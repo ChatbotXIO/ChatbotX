@@ -88,3 +88,9 @@
 html {
   font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
 }
+
+@layer base {
+  .bg-shark {
+    background-color: #2a2a2d;
+  }
+}
