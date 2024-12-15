@@ -2,10 +2,22 @@
   "common.analytics": "Analytics",
   "common.automated_responses": "Automated Responses",
   "common.broadcasts": "Broadcasts",
+  "common.cancel-btn": "Cancel",
+  "common.confirm-btn": "Confirm",
   "common.contacts": "Contacts",
   "common.flows": "Flows",
   "common.inbox": "Inbox",
   "common.language": "Language",
   "common.settings": "Settings",
-  "common.tools": "Tools"
+  "common.tools": "Tools",
+  "contacts.create.btn": "Create contact",
+  "contacts.create.title": "Create new contact",
+  "contacts.email": "Email",
+  "contacts.firstName": "First name",
+  "contacts.gender": "Gender",
+  "contacts.gender.female": "Female",
+  "contacts.gender.male": "Male",
+  "contacts.gender.unknown": "Unknown",
+  "contacts.lastName": "Last name",
+  "contacts.phoneNumber": "Phone number"
 }

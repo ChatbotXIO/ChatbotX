@@ -4,6 +4,7 @@ import { getLanguage } from "@/tolgee/language";
 import { getStaticData } from "@/tolgee/shared";
 import { ReactNode } from "react";
 import { TolgeeNextProvider } from "@/tolgee/client";
+import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
   title: "AhaChat AI",
@@ -27,6 +28,8 @@ export default async function RootLayout({ children, }: Props) {
       <body>
         <TolgeeNextProvider language={locale} staticData={staticData}>
           {children}
+
+          <Toaster />
         </TolgeeNextProvider>
       </body>
     </html>

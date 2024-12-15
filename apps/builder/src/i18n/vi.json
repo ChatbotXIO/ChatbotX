@@ -2,10 +2,22 @@
   "common.analytics": "Phân tích",
   "common.automated_responses": "Phản hồi tự động",
   "common.broadcasts": "Phát sóng",
+  "common.cancel-btn": "Hủy",
+  "common.confirm-btn": "Xác nhận",
   "common.contacts": "Danh bạ",
   "common.flows": "Luồng",
   "common.inbox": "Hộp thư đến",
   "common.language": "Ngôn ngữ",
   "common.settings": "Cài đặt",
-  "common.tools": "Công cụ"
+  "common.tools": "Công cụ",
+  "contacts.create.btn": "Tạo liên hệ",
+  "contacts.create.title": "Tạo liên hệ mới",
+  "contacts.email": "Email",
+  "contacts.firstName": "Tên",
+  "contacts.gender": "Giới tính",
+  "contacts.gender.female": "Nữ",
+  "contacts.gender.male": "Nam",
+  "contacts.gender.unknown": "Không rõ",
+  "contacts.lastName": "Họ",
+  "contacts.phoneNumber": "Số điện thoại"
 }
