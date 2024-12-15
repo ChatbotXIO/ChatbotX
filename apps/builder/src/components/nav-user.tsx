@@ -42,6 +42,7 @@ import { Button } from "./ui/button"
 import { LangSelector } from "./lang-selector"
 import { useTranslate } from "@tolgee/react"
 import { signOut } from "next-auth/react";
+import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
   user,
@@ -128,6 +129,13 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
+                {t('common.theme')}
+                <ThemeSwitcher />
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
@@ -149,18 +157,6 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        {/* <DialogContent>
-          <DialogTitle>Confirmation</DialogTitle>
-          <DialogDescription>Are you sure you want to log out?</DialogDescription>
-          <DialogFooter>
-            <button onClick={handleDialogCancel} className="btn btn-secondary">
-              No
-            </button>
-            <button onClick={handleDialogConfirm} className="btn btn-primary">
-              Yes
-            </button>
-          </DialogFooter>
-        </DialogContent> */}
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Confirmation</DialogTitle>

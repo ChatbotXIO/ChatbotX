@@ -5,6 +5,7 @@ import { getStaticData } from "@/tolgee/shared";
 import { ReactNode } from "react";
 import { TolgeeNextProvider } from "@/tolgee/client";
 import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "AhaChat AI",
@@ -24,13 +25,19 @@ export default async function RootLayout({ children, }: Props) {
   const staticData = await getStaticData([locale]);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body>
-        <TolgeeNextProvider language={locale} staticData={staticData}>
-          {children}
-
-          <Toaster />
-        </TolgeeNextProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <TolgeeNextProvider language={locale} staticData={staticData}>
+            {children}
+            <Toaster />
+          </TolgeeNextProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
