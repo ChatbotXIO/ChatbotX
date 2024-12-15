@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
-import Link from "next/link"
 
-export default async function SignInPage(props: {
+export default async function SignUpPage(props: {
   searchParams: { callbackUrl: string | undefined }
 }) {
   return (
@@ -29,7 +28,6 @@ export default async function SignInPage(props: {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-white text-center text-lg p-4">Don&apos;t have an account? <Link href="/sign-up" className="underline">Sign up for free</Link></div>
           <div className="flex flex-col gap-2">
             {Object.values(providerMap).map((provider, providerMapIdx) => (
               <form key={providerMapIdx}

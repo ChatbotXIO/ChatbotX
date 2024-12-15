@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
   BadgeCheck,
   Bell,
@@ -29,8 +30,18 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import {
+  Dialog,
+  DialogHeader,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog"
+import { Button } from "./ui/button"
 import { LangSelector } from "./lang-selector"
 import { useTranslate } from "@tolgee/react"
+import { signOut } from "next-auth/react";
 
 export function NavUser({
   user,
@@ -43,9 +54,23 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { t } = useTranslate()
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const onLogout = () => {
-    console.log('logout')
+  const onLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
+  }
+
+  const handleLogoutClick = () => {
+    setIsDialogOpen(true) // Mở dialog khi người dùng nhấn "Log out"
+  }
+
+  const handleDialogConfirm = () => {
+    setIsDialogOpen(false)
+    onLogout()
+  }
+
+  const handleDialogCancel = () => {
+    setIsDialogOpen(false) // Đóng dialog nếu người dùng chọn hủy
   }
 
   return (
@@ -116,13 +141,39 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onLogout()}>
+            <DropdownMenuItem onClick={handleLogoutClick}>
               <LogOut />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {/* <DialogContent>
+          <DialogTitle>Confirmation</DialogTitle>
+          <DialogDescription>Are you sure you want to log out?</DialogDescription>
+          <DialogFooter>
+            <button onClick={handleDialogCancel} className="btn btn-secondary">
+              No
+            </button>
+            <button onClick={handleDialogConfirm} className="btn btn-primary">
+              Yes
+            </button>
+          </DialogFooter>
+        </DialogContent> */}
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmation</DialogTitle>
+            <DialogDescription>
+            Are you sure you want to log out?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleDialogCancel}>No</Button>
+            <Button variant="outline" onClick={handleDialogCancel}>Yes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarMenu>
   )
 }

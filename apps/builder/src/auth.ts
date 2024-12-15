@@ -7,9 +7,6 @@ const prisma = new PrismaClient()
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: true,
-  // session: {
-  //   strategy: 'database',
-  // },
   pages: {
     signIn: '/login'
   },
