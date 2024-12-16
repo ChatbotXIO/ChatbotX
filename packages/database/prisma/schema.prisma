@@ -160,7 +160,7 @@ model Contact {
   email       String?
   firstName   String?
   lastName    String?
-  gender      String?
+  gender      Gender
   source      String
   userId      String?
   teamId      String?
@@ -172,11 +172,17 @@ model Contact {
 }
 
 enum ChatbotPlan {
-  Free
-  Pro
+  FREE
+  PRO
 }
 
 enum ChatbotMemberRole {
-  Owner
-  Agent
+  OWNER
+  AGENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOWN
 }
