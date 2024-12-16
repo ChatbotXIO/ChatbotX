@@ -1,5 +1,12 @@
-export default function SettingsPage({ children }: { children: React.ReactNode }) {
-  return (
-    'settings page'
-  )
+"use client";
+import SettingTabs from "./views/SettingTabs";
+
+const SettingsPage = () => {
+    return (
+        <div className='px-16'>
+            <SettingTabs/>
+        </div>
+    );
 }
+
+export default SettingsPage

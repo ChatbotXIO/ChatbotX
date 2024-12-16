@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: t('common.settings'),
-        url: `/chatbots/${chatbotId}/settings`,
+        url: `/chatbots/${chatbotId}/settings/general`,
         icon: SlidersHorizontal,
       },
     ],
