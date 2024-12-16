@@ -67,7 +67,7 @@ export default async function SignInPage(props: {
                       <span className="mx-4 text-white">Or with your email</span>
                       <hr className="flex-grow border-t border-gray-700" />
                     </div>
-                    <div className="flex w-full max-w-sm items-center space-x-2">
+                    <div className="flex w-full items-center space-x-2">
                       <Input type="email" placeholder="Email" />
                       <Button type="submit">Subscribe</Button>
                     </div> */}
@@ -80,7 +80,7 @@ export default async function SignInPage(props: {
               <span className="mx-4 text-white">Or with your email</span>
               <hr className="flex-grow border-t border-gray-700" />
             </div>
-            <div className="flex w-full max-w-sm items-center space-x-2">
+            <div className="flex w-full items-center space-x-2">
               <Input className="h-12 border-gray-700 bg-transparent text-base" type="email" placeholder="email@company.com" />
               <Button size="xl" className="w-1/4 bg-shark text-base hover:bg-gray-800" type="submit">Submit</Button>
             </div>

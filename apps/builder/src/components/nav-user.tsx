@@ -41,7 +41,7 @@ import {
 import { Button } from "./ui/button"
 import { LangSelector } from "./lang-selector"
 import { useTranslate } from "@tolgee/react"
-import { signOut } from "next-auth/react";
+import { signOut } from "next-auth/react"
 import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
@@ -116,7 +116,7 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
-                Upgrade to Pro
+                {t('navUser.upgrade_user')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -137,21 +137,21 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
-                Account
+                {t('navUser.account')}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />
-                Billing
+                {t('navUser.billing')}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
-                Notifications
+                {t('navUser.notifications')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogoutClick}>
               <LogOut />
-              Log out
+              {t('navUser.logout')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -159,14 +159,14 @@ export function NavUser({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Confirmation</DialogTitle>
+            <DialogTitle>{t('auth.confirmation')}</DialogTitle>
             <DialogDescription>
-            Are you sure you want to log out?
+              {t('auth.confirm_logout')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleDialogCancel}>No</Button>
-            <Button variant="outline" onClick={handleDialogCancel}>Yes</Button>
+            <Button variant="outline" onClick={handleDialogConfirm}>Yes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
