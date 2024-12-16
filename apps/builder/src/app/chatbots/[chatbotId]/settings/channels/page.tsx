@@ -1,16 +1,12 @@
 import React from 'react'
-import Channels from '../components/Channels'
-import SettingTabs from '../views/SettingTabs'
-import dynamic from 'next/dynamic'
-// const Channels = dynamic(() => import('../components/Channels'))
+import Channels from '@/features/settings/setting-channels'
 
 const ChannelsPage = () => {
-    return (
-        <div className='px-16'>
-            <SettingTabs />
-            <Channels />
-        </div>
-    )
+  return (
+    <div>
+      <Channels />
+    </div>
+  )
 }
 
 export default ChannelsPage

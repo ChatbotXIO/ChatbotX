@@ -1,12 +1,8 @@
-"use client";
-import SettingTabs from "./views/SettingTabs";
-
-const SettingsPage = () => {
-    return (
-        <div className='px-16'>
-            <SettingTabs/>
-        </div>
-    );
+export default function SettingsPage() {
+  return (
+    <div>
+      <h1>Settings Overview</h1>
+      <p>This is the main overview of settings.</p>
+    </div>
+  );
 }
-
-export default SettingsPage

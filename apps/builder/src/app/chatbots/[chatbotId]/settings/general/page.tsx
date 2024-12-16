@@ -1,14 +1,12 @@
 import React from 'react'
-import General from '../components/General'
-import SettingTabs from '../views/SettingTabs'
+import General from '@/features/settings/setting-general'
 
 const GeneralPage = () => {
-    return (
-        <div className='px-16'>
-            <SettingTabs />
-            <General />
-        </div>
-    )
+  return (
+    <div>
+      <General />
+    </div>
+  )
 }
 
 export default GeneralPage
