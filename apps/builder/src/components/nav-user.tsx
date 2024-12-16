@@ -159,7 +159,7 @@ export function NavUser({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{t('auth.confirmation')}</DialogTitle>
+            <DialogTitle>{t('common.confirmation')}</DialogTitle>
             <DialogDescription>
               {t('auth.confirm_logout')}
             </DialogDescription>
