@@ -48,3 +48,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   }
 })
+
+export const getCurrentUserId = async (): Promise<string> => {
+  const session = await auth()
+
+  return session?.user.id || 'unknown'
+}

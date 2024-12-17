@@ -9,7 +9,7 @@ import { findChatbotOrFail } from "@/lib/user-permissions";
 export const createContactAction = authActionClient
   .schema(createContactSchema)
   .action(async ({ ctx, parsedInput }) => {
-    const { chatbot } = await findChatbotOrFail(ctx.user, parsedInput.chatbotId)
+    const { chatbot } = await findChatbotOrFail(ctx.user.id, parsedInput.chatbotId)
 
     const existedContact = await prisma.contact.findFirst({ where: { chatbotId: chatbot.id, phoneNumber: parsedInput.phoneNumber } })
     if (existedContact) {

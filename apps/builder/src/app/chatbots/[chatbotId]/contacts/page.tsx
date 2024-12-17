@@ -1,4 +1,5 @@
-import { CreateContactDialog } from "@/features/contacts/create-contact-dialog";
+import { CreateContactDialog } from "@/features/contacts/create/create-contact-dialog";
+
 export default async function ContactsPage(
   props: { params: Promise<{ chatbotId: string }> }
 ) {
