@@ -1,10 +1,5 @@
 import { z } from "zod"
-
-export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  UNKNOWN = "UNKNOWN",
-}
+import { Gender } from "@prisma/client"
 
 export const createContactSchema = z.object({
   chatbotId: z.string().cuid2(),
@@ -17,3 +12,5 @@ export const createContactSchema = z.object({
   lastName: z.optional(z.string().max(100).trim()),
   gender: z.nativeEnum(Gender),
 })
+
+export type CreateContactSchema = z.infer<typeof createContactSchema>

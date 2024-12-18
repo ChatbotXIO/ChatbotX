@@ -1,14 +1,15 @@
 "use server";
 
 import { authActionClient } from "@/lib/safe-action";
-import { createContactSchema } from "./create-contact-schema";
+import { CreateContactSchema, createContactSchema } from "./create-contact-schema";
 import { prisma } from "@ahachat.ai/database";
 import { returnValidationErrors } from "next-safe-action";
 import { findChatbotOrFail } from "@/lib/user-permissions";
+import { User } from "@prisma/client";
 
 export const createContactAction = authActionClient
   .schema(createContactSchema)
-  .action(async ({ ctx, parsedInput }) => {
+  .action(async ({ ctx, parsedInput }: { ctx: { user: User }, parsedInput: CreateContactSchema }) => {
     const { chatbot } = await findChatbotOrFail(ctx.user.id, parsedInput.chatbotId)
 
     const existedContact = await prisma.contact.findFirst({ where: { chatbotId: chatbot.id, phoneNumber: parsedInput.phoneNumber } })

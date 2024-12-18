@@ -1,11 +1,19 @@
 "use client"
 
-import * as React from "react"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
+import {
+  ThemeProvider as NextThemesProvider,
+  type ThemeProviderProps,
+} from "next-themes"
+import { NuqsAdapter } from "nuqs/adapters/next/app"
 
-export function ThemeProvider({
-  children,
-  ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+import { TooltipProvider } from "@/components/ui/tooltip"
+
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  return (
+    <NextThemesProvider {...props}>
+      <TooltipProvider>
+        <NuqsAdapter>{children}</NuqsAdapter>
+      </TooltipProvider>
+    </NextThemesProvider>
+  )
 }

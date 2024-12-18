@@ -36,7 +36,13 @@
     "db:migrate": {
       "cache": false
     },
+    "db:migrate!": {
+      "cache": false
+    },
     "db:studio": {
+      "cache": false
+    },
+    "db:seed": {
       "cache": false
     }
   }
