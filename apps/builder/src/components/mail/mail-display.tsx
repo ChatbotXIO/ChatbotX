@@ -45,7 +45,7 @@ import {
 import { Mail } from "@/components/mail/data"
 
 interface MailDisplayProps {
-  mail: Mail | null
+  mail: Mail
 }
 
 export function MailDisplay({ mail }: MailDisplayProps) {
