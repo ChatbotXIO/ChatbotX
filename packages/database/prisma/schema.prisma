@@ -88,6 +88,7 @@ model Chatbot {
   teamMembers    TeamMember[]
   activityLogs   ActivityLog[]
   contacts       Contact[]
+  folders        Folder[]
 }
 
 model ChatbotMember {
@@ -168,6 +169,24 @@ model Contact {
   chatbot      Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   assignedUser User?   @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
   assignedTeam Team?   @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
+}
+
+model Folder {
+  id        String      @id @default(cuid())
+  name      String
+  group     FolderGroup @default(TAG)
+  parentId  String?
+  chatbotId String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  parent   Folder?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("ParentChild")
+  chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+enum FolderGroup {
+  TAG
 }
 
 enum ChatbotPlan {
