@@ -69,7 +69,6 @@ const mockData: Conversation[] = [
 ];
 
 export default async function InboxConversationSlot() {
-
   const conversations: Conversation[] = await new Promise((resolve) => {
     setTimeout(() => {
       resolve(mockData);

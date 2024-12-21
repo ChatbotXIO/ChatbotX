@@ -5,7 +5,7 @@ import { Conversation } from "./interfaces/conversation";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatDistanceToNow, parseISO, isAfter } from 'date-fns'
-import { Badge } from "@/components/ui/badge"
+import { Users, CheckCircle, User } from "lucide-react";
 import { Label } from "@/components/ui/label"
 
 interface ConversationItemProps {
@@ -15,7 +15,7 @@ interface ConversationItemProps {
 const MAX_MESSAGE_NUMBER = 30
 
 export default function ConversationItem({ conversation }: ConversationItemProps) {
-  const { lastActivityAt, contactLastSeenAt, contact } = conversation;
+  const { lastActivityAt, contactLastSeenAt, contact, assignedType } = conversation;
 
   const [formattedTime, setFormattedTime] = useState<string>('');
   const [lastMessage, setLastMessage] = useState<string>(conversation.lastMessage);
@@ -47,6 +47,20 @@ export default function ConversationItem({ conversation }: ConversationItemProps
     return isAfter(lastActivityDate, contactLastSeenDate);
   }
 
+  const assignedIcon = () => {
+    if (assignedType) {
+      return (
+        <div className="absolute flex items-center justify-center w-4 h-4 bg-gray-300 rounded-full bottom-0 left-0 right-0 m-auto -mb-1.5">
+          {
+            assignedType === 'Team' ? <Users size={10} color="black"/> : <User size={10} color="black"/>
+          }
+        </div>
+      )
+    }
+
+    return null
+  }
+
   useEffect(() => {
     const formatted = formatTimeAgo(lastActivityAt);
     setFormattedTime(formatted);
@@ -57,35 +71,44 @@ export default function ConversationItem({ conversation }: ConversationItemProps
     setLastMessage(formatLastMessage(conversation.lastMessage))
   }, [conversation.lastMessage])
 
-
   return (
     <div
       className={
-        `flex items-center p-3 gap-4 rounded-xl
-          ${isSelected ? 'bg-gray-50' : ''}
-          hover:bg-gray-50 w-full cursor-pointer`
+        `flex items-center p-3 gap-4 rounded-xl relative
+          ${isSelected ? 'bg-gray-200' : ''}
+          hover:bg-gray-100 w-full cursor-pointer dark:hover:text-black`
       }
       onClick={() => setIsSelected(true)}
     >
-      <Avatar className="w-12 h-12">
-        <AvatarImage src={avatar()} alt={username()}/>
-        <AvatarFallback>{username().charAt(0)}</AvatarFallback>
-      </Avatar>
+      <div className="relative">
+        <Avatar className="w-12 h-12">
+          <AvatarImage src={avatar()} alt={username()}/>
+          <AvatarFallback>{username().charAt(0)}</AvatarFallback>
+        </Avatar>
+        { assignedIcon() }
+      </div>
 
       <div className="w-full">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-2">
-            <Label className="font-semibold truncate">{username()}</Label>
-            <span className={`w-2.5 h-2.5 rounded-full ${hasReadMessage ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+          <Label className="font-semibold truncate">{username()}</Label>
+            { !hasReadMessage && <CheckCircle size={13} color="gray" /> }
           </div>
           <span className="text-gray-500">{formattedTime}</span>
         </div>
         <div className="mt-1 text-sm text-gray-600 w-full">{lastMessage}</div>
-        <div className="flex gap-2 mt-4">
-          <Badge>VIP</Badge>
-          <Badge variant="outline">New</Badge>
-        </div>
       </div>
+
+      {
+        hasReadMessage && (
+          <div className="absolute bottom-2.5 right-2.5">
+            <Avatar className="w-3 h-3">
+              <AvatarImage src={avatar()} alt={username()}/>
+              <AvatarFallback>{username().charAt(0)}</AvatarFallback>
+            </Avatar>
+          </div>
+        )
+      }
     </div>
   )
 }

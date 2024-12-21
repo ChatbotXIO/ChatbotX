@@ -4,7 +4,7 @@ import {ChatMessageList} from "@/components/ui/chat/chat-message-list";
 import {ChatBubble, ChatBubbleAvatar, ChatBubbleMessage} from "@/components/ui/chat/chat-bubble";
 import {ChatInput} from "@/components/ui/chat/chat-input";
 import {Button} from "@/components/ui/button";
-import {CornerDownLeft, Mic, Paperclip} from "lucide-react";
+import { CornerDownLeft, Mic, Paperclip } from "lucide-react";
 
 export default function InboxBubble() {
   return (
