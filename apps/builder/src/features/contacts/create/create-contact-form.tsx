@@ -16,32 +16,35 @@ import { Gender } from "@prisma/client"
 export function CreateContactForm({ chatbotId, onSubmmited, onCancelled }: { chatbotId: string, onSubmmited?: () => void, onCancelled?: () => void }) {
   const { t } = useTranslate()
 
-  const { form, handleSubmitWithAction } = useHookFormAction(createContactAction, zodResolver(createContactSchema), {
-    actionProps: {
-      onSuccess: () => {
-        toast.success("Contact created successfully")
+  const { form, handleSubmitWithAction } = useHookFormAction(
+    createContactAction.bind(null, chatbotId),
+    zodResolver(createContactSchema),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success("Contact created successfully")
 
-        onSubmmited && onSubmmited()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
+          onSubmmited && onSubmmited()
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError.message ?? error.serverError)
+          }
         }
-      }
-    },
-    formProps: {
-      mode: "onChange",
-      defaultValues: {
-        chatbotId,
-        phoneNumber: "",
-        email: "",
-        firstName: "",
-        lastName: "",
-        gender: Gender.Unknown,
-      }
-    },
-    errorMapProps: {}
-  });
+      },
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          phoneNumber: "",
+          email: "",
+          firstName: "",
+          lastName: "",
+          gender: Gender.Unknown,
+        }
+      },
+      errorMapProps: {}
+    }
+  );
 
   const genderLabels: Record<Gender, string> = {
     Male: t('contacts.gender.male'),

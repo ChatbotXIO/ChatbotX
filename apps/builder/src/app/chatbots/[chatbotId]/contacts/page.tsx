@@ -16,6 +16,7 @@ export default async function ContactsPage(
   const promises = Promise.all([
     getContacts({
       ...search,
+      chatbotId: params.chatbotId
     }),
   ])
 
