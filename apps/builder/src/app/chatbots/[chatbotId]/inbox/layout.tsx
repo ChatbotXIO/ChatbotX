@@ -4,17 +4,21 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable"
+} from "@/components/ui/resizable";
 
-import { TooltipProvider } from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface InboxLayoutProps {
-  conversation: React.ReactNode,
-  bubble: React.ReactNode
-  information: React.ReactNode,
+  conversation: React.ReactNode;
+  message: React.ReactNode;
+  contact: React.ReactNode;
 }
 
-export default function InboxLayout({ conversation, bubble, information }: InboxLayoutProps) {
+export default function InboxLayout({
+  conversation,
+  message,
+  contact,
+}: InboxLayoutProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
@@ -26,13 +30,13 @@ export default function InboxLayout({ conversation, bubble, information }: Inbox
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={48} minSize={30}>
-          { bubble }
+          {message}
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={20} minSize={15} maxSize={25}>
-          { information }
+          {contact}
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
-  )
+  );
 }
