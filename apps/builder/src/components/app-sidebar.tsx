@@ -21,10 +21,8 @@ import {
 } from '@/components/ui/sidebar'
 import { useTranslate } from '@tolgee/react'
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ chatbotId, ...props }: React.ComponentProps<typeof Sidebar> & { chatbotId: string }) {
   const { t } = useTranslate()
-
-  const chatbotId = 1
 
   const data = {
     user: {
@@ -51,43 +49,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
     navMain: [
       {
-        title: t('Analytics'),
+        title: t('common.analytics'),
         url: `/chatbots/${chatbotId}/dashboard`,
         icon: ChartPie,
         isActive: true,
       },
       {
-        title: t('Inbox'),
+        title: t('common.inbox'),
         url: `/chatbots/${chatbotId}/inbox`,
         icon: MessageCircleMore,
       },
       {
-        title: t('Flows'),
+        title: t('common.flows'),
         url: `/chatbots/${chatbotId}/flows`,
         icon: Workflow,
       },
       {
-        title: t('Contacts'),
+        title: t('common.contacts'),
         url: `/chatbots/${chatbotId}/contacts`,
         icon: Users,
       },
       {
-        title: t('Automated Responses'),
+        title: t('common.automated_responses'),
         url: `/chatbots/${chatbotId}/automated-responses`,
         icon: Atom,
       },
       {
-        title: t('Broadcasts'),
+        title: t('common.broadcasts'),
         url: `/chatbots/${chatbotId}/broadcasts`,
         icon: Radio,
       },
       {
-        title: t('Tools'),
+        title: t('common.tools'),
         url: `/chatbots/${chatbotId}/tools`,
         icon: Wrench,
       },
       {
-        title: t('Settings'),
+        title: t('common.settings'),
         url: `/chatbots/${chatbotId}/settings`,
         icon: SlidersHorizontal,
       },

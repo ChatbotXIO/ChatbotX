@@ -9,28 +9,28 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 interface InboxLayoutProps {
-  customer: React.ReactNode
   conversation: React.ReactNode,
-  details: React.ReactNode,
+  bubble: React.ReactNode
+  information: React.ReactNode,
 }
 
-export default function InboxLayout({ customer, conversation, details }: InboxLayoutProps) {
+export default function InboxLayout({ conversation, bubble, information }: InboxLayoutProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
         direction="horizontal"
-        className="h-full max-h-[calc(100vh-28px)] items-stretch"
+        className="h-full max-h-[calc(100vh-64px)] items-stretch"
       >
-        <ResizablePanel defaultSize={32} minSize={30}>
-          {customer}
+        <ResizablePanel defaultSize={20} minSize={20} maxSize={25}>
+          {conversation}
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={48} minSize={30}>
-          { conversation }
+          { bubble }
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={32} minSize={20}>
-          { details }
+        <ResizablePanel defaultSize={20} minSize={15} maxSize={25}>
+          { information }
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>

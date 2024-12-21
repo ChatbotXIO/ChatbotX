@@ -10,6 +10,11 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-ahachatai}
       - POSTGRES_USER=${POSTGRES_USER:-ahachatai}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar"
 import { LangSelector } from "./lang-selector"
 import { useTranslate } from "@tolgee/react"
+import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
   user,
@@ -96,8 +97,15 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                {t('Language')}
+                {t('common.language')}
                 <LangSelector />
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                {t('common.theme')}
+                <ThemeSwitcher />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
