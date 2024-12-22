@@ -9,7 +9,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { useTranslate } from '@tolgee/react';
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { FolderGroup } from "@prisma/client";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { createFolderSchema } from "@/features/folders/create/create-folder-schema";
 
 export function CreateFolderDialog({ children, chatbotId, group, parentId }: {
-  children: React.ReactNode,
+  children: ReactNode,
   chatbotId: string,
   group: FolderGroup,
   parentId?: string,
@@ -31,10 +31,13 @@ export function CreateFolderDialog({ children, chatbotId, group, parentId }: {
 
   const [open, setOpen] = useState(false);
 
-  const { form, handleSubmitWithAction } = useHookFormAction(createFolderAction, zodResolver(createFolderSchema), {
+  const {
+    form,
+    handleSubmitWithAction
+  } = useHookFormAction(createFolderAction.bind(null, chatbotId, group, parentId), zodResolver(createFolderSchema), {
     actionProps: {
       onSuccess: () => {
-        toast(`Folder created successfully`)
+        toast.success(`Folder created successfully`)
 
         setOpen(false)
       },
@@ -47,10 +50,7 @@ export function CreateFolderDialog({ children, chatbotId, group, parentId }: {
     formProps: {
       mode: "onChange",
       defaultValues: {
-        chatbotId,
         name: "",
-        group,
-        parentId
       }
     },
     errorMapProps: {}

@@ -1,35 +1,28 @@
-import { Suspense } from 'react';
-
 import { FolderGroup } from "@prisma/client";
 import { getFolders } from "@/features/folders/list/get-folders-queries";
-import { getFoldersSearchParamsCache } from "@/features/folders/list/get-folders-schema";
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 import { ListFolder } from "@/features/folders/list/list-folder";
+import { headers } from "next/headers";
 
 export default async function FolderPage(
   props: { params: Promise<{ chatbotId: string }> }
 ) {
   const params = await props.params
-  const search = getFoldersSearchParamsCache.parse({
+  const headersList = await headers()
+  const path = headersList.get("x-current-path") || ""
+  let group = FolderGroup.Tag
+
+  const segment = path.replace(`/chatbots/${params.chatbotId}`, "")
+
+  if (segment.startsWith("/tags")) {
+    group = FolderGroup.Tag
+  }
+
+  const promises = getFolders({
     chatbotId: params.chatbotId,
-    group: FolderGroup.TAG
+    group: group
   })
 
-  const promises = getFolders(search)
-
   return (
-    <div>
-      <Suspense fallback={
-        <DataTableSkeleton
-          columnCount={6}
-          searchableColumnCount={1}
-          filterableColumnCount={2}
-          cellWidths={["10rem", "40rem", "12rem", "12rem", "8rem", "8rem"]}
-          shrinkZero
-        />
-      }>
-        <ListFolder promises={promises} chatbotId={params.chatbotId}/>
-      </Suspense>
-    </div>
+    <ListFolder promises={promises} chatbotId={params.chatbotId} group={group}/>
   )
 }

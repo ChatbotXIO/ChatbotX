@@ -27,7 +27,10 @@ export function DeleteFolderDialog({ children, chatbotId, folderId }: {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
 
-  const { form, handleSubmitWithAction } = useHookFormAction(deleteFolderAction, zodResolver(deleteFolderSchema), {
+  const {
+    form,
+    handleSubmitWithAction
+  } = useHookFormAction(deleteFolderAction.bind(null, chatbotId, folderId), zodResolver(deleteFolderSchema), {
     actionProps: {
       onSuccess: () => {
         toast(`Folder deleted successfully`)
@@ -38,15 +41,7 @@ export function DeleteFolderDialog({ children, chatbotId, folderId }: {
           toast.error(error.serverError.message ?? error.serverError)
         }
       }
-    },
-    formProps: {
-      mode: "onChange",
-      defaultValues: {
-        chatbotId,
-        folderId,
-      }
-    },
-    errorMapProps: {}
+    }
   });
 
   return (

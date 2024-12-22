@@ -20,7 +20,7 @@ interface TreeDataItem {
   icon?: any
   selectedIcon?: any
   openIcon?: any
-  children?: TreeDataItem[]
+  children: TreeDataItem[]
   actions?: React.ReactNode
   onClick?: () => void
 }
@@ -93,7 +93,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
     }, [data, expandAll, initialSelectedItemId])
 
     return (
-      <div className={cn('overflow-hidden relative p-2', className)}>
+      <div className={cn('overflow-hidden relative', className)}>
         <TreeItem
           data={data}
           ref={ref}
@@ -167,13 +167,13 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
 TreeItem.displayName = 'TreeItem'
 
 const TreeNode = ({
-                    item,
-                    handleSelectChange,
-                    expandedItemIds,
-                    selectedItemId,
-                    defaultNodeIcon,
-                    defaultLeafIcon
-                  }: {
+  item,
+  handleSelectChange,
+  expandedItemIds,
+  selectedItemId,
+  defaultNodeIcon,
+  defaultLeafIcon
+}: {
   item: TreeDataItem
   handleSelectChange: (item: TreeDataItem | undefined) => void
   expandedItemIds: string[]
@@ -290,7 +290,7 @@ const AccordionTrigger = React.forwardRef<
       )}
       {...props}
     >
-      <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 text-accent-foreground/50 mr-1" />
+      <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 text-accent-foreground/50 mr-1"/>
       {children}
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
@@ -315,11 +315,11 @@ const AccordionContent = React.forwardRef<
 AccordionContent.displayName = AccordionPrimitive.Content.displayName
 
 const TreeIcon = ({
-                    item,
-                    isOpen,
-                    isSelected,
-                    default: defaultIcon
-                  }: {
+  item,
+  isOpen,
+  isSelected,
+  default: defaultIcon
+}: {
   item: TreeDataItem
   isOpen?: boolean
   isSelected?: boolean
@@ -334,23 +334,23 @@ const TreeIcon = ({
     Icon = item.icon
   }
   return Icon ? (
-    <Icon className="h-4 w-4 shrink-0 mr-2" />
+    <Icon className="h-4 w-4 shrink-0 mr-2"/>
   ) : (
     <></>
   )
 }
 
 const TreeActions = ({
-                       children,
-                       isSelected
-                     }: {
+  children,
+  isSelected
+}: {
   children: React.ReactNode
   isSelected: boolean
 }) => {
   return (
     <div
       className={cn(
-        isSelected ? 'block' : 'hidden',
+        // isSelected ? 'block' : 'hidden',
         'absolute right-3 group-hover:block'
       )}
     >

@@ -1,7 +1,11 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@ahachat.ai/database";
-import { Folder, Prisma } from "@prisma/client";
-import { GetFoldersSchema } from "@/features/folders/list/get-folders-schema";
+import { Folder, FolderGroup, Prisma } from "@prisma/client";
+
+type GetFoldersSchema = {
+  chatbotId: string,
+  group: FolderGroup
+}
 
 export async function getFolders(input: GetFoldersSchema): Promise<{ data: Folder[] }> {
   return await unstable_cache(async () => {
@@ -15,11 +19,10 @@ export async function getFolders(input: GetFoldersSchema): Promise<{ data: Folde
 
       return { data }
     } catch (err) {
-      console.log("err", err)
       return { data: [] }
     }
   }, [JSON.stringify(input)], {
     revalidate: 3600,
-    tags: ["Folders", input.chatbotId, input.group]
+    tags: [`Folders.${input.chatbotId}.${input.group}`]
   })()
 }

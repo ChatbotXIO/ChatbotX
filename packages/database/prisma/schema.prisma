@@ -174,7 +174,7 @@ model Contact {
 model Folder {
   id        String      @id @default(cuid())
   name      String
-  group     FolderGroup @default(TAG)
+  group     FolderGroup @default(Tag)
   parentId  String?
   chatbotId String
   createdAt DateTime    @default(now())
@@ -183,10 +183,13 @@ model Folder {
   parent   Folder?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
   children Folder[] @relation("ParentChild")
   chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
+  @@index([parentId])
 }
 
 enum FolderGroup {
-  TAG
+  Tag
 }
 
 enum ChatbotPlan {

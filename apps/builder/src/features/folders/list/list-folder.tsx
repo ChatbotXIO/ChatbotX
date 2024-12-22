@@ -1,31 +1,23 @@
 "use client"
 
 import * as React from 'react';
+import { useEffect } from 'react';
 
 import { getFolders } from "@/features/folders/list/get-folders-queries";
 import { CreateFolderDialog } from "@/features/folders/create/create-folder-dialog";
-import { FolderGroup } from "@prisma/client";
-import {
-  Plus,
-  Folder as FolderIcon,
-  FolderOpenIcon,
-  EllipsisVertical,
-  Type,
-  Trash
-} from "lucide-react";
+import { Folder, FolderGroup } from "@prisma/client";
+import { EllipsisVertical, Folder as FolderIcon, FolderOpenIcon, Plus, Trash, Type } from "lucide-react";
 import { useTranslate } from "@tolgee/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  Sidebar,
-  SidebarContent,
   SidebarGroup,
-  SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  SidebarProvider
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { TreeDataItem, TreeView } from "@/components/ui/tree-view";
-import { Folder } from "@prisma/client";
-import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,111 +27,132 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditFolderDialog } from "@/features/folders/edit/edit-folder-dialog";
 import { DeleteFolderDialog } from "@/features/folders/delete/delete-folder-dialog";
+import { useQueryState } from "nuqs";
+import { EditFolderSchema } from "@/features/folders/edit/edit-folder-schema";
 
 interface FolderSidebarProps {
   promises: Promise<Awaited<ReturnType<typeof getFolders>>>,
-  chatbotId: string
+  chatbotId: string,
+  group: FolderGroup
 }
 
-export function ListFolder({ promises, chatbotId }: FolderSidebarProps) {
+export function ListFolder({ promises, chatbotId, group }: FolderSidebarProps) {
   const { data: folders } = React.use(promises)
-  const router = useRouter()
-
-  console.log('folders', folders)
+  const [folderId, setFolderId] = useQueryState('folderId')
+  const [treeItems, setTreeItems] = React.useState<TreeDataItem[]>([])
 
   const { t } = useTranslate()
-  const buildTreeData = (folders: Folder[]) => {
-    const map: { [index: string]: any } = {};
-    const roots: TreeDataItem[] = [];
-
-    folders.forEach(folder => {
-      map[folder.id] = {
+  const buildTreeData = (folders: Folder[], parentId: string | null = null): TreeDataItem[] => {
+    return folders
+      .filter(folder => folder.parentId === parentId)
+      .map(folder => ({
         id: folder.id,
         name: folder.name,
         icon: FolderIcon,
         selectedIcon: FolderOpenIcon,
-        actions: <FolderAction folder={folder}/>,
-        children: [],
-        onClick: () => selectFolder(folder)
-      };
-    });
+        actions: <FolderAction folder={folder} group={group} onUpdated={(item) => updateTreeData(folder.id, item)}/>,
+        children: buildTreeData(folders, folder.id),
+      }));
+  }
 
-    folders.forEach(folder => {
-      if (folder.parentId) {
-        map[folder.parentId].children.push(map[folder.id]);
-      } else {
-        roots.push(map[folder.id]);
+  const updateTreeNode = (treeItems: TreeDataItem[], folderId: string, data: EditFolderSchema): TreeDataItem[] => {
+    return treeItems.map((treeData) => {
+      if (treeData.id === folderId) {
+        const folder = folders.find(obj => obj.id === folderId) as Folder
+        folder.name = data.name
+        treeData.name = data.name
+
+        return {
+          ...treeData,
+          actions: <FolderAction folder={folder} group={group} onUpdated={(item) => updateTreeData(folder.id, item)}/>,
+        }
       }
+
+      return { ...treeData, children: updateTreeNode(treeData.children, folderId, data) };
+    })
+  }
+
+  const updateTreeData = (folderId: string, data: EditFolderSchema) => {
+    setTreeItems((prevTreeItems) => {
+      return updateTreeNode(prevTreeItems, folderId, data);
     });
-
-    return roots;
   }
 
-  const selectFolder = (folder: Folder) => {
-    router.replace(`/chatbots/${chatbotId}/tags?folderId=${folder.id}`)
-  }
-
-  const treeDataItems: TreeDataItem[] = buildTreeData(folders)
+  useEffect(() => {
+    if (folders) {
+      const data = buildTreeData(folders);
+      setTreeItems(data);
+    }
+  }, [folders]);
 
   return (
-    <Sidebar collapsible="none" className="hidden md:flex h-full">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <div className="flex w-full justify-between items-center">
-              <div>{t('common.folders')}</div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CreateFolderDialog chatbotId={chatbotId} group={FolderGroup.TAG}>
-                      <Plus size={16} className={"cursor-pointer"}></Plus>
-                    </CreateFolderDialog>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t('common.edit')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <FolderIcon/> All folders
-                </SidebarMenuButton>
-                {/*<SidebarMenuBadge></SidebarMenuBadge>*/}
-              </SidebarMenuItem>
-            </SidebarMenu>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <FolderIcon/> Uncategorized
-                </SidebarMenuButton>
-                {/*<SidebarMenuBadge></SidebarMenuBadge>*/}
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>{t('common.folders')}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <TreeView data={treeDataItems}></TreeView>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <div>
+      <div className="relative flex w-full min-w-0 flex-col p-2">
+        <div
+          className="flex justify-between items-center rounded-md p-2 text-xs font-medium text-sidebar-foreground/70">
+          <div>{t('common.folders')}</div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CreateFolderDialog chatbotId={chatbotId} group={group}>
+                  <Plus size={16} className="cursor-pointer"></Plus>
+                </CreateFolderDialog>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('common.edit')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="w-full text-sm">
+          <ul className="flex w-full min-w-0 flex-col gap-1">
+            <li className="group/menu-item relative">
+              <SidebarMenuButton onClick={() => setFolderId("all")}>
+                <FolderIcon/> All folders
+              </SidebarMenuButton>
+              {/*<SidebarMenuBadge></SidebarMenuBadge>*/}
+            </li>
+          </ul>
+          <ul className="flex w-full min-w-0 flex-col gap-1">
+            <li className="group/menu-item relative">
+              <SidebarMenuButton onClick={() => setFolderId(null)}>
+                <FolderIcon/> Uncategorized
+              </SidebarMenuButton>
+              {/*<SidebarMenuBadge></SidebarMenuBadge>*/}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div className="relative flex w-full min-w-0 flex-col p-2">
+        <div
+          className="flex justify-between items-center rounded-md p-2 text-xs font-medium text-sidebar-foreground/70">
+          {t('common.folders.list')}</div>
+        <div className="w-full text-sm">
+          <ul className="flex w-full min-w-0 flex-col gap-1">
+            <li className="group/menu-item relative">
+              <TreeView data={treeItems}
+                        initialSelectedItemId={folderId as string | undefined}
+                        onSelectChange={(item) => item && setFolderId(item.id)}></TreeView>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   )
 }
 
-function FolderAction({ folder }: { folder: Folder }) {
+function FolderAction({
+  folder, group, onUpdated
+}: {
+  folder: Folder,
+  group: FolderGroup,
+  onUpdated: (item: EditFolderSchema) => void
+}) {
   const { t } = useTranslate()
 
   return (
     <div className="flex gap-2 items-center">
-      <CreateFolderDialog chatbotId={folder.chatbotId} group={FolderGroup.TAG} parentId={folder.id}>
+      <CreateFolderDialog chatbotId={folder.chatbotId} group={group} parentId={folder.id}>
         <Plus size={14}></Plus>
       </CreateFolderDialog>
       <DropdownMenu>
@@ -147,7 +160,7 @@ function FolderAction({ folder }: { folder: Folder }) {
           <EllipsisVertical size={14}/>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <EditFolderDialog chatbotId={folder.chatbotId} folder={folder}>
+          <EditFolderDialog chatbotId={folder.chatbotId} folder={folder} onUpdated={(item) => onUpdated(item)}>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="px-3 py-1">
               <div className="flex items-center gap-2">
                 <Type size={14}/> {t('tags.edit_name')}

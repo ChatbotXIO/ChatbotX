@@ -19,20 +19,25 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { editFolderAction } from "@/features/folders/edit/edit-folder-action";
-import { editFolderSchema } from "@/features/folders/edit/edit-folder-schema";
+import { editFolderSchema, EditFolderSchema } from "@/features/folders/edit/edit-folder-schema";
 
-export function EditFolderDialog({ children, chatbotId, folder }: {
+export function EditFolderDialog({ children, chatbotId, folder, onUpdated }: {
   children: ReactNode,
   chatbotId: string,
-  folder: Folder
+  folder: Folder,
+  onUpdated?: (item: EditFolderSchema) => void
 }) {
   const { t } = useTranslate();
 
   const [open, setOpen] = useState(false);
-  const { form, handleSubmitWithAction } = useHookFormAction(editFolderAction, zodResolver(editFolderSchema), {
+  const {
+    form,
+    handleSubmitWithAction
+  } = useHookFormAction(editFolderAction.bind(null, chatbotId, folder.id), zodResolver(editFolderSchema), {
     actionProps: {
       onSuccess: () => {
-        toast(`Folder ${folder ? 'updated' : 'created'} successfully`)
+        toast.success(`Folder updated successfully`)
+        onUpdated && onUpdated(form.getValues())
 
         setOpen(false)
       },
@@ -45,8 +50,6 @@ export function EditFolderDialog({ children, chatbotId, folder }: {
     formProps: {
       mode: "onChange",
       defaultValues: {
-        chatbotId,
-        folderId: folder.id,
         name: folder.name
       }
     },

@@ -2,29 +2,40 @@
 
 import { authActionClient } from "@/lib/safe-action";
 import { prisma } from "@ahachat.ai/database";
-import { toast } from "sonner";
 import { returnValidationErrors } from "next-safe-action";
-import { EditFolderSchema, editFolderSchema } from "@/features/folders/edit/edit-folder-schema";
+import {
+  EditFolderBindSchema,
+  editFolderBindSchema,
+  EditFolderSchema,
+  editFolderSchema
+} from "@/features/folders/edit/edit-folder-schema";
 
 export const editFolderAction = authActionClient
   .schema(editFolderSchema)
-  .action(async ({ parsedInput }: { parsedInput: EditFolderSchema }) => {
+  .bindArgsSchemas(editFolderBindSchema)
+  .action(async ({
+    parsedInput,
+    bindArgsParsedInputs: [chatbotId, folderId],
+  }: {
+    parsedInput: EditFolderSchema,
+    bindArgsParsedInputs: EditFolderBindSchema
+  }) => {
     const existedFolderId = await prisma.folder.findFirst({
       where: {
-        chatbotId: parsedInput.chatbotId,
-        id: parsedInput.folderId
+        chatbotId: chatbotId,
+        id: folderId
       }
     })
     if (!existedFolderId) {
-      toast(`Folder ${parsedInput.name} is not existed!`)
+      throw new Error(`Folder ${parsedInput.name} is not existed!`)
     }
     const existedFolderName = await prisma.folder.findFirst({
       where: {
-        chatbotId: parsedInput.chatbotId,
+        chatbotId: chatbotId,
         name: parsedInput.name,
-        group: existedFolderId?.group,
+        group: existedFolderId.group,
         id: {
-          not: parsedInput.folderId
+          not: folderId
         }
       }
     })
@@ -37,7 +48,7 @@ export const editFolderAction = authActionClient
       });
     }
 
-    await prisma.folder.update({ where: { id: parsedInput.folderId }, data: { name: parsedInput.name } })
+    await prisma.folder.update({ where: { id: folderId }, data: { name: parsedInput.name } })
 
     return {
       successful: true,
