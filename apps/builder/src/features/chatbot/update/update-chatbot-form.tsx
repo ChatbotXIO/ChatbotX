@@ -279,7 +279,7 @@ const languages = [
   { name: 'Viet Nam', code: 'VN' },
 ]
 
-const UpdateChatbotForm = ({ chatbotId, onSubmmited, onCancelled }: { chatbotId: string, onSubmmited?: () => void, onCancelled?: () => void }) => {
+const UpdateChatbotForm = ({ chatbotId }: { chatbotId: string}) => {
   const { t } = useTranslate()
   // const haveListLanguage = _.map(timezones, 'abbr')
   const [viewListLanguages] = useState(languages);
@@ -356,7 +356,7 @@ const UpdateChatbotForm = ({ chatbotId, onSubmmited, onCancelled }: { chatbotId:
   const onSubmit = (data: any) => {
     console.log(data);
     // onSubmit={form.handleSubmit(onSubmit)}
-    // onSubmit={handleSubmitWithAction}   
+    // onSubmit={handleSubmitWithAction}
   };
 
   return (

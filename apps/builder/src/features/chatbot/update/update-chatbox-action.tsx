@@ -8,7 +8,7 @@ import { findChatbotOrFail } from "@/lib/user-permissions";
 export const updateChatboxAction = authActionClient
   .schema(updateChatbotSchema)
   .action(async ({ ctx, parsedInput }) => {
-    const { chatbot } = await findChatbotOrFail(ctx.user, parsedInput.id);
+    const { chatbot } = await findChatbotOrFail(ctx.user.id, parsedInput.id);
     const existedChatbot = await prisma.chatbot.findFirst({
       where: { id: chatbot.id },
     });
