@@ -21,10 +21,8 @@ import {
 } from '@/components/ui/sidebar'
 import { useTranslate } from '@tolgee/react'
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ chatbotId, ...props }: React.ComponentProps<typeof Sidebar> & { chatbotId: string }) {
   const { t } = useTranslate()
-
-  const chatbotId = 1
 
   const data = {
     user: {

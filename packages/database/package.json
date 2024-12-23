@@ -5,13 +5,17 @@
     "@prisma/client": "5.22.0"
   },
   "devDependencies": {
-    "prisma": "5.22.0",
-    "@ahachat.ai/typescript-config": "workspace:*"
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "@types/node": "^22.10.2",
+    "dotenv-cli": "^7.4.4",
+    "prisma": "5.22.0"
   },
   "scripts": {
-    "db:generate": "prisma migrate dev --create-only",
-    "db:migrate": "prisma db push --skip-generate",
-    "db:studio": "prisma studio"
+    "db:generate": "dotenv -e ../../.env -- prisma migrate dev --create-only",
+    "db:migrate": "dotenv -e ../../.env -- prisma db push",
+    "db:migrate!": "dotenv -e ../../.env -- prisma db push --skip-generate",
+    "db:studio": "prisma studio",
+    "db:seed": "ts-node prisma/seed.ts"
   },
   "exports": {
     ".": "./src/index.ts"

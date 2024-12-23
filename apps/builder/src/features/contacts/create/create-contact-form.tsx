@@ -1,51 +1,55 @@
 "use client"
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useTranslate } from '@tolgee/react'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createContactSchema, Gender } from "./create-contact-schema"
-import { createContactAction } from "./create-contact-action"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2 } from "lucide-react"
+import { Gender } from "@prisma/client"
+import { useTranslate } from '@tolgee/react'
+import { AsteriskIcon, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { createContactAction } from "./create-contact-action"
+import { createContactSchema } from "./create-contact-schema"
 
 export function CreateContactForm({ chatbotId, onSubmmited, onCancelled }: { chatbotId: string, onSubmmited?: () => void, onCancelled?: () => void }) {
   const { t } = useTranslate()
 
-  const { form, handleSubmitWithAction } = useHookFormAction(createContactAction, zodResolver(createContactSchema), {
-    actionProps: {
-      onSuccess: () => {
-        toast("Contact created successfully")
+  const { form, handleSubmitWithAction } = useHookFormAction(
+    createContactAction.bind(null, chatbotId),
+    zodResolver(createContactSchema),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success("Contact created successfully")
 
-        onSubmmited && onSubmmited()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
+          onSubmmited && onSubmmited()
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError.message ?? error.serverError)
+          }
         }
-      }
-    },
-    formProps: {
-      mode: "onChange",
-      defaultValues: {
-        chatbotId,
-        phoneNumber: "",
-        email: "",
-        firstName: "",
-        lastName: "",
-        gender: Gender.UNKNOWN,
-      }
-    },
-    errorMapProps: {}
-  });
+      },
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          phoneNumber: "",
+          email: "",
+          firstName: "",
+          lastName: "",
+          gender: Gender.Unknown,
+        }
+      },
+      errorMapProps: {}
+    }
+  );
 
   const genderLabels: Record<Gender, string> = {
-    MALE: t('contacts.gender.male'),
-    FEMALE: t('contacts.gender.female'),
-    UNKNOWN: t('contacts.gender.unknown')
+    Male: t('contacts.gender.male'),
+    Female: t('contacts.gender.female'),
+    Unknown: t('contacts.gender.unknown')
   }
 
   return (
@@ -53,7 +57,10 @@ export function CreateContactForm({ chatbotId, onSubmmited, onCancelled }: { cha
       <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
         <FormField control={form.control} name="phoneNumber" render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('contacts.phoneNumber')}</FormLabel>
+            <FormLabel className="inline-flex gap-1">
+              {t('contacts.phoneNumber')}
+              <AsteriskIcon size={10} color="red" />
+            </FormLabel>
             <FormControl>
               <Input placeholder="090xxxxxxx" {...field} />
             </FormControl>

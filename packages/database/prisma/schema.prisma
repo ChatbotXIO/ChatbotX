@@ -22,12 +22,12 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  chatbotMembers ChatbotMember[]
-  accounts       Account[]
-  sessions       Session[]
-  teamMembers    TeamMember[]
-  activityLogs   ActivityLog[]
-  contacts       Contact[]
+  chatbotMembers   ChatbotMember[]
+  accounts         Account[]
+  sessions         Session[]
+  teamMembers      TeamMember[]
+  activityLogs     ActivityLog[]
+  assignedContacts Contact[]       @relation("AssignedUser")
 }
 
 model Account {
@@ -117,10 +117,9 @@ model Team {
   chatbotId String
   name      String
 
-  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-
-  teamMembers TeamMember[]
-  contacts    Contact[]
+  chatbot          Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  teamMembers      TeamMember[]
+  assignedContacts Contact[]    @relation("AssignedTeam")
 }
 
 model TeamMember {
@@ -151,38 +150,43 @@ model ActivityLog {
 }
 
 model Contact {
-  id          String    @id @default(cuid())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  avatar      String?
-  chatbotId   String
-  phoneNumber String?
-  email       String?
-  firstName   String?
-  lastName    String?
-  gender      Gender
-  source      String
-  userId      String?
-  teamId      String?
-  lastSeenAt  DateTime?
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  avatar       String?
+  chatbotId    String
+  phoneNumber  String?
+  email        String?
+  firstName    String?
+  lastName     String?
+  gender       Gender
+  source       String
+  assignedType AssignedType?
+  assignedId   String?
+  lastSeenAt   DateTime?
 
-  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team    Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbot      Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  assignedUser User?   @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
+  assignedTeam Team?   @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
 }
 
 enum ChatbotPlan {
-  FREE
-  PRO
+  Free
+  Pro
 }
 
 enum ChatbotMemberRole {
-  OWNER
-  AGENT
+  Owner
+  Agent
 }
 
 enum Gender {
-  MALE
-  FEMALE
-  UNKNOWN
+  Male
+  Female
+  Unknown
+}
+
+enum AssignedType {
+  User
+  Team
 }

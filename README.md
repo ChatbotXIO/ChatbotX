@@ -8,7 +8,7 @@ This project is 99.99% NodeJS/TypeScript.
 
 Required versions:
 - nodejs: v22
-- package manager: pnpm
+- package manager: bun
 
 ### How to run project
 
@@ -22,7 +22,7 @@ docker compose up -d
 nvm use
 
 # install dependencies
-pnpm install
+bun install
 
 # copy environments
 cp .env.example .env
