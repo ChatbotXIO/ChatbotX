@@ -1,10 +1,10 @@
 import React from 'react'
-import Channels from '@/features/settings/setting-channels'
+
 
 const ChannelsPage = () => {
   return (
     <div>
-      <Channels />
+      Channels by Hungw
     </div>
   )
 }
