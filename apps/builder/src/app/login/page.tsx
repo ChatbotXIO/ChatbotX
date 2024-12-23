@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 export default async function SignInPage(props: {
-  searchParams: { callbackUrl: string | undefined }
+  searchParams: Promise<{ callbackUrl: string | undefined }>
 }) {
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
@@ -22,7 +22,7 @@ export default async function SignInPage(props: {
                   "use server"
                   try {
                     await signIn(provider.id, {
-                      redirectTo: props.searchParams?.callbackUrl ?? "",
+                      redirectTo: (await props.searchParams)?.callbackUrl ?? "",
                     })
                   } catch (error) {
                     // Signin can fail for a number of reasons, such as the user
@@ -49,5 +49,5 @@ export default async function SignInPage(props: {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

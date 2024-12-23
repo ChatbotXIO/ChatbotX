@@ -1,13 +1,13 @@
 import { prisma } from "@ahachat.ai/database";
-import { Chatbot, ChatbotMember, User } from "@prisma/client";
+import { Chatbot, ChatbotMember } from "@prisma/client";
 
-export const findChatbotOrFail = async (user: User, chatbotId: string | null): Promise<{ chatbot: Chatbot, chatbotMember: ChatbotMember }> => {
+export const findChatbotOrFail = async (userId: string, chatbotId: string | null): Promise<{ chatbot: Chatbot, chatbotMember: ChatbotMember }> => {
   if (!chatbotId) {
     throw new Error('No Chatbot found')
   }
 
   const chatbotMember = await prisma.chatbotMember.findFirstOrThrow({
-    where: { userId: user.id, chatbotId: chatbotId },
+    where: { userId, chatbotId },
     include: {
       chatbot: true
     }
