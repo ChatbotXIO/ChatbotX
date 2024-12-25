@@ -1,14 +1,28 @@
 "use server";
+
 import { authActionClient } from "@/lib/safe-action";
-import { updateChatbotSchema } from "./update-chatbot-schema";
-import { prisma } from "@ahachat.ai/database";
-import { returnValidationErrors } from "next-safe-action";
 import { findChatbotOrFail } from "@/lib/user-permissions";
+import { prisma } from "@ahachat.ai/database";
+import { User } from "@prisma/client";
+import { returnValidationErrors } from "next-safe-action";
+import { UpdateChatbotBindSchema, updateChatbotBindSchema, UpdateChatbotSchema, updateChatbotSchema } from "./update-chatbot-schema";
 
 export const updateChatboxAction = authActionClient
   .schema(updateChatbotSchema)
-  .action(async ({ ctx, parsedInput }) => {
-    const { chatbot } = await findChatbotOrFail(ctx.user.id, parsedInput.id);
+  .bindArgsSchemas(updateChatbotBindSchema)
+  .action(async ({
+    ctx,
+    parsedInput,
+    bindArgsParsedInputs: [chatbotId],
+  }: {
+    ctx: { user: User },
+    parsedInput: UpdateChatbotSchema,
+    bindArgsParsedInputs: UpdateChatbotBindSchema,
+  }) => {
+
+
+    const { chatbot } = await findChatbotOrFail(ctx.user.id, chatbotId);
+
     const existedChatbot = await prisma.chatbot.findFirst({
       where: { id: chatbot.id },
     });

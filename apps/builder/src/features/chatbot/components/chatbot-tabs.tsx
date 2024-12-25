@@ -10,7 +10,7 @@ type Tab = {
   path: string;
 };
 
-export default function SettingTabs({ tabs }: { tabs: Tab[] }) {
+export default function ChatbotTabs({ tabs }: { tabs: Tab[] }) {
   const pathname = usePathname();
 
   const activeTab = tabs.find((tab) => pathname.startsWith(tab.path))?.value || tabs[0]?.value;

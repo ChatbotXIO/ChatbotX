@@ -1,12 +1,10 @@
 import React from 'react'
 
-
-const ChannelsPage = () => {
+export default function ChannelsPage(
+) {
   return (
     <div>
-      Channels by Hungw
+      Settings Channels
     </div>
-  )
+  );
 }
-
-export default ChannelsPage

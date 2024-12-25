@@ -1,7 +1,5 @@
 export default function SettingsPage() {
 
-  console.log("fffff")
-
   return (
     <div>
       <h1>Settings Overview</h1>

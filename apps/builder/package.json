@@ -43,6 +43,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
+    "countries-and-timezones": "^3.7.2",
     "date-fns": "^4.1.0",
     "i18next": "^24.1.2",
     "lodash": "^4.17.21",

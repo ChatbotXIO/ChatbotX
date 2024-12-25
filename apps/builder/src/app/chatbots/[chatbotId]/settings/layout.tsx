@@ -1,11 +1,11 @@
-import SettingTabs from "@/features/settings/setting-tabs";
+import ChatbotTabs from "@/features/chatbot/components/chatbot-tabs";
 
 export default async function SettingLayout(
   props: { children: React.ReactNode, params: Promise<{ chatbotId: string }>, searchParams: Promise<any> }
 ) {
-  // { children, params }: { children: React.ReactNode; params: { chatbotId: string }; }
-  const params = await props.params
 
+
+  const params = await props.params
 
   const tabs = [
     { value: "general", label: "General", path: `/chatbots/${params.chatbotId}/settings/general` },
@@ -14,7 +14,7 @@ export default async function SettingLayout(
 
   return (
     <div className="px-16 bg-gray-50">
-      <SettingTabs tabs={tabs} />
+      <ChatbotTabs tabs={tabs} />
       <div>{props.children}</div>
     </div>
   );
