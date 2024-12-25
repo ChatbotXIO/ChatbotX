@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import {
   Dialog,
   DialogContent,
@@ -13,13 +13,12 @@ import UpdateAgentForm from "./update-agent-form";
 interface UpdateAgentDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  agent: { id: number; name: string };
 }
+
 
 export function UpdateAgentDialog({
   isOpen,
   onClose,
-  agent,
 }: UpdateAgentDialogProps) {
   const { t } = useTranslate();
   return (
@@ -28,10 +27,9 @@ export function UpdateAgentDialog({
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
-
-        <DialogDescription>
-            <UpdateAgentForm/>
-        </DialogDescription>
+        <div>
+          <UpdateAgentForm />
+        </div>
       </DialogContent>
     </Dialog>
   );

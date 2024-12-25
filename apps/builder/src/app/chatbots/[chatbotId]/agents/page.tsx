@@ -1,62 +1,42 @@
-"use client";
-import React from "react";
-import { AgentTable } from "@/app/features/agents/agent-table";
-import { AgentBreadcumb } from "@/app/features/agents/agent-breadcumb";
+import { Suspense } from 'react';
 
-const data = [
-  {
-    id: 1,
-    name: "Cosiman Cosime",
-    avatar: "C",
-    contacts: true,
-    analytics: true,
-    flows: true,
-    settings: true,
-    notifications: false,
-  },
-  {
-    id: 2,
-    name: "My Hoang Phan Truong",
-    avatar: "T",
-    contacts: true,
-    analytics: true,
-    flows: true,
-    settings: true,
-    notifications: true,
-  },
-  {
-    id: 3,
-    name: "Nhường Phạm",
-    avatar: "N",
-    contacts: true,
-    analytics: true,
-    flows: true,
-    settings: true,
-    notifications: true,
-  },
-  {
-    id: 4,
-    name: "Bùi Văn Gia Phát",
-    avatar: "P",
-    contacts: true,
-    analytics: true,
-    flows: true,
-    settings: true,
-    notifications: true,
-  },
-];
+import { DataTableSkeleton } from '@/components/data-table/data-table-skeleton';
 
-export default function AgentsPage({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { chatbotId: string };
-}) {
+import { getAgents } from '@/features/agents/list-agents/get-agents-queries';
+import { AgentsTable } from '@/features/agents/list-agents/agent-table';
+import { getAgentsSearchParamsCache } from '@/features/agents/list-agents/get-agents-schema';
+import { AddAgentDialog } from '@/features/agents/add-agents/add-agent-dialog';
+
+export default async function AgentsPage(
+  props: { params: Promise<{ chatbotId: string }>, searchParams: Promise<any> }
+) {
+  const params = await props.params
+  const searchParams = await props.searchParams
+  const search = getAgentsSearchParamsCache.parse(searchParams)
+
+  const promises = Promise.all([
+    getAgents({
+      ...search,
+      chatbotId: params.chatbotId
+    }),
+  ])
+
   return (
-    <div className="absolute lg:left-1/3">
-      <AgentBreadcumb chatbotId={params.chatbotId} />
-      <AgentTable data={data} />  
+    <div>
+      <div className="flex w-full justify-end mb-4">
+              <AddAgentDialog chatbotId={params.chatbotId} />
+            </div>
+      <Suspense fallback={
+        <DataTableSkeleton
+          columnCount={6}
+          searchableColumnCount={1}
+          filterableColumnCount={2}
+          cellWidths={["10rem", "12rem", "12rem", "12rem", "8rem", "8rem"]}
+          shrinkZero
+        />
+      }>
+        <AgentsTable promises={promises}/>
+      </Suspense>
     </div>
-  );
+  )
 }

@@ -47,7 +47,11 @@ export function AddAgentForm({
         },
         onError: ({ error }) => {
           if (error.serverError) {
+            console.error("Server Error:", error.serverError.message);
             toast.error(error.serverError.message ?? "An unexpected error occurred.");
+          } else {
+            console.error("Validation Error:", error.validationErrors);
+            toast.error("Please fix the validation errors and try again.");
           }
         },
       },
@@ -56,6 +60,7 @@ export function AddAgentForm({
         defaultValues: {
           userId: "",
           role: ChatbotMemberRole.AGENT,
+          permissions: [],
           isAdmin: true,
           enableAnalytics: true,
           enableFlows: true,
@@ -72,38 +77,26 @@ export function AddAgentForm({
 
   const handleCheckboxChange = (checked: boolean, itemId: string) => {
     if (itemId === "super_admin") {
-      if (checked) {
-        const allPermissions = items.map((item) => item.id);
-        form.setValue("permissions", allPermissions);
-        console.log("Selected Permissions:", allPermissions);
-      } else {
-        form.setValue("permissions", []);
-      }
+      const updatedPermissions = checked ? items.map((item) => item.id) : [];
+      form.setValue("permissions", updatedPermissions);
+      console.log("Super Admin Permissions Updated:", updatedPermissions);
     } else {
       const currentValues = form.getValues("permissions") || [];
       const updatedValues = checked
         ? [...currentValues, itemId]
         : currentValues.filter((id: string) => id !== itemId);
+
       form.setValue("permissions", updatedValues);
-      console.log("Updated Permissions:", updatedValues);
+      console.log("Permissions Updated:", updatedValues);
     }
   };
 
-  const handleFormSubmit = (data: any) => {
-    const selectedPermissions = items
-      .filter((item) => data.permissions.includes(item.id))
-      .map((item) => item.label);
-
-    alert(`Selected Permissions: ${selectedPermissions.join(", ")}`);
-    handleSubmitWithAction(data);
-  };
-
-  const permissions = form.watch("permissions")||[];
+  const permissions = form.watch("permissions") || [];
   const isSuperAdminSelected = permissions.includes("super_admin");
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmitWithAction} className="space-y-8">
         <FormField
           control={form.control}
           name="permissions"
@@ -128,7 +121,7 @@ export function AddAgentForm({
                       >
                         <FormControl>
                           <Checkbox
-                            checked={field.value?.includes(item.id)}
+                            checked={permissions.includes(item.id)}
                             onCheckedChange={(checked) =>
                               handleCheckboxChange(checked === true, item.id)
                             }

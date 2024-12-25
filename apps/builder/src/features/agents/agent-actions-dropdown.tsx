@@ -2,7 +2,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EllipsisVertical, Pencil, Trash } from "lucide-react";
 
 interface AgentActionsDropdownProps {
-  onEdit: () => void; // Callback để mở dialog
+  onEdit: () => void;
   onDelete: () => void;
 }
 

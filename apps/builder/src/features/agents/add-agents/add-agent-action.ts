@@ -10,7 +10,7 @@ export const addAgentAction = authActionClient
   .schema(addAgentSchema)
   .action(async ({ ctx, parsedInput }) => {
     try {
-      const { chatbot } = await findChatbotOrFail(ctx.user, parsedInput.chatbotId);
+      const { chatbot } = await findChatbotOrFail(ctx.user.id, parsedInput.chatbotId);
 
       const existingMember = await prisma.chatbotMember.findFirst({
         where: { chatbotId: chatbot.id, userId: parsedInput.userId },
