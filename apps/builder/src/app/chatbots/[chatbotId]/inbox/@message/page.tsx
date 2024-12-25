@@ -1,6 +1,15 @@
 import * as React from "react";
-import InboxBubble from "@/features/inbox/bubble";
+import Messages from "@/features/inbox/messages";
 
-export default function InboxMessageSlot() {
-  return <InboxBubble />
+import { Message } from "@/features/inbox/interfaces/message";
+import { generateMessages } from "@/mock/messages.mock";
+
+export default async function InboxMessageSlot() {
+  const messages: Message[] = await new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(generateMessages(3) as Message[]);
+    }, 1000);
+  });
+
+  return <Messages messages={messages} />
 }
