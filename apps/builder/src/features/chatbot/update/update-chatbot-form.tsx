@@ -1,5 +1,6 @@
-
 "use client";
+
+import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Switch } from "@/components/ui/switch"
 import { SketchPicker } from 'react-color'
 import { ArrowDown, Check, ChevronsUpDown } from 'lucide-react';
@@ -20,12 +21,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslate } from "@tolgee/react";
-import { updateChatboxAction } from "./update-chatbox-action";
+import { updateChatbotAction } from "./update-chatbox-action";
 import { updateChatbotSchema } from "./update-chatbot-schema";
 import { toast } from "sonner"
-import { readChatboxAction } from "../read/read-chatbox-action";
-
-const ctz = require('countries-and-timezones');
+import * as ctz from 'countries-and-timezones';
 
 type Country = {
   id: string;
@@ -33,14 +32,22 @@ type Country = {
   timezones: string[];
 };
 
+type ChatbotData = {
+  defaultReply: string | null | undefined;
+  targetCountry: string | null | undefined;
+  defaultLanguage: string;
+  accountTimezone: string;
+  brandColor: string;
+  developmentMode: boolean;
+}
+
 
 const languages = [
   { name: "English", code: "en" },
   { name: 'Vietnamese', code: 'vi' },
 ]
 
-
-export function UpdateChatbotForm({ id }: { id: string }) {
+export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: ChatbotData }) {
   const { t } = useTranslate()
 
   const [viewListLanguages] = useState(languages);
@@ -57,7 +64,7 @@ export function UpdateChatbotForm({ id }: { id: string }) {
   const [openTimeZone, setOpenTimeZone] = useState(false)
 
   const [showPicker, setShowPicker] = useState(false);
-  const [currentColor, setCurrentColor] = useState("#000000")
+  const [currentColor, setCurrentColor] = useState(chatbot.brandColor || "#000000")
 
   const togglePicker = () => {
     setShowPicker(!showPicker);
@@ -69,7 +76,7 @@ export function UpdateChatbotForm({ id }: { id: string }) {
   }
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateChatboxAction.bind(null, id),
+    updateChatbotAction.bind(null, id),
     zodResolver(updateChatbotSchema),
     {
       actionProps: {
@@ -86,41 +93,18 @@ export function UpdateChatbotForm({ id }: { id: string }) {
         mode: "onChange",
         defaultValues: {
           id: id,
-          defaultReply: "",
-          targetCountry: "",
-          defaultLanguage: "",
-          accountTimezone: "",
-          brandColor: "",
-          developmentMode: false,
+          defaultReply: chatbot.defaultReply ?? null,
+          targetCountry: chatbot.targetCountry ?? null,
+          defaultLanguage: chatbot.defaultLanguage,
+          accountTimezone: chatbot.accountTimezone,
+          brandColor: chatbot.brandColor,
+          developmentMode: chatbot.developmentMode,
         }
       },
       errorMapProps: {}
     });
 
   const { setValue } = form;
-
-  useEffect(() => {
-    const fetchChatbotData = async () => {
-      const result = await readChatboxAction({ id });
-      toast.success("Success to fetch chatbot data");
-      if (result.successful && result.data) {
-        setValue("defaultReply", result.data.defaultReply ?? "");
-        setValue("targetCountry", result.data.targetCountry ?? "");
-        setValue("defaultLanguage", result.data.defaultLanguage);
-        setValue("accountTimezone", result.data.accountTimezone);
-        setValue("brandColor", result.data.brandColor);
-        setValue("developmentMode", result.data.developmentMode);
-        setCurrentColor(result.data.brandColor)
-      } else {
-        toast.error(result.error ?? "Failed to fetch chatbot data");
-      }
-    };
-
-    if (id) {
-      fetchChatbotData();
-    }
-  }, [id, setValue]);
-
 
   return (
     <div className="">
@@ -131,15 +115,21 @@ export function UpdateChatbotForm({ id }: { id: string }) {
               <FormLabel>{t('chatbot.default-reply')}</FormLabel>
               <FormDescription>Select a default value for your contacts.</FormDescription>
               <FormControl>
-                <Select value={field.value} onValueChange={field.onChange} name={field.name}>
+                <Select
+                  value={field.value || "null"}
+                  onValueChange={(value) => {
+                    field.onChange(value === "null" ? null : value);
+                  }}
+                  name={field.name}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Generic Default Reply" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="none">None</SelectItem>
-                      {/* <SelectItem value="default">Generic Default Reply</SelectItem>
-                      <SelectItem value="list">
+                      <SelectItem value="null">None</SelectItem>
+                      <SelectItem value="default">Generic Default Reply</SelectItem>
+                      {/* <SelectItem value="list">
                         SYSTEM - List of frequently asked questions
                       </SelectItem> */}
                     </SelectGroup>
@@ -176,14 +166,25 @@ export function UpdateChatbotForm({ id }: { id: string }) {
                       <Command>
                         <CommandInput placeholder="Search country..." />
                         <CommandList>
-                          <CommandEmpty>No country found.</CommandEmpty>
+                          <CommandItem
+                            value="none"
+                            onSelect={() => {
+                              field.onChange(null);
+                              setOpenCountry(false);
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${field.value === null ? "opacity-100" : "opacity-0"}`}
+                            />
+                            None
+                          </CommandItem>
                           <CommandGroup>
                             {(viewListCountries || []).map((country, index) => (
                               <CommandItem
                                 key={index}
                                 value={country.id}
                                 onSelect={() => {
-                                  field.onChange(country.name);
+                                  field.onChange(country.id);
                                   setOpenCountry(false);
                                 }}
                               >
@@ -388,7 +389,6 @@ export function UpdateChatbotForm({ id }: { id: string }) {
           </div>
         </form>
       </Form>
-
 
       <div className="flex content-center justify-center py-4 gap-x-10">
         <Button type="button"><u>Rename Account</u></Button>

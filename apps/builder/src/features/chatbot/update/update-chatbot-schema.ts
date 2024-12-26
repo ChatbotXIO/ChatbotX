@@ -1,22 +1,41 @@
 import { z } from "zod"
+import * as ctz from 'countries-and-timezones';
 
-// export const updateChatbotSchema = z.object({
-//   id: z.string().cuid2(),
-//   defaultReply: z.string().trim(),
-//   targetCountry: z.string().trim(),
-//   defaultLanguage: z.string().trim(),
-//   accountTimezone: z.string().trim(),
-//   brandColor: z.string().trim(),
-//   developmentMode: z.boolean(),
-// });
+type Country = {
+  id: string;
+  name: string;
+  timezones: string[];
+};
+
+const countries: { [key: string]: Country } = ctz.getAllCountries();
+
+export const CountriesEnum = Object.keys(countries).reduce((acc, countryId) => {
+  const country = countries[countryId];
+  if (country) {
+    acc[countryId] = country.name;
+  }
+  return acc;
+}, {} as Record<string, string>);
+
+export type CountryEnum = keyof typeof CountriesEnum;
+
+const [firstKey, ...otherKeys] = Object.keys(CountriesEnum);
 
 export const updateChatbotSchema = z.object({
-  id: z.string().min(1, { message: "ID không được để trống" }),
-  defaultReply: z.string().min(1, { message: "Default reply không được để trống" }),
-  targetCountry: z.string().min(1, { message: "Target country không được để trống" }),
-  defaultLanguage: z.string().min(1, { message: "Default language không được để trống" }),
-  accountTimezone: z.string().min(1, { message: "Account timezone không được để trống" }),
-  brandColor: z.string().min(1, { message: "Brand color không được để trống" }),
+  id: z.string().min(1),
+  defaultReply: z.union([
+    z.string().min(1),
+    z.null(),
+  ]),
+
+  targetCountry: z.union([
+    z.enum([firstKey!, ...otherKeys]),
+    z.null(),
+  ]),
+
+  defaultLanguage: z.string().min(1),
+  accountTimezone: z.string().min(1),
+  brandColor: z.string().min(1),
   developmentMode: z.boolean(),
 });
 

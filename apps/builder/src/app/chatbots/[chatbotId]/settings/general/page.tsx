@@ -1,5 +1,7 @@
 import React from 'react'
 import { UpdateChatbotForm } from '@/features/chatbot/update/update-chatbot-form'
+import { getCurrentUserId } from '@/auth';
+import { findChatbotOrFail } from '@/lib/user-permissions';
 
 export default async function GeneralPage(
   props: { params: Promise<{ chatbotId: string }> }
@@ -7,9 +9,11 @@ export default async function GeneralPage(
 
   const params = await props.params
 
+  const userId = await getCurrentUserId()
+
+  const { chatbot } = await findChatbotOrFail(userId, params.chatbotId);
+
   return (
-    <div>
-      <UpdateChatbotForm id={params.chatbotId} />
-    </div>
+      <UpdateChatbotForm id={params.chatbotId} chatbot={chatbot}/>
   );
 }

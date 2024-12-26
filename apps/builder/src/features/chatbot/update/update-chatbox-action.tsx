@@ -7,7 +7,7 @@ import { User } from "@prisma/client";
 import { returnValidationErrors } from "next-safe-action";
 import { UpdateChatbotBindSchema, updateChatbotBindSchema, UpdateChatbotSchema, updateChatbotSchema } from "./update-chatbot-schema";
 
-export const updateChatboxAction = authActionClient
+export const updateChatbotAction = authActionClient
   .schema(updateChatbotSchema)
   .bindArgsSchemas(updateChatbotBindSchema)
   .action(async ({
@@ -20,11 +20,8 @@ export const updateChatboxAction = authActionClient
     bindArgsParsedInputs: UpdateChatbotBindSchema,
   }) => {
 
-
-    const { chatbot } = await findChatbotOrFail(ctx.user.id, chatbotId);
-
     const existedChatbot = await prisma.chatbot.findFirst({
-      where: { id: chatbot.id },
+      where: { id: chatbotId },
     });
 
     if (!existedChatbot) {
