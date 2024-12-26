@@ -2,7 +2,7 @@
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Avatar } from "@/components/ui/avatar";
-import { ChatbotMember, User } from "@prisma/client";
+import { ChatbotMember} from "@prisma/client";
 import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { ColumnDef } from "@tanstack/react-table";
 import { Circle, CircleCheck, Mail } from "lucide-react";
