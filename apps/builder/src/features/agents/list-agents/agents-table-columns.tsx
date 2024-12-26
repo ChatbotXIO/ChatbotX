@@ -8,6 +8,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Circle, CircleCheck, Mail } from "lucide-react";
 import { AgentActionsDropdown } from "../agent-actions-dropdown";
 import { ChatbotMemberWithUser } from "./get-agents-queries";
+import { useState } from "react";
 
 const renderIcon = (condition: boolean, ActiveIcon: any, InactiveIcon: any) =>
   condition ? (
@@ -18,7 +19,10 @@ const renderIcon = (condition: boolean, ActiveIcon: any, InactiveIcon: any) =>
 
 export function getColumns(
   t: (key: string) => string,
+  onEdit:(agent:ChatbotMember)=>void
 ): ColumnDef<ChatbotMemberWithUser>[] {
+
+
   return [
     {
       accessorKey: "avatar",
@@ -165,14 +169,12 @@ export function getColumns(
       ),
       cell: ({ row }) => {
         const agent = row.original;
-        const handleEditAgent = (agent: ChatbotMember) => { };
-        const handleDeleteAgent = (agent: ChatbotMember) => { };
 
         return (
           <div className="text-center">
             <AgentActionsDropdown
-              onEdit={() => handleEditAgent(agent)}
-              onDelete={() => handleDeleteAgent(agent)}
+              onEdit={() => onEdit(agent)}
+              onDelete={() => console.log("delete")}
             />
           </div>
         );
