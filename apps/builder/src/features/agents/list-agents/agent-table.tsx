@@ -8,29 +8,26 @@ import { getColumns } from "./agents-table-columns";
 import { useDataTable } from "@/hooks/use-data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { DataTable } from "@/components/data-table/data-table";
+import { useTranslate } from "@tolgee/react";
 
-
-interface AgentsTableProps{
+interface AgentsTableProps {
   promises: Promise<[
     Awaited<ReturnType<typeof getAgents>>,
   ]>
 }
 
-export function AgentsTable({promises}:AgentsTableProps) {
-
-  const [{data, pageCount}] = React.use(promises);
-  console.log("dữ liệu",data)
-  const [rowAction, setRowAction] = React.useState<DataTableRowAction<ChatbotMember>|null>(null)
-
-  const columns = React.useMemo(()=>getColumns(), [setRowAction])
-
-    const filterFields: DataTableFilterField<ChatbotMember & { keyword?: string }>[] = [
-      {
-        id: "keyword",
-        label: "Search",
-        placeholder: "Enter keyword...",
-      },
-    ]
+export function AgentsTable({ promises }: AgentsTableProps) {
+  const { t } = useTranslate();
+  const [{ data, pageCount }] = React.use(promises);
+  const [rowAction, setRowAction] = React.useState<DataTableRowAction<ChatbotMember> | null>(null)
+  const columns = React.useMemo(() => getColumns(t), [setRowAction])
+  const filterFields: DataTableFilterField<ChatbotMember & { keyword?: string }>[] = [
+    {
+      id: "keyword",
+      label: "Search",
+      placeholder: "Enter keyword...",
+    },
+  ]
 
   const { table } = useDataTable({
     data,
@@ -46,11 +43,11 @@ export function AgentsTable({promises}:AgentsTableProps) {
     clearOnDefault: true,
   })
 
-    return(
-      <>
+  return (
+    <>
       <DataTable table={table}>
-        <DataTableToolbar table={table}/>
+        <DataTableToolbar table={table} filterFields={filterFields} />
       </DataTable>
-      </>
-    )
+    </>
+  )
 }

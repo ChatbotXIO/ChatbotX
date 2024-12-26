@@ -89,11 +89,6 @@ export function AppSidebar({ chatbotId, ...props }: React.ComponentProps<typeof 
         url: `/chatbots/${chatbotId}/settings`,
         icon: SlidersHorizontal,
       },
-      {
-        title: t('common.agents'),
-        url: `/chatbots/${chatbotId}/agents`,
-        icon: SlidersHorizontal,
-      },
     ],
   }
 

@@ -30,7 +30,10 @@ export function AddAgentForm({
     { id: "super_admin", label: "Super Admin" },
     { id: "analytics", label: t("common.analytics") },
     { id: "flows", label: t("common.flows") },
-    { id: "contacts_inbox", label: `${t("common.contacts")} / ${t("common.inbox")}` },
+    {
+      id: "contacts_inbox",
+      label: `${t("common.contacts")} / ${t("common.inbox")}`,
+    },
     { id: "contact_view", label: t("common.contactView") },
     { id: "broadcasts", label: t("common.broadcasts") },
     { id: "ecommerce", label: t("common.ecommerce") },
@@ -48,7 +51,9 @@ export function AddAgentForm({
         onError: ({ error }) => {
           if (error.serverError) {
             console.error("Server Error:", error.serverError.message);
-            toast.error(error.serverError.message ?? "An unexpected error occurred.");
+            toast.error(
+              error.serverError.message ?? "An unexpected error occurred.",
+            );
           } else {
             console.error("Validation Error:", error.validationErrors);
             toast.error("Please fix the validation errors and try again.");
@@ -72,22 +77,19 @@ export function AddAgentForm({
         },
       },
       errorMapProps: {},
-    }
+    },
   );
 
   const handleCheckboxChange = (checked: boolean, itemId: string) => {
     if (itemId === "super_admin") {
       const updatedPermissions = checked ? items.map((item) => item.id) : [];
       form.setValue("permissions", updatedPermissions);
-      console.log("Super Admin Permissions Updated:", updatedPermissions);
     } else {
       const currentValues = form.getValues("permissions") || [];
       const updatedValues = checked
         ? [...currentValues, itemId]
         : currentValues.filter((id: string) => id !== itemId);
-
       form.setValue("permissions", updatedValues);
-      console.log("Permissions Updated:", updatedValues);
     }
   };
 
@@ -127,7 +129,9 @@ export function AddAgentForm({
                             }
                           />
                         </FormControl>
-                        <FormLabel className="text-sm font-normal">{item.label}</FormLabel>
+                        <FormLabel className="text-sm font-normal">
+                          {item.label}
+                        </FormLabel>
                       </FormItem>
                     )}
                   />

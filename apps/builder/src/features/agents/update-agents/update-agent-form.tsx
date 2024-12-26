@@ -47,9 +47,7 @@ export default function AdminNotificationForm() {
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
-  };
+  const onSubmit = (data: FormData) => { };
   const superAdminChecked = form.watch("superAdmin");
 
   return (
