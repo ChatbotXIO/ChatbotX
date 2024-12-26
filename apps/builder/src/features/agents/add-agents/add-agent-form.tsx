@@ -27,14 +27,14 @@ export function AddAgentForm({
   const { t } = useTranslate();
 
   const items = [
-    { id: "super_admin", label: "Super Admin" },
+    { id: "superAdmin", label: "Super Admin" },
     { id: "analytics", label: t("common.analytics") },
     { id: "flows", label: t("common.flows") },
     {
-      id: "contacts_inbox",
+      id: "contactsInbox",
       label: `${t("common.contacts")} / ${t("common.inbox")}`,
     },
-    { id: "contact_view", label: t("common.contactView") },
+    { id: "contactView", label: t("common.contactView") },
     { id: "broadcasts", label: t("common.broadcasts") },
     { id: "ecommerce", label: t("common.ecommerce") },
   ] as const;
@@ -81,7 +81,7 @@ export function AddAgentForm({
   );
 
   const handleCheckboxChange = (checked: boolean, itemId: string) => {
-    if (itemId === "super_admin") {
+    if (itemId === "superAdmin") {
       const updatedPermissions = checked ? items.map((item) => item.id) : [];
       form.setValue("permissions", updatedPermissions);
     } else {
@@ -94,7 +94,7 @@ export function AddAgentForm({
   };
 
   const permissions = form.watch("permissions") || [];
-  const isSuperAdminSelected = permissions.includes("super_admin");
+  const isSuperAdminSelected = permissions.includes("superAdmin");
 
   return (
     <Form {...form}>
@@ -108,7 +108,7 @@ export function AddAgentForm({
                 <strong className="text-base">{t("common.permissions")}</strong>
               </div>
               {items.map((item) => {
-                if (item.id !== "super_admin" && isSuperAdminSelected) {
+                if (item.id !== "superAdmin" && isSuperAdminSelected) {
                   return null;
                 }
                 return (
