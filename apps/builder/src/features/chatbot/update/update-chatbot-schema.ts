@@ -1,5 +1,5 @@
 import { z } from "zod"
-import * as ctz from 'countries-and-timezones';
+import { getAllCountries } from "countries-and-timezones";
 
 type Country = {
   id: string;
@@ -7,41 +7,34 @@ type Country = {
   timezones: string[];
 };
 
-const countries: { [key: string]: Country } = ctz.getAllCountries();
+const countries: { [key: string]: Country } = getAllCountries();
+const [firstCountryKey, ...otherCountryKeys] = Object.keys(countries);
+const viewListTimeZones = Intl.supportedValuesOf('timeZone');
 
-export const CountriesEnum = Object.keys(countries).reduce((acc, countryId) => {
-  const country = countries[countryId];
-  if (country) {
-    acc[countryId] = country.name;
-  }
-  return acc;
-}, {} as Record<string, string>);
-
-export type CountryEnum = keyof typeof CountriesEnum;
-
-const [firstKey, ...otherKeys] = Object.keys(CountriesEnum);
+const viewListLanguages = [
+  { name: "English", code: "en" },
+  { name: 'Vietnamese', code: 'vi' },
+] as const;
+const languageCodes = viewListLanguages.map((language) => language.code);
 
 export const updateChatbotSchema = z.object({
-  id: z.string().min(1),
   defaultReply: z.union([
     z.string().min(1),
     z.null(),
   ]),
-
   targetCountry: z.union([
-    z.enum([firstKey!, ...otherKeys]),
+    z.enum([firstCountryKey!, ...otherCountryKeys]),
     z.null(),
   ]),
-
-  defaultLanguage: z.string().min(1),
-  accountTimezone: z.string().min(1),
-  brandColor: z.string().min(1),
+  defaultLanguage: z.enum(languageCodes as [string, ...string[]]),
+  accountTimezone: z.enum(viewListTimeZones as [string, ...string[]]),
+  brandColor: z.string().min(1).regex(/^#[0-9A-Fa-f]{6}$/),
   developmentMode: z.boolean(),
 });
 
 export type UpdateChatbotSchema = z.infer<typeof updateChatbotSchema>
 
-export const updateChatbotBindSchema: [chatbotId: z.ZodString] = [
+export const updateChatbotBindSchema: [id: z.ZodString] = [
   z.string().cuid2(),
 ]
-export type UpdateChatbotBindSchema = [chatbotId: string]
+export type UpdateChatbotBindSchema = [id: string]

@@ -24,7 +24,9 @@ import { useTranslate } from "@tolgee/react";
 import { updateChatbotAction } from "./update-chatbox-action";
 import { updateChatbotSchema } from "./update-chatbot-schema";
 import { toast } from "sonner"
-import * as ctz from 'countries-and-timezones';
+import { getAllCountries } from "countries-and-timezones";
+import { ComboboxComponent } from '../components/ComboboxComponent';
+
 
 type Country = {
   id: string;
@@ -41,8 +43,7 @@ type ChatbotData = {
   developmentMode: boolean;
 }
 
-
-const languages = [
+const viewListLanguages = [
   { name: "English", code: "en" },
   { name: 'Vietnamese', code: 'vi' },
 ]
@@ -50,14 +51,10 @@ const languages = [
 export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: ChatbotData }) {
   const { t } = useTranslate()
 
-  const [viewListLanguages] = useState(languages);
-
-  const countries: { [key: string]: Country } = ctz.getAllCountries();
-  const countryList = Object.values(countries);
-  const [viewListCountries] = useState(countryList);
-
-  const timeZones = Intl.supportedValuesOf('timeZone');
-  const [viewListTimeZones] = useState(timeZones);
+  const countries: { [key: string]: Country } = getAllCountries();
+  const viewListCountries = Object.values(countries);
+  const viewListTimeZones = Intl.supportedValuesOf('timeZone');
+  console.log("LIst time zone", viewListTimeZones)
 
   const [openLanguages, setOpenLanguages] = useState(false)
   const [openCountry, setOpenCountry] = useState(false)
@@ -92,7 +89,6 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
       formProps: {
         mode: "onChange",
         defaultValues: {
-          id: id,
           defaultReply: chatbot.defaultReply ?? null,
           targetCountry: chatbot.targetCountry ?? null,
           defaultLanguage: chatbot.defaultLanguage,
@@ -113,7 +109,7 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
           <FormField control={form.control} name="defaultReply" render={({ field }) => (
             <FormItem>
               <FormLabel>{t('chatbot.default-reply')}</FormLabel>
-              <FormDescription>Select a default value for your contacts.</FormDescription>
+              <FormDescription>{t('chatbot.default-reply-description')}</FormDescription>
               <FormControl>
                 <Select
                   value={field.value || "null"}
@@ -136,16 +132,151 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
                   </SelectContent>
                 </Select>
               </FormControl>
-              <FormDescription>It is the default response that your chatbot will send to users when the
-                chatbot doesn't know how to respond to the user message. Use a condition
-                on your starting step if you want to send different messages based on the
-                user channel.</FormDescription>
               <FormMessage />
             </FormItem>
           )} />
 
+          <FormField
+            control={form.control}
+            name="targetCountry"
+            render={({ field }) => (
+              <ComboboxComponent
+                label={t('chatbot.target-country')}
+                description={t('chatbot.target-country-description')}
+                placeholder={t('chatbot.target-country-placeholder')}
+                options={viewListCountries}
+                value={field.value}
+                onChange={(value) => field.onChange(value)}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.id}
+                openPopover={openCountry}
+                setoOpenPopover={setOpenCountry}
+              />
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="defaultLanguage"
+            render={({ field }) => (
+              <ComboboxComponent
+                label={t('chatbot.default-language')}
+                description={t('chatbot.default-language-description')}
+                placeholder={t('chatbot.default-language-placeholder')}
+                options={viewListLanguages}
+                value={field.value}
+                onChange={(value) => field.onChange(value)}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.code}
+                openPopover={openLanguages}
+                setoOpenPopover={setOpenLanguages}
+              />
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="accountTimezone"
+            render={({ field }) => (
+              <ComboboxComponent
+                label={t('chatbot.timezone')}
+                description={t('chatbot.timezone-description')}
+                placeholder={t('chatbot.timezone-placeholder')}
+                options={viewListTimeZones}
+                value={field.value}
+                onChange={(value) => field.onChange(value)}
+                getOptionLabel={(option) => option}
+                getOptionValue={(option) => option}
+                openPopover={openTimeZone}
+                setoOpenPopover={setOpenTimeZone}
+              />
+            )}
+          />
 
           <FormField control={form.control}
+            name="brandColor" render={() => (
+              <FormItem>
+                <FormLabel>{t('chatbot.brand-color')}</FormLabel>
+                <FormDescription>{t('chatbot.brand-color-description')}</FormDescription>
+                <FormControl>
+                  <Dialog open={showPicker} onOpenChange={togglePicker}>
+                    <DialogTrigger asChild>
+                      <Button
+                        onClick={togglePicker}
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                        style={{ backgroundColor: currentColor }}
+                      >
+                        <ArrowDown />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Brand Color</DialogTitle>
+                      </DialogHeader>
+                      <SketchPicker color={currentColor} onChangeComplete={handleOnChangeColor} />
+                      <DialogFooter>
+                        <Button variant="destructive" onClick={togglePicker}>
+                          Close
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+          <FormField control={form.control}
+            name="developmentMode" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('chatbot.development-mode')}</FormLabel>
+                <FormDescription>{t('chatbot.development-mode-description')}</FormDescription>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+          <FormField control={form.control}
+            name="developmentMode" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('chatbot.delete-account')}</FormLabel>
+                <FormDescription>{t('chatbot.delete-account-description')}</FormDescription>
+                <FormControl>
+                  <Button variant="destructive">{t('chatbot.button-delete')}</Button>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+          <div className="mt-4 text-center">
+            <Button type="submit">{t('chatbot.button-submit')}</Button>
+          </div>
+        </form>
+      </Form>
+
+      <div className="flex content-center justify-center py-4 gap-x-10">
+        <Button type="button"><u>Rename Account</u></Button>
+        <Button type="button"><u>Change Account Logo</u></Button>
+      </div>
+
+      <div className="mt-4 text-center">
+        <p className="text-gray-500">User  ID: 1001966523</p>
+        <p className="text-gray-500">Account ID: 1712583</p>
+        <p className="text-gray-500">Key: n8S4ll3s8ocJ0ykHN77L</p>
+      </div>
+    </div>
+  )
+}
+
+
+
+
+          {/* <FormField control={form.control}
             name="targetCountry" render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('chatbot.target-country')}</FormLabel>
@@ -310,96 +441,4 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
                 </FormDescription>
                 <FormMessage />
               </FormItem>
-            )} />
-
-          <FormField control={form.control}
-            name="brandColor" render={() => (
-              <FormItem>
-                <FormLabel>{t('chatbot.brand-color')}</FormLabel>
-                <FormDescription>Select a brand color for your contacts.</FormDescription>
-                <FormControl>
-                  <Dialog open={showPicker} onOpenChange={togglePicker}>
-                    <DialogTrigger asChild>
-                      <Button
-                        onClick={togglePicker}
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                        style={{ backgroundColor: currentColor }}
-                      >
-                        <ArrowDown />
-                      </Button>
-                    </DialogTrigger>
-
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Brand Color</DialogTitle>
-                      </DialogHeader>
-                      <SketchPicker color={currentColor} onChangeComplete={handleOnChangeColor} />
-                      <DialogFooter>
-                        <Button variant="destructive" onClick={togglePicker}>
-                          Close
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </FormControl>
-                <FormDescription>
-                  This color is used on buttons to match your branding on the landing page, emails and webchat.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-          <FormField control={form.control}
-            name="developmentMode" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('chatbot.development-mode')}</FormLabel>
-                <FormDescription>Select a development mode for your contacts.</FormDescription>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Your bot will work only for bot admins. Enable this option if you are building your bot and don't want non admins to use the bot.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-          <FormField control={form.control}
-            name="developmentMode" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('chatbot.delete-account')}</FormLabel>
-                <FormDescription>Delete chatbot account</FormDescription>
-                <FormControl>
-                  <Button variant="destructive">Delete</Button>
-
-                </FormControl>
-                <FormDescription>
-                  All your data associated to this chatbot will be deleted in 24 hours.
-
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-          <div className="mt-4 text-center">
-            <Button type="submit">Submit</Button>
-          </div>
-        </form>
-      </Form>
-
-      <div className="flex content-center justify-center py-4 gap-x-10">
-        <Button type="button"><u>Rename Account</u></Button>
-        <Button type="button"><u>Change Account Logo</u></Button>
-      </div>
-
-      <div className="mt-4 text-center">
-        <p className="text-gray-500">User  ID: 1001966523</p>
-        <p className="text-gray-500">Account ID: 1712583</p>
-        <p className="text-gray-500">Key: n8S4ll3s8ocJ0ykHN77L</p>
-      </div>
-    </div>
-  )
-}
+            )} /> */}

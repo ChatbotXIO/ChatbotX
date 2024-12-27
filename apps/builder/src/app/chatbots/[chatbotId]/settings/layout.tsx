@@ -4,7 +4,6 @@ export default async function SettingLayout(
   props: { children: React.ReactNode, params: Promise<{ chatbotId: string }>, searchParams: Promise<any> }
 ) {
 
-
   const params = await props.params
 
   const tabs = [
