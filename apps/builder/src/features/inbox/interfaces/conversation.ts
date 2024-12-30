@@ -19,8 +19,8 @@ export interface Assigned {
 
 export interface Contact {
   id: string;
-  firstName: string | null;
-  lastName: string | null;
-  phoneNumber: null | string;
-  avatar: string | null;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  avatar?: string;
 }

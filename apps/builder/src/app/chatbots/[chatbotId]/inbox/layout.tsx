@@ -29,7 +29,7 @@ export default function InboxLayout({
           {conversation}
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={48} minSize={30}>
+        <ResizablePanel defaultSize={60} minSize={30}>
           {message}
         </ResizablePanel>
         <ResizableHandle withHandle />

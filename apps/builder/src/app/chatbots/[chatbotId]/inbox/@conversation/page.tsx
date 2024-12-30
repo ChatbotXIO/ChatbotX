@@ -5,7 +5,7 @@ import { generateConversations } from "@/mock/conversation.mock";
 export default async function InboxConversationSlot() {
   const conversations: Conversation[] = await new Promise((resolve) => {
     setTimeout(() => {
-      resolve(generateConversations(3) as Conversation[]);
+      resolve(generateConversations(200) as Conversation[]);
     }, 1000);
   });
 

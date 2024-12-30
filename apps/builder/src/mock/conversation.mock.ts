@@ -1,6 +1,4 @@
-const generateRandomId = () => {
-  return Math.random().toString(36).substring(2, 18);
-}
+import { generateRandomId } from './common.mock'
 
 const generateRandomConversation = () => {
   const randomChannelTypes = ['Messenger', 'WhatsApp', 'Slack', 'Email'];

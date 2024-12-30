@@ -1,45 +1,41 @@
-const getRandomFromZeroToN = (n: number) => {
-  return Math.floor(Math.random() * (n + 1));
-};
+import { Message, MessageContent, MessageType, MessageDirection } from "@/features/inbox/interfaces/message";
 
-const generateRandomId = (): string => {
-  return Math.random().toString(36).substring(2, 18);
-};
+import { generateRandomId, getRandomFromZeroToN } from './common.mock'
 
 const getRandomMessageType = (): string => {
   const messageTypes: string[] = [
-    'text', 'image', 'markdown', 'audio', 'video', 'file', 'location',
-    'carousel', 'card', 'dropdown', 'choice', 'bloc'
+    'text', 'image', 'audio', 'video', 'file', 'location',
+    // 'markdown', 'carousel', 'card', 'dropdown', 'choice', 'bloc'
   ];
   return messageTypes[getRandomFromZeroToN(messageTypes.length)] || 'text';
 };
 
-const getRandomContent = (type: string) => {
+const getRandomContent = (type: string): Partial<MessageContent> | string => {
   switch (type) {
     case 'text':
       return 'Đây là một tin nhắn văn bản ngẫu nhiên.';
     case 'image':
-      return 'https://example.com/random-image.jpg';
-    case 'markdown':
-      return '**Markdown text**';
+      return { imageUrl: `https://picsum.photos/200/300?random=${Math.floor(Math.random() * 1000)}` };
     case 'audio':
-      return 'https://example.com/random-audio.mp3';
+      return { audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3?random=${Math.floor(Math.random() * 1000)}` };
     case 'video':
-      return 'https://example.com/random-video.mp4';
+      return { videoUrl: `https://www.w3schools.com/html/mov_bbb.mp4?random=${Math.floor(Math.random() * 1000)}` };
     case 'file':
-      return 'https://example.com/random-file.pdf';
+      return { fileUrl: `https://example.com/file${Math.floor(Math.random() * 1000)}.pdf`, fileName: `file${Math.floor(Math.random() * 1000)}.pdf` };
     case 'location':
-      return 'Latitude: 12.34, Longitude: 56.78';
-    case 'carousel':
-      return 'Carousel content here';
-    case 'card':
-      return 'Card content here';
-    case 'dropdown':
-      return 'Dropdown content here';
-    case 'choice':
-      return 'Choice content here';
-    case 'bloc':
-      return 'Bloc content here';
+      return { location: { lat: 21.0285 + Math.random() * 0.1, lng: 105.8542 + Math.random() * 0.1 } };
+    // case 'markdown':
+    //   return { markdownContent: "### This is markdown content\n\n- Item 1\n- Item 2" };
+    // case 'carousel':
+    //   return 'Carousel content here';
+    // case 'card':
+    //   return 'Card content here';
+    // case 'dropdown':
+    //   return 'Dropdown content here';
+    // case 'choice':
+    //   return 'Choice content here';
+    // case 'bloc':
+    //   return 'Bloc content here';
     default:
       return '';
   }
@@ -50,21 +46,31 @@ const getRandomDirection = () => {
   return direction[getRandomFromZeroToN(direction.length)];
 };
 
-const generateRandomMessage = () => {
+const generateRandomMessage = (): Message => {
   const messageType = getRandomMessageType();
+  const direction = getRandomDirection() as MessageDirection;
+
   return {
     id: generateRandomId(),
     chatbotId: generateRandomId(),
     conversationId: generateRandomId(),
-    messageType: messageType,
+    messageType: messageType as MessageType,
     content: getRandomContent(messageType),
-    direction: getRandomDirection(),
+    direction,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    isLoading: false,
+    user: {
+      id: generateRandomId(),
+      firstName: ['Kha', 'An', 'Hien', 'Minh', 'Linh', 'Trang'][Math.floor(Math.random() * 6)],
+      lastName: ['Duy', 'Viet', 'Hieu', 'Thao', 'Phong'][Math.floor(Math.random() * 5)],
+      phoneNumber: '095472823940',
+      avatar: `https://randomuser.me/api/portraits/men/${direction === 'sent' ? 1 : 0}.jpg`
+    }
   };
 };
 
-export const generateMessages = (count: number) => {
+export const generateMessages = (count: number): Message[] => {
   const messages = [];
   for (let i = 0; i < count; i++) {
     messages.push(generateRandomMessage());

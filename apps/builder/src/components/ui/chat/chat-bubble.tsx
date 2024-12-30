@@ -77,7 +77,7 @@ const chatBubbleMessageVariants = cva("p-4", {
     variant: {
       received:
         "bg-secondary text-secondary-foreground rounded-r-lg rounded-tl-lg",
-      sent: "bg-primary text-primary-foreground rounded-l-lg rounded-tr-lg",
+      sent: "bg-blue-400 text-primary-foreground rounded-l-lg rounded-tr-lg",
     },
     layout: {
       default: "",
@@ -151,6 +151,7 @@ const ChatBubbleAction: React.FC<ChatBubbleActionProps> = ({
   className,
   variant = "ghost",
   size = "icon",
+  name = '',
   ...props
 }) => (
   <Button
