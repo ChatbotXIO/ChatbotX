@@ -88,6 +88,7 @@ model Chatbot {
   teamMembers    TeamMember[]
   activityLogs   ActivityLog[]
   contacts       Contact[]
+  logs           Log[]
 }
 
 model ChatbotMember {
@@ -147,6 +148,29 @@ model ActivityLog {
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+model Log {
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now())
+  chatbotId    String
+  type         LogType
+  feature      String
+  detail       String
+  executorType ExecutorType?
+  executorId   String?
+
+  chatbot      Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+enum LogType {
+  Error
+  Audit
+}
+
+enum ExecutorType {
+  User
+  Contact
 }
 
 model Contact {
