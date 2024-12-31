@@ -22,7 +22,31 @@ export default function ConversationItem({ conversation }: ConversationItemProps
   const [hasReadMessage, setHasReadMessage] = useState<boolean>(false);
   const [isSelected, setIsSelected] = useState<boolean>(false);
 
-  const formatTimeAgo = (timestamp: string): string => formatDistanceToNow(parseISO(timestamp), { addSuffix: true });
+  const formatTimeAgo = (timestamp: string): string => {
+    const result = formatDistanceToNow(parseISO(timestamp), { addSuffix: false })
+
+    if (result === 'less than a minute') {
+      return 'Less than 1 min';
+    }
+
+    if (result.includes('minute')) {
+      return result.replace('minute', 'min').replace('minutes', 'min');
+    }
+
+    if (result.includes('hour')) {
+      return result.replace('hour', 'hr').replace('hours', 'hrs');
+    }
+
+    if (result.includes('day')) {
+      return result.replace('day', 'd').replace('days', 'd');
+    }
+
+    if (result.includes('week')) {
+      return result.replace('week', 'wk').replace('weeks', 'wks');
+    }
+
+    return result;
+  };
 
   const formatLastMessage = (message: string): string => message.length > MAX_MESSAGE_NUMBER ? `${message.substring(0, MAX_MESSAGE_NUMBER)}...` : message
 
@@ -94,9 +118,9 @@ export default function ConversationItem({ conversation }: ConversationItemProps
           <Label className="font-semibold truncate">{username()}</Label>
             { !hasReadMessage && <CheckCircle size={13} color="gray" /> }
           </div>
-          <span className="text-gray-500">{formattedTime}</span>
+          <span className="text-gray-500 truncate">{formattedTime}</span>
         </div>
-        <div className="mt-1 text-sm text-gray-600 w-full">{lastMessage}</div>
+        <div className="mt-1 text-sm text-gray-600 w-full truncate">{lastMessage}</div>
       </div>
 
       {

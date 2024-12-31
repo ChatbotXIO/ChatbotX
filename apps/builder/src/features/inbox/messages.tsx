@@ -1,7 +1,6 @@
 'use client'
 
 import { cn } from "@/lib/utils";
-import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage, ChatBubbleActionWrapper, ChatBubbleAction } from "@/components/ui/chat/chat-bubble";
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,7 @@ export default function Messages({ messages }: MessagesProps) {
       <div className="h-full max-h-[calc(100%-74px)]">
         <Virtuoso
           data={messages}
+          initialTopMostItemIndex={messages.length - 1}
           itemContent={(_, item) => (
             <div className={cn("flex mb-1", item.direction === 'sent' ? 'justify-end' : '' )}>
               <ChatBubble variant={item.direction} key={item.id} className="items-center">

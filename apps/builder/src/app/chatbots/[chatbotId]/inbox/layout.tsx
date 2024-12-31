@@ -25,15 +25,15 @@ export default function InboxLayout({
         direction="horizontal"
         className="h-full max-h-[calc(100vh-64px)] items-stretch"
       >
-        <ResizablePanel defaultSize={20} minSize={20} maxSize={25}>
+        <ResizablePanel defaultSize={25} minSize={20} maxSize={25}>
           {conversation}
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={60} minSize={30}>
+        <ResizablePanel defaultSize={50} minSize={40}>
           {message}
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={25}>
+        <ResizablePanel defaultSize={25} minSize={20} maxSize={25}>
           {contact}
         </ResizablePanel>
       </ResizablePanelGroup>
