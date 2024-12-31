@@ -1,11 +1,10 @@
 "use server";
 
 import { authActionClient } from "@/lib/safe-action";
-import { CreateContactBindSchema, createContactBindSchema, CreateContactSchema, createContactSchema } from "./create-contact-schema";
-import { prisma } from "@ahachat.ai/database";
-import { returnValidationErrors } from "next-safe-action";
 import { findChatbotOrFail } from "@/lib/user-permissions";
-import { User } from "@ahachat.ai/database";
+import { prisma, User } from "@ahachat.ai/database";
+import { returnValidationErrors } from "next-safe-action";
+import { CreateContactBindSchema, createContactBindSchema, CreateContactSchema, createContactSchema } from "./create-contact-schema";
 
 export const createContactAction = authActionClient
   .schema(createContactSchema)

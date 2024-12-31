@@ -8,7 +8,7 @@ import { Gender } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from '@tolgee/react'
-import { Loader2 } from "lucide-react"
+import { AsteriskIcon, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { createContactAction } from "./create-contact-action"
 import { createContactSchema } from "./create-contact-schema"
@@ -57,7 +57,10 @@ export function CreateContactForm({ chatbotId, onSubmmited, onCancelled }: { cha
       <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
         <FormField control={form.control} name="phoneNumber" render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('contacts.phoneNumber')}</FormLabel>
+            <FormLabel className="inline-flex gap-1">
+              {t('contacts.phoneNumber')}
+              <AsteriskIcon size={10} color="red" />
+            </FormLabel>
             <FormControl>
               <Input placeholder="090xxxxxxx" {...field} />
             </FormControl>

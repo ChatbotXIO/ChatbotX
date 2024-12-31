@@ -3,13 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTranslate } from '@tolgee/react';
-import { CreateContactForm } from "./create-contact-form";
+import { useRouter } from "next/navigation";
 import React from "react";
+import { CreateContactForm } from "./create-contact-form";
 
 export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
+  const router = useRouter()
   const { t } = useTranslate();
 
   const [open, setOpen] = React.useState(false);
+  const onSubmmited = () => {
+    setOpen(false)
+    router.refresh()
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -22,7 +28,7 @@ export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
           <DialogDescription></DialogDescription>
         </DialogHeader>
         <div className="flex items-center space-x-2">
-          <CreateContactForm chatbotId={chatbotId} onSubmmited={() => setOpen(false)} onCancelled={() => setOpen(false)} />
+          <CreateContactForm chatbotId={chatbotId} onSubmmited={onSubmmited} onCancelled={() => setOpen(false)} />
         </div>
       </DialogContent>
     </Dialog>
