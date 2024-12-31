@@ -1,7 +1,7 @@
 import { getTagsSearchParamsCache } from '@/features/tags/schemas/get-tags-schema';
 import { type SearchParams } from 'nuqs/server';
 
-export default async function FlowsPage(props: {
+export default async function EmailCampaignsPage(props: {
   params: Promise<{ chatbotId: string }>,
   searchParams: Promise<SearchParams>
 }) {

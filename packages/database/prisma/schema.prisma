@@ -172,24 +172,44 @@ model Contact {
 }
 
 model Folder {
-  id        String      @id @default(cuid())
-  name      String
-  group     FolderGroup @default(Tag)
-  parentId  String?
-  chatbotId String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id         String     @id @default(cuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  name       String
+  folderType FolderType @default(Tag)
+  parentId   String?
+  chatbotId  String
+  isTrash    Boolean    @default(false)
+  paths      String[]   @default([])
 
   parent   Folder?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
   children Folder[] @relation("ParentChild")
   chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  tags     Tag[]
 
   @@index([chatbotId])
   @@index([parentId])
 }
 
-enum FolderGroup {
+model Tag {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  name            String
+  folderId        String?
+  syncToMessenger Boolean
+
+  folder Folder? @relation(fields: [folderId], references: [id])
+
+  @@index([folderId])
+}
+
+enum FolderType {
   Tag
+  Flow
+  CustomField
+  EmailCampaign
+  AutomatedResponse
 }
 
 enum ChatbotPlan {

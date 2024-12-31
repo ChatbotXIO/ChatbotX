@@ -5,7 +5,7 @@ import { CreateContactBindSchema, createContactBindSchema, CreateContactSchema, 
 import { prisma } from "@ahachat.ai/database";
 import { returnValidationErrors } from "next-safe-action";
 import { findChatbotOrFail } from "@/lib/user-permissions";
-import { User } from "@prisma/client";
+import { User } from "@ahachat.ai/database";
 
 export const createContactAction = authActionClient
   .schema(createContactSchema)

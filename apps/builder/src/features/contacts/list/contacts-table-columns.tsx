@@ -1,9 +1,9 @@
 "use client"
 
-import { type ColumnDef } from "@tanstack/react-table"
-import { Checkbox } from "@/components/ui/checkbox"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Contact } from "@prisma/client"
+import { type ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 
 export function getColumns(): ColumnDef<Contact>[] {

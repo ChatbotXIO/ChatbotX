@@ -23,7 +23,7 @@ interface ContactsTableProps {
 
 export function ContactsTable({ promises }: ContactsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const [rowAction, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(null)
+  const [, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(null)
 
   const columns = React.useMemo(() => getColumns(), [setRowAction])
 
