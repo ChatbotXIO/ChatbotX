@@ -90,6 +90,7 @@ model Chatbot {
   activityLogs   ActivityLog[]
   contacts       Contact[]
   logs           Log[]
+  folders        Folder[]
 }
 
 model ChatbotMember {
@@ -197,6 +198,47 @@ model Contact {
   assignedUser User?   @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
   assignedTeam Team?   @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
   logs         Log[]   @relation("ExecutorContact")
+}
+
+model Folder {
+  id         String     @id @default(cuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  name       String
+  folderType FolderType
+  parentId   String?
+  chatbotId  String
+  isTrash    Boolean    @default(false)
+  paths      String[]   @default([])
+
+  parent   Folder?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("ParentChild")
+  chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  tags     Tag[]
+
+  @@index([chatbotId])
+  @@index([parentId])
+}
+
+model Tag {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  name            String
+  folderId        String?
+  syncToMessenger Boolean
+
+  folder Folder? @relation(fields: [folderId], references: [id])
+
+  @@index([folderId])
+}
+
+enum FolderType {
+  Tag
+  Flow
+  CustomField
+  EmailCampaign
+  AutomatedResponse
 }
 
 enum ChatbotPlan {

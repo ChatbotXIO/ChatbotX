@@ -36,7 +36,7 @@
     "db:migrate": {
       "cache": false
     },
-    "db:gen-client": {
+    "db:client": {
       "cache": false
     },
     "db:studio": {

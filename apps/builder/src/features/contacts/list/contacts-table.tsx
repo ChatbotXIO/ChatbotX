@@ -5,7 +5,7 @@ import * as React from 'react';
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
 import { useDataTable } from '@/hooks/use-data-table';
-import { Contact } from '@prisma/client';
+import { Contact } from '@ahachat.ai/database';
 
 import { getColumns } from './contacts-table-columns';
 import { getContacts } from './get-contacts-queries';
@@ -23,7 +23,7 @@ interface ContactsTableProps {
 
 export function ContactsTable({ promises }: ContactsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const [rowAction, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(null)
+  const [, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(null)
 
   const columns = React.useMemo(() => getColumns(), [setRowAction])
 

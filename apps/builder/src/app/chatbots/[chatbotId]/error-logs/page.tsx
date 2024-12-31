@@ -1,8 +1,8 @@
 import { DataTableSkeleton } from '@/components/data-table/data-table-skeleton';
-import { ErrorLogsTable } from '@/features/logs/list/error-logs-table';
-import { getLogs } from '@/features/logs/list/queries';
-import { getLogsSearchParamsCache } from '@/features/logs/list/schemas/get-logs-schema';
-import { LogType } from '@prisma/client';
+import { ErrorLogsTable } from '@/features/logs/error-logs-table';
+import { getLogs } from '@/features/logs/queries';
+import { getLogsSearchParamsCache } from '@/features/logs/schemas/get-logs-schema';
+import { LogType } from '@ahachat.ai/database';
 import { Suspense } from 'react';
 
 export default async function ErrorLogsPage(

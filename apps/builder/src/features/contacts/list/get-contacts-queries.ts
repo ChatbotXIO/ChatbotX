@@ -1,17 +1,17 @@
 import { unstable_cache } from "next/cache";
 import { GetContactsSchema } from "./get-contacts-schema";
 import { prisma } from "@ahachat.ai/database";
-import { Contact, Prisma } from "@prisma/client";
+import { Contact, Prisma } from "@ahachat.ai/database";
 import { getCurrentUserId } from "@/auth";
 import { findChatbotOrFail } from "@/lib/user-permissions";
 
 export async function getContacts(input: GetContactsSchema): Promise<{ data: Contact[], pageCount: number }> {
   const userId = await getCurrentUserId()
 
+  await findChatbotOrFail(userId, input.chatbotId)
+
   return await unstable_cache(async () => {
     try {
-      await findChatbotOrFail(userId, input.chatbotId)
-
       const where: Prisma.ContactWhereInput = {
         chatbotId: input.chatbotId
       }
@@ -50,6 +50,6 @@ export async function getContacts(input: GetContactsSchema): Promise<{ data: Con
     }
   }, [JSON.stringify(input)], {
     revalidate: 3600,
-    tags: ['contacts']
+    tags: [`${userId}#contacts`]
   })()
 }
