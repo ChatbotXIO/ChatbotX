@@ -1,9 +1,9 @@
 import { ReactNode } from "react";
 
-export default function TagsLayout({ children, folders }: { children: ReactNode, folders: ReactNode }) {
+export default function FlowsLayout({ children, folders }: { children: ReactNode, folders: ReactNode }) {
   return (
     <>
-      {folders}
+      {/* {folders} */}
       {children}
     </>
   )
