@@ -1,9 +1,9 @@
-import { Suspense } from 'react';
-
 import { DataTableSkeleton } from '@/components/data-table/data-table-skeleton';
-import { LogsTable } from '@/features/logs/list/logs-table';
-import { getLogs } from '@/features/logs/list/get-logs-queries';
-import { getLogsSearchParamsCache } from '@/features/logs/list/get-logs-schema';
+import { ErrorLogsTable } from '@/features/logs/list/error-logs-table';
+import { getLogs } from '@/features/logs/list/queries';
+import { getLogsSearchParamsCache } from '@/features/logs/list/schemas/get-logs-schema';
+import { LogType } from '@prisma/client';
+import { Suspense } from 'react';
 
 export default async function ErrorLogsPage(
   props: { params: Promise<{ chatbotId: string }>, searchParams: Promise<any> }
@@ -15,7 +15,8 @@ export default async function ErrorLogsPage(
   const promises = Promise.all([
     getLogs({
       ...search,
-      chatbotId: params.chatbotId
+      chatbotId: params.chatbotId,
+      logType: LogType.Error,
     }),
   ])
 
@@ -25,12 +26,12 @@ export default async function ErrorLogsPage(
         <DataTableSkeleton
           columnCount={6}
           searchableColumnCount={1}
-          filterableColumnCount={2}
-          cellWidths={["10rem", "40rem", "12rem", "12rem", "8rem", "8rem"]}
+          filterableColumnCount={1}
+          cellWidths={["10rem", "40rem", "12rem", "12rem", "12rem", "12rem"]}
           shrinkZero
         />
       }>
-        <LogsTable promises={promises} chatbotId={params.chatbotId}/>
+        <ErrorLogsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </div>
   )

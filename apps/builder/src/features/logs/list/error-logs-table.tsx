@@ -7,8 +7,8 @@ import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
 import { Log } from "@prisma/client";
 
-import { getColumns } from "./logs-table-columns";
-import { getLogs } from "./get-logs-queries";
+import { getColumns } from "./error-logs-table-columns";
+import { getLogs } from "./queries";
 
 import type {
   DataTableFilterField,
@@ -21,10 +21,10 @@ interface LogsTableProps {
   promises: Promise<[
     Awaited<ReturnType<typeof getLogs>>
   ]>;
-  chatbotId:string
+  chatbotId: string
 }
 
-export function LogsTable({ promises, chatbotId }: LogsTableProps) {
+export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
   const [{ data, pageCount }] = React.use(promises);
   const [rowAction, setRowAction] = React.useState<DataTableRowAction<Log> | null>(null);
 
@@ -33,11 +33,11 @@ export function LogsTable({ promises, chatbotId }: LogsTableProps) {
     [setRowAction]
   )
 
-  const filterFields: DataTableFilterField<Log & { keyword?: string }>[] = [
+  const filterFields: DataTableFilterField<Log & { action?: string }>[] = [
     {
-      id: "keyword",
+      id: "action",
       label: "Search",
-      placeholder: "Enter feature name...",
+      placeholder: "Enter Action name...",
     },
   ];
 
@@ -59,7 +59,7 @@ export function LogsTable({ promises, chatbotId }: LogsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          <LogsTableToolbarActions table={table} chatbotId={chatbotId}/>
+          <LogsTableToolbarActions table={table} chatbotId={chatbotId} />
         </DataTableToolbar>
       </DataTable>
 

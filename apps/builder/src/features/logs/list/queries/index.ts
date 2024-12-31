@@ -1,9 +1,9 @@
-import { unstable_cache } from "next/cache";
-import { GetLogsSchema } from "./get-logs-schema";
-import { prisma } from "@ahachat.ai/database";
-import { Prisma, Log } from "@prisma/client";
 import { getCurrentUserId } from "@/auth";
 import { findChatbotOrFail } from "@/lib/user-permissions";
+import { prisma } from "@ahachat.ai/database";
+import { Log, Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+import { GetLogsSchema } from "../schemas/get-logs-schema";
 
 export async function getLogs(input: GetLogsSchema): Promise<{ data: Log[], pageCount: number }> {
   const userId = await getCurrentUserId()
@@ -14,24 +14,34 @@ export async function getLogs(input: GetLogsSchema): Promise<{ data: Log[], page
 
       const where: Prisma.LogWhereInput = {
         chatbotId: input.chatbotId,
+        logType: input.logType
       }
 
-      if (input.keyword) {
-        where.OR = [
+      if (input.action) {
+        where.AND = [
           {
-            feature: {
-              contains: input.keyword,
+            action: {
+              contains: input.action,
               mode: 'insensitive'
             }
           },
         ]
       }
 
+      const orderBy = input.sort.map((sortItem) => ({
+        [sortItem.id]: sortItem.desc ? "desc" : "asc",
+      }));
+
       const [data, total] = await prisma.$transaction([
         prisma.log.findMany({
           skip: (input.page - 1) * input.perPage,
           take: input.perPage,
           where,
+          orderBy,
+          include: {
+            executorUser: true,
+            executorContact: true,
+          }
         }),
         prisma.log.count({ where }),
       ])
@@ -44,6 +54,6 @@ export async function getLogs(input: GetLogsSchema): Promise<{ data: Log[], page
     }
   }, [JSON.stringify(input)], {
     revalidate: 3600,
-    tags: ['logs']
+    tags: [`${userId}#logs`]
   })()
 }

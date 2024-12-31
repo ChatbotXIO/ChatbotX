@@ -12,10 +12,10 @@
   },
   "scripts": {
     "db:generate": "dotenv -e ../../.env -- prisma migrate dev --create-only",
-    "db:migrate": "dotenv -e ../../.env -- prisma db push",
-    "db:migrate!": "dotenv -e ../../.env -- prisma db push --skip-generate",
-    "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:migrate": "dotenv -e ../../.env -- prisma migrate deploy",
+    "db:gen-client": "dotenv -e ../../.env -- prisma generate",
+    "db:studio": "dotenv -e ../../.env -- prisma studio",
+    "db:seed": "dotenv -e ../../.env -- ts-node prisma/seed.ts"
   },
   "exports": {
     ".": "./src/index.ts"
