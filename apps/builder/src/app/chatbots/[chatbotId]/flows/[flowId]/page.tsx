@@ -21,7 +21,10 @@ import {
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
+
+import NodeEditorProvider from "@/features/flows/react-flow/stores/node-editor-provider";
+import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
 
 const nodeTypes = {
   [PanelAction.SendMessage]: SendMessageNode,
@@ -30,19 +33,22 @@ const nodeTypes = {
 
 const initialNodes = [
   { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
-  { id: '2', type: PanelAction.SendMessage, position: { x: 0, y: 100 }, data: { label: '2' } },
+  { id: '2', type: PanelAction.SendMessage, position: { x: 0, y: 100 }, data: { label: '2', image: [{}] } },
+  { id: '3', type: PanelAction.SendMessage, position: { x: 300, y: 100 }, data: { label: '3', image: [{}] } },
 ];
 
 const initialEdges: Edge[] = [];
 
 export default function FlowPage({ children }: { children: React.ReactNode }) {
   const { t } = useTranslate()
+  const { currentNode, updateCurrentNode } = useNodeEditorStore()
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [activeNode, setActiveNode] = useState<Node | null>(null)
   const [openNodeDetailSheet, setOpenNodeDetailSheet] = useState<boolean>(false);
 
   const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+
   const onChooseAction = (name: PanelAction) => {
     let newNode: any | undefined
     if (name == PanelAction.SendMessage) {
@@ -93,8 +99,24 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
     }
   }
 
+  useEffect(() => {
+    setNodes((nds) => nds.map((node) => {
+      if (node.id === currentNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            ...currentNode.data
+          }
+        }
+      }
+      return node
+    }))
+
+  }, [currentNode])
+
   return (
-    <>
+    <NodeEditorProvider>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -104,6 +126,7 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
         nodeTypes={nodeTypes}
         proOptions={{ hideAttribution: true }}
         onNodeClick={(event: any, node: any) => {
+          updateCurrentNode(node)
           setActiveNode(node);
           setOpenNodeDetailSheet(true);
         }}
@@ -122,6 +145,6 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
       </ReactFlow>
 
       <NodeDetailSheet open={openNodeDetailSheet} onOpenChange={setOpenNodeDetailSheet} activeNode={activeNode} />
-    </>
+    </NodeEditorProvider>
   )
 }
