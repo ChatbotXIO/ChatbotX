@@ -2,8 +2,7 @@
 
 import { authActionClient } from "@/lib/safe-action";
 import { findChatbotOrFail } from "@/lib/user-permissions";
-import { prisma } from "@ahachat.ai/database";
-import { User } from "@prisma/client";
+import { prisma, User } from "@ahachat.ai/database";
 import { returnValidationErrors } from "next-safe-action";
 import { CreateContactBindSchema, createContactBindSchema, CreateContactSchema, createContactSchema } from "./create-contact-schema";
 

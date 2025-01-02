@@ -4,10 +4,16 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { createSafeActionClient, DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action";
 
 export const actionClient = createSafeActionClient({
-  handleServerError(e) {
-    if (e instanceof PrismaClientKnownRequestError) {
+  handleServerError(error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === 'P2025' || error.code === 'P2016') {
+        return {
+          message: `Unable to find ${error.meta?.modelName ?? ''} record`
+        }
+      }
+
       return {
-        message: e.message
+        message: error.message
       };
     }
 

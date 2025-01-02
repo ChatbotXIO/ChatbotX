@@ -1,5 +1,14 @@
-export default function AutomatedResponsePage({ children }: { children: React.ReactNode }) {
+import { getTagsSearchParamsCache } from '@/features/tags/schemas/get-tags-schema';
+import { type SearchParams } from 'nuqs/server';
+
+export default async function AutomatedResponesPage(props: {
+  params: Promise<{ chatbotId: string }>,
+  searchParams: Promise<SearchParams>
+}) {
+  const searchParams = await props.searchParams
+  const { folderId } = getTagsSearchParamsCache.parse(searchParams)
+
   return (
-    'automated-responses'
+    <div>Folder ID: {folderId}</div>
   )
 }

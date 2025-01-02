@@ -1,5 +1,5 @@
 import { prisma } from "@ahachat.ai/database";
-import { Chatbot, ChatbotMember } from "@prisma/client";
+import { Chatbot, ChatbotMember } from "@ahachat.ai/database";
 
 export const findChatbotOrFail = async (userId: string, chatbotId: string | null): Promise<{ chatbot: Chatbot, chatbotMember: ChatbotMember }> => {
   if (!chatbotId) {

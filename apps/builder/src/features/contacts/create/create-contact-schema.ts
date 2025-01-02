@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { Gender } from "@prisma/client"
+import { Gender } from "@ahachat.ai/database"
 
 export const createContactSchema = z.object({
   phoneNumber: z.string().min(10).max(20).regex(/\+?\d{10,20}/),

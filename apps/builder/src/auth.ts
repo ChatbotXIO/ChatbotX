@@ -1,5 +1,5 @@
 import NextAuth, { DefaultSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@ahachat.ai/database"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import authConfig from "./auth.config"
 

@@ -2,20 +2,22 @@
   "name": "@ahachat.ai/database",
   "version": "0.1.0",
   "dependencies": {
-    "@prisma/client": "5.22.0"
+    "@paralleldrive/cuid2": "^2.2.2",
+    "@prisma/client": "^6.1.0"
   },
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
+    "@faker-js/faker": "^9.3.0",
     "@types/node": "^22.10.2",
     "dotenv-cli": "^7.4.4",
-    "prisma": "5.22.0"
+    "prisma": "^6.1.0"
   },
   "scripts": {
     "db:generate": "dotenv -e ../../.env -- prisma migrate dev --create-only",
-    "db:migrate": "dotenv -e ../../.env -- prisma db push",
-    "db:migrate!": "dotenv -e ../../.env -- prisma db push --skip-generate",
-    "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:migrate": "dotenv -e ../../.env -- prisma migrate deploy",
+    "db:studio": "dotenv -e ../../.env -- prisma studio",
+    "db:seed": "dotenv -e ../../.env -- ts-node prisma/seed.ts",
+    "db:client": "dotenv -e ../../.env -- prisma generate"
   },
   "exports": {
     ".": "./src/index.ts"
