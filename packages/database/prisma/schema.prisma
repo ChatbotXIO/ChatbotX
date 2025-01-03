@@ -261,3 +261,10 @@ enum AssignedType {
   User
   Team
 }
+
+enum SenderType {
+  Bot
+  Contact
+  System
+  User
+}

@@ -1,6 +1,7 @@
-import { Message, MessageContent, MessageType, MessageDirection } from "@/features/inbox/interfaces/message";
+import { Message, MessageContent, MessageType } from "@/features/inbox/interfaces/message";
 
 import { generateRandomId, getRandomFromZeroToN } from './common.mock'
+import { SenderType } from "@ahachat.ai/database";
 
 const getRandomMessageType = (): string => {
   const messageTypes: string[] = [
@@ -42,13 +43,13 @@ const getRandomContent = (type: string): Partial<MessageContent> | string => {
 };
 
 const getRandomDirection = () => {
-  const direction = ['sent', 'received'];
-  return direction[getRandomFromZeroToN(direction.length)];
+  const direction = Object.values(SenderType);
+  return direction[getRandomFromZeroToN(direction.length + 1)];
 };
 
 const generateRandomMessage = (): Message => {
   const messageType = getRandomMessageType();
-  const direction = getRandomDirection() as MessageDirection;
+  const senderType = [SenderType.Contact, SenderType.User][Math.floor(Math.random() * 2)];
 
   return {
     id: generateRandomId(),
@@ -56,7 +57,8 @@ const generateRandomMessage = (): Message => {
     conversationId: generateRandomId(),
     messageType: messageType as MessageType,
     content: getRandomContent(messageType),
-    direction,
+    senderType: senderType!,
+    senderId: `${Math.random()}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     isLoading: false,
@@ -65,7 +67,7 @@ const generateRandomMessage = (): Message => {
       firstName: ['Kha', 'An', 'Hien', 'Minh', 'Linh', 'Trang'][Math.floor(Math.random() * 6)],
       lastName: ['Duy', 'Viet', 'Hieu', 'Thao', 'Phong'][Math.floor(Math.random() * 5)],
       phoneNumber: '095472823940',
-      avatar: `https://randomuser.me/api/portraits/men/${direction === 'sent' ? 1 : 0}.jpg`
+      avatar: `https://randomuser.me/api/portraits/men/${senderType === SenderType.Contact ? 1 : 0}.jpg`
     }
   };
 };

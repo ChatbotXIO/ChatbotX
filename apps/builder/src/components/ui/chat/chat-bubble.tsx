@@ -1,9 +1,9 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import MessageLoading from "./message-loading";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 import { Button, ButtonProps } from "../button";
+import MessageLoading from "./message-loading";
 
 // ChatBubble
 const chatBubbleVariant = cva(
@@ -28,7 +28,7 @@ const chatBubbleVariant = cva(
 
 interface ChatBubbleProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof chatBubbleVariant> {}
+  VariantProps<typeof chatBubbleVariant> { }
 
 const ChatBubble = React.forwardRef<HTMLDivElement, ChatBubbleProps>(
   ({ className, variant, layout, children, ...props }, ref) => (
@@ -43,9 +43,9 @@ const ChatBubble = React.forwardRef<HTMLDivElement, ChatBubbleProps>(
       {React.Children.map(children, (child) =>
         React.isValidElement(child) && typeof child.type !== "string"
           ? React.cloneElement(child, {
-              variant,
-              layout,
-            } as React.ComponentProps<typeof child.type>)
+            variant,
+            layout,
+          } as React.ComponentProps<typeof child.type>)
           : child,
       )}
     </div>
@@ -72,12 +72,11 @@ const ChatBubbleAvatar: React.FC<ChatBubbleAvatarProps> = ({
 );
 
 // ChatBubbleMessage
-const chatBubbleMessageVariants = cva("p-4", {
+const chatBubbleMessageVariants = cva("px-4 py-2", {
   variants: {
     variant: {
-      received:
-        "bg-secondary text-secondary-foreground rounded-r-lg rounded-tl-lg",
-      sent: "bg-blue-400 text-primary-foreground rounded-l-lg rounded-tr-lg",
+      received: "bg-secondary text-secondary-foreground rounded-r-md rounded-tl-md",
+      sent: "bg-blue-400 text-primary-foreground rounded-l-md rounded-tr-md",
     },
     layout: {
       default: "",
@@ -92,7 +91,7 @@ const chatBubbleMessageVariants = cva("p-4", {
 
 interface ChatBubbleMessageProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof chatBubbleMessageVariants> {
+  VariantProps<typeof chatBubbleMessageVariants> {
   isLoading?: boolean;
 }
 
@@ -192,12 +191,8 @@ const ChatBubbleActionWrapper = React.forwardRef<
 ChatBubbleActionWrapper.displayName = "ChatBubbleActionWrapper";
 
 export {
-  ChatBubble,
-  ChatBubbleAvatar,
-  ChatBubbleMessage,
-  ChatBubbleTimestamp,
-  chatBubbleVariant,
-  chatBubbleMessageVariants,
-  ChatBubbleAction,
-  ChatBubbleActionWrapper,
+  ChatBubble, ChatBubbleAction,
+  ChatBubbleActionWrapper, ChatBubbleAvatar,
+  ChatBubbleMessage, chatBubbleMessageVariants, ChatBubbleTimestamp,
+  chatBubbleVariant
 };

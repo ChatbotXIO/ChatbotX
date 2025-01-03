@@ -1,7 +1,7 @@
 import { Contact } from "@/features/inbox/interfaces/conversation";
+import { SenderType } from "@ahachat.ai/database";
 
 export type MessageType = "text" | "image" | "audio" | "video" | "file" | "location" // | "markdown" | "carousel" | "card" | "dropdown" | "choice" | "bloc"
-export type MessageDirection = "sent" | "received"
 
 export interface MessageContent {
   imageUrl: string;
@@ -19,7 +19,8 @@ export interface Message {
   conversationId: string
   messageType: MessageType
   content: string | Partial<MessageContent>
-  direction: MessageDirection
+  senderType: SenderType,
+  senderId?: string
   createdAt: string
   updatedAt: string
   isLoading: boolean

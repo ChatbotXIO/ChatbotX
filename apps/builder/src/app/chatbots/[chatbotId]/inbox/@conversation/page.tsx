@@ -1,5 +1,5 @@
+import ConversationList from "@/features/conversations/conversation-list";
 import { Conversation } from "@/features/inbox/interfaces/conversation";
-import ConversationList from "@/features/inbox/conversation-list";
 import { generateConversations } from "@/mock/conversation.mock";
 
 export default async function InboxConversationSlot() {

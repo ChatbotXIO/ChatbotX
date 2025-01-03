@@ -1,26 +1,23 @@
-export interface Conversation {
-  id: string;
-  contactId: string;
-  channelType: string;
-  lastActivityAt: string;
-  contactLastSeenAt: string;
-  lastMessage: string;
-  assignedType: string | null;
-  assignedId: string | null;
-  contact: Contact;
-  assignedTeam?: Assigned;
-  assignedUser?: Assigned;
+import { Contact } from "@ahachat.ai/database"
+
+export type Conversation = {
+  id: string
+  contactId: string
+  channelType: string
+  lastActivityAt: string
+  contactLastSeenAt: Date
+  lastMessageAt: Date
+  lastMessage: string
+  assignedType: string | null
+  assignedId: string | null
+  contact: Contact
+  assignedTeam?: Assigned
+  assignedUser?: Assigned
+  isActive: boolean
 }
 
 export interface Assigned {
-  id: string;
-  name: string;
-}
-
-export interface Contact {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  avatar?: string;
+  id: string
+  image?: string
+  firstName?: string
 }

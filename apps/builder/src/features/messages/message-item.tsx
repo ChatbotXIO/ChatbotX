@@ -1,18 +1,16 @@
 'use client'
 
+import { Message } from "@/features/inbox/interfaces/message"
+import { Files } from "lucide-react"
 import Image from 'next/image'
-import { Message } from "@/features/inbox/interfaces/message";
-import { Files } from "lucide-react";
-
 
 interface MessageItemProps {
-  message: Message;
+  message: Message
 }
-
 
 export default function MessageItem({ message }: MessageItemProps) {
   if (message.messageType === "text") {
-    return message.content;
+    return message.content
   }
 
   if (typeof message.content === 'object') {
@@ -20,11 +18,11 @@ export default function MessageItem({ message }: MessageItemProps) {
 
     switch (message.messageType) {
       case 'image':
-        return <div className="relative w-[150px] h-auto"><Image src={imageUrl} fill={true} alt={message.id}/></div>
+        return <div className="relative w-[150px] h-auto"><Image src={imageUrl} fill={true} alt={message.id} /></div>
       case 'audio':
-        return <audio controls src={audioUrl}/>
+        return <audio controls src={audioUrl} />
       case 'video':
-        return <video controls className="rounded-b" width={300} height="auto" src={videoUrl}/>
+        return <video controls className="rounded-b" width={300} height="auto" src={videoUrl} />
       case 'file':
         return (
           <a className="flex items-center gap-2" href={fileUrl} download>
@@ -37,13 +35,12 @@ export default function MessageItem({ message }: MessageItemProps) {
             width="100%"
             height="150"
             src={`https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`}
-            frameBorder="0"
             allowFullScreen
             title="location"
           ></iframe>
-        );
+        )
       default:
-        return ''
+        return <div>default message</div>
     }
   }
 }

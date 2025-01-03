@@ -3,5 +3,5 @@ export const generateRandomId = (): string => {
 };
 
 export const getRandomFromZeroToN = (n: number) => {
-  return Math.floor(Math.random() * (n + 1));
+  return Math.floor(Math.random() * n);
 };
