@@ -41,7 +41,7 @@ function NeedAttachedImage({ onSwitchToImageLink }: { onSwitchToImageLink: () =>
   )
 }
 
-export default function ImageDropzone({ onSwitchToImageLink }: { onSwitchToImageLink: () => void }) {
+export default function ImageDropzone({ onSwitchToImageLink, onChange }: { onSwitchToImageLink: () => void, onChange: (file?: any) => void }) {
   const [image, setImage] = useState<string | null>(null)
 
   const handleFileChange = (file: File | null) => {
@@ -49,9 +49,15 @@ export default function ImageDropzone({ onSwitchToImageLink }: { onSwitchToImage
       const reader = new FileReader()
       reader.onloadend = () => {
         setImage(reader.result as string)
+        onChange({...file, base64: reader.result})
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  const handleRemove = () => {
+    setImage(null)
+    onChange(null)
   }
 
   return (
@@ -67,7 +73,7 @@ export default function ImageDropzone({ onSwitchToImageLink }: { onSwitchToImage
             <div className="flex flex-col items-center rounded-lg border border-dashed h-36 overflow-hidden justify-center">
               {
                 image
-                  ? <AttachedImage image={image} onRemove={() => setImage(null)} />
+                  ? <AttachedImage image={image} onRemove={handleRemove} />
                   : <NeedAttachedImage onSwitchToImageLink={onSwitchToImageLink} />
               }
             </div>

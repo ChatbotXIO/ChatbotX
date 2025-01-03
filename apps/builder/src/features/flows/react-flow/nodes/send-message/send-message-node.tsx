@@ -3,7 +3,9 @@ import { MessageCircleMoreIcon } from "lucide-react";
 import { FlowFlowNodeToolbar } from "../../toolbars";
 import { useState } from "react";
 
-export default function SendMessageNode({ data }: { data: { label: string } }) {
+import NodeBlockImage from "../blocks/image";
+
+export default function SendMessageNode({ data, id }: { data: Record<string, any>, id: string | number }) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   return (
@@ -13,11 +15,15 @@ export default function SendMessageNode({ data }: { data: { label: string } }) {
         <CardHeader className="p-4">
           <CardTitle className="flex gap-1 items-center">
             <MessageCircleMoreIcon size={20} />
-            {data.label}
+            {data?.label}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          kakaka
+          {
+            data && data?.image.length > 0 ?
+              data.image.map((img, idx) => <NodeBlockImage key={idx} nodeId={id} image={img} />) :
+              ''
+          }
         </CardContent>
       </Card>
     </>
