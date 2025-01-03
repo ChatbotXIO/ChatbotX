@@ -7,10 +7,13 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types";
 import { useDataTable } from "@/hooks/use-data-table";
-import React from 'react';
-import { getTags } from "./queries";
 import { Tag } from "@ahachat.ai/database";
+import React from 'react';
+import { DeleteTagsDialog } from "./delete-tag-dialog";
+import { getTags } from "./queries";
 import { getTagColumns } from "./tags-table-columns";
+import { UpdateTagDialog } from "./update-tag-dialog";
+import { TagsTableToolbarActions } from "./tags-table-toolbar-actions";
 
 interface TagsTableProps {
   promises: Promise<[
@@ -24,7 +27,7 @@ export function TagsTable({ promises, chatbotId }: TagsTableProps) {
   const [rowAction, setRowAction] = React.useState<DataTableRowAction<Tag> | null>(null);
 
   const columns = React.useMemo(
-    () => getTagColumns(),
+    () => getTagColumns({ setRowAction }),
     [setRowAction]
   )
 
@@ -54,8 +57,25 @@ export function TagsTable({ promises, chatbotId }: TagsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
+          <TagsTableToolbarActions table={table} chatbotId={chatbotId} />
         </DataTableToolbar>
       </DataTable>
+
+      <DeleteTagsDialog
+        open={rowAction?.type === "delete"}
+        onOpenChange={() => setRowAction(null)}
+        tags={rowAction?.row.original ? [rowAction?.row.original] : []}
+        showTrigger={false}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        chatbotId={chatbotId}
+      />
+
+      <UpdateTagDialog
+        open={rowAction?.type === "update"}
+        onOpenChange={() => setRowAction(null)}
+        chatbotId={chatbotId}
+        tag={rowAction?.row.original || null}
+      />
     </>
   );
 }

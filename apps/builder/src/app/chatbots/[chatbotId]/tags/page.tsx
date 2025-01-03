@@ -1,7 +1,8 @@
 import { DataTableSkeleton } from '@/components/data-table/data-table-skeleton';
-import { getTags } from '@/features/tags/list/queries';
-import { getTagsSearchParamsCache } from '@/features/tags/list/schemas/get-tags-schema';
-import { TagsTable } from '@/features/tags/list/tags-table';
+import { CreateTagDialog } from '@/features/tags/create-tag-dialog';
+import { getTags } from '@/features/tags/queries';
+import { getTagsSearchParamsCache } from '@/features/tags/schemas/get-tags-schema';
+import { TagsTable } from '@/features/tags/tags-table';
 import { type SearchParams } from 'nuqs/server';
 import { Suspense } from 'react';
 
@@ -21,9 +22,11 @@ export default async function TagsPage(props: {
     }),
   ])
 
-
   return (
     <div>
+      <div className="flex w-full justify-end mb-4">
+        <CreateTagDialog chatbotId={params.chatbotId} folderId={search.folderId} />
+      </div>
       <Suspense fallback={
         <DataTableSkeleton
           columnCount={5}

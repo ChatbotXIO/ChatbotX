@@ -1,0 +1,99 @@
+"use client"
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Tag } from "@ahachat.ai/database";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
+import { useTranslate } from '@tolgee/react';
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { updateTagAction } from "./actions/update-tag-action";
+import { updateTagSchema } from "./schemas/update-tag-schema";
+
+export function UpdateTagDialog({ chatbotId, tag, open,
+  onOpenChange }: {
+    open: boolean,
+    onOpenChange: (val: boolean) => void,
+    chatbotId: string,
+    tag: Tag | null,
+  }) {
+  const { t } = useTranslate();
+  const router = useRouter()
+
+  const {
+    form,
+    handleSubmitWithAction
+  } = useHookFormAction(
+    updateTagAction.bind(null, chatbotId, tag?.id ?? ""),
+    zodResolver(updateTagSchema), {
+    actionProps: {
+      onSuccess: () => {
+        toast.success(`Tag update successfully`)
+
+        onOpenChange(false)
+        router.refresh()
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError.message ?? error.serverError)
+        }
+      }
+    },
+    formProps: {
+      mode: "onChange",
+      defaultValues: {
+        name: "",
+      }
+    },
+    errorMapProps: {}
+  });
+
+  useEffect(() => {
+    console.log("Form change", form)
+  }, [])
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('tags.update.title')}</DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center space-x-2">
+          <Form {...form}>
+            <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('tags.name')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t('tags.name')} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('common.cancel-btn')}</Button>
+                <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting}>
+                  {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
+                  {t('common.confirm-btn')}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}

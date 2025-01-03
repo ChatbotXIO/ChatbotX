@@ -1,7 +1,7 @@
 import { getCurrentUserId } from "@/auth";
 import { findChatbotOrFail } from "@/lib/user-permissions";
-import { prisma } from "@ahachat.ai/database";
-import { Prisma, Tag } from "@prisma/client";
+import { prisma, Tag } from "@ahachat.ai/database";
+import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { GetTagsSchema } from "../schemas/get-tags-schema";
 

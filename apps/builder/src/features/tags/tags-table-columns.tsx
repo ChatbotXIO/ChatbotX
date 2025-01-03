@@ -10,13 +10,20 @@ import { EllipsisVerticalIcon } from "lucide-react";
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
+  type: "update" | "delete"
 }
 
 type TagWithContacts = Tag & {
   contacts?: any
 };
 
-export function getTagColumns(): ColumnDef<TagWithContacts>[] {
+interface GetColumnsProps {
+  setRowAction: React.Dispatch<
+    React.SetStateAction<DataTableRowAction<Tag> | null>
+  >
+}
+
+export function getTagColumns({ setRowAction }: GetColumnsProps): ColumnDef<TagWithContacts>[] {
   return [
     {
       id: "select",
@@ -73,11 +80,13 @@ export function getTagColumns(): ColumnDef<TagWithContacts>[] {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
+                onSelect={() => setRowAction({ row, type: "update" })}
               >
                 Update
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem
+                onSelect={() => setRowAction({ row, type: "delete" })}
               >
                 Delete
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
