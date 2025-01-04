@@ -3,19 +3,69 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslate } from "@tolgee/react";
 import { useForm } from "react-hook-form";
-import StepImage from "../../steps/step-image";
-import { SendMessageEditorItemType } from "./menu";
+import { SendMessageEditorItemType, SendMessageEditorItem } from "./menu";
 import SendMessageEditorAction from "./send-message-editor-action";
 import { Separator } from "@/components/ui/separator";
 import { DndContext } from "@dnd-kit/core";
+import { createId } from '@paralleldrive/cuid2';
+
+import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
+
+import type { NodeBlock } from "@/features/flows/react-flow/blocks/types";
+import dynamic from "next/dynamic";
+
+// Node block
+const StepImage = dynamic(() => import('../../steps/step-image'))
+const StepCard = dynamic(() => import('../../steps/step-card'))
+
+const prototypeItem = new Map()
+  .set(SendMessageEditorItem.Image, 'images')
+  .set(SendMessageEditorItem.Card, 'cards')
+  .set(SendMessageEditorItem.Text, 'text')
+  .set(SendMessageEditorItem.Video, 'videos')
+  .set(SendMessageEditorItem.Carousel, 'carousel')
 
 export default function SendMessageEditor() {
   const { t } = useTranslate()
+  const { currentNode, updateCurrentNode } = useNodeEditorStore()
 
   const form = useForm()
 
   const onClickAction = (name: SendMessageEditorItemType) => {
     console.log('onClickActionnnnn', name)
+
+    const newCurrentNode = { ...currentNode }
+    const newBlock: Partial<NodeBlock> = {
+      id: createId(),
+      key: name,
+    }
+    Object.defineProperty(newBlock, prototypeItem.get(name), {
+      value: [
+        {
+          id: createId(),
+        }
+      ],
+      writable: true,
+      enumerable: true,
+    })
+    newCurrentNode.data?.blocks.push(newBlock)
+    updateCurrentNode(newCurrentNode)
+  }
+
+  const renderBlockItem = (block: NodeBlock, blockIndex: number) => {
+    if (block.key === SendMessageEditorItem.Image) {
+      return block.images && block.images.map((img, idx: number) => <StepImage key={idx} blockIndex={blockIndex} itemIndex={idx} />)
+    }
+    if (block.key === SendMessageEditorItem.Card) {
+      return block.cards && block.cards.map((img, idx: number) => <StepCard key={idx} blockIndex={blockIndex} itemIndex={idx} />)
+    }
+  }
+
+  const renderBlocks = () => {
+    if (currentNode && currentNode.data && currentNode.data.blocks) {
+      return currentNode.data.blocks.map((block: NodeBlock, idx: number) => renderBlockItem(block, idx))
+    }
+    return null
   }
 
   return (
@@ -52,7 +102,7 @@ export default function SendMessageEditor() {
           {/* <Draggable /> */}
         </DndContext>
         <InputWithEmoji />
-        <StepImage />
+        { renderBlocks() }
       </div>
 
       <SendMessageEditorAction onClick={onClickAction} />

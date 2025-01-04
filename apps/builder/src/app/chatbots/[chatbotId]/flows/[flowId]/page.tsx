@@ -23,6 +23,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useCallback, useState, useEffect } from 'react';
 
+import type { NodeBaseAhachat } from "@/features/flows/react-flow/blocks/types";
+
 import NodeEditorProvider from "@/features/flows/react-flow/stores/node-editor-provider";
 import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
 
@@ -31,10 +33,13 @@ const nodeTypes = {
   [PanelAction.AddNotes]: AddNotesNode,
 }
 
-const initialNodes = [
-  { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
-  { id: '2', type: PanelAction.SendMessage, position: { x: 0, y: 100 }, data: { label: '2', image: [{}] } },
-  { id: '3', type: PanelAction.SendMessage, position: { x: 300, y: 100 }, data: { label: '3', image: [{}] } },
+const initialNodes: NodeBaseAhachat[] = [
+  { id: '1', type: PanelAction.SendMessage, position: { x: 200, y: 200 },
+    data: {
+      label: 'Send Message',
+      blocks: []
+    }
+  }
 ];
 
 const initialEdges: Edge[] = [];
@@ -42,6 +47,7 @@ const initialEdges: Edge[] = [];
 export default function FlowPage({ children }: { children: React.ReactNode }) {
   const { t } = useTranslate()
   const { currentNode, updateCurrentNode } = useNodeEditorStore()
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [activeNode, setActiveNode] = useState<Node | null>(null)
@@ -99,6 +105,7 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // update node selected
   useEffect(() => {
     setNodes((nds) => nds.map((node) => {
       if (node.id === currentNode.id) {
@@ -112,7 +119,6 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
       }
       return node
     }))
-
   }, [currentNode])
 
   return (
@@ -131,6 +137,7 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
           setOpenNodeDetailSheet(true);
         }}
         onPaneClick={() => {
+          updateCurrentNode({})
           setActiveNode(null);
           setOpenNodeDetailSheet(false);
         }}
