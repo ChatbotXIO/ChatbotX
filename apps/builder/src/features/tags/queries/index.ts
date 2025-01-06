@@ -17,8 +17,8 @@ export async function getTags(input: GetTagsSchema): Promise<{ data: Tag[], page
         chatbotId: input.chatbotId,
       }
 
-      if (input.folderId) {
-        where.folderId = input.folderId;
+      if (input.folderId !== undefined) {
+        where.folderId = input.folderId === null || input.folderId === "0" ? null : input.folderId;
       }
 
       if (input.name) {

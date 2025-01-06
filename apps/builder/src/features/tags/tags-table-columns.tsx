@@ -57,7 +57,7 @@ export function getTagColumns({ setRowAction, handleCopy }: GetColumnsProps): Co
       enableHiding: false,
     },
     {
-      accessorKey: "contacts",
+      accessorKey: "contactsCount",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Contacts" />,
       cell: ({ row }) => <div>{row.original._count.contacts}</div>,
       size: 50,

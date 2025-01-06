@@ -9,7 +9,6 @@ import {
 export const getTagsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
-  action: parseAsString.withDefault(""),
   sort: getSortingStateParser<Tag>().withDefault([
     { id: "createdAt", desc: true },
   ]),

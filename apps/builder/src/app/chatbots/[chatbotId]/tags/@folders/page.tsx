@@ -26,7 +26,7 @@ export default async function FoldersPage(props: {
     getFolders({
       chatbotId: params.chatbotId,
       folderType: folderType,
-      parentId: folderId,
+      parentId: folderId !== "0" ? folderId : null,
     }),
   ])
 
@@ -40,7 +40,7 @@ export default async function FoldersPage(props: {
       </div>
 
       <Suspense>
-        <ListFolders chatbotId={params.chatbotId}  folderType={folderType} promises={promises} />
+        <ListFolders chatbotId={params.chatbotId} folderType={folderType} promises={promises} />
       </Suspense>
     </>
   );

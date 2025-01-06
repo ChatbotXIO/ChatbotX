@@ -38,9 +38,7 @@ export function UpdateTagDialog({
   const {
     form,
     handleSubmitWithAction
-  } = useHookFormAction(
-    updateTagAction.bind(null, chatbotId, tag?.id ?? ""),
-    zodResolver(updateTagSchema), {
+  } = useHookFormAction(updateTagAction.bind(null, chatbotId, tag?.id ?? ""), zodResolver(updateTagSchema), {
     actionProps: {
       onSuccess: () => {
         toast.success(`Tag update successfully`)

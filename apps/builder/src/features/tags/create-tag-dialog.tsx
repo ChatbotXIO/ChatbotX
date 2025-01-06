@@ -22,20 +22,12 @@ import { toast } from "sonner";
 import { createTagAction } from "./actions/create-tag-action";
 import { createTagSchema } from "./schemas/create-tag-schema";
 
-export function CreateTagDialog({ chatbotId, folderId }: {
-  chatbotId: string,
-  folderId: string | null,
-}) {
+export function CreateTagDialog({ chatbotId, folderId }: { chatbotId: string, folderId: string | null, }) {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const router = useRouter()
 
-  const {
-    form,
-    handleSubmitWithAction
-  } = useHookFormAction(
-    createTagAction.bind(null, chatbotId, folderId),
-    zodResolver(createTagSchema), {
+  const { form, handleSubmitWithAction } = useHookFormAction(createTagAction.bind(null, chatbotId, folderId), zodResolver(createTagSchema), {
     actionProps: {
       onSuccess: () => {
         toast.success(`Tag created successfully`)
@@ -85,20 +77,15 @@ export function CreateTagDialog({ chatbotId, folderId }: {
                 </FormItem>
               )} />
 
-              <FormField control={form.control}
-                name="syncToMessenger" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('tags.sync_to_messenger')}</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
+              <FormField control={form.control} name="syncToMessenger" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('tags.sync_to_messenger')}</FormLabel>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t('common.cancel-btn')}</Button>

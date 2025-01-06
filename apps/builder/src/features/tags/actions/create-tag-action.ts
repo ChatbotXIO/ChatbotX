@@ -23,6 +23,7 @@ export const createTagAction = authActionClient
     const existingTag = await prisma.tag.findFirst({
       where: {
         name: parsedInput.name,
+        chatbotId,
       },
     });
 
