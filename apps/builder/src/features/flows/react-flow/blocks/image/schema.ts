@@ -7,4 +7,10 @@ export const NodeBlockImageSchema = z.object({
   link: z.string().url().optional(),
   base64: z.string().optional(),
   buttons: z.array(NodeBlockButtonSchema).optional(),
+}).refine(data => (data.file && data.base64) || (!data.file && !data.base64), {
+  message: 'File or Base64 not null',
+  path: ['file', 'base64'],
+}).refine(data => data.file || data.link, {
+  message: 'Link not null',
+  path: ['link'],
 })

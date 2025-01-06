@@ -2,17 +2,20 @@ import InputWithEmoji from "@/components/input-with-emoji";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslate } from "@tolgee/react";
-import { useForm } from "react-hook-form";
+import { Control, useForm} from "react-hook-form";
 import { SendMessageEditorItemType, SendMessageEditorItem } from "./menu";
 import SendMessageEditorAction from "./send-message-editor-action";
 import { Separator } from "@/components/ui/separator";
 import { DndContext } from "@dnd-kit/core";
 import { createId } from '@paralleldrive/cuid2';
+import { Button } from "@/components/ui/button";
 
 import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
 
 import type { NodeBlock } from "@/features/flows/react-flow/blocks/types";
+import { NodeBlockPayload, NodeBlockSchema } from "@/features/flows/react-flow/blocks/schema";
 import dynamic from "next/dynamic";
+import {zodResolver} from "@hookform/resolvers/zod";
 
 // Node block
 const StepImage = dynamic(() => import('../../steps/step-image'))
@@ -30,6 +33,9 @@ export default function SendMessageEditor() {
   const { currentNode, updateCurrentNode } = useNodeEditorStore()
 
   const form = useForm()
+  const formBlock = useForm<NodeBlockPayload>({
+    resolver: zodResolver(NodeBlockSchema)
+  })
 
   const onClickAction = (name: SendMessageEditorItemType) => {
     console.log('onClickActionnnnn', name)
@@ -52,21 +58,26 @@ export default function SendMessageEditor() {
     updateCurrentNode(newCurrentNode)
   }
 
-  const renderBlockItem = (block: NodeBlock, blockIndex: number) => {
+  const renderBlockItem = (block: NodeBlock, blockIndex: number, control: Control<NodeBlockPayload>) => {
     if (block.key === SendMessageEditorItem.Image) {
       return block.images && block.images.map((img, idx: number) => <StepImage key={idx} blockIndex={blockIndex} itemIndex={idx} />)
     }
     if (block.key === SendMessageEditorItem.Card) {
-      return block.cards && block.cards.map((img, idx: number) => <StepCard key={idx} blockIndex={blockIndex} itemIndex={idx} />)
+      return block.cards && block.cards.map((img, idx: number) => <StepCard key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
     }
   }
 
-  const renderBlocks = () => {
+  const renderBlocks = (control: Control<NodeBlockPayload>) => {
     if (currentNode && currentNode.data && currentNode.data.blocks) {
-      return currentNode.data.blocks.map((block: NodeBlock, idx: number) => renderBlockItem(block, idx))
+      return currentNode.data.blocks.map((block: NodeBlock, idx: number) => renderBlockItem(block, idx, control))
     }
     return null
   }
+
+  const onSubmit = (data: any) => {
+    const { formState } = formBlock
+    console.log('Form Data:', formState.errors);
+  };
 
   return (
     <>
@@ -102,8 +113,12 @@ export default function SendMessageEditor() {
           {/* <Draggable /> */}
         </DndContext>
         <InputWithEmoji />
-        { renderBlocks() }
+        <Form {...formBlock}>
+          { renderBlocks(formBlock.control) }
+        </Form>
       </div>
+
+      <Button onClick={onSubmit}>Test Form Submit</Button>
 
       <SendMessageEditorAction onClick={onClickAction} />
     </>

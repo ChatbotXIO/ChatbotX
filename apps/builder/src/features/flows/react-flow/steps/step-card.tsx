@@ -1,19 +1,23 @@
 import {SyntheticEvent, useEffect, useState} from 'react'
 import ImageDropzone from '@/components/image-dropzone'
 
+import {FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Card, CardFooter, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusIcon } from "lucide-react";
 import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
 import { createId } from "@paralleldrive/cuid2";
+import { Control } from "react-hook-form";
+import { NodeBlockPayload } from "@/features/flows/react-flow/blocks/schema";
 
 interface StepCardProps {
   blockIndex: number
-  itemIndex: number
+  itemIndex: number,
+  control: Control<NodeBlockPayload>
 }
 
-export default function AddCard({ blockIndex, itemIndex }: StepCardProps) {
+export default function AddCard({ blockIndex, itemIndex, control }: StepCardProps) {
   const { currentNode, updateCurrentNode } = useNodeEditorStore()
   const [imageLink, onImageLink] = useState<boolean>(false)
   const [card, setCard] = useState<Record<string, unknown>>({})
@@ -60,13 +64,22 @@ export default function AddCard({ blockIndex, itemIndex }: StepCardProps) {
         />
       </CardHeader>
       <CardContent className="p-2 bg-gray-200">
-        <Input
-          placeholder="Title (Required)" className="mb-2 border-0 focus-visible:ring-0 focus-visible:border-none"
-          maxLength={255}
-          value={card.title}
-          onChange={onChangeTitle}
-          required
+        <FormField
+          control={control}
+          name={`cards[${itemIndex}].title`}
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  placeholder="Title (Required)" className="mb-2 border-0 focus-visible:ring-0 focus-visible:border-none"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
+
         <Input
           placeholder="Subtitle"
           className="border-0 focus-visible:ring-0 focus-visible:border-none"

@@ -18,3 +18,5 @@ export const NodeDataSchema = z.object({
   id: z.string(),
   blocks: z.array(NodeBlockSchema).optional(),
 })
+
+export type NodeBlockPayload = z.infer<typeof NodeBlockSchema>
