@@ -23,6 +23,7 @@ export const deleteTagAction = authActionClient
         id: {
           in: ids,
         },
+        chatbotId,
       },
     })
 

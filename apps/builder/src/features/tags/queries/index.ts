@@ -8,11 +8,14 @@ import { GetTagsSchema } from "../schemas/get-tags-schema";
 export async function getTags(input: GetTagsSchema): Promise<{ data: Tag[], pageCount: number }> {
   const userId = await getCurrentUserId()
 
+  await findChatbotOrFail(userId, input.chatbotId)
+
   return await unstable_cache(async () => {
     try {
-      await findChatbotOrFail(userId, input.chatbotId)
 
-      const where: Prisma.TagWhereInput = {}
+      const where: Prisma.TagWhereInput = {
+        chatbotId: input.chatbotId,
+      }
 
       if (input.folderId) {
         where.folderId = input.folderId;
@@ -40,8 +43,12 @@ export async function getTags(input: GetTagsSchema): Promise<{ data: Tag[], page
           where,
           orderBy,
           include: {
-            contacts: true,
-          }
+            _count: {
+              select: {
+                contacts: true,
+              },
+            },
+          },
         }),
         prisma.tag.count({ where }),
       ])

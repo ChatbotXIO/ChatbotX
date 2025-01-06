@@ -14,20 +14,24 @@ import { Tag } from "@ahachat.ai/database";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
 import { useTranslate } from '@tolgee/react';
-import { Loader2 } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { updateTagAction } from "./actions/update-tag-action";
 import { updateTagSchema } from "./schemas/update-tag-schema";
 
-export function UpdateTagDialog({ chatbotId, tag, open,
-  onOpenChange }: {
-    open: boolean,
-    onOpenChange: (val: boolean) => void,
-    chatbotId: string,
-    tag: Tag | null,
-  }) {
+export function UpdateTagDialog({
+  chatbotId,
+  tag,
+  open,
+  onOpenChange
+}: {
+  open: boolean,
+  onOpenChange: (val: boolean) => void,
+  chatbotId: string,
+  tag: Tag | null,
+}) {
   const { t } = useTranslate();
   const router = useRouter()
 
@@ -86,7 +90,7 @@ export function UpdateTagDialog({ chatbotId, tag, open,
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('common.cancel-btn')}</Button>
                 <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting}>
-                  {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
+                  {form.formState.isSubmitting && <Loader2Icon className="animate-spin" />}
                   {t('common.confirm-btn')}
                 </Button>
               </div>

@@ -7,13 +7,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortc
 import { Tag } from "@ahachat.ai/database";
 import { Row, type ColumnDef } from "@tanstack/react-table";
 import { EllipsisVerticalIcon } from "lucide-react";
-
 export interface DataTableRowAction<TData> {
   row: Row<TData>
   type: "update" | "delete"
 }
 
 type TagWithContacts = Tag & {
+  _count?: any
   contacts?: any
 };
 
@@ -21,9 +21,10 @@ interface GetColumnsProps {
   setRowAction: React.Dispatch<
     React.SetStateAction<DataTableRowAction<Tag> | null>
   >
+  handleCopy: (id: string) => void
 }
 
-export function getTagColumns({ setRowAction }: GetColumnsProps): ColumnDef<TagWithContacts>[] {
+export function getTagColumns({ setRowAction, handleCopy }: GetColumnsProps): ColumnDef<TagWithContacts>[] {
   return [
     {
       id: "select",
@@ -56,9 +57,9 @@ export function getTagColumns({ setRowAction }: GetColumnsProps): ColumnDef<TagW
       enableHiding: false,
     },
     {
-      accessorKey: "folderId",
+      accessorKey: "contacts",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Contacts" />,
-      cell: ({ row }) => <div>{row.original.contacts.length}</div>,
+      cell: ({ row }) => <div>{row.original._count.contacts}</div>,
       size: 50,
       enableSorting: false,
       enableHiding: false,
@@ -83,6 +84,12 @@ export function getTagColumns({ setRowAction }: GetColumnsProps): ColumnDef<TagW
                 onSelect={() => setRowAction({ row, type: "update" })}
               >
                 Update
+                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleCopy(`${row.original.id}`)}
+              >
+                Get id
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem

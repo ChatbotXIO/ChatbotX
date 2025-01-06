@@ -23,10 +23,6 @@ export const createTagAction = authActionClient
     const existingTag = await prisma.tag.findFirst({
       where: {
         name: parsedInput.name,
-        folderId: folderId ?? null,
-        folder: {
-          chatbotId,
-        },
       },
     });
 
@@ -37,6 +33,7 @@ export const createTagAction = authActionClient
     await prisma.tag.create({
       data: {
         ...parsedInput,
+        chatbotId,
         folderId,
       }
     })

@@ -14,6 +14,8 @@ import { getTags } from "./queries";
 import { getTagColumns } from "./tags-table-columns";
 import { UpdateTagDialog } from "./update-tag-dialog";
 import { TagsTableToolbarActions } from "./tags-table-toolbar-actions";
+import { useCopyToClipboard } from "usehooks-ts";
+import { toast } from "sonner";
 
 interface TagsTableProps {
   promises: Promise<[
@@ -25,10 +27,21 @@ interface TagsTableProps {
 export function TagsTable({ promises, chatbotId }: TagsTableProps) {
   const [{ data, pageCount }] = React.use(promises);
   const [rowAction, setRowAction] = React.useState<DataTableRowAction<Tag> | null>(null);
+  const [copiedText, copy] = useCopyToClipboard()
+
+  const handleCopy = (id: string) => {
+    copy(id)
+      .then(() => {
+        toast.success("Copied to clipboard!");
+      })
+      .catch(() => {
+        toast.error("Failed to copy!");
+      });
+  };
 
   const columns = React.useMemo(
-    () => getTagColumns({ setRowAction }),
-    [setRowAction]
+    () => getTagColumns({ setRowAction, handleCopy }),
+    [setRowAction, handleCopy]
   )
 
   const filterFields: DataTableFilterField<Tag & { name?: string }>[] = [

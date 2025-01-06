@@ -71,9 +71,9 @@ export function DeleteTagsDialog({
         <DialogHeader>
           <DialogTitle>{t('tags.delete.dialog_title')}</DialogTitle>
           <DialogDescription>
-            {t('tags.delete.dialog_first_desc')}{" "}
+            {t('tags.confirmDeleteDesc')}{" "}
             <span className="font-medium">{tags.length}</span>
-            {tags.length === 1 ? " log " : " tags "}{t('tags.delete.dialog_second_desc')}
+            {tags.length === 1 ? " log " : " tags "}{t('tags.confirmDeleteDesc')}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
@@ -87,10 +87,7 @@ export function DeleteTagsDialog({
             disabled={isDeletePending}
           >
             {isDeletePending && (
-              <Loader
-                className="mr-2 size-4 animate-spin"
-                aria-hidden="true"
-              />
+              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             {t('common.deleteBtn')}
           </Button>

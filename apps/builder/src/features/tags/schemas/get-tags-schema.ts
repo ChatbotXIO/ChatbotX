@@ -19,7 +19,6 @@ export const getTagsSearchParamsCache = createSearchParamsCache({
 
 export type GetTagsSchema = Awaited<ReturnType<typeof getTagsSearchParamsCache.parse>> & {
   chatbotId: string,
-  name: string,
   folderId: string | null,
 }
 

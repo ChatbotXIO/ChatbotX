@@ -17,7 +17,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { T, useTranslate } from '@tolgee/react';
 import { Loader2, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { createTagAction } from "./actions/create-tag-action";
 import { createTagSchema } from "./schemas/create-tag-schema";
@@ -58,10 +58,6 @@ export function CreateTagDialog({ chatbotId, folderId }: {
     },
     errorMapProps: {}
   });
-
-  useEffect(() => {
-    console.log("Form change", form)
-  }, [])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
