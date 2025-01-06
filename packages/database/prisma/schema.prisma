@@ -91,7 +91,7 @@ model Chatbot {
   contacts       Contact[]
   logs           Log[]
   folders        Folder[]
-  tags Tag[]
+  tags           Tag[]
 }
 
 model ChatbotMember {
@@ -229,9 +229,9 @@ model Tag {
   name            String
   folderId        String?
   syncToMessenger Boolean
-  chatbotId String
+  chatbotId       String
 
-  chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbot  Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   folder   Folder?   @relation(fields: [folderId], references: [id])
   contacts Contact[]
 
