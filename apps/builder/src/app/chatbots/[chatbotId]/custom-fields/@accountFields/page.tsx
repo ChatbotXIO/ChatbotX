@@ -1,9 +1,11 @@
 
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 import { AccountFieldsTable } from "@/features/fields/account-field-table";
+import { CreateAccountFieldDialog } from "@/features/fields/create-account-field-dialog";
 import { getFields } from "@/features/fields/queries";
 import { getFieldsSearchParamsCache } from "@/features/fields/schemas/get-fields-schema";
 import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema";
+import { FieldType } from "@prisma/client";
 import { type SearchParams } from 'nuqs/server';
 import { Suspense } from "react";
 
@@ -20,13 +22,19 @@ export default async function AccountFieldsPage(props: {
     getFields({
       ...search,
       chatbotId: params.chatbotId,
-      folderId: folderId
+      folderId: folderId,
+      fieldType: FieldType.AccountField
     }),
   ])
 
   return (
     <>
-      <h1>Chatbot Field</h1>
+      <div className="flex">
+        <h3 className="font-bold flex-1">
+          Chatbot Field
+        </h3>
+        <CreateAccountFieldDialog chatbotId={params.chatbotId} folderId={folderId} />
+      </div>
       <Suspense fallback={
         <DataTableSkeleton
           columnCount={4}

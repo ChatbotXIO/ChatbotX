@@ -4,20 +4,19 @@ import React from 'react';
 
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
-import type {
-  DataTableFilterField,
-} from "@/components/data-table/types";
 import { useDataTable } from "@/hooks/use-data-table";
 import { Field, FieldType } from "@ahachat.ai/database";
-import { Row } from '@tanstack/react-table';
-import { toast } from 'sonner';
-import { useCopyToClipboard } from 'usehooks-ts';
-import { getColumns } from './account-field-table-columns';
-import { AccountFieldsTableToolbarActions } from './account-fields-table-toolbar-actions';
-import { DeleteFieldsDialog } from './delete-fields-dialog';
+import type {
+  DataTableFilterField,
+  DataTableRowAction,
+} from "@/components/data-table/types";
 import { getFields } from './queries';
-import { UpdateAccountFieldDialog } from './update-account-field-dialog';
-import { UpdateAccountFieldNameDialog } from './update-account-field-name-dialog';
+import { getColumns } from './custom-field-table-columns';
+import { CustomFieldsTableToolbarActions } from './custom-field-table-toolbar-actions';
+import { UpdateCustomFieldDialog } from './update-custom-field-dialog';
+import { useCopyToClipboard } from "usehooks-ts";
+import { toast } from 'sonner';
+import { DeleteFieldsDialog } from './delete-fields-dialog';
 
 interface FieldsTableProps {
   promises: Promise<[
@@ -26,16 +25,9 @@ interface FieldsTableProps {
   chatbotId: string
 }
 
-interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: "update" | "delete" | 'update-name'
-}
-
-
-export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
+export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
   const [{ data, pageCount }] = React.use(promises);
   const [rowAction, setRowAction] = React.useState<DataTableRowAction<Field> | null>(null);
-
   const [copiedText, copyFieldId] = useCopyToClipboard()
 
   const handleCopy = (id: string) => {
@@ -79,7 +71,7 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          <AccountFieldsTableToolbarActions table={table} chatbotId={chatbotId} setRowAction={setRowAction} />
+          <CustomFieldsTableToolbarActions table={table} chatbotId={chatbotId} setRowAction={setRowAction} />
         </DataTableToolbar>
       </DataTable>
 
@@ -90,18 +82,11 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         showTrigger={false}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
-        fieldType={FieldType.AccountField}
+        fieldType={FieldType.CustomField}
       />
 
-      <UpdateAccountFieldDialog
+      <UpdateCustomFieldDialog
         open={rowAction?.type === "update"}
-        onOpenChange={() => setRowAction(null)}
-        chatbotId={chatbotId}
-        accountField={rowAction?.row.original || null}
-      />
-
-      <UpdateAccountFieldNameDialog
-        open={rowAction?.type === "update-name"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         customField={rowAction?.row.original || null}

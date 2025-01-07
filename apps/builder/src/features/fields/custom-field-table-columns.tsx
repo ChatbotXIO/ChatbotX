@@ -4,13 +4,14 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import { Field } from "@ahachat.ai/database";
 import { Row, type ColumnDef } from "@tanstack/react-table";
 import { EllipsisIcon } from "lucide-react";
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  type: "update" | "delete" | 'update-name'
+  type: "update" | "delete"
 }
 
 interface GetColumnsProps {
@@ -65,9 +66,9 @@ export function getColumns({ setRowAction, handleCopy }: GetColumnsProps): Colum
       enableHiding: false,
     },
     {
-      accessorKey: "value",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Value" />,
-      cell: ({ row }) => <div>{row.original.value}</div>,
+      accessorKey: "showInInbox",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Inbox" />,
+      cell: ({ row }) => <Switch checked={row.original.showInInbox} />,
       enableSorting: true,
       enableHiding: false,
     },
@@ -90,13 +91,7 @@ export function getColumns({ setRowAction, handleCopy }: GetColumnsProps): Colum
               <DropdownMenuItem
                 onSelect={() => setRowAction({ row, type: "update" })}
               >
-                Change Value
-                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "update-name" })}
-              >
-                Change Name
+                Update Name
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem

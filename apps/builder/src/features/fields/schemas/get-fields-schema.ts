@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/components/data-table/parsers"
-import { Field } from "@ahachat.ai/database"
+import { Field, FieldType } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -18,4 +18,5 @@ export const getFieldsSearchParamsCache = createSearchParamsCache({
 export type GetFieldsSchema = Awaited<ReturnType<typeof getFieldsSearchParamsCache.parse>> & {
   chatbotId: string,
   folderId: string | null,
+  fieldType: FieldType
 }

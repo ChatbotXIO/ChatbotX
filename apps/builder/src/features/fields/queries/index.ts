@@ -13,10 +13,11 @@ export async function getFields(input: GetFieldsSchema): Promise<{ data: Field[]
     try {
       const where: Prisma.FieldWhereInput = {
         chatbotId: input.chatbotId,
+        fieldType: input.fieldType,
       }
 
-      if (input.folderId) {
-        where.folderId = input.folderId;
+      if (input.folderId !== undefined) {
+        where.folderId = input.folderId === null || input.folderId === "0" ? null : input.folderId;
       }
 
       if (input.name) {
@@ -52,6 +53,6 @@ export async function getFields(input: GetFieldsSchema): Promise<{ data: Field[]
     }
   }, [JSON.stringify(input)], {
     revalidate: 3600,
-    tags: [`${userId}#fields`]
+    tags: [`${userId}#fields#${input.fieldType}`]
   })()
 }
