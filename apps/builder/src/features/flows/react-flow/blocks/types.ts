@@ -12,7 +12,10 @@ export type NodeBlock = {
   images?: NodeBlockImage[]
   cards?: NodeBlockCard[]
   videos?: NodeBlockVideo[],
-  carousel?: []
+  carousel?: Record<string, unknown>[],
+  audios?: Record<string, unknown>[],
+  gifs?: Record<string, unknown>[],
+  files?: Record<string, unknown>[]
 }
 
 export type NodeData = {

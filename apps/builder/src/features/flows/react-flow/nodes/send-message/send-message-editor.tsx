@@ -8,14 +8,13 @@ import SendMessageEditorAction from "./send-message-editor-action";
 import { Separator } from "@/components/ui/separator";
 import { DndContext } from "@dnd-kit/core";
 import { createId } from '@paralleldrive/cuid2';
-import { Button } from "@/components/ui/button";
 
 import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
 
 import type { NodeBlock } from "@/features/flows/react-flow/blocks/types";
 import { NodeBlockPayload, NodeBlockSchema } from "@/features/flows/react-flow/blocks/schema";
 import dynamic from "next/dynamic";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const lazyLoadStep = (name: string) => dynamic(() => import((`@/features/flows/react-flow/steps/step-${name}`)))
 
@@ -23,6 +22,8 @@ const lazyLoadStep = (name: string) => dynamic(() => import((`@/features/flows/r
 const StepImage = lazyLoadStep('image')
 const StepCard = lazyLoadStep('card')
 const StepVideo = lazyLoadStep('video')
+const StepAudio = lazyLoadStep('audio')
+const StepGif = lazyLoadStep('gif')
 
 const prototypeItem = new Map()
   .set(SendMessageEditorItem.Image, 'images')
@@ -30,6 +31,8 @@ const prototypeItem = new Map()
   .set(SendMessageEditorItem.Text, 'text')
   .set(SendMessageEditorItem.Video, 'videos')
   .set(SendMessageEditorItem.Carousel, 'carousel')
+  .set(SendMessageEditorItem.FileAudio, 'audios')
+  .set(SendMessageEditorItem.Gif, 'gifs')
 
 export default function SendMessageEditor() {
   const { t } = useTranslate()
@@ -64,7 +67,7 @@ export default function SendMessageEditor() {
     updateCurrentNode(newCurrentNode)
   }
 
-  const renderBlockItem = (block: NodeBlock, blockIndex: number, control: Control<NodeBlockPayload>) => {
+  const renderBlockItem = ( block: NodeBlock, blockIndex: number, control: Control<NodeBlockPayload>) => {
     switch (block.key) {
       case SendMessageEditorItem.Image:
         return block.images && block.images.map((img, idx: number) => <StepImage key={idx} blockIndex={blockIndex} itemIndex={idx} />)
@@ -72,6 +75,10 @@ export default function SendMessageEditor() {
         return block.cards && block.cards.map((img, idx: number) => <StepCard key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
       case SendMessageEditorItem.Video:
         return block.videos && block.videos.map((video, idx: number) => <StepVideo key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
+      case SendMessageEditorItem.FileAudio:
+        return block.audios && block.audios.map((audio, idx: number) => <StepAudio key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
+      case SendMessageEditorItem.Gif:
+        return block.gifs && block.gifs.map((gif, idx: number) => <StepGif key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
       default:
         return null
     }

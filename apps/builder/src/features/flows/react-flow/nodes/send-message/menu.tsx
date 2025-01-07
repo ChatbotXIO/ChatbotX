@@ -1,5 +1,5 @@
 import { T } from "@tolgee/react";
-import { ArchiveIcon, BellIcon, BotIcon, CalculatorIcon, CalendarSyncIcon, ChartNoAxesCombinedIcon, CircleEllipsisIcon, ClockIcon, CodeIcon, CogIcon, CreditCardIcon, ImageIcon, ImagePlayIcon, KeyboardIcon, MessageCircleMoreIcon, MessageCirclePlusIcon, MessageCircleXIcon, MessagesSquareIcon, OctagonXIcon, PackageOpenIcon, PaperclipIcon, PictureInPicture2Icon, SaveIcon, SaveOffIcon, ShuffleIcon, StarIcon, StarOffIcon, TagIcon, TextIcon, UserIcon, UserRoundMinusIcon, UserRoundXIcon, VideoIcon, ZapIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BotIcon, CalculatorIcon, CalendarSyncIcon, ChartNoAxesCombinedIcon, CircleEllipsisIcon, ClockIcon, CodeIcon, CogIcon, CreditCardIcon, ImageIcon, ImagePlayIcon, KeyboardIcon, MessageCircleMoreIcon, MessageCirclePlusIcon, MessageCircleXIcon, MessagesSquareIcon, OctagonXIcon, PackageOpenIcon, PaperclipIcon, PictureInPicture2Icon, SaveIcon, SaveOffIcon, ShuffleIcon, StarIcon, StarOffIcon, TagIcon, TextIcon, UserIcon, UserRoundMinusIcon, UserRoundXIcon, VideoIcon, ZapIcon, Volume2 } from "lucide-react";
 import { ReactElement } from "react";
 
 export enum SendMessageEditorItem {
@@ -98,6 +98,12 @@ export const sendMessageEditorMenu: MenuItem[] = [
     label: <T keyName="flows.sendMenuEditor.actions.Video" />,
     icon: <VideoIcon />,
     type: SendMessageEditorItem.Video,
+    proFeature: false,
+  },
+  {
+    label: <T keyName="flows.sendMenuEditor.actions.Audio" />,
+    icon: <Volume2 />,
+    type: SendMessageEditorItem.FileAudio,
     proFeature: false,
   },
   {
