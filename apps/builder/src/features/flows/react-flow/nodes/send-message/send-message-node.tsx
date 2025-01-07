@@ -17,16 +17,24 @@ const lazyLoad = (name: string) => dynamic(
 
 const NodeBlockImage = lazyLoad('image')
 const NodeBlockCard = lazyLoad('card')
+const NodeBlockVideo = lazyLoad('video')
+const NodeBlockText = lazyLoad('text')
 
 export default function SendMessageNode({ data, id }: { data: NodeData, id: string | number }) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   const renderBlockItem = (block: NodeBlock) => {
-    if (block.key === SendMessageEditorItem.Image) {
-      return block.images && block.images.map((img, idx: number) => <NodeBlockImage key={idx} image={img} />)
-    }
-    if (block.key === SendMessageEditorItem.Card) {
-      return block.cards && block.cards.map((card, idx: number) => <NodeBlockCard key={idx} card={card} />)
+    switch (block.key) {
+      case SendMessageEditorItem.Text:
+        return block.text && block.text.map((text, idx: number) => <NodeBlockText key={idx} text={text} />)
+      case SendMessageEditorItem.Image:
+        return block.images && block.images.map((img, idx: number) => <NodeBlockImage key={idx} image={img} />)
+      case SendMessageEditorItem.Card:
+        return block.cards && block.cards.map((card, idx: number) => <NodeBlockCard key={idx} card={card} />)
+      case SendMessageEditorItem.Video:
+        return block.videos && block.videos.map((video, idx: number) => <NodeBlockVideo key={idx} video={video} />)
+      default:
+        return null
     }
   }
 

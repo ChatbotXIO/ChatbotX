@@ -1,6 +1,6 @@
 import { ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
-import {useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
 import Dropzone from "react-dropzone"
 import { T } from "@tolgee/react"

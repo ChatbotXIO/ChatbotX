@@ -17,9 +17,12 @@ import { NodeBlockPayload, NodeBlockSchema } from "@/features/flows/react-flow/b
 import dynamic from "next/dynamic";
 import {zodResolver} from "@hookform/resolvers/zod";
 
+const lazyLoadStep = (name: string) => dynamic(() => import((`@/features/flows/react-flow/steps/step-${name}`)))
+
 // Node block
-const StepImage = dynamic(() => import('../../steps/step-image'))
-const StepCard = dynamic(() => import('../../steps/step-card'))
+const StepImage = lazyLoadStep('image')
+const StepCard = lazyLoadStep('card')
+const StepVideo = lazyLoadStep('video')
 
 const prototypeItem = new Map()
   .set(SendMessageEditorItem.Image, 'images')
@@ -41,10 +44,12 @@ export default function SendMessageEditor() {
     console.log('onClickActionnnnn', name)
 
     const newCurrentNode = { ...currentNode }
+
     const newBlock: Partial<NodeBlock> = {
       id: createId(),
       key: name,
     }
+
     Object.defineProperty(newBlock, prototypeItem.get(name), {
       value: [
         {
@@ -54,16 +59,21 @@ export default function SendMessageEditor() {
       writable: true,
       enumerable: true,
     })
+
     newCurrentNode.data?.blocks.push(newBlock)
     updateCurrentNode(newCurrentNode)
   }
 
   const renderBlockItem = (block: NodeBlock, blockIndex: number, control: Control<NodeBlockPayload>) => {
-    if (block.key === SendMessageEditorItem.Image) {
-      return block.images && block.images.map((img, idx: number) => <StepImage key={idx} blockIndex={blockIndex} itemIndex={idx} />)
-    }
-    if (block.key === SendMessageEditorItem.Card) {
-      return block.cards && block.cards.map((img, idx: number) => <StepCard key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
+    switch (block.key) {
+      case SendMessageEditorItem.Image:
+        return block.images && block.images.map((img, idx: number) => <StepImage key={idx} blockIndex={blockIndex} itemIndex={idx} />)
+      case SendMessageEditorItem.Card:
+        return block.cards && block.cards.map((img, idx: number) => <StepCard key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
+      case SendMessageEditorItem.Video:
+        return block.videos && block.videos.map((video, idx: number) => <StepVideo key={idx} blockIndex={blockIndex} itemIndex={idx} control={control} />)
+      default:
+        return null
     }
   }
 
@@ -117,9 +127,6 @@ export default function SendMessageEditor() {
           { renderBlocks(formBlock.control) }
         </Form>
       </div>
-
-      <Button onClick={onSubmit}>Test Form Submit</Button>
-
       <SendMessageEditorAction onClick={onClickAction} />
     </>
   )
