@@ -1,9 +1,9 @@
+import { T } from "@tolgee/react"
 import { ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
-import {useEffect, useState} from "react"
-import { Button } from "./ui/button"
+import { useEffect, useState } from "react"
 import Dropzone from "react-dropzone"
-import { T } from "@tolgee/react"
+import { Button } from "./ui/button"
 
 function AttachedImage({ image, onRemove }: { image: string, onRemove: () => void }) {
   const onClick = (e: any) => {
@@ -49,7 +49,7 @@ export default function ImageDropzone({ oldImage, onSwitchToImageLink, onChange 
       const reader = new FileReader()
       reader.onloadend = () => {
         setImage(reader.result as string)
-        onChange({file, base64: reader.result})
+        onChange({ file, base64: reader.result })
       }
       reader.readAsDataURL(file)
     }
@@ -57,7 +57,7 @@ export default function ImageDropzone({ oldImage, onSwitchToImageLink, onChange 
 
   const handleRemove = () => {
     setImage(null)
-    onChange(null)
+    onChange({ file: null, base64: null })
   }
 
   useEffect(() => {
