@@ -1,13 +1,19 @@
-import { Message } from "@/features/inbox/interfaces/message";
 import MessageList from "@/features/messages/message-list";
-import { generateMessages } from "@/mock/messages.mock";
+import type { SearchParams } from "nuqs/server";
+import { Suspense } from "react";
+import { getConversationsSearchParamsCache } from "@/features/conversations/schemas/get-conversations-schema";
 
-export default async function InboxMessageListSlot() {
-  const messages: Message[] = await new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(generateMessages(200) as Message[]);
-    }, 1000);
-  });
+export default async function MessagesPage(props: {
+  params: Promise<{ chatbotId: string }>,
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await props.params
+  const searchParams = await props.searchParams
+  const { conversationId } = getConversationsSearchParamsCache.parse(searchParams)
 
-  return <MessageList messages={messages} />
+  return (
+    <Suspense>
+      {conversationId && <MessageList chatbotId={params.chatbotId} conversationId={conversationId} />}
+    </Suspense>
+  )
 }

@@ -1,17 +1,27 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { ChatBubble, ChatBubbleAction, ChatBubbleActionWrapper, ChatBubbleAvatar, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble"
+import {
+  ChatBubble,
+  ChatBubbleAction,
+  ChatBubbleActionWrapper,
+  ChatBubbleAvatar,
+  ChatBubbleMessage
+} from "@/components/ui/chat/chat-bubble"
 import { ChatInput } from "@/components/ui/chat/chat-input"
 import { cn } from "@/lib/utils"
-import { SenderType } from "@ahachat.ai/database"
+import { MessageType, SenderType } from "@ahachat.ai/database"
 import { File, Heart, PaperclipIcon, PlusCircle, Reply, SendIcon } from "lucide-react"
 import { Virtuoso } from "react-virtuoso"
-import { Message } from "../inbox/interfaces/message"
 import MessageItem from "./message-item"
+import { getMessages } from "@/features/messages/queries";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { CursorMessages, MessageResource } from "@/features/messages/schemas/get-messages-schema";
+import ConversationLoading from "@/features/inbox/conversation-loading";
 
 interface MessagesProps {
-  messages: Message[]
+  chatbotId: string,
+  conversationId: string,
 }
 
 const actionIcons = [
@@ -25,13 +35,45 @@ const actionIcons = [
   }
 ]
 
-export default function MessageList({ messages }: MessagesProps) {
+export default function MessageList({ chatbotId, conversationId }: MessagesProps) {
+  const [messages, setMessages] = useState<MessageResource[]>([])
+  // console.log('messages', messages)
+  const [loadingMore, setLoadingMore] = useState<boolean>(false)
+  const cursor = useRef<CursorMessages | null>(null)
+
+  useEffect(() => {
+    cursor.current = null
+    setMessages([])
+    loadMoreMessages(true)
+  }, [conversationId]);
+
+  const loadMoreMessages = async (isLoadFirst = false) => {
+    if (loadingMore || (!isLoadFirst && !cursor.current)) {
+      return
+    }
+
+    try {
+      setLoadingMore(true)
+      const newMessages = await getMessages({
+        chatbotId,
+        conversationId,
+        cursor: cursor.current
+      })
+      console.log('newMessages', newMessages.cursor, newMessages.data)
+      setMessages((prev) => [...newMessages.data.reverse(), ...prev])
+      cursor.current = newMessages.cursor
+    } catch (err) {
+      console.log('err', err)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
   const getPositionClasses = (senderType: SenderType): string => {
-    if (senderType === "Contact" as SenderType) {
+    if (senderType === SenderType.Contact) {
       return "justify-end"
     }
 
-    if (senderType === "System" as SenderType) {
+    if (senderType === SenderType.System) {
       return "justify-center"
     }
 
@@ -39,11 +81,11 @@ export default function MessageList({ messages }: MessagesProps) {
   }
 
   const getMessageDirection = (senderType: SenderType): "sent" | "received" | null | undefined => {
-    if (senderType === "Contact" as SenderType) {
+    if (senderType === SenderType.Contact) {
       return "sent"
     }
 
-    if (senderType === "System" as SenderType) {
+    if (senderType === SenderType.System) {
       return null
     }
 
@@ -56,45 +98,49 @@ export default function MessageList({ messages }: MessagesProps) {
         <Virtuoso
           className="flex-1"
           data={messages}
+          atTopStateChange={(atTop) => atTop && loadMoreMessages()}
           initialTopMostItemIndex={messages.length - 1}
           itemContent={(_, item) => (
-            <div className={cn("flex mb-1 max-h-[60%]", getPositionClasses(item.senderType))}>
-              <ChatBubble variant={getMessageDirection(item.senderType)} key={item.id} className="items-center">
-                <ChatBubbleAvatar fallback={item.user.firstName} src={item.user.avatar} />
-                <ChatBubbleMessage
-                  isLoading={item.isLoading}
-                  variant={getMessageDirection(item.senderType)}
-                  className={cn(
-                    item.messageType === 'text' || item.messageType === 'file' ? 'rounded-md' : 'p-0 bg-transparent'
-                  )}
-                >
-                  <MessageItem message={item} />
-                </ChatBubbleMessage>
-                {/* Action Icons */}
-                <ChatBubbleActionWrapper>
-                  {
-                    actionIcons.map(({ icon: Icon, type }) => (
-                      <ChatBubbleAction
-                        className="size-7"
-                        key={type}
-                        icon={<Icon className="size-4" />}
-                      />
-                    ))
-                  }
-                </ChatBubbleActionWrapper>
-              </ChatBubble>
-            </div>
+            <Suspense fallback={<ConversationLoading/>}>
+              {!item && (<div className="hidden"></div>)}
+              {item && (<div className={cn("flex mb-1 max-h-[60%]", getPositionClasses(item.senderType))}>
+                  <ChatBubble variant={getMessageDirection(item.senderType)} key={item.id} className="items-center">
+                    <ChatBubbleAvatar fallback={item.user?.name ?? ""} src={item.user?.image ?? ""}/>
+                    <ChatBubbleMessage
+                      variant={getMessageDirection(item.senderType)}
+                      className={cn(
+                        item.messageType === MessageType.Text || item.messageType === MessageType.File ? 'rounded-md' : 'p-0 bg-transparent'
+                      )}
+                    >
+                      <MessageItem message={item}/>
+                    </ChatBubbleMessage>
+                    {/* Action Icons */}
+                    <ChatBubbleActionWrapper>
+                      {
+                        actionIcons.map(({ icon: Icon, type }) => (
+                          <ChatBubbleAction
+                            className="size-7"
+                            key={type}
+                            icon={<Icon className="size-4"/>}
+                          />
+                        ))
+                      }
+                    </ChatBubbleActionWrapper>
+                  </ChatBubble>
+                </div>
+              )}
+            </Suspense>
           )}
         />
         <form className="flex items-center gap-2 mt-3">
           <Button variant="ghost" size="icon" className="h-auto p-2">
-            <PlusCircle size={20} />
+            <PlusCircle size={20}/>
           </Button>
           <Button variant="ghost" size="icon" className="h-auto p-2">
-            <File size={20} />
+            <File size={20}/>
           </Button>
           <Button variant="ghost" size="icon" className="h-auto p-2">
-            <PaperclipIcon size={20} />
+            <PaperclipIcon size={20}/>
           </Button>
           <div
             className="relative rounded-full w-full border bg-background focus-within:ring-1 focus-within:ring-ring h-auto">
@@ -104,7 +150,7 @@ export default function MessageList({ messages }: MessagesProps) {
             />
           </div>
           <Button size="icon" variant="ghost">
-            <SendIcon size={20} />
+            <SendIcon size={20}/>
           </Button>
         </form>
       </div>

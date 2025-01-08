@@ -1,35 +1,37 @@
 'use client'
 
-import { Message } from "@/features/inbox/interfaces/message"
+import { MessageType } from "@ahachat.ai/database"
 import { Files } from "lucide-react"
 import Image from 'next/image'
+import { MessageResource } from "@/features/messages/schemas/get-messages-schema";
 
 interface MessageItemProps {
-  message: Message
+  message: MessageResource
 }
 
 export default function MessageItem({ message }: MessageItemProps) {
-  if (message.messageType === "text") {
+  if (message.messageType === MessageType.Text) {
     return message.content
   }
 
-  if (typeof message.content === 'object') {
-    const { imageUrl = '', audioUrl = '', videoUrl = '', fileUrl = '', fileName = '', location: { lat, lng } = {} } = message.content
+  const content = JSON.parse(message.content ?? '{}')
+  if (typeof content === 'object') {
+    const { imageUrl = '', audioUrl = '', videoUrl = '', fileUrl = '', fileName = '', location: { lat = "", lng = "" } = {} } = content
 
     switch (message.messageType) {
-      case 'image':
+      case MessageType.Image:
         return <div className="relative w-[150px] h-auto"><Image src={imageUrl} fill={true} alt={message.id} /></div>
-      case 'audio':
+      case MessageType.Audio:
         return <audio controls src={audioUrl} />
-      case 'video':
+      case MessageType.Video:
         return <video controls className="rounded-b" width={300} height="auto" src={videoUrl} />
-      case 'file':
+      case MessageType.File:
         return (
           <a className="flex items-center gap-2" href={fileUrl} download>
             <Files size={15} /> {fileName}
           </a>
         )
-      case "location":
+      case MessageType.Location:
         return (
           <iframe
             width="100%"
