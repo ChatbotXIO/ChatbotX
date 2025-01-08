@@ -1,19 +1,41 @@
 import ImageDropzone from '@/components/image-dropzone'
-import { useState } from 'react'
+import {useEffect, useState} from 'react'
 import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
 
-export default function StepImage() {
-  const [imageLink, onImageLink] = useState<boolean>(false)
-  const { updateImageNode } = useNodeEditorStore()
+interface StepImageProps {
+  blockIndex: number
+  itemIndex: number
+}
 
-  const onChangeImage = (file: any) => {
-    updateImageNode(file)
+export default function StepImage({ blockIndex, itemIndex }: StepImageProps) {
+  const [imageLink, onImageLink] = useState<boolean>(false)
+  const [oldImage, setOldImage] = useState<Record<string, unknown>>({})
+  const { updateCurrentNode, currentNode } = useNodeEditorStore()
+
+  const onChangeImage = (file: { file: File, base64: string }) => {
+    const newNode = { ...currentNode }
+    if (file) {
+      newNode.data.blocks[blockIndex].images[itemIndex] = {
+        ...newNode.data.blocks[blockIndex].images[itemIndex],
+        ...file
+      }
+    } else {
+      newNode.data.blocks[blockIndex].images[itemIndex] = {
+        id: newNode.data.blocks[blockIndex].images[itemIndex].id
+      }
+    }
+    updateCurrentNode(newNode)
   }
+
+  useEffect(() => {
+    setOldImage(currentNode.data.blocks[blockIndex].images[itemIndex])
+  }, [])
 
   return (
     imageLink ?
       ("hehehe") :
       <ImageDropzone
+        oldImage={oldImage}
         onSwitchToImageLink={() => onImageLink(true)}
         onChange={onChangeImage}
       />

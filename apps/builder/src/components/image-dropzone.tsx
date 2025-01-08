@@ -1,9 +1,9 @@
+import { T } from "@tolgee/react"
 import { ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
-import { Button } from "./ui/button"
+import { useEffect, useState } from "react"
 import Dropzone from "react-dropzone"
-import { T } from "@tolgee/react"
+import { Button } from "./ui/button"
 
 function AttachedImage({ image, onRemove }: { image: string, onRemove: () => void }) {
   const onClick = (e: any) => {
@@ -41,7 +41,7 @@ function NeedAttachedImage({ onSwitchToImageLink }: { onSwitchToImageLink: () =>
   )
 }
 
-export default function ImageDropzone({ onSwitchToImageLink, onChange }: { onSwitchToImageLink: () => void, onChange: (file?: any) => void }) {
+export default function ImageDropzone({ oldImage, onSwitchToImageLink, onChange }: { oldImage: Record<string, unknown>, onSwitchToImageLink: () => void, onChange: (file?: Record<string, unknown>) => void }) {
   const [image, setImage] = useState<string | null>(null)
 
   const handleFileChange = (file: File | null) => {
@@ -49,7 +49,7 @@ export default function ImageDropzone({ onSwitchToImageLink, onChange }: { onSwi
       const reader = new FileReader()
       reader.onloadend = () => {
         setImage(reader.result as string)
-        onChange({...file, base64: reader.result})
+        onChange({ file, base64: reader.result })
       }
       reader.readAsDataURL(file)
     }
@@ -57,8 +57,14 @@ export default function ImageDropzone({ onSwitchToImageLink, onChange }: { onSwi
 
   const handleRemove = () => {
     setImage(null)
-    onChange(null)
+    onChange({ file: null, base64: null })
   }
+
+  useEffect(() => {
+    if (oldImage && Object.keys(oldImage)) {
+      setImage(oldImage.base64 as string)
+    }
+  }, [oldImage])
 
   return (
     <Dropzone
@@ -70,7 +76,7 @@ export default function ImageDropzone({ onSwitchToImageLink, onChange }: { onSwi
         <section>
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center rounded-lg border border-dashed h-36 overflow-hidden justify-center">
+            <div className="flex flex-col items-center rounded-lg border border-dashed border-2 h-36 overflow-hidden justify-center hover:cursor-pointer hover:border-solid hover:border-blue-500">
               {
                 image
                   ? <AttachedImage image={image} onRemove={handleRemove} />

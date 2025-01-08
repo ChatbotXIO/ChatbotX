@@ -1,7 +1,10 @@
 "use client"
 
+import { buttonBlockDefaultValue } from '@/features/flows/react-flow/blocks/button/schema';
+import { textBlockSchemaDefaultValue } from '@/features/flows/react-flow/blocks/text/schema';
 import AddNotesNode from '@/features/flows/react-flow/nodes/add-notes/add-notes-node';
-import SendMessageNode from '@/features/flows/react-flow/nodes/send-message/send-message-node';
+import { SendMessageNodeSchema } from '@/features/flows/react-flow/nodes/send-message/schema';
+import SendMessageNodeViewer from '@/features/flows/react-flow/nodes/send-message/viewer';
 import { AddBlockButton } from '@/features/flows/react-flow/panels/add-block';
 import { NodeDetailSheet } from '@/features/flows/react-flow/panels/node-detail-sheet';
 import { PanelAction } from '@/features/flows/react-flow/types';
@@ -16,32 +19,44 @@ import {
   Node,
   Panel,
   ReactFlow,
+  ReactFlowProvider,
   useEdgesState,
   useNodesState,
 } from '@xyflow/react';
-
 import '@xyflow/react/dist/style.css';
-import { useCallback, useState, useEffect } from 'react';
-
-import NodeEditorProvider from "@/features/flows/react-flow/stores/node-editor-provider";
-import { useNodeEditorStore } from "@/features/flows/react-flow/stores/node-editor-store";
+import { useCallback, useState } from 'react';
 
 const nodeTypes = {
-  [PanelAction.SendMessage]: SendMessageNode,
+  [PanelAction.SendMessage]: SendMessageNodeViewer,
   [PanelAction.AddNotes]: AddNotesNode,
 }
 
-const initialNodes = [
-  { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
-  { id: '2', type: PanelAction.SendMessage, position: { x: 0, y: 100 }, data: { label: '2', image: [{}] } },
-  { id: '3', type: PanelAction.SendMessage, position: { x: 300, y: 100 }, data: { label: '3', image: [{}] } },
+const data: SendMessageNodeSchema = {
+  id: createId(),
+  name: 'Send Message',
+  messageType: "Whatsapp",
+  blocks: [
+    textBlockSchemaDefaultValue("ok chuaw", [
+      buttonBlockDefaultValue("bt1"),
+      buttonBlockDefaultValue("bt2")
+    ])
+  ]
+}
+
+const initialNodes: any[] = [
+  {
+    id: '1',
+    type: PanelAction.SendMessage,
+    position: { x: 200, y: 200 },
+    data,
+  }
 ];
 
 const initialEdges: Edge[] = [];
 
 export default function FlowPage({ children }: { children: React.ReactNode }) {
   const { t } = useTranslate()
-  const { currentNode, updateCurrentNode } = useNodeEditorStore()
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [activeNode, setActiveNode] = useState<Node | null>(null)
@@ -99,24 +114,8 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    setNodes((nds) => nds.map((node) => {
-      if (node.id === currentNode.id) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            ...currentNode.data
-          }
-        }
-      }
-      return node
-    }))
-
-  }, [currentNode])
-
   return (
-    <NodeEditorProvider>
+    <ReactFlowProvider>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -126,7 +125,6 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
         nodeTypes={nodeTypes}
         proOptions={{ hideAttribution: true }}
         onNodeClick={(event: any, node: any) => {
-          updateCurrentNode(node)
           setActiveNode(node);
           setOpenNodeDetailSheet(true);
         }}
@@ -145,6 +143,6 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
       </ReactFlow>
 
       <NodeDetailSheet open={openNodeDetailSheet} onOpenChange={setOpenNodeDetailSheet} activeNode={activeNode} />
-    </NodeEditorProvider>
+    </ReactFlowProvider>
   )
 }

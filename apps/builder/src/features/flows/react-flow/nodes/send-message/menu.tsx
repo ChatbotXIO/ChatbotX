@@ -2,7 +2,7 @@ import { T } from "@tolgee/react";
 import { ArchiveIcon, BellIcon, BotIcon, CalculatorIcon, CalendarSyncIcon, ChartNoAxesCombinedIcon, CircleEllipsisIcon, ClockIcon, CodeIcon, CogIcon, CreditCardIcon, ImageIcon, ImagePlayIcon, KeyboardIcon, MessageCircleMoreIcon, MessageCirclePlusIcon, MessageCircleXIcon, MessagesSquareIcon, OctagonXIcon, PackageOpenIcon, PaperclipIcon, PictureInPicture2Icon, SaveIcon, SaveOffIcon, ShuffleIcon, StarIcon, StarOffIcon, TagIcon, TextIcon, UserIcon, UserRoundMinusIcon, UserRoundXIcon, VideoIcon, ZapIcon } from "lucide-react";
 import { ReactElement } from "react";
 
-enum SendMessageEditorItem {
+export enum SendMessageEditorItem {
   Actions = "Actions",
   AddNotes = "AddNotes",
   AddTag = "AddTag",
