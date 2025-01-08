@@ -1,22 +1,29 @@
 import { z } from 'zod';
-import { SendMessageEditorItem } from "@/features/flows/react-flow/nodes/send-message/menu";
-import { NodeBlockTextSchema } from "@/features/flows/react-flow/blocks/text/schema";
-import { NodeBlockImageSchema } from "@/features/flows/react-flow/blocks/image/schema";
-import { NodeBlockCardSchema } from "@/features/flows/react-flow/blocks/card/schema";
+import { buttonBlockSchema } from './button/schema';
+import { textBlockSchema } from './text/schema';
+import { BlockType } from './types';
 
-export const NodeBlockSchema = z.object({
-  id: z.union([z.string(), z.number()]),
-  key: z.enum(Object.values(SendMessageEditorItem) as [string, ...string[]]),
-  text: z.array(NodeBlockTextSchema).optional(),
-  images: z.array(NodeBlockImageSchema).optional(),
-  cards: z.array(NodeBlockCardSchema).optional(),
-  videos: z.array(z.unknown()).optional(),
-  carousel: z.array(z.unknown()).optional(),
+export enum CardLayout {
+  Vertical = "Vertical",
+  Horizontal = "Horizontal",
+}
+
+export const cardBlockSchema = z.object({
+  id: z.string().cuid2(),
+  blockType: z.enum([BlockType.Card]),
+  image: z.string(),
+  title: z.string().max(100),
+  subtitle: z.string().max(255).nullable(),
+  cardUrl: z.string().max(255).nullable(),
+  buttons: z.array(buttonBlockSchema),
 })
+export type CardBlockSchema = z.infer<typeof cardBlockSchema>
 
-export const NodeDataSchema = z.object({
-  id: z.string(),
-  blocks: z.array(NodeBlockSchema).optional(),
+export const carouselBlockSchema = z.object({
+  id: z.string().cuid2(),
+  blockType: z.enum([BlockType.Carousel]),
+  cardlayout: z.nativeEnum(CardLayout),
+  cards: z.array(cardBlockSchema),
 })
+export type CarouselBlockSchema = z.infer<typeof carouselBlockSchema>
 
-export type NodeBlockPayload = z.infer<typeof NodeBlockSchema>

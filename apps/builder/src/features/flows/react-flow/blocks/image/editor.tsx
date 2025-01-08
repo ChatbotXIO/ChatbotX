@@ -8,7 +8,7 @@ export default function NodeBlockImage({ image }) {
     <div
       className={
         cn(
-          'flex items-center justify-center border border-dashed border-2 border-gray-300 w-full rounded rounded-b mb-3',
+          'flex items-center justify-center border-dashed border-2 border-gray-300 w-full rounded rounded-b mb-3',
           image.base64 ? '' : 'h-[200px]'
         )
       }>

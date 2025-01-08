@@ -16,7 +16,7 @@ export default function SendMessageEditorAction({ onClick }: { onClick: (name: S
       <DropdownMenuTrigger asChild>
         <Button variant="outline">
           <PlusIcon />
-          {t("flows.sendMessageEditor.addContent")}
+          {t("flows.sendMessageNodeEditor.addContent")}
         </Button>
       </DropdownMenuTrigger>
 

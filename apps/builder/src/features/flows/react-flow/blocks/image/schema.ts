@@ -1,16 +1,21 @@
+import { buttonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema";
+import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
-import { NodeBlockButtonSchema } from "@/features/flows/react-flow/blocks/button/schema";
+import { BlockType } from '../types';
 
-export const NodeBlockImageSchema = z.object({
-  id: z.string(),
+export const imageBlockSchema = z.object({
+  id: z.string().cuid2(),
+  blockType: z.enum([BlockType.Image]),
   file: z.instanceof(File).optional(),
-  link: z.string().url().optional(),
+  url: z.string().url().trim().optional(),
   base64: z.string().optional(),
-  buttons: z.array(NodeBlockButtonSchema).optional(),
-}).refine(data => (data.file && data.base64) || (!data.file && !data.base64), {
-  message: 'File or Base64 not null',
-  path: ['file', 'base64'],
-}).refine(data => data.file || data.link, {
-  message: 'Link not null',
-  path: ['link'],
+  buttons: z.array(buttonBlockSchema)
+}).refine(data => !!data.file || !!data.url || !!data.base64, 'File is required')
+
+export type ImageBlockSchema = z.infer<typeof imageBlockSchema>
+
+export const imageBlockSchemaDefaultValue = (): ImageBlockSchema => ({
+  id: createId(),
+  blockType: BlockType.Image,
+  buttons: []
 })
