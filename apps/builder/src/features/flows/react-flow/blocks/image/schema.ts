@@ -8,14 +8,14 @@ export const imageBlockSchema = z.object({
   blockType: z.enum([BlockType.Image]),
   file: z.instanceof(File).optional(),
   url: z.string().url().trim().optional(),
-  base64: z.string().optional(),
   buttons: z.array(buttonBlockSchema)
-}).refine(data => !!data.file || !!data.url || !!data.base64, 'File is required')
+})
 
 export type ImageBlockSchema = z.infer<typeof imageBlockSchema>
 
 export const imageBlockSchemaDefaultValue = (): ImageBlockSchema => ({
   id: createId(),
   blockType: BlockType.Image,
+  url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQf5GRKMzldUwuZJ7IfmvoLMru3gjphUJDGuA&s",
   buttons: []
 })

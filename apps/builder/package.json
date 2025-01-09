@@ -47,6 +47,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "^4.1.0",
+    "embla-carousel-react": "^8.5.2",
     "emoji-mart": "^5.6.0",
     "i18next": "^24.2.0",
     "lodash.clonedeep": "^4.5.0",

@@ -9,10 +9,9 @@ import Dropzone from "react-dropzone";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
-import { FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-enum UploadType {
+enum FileType {
   Video = 'video',
   Image = 'image',
   File = 'file',
@@ -20,40 +19,41 @@ enum UploadType {
   Gif = 'gif',
 }
 
-interface NodeBlockUploadEditorProps {
-  type: 'video' | 'image' | 'file' | 'audio' | 'gif'
-  mode?: 'file' | 'link'
-  configs: {
-    uploadKeyName?: string
-    linkKeyName?: string
-    accept?: Record<string, string[]>,
-    maxSize?: number
-  }
-  key: number
-  control: any
-  block: {
-    name: string,
-    index?: number
-  }
-  itemIndex: number
-  onMode: (mode: 'file' | 'link') => void
-  onRemove: () => void
-  onDrop: (file: File) => void
+type FileDropzoneConfigs = {
+  uploadKeyName: string
+  linkKeyName: string
+  accept: Record<string, string[]>,
+  maxSize: number,
+  isCard: boolean
 }
 
-export default function NodeBlockUploadEditor(
+interface FileDropzoneProps {
+  register: any
+  unregister?: any
+  parentName: string
+  type?: 'video' | 'image' | 'file' | 'audio' | 'gif'
+  mode?: 'file' | 'link'
+  configs?: Partial<FileDropzoneConfigs>
+  onMode?: (mode: 'file' | 'link') => void
+  onRemove?: () => void
+  onDrop?: (file: File) => void
+}
+
+export default function FileDropzone(
   {
-    type = UploadType.Image,
+    register, unregister,
+    parentName,
+    type = FileType.Image,
     mode = 'file',
     configs: {
       uploadKeyName =  'common.uploadImageOr',
       linkKeyName = 'common.insertLink',
       accept = {"image/*": []},
-      maxSize = 10
-    },
-    block, key, control, itemIndex,
+      maxSize = 10,
+      isCard = false
+    } = {},
     onMode, onRemove, onDrop
-  }: NodeBlockUploadEditorProps
+  }: FileDropzoneProps
 ) {
   const [preview, setPreview] = useState('')
   const [fileMode, setFileMode] = useState<'file' | 'link'>(mode);
@@ -100,38 +100,44 @@ export default function NodeBlockUploadEditor(
         return toast('common.upload.fileMaxSize')
       }
 
-      if (file.type.includes(UploadType.Video)) {
+      if (file.type.includes(FileType.Video)) {
         _videoPreview(file)
       }
 
-      if (file.type.includes(UploadType.Image)) {
+      if (file.type.includes(FileType.Image)) {
         _imagePreview(file)
       }
 
-      onDrop(file)
+      onDrop && onDrop(file)
     }
   }
 
   const _onRemove = (e: any) => {
     e.stopPropagation()
-    onRemove()
+    setPreview('')
+    onRemove && onRemove()
   }
 
   const _onMode = (e: any) => {
     e.stopPropagation()
     setFileMode(fileMode === 'file' ? 'link' : 'file');
-    onMode(fileMode)
+    if (fileMode === 'link') {
+      unregister(`${parentName}.file`)
+    } else {
+      unregister(`${parentName}.url`)
+    }
+    onMode && onMode(fileMode)
   }
 
   const _uploadIcon = (size: number = 30) => {
     switch (type) {
-      case UploadType.Video:
+      case FileType.Video:
         return <Video size={size} className="text-gray-500"/>
-      case UploadType.File:
+      case FileType.File:
         return <File size={size} className="text-gray-500"/>
-      case UploadType.Audio:
+      case FileType.Audio:
         return <Volume2 size={size} className="text-gray-500" />
-      case UploadType.Gif:
+      case FileType.Gif:
         return <ImagePlay size={size} className="text-gray-500" />
       default:
         return <Image size={size} className="text-gray-500"/>
@@ -141,13 +147,19 @@ export default function NodeBlockUploadEditor(
   const _noFile = () => {
     return (
       <div className="flex flex-col items-center">
-        { _uploadIcon() }
+        {_uploadIcon()}
         <div>
           <T keyName={uploadKeyName}/>
-          {"\u00A0"}
-          <Button variant="link" onClick={_onMode} className="p-0 text-destructive">
-            <T keyName={linkKeyName} />
-          </Button>
+          {
+            !isCard && (
+              <>
+                {"\u00A0"}
+                <Button variant="link" onClick={_onMode} className="p-0 text-destructive">
+                  <T keyName={linkKeyName}/>
+                </Button>
+              </>
+            )
+          }
         </div>
       </div>
     )
@@ -171,41 +183,27 @@ export default function NodeBlockUploadEditor(
   }
 
   const dropZone = () => {
-    return (
-      <>
-        <FormField
-          key={key}
-          control={control}
-          name={`${block.name}[${itemIndex}].thumbnail`}
-          render={({ field }) => (
-            <FormItem>
-              <Input className="hidden" { ...field } />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Dropzone
-          maxFiles={1}
-          accept={accept}
-          onDrop={_onDrop}
-        >
-          {({getRootProps, getInputProps}) => (
-            <section>
-              <div {...getRootProps()}>
-                <input {...getInputProps()} />
-                <div
-                  className={cn(
-                    'relative flex flex-col items-center rounded-lg h-36 border-2 overflow-hidden justify-center hover:cursor-pointer hover:border-solid hover:border-blue-500',
-                    preview ? 'border-solid' : 'border-dashed'
-                  )}>
-                  { preview ? _hasFile() : _noFile() }
-                </div>
-              </div>
-            </section>
-          )}
-        </Dropzone>
-      </>
-    )
+    return <Dropzone
+      maxFiles={1}
+      accept={accept}
+      onDrop={_onDrop}
+    >
+      {({getRootProps, getInputProps}) => (
+        <section>
+          <div {...getRootProps()}>
+            <Input {...getInputProps()} />
+            <div
+              className={cn(
+                'relative flex flex-col items-center h-36 overflow-hidden justify-center hover:cursor-pointer',
+                preview ? 'border-solid' : 'border-dashed',
+                isCard ? '' : 'border-2 rounded-lg hover:border-solid hover:border-blue-500'
+              )}>
+              { preview ? _hasFile() : _noFile() }
+            </div>
+          </div>
+        </section>
+      )}
+    </Dropzone>
   }
 
   const inputLink = () => {
@@ -229,17 +227,7 @@ export default function NodeBlockUploadEditor(
             </TooltipProvider>
           </div>
         </div>
-        <FormField
-          key={key}
-          control={control}
-          name={`${block.name}[${itemIndex}].link`}
-          render={({field}) => (
-            <FormItem>
-              <Input className="rounded-full" placeholder="Insert link" {...field} />
-              <FormMessage/>
-            </FormItem>
-          )}
-        />
+        <Input className="rounded-full" placeholder="Insert link" {...register(`${parentName}.url`)} />
       </div>
     )
   }
