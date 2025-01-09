@@ -27,7 +27,8 @@ export const generateRandomConversation = (): Conversation => {
       firstName: ['Kha', 'An', 'Hien', 'Minh', 'Linh', 'Trang'][Math.floor(Math.random() * 6)] as string,
       lastName: ['Duy', 'Viet', 'Hieu', 'Thao', 'Phong'][Math.floor(Math.random() * 5)] as string,
       phoneNumber: '',
-      avatar: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 99)}.jpg`
+      avatar: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 99)}.jpg`,
+      email: `contact.${Math.floor(Math.random() * 100)}@gmail.com`,
     },
     assignedTeam: {
       id: generateRandomId(),
