@@ -142,6 +142,8 @@ async function main() {
         messageType: MessageType.Text,
         senderType: senderType,
         senderId: senderType === SenderType.Contact ? conversation.contactId : user.id,
+        createdAt: faker.date.anytime(),
+        updatedAt: faker.date.anytime(),
       })
     }
   }

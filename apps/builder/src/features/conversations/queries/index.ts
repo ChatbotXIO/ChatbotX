@@ -11,6 +11,11 @@ import {
   GetCurrentConversationsSchema
 } from "@/features/conversations/schemas/get-conversations-schema";
 
+export interface IUnreadMessage {
+  id: string,
+  unread_count: bigint
+}
+
 export const getConversations = async (input: GetConversationsSchema): Promise<{
   data: ConversationResource[],
   cursor: CursorConversations | null
@@ -38,7 +43,7 @@ export const getConversations = async (input: GetConversationsSchema): Promise<{
               createdAt: 'desc'
             },
             take: 1
-          }
+          },
         },
         take: perPage,
         where,
@@ -49,6 +54,15 @@ export const getConversations = async (input: GetConversationsSchema): Promise<{
         ...(input.cursor ? { cursor: input.cursor, skip: 1 } : {})
       })
 
+      const conversationIds = data.map((conversation) => conversation.id)
+      const unreadMessages = await prisma.$queryRaw<IUnreadMessage[]>`
+          SELECT c.id, COUNT(m.id) AS unread_count
+          FROM "Conversation" c
+                   JOIN "Message" m ON m."conversationId" = c.id
+          WHERE m."createdAt" < c."agentLastSeenAt"
+            AND c.id IN (${Prisma.join(conversationIds)})
+          GROUP BY c.id;`;
+
       let cursor = null
       if (data.length === perPage) {
         cursor = {
@@ -58,11 +72,12 @@ export const getConversations = async (input: GetConversationsSchema): Promise<{
       }
       const processData = data.map<ConversationResource>((conversation) => {
         const { messages, ...rest } = conversation
+        const unreadMessage = unreadMessages.find(obj => obj.id === conversation.id)
 
         return {
           ...rest,
           latestMessage: messages[0] || null,
-          unreadCount: 0
+          unreadCount: (unreadMessage?.unread_count ?? 0).toString()
         }
       })
 

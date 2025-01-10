@@ -5,7 +5,7 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 const enableDebug = process.env.PRISMA_DEBUG === "true"
 
 export const prisma = globalForPrisma.prisma || new PrismaClient({
-  // log: enableDebug ? ['query', 'info', 'warn', 'error'] : undefined
+  log: enableDebug ? ['query', 'info', 'warn', 'error'] : undefined
 })
 
 if (enableDebug) {
