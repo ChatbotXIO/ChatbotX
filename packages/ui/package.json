@@ -20,12 +20,12 @@
     "@ahachat.ai/typescript-config": "workspace:*",
     "@turbo/gen": "^2.3.3",
     "@types/node": "^22.10.5",
-    "@types/react": "19.0.2",
+    "@types/react": "19.0.4",
     "@types/react-dom": "19.0.2",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
-    "typescript": "5.7.2"
+    "typescript": "5.7.3"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",
