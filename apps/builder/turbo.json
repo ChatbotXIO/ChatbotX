@@ -1,0 +1,18 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "next:dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "partysocket:dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "dev": {
+      "dependsOn": ["next:dev", "partysocket:dev"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
