@@ -1,22 +1,22 @@
-import { z } from "zod"
-import { textBlockSchema } from "@/features/flows/react-flow/blocks/text/schema"
-import { imageBlockSchema } from "@/features/flows/react-flow/blocks/image/schema";
-import { cardBlockSchema } from "@/features/flows/react-flow/blocks/card/schema";
-import { videoBlockSchema } from "@/features/flows/react-flow/blocks/video/schema";
-import { audioBlockSchema } from "@/features/flows/react-flow/blocks/audio/schema";
-import { carouselGroupBlockSchema } from "@/features/flows/react-flow/blocks/carousel/schema";
+import { sendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema";
+import { sendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema";
+import { sendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema";
+import { sendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema";
+import { sendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema";
+import { sendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema";
+import { z } from "zod";
 
 export const sendMessageNodeSchema = z.object({
   id: z.string(),
   name: z.string().min(1).max(255).trim(),
   messageType: z.enum(["Messenger", "Whatsapp", "Chatwidget"]),
   blocks: z.array(z.union([
-    textBlockSchema,
-    imageBlockSchema,
-    cardBlockSchema,
-    videoBlockSchema,
-    audioBlockSchema,
-    carouselGroupBlockSchema,
+    sendTextBlockSchema,
+    sendImageBlockSchema,
+    sendCardBlockSchema,
+    sendVideoBlockSchema,
+    sendAudioBlockSchema,
+    sendCarouselBlockSchema,
   ]))
 })
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>

@@ -1,30 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BlockType } from "@/features/flows/react-flow/blocks/types";
 import { MessageCircleMoreIcon } from "lucide-react";
 import { useState } from "react";
 import { FlowFlowNodeToolbar } from "../../toolbars";
 import { SendMessageNodeSchema } from "./schema";
-
-import type { TextBlockSchema } from "@/features/flows/react-flow/blocks/text/schema";
-import { TextBlockViewer } from "@/features/flows/react-flow/blocks/text/viewer";
-import type { CardBlockSchema } from "@/features/flows/react-flow/blocks/card/schema";
-import { ImageBlockViewer } from "@/features/flows/react-flow/blocks/image/viewer";
-import type { ImageBlockSchema } from "@/features/flows/react-flow/blocks/image/schema";
-import { CardBlockViewer } from "@/features/flows/react-flow/blocks/card/viewer";
-import type { VideoBlockSchema } from "@/features/flows/react-flow/blocks/video/schema";
-import { VideoBlockViewer } from "@/features/flows/react-flow/blocks/video/viewer";
-import type { AudioBlockSchema } from "@/features/flows/react-flow/blocks/audio/schema";
-import { AudioBlockViewer } from "@/features/flows/react-flow/blocks/audio/viewer";
-import type { CarouselBlockSchema } from "@/features/flows/react-flow/blocks/schema";
-import { CarouselBlockViewer } from "@/features/flows/react-flow/blocks/carousel/viewer";
+import { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema";
+import { AudioBlockViewer } from "@/features/flows/react-flow/blocks/send-audio/viewer";
+import { SendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema";
+import { SendCardBlockViewer } from "@/features/flows/react-flow/blocks/send-card/viewer";
+import { SendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema";
+import { SendCarouselBlockViewer } from "@/features/flows/react-flow/blocks/send-carousel/viewer";
+import { SendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema";
+import { SendImageBlockViewer } from "@/features/flows/react-flow/blocks/send-image/viewer";
+import { SendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema";
+import { SendTextBlockViewer } from "@/features/flows/react-flow/blocks/send-text/viewer";
+import { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema";
+import { SendVideoBlockViewer } from "@/features/flows/react-flow/blocks/send-video/viewer";
+import { ActionType } from "../../action-type";
 
 const maps: Record<string, any> = {
-  [BlockType.Text]: (data: TextBlockSchema) => (<TextBlockViewer key={data.id} data={data} />),
-  [BlockType.Image]: (data: ImageBlockSchema) => (<ImageBlockViewer key={data.id} data={data} />),
-  [BlockType.Card]: (data: CardBlockSchema) => (<CardBlockViewer key={data.id} data={data} />),
-  [BlockType.Carousel]: (data: CarouselBlockSchema) => (<CarouselBlockViewer key={data.id} data={data} />),
-  [BlockType.Video]: (data: VideoBlockSchema) => (<VideoBlockViewer key={data.id} data={data} />),
-  [BlockType.FileAudio]: (data: AudioBlockSchema) => (<AudioBlockViewer key={data.id} data={data} />)
+  [ActionType.SendText]: (data: SendTextBlockSchema) => (<SendTextBlockViewer key={data.id} data={data} />),
+  [ActionType.SendImage]: (data: SendImageBlockSchema) => (<SendImageBlockViewer key={data.id} data={data} />),
+  [ActionType.SendCard]: (data: SendCardBlockSchema) => (<SendCardBlockViewer key={data.id} data={data} />),
+  [ActionType.SendCarousel]: (data: SendCarouselBlockSchema) => (<SendCarouselBlockViewer key={data.id} data={data} />),
+  [ActionType.SendVideo]: (data: SendVideoBlockSchema) => (<SendVideoBlockViewer key={data.id} data={data} />),
+  [ActionType.SendAudio]: (data: SendAudioBlockSchema) => (<AudioBlockViewer key={data.id} data={data} />)
 }
 
 export default function SendMessageNodeViewer({ data, id }: { data: SendMessageNodeSchema, id: string | number }) {
@@ -42,7 +41,7 @@ export default function SendMessageNodeViewer({ data, id }: { data: SendMessageN
         </CardHeader>
         <CardContent className="p-4 pt-0">
           {
-            data.blocks.map((blockItem) => maps[blockItem?.blockType!](blockItem!))
+            data.blocks.map((blockItem) => blockItem?.actionType ? maps[blockItem?.actionType](blockItem!) : null)
           }
         </CardContent>
       </Card>
