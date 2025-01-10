@@ -1,9 +1,9 @@
 "use client"
 
 import { ButtonGroupViewer } from "../button/viewer"
-import { TextBlockSchema } from "./schema"
+import { SendTextBlockSchema } from "./schema"
 
-export const TextBlockViewer = ({ data }: { data: TextBlockSchema }) => {
+export const SendTextBlockViewer = ({ data }: { data: SendTextBlockSchema }) => {
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary">
       <p className="px-4 py-2">{data.message}</p>

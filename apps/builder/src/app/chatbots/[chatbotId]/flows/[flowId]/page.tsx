@@ -1,10 +1,12 @@
 "use client"
 
 import { buttonBlockDefaultValue } from '@/features/flows/react-flow/blocks/button/schema';
-import { textBlockSchemaDefaultValue } from '@/features/flows/react-flow/blocks/text/schema';
+import { sendTextBlockDefaultValue } from '@/features/flows/react-flow/blocks/send-text/schema';
 import AddNotesNode from '@/features/flows/react-flow/nodes/add-notes/add-notes-node';
 import { SendMessageNodeSchema } from '@/features/flows/react-flow/nodes/send-message/schema';
 import SendMessageNodeViewer from '@/features/flows/react-flow/nodes/send-message/viewer';
+// import { splitTrafficNodeDefaultValue } from '@/features/flows/react-flow/nodes/split-traffic/schema';
+// import SplitTrafficNodeViewer from '@/features/flows/react-flow/nodes/split-traffic/viewer';
 import { AddBlockButton } from '@/features/flows/react-flow/panels/add-block';
 import { NodeDetailSheet } from '@/features/flows/react-flow/panels/node-detail-sheet';
 import { PanelAction } from '@/features/flows/react-flow/types';
@@ -28,6 +30,7 @@ import { useCallback, useState } from 'react';
 
 const nodeTypes = {
   [PanelAction.SendMessage]: SendMessageNodeViewer,
+  // [PanelAction.SplitTraffic]: SplitTrafficNodeViewer,
   [PanelAction.AddNotes]: AddNotesNode,
 }
 
@@ -36,7 +39,7 @@ const data: SendMessageNodeSchema = {
   name: 'Send Message',
   messageType: "Whatsapp",
   blocks: [
-    textBlockSchemaDefaultValue("ok chuaw", [
+    sendTextBlockDefaultValue("ok chuaw", [
       buttonBlockDefaultValue("bt1"),
       buttonBlockDefaultValue("bt2")
     ])
@@ -49,7 +52,13 @@ const initialNodes: any[] = [
     type: PanelAction.SendMessage,
     position: { x: 200, y: 200 },
     data,
-  }
+  },
+  // {
+  //   id: '2',
+  //   type: PanelAction.SplitTraffic,
+  //   position: { x: 300, y: 300 },
+  //   data: splitTrafficNodeDefaultValue()
+  // }
 ];
 
 const initialEdges: Edge[] = [];

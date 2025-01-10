@@ -4,7 +4,7 @@ import { InputWithEmoji } from "@/components/input-with-emoji"
 import { useFormContext } from "react-hook-form"
 import { ButtonGroupEditor } from "../button/editor"
 
-const TextBlockEditor = ({ parentName }: { parentName: string }) => {
+const SendTextBlockEditor = ({ parentName }: { parentName: string }) => {
   const { register } = useFormContext();
 
   return (
@@ -18,5 +18,5 @@ const TextBlockEditor = ({ parentName }: { parentName: string }) => {
 }
 
 export {
-  TextBlockEditor
+  SendTextBlockEditor
 }

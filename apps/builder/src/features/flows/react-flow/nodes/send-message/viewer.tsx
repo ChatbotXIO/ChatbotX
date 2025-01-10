@@ -1,14 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BlockType } from "@/features/flows/react-flow/blocks/types";
 import { MessageCircleMoreIcon } from "lucide-react";
 import { useState } from "react";
-import { TextBlockSchema } from "../../blocks/text/schema";
-import { TextBlockViewer } from "../../blocks/text/viewer";
+import { ActionType } from "../../action-type";
+import { SendTextBlockSchema } from "../../blocks/send-text/schema";
+import { SendTextBlockViewer } from "../../blocks/send-text/viewer";
 import { FlowFlowNodeToolbar } from "../../toolbars";
 import { SendMessageNodeSchema } from "./schema";
 
 const maps = {
-  [BlockType.Text]: (data: TextBlockSchema) => (<TextBlockViewer key={data.id} data={data} />)
+  [ActionType.SendText]: (data: SendTextBlockSchema) => (<SendTextBlockViewer key={data.id} data={data} />)
 }
 
 export default function SendMessageNodeViewer({ data, id }: { data: SendMessageNodeSchema, id: string | number }) {
@@ -26,7 +26,7 @@ export default function SendMessageNodeViewer({ data, id }: { data: SendMessageN
         </CardHeader>
         <CardContent className="p-4 pt-0">
           {
-            data.blocks.map((blockItem) => maps[blockItem?.blockType!](blockItem!))
+            data.blocks.map((blockItem) => blockItem?.actionType ? maps[blockItem?.actionType](blockItem!) : null)
           }
         </CardContent>
       </Card>

@@ -7,26 +7,30 @@ import { PanelAction } from "../types"
 
 const AddNotesEditor = dynamic(() => import('@/features/flows/react-flow/nodes/add-notes/add-notes-editor'));
 const SendMessageNodeEditor = dynamic(() => import('@/features/flows/react-flow/nodes/send-message/editor'));
+const SplitTrafficNodeEditor = dynamic(() => import('@/features/flows/react-flow/nodes/split-traffic/editor'));
 
-export function NodeDetailSheet({ open, onOpenChange, activeNode }: { open: boolean, onOpenChange: (open: boolean) => void, activeNode?: Node | null }) {
+const getEditor = (activeNode: Node<any>) => {
+  return {
+    [PanelAction.AddNotes]: <AddNotesEditor />,
+    [PanelAction.SendMessage]: <SendMessageNodeEditor activeNode={activeNode} />,
+    [PanelAction.SplitTraffic]: <SplitTrafficNodeEditor activeNode={activeNode} />
+  }[activeNode.type ?? '']
+}
+
+export function NodeDetailSheet({ open, onOpenChange, activeNode }: { open: boolean, onOpenChange: (open: boolean) => void, activeNode?: Node<any> | null }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>{activeNode && activeNode.data ? activeNode.data.label as string : "\u00A0"}</SheetTitle>
+          <SheetTitle>
+            {activeNode ? activeNode.data.icon : null}
+            {activeNode ? activeNode.data.name : "\u00A0"}
+          </SheetTitle>
           <SheetDescription />
         </SheetHeader>
-        <div className="flex flex-col flex-1 gap-4">
+        <div className="flex flex-col flex-1 gap-4 overflow-hidden">
           {
-            activeNode &&
-            activeNode.type == PanelAction.AddNotes &&
-            <AddNotesEditor />
-          }
-
-          {
-            activeNode &&
-            activeNode.type == PanelAction.SendMessage &&
-            <SendMessageNodeEditor activeNode={activeNode} />
+            activeNode && activeNode.type && getEditor(activeNode)
           }
         </div>
       </SheetContent>

@@ -11,18 +11,18 @@ import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
 import { ReactNode, useCallback, useEffect } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
+import { ActionType } from "../../action-type"
 import { ErrorAlert } from "../../blocks/error-alert"
-import { TextBlockEditor } from "../../blocks/text/editor"
-import { textBlockSchemaDefaultValue } from "../../blocks/text/schema"
-import { SendMessageEditorItem, SendMessageEditorItemType } from "./menu"
-import { sendMessageNodeSchema, SendMessageNodeSchema } from "./schema"
+import { SendTextBlockEditor } from "../../blocks/send-text/editor"
+import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
+import { SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
-const maps: Record<SendMessageEditorItem, (props: { key: string, parentName: string }) => ReactNode> = {
-  [SendMessageEditorItem.Text]: ({ key, parentName }) => {
-    return <TextBlockEditor key={key} parentName={parentName} />
+const maps: Record<ActionType, (props: { key: string, parentName: string }) => ReactNode> = {
+  [ActionType.SendText]: ({ key, parentName }) => {
+    return <SendTextBlockEditor key={key} parentName={parentName} />
   }
-  // [SendMessageEditorItem.Image]: (key: string, control: any, blockName: string) => <TextBlockEditor key={key} control={control} blockName={blockName} />
+  // [SendMessageEditorItem.Image]: (key: string, control: any, blockName: string) => <SendTextBlockEditor key={key} control={control} blockName={blockName} />
 }
 
 export default function SendMessageNodeEditor({ activeNode }: { activeNode: Node<SendMessageNodeSchema> }) {
@@ -58,10 +58,10 @@ export default function SendMessageNodeEditor({ activeNode }: { activeNode: Node
 
   const { fields, append, move, update, remove, insert } = useFieldArray({ control, name: 'blocks' })
 
-  const onClickAction = (name: SendMessageEditorItemType) => {
+  const onClickAction = (name: ActionType) => {
     switch (name) {
-      case SendMessageEditorItem.Text:
-        append(textBlockSchemaDefaultValue())
+      case ActionType.SendText:
+        append(sendTextBlockDefaultValue())
         break
       // case SendMessageEditorItem.Image:
       //   append(imageBlockSchemaDefaultValue())
@@ -126,10 +126,10 @@ export default function SendMessageNodeEditor({ activeNode }: { activeNode: Node
                       }
                       <div className="flex-1">
                         {
-                          maps[field.blockType]({
+                          field.actionType in ActionType ? maps[field.actionType as ActionType]({
                             key: field.id,
                             parentName: `blocks.${index}`,
-                          })
+                          }) : null
                         }
                       </div>
                       <div className="flex flex-col">

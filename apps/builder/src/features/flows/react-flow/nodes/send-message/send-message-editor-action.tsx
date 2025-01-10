@@ -5,10 +5,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { SendMessageEditorItemType, sendMessageEditorMenu } from "./menu";
+import { ActionType } from "../../action-type";
+import { sendMessageEditorMenus } from "./menu";
 import RecursiveDropdownMenu from "./recursive-dropdown-menu";
 
-export default function SendMessageEditorAction({ onClick }: { onClick: (name: SendMessageEditorItemType) => void }) {
+export default function SendMessageEditorAction({ onClick }: { onClick: (name: ActionType) => void }) {
   const { t } = useTranslate()
 
   return (
@@ -21,7 +22,7 @@ export default function SendMessageEditorAction({ onClick }: { onClick: (name: S
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-56">
-        <RecursiveDropdownMenu data={sendMessageEditorMenu} onClick={onClick} />
+        <RecursiveDropdownMenu data={sendMessageEditorMenus} onClick={onClick} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
