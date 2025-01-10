@@ -3,6 +3,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Sortable, SortableDragHandle, SortableItem } from "@/components/ui/sortable"
+import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert"
+import { SendAudioBlockEditor } from "@/features/flows/react-flow/blocks/send-audio/editor"
+import { sendAudioBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-audio/schema"
+import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor"
+import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema"
+import { SendCarouselBlockEditor } from "@/features/flows/react-flow/blocks/send-carousel/editor"
+import { sendCarouselBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-carousel/schema"
+import { SendImageBlockEditor } from "@/features/flows/react-flow/blocks/send-image/editor"
+import { sendImageBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-image/schema"
+import { SendVideoBlockEditor } from "@/features/flows/react-flow/blocks/send-video/editor"
+import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-video/schema"
+import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
 import { useTranslate } from "@tolgee/react"
@@ -12,17 +24,18 @@ import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
 import { ReactNode, useCallback, useEffect } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { ActionType } from "../../action-type"
-import { ErrorAlert } from "../../blocks/error-alert"
 import { SendTextBlockEditor } from "../../blocks/send-text/editor"
 import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
-import { SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
+import { sendMessageNodeSchema, SendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
 const maps: Record<ActionType, (props: { key: string, parentName: string }) => ReactNode> = {
-  [ActionType.SendText]: ({ key, parentName }) => {
-    return <SendTextBlockEditor key={key} parentName={parentName} />
-  }
-  // [SendMessageEditorItem.Image]: (key: string, control: any, blockName: string) => <SendTextBlockEditor key={key} control={control} blockName={blockName} />
+  [ActionType.SendText]: ({ key, parentName }) => <SendTextBlockEditor key={key} parentName={parentName} />,
+  [ActionType.SendImage]: ({ key, parentName }) => <SendImageBlockEditor key={key} parentName={parentName} />,
+  [ActionType.SendCard]: ({ key, parentName }) => <SendCardBlockEditor key={key} parentName={parentName} />,
+  [ActionType.SendVideo]: ({ key, parentName }) => <SendVideoBlockEditor key={key} parentName={parentName} />,
+  [ActionType.SendAudio]: ({ key, parentName }) => <SendAudioBlockEditor key={key} parentName={parentName} />,
+  [ActionType.SendCarousel]: ({ key, parentName }) => <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />,
 }
 
 export default function SendMessageNodeEditor({ activeNode }: { activeNode: Node<SendMessageNodeSchema> }) {
@@ -63,9 +76,24 @@ export default function SendMessageNodeEditor({ activeNode }: { activeNode: Node
       case ActionType.SendText:
         append(sendTextBlockDefaultValue())
         break
-      // case SendMessageEditorItem.Image:
-      //   append(imageBlockSchemaDefaultValue())
-      //   break
+      case ActionType.SendImage:
+        append(sendImageBlockDefaultValue())
+        break
+      case ActionType.SendCard:
+        append(sendCardBlockDefaultValue())
+        break
+      case ActionType.SendCarousel:
+        append(sendCarouselBlockDefaultValue(2))
+        break
+      case ActionType.SendVideo:
+        append(sendVideoBlockDefaultValue())
+        break
+      case ActionType.SendAudio:
+        append(sendAudioBlockDefaultValue())
+        break
+      case ActionType.SendFile:
+        append(sendAudioBlockDefaultValue())
+        break
     }
   }
 
@@ -120,11 +148,21 @@ export default function SendMessageNodeEditor({ activeNode }: { activeNode: Node
               <div className="flex w-full flex-col gap-4">
                 {fields.map((field, index) => (
                   <SortableItem key={field.id} value={field.id} asChild>
-                    <div className="flex gap-2 items-center">
+                    <div
+                      className={cn(
+                        'flex gap-2 items-center',
+                        field.actionType === ActionType.SendCarousel ? 'relative' : ''
+                      )}
+                    >
                       {
                         form.formState.errors.blocks?.[index] ? <ErrorAlert message={((form.formState.errors.blocks?.[index]?.message as any)?.message ?? '') as string} /> : <div className="w-4">{"\u00A0"}</div>
                       }
-                      <div className="flex-1">
+                      <div
+                        className={cn(
+                          'flex-1',
+                          field.actionType === ActionType.SendCarousel ? 'overflow-hidden' : ''
+                        )}
+                      >
                         {
                           field.actionType in ActionType ? maps[field.actionType as ActionType]({
                             key: field.id,
@@ -153,7 +191,6 @@ export default function SendMessageNodeEditor({ activeNode }: { activeNode: Node
           <Button>Test Form Submit</Button>
 
           <SendMessageEditorAction onClick={onClickAction} />
-
         </form>
       </Form >
     </>

@@ -54,7 +54,7 @@ export default function SplitTrafficNodeEditor({ activeNode }: { activeNode: Nod
   //       append(sendTextBlockDefaultValue())
   //       break
   // case SendMessageEditorItem.Image:
-  //   append(imageBlockSchemaDefaultValue())
+  //   append(sendImageBlockDefaultValue())
   //   break
   //   }
   // }

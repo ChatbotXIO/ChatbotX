@@ -1,5 +1,5 @@
 import { T } from "@tolgee/react";
-import { ArchiveIcon, AudioLinesIcon, BellIcon, BotIcon, BotMessageSquareIcon, BotOffIcon, CalculatorIcon, CalendarSyncIcon, ChartNoAxesColumnIcon, ChartNoAxesCombinedIcon, CircleCheckIcon, CircleEllipsisIcon, ClockIcon, CodeIcon, CogIcon, CreditCardIcon, FilterIcon, FilterXIcon, ImageIcon, ImagePlayIcon, KeyboardIcon, LogsIcon, MailIcon, MessageCircleMoreIcon, MessageCircleOffIcon, MessageCirclePlusIcon, MessageCircleXIcon, MessageSquareIcon, MessagesSquareIcon, OctagonXIcon, PackageOpenIcon, PaperclipIcon, PictureInPicture2Icon, SaveIcon, SaveOffIcon, ShuffleIcon, SpeechIcon, StarIcon, StarOffIcon, TagIcon, TextIcon, UserIcon, UserRoundMinusIcon, UserRoundXIcon, VideoIcon, ZapIcon } from "lucide-react";
+import { ArchiveIcon, AudioLinesIcon, BellIcon, BotIcon, BotMessageSquareIcon, BotOffIcon, CalculatorIcon, CalendarSyncIcon, ChartNoAxesColumnIcon, ChartNoAxesCombinedIcon, CircleCheckIcon, CircleEllipsisIcon, ClockIcon, CodeIcon, CogIcon, CreditCardIcon, FileAudioIcon, FilterIcon, FilterXIcon, ImageIcon, ImagePlayIcon, KeyboardIcon, LogsIcon, MailIcon, MessageCircleMoreIcon, MessageCircleOffIcon, MessageCirclePlusIcon, MessageCircleXIcon, MessageSquareIcon, MessagesSquareIcon, OctagonXIcon, PackageOpenIcon, PaperclipIcon, PictureInPicture2Icon, SaveIcon, SaveOffIcon, ShuffleIcon, SpeechIcon, StarIcon, StarOffIcon, TagIcon, TextIcon, UserIcon, UserRoundMinusIcon, UserRoundXIcon, VideoIcon, ZapIcon } from "lucide-react";
 import { ActionType } from "../../action-type";
 import { MenuItem } from "../types";
 
@@ -48,6 +48,18 @@ export const sendMessageEditorMenus: MenuItem[] = [
     label: <T keyName="flows.ActionType.SendFile" />,
     icon: <PaperclipIcon />,
     actionType: ActionType.SendFile,
+    children: [
+      {
+        label: <T keyName="flows.ActionType.SendAudio" />,
+        icon: <FileAudioIcon />,
+        actionType: ActionType.SendAudio,
+      },
+      {
+        label: <T keyName="flows.ActionType.SendFile" />,
+        icon: <PaperclipIcon />,
+        actionType: ActionType.SendFile,
+      }
+    ]
   },
   {
     label: <T keyName="flows.ActionType.Actions" />,

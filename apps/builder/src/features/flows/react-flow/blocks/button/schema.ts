@@ -23,7 +23,6 @@ export const buttonBlockSchema = z.object({
 })
 export type ButtonBlockSchema = z.infer<typeof buttonBlockSchema>
 
-
 export const buttonBlockDefaultValue = (label = ""): ButtonBlockSchema => ({
   id: createId(),
   label,
