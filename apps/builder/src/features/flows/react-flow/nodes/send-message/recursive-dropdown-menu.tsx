@@ -1,6 +1,12 @@
-import { DropdownMenuItem, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
-import { ActionType } from "../../action-type";
-import { MenuItem } from "../types";
+import {
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { ActionType } from "../../action-type"
+import type { MenuItem } from "../types"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
   return (
@@ -11,33 +17,37 @@ function MenuRow({ menuItem }: { menuItem: MenuItem }) {
   )
 }
 
-export default function RecursiveDropdownMenu({ data, onClick }: { data: MenuItem[], onClick: (name: ActionType) => void }) {
+export default function RecursiveDropdownMenu({
+  data,
+  onClick,
+}: { data: MenuItem[]; onClick: (name: ActionType) => void }) {
   return (
     <>
-      {
-        data.map((menuItem: MenuItem, index: number) => {
-          return menuItem.children && menuItem.children.length > 0 ?
-            (
-              <DropdownMenuSub key={index}>
-                <DropdownMenuSubTrigger>
-                  <MenuRow menuItem={menuItem} />
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <RecursiveDropdownMenu key={menuItem.actionType} data={menuItem.children} onClick={onClick} />
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-            ) :
-            (
-              <DropdownMenuItem key={index} onClick={() => onClick(menuItem.actionType)}>
-                <MenuRow menuItem={menuItem} />
-              </DropdownMenuItem>
-            )
-        })
-      }
+      {data.map((menuItem: MenuItem) => {
+        return menuItem.children && menuItem.children.length > 0 ? (
+          <DropdownMenuSub key={menuItem.actionType}>
+            <DropdownMenuSubTrigger>
+              <MenuRow menuItem={menuItem} />
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <RecursiveDropdownMenu
+                  key={menuItem.actionType}
+                  data={menuItem.children}
+                  onClick={onClick}
+                />
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+        ) : (
+          <DropdownMenuItem
+            key={menuItem.actionType}
+            onClick={() => onClick(menuItem.actionType)}
+          >
+            <MenuRow menuItem={menuItem} />
+          </DropdownMenuItem>
+        )
+      })}
     </>
-  );
-};
-
-
+  )
+}

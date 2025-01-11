@@ -1,8 +1,8 @@
-import { createId } from "@paralleldrive/cuid2";
-import { z } from 'zod';
-import { sendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema";
-import { buttonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema";
-import { ActionType } from "../../action-type";
+import { buttonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema"
+import { sendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema"
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
+import { ActionType } from "../../action-type"
 
 export enum CardLayout {
   Vertical = "Vertical",
@@ -16,7 +16,7 @@ export const sendCardBlockSchema = z.object({
   subtitle: z.string().max(255).trim().optional(),
   cardType: z.nativeEnum(CardLayout),
   image: sendImageBlockSchema.optional(),
-  buttons: z.array(buttonBlockSchema).optional()
+  buttons: z.array(buttonBlockSchema).optional(),
 })
 
 export type SendCardBlockSchema = z.infer<typeof sendCardBlockSchema>

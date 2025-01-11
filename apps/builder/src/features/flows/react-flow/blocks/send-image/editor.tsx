@@ -9,7 +9,12 @@ const SendImageBlockEditor = ({ parentName }: { parentName: string }) => {
 
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center">
-      <FileDropzone register={register} unregister={unregister} parentName={parentName} mode="link" />
+      <FileDropzone
+        register={register}
+        unregister={unregister}
+        parentName={parentName}
+        mode="link"
+      />
       <div className="bg-slate-200 p-4">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>
@@ -17,7 +22,4 @@ const SendImageBlockEditor = ({ parentName }: { parentName: string }) => {
   )
 }
 
-export {
-  SendImageBlockEditor
-}
-
+export { SendImageBlockEditor }

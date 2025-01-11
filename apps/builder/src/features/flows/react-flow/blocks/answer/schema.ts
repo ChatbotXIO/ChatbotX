@@ -23,7 +23,7 @@ const answerBaseBlockSchema = z.object({
     period: z.enum(["Second", "Minute", "Hour"]),
     unit: z.number().int().nullable(),
     failedAttemps: z.number().int().nonnegative().min(1).max(100),
-  })
+  }),
 })
 
 export const answerNumberBlockSchema = answerBaseBlockSchema.extend({})

@@ -9,11 +9,7 @@ import {
   Sparkles,
 } from "lucide-react"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,8 +25,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { LangSelector } from "./lang-selector"
 import { useTranslate } from "@tolgee/react"
+import { LangSelector } from "./lang-selector"
 import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
@@ -46,7 +42,7 @@ export function NavUser({
   const { t } = useTranslate()
 
   const onLogout = () => {
-    console.log('logout')
+    console.log("logout")
   }
 
   return (
@@ -97,14 +93,14 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                {t('common.language')}
+                {t("common.language")}
                 <LangSelector />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                {t('common.theme')}
+                {t("common.theme")}
                 <ThemeSwitcher />
               </DropdownMenuItem>
             </DropdownMenuGroup>

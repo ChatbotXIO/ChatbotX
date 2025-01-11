@@ -1,89 +1,99 @@
-'use client'
+"use client"
 
-import { useState } from "react";
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { Video, File, Volume2, Image, ImagePlay, Undo2, X } from "lucide-react";
-import { T } from "@tolgee/react";
-import Dropzone from "react-dropzone";
+import { cn } from "@/lib/utils"
+import { T } from "@tolgee/react"
+import { File, Image, ImagePlay, Undo2, Video, Volume2, X } from "lucide-react"
+import { useState } from "react"
+import Dropzone from "react-dropzone"
+import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 enum FileType {
-  Video = 'video',
-  Image = 'image',
-  File = 'file',
-  Audio = 'audio',
-  Gif = 'gif',
+  Video = "video",
+  Image = "image",
+  File = "file",
+  Audio = "audio",
+  Gif = "gif",
 }
 
 type FileDropzoneConfigs = {
   uploadKeyName: string
   linkKeyName: string
-  accept: Record<string, string[]>,
-  maxSize: number,
+  accept: Record<string, string[]>
+  maxSize: number
   isCard: boolean
 }
 
 interface FileDropzoneProps {
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   register: any
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   unregister?: any
   parentName: string
-  type?: 'video' | 'image' | 'file' | 'audio' | 'gif'
-  mode?: 'file' | 'link'
+  type?: "video" | "image" | "file" | "audio" | "gif"
+  mode?: "file" | "link"
   configs?: Partial<FileDropzoneConfigs>
-  onMode?: (mode: 'file' | 'link') => void
+  onMode?: (mode: "file" | "link") => void
   onRemove?: () => void
   onDrop?: (file: File) => void
 }
 
-export default function FileDropzone(
-  {
-    register, unregister,
-    parentName,
-    type = FileType.Image,
-    mode = 'file',
-    configs: {
-      uploadKeyName =  'common.uploadImageOr',
-      linkKeyName = 'common.insertLink',
-      accept = {"image/*": []},
-      maxSize = 10,
-      isCard = false
-    } = {},
-    onMode, onRemove, onDrop
-  }: FileDropzoneProps
-) {
-  const [preview, setPreview] = useState('')
-  const [fileMode, setFileMode] = useState<'file' | 'link'>(mode);
+export default function FileDropzone({
+  register,
+  unregister,
+  parentName,
+  type = FileType.Image,
+  mode = "file",
+  configs: {
+    uploadKeyName = "common.uploadImageOr",
+    linkKeyName = "common.insertLink",
+    accept = { "image/*": [] },
+    maxSize = 10,
+    isCard = false,
+  } = {},
+  onMode,
+  onRemove,
+  onDrop,
+}: FileDropzoneProps) {
+  const [preview, setPreview] = useState("")
+  const [fileMode, setFileMode] = useState<"file" | "link">(mode)
 
   const _validateSize = (file: File) => file.size > maxSize * 1024 * 1024
 
   const _videoPreview = (file: File) => {
-    const video: HTMLVideoElement = document.createElement('video');
-    const canvas: HTMLCanvasElement = document.createElement('canvas');
-    const ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D;
+    const video: HTMLVideoElement = document.createElement("video")
+    const canvas: HTMLCanvasElement = document.createElement("canvas")
+    const ctx: CanvasRenderingContext2D = canvas.getContext(
+      "2d",
+    ) as CanvasRenderingContext2D
 
-    const fileURL = URL.createObjectURL(file);
-    video.src = fileURL;
+    const fileURL = URL.createObjectURL(file)
+    video.src = fileURL
 
-    video.addEventListener('loadeddata', function() {
-      video.currentTime = 1;
-    });
+    video.addEventListener("loadeddata", () => {
+      video.currentTime = 1
+    })
 
-    video.addEventListener('seeked', function() {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      setPreview(canvas.toDataURL('image/png'))
-      URL.revokeObjectURL(fileURL);
-    });
+    video.addEventListener("seeked", () => {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      setPreview(canvas.toDataURL("image/png"))
+      URL.revokeObjectURL(fileURL)
+    })
 
-    video.addEventListener('error', () => {
-      toast('Video error');
-      URL.revokeObjectURL(fileURL);
-    });
+    video.addEventListener("error", () => {
+      toast("Video error")
+      URL.revokeObjectURL(fileURL)
+    })
   }
 
   const _imagePreview = (file: File) => {
@@ -94,10 +104,10 @@ export default function FileDropzone(
     reader.readAsDataURL(file)
   }
 
-  const _onDrop = ([ file ]: File[]) => {
+  const _onDrop = ([file]: File[]) => {
     if (file) {
       if (_validateSize(file)) {
-        return toast('common.upload.fileMaxSize')
+        return toast("common.upload.fileMaxSize")
       }
 
       if (file.type.includes(FileType.Video)) {
@@ -108,39 +118,41 @@ export default function FileDropzone(
         _imagePreview(file)
       }
 
-      onDrop && onDrop(file)
+      onDrop?.(file)
     }
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const _onRemove = (e: any) => {
     e.stopPropagation()
-    setPreview('')
-    onRemove && onRemove()
+    setPreview("")
+    onRemove?.()
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const _onMode = (e: any) => {
     e.stopPropagation()
-    setFileMode(fileMode === 'file' ? 'link' : 'file');
-    if (fileMode === 'link') {
+    setFileMode(fileMode === "file" ? "link" : "file")
+    if (fileMode === "link") {
       unregister(`${parentName}.file`)
     } else {
       unregister(`${parentName}.url`)
     }
-    onMode && onMode(fileMode)
+    onMode?.(fileMode)
   }
 
-  const _uploadIcon = (size: number = 30) => {
+  const _uploadIcon = (size = 30) => {
     switch (type) {
       case FileType.Video:
-        return <Video size={size} className="text-gray-500"/>
+        return <Video size={size} className="text-gray-500" />
       case FileType.File:
-        return <File size={size} className="text-gray-500"/>
+        return <File size={size} className="text-gray-500" />
       case FileType.Audio:
         return <Volume2 size={size} className="text-gray-500" />
       case FileType.Gif:
         return <ImagePlay size={size} className="text-gray-500" />
       default:
-        return <Image size={size} className="text-gray-500"/>
+        return <Image size={size} className="text-gray-500" />
     }
   }
 
@@ -149,17 +161,19 @@ export default function FileDropzone(
       <div className="flex flex-col items-center">
         {_uploadIcon()}
         <div>
-          <T keyName={uploadKeyName}/>
-          {
-            !isCard && (
-              <>
-                {"\u00A0"}
-                <Button variant="link" onClick={_onMode} className="p-0 text-destructive">
-                  <T keyName={linkKeyName}/>
-                </Button>
-              </>
-            )
-          }
+          <T keyName={uploadKeyName} />
+          {!isCard && (
+            <>
+              {"\u00A0"}
+              <Button
+                variant="link"
+                onClick={_onMode}
+                className="p-0 text-destructive"
+              >
+                <T keyName={linkKeyName} />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     )
@@ -170,11 +184,16 @@ export default function FileDropzone(
       <>
         <img
           src={preview}
-          className='w-full h-full object-cover'
+          className="w-full h-full object-cover"
           alt="Thumbnail"
         />
         <div className="absolute top-1 right-1 z-10">
-          <Button variant="outline" size="icon" className="rounded-full size-5" onClick={_onRemove}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full size-5"
+            onClick={_onRemove}
+          >
             <X size={10} />
           </Button>
         </div>
@@ -183,41 +202,41 @@ export default function FileDropzone(
   }
 
   const dropZone = () => {
-    return <Dropzone
-      maxFiles={1}
-      accept={accept}
-      onDrop={_onDrop}
-    >
-      {({getRootProps, getInputProps}) => (
-        <section>
-          <div {...getRootProps()}>
-            <Input {...getInputProps()} />
-            <div
-              className={cn(
-                'relative flex flex-col items-center h-36 overflow-hidden justify-center hover:cursor-pointer',
-                preview ? 'border-solid' : 'border-dashed',
-                isCard ? '' : 'border-2 rounded-lg hover:border-solid hover:border-blue-500'
-              )}>
-              { preview ? _hasFile() : _noFile() }
+    return (
+      <Dropzone maxFiles={1} accept={accept} onDrop={_onDrop}>
+        {({ getRootProps, getInputProps }) => (
+          <section>
+            <div {...getRootProps()}>
+              <Input {...getInputProps()} />
+              <div
+                className={cn(
+                  "relative flex flex-col items-center h-36 overflow-hidden justify-center hover:cursor-pointer",
+                  preview ? "border-solid" : "border-dashed",
+                  isCard
+                    ? ""
+                    : "border-2 rounded-lg hover:border-solid hover:border-blue-500",
+                )}
+              >
+                {preview ? _hasFile() : _noFile()}
+              </div>
             </div>
-          </div>
-        </section>
-      )}
-    </Dropzone>
+          </section>
+        )}
+      </Dropzone>
+    )
   }
 
   const inputLink = () => {
     return (
       <div className="flex flex-col">
         <div className="flex items-center justify-center gap-2 mb-2 relative">
-          { _uploadIcon(25) } <span className="capitalize">{ type }</span>
-
+          {_uploadIcon(25)} <span className="capitalize">{type}</span>
           <div className="absolute right-0">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="link" onClick={_onMode}>
-                    <Undo2 size={20}/>
+                    <Undo2 size={20} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -227,10 +246,14 @@ export default function FileDropzone(
             </TooltipProvider>
           </div>
         </div>
-        <Input className="rounded-full" placeholder="Insert link" {...register(`${parentName}.url`)} />
+        <Input
+          className="rounded-full"
+          placeholder="Insert link"
+          {...register(`${parentName}.url`)}
+        />
       </div>
     )
   }
 
-  return fileMode === 'file' ? dropZone() : inputLink()
+  return fileMode === "file" ? dropZone() : inputLink()
 }

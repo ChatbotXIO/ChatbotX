@@ -18,7 +18,7 @@ export function SendVideoBlockEditor({ parentName }: { parentName: string }) {
         configs={{
           uploadKeyName: "common.uploadVideoOr",
           linkKeyName: "common.insertLink",
-          accept: { "video/*": [] }
+          accept: { "video/*": [] },
         }}
       />
       <div className="bg-slate-200 p-4">

@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import FileDropzone from "@/components/file-dropzone";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Input } from '@/components/ui/input';
-import { useFormContext } from "react-hook-form";
-import { ButtonGroupEditor } from "../button/editor";
+import FileDropzone from "@/components/file-dropzone"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { useFormContext } from "react-hook-form"
+import { ButtonGroupEditor } from "../button/editor"
 
 export const SendCardBlockEditor = ({ parentName }: { parentName: string }) => {
   const { register } = useFormContext()
@@ -16,14 +16,15 @@ export const SendCardBlockEditor = ({ parentName }: { parentName: string }) => {
           register={register}
           parentName={parentName}
           configs={{
-            uploadKeyName: 'common.uploadImage',
-            isCard: true
+            uploadKeyName: "common.uploadImage",
+            isCard: true,
           }}
         />
       </CardHeader>
       <CardContent className="p-2 bg-gray-200">
         <Input
-          placeholder="Title (Required)" className="mb-2 border-0 focus-visible:ring-0 focus-visible:border-none"
+          placeholder="Title (Required)"
+          className="mb-2 border-0 focus-visible:ring-0 focus-visible:border-none"
           {...register(`${parentName}.title`)}
         />
 

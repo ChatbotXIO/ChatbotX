@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import type {
   DataTableAdvancedFilterField,
   Filter,
@@ -8,7 +7,8 @@ import type {
   JoinOperator,
   StringKeyOf,
 } from "@/components/data-table/types"
-import { type Table } from "@tanstack/react-table"
+import { createId } from "@paralleldrive/cuid2"
+import type { Table } from "@tanstack/react-table"
 import {
   CalendarIcon,
   Check,
@@ -17,15 +17,15 @@ import {
   ListFilter,
   Trash2,
 } from "lucide-react"
-import { createId } from "@paralleldrive/cuid2"
 import { parseAsStringEnum, useQueryState } from "nuqs"
+import * as React from "react"
 
-import { dataTableConfig } from "@/config/data-table"
-import { getDefaultFilterOperator, getFilterOperators } from "@/components/data-table/lib"
-import { getFiltersStateParser } from "@/components/data-table/parsers"
-import { cn } from "@/lib/utils"
+import {
+  getDefaultFilterOperator,
+  getFilterOperators,
+} from "@/components/data-table/lib"
 import { formatDate } from "@/components/data-table/lib/utils"
-import { useDebouncedCallback } from "use-debounce"
+import { getFiltersStateParser } from "@/components/data-table/parsers"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -65,6 +65,9 @@ import {
   SortableDragHandle,
   SortableItem,
 } from "@/components/ui/sortable"
+import { dataTableConfig } from "@/config/data-table"
+import { cn } from "@/lib/utils"
+import { useDebouncedCallback } from "use-debounce"
 
 interface DataTableFilterListProps<TData> {
   table: Table<TData>
@@ -87,7 +90,7 @@ export function DataTableFilterList<TData>({
       .withOptions({
         clearOnDefault: true,
         shallow,
-      })
+      }),
   )
 
   const [joinOperator, setJoinOperator] = useQueryState(
@@ -95,7 +98,7 @@ export function DataTableFilterList<TData>({
     parseAsStringEnum(["and", "or"]).withDefault("and").withOptions({
       clearOnDefault: true,
       shallow,
-    })
+    }),
   )
 
   const debouncedSetFilters = useDebouncedCallback(setFilters, debounceMs)
@@ -217,7 +220,7 @@ export function DataTableFilterList<TData>({
                     className="rounded-sm px-1 font-normal"
                   >
                     {filterField?.options?.find(
-                      (option) => option.value === filter.value
+                      (option) => option.value === filter.value,
                     )?.label || filter.value}
                   </Badge>
                 ) : (
@@ -270,9 +273,9 @@ export function DataTableFilterList<TData>({
             </FacetedFilterContent>
           </FacetedFilter>
         )
-      case "multi-select":
+      case "multi-select": {
         const selectedValues = new Set(
-          Array.isArray(filter.value) ? filter.value : []
+          Array.isArray(filter.value) ? filter.value : [],
         )
 
         return (
@@ -286,14 +289,12 @@ export function DataTableFilterList<TData>({
                 aria-controls={`${inputId}-listbox`}
                 className="h-8 w-full justify-start gap-2 rounded px-1.5 text-left text-muted-foreground hover:text-muted-foreground"
               >
-                <>
-                  {selectedValues.size === 0 && (
-                    <>
-                      {filterField.placeholder ?? " Select options..."}
-                      <ChevronsUpDown className="size-4" aria-hidden="true" />
-                    </>
-                  )}
-                </>
+                {selectedValues.size === 0 && (
+                  <>
+                    {filterField.placeholder ?? " Select options..."}
+                    <ChevronsUpDown className="size-4" aria-hidden="true" />
+                  </>
+                )}
                 {selectedValues?.size > 0 && (
                   <div className="flex items-center">
                     <Badge
@@ -376,7 +377,8 @@ export function DataTableFilterList<TData>({
             </FacetedFilterContent>
           </FacetedFilter>
         )
-      case "date":
+      }
+      case "date": {
         const dateValue = Array.isArray(filter.value)
           ? filter.value.filter(Boolean)
           : [filter.value, filter.value].filter(Boolean)
@@ -384,8 +386,8 @@ export function DataTableFilterList<TData>({
         const displayValue =
           filter.operator === "isBetween" && dateValue.length === 2
             ? `${formatDate(dateValue[0] ?? new Date())} - ${formatDate(
-              dateValue[1] ?? new Date()
-            )}`
+                dateValue[1] ?? new Date(),
+              )}`
             : dateValue[0]
               ? formatDate(dateValue[0])
               : "Pick a date"
@@ -401,7 +403,7 @@ export function DataTableFilterList<TData>({
                 aria-controls={`${inputId}-calendar`}
                 className={cn(
                   "h-8 w-full justify-start gap-2 rounded text-left font-normal",
-                  !filter.value && "text-muted-foreground"
+                  !filter.value && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon
@@ -424,13 +426,13 @@ export function DataTableFilterList<TData>({
                   selected={
                     dateValue.length === 2
                       ? {
-                        from: new Date(dateValue[0] ?? ""),
-                        to: new Date(dateValue[1] ?? ""),
-                      }
+                          from: new Date(dateValue[0] ?? ""),
+                          to: new Date(dateValue[1] ?? ""),
+                        }
                       : {
-                        from: new Date(),
-                        to: new Date(),
-                      }
+                          from: new Date(),
+                          to: new Date(),
+                        }
                   }
                   onSelect={(date) => {
                     updateFilter({
@@ -438,9 +440,9 @@ export function DataTableFilterList<TData>({
                       field: {
                         value: date
                           ? [
-                            date.from?.toISOString() ?? "",
-                            date.to?.toISOString() ?? "",
-                          ]
+                              date.from?.toISOString() ?? "",
+                              date.to?.toISOString() ?? "",
+                            ]
                           : [],
                       },
                     })
@@ -470,6 +472,7 @@ export function DataTableFilterList<TData>({
             </PopoverContent>
           </Popover>
         )
+      }
       case "boolean": {
         if (Array.isArray(filter.value)) return null
 
@@ -544,7 +547,7 @@ export function DataTableFilterList<TData>({
           collisionPadding={16}
           className={cn(
             "flex w-[calc(100vw-theme(spacing.12))] min-w-60 origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[36rem]",
-            filters.length > 0 ? "gap-3.5" : "gap-2"
+            filters.length > 0 ? "gap-3.5" : "gap-2",
           )}
         >
           {filters.length > 0 ? (
@@ -612,6 +615,7 @@ export function DataTableFilterList<TData>({
                           id={fieldTriggerId}
                           variant="outline"
                           size="sm"
+                          // biome-ignore lint: lint/a11y/useSemanticElements
                           role="combobox"
                           aria-label="Select filter field"
                           aria-controls={fieldListboxId}
@@ -619,7 +623,7 @@ export function DataTableFilterList<TData>({
                         >
                           <span className="truncate">
                             {filterFields.find(
-                              (field) => field.id === filter.id
+                              (field) => field.id === filter.id,
                             )?.label ?? "Select field"}
                           </span>
                           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
@@ -646,7 +650,7 @@ export function DataTableFilterList<TData>({
                                   value={field.id}
                                   onSelect={(value) => {
                                     const filterField = filterFields.find(
-                                      (col) => col.id === value
+                                      (col) => col.id === value,
                                     )
 
                                     if (!filterField) return
@@ -657,7 +661,7 @@ export function DataTableFilterList<TData>({
                                         id: value as StringKeyOf<TData>,
                                         type: filterField.type,
                                         operator: getDefaultFilterOperator(
-                                          filterField.type
+                                          filterField.type,
                                         ),
                                         value: "",
                                       },
@@ -676,7 +680,7 @@ export function DataTableFilterList<TData>({
                                       "ml-auto size-4 shrink-0",
                                       field.id === filter.id
                                         ? "opacity-100"
-                                        : "opacity-0"
+                                        : "opacity-0",
                                     )}
                                   />
                                 </CommandItem>

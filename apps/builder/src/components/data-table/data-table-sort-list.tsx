@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import type {
   ExtendedColumnSort,
   ExtendedSortingState,
@@ -15,11 +14,10 @@ import {
   Trash2,
 } from "lucide-react"
 import { useQueryState } from "nuqs"
+import * as React from "react"
 
-import { dataTableConfig } from "@/config/data-table"
-import { getSortingStateParser } from "@/components/data-table/parsers"
 import { cn, toSentenceCase } from "@/components/data-table/lib/utils"
-import { useDebouncedCallback } from "use-debounce"
+import { getSortingStateParser } from "@/components/data-table/parsers"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -47,6 +45,8 @@ import {
   SortableDragHandle,
   SortableItem,
 } from "@/components/ui/sortable"
+import { dataTableConfig } from "@/config/data-table"
+import { useDebouncedCallback } from "use-debounce"
 
 interface DataTableSortListProps<TData> {
   table: Table<TData>
@@ -71,15 +71,16 @@ export function DataTableSortList<TData>({
       .withOptions({
         clearOnDefault: true,
         shallow,
-      })
+      }),
   )
 
   const uniqueSorting = React.useMemo(
     () =>
       sorting.filter(
-        (sort, index, self) => index === self.findIndex((t) => t.id === sort.id)
+        (sort, index, self) =>
+          index === self.findIndex((t) => t.id === sort.id),
       ),
-    [sorting]
+    [sorting],
   )
 
   const debouncedSetSorting = useDebouncedCallback(setSorting, debounceMs)
@@ -90,19 +91,19 @@ export function DataTableSortList<TData>({
         .getAllColumns()
         .filter(
           (column) =>
-            column.getCanSort() && !sorting.some((s) => s.id === column.id)
+            column.getCanSort() && !sorting.some((s) => s.id === column.id),
         )
         .map((column) => ({
           id: column.id,
           label: toSentenceCase(column.id),
           selected: false,
         })),
-    [sorting, table]
+    [sorting, table],
   )
 
   function addSort() {
     const firstAvailableColumn = sortableColumns.find(
-      (column) => !sorting.some((s) => s.id === column.id)
+      (column) => !sorting.some((s) => s.id === column.id),
     )
     if (!firstAvailableColumn) return
 
@@ -130,7 +131,7 @@ export function DataTableSortList<TData>({
       if (!prevSorting) return prevSorting
 
       const updatedSorting = prevSorting.map((sort) =>
-        sort.id === id ? { ...sort, ...field } : sort
+        sort.id === id ? { ...sort, ...field } : sort,
       )
       return updatedSorting
     })
@@ -138,7 +139,7 @@ export function DataTableSortList<TData>({
 
   function removeSort(id: string) {
     void setSorting((prevSorting) =>
-      prevSorting.filter((item) => item.id !== id)
+      prevSorting.filter((item) => item.id !== id),
     )
   }
 
@@ -182,7 +183,7 @@ export function DataTableSortList<TData>({
           collisionPadding={16}
           className={cn(
             "flex w-[calc(100vw-theme(spacing.20))] min-w-72 max-w-[25rem] origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[25rem]",
-            sorting.length > 0 ? "gap-3.5" : "gap-2"
+            sorting.length > 0 ? "gap-3.5" : "gap-2",
           )}
         >
           {uniqueSorting.length > 0 ? (
@@ -212,6 +213,7 @@ export function DataTableSortList<TData>({
                             id={fieldTriggerId}
                             variant="outline"
                             size="sm"
+                            // biome-ignore lint: lint/a11y/useSemanticElements
                             role="combobox"
                             className="h-8 w-44 justify-between gap-2 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                             aria-controls={fieldListboxId}
@@ -221,7 +223,7 @@ export function DataTableSortList<TData>({
                             </span>
                             <div className="ml-auto flex items-center gap-1">
                               {initialSorting.length === 1 &&
-                                initialSorting[0]?.id === sort.id ? (
+                              initialSorting[0]?.id === sort.id ? (
                                 <Badge
                                   variant="secondary"
                                   className="h-[1.125rem] rounded px-1 font-mono text-[0.65rem] font-normal"
@@ -277,7 +279,7 @@ export function DataTableSortList<TData>({
                                         "ml-auto size-4 shrink-0",
                                         column.id === sort.id
                                           ? "opacity-100"
-                                          : "opacity-0"
+                                          : "opacity-0",
                                       )}
                                       aria-hidden="true"
                                     />

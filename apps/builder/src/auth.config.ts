@@ -1,12 +1,9 @@
 import type { NextAuthConfig } from "next-auth"
-import { Provider } from "next-auth/providers"
-import Google from "next-auth/providers/google"
+import type { Provider } from "next-auth/providers"
 import Facebook from "next-auth/providers/facebook"
+import Google from "next-auth/providers/google"
 
-const providers: Provider[] = [
-  Google,
-  Facebook,
-]
+const providers: Provider[] = [Google, Facebook]
 
 export const providerMap = providers
   .map((provider) => {
@@ -16,11 +13,11 @@ export const providerMap = providers
         id: providerData.id,
         name: providerData.name,
       }
-    } else {
-      return {
-        id: provider.id,
-        name: provider.name
-      }
+    }
+
+    return {
+      id: provider.id,
+      name: provider.name,
     }
   })
   .filter((provider) => provider.id !== "credentials")

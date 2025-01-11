@@ -1,32 +1,33 @@
 "use client"
 
-import { buttonBlockDefaultValue } from '@/features/flows/react-flow/blocks/button/schema';
-import { sendTextBlockDefaultValue } from '@/features/flows/react-flow/blocks/send-text/schema';
-import AddNotesNode from '@/features/flows/react-flow/nodes/add-notes/add-notes-node';
-import { SendMessageNodeSchema } from '@/features/flows/react-flow/nodes/send-message/schema';
-import SendMessageNodeViewer from '@/features/flows/react-flow/nodes/send-message/viewer';
+import { buttonBlockDefaultValue } from "@/features/flows/react-flow/blocks/button/schema"
+import { sendTextBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-text/schema"
+import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
+import type { AddNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema"
+import type { SendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
+import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer"
 // import { splitTrafficNodeDefaultValue } from '@/features/flows/react-flow/nodes/split-traffic/schema';
 // import SplitTrafficNodeViewer from '@/features/flows/react-flow/nodes/split-traffic/viewer';
-import { AddBlockButton } from '@/features/flows/react-flow/panels/add-block';
-import { NodeDetailSheet } from '@/features/flows/react-flow/panels/node-detail-sheet';
-import { PanelAction } from '@/features/flows/react-flow/types';
-import { createId } from '@paralleldrive/cuid2';
-import { useTranslate } from '@tolgee/react';
+import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block"
+import { NodeDetailSheet } from "@/features/flows/react-flow/panels/node-detail-sheet"
+import { PanelAction } from "@/features/flows/react-flow/types"
+import { createId } from "@paralleldrive/cuid2"
+import { useTranslate } from "@tolgee/react"
 import {
-  addEdge,
   Background,
   Controls,
-  Edge,
+  type Edge,
   MiniMap,
-  Node,
+  type Node,
   Panel,
   ReactFlow,
   ReactFlowProvider,
+  addEdge,
   useEdgesState,
   useNodesState,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { useCallback, useState } from 'react';
+} from "@xyflow/react"
+import "@xyflow/react/dist/style.css"
+import { useCallback, useState } from "react"
 
 const nodeTypes = {
   [PanelAction.SendMessage]: SendMessageNodeViewer,
@@ -36,19 +37,19 @@ const nodeTypes = {
 
 const data: SendMessageNodeSchema = {
   id: createId(),
-  name: 'Send Message',
+  name: "Send Message",
   messageType: "Whatsapp",
   blocks: [
     sendTextBlockDefaultValue("ok chuaw", [
       buttonBlockDefaultValue("bt1"),
-      buttonBlockDefaultValue("bt2")
-    ])
-  ]
+      buttonBlockDefaultValue("bt2"),
+    ]),
+  ],
 }
 
-const initialNodes: any[] = [
+const initialNodes: Node[] = [
   {
-    id: '1',
+    id: "1",
     type: PanelAction.SendMessage,
     position: { x: 200, y: 200 },
     data,
@@ -59,35 +60,41 @@ const initialNodes: any[] = [
   //   position: { x: 300, y: 300 },
   //   data: splitTrafficNodeDefaultValue()
   // }
-];
+]
 
-const initialEdges: Edge[] = [];
+const initialEdges: Edge[] = []
 
 export default function FlowPage({ children }: { children: React.ReactNode }) {
   const { t } = useTranslate()
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [activeNode, setActiveNode] = useState<Node | null>(null)
-  const [openNodeDetailSheet, setOpenNodeDetailSheet] = useState<boolean>(false);
+  const [openNodeDetailSheet, setOpenNodeDetailSheet] = useState<boolean>(false)
 
-  const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+  const onConnect = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    (params: any) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges],
+  )
 
   const onChooseAction = (name: PanelAction) => {
-    let newNode: any | undefined
-    if (name == PanelAction.SendMessage) {
+    let newNode: Node<SendMessageNodeSchema | AddNotesNodeSchema> | undefined
+    if (name === PanelAction.SendMessage) {
       let labelVersion = 0
-      nodes.forEach((node) => {
-        if (node.type == PanelAction.SendMessage) {
-          const matched = node.data.label.match(/^Send Message #(\d+)$/);
+      for (const node of nodes) {
+        if (node.type === PanelAction.SendMessage) {
+          const matched = (node.data.name as string).match(
+            /^Send Message #(\d+)$/,
+          )
           if (matched) {
-            const version = parseInt(matched[1] ?? '0', 10)
+            const version = Number.parseInt(matched[1] ?? "0", 10)
             if (version > labelVersion) {
               labelVersion = version
             }
           }
         }
-      }, 0)
+      }
 
       newNode = {
         id: createId(),
@@ -97,13 +104,15 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
           y: 100,
         },
         data: {
-          label: `Send Message #${labelVersion + 1}`,
-          message: "\u00A0"
-        }
+          id: createId(),
+          name: `Send Message #${labelVersion + 1}`,
+          messageType: "Messenger",
+          blocks: [],
+        },
       }
     }
 
-    if (name == PanelAction.AddNotes) {
+    if (name === PanelAction.AddNotes) {
       newNode = {
         id: createId(),
         type: PanelAction.AddNotes,
@@ -112,9 +121,10 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
           y: 100,
         },
         data: {
-          label: t("flows.addNotes"),
-          message: "\u00A0"
-        }
+          id: createId(),
+          name: t("flows.addNotes"),
+          message: "",
+        },
       }
     }
 
@@ -133,13 +143,13 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         proOptions={{ hideAttribution: true }}
-        onNodeClick={(event: any, node: any) => {
-          setActiveNode(node);
-          setOpenNodeDetailSheet(true);
+        onNodeClick={(_, node: Node) => {
+          setActiveNode(node)
+          setOpenNodeDetailSheet(true)
         }}
         onPaneClick={() => {
-          setActiveNode(null);
-          setOpenNodeDetailSheet(false);
+          setActiveNode(null)
+          setOpenNodeDetailSheet(false)
         }}
       >
         <MiniMap />
@@ -151,7 +161,11 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
         </Panel>
       </ReactFlow>
 
-      <NodeDetailSheet open={openNodeDetailSheet} onOpenChange={setOpenNodeDetailSheet} activeNode={activeNode} />
+      <NodeDetailSheet
+        open={openNodeDetailSheet}
+        onOpenChange={setOpenNodeDetailSheet}
+        activeNode={activeNode}
+      />
     </ReactFlowProvider>
   )
 }

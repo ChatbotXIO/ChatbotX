@@ -1,12 +1,26 @@
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { Separator } from "@/components/ui/separator"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { getCurrentUserId } from "@/auth"
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { redirect } from "next/navigation"
 
-export default async function ChatbotLayout({ children, params }: { children: React.ReactNode, params: Promise<{ chatbotId: string }> }) {
+export default async function ChatbotLayout({
+  children,
+  params,
+}: { children: React.ReactNode; params: Promise<{ chatbotId: string }> }) {
   const chatbotId = (await params).chatbotId
   const userId = await getCurrentUserId()
 
@@ -26,22 +40,16 @@ export default async function ChatbotLayout({ children, params }: { children: Re
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">
-                  Chatbots
-                </BreadcrumbLink>
+                <BreadcrumbLink href="#">Chatbots</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>
-                  Contacts
-                </BreadcrumbPage>
+                <BreadcrumbPage>Contacts</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4">
-          {children}
-        </main>
+        <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )

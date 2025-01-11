@@ -1,7 +1,55 @@
-import { T } from "@tolgee/react";
-import { ArchiveIcon, AudioLinesIcon, BellIcon, BotIcon, BotMessageSquareIcon, BotOffIcon, CalculatorIcon, CalendarSyncIcon, ChartNoAxesColumnIcon, ChartNoAxesCombinedIcon, CircleCheckIcon, CircleEllipsisIcon, ClockIcon, CodeIcon, CogIcon, CreditCardIcon, FileAudioIcon, FilterIcon, FilterXIcon, ImageIcon, ImagePlayIcon, KeyboardIcon, LogsIcon, MailIcon, MessageCircleMoreIcon, MessageCircleOffIcon, MessageCirclePlusIcon, MessageCircleXIcon, MessageSquareIcon, MessagesSquareIcon, OctagonXIcon, PackageOpenIcon, PaperclipIcon, PictureInPicture2Icon, SaveIcon, SaveOffIcon, ShuffleIcon, SpeechIcon, StarIcon, StarOffIcon, TagIcon, TextIcon, UserIcon, UserRoundMinusIcon, UserRoundXIcon, VideoIcon, ZapIcon } from "lucide-react";
-import { ActionType } from "../../action-type";
-import { MenuItem } from "../types";
+import { T } from "@tolgee/react"
+import {
+  ArchiveIcon,
+  AudioLinesIcon,
+  BellIcon,
+  BotIcon,
+  BotMessageSquareIcon,
+  BotOffIcon,
+  CalculatorIcon,
+  CalendarSyncIcon,
+  ChartNoAxesColumnIcon,
+  ChartNoAxesCombinedIcon,
+  CircleCheckIcon,
+  CircleEllipsisIcon,
+  ClockIcon,
+  CodeIcon,
+  CogIcon,
+  CreditCardIcon,
+  FileAudioIcon,
+  FilterIcon,
+  FilterXIcon,
+  ImageIcon,
+  ImagePlayIcon,
+  KeyboardIcon,
+  LogsIcon,
+  MailIcon,
+  MessageCircleMoreIcon,
+  MessageCircleOffIcon,
+  MessageCirclePlusIcon,
+  MessageCircleXIcon,
+  MessageSquareIcon,
+  MessagesSquareIcon,
+  OctagonXIcon,
+  PackageOpenIcon,
+  PaperclipIcon,
+  PictureInPicture2Icon,
+  SaveIcon,
+  SaveOffIcon,
+  ShuffleIcon,
+  SpeechIcon,
+  StarIcon,
+  StarOffIcon,
+  TagIcon,
+  TextIcon,
+  UserIcon,
+  UserRoundMinusIcon,
+  UserRoundXIcon,
+  VideoIcon,
+  ZapIcon,
+} from "lucide-react"
+import { ActionType } from "../../action-type"
+import type { MenuItem } from "../types"
 
 export const sendMessageEditorMenus: MenuItem[] = [
   {
@@ -58,8 +106,8 @@ export const sendMessageEditorMenus: MenuItem[] = [
         label: <T keyName="flows.ActionType.SendFile" />,
         icon: <PaperclipIcon />,
         actionType: ActionType.SendFile,
-      }
-    ]
+      },
+    ],
   },
   {
     label: <T keyName="flows.ActionType.Actions" />,
@@ -126,7 +174,7 @@ export const sendMessageEditorMenus: MenuItem[] = [
             icon: <UserRoundMinusIcon />,
             actionType: ActionType.BlockContact,
           },
-        ]
+        ],
       },
       {
         label: <T keyName="flows.ActionType.AddTag" />,
@@ -173,7 +221,7 @@ export const sendMessageEditorMenus: MenuItem[] = [
             icon: <MessageCircleOffIcon />,
             actionType: ActionType.DeleteMessageHistory,
           },
-        ]
+        ],
       },
 
       {
@@ -184,19 +232,19 @@ export const sendMessageEditorMenus: MenuItem[] = [
           {
             label: <T keyName="flows.ActionType.MarkEmailVerified" />,
             icon: <CircleCheckIcon />,
-            actionType: ActionType.MarkEmailVerified
+            actionType: ActionType.MarkEmailVerified,
           },
           {
             label: <T keyName="flows.ActionType.OptInEmail" />,
             icon: <FilterIcon />,
-            actionType: ActionType.OptInEmail
+            actionType: ActionType.OptInEmail,
           },
           {
             label: <T keyName="flows.ActionType.OptOutEmail" />,
             icon: <FilterXIcon />,
-            actionType: ActionType.OptOutEmail
+            actionType: ActionType.OptOutEmail,
           },
-        ]
+        ],
       },
       {
         label: <T keyName="flows.ActionType.MessengerActions" />,
@@ -213,7 +261,7 @@ export const sendMessageEditorMenus: MenuItem[] = [
             icon: <LogsIcon />,
             actionType: ActionType.AddMessengerRichmenu,
           },
-        ]
+        ],
       },
       {
         label: <T keyName="flows.ActionType.NotifyAgent" />,
@@ -275,7 +323,7 @@ export const sendMessageEditorMenus: MenuItem[] = [
             icon: <ZapIcon />,
             actionType: ActionType.TriggerPabbly,
           },
-        ]
+        ],
       },
       {
         label: <T keyName="flows.ActionType.Others" />,
@@ -302,7 +350,7 @@ export const sendMessageEditorMenus: MenuItem[] = [
             icon: <ZapIcon />,
             actionType: ActionType.CancelContactInput,
           },
-        ]
+        ],
       },
       {
         label: <T keyName="flows.ActionType.Tools" />,
@@ -329,8 +377,8 @@ export const sendMessageEditorMenus: MenuItem[] = [
             icon: <CalculatorIcon />,
             actionType: ActionType.CountCharacters,
           },
-        ]
+        ],
       },
-    ]
+    ],
   },
 ]

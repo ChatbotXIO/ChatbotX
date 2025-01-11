@@ -1,9 +1,11 @@
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { useFormContext } from "react-hook-form";
+import { Input } from "@/components/ui/input"
+import { Slider } from "@/components/ui/slider"
+import { useFormContext } from "react-hook-form"
 
-export const SplitTrafficBlockEditor = ({ parentName }: { parentName: string }) => {
-  const { register } = useFormContext();
+export const SplitTrafficBlockEditor = ({
+  parentName,
+}: { parentName: string }) => {
+  const { register } = useFormContext()
 
   return (
     <div className="flex flex-1 gap-2 items-center py-4">

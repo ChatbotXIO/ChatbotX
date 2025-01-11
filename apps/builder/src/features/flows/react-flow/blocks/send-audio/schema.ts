@@ -1,7 +1,7 @@
-import { createId } from "@paralleldrive/cuid2";
-import { z } from "zod";
-import { ActionType } from "../../action-type";
-import { buttonBlockSchema } from "../button/schema";
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
+import { ActionType } from "../../action-type"
+import { buttonBlockSchema } from "../button/schema"
 
 export const sendAudioBlockSchema = z.object({
   id: z.string().cuid2(),
@@ -16,5 +16,5 @@ export const sendAudioBlockDefaultValue = (): SendAudioBlockSchema => ({
   id: createId(),
   actionType: ActionType.SendAudio,
   url: "https://www.w3schools.com/html/horse.ogg",
-  buttons: []
+  buttons: [],
 })

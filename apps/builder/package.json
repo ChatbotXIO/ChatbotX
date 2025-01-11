@@ -8,7 +8,7 @@
     "check-types": "tsc --noEmit",
     "next:dev": "dotenv -e ./.env -e ../../.env -- next dev --turbopack -p 3000",
     "partysocket:dev": "dotenv -e ./.env -e ../../.env -- partykit dev",
-    "lint": "next lint --max-warnings 0",
+    "lint": "biome check .",
     "start": "next start"
   },
   "dependencies": {
@@ -54,7 +54,7 @@
     "i18next": "^24.2.1",
     "ky": "^1.7.4",
     "lodash.clonedeep": "^4.5.0",
-    "lucide-react": "^0.469.0",
+    "lucide-react": "^0.471.0",
     "next": "15.1.4",
     "next-auth": "5.0.0-beta.25",
     "next-safe-action": "^7.10.2",
@@ -76,6 +76,7 @@
   "devDependencies": {
     "@ahachat.ai/eslint-config": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
+    "@biomejs/biome": "^1.9.4",
     "@faker-js/faker": "^9.3.0",
     "@types/lodash.clonedeep": "^4.5.9",
     "@types/node": "^22.10.5",

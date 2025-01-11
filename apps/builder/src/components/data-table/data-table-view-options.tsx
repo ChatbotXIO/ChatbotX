@@ -1,8 +1,8 @@
 "use client"
 
-import * as React from "react"
 import type { Table } from "@tanstack/react-table"
 import { Check, ChevronsUpDown, Settings2 } from "lucide-react"
+import * as React from "react"
 
 import { cn, toSentenceCase } from "@/components/data-table/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,7 @@ export function DataTableViewOptions<TData>({
           ref={triggerRef}
           aria-label="Toggle columns"
           variant="outline"
+          // biome-ignore lint: lint/a11y/useSemanticElements
           role="combobox"
           size="sm"
           className="ml-auto hidden h-8 gap-2 focus:outline-none focus:ring-1 focus:ring-ring focus-visible:ring-0 lg:flex"
@@ -60,7 +61,7 @@ export function DataTableViewOptions<TData>({
                 .filter(
                   (column) =>
                     typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
+                    column.getCanHide(),
                 )
                 .map((column) => {
                   return (
@@ -76,7 +77,7 @@ export function DataTableViewOptions<TData>({
                       <Check
                         className={cn(
                           "ml-auto size-4 shrink-0",
-                          column.getIsVisible() ? "opacity-100" : "opacity-0"
+                          column.getIsVisible() ? "opacity-100" : "opacity-0",
                         )}
                       />
                     </CommandItem>

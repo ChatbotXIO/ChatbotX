@@ -1,6 +1,6 @@
-import NextAuth, { DefaultSession } from "next-auth"
 import { PrismaClient } from "@ahachat.ai/database"
 import { PrismaAdapter } from "@auth/prisma-adapter"
+import NextAuth, { type DefaultSession } from "next-auth"
 import authConfig from "./auth.config"
 
 const prisma = new PrismaClient()
@@ -30,27 +30,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   //   strategy: 'database',
   // },
   pages: {
-    signIn: '/login'
+    signIn: "/login",
   },
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   ...authConfig,
   callbacks: {
     jwt({ token, user }) {
-      if (user) { // User is available during sign-in
+      if (user) {
+        // User is available during sign-in
         token.id = user.id
       }
       return token
     },
     session({ session, token }) {
-      session.user.id = token.sub ?? ''
+      session.user.id = token.sub ?? ""
       return session
     },
-  }
+  },
 })
 
 export const getCurrentUserId = async (): Promise<string> => {
   const session = await auth()
 
-  return session?.user.id || 'unknown'
+  return session?.user.id || "unknown"
 }

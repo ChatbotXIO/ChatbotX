@@ -1,5 +1,5 @@
-import { Textarea } from "@/components/ui/textarea";
-import { useTranslate } from "@tolgee/react";
+import { Textarea } from "@/components/ui/textarea"
+import { useTranslate } from "@tolgee/react"
 
 export default function AddNotesEditor() {
   const { t } = useTranslate()
