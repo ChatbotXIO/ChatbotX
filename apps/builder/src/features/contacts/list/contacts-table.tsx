@@ -1,30 +1,31 @@
 "use client"
 
-import * as React from 'react';
+import * as React from "react"
 
-import { DataTable } from '@/components/data-table/data-table';
-import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
-import { useDataTable } from '@/hooks/use-data-table';
-import { Contact } from '@ahachat.ai/database';
+import { DataTable } from "@/components/data-table/data-table"
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import { useDataTable } from "@/hooks/use-data-table"
+import type { Contact } from "@ahachat.ai/database"
 
-import { getColumns } from './contacts-table-columns';
-import { getContacts } from './get-contacts-queries';
+import { getColumns } from "./contacts-table-columns"
+import type { getContacts } from "./get-contacts-queries"
 
 import type {
   DataTableFilterField,
-  DataTableRowAction
+  DataTableRowAction,
 } from "@/components/data-table/types"
 
 interface ContactsTableProps {
-  promises: Promise<[
-    Awaited<ReturnType<typeof getContacts>>,
-  ]>
+  promises: Promise<[Awaited<ReturnType<typeof getContacts>>]>
 }
 
 export function ContactsTable({ promises }: ContactsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const [, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(null)
+  const [, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(
+    null,
+  )
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = React.useMemo(() => getColumns(), [setRowAction])
 
   const filterFields: DataTableFilterField<Contact & { keyword?: string }>[] = [
@@ -51,7 +52,7 @@ export function ContactsTable({ promises }: ContactsTableProps) {
 
   return (
     <>
-      <DataTable table={table} >
+      <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields} />
       </DataTable>
     </>

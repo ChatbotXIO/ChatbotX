@@ -1,31 +1,28 @@
-"use client";
+"use client"
 
-import { DataTable } from "@/components/data-table/data-table";
+import { DataTable } from "@/components/data-table/data-table"
 import type {
   DataTableFilterField,
   DataTableRowAction,
-} from "@/components/data-table/types";
-import { useDataTable } from "@/hooks/use-data-table";
-import { Log } from "@ahachat.ai/database";
-import React from 'react';
-import { getAuditColumns } from './audit-logs-table-columns';
-import { getLogs } from "./queries";
+} from "@/components/data-table/types"
+import { useDataTable } from "@/hooks/use-data-table"
+import type { Log } from "@ahachat.ai/database"
+import React from "react"
+import { getAuditColumns } from "./audit-logs-table-columns"
+import type { getLogs } from "./queries"
 
 interface LogsTableProps {
-  promises: Promise<[
-    Awaited<ReturnType<typeof getLogs>>
-  ]>;
+  promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>
   chatbotId: string
 }
 
 export function AuditLogsTable({ promises, chatbotId }: LogsTableProps) {
-  const [{ data, pageCount }] = React.use(promises);
-  const [rowAction, setRowAction] = React.useState<DataTableRowAction<Log> | null>(null);
+  const [{ data, pageCount }] = React.use(promises)
+  const [rowAction, setRowAction] =
+    React.useState<DataTableRowAction<Log> | null>(null)
 
-  const columns = React.useMemo(
-    () => getAuditColumns(),
-    [setRowAction]
-  )
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const columns = React.useMemo(() => getAuditColumns(), [setRowAction])
 
   const filterFields: DataTableFilterField<Log & { action?: string }>[] = [
     {
@@ -33,7 +30,7 @@ export function AuditLogsTable({ promises, chatbotId }: LogsTableProps) {
       label: "Search",
       placeholder: "Enter Action name...",
     },
-  ];
+  ]
 
   const { table } = useDataTable({
     data,
@@ -47,11 +44,11 @@ export function AuditLogsTable({ promises, chatbotId }: LogsTableProps) {
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
-  });
+  })
 
   return (
     <>
       <DataTable table={table} />
     </>
-  );
+  )
 }

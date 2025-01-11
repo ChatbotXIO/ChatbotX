@@ -1,6 +1,9 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react"
 
-export default function TagsLayout({ children, folders }: { children: ReactNode, folders: ReactNode }) {
+export default function TagsLayout({
+  children,
+  folders,
+}: { children: ReactNode; folders: ReactNode }) {
   return (
     <>
       {folders}

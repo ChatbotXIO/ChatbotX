@@ -8,7 +8,7 @@ This project is 99.99% NodeJS/TypeScript.
 
 Required versions:
 - nodejs: v22
-- package manager: bun
+- package manager: pnpm
 
 ### How to run project
 
@@ -22,7 +22,7 @@ docker compose up -d
 nvm use
 
 # install dependencies
-bun install
+pnpm install
 
 # copy environments
 cp .env.example .env
@@ -32,6 +32,11 @@ turbo db:migrate
 
 # start the dev server and enjoy the moment
 turbo dev
+
+# login to create new user
+
+# run seeder for first user
+turbo db:seed
 ```
 
 ### Folder structure

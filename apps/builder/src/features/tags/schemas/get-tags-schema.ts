@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/components/data-table/parsers"
-import { Tag } from "@ahachat.ai/database"
+import type { Tag } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -20,4 +20,3 @@ export type GetTagsSchema = Awaited<ReturnType<typeof getTagsSearchParamsCache.p
   chatbotId: string,
   folderId: string | null,
 }
-

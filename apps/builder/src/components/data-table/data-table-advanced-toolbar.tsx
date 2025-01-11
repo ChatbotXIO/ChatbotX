@@ -1,13 +1,13 @@
 "use client"
 
-import * as React from "react"
 import type { DataTableAdvancedFilterField } from "@/components/data-table/types"
-import { type Table } from "@tanstack/react-table"
+import type { Table } from "@tanstack/react-table"
+import type * as React from "react"
 
-import { cn } from "@/lib/utils"
 import { DataTableFilterList } from "@/components/data-table/data-table-filter-list"
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list"
 import { DataTableViewOptions } from "@/components/data-table/data-table-view-options"
+import { cn } from "@/lib/utils"
 
 interface DataTableAdvancedToolbarProps<TData>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -68,7 +68,7 @@ export function DataTableAdvancedToolbar<TData>({
     <div
       className={cn(
         "flex w-full items-center justify-between gap-2 overflow-auto p-1",
-        className
+        className,
       )}
       {...props}
     >

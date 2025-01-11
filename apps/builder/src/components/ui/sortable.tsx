@@ -1,7 +1,5 @@
-
 "use client"
 
-import * as React from "react"
 import type {
   DndContextProps,
   DraggableSyntheticListeners,
@@ -9,13 +7,13 @@ import type {
   UniqueIdentifier,
 } from "@dnd-kit/core"
 import {
-  closestCenter,
-  defaultDropAnimationSideEffects,
   DndContext,
   DragOverlay,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
+  closestCenter,
+  defaultDropAnimationSideEffects,
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
@@ -25,19 +23,20 @@ import {
   restrictToVerticalAxis,
 } from "@dnd-kit/modifiers"
 import {
+  SortableContext,
+  type SortableContextProps,
   arrayMove,
   horizontalListSortingStrategy,
-  SortableContext,
   useSortable,
   verticalListSortingStrategy,
-  type SortableContextProps,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Slot, type SlotProps } from "@radix-ui/react-slot"
+import * as React from "react"
 
 import { composeRefs } from "@/components/lib/compose-refs"
-import { cn } from "@/lib/utils"
 import { Button, type ButtonProps } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const orientationConfig = {
   vertical: {
@@ -140,7 +139,7 @@ function Sortable<TData extends { id: UniqueIdentifier }>({
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   )
 
   const config = orientationConfig[orientation]
@@ -195,7 +194,7 @@ interface SortableOverlayProps
 const SortableOverlay = React.forwardRef<HTMLDivElement, SortableOverlayProps>(
   (
     { activeId, dropAnimation = dropAnimationOpts, children, ...props },
-    ref
+    ref,
   ) => {
     return (
       <DragOverlay dropAnimation={dropAnimation} {...props}>
@@ -211,7 +210,7 @@ const SortableOverlay = React.forwardRef<HTMLDivElement, SortableOverlayProps>(
         ) : null}
       </DragOverlay>
     )
-  }
+  },
 )
 SortableOverlay.displayName = "SortableOverlay"
 
@@ -277,7 +276,7 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         listeners,
         isDragging,
       }),
-      [attributes, listeners, isDragging]
+      [attributes, listeners, isDragging],
     )
     const style: React.CSSProperties = {
       opacity: isDragging ? 0.5 : 1,
@@ -294,7 +293,7 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           className={cn(
             "data-[state=dragging]:cursor-grabbing",
             { "cursor-grab": !isDragging && asTrigger },
-            className
+            className,
           )}
           ref={composeRefs(ref, setNodeRef as React.Ref<HTMLDivElement>)}
           style={style}
@@ -304,7 +303,7 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         />
       </SortableItemContext.Provider>
     )
-  }
+  },
 )
 SortableItem.displayName = "SortableItem"
 
@@ -324,7 +323,7 @@ const SortableDragHandle = React.forwardRef<
       data-state={isDragging ? "dragging" : undefined}
       className={cn(
         "cursor-grab data-[state=dragging]:cursor-grabbing",
-        className
+        className,
       )}
       {...attributes}
       {...listeners}

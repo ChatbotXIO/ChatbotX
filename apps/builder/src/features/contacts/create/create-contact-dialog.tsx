@@ -1,17 +1,24 @@
 "use client"
 
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useTranslate } from '@tolgee/react';
-import { useRouter } from "next/navigation";
-import React from "react";
-import { CreateContactForm } from "./create-contact-form";
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { useTranslate } from "@tolgee/react"
+import { useRouter } from "next/navigation"
+import React from "react"
+import { CreateContactForm } from "./create-contact-form"
 
 export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
   const router = useRouter()
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false)
   const onSubmmited = () => {
     setOpen(false)
     router.refresh()
@@ -20,15 +27,19 @@ export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{t('contacts.create.btn')}</Button>
+        <Button variant="outline">{t("contacts.create.btn")}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('contacts.create.title')}</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogTitle>{t("contacts.create.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
-          <CreateContactForm chatbotId={chatbotId} onSubmmited={onSubmmited} onCancelled={() => setOpen(false)} />
+          <CreateContactForm
+            chatbotId={chatbotId}
+            onSubmmited={onSubmmited}
+            onCancelled={() => setOpen(false)}
+          />
         </div>
       </DialogContent>
     </Dialog>

@@ -1,3 +1,3 @@
-import type * as Prisma from "@prisma/client";
+import type * as Prisma from "@prisma/client"
 
-export type { Prisma };
+export type { Prisma }

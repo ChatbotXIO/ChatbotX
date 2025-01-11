@@ -2,7 +2,6 @@ import type { Option } from "@/components/data-table/types"
 import type { Column } from "@tanstack/react-table"
 import { Check, PlusCircle } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>
@@ -34,7 +34,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const unknownValue = column?.getFilterValue()
   const selectedValues = new Set(
-    Array.isArray(unknownValue) ? unknownValue : []
+    Array.isArray(unknownValue) ? unknownValue : [],
   )
 
   return (
@@ -98,7 +98,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       }
                       const filterValues = Array.from(selectedValues)
                       column?.setFilterValue(
-                        filterValues.length ? filterValues : undefined
+                        filterValues.length ? filterValues : undefined,
                       )
                     }}
                   >
@@ -107,7 +107,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                         "mr-2 flex size-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
                           ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
+                          : "opacity-50 [&_svg]:invisible",
                       )}
                     >
                       <Check className="size-4" aria-hidden="true" />

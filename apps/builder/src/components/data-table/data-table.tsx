@@ -1,8 +1,8 @@
-import * as React from "react"
-import { flexRender, type Table as TanstackTable } from "@tanstack/react-table"
+import { type Table as TanstackTable, flexRender } from "@tanstack/react-table"
+import type * as React from "react"
 
+import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { getCommonPinningStyles } from "@/components/data-table/lib"
-import { cn } from "@/lib/utils"
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { DataTablePagination } from "@/components/data-table/data-table-pagination"
+import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData> extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -59,9 +59,9 @@ export function DataTable<TData>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   )
                 })}
@@ -84,7 +84,7 @@ export function DataTable<TData>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

@@ -1,5 +1,10 @@
-import { faker } from "@faker-js/faker";
-import { Chatbot, FolderType, PrismaClient } from "@prisma/client";
+import { faker } from "@faker-js/faker"
+import {
+  type Chatbot,
+  type Folder,
+  FolderType,
+  PrismaClient,
+} from "@prisma/client"
 
 const prisma = new PrismaClient()
 
@@ -8,20 +13,20 @@ async function main() {
 
   // create chatbot
   const chatbotsCount = await prisma.chatbot.count()
-  if (chatbotsCount == 0) {
+  if (chatbotsCount === 0) {
     const chatbots = await prisma.chatbot.createManyAndReturn({
       data: [
         {
-          name: 'Ahachat FREE',
+          name: "Ahachat FREE",
           accountTimezone: "Asia/Saigon",
           plan: "Free",
         },
         {
-          name: 'Ahachat PRO',
+          name: "Ahachat PRO",
           accountTimezone: "Asia/Saigon",
           plan: "Pro",
-        }
-      ] as Chatbot[]
+        },
+      ] as Chatbot[],
     })
     await prisma.chatbotMember.createMany({
       data: chatbots.map((chatbot) => ({
@@ -36,7 +41,7 @@ async function main() {
         enableEmailAndPhone: true,
         enableBroadcast: true,
         enableEcommerce: true,
-      }))
+      })),
     })
   }
 
@@ -44,14 +49,14 @@ async function main() {
     where: {
       chatbotMembers: {
         some: {
-          userId: user.id
-        }
-      }
-    }
+          userId: user.id,
+        },
+      },
+    },
   })
 
   // create folders
-  const data: any[] = []
+  const data: Pick<Folder, "name" | "folderType" | "chatbotId">[] = []
   const folderTypes = Object.values(FolderType)
 
   for (const chatbot of chatbots) {
@@ -68,7 +73,6 @@ async function main() {
   }
   await prisma.folder.createMany({ data })
 }
-
 
 main()
   .then(async () => {

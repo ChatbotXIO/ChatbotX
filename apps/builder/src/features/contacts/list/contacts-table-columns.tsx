@@ -2,8 +2,8 @@
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Contact } from "@ahachat.ai/database"
-import { type ColumnDef } from "@tanstack/react-table"
+import type { Contact } from "@ahachat.ai/database"
+import type { ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 
 export function getColumns(): ColumnDef<Contact>[] {
@@ -12,7 +12,10 @@ export function getColumns(): ColumnDef<Contact>[] {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
           className="translate-y-0.5"
@@ -35,7 +38,9 @@ export function getColumns(): ColumnDef<Contact>[] {
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({ row }) => {
-        const fullName = [row.original.firstName, row.original.lastName].filter(v => !!v).join(" ")
+        const fullName = [row.original.firstName, row.original.lastName]
+          .filter((v) => !!v)
+          .join(" ")
 
         return <div>{fullName}</div>
       },
@@ -67,7 +72,15 @@ export function getColumns(): ColumnDef<Contact>[] {
         <DataTableColumnHeader column={column} title="Last seen" />
       ),
       cell: ({ row }) => {
-        return <div>{row.original.lastSeenAt ? formatDistance(new Date(), row.original.lastSeenAt, { addSuffix: true }) : null}</div>
+        return (
+          <div>
+            {row.original.lastSeenAt
+              ? formatDistance(new Date(), row.original.lastSeenAt, {
+                  addSuffix: true,
+                })
+              : null}
+          </div>
+        )
       },
       enableSorting: false,
       enableHiding: false,
