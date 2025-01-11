@@ -3,7 +3,7 @@ import type { Tag } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,
   parseAsInteger,
-  parseAsString
+  parseAsString,
 } from "nuqs/server"
 
 export const getTagsSearchParamsCache = createSearchParamsCache({
@@ -13,10 +13,12 @@ export const getTagsSearchParamsCache = createSearchParamsCache({
     { id: "createdAt", desc: true },
   ]),
   name: parseAsString.withDefault(""),
-  folderId: parseAsString
+  folderId: parseAsString,
 })
 
-export type GetTagsSchema = Awaited<ReturnType<typeof getTagsSearchParamsCache.parse>> & {
-  chatbotId: string,
-  folderId: string | null,
+export type GetTagsSchema = Awaited<
+  ReturnType<typeof getTagsSearchParamsCache.parse>
+> & {
+  chatbotId: string
+  folderId: string | null
 }

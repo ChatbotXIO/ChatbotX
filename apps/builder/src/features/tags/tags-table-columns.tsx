@@ -1,21 +1,28 @@
-"use client";
+"use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Tag } from "@ahachat.ai/database";
-import { Row, type ColumnDef } from "@tanstack/react-table";
-import { EllipsisVerticalIcon } from "lucide-react";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { Tag } from "@ahachat.ai/database"
+import type { ColumnDef, Row } from "@tanstack/react-table"
+import { EllipsisVerticalIcon } from "lucide-react"
 export interface DataTableRowAction<TData> {
   row: Row<TData>
   type: "update" | "delete"
 }
 
 type TagWithContacts = Tag & {
-  _count?: any
-  contacts?: any
-};
+  _count?: {
+    contacts: number
+  }
+}
 
 interface GetColumnsProps {
   setRowAction: React.Dispatch<
@@ -24,13 +31,19 @@ interface GetColumnsProps {
   handleCopy: (id: string) => void
 }
 
-export function getTagColumns({ setRowAction, handleCopy }: GetColumnsProps): ColumnDef<TagWithContacts>[] {
+export function getTagColumns({
+  setRowAction,
+  handleCopy,
+}: GetColumnsProps): ColumnDef<TagWithContacts>[] {
   return [
     {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
           className="translate-y-0.5"
@@ -50,7 +63,9 @@ export function getTagColumns({ setRowAction, handleCopy }: GetColumnsProps): Co
     },
     {
       accessorKey: "name",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Name" />
+      ),
       cell: ({ row }) => <div>{row.original.name}</div>,
       size: 300,
       enableSorting: true,
@@ -58,8 +73,10 @@ export function getTagColumns({ setRowAction, handleCopy }: GetColumnsProps): Co
     },
     {
       accessorKey: "contactsCount",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Contacts" />,
-      cell: ({ row }) => <div>{row.original._count.contacts}</div>,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Contacts" />
+      ),
+      cell: ({ row }) => <div>{row.original._count?.contacts ?? 0}</div>,
       size: 50,
       enableSorting: false,
       enableHiding: false,
@@ -100,11 +117,11 @@ export function getTagColumns({ setRowAction, handleCopy }: GetColumnsProps): Co
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        );
+        )
       },
       size: 50,
       enableSorting: false,
       enableHiding: false,
     },
-  ];
+  ]
 }

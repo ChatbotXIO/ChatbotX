@@ -11,15 +11,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Tag } from "@ahachat.ai/database"
-import { type Row } from "@tanstack/react-table"
+import type { Tag } from "@ahachat.ai/database"
+import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
+import { useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
 import { deleteTagAction } from "./actions/delete-tag-action"
-import { useRouter } from "next/navigation"
 
 interface DeleteTagsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
@@ -38,14 +38,20 @@ export function DeleteTagsDialog({
   onOpenChange,
   ...props
 }: DeleteTagsDialogProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
   const router = useRouter()
 
-  const { execute, result } = useAction(deleteTagAction.bind(null, chatbotId, (tags ?? []).map(tag => tag.id)))
+  const { execute, result } = useAction(
+    deleteTagAction.bind(
+      null,
+      chatbotId,
+      (tags ?? []).map((tag) => tag.id),
+    ),
+  )
 
   const [isDeletePending, startDeleteTransition] = useTransition()
   const onDelete = () => {
-    if (!tags || tags.length == 0) {
+    if (!tags || tags.length === 0) {
       return
     }
 
@@ -68,22 +74,23 @@ export function DeleteTagsDialog({
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
             <Trash className="mr-2 size-4" aria-hidden="true" />
-            {t('common.deleteBtn')} ({tags.length})
+            {t("common.deleteBtn")} ({tags.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('tags.delete.dialog_title')}</DialogTitle>
+          <DialogTitle>{t("tags.delete.dialog_title")}</DialogTitle>
           <DialogDescription>
-            {t('tags.confirmDeleteDesc')}{" "}
+            {t("tags.confirmDeleteDesc")}{" "}
             <span className="font-medium">{tags.length}</span>
-            {tags.length === 1 ? " log " : " tags "}{t('tags.confirmDeleteDesc')}
+            {tags.length === 1 ? " log " : " tags "}
+            {t("tags.confirmDeleteDesc")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t('common.cancelBtn')}</Button>
+            <Button variant="outline">{t("common.cancelBtn")}</Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
@@ -94,7 +101,7 @@ export function DeleteTagsDialog({
             {isDeletePending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
-            {t('common.deleteBtn')}
+            {t("common.deleteBtn")}
           </Button>
         </DialogFooter>
       </DialogContent>
