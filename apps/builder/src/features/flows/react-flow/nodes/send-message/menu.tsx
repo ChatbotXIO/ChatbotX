@@ -3,6 +3,8 @@ import {
   ArchiveIcon,
   AudioLinesIcon,
   BellIcon,
+  BellOffIcon,
+  BellRingIcon,
   BotIcon,
   BotMessageSquareIcon,
   BotOffIcon,
@@ -17,8 +19,6 @@ import {
   CogIcon,
   CreditCardIcon,
   FileAudioIcon,
-  FilterIcon,
-  FilterXIcon,
   ImageIcon,
   ImagePlayIcon,
   KeyboardIcon,
@@ -231,17 +231,17 @@ export const sendMessageEditorMenus: MenuItem[] = [
         children: [
           {
             label: <T keyName="flows.ActionType.MarkEmailVerified" />,
-            icon: <CircleCheckIcon />,
+            icon: <CircleCheckIcon className="text-green-500" />,
             actionType: ActionType.MarkEmailVerified,
           },
           {
             label: <T keyName="flows.ActionType.OptInEmail" />,
-            icon: <FilterIcon />,
+            icon: <BellRingIcon />,
             actionType: ActionType.OptInEmail,
           },
           {
             label: <T keyName="flows.ActionType.OptOutEmail" />,
-            icon: <FilterXIcon />,
+            icon: <BellOffIcon />,
             actionType: ActionType.OptOutEmail,
           },
         ],

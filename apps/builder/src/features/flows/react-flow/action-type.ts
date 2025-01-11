@@ -79,3 +79,9 @@ export enum ActionType {
   RandomCode = "RandomCode",
   CountCharacters = "CountCharacters",
 }
+
+export const disabledCopyActionTypes = [
+  ActionType.MarkEmailVerified,
+  ActionType.OptInEmail,
+  ActionType.OptOutEmail,
+]

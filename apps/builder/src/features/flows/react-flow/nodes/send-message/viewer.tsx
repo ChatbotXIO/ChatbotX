@@ -1,4 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { MarkEmailVerifiedBlockSchema } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
+import { MarkEmailVerifiedBlockViewer } from "@/features/flows/react-flow/blocks/mark-email-verified/viewer"
+import type { OptInEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
+import { OptInEmailBlockViewer } from "@/features/flows/react-flow/blocks/opt-in-email/viewer"
+import type { OptOutEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
+import { OptOutEmailBlockViewer } from "@/features/flows/react-flow/blocks/opt-out-email/viewer"
 import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
 import { AudioBlockViewer } from "@/features/flows/react-flow/blocks/send-audio/viewer"
 import type { SendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
@@ -36,6 +42,15 @@ const maps: Record<ActionType, (data: any) => ReactNode> = {
   ),
   [ActionType.SendAudio]: (data: SendAudioBlockSchema) => (
     <AudioBlockViewer key={data.id} data={data} />
+  ),
+  [ActionType.MarkEmailVerified]: (data: MarkEmailVerifiedBlockSchema) => (
+    <MarkEmailVerifiedBlockViewer key={data.id} />
+  ),
+  [ActionType.OptInEmail]: (data: OptInEmailBlockSchema) => (
+    <OptInEmailBlockViewer key={data.id} />
+  ),
+  [ActionType.OptOutEmail]: (data: OptOutEmailBlockSchema) => (
+    <OptOutEmailBlockViewer key={data.id} />
   ),
 }
 
