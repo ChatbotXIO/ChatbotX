@@ -2,7 +2,7 @@ import { SingleSelect } from "@/components/single-select"
 
 import { OpenAIFormItem } from "@/features/flows/react-flow/blocks/open-ai/components/form-item"
 
-interface OpenAIModelProps {
+type OpenAIModelProps = {
   value?: string
   onValueChange: (value: string) => void
 }

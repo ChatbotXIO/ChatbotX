@@ -16,10 +16,10 @@ export enum OpenAIModel {
 
 export const openAISchema = z.object({
   id: z.string(),
-  model: z.enum([OpenAIModel.GPT4oMini]),
-  userMessage: z.string().optional(),
-  customField: z.string().optional(),
-  triggers: z.array(z.string()).optional(),
+  model: z.nativeEnum(OpenAIModel),
+  userMessage: z.string().min(1).max(255).optional(),
+  customFieldId: z.string().min(1).max(255).cuid2().optional(),
+  aiTriggerIds: z.array(z.string()).optional(),
   buttons: z.array(buttonBlockSchema).optional(),
 })
 

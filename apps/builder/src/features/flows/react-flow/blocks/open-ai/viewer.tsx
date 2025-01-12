@@ -1,6 +1,6 @@
 "use client"
 
-import { BotMessageSquare } from "lucide-react"
+import { BotMessageSquareIcon } from "lucide-react"
 
 interface OpenAIViewerProps {
   name: string
@@ -12,7 +12,7 @@ export const OpenAIViewer = ({ name }: OpenAIViewerProps) => {
     <div className="flex flex-col border border-dashed rounded-md p-4 mb-2">
       <div className="flex flex-col items-center mb-4  capitalize">
         <div className="flex items-center justify-center gap-2">
-          <BotMessageSquare size={20} color="grey" />
+          <BotMessageSquareIcon size={20} className="text-gray-500" />
           <p className="font-bold">OpenAI</p>
         </div>
         <span className="text-gray-500 italic">{name}</span>
