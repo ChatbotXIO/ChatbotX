@@ -5,8 +5,8 @@ import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/compone
 import { NumberField } from "@/components/number-field"
 import { SingleSelect } from "@/components/single-select"
 
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
 import { FormItem, FormLabel } from "@/components/ui/form"
+import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
 import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
 import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
 import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
@@ -19,7 +19,7 @@ export const OpenAIGenerateTextAgentEditor = ({
   parentName,
 }: OpenAIGenerateTextAgentEditorProps) => {
   return (
-    <OpenAIDialog name="Generate Text - Agent">
+    <OpenAIDialog name="flows.OpenAI.Title.GenerateTextAgent">
       <OpenAIModel onValueChange={console.log} />
 
       <FormItem>

@@ -49,6 +49,7 @@ export enum ActionType {
   OpenAIGenerateText = "OpenAIGenerateText",
   OpenAIGenerateTextAgent = "OpenAIGenerateTextAgent",
   OpenAIGenerateTextAdvanced = "OpenAIGenerateTextAdvanced",
+  OpenAIGenerateTextAssistant = "OpenAIGenerateTextAssistant",
   OpenAIGenerateImage = "OpenAIGenerateImage",
   OpenAIAnalyzeImage = "OpenAIAnalyzeImage",
   OpenAISpeechToText = "OpenAISpeechToText",

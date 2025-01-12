@@ -20,7 +20,7 @@ export const OpenAIGenerateTextAdvancedEditor = ({
   parentName,
 }: OpenAIGenerateTextAdvancedEditorProps) => {
   return (
-    <OpenAIDialog name="Generate Text - Advanced">
+    <OpenAIDialog name="flows.OpenAI.Title.GenerateTextAdvanced">
       <OpenAIModel onValueChange={console.log} />
 
       <FormItem>

@@ -2,38 +2,45 @@
 
 import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
 
-import { Input } from "@/components/ui/input"
+import { SingleSelect } from "@/components/single-select"
 
 import { FormItem, FormLabel } from "@/components/ui/form"
 import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
 import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
 import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
 
-interface OpenAIGenerateTextEditorProps {
+interface OpenAIGenerateTextAssistantEditorProps {
   parentName: string
 }
 
-export const OpenAIGenerateTextEditor = ({
+export const OpenAIGenerateTextAssistantEditor = ({
   parentName,
-}: OpenAIGenerateTextEditorProps) => {
+}: OpenAIGenerateTextAssistantEditorProps) => {
   return (
-    <OpenAIDialog name="flows.OpenAI.Title.GenerateText">
+    <OpenAIDialog name="flows.OpenAI.Title.GenerateTextAssistant">
       <OpenAIModel onValueChange={console.log} />
 
       <FormItem>
-        <FormLabel>
-          Business Information (Prompt)
-          <span className="text-[12px] text-gray-500 pl-1">(Options)</span>
-        </FormLabel>
-        <Input />
+        <FormLabel>Assistant</FormLabel>
+        <SingleSelect
+          value="troly"
+          options={[
+            {
+              label: "Trợ Lý",
+              value: "troly",
+            },
+            {
+              label: "AI TL",
+              value: "ai-tl",
+            },
+          ]}
+          onValueChange={console.log}
+        />
       </FormItem>
 
       <OpenAIUserMessage />
 
       <OpenAICustomField />
-
-      <OpenAITrigger />
     </OpenAIDialog>
   )
 }

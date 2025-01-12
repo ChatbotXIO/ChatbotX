@@ -17,8 +17,14 @@ import { ActionType } from "../../action-type"
 import { FlowFlowNodeToolbar } from "../../toolbars"
 import type { SendMessageNodeSchema } from "./schema"
 
+import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
+import type { OpenAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
+import type { OpenAIGenerateImageSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
 import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
+import type { OpenAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
 import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
+import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
+import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
 import { OpenAIViewer } from "@/features/flows/react-flow/blocks/open-ai/viewer"
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -52,6 +58,26 @@ const maps: Record<ActionType, (data: any) => ReactNode> = {
   ) => (
     <OpenAIViewer key={data.id} data={data} name="generate text - advanced" />
   ),
+  [ActionType.OpenAIGenerateTextAssistant]: (
+    data: OpenAIGenerateTextAssistantSchema,
+  ) => (
+    <OpenAIViewer key={data.id} data={data} name="generate text - assistant" />
+  ),
+  [ActionType.OpenAIGenerateImage]: (data: OpenAIGenerateImageSchema) => (
+    <OpenAIViewer key={data.id} data={data} name="generate image" />
+  ),
+  [ActionType.OpenAIAnalyzeImage]: (data: OpenAIAnalyzeImageSchema) => (
+    <OpenAIViewer key={data.id} data={data} name="analyze image" />
+  ),
+  [ActionType.OpenAISpeechToText]: (data: OpenAISpeechToTextSchema) => (
+    <OpenAIViewer key={data.id} data={data} name="speech to text" />
+  ),
+  [ActionType.OpenAITextToSpeech]: (data: OpenAITextToSpeechSchema) => (
+    <OpenAIViewer key={data.id} data={data} name="text to speech" />
+  ),
+  [ActionType.OpenAIDeleteMessageHistory]: (
+    data: OpenAIDeleteMessageHistorySchema,
+  ) => <OpenAIViewer key={data.id} data={data} name="delete message history" />,
 }
 
 export default function SendMessageNodeViewer({

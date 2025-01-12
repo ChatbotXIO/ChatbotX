@@ -207,6 +207,11 @@ export const sendMessageEditorMenus: MenuItem[] = [
             actionType: ActionType.OpenAIGenerateTextAdvanced,
           },
           {
+            label: <T keyName="flows.ActionType.GenerateTextAssistant" />,
+            icon: <TextIcon />,
+            actionType: ActionType.OpenAIGenerateTextAssistant,
+          },
+          {
             label: <T keyName="flows.ActionType.GenerateImage" />,
             icon: <ImageIcon />,
             actionType: ActionType.OpenAIGenerateImage,
