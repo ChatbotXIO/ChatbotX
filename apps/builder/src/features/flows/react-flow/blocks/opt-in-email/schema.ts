@@ -4,7 +4,7 @@ import { ActionType } from "../../action-type"
 
 export const optInEmailBlockSchema = z.object({
   id: z.string().cuid2(),
-  actionType: z.enum([ActionType.OptInEmail]),
+  actionType: z.literal(ActionType.OptInEmail),
 })
 
 export type OptInEmailBlockSchema = z.infer<typeof optInEmailBlockSchema>

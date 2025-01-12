@@ -4,7 +4,7 @@ import { ActionType } from "../../action-type"
 
 export const markEmailVerifiedBlockSchema = z.object({
   id: z.string().cuid2(),
-  actionType: z.enum([ActionType.MarkEmailVerified]),
+  actionType: z.literal(ActionType.MarkEmailVerified),
 })
 
 export type MarkEmailVerifiedBlockSchema = z.infer<
