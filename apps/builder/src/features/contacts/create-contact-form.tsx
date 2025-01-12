@@ -1,5 +1,6 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -9,7 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -20,17 +20,21 @@ import {
 import { Gender } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
-import { AsteriskIcon, Loader2 } from "lucide-react"
+import { T, useTranslate } from "@tolgee/react"
+import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { createContactAction } from "./create-contact-action"
-import { createContactSchema } from "./create-contact-schema"
+import { createContactAction } from "./actions/create-contact-action"
+import { createContactSchema } from "./schemas/create-contact-schema"
 
 export function CreateContactForm({
   chatbotId,
   onSubmmited,
   onCancelled,
-}: { chatbotId: string; onSubmmited?: () => void; onCancelled?: () => void }) {
+}: {
+  chatbotId: string
+  onSubmmited?: () => void
+  onCancelled?: () => void
+}) {
   const { t } = useTranslate()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -72,63 +76,31 @@ export function CreateContactForm({
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
-        <FormField
-          control={form.control}
+        <FormInput
           name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="inline-flex gap-1">
-                {t("contacts.phoneNumber")}
-                <AsteriskIcon size={10} color="red" />
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="090xxxxxxx" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label={t("contacts.phoneNumber")}
+          placeholder="090xxxxxxx"
         />
 
-        <FormField
-          control={form.control}
+        <FormInput
           name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("contacts.email")}</FormLabel>
-              <FormControl>
-                <Input placeholder="email@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label={t("contacts.email")}
+          placeholder="email@ahachat.ai"
+          isRequired={false}
         />
 
-        <FormField
-          control={form.control}
+        <FormInput
           name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("contacts.firstName")}</FormLabel>
-              <FormControl>
-                <Input placeholder={t("contacts.firstName")} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label={t("contacts.firstName")}
+          placeholder={t("contacts.firstName.placeholder")}
+          isRequired={false}
         />
 
-        <FormField
-          control={form.control}
+        <FormInput
           name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("contacts.lastName")}</FormLabel>
-              <FormControl>
-                <Input placeholder={t("contacts.lastName")} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label={t("contacts.lastName")}
+          placeholder={t("contacts.lastName.placeholder")}
+          isRequired={false}
         />
 
         <FormField
@@ -136,13 +108,18 @@ export function CreateContactForm({
           name="gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("contacts.gender")}</FormLabel>
+              <FormLabel className="flex gap-1">
+                {t("contacts.gender")}
+                <span className="text-xxs self-start font-normal">
+                  (optional)
+                </span>
+              </FormLabel>
               <FormControl>
                 <Select
                   value={field.value}
                   name={field.name}
                   onValueChange={field.onChange}
-                  defaultValue="unknown"
+                  defaultValue={Gender.Unknown}
                 >
                   <SelectTrigger>
                     <SelectValue onBlur={field.onBlur} ref={field.ref} />

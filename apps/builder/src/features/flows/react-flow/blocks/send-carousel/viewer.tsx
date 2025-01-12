@@ -10,7 +10,9 @@ import type { SendCarouselBlockSchema } from "@/features/flows/react-flow/blocks
 
 export const SendCarouselBlockViewer = ({
   data,
-}: { data: SendCarouselBlockSchema }) => {
+}: {
+  data: SendCarouselBlockSchema
+}) => {
   return (
     <Carousel className="pointer-events-none">
       <CarouselContent>

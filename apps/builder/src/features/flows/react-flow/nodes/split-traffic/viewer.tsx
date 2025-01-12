@@ -8,7 +8,10 @@ import type { SplitTrafficNodeSchema } from "./schema"
 export default function SplitTrafficNodeViewer({
   data,
   id,
-}: { data: SplitTrafficNodeSchema; id: string | number }) {
+}: {
+  data: SplitTrafficNodeSchema
+  id: string | number
+}) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   return (

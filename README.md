@@ -7,6 +7,7 @@ This is offical source code for AhaChat.ai
 This project is 99.99% NodeJS/TypeScript.
 
 Required versions:
+
 - nodejs: v22
 - package manager: pnpm
 
@@ -42,4 +43,3 @@ turbo db:seed
 ### Folder structure
 
 This project is Modern Monorepo with Turborepo
-

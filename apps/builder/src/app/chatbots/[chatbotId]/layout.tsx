@@ -20,7 +20,10 @@ import { redirect } from "next/navigation"
 export default async function ChatbotLayout({
   children,
   params,
-}: { children: React.ReactNode; params: Promise<{ chatbotId: string }> }) {
+}: {
+  children: React.ReactNode
+  params: Promise<{ chatbotId: string }>
+}) {
   const chatbotId = (await params).chatbotId
   const userId = await getCurrentUserId()
 
