@@ -1,9 +1,25 @@
-import { PrismaClient } from "@ahachat.ai/database"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import NextAuth, { type DefaultSession } from "next-auth"
 import authConfig from "./auth.config"
+import Nodemailer from "next-auth/providers/nodemailer"
+import { prisma } from "@ahachat.ai/database"
 
-const prisma = new PrismaClient()
+const workspaceId =
+  process.env.DEFAULT_WORKSPACE_ID ?? "b7p91mne1bjgd5buq8x0w51c"
+
+const providers = [
+  ...authConfig.providers,
+  Nodemailer({
+    server: process.env.EMAIL_SERVER,
+    from: process.env.EMAIL_FROM,
+  }),
+]
+
+function stripUndefined<T>(obj: T) {
+  const data = {} as T
+  for (const key in obj) if (obj[key] !== undefined) data[key] = obj[key]
+  return { data }
+}
 
 declare module "next-auth" {
   /**
@@ -13,6 +29,8 @@ declare module "next-auth" {
     user: {
       /** The user's id. */
       id: string
+
+      workspaceId: string
 
       /**
        * By default, TypeScript merges new interface properties and overwrites existing ones.
@@ -29,22 +47,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // session: {
   //   strategy: 'database',
   // },
-  pages: {
-    signIn: "/login",
+  // pages: {
+  //   signIn: "/login",
+  // },
+  adapter: {
+    ...PrismaAdapter(prisma),
+    getUserByEmail: (email) =>
+      prisma.user.findUnique({
+        where: { workspaceId_email: { email, workspaceId } },
+      }),
+    createUser: ({ id, ...data }) =>
+      prisma.user.create(stripUndefined({ ...data, workspaceId })),
+
+    // ({ id, ...input }) => {
+    //   const input = { ...pickBy(, identity), workspaceId }
+    //   prisma.user.create({ data: input )})
+    // }),
   },
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  // session: { strategy: "jwt" },
   ...authConfig,
+  providers,
   callbacks: {
     jwt({ token, user }) {
       if (user) {
         // User is available during sign-in
         token.id = user.id
+        token.workspaceId = user.workspaceId
       }
       return token
     },
     session({ session, token }) {
+      console.log("xxxxxx", session, token)
       session.user.id = token.sub ?? ""
+      session.user.workspaceId = token.workspaceId as string
       return session
     },
   },

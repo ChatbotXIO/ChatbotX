@@ -2,12 +2,15 @@ import { signIn } from "@/auth"
 import { providerMap } from "@/auth.config"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { AuthError } from "next-auth"
 import { redirect } from "next/navigation"
 
 export default async function SignInPage(props: {
   searchParams: Promise<{ callbackUrl: string | undefined }>
 }) {
+  const searchParams = await props.searchParams
+
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
       <Card className="mx-auto max-w-sm">
@@ -25,7 +28,7 @@ export default async function SignInPage(props: {
                   "use server"
                   try {
                     await signIn(provider.id, {
-                      redirectTo: (await props.searchParams)?.callbackUrl ?? "",
+                      redirectTo: searchParams.callbackUrl ?? "",
                     })
                   } catch (error) {
                     // Signin can fail for a number of reasons, such as the user
@@ -52,6 +55,21 @@ export default async function SignInPage(props: {
                 </Button>
               </form>
             ))}
+
+            <form
+              action={async () => {
+                "use server"
+                await signIn("nodemailer")
+              }}
+            >
+              <p>Login with email</p>
+              <Input
+                type="email"
+                name="email"
+                defaultValue="example@ahachat.ai"
+              />
+              <button type="submit">Sign In</button>
+            </form>
           </div>
         </CardContent>
       </Card>
