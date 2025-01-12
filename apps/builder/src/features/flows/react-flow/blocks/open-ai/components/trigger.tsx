@@ -1,6 +1,6 @@
-import { MultiSelect } from "@/components/multi-select"
 
-import { OpenAIFormItem } from "@/features/flows/react-flow/blocks/open-ai/components/form-item"
+import { MultiSelect } from "@/components/multi-select"
+import { FormItem, FormLabel } from "@/components/ui/form"
 
 interface OpenAITriggerProps {
   value?: string
@@ -20,7 +20,11 @@ export const OpenAITrigger = ({
   ]
 
   return (
-    <OpenAIFormItem label="All Triggers" isOptions>
+    <FormItem>
+      <FormLabel>
+        All Triggers
+        <span className="text-[12px] text-gray-500 pl-1">(Options)</span>
+      </FormLabel>
       <MultiSelect
         options={frameworksList}
         placeholder="Select frameworks"
@@ -30,6 +34,6 @@ export const OpenAITrigger = ({
         value={value}
         onValueChange={onValueChange}
       />
-    </OpenAIFormItem>
+    </FormItem>
   )
 }

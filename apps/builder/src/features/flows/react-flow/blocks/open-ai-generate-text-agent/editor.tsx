@@ -6,7 +6,7 @@ import { NumberField } from "@/components/number-field"
 import { SingleSelect } from "@/components/single-select"
 
 import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIFormItem } from "@/features/flows/react-flow/blocks/open-ai/components/form-item"
+import { FormItem, FormLabel } from "@/components/ui/form"
 import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
 import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
 import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
@@ -22,7 +22,8 @@ export const OpenAIGenerateTextAgentEditor = ({
     <OpenAIDialog name="Generate Text - Agent">
       <OpenAIModel onValueChange={console.log} />
 
-      <OpenAIFormItem label="Agents">
+      <FormItem>
+        <FormLabel>Agents</FormLabel>
         <SingleSelect
           value="prompt-1"
           options={[
@@ -37,7 +38,7 @@ export const OpenAIGenerateTextAgentEditor = ({
           ]}
           onValueChange={console.log}
         />
-      </OpenAIFormItem>
+      </FormItem>
 
       <OpenAIUserMessage />
 
@@ -45,7 +46,8 @@ export const OpenAIGenerateTextAgentEditor = ({
 
       <OpenAITrigger />
 
-      <OpenAIFormItem label="Remember Conversation">
+      <FormItem>
+        <FormLabel>Remember Conversation</FormLabel>
         <SingleSelect
           value="yes"
           options={[
@@ -60,15 +62,20 @@ export const OpenAIGenerateTextAgentEditor = ({
           ]}
           onValueChange={console.log}
         />
-      </OpenAIFormItem>
+      </FormItem>
 
-      <OpenAIFormItem label="Temperature">
+      <FormItem>
+        <FormLabel>Temperature</FormLabel>
         <NumberField value={0.4} max={2} onChange={console.log} />
-      </OpenAIFormItem>
+      </FormItem>
 
-      <OpenAIFormItem label="Maximum number of output tokens" isOptions>
+      <FormItem>
+        <FormLabel>
+          Maximum number of output tokens
+          <span className="text-[12px] text-gray-500 pl-1">(Options)</span>
+        </FormLabel>
         <NumberField value={250} step={1} max={4096} onChange={console.log} />
-      </OpenAIFormItem>
+      </FormItem>
     </OpenAIDialog>
   )
 }

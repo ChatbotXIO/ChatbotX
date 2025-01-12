@@ -1,12 +1,13 @@
 "use client"
 
+import { FormItem, FormLabel } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { OpenAIFormItem } from "@/features/flows/react-flow/blocks/open-ai/components/form-item"
 
 export const OpenAIUserMessage = () => {
   return (
-    <OpenAIFormItem label="User Message">
+    <FormItem>
+      <FormLabel>User Message</FormLabel>
       <Input value="{{last_input}}" onChange={console.log} />
-    </OpenAIFormItem>
+    </FormItem>
   )
 }

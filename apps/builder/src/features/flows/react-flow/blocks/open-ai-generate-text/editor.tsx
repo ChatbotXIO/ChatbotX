@@ -5,7 +5,7 @@ import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/compone
 import { Input } from "@/components/ui/input"
 
 import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIFormItem } from "@/features/flows/react-flow/blocks/open-ai/components/form-item"
+import { FormItem, FormLabel } from "@/components/ui/form"
 import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
 import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
 import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
@@ -21,11 +21,15 @@ export const OpenAIGenerateTextEditor = ({
     <OpenAIDialog name="Generate Text">
       <OpenAIModel onValueChange={console.log} />
 
-      <OpenAIFormItem label="Business Information (Prompt)" isOptions>
-        <Input />
-      </OpenAIFormItem>
+      <FormItem>
+        <FormLabel>
+          Business Information (Prompt)
+          <span className="text-[12px] text-gray-500 pl-1">(Options)</span>
+        </FormLabel>
+        <Input/>
+      </FormItem>
 
-      <OpenAIUserMessage />
+      <OpenAIUserMessage/>
 
       <OpenAICustomField />
 

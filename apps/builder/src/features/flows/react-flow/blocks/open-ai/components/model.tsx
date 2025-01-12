@@ -1,6 +1,6 @@
 import { SingleSelect } from "@/components/single-select"
 
-import { OpenAIFormItem } from "@/features/flows/react-flow/blocks/open-ai/components/form-item"
+import { FormItem, FormLabel } from "@/components/ui/form"
 
 type OpenAIModelProps = {
   value?: string
@@ -51,13 +51,14 @@ export const OpenAIModel = ({
   ]
 
   return (
-    <OpenAIFormItem label="Model">
+    <FormItem>
+      <FormLabel>Model</FormLabel>
       <SingleSelect
         placeholder="Select model Open AI"
         value={value}
         options={models}
         onValueChange={onValueChange}
       />
-    </OpenAIFormItem>
+    </FormItem>
   )
 }
