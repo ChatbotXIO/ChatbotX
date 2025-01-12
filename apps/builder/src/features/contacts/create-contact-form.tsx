@@ -78,27 +78,27 @@ export function CreateContactForm({
       <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
         <FormInput
           name="phoneNumber"
-          label={<T keyName="contacts.phoneNumber" />}
+          label={t("contacts.phoneNumber")}
           placeholder="090xxxxxxx"
         />
 
         <FormInput
           name="email"
-          label={<T keyName="contacts.email" />}
+          label={t("contacts.email")}
           placeholder="email@ahachat.ai"
           isRequired={false}
         />
 
         <FormInput
           name="firstName"
-          label={<T keyName="contacts.firstName" />}
+          label={t("contacts.firstName")}
           placeholder={t("contacts.firstName.placeholder")}
           isRequired={false}
         />
 
         <FormInput
           name="lastName"
-          label={<T keyName="contacts.lastName" />}
+          label={t("contacts.lastName")}
           placeholder={t("contacts.lastName.placeholder")}
           isRequired={false}
         />
