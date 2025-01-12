@@ -46,6 +46,13 @@ import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
+import { OpenAIGenerateTextAdvancedEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/editor"
+import { openAIGenerateTextAdvancedDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
+import { OpenAIGenerateTextAgentEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/editor"
+import { openAIGenerateTextAgentDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
+import { OpenAIGenerateTextEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text/editor"
+import { openAIGenerateTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
+
 const maps: Record<
   ActionType,
   (props: { key: string; parentName: string }) => ReactNode
@@ -68,11 +75,22 @@ const maps: Record<
   [ActionType.SendCarousel]: ({ key, parentName }) => (
     <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />
   ),
+  [ActionType.OpenAIGenerateText]: ({ key, parentName }) => (
+    <OpenAIGenerateTextEditor key={key} parentName={parentName} />
+  ),
+  [ActionType.OpenAIGenerateTextAgent]: ({ key, parentName }) => (
+    <OpenAIGenerateTextAgentEditor key={key} parentName={parentName} />
+  ),
+  [ActionType.OpenAIGenerateTextAdvanced]: ({ key, parentName }) => (
+    <OpenAIGenerateTextAdvancedEditor key={key} parentName={parentName} />
+  ),
 }
 
 export default function SendMessageNodeEditor({
   activeNode,
-}: { activeNode: Node<SendMessageNodeSchema> }) {
+}: {
+  activeNode: Node<SendMessageNodeSchema>
+}) {
   const { t } = useTranslate()
 
   const { setNodes } = useReactFlow()
@@ -118,6 +136,7 @@ export default function SendMessageNodeEditor({
   })
 
   const onClickAction = (name: ActionType) => {
+    console.log("onClickAction => ", name)
     switch (name) {
       case ActionType.SendText:
         append(sendTextBlockDefaultValue())
@@ -139,6 +158,16 @@ export default function SendMessageNodeEditor({
         break
       case ActionType.SendFile:
         append(sendAudioBlockDefaultValue())
+        break
+      // Action OpenAI
+      case ActionType.OpenAIGenerateText:
+        append(openAIGenerateTextDefaultValue())
+        break
+      case ActionType.OpenAIGenerateTextAgent:
+        append(openAIGenerateTextAgentDefaultValue())
+        break
+      case ActionType.OpenAIGenerateTextAdvanced:
+        append(openAIGenerateTextAdvancedDefaultValue())
         break
     }
   }

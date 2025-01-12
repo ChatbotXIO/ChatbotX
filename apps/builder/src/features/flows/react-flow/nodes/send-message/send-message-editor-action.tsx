@@ -12,7 +12,9 @@ import RecursiveDropdownMenu from "./recursive-dropdown-menu"
 
 export default function SendMessageEditorAction({
   onClick,
-}: { onClick: (name: ActionType) => void }) {
+}: {
+  onClick: (name: ActionType) => void
+}) {
   const { t } = useTranslate()
 
   return (

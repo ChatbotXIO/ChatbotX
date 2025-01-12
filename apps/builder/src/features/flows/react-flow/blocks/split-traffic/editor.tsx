@@ -4,7 +4,9 @@ import { useFormContext } from "react-hook-form"
 
 export const SplitTrafficBlockEditor = ({
   parentName,
-}: { parentName: string }) => {
+}: {
+  parentName: string
+}) => {
   const { register } = useFormContext()
 
   return (

@@ -30,7 +30,11 @@ export function CreateContactForm({
   chatbotId,
   onSubmmited,
   onCancelled,
-}: { chatbotId: string; onSubmmited?: () => void; onCancelled?: () => void }) {
+}: {
+  chatbotId: string
+  onSubmmited?: () => void
+  onCancelled?: () => void
+}) {
   const { t } = useTranslate()
 
   const { form, handleSubmitWithAction } = useHookFormAction(

@@ -1,6 +1,5 @@
 # Request workflows
 
-
 ### GET Requests
 
 ```mermaid

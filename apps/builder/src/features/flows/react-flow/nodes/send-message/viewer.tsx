@@ -17,6 +17,10 @@ import { ActionType } from "../../action-type"
 import { FlowFlowNodeToolbar } from "../../toolbars"
 import type { SendMessageNodeSchema } from "./schema"
 
+import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
+import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
+import { OpenAIViewer } from "@/features/flows/react-flow/blocks/open-ai/viewer"
+
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const maps: Record<ActionType, (data: any) => ReactNode> = {
   [ActionType.SendText]: (data: SendTextBlockSchema) => (
@@ -37,12 +41,26 @@ const maps: Record<ActionType, (data: any) => ReactNode> = {
   [ActionType.SendAudio]: (data: SendAudioBlockSchema) => (
     <AudioBlockViewer key={data.id} data={data} />
   ),
+  [ActionType.OpenAIGenerateText]: (data: OpenAIGenerateTextSchema) => (
+    <OpenAIViewer key={data.id} data={data} name="generate text" />
+  ),
+  [ActionType.OpenAIGenerateTextAgent]: (data: OpenAIGenerateTextSchema) => (
+    <OpenAIViewer key={data.id} data={data} name="generate text - agents" />
+  ),
+  [ActionType.OpenAIGenerateTextAdvanced]: (
+    data: OpenAIGenerateTextAdvancedSchema,
+  ) => (
+    <OpenAIViewer key={data.id} data={data} name="generate text - advanced" />
+  ),
 }
 
 export default function SendMessageNodeViewer({
   data,
   id,
-}: { data: SendMessageNodeSchema; id: string | number }) {
+}: {
+  data: SendMessageNodeSchema
+  id: string | number
+}) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   return (

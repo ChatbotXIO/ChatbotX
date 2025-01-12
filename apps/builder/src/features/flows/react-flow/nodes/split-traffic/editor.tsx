@@ -13,7 +13,9 @@ import { type SplitTrafficNodeSchema, splitTrafficNodeSchema } from "./schema"
 
 export default function SplitTrafficNodeEditor({
   activeNode,
-}: { activeNode: Node<SplitTrafficNodeSchema> }) {
+}: {
+  activeNode: Node<SplitTrafficNodeSchema>
+}) {
   const { t } = useTranslate()
 
   const { setNodes } = useReactFlow()

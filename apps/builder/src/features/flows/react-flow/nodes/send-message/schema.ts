@@ -1,3 +1,6 @@
+import { openAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
+import { openAIGenerateTextAgentSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
+import { openAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
 import { sendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
 import { sendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
 import { sendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema"
@@ -18,6 +21,9 @@ export const sendMessageNodeSchema = z.object({
       sendVideoBlockSchema,
       sendAudioBlockSchema,
       sendCarouselBlockSchema,
+      openAIGenerateTextSchema,
+      openAIGenerateTextAgentSchema,
+      openAIGenerateTextAdvancedSchema,
     ]),
   ),
 })

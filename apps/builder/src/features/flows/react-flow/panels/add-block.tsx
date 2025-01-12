@@ -24,7 +24,9 @@ import { PanelAction } from "../types"
 
 export function AddBlockButton({
   onChooseAction,
-}: { onChooseAction: (name: PanelAction) => void }) {
+}: {
+  onChooseAction: (name: PanelAction) => void
+}) {
   const { t } = useTranslate()
 
   const [open, setOpen] = useState(false)

@@ -1,8 +1,8 @@
 "use client"
 
 import { Card, CardFooter, CardHeader } from "@/components/ui/card"
-import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/audio/schema"
 import { ButtonGroupViewer } from "@/features/flows/react-flow/blocks/button/viewer"
+import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
 
 import { Volume2 } from "lucide-react"
 
