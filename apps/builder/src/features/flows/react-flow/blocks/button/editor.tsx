@@ -12,7 +12,9 @@ import { buttonBlockDefaultValue } from "./schema"
 export const ButtonBlockEditor = ({
   parentName,
   ...rest
-}: { parentName: string }) => {
+}: {
+  parentName: string
+}) => {
   const { watch } = useFormContext()
 
   const buttonName = watch(`${parentName}.label`)

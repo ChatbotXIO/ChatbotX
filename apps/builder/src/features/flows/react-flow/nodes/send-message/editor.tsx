@@ -72,7 +72,9 @@ const maps: Record<
 
 export default function SendMessageNodeEditor({
   activeNode,
-}: { activeNode: Node<SendMessageNodeSchema> }) {
+}: {
+  activeNode: Node<SendMessageNodeSchema>
+}) {
   const { t } = useTranslate()
 
   const { setNodes } = useReactFlow()

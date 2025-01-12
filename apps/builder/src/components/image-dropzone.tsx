@@ -8,7 +8,10 @@ import { Button } from "./ui/button"
 function AttachedImage({
   image,
   onRemove,
-}: { image: string; onRemove: () => void }) {
+}: {
+  image: string
+  onRemove: () => void
+}) {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const onClick = (e: any) => {
     e.stopPropagation()
@@ -36,7 +39,9 @@ function AttachedImage({
 
 function NeedAttachedImage({
   onSwitchToImageLink,
-}: { onSwitchToImageLink: () => void }) {
+}: {
+  onSwitchToImageLink: () => void
+}) {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const switchToImageLinkMode = (e: any) => {
     e.stopPropagation()

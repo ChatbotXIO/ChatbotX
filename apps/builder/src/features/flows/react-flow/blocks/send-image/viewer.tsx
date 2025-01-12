@@ -5,7 +5,9 @@ import { ButtonGroupViewer } from "../button/viewer"
 
 export const SendImageBlockViewer = ({
   data,
-}: { data: SendImageBlockSchema }) => {
+}: {
+  data: SendImageBlockSchema
+}) => {
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary mb-2">
       <div className="h-[150px]">

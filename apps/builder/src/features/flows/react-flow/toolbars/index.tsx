@@ -32,7 +32,10 @@ export type ToolbarOptionKey = keyof typeof FlowFlowNodeToolbarOptions
 export function FlowFlowNodeToolbar({
   toolbarOptions,
   visible = false,
-}: { toolbarOptions?: ToolbarOptions; visible: boolean }) {
+}: {
+  toolbarOptions?: ToolbarOptions
+  visible: boolean
+}) {
   const { t } = useTranslate()
 
   const options = { ...FlowFlowNodeToolbarOptions, ...toolbarOptions }

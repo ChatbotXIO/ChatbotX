@@ -20,7 +20,10 @@ function MenuRow({ menuItem }: { menuItem: MenuItem }) {
 export default function RecursiveDropdownMenu({
   data,
   onClick,
-}: { data: MenuItem[]; onClick: (name: ActionType) => void }) {
+}: {
+  data: MenuItem[]
+  onClick: (name: ActionType) => void
+}) {
   return (
     <>
       {data.map((menuItem: MenuItem) => {

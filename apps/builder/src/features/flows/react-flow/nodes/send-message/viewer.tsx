@@ -42,7 +42,10 @@ const maps: Record<ActionType, (data: any) => ReactNode> = {
 export default function SendMessageNodeViewer({
   data,
   id,
-}: { data: SendMessageNodeSchema; id: string | number }) {
+}: {
+  data: SendMessageNodeSchema
+  id: string | number
+}) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   return (

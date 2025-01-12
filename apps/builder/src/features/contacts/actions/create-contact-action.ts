@@ -9,7 +9,8 @@ import {
   type CreateContactSchema,
   createContactBindSchema,
   createContactSchema,
-} from "./create-contact-schema"
+} from "../schemas/create-contact-schema"
+import { revalidateTag } from "next/cache"
 
 export const createContactAction = authActionClient
   .schema(createContactSchema)
@@ -41,6 +42,8 @@ export const createContactAction = authActionClient
       await prisma.contact.create({
         data: { ...parsedInput, chatbotId: chatbot.id, source: "web" },
       })
+
+      revalidateTag(`${ctx.user.id}#contacts`)
 
       return {
         successful: true,

@@ -17,7 +17,7 @@ import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { EditFolderDialog } from "./edit-folder-dialog"
 import type { getCurrentFolder, getFolders } from "./queries"
 
-interface ListFoldersProps {
+type ListFoldersProps = {
   chatbotId: string
   folderType: FolderType
   promises: Promise<
@@ -155,7 +155,6 @@ const ListFolders = ({ chatbotId, folderType, promises }: ListFoldersProps) => {
         onOpenChange={setOpenEditDialog}
         chatbotId={chatbotId}
         folder={targetFolder}
-        onClose={console.log}
       />
 
       <DeleteFolderDialog

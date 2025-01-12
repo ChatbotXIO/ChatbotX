@@ -1,5 +1,6 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -8,14 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
 import {
@@ -27,6 +21,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { toast } from "sonner"
 
 export function EditFolderDialog({
@@ -34,15 +30,14 @@ export function EditFolderDialog({
   onOpenChange,
   chatbotId,
   folder,
-  onClose,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
   folder: Folder | null
-  onClose?: (item: EditFolderSchema) => void
 }) {
   const { t } = useTranslate()
+  const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     editFolderAction.bind(null, chatbotId, folder?.id ?? ""),
@@ -51,9 +46,9 @@ export function EditFolderDialog({
       actionProps: {
         onSuccess: () => {
           toast.success("Folder updated successfully")
-          onClose?.(form.getValues())
 
           onOpenChange(false)
+          router.refresh()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -71,6 +66,10 @@ export function EditFolderDialog({
     },
   )
 
+  useEffect(() => {
+    form.reset({ name: folder?.name })
+  }, [folder, form.reset])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -84,18 +83,10 @@ export function EditFolderDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormField
-                control={form.control}
+              <FormInput
                 name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("folders.name")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("folders.name")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("folders.name")}
+                placeholder={t("folders.name.placeholder")}
               />
 
               <div className="flex justify-end gap-4">

@@ -3,7 +3,7 @@ import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@ahachat.ai/database"
 import type { Contact, Prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { GetContactsSchema } from "./get-contacts-schema"
+import type { GetContactsSchema } from "../schemas/get-contacts-schema"
 
 export async function getContacts(
   input: GetContactsSchema,

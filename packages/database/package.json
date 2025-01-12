@@ -16,8 +16,9 @@
     "db:generate": "dotenv -e ../../.env -- prisma migrate dev --create-only",
     "db:migrate": "dotenv -e ../../.env -- prisma migrate deploy",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
-    "db:seed": "dotenv -e ../../.env -- ts-node prisma/seed.ts",
-    "db:client": "dotenv -e ../../.env -- prisma generate"
+    "db:seed": "dotenv -e ../../.env -- npx ts-node prisma/seed.ts",
+    "db:client": "dotenv -e ../../.env -- prisma generate",
+    "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force"
   },
   "exports": {
     ".": "./src/index.ts"

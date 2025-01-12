@@ -1,5 +1,7 @@
 export default function BroadcastsPage({
   children,
-}: { children: React.ReactNode }) {
+}: {
+  children: React.ReactNode
+}) {
   return "broadcasts"
 }
