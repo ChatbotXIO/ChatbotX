@@ -4,13 +4,13 @@ import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { returnValidationErrors } from "next-safe-action"
+import { revalidateTag } from "next/cache"
 import {
   type CreateContactBindSchema,
   type CreateContactSchema,
   createContactBindSchema,
   createContactSchema,
 } from "../schemas/create-contact-schema"
-import { revalidateTag } from "next/cache"
 
 export const createContactAction = authActionClient
   .schema(createContactSchema)
