@@ -1,20 +1,20 @@
-"use client";
+"use client"
 
-import { cn } from "@/lib/utils";
-import { T } from "@tolgee/react";
-import { File, Image, ImagePlay, Undo2, Video, Volume2, X } from "lucide-react";
-import { useState } from "react";
-import Dropzone from "react-dropzone";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils"
+import { T } from "@tolgee/react"
+import { File, Image, ImagePlay, Undo2, Video, Volume2, X } from "lucide-react"
+import { useState } from "react"
+import Dropzone from "react-dropzone"
+import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/ui/tooltip"
 
 enum FileType {
   Video = "video",
@@ -25,25 +25,25 @@ enum FileType {
 }
 
 type FileDropzoneConfigs = {
-  uploadKeyName: string;
-  linkKeyName: string;
-  accept: Record<string, string[]>;
-  maxSize: number;
-  isCard: boolean;
-};
+  uploadKeyName: string
+  linkKeyName: string
+  accept: Record<string, string[]>
+  maxSize: number
+  isCard: boolean
+}
 
 interface FileDropzoneProps {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  register: any;
+  register: any
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  unregister?: any;
-  parentName: string;
-  type?: "video" | "image" | "file" | "audio" | "gif";
-  mode?: "file" | "link";
-  configs?: Partial<FileDropzoneConfigs>;
-  onMode?: (mode: "file" | "link") => void;
-  onRemove?: () => void;
-  onDrop?: (file: File) => void;
+  unregister?: any
+  parentName: string
+  type?: "video" | "image" | "file" | "audio" | "gif"
+  mode?: "file" | "link"
+  configs?: Partial<FileDropzoneConfigs>
+  onMode?: (mode: "file" | "link") => void
+  onRemove?: () => void
+  onDrop?: (file: File) => void
 }
 
 export default function FileDropzone({
@@ -63,98 +63,98 @@ export default function FileDropzone({
   onRemove,
   onDrop,
 }: FileDropzoneProps) {
-  const [preview, setPreview] = useState("");
-  const [fileMode, setFileMode] = useState<"file" | "link">(mode);
+  const [preview, setPreview] = useState("")
+  const [fileMode, setFileMode] = useState<"file" | "link">(mode)
 
-  const _validateSize = (file: File) => file.size > maxSize * 1024 * 1024;
+  const _validateSize = (file: File) => file.size > maxSize * 1024 * 1024
 
   const _videoPreview = (file: File) => {
-    const video: HTMLVideoElement = document.createElement("video");
-    const canvas: HTMLCanvasElement = document.createElement("canvas");
+    const video: HTMLVideoElement = document.createElement("video")
+    const canvas: HTMLCanvasElement = document.createElement("canvas")
     const ctx: CanvasRenderingContext2D = canvas.getContext(
       "2d",
-    ) as CanvasRenderingContext2D;
+    ) as CanvasRenderingContext2D
 
-    const fileURL = URL.createObjectURL(file);
-    video.src = fileURL;
+    const fileURL = URL.createObjectURL(file)
+    video.src = fileURL
 
     video.addEventListener("loadeddata", () => {
-      video.currentTime = 1;
-    });
+      video.currentTime = 1
+    })
 
     video.addEventListener("seeked", () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      setPreview(canvas.toDataURL("image/png"));
-      URL.revokeObjectURL(fileURL);
-    });
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      setPreview(canvas.toDataURL("image/png"))
+      URL.revokeObjectURL(fileURL)
+    })
 
     video.addEventListener("error", () => {
-      toast("Video error");
-      URL.revokeObjectURL(fileURL);
-    });
-  };
+      toast("Video error")
+      URL.revokeObjectURL(fileURL)
+    })
+  }
 
   const _imagePreview = (file: File) => {
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
+      setPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
 
   const _onDrop = ([file]: File[]) => {
     if (file) {
       if (_validateSize(file)) {
-        return toast("common.upload.fileMaxSize");
+        return toast("common.upload.fileMaxSize")
       }
 
       if (file.type.includes(FileType.Video)) {
-        _videoPreview(file);
+        _videoPreview(file)
       }
 
       if (file.type.includes(FileType.Image)) {
-        _imagePreview(file);
+        _imagePreview(file)
       }
 
-      onDrop?.(file);
+      onDrop?.(file)
     }
-  };
+  }
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const _onRemove = (e: any) => {
-    e.stopPropagation();
-    setPreview("");
-    onRemove?.();
-  };
+    e.stopPropagation()
+    setPreview("")
+    onRemove?.()
+  }
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const _onMode = (e: any) => {
-    e.stopPropagation();
-    setFileMode(fileMode === "file" ? "link" : "file");
+    e.stopPropagation()
+    setFileMode(fileMode === "file" ? "link" : "file")
     if (fileMode === "link") {
-      unregister(`${parentName}.file`);
+      unregister(`${parentName}.file`)
     } else {
-      unregister(`${parentName}.url`);
+      unregister(`${parentName}.url`)
     }
-    onMode?.(fileMode);
-  };
+    onMode?.(fileMode)
+  }
 
   const _uploadIcon = (size = 30) => {
     switch (type) {
       case FileType.Video:
-        return <Video size={size} className="text-gray-500" />;
+        return <Video size={size} className="text-gray-500" />
       case FileType.File:
-        return <File size={size} className="text-gray-500" />;
+        return <File size={size} className="text-gray-500" />
       case FileType.Audio:
-        return <Volume2 size={size} className="text-gray-500" />;
+        return <Volume2 size={size} className="text-gray-500" />
       case FileType.Gif:
-        return <ImagePlay size={size} className="text-gray-500" />;
+        return <ImagePlay size={size} className="text-gray-500" />
       default:
-        return <Image size={size} className="text-gray-500" />;
+        return <Image size={size} className="text-gray-500" />
     }
-  };
+  }
 
   const _noFile = () => {
     return (
@@ -176,8 +176,8 @@ export default function FileDropzone({
           )}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const _hasFile = () => {
     return (
@@ -198,8 +198,8 @@ export default function FileDropzone({
           </Button>
         </div>
       </>
-    );
-  };
+    )
+  }
 
   const dropZone = () => {
     return (
@@ -223,8 +223,8 @@ export default function FileDropzone({
           </section>
         )}
       </Dropzone>
-    );
-  };
+    )
+  }
 
   const inputLink = () => {
     return (
@@ -252,8 +252,8 @@ export default function FileDropzone({
           {...register(`${parentName}.url`)}
         />
       </div>
-    );
-  };
+    )
+  }
 
-  return fileMode === "file" ? dropZone() : inputLink();
+  return fileMode === "file" ? dropZone() : inputLink()
 }

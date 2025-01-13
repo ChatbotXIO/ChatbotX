@@ -1,4 +1,4 @@
-import type * as Party from "partykit/server";
+import type * as Party from "partykit/server"
 
 export default class Server implements Party.Server {
   onStart() {}
@@ -8,7 +8,7 @@ export default class Server implements Party.Server {
     lobby: Party.Lobby,
     ctx: Party.ExecutionContext,
   ) {
-    return new Response("Access denied", { status: 403 });
+    return new Response("Access denied", { status: 403 })
   }
 
   static async onBeforeConnect(
@@ -16,6 +16,6 @@ export default class Server implements Party.Server {
     lobby: Party.Lobby,
     ctx: Party.ExecutionContext,
   ) {
-    return new Response("Access denied", { status: 403 });
+    return new Response("Access denied", { status: 403 })
   }
 }

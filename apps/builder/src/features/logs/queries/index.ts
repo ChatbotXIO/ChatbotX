@@ -1,15 +1,15 @@
-import { getCurrentUserId } from "@/auth";
-import { findChatbotOrFail } from "@/lib/user-permissions";
-import { type Log, type Prisma, prisma } from "@ahachat.ai/database";
-import { unstable_cache } from "next/cache";
-import type { GetLogsSchema } from "../schemas/get-logs-schema";
+import { getCurrentUserId } from "@/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type Log, type Prisma, prisma } from "@ahachat.ai/database"
+import { unstable_cache } from "next/cache"
+import type { GetLogsSchema } from "../schemas/get-logs-schema"
 
 export async function getLogs(
   input: GetLogsSchema,
 ): Promise<{ data: Log[]; pageCount: number }> {
-  const userId = await getCurrentUserId();
+  const userId = await getCurrentUserId()
 
-  await findChatbotOrFail(userId, input.chatbotId);
+  await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
     async () => {
@@ -17,7 +17,7 @@ export async function getLogs(
         const where: Prisma.LogWhereInput = {
           chatbotId: input.chatbotId,
           logType: input.logType,
-        };
+        }
 
         if (input.action) {
           where.AND = [
@@ -27,12 +27,12 @@ export async function getLogs(
                 mode: "insensitive",
               },
             },
-          ];
+          ]
         }
 
         const orderBy = input.sort.map((sortItem) => ({
           [sortItem.id]: sortItem.desc ? "desc" : "asc",
-        }));
+        }))
 
         const [data, total] = await prisma.$transaction([
           prisma.log.findMany({
@@ -46,13 +46,13 @@ export async function getLogs(
             },
           }),
           prisma.log.count({ where }),
-        ]);
+        ])
 
-        const pageCount = Math.ceil(total / input.perPage);
+        const pageCount = Math.ceil(total / input.perPage)
 
-        return { data, pageCount };
+        return { data, pageCount }
       } catch (err) {
-        return { data: [], pageCount: 0 };
+        return { data: [], pageCount: 0 }
       }
     },
     [JSON.stringify(input)],
@@ -60,5 +60,5 @@ export async function getLogs(
       revalidate: 3600,
       tags: [`${userId}#logs#${input.logType}`],
     },
-  )();
+  )()
 }

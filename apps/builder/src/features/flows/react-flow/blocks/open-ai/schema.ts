@@ -1,6 +1,6 @@
-import { buttonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema";
-import { createId } from "@paralleldrive/cuid2";
-import { z } from "zod";
+import { buttonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema"
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
 
 export enum OpenAIModel {
   GPT4oMini = "gpt-4o-mini",
@@ -21,11 +21,11 @@ export const openAISchema = z.object({
   customFieldId: z.string().min(1).max(255).cuid2().optional(),
   aiTriggerIds: z.array(z.string()).optional(),
   buttons: z.array(buttonBlockSchema).optional(),
-});
+})
 
-export type OpenAISchema = z.infer<typeof openAISchema>;
+export type OpenAISchema = z.infer<typeof openAISchema>
 
 export const openAIDefaultValue = (): OpenAISchema => ({
   id: createId(),
   model: OpenAIModel.GPT4oMini,
-});
+})

@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import type { Table } from "@tanstack/react-table";
-import { Check, ChevronsUpDown, Settings2 } from "lucide-react";
-import * as React from "react";
+import type { Table } from "@tanstack/react-table"
+import { Check, ChevronsUpDown, Settings2 } from "lucide-react"
+import * as React from "react"
 
-import { cn, toSentenceCase } from "@/components/data-table/lib/utils";
-import { Button } from "@/components/ui/button";
+import { cn, toSentenceCase } from "@/components/data-table/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -13,21 +13,21 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/ui/popover"
 
 interface DataTableViewOptionsProps<TData> {
-  table: Table<TData>;
+  table: Table<TData>
 }
 
 export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
-  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
 
   return (
     <Popover modal>
@@ -81,12 +81,12 @@ export function DataTableViewOptions<TData>({
                         )}
                       />
                     </CommandItem>
-                  );
+                  )
                 })}
             </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

@@ -1,12 +1,12 @@
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
-import { CodeIcon, SmileIcon } from "lucide-react";
-import { useFormContext } from "react-hook-form";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
-import { Textarea } from "./ui/textarea";
+import data from "@emoji-mart/data"
+import Picker from "@emoji-mart/react"
+import { CodeIcon, SmileIcon } from "lucide-react"
+import { useFormContext } from "react-hook-form"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card"
+import { Textarea } from "./ui/textarea"
 
 export const InputWithEmoji = ({ name }: { name: string }) => {
-  const { register } = useFormContext();
+  const { register } = useFormContext()
   return (
     <HoverCard openDelay={0} closeDelay={0}>
       <HoverCardTrigger asChild>
@@ -48,5 +48,5 @@ export const InputWithEmoji = ({ name }: { name: string }) => {
         </HoverCard>
       </HoverCardContent>
     </HoverCard>
-  );
-};
+  )
+}

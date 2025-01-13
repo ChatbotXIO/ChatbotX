@@ -1,13 +1,13 @@
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { useFormContext } from "react-hook-form";
+import { Input } from "@/components/ui/input"
+import { Slider } from "@/components/ui/slider"
+import { useFormContext } from "react-hook-form"
 
 export const SplitTrafficBlockEditor = ({
   parentName,
 }: {
-  parentName: string;
+  parentName: string
 }) => {
-  const { register } = useFormContext();
+  const { register } = useFormContext()
 
   return (
     <div className="flex flex-1 gap-2 items-center py-4">
@@ -16,5 +16,5 @@ export const SplitTrafficBlockEditor = ({
       <Input className="flex-none w-14" {...register(`${parentName}.value`)} />
       <span>%</span>
     </div>
-  );
-};
+  )
+}

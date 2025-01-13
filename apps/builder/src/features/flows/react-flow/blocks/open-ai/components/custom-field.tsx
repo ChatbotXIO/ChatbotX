@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { SingleSelect } from "@/components/single-select";
-import { Button } from "@/components/ui/button";
-import { FormItem, FormLabel } from "@/components/ui/form";
+import { SingleSelect } from "@/components/single-select"
+import { Button } from "@/components/ui/button"
+import { FormItem, FormLabel } from "@/components/ui/form"
 
 export const OpenAICustomField = () => {
   return (
@@ -18,5 +18,5 @@ export const OpenAICustomField = () => {
         options={[{ label: "ChatGPT Response", value: "chatgptResponse" }]}
       />
     </FormItem>
-  );
-};
+  )
+}

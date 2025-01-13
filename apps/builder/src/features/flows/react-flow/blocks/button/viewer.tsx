@@ -1,13 +1,13 @@
-import { Button } from "@/components/ui/button";
-import type { ButtonBlockSchema } from "./schema";
+import { Button } from "@/components/ui/button"
+import type { ButtonBlockSchema } from "./schema"
 
 export const ButtonBlockViewer = ({ data }: { data: ButtonBlockSchema }) => {
   return (
     <Button type="button" variant="secondary" className="w-full" disabled>
       {data.label}
     </Button>
-  );
-};
+  )
+}
 
 export const ButtonGroupViewer = ({ data }: { data: ButtonBlockSchema[] }) => {
   return (
@@ -16,5 +16,5 @@ export const ButtonGroupViewer = ({ data }: { data: ButtonBlockSchema[] }) => {
         <ButtonBlockViewer key={button.id} data={button} />
       ))}
     </div>
-  );
-};
+  )
+}

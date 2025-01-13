@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { Card, CardFooter, CardHeader } from "@/components/ui/card";
-import { ButtonGroupViewer } from "@/features/flows/react-flow/blocks/button/viewer";
-import type { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema";
+import { Card, CardFooter, CardHeader } from "@/components/ui/card"
+import { ButtonGroupViewer } from "@/features/flows/react-flow/blocks/button/viewer"
+import type { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema"
 
 export const SendVideoBlockViewer = ({
   data,
 }: {
-  data: SendVideoBlockSchema;
+  data: SendVideoBlockSchema
 }) => {
   return (
     <Card className="mb-2">
@@ -20,5 +20,5 @@ export const SendVideoBlockViewer = ({
         </CardFooter>
       )}
     </Card>
-  );
-};
+  )
+}

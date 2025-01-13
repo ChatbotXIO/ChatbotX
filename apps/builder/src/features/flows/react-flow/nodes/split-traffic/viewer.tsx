@@ -1,18 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SplitIcon } from "lucide-react";
-import { useState } from "react";
-import { SplitTrafficBlockViewer } from "../../blocks/split-traffic/viewer";
-import { FlowFlowNodeToolbar } from "../../toolbars";
-import type { SplitTrafficNodeSchema } from "./schema";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SplitIcon } from "lucide-react"
+import { useState } from "react"
+import { SplitTrafficBlockViewer } from "../../blocks/split-traffic/viewer"
+import { FlowFlowNodeToolbar } from "../../toolbars"
+import type { SplitTrafficNodeSchema } from "./schema"
 
 export default function SplitTrafficNodeViewer({
   data,
   id,
 }: {
-  data: SplitTrafficNodeSchema;
-  id: string | number;
+  data: SplitTrafficNodeSchema
+  id: string | number
 }) {
-  const [openToolbar, onOpenToolbar] = useState(false);
+  const [openToolbar, onOpenToolbar] = useState(false)
 
   return (
     <>
@@ -35,5 +35,5 @@ export default function SplitTrafficNodeViewer({
         </CardContent>
       </Card>
     </>
-  );
+  )
 }

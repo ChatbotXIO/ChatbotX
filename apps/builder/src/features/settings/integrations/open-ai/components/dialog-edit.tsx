@@ -6,24 +6,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { NumberField } from "@/components/number-field";
-import { SingleSelect } from "@/components/single-select";
-import { Button } from "@/components/ui/button";
-import { FormItem, FormLabel } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model";
-import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger";
-import { T } from "@tolgee/react";
-import { useState } from "react";
+import { NumberField } from "@/components/number-field"
+import { SingleSelect } from "@/components/single-select"
+import { Button } from "@/components/ui/button"
+import { FormItem, FormLabel } from "@/components/ui/form"
+import { Textarea } from "@/components/ui/textarea"
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
+import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
+import { T } from "@tolgee/react"
+import { useState } from "react"
 
 type editTab = {
-  label: string;
-  value: string;
-};
+  label: string
+  value: string
+}
 
 const editTabs: editTab[] = [
   {
@@ -38,12 +38,12 @@ const editTabs: editTab[] = [
     label: "Assistant",
     value: "assistant",
   },
-];
+]
 
 const OptionsFields = () => {
-  const [isOptions, setIsOptions] = useState<boolean>(false);
+  const [isOptions, setIsOptions] = useState<boolean>(false)
 
-  const onToggleOptions = () => setIsOptions(!isOptions);
+  const onToggleOptions = () => setIsOptions(!isOptions)
 
   const renderOptions = () => {
     return (
@@ -60,8 +60,8 @@ const OptionsFields = () => {
           <NumberField value={200} step={1} onChange={console.log} />
         </FormItem>
       </>
-    );
-  };
+    )
+  }
 
   return (
     <>
@@ -82,8 +82,8 @@ const OptionsFields = () => {
         </div>
       )}
     </>
-  );
-};
+  )
+}
 
 export const SettingIntegrationOpenAIDialogEdit = () => {
   return (
@@ -162,5 +162,5 @@ export const SettingIntegrationOpenAIDialogEdit = () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

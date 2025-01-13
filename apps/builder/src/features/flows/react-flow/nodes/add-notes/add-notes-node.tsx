@@ -1,15 +1,15 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InfoIcon } from "lucide-react";
-import { useState } from "react";
-import { FlowFlowNodeToolbar } from "../../toolbars";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { InfoIcon } from "lucide-react"
+import { useState } from "react"
+import { FlowFlowNodeToolbar } from "../../toolbars"
 
 export type AddNotesNodeProps = {
-  label: string;
-  message: string;
-};
+  label: string
+  message: string
+}
 
 export default function AddNotesNode({ data }: { data: AddNotesNodeProps }) {
-  const [openToolbar, onOpenToolbar] = useState(false);
+  const [openToolbar, onOpenToolbar] = useState(false)
 
   return (
     <>
@@ -39,5 +39,5 @@ export default function AddNotesNode({ data }: { data: AddNotesNodeProps }) {
         </CardContent>
       </Card>
     </>
-  );
+  )
 }

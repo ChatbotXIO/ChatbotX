@@ -1,15 +1,15 @@
-"use server";
+"use server"
 
 import {
   type EditFolderBindSchema,
   type EditFolderSchema,
   editFolderBindSchema,
   editFolderSchema,
-} from "@/features/folders/schemas/edit-folder-schema";
-import { authActionClient } from "@/lib/safe-action";
-import { findChatbotOrFail } from "@/lib/user-permissions";
-import { type Prisma, type User, prisma } from "@ahachat.ai/database";
-import { revalidateTag } from "next/cache";
+} from "@/features/folders/schemas/edit-folder-schema"
+import { authActionClient } from "@/lib/safe-action"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type Prisma, type User, prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
 
 export const editFolderAction = authActionClient
   .schema(editFolderSchema)
@@ -20,22 +20,22 @@ export const editFolderAction = authActionClient
       parsedInput,
       bindArgsParsedInputs: [chatbotId, folderId],
     }: {
-      ctx: { user: User };
-      parsedInput: EditFolderSchema;
-      bindArgsParsedInputs: EditFolderBindSchema;
+      ctx: { user: User }
+      parsedInput: EditFolderSchema
+      bindArgsParsedInputs: EditFolderBindSchema
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId);
+      await findChatbotOrFail(ctx.user.id, chatbotId)
 
       const folder = await prisma.folder.findFirstOrThrow({
         where: {
           chatbotId: chatbotId,
           id: folderId,
         },
-      });
+      })
 
       const data: Prisma.FolderUpdateInput = {
         name: parsedInput.name,
-      };
+      }
       // if (parsedInput.parentId && parsedInput.parentId !== folder.parentId) {
       //   const parentFolder = await prisma.folder.findFirstOrThrow({
       //     where: {
@@ -51,12 +51,12 @@ export const editFolderAction = authActionClient
       await prisma.folder.update({
         where: { id: folderId },
         data,
-      });
+      })
 
-      revalidateTag(`${ctx.user.id}#folders#${folder.folderType}`);
+      revalidateTag(`${ctx.user.id}#folders#${folder.folderType}`)
 
       return {
         successful: true,
-      };
+      }
     },
-  );
+  )

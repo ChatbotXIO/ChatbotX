@@ -1,20 +1,15 @@
-"use client";
+"use client"
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { ButtonGroupViewer } from "@/features/flows/react-flow/blocks/button/viewer";
-import { Image } from "lucide-react";
-import type { SendCardBlockSchema } from "./schema";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { ButtonGroupViewer } from "@/features/flows/react-flow/blocks/button/viewer"
+import { Image } from "lucide-react"
+import type { SendCardBlockSchema } from "./schema"
 
 export const SendCardBlockViewer = ({
   data,
 }: {
-  data: SendCardBlockSchema;
+  data: SendCardBlockSchema
 }) => {
   return (
     <Card className="mb-3">
@@ -43,5 +38,5 @@ export const SendCardBlockViewer = ({
         </CardFooter>
       )}
     </Card>
-  );
-};
+  )
+}

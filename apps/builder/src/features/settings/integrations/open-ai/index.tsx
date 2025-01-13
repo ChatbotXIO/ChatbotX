@@ -3,19 +3,19 @@ import {
   CardContent,
   CardDescription,
   CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { T } from "@tolgee/react";
-import Link from "next/link";
+} from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { T } from "@tolgee/react"
+import Link from "next/link"
 
-import { SettingIntegrationOpenAIDialogConnect } from "@/features/settings/integrations/open-ai/components/dialog-connect";
-import { SettingIntegrationOpenAIDialogDisconnect } from "@/features/settings/integrations/open-ai/components/dialog-disconnect";
-import { SettingIntegrationOpenAIDialogEdit } from "@/features/settings/integrations/open-ai/components/dialog-edit";
+import { SettingIntegrationOpenAIDialogConnect } from "@/features/settings/integrations/open-ai/components/dialog-connect"
+import { SettingIntegrationOpenAIDialogDisconnect } from "@/features/settings/integrations/open-ai/components/dialog-disconnect"
+import { SettingIntegrationOpenAIDialogEdit } from "@/features/settings/integrations/open-ai/components/dialog-edit"
 
-import { useState } from "react";
+import { useState } from "react"
 
 export const SettingIntegrationOpenAI = () => {
-  const [isConnect, setIsConnect] = useState(false);
+  const [isConnect, setIsConnect] = useState(false)
 
   const renderButtonConnect = () => {
     return (
@@ -23,8 +23,8 @@ export const SettingIntegrationOpenAI = () => {
         <SettingIntegrationOpenAIDialogEdit />
         <SettingIntegrationOpenAIDialogDisconnect />
       </>
-    );
-  };
+    )
+  }
 
   return (
     <Card className="rounded-lg">
@@ -47,5 +47,5 @@ export const SettingIntegrationOpenAI = () => {
         </CardDescription>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

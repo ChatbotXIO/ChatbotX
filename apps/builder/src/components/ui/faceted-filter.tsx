@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { Check } from "lucide-react";
-import * as React from "react";
+import { Check } from "lucide-react"
+import * as React from "react"
 
 import {
   Command,
@@ -12,15 +12,15 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@/components/ui/command";
+} from "@/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 
-const FacetedFilter = Popover;
+const FacetedFilter = Popover
 
 const FacetedFilterTrigger = React.forwardRef<
   React.ComponentRef<typeof PopoverTrigger>,
@@ -29,8 +29,8 @@ const FacetedFilterTrigger = React.forwardRef<
   <PopoverTrigger ref={ref} className={cn(className)} {...props}>
     {children}
   </PopoverTrigger>
-));
-FacetedFilterTrigger.displayName = "FacetedFilterTrigger";
+))
+FacetedFilterTrigger.displayName = "FacetedFilterTrigger"
 
 const FacetedFilterContent = React.forwardRef<
   React.ComponentRef<typeof PopoverContent>,
@@ -44,20 +44,20 @@ const FacetedFilterContent = React.forwardRef<
   >
     <Command>{children}</Command>
   </PopoverContent>
-));
-FacetedFilterContent.displayName = "FacetedFilterContent";
+))
+FacetedFilterContent.displayName = "FacetedFilterContent"
 
-const FacetedFilterInput = CommandInput;
+const FacetedFilterInput = CommandInput
 
-const FacetedFilterList = CommandList;
+const FacetedFilterList = CommandList
 
-const FacetedFilterEmpty = CommandEmpty;
+const FacetedFilterEmpty = CommandEmpty
 
-const FacetedFilterGroup = CommandGroup;
+const FacetedFilterGroup = CommandGroup
 
 interface FacetedFilterItemProps
   extends React.ComponentPropsWithoutRef<typeof CommandItem> {
-  selected: boolean;
+  selected: boolean
 }
 
 const FacetedFilterItem = React.forwardRef<
@@ -84,13 +84,13 @@ const FacetedFilterItem = React.forwardRef<
       </span>
       {children}
     </CommandItem>
-  );
-});
-FacetedFilterItem.displayName = "FacetedFilterItem";
+  )
+})
+FacetedFilterItem.displayName = "FacetedFilterItem"
 
-const FacetedFilterSeparator = CommandSeparator;
+const FacetedFilterSeparator = CommandSeparator
 
-const FacetedFilterShortcut = CommandShortcut;
+const FacetedFilterShortcut = CommandShortcut
 
 export {
   FacetedFilter,
@@ -103,4 +103,4 @@ export {
   FacetedFilterItem,
   FacetedFilterSeparator,
   FacetedFilterShortcut,
-};
+}

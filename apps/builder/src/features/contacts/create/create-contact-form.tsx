@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -8,34 +8,34 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Gender } from "@ahachat.ai/database";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { useTranslate } from "@tolgee/react";
-import { AsteriskIcon, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { createContactAction } from "./create-contact-action";
-import { createContactSchema } from "./create-contact-schema";
+} from "@/components/ui/select"
+import { Gender } from "@ahachat.ai/database"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useTranslate } from "@tolgee/react"
+import { AsteriskIcon, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import { createContactAction } from "./create-contact-action"
+import { createContactSchema } from "./create-contact-schema"
 
 export function CreateContactForm({
   chatbotId,
   onSubmmited,
   onCancelled,
 }: {
-  chatbotId: string;
-  onSubmmited?: () => void;
-  onCancelled?: () => void;
+  chatbotId: string
+  onSubmmited?: () => void
+  onCancelled?: () => void
 }) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     createContactAction.bind(null, chatbotId),
@@ -43,13 +43,13 @@ export function CreateContactForm({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Contact created successfully");
+          toast.success("Contact created successfully")
 
-          onSubmmited?.();
+          onSubmmited?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError);
+            toast.error(error.serverError.message ?? error.serverError)
           }
         },
       },
@@ -65,13 +65,13 @@ export function CreateContactForm({
       },
       errorMapProps: {},
     },
-  );
+  )
 
   const genderLabels: Record<Gender, string> = {
     Male: t("contacts.gender.male"),
     Female: t("contacts.gender.female"),
     Unknown: t("contacts.gender.unknown"),
-  };
+  }
 
   return (
     <Form {...form}>
@@ -181,5 +181,5 @@ export function CreateContactForm({
         </div>
       </form>
     </Form>
-  );
+  )
 }

@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { Card, CardFooter, CardHeader } from "@/components/ui/card";
-import { ButtonGroupViewer } from "@/features/flows/react-flow/blocks/button/viewer";
-import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema";
+import { Card, CardFooter, CardHeader } from "@/components/ui/card"
+import { ButtonGroupViewer } from "@/features/flows/react-flow/blocks/button/viewer"
+import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
 
-import { Volume2 } from "lucide-react";
+import { Volume2 } from "lucide-react"
 
 export const AudioBlockViewer = ({ data }: { data: SendAudioBlockSchema }) => {
   const getFileNameFromUrl = () => {
-    const urlObject = new URL(data.url as string);
-    const path = urlObject.pathname;
-    return urlObject.pathname.substring(path.lastIndexOf("/") + 1);
-  };
+    const urlObject = new URL(data.url as string)
+    const path = urlObject.pathname
+    return urlObject.pathname.substring(path.lastIndexOf("/") + 1)
+  }
 
   return (
     <Card className="mb-2">
@@ -25,5 +25,5 @@ export const AudioBlockViewer = ({ data }: { data: SendAudioBlockSchema }) => {
         </CardFooter>
       )}
     </Card>
-  );
-};
+  )
+}

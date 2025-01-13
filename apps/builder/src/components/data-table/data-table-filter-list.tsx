@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import type {
   DataTableAdvancedFilterField,
@@ -6,9 +6,9 @@ import type {
   FilterOperator,
   JoinOperator,
   StringKeyOf,
-} from "@/components/data-table/types";
-import { createId } from "@paralleldrive/cuid2";
-import type { Table } from "@tanstack/react-table";
+} from "@/components/data-table/types"
+import { createId } from "@paralleldrive/cuid2"
+import type { Table } from "@tanstack/react-table"
 import {
   CalendarIcon,
   Check,
@@ -16,19 +16,19 @@ import {
   GripVertical,
   ListFilter,
   Trash2,
-} from "lucide-react";
-import { parseAsStringEnum, useQueryState } from "nuqs";
-import * as React from "react";
+} from "lucide-react"
+import { parseAsStringEnum, useQueryState } from "nuqs"
+import * as React from "react"
 
 import {
   getDefaultFilterOperator,
   getFilterOperators,
-} from "@/components/data-table/lib";
-import { formatDate } from "@/components/data-table/lib/utils";
-import { getFiltersStateParser } from "@/components/data-table/parsers";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+} from "@/components/data-table/lib"
+import { formatDate } from "@/components/data-table/lib/utils"
+import { getFiltersStateParser } from "@/components/data-table/parsers"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Command,
   CommandEmpty,
@@ -36,7 +36,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@/components/ui/command"
 import {
   FacetedFilter,
   FacetedFilterContent,
@@ -46,34 +46,34 @@ import {
   FacetedFilterItem,
   FacetedFilterList,
   FacetedFilterTrigger,
-} from "@/components/ui/faceted-filter";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/faceted-filter"
+import { Input } from "@/components/ui/input"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
-} from "@/components/ui/sortable";
-import { dataTableConfig } from "@/config/data-table";
-import { cn } from "@/lib/utils";
-import { useDebouncedCallback } from "use-debounce";
+} from "@/components/ui/sortable"
+import { dataTableConfig } from "@/config/data-table"
+import { cn } from "@/lib/utils"
+import { useDebouncedCallback } from "use-debounce"
 
 interface DataTableFilterListProps<TData> {
-  table: Table<TData>;
-  filterFields: DataTableAdvancedFilterField<TData>[];
-  debounceMs: number;
-  shallow?: boolean;
+  table: Table<TData>
+  filterFields: DataTableAdvancedFilterField<TData>[]
+  debounceMs: number
+  shallow?: boolean
 }
 
 export function DataTableFilterList<TData>({
@@ -82,7 +82,7 @@ export function DataTableFilterList<TData>({
   debounceMs,
   shallow,
 }: DataTableFilterListProps<TData>) {
-  const id = React.useId();
+  const id = React.useId()
   const [filters, setFilters] = useQueryState(
     "filters",
     getFiltersStateParser(table.getRowModel().rows[0]?.original)
@@ -91,7 +91,7 @@ export function DataTableFilterList<TData>({
         clearOnDefault: true,
         shallow,
       }),
-  );
+  )
 
   const [joinOperator, setJoinOperator] = useQueryState(
     "joinOperator",
@@ -99,14 +99,14 @@ export function DataTableFilterList<TData>({
       clearOnDefault: true,
       shallow,
     }),
-  );
+  )
 
-  const debouncedSetFilters = useDebouncedCallback(setFilters, debounceMs);
+  const debouncedSetFilters = useDebouncedCallback(setFilters, debounceMs)
 
   function addFilter() {
-    const filterField = filterFields[0];
+    const filterField = filterFields[0]
 
-    if (!filterField) return;
+    if (!filterField) return
 
     void setFilters([
       ...filters,
@@ -117,7 +117,7 @@ export function DataTableFilterList<TData>({
         operator: getDefaultFilterOperator(filterField.type),
         rowId: createId(),
       },
-    ]);
+    ])
   }
 
   function updateFilter({
@@ -125,47 +125,47 @@ export function DataTableFilterList<TData>({
     field,
     debounced = false,
   }: {
-    rowId: string;
-    field: Omit<Partial<Filter<TData>>, "rowId">;
-    debounced?: boolean;
+    rowId: string
+    field: Omit<Partial<Filter<TData>>, "rowId">
+    debounced?: boolean
   }) {
-    const updateFunction = debounced ? debouncedSetFilters : setFilters;
+    const updateFunction = debounced ? debouncedSetFilters : setFilters
     updateFunction((prevFilters) => {
       const updatedFilters = prevFilters.map((filter) => {
         if (filter.rowId === rowId) {
-          return { ...filter, ...field };
+          return { ...filter, ...field }
         }
-        return filter;
-      });
-      return updatedFilters;
-    });
+        return filter
+      })
+      return updatedFilters
+    })
   }
 
   function removeFilter(rowId: string) {
-    const updatedFilters = filters.filter((filter) => filter.rowId !== rowId);
-    void setFilters(updatedFilters);
+    const updatedFilters = filters.filter((filter) => filter.rowId !== rowId)
+    void setFilters(updatedFilters)
   }
 
   function moveFilter(activeIndex: number, overIndex: number) {
     void setFilters((prevFilters) => {
-      const newFilters = [...prevFilters];
-      const [removed] = newFilters.splice(activeIndex, 1);
-      if (!removed) return prevFilters;
-      newFilters.splice(overIndex, 0, removed);
-      return newFilters;
-    });
+      const newFilters = [...prevFilters]
+      const [removed] = newFilters.splice(activeIndex, 1)
+      if (!removed) return prevFilters
+      newFilters.splice(overIndex, 0, removed)
+      return newFilters
+    })
   }
 
   function renderFilterInput({
     filter,
     inputId,
   }: {
-    filter: Filter<TData>;
-    inputId: string;
+    filter: Filter<TData>
+    inputId: string
   }) {
-    const filterField = filterFields.find((f) => f.id === filter.id);
+    const filterField = filterFields.find((f) => f.id === filter.id)
 
-    if (!filterField) return null;
+    if (!filterField) return null
 
     if (filter.operator === "isEmpty" || filter.operator === "isNotEmpty") {
       return (
@@ -176,7 +176,7 @@ export function DataTableFilterList<TData>({
           aria-label={`${filterField.label} filter is ${filter.operator === "isEmpty" ? "empty" : "not empty"}`}
           className="h-8 w-full rounded border border-dashed"
         />
-      );
+      )
     }
 
     switch (filter.type) {
@@ -201,7 +201,7 @@ export function DataTableFilterList<TData>({
               })
             }
           />
-        );
+        )
       case "select":
         return (
           <FacetedFilter>
@@ -248,10 +248,10 @@ export function DataTableFilterList<TData>({
                       value={option.value}
                       selected={filter.value === option.value}
                       onSelect={(value) => {
-                        updateFilter({ rowId: filter.rowId, field: { value } });
+                        updateFilter({ rowId: filter.rowId, field: { value } })
                         setTimeout(() => {
-                          document.getElementById(inputId)?.click();
-                        }, 0);
+                          document.getElementById(inputId)?.click()
+                        }, 0)
                       }}
                     >
                       {option.icon && (
@@ -272,11 +272,11 @@ export function DataTableFilterList<TData>({
               </FacetedFilterList>
             </FacetedFilterContent>
           </FacetedFilter>
-        );
+        )
       case "multi-select": {
         const selectedValues = new Set(
           Array.isArray(filter.value) ? filter.value : [],
-        );
+        )
 
         return (
           <FacetedFilter>
@@ -348,14 +348,14 @@ export function DataTableFilterList<TData>({
                       onSelect={(value) => {
                         const currentValue = Array.isArray(filter.value)
                           ? filter.value
-                          : [];
+                          : []
                         const newValue = currentValue.includes(value)
                           ? currentValue.filter((v) => v !== value)
-                          : [...currentValue, value];
+                          : [...currentValue, value]
                         updateFilter({
                           rowId: filter.rowId,
                           field: { value: newValue },
-                        });
+                        })
                       }}
                     >
                       {option.icon && (
@@ -376,12 +376,12 @@ export function DataTableFilterList<TData>({
               </FacetedFilterList>
             </FacetedFilterContent>
           </FacetedFilter>
-        );
+        )
       }
       case "date": {
         const dateValue = Array.isArray(filter.value)
           ? filter.value.filter(Boolean)
-          : [filter.value, filter.value].filter(Boolean);
+          : [filter.value, filter.value].filter(Boolean)
 
         const displayValue =
           filter.operator === "isBetween" && dateValue.length === 2
@@ -390,7 +390,7 @@ export function DataTableFilterList<TData>({
               )}`
             : dateValue[0]
               ? formatDate(dateValue[0])
-              : "Pick a date";
+              : "Pick a date"
 
         return (
           <Popover>
@@ -445,7 +445,7 @@ export function DataTableFilterList<TData>({
                             ]
                           : [],
                       },
-                    });
+                    })
                   }}
                   autoFocus
                   numberOfMonths={1}
@@ -460,21 +460,21 @@ export function DataTableFilterList<TData>({
                     updateFilter({
                       rowId: filter.rowId,
                       field: { value: date?.toISOString() ?? "" },
-                    });
+                    })
 
                     setTimeout(() => {
-                      document.getElementById(inputId)?.click();
-                    }, 0);
+                      document.getElementById(inputId)?.click()
+                    }, 0)
                   }}
                   autoFocus
                 />
               )}
             </PopoverContent>
           </Popover>
-        );
+        )
       }
       case "boolean": {
-        if (Array.isArray(filter.value)) return null;
+        if (Array.isArray(filter.value)) return null
 
         return (
           <Select
@@ -496,10 +496,10 @@ export function DataTableFilterList<TData>({
               <SelectItem value="false">False</SelectItem>
             </SelectContent>
           </Select>
-        );
+        )
       }
       default:
-        return null;
+        return null
     }
   }
 
@@ -562,12 +562,12 @@ export function DataTableFilterList<TData>({
           )}
           <div className="flex max-h-40 flex-col gap-2 overflow-y-auto py-0.5 pr-1">
             {filters.map((filter, index) => {
-              const filterId = `${id}-filter-${filter.rowId}`;
-              const joinOperatorListboxId = `${filterId}-join-operator-listbox`;
-              const fieldListboxId = `${filterId}-field-listbox`;
-              const fieldTriggerId = `${filterId}-field-trigger`;
-              const operatorListboxId = `${filterId}-operator-listbox`;
-              const inputId = `${filterId}-input`;
+              const filterId = `${id}-filter-${filter.rowId}`
+              const joinOperatorListboxId = `${filterId}-join-operator-listbox`
+              const fieldListboxId = `${filterId}-field-listbox`
+              const fieldTriggerId = `${filterId}-field-trigger`
+              const operatorListboxId = `${filterId}-operator-listbox`
+              const inputId = `${filterId}-input`
 
               return (
                 <SortableItem key={filter.rowId} value={filter.rowId} asChild>
@@ -651,9 +651,9 @@ export function DataTableFilterList<TData>({
                                   onSelect={(value) => {
                                     const filterField = filterFields.find(
                                       (col) => col.id === value,
-                                    );
+                                    )
 
-                                    if (!filterField) return;
+                                    if (!filterField) return
 
                                     updateFilter({
                                       rowId: filter.rowId,
@@ -665,11 +665,11 @@ export function DataTableFilterList<TData>({
                                         ),
                                         value: "",
                                       },
-                                    });
+                                    })
 
                                     document
                                       .getElementById(fieldTriggerId)
-                                      ?.click();
+                                      ?.click()
                                   }}
                                 >
                                   <span className="mr-1.5 truncate">
@@ -743,7 +743,7 @@ export function DataTableFilterList<TData>({
                     </SortableDragHandle>
                   </div>
                 </SortableItem>
-              );
+              )
             })}
           </div>
           <div className="flex w-full items-center gap-2">
@@ -760,8 +760,8 @@ export function DataTableFilterList<TData>({
                 variant="outline"
                 className="rounded"
                 onClick={() => {
-                  void setFilters(null);
-                  void setJoinOperator("and");
+                  void setFilters(null)
+                  void setJoinOperator("and")
                 }}
               >
                 Reset filters
@@ -771,5 +771,5 @@ export function DataTableFilterList<TData>({
         </PopoverContent>
       </Popover>
     </Sortable>
-  );
+  )
 }

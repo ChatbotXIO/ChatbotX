@@ -4,9 +4,9 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { ActionType } from "../../action-type";
-import type { MenuItem } from "../types";
+} from "@/components/ui/dropdown-menu"
+import type { ActionType } from "../../action-type"
+import type { MenuItem } from "../types"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
   return (
@@ -14,15 +14,15 @@ function MenuRow({ menuItem }: { menuItem: MenuItem }) {
       {menuItem.icon}
       {menuItem.label}
     </>
-  );
+  )
 }
 
 export default function RecursiveDropdownMenu({
   data,
   onClick,
 }: {
-  data: MenuItem[];
-  onClick: (name: ActionType) => void;
+  data: MenuItem[]
+  onClick: (name: ActionType) => void
 }) {
   return (
     <>
@@ -49,8 +49,8 @@ export default function RecursiveDropdownMenu({
           >
             <MenuRow menuItem={menuItem} />
           </DropdownMenuItem>
-        );
+        )
       })}
     </>
-  );
+  )
 }

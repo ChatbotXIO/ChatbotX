@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import type { DataTableFilterField } from "@/components/data-table/types";
-import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
-import * as React from "react";
+import type { DataTableFilterField } from "@/components/data-table/types"
+import type { Table } from "@tanstack/react-table"
+import { X } from "lucide-react"
+import * as React from "react"
 
-import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
-import { DataTableViewOptions } from "@/components/data-table/data-table-view-options";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter"
+import { DataTableViewOptions } from "@/components/data-table/data-table-view-options"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 
 interface DataTableToolbarProps<TData>
   extends React.HTMLAttributes<HTMLDivElement> {
-  table: Table<TData>;
+  table: Table<TData>
   /**
    * An array of filter field configurations for the data table.
    * When options are provided, a faceted filter is rendered.
@@ -36,7 +36,7 @@ interface DataTableToolbarProps<TData>
    *   }
    * ]
    */
-  filterFields?: DataTableFilterField<TData>[];
+  filterFields?: DataTableFilterField<TData>[]
 }
 
 export function DataTableToolbar<TData>({
@@ -46,15 +46,15 @@ export function DataTableToolbar<TData>({
   className,
   ...props
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = table.getState().columnFilters.length > 0
 
   // Memoize computation of searchableColumns and filterableColumns
   const { searchableColumns, filterableColumns } = React.useMemo(() => {
     return {
       searchableColumns: filterFields.filter((field) => !field.options),
       filterableColumns: filterFields.filter((field) => field.options),
-    };
-  }, [filterFields]);
+    }
+  }, [filterFields])
 
   return (
     <div
@@ -115,5 +115,5 @@ export function DataTableToolbar<TData>({
         <DataTableViewOptions table={table} />
       </div>
     </div>
-  );
+  )
 }

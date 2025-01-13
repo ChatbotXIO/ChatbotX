@@ -1,63 +1,63 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
-import { type ChangeEvent, type FormEvent, forwardRef, useState } from "react";
+import { type ChangeEvent, type FormEvent, forwardRef, useState } from "react"
 
-import { cn } from "@/lib/utils";
-import { Minus, Plus } from "lucide-react";
+import { cn } from "@/lib/utils"
+import { Minus, Plus } from "lucide-react"
 
 interface NumberFieldProps {
-  value: number;
-  step?: number;
-  onChange: (value: ChangeEvent<HTMLInputElement>) => void;
-  min?: number;
-  max?: number;
+  value: number
+  step?: number
+  onChange: (value: ChangeEvent<HTMLInputElement>) => void
+  min?: number
+  max?: number
 }
 
 export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
   ({ value = 0, step = 0.1, onChange = () => {}, min = 0, max = 0 }, ref) => {
-    const [current, setCurrent] = useState(value);
-    const [isFocus, setIsFocus] = useState(false);
+    const [current, setCurrent] = useState(value)
+    const [isFocus, setIsFocus] = useState(false)
 
     const increment = () => {
-      const newValue = Math.round((Number(current) + step) * 10) / 10;
+      const newValue = Math.round((Number(current) + step) * 10) / 10
       if (max && newValue >= max) {
-        return;
+        return
       }
-      setCurrent(newValue);
-    };
+      setCurrent(newValue)
+    }
 
     const decrement = () => {
-      const newValue = Math.round((Number(current) - step) * 10) / 10;
+      const newValue = Math.round((Number(current) - step) * 10) / 10
       if (newValue <= min) {
-        return;
+        return
       }
-      setCurrent(newValue);
-    };
+      setCurrent(newValue)
+    }
 
     const onInput = (e: FormEvent<HTMLInputElement>) => {
-      const regex = /^-?(\d\.)?(\d+)?$/;
+      const regex = /^-?(\d\.)?(\d+)?$/
 
       if (regex.test((e.target as HTMLInputElement).value)) {
-        const value = (e.target as HTMLInputElement).value;
-        const newValue = Math.round(Number(value) * 10) / 10;
+        const value = (e.target as HTMLInputElement).value
+        const newValue = Math.round(Number(value) * 10) / 10
 
         if (max && newValue >= max) {
-          return setCurrent(max);
+          return setCurrent(max)
         }
 
         if (newValue <= min) {
-          return setCurrent(min);
+          return setCurrent(min)
         }
 
-        setCurrent(newValue);
+        setCurrent(newValue)
       }
-    };
+    }
 
-    const onFocus = () => setIsFocus(true);
-    const onBlur = () => setIsFocus(false);
+    const onFocus = () => setIsFocus(true)
+    const onBlur = () => setIsFocus(false)
 
     return (
       <div
@@ -91,8 +91,8 @@ export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
           <Plus />
         </Button>
       </div>
-    );
+    )
   },
-);
+)
 
-NumberField.displayName = "NumberField";
+NumberField.displayName = "NumberField"

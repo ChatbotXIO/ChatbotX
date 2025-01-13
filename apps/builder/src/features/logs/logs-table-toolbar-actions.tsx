@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import type { Log } from "@ahachat.ai/database";
-import type { Table } from "@tanstack/react-table";
-import { DeleteLogsDialog } from "./delete-logs-dialog";
+import type { Log } from "@ahachat.ai/database"
+import type { Table } from "@tanstack/react-table"
+import { DeleteLogsDialog } from "./delete-logs-dialog"
 
 interface LogsTableToolbarActionsProps {
-  table: Table<Log>;
-  chatbotId: string;
-  logType: string;
+  table: Table<Log>
+  chatbotId: string
+  logType: string
 }
 
 export function LogsTableToolbarActions({
@@ -28,5 +28,5 @@ export function LogsTableToolbarActions({
         />
       ) : null}
     </div>
-  );
+  )
 }

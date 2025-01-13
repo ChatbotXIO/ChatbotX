@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { Log } from "@ahachat.ai/database";
-import type { ColumnDef, Row } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { EllipsisIcon, UserRoundIcon } from "lucide-react";
+} from "@/components/ui/dropdown-menu"
+import type { Log } from "@ahachat.ai/database"
+import type { ColumnDef, Row } from "@tanstack/react-table"
+import { format } from "date-fns"
+import { EllipsisIcon, UserRoundIcon } from "lucide-react"
 
 export interface DataTableRowAction<TData> {
-  row: Row<TData>;
-  type: "update" | "delete";
+  row: Row<TData>
+  type: "update" | "delete"
 }
 
 interface GetColumnsProps {
   setRowAction: React.Dispatch<
     React.SetStateAction<DataTableRowAction<Log> | null>
-  >;
+  >
 }
 
 export function getColumns({
@@ -123,11 +123,11 @@ export function getColumns({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        );
+        )
       },
       size: 50,
       enableSorting: false,
       enableHiding: false,
     },
-  ];
+  ]
 }

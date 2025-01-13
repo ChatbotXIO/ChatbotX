@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import type { SendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema";
-import { ButtonGroupViewer } from "../button/viewer";
+import type { SendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema"
+import { ButtonGroupViewer } from "../button/viewer"
 
 export const SendImageBlockViewer = ({
   data,
 }: {
-  data: SendImageBlockSchema;
+  data: SendImageBlockSchema
 }) => {
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary mb-2">
@@ -23,5 +23,5 @@ export const SendImageBlockViewer = ({
         </div>
       )}
     </div>
-  );
-};
+  )
+}

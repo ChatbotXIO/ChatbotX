@@ -1,33 +1,33 @@
-"use client";
+"use client"
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react"
 
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { DataTable } from "@/components/data-table/data-table"
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
 import type {
   DataTableFilterField,
   DataTableRowAction,
-} from "@/components/data-table/types";
-import { useDataTable } from "@/hooks/use-data-table";
-import { type Log, LogType } from "@ahachat.ai/database";
-import { DeleteLogsDialog } from "./delete-logs-dialog";
-import { getColumns } from "./error-logs-table-columns";
-import { LogsTableToolbarActions } from "./logs-table-toolbar-actions";
-import type { getLogs } from "./queries";
+} from "@/components/data-table/types"
+import { useDataTable } from "@/hooks/use-data-table"
+import { type Log, LogType } from "@ahachat.ai/database"
+import { DeleteLogsDialog } from "./delete-logs-dialog"
+import { getColumns } from "./error-logs-table-columns"
+import { LogsTableToolbarActions } from "./logs-table-toolbar-actions"
+import type { getLogs } from "./queries"
 
 interface LogsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>;
-  chatbotId: string;
+  promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>
+  chatbotId: string
 }
 
 export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
-  const [{ data, pageCount }] = React.use(promises);
+  const [{ data, pageCount }] = React.use(promises)
   const [rowAction, setRowAction] = useState<DataTableRowAction<Log> | null>(
     null,
-  );
+  )
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const columns = useMemo(() => getColumns({ setRowAction }), [setRowAction]);
+  const columns = useMemo(() => getColumns({ setRowAction }), [setRowAction])
 
   const filterFields: DataTableFilterField<Log & { action?: string }>[] = [
     {
@@ -35,7 +35,7 @@ export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
       label: "Search",
       placeholder: "Enter Action name...",
     },
-  ];
+  ]
 
   const { table } = useDataTable({
     data,
@@ -49,7 +49,7 @@ export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
-  });
+  })
 
   return (
     <>
@@ -73,5 +73,5 @@ export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
         logType={LogType.Error}
       />
     </>
-  );
+  )
 }

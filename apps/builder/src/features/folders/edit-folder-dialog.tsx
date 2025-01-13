@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -15,19 +15,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { editFolderAction } from "@/features/folders/actions/edit-folder-action";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
 import {
   type EditFolderSchema,
   editFolderSchema,
-} from "@/features/folders/schemas/edit-folder-schema";
-import type { Folder } from "@ahachat.ai/database";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { useTranslate } from "@tolgee/react";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+} from "@/features/folders/schemas/edit-folder-schema"
+import type { Folder } from "@ahachat.ai/database"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useTranslate } from "@tolgee/react"
+import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 export function EditFolderDialog({
   open,
@@ -36,13 +36,13 @@ export function EditFolderDialog({
   folder,
   onClose,
 }: {
-  open: boolean;
-  onOpenChange: (val: boolean) => void;
-  chatbotId: string;
-  folder: Folder | null;
-  onClose?: (item: EditFolderSchema) => void;
+  open: boolean
+  onOpenChange: (val: boolean) => void
+  chatbotId: string
+  folder: Folder | null
+  onClose?: (item: EditFolderSchema) => void
 }) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     editFolderAction.bind(null, chatbotId, folder?.id ?? ""),
@@ -50,14 +50,14 @@ export function EditFolderDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Folder updated successfully");
-          onClose?.(form.getValues());
+          toast.success("Folder updated successfully")
+          onClose?.(form.getValues())
 
-          onOpenChange(false);
+          onOpenChange(false)
         },
         onError: ({ error }) => {
           if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError);
+            toast.error(error.serverError.message ?? error.serverError)
           }
         },
       },
@@ -69,7 +69,7 @@ export function EditFolderDialog({
       },
       errorMapProps: {},
     },
-  );
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,5 +123,5 @@ export function EditFolderDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import { buttonBlockDefaultValue } from "@/features/flows/react-flow/blocks/button/schema";
-import { sendTextBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-text/schema";
-import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node";
-import type { AddNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema";
-import type { SendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema";
-import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer";
+import { buttonBlockDefaultValue } from "@/features/flows/react-flow/blocks/button/schema"
+import { sendTextBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-text/schema"
+import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
+import type { AddNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema"
+import type { SendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
+import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer"
 // import { splitTrafficNodeDefaultValue } from '@/features/flows/react-flow/nodes/split-traffic/schema';
 // import SplitTrafficNodeViewer from '@/features/flows/react-flow/nodes/split-traffic/viewer';
-import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block";
-import { NodeDetailSheet } from "@/features/flows/react-flow/panels/node-detail-sheet";
-import { PanelAction } from "@/features/flows/react-flow/types";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
+import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block"
+import { NodeDetailSheet } from "@/features/flows/react-flow/panels/node-detail-sheet"
+import { PanelAction } from "@/features/flows/react-flow/types"
+import { createId } from "@paralleldrive/cuid2"
+import { useTranslate } from "@tolgee/react"
 import {
   Background,
   Controls,
@@ -25,15 +25,15 @@ import {
   addEdge,
   useEdgesState,
   useNodesState,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import { useCallback, useState } from "react";
+} from "@xyflow/react"
+import "@xyflow/react/dist/style.css"
+import { useCallback, useState } from "react"
 
 const nodeTypes = {
   [PanelAction.SendMessage]: SendMessageNodeViewer,
   // [PanelAction.SplitTraffic]: SplitTrafficNodeViewer,
   [PanelAction.AddNotes]: AddNotesNode,
-};
+}
 
 const data: SendMessageNodeSchema = {
   id: createId(),
@@ -45,7 +45,7 @@ const data: SendMessageNodeSchema = {
       buttonBlockDefaultValue("bt2"),
     ]),
   ],
-};
+}
 
 const initialNodes: Node[] = [
   {
@@ -60,38 +60,37 @@ const initialNodes: Node[] = [
   //   position: { x: 300, y: 300 },
   //   data: splitTrafficNodeDefaultValue()
   // }
-];
+]
 
-const initialEdges: Edge[] = [];
+const initialEdges: Edge[] = []
 
 export default function FlowPage({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [activeNode, setActiveNode] = useState<Node | null>(null);
-  const [openNodeDetailSheet, setOpenNodeDetailSheet] =
-    useState<boolean>(false);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [activeNode, setActiveNode] = useState<Node | null>(null)
+  const [openNodeDetailSheet, setOpenNodeDetailSheet] = useState<boolean>(false)
 
   const onConnect = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (params: any) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
-  );
+  )
 
   const onChooseAction = (name: PanelAction) => {
-    let newNode: Node<SendMessageNodeSchema | AddNotesNodeSchema> | undefined;
+    let newNode: Node<SendMessageNodeSchema | AddNotesNodeSchema> | undefined
     if (name === PanelAction.SendMessage) {
-      let labelVersion = 0;
+      let labelVersion = 0
       for (const node of nodes) {
         if (node.type === PanelAction.SendMessage) {
           const matched = (node.data.name as string).match(
             /^Send Message #(\d+)$/,
-          );
+          )
           if (matched) {
-            const version = Number.parseInt(matched[1] ?? "0", 10);
+            const version = Number.parseInt(matched[1] ?? "0", 10)
             if (version > labelVersion) {
-              labelVersion = version;
+              labelVersion = version
             }
           }
         }
@@ -110,7 +109,7 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
           messageType: "Messenger",
           blocks: [],
         },
-      };
+      }
     }
 
     if (name === PanelAction.AddNotes) {
@@ -126,13 +125,13 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
           name: t("flows.addNotes"),
           message: "",
         },
-      };
+      }
     }
 
     if (newNode) {
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => nds.concat(newNode))
     }
-  };
+  }
 
   return (
     <ReactFlowProvider>
@@ -145,12 +144,12 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
         nodeTypes={nodeTypes}
         proOptions={{ hideAttribution: true }}
         onNodeClick={(_, node: Node) => {
-          setActiveNode(node);
-          setOpenNodeDetailSheet(true);
+          setActiveNode(node)
+          setOpenNodeDetailSheet(true)
         }}
         onPaneClick={() => {
-          setActiveNode(null);
-          setOpenNodeDetailSheet(false);
+          setActiveNode(null)
+          setOpenNodeDetailSheet(false)
         }}
       >
         <MiniMap />
@@ -168,5 +167,5 @@ export default function FlowPage({ children }: { children: React.ReactNode }) {
         activeNode={activeNode}
       />
     </ReactFlowProvider>
-  );
+  )
 }

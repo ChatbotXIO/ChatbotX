@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { NodeToolbar, Position } from "@xyflow/react";
+} from "@/components/ui/tooltip"
+import { useTranslate } from "@tolgee/react"
+import { NodeToolbar, Position } from "@xyflow/react"
 import {
   CopyIcon,
   EyeIcon,
@@ -14,8 +14,8 @@ import {
   PlayIcon,
   Trash2Icon,
   TypeIcon,
-} from "lucide-react";
-import type { ReactElement } from "react";
+} from "lucide-react"
+import type { ReactElement } from "react"
 
 const FlowFlowNodeToolbarOptions = {
   previewBtn: true,
@@ -25,20 +25,20 @@ const FlowFlowNodeToolbarOptions = {
   renameBtn: true,
   duplicateBtn: true,
   deleteBtn: true,
-};
-export type ToolbarOptions = Partial<typeof FlowFlowNodeToolbarOptions>;
-export type ToolbarOptionKey = keyof typeof FlowFlowNodeToolbarOptions;
+}
+export type ToolbarOptions = Partial<typeof FlowFlowNodeToolbarOptions>
+export type ToolbarOptionKey = keyof typeof FlowFlowNodeToolbarOptions
 
 export function FlowFlowNodeToolbar({
   toolbarOptions,
   visible = false,
 }: {
-  toolbarOptions?: ToolbarOptions;
-  visible: boolean;
+  toolbarOptions?: ToolbarOptions
+  visible: boolean
 }) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
-  const options = { ...FlowFlowNodeToolbarOptions, ...toolbarOptions };
+  const options = { ...FlowFlowNodeToolbarOptions, ...toolbarOptions }
 
   const configs: Record<
     ToolbarOptionKey,
@@ -79,7 +79,7 @@ export function FlowFlowNodeToolbar({
       label: t("flows.deleteBtn"),
       onClick: () => {},
     },
-  };
+  }
 
   return (
     <NodeToolbar isVisible={visible} position={Position.Top}>
@@ -100,9 +100,9 @@ export function FlowFlowNodeToolbar({
                 <p>{configs[option as ToolbarOptionKey].label}</p>
               </TooltipContent>
             </Tooltip>
-          ) : undefined;
+          ) : undefined
         })}
       </div>
     </NodeToolbar>
-  );
+  )
 }

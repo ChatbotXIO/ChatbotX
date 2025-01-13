@@ -1,25 +1,25 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
-import { CreateContactDialog } from "@/features/contacts/create/create-contact-dialog";
-import { ContactsTable } from "@/features/contacts/list/contacts-table";
-import { getContacts } from "@/features/contacts/list/get-contacts-queries";
-import { getContactsSearchParamsCache } from "@/features/contacts/list/get-contacts-schema";
-import type { SearchParams } from "nuqs/server";
-import { Suspense } from "react";
+import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
+import { CreateContactDialog } from "@/features/contacts/create/create-contact-dialog"
+import { ContactsTable } from "@/features/contacts/list/contacts-table"
+import { getContacts } from "@/features/contacts/list/get-contacts-queries"
+import { getContactsSearchParamsCache } from "@/features/contacts/list/get-contacts-schema"
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 
 export default async function ContactsPage(props: {
-  params: Promise<{ chatbotId: string }>;
-  searchParams: Promise<SearchParams>;
+  params: Promise<{ chatbotId: string }>
+  searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
-  const search = getContactsSearchParamsCache.parse(searchParams);
+  const params = await props.params
+  const searchParams = await props.searchParams
+  const search = getContactsSearchParamsCache.parse(searchParams)
 
   const promises = Promise.all([
     getContacts({
       ...search,
       chatbotId: params.chatbotId,
     }),
-  ]);
+  ])
 
   return (
     <div>
@@ -40,5 +40,5 @@ export default async function ContactsPage(props: {
         <ContactsTable promises={promises} />
       </Suspense>
     </div>
-  );
+  )
 }

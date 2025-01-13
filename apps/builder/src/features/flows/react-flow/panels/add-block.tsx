@@ -1,12 +1,12 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { useTranslate } from "@tolgee/react";
-import { ControlButton } from "@xyflow/react";
+} from "@/components/ui/popover"
+import { useTranslate } from "@tolgee/react"
+import { ControlButton } from "@xyflow/react"
 import {
   ClockIcon,
   CompassIcon,
@@ -18,22 +18,22 @@ import {
   Plus,
   ShuffleIcon,
   ZapIcon,
-} from "lucide-react";
-import { useState } from "react";
-import { PanelAction } from "../types";
+} from "lucide-react"
+import { useState } from "react"
+import { PanelAction } from "../types"
 
 export function AddBlockButton({
   onChooseAction,
 }: {
-  onChooseAction: (name: PanelAction) => void;
+  onChooseAction: (name: PanelAction) => void
 }) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   const onClickAction = (name: PanelAction) => {
-    onChooseAction(name);
-    setOpen(false);
-  };
+    onChooseAction(name)
+    setOpen(false)
+  }
 
   const buttons = [
     {
@@ -99,7 +99,7 @@ export function AddBlockButton({
       proFeature: false,
       onClick: () => onClickAction(PanelAction.AddNotes),
     },
-  ];
+  ]
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -122,10 +122,10 @@ export function AddBlockButton({
                 {item.label}
                 {item.proFeature && <Badge variant="destructive">Pro</Badge>}
               </Button>
-            );
+            )
           })}
         </div>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

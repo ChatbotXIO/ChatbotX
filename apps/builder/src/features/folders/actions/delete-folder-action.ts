@@ -1,13 +1,13 @@
-"use server";
+"use server"
 
 import {
   type DeleteFolderBindSchema,
   deleteFolderBindSchema,
-} from "@/features/folders/schemas/delete-folder-schema";
-import { authActionClient } from "@/lib/safe-action";
-import { findChatbotOrFail } from "@/lib/user-permissions";
-import { type Folder, type User, prisma } from "@ahachat.ai/database";
-import { revalidateTag } from "next/cache";
+} from "@/features/folders/schemas/delete-folder-schema"
+import { authActionClient } from "@/lib/safe-action"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type Folder, type User, prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
 
 export const deleteFolderAction = authActionClient
   .bindArgsSchemas(deleteFolderBindSchema)
@@ -16,17 +16,17 @@ export const deleteFolderAction = authActionClient
       ctx,
       bindArgsParsedInputs: [chatbotId, id],
     }: {
-      ctx: { user: User };
-      bindArgsParsedInputs: DeleteFolderBindSchema;
+      ctx: { user: User }
+      bindArgsParsedInputs: DeleteFolderBindSchema
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId);
+      await findChatbotOrFail(ctx.user.id, chatbotId)
 
       const folder: Folder = await prisma.folder.findFirstOrThrow({
         where: {
           id,
           chatbotId,
         },
-      });
+      })
 
       // TODO: move to trash
 
@@ -60,12 +60,12 @@ export const deleteFolderAction = authActionClient
             },
           ],
         },
-      });
+      })
 
-      revalidateTag(`${ctx.user.id}#folders#${folder.folderType}`);
+      revalidateTag(`${ctx.user.id}#folders#${folder.folderType}`)
 
       return {
         successful: true,
-      };
+      }
     },
-  );
+  )

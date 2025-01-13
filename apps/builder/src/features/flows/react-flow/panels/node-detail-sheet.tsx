@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   Sheet,
@@ -6,20 +6,20 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import type { Node } from "@xyflow/react";
-import dynamic from "next/dynamic";
-import { PanelAction } from "../types";
+} from "@/components/ui/sheet"
+import type { Node } from "@xyflow/react"
+import dynamic from "next/dynamic"
+import { PanelAction } from "../types"
 
 const AddNotesEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/add-notes/add-notes-editor"),
-);
+)
 const SendMessageNodeEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/send-message/editor"),
-);
+)
 const SplitTrafficNodeEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/split-traffic/editor"),
-);
+)
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const getEditor = (activeNode: Node<any>) => {
@@ -31,18 +31,18 @@ const getEditor = (activeNode: Node<any>) => {
     [PanelAction.SplitTraffic]: (
       <SplitTrafficNodeEditor activeNode={activeNode} />
     ),
-  }[activeNode.type ?? ""];
-};
+  }[activeNode.type ?? ""]
+}
 
 export function NodeDetailSheet({
   open,
   onOpenChange,
   activeNode,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  activeNode?: Node<any> | null;
+  activeNode?: Node<any> | null
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -59,5 +59,5 @@ export function NodeDetailSheet({
         </div>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

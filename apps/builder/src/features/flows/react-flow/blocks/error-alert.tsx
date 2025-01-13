@@ -3,8 +3,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { TriangleAlertIcon } from "lucide-react";
+} from "@/components/ui/tooltip"
+import { TriangleAlertIcon } from "lucide-react"
 
 export const ErrorAlert = ({ message }: { message: string }) => {
   return (
@@ -18,5 +18,5 @@ export const ErrorAlert = ({ message }: { message: string }) => {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  );
-};
+  )
+}

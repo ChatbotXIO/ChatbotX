@@ -10,4 +10,4 @@ export enum PanelAction {
   AddNotes = "AddNotes",
 }
 
-export type PanelActionKey = keyof typeof PanelAction;
+export type PanelActionKey = keyof typeof PanelAction

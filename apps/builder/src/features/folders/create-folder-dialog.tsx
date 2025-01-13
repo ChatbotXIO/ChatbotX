@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -16,31 +16,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { createFolderAction } from "@/features/folders/actions/create-folder-action";
-import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema";
-import type { FolderType } from "@ahachat.ai/database";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { T, useTranslate } from "@tolgee/react";
-import { Loader2, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { createFolderAction } from "@/features/folders/actions/create-folder-action"
+import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema"
+import type { FolderType } from "@ahachat.ai/database"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { T, useTranslate } from "@tolgee/react"
+import { Loader2, PlusIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { toast } from "sonner"
 
 export function CreateFolderDialog({
   chatbotId,
   folderType,
   parentId,
 }: {
-  chatbotId: string;
-  folderType: FolderType;
-  parentId: string | null;
+  chatbotId: string
+  folderType: FolderType
+  parentId: string | null
 }) {
-  const { t } = useTranslate();
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const { t } = useTranslate()
+  const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     createFolderAction.bind(null, chatbotId, folderType, parentId),
@@ -48,14 +48,14 @@ export function CreateFolderDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Folder created successfully");
+          toast.success("Folder created successfully")
 
-          setOpen(false);
-          router.refresh();
+          setOpen(false)
+          router.refresh()
         },
         onError: ({ error }) => {
           if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError);
+            toast.error(error.serverError.message ?? error.serverError)
           }
         },
       },
@@ -67,7 +67,7 @@ export function CreateFolderDialog({
       },
       errorMapProps: {},
     },
-  );
+  )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -127,5 +127,5 @@ export function CreateFolderDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,64 +1,64 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Carousel,
   type CarouselApi,
   CarouselContent,
   CarouselItem,
-} from "@/components/ui/carousel";
+} from "@/components/ui/carousel"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor";
-import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema";
-import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
-import { useState } from "react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+} from "@/components/ui/tooltip"
+import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor"
+import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema"
+import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react"
+import { useState } from "react"
+import { useFieldArray, useFormContext } from "react-hook-form"
 
 export const SendCarouselBlockEditor = ({
   parentName,
 }: {
-  parentName: string;
+  parentName: string
 }) => {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState<number>();
+  const [api, setApi] = useState<CarouselApi>()
+  const [current, setCurrent] = useState<number>()
 
-  const { control } = useFormContext();
+  const { control } = useFormContext()
   const { fields, append, update, remove } = useFieldArray({
     control,
     name: parentName,
-  });
+  })
 
   const addCard = () => {
-    append(sendCardBlockDefaultValue());
-    setCurrent(api?.selectedScrollSnap());
-  };
+    append(sendCardBlockDefaultValue())
+    setCurrent(api?.selectedScrollSnap())
+  }
 
   const removeCard = () => {
-    remove(api?.selectedScrollSnap());
-  };
+    remove(api?.selectedScrollSnap())
+  }
 
   const onNext = () => {
     if (!api) {
-      return;
+      return
     }
 
-    api.scrollNext();
-    setCurrent(api.selectedScrollSnap());
-  };
+    api.scrollNext()
+    setCurrent(api.selectedScrollSnap())
+  }
 
   const onPrev = () => {
     if (!api) {
-      return;
+      return
     }
 
-    api.scrollPrev();
-    setCurrent(api.selectedScrollSnap());
-  };
+    api.scrollPrev()
+    setCurrent(api.selectedScrollSnap())
+  }
 
   return (
     <>
@@ -153,5 +153,5 @@ export const SendCarouselBlockEditor = ({
         </>
       )}
     </>
-  );
-};
+  )
+}

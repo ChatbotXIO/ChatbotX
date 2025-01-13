@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import FileDropzone from "@/components/file-dropzone";
-import { useFormContext } from "react-hook-form";
+import FileDropzone from "@/components/file-dropzone"
+import { useFormContext } from "react-hook-form"
 
 export function SendAudioBlockEditor({ parentName }: { parentName: string }) {
-  const { register, unregister } = useFormContext();
+  const { register, unregister } = useFormContext()
 
   return (
     <FileDropzone
@@ -19,5 +19,5 @@ export function SendAudioBlockEditor({ parentName }: { parentName: string }) {
         accept: { "audio/*": [] },
       }}
     />
-  );
+  )
 }
