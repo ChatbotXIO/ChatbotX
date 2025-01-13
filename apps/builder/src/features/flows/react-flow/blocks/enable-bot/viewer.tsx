@@ -3,11 +3,11 @@
 import { T } from "@tolgee/react"
 import { ZapIcon } from "lucide-react"
 
-export const OptOutEmailBlockViewer = () => {
+export const EnableBotBlockViewer = () => {
   return (
     <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center break-all">
       <ZapIcon size={18} className="text-yellow-500" />
-      <T keyName="flows.ActionType.OptOutEmail" />
+      <T keyName="flows.ActionType.EnableBot" />
     </div>
   )
 }

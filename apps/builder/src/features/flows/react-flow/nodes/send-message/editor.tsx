@@ -20,7 +20,23 @@ import {
   SortableDragHandle,
   SortableItem,
 } from "@/components/ui/sortable"
+import { AddNoteBlockEditor } from "@/features/flows/react-flow/blocks/add-note/editor"
+import { addNoteBlockDefaultValue } from "@/features/flows/react-flow/blocks/add-note/schema"
+import { ArchiveConversationBlockEditor } from "@/features/flows/react-flow/blocks/archive-conversation/editor"
+import { archiveConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/archive-conversation/schema"
+import { AssignConversationBlockEditor } from "@/features/flows/react-flow/blocks/assign-conversation/editor"
+import { assignConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/assign-conversation/schema"
+import { AutoAssignConversationBlockEditor } from "@/features/flows/react-flow/blocks/auto-assign-conversation/editor"
+import { autoAssignConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/auto-assign-conversation/schema"
+import { BlockContactBlockEditor } from "@/features/flows/react-flow/blocks/block-contact/editor"
+import { blockContactBlockDefaultValue } from "@/features/flows/react-flow/blocks/block-contact/schema"
+import { DisableBotBlockEditor } from "@/features/flows/react-flow/blocks/disable-bot/editor"
+import { disableBotBlockDefaultValue } from "@/features/flows/react-flow/blocks/disable-bot/schema"
+import { EnableBotBlockEditor } from "@/features/flows/react-flow/blocks/enable-bot/editor"
+import { enableBotBlockDefaultValue } from "@/features/flows/react-flow/blocks/enable-bot/schema"
 import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert"
+import { FollowConversationBlockEditor } from "@/features/flows/react-flow/blocks/follow-conversation/editor"
+import { followConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/follow-conversation/schema"
 import { MarkEmailVerifiedBlockEditor } from "@/features/flows/react-flow/blocks/mark-email-verified/editor"
 import { markEmailVerifiedBlockDefaultValue } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
 import { OptInEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-in-email/editor"
@@ -37,6 +53,14 @@ import { SendImageBlockEditor } from "@/features/flows/react-flow/blocks/send-im
 import { sendImageBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-image/schema"
 import { SendVideoBlockEditor } from "@/features/flows/react-flow/blocks/send-video/editor"
 import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-video/schema"
+import { UnArchiveConversationBlockEditor } from "@/features/flows/react-flow/blocks/unarchive-conversation/editor"
+import { unArchiveConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/unarchive-conversation/schema"
+import { UnassignConversationBlockEditor } from "@/features/flows/react-flow/blocks/unassign-conversation/editor"
+import { unassignConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/unassign-conversation/schema"
+import { UnfollowConversationBlockEditor } from "@/features/flows/react-flow/blocks/unfollow-conversation/editor"
+import { unfollowConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/unfollow-conversation/schema"
+import { EditNoteDialog } from "@/features/flows/react-flow/nodes/send-message/edit-note-dialog"
+import type { RecipientSchema } from "@/features/flows/react-flow/types"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
@@ -44,7 +68,7 @@ import { useTranslate } from "@tolgee/react"
 import { type Node, useReactFlow } from "@xyflow/react"
 import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
-import { type ReactNode, useCallback, useEffect } from "react"
+import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { ActionType, disabledCopyActionTypes } from "../../action-type"
 import { SendTextBlockEditor } from "../../blocks/send-text/editor"
@@ -52,33 +76,10 @@ import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
-const maps: Record<
-  ActionType,
-  (props: { key: string; parentName: string }) => ReactNode
-> = {
-  [ActionType.SendText]: ({ key, parentName }) => (
-    <SendTextBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendImage]: ({ key, parentName }) => (
-    <SendImageBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendCard]: ({ key, parentName }) => (
-    <SendCardBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendVideo]: ({ key, parentName }) => (
-    <SendVideoBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendAudio]: ({ key, parentName }) => (
-    <SendAudioBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendCarousel]: ({ key, parentName }) => (
-    <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />
-  ),
-  [ActionType.MarkEmailVerified]: ({ key }) => (
-    <MarkEmailVerifiedBlockEditor key={key} />
-  ),
-  [ActionType.OptInEmail]: ({ key }) => <OptInEmailBlockEditor key={key} />,
-  [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
+export interface BlockEditorProps {
+  key: string
+  parentName: string
+  recipients?: RecipientSchema[]
 }
 
 export default function SendMessageNodeEditor({
@@ -86,6 +87,79 @@ export default function SendMessageNodeEditor({
 }: {
   activeNode: Node<SendMessageNodeSchema>
 }) {
+  const maps: Record<ActionType, (props: BlockEditorProps) => ReactNode> = {
+    [ActionType.SendText]: ({ key, parentName }) => (
+      <SendTextBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendImage]: ({ key, parentName }) => (
+      <SendImageBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendCard]: ({ key, parentName }) => (
+      <SendCardBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendVideo]: ({ key, parentName }) => (
+      <SendVideoBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendAudio]: ({ key, parentName }) => (
+      <SendAudioBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendCarousel]: ({ key, parentName }) => (
+      <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />
+    ),
+
+    // Inbox actions
+    [ActionType.DisableBot]: ({ key, parentName }) => (
+      <DisableBotBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.EnableBot]: ({ key }) => <EnableBotBlockEditor key={key} />,
+    [ActionType.AssignConversation]: ({ key, parentName, recipients }) => (
+      <AssignConversationBlockEditor
+        key={key}
+        parentName={parentName}
+        recipients={recipients ?? []}
+      />
+    ),
+    [ActionType.AutoAssignConversation]: ({ key, parentName, recipients }) => (
+      <AutoAssignConversationBlockEditor
+        key={key}
+        parentName={parentName}
+        recipients={recipients ?? []}
+      />
+    ),
+    [ActionType.UnassignConversation]: ({ key }) => (
+      <UnassignConversationBlockEditor key={key} />
+    ),
+    [ActionType.AddNote]: ({ key, parentName }) => (
+      <AddNoteBlockEditor
+        key={key}
+        parentName={parentName}
+        onEdit={(parentName) => openEditNoteDialog(parentName)}
+      />
+    ),
+    [ActionType.FollowConversation]: ({ key }) => (
+      <FollowConversationBlockEditor key={key} />
+    ),
+    [ActionType.UnfollowConversation]: ({ key }) => (
+      <UnfollowConversationBlockEditor key={key} />
+    ),
+    [ActionType.ArchiveConversation]: ({ key }) => (
+      <ArchiveConversationBlockEditor key={key} />
+    ),
+    [ActionType.UnArchiveConversation]: ({ key }) => (
+      <UnArchiveConversationBlockEditor key={key} />
+    ),
+    [ActionType.BlockContact]: ({ key }) => (
+      <BlockContactBlockEditor key={key} />
+    ),
+
+    // Email actions
+    [ActionType.MarkEmailVerified]: ({ key }) => (
+      <MarkEmailVerifiedBlockEditor key={key} />
+    ),
+    [ActionType.OptInEmail]: ({ key }) => <OptInEmailBlockEditor key={key} />,
+    [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
+  }
+
   const { t } = useTranslate()
 
   const { setNodes } = useReactFlow()
@@ -130,7 +204,27 @@ export default function SendMessageNodeEditor({
     name: "blocks",
   })
 
-  const onClickAction = (name: ActionType) => {
+  const generateEditor = (
+    field: { id: string; actionType: ActionType },
+    index: number,
+  ) => {
+    let props = {
+      key: field.id,
+      parentName: `blocks.${index}`,
+    }
+    switch (field.actionType) {
+      case ActionType.AssignConversation:
+      case ActionType.AutoAssignConversation:
+        props = { ...props, ...{ recipients } }
+        break
+      default:
+        break
+    }
+
+    return maps[field.actionType as ActionType](props)
+  }
+
+  const onClickAction = async (name: ActionType) => {
     switch (name) {
       case ActionType.SendText:
         append(sendTextBlockDefaultValue())
@@ -153,6 +247,45 @@ export default function SendMessageNodeEditor({
       case ActionType.SendFile:
         append(sendAudioBlockDefaultValue())
         break
+
+      // Inbox actions
+      case ActionType.DisableBot:
+        append(disableBotBlockDefaultValue())
+        break
+      case ActionType.EnableBot:
+        append(enableBotBlockDefaultValue())
+        break
+      case ActionType.AssignConversation:
+        await getRecipients()
+        append(assignConversationBlockDefaultValue())
+        break
+      case ActionType.AutoAssignConversation:
+        await getRecipients()
+        append(autoAssignConversationBlockDefaultValue())
+        break
+      case ActionType.UnassignConversation:
+        append(unassignConversationBlockDefaultValue())
+        break
+      case ActionType.AddNote:
+        append(addNoteBlockDefaultValue())
+        break
+      case ActionType.FollowConversation:
+        append(followConversationBlockDefaultValue())
+        break
+      case ActionType.UnfollowConversation:
+        append(unfollowConversationBlockDefaultValue())
+        break
+      case ActionType.ArchiveConversation:
+        append(archiveConversationBlockDefaultValue())
+        break
+      case ActionType.UnArchiveConversation:
+        append(unArchiveConversationBlockDefaultValue())
+        break
+      case ActionType.BlockContact:
+        append(blockContactBlockDefaultValue())
+        break
+
+      // Email actions
       case ActionType.MarkEmailVerified:
         append(markEmailVerifiedBlockDefaultValue())
         break
@@ -170,6 +303,37 @@ export default function SendMessageNodeEditor({
     if (values) {
       insert(index + 1, { ...cloneDeep(values), id: createId() })
     }
+  }
+
+  const [parentNameEditNote, setParentNameEditNote] = useState<string>("")
+  const [openedEditNoteDialog, setOpenEditNoteDialog] = useState<boolean>(false)
+
+  const openEditNoteDialog = (parentName: string) => {
+    setParentNameEditNote(parentName)
+    setOpenEditNoteDialog(true)
+  }
+
+  const closeEditNoteDialog = () => {
+    setParentNameEditNote("")
+    setOpenEditNoteDialog(false)
+  }
+
+  const [recipients, setRecipients] = useState<RecipientSchema[]>([])
+  const [loadedRecipients, setLoadedRecipients] = useState<boolean>(false)
+  const getRecipients = async () => {
+    if (loadedRecipients) {
+      return
+    }
+    setLoadedRecipients(true)
+    await Promise.resolve(() => setTimeout(() => {}, 100))
+    setRecipients(
+      Array.from({ length: 10 }, (_, i) => i + 1).map((i) => {
+        return {
+          id: createId(),
+          name: `Recipient ${i}`,
+        }
+      }),
+    )
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -255,10 +419,7 @@ export default function SendMessageNodeEditor({
                         )}
                       >
                         {field.actionType in ActionType
-                          ? maps[field.actionType as ActionType]({
-                              key: field.id,
-                              parentName: `blocks.${index}`,
-                            })
+                          ? generateEditor(field, index)
                           : null}
                       </div>
                       <div className="flex flex-col">
@@ -305,6 +466,13 @@ export default function SendMessageNodeEditor({
           <Button>Test Form Submit</Button>
 
           <SendMessageEditorAction onClick={onClickAction} />
+          {parentNameEditNote && (
+            <EditNoteDialog
+              parentName={parentNameEditNote}
+              open={openedEditNoteDialog}
+              onOpenChange={closeEditNoteDialog}
+            />
+          )}
         </form>
       </Form>
     </>

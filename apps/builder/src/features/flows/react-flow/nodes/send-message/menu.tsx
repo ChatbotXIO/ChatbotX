@@ -43,7 +43,6 @@ import {
   TagIcon,
   TextIcon,
   UserIcon,
-  UserRoundMinusIcon,
   UserRoundXIcon,
   VideoIcon,
   ZapIcon,
@@ -120,19 +119,19 @@ export const sendMessageEditorMenus: MenuItem[] = [
         actionType: ActionType.InboxActions,
         children: [
           {
-            label: <T keyName="flows.ActionType.UnsubscribeBot" />,
+            label: <T keyName="flows.ActionType.DisableBot" />,
             icon: <UserIcon />,
-            actionType: ActionType.UnsubscribeBot,
+            actionType: ActionType.DisableBot,
           },
           {
-            label: <T keyName="flows.ActionType.SubscribeBot" />,
+            label: <T keyName="flows.ActionType.EnableBot" />,
             icon: <BotIcon />,
-            actionType: ActionType.SubscribeBot,
+            actionType: ActionType.EnableBot,
           },
           {
-            label: <T keyName="flows.ActionType.AssignConversaton" />,
+            label: <T keyName="flows.ActionType.AssignConversation" />,
             icon: <MessageCirclePlusIcon />,
-            actionType: ActionType.AssignConversaton,
+            actionType: ActionType.AssignConversation,
           },
           {
             label: <T keyName="flows.ActionType.AutoAssignConversation" />,
@@ -145,9 +144,9 @@ export const sendMessageEditorMenus: MenuItem[] = [
             actionType: ActionType.UnassignConversation,
           },
           {
-            label: <T keyName="flows.ActionType.AddNotes" />,
+            label: <T keyName="flows.ActionType.AddNote" />,
             icon: <MessageCircleMoreIcon />,
-            actionType: ActionType.AddNotes,
+            actionType: ActionType.AddNote,
           },
           {
             label: <T keyName="flows.ActionType.FollowConversation" />,
@@ -165,13 +164,13 @@ export const sendMessageEditorMenus: MenuItem[] = [
             actionType: ActionType.ArchiveConversation,
           },
           {
-            label: <T keyName="flows.ActionType.UnarchiveConversation" />,
+            label: <T keyName="flows.ActionType.UnArchiveConversation" />,
             icon: <PackageOpenIcon />,
-            actionType: ActionType.UnarchiveConversation,
+            actionType: ActionType.UnArchiveConversation,
           },
           {
             label: <T keyName="flows.ActionType.BlockContact" />,
-            icon: <UserRoundMinusIcon />,
+            icon: <UserRoundXIcon />,
             actionType: ActionType.BlockContact,
           },
         ],
