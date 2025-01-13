@@ -9,8 +9,25 @@
       "cache": false,
       "persistent": false
     },
+    "workers:flow:dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "workers:chat:dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "workers:low:dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "workers:dev": {
+      "dependsOn": ["workers:flow:dev", "workers:chat:dev", "workers:low:dev"],
+      "cache": false,
+      "persistent": false
+    },
     "dev": {
-      "dependsOn": ["next:dev", "partysocket:dev"],
+      "dependsOn": ["next:dev", "partysocket:dev", "workers:dev"],
       "cache": false,
       "persistent": true
     }
