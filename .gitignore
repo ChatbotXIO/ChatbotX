@@ -36,5 +36,8 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+.idea/
 
 .tolgee
+.partykit
+test.rest

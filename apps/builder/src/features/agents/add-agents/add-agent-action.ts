@@ -1,20 +1,23 @@
-"use server";
+"use server"
 
-import { authActionClient } from "@/lib/safe-action";
-import { addAgentSchema } from "./add-agent-schema";
-import { prisma } from "@ahachat.ai/database";
-import { returnValidationErrors } from "next-safe-action";
-import { findChatbotOrFail } from "@/lib/user-permissions";
+import { authActionClient } from "@/lib/safe-action"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { prisma } from "@ahachat.ai/database"
+import { returnValidationErrors } from "next-safe-action"
+import { addAgentSchema } from "./add-agent-schema"
 
 export const addAgentAction = authActionClient
   .schema(addAgentSchema)
   .action(async ({ ctx, parsedInput }) => {
     try {
-      const { chatbot } = await findChatbotOrFail(ctx.user.id, parsedInput.chatbotId);
+      const { chatbot } = await findChatbotOrFail(
+        ctx.user.id,
+        parsedInput.chatbotId,
+      )
 
       const existingMember = await prisma.chatbotMember.findFirst({
         where: { chatbotId: chatbot.id, userId: parsedInput.userId },
-      });
+      })
 
       if (existingMember) {
         return returnValidationErrors(addAgentSchema, {
@@ -22,7 +25,7 @@ export const addAgentAction = authActionClient
           userId: {
             _errors: ["User is already a member of this chatbot"],
           },
-        });
+        })
       }
 
       await prisma.chatbotMember.create({
@@ -39,18 +42,16 @@ export const addAgentAction = authActionClient
           enableBroadcast: parsedInput.enableBroadcast,
           enableEcommerce: parsedInput.enableEcommerce,
         },
-      });
-
-
+      })
 
       return {
         successful: true,
-      };
+      }
     } catch (error) {
-      console.error("Error adding agent:", error);
+      console.error("Error adding agent:", error)
       return {
         successful: false,
         error: "An unexpected error occurred.",
-      };
+      }
     }
-  });
+  })

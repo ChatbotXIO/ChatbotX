@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 export enum ChatbotMemberRole {
   OWNER = "Owner",
@@ -17,5 +17,5 @@ export const addAgentSchema = z.object({
   enableEmailAndPhone: z.boolean(),
   enableBroadcast: z.boolean(),
   enableEcommerce: z.boolean(),
-  permissions: z.array(z.string()).optional()
-});
+  permissions: z.array(z.string()).optional(),
+})

@@ -14,7 +14,7 @@ function setRef<T>(ref: PossibleRef<T>, value: T) {
   if (typeof ref === "function") {
     ref(value)
   } else if (ref !== null && ref !== undefined) {
-    ; (ref as React.MutableRefObject<T>).current = value
+    ;(ref as React.MutableRefObject<T>).current = value
   }
 }
 
@@ -23,7 +23,11 @@ function setRef<T>(ref: PossibleRef<T>, value: T) {
  * Accepts callback refs and RefObject(s)
  */
 function composeRefs<T>(...refs: PossibleRef<T>[]) {
-  return (node: T) => refs.forEach((ref) => setRef(ref, node))
+  return (node: T) => {
+    for (const ref of refs) {
+      setRef(ref, node)
+    }
+  }
 }
 
 /**

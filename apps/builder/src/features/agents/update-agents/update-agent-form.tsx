@@ -1,31 +1,31 @@
-import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button"
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { useForm } from "react-hook-form"
 
 type FormData = {
-  email: string;
-  superAdmin: boolean;
+  email: string
+  superAdmin: boolean
   permissions: {
-    analytics: boolean;
-    contacts: boolean;
-    viewEmailPhone: boolean;
-    broadcasts: boolean;
-    ecommerce: boolean;
-    flows: boolean;
-  };
-  notifyAdmin: boolean;
-  newMessage: boolean;
-  emailNotification: boolean;
-  browserNotification: boolean;
-};
+    analytics: boolean
+    contacts: boolean
+    viewEmailPhone: boolean
+    broadcasts: boolean
+    ecommerce: boolean
+    flows: boolean
+  }
+  notifyAdmin: boolean
+  newMessage: boolean
+  emailNotification: boolean
+  browserNotification: boolean
+}
 
 export default function AdminNotificationForm() {
   const form = useForm<FormData>({
@@ -45,10 +45,10 @@ export default function AdminNotificationForm() {
       emailNotification: false,
       browserNotification: true,
     },
-  });
+  })
 
-  const onSubmit = (data: FormData) => { };
-  const superAdminChecked = form.watch("superAdmin");
+  const onSubmit = (data: FormData) => {}
+  const superAdminChecked = form.watch("superAdmin")
 
   return (
     <Form {...form}>
@@ -76,7 +76,7 @@ export default function AdminNotificationForm() {
                   <Switch
                     checked={field.value}
                     onCheckedChange={(value) => {
-                      field.onChange(value);
+                      field.onChange(value)
 
                       form.setValue("permissions", {
                         analytics: value,
@@ -85,7 +85,7 @@ export default function AdminNotificationForm() {
                         broadcasts: value,
                         ecommerce: value,
                         flows: value,
-                      });
+                      })
                     }}
                   />
                 </FormControl>
@@ -264,5 +264,5 @@ export default function AdminNotificationForm() {
         </div>
       </form>
     </Form>
-  );
+  )
 }

@@ -1,12 +1,20 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { EllipsisVertical, Pencil, Trash } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { EllipsisVertical, Pencil, Trash } from "lucide-react"
 
 interface AgentActionsDropdownProps {
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: () => void
+  onDelete: () => void
 }
 
-export function AgentActionsDropdown({ onEdit, onDelete }: AgentActionsDropdownProps) {
+export function AgentActionsDropdown({
+  onEdit,
+  onDelete,
+}: AgentActionsDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,5 +33,5 @@ export function AgentActionsDropdown({ onEdit, onDelete }: AgentActionsDropdownP
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-'use client'
-import { Button } from "@/components/ui/button";
+"use client"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -8,14 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { AddAgentForm } from "./add-agent-form";
-import { useTranslate } from "@tolgee/react";
-import React from "react";
+} from "@/components/ui/dialog"
+import { useTranslate } from "@tolgee/react"
+import React from "react"
+import { AddAgentForm } from "./add-agent-form"
 
 export function AddAgentDialog({ chatbotId }: { chatbotId: string }) {
-  const { t } = useTranslate();
-  const [open, setOpen] = React.useState(false);
+  const { t } = useTranslate()
+  const [open, setOpen] = React.useState(false)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -36,5 +36,5 @@ export function AddAgentDialog({ chatbotId }: { chatbotId: string }) {
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,25 +1,25 @@
-import { getCurrentUserId } from "@/auth";
-import { GetAgentsSchema } from "./get-agents-schema";
-import { unstable_cache } from "next/cache";
-import { ChatbotMember, Prisma, User } from "@prisma/client";
-import { findChatbotOrFail } from "@/lib/user-permissions";
-import { prisma } from "@ahachat.ai/database";
+import { getCurrentUserId } from "@/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { prisma } from "@ahachat.ai/database"
+import type { ChatbotMember, Prisma, User } from "@prisma/client"
+import { unstable_cache } from "next/cache"
+import type { GetAgentsSchema } from "./get-agents-schema"
 
-export type ChatbotMemberWithUser = ChatbotMember & { user: User };
+export type ChatbotMemberWithUser = ChatbotMember & { user: User }
 
 export async function getAgents(
   input: GetAgentsSchema,
 ): Promise<{ data: ChatbotMemberWithUser[]; pageCount: number }> {
-  const userId = await getCurrentUserId();
+  const userId = await getCurrentUserId()
 
-  await findChatbotOrFail(userId, input.chatbotId);
+  await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
     async () => {
       try {
         const where: Prisma.ChatbotMemberWhereInput = {
           chatbotId: input.chatbotId,
-        };
+        }
 
         if (input.keyword) {
           where.OR = [
@@ -31,7 +31,7 @@ export async function getAgents(
                 },
               },
             },
-          ];
+          ]
         }
         const [data, total] = await prisma.$transaction([
           prisma.chatbotMember.findMany({
@@ -43,11 +43,11 @@ export async function getAgents(
             },
           }),
           prisma.chatbotMember.count({ where }),
-        ]);
-        const pageCount = Math.ceil(total / input.perPage);
-        return { data: data as ChatbotMemberWithUser[], pageCount };
+        ])
+        const pageCount = Math.ceil(total / input.perPage)
+        return { data: data as ChatbotMemberWithUser[], pageCount }
       } catch (error) {
-        return { data: [], pageCount: 0 };
+        return { data: [], pageCount: 0 }
       }
     },
     [JSON.stringify(input)],
@@ -55,5 +55,5 @@ export async function getAgents(
       revalidate: 3600,
       tags: ["agents"],
     },
-  )();
+  )()
 }

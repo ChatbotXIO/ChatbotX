@@ -1,9 +1,7 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -11,20 +9,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { useTranslate } from "@tolgee/react";
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { addAgentAction } from "./add-agent-action";
-import { addAgentSchema, ChatbotMemberRole } from "./add-agent-schema";
+} from "@/components/ui/form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useTranslate } from "@tolgee/react"
+import { toast } from "sonner"
+import { addAgentAction } from "./add-agent-action"
+import { ChatbotMemberRole, addAgentSchema } from "./add-agent-schema"
 
 export function AddAgentForm({
   onSubmmited,
   onCancelled,
 }: {
-  onSubmmited?: () => void;
-  onCancelled?: () => void;
+  onSubmmited?: () => void
+  onCancelled?: () => void
 }) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
   const items = [
     { id: "superAdmin", label: "Super Admin" },
@@ -37,7 +37,7 @@ export function AddAgentForm({
     { id: "contactView", label: t("common.contactView") },
     { id: "broadcasts", label: t("common.broadcasts") },
     { id: "ecommerce", label: t("common.ecommerce") },
-  ] as const;
+  ] as const
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     addAgentAction,
@@ -45,18 +45,18 @@ export function AddAgentForm({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Agent added successfully");
-          onSubmmited && onSubmmited();
+          toast.success("Agent added successfully")
+          onSubmmited && onSubmmited()
         },
         onError: ({ error }) => {
           if (error.serverError) {
-            console.error("Server Error:", error.serverError.message);
+            console.error("Server Error:", error.serverError.message)
             toast.error(
               error.serverError.message ?? "An unexpected error occurred.",
-            );
+            )
           } else {
-            console.error("Validation Error:", error.validationErrors);
-            toast.error("Please fix the validation errors and try again.");
+            console.error("Validation Error:", error.validationErrors)
+            toast.error("Please fix the validation errors and try again.")
           }
         },
       },
@@ -78,23 +78,23 @@ export function AddAgentForm({
       },
       errorMapProps: {},
     },
-  );
+  )
 
   const handleCheckboxChange = (checked: boolean, itemId: string) => {
     if (itemId === "superAdmin") {
-      const updatedPermissions = checked ? items.map((item) => item.id) : [];
-      form.setValue("permissions", updatedPermissions);
+      const updatedPermissions = checked ? items.map((item) => item.id) : []
+      form.setValue("permissions", updatedPermissions)
     } else {
-      const currentValues = form.getValues("permissions") || [];
+      const currentValues = form.getValues("permissions") || []
       const updatedValues = checked
         ? [...currentValues, itemId]
-        : currentValues.filter((id: string) => id !== itemId);
-      form.setValue("permissions", updatedValues);
+        : currentValues.filter((id: string) => id !== itemId)
+      form.setValue("permissions", updatedValues)
     }
-  };
+  }
 
-  const permissions = form.watch("permissions") || [];
-  const isSuperAdminSelected = permissions.includes("superAdmin");
+  const permissions = form.watch("permissions") || []
+  const isSuperAdminSelected = permissions.includes("superAdmin")
 
   return (
     <Form {...form}>
@@ -109,7 +109,7 @@ export function AddAgentForm({
               </div>
               {items.map((item) => {
                 if (item.id !== "superAdmin" && isSuperAdminSelected) {
-                  return null;
+                  return null
                 }
                 return (
                   <FormField
@@ -135,7 +135,7 @@ export function AddAgentForm({
                       </FormItem>
                     )}
                   />
-                );
+                )
               })}
               <FormMessage />
             </FormItem>
@@ -149,5 +149,5 @@ export function AddAgentForm({
         </div>
       </form>
     </Form>
-  );
+  )
 }

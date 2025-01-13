@@ -10,4 +10,6 @@ export const getAgentsSearchParamsCache = createSearchParamsCache({
   keyword: parseAsString.withDefault(""),
 })
 
-export type GetAgentsSchema = Awaited<ReturnType<typeof getAgentsSearchParamsCache.parse>> & { chatbotId: string }
+export type GetAgentsSchema = Awaited<
+  ReturnType<typeof getAgentsSearchParamsCache.parse>
+> & { chatbotId: string }

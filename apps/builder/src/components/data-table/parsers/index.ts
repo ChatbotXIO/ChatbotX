@@ -1,5 +1,8 @@
-import type { ExtendedSortingState, Filter } from "@/components/data-table/types"
-import { type Row } from "@tanstack/react-table"
+import type {
+  ExtendedSortingState,
+  Filter,
+} from "@/components/data-table/types"
+import type { Row } from "@tanstack/react-table"
 import { createParser } from "nuqs/server"
 import { z } from "zod"
 
@@ -16,7 +19,7 @@ export const sortingItemSchema = z.object({
  * @returns A parser for TanStack Table sorting state.
  */
 export const getSortingStateParser = <TData>(
-  originalRow?: Row<TData>["original"]
+  originalRow?: Row<TData>["original"],
 ) => {
   const validKeys = originalRow ? new Set(Object.keys(originalRow)) : null
 
@@ -42,7 +45,7 @@ export const getSortingStateParser = <TData>(
       a.length === b.length &&
       a.every(
         (item, index) =>
-          item.id === b[index]?.id && item.desc === b[index]?.desc
+          item.id === b[index]?.id && item.desc === b[index]?.desc,
       ),
   })
 }
@@ -88,7 +91,7 @@ export const getFiltersStateParser = <T>(originalRow?: Row<T>["original"]) => {
           filter.id === b[index]?.id &&
           filter.value === b[index]?.value &&
           filter.type === b[index]?.type &&
-          filter.operator === b[index]?.operator
+          filter.operator === b[index]?.operator,
       ),
   })
 }

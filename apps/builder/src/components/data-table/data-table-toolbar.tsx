@@ -1,15 +1,15 @@
 "use client"
 
-import * as React from "react"
 import type { DataTableFilterField } from "@/components/data-table/types"
 import type { Table } from "@tanstack/react-table"
 import { X } from "lucide-react"
+import * as React from "react"
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter"
 import { DataTableViewOptions } from "@/components/data-table/data-table-view-options"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 
 interface DataTableToolbarProps<TData>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -60,7 +60,7 @@ export function DataTableToolbar<TData>({
     <div
       className={cn(
         "flex w-full items-center justify-between gap-2 overflow-auto p-1",
-        className
+        className,
       )}
       {...props}
     >
@@ -84,7 +84,7 @@ export function DataTableToolbar<TData>({
                   }
                   className="h-8 w-40 lg:w-64"
                 />
-              )
+              ),
           )}
         {filterableColumns.length > 0 &&
           filterableColumns.map(
@@ -96,7 +96,7 @@ export function DataTableToolbar<TData>({
                   title={column.label}
                   options={column.options ?? []}
                 />
-              )
+              ),
           )}
         {isFiltered && (
           <Button
