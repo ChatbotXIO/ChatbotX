@@ -62,7 +62,7 @@ export const SettingIntegrationOpenAIDialogConnect = () => {
           <T keyName="settings.integrations.OpenAI.button.connect" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>OpenAI Connect</DialogTitle>
         </DialogHeader>

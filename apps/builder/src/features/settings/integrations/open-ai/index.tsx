@@ -15,7 +15,7 @@ import { SettingIntegrationOpenAIDialogEdit } from "@/features/settings/integrat
 import { useState } from "react"
 
 export const SettingIntegrationOpenAI = () => {
-  const [isConnect, setIsConnect] = useState(true)
+  const [isConnect, setIsConnect] = useState(false)
 
   const renderButtonConnect = () => {
     return (

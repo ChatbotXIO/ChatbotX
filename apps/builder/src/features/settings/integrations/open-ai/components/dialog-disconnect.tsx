@@ -21,7 +21,7 @@ export const SettingIntegrationOpenAIDialogDisconnect = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>OpenAI Disconnect</DialogTitle>
+          <DialogTitle>Do you want to disconnect OpenAI?</DialogTitle>
         </DialogHeader>
 
         <DialogFooter>
