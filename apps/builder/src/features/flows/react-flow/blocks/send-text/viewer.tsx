@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { ButtonGroupViewer } from "../button/viewer"
-import type { SendTextBlockSchema } from "./schema"
+import { ButtonGroupViewer } from "../button/viewer";
+import type { SendTextBlockSchema } from "./schema";
 
 export const SendTextBlockViewer = ({
   data,
 }: {
-  data: SendTextBlockSchema
+  data: SendTextBlockSchema;
 }) => {
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary mb-2">
@@ -15,5 +15,5 @@ export const SendTextBlockViewer = ({
         <ButtonGroupViewer data={data.buttons} />
       </div>
     </div>
-  )
-}
+  );
+};

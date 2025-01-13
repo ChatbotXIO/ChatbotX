@@ -1,23 +1,23 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
-} from "@/components/ui/sortable"
-import { useTranslate } from "@tolgee/react"
-import { MoveIcon, PlusIcon } from "lucide-react"
-import { useFieldArray, useFormContext } from "react-hook-form"
-import { buttonBlockDefaultValue } from "./schema"
+} from "@/components/ui/sortable";
+import { useTranslate } from "@tolgee/react";
+import { MoveIcon, PlusIcon } from "lucide-react";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import { buttonBlockDefaultValue } from "./schema";
 
 export const ButtonBlockEditor = ({
   parentName,
   ...rest
 }: {
-  parentName: string
+  parentName: string;
 }) => {
-  const { watch } = useFormContext()
+  const { watch } = useFormContext();
 
-  const buttonName = watch(`${parentName}.label`)
+  const buttonName = watch(`${parentName}.label`);
 
   return (
     <div className="w-full flex-1" {...rest}>
@@ -25,20 +25,20 @@ export const ButtonBlockEditor = ({
         {buttonName}
       </Button>
     </div>
-  )
-}
+  );
+};
 
 export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
-  const { t } = useTranslate()
+  const { t } = useTranslate();
 
-  const { control } = useFormContext()
+  const { control } = useFormContext();
   const { fields, append, move, update, remove } = useFieldArray({
     control,
     name: parentName,
-  })
+  });
 
   function addButton() {
-    append(buttonBlockDefaultValue(`Button #${fields.length + 1}`))
+    append(buttonBlockDefaultValue(`Button #${fields.length + 1}`));
   }
 
   return (
@@ -76,5 +76,5 @@ export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
         {t("flows.addBtn")}
       </Button>
     </>
-  )
-}
+  );
+};

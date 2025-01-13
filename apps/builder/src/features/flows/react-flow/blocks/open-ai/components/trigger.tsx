@@ -1,9 +1,9 @@
-import { MultiSelect } from "@/components/multi-select"
-import { FormItem, FormLabel } from "@/components/ui/form"
+import { MultiSelect } from "@/components/multi-select";
+import { FormItem, FormLabel } from "@/components/ui/form";
 
 interface OpenAITriggerProps {
-  value?: string
-  onValueChange?: (value: string[]) => void
+  value?: string;
+  onValueChange?: (value: string[]) => void;
 }
 
 export const OpenAITrigger = ({
@@ -16,7 +16,7 @@ export const OpenAITrigger = ({
     { value: "vue", label: "Vue" },
     { value: "svelte", label: "Svelte" },
     { value: "ember", label: "Ember" },
-  ]
+  ];
 
   return (
     <FormItem>
@@ -34,5 +34,5 @@ export const OpenAITrigger = ({
         onValueChange={onValueChange}
       />
     </FormItem>
-  )
-}
+  );
+};

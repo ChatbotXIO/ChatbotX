@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -10,23 +10,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import type { Log } from "@ahachat.ai/database"
-import type { Row } from "@tanstack/react-table"
-import { useTranslate } from "@tolgee/react"
-import { Loader, Trash } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
-import { useTransition } from "react"
-import { toast } from "sonner"
-import { deleteLogAction } from "./actions/delete-log-action"
+} from "@/components/ui/dialog";
+import type { Log } from "@ahachat.ai/database";
+import type { Row } from "@tanstack/react-table";
+import { useTranslate } from "@tolgee/react";
+import { Loader, Trash } from "lucide-react";
+import { useAction } from "next-safe-action/hooks";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { deleteLogAction } from "./actions/delete-log-action";
 
 interface DeleteLogsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
-  chatbotId: string
-  logs: Row<Log>["original"][]
-  logType: string
-  showTrigger?: boolean
-  onSuccess?: () => void
+  chatbotId: string;
+  logs: Row<Log>["original"][];
+  logType: string;
+  showTrigger?: boolean;
+  onSuccess?: () => void;
 }
 
 export function DeleteLogsDialog({
@@ -37,7 +37,7 @@ export function DeleteLogsDialog({
   onSuccess,
   ...props
 }: DeleteLogsDialogProps) {
-  const { t } = useTranslate()
+  const { t } = useTranslate();
 
   const { execute, result } = useAction(
     deleteLogAction.bind(
@@ -46,25 +46,25 @@ export function DeleteLogsDialog({
       (logs ?? []).map((log) => log.id),
       logType,
     ),
-  )
+  );
 
-  const [isDeletePending, startDeleteTransition] = useTransition()
+  const [isDeletePending, startDeleteTransition] = useTransition();
   const onDelete = () => {
     if (!logs || logs.length === 0) {
-      return
+      return;
     }
 
     startDeleteTransition(async () => {
-      await execute()
+      await execute();
 
       if (result.serverError) {
-        toast.error(result.serverError.message ?? result.serverError)
+        toast.error(result.serverError.message ?? result.serverError);
       } else {
-        toast.success(t("logs.deleted"))
-        onSuccess?.()
+        toast.success(t("logs.deleted"));
+        onSuccess?.();
       }
-    })
-  }
+    });
+  };
 
   return (
     <Dialog {...props}>
@@ -104,5 +104,5 @@ export function DeleteLogsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

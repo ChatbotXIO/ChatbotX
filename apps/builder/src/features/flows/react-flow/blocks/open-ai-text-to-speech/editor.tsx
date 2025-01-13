@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog";
 
-import { SingleSelect } from "@/components/single-select"
-import { Input } from "@/components/ui/input"
+import { SingleSelect } from "@/components/single-select";
+import { Input } from "@/components/ui/input";
 
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
+import { FormItem, FormLabel } from "@/components/ui/form";
+import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field";
 
 interface OpenAITextToSpeechEditorProps {
-  parentName: string
+  parentName: string;
 }
 
 export const OpenAITextToSpeechEditor = ({
@@ -40,5 +40,5 @@ export const OpenAITextToSpeechEditor = ({
 
       <OpenAICustomField />
     </OpenAIDialog>
-  )
-}
+  );
+};

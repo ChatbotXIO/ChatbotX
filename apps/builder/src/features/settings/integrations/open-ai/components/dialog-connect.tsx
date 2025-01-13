@@ -1,5 +1,5 @@
-import { NumberField } from "@/components/number-field"
-import { Button } from "@/components/ui/button"
+import { NumberField } from "@/components/number-field";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -8,35 +8,35 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { T } from "@tolgee/react"
-import { type ChangeEvent, useState } from "react"
+} from "@/components/ui/dialog";
+import { FormItem, FormLabel } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model";
+import { T } from "@tolgee/react";
+import { type ChangeEvent, useState } from "react";
 
 export const SettingIntegrationOpenAIDialogConnect = () => {
-  const [isOptions, setIsOptions] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [apiKey, setApiKey] = useState<string>("")
+  const [isOptions, setIsOptions] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [apiKey, setApiKey] = useState<string>("");
 
-  const onToggleOptions = () => setIsOptions(!isOptions)
+  const onToggleOptions = () => setIsOptions(!isOptions);
 
   const onOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      setIsOptions(isOpen)
+      setIsOptions(isOpen);
     }
-  }
+  };
 
   const onUpdateAPIKey = (e: ChangeEvent<HTMLInputElement>) => {
-    setIsLoading(true)
+    setIsLoading(true);
     setTimeout(() => {
-      setApiKey(e.target.value)
-      setIsLoading(false)
-    }, 3000)
-  }
+      setApiKey(e.target.value);
+      setIsLoading(false);
+    }, 3000);
+  };
 
   const renderOptions = () => {
     return (
@@ -52,8 +52,8 @@ export const SettingIntegrationOpenAIDialogConnect = () => {
           <NumberField value={200} onChange={console.log} />
         </FormItem>
       </>
-    )
-  }
+    );
+  };
 
   return (
     <Dialog onOpenChange={onOpenChange}>
@@ -119,5 +119,5 @@ export const SettingIntegrationOpenAIDialogConnect = () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

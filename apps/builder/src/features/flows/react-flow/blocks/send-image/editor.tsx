@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import FileDropzone from "@/components/file-dropzone"
-import { useFormContext } from "react-hook-form"
-import { ButtonGroupEditor } from "../button/editor"
+import FileDropzone from "@/components/file-dropzone";
+import { useFormContext } from "react-hook-form";
+import { ButtonGroupEditor } from "../button/editor";
 
 const SendImageBlockEditor = ({ parentName }: { parentName: string }) => {
-  const { register, unregister } = useFormContext()
+  const { register, unregister } = useFormContext();
 
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center">
@@ -19,7 +19,7 @@ const SendImageBlockEditor = ({ parentName }: { parentName: string }) => {
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export { SendImageBlockEditor }
+export { SendImageBlockEditor };

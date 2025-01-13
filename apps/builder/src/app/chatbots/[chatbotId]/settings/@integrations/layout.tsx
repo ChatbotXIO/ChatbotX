@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
-import { T } from "@tolgee/react"
-import { BotMessageSquareIcon } from "lucide-react"
-import type { ReactNode } from "react"
+} from "@/components/ui/accordion";
+import { T } from "@tolgee/react";
+import { BotMessageSquareIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface SettingIntegrationLayoutProps {
-  openAI: ReactNode
+  openAI: ReactNode;
 }
 
 export default function SettingIntegrationLayout({
@@ -32,5 +32,5 @@ export default function SettingIntegrationLayout({
         <AccordionContent className="p-4">{openAI}</AccordionContent>
       </AccordionItem>
     </Accordion>
-  )
+  );
 }

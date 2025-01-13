@@ -1,24 +1,24 @@
-import { Button } from "@/components/ui/button"
-import { Form } from "@/components/ui/form"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslate } from "@tolgee/react"
-import { type Node, useReactFlow } from "@xyflow/react"
-import { Trash, TrashIcon, XIcon } from "lucide-react"
-import { useCallback, useEffect } from "react"
-import { useFieldArray, useForm } from "react-hook-form"
-import { SplitTrafficBlockEditor } from "../../blocks/split-traffic/editor"
-import { splitTrafficBlockDefaultValue } from "../../blocks/split-traffic/schema"
-import { type SplitTrafficNodeSchema, splitTrafficNodeSchema } from "./schema"
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
+import { type Node, useReactFlow } from "@xyflow/react";
+import { Trash, TrashIcon, XIcon } from "lucide-react";
+import { useCallback, useEffect } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { SplitTrafficBlockEditor } from "../../blocks/split-traffic/editor";
+import { splitTrafficBlockDefaultValue } from "../../blocks/split-traffic/schema";
+import { type SplitTrafficNodeSchema, splitTrafficNodeSchema } from "./schema";
 
 export default function SplitTrafficNodeEditor({
   activeNode,
 }: {
-  activeNode: Node<SplitTrafficNodeSchema>
+  activeNode: Node<SplitTrafficNodeSchema>;
 }) {
-  const { t } = useTranslate()
+  const { t } = useTranslate();
 
-  const { setNodes } = useReactFlow()
+  const { setNodes } = useReactFlow();
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (data: any) => {
@@ -31,37 +31,37 @@ export default function SplitTrafficNodeEditor({
                 ...node.data,
                 ...data,
               },
-            }
+            };
           }
-          return node
+          return node;
         }),
-      )
+      );
     },
     [activeNode, setNodes],
-  )
+  );
 
   const { control, getValues, watch, ...form } =
     useForm<SplitTrafficNodeSchema>({
       resolver: zodResolver(splitTrafficNodeSchema),
       defaultValues: activeNode.data,
-    })
+    });
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const { unsubscribe } = watch((value) => {
-      onChange(value)
-    })
-    return () => unsubscribe()
-  }, [watch])
+      onChange(value);
+    });
+    return () => unsubscribe();
+  }, [watch]);
 
   const { fields, append, move, update, remove, insert } = useFieldArray({
     control,
     name: "blocks",
-  })
+  });
 
   const addTraffic = () => {
-    append(splitTrafficBlockDefaultValue())
-  }
+    append(splitTrafficBlockDefaultValue());
+  };
 
   // const onClickAction = (name: SendMessageEditorItemType) => {
   //   switch (name) {
@@ -83,8 +83,8 @@ export default function SplitTrafficNodeEditor({
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const onSubmit = (data: any) => {
-    console.log("Form Data:", data)
-  }
+    console.log("Form Data:", data);
+  };
 
   return (
     <>
@@ -123,5 +123,5 @@ export default function SplitTrafficNodeEditor({
         </form>
       </Form>
     </>
-  )
+  );
 }

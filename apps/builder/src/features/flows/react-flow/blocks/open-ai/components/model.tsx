@@ -1,11 +1,11 @@
-import { SingleSelect } from "@/components/single-select"
+import { SingleSelect } from "@/components/single-select";
 
-import { FormItem, FormLabel } from "@/components/ui/form"
+import { FormItem, FormLabel } from "@/components/ui/form";
 
 type OpenAIModelProps = {
-  value?: string
-  onValueChange: (value: string) => void
-}
+  value?: string;
+  onValueChange: (value: string) => void;
+};
 
 export const OpenAIModel = ({
   value,
@@ -48,7 +48,7 @@ export const OpenAIModel = ({
       value: "O1Mini",
       label: "o1 mini",
     },
-  ]
+  ];
 
   return (
     <FormItem>
@@ -60,5 +60,5 @@ export const OpenAIModel = ({
         onValueChange={onValueChange}
       />
     </FormItem>
-  )
-}
+  );
+};

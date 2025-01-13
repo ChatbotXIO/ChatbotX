@@ -2,10 +2,10 @@ import type {
   ColumnType,
   Filter,
   FilterOperator,
-} from "@/components/data-table/types"
-import type { Column } from "@tanstack/react-table"
+} from "@/components/data-table/types";
+import type { Column } from "@tanstack/react-table";
 
-import { dataTableConfig } from "@/config/data-table"
+import { dataTableConfig } from "@/config/data-table";
 
 /**
  * Generate common pinning styles for a table column.
@@ -24,18 +24,18 @@ export function getCommonPinningStyles<TData>({
   column,
   withBorder = false,
 }: {
-  column: Column<TData>
+  column: Column<TData>;
   /**
    * Show box shadow between pinned and scrollable columns.
    * @default false
    */
-  withBorder?: boolean
+  withBorder?: boolean;
 }): React.CSSProperties {
-  const isPinned = column.getIsPinned()
+  const isPinned = column.getIsPinned();
   const isLastLeftPinnedColumn =
-    isPinned === "left" && column.getIsLastColumn("left")
+    isPinned === "left" && column.getIsLastColumn("left");
   const isFirstRightPinnedColumn =
-    isPinned === "right" && column.getIsFirstColumn("right")
+    isPinned === "right" && column.getIsFirstColumn("right");
 
   return {
     boxShadow: withBorder
@@ -52,7 +52,7 @@ export function getCommonPinningStyles<TData>({
     background: isPinned ? "hsl(var(--background))" : "hsl(var(--background))",
     width: column.getSize(),
     zIndex: isPinned ? 1 : 0,
-  }
+  };
 }
 
 /**
@@ -69,10 +69,10 @@ export function getDefaultFilterOperator(
   columnType: ColumnType,
 ): FilterOperator {
   if (columnType === "text") {
-    return "iLike"
+    return "iLike";
   }
 
-  return "eq"
+  return "eq";
 }
 
 /**
@@ -96,9 +96,9 @@ export function getFilterOperators(columnType: ColumnType) {
     "multi-select": dataTableConfig.selectOperators,
     boolean: dataTableConfig.booleanOperators,
     date: dataTableConfig.dateOperators,
-  }
+  };
 
-  return operatorMap[columnType] ?? dataTableConfig.textOperators
+  return operatorMap[columnType] ?? dataTableConfig.textOperators;
 }
 
 /**
@@ -125,5 +125,5 @@ export function getValidFilters<TData>(
         : filter.value !== "" &&
           filter.value !== null &&
           filter.value !== undefined),
-  )
+  );
 }

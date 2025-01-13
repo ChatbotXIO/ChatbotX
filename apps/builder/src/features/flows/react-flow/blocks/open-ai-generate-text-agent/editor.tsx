@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog";
 
-import { NumberField } from "@/components/number-field"
-import { SingleSelect } from "@/components/single-select"
+import { NumberField } from "@/components/number-field";
+import { SingleSelect } from "@/components/single-select";
 
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
-import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
+import { FormItem, FormLabel } from "@/components/ui/form";
+import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field";
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model";
+import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger";
+import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message";
 
 interface OpenAIGenerateTextAgentEditorProps {
-  parentName: string
+  parentName: string;
 }
 
 export const OpenAIGenerateTextAgentEditor = ({
@@ -77,5 +77,5 @@ export const OpenAIGenerateTextAgentEditor = ({
         <NumberField value={250} step={1} max={4096} onChange={console.log} />
       </FormItem>
     </OpenAIDialog>
-  )
-}
+  );
+};

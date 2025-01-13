@@ -1,18 +1,18 @@
-import { getCurrentUserId } from "@/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Folder, prisma } from "@ahachat.ai/database"
-import { unstable_cache } from "next/cache"
+import { getCurrentUserId } from "@/auth";
+import { findChatbotOrFail } from "@/lib/user-permissions";
+import { type Folder, prisma } from "@ahachat.ai/database";
+import { unstable_cache } from "next/cache";
 import type {
   GetCurrentFoldersSchema,
   GetFoldersSchema,
-} from "../schemas/get-folders-schema"
+} from "../schemas/get-folders-schema";
 
 export const getFolders = async (
   input: GetFoldersSchema,
 ): Promise<{ data: Folder[] }> => {
-  const userId = await getCurrentUserId()
+  const userId = await getCurrentUserId();
 
-  await findChatbotOrFail(userId, input.chatbotId)
+  await findChatbotOrFail(userId, input.chatbotId);
 
   return await unstable_cache(
     async () => {
@@ -24,11 +24,11 @@ export const getFolders = async (
               createdAt: "asc",
             },
           ],
-        })
+        });
 
-        return { data }
+        return { data };
       } catch (err) {
-        return { data: [] }
+        return { data: [] };
       }
     },
     [JSON.stringify(input)],
@@ -36,51 +36,51 @@ export const getFolders = async (
       revalidate: 3600,
       tags: [`${userId}#folders#${input.folderType}`],
     },
-  )()
-}
+  )();
+};
 
 export const getCurrentFolder = async (
   input: GetCurrentFoldersSchema,
 ): Promise<{ folder: Folder | null; parents: Folder[] }> => {
-  const userId = await getCurrentUserId()
+  const userId = await getCurrentUserId();
 
-  await findChatbotOrFail(userId, input.chatbotId)
+  await findChatbotOrFail(userId, input.chatbotId);
 
   return await unstable_cache(
     async () => {
       try {
         const folder = await prisma.folder.findFirstOrThrow({
           where: input,
-        })
+        });
 
-        let parents: Folder[] = []
+        let parents: Folder[] = [];
         if (folder.paths.length > 0) {
           const tempParents = await prisma.folder.findMany({
             where: {
               id: { in: folder.paths },
             },
-          })
+          });
 
           // Sort by path's order
           const orderedPaths = folder.paths.reduce(
             (result, value) => {
-              result[value] = null
-              return result
+              result[value] = null;
+              return result;
             },
             {} as Record<string, Folder | null>,
-          )
+          );
 
           for (const temp of tempParents) {
-            orderedPaths[temp.id] = temp
+            orderedPaths[temp.id] = temp;
           }
 
           // Remove null value
-          parents = Object.values(orderedPaths).filter((v) => !!v)
+          parents = Object.values(orderedPaths).filter((v) => !!v);
         }
 
-        return { folder, parents }
+        return { folder, parents };
       } catch (err) {
-        return { folder: null, parents: [] }
+        return { folder: null, parents: [] };
       }
     },
     [JSON.stringify(input)],
@@ -88,5 +88,5 @@ export const getCurrentFolder = async (
       revalidate: 3600,
       tags: [`${userId}#folders`, `${userId}#folders#${input.id}`],
     },
-  )()
-}
+  )();
+};

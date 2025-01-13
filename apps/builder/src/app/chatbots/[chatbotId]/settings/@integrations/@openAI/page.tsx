@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { SettingIntegrationOpenAI } from "@/features/settings/integrations/open-ai"
+import { SettingIntegrationOpenAI } from "@/features/settings/integrations/open-ai";
 
 export default function SettingIntegrationOpenAIPage() {
-  return <SettingIntegrationOpenAI />
+  return <SettingIntegrationOpenAI />;
 }

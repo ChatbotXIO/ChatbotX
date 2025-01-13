@@ -1,5 +1,5 @@
-import { getCurrentUserId } from "@/auth"
-import { AppSidebar } from "@/components/app-sidebar"
+import { getCurrentUserId } from "@/auth";
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,30 +7,30 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { redirect } from "next/navigation"
+} from "@/components/ui/sidebar";
+import { findChatbotOrFail } from "@/lib/user-permissions";
+import { redirect } from "next/navigation";
 
 export default async function ChatbotLayout({
   children,
   params,
 }: {
-  children: React.ReactNode
-  params: Promise<{ chatbotId: string }>
+  children: React.ReactNode;
+  params: Promise<{ chatbotId: string }>;
 }) {
-  const chatbotId = (await params).chatbotId
-  const userId = await getCurrentUserId()
+  const chatbotId = (await params).chatbotId;
+  const userId = await getCurrentUserId();
 
   try {
-    await findChatbotOrFail(userId, chatbotId)
+    await findChatbotOrFail(userId, chatbotId);
   } catch (e) {
-    redirect("/")
+    redirect("/");
   }
 
   return (
@@ -55,5 +55,5 @@ export default async function ChatbotLayout({
         <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

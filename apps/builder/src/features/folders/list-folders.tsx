@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Breadcrumb,
@@ -6,51 +6,51 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Folder, FolderType } from "@ahachat.ai/database"
-import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
-import { parseAsString, useQueryState } from "nuqs"
-import { Fragment, use, useState } from "react"
-import { DeleteFolderDialog } from "./delete-folder-dialog"
-import { EditFolderDialog } from "./edit-folder-dialog"
-import type { getCurrentFolder, getFolders } from "./queries"
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Folder, FolderType } from "@ahachat.ai/database";
+import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { parseAsString, useQueryState } from "nuqs";
+import { Fragment, use, useState } from "react";
+import { DeleteFolderDialog } from "./delete-folder-dialog";
+import { EditFolderDialog } from "./edit-folder-dialog";
+import type { getCurrentFolder, getFolders } from "./queries";
 
 interface ListFoldersProps {
-  chatbotId: string
-  folderType: FolderType
+  chatbotId: string;
+  folderType: FolderType;
   promises: Promise<
     [
       Awaited<ReturnType<typeof getCurrentFolder>>,
       Awaited<ReturnType<typeof getFolders>>,
     ]
-  >
+  >;
 }
 
 const ListFolders = ({ chatbotId, folderType, promises }: ListFoldersProps) => {
-  const [{ folder, parents }, { data: folders }] = use(promises)
+  const [{ folder, parents }, { data: folders }] = use(promises);
   const [, setFolderId] = useQueryState(
     "folderId",
     parseAsString.withOptions({
       history: "replace",
       shallow: false,
     }),
-  )
+  );
 
-  const [targetFolder, setTargetFolder] = useState<Folder | null>(null)
+  const [targetFolder, setTargetFolder] = useState<Folder | null>(null);
 
-  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false)
+  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
   const onEdit = (folder: Folder) => {
-    setTargetFolder(folder)
-    setOpenEditDialog(true)
-  }
+    setTargetFolder(folder);
+    setOpenEditDialog(true);
+  };
 
-  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false)
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const onDelete = (folder: Folder) => {
-    setTargetFolder(folder)
-    setOpenDeleteDialog(true)
-  }
+    setTargetFolder(folder);
+    setOpenDeleteDialog(true);
+  };
 
   return (
     <>
@@ -84,7 +84,7 @@ const ListFolders = ({ chatbotId, folderType, promises }: ListFoldersProps) => {
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </Fragment>
-            )
+            );
           })}
           {folder && (
             <>
@@ -145,7 +145,7 @@ const ListFolders = ({ chatbotId, folderType, promises }: ListFoldersProps) => {
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       </ScrollArea>
@@ -165,7 +165,7 @@ const ListFolders = ({ chatbotId, folderType, promises }: ListFoldersProps) => {
         folder={targetFolder}
       />
     </>
-  )
-}
+  );
+};
 
-export { ListFolders }
+export { ListFolders };

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -9,14 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { T } from "@tolgee/react"
-import { BotMessageSquareIcon } from "lucide-react"
-import type { ReactNode } from "react"
+} from "@/components/ui/dialog";
+import { T } from "@tolgee/react";
+import { BotMessageSquareIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface OpenAIDialogProps {
-  name: string
-  children?: ReactNode
+  name: string;
+  children?: ReactNode;
 }
 
 export const OpenAIDialog = ({ name, children }: OpenAIDialogProps) => {
@@ -52,5 +52,5 @@ export const OpenAIDialog = ({ name, children }: OpenAIDialogProps) => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

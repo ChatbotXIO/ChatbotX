@@ -1,23 +1,23 @@
-import { getCurrentUserId } from "@/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
-import type { Contact, Prisma } from "@ahachat.ai/database"
-import { unstable_cache } from "next/cache"
-import type { GetContactsSchema } from "./get-contacts-schema"
+import { getCurrentUserId } from "@/auth";
+import { findChatbotOrFail } from "@/lib/user-permissions";
+import { prisma } from "@ahachat.ai/database";
+import type { Contact, Prisma } from "@ahachat.ai/database";
+import { unstable_cache } from "next/cache";
+import type { GetContactsSchema } from "./get-contacts-schema";
 
 export async function getContacts(
   input: GetContactsSchema,
 ): Promise<{ data: Contact[]; pageCount: number }> {
-  const userId = await getCurrentUserId()
+  const userId = await getCurrentUserId();
 
-  await findChatbotOrFail(userId, input.chatbotId)
+  await findChatbotOrFail(userId, input.chatbotId);
 
   return await unstable_cache(
     async () => {
       try {
         const where: Prisma.ContactWhereInput = {
           chatbotId: input.chatbotId,
-        }
+        };
 
         if (input.keyword) {
           where.OR = [
@@ -33,7 +33,7 @@ export async function getContacts(
                 mode: "insensitive",
               },
             },
-          ]
+          ];
         }
 
         const [data, total] = await prisma.$transaction([
@@ -43,13 +43,13 @@ export async function getContacts(
             where,
           }),
           prisma.contact.count({ where }),
-        ])
+        ]);
 
-        const pageCount = Math.ceil(total / input.perPage)
+        const pageCount = Math.ceil(total / input.perPage);
 
-        return { data, pageCount }
+        return { data, pageCount };
       } catch (err) {
-        return { data: [], pageCount: 0 }
+        return { data: [], pageCount: 0 };
       }
     },
     [JSON.stringify(input)],
@@ -57,5 +57,5 @@ export async function getContacts(
       revalidate: 3600,
       tags: [`${userId}#contacts`],
     },
-  )()
+  )();
 }

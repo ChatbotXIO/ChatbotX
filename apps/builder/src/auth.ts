@@ -1,9 +1,9 @@
-import { PrismaClient } from "@ahachat.ai/database"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import NextAuth, { type DefaultSession } from "next-auth"
-import authConfig from "./auth.config"
+import { PrismaClient } from "@ahachat.ai/database";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import NextAuth, { type DefaultSession } from "next-auth";
+import authConfig from "./auth.config";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 declare module "next-auth" {
   /**
@@ -12,7 +12,7 @@ declare module "next-auth" {
   interface Session {
     user: {
       /** The user's id. */
-      id: string
+      id: string;
 
       /**
        * By default, TypeScript merges new interface properties and overwrites existing ones.
@@ -20,7 +20,7 @@ declare module "next-auth" {
        * with the new ones defined above. To keep the default session user properties,
        * you need to add them back into the newly declared interface.
        */
-    } & DefaultSession["user"]
+    } & DefaultSession["user"];
   }
 }
 
@@ -39,19 +39,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         // User is available during sign-in
-        token.id = user.id
+        token.id = user.id;
       }
-      return token
+      return token;
     },
     session({ session, token }) {
-      session.user.id = token.sub ?? ""
-      return session
+      session.user.id = token.sub ?? "";
+      return session;
     },
   },
-})
+});
 
 export const getCurrentUserId = async (): Promise<string> => {
-  const session = await auth()
+  const session = await auth();
 
-  return session?.user.id || "unknown"
-}
+  return session?.user.id || "unknown";
+};

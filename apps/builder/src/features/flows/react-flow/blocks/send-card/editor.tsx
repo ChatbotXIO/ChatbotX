@@ -1,13 +1,18 @@
-"use client"
+"use client";
 
-import FileDropzone from "@/components/file-dropzone"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { useFormContext } from "react-hook-form"
-import { ButtonGroupEditor } from "../button/editor"
+import FileDropzone from "@/components/file-dropzone";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useFormContext } from "react-hook-form";
+import { ButtonGroupEditor } from "../button/editor";
 
 export const SendCardBlockEditor = ({ parentName }: { parentName: string }) => {
-  const { register } = useFormContext()
+  const { register } = useFormContext();
 
   return (
     <Card className="w-full shadow-lg rounded-lg border-2 hover:border-blue-500 hover:border-solid hover:cursor-pointer">
@@ -38,5 +43,5 @@ export const SendCardBlockEditor = ({ parentName }: { parentName: string }) => {
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </CardFooter>
     </Card>
-  )
-}
+  );
+};

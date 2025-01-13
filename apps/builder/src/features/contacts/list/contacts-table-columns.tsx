@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
-import { Checkbox } from "@/components/ui/checkbox"
-import type { Contact } from "@ahachat.ai/database"
-import type { ColumnDef } from "@tanstack/react-table"
-import { format, formatDistance } from "date-fns"
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { Contact } from "@ahachat.ai/database";
+import type { ColumnDef } from "@tanstack/react-table";
+import { format, formatDistance } from "date-fns";
 
 export function getColumns(): ColumnDef<Contact>[] {
   return [
@@ -40,9 +40,9 @@ export function getColumns(): ColumnDef<Contact>[] {
       cell: ({ row }) => {
         const fullName = [row.original.firstName, row.original.lastName]
           .filter((v) => !!v)
-          .join(" ")
+          .join(" ");
 
-        return <div>{fullName}</div>
+        return <div>{fullName}</div>;
       },
       enableSorting: false,
       enableHiding: false,
@@ -61,7 +61,7 @@ export function getColumns(): ColumnDef<Contact>[] {
         <DataTableColumnHeader column={column} title="Assigned" />
       ),
       cell: ({ row }) => {
-        return <div>Unassigned</div>
+        return <div>Unassigned</div>;
       },
       enableSorting: false,
       enableHiding: false,
@@ -80,7 +80,7 @@ export function getColumns(): ColumnDef<Contact>[] {
                 })
               : null}
           </div>
-        )
+        );
       },
       enableSorting: false,
       enableHiding: false,
@@ -94,5 +94,5 @@ export function getColumns(): ColumnDef<Contact>[] {
       enableSorting: false,
       enableHiding: false,
     },
-  ]
+  ];
 }

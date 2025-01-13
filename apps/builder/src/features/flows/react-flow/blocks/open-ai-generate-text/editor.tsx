@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog";
 
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input";
 
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
-import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
+import { FormItem, FormLabel } from "@/components/ui/form";
+import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field";
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model";
+import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger";
+import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message";
 
 interface OpenAIGenerateTextEditorProps {
-  parentName: string
+  parentName: string;
 }
 
 export const OpenAIGenerateTextEditor = ({
@@ -35,5 +35,5 @@ export const OpenAIGenerateTextEditor = ({
 
       <OpenAITrigger />
     </OpenAIDialog>
-  )
-}
+  );
+};

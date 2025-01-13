@@ -1,10 +1,10 @@
-import { getSortingStateParser } from "@/components/data-table/parsers"
-import type { Log, LogType } from "@ahachat.ai/database"
+import { getSortingStateParser } from "@/components/data-table/parsers";
+import type { Log, LogType } from "@ahachat.ai/database";
 import {
   createSearchParamsCache,
   parseAsInteger,
   parseAsString,
-} from "nuqs/server"
+} from "nuqs/server";
 
 export const getLogsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -13,11 +13,11 @@ export const getLogsSearchParamsCache = createSearchParamsCache({
   sort: getSortingStateParser<Log>().withDefault([
     { id: "createdAt", desc: true },
   ]),
-})
+});
 
 export type GetLogsSchema = Awaited<
   ReturnType<typeof getLogsSearchParamsCache.parse>
 > & {
-  chatbotId: string
-  logType: LogType
-}
+  chatbotId: string;
+  logType: LogType;
+};

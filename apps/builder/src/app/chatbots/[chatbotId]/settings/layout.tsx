@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { Form } from "@/components/ui/form"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { updateSettingsAction } from "@/features/settings/action"
-import { settingSchema } from "@/features/settings/schema"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useHookFormOptimisticAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
-import type { ReactNode } from "react"
+import { Form } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { updateSettingsAction } from "@/features/settings/action";
+import { settingSchema } from "@/features/settings/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useHookFormOptimisticAction } from "@next-safe-action/adapter-react-hook-form/hooks";
+import { T } from "@tolgee/react";
+import type { ReactNode } from "react";
 
 interface LayoutSettingProps {
-  integrations: ReactNode
+  integrations: ReactNode;
 }
 
 const SettingTabs = [
@@ -34,7 +34,7 @@ const SettingTabs = [
     value: "billing",
     label: "settings.tab.billing",
   },
-]
+];
 
 export default function SettingLayout({ integrations }: LayoutSettingProps) {
   const { form, action, handleSubmitWithAction, resetFormAndAction } =
@@ -45,23 +45,27 @@ export default function SettingLayout({ integrations }: LayoutSettingProps) {
         actionProps: {
           currentState: {},
           updateFn: (state: unknown, input: unknown) => {
-            console.log(state, input)
-            return {}
+            console.log(state, input);
+            return {};
           },
         },
         formProps: {
           mode: "onChange",
         },
       },
-    )
+    );
 
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitWithAction}>
         <Tabs defaultValue="integrations" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-5 bg-transparent rounded-none">
             {SettingTabs.map((setting) => (
-              <TabsTrigger key={setting.value} value={setting.value}>
+              <TabsTrigger
+                key={setting.value}
+                value={setting.value}
+                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent border-b-2 border-gray-200 rounded-none data-[state=active]:rounded-none data-[state=active]:border-blue-500"
+              >
                 <T keyName={setting.label} />
               </TabsTrigger>
             ))}
@@ -72,5 +76,5 @@ export default function SettingLayout({ integrations }: LayoutSettingProps) {
         </Tabs>
       </form>
     </Form>
-  )
+  );
 }

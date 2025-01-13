@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Atom,
@@ -12,26 +12,26 @@ import {
   Users,
   Workflow,
   Wrench,
-} from "lucide-react"
-import type * as React from "react"
+} from "lucide-react";
+import type * as React from "react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { useTranslate } from "@tolgee/react"
+} from "@/components/ui/sidebar";
+import { useTranslate } from "@tolgee/react";
 
 export function AppSidebar({
   chatbotId,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { chatbotId: string }) {
-  const { t } = useTranslate()
+  const { t } = useTranslate();
 
   const data = {
     user: {
@@ -99,7 +99,7 @@ export function AppSidebar({
         icon: SlidersHorizontal,
       },
     ],
-  }
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -114,5 +114,5 @@ export function AppSidebar({
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

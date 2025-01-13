@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { type ComponentType, forwardRef } from "react"
+import { type ComponentType, forwardRef } from "react";
 
 import {
   Select,
@@ -8,21 +8,21 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import type { SelectProps } from "@radix-ui/react-select"
+} from "@/components/ui/select";
+import type { SelectProps } from "@radix-ui/react-select";
 
 type SingleOptions = {
   /** The text to display for the option. */
-  label: string
+  label: string;
   /** The unique value associated with the option. */
-  value: string
+  value: string;
   /** Optional icon component to display alongside the option. */
-  icon?: ComponentType<{ className?: string }>
-}
+  icon?: ComponentType<{ className?: string }>;
+};
 
 interface SingleSelectProps extends SelectProps {
-  options: SingleOptions[]
-  placeholder?: string
+  options: SingleOptions[];
+  placeholder?: string;
 }
 
 export const SingleSelect = forwardRef<HTMLButtonElement, SingleSelectProps>(
@@ -44,8 +44,8 @@ export const SingleSelect = forwardRef<HTMLButtonElement, SingleSelectProps>(
           ))}
         </SelectContent>
       </Select>
-    )
+    );
   },
-)
+);
 
-SingleSelect.displayName = "SingleSelect"
+SingleSelect.displayName = "SingleSelect";

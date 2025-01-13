@@ -1,4 +1,4 @@
-import { T } from "@tolgee/react"
+import { T } from "@tolgee/react";
 import {
   ArchiveIcon,
   AudioLinesIcon,
@@ -47,9 +47,9 @@ import {
   UserRoundXIcon,
   VideoIcon,
   ZapIcon,
-} from "lucide-react"
-import { ActionType } from "../../action-type"
-import type { MenuItem } from "../types"
+} from "lucide-react";
+import { ActionType } from "../../action-type";
+import type { MenuItem } from "../types";
 
 export const sendMessageEditorMenus: MenuItem[] = [
   {
@@ -396,4 +396,4 @@ export const sendMessageEditorMenus: MenuItem[] = [
       },
     ],
   },
-]
+];

@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export enum AnswerType {
   Number = "Number",
@@ -24,13 +24,13 @@ const answerBaseBlockSchema = z.object({
     unit: z.number().int().nullable(),
     failedAttemps: z.number().int().nonnegative().min(1).max(100),
   }),
-})
+});
 
-export const answerNumberBlockSchema = answerBaseBlockSchema.extend({})
-export type AnswerNumberBlockSchema = z.infer<typeof answerNumberBlockSchema>
+export const answerNumberBlockSchema = answerBaseBlockSchema.extend({});
+export type AnswerNumberBlockSchema = z.infer<typeof answerNumberBlockSchema>;
 
-export const answerTextBlockSchema = answerBaseBlockSchema.extend({})
-export type AnswerTextBlockSchema = z.infer<typeof answerTextBlockSchema>
+export const answerTextBlockSchema = answerBaseBlockSchema.extend({});
+export type AnswerTextBlockSchema = z.infer<typeof answerTextBlockSchema>;
 
-export const answerEmailBlockSchema = answerBaseBlockSchema.extend({})
-export type AnswerEmailBlockSchema = z.infer<typeof answerEmailBlockSchema>
+export const answerEmailBlockSchema = answerBaseBlockSchema.extend({});
+export type AnswerEmailBlockSchema = z.infer<typeof answerEmailBlockSchema>;

@@ -1,4 +1,4 @@
-export type DataTableConfig = typeof dataTableConfig
+export type DataTableConfig = typeof dataTableConfig;
 
 export const dataTableConfig = {
   textOperators: [
@@ -73,4 +73,4 @@ export const dataTableConfig = {
     "and",
     "or",
   ] as const,
-}
+};

@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { BotMessageSquareIcon } from "lucide-react"
+import { BotMessageSquareIcon } from "lucide-react";
 
 interface OpenAIViewerProps {
-  name: string
-  data: Record<string, unknown>
+  name: string;
+  data: Record<string, unknown>;
 }
 
 export const OpenAIViewer = ({ name }: OpenAIViewerProps) => {
@@ -29,5 +29,5 @@ export const OpenAIViewer = ({ name }: OpenAIViewerProps) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

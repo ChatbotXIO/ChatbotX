@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -6,64 +6,64 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
-} from "@/components/ui/sortable"
-import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert"
-import { SendAudioBlockEditor } from "@/features/flows/react-flow/blocks/send-audio/editor"
-import { sendAudioBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-audio/schema"
-import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor"
-import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema"
-import { SendCarouselBlockEditor } from "@/features/flows/react-flow/blocks/send-carousel/editor"
-import { sendCarouselBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-carousel/schema"
-import { SendImageBlockEditor } from "@/features/flows/react-flow/blocks/send-image/editor"
-import { sendImageBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-image/schema"
-import { SendVideoBlockEditor } from "@/features/flows/react-flow/blocks/send-video/editor"
-import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-video/schema"
-import { cn } from "@/lib/utils"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { createId } from "@paralleldrive/cuid2"
-import { useTranslate } from "@tolgee/react"
-import { type Node, useReactFlow } from "@xyflow/react"
-import cloneDeep from "lodash.clonedeep"
-import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
-import { type ReactNode, useCallback, useEffect } from "react"
-import { useFieldArray, useForm } from "react-hook-form"
-import { ActionType } from "../../action-type"
-import { SendTextBlockEditor } from "../../blocks/send-text/editor"
-import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
-import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
-import SendMessageEditorAction from "./send-message-editor-action"
+} from "@/components/ui/sortable";
+import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert";
+import { SendAudioBlockEditor } from "@/features/flows/react-flow/blocks/send-audio/editor";
+import { sendAudioBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-audio/schema";
+import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor";
+import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema";
+import { SendCarouselBlockEditor } from "@/features/flows/react-flow/blocks/send-carousel/editor";
+import { sendCarouselBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-carousel/schema";
+import { SendImageBlockEditor } from "@/features/flows/react-flow/blocks/send-image/editor";
+import { sendImageBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-image/schema";
+import { SendVideoBlockEditor } from "@/features/flows/react-flow/blocks/send-video/editor";
+import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-video/schema";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
+import { type Node, useReactFlow } from "@xyflow/react";
+import cloneDeep from "lodash.clonedeep";
+import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react";
+import { type ReactNode, useCallback, useEffect } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { ActionType } from "../../action-type";
+import { SendTextBlockEditor } from "../../blocks/send-text/editor";
+import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema";
+import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema";
+import SendMessageEditorAction from "./send-message-editor-action";
 
-import { OpenAIAnalyzeImageEditor } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/editor"
-import { openAIAnalyzeImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
-import { OpenAIDeleteMessageHistoryEditor } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/editor"
-import { openAIDeleteMessageHistoryDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
-import { OpenAIGenerateImageEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-image/editor"
-import { openAIGenerateImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
-import { OpenAIGenerateTextAdvancedEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/editor"
-import { openAIGenerateTextAdvancedDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
-import { OpenAIGenerateTextAgentEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/editor"
-import { openAIGenerateTextAgentDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
-import { OpenAIGenerateTextAssistantEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/editor"
-import { openAIGenerateTextAssistantDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
-import { OpenAIGenerateTextEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text/editor"
-import { openAIGenerateTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
-import { OpenAISpeechToTextEditor } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/editor"
-import { openAISpeechToTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
-import { OpenAITextToSpeechEditor } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/editor"
-import { openAITextToSpeechDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
+import { OpenAIAnalyzeImageEditor } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/editor";
+import { openAIAnalyzeImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema";
+import { OpenAIDeleteMessageHistoryEditor } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/editor";
+import { openAIDeleteMessageHistoryDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema";
+import { OpenAIGenerateImageEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-image/editor";
+import { openAIGenerateImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema";
+import { OpenAIGenerateTextAdvancedEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/editor";
+import { openAIGenerateTextAdvancedDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema";
+import { OpenAIGenerateTextAgentEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/editor";
+import { openAIGenerateTextAgentDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema";
+import { OpenAIGenerateTextAssistantEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/editor";
+import { openAIGenerateTextAssistantDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema";
+import { OpenAIGenerateTextEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text/editor";
+import { openAIGenerateTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema";
+import { OpenAISpeechToTextEditor } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/editor";
+import { openAISpeechToTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema";
+import { OpenAITextToSpeechEditor } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/editor";
+import { openAITextToSpeechDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema";
 
 const maps: Record<
   ActionType,
@@ -114,16 +114,16 @@ const maps: Record<
   [ActionType.OpenAIDeleteMessageHistory]: ({ key, parentName }) => (
     <OpenAIDeleteMessageHistoryEditor key={key} parentName={parentName} />
   ),
-}
+};
 
 export default function SendMessageNodeEditor({
   activeNode,
 }: {
-  activeNode: Node<SendMessageNodeSchema>
+  activeNode: Node<SendMessageNodeSchema>;
 }) {
-  const { t } = useTranslate()
+  const { t } = useTranslate();
 
-  const { setNodes } = useReactFlow()
+  const { setNodes } = useReactFlow();
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (data: any) => {
@@ -136,101 +136,101 @@ export default function SendMessageNodeEditor({
                 ...node.data,
                 ...data,
               },
-            }
+            };
           }
-          return node
+          return node;
         }),
-      )
+      );
     },
     [activeNode, setNodes],
-  )
+  );
 
   const { control, getValues, watch, ...form } = useForm<SendMessageNodeSchema>(
     {
       resolver: zodResolver(sendMessageNodeSchema),
       defaultValues: activeNode.data,
     },
-  )
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const { unsubscribe } = watch((value) => {
-      onChange(value)
-    })
-    return () => unsubscribe()
-  }, [watch])
+      onChange(value);
+    });
+    return () => unsubscribe();
+  }, [watch]);
 
   const { fields, append, move, update, remove, insert } = useFieldArray({
     control,
     name: "blocks",
-  })
+  });
 
   const onClickAction = (name: ActionType) => {
-    console.log("onClickAction => ", name)
+    console.log("onClickAction => ", name);
     switch (name) {
       case ActionType.SendText:
-        append(sendTextBlockDefaultValue())
-        break
+        append(sendTextBlockDefaultValue());
+        break;
       case ActionType.SendImage:
-        append(sendImageBlockDefaultValue())
-        break
+        append(sendImageBlockDefaultValue());
+        break;
       case ActionType.SendCard:
-        append(sendCardBlockDefaultValue())
-        break
+        append(sendCardBlockDefaultValue());
+        break;
       case ActionType.SendCarousel:
-        append(sendCarouselBlockDefaultValue(2))
-        break
+        append(sendCarouselBlockDefaultValue(2));
+        break;
       case ActionType.SendVideo:
-        append(sendVideoBlockDefaultValue())
-        break
+        append(sendVideoBlockDefaultValue());
+        break;
       case ActionType.SendAudio:
-        append(sendAudioBlockDefaultValue())
-        break
+        append(sendAudioBlockDefaultValue());
+        break;
       case ActionType.SendFile:
-        append(sendAudioBlockDefaultValue())
-        break
+        append(sendAudioBlockDefaultValue());
+        break;
       // Action OpenAI
       case ActionType.OpenAIGenerateText:
-        append(openAIGenerateTextDefaultValue())
-        break
+        append(openAIGenerateTextDefaultValue());
+        break;
       case ActionType.OpenAIGenerateTextAgent:
-        append(openAIGenerateTextAgentDefaultValue())
-        break
+        append(openAIGenerateTextAgentDefaultValue());
+        break;
       case ActionType.OpenAIGenerateTextAdvanced:
-        append(openAIGenerateTextAdvancedDefaultValue())
-        break
+        append(openAIGenerateTextAdvancedDefaultValue());
+        break;
       case ActionType.OpenAIGenerateTextAssistant:
-        append(openAIGenerateTextAssistantDefaultValue())
-        break
+        append(openAIGenerateTextAssistantDefaultValue());
+        break;
       case ActionType.OpenAIGenerateImage:
-        append(openAIGenerateImageDefaultValue())
-        break
+        append(openAIGenerateImageDefaultValue());
+        break;
       case ActionType.OpenAIAnalyzeImage:
-        append(openAIAnalyzeImageDefaultValue())
-        break
+        append(openAIAnalyzeImageDefaultValue());
+        break;
       case ActionType.OpenAISpeechToText:
-        append(openAISpeechToTextDefaultValue())
-        break
+        append(openAISpeechToTextDefaultValue());
+        break;
       case ActionType.OpenAITextToSpeech:
-        append(openAITextToSpeechDefaultValue())
-        break
+        append(openAITextToSpeechDefaultValue());
+        break;
       case ActionType.OpenAIDeleteMessageHistory:
-        append(openAIDeleteMessageHistoryDefaultValue())
-        break
+        append(openAIDeleteMessageHistoryDefaultValue());
+        break;
     }
-  }
+  };
 
   const onCopy = (index: number) => {
-    const values = getValues(`blocks.${index}`)
+    const values = getValues(`blocks.${index}`);
     if (values) {
-      insert(index + 1, { ...cloneDeep(values), id: createId() })
+      insert(index + 1, { ...cloneDeep(values), id: createId() });
     }
-  }
+  };
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const onSubmit = (data: any) => {
-    console.log("Form Data:", data)
-  }
+    console.log("Form Data:", data);
+  };
 
   return (
     <>
@@ -359,5 +359,5 @@ export default function SendMessageNodeEditor({
         </form>
       </Form>
     </>
-  )
+  );
 }

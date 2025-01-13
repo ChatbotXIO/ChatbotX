@@ -1,22 +1,22 @@
-import { T } from "@tolgee/react"
-import { ImageIcon, XIcon } from "lucide-react"
-import Image from "next/image"
-import { useEffect, useState } from "react"
-import Dropzone from "react-dropzone"
-import { Button } from "./ui/button"
+import { T } from "@tolgee/react";
+import { ImageIcon, XIcon } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import Dropzone from "react-dropzone";
+import { Button } from "./ui/button";
 
 function AttachedImage({
   image,
   onRemove,
 }: {
-  image: string
-  onRemove: () => void
+  image: string;
+  onRemove: () => void;
 }) {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const onClick = (e: any) => {
-    e.stopPropagation()
-    onRemove()
-  }
+    e.stopPropagation();
+    onRemove();
+  };
 
   return (
     <div className="relative w-full h-full">
@@ -34,19 +34,19 @@ function AttachedImage({
         <XIcon />
       </Button>
     </div>
-  )
+  );
 }
 
 function NeedAttachedImage({
   onSwitchToImageLink,
 }: {
-  onSwitchToImageLink: () => void
+  onSwitchToImageLink: () => void;
 }) {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const switchToImageLinkMode = (e: any) => {
-    e.stopPropagation()
-    onSwitchToImageLink()
-  }
+    e.stopPropagation();
+    onSwitchToImageLink();
+  };
 
   return (
     <>
@@ -65,7 +65,7 @@ function NeedAttachedImage({
         </Button>
       </div>
     </>
-  )
+  );
 }
 
 export default function ImageDropzone({
@@ -73,33 +73,33 @@ export default function ImageDropzone({
   onSwitchToImageLink,
   onChange,
 }: {
-  oldImage: Record<string, unknown>
-  onSwitchToImageLink: () => void
-  onChange: (file?: Record<string, unknown>) => void
+  oldImage: Record<string, unknown>;
+  onSwitchToImageLink: () => void;
+  onChange: (file?: Record<string, unknown>) => void;
 }) {
-  const [image, setImage] = useState<string | null>(null)
+  const [image, setImage] = useState<string | null>(null);
 
   const handleFileChange = (file: File | null) => {
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result as string)
-        onChange({ file, base64: reader.result })
-      }
-      reader.readAsDataURL(file)
+        setImage(reader.result as string);
+        onChange({ file, base64: reader.result });
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleRemove = () => {
-    setImage(null)
-    onChange({ file: null, base64: null })
-  }
+    setImage(null);
+    onChange({ file: null, base64: null });
+  };
 
   useEffect(() => {
     if (oldImage && Object.keys(oldImage)) {
-      setImage(oldImage.base64 as string)
+      setImage(oldImage.base64 as string);
     }
-  }, [oldImage])
+  }, [oldImage]);
 
   return (
     <Dropzone
@@ -122,5 +122,5 @@ export default function ImageDropzone({
         </section>
       )}
     </Dropzone>
-  )
+  );
 }

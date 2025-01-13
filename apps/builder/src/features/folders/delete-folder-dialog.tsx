@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action"
-import type { Folder } from "@ahachat.ai/database"
-import { useTranslate } from "@tolgee/react"
-import { Loader2 } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
-import { useTransition } from "react"
-import { toast } from "sonner"
+} from "@/components/ui/dialog";
+import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action";
+import type { Folder } from "@ahachat.ai/database";
+import { useTranslate } from "@tolgee/react";
+import { Loader2 } from "lucide-react";
+import { useAction } from "next-safe-action/hooks";
+import { useTransition } from "react";
+import { toast } from "sonner";
 
 export function DeleteFolderDialog({
   open,
@@ -23,33 +23,33 @@ export function DeleteFolderDialog({
   folder,
   // onClose,
 }: {
-  open: boolean
-  onOpenChange: (val: boolean) => void
-  chatbotId: string
-  folder: Folder | null
+  open: boolean;
+  onOpenChange: (val: boolean) => void;
+  chatbotId: string;
+  folder: Folder | null;
 }) {
-  const { t } = useTranslate()
+  const { t } = useTranslate();
 
   const { execute, result } = useAction(
     deleteFolderAction.bind(null, chatbotId, folder?.id ?? ""),
-  )
+  );
 
-  const [isDeletePending, startDeleteTransition] = useTransition()
+  const [isDeletePending, startDeleteTransition] = useTransition();
   const onDelete = () => {
     if (!folder) {
-      return
+      return;
     }
 
     startDeleteTransition(async () => {
-      await execute()
+      await execute();
 
       if (result.serverError) {
-        toast.error(result.serverError.message ?? result.serverError)
+        toast.error(result.serverError.message ?? result.serverError);
       } else {
-        toast.success(t("folders.deleted"))
+        toast.success(t("folders.deleted"));
       }
-    })
-  }
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,5 +77,5 @@ export function DeleteFolderDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

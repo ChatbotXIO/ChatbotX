@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import { useDataTable } from "@/hooks/use-data-table"
-import type { Contact } from "@ahachat.ai/database"
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { useDataTable } from "@/hooks/use-data-table";
+import type { Contact } from "@ahachat.ai/database";
 
-import { getColumns } from "./contacts-table-columns"
-import type { getContacts } from "./get-contacts-queries"
+import { getColumns } from "./contacts-table-columns";
+import type { getContacts } from "./get-contacts-queries";
 
 import type {
   DataTableFilterField,
   DataTableRowAction,
-} from "@/components/data-table/types"
+} from "@/components/data-table/types";
 
 interface ContactsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getContacts>>]>
+  promises: Promise<[Awaited<ReturnType<typeof getContacts>>]>;
 }
 
 export function ContactsTable({ promises }: ContactsTableProps) {
-  const [{ data, pageCount }] = React.use(promises)
+  const [{ data, pageCount }] = React.use(promises);
   const [, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(
     null,
-  )
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const columns = React.useMemo(() => getColumns(), [setRowAction])
+  const columns = React.useMemo(() => getColumns(), [setRowAction]);
 
   const filterFields: DataTableFilterField<Contact & { keyword?: string }>[] = [
     {
@@ -34,7 +34,7 @@ export function ContactsTable({ promises }: ContactsTableProps) {
       label: "Search",
       placeholder: "Enter keyword...",
     },
-  ]
+  ];
 
   const { table } = useDataTable({
     data,
@@ -48,7 +48,7 @@ export function ContactsTable({ promises }: ContactsTableProps) {
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
-  })
+  });
 
   return (
     <>
@@ -56,5 +56,5 @@ export function ContactsTable({ promises }: ContactsTableProps) {
         <DataTableToolbar table={table} filterFields={filterFields} />
       </DataTable>
     </>
-  )
+  );
 }

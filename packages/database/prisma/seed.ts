@@ -1,18 +1,18 @@
-import { faker } from "@faker-js/faker"
+import { faker } from "@faker-js/faker";
 import {
   type Chatbot,
   type Folder,
   FolderType,
   PrismaClient,
-} from "@prisma/client"
+} from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  const user = await prisma.user.findFirstOrThrow()
+  const user = await prisma.user.findFirstOrThrow();
 
   // create chatbot
-  const chatbotsCount = await prisma.chatbot.count()
+  const chatbotsCount = await prisma.chatbot.count();
   if (chatbotsCount === 0) {
     const chatbots = await prisma.chatbot.createManyAndReturn({
       data: [
@@ -27,7 +27,7 @@ async function main() {
           plan: "Pro",
         },
       ] as Chatbot[],
-    })
+    });
     await prisma.chatbotMember.createMany({
       data: chatbots.map((chatbot) => ({
         chatbotId: chatbot.id,
@@ -42,7 +42,7 @@ async function main() {
         enableBroadcast: true,
         enableEcommerce: true,
       })),
-    })
+    });
   }
 
   const chatbots = await prisma.chatbot.findMany({
@@ -53,34 +53,34 @@ async function main() {
         },
       },
     },
-  })
+  });
 
   // create folders
-  const data: Pick<Folder, "name" | "folderType" | "chatbotId">[] = []
-  const folderTypes = Object.values(FolderType)
+  const data: Pick<Folder, "name" | "folderType" | "chatbotId">[] = [];
+  const folderTypes = Object.values(FolderType);
 
   for (const chatbot of chatbots) {
-    const foldersCount = faker.number.int({ min: 10, max: 100 })
+    const foldersCount = faker.number.int({ min: 10, max: 100 });
     for (let i = 0; i < foldersCount; i++) {
       for (const folderType of folderTypes) {
         data.push({
           name: `${folderType} ${faker.string.alpha(10)}`,
           folderType,
           chatbotId: chatbot.id,
-        })
+        });
       }
     }
   }
-  await prisma.folder.createMany({ data })
+  await prisma.folder.createMany({ data });
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
+    console.error(e);
+    await prisma.$disconnect();
 
-    process.exit(1)
-  })
+    process.exit(1);
+  });

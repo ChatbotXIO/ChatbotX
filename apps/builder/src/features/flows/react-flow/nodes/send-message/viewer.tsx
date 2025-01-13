@@ -1,31 +1,31 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
-import { AudioBlockViewer } from "@/features/flows/react-flow/blocks/send-audio/viewer"
-import type { SendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
-import { SendCardBlockViewer } from "@/features/flows/react-flow/blocks/send-card/viewer"
-import type { SendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema"
-import { SendCarouselBlockViewer } from "@/features/flows/react-flow/blocks/send-carousel/viewer"
-import type { SendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema"
-import { SendImageBlockViewer } from "@/features/flows/react-flow/blocks/send-image/viewer"
-import type { SendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema"
-import { SendTextBlockViewer } from "@/features/flows/react-flow/blocks/send-text/viewer"
-import type { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema"
-import { SendVideoBlockViewer } from "@/features/flows/react-flow/blocks/send-video/viewer"
-import { MessageCircleMoreIcon } from "lucide-react"
-import { type ReactNode, useState } from "react"
-import { ActionType } from "../../action-type"
-import { FlowFlowNodeToolbar } from "../../toolbars"
-import type { SendMessageNodeSchema } from "./schema"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema";
+import { AudioBlockViewer } from "@/features/flows/react-flow/blocks/send-audio/viewer";
+import type { SendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema";
+import { SendCardBlockViewer } from "@/features/flows/react-flow/blocks/send-card/viewer";
+import type { SendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema";
+import { SendCarouselBlockViewer } from "@/features/flows/react-flow/blocks/send-carousel/viewer";
+import type { SendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema";
+import { SendImageBlockViewer } from "@/features/flows/react-flow/blocks/send-image/viewer";
+import type { SendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema";
+import { SendTextBlockViewer } from "@/features/flows/react-flow/blocks/send-text/viewer";
+import type { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema";
+import { SendVideoBlockViewer } from "@/features/flows/react-flow/blocks/send-video/viewer";
+import { MessageCircleMoreIcon } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { ActionType } from "../../action-type";
+import { FlowFlowNodeToolbar } from "../../toolbars";
+import type { SendMessageNodeSchema } from "./schema";
 
-import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
-import type { OpenAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
-import type { OpenAIGenerateImageSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
-import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
-import type { OpenAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
-import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
-import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
-import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
-import { OpenAIViewer } from "@/features/flows/react-flow/blocks/open-ai/viewer"
+import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema";
+import type { OpenAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema";
+import type { OpenAIGenerateImageSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema";
+import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema";
+import type { OpenAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema";
+import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema";
+import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema";
+import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema";
+import { OpenAIViewer } from "@/features/flows/react-flow/blocks/open-ai/viewer";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const maps: Record<ActionType, (data: any) => ReactNode> = {
@@ -78,16 +78,16 @@ const maps: Record<ActionType, (data: any) => ReactNode> = {
   [ActionType.OpenAIDeleteMessageHistory]: (
     data: OpenAIDeleteMessageHistorySchema,
   ) => <OpenAIViewer key={data.id} data={data} name="delete message history" />,
-}
+};
 
 export default function SendMessageNodeViewer({
   data,
   id,
 }: {
-  data: SendMessageNodeSchema
-  id: string | number
+  data: SendMessageNodeSchema;
+  id: string | number;
 }) {
-  const [openToolbar, onOpenToolbar] = useState(false)
+  const [openToolbar, onOpenToolbar] = useState(false);
 
   return (
     <>
@@ -112,5 +112,5 @@ export default function SendMessageNodeViewer({
         </CardContent>
       </Card>
     </>
-  )
+  );
 }

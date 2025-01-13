@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,21 +8,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { useTranslate } from "@tolgee/react"
-import { useRouter } from "next/navigation"
-import React from "react"
-import { CreateContactForm } from "./create-contact-form"
+} from "@/components/ui/dialog";
+import { useTranslate } from "@tolgee/react";
+import { useRouter } from "next/navigation";
+import React from "react";
+import { CreateContactForm } from "./create-contact-form";
 
 export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
-  const router = useRouter()
-  const { t } = useTranslate()
+  const router = useRouter();
+  const { t } = useTranslate();
 
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
   const onSubmmited = () => {
-    setOpen(false)
-    router.refresh()
-  }
+    setOpen(false);
+    router.refresh();
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -43,5 +43,5 @@ export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -6,10 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
-import { Button } from "@/components/ui/button"
-import { T } from "@tolgee/react"
+import { Button } from "@/components/ui/button";
+import { T } from "@tolgee/react";
 
 export const SettingIntegrationOpenAIDialogDisconnect = () => {
   return (
@@ -37,5 +37,5 @@ export const SettingIntegrationOpenAIDialogDisconnect = () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

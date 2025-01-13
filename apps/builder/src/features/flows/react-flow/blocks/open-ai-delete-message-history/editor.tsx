@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog";
 
 interface OpenAIDeleteMessageHistoryEditorProps {
-  parentName: string
+  parentName: string;
 }
 
 export const OpenAIDeleteMessageHistoryEditor = ({
   parentName,
 }: OpenAIDeleteMessageHistoryEditorProps) => {
-  return <OpenAIDialog name="flows.OpenAI.Title.DeleteMessageHistory" />
-}
+  return <OpenAIDialog name="flows.OpenAI.Title.DeleteMessageHistory" />;
+};

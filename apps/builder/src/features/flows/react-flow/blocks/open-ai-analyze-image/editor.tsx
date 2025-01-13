@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog";
 
-import { SingleSelect } from "@/components/single-select"
-import { Input } from "@/components/ui/input"
+import { SingleSelect } from "@/components/single-select";
+import { Input } from "@/components/ui/input";
 
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
+import { FormItem, FormLabel } from "@/components/ui/form";
+import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field";
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model";
 
 interface OpenAIAnalyzeImageEditorProps {
-  parentName: string
+  parentName: string;
 }
 
 export const OpenAIAnalyzeImageEditor = ({
@@ -36,5 +36,5 @@ export const OpenAIAnalyzeImageEditor = ({
 
       <OpenAICustomField />
     </OpenAIDialog>
-  )
-}
+  );
+};
