@@ -1,10 +1,10 @@
 "use client"
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { T } from "@tolgee/react"
-import { ReactNode } from "react"
-import { usePathname, redirect } from 'next/navigation';
-import { cn } from '@/lib/utils'
+import { redirect, usePathname } from "next/navigation"
+import type { ReactNode } from "react"
 
 interface LayoutSettingProps {
   children: ReactNode
@@ -14,36 +14,37 @@ const SettingTabs = [
   {
     value: "general",
     label: "settings.tab.general",
-    link: 'general'
+    link: "general",
   },
   {
     value: "channels",
     label: "settings.tab.channels",
-    link: 'channels'
+    link: "channels",
   },
   {
     value: "integrations",
     label: "settings.tab.integrations",
-    link: 'integrations'
+    link: "integrations",
   },
   {
     value: "admins",
     label: "settings.tab.admins",
-    link: 'admins'
+    link: "admins",
   },
   {
     value: "billing",
     label: "settings.tab.billing",
-    link: 'billing'
+    link: "billing",
   },
 ]
 
 export default function SettingLayout({ children }: LayoutSettingProps) {
   const pathname = usePathname()
 
-  const hasSelected = (tabKey: string) => pathname.split('/').at(-1) === tabKey
+  const hasSelected = (tabKey: string) => pathname.split("/").at(-1) === tabKey
 
-  const onGotoPage = (link: string) => redirect(`${pathname.split('/').slice(0, -1).join('/')}/${link}`)
+  const onGotoPage = (link: string) =>
+    redirect(`${pathname.split("/").slice(0, -1).join("/")}/${link}`)
 
   return (
     <>
@@ -51,10 +52,10 @@ export default function SettingLayout({ children }: LayoutSettingProps) {
         {SettingTabs.map((setting) => (
           <Button
             key={setting.value}
-            variant='link'
+            variant="link"
             className={cn(
-              'border-b-2 border-gray-200 rounded-none hover:no-underline hover:border-blue-500',
-              hasSelected(setting.value) ? 'border-blue-500' : ''
+              "border-b-2 border-gray-200 rounded-none hover:no-underline hover:border-blue-500",
+              hasSelected(setting.value) ? "border-blue-500" : "",
             )}
             onClick={() => onGotoPage(setting.link)}
           >
@@ -62,9 +63,7 @@ export default function SettingLayout({ children }: LayoutSettingProps) {
           </Button>
         ))}
       </section>
-      <section className="p-4">
-        {children}
-      </section>
+      <section className="p-4">{children}</section>
     </>
   )
 }

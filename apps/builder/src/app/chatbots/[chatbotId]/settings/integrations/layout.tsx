@@ -7,13 +7,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Form } from "@/components/ui/form"
-import { T } from "@tolgee/react"
-import { BotMessageSquareIcon } from "lucide-react"
-import type { ReactNode } from "react"
 import { updateSettingsAction } from "@/features/settings/action"
 import { settingSchema } from "@/features/settings/schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormOptimisticAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { T } from "@tolgee/react"
+import { BotMessageSquareIcon } from "lucide-react"
+import type { ReactNode } from "react"
 
 interface SettingIntegrationLayoutProps {
   openAI: ReactNode
@@ -22,7 +22,6 @@ interface SettingIntegrationLayoutProps {
 export default function SettingIntegrationLayout({
   openAI,
 }: SettingIntegrationLayoutProps) {
-
   const { form, action, handleSubmitWithAction, resetFormAndAction } =
     useHookFormOptimisticAction(
       updateSettingsAction,

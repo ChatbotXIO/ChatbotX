@@ -1,5 +1,5 @@
-'use client'
+"use client"
 
-export default function SettingsAdminPage () {
+export default function SettingsAdminPage() {
   return <h1>SettingsAdminPage</h1>
 }

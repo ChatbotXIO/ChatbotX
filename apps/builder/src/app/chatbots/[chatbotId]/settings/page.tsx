@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import {  redirect } from 'next/navigation';
+import { redirect } from "next/navigation"
 
-export default function SettingPage () {
-  return redirect('settings/general')
+export default function SettingPage() {
+  return redirect("settings/general")
 }
