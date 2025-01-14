@@ -1,80 +1,70 @@
 "use client"
 
-import { Form } from "@/components/ui/form"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { updateSettingsAction } from "@/features/settings/action"
-import { settingSchema } from "@/features/settings/schema"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useHookFormOptimisticAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { Button } from '@/components/ui/button'
 import { T } from "@tolgee/react"
-import type { ReactNode } from "react"
+import { ReactNode } from "react"
+import { usePathname, redirect } from 'next/navigation';
+import { cn } from '@/lib/utils'
 
 interface LayoutSettingProps {
-  integrations: ReactNode
+  children: ReactNode
 }
 
 const SettingTabs = [
   {
     value: "general",
     label: "settings.tab.general",
+    link: 'general'
   },
   {
     value: "channels",
     label: "settings.tab.channels",
+    link: 'channels'
   },
   {
     value: "integrations",
     label: "settings.tab.integrations",
+    link: 'integrations'
   },
   {
     value: "admins",
     label: "settings.tab.admins",
+    link: 'admins'
   },
   {
     value: "billing",
     label: "settings.tab.billing",
+    link: 'billing'
   },
 ]
 
-export default function SettingLayout({ integrations }: LayoutSettingProps) {
-  const { form, action, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormOptimisticAction(
-      updateSettingsAction,
-      zodResolver(settingSchema),
-      {
-        actionProps: {
-          currentState: {},
-          updateFn: (state: unknown, input: unknown) => {
-            console.log(state, input)
-            return {}
-          },
-        },
-        formProps: {
-          mode: "onChange",
-        },
-      },
-    )
+export default function SettingLayout({ children }: LayoutSettingProps) {
+  const pathname = usePathname()
+
+  const hasSelected = (tabKey: string) => pathname.split('/').at(-1) === tabKey
+
+  const onGotoPage = (link: string) => redirect(`${pathname.split('/').slice(0, -1).join('/')}/${link}`)
 
   return (
-    <Form {...form}>
-      <form onSubmit={handleSubmitWithAction}>
-        <Tabs defaultValue="integrations" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-transparent rounded-none">
-            {SettingTabs.map((setting) => (
-              <TabsTrigger
-                key={setting.value}
-                value={setting.value}
-                className="data-[state=active]:shadow-none data-[state=active]:bg-transparent border-b-2 border-gray-200 rounded-none data-[state=active]:rounded-none data-[state=active]:border-blue-500"
-              >
-                <T keyName={setting.label} />
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="integrations" className="px-4">
-            {integrations}
-          </TabsContent>
-        </Tabs>
-      </form>
-    </Form>
+    <>
+      <section className="grid w-full grid-cols-5">
+        {SettingTabs.map((setting) => (
+          <Button
+            key={setting.value}
+            variant='link'
+            className={cn(
+              'border-b-2 border-gray-200 rounded-none hover:no-underline hover:border-blue-500',
+              hasSelected(setting.value) ? 'border-blue-500' : ''
+            )}
+            onClick={() => onGotoPage(setting.link)}
+          >
+            <T keyName={setting.label} />
+          </Button>
+        ))}
+      </section>
+      <section className="p-4">
+        {children}
+      </section>
+    </>
   )
 }
