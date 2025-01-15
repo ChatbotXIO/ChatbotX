@@ -21,6 +21,12 @@ import {
   SortableItem,
 } from "@/components/ui/sortable"
 import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert"
+import { MarkEmailVerifiedBlockEditor } from "@/features/flows/react-flow/blocks/mark-email-verified/editor"
+import { markEmailVerifiedBlockDefaultValue } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
+import { OptInEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-in-email/editor"
+import { optInEmailBlockDefaultValue } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
+import { OptOutEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-out-email/editor"
+import { optOutEmailBlockDefaultValue } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
 import { SendAudioBlockEditor } from "@/features/flows/react-flow/blocks/send-audio/editor"
 import { sendAudioBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-audio/schema"
 import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor"
@@ -40,7 +46,7 @@ import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
 import { type ReactNode, useCallback, useEffect } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
-import { ActionType } from "../../action-type"
+import { ActionType, disabledCopyActionTypes } from "../../action-type"
 import { SendTextBlockEditor } from "../../blocks/send-text/editor"
 import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
@@ -68,11 +74,18 @@ const maps: Record<
   [ActionType.SendCarousel]: ({ key, parentName }) => (
     <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />
   ),
+  [ActionType.MarkEmailVerified]: ({ key }) => (
+    <MarkEmailVerifiedBlockEditor key={key} />
+  ),
+  [ActionType.OptInEmail]: ({ key }) => <OptInEmailBlockEditor key={key} />,
+  [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
 }
 
 export default function SendMessageNodeEditor({
   activeNode,
-}: { activeNode: Node<SendMessageNodeSchema> }) {
+}: {
+  activeNode: Node<SendMessageNodeSchema>
+}) {
   const { t } = useTranslate()
 
   const { setNodes } = useReactFlow()
@@ -139,6 +152,15 @@ export default function SendMessageNodeEditor({
         break
       case ActionType.SendFile:
         append(sendAudioBlockDefaultValue())
+        break
+      case ActionType.MarkEmailVerified:
+        append(markEmailVerifiedBlockDefaultValue())
+        break
+      case ActionType.OptInEmail:
+        append(optInEmailBlockDefaultValue())
+        break
+      case ActionType.OptOutEmail:
+        append(optOutEmailBlockDefaultValue())
         break
     }
   }
@@ -259,15 +281,19 @@ export default function SendMessageNodeEditor({
                             aria-hidden="true"
                           />
                         </SortableDragHandle>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 shrink-0"
-                          onClick={() => onCopy(index)}
-                        >
-                          <CopyIcon className="size-4" aria-hidden="true" />
-                        </Button>
+                        {!disabledCopyActionTypes.includes(
+                          field.actionType,
+                        ) && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            onClick={() => onCopy(index)}
+                          >
+                            <CopyIcon className="size-4" aria-hidden="true" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </SortableItem>

@@ -1,5 +1,6 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -9,15 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Form } from "@/components/ui/form"
 import { createFolderAction } from "@/features/folders/actions/create-folder-action"
 import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema"
 import type { FolderType } from "@ahachat.ai/database"
@@ -88,18 +81,10 @@ export function CreateFolderDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormField
-                control={form.control}
+              <FormInput
                 name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("folders.name")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("folders.name")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("folders.name")}
+                placeholder={t("folders.name.placeholder")}
               />
 
               <div className="flex justify-end gap-4">

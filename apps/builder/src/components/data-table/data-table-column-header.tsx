@@ -24,7 +24,11 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort() && !column.getCanHide()) {
-    return <div className={cn(className)}>{title}</div>
+    return (
+      <div className={cn("text-sm", className)} suppressHydrationWarning={true}>
+        {title}
+      </div>
+    )
   }
 
   const ascValue = `${column.id}-asc`
@@ -55,7 +59,8 @@ export function DataTableColumnHeader<TData, TValue>({
                 ? "Sorted ascending. Click to sort descending."
                 : "Not sorted. Click to sort ascending."
           }
-          className="-ml-3 h-8 w-fit border-none text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent [&>svg:last-child]:hidden"
+          className="h-8 w-fit border-none shadow-none hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent [&>svg:last-child]:hidden"
+          suppressHydrationWarning={true}
         >
           {title}
           <SelectIcon asChild>

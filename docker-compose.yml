@@ -45,6 +45,13 @@ services:
       /usr/bin/mc anonymous set public minio/ahachatai/public;
       exit 0;
       "
+  redis:
+    image: redis:6.2-alpine
+    volumes:
+        - redis_data:/data
+    ports:
+        - "6379:6379"
 volumes:
   db_data:
   s3_data:
+  redis_data:

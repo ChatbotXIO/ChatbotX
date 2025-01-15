@@ -21,7 +21,9 @@ import { useFieldArray, useFormContext } from "react-hook-form"
 
 export const SendCarouselBlockEditor = ({
   parentName,
-}: { parentName: string }) => {
+}: {
+  parentName: string
+}) => {
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState<number>()
 

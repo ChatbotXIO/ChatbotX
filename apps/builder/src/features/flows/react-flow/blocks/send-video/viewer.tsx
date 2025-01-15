@@ -6,7 +6,9 @@ import type { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/se
 
 export const SendVideoBlockViewer = ({
   data,
-}: { data: SendVideoBlockSchema }) => {
+}: {
+  data: SendVideoBlockSchema
+}) => {
   return (
     <Card className="mb-2">
       <CardHeader className="p-0">

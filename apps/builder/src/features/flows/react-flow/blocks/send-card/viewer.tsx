@@ -8,7 +8,9 @@ import type { SendCardBlockSchema } from "./schema"
 
 export const SendCardBlockViewer = ({
   data,
-}: { data: SendCardBlockSchema }) => {
+}: {
+  data: SendCardBlockSchema
+}) => {
   return (
     <Card className="mb-3">
       <CardHeader className="p-0">

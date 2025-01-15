@@ -1,3 +1,6 @@
+import { markEmailVerifiedBlockSchema } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
+import { optInEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
+import { optOutEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
 import { sendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
 import { sendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
 import { sendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema"
@@ -18,6 +21,9 @@ export const sendMessageNodeSchema = z.object({
       sendVideoBlockSchema,
       sendAudioBlockSchema,
       sendCarouselBlockSchema,
+      markEmailVerifiedBlockSchema,
+      optInEmailBlockSchema,
+      optOutEmailBlockSchema,
     ]),
   ),
 })
