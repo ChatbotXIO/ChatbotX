@@ -1,14 +1,13 @@
+import {
+  type ChatbotMember,
+  ChatbotMemberRole,
+  type User,
+} from "@ahachat.ai/database"
 import { z } from "zod"
-import type { ChatbotMember, User } from "@ahachat.ai/database"
-
-export enum ChatbotMemberRole {
-  OWNER = "Owner",
-  AGENT = "Agent",
-}
 
 export type ChatbotMemberWithUser = ChatbotMember & { user: User }
 
-export const addAgentSchema = z.object({
+export const addChatbotMemberSchema = z.object({
   chatbotId: z.string().cuid2(),
   userId: z.string().cuid2(),
   role: z.nativeEnum(ChatbotMemberRole),

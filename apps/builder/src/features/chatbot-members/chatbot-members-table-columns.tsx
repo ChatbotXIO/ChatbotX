@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import type { ColumnDef } from "@tanstack/react-table"
 import { CircleCheckIcon, CircleXIcon, MailIcon, MailXIcon } from "lucide-react"
-import type { ChatbotMemberWithUser } from "./schemas/add-agent-schema"
+import type { ChatbotMemberWithUser } from "./schemas/add-chatbot-member-schema"
 
 const activeIcon = (active: boolean) =>
   active ? (

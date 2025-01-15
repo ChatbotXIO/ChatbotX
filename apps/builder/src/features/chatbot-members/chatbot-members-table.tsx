@@ -12,7 +12,7 @@ import { useTranslate } from "@tolgee/react"
 import React, { use, useEffect, useMemo, useState } from "react"
 import { getColumns } from "./chatbot-members-table-columns"
 import type { getAgents } from "./queries"
-import type { ChatbotMemberWithUser } from "./schemas/add-agent-schema"
+import type { ChatbotMemberWithUser } from "./schemas/add-chatbot-member-schema"
 
 type ChatbotMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getAgents>>]>
