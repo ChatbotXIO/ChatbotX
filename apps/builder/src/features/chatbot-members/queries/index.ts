@@ -1,14 +1,13 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@ahachat.ai/database"
-import type { ChatbotMember, Prisma, User } from "@prisma/client"
+import type { Prisma } from "@prisma/client"
+import type { ChatbotMemberWithUser } from "../schemas/add-agent-schema"
+import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"
 import { unstable_cache } from "next/cache"
-import type { GetAgentsSchema } from "./get-agents-schema"
-
-export type ChatbotMemberWithUser = ChatbotMember & { user: User }
 
 export async function getAgents(
-  input: GetAgentsSchema,
+  input: GetChatbotMembersSchema,
 ): Promise<{ data: ChatbotMemberWithUser[]; pageCount: number }> {
   const userId = await getCurrentUserId()
 
@@ -19,20 +18,16 @@ export async function getAgents(
       try {
         const where: Prisma.ChatbotMemberWhereInput = {
           chatbotId: input.chatbotId,
-        }
-
-        if (input.keyword) {
-          where.OR = [
-            {
-              user: {
+          user: input.keyword
+            ? {
                 name: {
                   contains: input.keyword,
                   mode: "insensitive",
                 },
-              },
-            },
-          ]
+              }
+            : undefined,
         }
+
         const [data, total] = await prisma.$transaction([
           prisma.chatbotMember.findMany({
             skip: (input.page - 1) * input.perPage,
@@ -42,10 +37,13 @@ export async function getAgents(
               user: true,
             },
           }),
-          prisma.chatbotMember.count({ where }),
+          prisma.chatbotMember.count({
+            where,
+          }),
         ])
         const pageCount = Math.ceil(total / input.perPage)
-        return { data: data as ChatbotMemberWithUser[], pageCount }
+
+        return { data, pageCount }
       } catch (error) {
         return { data: [], pageCount: 0 }
       }
@@ -53,7 +51,7 @@ export async function getAgents(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: ["agents"],
+      tags: [`${userId}#chatbotMembers`],
     },
   )()
 }

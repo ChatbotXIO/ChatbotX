@@ -1,17 +1,17 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { AddAgentDialog } from "@/features/agents/add-agents/add-agent-dialog"
-import { AgentsTable } from "@/features/agents/list-agents/agent-table"
-import { getAgents } from "@/features/agents/list-agents/get-agents-queries"
-import { getAgentsSearchParamsCache } from "@/features/agents/list-agents/get-agents-schema"
+import { ChatbotMembersTable } from "@/features/chatbot-members/chatbot-members-table"
+import { getAgents } from "@/features/chatbot-members/queries"
+import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
+import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
 export default async function AgentsPage(props: {
   params: Promise<{ chatbotId: string }>
-  searchParams: Promise<any>
+  searchParams: Promise<SearchParams>
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getAgentsSearchParamsCache.parse(searchParams)
+  const search = getChatbotMembersSearchParamsCache.parse(searchParams)
 
   const promises = Promise.all([
     getAgents({
@@ -21,10 +21,7 @@ export default async function AgentsPage(props: {
   ])
 
   return (
-    <div>
-      <div className="flex w-full justify-end mb-4">
-        <AddAgentDialog chatbotId={params.chatbotId} />
-      </div>
+    <>
       <Suspense
         fallback={
           <DataTableSkeleton
@@ -36,8 +33,8 @@ export default async function AgentsPage(props: {
           />
         }
       >
-        <AgentsTable promises={promises} />
+        <ChatbotMembersTable promises={promises} />
       </Suspense>
-    </div>
+    </>
   )
 }

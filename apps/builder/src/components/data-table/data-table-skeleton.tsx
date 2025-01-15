@@ -110,11 +110,13 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {Array.from({ length: 1 }).map((row) => (
-              <TableRow key={`row-${row}`} className="hover:bg-transparent">
+            {Array.from({ length: 1 }).map((row, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              <TableRow key={`row-${i}`} className="hover:bg-transparent">
                 {Array.from({ length: columnCount }).map((rowj, j) => (
                   <TableHead
-                    key={`rowj-${rowj}`}
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={`rowj-${j}`}
                     style={{
                       width: cellWidths[j],
                       minWidth: shrinkZero ? cellWidths[j] : "auto",

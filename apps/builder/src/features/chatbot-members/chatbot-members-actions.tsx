@@ -4,9 +4,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { EllipsisVertical, Pencil, Trash } from "lucide-react"
+import { T } from "@tolgee/react"
+import {
+  EllipsisVertical,
+  EllipsisVerticalIcon,
+  Pencil,
+  PencilIcon,
+  Trash,
+  TrashIcon,
+} from "lucide-react"
 
-interface AgentActionsDropdownProps {
+interface ChatbotMembersActionsProps {
   onEdit: () => void
   onDelete: () => void
 }
@@ -14,22 +22,20 @@ interface AgentActionsDropdownProps {
 export function AgentActionsDropdown({
   onEdit,
   onDelete,
-}: AgentActionsDropdownProps) {
+}: ChatbotMembersActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button>
-          <EllipsisVertical />
-        </button>
+        <EllipsisVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-32">
         <DropdownMenuItem onClick={onEdit}>
-          <Pencil className="w-4 h-4 mr-2" />
-          Edit
+          <PencilIcon className="w-4 h-4 mr-2" />
+          <T keyName="common.edit" />
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onDelete}>
-          <Trash className="w-4 h-4 mr-2" />
-          Delete
+          <TrashIcon className="w-4 h-4 mr-2" />
+          <T keyName="common.delete" />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
