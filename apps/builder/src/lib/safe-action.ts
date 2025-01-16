@@ -24,7 +24,7 @@ export const actionClient = createSafeActionClient({
 
     if (error instanceof BaseException) {
       return {
-        message: error.message
+        message: error.message,
       }
     }
 
