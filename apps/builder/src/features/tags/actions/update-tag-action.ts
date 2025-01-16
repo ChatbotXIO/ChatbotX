@@ -4,6 +4,7 @@ import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
+import { TagException } from "../schemas/error"
 import {
   type UpdateTagBindSchema,
   type UpdateTagSchema,
@@ -39,7 +40,7 @@ export const updateTagAction = authActionClient
         },
       })
       if (existingTag) {
-        throw new Error(
+        throw new TagException(
           `Tag with the name "${parsedInput.name}" already exists.`,
         )
       }

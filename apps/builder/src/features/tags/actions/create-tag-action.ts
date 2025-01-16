@@ -10,6 +10,7 @@ import {
   createTagBindSchema,
   createTagSchema,
 } from "../schemas/create-tag-schema"
+import { TagException } from "../schemas/error"
 
 export const createTagAction = authActionClient
   .schema(createTagSchema)
@@ -36,7 +37,7 @@ export const createTagAction = authActionClient
         },
       })
       if (existingTag) {
-        throw new Error(
+        throw new TagException(
           `Tag with the name "${parsedInput.name}" already exists.`,
         )
       }
@@ -53,7 +54,7 @@ export const createTagAction = authActionClient
           },
         })
         if (!existingFolder) {
-          throw new Error("Folder does not exists.")
+          throw new TagException("Folder does not exists.")
         }
       }
 
