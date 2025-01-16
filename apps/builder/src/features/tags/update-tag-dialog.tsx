@@ -42,7 +42,11 @@ export function UpdateTagDialog({
   const { t } = useTranslate()
   const router = useRouter()
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
+  const {
+    form,
+    handleSubmitWithAction,
+    form: { setValue },
+  } = useHookFormAction(
     updateTagAction.bind(null, chatbotId, tag?.id ?? ""),
     zodResolver(updateTagSchema),
     {
@@ -61,13 +65,16 @@ export function UpdateTagDialog({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          name: "",
-        },
       },
       errorMapProps: {},
     },
   )
+
+  useEffect(() => {
+    if (tag) {
+      setValue("name", tag.name)
+    }
+  }, [tag, setValue])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

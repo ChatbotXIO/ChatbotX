@@ -37,33 +37,35 @@ export function CreateTagDialog({
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    createTagAction.bind(null, chatbotId, folderId),
-    zodResolver(createTagSchema),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Tag created successfully")
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      createTagAction.bind(null, chatbotId, folderId),
+      zodResolver(createTagSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success("Tag created successfully")
 
-          setOpen(false)
-          router.refresh()
+            setOpen(false)
+            resetFormAndAction()
+            router.refresh()
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError.message ?? error.serverError)
+            }
+          },
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: "",
+            syncToMessenger: false,
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: "",
-          syncToMessenger: false,
-        },
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -102,10 +104,11 @@ export function CreateTagDialog({
                 control={form.control}
                 name="syncToMessenger"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("tags.sync_to_messenger")}</FormLabel>
+                  <FormItem className="flex items-center gap-2">
+                    <FormLabel>{t("tags.syncToMessenger")}</FormLabel>
                     <FormControl>
                       <Switch
+                        className="!mt-0"
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />

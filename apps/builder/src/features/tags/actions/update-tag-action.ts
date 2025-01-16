@@ -27,12 +27,17 @@ export const updateTagAction = authActionClient
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
       const existingTag = await prisma.tag.findFirst({
+        select: {
+          id: true,
+        },
         where: {
           name: parsedInput.name,
           chatbotId,
+          id: {
+            not: tagId,
+          },
         },
       })
-
       if (existingTag) {
         throw new Error(
           `Tag with the name "${parsedInput.name}" already exists.`,
@@ -42,7 +47,6 @@ export const updateTagAction = authActionClient
       await prisma.tag.update({
         where: {
           id: tagId,
-          chatbotId,
         },
         data: {
           name: parsedInput.name,

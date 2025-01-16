@@ -2,7 +2,7 @@
 
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import { FolderType, type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
   type CreateTagBindSchema,
@@ -27,16 +27,34 @@ export const createTagAction = authActionClient
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
       const existingTag = await prisma.tag.findFirst({
+        select: {
+          id: true,
+        },
         where: {
           name: parsedInput.name,
           chatbotId,
         },
       })
-
       if (existingTag) {
         throw new Error(
           `Tag with the name "${parsedInput.name}" already exists.`,
         )
+      }
+
+      if (folderId) {
+        const existingFolder = await prisma.folder.findFirst({
+          select: {
+            id: true,
+          },
+          where: {
+            chatbotId,
+            id: folderId,
+            folderType: FolderType.Tag,
+          },
+        })
+        if (!existingFolder) {
+          throw new Error("Folder does not exists.")
+        }
       }
 
       await prisma.tag.create({

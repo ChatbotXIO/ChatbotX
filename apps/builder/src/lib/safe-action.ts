@@ -8,6 +8,7 @@ import {
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
+    console.log("dddddddd", error)
     if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === "P2025" || error.code === "P2016") {
         return {
