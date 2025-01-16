@@ -4,12 +4,13 @@ import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { returnValidationErrors } from "next-safe-action"
+import { revalidateTag } from "next/cache"
 import {
   type CreateContactBindSchema,
   type CreateContactSchema,
   createContactBindSchema,
   createContactSchema,
-} from "./create-contact-schema"
+} from "../schemas/create-contact-schema"
 
 export const createContactAction = authActionClient
   .schema(createContactSchema)
@@ -41,6 +42,8 @@ export const createContactAction = authActionClient
       await prisma.contact.create({
         data: { ...parsedInput, chatbotId: chatbot.id, source: "web" },
       })
+
+      revalidateTag(`${ctx.user.id}#contacts`)
 
       return {
         successful: true,

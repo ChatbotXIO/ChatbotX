@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "next/link"
 import {
   Card,
   CardContent,
@@ -7,11 +7,14 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { T } from "@tolgee/react";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { T } from "@tolgee/react"
+import { cn } from "@/lib/utils"
+import { useState } from "react"
 
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file'];
+const SCOPES = [
+  "https://www.googleapis.com/auth/spreadsheets",
+  "https://www.googleapis.com/auth/drive.file",
+]
 
 export const SettingIntegrationGoogleSheets = () => {
   const [isConnect, setIsConnect] = useState(false)
@@ -38,25 +41,21 @@ export const SettingIntegrationGoogleSheets = () => {
         </CardHeader>
 
         <div className={cn(isConnect ? "flex flex-col gap-2" : "")}>
-          {
-            isConnect
-              ? (
-                <>
-                  <Button variant="secondary">
-                    <T keyName="settings.integrations.Button.Manager" />
-                  </Button>
+          {isConnect ? (
+            <>
+              <Button variant="secondary">
+                <T keyName="settings.integrations.Button.Manager" />
+              </Button>
 
-                  <Button variant="destructive">
-                    <T keyName="settings.integrations.Button.Disconnect" />
-                  </Button>
-                </>
-              )
-              : (
-                <Button variant="secondary" onClick={onConnect}>
-                  <T keyName="settings.integrations.Button.Connect" />
-                </Button>
-              )
-          }
+              <Button variant="destructive">
+                <T keyName="settings.integrations.Button.Disconnect" />
+              </Button>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={onConnect}>
+              <T keyName="settings.integrations.Button.Connect" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

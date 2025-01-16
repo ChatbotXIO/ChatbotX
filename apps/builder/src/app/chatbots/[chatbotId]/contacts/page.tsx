@@ -1,8 +1,8 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { CreateContactDialog } from "@/features/contacts/create/create-contact-dialog"
-import { ContactsTable } from "@/features/contacts/list/contacts-table"
-import { getContacts } from "@/features/contacts/list/get-contacts-queries"
-import { getContactsSearchParamsCache } from "@/features/contacts/list/get-contacts-schema"
+import { ContactsTable } from "@/features/contacts/contacts-table"
+import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
+import { getContacts } from "@/features/contacts/queries"
+import { getContactsSearchParamsCache } from "@/features/contacts/schemas/get-contacts-schema"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 

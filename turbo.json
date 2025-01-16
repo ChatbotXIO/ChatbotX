@@ -17,21 +17,6 @@
       "cache": false,
       "persistent": true
     },
-    "db:generate": {
-      "cache": false
-    },
-    "db:migrate": {
-      "cache": false
-    },
-    "db:client": {
-      "cache": false
-    },
-    "db:studio": {
-      "cache": false
-    },
-    "db:seed": {
-      "cache": false
-    },
     "//#format-and-lint": {},
     "//#format-and-lint:fix": {
       "cache": false

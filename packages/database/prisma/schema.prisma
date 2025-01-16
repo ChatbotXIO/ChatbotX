@@ -91,6 +91,8 @@ model Chatbot {
   contacts       Contact[]
   logs           Log[]
   folders        Folder[]
+  fields         Field[]
+  tags           Tag[]
 }
 
 model ChatbotMember {
@@ -198,6 +200,7 @@ model Contact {
   assignedUser User?   @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
   assignedTeam Team?   @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
   logs         Log[]   @relation("ExecutorContact")
+  tags         Tag[]
 }
 
 model Folder {
@@ -215,6 +218,7 @@ model Folder {
   children Folder[] @relation("ParentChild")
   chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   tags     Tag[]
+  fields   Field[]
 
   @@index([chatbotId])
   @@index([parentId])
@@ -227,10 +231,44 @@ model Tag {
   name            String
   folderId        String?
   syncToMessenger Boolean
+  chatbotId       String
 
-  folder Folder? @relation(fields: [folderId], references: [id])
+  chatbot  Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  folder   Folder?   @relation(fields: [folderId], references: [id])
+  contacts Contact[]
 
   @@index([folderId])
+}
+
+model Field {
+  id              String          @id @default(cuid(2))
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  name            String
+  customFieldType CustomFieldType
+  description     String?
+  folderId        String?
+  fieldType       FieldType
+  value           String?
+  showInInbox     Boolean
+  chatbotId       String
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  folder  Folder? @relation(fields: [folderId], references: [id])
+}
+
+enum CustomFieldType {
+  ShortText
+  Number
+  Date
+  DateTime
+  Boolean
+  LongText
+}
+
+enum FieldType {
+  AccountField
+  CustomField
 }
 
 enum FolderType {

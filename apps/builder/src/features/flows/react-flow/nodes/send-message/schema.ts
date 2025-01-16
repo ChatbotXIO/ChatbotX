@@ -7,6 +7,9 @@ import { openAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/b
 import { openAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
 import { openAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
 import { openAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
+import { markEmailVerifiedBlockSchema } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
+import { optInEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
+import { optOutEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
 import { sendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
 import { sendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
 import { sendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema"
@@ -36,6 +39,9 @@ export const sendMessageNodeSchema = z.object({
       openAISpeechToTextSchema,
       openAITextToSpeechSchema,
       openAIDeleteMessageHistorySchema,
+      markEmailVerifiedBlockSchema,
+      optInEmailBlockSchema,
+      optOutEmailBlockSchema,
     ]),
   ),
 })

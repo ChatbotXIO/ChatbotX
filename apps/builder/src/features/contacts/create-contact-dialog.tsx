@@ -27,7 +27,7 @@ export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{t("contacts.create.btn")}</Button>
+        <Button variant="outline">{t("contacts.createBtn")}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

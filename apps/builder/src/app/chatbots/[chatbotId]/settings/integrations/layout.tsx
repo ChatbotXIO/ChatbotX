@@ -20,22 +20,20 @@ interface SettingIntegrationLayoutProps {
   googleSheets: ReactNode
 }
 
-
-
 export default function SettingIntegrationLayout({
-  openAI, googleSheets
+  openAI,
+  googleSheets,
 }: SettingIntegrationLayoutProps) {
-
   const IntegrationItems = [
     {
-      keyName: 'settings.integrations.OpenAI',
+      keyName: "settings.integrations.OpenAI",
       icon: <BotMessageSquareIcon size={30} />,
-      content: openAI
+      content: openAI,
     },
     {
-      keyName: 'settings.integrations.GoogleSheets',
+      keyName: "settings.integrations.GoogleSheets",
       icon: <TableIcon size={30} />,
-      content: googleSheets
+      content: googleSheets,
     },
   ]
 
@@ -61,23 +59,23 @@ export default function SettingIntegrationLayout({
     <Form {...form}>
       <form onSubmit={handleSubmitWithAction}>
         <Accordion type="single" collapsible className="w-full">
-          {
-            IntegrationItems.map((integration) => (
-              <AccordionItem
-                key={integration.keyName}
-                value={integration.keyName}
-                className="transition-all hover:rounded-lg hover:[&[data-state=open]]:rounded-none"
-              >
-                <AccordionTrigger className="px-4 rounded-none transition-all [&[data-state=open]]:bg-gray-200 hover:no-underline hover:bg-gray-200">
-                  <div className="flex items-center gap-2">
-                    { integration.icon }
-                    <T keyName={integration.keyName} />
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-4">{integration.content}</AccordionContent>
-              </AccordionItem>
-            ))
-          }
+          {IntegrationItems.map((integration) => (
+            <AccordionItem
+              key={integration.keyName}
+              value={integration.keyName}
+              className="transition-all hover:rounded-lg hover:[&[data-state=open]]:rounded-none"
+            >
+              <AccordionTrigger className="px-4 rounded-none transition-all [&[data-state=open]]:bg-gray-200 hover:no-underline hover:bg-gray-200">
+                <div className="flex items-center gap-2">
+                  {integration.icon}
+                  <T keyName={integration.keyName} />
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="p-4">
+                {integration.content}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
         </Accordion>
       </form>
     </Form>
