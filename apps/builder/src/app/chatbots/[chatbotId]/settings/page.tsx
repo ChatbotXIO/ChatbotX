@@ -1,7 +1,7 @@
-export default function SettingsPage({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return "settings page"
+"use client"
+
+import { redirect } from "next/navigation"
+
+export default function SettingPage() {
+  return redirect("settings/general")
 }
