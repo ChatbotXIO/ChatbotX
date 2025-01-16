@@ -5,10 +5,10 @@ import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
-  updateCustomFieldSchema,
   type UpdateCustomFieldSchema,
-  updateFieldBindSchema,
   type UpdateFieldBindSchema,
+  updateCustomFieldSchema,
+  updateFieldBindSchema,
 } from "../schemas/update-custom-field-schema"
 
 export const updateCustomFieldAction = authActionClient

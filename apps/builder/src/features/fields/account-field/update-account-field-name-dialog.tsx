@@ -92,7 +92,7 @@ export function UpdateAccountFieldNameDialog({
           <DialogTitle>
             {t("field.update.title")}: {customField?.name}
           </DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>

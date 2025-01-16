@@ -1,5 +1,5 @@
-import { z } from "zod"
 import { FieldType } from "@ahachat.ai/database"
+import { z } from "zod"
 
 const FieldTypeEnum = z.nativeEnum(FieldType)
 
