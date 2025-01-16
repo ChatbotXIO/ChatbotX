@@ -218,7 +218,7 @@ model Folder {
   children Folder[] @relation("ParentChild")
   chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   tags     Tag[]
-  Field    Field[]
+  fields   Field[]
 
   @@index([chatbotId])
   @@index([parentId])
