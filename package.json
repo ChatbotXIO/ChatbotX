@@ -4,24 +4,27 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "lint": "turbo lint",
+    "format": "biome format --fix",
+    "lint": "biome check . --write",
     "locale:pull": "tolgee pull",
-    "locale:push": "tolgee sync --continue-on-warning --remove-unused --patterns './apps/builder/src/**/*.ts?(x)' --backup './.tolgee/backup'"
+    "locale:push": "tolgee sync --continue-on-warning --remove-unused --patterns './apps/builder/src/**/*.ts?(x)' --backup './.tolgee/backup'",
+    "format-and-lint": "biome check .",
+    "format-and-lint:fix": "biome check . --write",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@tolgee/cli": "^2.4.1",
-    "@types/node": "^22.10.2",
+    "@biomejs/biome": "^1.9.4",
+    "@tolgee/cli": "^2.5.0",
+    "@types/node": "^22.10.5",
+    "husky": "^9.1.7",
     "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
     "turbo": "^2.3.3",
-    "typescript": "5.5.4"
+    "typescript": "5.7.3"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=22"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "workspaces": ["apps/*", "packages/*"]
 }

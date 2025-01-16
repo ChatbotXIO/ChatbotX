@@ -1,6 +1,6 @@
-import { TolgeeBase, ALL_LANGUAGES, getStaticData } from './shared';
-import { createServerInstance } from '@tolgee/react/server';
-import { getLanguage } from './language';
+import { createServerInstance } from "@tolgee/react/server"
+import { getLanguage } from "./language"
+import { ALL_LANGUAGES, TolgeeBase, getStaticData } from "./shared"
 
 export const { getTolgee, getTranslate, T } = createServerInstance({
   getLocale: getLanguage,
@@ -16,4 +16,4 @@ export const { getTolgee, getTranslate, T } = createServerInstance({
       fetch: async (input, init) =>
         fetch(input, { ...init, next: { revalidate: 0 } }),
     }),
-});
+})

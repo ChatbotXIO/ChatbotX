@@ -1,22 +1,23 @@
-'use client';
+"use client"
 
-import React from 'react';
-import { useTolgee } from '@tolgee/react';
-import { setLanguage } from '@/tolgee/language';
 import {
   Select,
   SelectContent,
   SelectGroup,
-  SelectItem, SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { setLanguage } from "@/tolgee/language"
+import { useTolgee } from "@tolgee/react"
+import type React from "react"
 
 export const LangSelector: React.FC = () => {
-  const tolgee = useTolgee(['language']);
-  const locale = tolgee.getLanguage();
+  const tolgee = useTolgee(["language"])
+  const locale = tolgee.getLanguage()
 
   function onSelectChange(value: string) {
-    setLanguage(value);
+    setLanguage(value)
   }
   return (
     <Select onValueChange={onSelectChange} defaultValue={locale}>
@@ -30,5 +31,5 @@ export const LangSelector: React.FC = () => {
         </SelectGroup>
       </SelectContent>
     </Select>
-  );
-};
+  )
+}

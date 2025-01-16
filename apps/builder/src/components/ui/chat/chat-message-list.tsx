@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
-import * as React from "react";
+import { cn } from "@/lib/utils"
+import * as React from "react"
 
-interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> { }
+interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
   ({ className, children, ...props }, ref) => (
@@ -16,8 +16,8 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
       {children}
     </div>
   ),
-);
+)
 
-ChatMessageList.displayName = "ChatMessageList";
+ChatMessageList.displayName = "ChatMessageList"
 
-export { ChatMessageList };
+export { ChatMessageList }

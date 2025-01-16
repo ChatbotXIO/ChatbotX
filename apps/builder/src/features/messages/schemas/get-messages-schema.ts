@@ -1,15 +1,15 @@
-import { Message } from "@ahachat.ai/database"
-import { User } from "next-auth";
+import type { Message } from "@ahachat.ai/database"
+import type { User } from "next-auth"
 
 export type CursorMessages = {
-  createdAt: Date,
+  createdAt: Date
   id: string
 }
 
 export type GetMessagesSchema = {
-  chatbotId: string,
-  conversationId: string,
-  perPage?: number,
+  chatbotId: string
+  conversationId: string
+  perPage?: number
   cursor?: CursorMessages | null
 }
 

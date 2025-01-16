@@ -1,4 +1,4 @@
-import { type Table } from "@tanstack/react-table"
+import type { Table } from "@tanstack/react-table"
 import {
   ChevronLeft,
   ChevronRight,

@@ -7,7 +7,9 @@ export default function MessageLoading() {
       viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
       className="text-foreground"
+      aria-label="Loading message animation"
     >
+      <title>Loading</title>
       <circle cx="4" cy="12" r="2" fill="currentColor">
         <animate
           id="spinner_qFRN"
@@ -41,5 +43,5 @@ export default function MessageLoading() {
         />
       </circle>
     </svg>
-  );
+  )
 }

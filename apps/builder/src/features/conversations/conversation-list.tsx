@@ -2,34 +2,50 @@
 
 import { Button } from "@/components/ui/button"
 import ConversationItem from "@/features/conversations/conversation-item"
+import {
+  getConversations,
+  getCurrentConversation,
+} from "@/features/conversations/queries"
+import type {
+  ConversationResource,
+  CursorConversations,
+} from "@/features/conversations/schemas/get-conversations-schema"
 import ConversationLoading from "@/features/inbox/conversation-loading"
+import { generateRandomMessage } from "@/mock/messages.mock"
+import type { Message } from "@ahachat.ai/database"
 import { parseAsString, useQueryState } from "nuqs"
 import { Suspense, use, useEffect, useRef, useState } from "react"
-import { Virtuoso, VirtuosoHandle } from "react-virtuoso"
-import { getConversations, getCurrentConversation } from "@/features/conversations/queries";
-import { Message } from "@ahachat.ai/database"
-import { ConversationResource, CursorConversations } from "@/features/conversations/schemas/get-conversations-schema";
-import { generateRandomMessage } from "@/mock/messages.mock";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso"
 
 interface ConversationListProps {
   chatbotId: string
   promises: Promise<Awaited<ReturnType<typeof getConversations>>>
 }
 
-export default function ConversationList({ chatbotId, promises }: ConversationListProps) {
+export default function ConversationList({
+  chatbotId,
+  promises,
+}: ConversationListProps) {
   const { data, cursor: initCursor } = use(promises)
   const [conversations, setConversations] = useState(data)
   const [cursor, setCursor] = useState<CursorConversations | null>(initCursor)
   const [loadingMore, setLoadingMore] = useState<boolean>(false)
 
-  const [activeConversationId, setActiveConversationId] = useQueryState("conversationId", parseAsString.withOptions({
-    history: "replace",
-    shallow: false,
-  }))
+  const [activeConversationId, setActiveConversationId] = useQueryState(
+    "conversationId",
+    parseAsString.withOptions({
+      history: "replace",
+      shallow: false,
+    }),
+  )
 
   const virtuosoRef = useRef<VirtuosoHandle>(null)
-  const foundIndex = conversations.findIndex((c) => c.id == activeConversationId)
-  const [activeConversationIndex] = useState<number>(foundIndex > -1 ? foundIndex : 0)
+  const foundIndex = conversations.findIndex(
+    (c) => c.id === activeConversationId,
+  )
+  const [activeConversationIndex] = useState<number>(
+    foundIndex > -1 ? foundIndex : 0,
+  )
 
   const loadMoreConversations = async () => {
     if (loadingMore || !cursor) {
@@ -40,50 +56,58 @@ export default function ConversationList({ chatbotId, promises }: ConversationLi
       setLoadingMore(true)
       const newConversations = await getConversations({
         chatbotId,
-        cursor
+        cursor,
       })
       setConversations((prev) => [...prev, ...newConversations.data])
       setCursor(newConversations.cursor)
     } catch (err) {
-      console.log('err', err)
+      console.log("err", err)
     } finally {
       setLoadingMore(false)
     }
   }
 
-  const onNewConversation = () => {
-  }
+  const onNewConversation = () => {}
 
   const mockNewMessageEvent = async () => {
     const message = generateRandomMessage(chatbotId)
     const randomNewConversation = Math.random() < 0.5
     if (!randomNewConversation) {
-      message.conversationId = conversations[Math.floor(Math.random() * conversations.length)]?.id as string
+      message.conversationId = conversations[
+        Math.floor(Math.random() * conversations.length)
+      ]?.id as string
     }
 
     await onNewMessage(message)
   }
 
   const onNewMessage = async (message: Message) => {
-    const index = conversations.findIndex((c) => c.id === message.conversationId)
+    const index = conversations.findIndex(
+      (c) => c.id === message.conversationId,
+    )
     if (index > -1) {
-      const [existingConversation] = conversations.splice(index, 1) as [ConversationResource];
+      const [existingConversation] = conversations.splice(index, 1) as [
+        ConversationResource,
+      ]
       existingConversation.latestMessage = message
       existingConversation.updatedAt = message.createdAt
       existingConversation.unreadCount++
-      conversations.unshift(existingConversation);
+      conversations.unshift(existingConversation)
       setConversations([...conversations])
       return
     }
 
     const newConversation = await getCurrentConversation({
       chatbotId,
-      id: message.conversationId
+      id: message.conversationId,
     })
     if (!newConversation.conversation) {
       return
     }
-    setConversations([newConversation.conversation as ConversationResource, ...conversations])
+    setConversations([
+      newConversation.conversation as ConversationResource,
+      ...conversations,
+    ])
   }
 
   useEffect(() => {
@@ -108,10 +132,12 @@ export default function ConversationList({ chatbotId, promises }: ConversationLi
         initialItemCount={data.length}
         atBottomStateChange={(atBottom) => atBottom && loadMoreConversations()}
         itemContent={(_, item) => (
-          <Suspense fallback={<ConversationLoading/>}>
-            <ConversationItem conversation={item}
-                              isActive={item.id === activeConversationId}
-                              onSelect={() => setActiveConversationId(item.id)}/>
+          <Suspense fallback={<ConversationLoading />}>
+            <ConversationItem
+              conversation={item}
+              isActive={item.id === activeConversationId}
+              onSelect={() => setActiveConversationId(item.id)}
+            />
           </Suspense>
         )}
       />

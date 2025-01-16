@@ -11,8 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Log } from "@ahachat.ai/database"
-import { type Row } from "@tanstack/react-table"
+import type { Log } from "@ahachat.ai/database"
+import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -37,13 +37,20 @@ export function DeleteLogsDialog({
   onSuccess,
   ...props
 }: DeleteLogsDialogProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
 
-  const { execute, result } = useAction(deleteLogAction.bind(null, chatbotId, (logs ?? []).map(log => log.id), logType))
+  const { execute, result } = useAction(
+    deleteLogAction.bind(
+      null,
+      chatbotId,
+      (logs ?? []).map((log) => log.id),
+      logType,
+    ),
+  )
 
   const [isDeletePending, startDeleteTransition] = useTransition()
   const onDelete = () => {
-    if (!logs || logs.length == 0) {
+    if (!logs || logs.length === 0) {
       return
     }
 
@@ -65,22 +72,23 @@ export function DeleteLogsDialog({
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
             <Trash className="mr-2 size-4" aria-hidden="true" />
-            {t('common.deleteBtn')} ({logs.length})
+            {t("common.deleteBtn")} ({logs.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('logs.delete.dialog_title')}</DialogTitle>
+          <DialogTitle>{t("logs.delete.dialog_title")}</DialogTitle>
           <DialogDescription>
-            {t('logs.delete.dialog_first_desc')}{" "}
+            {t("logs.delete.dialog_first_desc")}{" "}
             <span className="font-medium">{logs.length}</span>
-            {logs.length === 1 ? " log " : " logs "}{t('logs.delete.dialog_second_desc')}
+            {logs.length === 1 ? " log " : " logs "}
+            {t("logs.delete.dialog_second_desc")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t('common.cancelBtn')}</Button>
+            <Button variant="outline">{t("common.cancelBtn")}</Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
@@ -89,12 +97,9 @@ export function DeleteLogsDialog({
             disabled={isDeletePending}
           >
             {isDeletePending && (
-              <Loader
-                className="mr-2 size-4 animate-spin"
-                aria-hidden="true"
-              />
+              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
-            {t('common.deleteBtn')}
+            {t("common.deleteBtn")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,16 +1,16 @@
-import { cookies } from "next/headers";
+import { cookies } from "next/headers"
 
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { ReactNode } from "react";
+} from "@/components/ui/resizable"
+import type { ReactNode } from "react"
 
 interface InboxLayoutProps {
-  conversation: ReactNode;
-  message: ReactNode;
-  contact: ReactNode;
+  conversation: ReactNode
+  message: ReactNode
+  contact: ReactNode
 }
 
 export default async function InboxLayout({
@@ -27,7 +27,11 @@ export default async function InboxLayout({
       className="h-full max-h-[calc(100vh-64px)] items-stretch"
     >
       {/* CONVERSATION LIST */}
-      <ResizablePanel defaultSize={defaultLayout[0] ?? 25} minSize={20} maxSize={25}>
+      <ResizablePanel
+        defaultSize={defaultLayout[0] ?? 25}
+        minSize={20}
+        maxSize={25}
+      >
         {conversation}
       </ResizablePanel>
       <ResizableHandle withHandle />
@@ -39,9 +43,13 @@ export default async function InboxLayout({
       <ResizableHandle withHandle />
 
       {/* CONTACT DETAIL */}
-      <ResizablePanel defaultSize={defaultLayout[2] ?? 25} minSize={20} maxSize={25}>
+      <ResizablePanel
+        defaultSize={defaultLayout[2] ?? 25}
+        minSize={20}
+        maxSize={25}
+      >
         {contact}
       </ResizablePanel>
     </ResizablePanelGroup>
-  );
+  )
 }
