@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -6,9 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { T } from "@tolgee/react"
 import { cn } from "@/lib/utils"
+import { T } from "@tolgee/react"
+import Link from "next/link"
 import { useState } from "react"
 
 const SCOPES = [
