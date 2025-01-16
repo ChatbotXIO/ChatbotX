@@ -1,123 +1,131 @@
 "use client"
 
-import { Button } from "@/components/ui/button";
+import { FormInput } from "@/components/form-input"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogContent, DialogDescription, DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Field, FieldType } from "@ahachat.ai/database";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { useTranslate } from '@tolgee/react';
-import { Loader2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import "react-day-picker/style.css";
-import { toast } from "sonner";
-import { updateFieldNameAction } from "./actions/update-field-name-action";
-import { updateFieldNameSchema } from "./schemas/update-field-name-schema";
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Form } from "@/components/ui/form"
+import { type Field, FieldType } from "@ahachat.ai/database"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useTranslate } from "@tolgee/react"
+import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import { toast } from "sonner"
+import { updateCustomFieldAction } from "./actions/update-custom-field-action"
+import { updateCustomFieldSchema } from "./schemas/update-custom-field-schema"
 
 export function UpdateCustomFieldDialog({
   chatbotId,
   customField,
   open,
-  onOpenChange
-}:
-  {
-    open: boolean,
-    onOpenChange: (val: boolean) => void,
-    chatbotId: string,
-    customField: Field | null,
-
-  }) {
-  const { t } = useTranslate();
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (val: boolean) => void
+  chatbotId: string
+  customField: Field | null
+}) {
+  const { t } = useTranslate()
   const router = useRouter()
   const fieldType = FieldType.CustomField
 
   const {
     form,
-    handleSubmitWithAction
-  } = useHookFormAction(updateFieldNameAction.bind(null, chatbotId, customField?.id ?? "", fieldType), zodResolver(updateFieldNameSchema), {
-    actionProps: {
-      onSuccess: () => {
-        toast.success(`Custom Field update successfully`)
+    handleSubmitWithAction,
+    resetFormAndAction,
+    form: { setValue },
+  } = useHookFormAction(
+    updateCustomFieldAction.bind(
+      null,
+      chatbotId,
+      customField?.id ?? "",
+      fieldType,
+    ),
+    zodResolver(updateCustomFieldSchema),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success("Custom Field update successfully")
 
-        onOpenChange(false)
-        router.refresh()
+          onOpenChange(false)
+          resetFormAndAction()
+          router.refresh()
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError.message ?? error.serverError)
+          }
+        },
       },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
-      }
+      formProps: {
+        mode: "onChange",
+      },
+      errorMapProps: {},
     },
-    formProps: {
-      mode: "onChange",
-      defaultValues: {
-        name: customField?.name,
-        description: customField?.description ?? undefined,
-      }
-    },
-    errorMapProps: {}
-  });
-
+  )
 
   useEffect(() => {
     if (customField) {
-      form.reset({
-        name: customField.name,
-        description: customField.description ?? undefined,
-      });
+      console.log("customFieldcustomField", customField)
+      setValue("name", customField.name)
+      setValue("description", customField.description ?? "")
     }
-  }, [customField, form]);
+  }, [customField, setValue])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('field.update.title')}: {customField?.name}</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogTitle>
+            {t("customField.update.title")}: {customField?.name}
+          </DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>
-            <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
-
-              <FormField
-                control={form.control}
+            <form
+              onSubmit={handleSubmitWithAction}
+              className="flex-1 space-y-4"
+            >
+              <FormInput
                 name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("customField.name.label")}
+                placeholder={t("customField.name.placeholder")}
               />
 
-              <FormField
-                control={form.control}
+              <FormInput
                 name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("customField.description.label")}
+                placeholder={t("customField.description.placeholder")}
+                inputType="textarea"
+                isRequired={false}
               />
 
               <div className="flex justify-end gap-4">
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('common.cancel-btn')}</Button>
-                <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting}>
-                  {form.formState.isSubmitting && <Loader2Icon className="animate-spin" />}
-                  {t('common.confirm-btn')}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                >
+                  {t("common.cancel-btn")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    !form.formState.isValid || form.formState.isSubmitting
+                  }
+                >
+                  {form.formState.isSubmitting && (
+                    <Loader2Icon className="animate-spin" />
+                  )}
+                  {t("common.confirm-btn")}
                 </Button>
               </div>
             </form>

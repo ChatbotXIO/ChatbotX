@@ -1,16 +1,14 @@
-import { FieldType } from "@ahachat.ai/database";
-import { z } from "zod";
-
-const FieldTypeEnum = z.nativeEnum(FieldType);
+import { FieldType } from "@ahachat.ai/database"
+import { z } from "zod"
 
 export const deleteFieldBindSchema: [
   chatbotId: z.ZodString,
+  fieldType: z.ZodNativeEnum<typeof FieldType>,
   ids: z.ZodArray<Zod.ZodString>,
-  fieldType: typeof FieldTypeEnum
-] = [
-    z.string().cuid2(),
-    z.array(z.string().cuid2()),
-    FieldTypeEnum,
-  ]
+] = [z.string().cuid2(), z.nativeEnum(FieldType), z.array(z.string().cuid2())]
 
-export type DeleteFieldBindSchema = [chatbotId: string, ids: string[], fieldType: FieldType]
+export type DeleteFieldBindSchema = [
+  chatbotId: string,
+  fieldType: FieldType,
+  ids: string[],
+]

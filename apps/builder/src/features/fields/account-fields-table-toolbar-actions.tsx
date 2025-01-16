@@ -1,15 +1,16 @@
 "use client"
 
-import { Field, FieldType } from "@ahachat.ai/database"
-import { type Table } from "@tanstack/react-table"
-import { DataTableRowAction } from "./account-field-table-columns"
+import { type Field, FieldType } from "@ahachat.ai/database"
+import type { Table } from "@tanstack/react-table"
+import type { DataTableRowAction } from "./account-field-table-columns"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
-
 
 interface AccountFieldsTableToolbarActionsProps {
   table: Table<Field>
   chatbotId: string
-  setRowAction: React.Dispatch<React.SetStateAction<DataTableRowAction<Field> | null>>;
+  setRowAction: React.Dispatch<
+    React.SetStateAction<DataTableRowAction<Field> | null>
+  >
 }
 
 export function AccountFieldsTableToolbarActions({

@@ -1,15 +1,16 @@
 "use client"
 
-import { DataTableRowAction } from "@/components/data-table/types"
-import { Field, FieldType } from "@ahachat.ai/database"
-import { type Table } from "@tanstack/react-table"
+import type { DataTableRowAction } from "@/components/data-table/types"
+import { type Field, FieldType } from "@ahachat.ai/database"
+import type { Table } from "@tanstack/react-table"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
-
 
 interface CustomFieldsTableToolbarActionsProps {
   table: Table<Field>
   chatbotId: string
-  setRowAction: React.Dispatch<React.SetStateAction<DataTableRowAction<Field> | null>>;
+  setRowAction: React.Dispatch<
+    React.SetStateAction<DataTableRowAction<Field> | null>
+  >
 }
 
 export function CustomFieldsTableToolbarActions({
@@ -17,7 +18,6 @@ export function CustomFieldsTableToolbarActions({
   chatbotId,
   setRowAction,
 }: CustomFieldsTableToolbarActionsProps) {
-
   return (
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (

@@ -1,16 +1,27 @@
-"use client";
+"use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Field } from "@ahachat.ai/database";
-import { Row, type ColumnDef } from "@tanstack/react-table";
-import { EllipsisIcon } from "lucide-react";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { Field } from "@ahachat.ai/database"
+import type { ColumnDef, Row } from "@tanstack/react-table"
+import { T } from "@tolgee/react"
+import {
+  EllipsisIcon,
+  FingerprintIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  type: "update" | "delete" | 'update-name'
+  type: "update" | "delete" | "update-name"
 }
 
 interface GetColumnsProps {
@@ -20,13 +31,19 @@ interface GetColumnsProps {
   handleCopy: (id: string) => void
 }
 
-export function getColumns({ setRowAction, handleCopy }: GetColumnsProps): ColumnDef<Field>[] {
+export function getColumns({
+  setRowAction,
+  handleCopy,
+}: GetColumnsProps): ColumnDef<Field>[] {
   return [
     {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
           className="translate-y-0.5"
@@ -46,27 +63,32 @@ export function getColumns({ setRowAction, handleCopy }: GetColumnsProps): Colum
     },
     {
       accessorKey: "name",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      cell: ({ row }) =>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Name" />
+      ),
+      cell: ({ row }) => (
         <div>
           {row.original.name}
-          <div className="text-gray-400">
-            {row.original.description}
-          </div>
-        </div>,
+          <div className="text-gray-400">{row.original.description}</div>
+        </div>
+      ),
       enableSorting: true,
       enableHiding: false,
     },
     {
       accessorKey: "customFieldType",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Type" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Type" />
+      ),
       cell: ({ row }) => <div>{row.original.customFieldType}</div>,
       enableSorting: true,
       enableHiding: false,
     },
     {
       accessorKey: "value",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Value" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Value" />
+      ),
       cell: ({ row }) => <div>{row.original.value}</div>,
       enableSorting: true,
       enableHiding: false,
@@ -90,34 +112,28 @@ export function getColumns({ setRowAction, handleCopy }: GetColumnsProps): Colum
               <DropdownMenuItem
                 onSelect={() => setRowAction({ row, type: "update" })}
               >
-                Change Value
-                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "update-name" })}
-              >
-                Change Name
-                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                <PencilIcon />
+                <T keyName="common.updateBtn" />
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleCopy(`${row.original.id}`)}
               >
-                Get id
-                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                <FingerprintIcon />
+                <T keyName="common.getIdBtn" />
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => setRowAction({ row, type: "delete" })}
               >
-                Delete
-                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+                <Trash2Icon />
+                <T keyName="common.deleteBtn" />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        );
+        )
       },
       size: 50,
       enableSorting: false,
       enableHiding: false,
     },
-  ];
+  ]
 }

@@ -11,18 +11,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Field, FieldType } from "@ahachat.ai/database"
-import { type Row } from "@tanstack/react-table"
+import type { Field, FieldType } from "@ahachat.ai/database"
+import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
-import { useTransition } from "react"
-import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { type ComponentPropsWithoutRef, useTransition } from "react"
+import { toast } from "sonner"
 import { deleteFieldsAction } from "./actions/delete-field-action"
 
 interface DeleteFieldsDialogProps
-  extends React.ComponentPropsWithoutRef<typeof Dialog> {
+  extends ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
   fields: Row<Field>["original"][]
   showTrigger?: boolean
@@ -35,19 +35,26 @@ export function DeleteFieldsDialog({
   chatbotId,
   fields,
   showTrigger = true,
+  fieldType,
   onSuccess,
   onOpenChange,
-  fieldType,
   ...props
 }: DeleteFieldsDialogProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslate()
   const router = useRouter()
 
-  const { execute, result } = useAction(deleteFieldsAction.bind(null, chatbotId, (fields ?? []).map(field => field.id), fieldType))
+  const { execute, result } = useAction(
+    deleteFieldsAction.bind(
+      null,
+      chatbotId,
+      fieldType,
+      (fields ?? []).map((field) => field.id),
+    ),
+  )
 
-  const [isDeletePending, startDeleteTransition] = useTransition()
+  const [isDeleting, startDeleteTransition] = useTransition()
   const onDelete = () => {
-    if (!fields || fields.length == 0) {
+    if (!fields || fields.length === 0) {
       return
     }
 
@@ -70,33 +77,31 @@ export function DeleteFieldsDialog({
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
             <Trash className="mr-2 size-4" aria-hidden="true" />
-            {t('common.deleteBtn')} ({fields.length})
+            {t("common.deleteBtn")} ({fields.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('field.delete.dialog_title')}</DialogTitle>
+          <DialogTitle>{t("field.deleteDialogTitle")}</DialogTitle>
           <DialogDescription>
-            {t('field.confirmDeleteDesc')}{" "}
-            <span className="font-medium">{fields.length}</span>
-            {fields.length === 1 ? " log " : " field "}{t('field.confirmDeleteDesc')}
+            {t("field.delete.confirmationText")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t('common.cancelBtn')}</Button>
+            <Button variant="outline">{t("common.cancelBtn")}</Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
             onClick={onDelete}
-            disabled={isDeletePending}
+            disabled={isDeleting}
           >
-            {isDeletePending && (
+            {isDeleting && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
-            {t('common.deleteBtn')}
+            {t("common.deleteBtn")}
           </Button>
         </DialogFooter>
       </DialogContent>

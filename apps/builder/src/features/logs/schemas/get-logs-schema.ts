@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/components/data-table/parsers"
-import { Log, LogType } from "@ahachat.ai/database"
+import type { Log, LogType } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -15,7 +15,9 @@ export const getLogsSearchParamsCache = createSearchParamsCache({
   ]),
 })
 
-export type GetLogsSchema = Awaited<ReturnType<typeof getLogsSearchParamsCache.parse>> & {
-  chatbotId: string,
-  logType: LogType,
+export type GetLogsSchema = Awaited<
+  ReturnType<typeof getLogsSearchParamsCache.parse>
+> & {
+  chatbotId: string
+  logType: LogType
 }

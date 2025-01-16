@@ -1,49 +1,71 @@
-"use server";
+"use server"
 
-import { authActionClient } from "@/lib/safe-action";
-import { findChatbotOrFail } from "@/lib/user-permissions";
-import { prisma, User } from "@ahachat.ai/database";
-import { revalidateTag } from "next/cache";
-import { createFieldBindSchema, CreateFieldBindSchema, createFieldSchema, CreateFieldSchema } from "../schemas/create-field-schema";
+import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { authActionClient } from "@/lib/safe-action"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { FolderType, prisma, type User } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
+import {
+  createAccountFieldSchema,
+  type CreateAccountFieldSchema,
+  type CreateCustomFieldSchema,
+  createCustomFieldSchema,
+  type CreateFieldBindSchema,
+  createFieldBindSchema,
+} from "../schemas/create-field-schema"
+import { FieldException } from "../schemas/exception"
 
-export const createFieldAction = authActionClient
-  .schema(createFieldSchema)
-  .bindArgsSchemas(createFieldBindSchema)
-  .action(async ({
-    ctx,
-    parsedInput,
-    bindArgsParsedInputs: [chatbotId, folderId, fieldType]
-  }: {
-    ctx: { user: User },
-    parsedInput: CreateFieldSchema,
-    bindArgsParsedInputs: CreateFieldBindSchema
-  }) => {
-    await findChatbotOrFail(ctx.user.id, chatbotId)
+const createField = async ({
+  ctx,
+  parsedInput,
+  bindArgsParsedInputs: [chatbotId, folderId, fieldType],
+}: {
+  ctx: { user: User }
+  parsedInput: CreateCustomFieldSchema | CreateAccountFieldSchema
+  bindArgsParsedInputs: CreateFieldBindSchema
+}) => {
+  await findChatbotOrFail(ctx.user.id, chatbotId)
 
-    const existingField = await prisma.field.findFirst({
-      where: {
-        name: parsedInput.name,
-        chatbotId,
-        fieldType
-      },
-    });
-
-    if (existingField) {
-      throw new Error(`Tag with the name "${parsedInput.name}" already exists.`);
-    }
-
-    await prisma.field.create({
-      data: {
-        ...parsedInput,
-        chatbotId,
-        folderId,
-        fieldType
-      }
-    })
-
-    revalidateTag(`${ctx.user.id}#fields#${fieldType}`)
-
-    return {
-      successful: true,
-    }
+  const existingField = await prisma.field.findFirst({
+    where: {
+      name: parsedInput.name,
+      chatbotId,
+      fieldType,
+    },
   })
+  if (existingField) {
+    throw new FieldException(
+      `Custom field with the name "${parsedInput.name}" already exists.`,
+    )
+  }
+
+  if (folderId) {
+    await ensureFolderIdIsExists(folderId, chatbotId, FolderType.CustomField)
+  }
+
+  await prisma.field.create({
+    data: {
+      chatbotId,
+      folderId,
+      fieldType,
+      showInInbox: true,
+      ...parsedInput,
+    },
+  })
+
+  revalidateTag(`${ctx.user.id}#fields#${fieldType}`)
+
+  return {
+    successful: true,
+  }
+}
+
+export const createCustomFieldAction = authActionClient
+  .schema(createCustomFieldSchema)
+  .bindArgsSchemas(createFieldBindSchema)
+  .action(createField)
+
+export const createAccountFieldAction = authActionClient
+  .schema(createAccountFieldSchema)
+  .bindArgsSchemas(createFieldBindSchema)
+  .action(createField)

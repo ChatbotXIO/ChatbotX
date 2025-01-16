@@ -1,11 +1,19 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react"
 
-export default function CustomFieldsLayout({ children, folders, accountFields }: { children: ReactNode, folders: ReactNode, accountFields: ReactNode }) {
+export default function CustomFieldsLayout({
+  children,
+  folders,
+  accountField,
+}: {
+  children: ReactNode
+  folders: ReactNode
+  accountField: ReactNode
+}) {
   return (
-    <>
+    <div className="flex flex-col gap-8">
       {folders}
       {children}
-      {accountFields}
-    </>
+      {accountField}
+    </div>
   )
 }

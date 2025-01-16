@@ -1,229 +1,216 @@
 "use client"
 
-import { Button } from "@/components/ui/button";
+import { FormInput } from "@/components/form-input"
+import { Button } from "@/components/ui/button"
+import { DateTimePicker } from "@/components/ui/date-picker"
 import {
   Dialog,
-  DialogContent, DialogHeader,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CustomFieldType, FieldType } from "@ahachat.ai/database";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { useTranslate } from '@tolgee/react';
-import { Loader2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { ChangeEventHandler, useState } from "react";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/style.css";
-import { toast } from "sonner";
-import { createFieldAction } from "./actions/create-field-action";
-import { createFieldSchema } from "./schemas/create-field-schema";
-import { setHours, setMinutes } from "date-fns";
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { CustomFieldType, FieldType } from "@ahachat.ai/database"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useTranslate } from "@tolgee/react"
+import { format } from "date-fns"
+import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { Controller } from "react-hook-form"
+import { toast } from "sonner"
+import { createAccountFieldAction } from "./actions/create-field-action"
+import { createAccountFieldSchema } from "./schemas/create-field-schema"
 
-export function CreateAccountFieldDialog({ chatbotId, folderId }: { chatbotId: string, folderId: string | null }) {
-  const { t } = useTranslate();
-  const [open, setOpen] = useState(false);
+export function CreateAccountFieldDialog({
+  chatbotId,
+  folderId,
+}: { chatbotId: string; folderId: string | null }) {
+  const { t } = useTranslate()
+
+  const [open, setOpen] = useState(false)
   const router = useRouter()
-  const [customFieldType, setCustomFieldType] = useState<CustomFieldType>("ShortText");
-  const fieldType = FieldType.AccountField
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedDateTime, setSelectedDateTime] = useState<Date>();
-  const [timeValue, setTimeValue] = useState<string>("00:00");
 
-  const handleTimeChange: ChangeEventHandler<HTMLInputElement> = (e) => {
-    const time = e.target.value;
-    if (!selectedDateTime) {
-      setTimeValue(time);
-      return;
-    }
-    const [hours, minutes] = time.split(":").map((str) => parseInt(str, 10));
-    const newSelectedDate = setHours(setMinutes(selectedDateTime, minutes as any), hours as any);
-    setSelectedDateTime(newSelectedDate);
-    setTimeValue(time);
-    form.setValue("value", selectedDateTime ? selectedDateTime.toLocaleString() : "")
-  };
-
-  const handleDaySelect = (date: Date | undefined) => {
-    if (!timeValue || !date) {
-      setSelectedDateTime(date);
-      return;
-    }
-    const [hours, minutes] = timeValue
-      .split(":")
-      .map((str) => parseInt(str, 10));
-    const newDate = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      hours,
-      minutes
-    );
-    setSelectedDateTime(newDate);
-  };
+  const customFieldTypeLabels: Record<CustomFieldType, string> = {
+    ShortText: t("accountField.customFieldType.ShortText"),
+    Number: t("accountField.customFieldType.Number"),
+    Date: t("accountField.customFieldType.Date"),
+    DateTime: t("accountField.customFieldType.DateTime"),
+    Boolean: t("accountField.customFieldType.Boolean"),
+    LongText: t("accountField.customFieldType.LongText"),
+  }
 
   const {
     form,
-    handleSubmitWithAction
-  } = useHookFormAction(createFieldAction.bind(null, chatbotId, folderId, fieldType), zodResolver(createFieldSchema), {
-    actionProps: {
-      onSuccess: () => {
-        toast.success(`Field created successfully`)
+    handleSubmitWithAction,
+    resetFormAndAction,
+    form: { control, watch, register, setValue },
+  } = useHookFormAction(
+    createAccountFieldAction.bind(
+      null,
+      chatbotId,
+      folderId,
+      FieldType.AccountField,
+    ),
+    zodResolver(createAccountFieldSchema),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success("Field created successfully")
 
-        setOpen(false)
-        router.refresh()
+          setOpen(false)
+          resetFormAndAction()
+          router.refresh()
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError.message ?? error.serverError)
+          }
+        },
       },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
-      }
-    },
-    formProps: {
-      mode: "onChange",
-      defaultValues: {
-        name: "",
-        customFieldType: "ShortText",
-        value: "",
-        description: "",
-        showInInbox: false
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          name: "",
+          customFieldType: "ShortText",
+          value: "",
+          description: "",
+        },
       },
+      errorMapProps: {},
     },
-    errorMapProps: {}
-  });
+  )
+
+  const watchCustomFieldType = watch(
+    "customFieldType",
+    CustomFieldType.ShortText,
+  )
 
   const renderValueInput = () => {
-    switch (customFieldType) {
-      case "ShortText":
+    switch (watchCustomFieldType) {
+      case CustomFieldType.Number:
         return (
-          <FormControl>
-            <Input placeholder="Enter text" {...form.register("value")} />
-          </FormControl>
-        );
-      case "Number":
+          <Input
+            type="number"
+            placeholder="Enter number"
+            {...register("value")}
+          />
+        )
+      case CustomFieldType.Boolean:
         return (
-          <FormControl>
-            <Input type="number" placeholder="Enter number" {...form.register("value")} />
-          </FormControl>
-        );
-      case "Boolean":
+          <Controller
+            name="value"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select true/false" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">True</SelectItem>
+                  <SelectItem value="false">False</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )
+      case CustomFieldType.Date:
         return (
-          <FormControl>
-            <Select
-              onValueChange={(value) => form.setValue("value", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select true/false" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">True</SelectItem>
-                <SelectItem value="false">False</SelectItem>
-              </SelectContent>
-            </Select>
-          </FormControl>
-        );
-      case "Date":
+          <DateTimePicker
+            granularity="day"
+            displayFormat={{ hour24: "yyyy-MM-dd" }}
+            value={new Date()}
+            onChange={(value) => {
+              setValue("value", format(value ?? new Date(), "yyyy-MM-dd"))
+            }}
+          />
+        )
+
+      case CustomFieldType.DateTime:
         return (
-          <FormControl>
-            <DayPicker
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => {
-                setSelectedDate(date);
-                form.setValue("value", date ? date.toLocaleDateString() : "");
-              }}
-              footer={
-                selectedDate ? `Selected: ${selectedDate.toLocaleDateString()}` : "Pick a day."
-              }
-            />
-          </FormControl>
-        );
-      case "DateTime":
-        return (
-          <div>
-            <label>
-              Set the time:{" "}
-              <input type="time" value={timeValue} onChange={handleTimeChange} />
-            </label>
-            <DayPicker
-              mode="single"
-              selected={selectedDateTime}
-              onSelect={handleDaySelect}
-              footer={`Selected date: ${selectedDateTime ? selectedDateTime.toLocaleString() : "none"}`}
-            />
-          </div>
-        );
-      case "LongText":
-        return (
-          <FormControl>
-            <Input placeholder="Enter text" {...form.register("value")} />
-          </FormControl>
-        );
+          <DateTimePicker
+            displayFormat={{ hour24: "yyyy-MM-dd hh:mm" }}
+            value={new Date()}
+            onChange={(value) => {
+              setValue("value", format(value ?? new Date(), "yyyy-MM-dd hh:mm"))
+            }}
+          />
+        )
+      case CustomFieldType.LongText:
+        return <Textarea placeholder="Enter text" {...register("value")} />
       default:
-        return null;
+        return <Input placeholder="Enter text" {...register("value")} />
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Create Field</Button>
+        <Button size="sm">
+          <PlusIcon />
+          {t("accountField.createBtn")}
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create a Field</DialogTitle>
+          <DialogTitle>{t("accountField.createDialog.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
-            <FormField
-              control={form.control}
+            <FormInput
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label={t("accountField.name.label")}
+              placeholder={t("accountField.name.placeholder")}
             />
 
-            <FormField
-              control={form.control}
+            <FormInput
               name="customFieldType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Field Type</FormLabel>
-                  <FormControl>
-                    <Select
-                      value={customFieldType}
-                      onValueChange={(value) => {
-                        setCustomFieldType(value as any);
-                        form.setValue("customFieldType", value as any);
-                        form.setValue("value", "");
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a field type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ShortText">Short Text</SelectItem>
-                        <SelectItem value="Number">Number</SelectItem>
-                        <SelectItem value="Date">Date</SelectItem>
-                        <SelectItem value="DateTime">DateTime</SelectItem>
-                        <SelectItem value="Boolean">Boolean</SelectItem>
-                        <SelectItem value="LongText">Long Text</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              label={t("accountField.customFieldType.label")}
+            >
+              <Controller
+                name="customFieldType"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={t(
+                          "accountField.customFieldType.placeholder",
+                        )}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(customFieldTypeLabels).map(
+                        (label: string) => (
+                          <SelectItem key={label} value={label}>
+                            {customFieldTypeLabels[label as CustomFieldType]}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormInput>
 
             <FormField
               control={form.control}
@@ -237,25 +224,32 @@ export function CreateAccountFieldDialog({ chatbotId, folderId }: { chatbotId: s
               )}
             />
 
-            <FormField
-              control={form.control}
+            <FormInput
               name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter description" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              inputType="textarea"
+              isRequired={false}
+              label={t("accountField.description.label")}
+              placeholder={t("accountField.description.placeholder")}
             />
 
             <div className="flex justify-end space-x-2">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t('common.cancel-btn')}</Button>
-              <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting}>
-                {form.formState.isSubmitting && <Loader2Icon className="animate-spin" />}
-                {t('common.confirm-btn')}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+              >
+                {t("common.cancelBtn")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2Icon className="animate-spin" />
+                )}
+                {t("common.confirmBtn")}
               </Button>
             </div>
           </form>

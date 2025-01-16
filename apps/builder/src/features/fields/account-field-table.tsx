@@ -1,56 +1,51 @@
-"use client";
+"use client"
 
-import React from 'react';
-
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
-import type {
-  DataTableFilterField,
-} from "@/components/data-table/types";
-import { useDataTable } from "@/hooks/use-data-table";
-import { Field, FieldType } from "@ahachat.ai/database";
-import { Row } from '@tanstack/react-table';
-import { toast } from 'sonner';
-import { useCopyToClipboard } from 'usehooks-ts';
-import { getColumns } from './account-field-table-columns';
-import { AccountFieldsTableToolbarActions } from './account-fields-table-toolbar-actions';
-import { DeleteFieldsDialog } from './delete-fields-dialog';
-import { getFields } from './queries';
-import { UpdateAccountFieldDialog } from './update-account-field-dialog';
-import { UpdateAccountFieldNameDialog } from './update-account-field-name-dialog';
+import { DataTable } from "@/components/data-table/data-table"
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import type { DataTableFilterField } from "@/components/data-table/types"
+import { useDataTable } from "@/hooks/use-data-table"
+import { FieldType, type Field } from "@ahachat.ai/database"
+import type { Row } from "@tanstack/react-table"
+import { use, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { useCopyToClipboard } from "usehooks-ts"
+import { getColumns } from "./account-field-table-columns"
+// import { UpdateAccountFieldDialog } from "./account-field/update-account-field-dialog"
+import { AccountFieldsTableToolbarActions } from "./account-fields-table-toolbar-actions"
+import { DeleteFieldsDialog } from "./delete-fields-dialog"
+import type { getFields } from "./queries"
 
 interface FieldsTableProps {
-  promises: Promise<[
-    Awaited<ReturnType<typeof getFields>>
-  ]>;
+  promises: Promise<[Awaited<ReturnType<typeof getFields>>]>
   chatbotId: string
 }
 
 interface DataTableRowAction<TData> {
   row: Row<TData>
-  type: "update" | "delete" | 'update-name'
+  type: "update" | "delete" | "update-name"
 }
 
-
 export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
-  const [{ data, pageCount }] = React.use(promises);
-  const [rowAction, setRowAction] = React.useState<DataTableRowAction<Field> | null>(null);
+  const [{ data, pageCount }] = use(promises)
+  const [rowAction, setRowAction] = useState<DataTableRowAction<Field> | null>(
+    null,
+  )
 
-  const [copiedText, copyFieldId] = useCopyToClipboard()
-
+  const [_, copyFieldId] = useCopyToClipboard()
   const handleCopy = (id: string) => {
     copyFieldId(id)
       .then(() => {
-        toast.success("Copied to clipboard!");
+        toast.success("Copied to clipboard!")
       })
       .catch(() => {
-        toast.error("Failed to copy!");
-      });
-  };
+        toast.error("Failed to copy!")
+      })
+  }
 
-  const columns = React.useMemo(
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const columns = useMemo(
     () => getColumns({ setRowAction, handleCopy }),
-    [setRowAction, handleCopy]
+    [setRowAction],
   )
 
   const filterFields: DataTableFilterField<Field & { name?: string }>[] = [
@@ -59,7 +54,7 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
       label: "Search",
       placeholder: "Enter Field name...",
     },
-  ];
+  ]
 
   const { table } = useDataTable({
     data,
@@ -73,13 +68,17 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
-  });
+  })
 
   return (
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          <AccountFieldsTableToolbarActions table={table} chatbotId={chatbotId} setRowAction={setRowAction} />
+          <AccountFieldsTableToolbarActions
+            table={table}
+            chatbotId={chatbotId}
+            setRowAction={setRowAction}
+          />
         </DataTableToolbar>
       </DataTable>
 
@@ -93,20 +92,12 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         fieldType={FieldType.AccountField}
       />
 
-      <UpdateAccountFieldDialog
+      {/* <UpdateAccountFieldDialog
         open={rowAction?.type === "update"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         accountField={rowAction?.row.original || null}
-      />
-
-      <UpdateAccountFieldNameDialog
-        open={rowAction?.type === "update-name"}
-        onOpenChange={() => setRowAction(null)}
-        chatbotId={chatbotId}
-        customField={rowAction?.row.original || null}
-      />
+      /> */}
     </>
-  );
+  )
 }
-

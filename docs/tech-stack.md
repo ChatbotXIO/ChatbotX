@@ -16,6 +16,7 @@ Key components of the project's tech stack.
 - [Sonner](https://sonner.emilkowal.ski/)
 - [React Table](https://www.npmjs.com/package/@tanstack/react-table)
 - [DnD Kit](https://dndkit.com/)
+- [emoji-mart](https://www.npmjs.com/package/emoji-mart)
 
 ### Forms and Validation
 

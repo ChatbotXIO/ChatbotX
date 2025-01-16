@@ -50,7 +50,7 @@
   "common.settings": "Cài đặt",
   "common.submit": "Gửi",
   "common.tools": "Công cụ",
-  "contacts.create.btn": "Tạo liên hệ",
+  "contacts.createBtn": "Tạo liên hệ",
   "contacts.create.title": "Tạo liên hệ mới",
   "contacts.email": "Email",
   "contacts.firstName": "Tên",
