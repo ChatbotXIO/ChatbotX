@@ -5,14 +5,6 @@ const nextConfig: NextConfig = {
   //   ignoreDuringBuilds: true,
   // },
   reactStrictMode: true,
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "placehold.co",
-      },
-    ],
-  },
   eslint: {
     ignoreDuringBuilds: true,
   },
