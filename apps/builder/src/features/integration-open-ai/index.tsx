@@ -6,7 +6,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { T } from "@tolgee/react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -15,11 +14,11 @@ import { Switch } from "@/components/ui/switch"
 import { SettingIntegrationOpenAIDialogConnect } from "@/features/settings/integrations/open-ai/components/dialog-connect"
 import { SettingIntegrationOpenAIDialogDisconnect } from "@/features/settings/integrations/open-ai/components/dialog-disconnect"
 import { SettingIntegrationOpenAIDialogEdit } from "@/features/settings/integrations/open-ai/components/dialog-edit"
-
-import { useState } from "react"
+import { T } from "@/tolgee/server"
 
 export const SettingIntegrationOpenAI = () => {
-  const [isConnect, setIsConnect] = useState(false)
+  const isConnect = true
+  // const [isConnect, setIsConnect] = useState(false)
 
   const renderButtonConnect = () => {
     return (
@@ -32,6 +31,7 @@ export const SettingIntegrationOpenAI = () => {
 
   return (
     <>
+      ok
       <Card className="rounded-lg mb-4">
         <CardContent className="p-4 flex items-center justify-between">
           <CardHeader className="p-2">
@@ -48,16 +48,14 @@ export const SettingIntegrationOpenAI = () => {
           </CardHeader>
 
           <div className={cn(isConnect ? "flex flex-col gap-2" : "")}>
-            {isConnect ? (
-              renderButtonConnect()
-            ) : (
-              <SettingIntegrationOpenAIDialogConnect />
-            )}
+            {
+              isConnect ? renderButtonConnect() : "heheh"
+              // <SettingIntegrationOpenAIDialogConnect />
+            }
           </div>
         </CardContent>
       </Card>
-
-      {isConnect && (
+      {/* {isConnect && (
         <>
           <Card className="rounded-lg mb-4">
             <CardContent className="p-4 flex items-center justify-between">
@@ -158,7 +156,7 @@ export const SettingIntegrationOpenAI = () => {
             </CardContent>
           </Card>
         </>
-      )}
+      )} */}
     </>
   )
 }

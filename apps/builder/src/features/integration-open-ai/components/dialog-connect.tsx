@@ -1,3 +1,5 @@
+"use client"
+
 import { NumberField } from "@/components/number-field"
 import { Button } from "@/components/ui/button"
 import {
