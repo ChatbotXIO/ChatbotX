@@ -9,12 +9,15 @@ import {
   ChatBubbleMessage,
 } from "@/components/ui/chat/chat-bubble"
 import { ChatInput } from "@/components/ui/chat/chat-input"
+import type { getCurrentConversation } from "@/features/conversations/queries"
 import ConversationLoading from "@/features/inbox/conversation-loading"
 import { getMessages } from "@/features/messages/queries"
 import type {
   CursorMessages,
   MessageResource,
 } from "@/features/messages/schemas/get-messages-schema"
+import type { getTeams } from "@/features/teams/queries"
+import type { getUsers } from "@/features/users/queries"
 import { cn } from "@/lib/utils"
 import { MessageType, SenderType } from "@ahachat.ai/database"
 import {
@@ -25,13 +28,21 @@ import {
   Reply,
   SendIcon,
 } from "lucide-react"
-import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, use, useCallback, useEffect, useRef, useState } from "react"
 import { Virtuoso } from "react-virtuoso"
+import MessageHead from "./message-head"
 import MessageItem from "./message-item"
 
 interface MessagesProps {
   chatbotId: string
   conversationId: string
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof getCurrentConversation>>,
+      Awaited<ReturnType<typeof getUsers>>,
+      Awaited<ReturnType<typeof getTeams>>,
+    ]
+  >
 }
 
 const actionIcons = [
@@ -48,7 +59,10 @@ const actionIcons = [
 export default function MessageList({
   chatbotId,
   conversationId,
+  promises,
 }: MessagesProps) {
+  const data = use(promises)
+  const [conversation, setConversation] = useState(data[0].conversation)
   const [messages, setMessages] = useState<MessageResource[]>([])
   // console.log('messages', messages)
   const loadingMore = useRef<boolean>(false)
@@ -111,9 +125,20 @@ export default function MessageList({
 
   return (
     <>
-      <div className="h-full flex flex-col p-2">
+      <div className="h-full flex flex-col">
+        <MessageHead
+          conversation={conversation}
+          users={data[1].data}
+          teams={data[2].data}
+          onUpdateConversation={(data) =>
+            setConversation((prev) => ({
+              ...prev,
+              ...data,
+            }))
+          }
+        />
         <Virtuoso
-          className="flex-1"
+          className="flex-1 p-2"
           data={messages}
           atTopStateChange={(atTop) => atTop && loadMoreMessages()}
           initialTopMostItemIndex={messages.length - 1}
@@ -163,26 +188,28 @@ export default function MessageList({
             </Suspense>
           )}
         />
-        <form className="flex items-center gap-2 mt-3">
-          <Button variant="ghost" size="icon" className="h-auto p-2">
-            <PlusCircle size={20} />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-auto p-2">
-            <File size={20} />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-auto p-2">
-            <PaperclipIcon size={20} />
-          </Button>
-          <div className="relative rounded-full w-full border bg-background focus-within:ring-1 focus-within:ring-ring h-auto">
-            <ChatInput
-              placeholder="Type your message here..."
-              className="min-h-12 resize-none rounded-full bg-background border-0 p-3 shadow-none focus-visible:ring-0"
-            />
-          </div>
-          <Button size="icon" variant="ghost">
-            <SendIcon size={20} />
-          </Button>
-        </form>
+        {!conversation.blockedAt && (
+          <form className="flex items-center gap-2 mt-3">
+            <Button variant="ghost" size="icon" className="h-auto p-2">
+              <PlusCircle size={20} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-auto p-2">
+              <File size={20} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-auto p-2">
+              <PaperclipIcon size={20} />
+            </Button>
+            <div className="relative rounded-full w-full border bg-background focus-within:ring-1 focus-within:ring-ring h-auto">
+              <ChatInput
+                placeholder="Type your message here..."
+                className="min-h-12 resize-none rounded-full bg-background border-0 p-3 shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <Button size="icon" variant="ghost">
+              <SendIcon size={20} />
+            </Button>
+          </form>
+        )}
       </div>
     </>
   )

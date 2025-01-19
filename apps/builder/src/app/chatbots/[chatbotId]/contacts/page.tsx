@@ -3,6 +3,8 @@ import { ContactsTable } from "@/features/contacts/contacts-table"
 import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
 import { getContacts } from "@/features/contacts/queries"
 import { getContactsSearchParamsCache } from "@/features/contacts/schemas/get-contacts-schema"
+import { getTeams } from "@/features/teams/queries"
+import { getUsers } from "@/features/users/queries"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -19,6 +21,8 @@ export default async function ContactsPage(props: {
       ...search,
       chatbotId: params.chatbotId,
     }),
+    getUsers({ chatbotId: params.chatbotId }),
+    getTeams({ chatbotId: params.chatbotId }),
   ])
 
   return (
@@ -37,7 +41,7 @@ export default async function ContactsPage(props: {
           />
         }
       >
-        <ContactsTable promises={promises} />
+        <ContactsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </div>
   )

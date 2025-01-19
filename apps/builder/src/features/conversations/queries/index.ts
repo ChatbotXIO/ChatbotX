@@ -56,12 +56,12 @@ export const getConversations = async (
 
         const conversationIds = data.map((conversation) => conversation.id)
         const unreadMessages = await prisma.$queryRaw<IUnreadMessage[]>`
-          SELECT c.id, COUNT(m.id) AS unread_count
-          FROM "Conversation" c
-                   JOIN "Message" m ON m."conversationId" = c.id
-          WHERE m."createdAt" < c."agentLastSeenAt"
-            AND c.id IN (${Prisma.join(conversationIds)})
-          GROUP BY c.id;`
+            SELECT c.id, COUNT(m.id) AS unread_count
+            FROM "Conversation" c
+                     JOIN "Message" m ON m."conversationId" = c.id
+            WHERE m."createdAt" < c."agentLastSeenAt"
+              AND c.id IN (${Prisma.join(conversationIds)})
+            GROUP BY c.id;`
 
         let cursor = null
         if (data.length === perPage) {
@@ -100,7 +100,7 @@ export const getConversations = async (
 export const getCurrentConversation = async (
   input: GetCurrentConversationsSchema,
 ): Promise<{
-  conversation: ConversationResource | null
+  conversation: ConversationResource
 }> => {
   const userId = await getCurrentUserId()
 
@@ -108,7 +108,7 @@ export const getCurrentConversation = async (
 
   return await unstable_cache(
     async () => {
-      const data = await prisma.conversation.findFirst({
+      const data = await prisma.conversation.findFirstOrThrow({
         include: {
           contact: {
             include: {
@@ -124,9 +124,6 @@ export const getCurrentConversation = async (
         },
         where: input,
       })
-      if (!data) {
-        return { conversation: null }
-      }
       const { messages, ...rest } = data
 
       const conversation = {
@@ -140,7 +137,7 @@ export const getCurrentConversation = async (
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#conversations`, `${userId}#conversations#${input.id}`],
+      tags: [`${userId}#conversations`, `conversations#${input.id}`],
     },
   )()
 }
