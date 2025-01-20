@@ -1,11 +1,12 @@
 "use client"
+
 import type {
   getOpenAIAgents,
   getOpenAIAssistants,
   getOpenAIPrompt,
 } from "@/features/integrations/open-ai/queries"
 
-import { use, useEffect, useState } from "react"
+import { use, useCallback, useEffect, useState } from "react"
 
 import { MultiSelect } from "@/components/multi-select"
 import { NumberField } from "@/components/number-field"
@@ -40,26 +41,70 @@ const EditTabs: Record<string, string>[] = [
 ]
 
 type OptionsFieldsProps = {
-  openAIModel: string
-  openAITrigger: string
-  models: Record<string, string | number>[]
-  triggers: Record<string, string | number>[]
+  prompt: Record<
+    string,
+    string | number | boolean | Record<string, string | number>[]
+  > | null
+  agents: Record<string, string | number>[] | []
+  changeValue: (
+    payload: Record<
+      string,
+      string | number | boolean | Record<string, string | number>[]
+    >,
+  ) => void
 }
 
-const OptionsFields = ({
-  openAIModel,
-  openAITrigger,
-  models,
-  triggers,
-}: OptionsFieldsProps) => {
+const OptionsFields = ({ prompt, agents, changeValue }: OptionsFieldsProps) => {
   const [isOptions, setIsOptions] = useState<boolean>(false)
+  const [maxToken, setMaxToken] = useState<number>(0)
+  const [temperature, setTemperature] = useState<number>(0)
   const [model, setModel] = useState<string>("")
   const [trigger, setTrigger] = useState<string>("")
 
+  const [models, setModels] = useState<Record<string, string>[]>([])
+  const [triggers, setTriggers] = useState<Record<string, string>[]>([])
+
   const onToggleOptions = () => setIsOptions(!isOptions)
 
-  setModel(openAIModel)
-  setTrigger(openAITrigger)
+  const formatOptionsFields = useCallback(() => {
+    const models = prompt?.data?.models.map(
+      ({
+        id,
+        name,
+        maxlength,
+      }: { id: string; name: string; maxlength: number }) => ({
+        label: name,
+        value: id,
+        maxlength,
+      }),
+    )
+    setModels(models)
+    setModel(prompt?.data?.model)
+    const triggers = agents?.data.map(
+      ({ id, name }: { id: string; name: string }) => ({
+        label: name,
+        value: id,
+      }),
+    )
+    setTriggers(triggers)
+    setTrigger(triggers[0].value)
+    setMaxToken(prompt?.data?.max_tokens)
+    setTemperature(prompt?.data?.temperature)
+  }, [prompt, agents])
+
+  useEffect(() => {
+    formatOptionsFields()
+    return () => {}
+  }, [formatOptionsFields])
+
+  useEffect(() => {
+    changeValue({
+      max_tokens: maxToken,
+      temperature,
+      model,
+      trigger,
+    })
+  }, [changeValue, maxToken, temperature, model, trigger])
 
   const renderOptions = () => {
     return (
@@ -68,12 +113,12 @@ const OptionsFields = ({
           placeholder="Select model Open AI"
           value={model}
           options={models}
-          onValueChange={console.log}
+          onValueChange={setModel}
         />
 
-        <NumberField value={0.5} onChange={console.log} />
+        <NumberField value={temperature} onChange={setTemperature} />
 
-        <NumberField value={200} step={1} onChange={console.log} />
+        <NumberField value={maxToken} step={1} onChange={setMaxToken} />
       </>
     )
   }
@@ -87,7 +132,7 @@ const OptionsFields = ({
         animation={2}
         maxCount={3}
         value={trigger}
-        onValueChange={console.log}
+        onValueChange={setTrigger}
       />
 
       {isOptions ? (
@@ -110,35 +155,17 @@ const OptionsFields = ({
 
 export default function TabEdit({ promises }: TabPromptProps) {
   const [prompt, agents, assistants] = use(promises)
-  const [models, setModels] = useState<Record<string, string>[]>([])
-  const [triggers, setTriggers] = useState<Record<string, string>[]>([])
   const [assistant, setAssistant] = useState<Record<string, string>[]>([])
 
-  console.log(prompt, agents, assistants)
-
-  const formatModels = () => {
-    const { data } = prompt
-
-    return data?.models.map(({ id, name, maxlength }) => ({
-      label: name,
-      value: id,
-      maxlength,
-    }))
-  }
-
-  const formatTriggers = () => {
-    const { data = [] } = agents
-    return data.map(({ id, name }) => ({ label: name, value: id }))
-  }
-
-  const formatAssistants = () => {
+  const formatAssistants = useCallback(() => {
     const { data = [] } = assistants
     return data.map(({ id, name }) => ({ label: name, value: id }))
-  }
+  }, [assistants])
 
-  setModels(formatModels())
-  setTriggers(formatTriggers())
-  setAssistant(formatAssistants())
+  useEffect(() => {
+    setAssistant(formatAssistants)
+    return () => {}
+  }, [formatAssistants])
 
   return (
     <Tabs defaultValue="prompt" className="w-full">
@@ -161,10 +188,9 @@ export default function TabEdit({ promises }: TabPromptProps) {
             onChange={console.log}
           />
           <OptionsFields
-            openAIModel={prompt?.data?.model}
-            openAITrigger=""
-            models={models}
-            triggers={triggers}
+            prompt={prompt}
+            agents={agents}
+            changeValue={console.log}
           />
         </div>
       </TabsContent>
@@ -180,10 +206,9 @@ export default function TabEdit({ promises }: TabPromptProps) {
             ]}
           />
           <OptionsFields
-            openAIModel={prompt?.data?.model}
-            openAITrigger=""
-            models={models}
-            triggers={triggers}
+            prompt={prompt}
+            agents={agents}
+            changeValue={console.log}
           />
         </div>
       </TabsContent>

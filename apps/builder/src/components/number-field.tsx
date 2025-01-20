@@ -3,7 +3,13 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-import { type ChangeEvent, type FormEvent, forwardRef, useState } from "react"
+import {
+  type ChangeEvent,
+  type FormEvent,
+  forwardRef,
+  useEffect,
+  useState,
+} from "react"
 
 import { cn } from "@/lib/utils"
 import { Minus, Plus } from "lucide-react"
@@ -11,7 +17,7 @@ import { Minus, Plus } from "lucide-react"
 interface NumberFieldProps {
   value: number
   step?: number
-  onChange: (value: ChangeEvent<HTMLInputElement>) => void
+  onChange: (value: number) => void
   min?: number
   max?: number
 }
@@ -27,6 +33,7 @@ export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
         return
       }
       setCurrent(newValue)
+      onChange(current)
     }
 
     const decrement = () => {
@@ -35,6 +42,7 @@ export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
         return
       }
       setCurrent(newValue)
+      onChange(current)
     }
 
     const onInput = (e: FormEvent<HTMLInputElement>) => {
@@ -53,6 +61,7 @@ export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
         }
 
         setCurrent(newValue)
+        onChange(current)
       }
     }
 
@@ -76,8 +85,8 @@ export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
         </Button>
         <Input
           className="text-center w-full border-0 rounded-none focus-visible:ring-0"
-          value={current}
-          onChange={onChange}
+          value={value}
+          onChange={(e) => setCurrent(+e.target.value)}
           onInput={onInput}
           onFocus={onFocus}
           onBlur={onBlur}
