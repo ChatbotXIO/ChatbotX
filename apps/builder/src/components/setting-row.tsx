@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils"
 import { useTranslate } from "@tolgee/react"
 import Link from "next/link"
 import type { ReactElement } from "react"
@@ -6,22 +7,29 @@ export const SettingRow = ({
   label,
   description,
   readMoreUrl,
+  className,
   children,
 }: {
   label: ReactElement
   description: ReactElement
+  className?: string
   readMoreUrl?: string
   children: ReactElement
 }) => {
   const { t } = useTranslate()
   return (
-    <div className="grid grid-flow-col gap-2">
-      <h4 className="font-medium">{label}</h4>
-      <div>{children}</div>
+    <div className={cn("grid grid-cols-2 gap-3", className)}>
       <div>
-        {description}
-        {readMoreUrl && <Link href={readMoreUrl}>{t("common.readMore")}</Link>}
+        <h4 className="font-medium">{label}</h4>
+        <div>
+          {description}
+          {readMoreUrl && (
+            <Link href={readMoreUrl}>{t("common.readMore")}</Link>
+          )}
+        </div>
       </div>
+
+      <div>{children}</div>
     </div>
   )
 }

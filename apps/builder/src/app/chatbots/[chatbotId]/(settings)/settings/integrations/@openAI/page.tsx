@@ -1,5 +1,15 @@
-// import { SettingIntegrationOpenAI } from "@/features/settings/integrations/open-ai"
+import { OpenAIConnect } from "@/features/integrations/open-ai"
+import { getOpenAIIntegration } from "@/features/integrations/open-ai/queries"
 
-export default function SettingIntegrationOpenAIPage() {
-  return <div>SettingIntegrationOpenAIPage</div> // ()<SettingIntegrationOpenAI />
+export default async function SettingIntegrationOpenAIPage(props: {
+  params: Promise<{ chatbotId: string }>
+}) {
+  const params = await props.params
+  const promises = Promise.all([
+    getOpenAIIntegration({
+      chatbotId: params.chatbotId,
+    }),
+  ])
+
+  return <OpenAIConnect promises={promises} />
 }
