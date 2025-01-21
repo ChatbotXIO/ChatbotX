@@ -11,7 +11,15 @@ import {
 import { Button } from "@/components/ui/button"
 import { T } from "@tolgee/react"
 
-export const SettingIntegrationOpenAIDialogDisconnect = () => {
+type IntegrationDialogDisconnectProps = {
+  title: string
+  disconnect: () => void
+}
+
+export const IntegrationDialogDisconnect = ({
+  title,
+  disconnect,
+}: IntegrationDialogDisconnectProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -21,7 +29,7 @@ export const SettingIntegrationOpenAIDialogDisconnect = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Do you want to disconnect OpenAI?</DialogTitle>
+          <DialogTitle v-html={title} />
         </DialogHeader>
 
         <DialogFooter>
@@ -31,7 +39,7 @@ export const SettingIntegrationOpenAIDialogDisconnect = () => {
             </Button>
           </DialogClose>
 
-          <Button type="button" variant="destructive">
+          <Button type="button" variant="destructive" onClick={disconnect}>
             Disconnect
           </Button>
         </DialogFooter>

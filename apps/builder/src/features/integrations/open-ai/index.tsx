@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import OpenAIDialogEdit from "@/features/integrations/open-ai/components/dialog-edit"
 import type { getOpenAIIntegration } from "@/features/integrations/open-ai/queries"
 import { T } from "@tolgee/react"
+import Link from "next/link"
 import { useParams } from "next/navigation"
 import { use } from "react"
 
@@ -63,8 +64,10 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             }
             className="items-center"
           >
-            <Button variant="secondary">
-              <T keyName="settings.integrations.ManageBtn" />
+            <Button variant="secondary" asChild>
+              <Link href="../openai-prompts">
+                <T keyName="settings.integrations.ManageBtn" />
+              </Link>
             </Button>
           </SettingRow>
 
@@ -76,7 +79,9 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             className="items-center"
           >
             <Button variant="secondary">
-              <T keyName="settings.integrations.ManageBtn" />
+              <Link href="../openai-assistants">
+                <T keyName="settings.integrations.ManageBtn" />
+              </Link>
             </Button>
           </SettingRow>
 
@@ -88,7 +93,9 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             className="items-center"
           >
             <Button variant="secondary">
-              <T keyName="settings.integrations.ManageBtn" />
+              <Link href="../chatgpt-triggers">
+                <T keyName="settings.integrations.ManageBtn" />
+              </Link>
             </Button>
           </SettingRow>
         </div>

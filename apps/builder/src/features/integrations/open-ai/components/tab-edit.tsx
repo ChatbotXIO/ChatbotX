@@ -43,13 +43,13 @@ const EditTabs: Record<string, string>[] = [
 type OptionsFieldsProps = {
   prompt: Record<
     string,
-    string | number | boolean | Record<string, string | number>[]
+    string | string[] | number | boolean | Record<string, string | number>[]
   > | null
   agents: Record<string, string | number>[] | []
   changeValue: (
     payload: Record<
       string,
-      string | number | boolean | Record<string, string | number>[]
+      string | string[] | number | boolean | Record<string, string | number>[]
     >,
   ) => void
 }
@@ -59,15 +59,17 @@ const OptionsFields = ({ prompt, agents, changeValue }: OptionsFieldsProps) => {
   const [maxToken, setMaxToken] = useState<number>(0)
   const [temperature, setTemperature] = useState<number>(0)
   const [model, setModel] = useState<string>("")
-  const [trigger, setTrigger] = useState<string>("")
+  const [trigger, setTrigger] = useState<string[]>(["1"])
 
-  const [models, setModels] = useState<Record<string, string>[]>([])
-  const [triggers, setTriggers] = useState<Record<string, string>[]>([])
+  const [models, setModels] = useState<{ label: string; value: string }[]>([])
+  const [triggers, setTriggers] = useState<{ label: string; value: string }[]>(
+    [],
+  )
 
   const onToggleOptions = () => setIsOptions(!isOptions)
 
   const formatOptionsFields = useCallback(() => {
-    const models = prompt?.data?.models.map(
+    const models = (prompt?.models as []).map(
       ({
         id,
         name,
@@ -79,17 +81,17 @@ const OptionsFields = ({ prompt, agents, changeValue }: OptionsFieldsProps) => {
       }),
     )
     setModels(models)
-    setModel(prompt?.data?.model)
-    const triggers = agents?.data.map(
+    setModel(prompt?.model as string)
+    const triggers = (agents as []).map(
       ({ id, name }: { id: string; name: string }) => ({
         label: name,
         value: id,
       }),
     )
     setTriggers(triggers)
-    setTrigger(triggers[0].value)
-    setMaxToken(prompt?.data?.max_tokens)
-    setTemperature(prompt?.data?.temperature)
+    setTrigger(prompt?.functions as string[])
+    setMaxToken(prompt?.max_tokens as number)
+    setTemperature(prompt?.temperature as number)
   }, [prompt, agents])
 
   useEffect(() => {
@@ -118,7 +120,7 @@ const OptionsFields = ({ prompt, agents, changeValue }: OptionsFieldsProps) => {
 
         <NumberField value={temperature} onChange={setTemperature} />
 
-        <NumberField value={maxToken} step={1} onChange={setMaxToken} />
+        <NumberField value={maxToken} step={5} onChange={setMaxToken} />
       </>
     )
   }
@@ -155,11 +157,19 @@ const OptionsFields = ({ prompt, agents, changeValue }: OptionsFieldsProps) => {
 
 export default function TabEdit({ promises }: TabPromptProps) {
   const [prompt, agents, assistants] = use(promises)
-  const [assistant, setAssistant] = useState<Record<string, string>[]>([])
+  const [assistant, setAssistant] = useState<
+    { label: string; value: string }[]
+  >([])
 
-  const formatAssistants = useCallback(() => {
+  const formatAssistants = useCallback((): {
+    label: string
+    value: string
+  }[] => {
     const { data = [] } = assistants
-    return data.map(({ id, name }) => ({ label: name, value: id }))
+    return data.map(({ id, name }) => ({ label: name, value: id })) as {
+      label: string
+      value: string
+    }[]
   }, [assistants])
 
   useEffect(() => {
@@ -173,7 +183,7 @@ export default function TabEdit({ promises }: TabPromptProps) {
         {EditTabs.map((tab: Record<string, string>) => (
           <TabsTrigger
             key={tab.value}
-            value={tab.value}
+            value={tab.value as string}
             className="data-[state=active]:shadow-none data-[state=active]:bg-transparent border-b-2 border-gray-200 rounded-none data-[state=active]:rounded-none data-[state=active]:border-blue-500"
           >
             {tab.label}
@@ -188,8 +198,8 @@ export default function TabEdit({ promises }: TabPromptProps) {
             onChange={console.log}
           />
           <OptionsFields
-            prompt={prompt}
-            agents={agents}
+            prompt={prompt.data}
+            agents={agents.data}
             changeValue={console.log}
           />
         </div>
@@ -206,8 +216,8 @@ export default function TabEdit({ promises }: TabPromptProps) {
             ]}
           />
           <OptionsFields
-            prompt={prompt}
-            agents={agents}
+            prompt={prompt.data}
+            agents={agents.data}
             changeValue={console.log}
           />
         </div>
