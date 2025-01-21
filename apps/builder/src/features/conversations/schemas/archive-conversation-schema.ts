@@ -6,8 +6,3 @@ export const archiveConversationSchema = z.object({
 export type ArchiveConversationSchema = z.infer<
   typeof archiveConversationSchema
 >
-
-export const archiveConversationBindSchema: [chatbotId: z.ZodString] = [
-  z.string().cuid2(),
-]
-export type ArchiveConversationBindSchema = [chatbotId: string]

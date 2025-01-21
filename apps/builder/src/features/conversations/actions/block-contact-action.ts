@@ -1,20 +1,21 @@
 "use server"
 
 import {
-  type BlockContactBindSchema,
+  type ChatbotBindSchema,
+  chatbotBindSchema,
+} from "@/features/chatbots/schemas/handle-resource-schema"
+import {
   type BlockContactSchema,
-  blockContactBindSchema,
   blockContactSchema,
 } from "@/features/conversations/schemas/block-contact-schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { blockContactService } from "@/services/conversation.service"
 import { type User, prisma } from "@ahachat.ai/database"
-import { returnValidationErrors } from "next-safe-action"
-import { revalidateTag } from "next/cache"
 
 export const blockContactAction = authActionClient
   .schema(blockContactSchema)
-  .bindArgsSchemas(blockContactBindSchema)
+  .bindArgsSchemas(chatbotBindSchema)
   .action(
     async ({
       ctx,
@@ -23,7 +24,7 @@ export const blockContactAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: BlockContactSchema
-      bindArgsParsedInputs: BlockContactBindSchema
+      bindArgsParsedInputs: ChatbotBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
       const params = {
@@ -37,31 +38,14 @@ export const blockContactAction = authActionClient
         where: params,
       })
       if (conversations.length !== parsedInput.ids.length) {
-        return returnValidationErrors(blockContactSchema, {
-          _errors: ["Validation Exception"],
-          ids: {
-            _errors: [
-              "Conversation not exists on chatbot or conversation archived before.",
-            ],
-          },
-        })
+        throw new Error(
+          "Conversation not exists on chatbot or conversation archived before.",
+        )
       }
-      const data = { blockedAt: new Date() }
-
-      await prisma.conversation.updateMany({
-        where: {
-          ...params,
-          blockedAt: null,
-        },
-        data,
-      })
-      for (const id of parsedInput.ids) {
-        revalidateTag(`conversations#${id}`)
-      }
+      await blockContactService(conversations)
 
       return {
         successful: true,
-        data,
       }
     },
   )

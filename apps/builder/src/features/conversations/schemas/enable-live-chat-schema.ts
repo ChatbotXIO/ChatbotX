@@ -5,8 +5,3 @@ export const enableLiveChatSchema = z.object({
   liveChatEnabled: z.boolean(),
 })
 export type EnableLiveChatSchema = z.infer<typeof enableLiveChatSchema>
-
-export const enableLiveChatBindSchema: [chatbotId: z.ZodString] = [
-  z.string().cuid2(),
-]
-export type EnableLiveChatBindSchema = [chatbotId: string]

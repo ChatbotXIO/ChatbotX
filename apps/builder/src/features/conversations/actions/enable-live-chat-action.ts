@@ -1,20 +1,21 @@
 "use server"
 
 import {
-  type EnableLiveChatBindSchema,
+  type ChatbotBindSchema,
+  chatbotBindSchema,
+} from "@/features/chatbots/schemas/handle-resource-schema"
+import {
   type EnableLiveChatSchema,
-  enableLiveChatBindSchema,
   enableLiveChatSchema,
 } from "@/features/conversations/schemas/enable-live-chat-schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { enableLiveChatService } from "@/services/conversation.service"
 import { type User, prisma } from "@ahachat.ai/database"
-import { returnValidationErrors } from "next-safe-action"
-import { revalidateTag } from "next/cache"
 
 export const enableLiveChatAction = authActionClient
   .schema(enableLiveChatSchema)
-  .bindArgsSchemas(enableLiveChatBindSchema)
+  .bindArgsSchemas(chatbotBindSchema)
   .action(
     async ({
       ctx,
@@ -23,9 +24,8 @@ export const enableLiveChatAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: EnableLiveChatSchema
-      bindArgsParsedInputs: EnableLiveChatBindSchema
+      bindArgsParsedInputs: ChatbotBindSchema
     }) => {
-      console.log("parsedInput", parsedInput)
       await findChatbotOrFail(ctx.user.id, chatbotId)
       const params = {
         chatbotId: chatbotId,
@@ -38,21 +38,10 @@ export const enableLiveChatAction = authActionClient
         where: params,
       })
       if (conversations.length !== parsedInput.ids.length) {
-        return returnValidationErrors(enableLiveChatSchema, {
-          _errors: ["Validation Exception"],
-          ids: {
-            _errors: ["Conversation not exists on chatbot"],
-          },
-        })
+        throw new Error("Conversation not exists on chatbot")
       }
 
-      await prisma.conversation.updateMany({
-        where: params,
-        data: { liveChatEnabled: parsedInput.liveChatEnabled },
-      })
-      for (const id of parsedInput.ids) {
-        revalidateTag(`conversations#${id}`)
-      }
+      await enableLiveChatService(conversations, parsedInput.liveChatEnabled)
 
       return {
         successful: true,

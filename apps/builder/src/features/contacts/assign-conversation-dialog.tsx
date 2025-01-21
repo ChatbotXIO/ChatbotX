@@ -11,14 +11,16 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
 import type { AssignConversationSchema } from "@/features/conversations/schemas/assign-conversation-schema"
 import { AssignedType, type Team, type User } from "@ahachat.ai/database"
 import { useTranslate } from "@tolgee/react"
-import React, { useState } from "react"
+import React, { useState, useTransition } from "react"
 
 export function AssignConversationDialog({
   chatbotId,
@@ -40,23 +42,26 @@ export function AssignConversationDialog({
   const { t } = useTranslate()
 
   const [assigner, setAssigner] = useState<string>("")
+  const [isPending, startTransition] = useTransition()
 
   const onSubmitted = async () => {
-    onOpenChange(false)
-    if (assigner === "unassign") {
-      return onSubmit({
-        assignedId: null,
-        assignedType: null,
-      })
-    }
-    const [assignedType, assignedId] = assigner.split("_") as [
-      AssignedType,
-      string,
-    ]
+    startTransition(() => {
+      if (assigner === "unassign") {
+        return onSubmit({
+          assignedId: null,
+          assignedType: null,
+        })
+      }
+      const [assignedType, assignedId] = assigner.split("_") as [
+        AssignedType,
+        string,
+      ]
 
-    return onSubmit({
-      assignedId,
-      assignedType,
+      onSubmit({
+        assignedId,
+        assignedType,
+      })
+      startTransition(() => onOpenChange(false))
     })
   }
 
@@ -79,22 +84,28 @@ export function AssignConversationDialog({
               <SelectItem value="unassign">
                 {t("flows.ActionType.UnassignConversation")}
               </SelectItem>
-              {users.map((user) => (
-                <SelectItem
-                  value={`${AssignedType.User}_${user.id}`}
-                  key={user.id}
-                >
-                  {user.name}
-                </SelectItem>
-              ))}
-              {teams.map((team) => (
-                <SelectItem
-                  value={`${AssignedType.Team}_${team.id}`}
-                  key={team.id}
-                >
-                  {team.name}
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                <SelectLabel>User</SelectLabel>
+                {users.map((user) => (
+                  <SelectItem
+                    value={`${AssignedType.User}_${user.id}`}
+                    key={user.id}
+                  >
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Team</SelectLabel>
+                {teams.map((team) => (
+                  <SelectItem
+                    value={`${AssignedType.Team}_${team.id}`}
+                    key={team.id}
+                  >
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
@@ -109,7 +120,7 @@ export function AssignConversationDialog({
           </Button>
           <Button
             type="submit"
-            disabled={!assigner}
+            disabled={!assigner || isPending}
             onClick={() => onSubmitted()}
           >
             {t("common.confirm-btn")}

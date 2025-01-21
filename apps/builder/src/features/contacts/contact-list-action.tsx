@@ -33,6 +33,7 @@ interface ContactListActionProps<TData>
   users: User[]
   teams: Team[]
   rows: RowModel<TData>[]
+  onUnsetAllRows: () => void
 }
 
 export function ContactListAction<TData>({
@@ -40,6 +41,7 @@ export function ContactListAction<TData>({
   users,
   teams,
   rows,
+  onUnsetAllRows,
 }: ContactListActionProps<TData>) {
   const { t } = useTranslate()
   const router = useRouter()
@@ -52,50 +54,56 @@ export function ContactListAction<TData>({
     return rows.map((row) => row.original.id)
   }, [rows])
   const [openAssignConversation, setOpenAssignConversation] = useState(false)
-  const { execute: executeAssignConversation } = useAction(
-    assignConversationAction.bind(null, chatbotId),
-    {
-      onSuccess: ({ input }) => {
-        // TODO update assigned text on parent component
-        // TODO whisper socket to update list conversation
-        router.refresh()
-        setOpenAssignConversation(false)
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
-      },
+  const {
+    execute: executeAssignConversation,
+    isExecuting: isExecutingAssignConversation,
+  } = useAction(assignConversationAction.bind(null, chatbotId), {
+    onSuccess: () => {
+      // TODO update assigned text on parent component
+      // TODO whisper socket to update list conversation
+      toast.success("Assign conversation successfully")
+      setOpenAssignConversation(false)
+      router.refresh()
+      onUnsetAllRows()
     },
-  )
+    onError: ({ error }) => {
+      if (error.serverError) {
+        toast.error(error.serverError.message ?? error.serverError)
+      }
+    },
+  })
 
-  const { execute: executeEnableLiveChat } = useAction(
-    enableLiveChatAction.bind(null, chatbotId),
-    {
-      onSuccess: ({ input }) => {
-        router.refresh()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
-      },
+  const {
+    execute: executeEnableLiveChat,
+    isExecuting: isExecutingEnableLivechat,
+  } = useAction(enableLiveChatAction.bind(null, chatbotId), {
+    onSuccess: () => {
+      toast.success("Enable chat successfully")
+      router.refresh()
+      onUnsetAllRows()
     },
-  )
+    onError: ({ error }) => {
+      if (error.serverError) {
+        toast.error(error.serverError.message ?? error.serverError)
+      }
+    },
+  })
 
-  const { execute: executeArchiveConversation } = useAction(
-    archiveConversationAction.bind(null, chatbotId),
-    {
-      onSuccess: async ({ data }) => {
-        router.refresh()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
-      },
+  const {
+    execute: executeArchiveConversation,
+    isExecuting: isExecutingArchiveConversation,
+  } = useAction(archiveConversationAction.bind(null, chatbotId), {
+    onSuccess: async () => {
+      toast.success("Archive conversation successfully")
+      router.refresh()
+      onUnsetAllRows()
     },
-  )
+    onError: ({ error }) => {
+      if (error.serverError) {
+        toast.error(error.serverError.message ?? error.serverError)
+      }
+    },
+  })
 
   return (
     <>
@@ -112,11 +120,20 @@ export function ContactListAction<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
-          <DropdownMenuItem onSelect={() => setOpenAssignConversation(true)}>
-            <div className="flex items-center gap-3">
+          <DropdownMenuItem
+            onSelect={() =>
+              contactIds.length && setOpenAssignConversation(true)
+            }
+          >
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={!contactIds.length || isExecutingAssignConversation}
+              className="flex items-center gap-3"
+            >
               <MessageCirclePlusIcon size="20" />
               {t("flows.ActionType.AssignConversation")}
-            </div>
+            </Button>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() =>
@@ -127,10 +144,15 @@ export function ContactListAction<TData>({
               })
             }
           >
-            <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={!conversationIds.length || isExecutingEnableLivechat}
+              className="flex items-center gap-3"
+            >
               <UserIcon size="20" />
               {t("flows.ActionType.DisableBot")}
-            </div>
+            </Button>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() =>
@@ -141,10 +163,15 @@ export function ContactListAction<TData>({
               })
             }
           >
-            <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={!conversationIds.length || isExecutingEnableLivechat}
+              className="flex items-center gap-3"
+            >
               <BotIcon size="20" />
               {t("flows.ActionType.EnableBot")}
-            </div>
+            </Button>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() =>
@@ -152,10 +179,17 @@ export function ContactListAction<TData>({
               executeArchiveConversation({ ids: conversationIds })
             }
           >
-            <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={
+                !conversationIds.length || isExecutingArchiveConversation
+              }
+              className="flex items-center gap-3"
+            >
               <ArchiveIcon size="20" />
               {t("flows.ActionType.ArchiveConversation")}
-            </div>
+            </Button>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

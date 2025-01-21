@@ -70,6 +70,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
             rows={table.getFilteredSelectedRowModel().rows}
             users={users}
             teams={teams}
+            onUnsetAllRows={() => table.toggleAllRowsSelected(false)}
           />
         </DataTableToolbar>
       </DataTable>

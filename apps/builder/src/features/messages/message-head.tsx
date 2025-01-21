@@ -14,13 +14,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { archiveConversationAction } from "@/features/conversations/actions/archive-conversation-action"
+import type { AssignConversationResponse } from "@/features/conversations/actions/assign-conversation-action"
 import { blockContactAction } from "@/features/conversations/actions/block-contact-action"
 import { enableLiveChatAction } from "@/features/conversations/actions/enable-live-chat-action"
 import { followChatAction } from "@/features/conversations/actions/follow-chat-action"
 import { unarchiveConversationAction } from "@/features/conversations/actions/unarchive-conversation-action"
 import { unblockContactAction } from "@/features/conversations/actions/unblock-contact-action"
 import ConversationAssignedPopover from "@/features/conversations/conversation-assigned-popover"
-import type { Contact, Conversation, Team, User } from "@ahachat.ai/database"
+import type { ConversationResource } from "@/features/conversations/schemas/get-conversations-schema"
+import {
+  AssignedType,
+  type Contact,
+  type Conversation,
+  type Team,
+  type User,
+} from "@ahachat.ai/database"
 import { useTranslate } from "@tolgee/react"
 import {
   ArchiveIcon,
@@ -38,7 +46,7 @@ import { parseAsString, useQueryState } from "nuqs"
 import { toast } from "sonner"
 
 interface MessagesHeadProps {
-  conversation: Conversation & { contact: Contact }
+  conversation: ConversationResource
   users: User[]
   teams: Team[]
   onUpdateConversation: (data: object) => void
@@ -152,6 +160,34 @@ export default function MessageHead({
     },
   )
 
+  const updateAssigner = ({
+    assignedId,
+    assignedType,
+    assigner,
+  }: AssignConversationResponse) => {
+    let data = {}
+    if (assignedType === AssignedType.User) {
+      data = {
+        assignedUser: assigner,
+        assignedTeam: null,
+      }
+    } else if (assignedType === AssignedType.Team) {
+      data = {
+        assignedUser: null,
+        assignedTeam: assigner,
+      }
+    } else {
+      data = {
+        assignedUser: null,
+        assignedTeam: null,
+      }
+    }
+
+    onUpdateConversation({
+      contact: { ...conversation.contact, assignedId, assignedType, ...data },
+    })
+  }
+
   return (
     <>
       <div>
@@ -163,12 +199,18 @@ export default function MessageHead({
                 conversation={conversation}
                 users={users}
                 teams={teams}
-                onAssigned={() => {}}
+                onAssigned={(data) =>
+                  updateAssigner(data as AssignConversationResponse)
+                }
               >
                 <div className="flex gap-1 items-center w-fit">
                   {!conversation.contact.assignedId
                     ? t("flows.ActionType.AssignConversation")
-                    : t("inboxes.assignedTo", { name: "User name" })}
+                    : t("inboxes.assignedTo", {
+                        name:
+                          conversation.contact.assignedUser?.name ??
+                          conversation.contact.assignedTeam?.name,
+                      })}
                   <ChevronDown size={16} />
                 </div>
               </ConversationAssignedPopover>

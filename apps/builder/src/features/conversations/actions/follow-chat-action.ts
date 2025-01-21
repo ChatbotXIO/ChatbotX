@@ -1,20 +1,21 @@
 "use server"
 
 import {
-  type FollowChatBindSchema,
+  type ChatbotBindSchema,
+  chatbotBindSchema,
+} from "@/features/chatbots/schemas/handle-resource-schema"
+import {
   type FollowChatSchema,
-  followChatBindSchema,
   followChatSchema,
 } from "@/features/conversations/schemas/follow-chat-schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { followConversationService } from "@/services/conversation.service"
 import { type User, prisma } from "@ahachat.ai/database"
-import { returnValidationErrors } from "next-safe-action"
-import { revalidateTag } from "next/cache"
 
 export const followChatAction = authActionClient
   .schema(followChatSchema)
-  .bindArgsSchemas(followChatBindSchema)
+  .bindArgsSchemas(chatbotBindSchema)
   .action(
     async ({
       ctx,
@@ -23,7 +24,7 @@ export const followChatAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: FollowChatSchema
-      bindArgsParsedInputs: FollowChatBindSchema
+      bindArgsParsedInputs: ChatbotBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
       const params = {
@@ -37,21 +38,9 @@ export const followChatAction = authActionClient
         where: params,
       })
       if (conversations.length !== parsedInput.ids.length) {
-        return returnValidationErrors(followChatSchema, {
-          _errors: ["Validation Exception"],
-          ids: {
-            _errors: ["Conversation not exists on chatbot"],
-          },
-        })
+        throw new Error("Conversation not exists on chatbot")
       }
-
-      await prisma.conversation.updateMany({
-        where: params,
-        data: { followed: parsedInput.followed },
-      })
-      for (const id of parsedInput.ids) {
-        revalidateTag(`conversations#${id}`)
-      }
+      await followConversationService(conversations, parsedInput.followed)
 
       return {
         successful: true,

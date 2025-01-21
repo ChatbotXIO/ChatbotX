@@ -5,8 +5,3 @@ export const followChatSchema = z.object({
   followed: z.boolean(),
 })
 export type FollowChatSchema = z.infer<typeof followChatSchema>
-
-export const followChatBindSchema: [chatbotId: z.ZodString] = [
-  z.string().cuid2(),
-]
-export type FollowChatBindSchema = [chatbotId: string]

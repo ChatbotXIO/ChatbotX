@@ -7,8 +7,3 @@ export const assignConversationSchema = z.object({
   assignedType: z.nativeEnum(AssignedType).nullable(),
 })
 export type AssignConversationSchema = z.infer<typeof assignConversationSchema>
-
-export const assignConversationBindSchema: [chatbotId: z.ZodString] = [
-  z.string().cuid2(),
-]
-export type AssignConversationBindSchema = [chatbotId: string]

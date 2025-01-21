@@ -1,20 +1,22 @@
 "use server"
 
 import {
-  type UnblockContactBindSchema,
+  type ChatbotBindSchema,
+  chatbotBindSchema,
+} from "@/features/chatbots/schemas/handle-resource-schema"
+import {
   type UnblockContactSchema,
-  unblockContactBindSchema,
   unblockContactSchema,
 } from "@/features/conversations/schemas/unblock-contact-schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { unblockContactService } from "@/services/conversation.service"
 import { type User, prisma } from "@ahachat.ai/database"
 import { returnValidationErrors } from "next-safe-action"
-import { revalidateTag } from "next/cache"
 
 export const unblockContactAction = authActionClient
   .schema(unblockContactSchema)
-  .bindArgsSchemas(unblockContactBindSchema)
+  .bindArgsSchemas(chatbotBindSchema)
   .action(
     async ({
       ctx,
@@ -23,7 +25,7 @@ export const unblockContactAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: UnblockContactSchema
-      bindArgsParsedInputs: UnblockContactBindSchema
+      bindArgsParsedInputs: ChatbotBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
       const params = {
@@ -47,18 +49,7 @@ export const unblockContactAction = authActionClient
         })
       }
 
-      await prisma.conversation.updateMany({
-        where: {
-          ...params,
-          blockedAt: {
-            not: null,
-          },
-        },
-        data: { blockedAt: null },
-      })
-      for (const id of parsedInput.ids) {
-        revalidateTag(`conversations#${id}`)
-      }
+      await unblockContactService(conversations)
 
       return {
         successful: true,

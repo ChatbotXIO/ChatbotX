@@ -2,11 +2,18 @@
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Contact } from "@ahachat.ai/database"
+import {
+  AssignedType,
+  type Contact,
+  type Team,
+  type User,
+} from "@ahachat.ai/database"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 
-export function getColumns(): ColumnDef<Contact>[] {
+export function getColumns(): ColumnDef<
+  Contact & { assignedUser: User | null; assignedTeam: Team | null }
+>[] {
   return [
     {
       id: "select",
@@ -61,7 +68,17 @@ export function getColumns(): ColumnDef<Contact>[] {
         <DataTableColumnHeader column={column} title="Assigned" />
       ),
       cell: ({ row }) => {
-        return <div>Unassigned</div>
+        return (
+          <>
+            {!row.original.assignedId && <div>Unassigned</div>}
+            {row.original.assignedType === AssignedType.User && (
+              <div>{row.original.assignedUser?.name}</div>
+            )}
+            {row.original.assignedType === AssignedType.Team && (
+              <div>{row.original.assignedTeam?.name}</div>
+            )}
+          </>
+        )
       },
       enableSorting: false,
       enableHiding: false,

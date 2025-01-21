@@ -1,20 +1,21 @@
 "use server"
 
 import {
-  type ArchiveConversationBindSchema,
+  type ChatbotBindSchema,
+  chatbotBindSchema,
+} from "@/features/chatbots/schemas/handle-resource-schema"
+import {
   type ArchiveConversationSchema,
-  archiveConversationBindSchema,
   archiveConversationSchema,
 } from "@/features/conversations/schemas/archive-conversation-schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { archiveConversationService } from "@/services/conversation.service"
 import { type User, prisma } from "@ahachat.ai/database"
-import { returnValidationErrors } from "next-safe-action"
-import { revalidateTag } from "next/cache"
 
 export const archiveConversationAction = authActionClient
   .schema(archiveConversationSchema)
-  .bindArgsSchemas(archiveConversationBindSchema)
+  .bindArgsSchemas(chatbotBindSchema)
   .action(
     async ({
       ctx,
@@ -23,7 +24,7 @@ export const archiveConversationAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: ArchiveConversationSchema
-      bindArgsParsedInputs: ArchiveConversationBindSchema
+      bindArgsParsedInputs: ChatbotBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
       const params = {
@@ -37,31 +38,14 @@ export const archiveConversationAction = authActionClient
         where: params,
       })
       if (conversations.length !== parsedInput.ids.length) {
-        return returnValidationErrors(archiveConversationSchema, {
-          _errors: ["Validation Exception"],
-          ids: {
-            _errors: [
-              "Conversation not exists on chatbot or conversation archived before.",
-            ],
-          },
-        })
+        throw new Error(
+          "Conversation not exists on chatbot or conversation archived before.",
+        )
       }
-      const data = { archivedAt: new Date() }
-
-      await prisma.conversation.updateMany({
-        where: {
-          ...params,
-          archivedAt: null,
-        },
-        data,
-      })
-      for (const id of parsedInput.ids) {
-        revalidateTag(`conversations#${id}`)
-      }
+      await archiveConversationService(conversations)
 
       return {
         successful: true,
-        data,
       }
     },
   )

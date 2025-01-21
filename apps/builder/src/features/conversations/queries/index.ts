@@ -113,6 +113,7 @@ export const getCurrentConversation = async (
           contact: {
             include: {
               assignedUser: true,
+              assignedTeam: true,
             },
           },
           messages: {

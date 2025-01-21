@@ -41,6 +41,8 @@ export async function getContacts(input: GetContactsSchema): Promise<{
           prisma.contact.findMany({
             include: {
               conversation: true,
+              assignedUser: true,
+              assignedTeam: true,
             },
             skip: (input.page - 1) * input.perPage,
             take: input.perPage,

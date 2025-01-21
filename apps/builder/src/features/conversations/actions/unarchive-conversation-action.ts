@@ -1,20 +1,21 @@
 "use server"
 
 import {
-  type UnarchiveConversationBindSchema,
+  type ChatbotBindSchema,
+  chatbotBindSchema,
+} from "@/features/chatbots/schemas/handle-resource-schema"
+import {
   type UnarchiveConversationSchema,
-  unarchiveConversationBindSchema,
   unarchiveConversationSchema,
 } from "@/features/conversations/schemas/unarchive-conversation-schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { unarchiveConversationService } from "@/services/conversation.service"
 import { type User, prisma } from "@ahachat.ai/database"
-import { returnValidationErrors } from "next-safe-action"
-import { revalidateTag } from "next/cache"
 
 export const unarchiveConversationAction = authActionClient
   .schema(unarchiveConversationSchema)
-  .bindArgsSchemas(unarchiveConversationBindSchema)
+  .bindArgsSchemas(chatbotBindSchema)
   .action(
     async ({
       ctx,
@@ -23,7 +24,7 @@ export const unarchiveConversationAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: UnarchiveConversationSchema
-      bindArgsParsedInputs: UnarchiveConversationBindSchema
+      bindArgsParsedInputs: ChatbotBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
       const params = {
@@ -37,28 +38,11 @@ export const unarchiveConversationAction = authActionClient
         where: params,
       })
       if (conversations.length !== parsedInput.ids.length) {
-        return returnValidationErrors(unarchiveConversationSchema, {
-          _errors: ["Validation Exception"],
-          ids: {
-            _errors: [
-              "Conversation not exists on chatbot or conversation unarchived before.",
-            ],
-          },
-        })
+        throw new Error(
+          "Conversation not exists on chatbot or conversation unarchived before.",
+        )
       }
-
-      await prisma.conversation.updateMany({
-        where: {
-          ...params,
-          archivedAt: {
-            not: null,
-          },
-        },
-        data: { archivedAt: null },
-      })
-      for (const id of parsedInput.ids) {
-        revalidateTag(`conversations#${id}`)
-      }
+      await unarchiveConversationService(conversations)
 
       return {
         successful: true,

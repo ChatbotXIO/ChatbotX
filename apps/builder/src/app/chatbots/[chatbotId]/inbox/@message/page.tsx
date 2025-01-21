@@ -14,16 +14,16 @@ export default async function MessagesPage(props: {
   const searchParams = await props.searchParams
   const { conversationId } =
     getConversationsSearchParamsCache.parse(searchParams)
-  const promises = Promise.all([
-    conversationId
-      ? getCurrentConversation({
+  const promises = conversationId
+    ? Promise.all([
+        getCurrentConversation({
           chatbotId: params.chatbotId,
           id: conversationId,
-        })
-      : Promise.resolve({ conversation: null }),
-    getUsers({ chatbotId: params.chatbotId }),
-    getTeams({ chatbotId: params.chatbotId }),
-  ])
+        }),
+        getUsers({ chatbotId: params.chatbotId }),
+        getTeams({ chatbotId: params.chatbotId }),
+      ])
+    : Promise.resolve([])
 
   return (
     <Suspense>

@@ -63,6 +63,7 @@ export default function MessageList({
 }: MessagesProps) {
   const data = use(promises)
   const [conversation, setConversation] = useState(data[0].conversation)
+  console.log("conversation", conversation)
   const [messages, setMessages] = useState<MessageResource[]>([])
   // console.log('messages', messages)
   const loadingMore = useRef<boolean>(false)

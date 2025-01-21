@@ -8,7 +8,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { assignConversationAction } from "@/features/conversations/actions/assign-conversation-action"
+import {
+  type AssignConversationResponse,
+  assignConversationAction,
+} from "@/features/conversations/actions/assign-conversation-action"
 import {
   AssignedType,
   type Contact,
@@ -42,14 +45,20 @@ export default function ConversationAssignedPopover({
   const [open, setOpen] = useState(false)
   const userOptions = useMemo(() => {
     return users.filter(
-      (user) => !assignerName || user.name?.includes(assignerName),
+      (user) =>
+        (conversation.contact.assignedType !== AssignedType.User ||
+          conversation.contact.assignedId !== user.id) &&
+        (!assignerName || user.name?.includes(assignerName)),
     )
-  }, [users, assignerName])
+  }, [users, assignerName, conversation])
   const teamOptions = useMemo(() => {
     return teams.filter(
-      (team) => !assignerName || team.name.includes(assignerName),
+      (team) =>
+        (conversation.contact.assignedType !== AssignedType.Team ||
+          conversation.contact.assignedId !== team.id) &&
+        (!assignerName || team.name.includes(assignerName)),
     )
-  }, [teams, assignerName])
+  }, [teams, assignerName, conversation])
 
   const { execute: executeAssignConversation } = useAction(
     assignConversationAction.bind(null, conversation.chatbotId),
@@ -57,10 +66,10 @@ export default function ConversationAssignedPopover({
       onExecute: () => {
         setOpen(false)
       },
-      onSuccess: ({ input }) => {
+      onSuccess: ({ data }) => {
         // TODO update assigned text on parent component
         // TODO whisper socket to update list conversation
-        // onAssigned({})
+        onAssigned(data as AssignConversationResponse)
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -127,6 +136,7 @@ export default function ConversationAssignedPopover({
             <Button
               variant="ghost"
               className="border px-2"
+              disabled={!conversation.contact.assignedId}
               onClick={() =>
                 executeAssignConversation({
                   ids: [conversation.contactId],
