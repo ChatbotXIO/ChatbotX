@@ -16,20 +16,20 @@ type IntegrationDialogDisconnectProps = {
   disconnect: () => void
 }
 
-export const IntegrationDialogDisconnect = ({
+export default function IntegrationDialogDisconnect({
   title,
   disconnect,
-}: IntegrationDialogDisconnectProps) => {
+}: IntegrationDialogDisconnectProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="destructive" className="min-w-[250px]">
-          <T keyName="settings.integrations.OpenAI.button.edit" />
+          <T keyName="settings.integrations.DisconnectBtn" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle v-html={title} />
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <DialogFooter>

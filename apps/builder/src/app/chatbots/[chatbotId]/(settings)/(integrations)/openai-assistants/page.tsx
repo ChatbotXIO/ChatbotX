@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 
-export default function OpenAIPromptsPage() {
+export default function OpenAIAssistantPage() {
   return (
     <div className="flex flex-col items-center justify-center">
       <h1 className="text-3xl">Assistants</h1>
