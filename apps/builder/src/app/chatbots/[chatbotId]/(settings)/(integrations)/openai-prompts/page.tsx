@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import OpenAIPromptTable from "@/features/integrations/open-ai/components/prompt-table"
+import OpenAIPromptTable from "@/features/integrations/open-ai/components/prompt/table"
 import {
   getOpenAIAgents,
   getOpenAIIntegration,

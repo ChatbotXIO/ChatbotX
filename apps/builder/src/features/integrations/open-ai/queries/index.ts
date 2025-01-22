@@ -138,3 +138,25 @@ export const getOpenAIAssistants = async ({
     status: "ok",
   }
 }
+
+export const getOpenAIPromptByID = async ({
+  id,
+}: { id: string }): Promise<{
+  data: Record<
+    string,
+    string | Record<string, string | Record<string, string>[]>
+  >
+  status: string
+}> => {
+  return {
+    data: {
+      id: "816038",
+      json_builder: {
+        messages: [],
+        system: "You are a helpful assistant.",
+      },
+      name: "11232132",
+    },
+    status: "ok",
+  }
+}
