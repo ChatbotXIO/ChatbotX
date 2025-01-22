@@ -3,7 +3,7 @@
 import { SettingRow } from "@/components/setting-row"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import IntegrationDialogDisconnect from "@/features/integrations/components/dialog-disconnect"
+import IntegrationDialogDisconnect from "@/features/integrations/components/dialog/disconnect"
 import OpenAIDialogEdit from "@/features/integrations/open-ai/components/dialog-edit"
 import type { getOpenAIIntegration } from "@/features/integrations/open-ai/queries"
 import { T } from "@tolgee/react"

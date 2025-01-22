@@ -160,3 +160,10 @@ export const getOpenAIPromptByID = async ({
     status: "ok",
   }
 }
+
+export const createNewPrompt = async (payload: Record<string, string>) => {
+  return {
+    data: {},
+    status: "ok",
+  }
+}
