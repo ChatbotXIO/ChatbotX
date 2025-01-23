@@ -6,7 +6,7 @@
   "scripts": {
     "build": "next build",
     "check-types": "tsc --noEmit",
-    "next:dev": "dotenv -e ../../.env -- next dev --turbopack -p 3000",
+    "next:dev": "dotenv -e ../../.env -- next dev --turbopack -p 3030",
     "partysocket:dev": "dotenv -e ../../.env -- partykit dev",
     "workers:flow:dev": "dotenv -e ../../.env -- tsx --watch src/workers/flow.worker.ts",
     "workers:chat:dev": "dotenv -e ../../.env -- tsx --watch src/workers/chat.worker.ts",

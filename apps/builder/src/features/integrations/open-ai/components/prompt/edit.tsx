@@ -116,10 +116,12 @@ export default function OpenAIPromptEdit({ promises }: OpenAIPromptEditProps) {
   return (
     <>
       <div className="flex items-center justify-end gap-3 p-3 mb-5">
-        <Button variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
-        <Button onClick={onSave}>Save</Button>
+        <Button type="button" onClick={onSave}>
+          Save
+        </Button>
       </div>
 
       <div className="flex flex-col w-full mr-auto ml-auto p-2 rounded-xl shadow-xl md:w-1/2 md:p-4">

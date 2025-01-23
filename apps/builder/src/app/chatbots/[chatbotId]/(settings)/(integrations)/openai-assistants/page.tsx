@@ -1,14 +1,17 @@
-import { Button } from "@/components/ui/button"
+import {
+  getOpenAIIntegration,
+  getOpenAIAssistants,
+} from "@/features/integrations/open-ai/queries"
+import OpenAIAssistantTable from "@/features/integrations/open-ai/components/assistant/table"
 
-export default function OpenAIAssistantPage() {
-  return (
-    <div className="flex flex-col items-center justify-center">
-      <h1 className="text-3xl">Assistants</h1>
-      <p className="mb-2">
-        Assistants are similar to AI agents. Use it when you want to use a large
-        amount of data on files.
-      </p>
-      <Button type="button">Add</Button>
-    </div>
-  )
+export default async function OpenAIAssistantPage(props: {
+  params: Promise<{ chatbotId: string }>
+}) {
+  const params = await props.params
+  const promises = Promise.all([
+    getOpenAIIntegration({ chatbotId: params.chatbotId as string }),
+    getOpenAIAssistants({ chatbotId: params.chatbotId as string }),
+  ])
+
+  return <OpenAIAssistantTable promises={promises} />
 }

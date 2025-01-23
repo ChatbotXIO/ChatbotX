@@ -80,8 +80,8 @@ export default function OpenAIPromptTable({
           />
         </div>
       </div>
-      {integration?.data?.isConnect ? (
-        <div className="p-2">
+      <div className="p-2">
+        {integration?.data?.isConnect ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -91,7 +91,7 @@ export default function OpenAIPromptTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {prompts?.data?.map((prompt, index) => (
+              {prompts?.data?.map((prompt) => (
                 <TableRow
                   key={prompt.id}
                   className="cursor-pointer hover:bg-slate-200"
@@ -153,13 +153,13 @@ export default function OpenAIPromptTable({
               ))}
             </TableBody>
           </Table>
-        </div>
-      ) : (
-        <p className="mb-2">
-          AI agents give you control over how AI answers customers based on your
-          business information.
-        </p>
-      )}
+        ) : (
+          <p>
+            AI agents give you control over how AI answers customers based on
+            your business information.
+          </p>
+        )}
+      </div>
     </div>
   )
 }
