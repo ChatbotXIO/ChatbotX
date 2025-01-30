@@ -1,6 +1,11 @@
 "use client"
 
-import { use, useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Table,
   TableBody,
@@ -9,21 +14,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Button } from "@/components/ui/button"
 import IntegrationDialogAdd from "@/features/integrations/components/dialog/add"
-import { EllipsisVerticalIcon, PlusCircleIcon, Trash2Icon } from "lucide-react"
-import { T } from "@tolgee/react"
+import IntegrationDialogDelete from "@/features/integrations/components/dialog/delete"
 import type {
   getOpenAIAssistants,
   getOpenAIIntegration,
 } from "@/features/integrations/open-ai/queries"
-import IntegrationDialogDelete from "@/features/integrations/components/dialog/delete"
+import { T } from "@tolgee/react"
+import { EllipsisVerticalIcon, PlusCircleIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { use, useState } from "react"
 
 type OpenAIAssistantTableProps = {
   promises: Promise<

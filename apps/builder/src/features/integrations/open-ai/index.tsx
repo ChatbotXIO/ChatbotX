@@ -4,7 +4,6 @@ import { SettingRow } from "@/components/setting-row"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import IntegrationDialogDisconnect from "@/features/integrations/components/dialog/disconnect"
-import OpenAIDialogEdit from "@/features/integrations/open-ai/components/dialog-edit"
 import type { getOpenAIIntegration } from "@/features/integrations/open-ai/queries"
 import { T } from "@tolgee/react"
 import Link from "next/link"
@@ -30,8 +29,6 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
       >
         {data?.isConnect ? (
           <div className="flex flex-col gap-2">
-            <OpenAIDialogEdit chatbotId={`${params?.chatbotId}`} />
-
             <IntegrationDialogDisconnect
               title="Do you want to Disconnect OpenAI?"
               disconnect={onDisconnect}
@@ -69,7 +66,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             className="items-center"
           >
             <Button variant="secondary" asChild>
-              <Link href="../openai-prompts">
+              <Link href="../ai-agents">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
             </Button>
@@ -83,7 +80,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             className="items-center"
           >
             <Button variant="secondary">
-              <Link href="../openai-assistants">
+              <Link href="../assistants">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
             </Button>
@@ -97,7 +94,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             className="items-center"
           >
             <Button variant="secondary">
-              <Link href="../chatgpt-triggers">
+              <Link href="../ai-triggers">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
             </Button>

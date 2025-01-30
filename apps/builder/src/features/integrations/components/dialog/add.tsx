@@ -10,11 +10,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-import { type ReactNode, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { T } from "@tolgee/react"
+import { type ReactNode, useEffect, useState } from "react"
 
 type IntegrationDialogAddNameProps = {
   button: ReactNode

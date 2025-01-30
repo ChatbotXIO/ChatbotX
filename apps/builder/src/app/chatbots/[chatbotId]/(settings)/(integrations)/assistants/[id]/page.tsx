@@ -1,9 +1,9 @@
+import OpenAIAssistantEdit from "@/features/integrations/open-ai/assistant/edit"
 import {
   getOpenAIAssistantByID,
   getOpenAIModels,
   getOpenAITriggers,
 } from "@/features/integrations/open-ai/queries"
-import OpenAIAssistantEdit from "@/features/integrations/open-ai/components/assistant/edit"
 
 export default async function OpenAIAssistantEditPage(props: {
   params: Promise<{ chatbotId: string; id: string }>

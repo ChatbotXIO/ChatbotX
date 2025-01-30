@@ -1,17 +1,17 @@
 "use client"
 
+import { MultiSelect } from "@/components/multi-select"
+import { SingleSelect } from "@/components/single-select"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import type {
   getOpenAIAssistantByID,
   getOpenAIModels,
   getOpenAITriggers,
 } from "@/features/integrations/open-ai/queries"
 import { use, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { SingleSelect } from "@/components/single-select"
-import { MultiSelect } from "@/components/multi-select"
 
 type OpenAIAssistantEditProps = {
   promises: Promise<

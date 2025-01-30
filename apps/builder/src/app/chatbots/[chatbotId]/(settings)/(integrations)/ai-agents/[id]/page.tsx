@@ -1,7 +1,7 @@
-import OpenAIPromptEdit from "@/features/integrations/open-ai/components/prompt/edit"
+import OpenAIPromptEdit from "@/features/integrations/open-ai/agents/edit"
 import { getOpenAIPromptByID } from "@/features/integrations/open-ai/queries"
 
-export default async function OpenAIPromptEditPage(props: {
+export default async function OpenAIAgentsEditPage(props: {
   params: Promise<{ chatbotId: string; id: string }>
 }) {
   const params = await props.params

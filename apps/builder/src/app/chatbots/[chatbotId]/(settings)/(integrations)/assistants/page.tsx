@@ -1,8 +1,8 @@
+import OpenAIAssistantTable from "@/features/integrations/open-ai/assistant/table"
 import {
-  getOpenAIIntegration,
   getOpenAIAssistants,
+  getOpenAIIntegration,
 } from "@/features/integrations/open-ai/queries"
-import OpenAIAssistantTable from "@/features/integrations/open-ai/components/assistant/table"
 
 export default async function OpenAIAssistantPage(props: {
   params: Promise<{ chatbotId: string }>

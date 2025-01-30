@@ -1,3 +1,5 @@
+import type { Tag } from "@ahachat.ai/database"
+
 export const getOpenAIIntegration = async ({
   chatbotId,
 }: { chatbotId: string }): Promise<{
@@ -140,13 +142,13 @@ export const getOpenAIPrompt = async ({
   }
 }
 
-export const getOpenAIAgents = async ({
+export const getAgents = async ({
   chatbotId,
 }: {
   chatbotId: string
 }): Promise<{
-  data: Record<string, string | number>[] | []
-  status: string
+  data: { id: string; name: string; update_at: string }[]
+  pageCount: number
 }> => {
   return {
     data: [
@@ -171,7 +173,7 @@ export const getOpenAIAgents = async ({
         update_at: "0",
       },
     ],
-    status: "ok",
+    pageCount: 1,
   }
 }
 
