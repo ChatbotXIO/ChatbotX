@@ -45,7 +45,7 @@ export function ChatbotSwitcher({
                   alt={activeChatbot?.name}
                 />
                 <AvatarFallback className="rounded">
-                  {activeChatbot?.name?.charAt(0)}
+                  {activeChatbot?.name?.slice(0, 2) || "  "}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">

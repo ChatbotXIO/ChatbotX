@@ -41,7 +41,6 @@ export function SignOut() {
             Sign Out
           </Button>
         </div>
-        {/* </form> */}
       </DialogContent>
     </Dialog>
   )
