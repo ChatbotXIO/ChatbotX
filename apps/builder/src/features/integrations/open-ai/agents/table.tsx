@@ -6,6 +6,8 @@ import type {
   DataTableFilterField,
   DataTableRowAction,
 } from "@/components/data-table/types"
+import { DeleteAgentsDialog } from "@/features/integrations/open-ai/agents/delete"
+import { AgentsTableToolbarActions } from "@/features/integrations/open-ai/agents/table-toolbar-actions"
 import type { getAgents } from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import { use, useMemo, useState } from "react"
@@ -60,7 +62,7 @@ export function AgentsTable({ promises, chatbotId }: AgentsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow: Record<string, string>) => originalRow.id as string,
     shallow: false,
     clearOnDefault: true,
   })
@@ -69,18 +71,18 @@ export function AgentsTable({ promises, chatbotId }: AgentsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          {/*<TagsTableToolbarActions table={table} chatbotId={chatbotId} />*/}
+          <AgentsTableToolbarActions table={table} chatbotId={chatbotId} />
         </DataTableToolbar>
       </DataTable>
 
-      {/*<DeleteTagsDialog*/}
-      {/*  open={rowAction?.type === "delete"}*/}
-      {/*  onOpenChange={() => setRowAction(null)}*/}
-      {/*  tags={rowAction?.row.original ? [rowAction?.row.original] : []}*/}
-      {/*  showTrigger={false}*/}
-      {/*  onSuccess={() => rowAction?.row.toggleSelected(false)}*/}
-      {/*  chatbotId={chatbotId}*/}
-      {/*/>*/}
+      <DeleteAgentsDialog
+        open={rowAction?.type === "delete"}
+        onOpenChange={() => setRowAction(null)}
+        agents={rowAction?.row.original ? [rowAction?.row.original] : []}
+        showTrigger={false}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        chatbotId={chatbotId}
+      />
 
       {/*<UpdateTagDialog*/}
       {/*  open={rowAction?.type === "update"}*/}

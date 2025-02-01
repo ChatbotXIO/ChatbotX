@@ -41,3 +41,13 @@ export const createAgentBindSchema: [
 ] = [z.string().cuid2(), z.string().nullable()]
 
 export type CreateAgentBindSchema = [chatbotId: string, name: string | null]
+
+/**
+ * Delete
+ */
+export const deleteAgentBindSchema: [
+  chatbotId: z.ZodString,
+  ids: z.ZodArray<Zod.ZodString>,
+] = [z.string().cuid2(), z.array(z.string().cuid2())]
+
+export type DeleteAgentBindSchema = [chatbotId: string, ids: string[]]
