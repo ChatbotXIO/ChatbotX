@@ -7,8 +7,8 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { DeleteAgentsDialog } from "@/features/integrations/open-ai/agents/delete"
-import { UpdateAgentDialog } from "@/features/integrations/open-ai/agents/update";
 import { AgentsTableToolbarActions } from "@/features/integrations/open-ai/agents/table-toolbar-actions"
+import { UpdateAgentDialog } from "@/features/integrations/open-ai/agents/update"
 import type { getAgents } from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import { use, useMemo, useState } from "react"

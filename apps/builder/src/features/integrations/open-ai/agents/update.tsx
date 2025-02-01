@@ -1,5 +1,6 @@
 "use client"
 
+import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,16 +18,17 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea"
+import { updateAgentAction } from "@/features/integrations/open-ai/actions/agents.action"
+import { updateAgentSchema } from "@/features/integrations/open-ai/schemas/agents.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
-import { Loader2Icon } from "lucide-react"
+import { Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { updateAgentSchema } from "@/features/integrations/open-ai/schemas/agents.schema";
-import { updateAgentAction } from "@/features/integrations/open-ai/actions/agents.action";
 
 export function UpdateAgentDialog({
   chatbotId,
@@ -45,7 +47,7 @@ export function UpdateAgentDialog({
   const {
     form,
     handleSubmitWithAction,
-    form: { setValue },
+    form: { setValue, control, reset },
   } = useHookFormAction(
     updateAgentAction.bind(null, chatbotId, agent?.id ?? ""),
     zodResolver(updateAgentSchema),
@@ -69,6 +71,36 @@ export function UpdateAgentDialog({
       errorMapProps: {},
     },
   )
+
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "json_builder.messages",
+  })
+
+  const addOptions = () => {
+    console.log(fields)
+    const lastRole: string = fields.at(-1)?.role || "agent"
+    console.log(lastRole)
+    append({ role: lastRole === "user" ? "agent" : "user", content: "" })
+  }
+
+  const onChangeRole = (index: number, value: string) => {
+    console.log(fields[index].content)
+    // update(index, {
+    //   role: value,
+    //   content: fields[index]?.content
+    // })
+  }
+
+  useEffect(() => {
+    if (!open) {
+      reset({
+        json_builder: {
+          messages: [],
+        },
+      })
+    }
+  }, [open, reset])
 
   useEffect(() => {
     if (agent) {
@@ -115,6 +147,56 @@ export function UpdateAgentDialog({
                   </FormItem>
                 )}
               />
+              <div className="flex flex-col space-y-2 overflow-auto max-h-[500px]">
+                {fields.map((item, index) => (
+                  <div className="flex items-center space-x-2" key={item.id}>
+                    <div className="w-[150px]">
+                      <FormField
+                        control={form.control}
+                        name={`json_builder.messages.${index}.role`}
+                        render={({ field }) => (
+                          <SingleSelect
+                            options={[
+                              { label: "User", value: "user" },
+                              { label: "Agent", value: "agent" },
+                            ]}
+                            onValueChange={(v: string) =>
+                              update(index, {
+                                ...fields[index],
+                                role: v,
+                              })
+                            }
+                            {...field}
+                          />
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`json_builder.messages.${index}.content`}
+                      render={({ field }) => (
+                        <Input placeholder="Type a message..." {...field} />
+                      )}
+                    />
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="w-[60px]"
+                      onClick={() => remove(index)}
+                    >
+                      <XIcon size={20} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <Button type="button" onClick={addOptions}>
+                  {t("common.add-more")}
+                </Button>
+              </div>
 
               <div className="flex justify-end gap-4">
                 <Button
