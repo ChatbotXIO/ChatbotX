@@ -5,7 +5,6 @@ import {
   Bell,
   ChevronsUpDown,
   CreditCard,
-  LogOut,
   Sparkles,
 } from "lucide-react"
 
@@ -25,6 +24,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { SignOut } from "@/features/auth/sign-out"
 import { useTranslate } from "@tolgee/react"
 import { LangSelector } from "./lang-selector"
 import { ThemeSwitcher } from "./theme-switcher"
@@ -40,10 +40,6 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { t } = useTranslate()
-
-  const onLogout = () => {
-    console.log("logout")
-  }
 
   return (
     <SidebarMenu>
@@ -120,9 +116,8 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onLogout()}>
-              <LogOut />
-              Log out
+            <DropdownMenuItem asChild>
+              <SignOut />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

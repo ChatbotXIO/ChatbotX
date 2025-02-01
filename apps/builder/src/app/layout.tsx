@@ -1,11 +1,12 @@
-import type { Metadata } from "next"
-import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TolgeeNextProvider } from "@/tolgee/client"
 import { getLanguage } from "@/tolgee/language"
 import { getStaticData } from "@/tolgee/shared"
+import type { Metadata } from "next"
+import { SessionProvider } from "next-auth/react"
 import type { ReactNode } from "react"
+import "./globals.css"
 
 export const metadata: Metadata = {
   title: "AhaChat AI",
@@ -27,17 +28,19 @@ export default async function RootLayout({ children }: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <TolgeeNextProvider language={locale} staticData={staticData}>
-            {children}
-            <Toaster richColors position="top-right" />
-          </TolgeeNextProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <TolgeeNextProvider language={locale} staticData={staticData}>
+              {children}
+              <Toaster richColors position="top-right" />
+            </TolgeeNextProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   )
