@@ -89,7 +89,9 @@ export function DeleteAgentsDialog({
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t("common.cancelBtn")}</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              {t("common.cancelBtn")}
+            </Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"

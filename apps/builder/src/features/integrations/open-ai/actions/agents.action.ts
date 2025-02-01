@@ -1,6 +1,5 @@
 "use server"
 
-import type { DeleteTagBindSchema } from "@/features/tags/schemas/delete-tag-schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { User } from "@ahachat.ai/database"
@@ -9,10 +8,17 @@ import {
   type CreateAgentBindSchema,
   type CreateAgentSchema,
   type DeleteAgentBindSchema,
+  type UpdateAgentBindSchema,
+  type UpdateAgentSchema,
   createAgentBindSchema,
   deleteAgentBindSchema,
+  updateAgentBindSchema,
+  updateAgentSchema,
 } from "../schemas/agents.schema"
 
+/**
+ * Create
+ */
 export const createAgentAction = authActionClient
   .schema(createAgentSchema)
   .bindArgsSchemas(createAgentBindSchema)
@@ -28,7 +34,29 @@ export const createAgentAction = authActionClient
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      console.log(parsedInput, name)
+      return {
+        successful: true,
+      }
+    },
+  )
+
+/**
+ * Update
+ */
+export const updateAgentAction = authActionClient
+  .schema(updateAgentSchema)
+  .bindArgsSchemas(updateAgentBindSchema)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+      bindArgsParsedInputs: [chatbotId, agentId],
+    }: {
+      ctx: { user: User }
+      parsedInput: UpdateAgentSchema
+      bindArgsParsedInputs: UpdateAgentBindSchema
+    }) => {
+      await findChatbotOrFail(ctx.user.id, chatbotId)
 
       return {
         successful: true,
@@ -36,6 +64,9 @@ export const createAgentAction = authActionClient
     },
   )
 
+/**
+ * Delete
+ */
 export const deleteAgentAction = authActionClient
   .bindArgsSchemas(deleteAgentBindSchema)
   .action(

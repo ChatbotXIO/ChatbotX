@@ -51,3 +51,28 @@ export const deleteAgentBindSchema: [
 ] = [z.string().cuid2(), z.array(z.string().cuid2())]
 
 export type DeleteAgentBindSchema = [chatbotId: string, ids: string[]]
+
+/**
+ * Update
+ */
+const messageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string()
+});
+
+export const updateAgentSchema = z.object({
+  name: z.string().min(1).max(255).trim(),
+  json_builder: z.object({
+    system: z.string().optional(),
+    messages: z.array(messageSchema).optional()
+  }).optional()
+})
+
+export type UpdateAgentSchema = z.infer<typeof updateAgentSchema>
+
+export const updateAgentBindSchema: [
+  chatbotId: z.ZodString,
+  agentId: z.ZodString,
+] = [z.string().cuid2(), z.string().cuid2()]
+
+export type UpdateAgentBindSchema = [chatbotId: string, agentId: string]

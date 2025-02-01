@@ -7,6 +7,7 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { DeleteAgentsDialog } from "@/features/integrations/open-ai/agents/delete"
+import { UpdateAgentDialog } from "@/features/integrations/open-ai/agents/update";
 import { AgentsTableToolbarActions } from "@/features/integrations/open-ai/agents/table-toolbar-actions"
 import type { getAgents } from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
@@ -84,12 +85,12 @@ export function AgentsTable({ promises, chatbotId }: AgentsTableProps) {
         chatbotId={chatbotId}
       />
 
-      {/*<UpdateTagDialog*/}
-      {/*  open={rowAction?.type === "update"}*/}
-      {/*  onOpenChange={() => setRowAction(null)}*/}
-      {/*  chatbotId={chatbotId}*/}
-      {/*  tag={rowAction?.row.original || null}*/}
-      {/*/>*/}
+      <UpdateAgentDialog
+        open={rowAction?.type === "update"}
+        onOpenChange={() => setRowAction(null)}
+        chatbotId={chatbotId}
+        agent={rowAction?.row.original || null}
+      />
     </>
   )
 }

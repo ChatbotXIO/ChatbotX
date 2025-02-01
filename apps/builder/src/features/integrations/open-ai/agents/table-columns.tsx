@@ -93,7 +93,7 @@ export function getAgentsColumns({
               <DropdownMenuItem
                 onSelect={() => setRowAction({ row, type: "update" })}
               >
-                Rename
+                Edit
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem
