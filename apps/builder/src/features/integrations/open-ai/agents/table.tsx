@@ -9,7 +9,7 @@ import type {
 import { DeleteAgentsDialog } from "@/features/integrations/open-ai/agents/delete"
 import { AgentsTableToolbarActions } from "@/features/integrations/open-ai/agents/table-toolbar-actions"
 import { UpdateAgentDialog } from "@/features/integrations/open-ai/agents/update"
-import type { getAgents } from "@/features/integrations/open-ai/queries"
+import type { getAgents } from "@/features/integrations/open-ai/queries/agent.query"
 import { useDataTable } from "@/hooks/use-data-table"
 import { use, useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -72,7 +72,11 @@ export function AgentsTable({ promises, chatbotId }: AgentsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          <AgentsTableToolbarActions table={table} chatbotId={chatbotId} />
+          <AgentsTableToolbarActions
+            table={table}
+            chatbotId={chatbotId}
+            onOpenChange={() => setRowAction(null)}
+          />
         </DataTableToolbar>
       </DataTable>
 

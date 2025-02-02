@@ -1,6 +1,5 @@
 "use client"
 
-import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -54,7 +53,7 @@ export function UpdateAgentDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Tag update successfully")
+          toast.success("Agent update successfully")
 
           onOpenChange(false)
           router.refresh()

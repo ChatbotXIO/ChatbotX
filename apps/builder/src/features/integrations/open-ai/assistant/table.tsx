@@ -1,139 +1,87 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import IntegrationDialogAdd from "@/features/integrations/components/dialog/add"
-import IntegrationDialogDelete from "@/features/integrations/components/dialog/delete"
+import { DataTable } from "@/components/data-table/data-table"
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
 import type {
-  getOpenAIAssistants,
-  getOpenAIIntegration,
-} from "@/features/integrations/open-ai/queries"
-import { T } from "@tolgee/react"
-import { EllipsisVerticalIcon, PlusCircleIcon, Trash2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { use, useState } from "react"
+  DataTableFilterField,
+  DataTableRowAction,
+} from "@/components/data-table/types"
+import { DeleteAssistantDialog } from "@/features/integrations/open-ai/assistant/delete"
+import { AssistantTableToolbarActions } from "@/features/integrations/open-ai/assistant/table-toolbar-actions"
+import { UpdateAssistantDialog } from "@/features/integrations/open-ai/assistant/update"
+import type { getAssistants } from "@/features/integrations/open-ai/queries/assistant.query"
+import { useDataTable } from "@/hooks/use-data-table"
+import { use, useMemo, useState } from "react"
+import { getAssistantColumns } from "./table-columns"
 
-type OpenAIAssistantTableProps = {
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof getOpenAIIntegration>>,
-      Awaited<ReturnType<typeof getOpenAIAssistants>>,
-    ]
-  >
+interface AgentsTableProps {
+  promises: Promise<[Awaited<ReturnType<typeof getAssistants>>]>
+  chatbotId: string
 }
 
-export default function OpenAIAssistantTable({
-  promises,
-}: OpenAIAssistantTableProps) {
-  const router = useRouter()
-  const [integration, assistants] = use(promises)
-  const [activePopover, setActivePopover] = useState("")
+export function AssistantTable({ promises, chatbotId }: AgentsTableProps) {
+  const [{ data, pageCount }] = use(promises)
+  const [rowAction, setRowAction] = useState<DataTableRowAction<
+    Record<string, string>
+  > | null>(null)
 
-  console.log(integration, assistants)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const columns = useMemo(
+    () => getAssistantColumns({ setRowAction }),
+    [setRowAction],
+  )
 
-  const onAdd = async (name: string) => {
-    console.log("Add Name")
-  }
+  const filterFields: DataTableFilterField<
+    Record<string, string> & { name?: string }
+  >[] = [
+    {
+      id: "name",
+      label: "Search",
+      placeholder: "Enter assistant name...",
+    },
+  ]
 
-  const onRemove = () => {
-    console.log("onRemove")
-    setActivePopover("")
-  }
-
-  const onEdit = (id: string) => {
-    router.push(`./openai-assistants/${id}`)
-  }
+  const { table } = useDataTable({
+    data,
+    columns,
+    pageCount,
+    filterFields,
+    initialState: {
+      sorting: [{ id: "createdAt", desc: true }],
+      columnPinning: { right: ["actions"] },
+    },
+    getRowId: (originalRow: Record<string, string>) => originalRow.id as string,
+    shallow: false,
+    clearOnDefault: true,
+  })
 
   return (
-    <div className="border rounded-md">
-      <div className="border-b p-2 flex items-center justify-between">
-        <h1 className="text-2xl">Assistants</h1>
-        <div className="">
-          <IntegrationDialogAdd
-            title="Add New"
-            save={onAdd}
-            button={
-              <Button className="min-w-[250px]">
-                <PlusCircleIcon />
-                <T keyName="settings.integrations.button.add" />
-              </Button>
-            }
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table} filterFields={filterFields}>
+          <AssistantTableToolbarActions
+            table={table}
+            chatbotId={chatbotId}
+            onOpenChange={() => setRowAction(null)}
           />
-        </div>
-      </div>
-      <div className="p-2">
-        {integration?.data?.isConnect ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Modified</TableHead>
-                <TableHead className="w-[100px]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assistants.data.map((item) => (
-                <TableRow
-                  key={item.id}
-                  className="cursor-pointer hover:bg-slate-200"
-                  onClick={() => onEdit(item.id as string)}
-                >
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.update_at}</TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Popover open={activePopover === item.id}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onMouseEnter={() =>
-                            setActivePopover(item.id as string)
-                          }
-                        >
-                          <EllipsisVerticalIcon />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-[200px] p-0"
-                        onMouseLeave={() => setActivePopover("")}
-                      >
-                        <IntegrationDialogDelete
-                          title="One item will be deleted. You can't undo this action."
-                          id={item.id as string}
-                          button={
-                            <div className="flex items-center gap-2 p-2 border-b cursor-pointer text-gray-300 hover:bg-slate-200 hover:text-red-500">
-                              <Trash2Icon size={15} />
-                              <p>Delete</p>
-                            </div>
-                          }
-                          remove={onRemove}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <p className="">
-            Assistants are similar to AI agents. Use it when you want to use a
-            large amount of data on files.
-          </p>
-        )}
-      </div>
-    </div>
+        </DataTableToolbar>
+      </DataTable>
+
+      <DeleteAssistantDialog
+        open={rowAction?.type === "delete"}
+        onOpenChange={() => setRowAction(null)}
+        assistant={rowAction?.row.original ? [rowAction?.row.original] : []}
+        showTrigger={false}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        chatbotId={chatbotId}
+      />
+
+      <UpdateAssistantDialog
+        open={rowAction?.type === "update"}
+        onOpenChange={() => setRowAction(null)}
+        chatbotId={chatbotId}
+        assistant={rowAction?.row.original || null}
+      />
+    </>
   )
 }

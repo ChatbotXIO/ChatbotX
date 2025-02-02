@@ -76,6 +76,7 @@ export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
         )}
       >
         <Button
+          type="button"
           size="icon"
           className="min-w-10 rounded-r-none hover:bg-gray-200 focus-visible:ring-1"
           variant="secondary"
@@ -92,6 +93,7 @@ export const NumberField = forwardRef<HTMLDivElement, NumberFieldProps>(
           onBlur={onBlur}
         />
         <Button
+          type="button"
           size="icon"
           className="min-w-10 rounded-l-none hover:bg-gray-200 focus-visible:ring-1"
           variant="secondary"

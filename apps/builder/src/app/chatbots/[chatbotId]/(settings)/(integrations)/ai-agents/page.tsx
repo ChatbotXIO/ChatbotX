@@ -1,7 +1,7 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateAgentDialog } from "@/features/integrations/open-ai/agents/create"
 import { AgentsTable } from "@/features/integrations/open-ai/agents/table"
-import { getAgents } from "@/features/integrations/open-ai/queries"
+import { getAgents } from "@/features/integrations/open-ai/queries/agent.query"
 import { getAgentSearchParamsCache } from "@/features/integrations/open-ai/schemas/agents.schema"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"

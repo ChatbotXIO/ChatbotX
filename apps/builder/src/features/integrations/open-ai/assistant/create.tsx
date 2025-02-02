@@ -18,8 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createAgentAction } from "@/features/integrations/open-ai/actions/agents.action"
-import { createAgentSchema } from "@/features/integrations/open-ai/schemas/agents.schema"
+import { createAssistantAction } from "@/features/integrations/open-ai/actions/assistant.action"
+import { createAssistantSchema } from "@/features/integrations/open-ai/schemas/assistant.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -28,19 +28,19 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
-export function CreateAgentDialog({ chatbotId }: { chatbotId: string }) {
+export function CreateAssistantDialog({ chatbotId }: { chatbotId: string }) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAgentAction.bind(null, chatbotId, ""),
-      zodResolver(createAgentSchema),
+      createAssistantAction.bind(null, chatbotId, ""),
+      zodResolver(createAssistantSchema),
       {
         actionProps: {
           onSuccess: () => {
-            toast.success("Agent created successfully")
+            toast.success("Assistant created successfully")
 
             setOpen(false)
             resetFormAndAction()
@@ -67,12 +67,12 @@ export function CreateAgentDialog({ chatbotId }: { chatbotId: string }) {
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          <T keyName="agent.addBtn" />
+          <T keyName="assistant.addBtn" />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("agent.create.title")}</DialogTitle>
+          <DialogTitle>{t("assistant.create.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -86,9 +86,9 @@ export function CreateAgentDialog({ chatbotId }: { chatbotId: string }) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("agent.name")}</FormLabel>
+                    <FormLabel>{t("assistant.name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("agent.name")} {...field} />
+                      <Input placeholder={t("assistant.name")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
