@@ -78,18 +78,15 @@ export function UpdateAgentDialog({
   })
 
   const addOptions = () => {
-    console.log(fields)
     const lastRole: string = fields.at(-1)?.role || "agent"
-    console.log(lastRole)
     append({ role: lastRole === "user" ? "agent" : "user", content: "" })
   }
 
-  const onChangeRole = (index: number, value: string) => {
-    console.log(fields[index].content)
-    // update(index, {
-    //   role: value,
-    //   content: fields[index]?.content
-    // })
+  const onChangeRole = (index: number) => {
+    update(index, {
+      ...fields[index],
+      role: (fields[index]?.role === "agent" ? "user" : "agent") as string,
+    })
   }
 
   useEffect(() => {
@@ -147,27 +144,23 @@ export function UpdateAgentDialog({
                   </FormItem>
                 )}
               />
-              <div className="flex flex-col space-y-2 overflow-auto max-h-[500px]">
+              <div className="flex flex-col space-y-2 overflow-auto max-h-[300px]">
                 {fields.map((item, index) => (
                   <div className="flex items-center space-x-2" key={item.id}>
-                    <div className="w-[150px]">
+                    <div className="w-[100px]">
                       <FormField
                         control={form.control}
                         name={`json_builder.messages.${index}.role`}
                         render={({ field }) => (
-                          <SingleSelect
-                            options={[
-                              { label: "User", value: "user" },
-                              { label: "Agent", value: "agent" },
-                            ]}
-                            onValueChange={(v: string) =>
-                              update(index, {
-                                ...fields[index],
-                                role: v,
-                              })
-                            }
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-[100px] capitalize"
                             {...field}
-                          />
+                            onClick={() => onChangeRole(index)}
+                          >
+                            {item.role}
+                          </Button>
                         )}
                       />
                     </div>
@@ -175,7 +168,11 @@ export function UpdateAgentDialog({
                       control={form.control}
                       name={`json_builder.messages.${index}.content`}
                       render={({ field }) => (
-                        <Input placeholder="Type a message..." {...field} />
+                        <Input
+                          placeholder="Type a message..."
+                          className="focus-visible:ring-0"
+                          {...field}
+                        />
                       )}
                     />
 

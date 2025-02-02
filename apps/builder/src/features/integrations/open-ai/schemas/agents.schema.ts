@@ -56,7 +56,7 @@ export type DeleteAgentBindSchema = [chatbotId: string, ids: string[]]
  * Update
  */
 const messageSchema = z.object({
-  role: z.enum(["user", "agent"]),
+  role: z.enum(["user", "agent"]).default("user"),
   content: z.string(),
 })
 
