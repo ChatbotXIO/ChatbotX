@@ -43,3 +43,5 @@ yarn-error.log*
 .idea/
 
 .tolgee
+.partykit
+test.rest

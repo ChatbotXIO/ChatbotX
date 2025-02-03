@@ -1,16 +1,16 @@
 "use client"
 
 import { SelectIcon } from "@radix-ui/react-select"
-import { type Column } from "@tanstack/react-table"
+import type { Column } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -24,7 +24,11 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort() && !column.getCanHide()) {
-    return <div className={cn(className)}>{title}</div>
+    return (
+      <div className={cn("text-sm", className)} suppressHydrationWarning={true}>
+        {title}
+      </div>
+    )
   }
 
   const ascValue = `${column.id}-asc`
@@ -55,7 +59,8 @@ export function DataTableColumnHeader<TData, TValue>({
                 ? "Sorted ascending. Click to sort descending."
                 : "Not sorted. Click to sort ascending."
           }
-          className="-ml-3 h-8 w-fit border-none text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent [&>svg:last-child]:hidden"
+          className="h-8 w-fit border-none shadow-none hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent [&>svg:last-child]:hidden"
+          suppressHydrationWarning={true}
         >
           {title}
           <SelectIcon asChild>

@@ -1,15 +1,11 @@
 "use client"
 
-import * as React from "react"
-import type { DataTableFilterField, ExtendedSortingState } from "@/components/data-table/types"
+import { getSortingStateParser } from "@/components/data-table/parsers"
+import type {
+  DataTableFilterField,
+  ExtendedSortingState,
+} from "@/components/data-table/types"
 import {
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
   type ColumnFiltersState,
   type PaginationState,
   type RowSelectionState,
@@ -18,31 +14,37 @@ import {
   type TableState,
   type Updater,
   type VisibilityState,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table"
 import {
+  type Parser,
+  type UseQueryStateOptions,
   parseAsArrayOf,
   parseAsInteger,
   parseAsString,
   useQueryState,
   useQueryStates,
-  type Parser,
-  type UseQueryStateOptions,
 } from "nuqs"
+import * as React from "react"
 import { useDebouncedCallback } from "use-debounce"
-import { getSortingStateParser } from "@/components/data-table/parsers"
-
 
 interface UseDataTableProps<TData>
   extends Omit<
-    TableOptions<TData>,
-    | "state"
-    | "pageCount"
-    | "getCoreRowModel"
-    | "manualFiltering"
-    | "manualPagination"
-    | "manualSorting"
-  >,
-  Required<Pick<TableOptions<TData>, "pageCount">> {
+      TableOptions<TData>,
+      | "state"
+      | "pageCount"
+      | "getCoreRowModel"
+      | "manualFiltering"
+      | "manualPagination"
+      | "manualSorting"
+    >,
+    Required<Pick<TableOptions<TData>, "pageCount">> {
   /**
    * Defines filter fields for the table. Supports both dynamic faceted filters and search filters.
    * - Faceted filters are rendered when `options` are provided for a filter field.
@@ -172,26 +174,26 @@ export function useDataTable<TData>({
   ])
 
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(
-    initialState?.rowSelection ?? {}
+    initialState?.rowSelection ?? {},
   )
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(initialState?.columnVisibility ?? {})
 
   const [page, setPage] = useQueryState(
     "page",
-    parseAsInteger.withOptions(queryStateOptions).withDefault(1)
+    parseAsInteger.withOptions(queryStateOptions).withDefault(1),
   )
   const [perPage, setPerPage] = useQueryState(
     "perPage",
     parseAsInteger
       .withOptions(queryStateOptions)
-      .withDefault(initialState?.pagination?.pageSize ?? 10)
+      .withDefault(initialState?.pagination?.pageSize ?? 10),
   )
   const [sorting, setSorting] = useQueryState(
     "sort",
     getSortingStateParser<TData>()
       .withOptions(queryStateOptions)
-      .withDefault(initialState?.sorting ?? [])
+      .withDefault(initialState?.sorting ?? []),
   )
 
   // Create parsers for each filter field
@@ -202,7 +204,7 @@ export function useDataTable<TData>({
       if (field.options) {
         // Faceted filter
         acc[field.id] = parseAsArrayOf(parseAsString, ",").withOptions(
-          queryStateOptions
+          queryStateOptions,
         )
       } else {
         // Search filter
@@ -216,7 +218,7 @@ export function useDataTable<TData>({
 
   const debouncedSetFilterValues = useDebouncedCallback(
     setFilterValues,
-    debounceMs
+    debounceMs,
   )
 
   // Paginate
@@ -249,17 +251,17 @@ export function useDataTable<TData>({
     return enableAdvancedFilter
       ? []
       : Object.entries(filterValues).reduce<ColumnFiltersState>(
-        (filters, [key, value]) => {
-          if (value !== null) {
-            filters.push({
-              id: key,
-              value: Array.isArray(value) ? value : [value],
-            })
-          }
-          return filters
-        },
-        []
-      )
+          (filters, [key, value]) => {
+            if (value !== null) {
+              filters.push({
+                id: key,
+                value: Array.isArray(value) ? value : [value],
+              })
+            }
+            return filters
+          },
+          [],
+        )
   }, [filterValues, enableAdvancedFilter])
 
   const [columnFilters, setColumnFilters] =
@@ -270,9 +272,9 @@ export function useDataTable<TData>({
     return enableAdvancedFilter
       ? { searchableColumns: [], filterableColumns: [] }
       : {
-        searchableColumns: filterFields.filter((field) => !field.options),
-        filterableColumns: filterFields.filter((field) => field.options),
-      }
+          searchableColumns: filterFields.filter((field) => !field.options),
+          filterableColumns: filterFields.filter((field) => field.options),
+        }
   }, [filterFields, enableAdvancedFilter])
 
   const onColumnFiltersChange = React.useCallback(
@@ -299,6 +301,7 @@ export function useDataTable<TData>({
           return acc
         }, {})
 
+        // biome-ignore lint/complexity/noForEach: <explanation>
         prev.forEach((prevFilter) => {
           if (!next.some((filter) => filter.id === prevFilter.id)) {
             filterUpdates[prevFilter.id] = null
@@ -317,7 +320,7 @@ export function useDataTable<TData>({
       filterableColumns,
       searchableColumns,
       setPage,
-    ]
+    ],
   )
 
   const table = useReactTable({

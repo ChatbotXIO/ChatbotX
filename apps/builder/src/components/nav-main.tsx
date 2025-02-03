@@ -1,11 +1,12 @@
 "use client"
 
-import { type LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 import {
-  SidebarGroup, SidebarMenu,
+  SidebarGroup,
+  SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -28,7 +29,11 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton tooltip={item.title} isActive={item.isActive} asChild>
+            <SidebarMenuButton
+              tooltip={item.title}
+              isActive={item.isActive}
+              asChild
+            >
               <a href={item.url}>
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>

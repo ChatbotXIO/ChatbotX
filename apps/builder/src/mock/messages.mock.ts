@@ -1,30 +1,47 @@
-import { Message, MessageContent, MessageType } from "@/features/inbox/interfaces/message";
-
-import { generateRandomId, getRandomFromZeroToN } from './common.mock'
-import { SenderType } from "@ahachat.ai/database";
+import { type Message, MessageType, SenderType } from "@ahachat.ai/database"
+import { generateRandomId, getRandomFromZeroToN } from "./common.mock"
 
 const getRandomMessageType = (): string => {
   const messageTypes: string[] = [
-    'text', 'image', 'audio', 'video', 'file', 'location',
+    MessageType.Text,
+    MessageType.Image,
+    MessageType.Audio,
+    MessageType.Video,
+    MessageType.File,
+    MessageType.Location,
     // 'markdown', 'carousel', 'card', 'dropdown', 'choice', 'bloc'
-  ];
-  return messageTypes[getRandomFromZeroToN(messageTypes.length)] || 'text';
-};
+  ]
+  return messageTypes[getRandomFromZeroToN(messageTypes.length)] || "text"
+}
 
-const getRandomContent = (type: string): Partial<MessageContent> | string => {
+const getRandomContent = (type: string): string | null => {
   switch (type) {
-    case 'text':
-      return 'Đây là một tin nhắn văn bản ngẫu nhiên.';
-    case 'image':
-      return { imageUrl: `https://picsum.photos/200/300?random=${Math.floor(Math.random() * 1000)}` };
-    case 'audio':
-      return { audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3?random=${Math.floor(Math.random() * 1000)}` };
-    case 'video':
-      return { videoUrl: `https://www.w3schools.com/html/mov_bbb.mp4?random=${Math.floor(Math.random() * 1000)}` };
-    case 'file':
-      return { fileUrl: `https://example.com/file${Math.floor(Math.random() * 1000)}.pdf`, fileName: `file${Math.floor(Math.random() * 1000)}.pdf` };
-    case 'location':
-      return { location: { lat: 21.0285 + Math.random() * 0.1, lng: 105.8542 + Math.random() * 0.1 } };
+    case MessageType.Text:
+      return "Đây là một tin nhắn văn bản ngẫu nhiên."
+    case MessageType.Image:
+      return JSON.stringify({
+        imageUrl: `https://picsum.photos/200/300?random=${Math.floor(Math.random() * 1000)}`,
+      })
+    case MessageType.Audio:
+      return JSON.stringify({
+        audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3?random=${Math.floor(Math.random() * 1000)}`,
+      })
+    case MessageType.Video:
+      return JSON.stringify({
+        videoUrl: `https://www.w3schools.com/html/mov_bbb.mp4?random=${Math.floor(Math.random() * 1000)}`,
+      })
+    case MessageType.File:
+      return JSON.stringify({
+        fileUrl: `https://example.com/file${Math.floor(Math.random() * 1000)}.pdf`,
+        fileName: `file${Math.floor(Math.random() * 1000)}.pdf`,
+      })
+    case MessageType.Location:
+      return JSON.stringify({
+        location: {
+          lat: 21.0285 + Math.random() * 0.1,
+          lng: 105.8542 + Math.random() * 0.1,
+        },
+      })
     // case 'markdown':
     //   return { markdownContent: "### This is markdown content\n\n- Item 1\n- Item 2" };
     // case 'carousel':
@@ -38,44 +55,26 @@ const getRandomContent = (type: string): Partial<MessageContent> | string => {
     // case 'bloc':
     //   return 'Bloc content here';
     default:
-      return '';
+      return ""
   }
-};
+}
 
-const getRandomDirection = () => {
-  const direction = Object.values(SenderType);
-  return direction[getRandomFromZeroToN(direction.length + 1)];
-};
-
-const generateRandomMessage = (): Message => {
-  const messageType = getRandomMessageType();
-  const senderType = [SenderType.Contact, SenderType.User][Math.floor(Math.random() * 2)];
+export const generateRandomMessage = (chatbotId: string): Message => {
+  const messageType = getRandomMessageType()
+  const senderType = [SenderType.Contact, SenderType.User][
+    Math.floor(Math.random() * 2)
+  ]
 
   return {
     id: generateRandomId(),
-    chatbotId: generateRandomId(),
+    inboxId: generateRandomId(),
+    chatbotId: chatbotId,
     conversationId: generateRandomId(),
     messageType: messageType as MessageType,
     content: getRandomContent(messageType),
-    senderType: senderType!,
-    senderId: `${Math.random()}`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    isLoading: false,
-    user: {
-      id: generateRandomId(),
-      firstName: ['Kha', 'An', 'Hien', 'Minh', 'Linh', 'Trang'][Math.floor(Math.random() * 6)],
-      lastName: ['Duy', 'Viet', 'Hieu', 'Thao', 'Phong'][Math.floor(Math.random() * 5)],
-      phoneNumber: '095472823940',
-      avatar: `https://randomuser.me/api/portraits/men/${senderType === SenderType.Contact ? 1 : 0}.jpg`
-    }
-  };
-};
-
-export const generateMessages = (count: number): Message[] => {
-  const messages = [];
-  for (let i = 0; i < count; i++) {
-    messages.push(generateRandomMessage());
+    senderType: senderType as SenderType,
+    senderId: generateRandomId(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   }
-  return messages;
-};
+}

@@ -1,7 +1,7 @@
 "use client"
 
-import { Log } from "@ahachat.ai/database"
-import { type Table } from "@tanstack/react-table"
+import type { Log } from "@ahachat.ai/database"
+import type { Table } from "@tanstack/react-table"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 
 interface LogsTableToolbarActionsProps {

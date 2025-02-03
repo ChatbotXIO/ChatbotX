@@ -1,13 +1,19 @@
-"use client";
+"use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Log } from "@ahachat.ai/database";
-import { Row, type ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { EllipsisIcon, UserRoundIcon } from "lucide-react";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { Log } from "@ahachat.ai/database"
+import type { ColumnDef, Row } from "@tanstack/react-table"
+import { format } from "date-fns"
+import { EllipsisIcon, UserRoundIcon } from "lucide-react"
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
@@ -20,13 +26,18 @@ interface GetColumnsProps {
   >
 }
 
-export function getColumns({ setRowAction }: GetColumnsProps): ColumnDef<Log>[] {
+export function getColumns({
+  setRowAction,
+}: GetColumnsProps): ColumnDef<Log>[] {
   return [
     {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
           className="translate-y-0.5"
@@ -46,7 +57,9 @@ export function getColumns({ setRowAction }: GetColumnsProps): ColumnDef<Log>[] 
     },
     {
       accessorKey: "action",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Type" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Type" />
+      ),
       cell: ({ row }) => <div>{row.original.action}</div>,
       size: 50,
       enableSorting: true,
@@ -54,7 +67,9 @@ export function getColumns({ setRowAction }: GetColumnsProps): ColumnDef<Log>[] 
     },
     {
       accessorKey: "detail",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Description" />
+      ),
       cell: ({ row }) => <div>{row.original.detail}</div>,
       size: 400,
       enableSorting: true,
@@ -62,18 +77,23 @@ export function getColumns({ setRowAction }: GetColumnsProps): ColumnDef<Log>[] 
     },
     {
       accessorKey: "executorType",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Contact" />,
-      cell: ({ row }) =>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Contact" />
+      ),
+      cell: ({ row }) => (
         <div>
           {row.original.executorType ? <UserRoundIcon size={16} /> : null}
-        </div>,
+        </div>
+      ),
       size: 50,
       enableSorting: false,
       enableHiding: false,
     },
     {
       accessorKey: "createdAt",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Date" />
+      ),
       cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd HH:mm"),
       size: 100,
       enableSorting: true,
@@ -103,11 +123,11 @@ export function getColumns({ setRowAction }: GetColumnsProps): ColumnDef<Log>[] 
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        );
+        )
       },
       size: 50,
       enableSorting: false,
       enableHiding: false,
     },
-  ];
+  ]
 }

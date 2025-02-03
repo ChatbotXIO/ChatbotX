@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation"
-import { providerMap } from "@/auth.config"
 import { signIn } from "@/auth"
-import { AuthError } from "next-auth"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { providerMap } from "@/auth.config"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AuthError } from "next-auth"
+import { redirect } from "next/navigation"
 
 export default async function SignInPage(props: {
   searchParams: Promise<{ callbackUrl: string | undefined }>
@@ -12,12 +12,15 @@ export default async function SignInPage(props: {
     <div className="flex h-screen w-full items-center justify-center px-4">
       <Card className="mx-auto max-w-sm">
         <CardHeader>
-          <CardTitle className="text-3xl bold uppercase text-center">Login</CardTitle>
+          <CardTitle className="text-3xl bold uppercase text-center">
+            Login
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-2">
-            {Object.values(providerMap).map((provider, providerMapIdx) => (
-              <form key={providerMapIdx}
+            {Object.values(providerMap).map((provider) => (
+              <form
+                key={provider.id}
                 action={async () => {
                   "use server"
                   try {
@@ -40,7 +43,11 @@ export default async function SignInPage(props: {
                   }
                 }}
               >
-                <Button variant="outline" size="xl" className="w-full text-left">
+                <Button
+                  variant="outline"
+                  size="xl"
+                  className="w-full text-left"
+                >
                   <span>Sign in with {provider.name}</span>
                 </Button>
               </form>
@@ -49,5 +56,5 @@ export default async function SignInPage(props: {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
