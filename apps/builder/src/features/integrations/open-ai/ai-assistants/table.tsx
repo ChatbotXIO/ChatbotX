@@ -1,5 +1,4 @@
 "use client"
-import type { AiAssistant } from "@ahachat.ai/database"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
 import type {
@@ -11,6 +10,7 @@ import { AiAssistantTableToolbarActions } from "@/features/integrations/open-ai/
 import { UpdateAiAssistantDialog } from "@/features/integrations/open-ai/ai-assistants/update"
 import type { getAiAssistants } from "@/features/integrations/open-ai/queries/ai-assistants.query"
 import { useDataTable } from "@/hooks/use-data-table"
+import type { AiAssistant } from "@ahachat.ai/database"
 import { use, useMemo, useState } from "react"
 import { getAssistantColumns } from "./table-columns"
 

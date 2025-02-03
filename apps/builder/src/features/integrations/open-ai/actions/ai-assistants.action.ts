@@ -12,10 +12,10 @@ import {
   updateAiAssistantsBindSchema,
   updateAiAssistantsSchema,
 } from "@/features/integrations/open-ai/schemas/ai-assistants.schema"
+import { AiAssistantException } from "@/features/integrations/open-ai/schemas/error"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma, User } from "@ahachat.ai/database"
-import { AiAssistantException } from "@/features/integrations/open-ai/schemas/error"
+import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
 /**

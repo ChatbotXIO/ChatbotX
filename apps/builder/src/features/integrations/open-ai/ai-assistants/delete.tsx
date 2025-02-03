@@ -1,6 +1,5 @@
 "use client"
 
-import type { AiAssistant } from "@ahachat.ai/database"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,12 +12,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { deleteAiAssistantsAction } from "@/features/integrations/open-ai/actions/ai-assistants.action"
+import type { AiAssistant } from "@ahachat.ai/database"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
-import { useTransition, type ComponentPropsWithoutRef } from "react"
+import { type ComponentPropsWithoutRef, useTransition } from "react"
 import { toast } from "sonner"
 
 interface DeleteAiAgentsDialogProps

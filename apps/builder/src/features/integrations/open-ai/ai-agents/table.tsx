@@ -2,7 +2,6 @@
 
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import type { AiAgent } from "@ahachat.ai/database"
 import type {
   DataTableFilterField,
   DataTableRowAction,
@@ -12,6 +11,7 @@ import { AiAgentsTableToolbarActions } from "@/features/integrations/open-ai/ai-
 import { UpdateAiAgentDialog } from "@/features/integrations/open-ai/ai-agents/update"
 import type { getAiAgents } from "@/features/integrations/open-ai/queries/ai-agents.query"
 import { useDataTable } from "@/hooks/use-data-table"
+import type { AiAgent } from "@ahachat.ai/database"
 import { use, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"

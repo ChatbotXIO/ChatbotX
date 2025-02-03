@@ -1,22 +1,22 @@
 "use server"
 
+import { AiAgentException } from "@/features/integrations/open-ai/schemas/error"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma, User } from "@ahachat.ai/database"
+import { type User, prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
 import {
   type CreateAiAgentBindSchema,
   type CreateAiAgentSchema,
   type DeleteAiAgentBindSchema,
   type UpdateAiAgentBindSchema,
   type UpdateAiAgentSchema,
-  createAiAgentSchema,
   createAiAgentBindSchema,
+  createAiAgentSchema,
   deleteAiAgentBindSchema,
   updateAiAgentBindSchema,
   updateAiAgentSchema,
 } from "../schemas/ai-agents.schema"
-import { AiAgentException } from "@/features/integrations/open-ai/schemas/error"
-import { revalidateTag } from "next/cache"
 
 /**
  * Create

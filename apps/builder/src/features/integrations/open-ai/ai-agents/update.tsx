@@ -1,6 +1,5 @@
 "use client"
 
-import type { AiAgent } from "@ahachat.ai/database"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -21,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { updateAiAgentAction } from "@/features/integrations/open-ai/actions/ai-agents.action"
 import { updateAiAgentSchema } from "@/features/integrations/open-ai/schemas/ai-agents.schema"
+import type { AiAgent } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"

@@ -1,7 +1,7 @@
-import { AiAgent, prisma, Prisma } from "@ahachat.ai/database"
-import type { GetAiAgentsSchema } from "@/features/integrations/open-ai/schemas/ai-agents.schema"
 import { getCurrentUserId } from "@/auth"
+import type { GetAiAgentsSchema } from "@/features/integrations/open-ai/schemas/ai-agents.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type AiAgent, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
 export async function getAiAgents(

@@ -1,7 +1,7 @@
 "use client"
 
-import type { AiAssistant } from "@ahachat.ai/database"
 import { DeleteAssistantDialog } from "@/features/integrations/open-ai/ai-assistants/delete"
+import type { AiAssistant } from "@ahachat.ai/database"
 import type { Table } from "@tanstack/react-table"
 
 type AiAgentsTableToolbarActionsProps = {

@@ -1,5 +1,4 @@
 "use client"
-import type { AiAssistant } from "@ahachat.ai/database"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -10,9 +9,10 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { AiAssistant } from "@ahachat.ai/database"
 import type { ColumnDef, Row } from "@tanstack/react-table"
-import { EllipsisVerticalIcon } from "lucide-react"
 import { format } from "date-fns"
+import { EllipsisVerticalIcon } from "lucide-react"
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>

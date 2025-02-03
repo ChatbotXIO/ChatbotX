@@ -1,8 +1,8 @@
 import { getCurrentUserId } from "@/auth"
+import type { GetAiAssistantsSchema } from "@/features/integrations/open-ai/schemas/ai-assistants.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type AiAssistant, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import { AiAssistant, prisma, Prisma } from "@ahachat.ai/database"
-import { GetAiAssistantsSchema } from "@/features/integrations/open-ai/schemas/ai-assistants.schema"
 
 export const getAiAssistants = async (
   input: GetAiAssistantsSchema,
