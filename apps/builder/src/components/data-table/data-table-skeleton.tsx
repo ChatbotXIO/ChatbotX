@@ -90,14 +90,16 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
       <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
         <div className="flex flex-1 items-center space-x-2">
           {searchableColumnCount > 0
-            ? Array.from({ length: searchableColumnCount }).map((row) => (
-                <Skeleton key={`row-${row}`} className="h-7 w-40 lg:w-60" />
+            ? Array.from({ length: searchableColumnCount }).map((row, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                <Skeleton key={`row-${i}`} className="h-7 w-40 lg:w-60" />
               ))
             : null}
           {filterableColumnCount > 0
-            ? Array.from({ length: filterableColumnCount }).map((row) => (
+            ? Array.from({ length: filterableColumnCount }).map((row, i) => (
                 <Skeleton
-                  key={`row-${row}`}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  key={`row-${i}`}
                   className="h-7 w-[4.5rem] border-dashed"
                 />
               ))
@@ -129,11 +131,13 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {Array.from({ length: rowCount }).map((row) => (
-              <TableRow key={`row-${row}`} className="hover:bg-transparent">
+            {Array.from({ length: rowCount }).map((row, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              <TableRow key={`row-${i}`} className="hover:bg-transparent">
                 {Array.from({ length: columnCount }).map((rowj, j) => (
                   <TableCell
-                    key={`rowj-${rowj}`}
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={`rowj-${j}`}
                     style={{
                       width: cellWidths[j],
                       minWidth: shrinkZero ? cellWidths[j] : "auto",

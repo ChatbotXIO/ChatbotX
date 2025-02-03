@@ -27,7 +27,7 @@ export default async function FoldersPage(props: {
     getFolders({
       chatbotId: params.chatbotId,
       folderType: folderType,
-      parentId: folderId,
+      parentId: folderId !== "0" ? folderId : null,
     }),
   ])
 

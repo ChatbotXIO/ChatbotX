@@ -50,7 +50,7 @@
   "common.settings": "Settings",
   "common.submit": "Submit",
   "common.tools": "Tools",
-  "contacts.create.btn": "Create contact",
+  "contacts.createBtn": "Create contact",
   "contacts.create.title": "Create new contact",
   "contacts.email": "Email",
   "contacts.firstName": "First name",

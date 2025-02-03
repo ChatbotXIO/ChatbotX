@@ -1,7 +1,7 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@ahachat.ai/database"
-import type { Prisma } from "@prisma/client"
+import type { Prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 import type { ChatbotMemberWithUser } from "../schemas/add-chatbot-member-schema"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"

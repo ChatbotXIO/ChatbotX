@@ -5,6 +5,7 @@ import {
   DEFAULT_SERVER_ERROR_MESSAGE,
   createSafeActionClient,
 } from "next-safe-action"
+import { BaseException } from "./error"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
@@ -15,6 +16,12 @@ export const actionClient = createSafeActionClient({
         }
       }
 
+      return {
+        message: error.message,
+      }
+    }
+
+    if (error instanceof BaseException) {
       return {
         message: error.message,
       }

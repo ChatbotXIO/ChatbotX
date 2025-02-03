@@ -1,11 +1,9 @@
 "use client"
 
+import type { Chatbot } from "@ahachat.ai/database"
 import {
   Atom,
-  AudioWaveform,
   ChartPie,
-  Command,
-  GalleryVerticalEnd,
   MessageCircleMore,
   Radio,
   SlidersHorizontal,
@@ -13,11 +11,11 @@ import {
   Workflow,
   Wrench,
 } from "lucide-react"
-import type * as React from "react"
+import { type ComponentProps, use } from "react"
 
+import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -29,9 +27,15 @@ import { useTranslate } from "@tolgee/react"
 
 export function AppSidebar({
   chatbotId,
+  allChatbotsPromise,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { chatbotId: string }) {
+}: ComponentProps<typeof Sidebar> & {
+  chatbotId: string
+  allChatbotsPromise: Promise<Chatbot[]>
+}) {
   const { t } = useTranslate()
+
+  const chatbots = use(allChatbotsPromise)
 
   const data = {
     user: {
@@ -39,23 +43,6 @@ export function AppSidebar({
       email: "m@example.com",
       avatar: "/avatars/shadcn.jpg",
     },
-    teams: [
-      {
-        name: "FREE Business Account",
-        logo: GalleryVerticalEnd,
-        plan: "Free",
-      },
-      {
-        name: "PRO Business Account",
-        logo: AudioWaveform,
-        plan: "Profesional",
-      },
-      {
-        name: "ENTERPRISE Corp.",
-        logo: Command,
-        plan: "Enterprise",
-      },
-    ],
     navMain: [
       {
         title: t("common.analytics"),
@@ -104,7 +91,7 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <ChatbotSwitcher chatbots={chatbots} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

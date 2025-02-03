@@ -12,4 +12,6 @@ export const getChatbotMembersSearchParamsCache = createSearchParamsCache({
 
 export type GetChatbotMembersSchema = Awaited<
   ReturnType<typeof getChatbotMembersSearchParamsCache.parse>
-> & { chatbotId: string }
+> & {
+  chatbotId: string
+}
