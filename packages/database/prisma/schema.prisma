@@ -205,7 +205,7 @@ model Contact {
   assignedUser             User?                     @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
   assignedTeam             Team?                     @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
   logs                     Log[]                     @relation("ExecutorContact")
-  conversations            Conversation[]
+  conversation             Conversation?
   conversationParticipants ConversationParticipant[]
 }
 
@@ -302,11 +302,15 @@ model Conversation {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   chatbotId         String
-  contactId         String
+  contactId         String    @unique
   // contactInboxId    String
   contactLastSeenAt DateTime?
   agentLastSeenAt   DateTime?
   sourceId          String? // Id message of messenger or whatsapp, ...
+  liveChatEnabled   Boolean   @default(false)
+  followed          Boolean   @default(false)
+  archivedAt        DateTime?
+  blockedAt         DateTime?
 
   chatbot                  Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   contact                  Contact                   @relation(fields: [contactId], references: [id], onDelete: Cascade)
@@ -314,7 +318,6 @@ model Conversation {
   conversationParticipants ConversationParticipant[]
 
   @@index([chatbotId])
-  @@index([contactId])
 }
 
 model ConversationParticipant {

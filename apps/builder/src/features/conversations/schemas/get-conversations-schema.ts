@@ -1,5 +1,10 @@
-import type { Contact, Conversation, Message } from "@ahachat.ai/database"
-import type { User } from "next-auth"
+import type {
+  Contact,
+  Conversation,
+  Message,
+  Team,
+  User,
+} from "@ahachat.ai/database"
 import { createSearchParamsCache, parseAsString } from "nuqs/server"
 
 export const getConversationsSearchParamsCache = createSearchParamsCache({
@@ -25,6 +30,7 @@ export type GetCurrentConversationsSchema = {
 export type ConversationResource = Conversation & {
   contact: Contact & {
     assignedUser: User | null
+    assignedTeam: Team | null
   }
   latestMessage: Message | null
   unreadCount: number
