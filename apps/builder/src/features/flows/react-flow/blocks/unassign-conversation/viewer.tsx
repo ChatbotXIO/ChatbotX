@@ -1,0 +1,13 @@
+"use client"
+
+import { T } from "@tolgee/react"
+import { MessageCircleXIcon } from "lucide-react"
+
+export const UnassignConversationBlockViewer = () => {
+  return (
+    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center break-all">
+      <MessageCircleXIcon size={18} className="text-yellow-500" />
+      <T keyName="flows.ActionType.UnassignConversation" />
+    </div>
+  )
+}

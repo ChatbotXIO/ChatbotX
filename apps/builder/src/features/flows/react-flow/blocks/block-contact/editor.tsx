@@ -2,12 +2,12 @@
 
 import { T } from "@tolgee/react"
 
-const OptInEmailBlockEditor = () => {
+const BlockContactBlockEditor = () => {
   return (
     <div className="font-bold text-center break-all">
-      <T keyName="flows.ActionType.OptInEmail" />
+      <T keyName="flows.ActionType.BlockContact" />
     </div>
   )
 }
 
-export { OptInEmailBlockEditor }
+export { BlockContactBlockEditor }

@@ -11,3 +11,8 @@ export enum PanelAction {
 }
 
 export type PanelActionKey = keyof typeof PanelAction
+
+export interface RecipientSchema {
+  id: string
+  name: string
+}

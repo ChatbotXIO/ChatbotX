@@ -46,7 +46,7 @@ export function NodeDetailSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="flex flex-col">
+      <SheetContent side="left" className="flex flex-col overflow-auto">
         <SheetHeader>
           <SheetTitle>
             {activeNode ? activeNode.data.icon : null}
@@ -54,7 +54,7 @@ export function NodeDetailSheet({
           </SheetTitle>
           <SheetDescription />
         </SheetHeader>
-        <div className="flex flex-col flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-col flex-1 gap-4">
           {activeNode?.type && getEditor(activeNode)}
         </div>
       </SheetContent>
