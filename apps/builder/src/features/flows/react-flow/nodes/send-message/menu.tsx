@@ -9,7 +9,7 @@ import {
   BotMessageSquareIcon,
   BotOffIcon,
   CalculatorIcon,
-  CalendarSync,
+  CalendarSync as CalendarSyncIcon,
   ChartNoAxesColumnIcon,
   ChartNoAxesCombinedIcon,
   CircleCheckIcon,
@@ -379,7 +379,7 @@ export const sendMessageEditorMenus: MenuItem[] = [
           },
           {
             label: <T keyName="flows.ActionType.FormatDate" />,
-            icon: <CalendarSync />,
+            icon: <CalendarSyncIcon />,
             actionType: ActionType.FormatDate,
           },
           {

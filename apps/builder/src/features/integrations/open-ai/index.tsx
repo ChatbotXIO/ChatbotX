@@ -80,7 +80,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             className="items-center"
           >
             <Button variant="secondary">
-              <Link href="../assistants">
+              <Link href="../ai-assistants">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
             </Button>

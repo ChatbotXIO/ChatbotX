@@ -1,26 +1,26 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { CreateAiAgentDialog } from "@/features/integrations/open-ai/ai-agents/create"
-import { AiAgentsTable } from "@/features/integrations/open-ai/ai-agents/table"
-import { getAiAgents } from "@/features/integrations/open-ai/queries/ai-agents.query"
-import { getAiAgentSearchParamsCache } from "@/features/integrations/open-ai/schemas/ai-agents.schema"
+import { CreateAiAssistantsDialog } from "@/features/integrations/open-ai/ai-assistants/create"
+import { AiAssistantsTable } from "@/features/integrations/open-ai/ai-assistants/table"
+import { getAiAssistants } from "@/features/integrations/open-ai/queries/ai-assistants.query"
+import { getAiAssistantsSearchParamsCache } from "@/features/integrations/open-ai/schemas/ai-assistants.schema"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
-export default async function OpenAIAgentsPage(props: {
+export default async function OpenAIAssistantPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getAiAgentSearchParamsCache.parse(searchParams)
+  const search = getAiAssistantsSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
-    getAiAgents({ ...search, chatbotId: params.chatbotId as string }),
+    getAiAssistants({ ...search, chatbotId: params.chatbotId as string }),
   ])
 
   return (
     <>
       <div className="flex w-full justify-end mb-4">
-        <CreateAiAgentDialog chatbotId={params.chatbotId} />
+        <CreateAiAssistantsDialog chatbotId={params.chatbotId} />
       </div>
       <Suspense
         fallback={
@@ -33,7 +33,7 @@ export default async function OpenAIAgentsPage(props: {
           />
         }
       >
-        <AiAgentsTable promises={promises} chatbotId={params.chatbotId} />
+        <AiAssistantsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </>
   )
