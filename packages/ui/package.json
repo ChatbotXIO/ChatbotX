@@ -16,7 +16,6 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@ahachat.ai/eslint-config": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
     "@turbo/gen": "^2.3.3",
     "@types/node": "^22.10.7",
