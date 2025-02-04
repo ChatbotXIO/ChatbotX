@@ -17,8 +17,16 @@ const AddNotesEditor = dynamic(
 const SendMessageNodeEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/send-message/editor"),
 )
+
+const LandingPageNodeEditor = dynamic(
+  () => import("@/features/flows/react-flow/nodes/landing-page/editor"),
+)
 const SplitTrafficNodeEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/split-traffic/editor"),
+)
+
+const SendMailNodeEditor = dynamic(
+  () => import("@/features/flows/react-flow/nodes/send-mail/editor"),
 )
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -28,6 +36,10 @@ const getEditor = (activeNode: Node<any>) => {
     [PanelAction.SendMessage]: (
       <SendMessageNodeEditor activeNode={activeNode} />
     ),
+    [PanelAction.LandingPage]: (
+      <LandingPageNodeEditor activeNode={activeNode} />
+    ),
+    [PanelAction.SendMail]: <SendMailNodeEditor activeNode={activeNode} />,
     [PanelAction.SplitTraffic]: (
       <SplitTrafficNodeEditor activeNode={activeNode} />
     ),

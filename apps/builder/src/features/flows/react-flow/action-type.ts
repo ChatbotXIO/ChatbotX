@@ -78,6 +78,22 @@ export enum ActionType {
   FormatDate = "FormatDate",
   RandomCode = "RandomCode",
   CountCharacters = "CountCharacters",
+
+  // For Landing Page
+  Heading = "Heading",
+  Spacing = "Spacing",
+  Text = "Text",
+  SingleButton = "SingleButton",
+  Line = "Line",
+  Code = "Code",
+  Image = "Image",
+
+  // For Send Mail
+  EmailTopic = "EmailTopic",
+  From = "From",
+  To = "To",
+  Subject = "Subject",
+  PreHeader = "PreHeader",
 }
 
 export const disabledCopyActionTypes = [
