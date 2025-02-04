@@ -1,13 +1,14 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
+import { type Conversation, prisma } from "@ahachat.ai/database"
 import type { Contact, Prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 import type { GetContactsSchema } from "../schemas/get-contacts-schema"
 
-export async function getContacts(
-  input: GetContactsSchema,
-): Promise<{ data: Contact[]; pageCount: number }> {
+export async function getContacts(input: GetContactsSchema): Promise<{
+  data: (Contact & { conversation: Conversation | null })[]
+  pageCount: number
+}> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)
@@ -38,6 +39,11 @@ export async function getContacts(
 
         const [data, total] = await prisma.$transaction([
           prisma.contact.findMany({
+            include: {
+              conversation: true,
+              assignedUser: true,
+              assignedTeam: true,
+            },
             skip: (input.page - 1) * input.perPage,
             take: input.perPage,
             where,

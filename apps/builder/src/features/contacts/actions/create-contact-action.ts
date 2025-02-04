@@ -39,11 +39,21 @@ export const createContactAction = authActionClient
         })
       }
 
-      await prisma.contact.create({
-        data: { ...parsedInput, chatbotId: chatbot.id, source: "web" },
+      await prisma.$transaction(async (tx) => {
+        const contact = await tx.contact.create({
+          data: { ...parsedInput, chatbotId: chatbot.id, source: "whatsapp" },
+        })
+
+        await tx.conversation.create({
+          data: {
+            chatbotId: chatbot.id,
+            contactId: contact.id,
+          },
+        })
       })
 
-      revalidateTag(`${ctx.user.id}#contacts`)
+      revalidateTag(`u${ctx.user.id}#c${chatbotId}#contacts`)
+      revalidateTag(`u${ctx.user.id}#c${chatbotId}#conversations`)
 
       return {
         successful: true,
