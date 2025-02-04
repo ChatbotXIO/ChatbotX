@@ -1,7 +1,7 @@
-import type { GetAiAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/get.schema"
-import { AiAssistant, prisma, Prisma } from "@ahachat.ai/database"
 import { getCurrentUserId } from "@/auth"
+import type { GetAiAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/get.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type AiAssistant, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
 export const getAiAssistants = async (

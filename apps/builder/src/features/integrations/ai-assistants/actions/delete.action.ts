@@ -4,8 +4,8 @@ import {
   deleteAiAssistantsBindSchema,
 } from "@/features/integrations/ai-assistants/schemas/delete.schema"
 import { authActionClient } from "@/lib/safe-action"
-import type { User } from "@ahachat.ai/database"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import type { User } from "@ahachat.ai/database"
 
 export const deleteAiAssistantsAction = authActionClient
   .bindArgsSchemas(deleteAiAssistantsBindSchema)

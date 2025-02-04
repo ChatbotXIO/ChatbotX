@@ -7,9 +7,9 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { DeleteAiAgentsDialog } from "@/features/integrations/ai-agents/delete"
+import type { getAiAgents } from "@/features/integrations/ai-agents/queries/get.query"
 import { AiAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
 import { UpdateAiAgentDialog } from "@/features/integrations/ai-agents/update"
-import type { getAiAgents } from "@/features/integrations/ai-agents/queries/get.query"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiAgent } from "@ahachat.ai/database"
 import { use, useMemo, useState } from "react"

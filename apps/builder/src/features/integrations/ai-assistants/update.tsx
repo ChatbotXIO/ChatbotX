@@ -170,7 +170,11 @@ export function UpdateAiAssistantDialog({
                     {t("aiAssistants.json_builder.triggers")}
                   </FormLabel>
                   <FormControl>
-                    <MultiSelect options={[]} {...field} onValueChange={console.log} />
+                    <MultiSelect
+                      options={[]}
+                      {...field}
+                      onValueChange={console.log}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -186,7 +190,11 @@ export function UpdateAiAssistantDialog({
                     {t("aiAssistants.json_builder.file_ids")}
                   </FormLabel>
                   <FormControl>
-                    <MultiSelect options={[]} {...field} onValueChange={console.log} />
+                    <MultiSelect
+                      options={[]}
+                      {...field}
+                      onValueChange={console.log}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

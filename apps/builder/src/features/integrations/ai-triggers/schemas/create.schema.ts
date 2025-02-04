@@ -12,4 +12,8 @@ export const createAiTriggerBindSchema: [
   description: z.ZodNullable<z.ZodString>,
 ] = [z.string().cuid2(), z.string().nullable(), z.string().nullable()]
 
-export type CreateAiTriggerBindSchema = [chatbotId: string, name: string | null, description: string | null]
+export type CreateAiTriggerBindSchema = [
+  chatbotId: string,
+  name: string | null,
+  description: string | null,
+]

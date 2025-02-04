@@ -1,10 +1,13 @@
 "use server"
 
+import {
+  type DeleteAiTriggerBindSchema,
+  deleteAiTriggerBindSchema,
+} from "@/features/integrations/ai-triggers/schemas/delete.schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
-import { type DeleteAiTriggerBindSchema, deleteAiTriggerBindSchema } from "@/features/integrations/ai-triggers/schemas/delete.schema";
 
 export const deleteAiTriggerAction = authActionClient
   .bindArgsSchemas(deleteAiTriggerBindSchema)

@@ -78,7 +78,7 @@ export function DeleteAssistantDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent >
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("aiAssistants.delete.dialog_title")}</DialogTitle>
           <DialogDescription>

@@ -1,8 +1,8 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateAiAssistantsDialog } from "@/features/integrations/ai-assistants/create"
-import { AiAssistantsTable } from "@/features/integrations/ai-assistants/table"
 import { getAiAssistants } from "@/features/integrations/ai-assistants/queries/get.query"
 import { getAiAssistantsSearchParamsCache } from "@/features/integrations/ai-assistants/schemas/get.schema"
+import { AiAssistantsTable } from "@/features/integrations/ai-assistants/table"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 

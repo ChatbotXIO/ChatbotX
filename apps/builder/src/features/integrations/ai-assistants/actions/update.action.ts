@@ -1,14 +1,14 @@
 "use server"
 
 import {
-  type UpdateAiAssistantsSchema,
   type UpdateAiAssistantsBindSchema,
-  updateAiAssistantsSchema,
+  type UpdateAiAssistantsSchema,
   updateAiAssistantsBindSchema,
+  updateAiAssistantsSchema,
 } from "@/features/integrations/ai-assistants/schemas/update.schema"
 import { authActionClient } from "@/lib/safe-action"
-import type { User } from "@ahachat.ai/database"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import type { User } from "@ahachat.ai/database"
 
 export const updateAiAssistantsAction = authActionClient
   .schema(updateAiAssistantsSchema)

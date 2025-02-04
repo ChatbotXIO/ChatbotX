@@ -1,15 +1,15 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
+import { AiAgentException } from "@/features/integrations/ai-agents/schemas/errors.schema"
 import {
   type UpdateAiAgentBindSchema,
   type UpdateAiAgentSchema,
   updateAiAgentBindSchema,
   updateAiAgentSchema,
 } from "@/features/integrations/ai-agents/schemas/update.schema"
-import { prisma, User } from "@ahachat.ai/database"
+import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { AiAgentException } from "@/features/integrations/ai-agents/schemas/errors.schema"
+import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
 export const updateAiAgentAction = authActionClient
