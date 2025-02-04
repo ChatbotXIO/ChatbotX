@@ -595,17 +595,18 @@ enum InboxType {
 }
 
 enum MessageType {
-  Text
-  Image
-  Markdown
   Audio
-  Video
-  File
-  Location
-  Carousel
   Card
-  Dropdown
+  Carousel
   Choice
+  Dropdown
+  File
+  Image
+  Location
+  Markdown
+  System
+  Text
+  Video
 }
 
 enum AttachmentType {

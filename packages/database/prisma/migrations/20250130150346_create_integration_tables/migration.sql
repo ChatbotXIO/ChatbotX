@@ -34,16 +34,9 @@ ADD COLUMN     "aiAssistantId" TEXT;
 -- DropTable
 DROP TABLE "IntegrationOpenAiAgent";
 
--- CreateTable
-CREATE TABLE "Inbox" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "chatbotId" TEXT NOT NULL,
-    "inboxType" "InboxType" NOT NULL,
-
-    CONSTRAINT "Inbox_pkey" PRIMARY KEY ("id")
-);
+-- AlterTable
+ALTER TABLE "Inbox"
+ADD COLUMN "inboxType" "InboxType" NOT NULL;
 
 -- CreateTable
 CREATE TABLE "AiTrigger" (

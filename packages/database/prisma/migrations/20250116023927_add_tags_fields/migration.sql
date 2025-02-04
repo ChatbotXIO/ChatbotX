@@ -22,12 +22,6 @@ CREATE TABLE "_ContactToTag" (
 CREATE INDEX "_ContactToTag_B_index" ON "_ContactToTag"("B");
 
 -- AddForeignKey
-ALTER TABLE "Log" ADD CONSTRAINT "user_executorId" FOREIGN KEY ("executorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Log" ADD CONSTRAINT "contact_executorId" FOREIGN KEY ("executorId") REFERENCES "Contact"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Tag" ADD CONSTRAINT "Tag_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey

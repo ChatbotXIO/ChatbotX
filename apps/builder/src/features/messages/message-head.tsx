@@ -190,175 +190,170 @@ export default function MessageHead({
 
   return (
     <>
-      <div>
-        <div className="flex items-center gap-2 border-b p-3">
-          <div className="flex-1">
-            <div>{getFullName(conversation.contact)}</div>
-            <div className="text-xs cursor-pointer">
-              <ConversationAssignedPopover
-                conversation={conversation}
-                users={users}
-                teams={teams}
-                onAssigned={(data) =>
-                  updateAssigner(data as AssignConversationResponse)
-                }
-              >
-                <div className="flex gap-1 items-center w-fit">
-                  {!conversation.contact.assignedId
-                    ? t("flows.ActionType.AssignConversation")
-                    : t("inboxes.assignedTo", {
-                        name:
-                          conversation.contact.assignedUser?.name ??
-                          conversation.contact.assignedTeam?.name,
-                      })}
-                  <ChevronDown size={16} />
-                </div>
-              </ConversationAssignedPopover>
-            </div>
+      <div className="flex items-center gap-2 border-b pb-3 px-3">
+        <div className="flex-1">
+          <div className="font-medium text-semibold truncate">
+            {getFullName(conversation.contact)}
           </div>
-          {conversation.liveChatEnabled && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex-none"
-                    disabled={isExecutingEnableLiveChat}
-                    onClick={() =>
-                      executeEnableLiveChat({
-                        ids: [conversation.id],
-                        liveChatEnabled: false,
-                      })
-                    }
-                  >
-                    <Bot size="24" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t("flows.ActionType.enableBot")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <div className="text-xs cursor-pointer">
+            <ConversationAssignedPopover
+              conversation={conversation}
+              users={users}
+              teams={teams}
+              onAssigned={(data) =>
+                updateAssigner(data as AssignConversationResponse)
+              }
+            >
+              <div className="flex gap-1 items-center w-fit">
+                {!conversation.contact.assignedId
+                  ? t("flows.ActionType.AssignConversation")
+                  : t("inboxes.assignedTo", {
+                      name:
+                        conversation.contact.assignedUser?.name ??
+                        conversation.contact.assignedTeam?.name,
+                    })}
+                <ChevronDown size={16} />
+              </div>
+            </ConversationAssignedPopover>
+          </div>
+        </div>
+        {conversation.liveChatEnabled && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   className="flex-none"
-                  disabled={isExecutingFollowChat}
+                  disabled={isExecutingEnableLiveChat}
                   onClick={() =>
-                    executeFollowChat({
+                    executeEnableLiveChat({
                       ids: [conversation.id],
-                      followed: !conversation.followed,
+                      liveChatEnabled: false,
                     })
                   }
                 >
-                  {conversation.followed ? (
-                    <Star size="24" className="text-yellow-500" />
-                  ) : (
-                    <StarOff size="24" />
-                  )}
+                  <Bot size="24" />
                 </Button>
               </TooltipTrigger>
-              {conversation.followed ? (
-                <TooltipContent>
-                  {t("flows.ActionType.UnfollowConversation")}
-                </TooltipContent>
-              ) : (
-                <TooltipContent>
-                  {t("flows.ActionType.FollowConversation")}
-                </TooltipContent>
-              )}
+              <TooltipContent>{t("flows.ActionType.enableBot")}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label="Open menu"
-                variant="ghost"
-                className="flex size-8 p-0 data-[state=open]:bg-muted"
-              >
-                <EllipsisVerticalIcon
-                  size={24}
-                  className="size-4"
-                  aria-hidden="true"
-                />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center">
-              {!conversation.archivedAt ? (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    executeArchiveConversation({ ids: [conversation.id] })
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <ArchiveIcon size="20" />
-                    {t("flows.ActionType.ArchiveConversation")}
-                  </div>
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    executeUnarchiveConversation({ ids: [conversation.id] })
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <PackageOpenIcon size="20" />
-                    {t("flows.ActionType.UnArchiveConversation")}
-                  </div>
-                </DropdownMenuItem>
-              )}
-              {!conversation.blockedAt ? (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    executeBlockContact({ ids: [conversation.id] })
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <UserRoundMinusIcon size="20" />
-                    {t("flows.ActionType.BlockContact")}
-                  </div>
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    executeUnblockContact({ ids: [conversation.id] })
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <UserRoundPlusIcon size="20" />
-                    {t("inboxes.UnblockContact")}
-                  </div>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      {!conversation.liveChatEnabled && (
+        )}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div
-                className="w-full flex items-center justify-center gap-2 bg-yellow-500 py-1 text-white cursor-pointer"
+              <Button
+                variant="ghost"
+                className="flex-none"
+                disabled={isExecutingFollowChat}
                 onClick={() =>
-                  !isExecutingEnableLiveChat &&
-                  executeEnableLiveChat({
+                  executeFollowChat({
                     ids: [conversation.id],
-                    liveChatEnabled: true,
+                    followed: !conversation.followed,
                   })
                 }
-                onKeyDown={() => {}}
               >
-                <Bot size="20" />
-                {t("inboxes.bot.isActive")}
-              </div>
+                {conversation.followed ? (
+                  <Star size="24" className="text-yellow-500" />
+                ) : (
+                  <StarOff size="24" />
+                )}
+              </Button>
             </TooltipTrigger>
-            <TooltipContent>{t("flows.ActionType.disableBot")}</TooltipContent>
+            {conversation.followed ? (
+              <TooltipContent>
+                {t("flows.ActionType.UnfollowConversation")}
+              </TooltipContent>
+            ) : (
+              <TooltipContent>
+                {t("flows.ActionType.FollowConversation")}
+              </TooltipContent>
+            )}
           </Tooltip>
         </TooltipProvider>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              aria-label="Open menu"
+              variant="ghost"
+              className="flex size-8 p-0 data-[state=open]:bg-muted"
+            >
+              <EllipsisVerticalIcon
+                size={24}
+                className="size-4"
+                aria-hidden="true"
+              />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center">
+            {!conversation.archivedAt ? (
+              <DropdownMenuItem
+                onSelect={() =>
+                  executeArchiveConversation({ ids: [conversation.id] })
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <ArchiveIcon size="20" />
+                  {t("flows.ActionType.ArchiveConversation")}
+                </div>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onSelect={() =>
+                  executeUnarchiveConversation({ ids: [conversation.id] })
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <PackageOpenIcon size="20" />
+                  {t("flows.ActionType.UnArchiveConversation")}
+                </div>
+              </DropdownMenuItem>
+            )}
+            {!conversation.blockedAt ? (
+              <DropdownMenuItem
+                onSelect={() => executeBlockContact({ ids: [conversation.id] })}
+              >
+                <div className="flex items-center gap-3">
+                  <UserRoundMinusIcon size="20" />
+                  {t("flows.ActionType.BlockContact")}
+                </div>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onSelect={() =>
+                  executeUnblockContact({ ids: [conversation.id] })
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <UserRoundPlusIcon size="20" />
+                  {t("inboxes.UnblockContact")}
+                </div>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {!conversation.liveChatEnabled && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className="w-full flex items-center justify-center gap-1 bg-yellow-500 py-1 text-white cursor-pointer text-xs"
+              onClick={() =>
+                !isExecutingEnableLiveChat &&
+                executeEnableLiveChat({
+                  ids: [conversation.id],
+                  liveChatEnabled: true,
+                })
+              }
+              onKeyDown={() => {}}
+            >
+              <Bot size="16" />
+              {t("inboxes.bot.isActive")}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>{t("flows.ActionType.disableBot")}</TooltipContent>
+        </Tooltip>
       )}
     </>
   )

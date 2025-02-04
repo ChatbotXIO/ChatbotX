@@ -1,3 +1,4 @@
+import type { CursorPagination } from "@/features/common/types"
 import type {
   Contact,
   Conversation,
@@ -11,27 +12,27 @@ export const getConversationsSearchParamsCache = createSearchParamsCache({
   conversationId: parseAsString,
 })
 
-export type CursorConversations = {
-  updatedAt: Date | string
-  id: string
-}
-
-export type GetConversationsSchema = {
+export type ListConversationsSchema = {
   chatbotId: string
   perPage?: number
-  cursor?: CursorConversations
+  cursor?: CursorPagination
 }
 
-export type GetCurrentConversationsSchema = {
+export type FindConversationSchema = {
   id: string
   chatbotId: string
 }
 
 export type ConversationResource = Conversation & {
-  contact: Contact & {
+  messages?: Message[]
+  contact?: Contact & {
     assignedUser: User | null
     assignedTeam: Team | null
   }
-  latestMessage: Message | null
-  unreadCount: number
+}
+
+export type ConversationCollection = {
+  data: ConversationResource[]
+  nextCursor: CursorPagination | null
+  prevCursor: CursorPagination | null
 }

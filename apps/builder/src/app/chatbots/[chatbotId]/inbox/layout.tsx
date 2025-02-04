@@ -8,14 +8,14 @@ import {
 import type { ReactNode } from "react"
 
 interface InboxLayoutProps {
-  conversation: ReactNode
-  message: ReactNode
+  listConversations: ReactNode
+  listMessages: ReactNode
   contact: ReactNode
 }
 
 export default async function InboxLayout({
-  conversation,
-  message,
+  listConversations,
+  listMessages,
   contact,
 }: InboxLayoutProps) {
   const layout = (await cookies()).get("ahachatai:layout:inbox")
@@ -24,21 +24,26 @@ export default async function InboxLayout({
   return (
     <ResizablePanelGroup
       direction="horizontal"
-      className="h-full max-h-[calc(100vh-64px)] items-stretch"
+      className="h-full max-h-[calc(100vh-48px)] items-stretch"
     >
       {/* CONVERSATION LIST */}
       <ResizablePanel
         defaultSize={defaultLayout[0] ?? 25}
         minSize={20}
         maxSize={25}
+        className="p-3"
       >
-        {conversation}
+        {listConversations}
       </ResizablePanel>
       <ResizableHandle withHandle />
 
       {/* MESSAGE LIST */}
-      <ResizablePanel defaultSize={defaultLayout[1] ?? 50} minSize={40}>
-        {message}
+      <ResizablePanel
+        defaultSize={defaultLayout[1] ?? 50}
+        minSize={40}
+        className="py-3"
+      >
+        {listMessages}
       </ResizablePanel>
       <ResizableHandle withHandle />
 
@@ -47,6 +52,7 @@ export default async function InboxLayout({
         defaultSize={defaultLayout[2] ?? 25}
         minSize={20}
         maxSize={25}
+        className="p-3"
       >
         {contact}
       </ResizablePanel>

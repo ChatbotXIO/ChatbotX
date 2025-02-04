@@ -158,6 +158,9 @@ importers:
       emoji-mart:
         specifier: ^5.6.0
         version: 5.6.0
+      emoji-picker-react:
+        specifier: ^4.12.0
+        version: 4.12.0(react@19.0.0)
       i18next:
         specifier: ^24.2.1
         version: 24.2.2(typescript@5.7.3)
@@ -209,6 +212,9 @@ importers:
       react-hook-form:
         specifier: ^7.54.2
         version: 7.54.2(react@19.0.0)
+      react-input-emoji:
+        specifier: ^5.9.0
+        version: 5.9.0(@types/react@19.0.7)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react-resizable-panels:
         specifier: ^2.1.7
         version: 2.1.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -2182,6 +2188,12 @@ packages:
   emoji-mart@5.6.0:
     resolution: {integrity: sha512-eJp3QRe79pjwa+duv+n7+5YsNhRcMl812EcFVwrnRvYKoNPoQb5qxU8DG6Bgwji0akHdp6D4Ln6tYLG58MFSow==}
 
+  emoji-picker-react@4.12.0:
+    resolution: {integrity: sha512-q2c8UcZH0eRIMj41bj0k1akTjk69tsu+E7EzkW7giN66iltF6H9LQvQvw6ugscsxdC+1lmt3WZpQkkY65J95tg==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>=16'
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -2277,6 +2289,9 @@ packages:
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
+
+  flairup@1.0.0:
+    resolution: {integrity: sha512-IKlE+pNvL2R+kVL1kEhUYqRxVqeFnjiIvHWDMLFXNaqyUdFXQM2wte44EfMYJNHkW16X991t2Zg8apKkhv7OBA==}
 
   foreground-child@3.3.0:
     resolution: {integrity: sha512-Ld2g8rrAyMYFXBhEqMz8ZAHBi4J4uS1i/CxGMDnjyFWddMXLVcDp051DZfu+t7+ab7Wv6SMqpWmyFIj5UbfFvg==}
@@ -3066,11 +3081,27 @@ packages:
     peerDependencies:
       react: '>= 16.8 || 18.0.0'
 
+  react-easy-emoji@1.8.1:
+    resolution: {integrity: sha512-wAf2x+cjwtOlLfXnjc0J3k5B2PDZdoxd1BjtfKr5tq2AL7t2ygvByJQWgFOyN28xg3qe8EKBM6pKxGP+qrGWuQ==}
+    peerDependencies:
+      '@types/react': '>=0.14.0'
+      react: '>=0.14.27'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
   react-hook-form@7.54.2:
     resolution: {integrity: sha512-eHpAUgUjWbZocoQYUHposymRb4ZP6d0uwUnooL2uOybA9/3tPUvoAKqEWK1WaSiTxxOfTpffNZP7QwlnM3/gEg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-input-emoji@5.9.0:
+    resolution: {integrity: sha512-37Bbg4DEI4UXQ/tNSG3shIA0iFqk3vkhvfTZSQxi/oweeB/870G/6lvp65Ebex2rNM+UlwjMmR80rlJQwl78lQ==}
+    engines: {node: '>=8', npm: '>=5'}
+    peerDependencies:
+      react: '>=17.0.x'
+      react-dom: '>=17.0.x'
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -3283,6 +3314,9 @@ packages:
   streamsearch@1.1.0:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
     engines: {node: '>=10.0.0'}
+
+  string-replace-to-array@2.1.1:
+    resolution: {integrity: sha512-i31csTEoIrcB8pusAF72Z0WsF04sbdiH4s0egpcmFj30SgHYdYd1swmZ7Zb1qFryJ5DbZR6z4rSjOzoUcrWUWw==}
 
   string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
@@ -5302,6 +5336,11 @@ snapshots:
 
   emoji-mart@5.6.0: {}
 
+  emoji-picker-react@4.12.0(react@19.0.0):
+    dependencies:
+      flairup: 1.0.0
+      react: 19.0.0
+
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
@@ -5444,6 +5483,8 @@ snapshots:
   fill-range@7.1.1:
     dependencies:
       to-regex-range: 5.0.1
+
+  flairup@1.0.0: {}
 
   foreground-child@3.3.0:
     dependencies:
@@ -6239,9 +6280,27 @@ snapshots:
       prop-types: 15.8.1
       react: 19.0.0
 
+  react-easy-emoji@1.8.1(@types/react@19.0.7)(react@19.0.0):
+    dependencies:
+      react: 19.0.0
+      string-replace-to-array: 2.1.1
+    optionalDependencies:
+      '@types/react': 19.0.7
+
   react-hook-form@7.54.2(react@19.0.0):
     dependencies:
       react: 19.0.0
+
+  react-input-emoji@5.9.0(@types/react@19.0.7)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+    dependencies:
+      '@emoji-mart/data': 1.2.1
+      '@emoji-mart/react': 1.1.1(emoji-mart@5.6.0)(react@19.0.0)
+      emoji-mart: 5.6.0
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
+      react-easy-emoji: 1.8.1(@types/react@19.0.7)(react@19.0.0)
+    transitivePeerDependencies:
+      - '@types/react'
 
   react-is@16.13.1: {}
 
@@ -6449,6 +6508,8 @@ snapshots:
   stoppable@1.1.0: {}
 
   streamsearch@1.1.0: {}
+
+  string-replace-to-array@2.1.1: {}
 
   string-width@4.2.3:
     dependencies:

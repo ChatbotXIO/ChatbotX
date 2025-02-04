@@ -1,5 +1,8 @@
 "use client"
 
+import { InstagramIcon } from "@/components/icons/instagram"
+import { MessengerIcon } from "@/components/icons/messenger"
+import { WhatsappIcon } from "@/components/icons/whatsapp"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,9 +11,11 @@ import {
   AssignedType,
   type Contact,
   type Conversation,
+  type Team,
+  type User,
 } from "@ahachat.ai/database"
 import { formatDistanceToNow } from "date-fns"
-import { CheckCircleIcon, UsersRoundIcon } from "lucide-react"
+import { CheckCircleIcon, GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 
 interface ConversationItemProps {
@@ -19,23 +24,43 @@ interface ConversationItemProps {
   onSelect: () => void
 }
 
-const assignedIcon = (conversation: ConversationResource) => {
-  return (
-    <>
-      {conversation.contact.assignedType === AssignedType.User ? (
-        <Avatar>
-          <AvatarImage src={conversation.contact.assignedUser?.image ?? ""} />
+const assignedIcon = (
+  contact: Contact & { assignedUser: User | null; assignedTeam: Team | null },
+) => {
+  switch (contact.assignedType) {
+    case AssignedType.User:
+      return (
+        <Avatar className="w-4 h-4">
+          <AvatarImage src={contact.assignedUser?.image ?? ""} />
           <AvatarFallback>
-            {conversation.contact.assignedUser?.name ?? " "}
+            {contact.assignedUser?.name?.slice(0, 2) ?? " "}
           </AvatarFallback>
         </Avatar>
-      ) : (
-        <div className="rounded-full border bg-secondary overflow-hidden">
+      )
+    case AssignedType.Team:
+      return (
+        <div className="rounded-full border border-zinc-600 bg-secondary overflow-hidden">
           <UsersRoundIcon size={16} strokeWidth={1} />
         </div>
-      )}
-    </>
-  )
+      )
+    default:
+      return <></>
+  }
+}
+
+const sourceIcon = (
+  contact: Contact & { assignedUser: User | null; assignedTeam: Team | null },
+) => {
+  switch (contact.source) {
+    case "Whatsapp":
+      return <WhatsappIcon />
+    case "Instagram":
+      return <InstagramIcon />
+    case "Messenger":
+      return <MessengerIcon />
+    default:
+      return <GlobeIcon />
+  }
 }
 
 export default function ConversationItem({
@@ -81,25 +106,26 @@ export default function ConversationItem({
   }, [conversation])
 
   return (
-    <div
-      className="px-2 py-1 w-full"
-      onClick={() => onSelect()}
-      onKeyUp={() => {}}
-    >
+    <div className="w-full" onClick={() => onSelect()} onKeyUp={() => {}}>
       <Button
         variant={isActive ? "secondary" : "ghost"}
         className="h-auto w-full justify-center font-normal py-3"
       >
         <div className="relative">
-          <Avatar className="w-12 h-12">
+          <Avatar className="w-12 h-12 ">
             <AvatarImage
               src={conversation.contact.avatar ?? ""}
               alt={contactFullName}
             />
-            <AvatarFallback>{contactFullName.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="bg-zinc-500">
+              {contactFullName.charAt(0)}
+            </AvatarFallback>
           </Avatar>
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-            {assignedIcon(conversation)}
+            {assignedIcon(conversation.contact)}
+          </div>
+          <div className="absolute bottom-0 right-0 transform">
+            {sourceIcon(conversation.contact)}
           </div>
         </div>
 
@@ -118,7 +144,7 @@ export default function ConversationItem({
             )}
           </div>
           <p className="text-left text-sm text-gray-600 w-full truncate">
-            {conversation.latestMessage?.content}
+            {conversation.latestMessage?.content ?? " "}
           </p>
           <div className="flex gap-2 items-center">
             {latestSeenAt && (

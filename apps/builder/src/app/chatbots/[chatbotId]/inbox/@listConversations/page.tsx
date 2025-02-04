@@ -1,15 +1,15 @@
 import ConversationList from "@/features/conversations/conversation-list"
-import { getConversations } from "@/features/conversations/queries"
+import { listConversations } from "@/features/conversations/queries"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
-export default async function ConversationsPage(props: {
+export default async function ListConversationsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
   const params = await props.params
 
-  const promises = getConversations({
+  const promises = listConversations({
     chatbotId: params.chatbotId,
   })
 
