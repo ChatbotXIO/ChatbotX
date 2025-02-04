@@ -1,8 +1,8 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { CreateAiAgentDialog } from "@/features/integrations/open-ai/ai-agents/create"
-import { AiAgentsTable } from "@/features/integrations/open-ai/ai-agents/table"
-import { getAiAgents } from "@/features/integrations/open-ai/queries/ai-agents.query"
-import { getAiAgentSearchParamsCache } from "@/features/integrations/open-ai/schemas/ai-agents.schema"
+import { CreateAiAgentDialog } from "@/features/integrations/ai-agents/create"
+import { AiAgentsTable } from "@/features/integrations/ai-agents/table"
+import { getAiAgents } from "@/features/integrations/ai-agents/queries/get.query"
+import { getAiAgentSearchParamsCache } from "@/features/integrations/ai-agents/schemas/get.schema"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
