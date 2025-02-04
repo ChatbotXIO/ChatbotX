@@ -1,9 +1,8 @@
-import type { NextAuthConfig } from "next-auth"
 import type { Provider } from "next-auth/providers"
 import Facebook from "next-auth/providers/facebook"
 import Google from "next-auth/providers/google"
 
-const providers: Provider[] = [Google, Facebook]
+export const providers: Provider[] = [Google, Facebook]
 
 export const providerMap = providers
   .map((provider) => {
@@ -21,8 +20,3 @@ export const providerMap = providers
     }
   })
   .filter((provider) => provider.id !== "credentials")
-
-// Notice this is only an object, not a full Auth.js instance
-export default {
-  providers,
-} satisfies NextAuthConfig

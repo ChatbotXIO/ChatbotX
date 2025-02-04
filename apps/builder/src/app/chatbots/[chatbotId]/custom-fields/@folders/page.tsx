@@ -32,8 +32,8 @@ export default async function FoldersPage(props: {
   ])
 
   return (
-    <>
-      <div className="flex">
+    <div>
+      <div className="flex items-center">
         <h3 className="font-bold flex-1">
           <T keyName="tags.header" />
         </h3>
@@ -51,6 +51,6 @@ export default async function FoldersPage(props: {
           promises={promises}
         />
       </Suspense>
-    </>
+    </div>
   )
 }

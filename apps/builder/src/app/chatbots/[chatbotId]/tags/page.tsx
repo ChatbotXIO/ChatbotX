@@ -1,12 +1,47 @@
+import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
+import { CreateTagDialog } from "@/features/tags/create-tag-dialog"
+import { getTags } from "@/features/tags/queries"
 import { getTagsSearchParamsCache } from "@/features/tags/schemas/get-tags-schema"
+import { TagsTable } from "@/features/tags/tags-table"
 import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 
 export default async function TagsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
+  const params = await props.params
   const searchParams = await props.searchParams
-  const { folderId } = getTagsSearchParamsCache.parse(searchParams)
+  const search = getTagsSearchParamsCache.parse(searchParams)
 
-  return <div>Folder ID: {folderId}</div>
+  const promises = Promise.all([
+    getTags({
+      ...search,
+      chatbotId: params.chatbotId,
+    }),
+  ])
+
+  return (
+    <div>
+      <div className="flex w-full justify-end mb-4">
+        <CreateTagDialog
+          chatbotId={params.chatbotId}
+          folderId={search.folderId}
+        />
+      </div>
+      <Suspense
+        fallback={
+          <DataTableSkeleton
+            columnCount={5}
+            searchableColumnCount={1}
+            filterableColumnCount={2}
+            cellWidths={["10rem", "20rem", "40rem", "12rem", "10rem"]}
+            shrinkZero
+          />
+        }
+      >
+        <TagsTable promises={promises} chatbotId={params.chatbotId} />
+      </Suspense>
+    </div>
+  )
 }

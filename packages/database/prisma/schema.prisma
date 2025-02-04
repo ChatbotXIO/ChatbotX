@@ -91,6 +91,17 @@ model Chatbot {
   contacts       Contact[]
   logs           Log[]
   folders        Folder[]
+  fields         Field[]
+  tags           Tag[]
+  aiAgents       AiAgent[]
+  integrations   Integration[]
+  aiAssistants   AiAssistant[]
+  spreadsheets   Spreadsheet[]
+  aiTriggers     AiTrigger[]
+
+  openAis      IntegrationOpenAi[]
+  googleSheets IntegrationGoogleSheets[]
+  whatsapps    IntegrationWhatsapp[]
 }
 
 model ChatbotMember {
@@ -198,6 +209,7 @@ model Contact {
   assignedUser User?   @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
   assignedTeam Team?   @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
   logs         Log[]   @relation("ExecutorContact")
+  tags         Tag[]
 }
 
 model Folder {
@@ -215,6 +227,7 @@ model Folder {
   children Folder[] @relation("ParentChild")
   chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   tags     Tag[]
+  fields   Field[]
 
   @@index([chatbotId])
   @@index([parentId])
@@ -227,10 +240,168 @@ model Tag {
   name            String
   folderId        String?
   syncToMessenger Boolean
+  chatbotId       String
 
-  folder Folder? @relation(fields: [folderId], references: [id])
+  chatbot  Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  folder   Folder?   @relation(fields: [folderId], references: [id])
+  contacts Contact[]
 
   @@index([folderId])
+}
+
+model Field {
+  id              String          @id @default(cuid(2))
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  name            String
+  customFieldType CustomFieldType
+  description     String?
+  folderId        String?
+  fieldType       FieldType
+  value           String?
+  showInInbox     Boolean
+  chatbotId       String
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  folder  Folder? @relation(fields: [folderId], references: [id])
+}
+
+model Inbox {
+  id        String    @id @default(cuid(2))
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  chatbotId String
+  inboxType InboxType
+
+  integrationWhatsapps IntegrationWhatsapp[]
+}
+
+model Integration {
+  id              String          @id @default(cuid(2))
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  chatbotId       String
+  integrationType IntegrationType
+
+  openAi       IntegrationOpenAi?
+  googleSheets IntegrationGoogleSheets?
+  chatbot      Chatbot                  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+model AiAgent {
+  id        String   @id @default(cuid(2))
+  chatbotId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  prompt    String?
+  messages  Json[]
+
+  chatbot            Chatbot             @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integrationOpenAis IntegrationOpenAi[]
+}
+
+model AiAssistant {
+  id            String   @id @default(cuid(2))
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  chatbotId     String
+  name          String
+  prompt        String
+  model         String
+  aiTriggerIds  String[]
+  attachmentIds String[]
+  temperature   Float
+
+  chatbot           Chatbot             @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integrationOpenAi IntegrationOpenAi[]
+}
+
+model AiTrigger {
+  id           String   @id @default(cuid(2))
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  chatbotId    String
+  description  String?
+  flowId       String?
+  questions    Json[]
+  finalMessage String?
+
+  chatbot            Chatbot             @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integrationOpenAis IntegrationOpenAi[]
+}
+
+model IntegrationOpenAi {
+  id                     String   @id @default(cuid(2))
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  chatbotId              String
+  integrationId          String   @unique
+  auth                   Json
+  automatedResponse      Boolean
+  automatedVoiceResponse Boolean  @default(false)
+  voice                  String?
+  prompt                 String?
+  model                  String
+  temperature            Float    @default(0.5)
+  maximumOutputTokens    Int      @default(200)
+  aiAssistantId          String?
+  aiAgentId              String?
+
+  chatbot     Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integration Integration  @relation(fields: [integrationId], references: [id])
+  aiTriggers  AiTrigger[]
+  aiAssistant AiAssistant? @relation(fields: [aiAssistantId], references: [id])
+  aiAgent     AiAgent?     @relation(fields: [aiAgentId], references: [id])
+}
+
+model IntegrationGoogleSheets {
+  id            String   @id @default(cuid(2))
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  chatbotId     String
+  integrationId String   @unique
+  auth          Json
+
+  chatbot     Chatbot     @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integration Integration @relation(fields: [integrationId], references: [id])
+}
+
+model IntegrationWhatsapp {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  inboxId   String   @unique
+  auth      Json
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  inbox   Inbox   @relation(fields: [inboxId], references: [id])
+}
+
+model Spreadsheet {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  name      String
+  url       String
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+enum CustomFieldType {
+  ShortText
+  Number
+  Date
+  DateTime
+  Boolean
+  LongText
+}
+
+enum FieldType {
+  AccountField
+  CustomField
 }
 
 enum FolderType {
@@ -260,4 +431,20 @@ enum Gender {
 enum AssignedType {
   User
   Team
+}
+
+enum IntegrationType {
+  ChatWidget
+  GoogleSheets
+  Instagram
+  Messenger
+  OpenAi
+  Whatsapp
+}
+
+enum InboxType {
+  ChatWidget
+  Instagram
+  Messenger
+  Whatsapp
 }

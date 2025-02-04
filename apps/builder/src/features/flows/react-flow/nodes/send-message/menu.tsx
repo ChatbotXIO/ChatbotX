@@ -9,7 +9,7 @@ import {
   BotMessageSquareIcon,
   BotOffIcon,
   CalculatorIcon,
-  CalendarSyncIcon,
+  CalendarSync as CalendarSyncIcon,
   ChartNoAxesColumnIcon,
   ChartNoAxesCombinedIcon,
   CircleCheckIcon,

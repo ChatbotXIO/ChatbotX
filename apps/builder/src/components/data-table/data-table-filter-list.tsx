@@ -385,9 +385,7 @@ export function DataTableFilterList<TData>({
 
         const displayValue =
           filter.operator === "isBetween" && dateValue.length === 2
-            ? `${formatDate(dateValue[0] ?? new Date())} - ${formatDate(
-                dateValue[1] ?? new Date(),
-              )}`
+            ? `${formatDate(dateValue[0] ?? new Date())} - ${formatDate(dateValue[1] ?? new Date())}`
             : dateValue[0]
               ? formatDate(dateValue[0])
               : "Pick a date"
