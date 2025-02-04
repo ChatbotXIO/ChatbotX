@@ -1,13 +1,9 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
-
-import { SingleSelect } from "@/components/single-select"
-import { Input } from "@/components/ui/input"
-
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
+import { OpenAIModel } from "../open-ai/open-ai-model-select"
 
 interface OpenAIAnalyzeImageEditorProps {
   parentName: string
@@ -18,23 +14,24 @@ export const OpenAIAnalyzeImageEditor = ({
 }: OpenAIAnalyzeImageEditorProps) => {
   return (
     <OpenAIDialog name="flows.OpenAI.Title.AnalyzeImage">
-      <FormItem>
-        <FormLabel>Image</FormLabel>
-        <SingleSelect
-          value="chat_gpt_response"
-          options={[{ value: "chat_gpt_response", label: "ChatGPT Response" }]}
-          onValueChange={console.log}
-        />
-      </FormItem>
+      <OpenAIModel name={`${parentName}.model`} />
 
-      <FormItem>
-        <FormLabel>Prompt</FormLabel>
-        <Input value="What’s in this image?" onChange={console.log} />
-      </FormItem>
+      <CustomFieldSelect
+        label="Image"
+        name={`${parentName}.imageCustomFieldId`}
+      />
 
-      <OpenAIModel onValueChange={console.log} />
+      <FormInput
+        label="Prompt"
+        name={`${parentName}.prompt`}
+        inputType="textarea"
+      />
 
-      <OpenAICustomField />
+      <CustomFieldSelect
+        name={`${parentName}.resultCustomFieldId`}
+        label="Save response to a custom field"
+        allowCreate={true}
+      />
     </OpenAIDialog>
   )
 }

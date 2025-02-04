@@ -26,28 +26,28 @@ export const OpenAIDialog = ({ name, children }: OpenAIDialogProps) => {
         <div className="flex flex-col items-center rounded-md bg-slate-200 p-2 border-2 border-transparent transition-all ease-in hover:border-blue-500 hover:cursor-pointer hover:shadow-xl">
           <div className="flex items-center justify-center gap-2">
             <BotMessageSquareIcon size={20} className="text-gray-500" />
-            <p className="font-bold">OpenAI</p>
+            <p className="font-medium text-sm">OpenAI</p>
           </div>
-          <span className="text-gray-500 italic">
+          <div className="text-gray-500 text-xs mt-2">
             <T keyName={name} />
-          </span>
+          </div>
         </div>
       </DialogTrigger>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle className="capitalize">Open AI {name}</DialogTitle>
+          <DialogTitle className="capitalize">Open AI - {name}</DialogTitle>
         </DialogHeader>
         {children}
 
-        <DialogFooter className="flex items-center justify-between sm:justify-between">
+        <DialogFooter className="flex items-end">
           <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              <T keyName="flows.OpenAI.Button.Cancel" />
+            <Button type="button" variant="secondary" size="sm">
+              <T keyName="common.cancelBtn" />
             </Button>
           </DialogClose>
 
-          <Button type="button">
-            <T keyName="flows.OpenAI.Button.Continue" />
+          <Button type="button" size="sm">
+            <T keyName="common.continueBtn" />
           </Button>
         </DialogFooter>
       </DialogContent>

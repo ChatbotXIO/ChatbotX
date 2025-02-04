@@ -1,16 +1,12 @@
+import { FormInput } from "@/components/form-input"
 import { SingleSelect } from "@/components/single-select"
-
-import { FormItem, FormLabel } from "@/components/ui/form"
+import { Controller } from "react-hook-form"
 
 type OpenAIModelProps = {
-  value?: string
-  onValueChange: (value: string) => void
+  name: string
 }
 
-export const OpenAIModel = ({
-  value,
-  onValueChange = () => {},
-}: OpenAIModelProps) => {
+export const OpenAIModel = ({ name }: OpenAIModelProps) => {
   const models = [
     {
       value: "GPT4oMini",
@@ -51,14 +47,17 @@ export const OpenAIModel = ({
   ]
 
   return (
-    <FormItem>
-      <FormLabel>Model</FormLabel>
-      <SingleSelect
-        placeholder="Select model Open AI"
-        value={value}
-        options={models}
-        onValueChange={onValueChange}
+    <FormInput name={name} label="Model">
+      <Controller
+        name={name}
+        render={(field) => (
+          <SingleSelect
+            placeholder="Select model Open AI"
+            options={models}
+            {...field}
+          />
+        )}
       />
-    </FormItem>
+    </FormInput>
   )
 }

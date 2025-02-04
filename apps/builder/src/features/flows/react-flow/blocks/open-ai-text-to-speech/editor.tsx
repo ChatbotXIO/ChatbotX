@@ -1,12 +1,11 @@
 "use client"
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
-
+import { FormInput } from "@/components/form-input"
 import { SingleSelect } from "@/components/single-select"
-import { Input } from "@/components/ui/input"
-
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { Controller } from "react-hook-form"
+import { voiceTypes } from "./schema"
 
 interface OpenAITextToSpeechEditorProps {
   parentName: string
@@ -17,28 +16,29 @@ export const OpenAITextToSpeechEditor = ({
 }: OpenAITextToSpeechEditorProps) => {
   return (
     <OpenAIDialog name="flows.OpenAI.Title.TextToSpeech">
-      <FormItem>
-        <FormLabel>Input Text</FormLabel>
-        <Input />
-      </FormItem>
+      <FormInput name={`${parentName}.userMessage`} label="Input Text" />
 
-      <FormItem>
-        <FormLabel>Voice Type</FormLabel>
-        <SingleSelect
-          value="alloy"
-          options={[
-            { value: "alloy", label: "Alloy" },
-            { value: "echo", label: "Echo" },
-            { value: "fable", label: "Fable" },
-            { value: "onyx", label: "Onyx" },
-            { value: "nova", label: "Nova" },
-            { value: "shimmer", label: "Shimmer" },
-          ]}
-          onValueChange={console.log}
+      <FormInput name={`${parentName}.voiceType`} label="Voice Type">
+        <Controller
+          name={`${parentName}.voiceType`}
+          render={(field) => (
+            <SingleSelect
+              value="alloy"
+              options={Object.keys(voiceTypes).map((k) => ({
+                value: k,
+                label: voiceTypes[k] as string,
+              }))}
+              {...field}
+            />
+          )}
         />
-      </FormItem>
+      </FormInput>
 
-      <OpenAICustomField />
+      <CustomFieldSelect
+        name={`${parentName}.resultCustomFieldId`}
+        label="Save response to a custom field"
+        allowCreate={true}
+      />
     </OpenAIDialog>
   )
 }

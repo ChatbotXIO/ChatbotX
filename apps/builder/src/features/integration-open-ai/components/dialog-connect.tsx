@@ -15,7 +15,7 @@ import { FormItem, FormLabel } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/open-ai-model-select"
 import { T } from "@tolgee/react"
 import { type ChangeEvent, useState } from "react"
 
@@ -43,7 +43,7 @@ export const SettingIntegrationOpenAIDialogConnect = () => {
   const renderOptions = () => {
     return (
       <>
-        {apiKey ? <OpenAIModel onValueChange={console.log} /> : null}
+        {apiKey ? <OpenAIModel name="model" /> : null}
         <FormItem>
           <FormLabel>Temperature</FormLabel>
           <NumberField value={0.5} onChange={console.log} />

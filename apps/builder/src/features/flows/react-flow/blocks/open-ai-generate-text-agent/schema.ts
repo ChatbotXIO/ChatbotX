@@ -6,8 +6,14 @@ import {
 import { z } from "zod"
 
 export const openAIGenerateTextAgentSchema = openAISchema.extend({
-  actionType: z.enum([ActionType.OpenAIGenerateTextAgent]),
-  agent: z.string(),
+  actionType: z.literal(ActionType.OpenAIGenerateTextAgent),
+  aiAgentId: z.string().cuid2(),
+  userMessage: z.string(),
+  resultCustomFieldId: z.string().cuid2(),
+  aiTriggerIds: z.array(z.string().cuid2()),
+  rememberConversation: z.boolean(),
+  temperature: z.number().min(0).max(2),
+  maxTokens: z.number().int().min(250).max(4096),
 })
 
 export type OpenAIGenerateTextAgentSchema = z.infer<
@@ -18,6 +24,11 @@ export const openAIGenerateTextAgentDefaultValue =
   (): OpenAIGenerateTextAgentSchema => ({
     ...openAIDefaultValue(),
     actionType: ActionType.OpenAIGenerateTextAgent,
-    agent: "",
-    buttons: [],
+    aiAgentId: "",
+    userMessage: "",
+    resultCustomFieldId: "",
+    aiTriggerIds: [],
+    rememberConversation: true,
+    temperature: 1.0,
+    maxTokens: 250,
   })

@@ -438,7 +438,7 @@ enum IntegrationType {
   GoogleSheets
   Instagram
   Messenger
-  OpenAi
+  OpenAI
   Whatsapp
 }
 

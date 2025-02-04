@@ -11,20 +11,20 @@ import { BotIcon, TableIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
 interface SettingIntegrationLayoutProps {
-  // openAI: ReactNode
+  openAI: ReactNode
   googleSheets: ReactNode
 }
 
 export default function SettingIntegrationLayout({
-  // openAI,
+  openAI,
   googleSheets,
 }: SettingIntegrationLayoutProps) {
   const integrationItems = [
-    // {
-    //   keyName: "settings.integrations.OpenAI",
-    //   icon: <BotIcon size={24} />,
-    //   content: openAI,
-    // },
+    {
+      keyName: "settings.integrations.OpenAI",
+      icon: <BotIcon size={24} />,
+      content: openAI,
+    },
     {
       keyName: "settings.integrations.GoogleSheets",
       icon: <TableIcon size={24} />,

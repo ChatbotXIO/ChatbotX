@@ -23,13 +23,13 @@ export function GoogleSheetsConnect({ promises }: GoogleSheetsConnectProps) {
     >
       {data ? (
         <div className="flex flex-col gap-2">
-          <Button variant="secondary">
+          <Button variant="secondary" size="sm">
             <Link href="../google-sheets" replace={true}>
               <T keyName="settings.integrations.ManageBtn" />
             </Link>
           </Button>
 
-          <Button variant="destructive">
+          <Button variant="destructive" size="sm">
             <T keyName="settings.integrations.DisconnectBtn" />
           </Button>
         </div>

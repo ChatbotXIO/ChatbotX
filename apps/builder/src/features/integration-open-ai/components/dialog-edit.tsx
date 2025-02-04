@@ -1,5 +1,8 @@
 "use client"
 
+import { NumberField } from "@/components/number-field"
+import { SingleSelect } from "@/components/single-select"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -9,16 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-import { NumberField } from "@/components/number-field"
-import { SingleSelect } from "@/components/single-select"
-import { Button } from "@/components/ui/button"
 import { FormItem, FormLabel } from "@/components/ui/form"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/open-ai-model-select"
 import { T } from "@tolgee/react"
 import { useState } from "react"
 
@@ -50,7 +47,7 @@ const OptionsFields = () => {
   const renderOptions = () => {
     return (
       <>
-        <OpenAIModel onValueChange={console.log} />
+        <OpenAIModel name="model" />
 
         <FormItem>
           <FormLabel>Temperature</FormLabel>
@@ -67,8 +64,6 @@ const OptionsFields = () => {
 
   return (
     <>
-      <OpenAITrigger />
-
       {isOptions ? (
         renderOptions()
       ) : (

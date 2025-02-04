@@ -1,3 +1,3 @@
-export default function IntegrationGOogleSheetsPage() {
-  return <div>IntegrationGOogleSheetsPage</div>
+export default function SettingsGoogleSheetsPage() {
+  return <div>SettingsGoogleSheetsPage</div>
 }

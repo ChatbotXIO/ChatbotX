@@ -6,15 +6,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
-
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-
-import { SettingIntegrationOpenAIDialogConnect } from "@/features/settings/integrations/open-ai/components/dialog-connect"
-import { SettingIntegrationOpenAIDialogDisconnect } from "@/features/settings/integrations/open-ai/components/dialog-disconnect"
-import { SettingIntegrationOpenAIDialogEdit } from "@/features/settings/integrations/open-ai/components/dialog-edit"
 import { T } from "@/tolgee/server"
+import Link from "next/link"
+import { SettingIntegrationOpenAIDialogDisconnect } from "./components/dialog-disconnect"
+import { SettingIntegrationOpenAIDialogEdit } from "./components/dialog-edit"
 
 export const SettingIntegrationOpenAI = () => {
   const isConnect = true

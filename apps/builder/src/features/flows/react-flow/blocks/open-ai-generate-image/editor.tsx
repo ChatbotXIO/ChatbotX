@@ -1,13 +1,11 @@
 "use client"
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
-
+import { FormInput } from "@/components/form-input"
 import { SingleSelect } from "@/components/single-select"
-
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { Controller, useFormContext } from "react-hook-form"
+import { openAIGenerateImageSizes } from "./schema"
 
 interface OpenAIGenerateImageEditorProps {
   parentName: string
@@ -16,29 +14,36 @@ interface OpenAIGenerateImageEditorProps {
 export const OpenAIGenerateImageEditor = ({
   parentName,
 }: OpenAIGenerateImageEditorProps) => {
+  const { control } = useFormContext()
+
   return (
     <OpenAIDialog name="flows.OpenAI.Title.GenerateImage">
-      <OpenAIModel onValueChange={console.log} />
+      <FormInput label="User Message" name={`${parentName}.userMessage`} />
 
-      <OpenAIUserMessage />
-
-      <FormItem>
-        <FormLabel>Size</FormLabel>
-        <SingleSelect
-          value="1024_1024_dall_e_2"
-          options={[
-            { value: "256_256_dall_e_2", label: "256x256 (DALL·E 2)" },
-            { value: "512_512_dall_e_2", label: "512x512 (DALL·E 2)" },
-            { value: "1024_1024_dall_e_2", label: "1024x1024 (DALL·E 2)" },
-            { value: "1024_1024_dall_e_3", label: "1024x1024 (DALL·E 3)" },
-            { value: "1792_1024_dall_e_3", label: "1792x1024 (DALL·E 3)" },
-            { value: "1024_1792_dall_e_3", label: "1024x1792 (DALL·E 3)" },
-          ]}
-          onValueChange={console.log}
+      <FormInput label="Size" name={`${parentName}.size`}>
+        <Controller
+          control={control}
+          name={`${parentName}.size`}
+          render={(field) => (
+            <SingleSelect
+              value="dall-e-2::1024x1024"
+              options={Object.keys(openAIGenerateImageSizes).map(
+                (k: string) => ({
+                  value: k,
+                  label: openAIGenerateImageSizes[k] as string,
+                }),
+              )}
+              {...field}
+            />
+          )}
         />
-      </FormItem>
+      </FormInput>
 
-      <OpenAICustomField />
+      <CustomFieldSelect
+        label="Save response to a custom field"
+        name={`${parentName}.resultCustomFieldId`}
+        allowCreate={true}
+      />
     </OpenAIDialog>
   )
 }

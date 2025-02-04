@@ -1,23 +1,23 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
-import {
-  openAIDefaultValue,
-  openAISchema,
-} from "@/features/flows/react-flow/blocks/open-ai/schema"
+import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 
-export const openAIGenerateTextAssistantSchema = openAISchema.extend({
-  actionType: z.enum([ActionType.OpenAIGenerateTextAssistant]),
-  assistantId: z.string().min(1).max(100).cuid2(),
+export const openAIGenerateTextAssistantSchema = z.object({
+  id: z.string().cuid2(),
+  actionType: z.literal(ActionType.OpenAIGenerateTextAssistant),
+  aiAssistantId: z.string().cuid2(),
+  userMessage: z.string(),
+  resultCustomFieldId: z.string().cuid2(),
 })
-
 export type OpenAIGenerateTextAssistantSchema = z.infer<
   typeof openAIGenerateTextAssistantSchema
 >
 
 export const openAIGenerateTextAssistantDefaultValue =
   (): OpenAIGenerateTextAssistantSchema => ({
-    ...openAIDefaultValue(),
+    id: createId(),
     actionType: ActionType.OpenAIGenerateTextAssistant,
-    assistantId: "",
-    buttons: [],
+    aiAssistantId: "",
+    userMessage: "",
+    resultCustomFieldId: "",
   })
