@@ -1,20 +1,18 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
-import {
-  openAIDefaultValue,
-  openAISchema,
-} from "@/features/flows/react-flow/blocks/open-ai/schema"
+import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 
-export const openAISpeechToTextSchema = openAISchema.extend({
-  actionType: z.enum([ActionType.OpenAISpeechToText]),
-  audioId: z.string().min(1).max(100).cuid2(),
+export const openAISpeechToTextSchema = z.object({
+  id: z.string().cuid2(),
+  actionType: z.literal(ActionType.OpenAISpeechToText),
+  audioCustomFieldId: z.string().cuid2(),
+  resultCustomFieldId: z.string().cuid2(),
 })
-
 export type OpenAISpeechToTextSchema = z.infer<typeof openAISpeechToTextSchema>
 
 export const openAISpeechToTextDefaultValue = (): OpenAISpeechToTextSchema => ({
-  ...openAIDefaultValue(),
+  id: createId(),
   actionType: ActionType.OpenAISpeechToText,
-  audioId: "",
-  buttons: [],
+  audioCustomFieldId: "",
+  resultCustomFieldId: "",
 })

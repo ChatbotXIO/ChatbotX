@@ -7,29 +7,24 @@ export const SettingRow = ({
   label,
   description,
   readMoreUrl,
-  className,
   children,
+  className,
 }: {
   label: ReactElement
   description: ReactElement
-  className?: string
   readMoreUrl?: string
   children: ReactElement
+  className: string
 }) => {
   const { t } = useTranslate()
   return (
-    <div className={cn("grid grid-cols-2 gap-3", className)}>
-      <div>
-        <h4 className="font-medium">{label}</h4>
-        <div>
-          {description}
-          {readMoreUrl && (
-            <Link href={readMoreUrl}>{t("common.readMore")}</Link>
-          )}
-        </div>
+    <div className={cn("flex flex-row gap-2", className)}>
+      <h4 className="font-medium basis-3/12	truncate">{label}</h4>
+      <div className="basis-3/12 truncate">{children}</div>
+      <div className="basis-6/12 truncate">
+        {description}
+        {readMoreUrl && <Link href={readMoreUrl}>{t("common.readMore")}</Link>}
       </div>
-
-      <div>{children}</div>
     </div>
   )
 }

@@ -1,13 +1,9 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
+import { AIAsistantSelect } from "@/features/ai-assistants/ai-assistant-select"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
-
-import { SingleSelect } from "@/components/single-select"
-
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
 
 interface OpenAIGenerateTextAssistantEditorProps {
   parentName: string
@@ -18,29 +14,14 @@ export const OpenAIGenerateTextAssistantEditor = ({
 }: OpenAIGenerateTextAssistantEditorProps) => {
   return (
     <OpenAIDialog name="flows.OpenAI.Title.GenerateTextAssistant">
-      <OpenAIModel onValueChange={console.log} />
+      <AIAsistantSelect name={`${parentName}.aiAssistantId`} />
 
-      <FormItem>
-        <FormLabel>Assistant</FormLabel>
-        <SingleSelect
-          value="troly"
-          options={[
-            {
-              label: "Trợ Lý",
-              value: "troly",
-            },
-            {
-              label: "AI TL",
-              value: "ai-tl",
-            },
-          ]}
-          onValueChange={console.log}
-        />
-      </FormItem>
+      <FormInput name={`${parentName}.userMessage`} label="User Message" />
 
-      <OpenAIUserMessage />
-
-      <OpenAICustomField />
+      <CustomFieldSelect
+        name={`${parentName}.resultCustomFieldId`}
+        label="Save response to a custom field"
+      />
     </OpenAIDialog>
   )
 }

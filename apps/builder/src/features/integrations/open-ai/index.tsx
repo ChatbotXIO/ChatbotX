@@ -37,6 +37,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
         ) : (
           <Button
             variant="secondary"
+            size="sm"
             onClick={() => console.log("press connect button")}
           >
             <T keyName="common.Connect" />
@@ -65,7 +66,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             }
             className="items-center"
           >
-            <Button variant="secondary" asChild>
+            <Button variant="secondary" size="sm" asChild>
               <Link href="../ai-agents">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
@@ -79,7 +80,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             }
             className="items-center"
           >
-            <Button variant="secondary">
+            <Button variant="secondary" size="sm">
               <Link href="../ai-assistants">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
@@ -93,7 +94,7 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             }
             className="items-center"
           >
-            <Button variant="secondary">
+            <Button variant="secondary" size="sm">
               <Link href="../ai-triggers">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>

@@ -6,7 +6,7 @@ import {
 import { z } from "zod"
 
 export const openAIDeleteMessageHistorySchema = openAISchema.extend({
-  actionType: z.enum([ActionType.OpenAIDeleteMessageHistory]),
+  actionType: z.literal(ActionType.OpenAIDeleteMessageHistory),
 })
 
 export type OpenAIDeleteMessageHistorySchema = z.infer<
@@ -17,5 +17,4 @@ export const openAIDeleteMessageHistoryDefaultValue =
   (): OpenAIDeleteMessageHistorySchema => ({
     ...openAIDefaultValue(),
     actionType: ActionType.OpenAIDeleteMessageHistory,
-    buttons: [],
   })

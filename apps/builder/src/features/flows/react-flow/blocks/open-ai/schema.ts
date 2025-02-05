@@ -1,4 +1,3 @@
-import { buttonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 
@@ -15,14 +14,9 @@ export enum OpenAIModel {
 }
 
 export const openAISchema = z.object({
-  id: z.string(),
+  id: z.string().cuid2(),
   model: z.nativeEnum(OpenAIModel),
-  userMessage: z.string().min(1).max(255).optional(),
-  customFieldId: z.string().min(1).max(255).cuid2().optional(),
-  aiTriggerIds: z.array(z.string()).optional(),
-  buttons: z.array(buttonBlockSchema).optional(),
 })
-
 export type OpenAISchema = z.infer<typeof openAISchema>
 
 export const openAIDefaultValue = (): OpenAISchema => ({

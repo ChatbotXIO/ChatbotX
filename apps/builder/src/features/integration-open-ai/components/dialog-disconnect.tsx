@@ -11,40 +11,27 @@ import {
 import { Button } from "@/components/ui/button"
 import { T } from "@tolgee/react"
 
-type IntegrationDialogDisconnectProps = {
-  title: string
-  disconnect: () => void
-}
-
-export default function IntegrationDialogDisconnect({
-  title,
-  disconnect,
-}: IntegrationDialogDisconnectProps) {
+export const SettingIntegrationOpenAIDialogDisconnect = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm" className="min-w-[250px]">
-          <T keyName="settings.integrations.DisconnectBtn" />
+        <Button variant="destructive" className="min-w-[250px]">
+          <T keyName="settings.integrations.OpenAI.button.edit" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>Do you want to disconnect OpenAI?</DialogTitle>
         </DialogHeader>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="secondary" size="sm">
+            <Button type="button" variant="secondary">
               Cancel
             </Button>
           </DialogClose>
 
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={disconnect}
-          >
+          <Button type="button" variant="destructive">
             Disconnect
           </Button>
         </DialogFooter>

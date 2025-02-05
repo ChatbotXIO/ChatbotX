@@ -1,14 +1,10 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
+import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
-
-import { Input } from "@/components/ui/input"
-
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
-import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
+import { OpenAIModel } from "../open-ai/open-ai-model-select"
 
 interface OpenAIGenerateTextEditorProps {
   parentName: string
@@ -19,21 +15,27 @@ export const OpenAIGenerateTextEditor = ({
 }: OpenAIGenerateTextEditorProps) => {
   return (
     <OpenAIDialog name="flows.OpenAI.Title.GenerateText">
-      <OpenAIModel onValueChange={console.log} />
+      <OpenAIModel name={`${parentName}.model`} />
 
-      <FormItem>
-        <FormLabel>
-          Business Information (Prompt)
-          <span className="text-[12px] text-gray-500 pl-1">(Options)</span>
-        </FormLabel>
-        <Input />
-      </FormItem>
+      <FormInput
+        label="Prompt"
+        name={`${parentName}.prompt`}
+        isRequired={false}
+        inputType="textarea"
+      />
 
-      <OpenAIUserMessage />
+      <FormInput label="User Message" name={`${parentName}.userMessage`} />
 
-      <OpenAICustomField />
+      <CustomFieldSelect
+        name={`${parentName}.resultCustomFieldId`}
+        label="Save response to a custom field"
+        allowCreate={true}
+      />
 
-      <OpenAITrigger />
+      <AITriggersMultipleSelect
+        name={`${parentName}.aiTriggerIds`}
+        isRequired={false}
+      />
     </OpenAIDialog>
   )
 }

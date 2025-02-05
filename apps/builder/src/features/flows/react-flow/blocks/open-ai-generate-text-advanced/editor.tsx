@@ -1,16 +1,13 @@
 "use client"
 
-import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
-
+import { FormInput } from "@/components/form-input"
 import { NumberField } from "@/components/number-field"
-import { SingleSelect } from "@/components/single-select"
-import { FormItem, FormLabel } from "@/components/ui/form"
-
-import { Input } from "@/components/ui/input"
-import { OpenAICustomField } from "@/features/flows/react-flow/blocks/open-ai/components/custom-field"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/components/model"
-import { OpenAITrigger } from "@/features/flows/react-flow/blocks/open-ai/components/trigger"
-import { OpenAIUserMessage } from "@/features/flows/react-flow/blocks/open-ai/components/user-message"
+import { Checkbox } from "@/components/ui/checkbox"
+import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
+import { Controller } from "react-hook-form"
+import { OpenAIModel } from "../open-ai/open-ai-model-select"
 
 interface OpenAIGenerateTextAdvancedEditorProps {
   parentName: string
@@ -21,52 +18,49 @@ export const OpenAIGenerateTextAdvancedEditor = ({
 }: OpenAIGenerateTextAdvancedEditorProps) => {
   return (
     <OpenAIDialog name="flows.OpenAI.Title.GenerateTextAdvanced">
-      <OpenAIModel onValueChange={console.log} />
+      <OpenAIModel name={`${parentName}.model`} />
 
-      <FormItem>
-        <FormLabel>
-          Business Information (Prompt)
-          <span className="text-[12px] text-gray-500">(Options)</span>
-        </FormLabel>
-        <Input value="You are a helpful assistant." onChange={console.log} />
-      </FormItem>
+      <FormInput
+        name={`${parentName}.prompt`}
+        label="Prompt"
+        inputType="textarea"
+        isRequired={false}
+      />
 
-      <OpenAIUserMessage />
+      <FormInput name={`${parentName}.userMessage`} label="User Message" />
 
-      <OpenAICustomField />
+      <CustomFieldSelect
+        name={`${parentName}.resultCustomFieldId`}
+        label="Save response to a custom field"
+        allowCreate={true}
+      />
 
-      <OpenAITrigger />
+      <AITriggersMultipleSelect
+        name={`${parentName}.aiTriggerIds`}
+        isRequired={false}
+      />
 
-      <FormItem>
-        <FormLabel>Remember Conversation</FormLabel>
-        <SingleSelect
-          value="yes"
-          options={[
-            {
-              label: "Yes",
-              value: "yes",
-            },
-            {
-              label: "No",
-              value: "no",
-            },
-          ]}
-          onValueChange={console.log}
+      <FormInput
+        name={`${parentName}.rememberConversation`}
+        label="Remember Conversation"
+      >
+        <Controller
+          name={`${parentName}.rememberConversation`}
+          render={(field) => <Checkbox id="rememberConversation" {...field} />}
         />
-      </FormItem>
+      </FormInput>
 
-      <FormItem>
-        <FormLabel>Temperature</FormLabel>
+      <FormInput name={`${parentName}.temperature`} label="Temperature">
         <NumberField value={0.4} max={2} onChange={console.log} />
-      </FormItem>
+      </FormInput>
 
-      <FormItem>
-        <FormLabel>
-          Maximum number of output tokens{" "}
-          <span className="text-[12px] text-gray-500">(Options)</span>
-        </FormLabel>
+      <FormInput
+        name={`${parentName}.maxTokens`}
+        label="Maximum number of output tokens"
+        isRequired={false}
+      >
         <NumberField value={250} step={1} max={4096} onChange={console.log} />
-      </FormItem>
+      </FormInput>
     </OpenAIDialog>
   )
 }

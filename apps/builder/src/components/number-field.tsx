@@ -2,17 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-
-import {
-  type ChangeEvent,
-  type FormEvent,
-  forwardRef,
-  useEffect,
-  useState,
-} from "react"
-
 import { cn } from "@/lib/utils"
 import { Minus, Plus } from "lucide-react"
+import { type FormEvent, forwardRef, useState } from "react"
 
 interface NumberFieldProps {
   value: number
