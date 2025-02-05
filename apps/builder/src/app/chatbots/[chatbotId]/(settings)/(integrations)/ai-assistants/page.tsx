@@ -6,7 +6,7 @@ import { AiAssistantsTable } from "@/features/integrations/ai-assistants/table"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
-export default async function OpenAIAssistantPage(props: {
+export default async function AIAssistantsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
@@ -22,6 +22,7 @@ export default async function OpenAIAssistantPage(props: {
       <div className="flex w-full justify-end mb-4">
         <CreateAiAssistantsDialog chatbotId={params.chatbotId} />
       </div>
+
       <Suspense
         fallback={
           <DataTableSkeleton

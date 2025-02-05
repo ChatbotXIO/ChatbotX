@@ -6,7 +6,7 @@ import { AiAgentsTable } from "@/features/integrations/ai-agents/table"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
-export default async function OpenAIAgentsPage(props: {
+export default async function AIAgentsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
@@ -22,6 +22,7 @@ export default async function OpenAIAgentsPage(props: {
       <div className="flex w-full justify-end mb-4">
         <CreateAiAgentDialog chatbotId={params.chatbotId} />
       </div>
+
       <Suspense
         fallback={
           <DataTableSkeleton
