@@ -14,6 +14,7 @@ import { UpdateAiAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiAgent } from "@ahachat.ai/database"
 import { useAction } from "next-safe-action/hooks"
+import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { GetAiAgentsColumns } from "./table-columns"
@@ -25,6 +26,7 @@ interface AiAgentsTableProps {
 
 export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
   const [{ data, pageCount }] = use(promises)
+  const router = useRouter()
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiAgent> | null>(null)
 
@@ -39,9 +41,11 @@ export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
   useEffect(() => {
     if (rowAction && rowAction.type === "duplicate") {
       execute()
+      setRowAction(null)
       toast.success("Duplicate successfully!")
+      router.refresh()
     }
-  }, [rowAction, execute])
+  }, [rowAction, execute, router])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
