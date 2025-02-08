@@ -6,15 +6,16 @@ import type {
   DataTableFilterField,
   DataTableRowAction,
 } from "@/components/data-table/types"
+import { duplicateAiAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
 import { DeleteAiAgentsDialog } from "@/features/integrations/ai-agents/delete"
 import type { getAiAgents } from "@/features/integrations/ai-agents/queries/get.query"
 import { AiAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
 import { UpdateAiAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiAgent } from "@ahachat.ai/database"
-import { use, useMemo, useState } from "react"
+import { useAction } from "next-safe-action/hooks"
+import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
 import { GetAiAgentsColumns } from "./table-columns"
 
 interface AiAgentsTableProps {
@@ -26,21 +27,25 @@ export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiAgent> | null>(null)
-  const [_, copy] = useCopyToClipboard()
 
-  const duplicateAiAgent = (id: string) => {
-    copy(id)
-      .then(() => {
-        toast.success("Duplicate successfully!")
-      })
-      .catch(() => {
-        toast.error("Failed to copy!")
-      })
-  }
+  const { execute, result } = useAction(
+    duplicateAiAgentAction.bind(
+      null,
+      chatbotId,
+      rowAction?.row.original ? rowAction.row.original.id : "",
+    ),
+  )
+
+  useEffect(() => {
+    if (rowAction && rowAction.type === "duplicate") {
+      execute()
+      toast.success("Duplicate successfully!")
+    }
+  }, [rowAction, execute])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
-    () => GetAiAgentsColumns({ setRowAction, duplicateAiAgent }),
+    () => GetAiAgentsColumns({ setRowAction }),
     [setRowAction],
   )
 

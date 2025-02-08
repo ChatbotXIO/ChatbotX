@@ -1,8 +1,8 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { CreateAiTriggerDialog } from "@/features/integrations/ai-triggers/create";
-import { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query";
-import { getAiTriggerSearchParamsCache } from "@/features/integrations/ai-triggers/schemas/get.schema";
-import { AiTriggersTable } from "@/features/integrations/ai-triggers/table";
+import { CreateAiTriggerDialog } from "@/features/integrations/ai-triggers/create"
+import { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
+import { getAiTriggerSearchParamsCache } from "@/features/integrations/ai-triggers/schemas/get.schema"
+import { AiTriggersTable } from "@/features/integrations/ai-triggers/table"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 

@@ -18,17 +18,15 @@ import type { Dispatch, SetStateAction } from "react"
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  type: "update" | "delete"
+  type: "update" | "delete" | "duplicate"
 }
 
 interface GetAiAgentsColumnsProps {
   setRowAction: Dispatch<SetStateAction<DataTableRowAction<AiAgent> | null>>
-  duplicateAiAgent: (id: string) => void
 }
 
 export function GetAiAgentsColumns({
   setRowAction,
-  duplicateAiAgent,
 }: GetAiAgentsColumnsProps): ColumnDef<AiAgent>[] {
   return [
     {
@@ -105,7 +103,7 @@ export function GetAiAgentsColumns({
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => duplicateAiAgent(`${row.original.id}`)}
+                onClick={() => setRowAction({ row, type: "duplicate" })}
               >
                 Duplicate
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

@@ -17,8 +17,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createAiTriggerAction } from "@/features/integrations/ai-triggers/actions/create.action";
-import { createAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema";
+import { createAiTriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
+import { createAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -34,7 +34,7 @@ export function CreateAiTriggerDialog({ chatbotId }: { chatbotId: string }) {
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAiTriggerAction.bind(null, chatbotId, "", ''),
+      createAiTriggerAction.bind(null, chatbotId, "", ""),
       zodResolver(createAiTriggerSchema),
       {
         actionProps: {

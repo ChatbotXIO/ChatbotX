@@ -44,8 +44,6 @@ export function UpdateAiAgentDialog({
   const { t } = useTranslate()
   const router = useRouter()
 
-  console.log("UpdateAiAgentDialog", agent)
-
   const {
     form,
     handleSubmitWithAction,
