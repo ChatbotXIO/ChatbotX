@@ -50,9 +50,7 @@ export const updateAiAgentAction = authActionClient
         where: {
           id: agentId,
         },
-        data: {
-          name: parsedInput.name,
-        },
+        data: parsedInput,
       })
 
       revalidateTag(`${ctx.user.id}#aiAgents`)

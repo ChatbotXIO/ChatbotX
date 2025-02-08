@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -23,6 +22,7 @@ import { updateAiAgentSchema } from "@/features/integrations/ai-agents/schemas/u
 import type { AiAgent } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import type { JsonObject } from "@prisma/client/runtime/binary"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -43,6 +43,8 @@ export function UpdateAiAgentDialog({
 }) {
   const { t } = useTranslate()
   const router = useRouter()
+
+  console.log("UpdateAiAgentDialog", agent)
 
   const {
     form,
@@ -74,7 +76,7 @@ export function UpdateAiAgentDialog({
 
   const { fields, append, remove, update } = useFieldArray({
     control,
-    name: "json_builder.messages",
+    name: "messages",
   })
 
   const addOptions = () => {
@@ -93,16 +95,16 @@ export function UpdateAiAgentDialog({
   useEffect(() => {
     if (!open) {
       reset({
-        json_builder: {
-          messages: [],
-        },
+        messages: [],
       })
     }
   }, [open, reset])
 
   useEffect(() => {
     if (agent) {
-      setValue("name", agent.name as string)
+      setValue("name", agent.name)
+      setValue("prompt", agent.prompt || "")
+      setValue("messages", agent.messages as JsonObject[])
     }
   }, [agent, setValue])
 
@@ -134,7 +136,7 @@ export function UpdateAiAgentDialog({
 
               <FormField
                 control={form.control}
-                name="json_builder.system"
+                name="prompt"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("aiAgents.prompt")}</FormLabel>
@@ -150,7 +152,7 @@ export function UpdateAiAgentDialog({
                     <div className="w-[100px]">
                       <FormField
                         control={form.control}
-                        name={`json_builder.messages.${index}.role`}
+                        name={`messages.${index}.role`}
                         render={({ field }) => (
                           <Button
                             type="button"
@@ -166,7 +168,7 @@ export function UpdateAiAgentDialog({
                     </div>
                     <FormField
                       control={form.control}
-                      name={`json_builder.messages.${index}.content`}
+                      name={`messages.${index}.content`}
                       render={({ field }) => (
                         <Input
                           placeholder="Type a message..."
