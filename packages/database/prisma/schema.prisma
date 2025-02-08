@@ -343,13 +343,13 @@ model IntegrationOpenAi {
   voice                  String?
   prompt                 String?
   model                  String
-  temperature            Float    @default(0.5)
-  maximumOutputTokens    Int      @default(200)
+  temperature            Float
+  maximumOutputTokens    Int
   aiAssistantId          String?
   aiAgentId              String?
 
   chatbot     Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  integration Integration  @relation(fields: [integrationId], references: [id])
+  integration Integration  @relation(fields: [integrationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   aiTriggers  AiTrigger[]
   aiAssistant AiAssistant? @relation(fields: [aiAssistantId], references: [id])
   aiAgent     AiAgent?     @relation(fields: [aiAgentId], references: [id])
@@ -364,7 +364,7 @@ model IntegrationGoogleSheets {
   auth          Json
 
   chatbot     Chatbot     @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  integration Integration @relation(fields: [integrationId], references: [id])
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model IntegrationWhatsapp {
@@ -376,7 +376,7 @@ model IntegrationWhatsapp {
   auth      Json
 
   chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  inbox   Inbox   @relation(fields: [inboxId], references: [id])
+  inbox   Inbox   @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Spreadsheet {

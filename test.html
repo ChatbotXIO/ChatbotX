@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embed Ember Component</title>
+  <style>
+    .start_setup,
+    .add_number {
+      width: 120px;
+      height: 32px;
+      background-color: #264966;
+      border: 1px solid #12344d;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      max-width: 240px;
+      min-width: 75px;
+      overflow-x: hidden;
+      overflow-y: hidden;
+      text-overflow: ellipsis;
+      text-shadow: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 20px;
+      text-align: left;
+    }
+
+    .add_number {
+      width: 126px;
+    }
+
+    .start_setup:hover,
+    .add_number:hover {
+      background: #12344D;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="button-container" id="buttonContainer"></div>
+
+  <script>
+    // Function to get query parameters from the URL
+    function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        appId: params.get('appId'),
+        configId: params.get('configId'),
+        addNumber: params.get('add_number')
+      };
+    }
+
+    // Fetch the parameters
+    const { appId, configId, addNumber } = getQueryParams();
+
+    window.fbAsyncInit = function () {
+      // JavaScript SDK configuration and setup
+      FB.init({
+        appId: appId, // Facebook App ID
+        cookie: true, // Enable cookies
+        xfbml: true, // Parse social plugins on this page
+        version: 'v19.0' // Graph API version
+      });
+    };
+
+    // Load the JavaScript SDK asynchronously
+    (function (d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    // Facebook Login with JavaScript SDK
+    function launchWhatsAppSignup() {
+      // Launch Facebook login
+      FB.login(function (response) {
+        if (response.authResponse) {
+          const code = response.authResponse.code;
+          // The returned code must be transmitted to your backend
+        } else {
+          console.log('User cancelled login or did not fully authorize.');
+        }
+      }, {
+        config_id: configId, // Configuration ID
+        response_type: 'code', // Must be set to 'code' for System User access token
+        override_default_response_type: true, // When true, any response types passed in the "response_type" will take precedence over the default type
+        extras: {
+          feature: 'whatsapp_embedded_signup',
+          sessionInfoVersion: 2, // Receive Session Logging Info
+          version: 2
+        }
+      });
+    }
+
+    const sessionInfoListener = (event) => {
+      if (event.origin == null) {
+        return;
+      }
+
+      // Make sure the data is coming from facebook.com
+      if (!event.origin.endsWith("facebook.com")) {
+        return;
+      }
+
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'WA_EMBEDDED_SIGNUP') {
+          // If user finishes the Embedded Signup flow
+          if (data.event === 'FINISH') {
+            const { phone_number_id, waba_id } = data.data;
+            // Forward the data to the parent window
+            window.parent.postMessage(data.data, '*');
+            console.log("Phone number ID ", phone_number_id, " WhatsApp business account ID ", waba_id);
+          }
+          // If user reports an error during the Embedded Signup flow
+          else if (data.event === 'ERROR') {
+            const { error_message } = data.data;
+            console.error("Error: ", error_message);
+          }
+          // If user cancels the Embedded Signup flow
+          else {
+            const { current_step } = data.data;
+            // Forward the data to the parent window
+            window.parent.postMessage(data.data, '*');
+            console.warn("Cancel at ", current_step);
+          }
+        }
+      } catch {
+        console.log('Non JSON Response', event.data);
+      }
+    };
+
+    window.addEventListener('message', sessionInfoListener);
+
+    // Render buttons based on query parameter
+    function renderButtons() {
+      const container = document.getElementById('buttonContainer');
+
+      let buttonHtml = '';
+      if (addNumber) {
+        buttonHtml = `
+          <button onclick="launchWhatsAppSignup()" class="add_number">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="16" height="16" fill="white" fill-opacity="0.01"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M7.99961 1.59961C4.46499 1.59961 1.59961 4.46499 1.59961 7.99961C1.59961 11.5342 4.46499 14.3996 7.99961 14.3996C11.5342 14.3996 14.3996 11.5342 14.3996 7.99961C14.3996 6.30222 13.7253 4.67436 12.5251 3.47413C11.3249 2.27389 9.697 1.59961 7.99961 1.59961ZM7.9996 13.2796C5.08354 13.2796 2.7196 10.9157 2.7196 7.99961C2.7196 5.08354 5.08354 2.71961 7.9996 2.71961C10.9157 2.71961 13.2796 5.08354 13.2796 7.99961C13.2752 10.9138 10.9138 13.2752 7.9996 13.2796ZM10.6396 8.55961C10.9489 8.55961 11.1996 8.30889 11.1996 7.99961C11.1996 7.69033 10.9489 7.43961 10.6396 7.43961H8.55961V5.35961C8.55961 5.05033 8.30889 4.79961 7.99961 4.79961C7.69033 4.79961 7.43961 5.05033 7.43961 5.35961V7.43961H5.35961C5.05033 7.43961 4.79961 7.69033 4.79961 7.99961C4.79961 8.30889 5.05033 8.55961 5.35961 8.55961H7.43961V10.6396C7.43961 10.9489 7.69033 11.1996 7.99961 11.1996C8.30889 11.1996 8.55961 10.9489 8.55961 10.6396V8.55961H10.6396Z" fill="white"/>
+            </svg>
+            Add number
+          </button>
+        `;
+      } else {
+        buttonHtml = `
+          <button onclick="launchWhatsAppSignup()" class="start_setup">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="16" height="16" fill="white" fill-opacity="0.01"/>
+              <path d="M14.96 8.2203C15.02 8.0803 15.02 7.9203 14.96 7.7703C14.95 7.7403 14.93 7.7203 14.91 7.6903C14.89 7.6603 14.87 7.6203 14.85 7.5903L10.82 3.1903C10.6 2.9503 10.22 2.9303 9.97 3.1503C9.73 3.3703 9.71 3.7503 9.93 4.0003L13.04 7.4003H1.6C1.27 7.4003 1 7.6703 1 8.0003C1 8.3303 1.27 8.6003 1.6 8.6003H13.04L9.93 11.9903C9.71 12.2303 9.72 12.6103 9.97 12.8403C10.09 12.9503 10.23 13.0003 10.38 13.0003C10.54 13.0003 10.7 12.9303 10.82 12.8103L14.85 8.4103C14.85 8.4103 14.89 8.3403 14.91 8.3103C14.93 8.2803 14.95 8.2603 14.96 8.2303V8.2203Z" fill="white"/>
+            </svg>
+            Start setup
+          </button>
+        `;
+      }
+
+      container.innerHTML = buttonHtml;
+    }
+
+    // Call the function to render buttons on page load
+    window.onload = renderButtons;
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "@ahachat.ai/whatsapp",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@ahachat.ai/sdk": "workspace:*",
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "tslog": "^4.9.3",
+    "typescript": "5.7.3",
+    "whatsapp-api-js": "^5.0.0"
+  }
+}
