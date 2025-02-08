@@ -60,49 +60,52 @@ export const getAiAssistants = async (
   )()
 }
 
-export const findAIAssistant = async ({
-  id,
-}: { id: string }): Promise<{
-  data: Record<
-    string,
-    | string
-    | number
-    | Record<
-        string,
-        | string
-        | number
-        | boolean
-        | null
-        | string[]
-        | Record<string, string | boolean>
-      >
-    | null
-    | undefined
-  >
+export const getAiAssistantFiles = async (
+  input: Record<string, string>,
+): Promise<{
+  data: Record<string, string>[]
   status: string
 }> => {
-  return {
-    data: {
-      id: "1067356",
-      name: "dddd",
-      external_id: "asst_UMKktMjnElmhtd29Jm6Ab1SG",
-      json_builder: {
-        version: "3",
-        name: "dddd",
-        model: "gpt-3.5-turbo",
-        description: null,
-        temperature: 1,
-        instructions: "You are a helpful assistant.eeeeee",
-        file_ids: [],
-        functions: ["1"],
-        autoVoice: {
-          enable: true,
-          voice: "alloy",
-        },
-      },
-      version: "3",
-      vector_store_id: "",
+  const userId = await getCurrentUserId()
+  // await findChatbotOrFail(userId, input.chatbotId)
+
+  return await unstable_cache(
+    async () => {
+      try {
+        return {
+          data: [
+            {
+              id: "178120",
+              external_id: "file-Xlt615JTrhehAkh2jCLTB266",
+              name: "Câu hỏi thường gặp - FAQ.pdf",
+              ext_vector_strore_id: "",
+              created_at: "2024-11-11 10:26:39",
+            },
+            {
+              id: "181962",
+              external_id: "file-1uEUa1xhVuc75AQLGwXNZr",
+              name: "wbn22012.png",
+              ext_vector_strore_id: "",
+              created_at: "2024-12-25 17:09:44",
+            },
+            {
+              id: "244759",
+              external_id: "file-B2N6hKQzDiyU5kMn1qmHox",
+              name: "Brochure AhaChat - Ca Nhan.pdf",
+              ext_vector_strore_id: "",
+              created_at: "2024-12-25 17:10:07",
+            },
+          ],
+          status: "ok",
+        }
+      } catch (err) {
+        return { data: [], status: "error" }
+      }
     },
-    status: "ok",
-  }
+    [JSON.stringify(input)],
+    {
+      revalidate: 3600,
+      tags: [`${userId}#aiAssistants`],
+    },
+  )()
 }

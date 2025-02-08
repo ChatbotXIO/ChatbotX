@@ -1,6 +1,9 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateAiAssistantsDialog } from "@/features/integrations/ai-assistants/create"
-import { getAiAssistants } from "@/features/integrations/ai-assistants/queries/get.query"
+import {
+  getAiAssistantFiles,
+  getAiAssistants,
+} from "@/features/integrations/ai-assistants/queries/get.query"
 import { getAiAssistantsSearchParamsCache } from "@/features/integrations/ai-assistants/schemas/get.schema"
 import { AiAssistantsTable } from "@/features/integrations/ai-assistants/table"
 import {
@@ -21,6 +24,7 @@ export default async function AIAssistantsPage(props: {
     getAiAssistants({ ...search, chatbotId: params.chatbotId as string }),
     getOpenAIModels(),
     getOpenAITriggers(),
+    getAiAssistantFiles({ chatbotId: params.chatbotId as string }),
   ])
 
   return (

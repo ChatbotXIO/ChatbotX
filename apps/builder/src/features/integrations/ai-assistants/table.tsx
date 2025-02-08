@@ -7,7 +7,10 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { DeleteAssistantDialog } from "@/features/integrations/ai-assistants/delete"
-import type { getAiAssistants } from "@/features/integrations/ai-assistants/queries/get.query"
+import type {
+  getAiAssistantFiles,
+  getAiAssistants,
+} from "@/features/integrations/ai-assistants/queries/get.query"
 import { AiAssistantTableToolbarActions } from "@/features/integrations/ai-assistants/table-toolbar-actions"
 import { UpdateAiAssistantDialog } from "@/features/integrations/ai-assistants/update"
 import type {
@@ -25,6 +28,7 @@ interface AiAssistantsTableProps {
       Awaited<ReturnType<typeof getAiAssistants>>,
       Awaited<ReturnType<typeof getOpenAIModels>>,
       Awaited<ReturnType<typeof getOpenAITriggers>>,
+      Awaited<ReturnType<typeof getAiAssistantFiles>>,
     ]
   >
   chatbotId: string
@@ -34,11 +38,9 @@ export function AiAssistantsTable({
   promises,
   chatbotId,
 }: AiAssistantsTableProps) {
-  const [{ data, pageCount }, aiModels, aiTriggers] = use(promises)
+  const [{ data, pageCount }, aiModels, aiTriggers, aiFiles] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiAssistant> | null>(null)
-
-  console.log("AiAssistantsTable", aiModels)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
@@ -97,6 +99,7 @@ export function AiAssistantsTable({
         assistant={rowAction?.row.original || null}
         aiModels={aiModels.data}
         aiTriggers={aiTriggers.data}
+        aiFiles={aiFiles.data}
       />
     </>
   )

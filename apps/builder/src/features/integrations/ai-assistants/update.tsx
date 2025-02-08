@@ -37,6 +37,7 @@ type UpdateAiAssistantDialogProps = {
   chatbotId: string
   aiModels: Record<string, string | number>[]
   aiTriggers: Record<string, string>[]
+  aiFiles: Record<string, string>[]
   assistant: AiAssistant | null
 }
 
@@ -47,6 +48,7 @@ export function UpdateAiAssistantDialog({
   onOpenChange,
   aiModels,
   aiTriggers,
+  aiFiles,
 }: UpdateAiAssistantDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()
@@ -183,12 +185,25 @@ export function UpdateAiAssistantDialog({
               name="attachmentIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("aiAssistants.attachmentIds")}</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>{t("aiAssistants.attachmentIds")}</FormLabel>
+                    <Button type="button" variant="link" className="p-0 h-max">
+                      {t("aiAssistants.file.button.upload")}
+                    </Button>
+                  </div>
                   <FormControl>
                     <MultiSelect
-                      options={[]}
+                      options={
+                        aiFiles.map((item) => ({
+                          label: item.name,
+                          value: item.id,
+                        })) as { label: string; value: string }[]
+                      }
                       {...field}
-                      onValueChange={console.log}
+                      defaultValue={assistant?.attachmentIds || []}
+                      onValueChange={(list: string[]) =>
+                        setValue("attachmentIds", list)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
