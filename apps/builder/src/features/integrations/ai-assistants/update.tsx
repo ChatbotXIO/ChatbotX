@@ -28,14 +28,15 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { toast } from "sonner"
-// import { findAIAssistant, getAiAssistants } from "../queries/ai-assistants.query"
-// import { use, useEffect, useState } from "react"
 
 type UpdateAiAssistantDialogProps = {
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
+  aiModels: Record<string, string | number>[]
+  aiTriggers: Record<string, string>[]
   assistant: AiAssistant | null
 }
 
@@ -44,22 +45,11 @@ export function UpdateAiAssistantDialog({
   assistant,
   open,
   onOpenChange,
+  aiModels,
+  aiTriggers,
 }: UpdateAiAssistantDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()
-
-  // const [aiAssiantant, setAIAssiatnt] = useState<AiAssistant|null>(null)
-  //
-  // useEffect(() => {
-  //   console.log("assistantassistant", assistant)
-  //   if (!assistant) return
-  //   promises.then((data) => {
-  //     console.log("dddddddd1111", data)
-  //   })
-  // }, [aiAssiantant, assistant])
-
-  // const a = use(promises)
-  // console.log("aaaaaaa", a)
 
   const {
     form,
@@ -84,27 +74,21 @@ export function UpdateAiAssistantDialog({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          name: "tro ly",
-          json_builder: {
-            version: "3",
-            name: "Trợ lý",
-            model: "gpt-4o-mini",
-            description: null,
-            temperature: 1,
-            instructions: "You are a helpful assistant.",
-            file_ids: ["file-Xlt615JTrhehAkh2jCLTB266"],
-            functions: [],
-            autoVoice: {
-              enable: true,
-              voice: "alloy",
-            },
-          },
-        },
       },
       errorMapProps: {},
     },
   )
+
+  useEffect(() => {
+    if (assistant) {
+      setValue("name", assistant.name)
+      setValue("model", assistant.model)
+      setValue("prompt", assistant.prompt)
+      setValue("temperature", assistant.temperature)
+      setValue("aiTriggerIds", assistant.aiTriggerIds)
+      setValue("attachmentIds", assistant.attachmentIds)
+    }
+  }, [assistant, setValue])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -130,15 +114,13 @@ export function UpdateAiAssistantDialog({
 
             <FormField
               control={form.control}
-              name="json_builder.instructions"
+              name="prompt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {t("aiAssistants.json_builder.instructions")}
-                  </FormLabel>
+                  <FormLabel>{t("aiAssistants.prompt")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder={t("aiAssistants.json_builder.instructions")}
+                      placeholder={t("aiAssistants.prompt")}
                       {...field}
                     />
                   </FormControl>
@@ -149,12 +131,21 @@ export function UpdateAiAssistantDialog({
 
             <FormField
               control={form.control}
-              name="json_builder.model"
+              name="model"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("aiAssistants.json_builder.model")}</FormLabel>
+                  <FormLabel>{t("aiAssistants.model")}</FormLabel>
                   <FormControl>
-                    <SingleSelect options={[]} {...field} />
+                    <SingleSelect
+                      options={
+                        aiModels.map((item) => ({
+                          label: item.name,
+                          value: item.id,
+                        })) as { label: string; value: string }[]
+                      }
+                      {...field}
+                      onValueChange={(v: string) => setValue("model", v)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -163,12 +154,36 @@ export function UpdateAiAssistantDialog({
 
             <FormField
               control={form.control}
-              name="json_builder.functions"
+              name="aiTriggerIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {t("aiAssistants.json_builder.triggers")}
-                  </FormLabel>
+                  <FormLabel>{t("aiAssistants.aiTriggerIds")}</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={
+                        aiTriggers.map((item) => ({
+                          label: item.name,
+                          value: item.id,
+                        })) as { label: string; value: string }[]
+                      }
+                      {...field}
+                      defaultValue={assistant?.aiTriggerIds || []}
+                      onValueChange={(list: string[]) =>
+                        setValue("aiTriggerIds", list)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="attachmentIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("aiAssistants.attachmentIds")}</FormLabel>
                   <FormControl>
                     <MultiSelect
                       options={[]}
@@ -183,32 +198,10 @@ export function UpdateAiAssistantDialog({
 
             <FormField
               control={form.control}
-              name="json_builder.file_ids"
+              name="temperature"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {t("aiAssistants.json_builder.file_ids")}
-                  </FormLabel>
-                  <FormControl>
-                    <MultiSelect
-                      options={[]}
-                      {...field}
-                      onValueChange={console.log}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="json_builder.temperature"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {t("aiAssistants.json_builder.temperature")}
-                  </FormLabel>
+                  <FormLabel>{t("aiAssistants.temperature")}</FormLabel>
                   <FormControl>
                     <NumberField step={0.1} min={0} max={2} {...field} />
                   </FormControl>

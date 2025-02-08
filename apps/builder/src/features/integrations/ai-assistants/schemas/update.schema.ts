@@ -1,23 +1,12 @@
 import { z } from "zod"
 
-const autoVoiceSchema = z.object({
-  enable: z.boolean(),
-  voice: z.string(),
-})
-
 export const updateAiAssistantsSchema = z.object({
   name: z.string().min(1).max(255).trim(),
-  json_builder: z.object({
-    version: z.string(),
-    name: z.string(),
-    model: z.string(),
-    description: z.nullable(z.string()),
-    temperature: z.number(),
-    instructions: z.string(),
-    file_ids: z.array(z.string()),
-    functions: z.array(z.string()),
-    autoVoice: autoVoiceSchema,
-  }),
+  model: z.string(),
+  prompt: z.string().min(1).max(255).trim(),
+  temperature: z.number(),
+  attachmentIds: z.array(z.string()).optional(),
+  aiTriggerIds: z.array(z.string()).optional(),
 })
 
 export type UpdateAiAssistantsSchema = z.infer<typeof updateAiAssistantsSchema>

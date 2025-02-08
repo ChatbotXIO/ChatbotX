@@ -10,13 +10,23 @@ import { DeleteAssistantDialog } from "@/features/integrations/ai-assistants/del
 import type { getAiAssistants } from "@/features/integrations/ai-assistants/queries/get.query"
 import { AiAssistantTableToolbarActions } from "@/features/integrations/ai-assistants/table-toolbar-actions"
 import { UpdateAiAssistantDialog } from "@/features/integrations/ai-assistants/update"
+import type {
+  getOpenAIModels,
+  getOpenAITriggers,
+} from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiAssistant } from "@ahachat.ai/database"
 import { use, useMemo, useState } from "react"
 import { getAssistantColumns } from "./table-columns"
 
 interface AiAssistantsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getAiAssistants>>]>
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof getAiAssistants>>,
+      Awaited<ReturnType<typeof getOpenAIModels>>,
+      Awaited<ReturnType<typeof getOpenAITriggers>>,
+    ]
+  >
   chatbotId: string
 }
 
@@ -24,9 +34,11 @@ export function AiAssistantsTable({
   promises,
   chatbotId,
 }: AiAssistantsTableProps) {
-  const [{ data, pageCount }] = use(promises)
+  const [{ data, pageCount }, aiModels, aiTriggers] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiAssistant> | null>(null)
+
+  console.log("AiAssistantsTable", aiModels)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
@@ -83,6 +95,8 @@ export function AiAssistantsTable({
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         assistant={rowAction?.row.original || null}
+        aiModels={aiModels.data}
+        aiTriggers={aiTriggers.data}
       />
     </>
   )

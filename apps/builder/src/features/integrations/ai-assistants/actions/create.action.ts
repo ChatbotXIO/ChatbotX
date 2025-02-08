@@ -47,7 +47,7 @@ export const createAiAssistantsAction = authActionClient
         data: {
           chatbotId,
           prompt: "",
-          model: "gpt-4o-mini-2024-07-18",
+          model: "gpt-4o-mini",
           temperature: 1,
           ...parsedInput,
         },
