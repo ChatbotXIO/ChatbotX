@@ -36,7 +36,7 @@ export default async function AIAssistantsPage(props: {
       <Suspense
         fallback={
           <DataTableSkeleton
-            columnCount={5}
+            columnCount={4}
             searchableColumnCount={1}
             filterableColumnCount={2}
             cellWidths={["10rem", "20rem", "40rem", "12rem", "10rem"]}
