@@ -38,7 +38,6 @@ export function generateAuthUrl(oauth2Props: Oauth2PropsSchema): string {
 export async function getToken(
   oauth2Props: Oauth2PropsSchema,
 ): Promise<TokenAuthSchema> {
-  console.log("sdffffffffffffffffffffffffffff", oauth2Props)
   const { tokens } = await getClient(oauth2Props).getToken(
     oauth2Props.code ?? "",
   )

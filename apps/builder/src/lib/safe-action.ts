@@ -27,8 +27,6 @@ export const actionClient = createSafeActionClient({
       }
     }
 
-    console.log("errrrrrr", error)
-
     return {
       message: DEFAULT_SERVER_ERROR_MESSAGE,
     }
