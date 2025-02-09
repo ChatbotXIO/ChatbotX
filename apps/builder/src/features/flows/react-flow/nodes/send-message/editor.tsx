@@ -209,7 +209,7 @@ export default function SendMessageNodeEditor({
 
   const { t } = useTranslate()
 
-  const { setNodes } = useReactFlow()
+  const { setNodes, setEdges } = useReactFlow()
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (data: any) => {
@@ -412,6 +412,21 @@ export default function SendMessageNodeEditor({
     )
   }
 
+  const removeBlock = (field: object, index: number) => {
+    remove(index)
+    if (!field.buttons?.length) {
+      return
+    }
+    for (const button of field.buttons) {
+      setEdges((edges) => {
+        return edges.filter(
+          (edge) =>
+            edge.targetHandle !== button.id && edge.sourceHandle !== button.id,
+        )
+      })
+    }
+  }
+
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const onSubmit = (data: any) => {
     console.log("Form Data:", data)
@@ -504,7 +519,7 @@ export default function SendMessageNodeEditor({
                           variant="ghost"
                           size="icon"
                           className="size-8 shrink-0"
-                          onClick={() => remove(index)}
+                          onClick={() => removeBlock(field, index)}
                         >
                           <XIcon className="size-4" aria-hidden="true" />
                         </Button>

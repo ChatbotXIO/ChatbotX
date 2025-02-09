@@ -30,6 +30,7 @@ model User {
   assignedContacts         Contact[]                 @relation("AssignedUser")
   logs                     Log[]                     @relation("ExecutorUser")
   conversationParticipants ConversationParticipant[]
+  flows                    Flow[]
 }
 
 model Account {
@@ -108,6 +109,8 @@ model Chatbot {
   teamMembers              TeamMember[]
   teams                    Team[]
   whatsapps                IntegrationWhatsapp[]
+  flows                    Flow[]
+  flowVersions             FlowVersion[]
 }
 
 model ChatbotMember {
@@ -240,6 +243,7 @@ model Folder {
   chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   tags     Tag[]
   fields   Field[]
+  flows    Flow[]
 
   @@index([chatbotId])
   @@index([parentId])
@@ -526,6 +530,41 @@ model Spreadsheet {
   url       String
 
   chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+model Flow {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  chatbotId        String
+  userId           String
+  folderId         String?
+  title            String
+  isPublished      Boolean  @default(true)
+  enableInInbox    Boolean  @default(true)
+  currentVersionId String?  @unique
+
+  chatbot        Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder         Folder?       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  currentVersion FlowVersion?  @relation(name: "CurrentVersion", fields: [currentVersionId], references: [id])
+  flowVersions   FlowVersion[] @relation(name: "FlowVersions")
+}
+
+model FlowVersion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  flowId    String
+  nodes     Json
+  edges     Json
+  version   DateTime @default(now())
+  isDraft   Boolean  @default(true)
+
+  chatbot     Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  flow        Flow    @relation(name: "FlowVersions", fields: [flowId], references: [id], onDelete: Cascade)
+  currentFlow Flow?   @relation(name: "CurrentVersion")
 }
 
 enum CustomFieldType {

@@ -9,7 +9,7 @@ export default function FlowsLayout({
 }) {
   return (
     <>
-      {/* {folders} */}
+      {folders}
       {children}
     </>
   )

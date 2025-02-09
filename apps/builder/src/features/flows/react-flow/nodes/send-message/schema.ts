@@ -32,7 +32,7 @@ import { z } from "zod"
 export const sendMessageNodeSchema = z.object({
   id: z.string(),
   name: z.string().min(1).max(255).trim(),
-  messageType: z.enum(["Messenger", "Whatsapp", "Chatwidget"]),
+  messageType: z.enum(["Omnichannel", "Messenger", "Whatsapp", "Webchat"]),
   blocks: z.array(
     z.union([
       sendTextBlockSchema,
