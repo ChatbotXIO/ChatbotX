@@ -25,7 +25,7 @@ export const duplicateAiTriggerAction = authActionClient
 
       const existingAiTrigger = await prisma.aiTrigger.findFirst({
         select: {
-          // name: true,
+          name: true,
           description: true,
           questions: true,
           flowId: true,
@@ -39,12 +39,12 @@ export const duplicateAiTriggerAction = authActionClient
 
       const dupTrigger = await prisma.aiTrigger.create({
         data: {
-          description: `${existingAiTrigger?.description}_copy_${new Date().getTime()}`,
+          name: `${existingAiTrigger?.name}_copy_${new Date().getTime()}`,
           chatbotId,
         },
       })
 
-      await prisma.aiAgent.update({
+      await prisma.aiTrigger.update({
         where: {
           id: dupTrigger.id,
         },

@@ -322,6 +322,7 @@ model AiTrigger {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   chatbotId    String
+  name         String
   description  String?
   flowId       String?
   questions    Json[]
@@ -344,7 +345,7 @@ model IntegrationOpenAI {
   prompt                 String?
   model                  String
   temperature            Float
-  maxTokens    Int
+  maxTokens              Int
   aiAssistantId          String?
   aiAgentId              String?
 

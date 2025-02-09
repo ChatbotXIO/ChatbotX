@@ -33,7 +33,7 @@ export const createAiTriggerAction = authActionClient
           id: true,
         },
         where: {
-          // name: parsedInput.name,
+          name: parsedInput.name,
           chatbotId,
         },
       })
@@ -46,11 +46,8 @@ export const createAiTriggerAction = authActionClient
 
       await prisma.aiTrigger.create({
         data: {
-          // ...parsedInput,
-          description: parsedInput.description,
+          ...parsedInput,
           questions: parsedInput.questions as JsonObject[],
-          flowId: parsedInput.flowId,
-          finalMessage: parsedInput.finalMessage,
           chatbotId,
         },
       })
