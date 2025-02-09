@@ -55,7 +55,7 @@ export const updateAiTriggerAction = authActionClient
         },
       })
 
-      revalidateTag(`${ctx.user.id}#AiTrigger`)
+      revalidateTag(`${ctx.user.id}#aiTriggers`)
 
       return {
         successful: true,

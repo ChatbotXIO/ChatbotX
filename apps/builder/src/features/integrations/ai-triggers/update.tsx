@@ -1,13 +1,11 @@
 "use client"
 
-import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Form,
@@ -19,57 +17,53 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { createAiTriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
-import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
-import { createAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
-import type {
-  getOpenAIFields,
-  getOpenAIFlows,
-} from "@/features/integrations/open-ai/queries"
+import { updateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
+import { updateAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
+import type { AiTrigger } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
-import { ArrowRightIcon, Loader2, PlusIcon, XIcon } from "lucide-react"
+import type { JsonObject } from "@prisma/client/runtime/binary"
+import { useTranslate } from "@tolgee/react"
+import { ArrowRightIcon, Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { use, useState } from "react"
+import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { SingleSelect } from "@/components/single-select"
 
-type CreateAiTriggerDialogProps = {
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof getAiTriggers>>,
-      Awaited<ReturnType<typeof getOpenAIFlows>>,
-      Awaited<ReturnType<typeof getOpenAIFields>>,
-    ]
-  >
+type UpdateAiTriggerDialogProps = {
+  open: boolean
+  onOpenChange: (val: boolean) => void
   chatbotId: string
+  trigger: AiTrigger | null
+  flows: { label: string; value: string }[]
+  customFields: { label: string; value: string }[]
 }
 
-export function CreateAiTriggerDialog({
+export function UpdateAiTriggerDialog({
   chatbotId,
-  promises,
-}: CreateAiTriggerDialogProps) {
+  trigger,
+  open,
+  onOpenChange,
+  flows,
+  customFields,
+}: UpdateAiTriggerDialogProps) {
   const { t } = useTranslate()
-  const [open, setOpen] = useState(false)
-  const [_, flows, customFields] = use(promises)
   const router = useRouter()
 
   const {
     form,
     handleSubmitWithAction,
-    resetFormAndAction,
-    form: { control, setValue },
+    form: { setValue, control, reset },
   } = useHookFormAction(
-    createAiTriggerAction.bind(null, chatbotId),
-    zodResolver(createAiTriggerSchema),
+    updateAiTriggerAction.bind(null, chatbotId, trigger?.id ?? ""),
+    zodResolver(updateAiTriggerSchema),
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Ai Trigger created successfully")
+          toast.success("AI Trigger update successfully")
 
-          setOpen(false)
-          resetFormAndAction()
+          onOpenChange(false)
           router.refresh()
         },
         onError: ({ error }) => {
@@ -80,9 +74,6 @@ export function CreateAiTriggerDialog({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          name: "",
-        },
       },
       errorMapProps: {},
     },
@@ -100,17 +91,23 @@ export function CreateAiTriggerDialog({
     })
   }
 
+  useEffect(() => {
+    if (trigger) {
+      // setValue("name", trigger?.name)
+      setValue("description", trigger.description || "")
+      if (trigger.questions) {
+        setValue("questions", trigger.questions as JsonObject[])
+      }
+      setValue("flowId", trigger.flowId ||  "")
+      setValue("finalMessage", trigger.finalMessage ||  "")
+    }
+  }, [trigger, setValue])
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          <T keyName="aiTriggers.addBtn" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>{t("aiTriggers.create.title")}</DialogTitle>
+          <DialogTitle>{t("aiTriggers.update.title")}</DialogTitle>
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>
@@ -178,7 +175,7 @@ export function CreateAiTriggerDialog({
                         <FormItem>
                           <FormControl>
                             <SingleSelect
-                              options={customFields.data}
+                              options={customFields}
                               placeholder={t("aiTriggers.questions.fieldId")}
                               {...field}
                               onValueChange={(v: string) =>
@@ -218,7 +215,7 @@ export function CreateAiTriggerDialog({
                     <FormLabel>{t("aiTriggers.flowId")}</FormLabel>
                     <FormControl>
                       <SingleSelect
-                        options={flows.data}
+                        options={flows}
                         placeholder={t("aiTriggers.flowId")}
                         {...field}
                         onValueChange={(v: string) => setValue("flowId", v)}
@@ -250,7 +247,7 @@ export function CreateAiTriggerDialog({
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => setOpen(false)}
+                  onClick={() => onOpenChange(false)}
                 >
                   {t("common.cancel-btn")}
                 </Button>
@@ -261,7 +258,7 @@ export function CreateAiTriggerDialog({
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   {t("common.confirm-btn")}
                 </Button>

@@ -23,10 +23,10 @@ export const getAiTriggers = async (
         if (input.name) {
           where.AND = [
             {
-              name: {
-                contains: input.name,
-                mode: "insensitive",
-              },
+              // name: {
+              //   contains: input.name,
+              //   mode: "insensitive",
+              // },
             },
           ]
         }

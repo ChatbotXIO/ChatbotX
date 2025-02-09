@@ -8,14 +8,20 @@ import type {
 } from "@/components/data-table/types"
 import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { AiTriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
+import { UpdateAiTriggerDialog } from "@/features/integrations/ai-triggers/update"
+import { DeleteAiTriggerDialog } from "@/features/integrations/ai-triggers/delete"
 import type {
   getOpenAIFields,
   getOpenAIFlows,
 } from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiTrigger } from "@ahachat.ai/database"
-import { use, useMemo, useState } from "react"
+import {use, useEffect, useMemo, useState} from "react"
 import { getAiTriggersColumns } from "./table-columns"
+import {toast} from "sonner";
+import {useAction} from "next-safe-action/hooks";
+import { duplicateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action";
+import {useRouter} from "next/navigation";
 
 interface AiTriggersTableProps {
   promises: Promise<
@@ -30,6 +36,7 @@ interface AiTriggersTableProps {
 
 export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
   const [{ data, pageCount }, flows, fields] = use(promises)
+  const router = useRouter()
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiTrigger> | null>(null)
 
@@ -38,6 +45,23 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
     () => getAiTriggersColumns({ setRowAction }),
     [setRowAction],
   )
+
+  const { execute, result } = useAction(
+    duplicateAiTriggerAction.bind(
+      null,
+      chatbotId,
+      rowAction?.row.original ? rowAction.row.original.id : "",
+    ),
+  )
+
+  useEffect(() => {
+    if (rowAction && rowAction.type === "duplicate") {
+      execute()
+      setRowAction(null)
+      toast.success("Duplicate successfully!")
+      router.refresh()
+    }
+  }, [rowAction, execute, router])
 
   const filterFields: DataTableFilterField<AiTrigger & { name?: string }>[] = [
     {
@@ -72,6 +96,24 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
           />
         </DataTableToolbar>
       </DataTable>
+
+      <DeleteAiTriggerDialog
+        open={rowAction?.type === "delete"}
+        onOpenChange={() => setRowAction(null)}
+        trigger={rowAction?.row.original ? [rowAction?.row.original] : []}
+        showTrigger={false}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        chatbotId={chatbotId}
+      />
+
+      <UpdateAiTriggerDialog
+        open={rowAction?.type === "update"}
+        onOpenChange={() => setRowAction(null)}
+        chatbotId={chatbotId}
+        trigger={rowAction?.row.original || null}
+        flows={flows.data}
+        customFields={fields.data}
+      />
     </>
   )
 }

@@ -11,6 +11,7 @@ import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
+import type { JsonObject } from "@prisma/client/runtime/binary"
 
 export const createAiTriggerAction = authActionClient
   .schema(createAiTriggerSchema)
@@ -32,7 +33,7 @@ export const createAiTriggerAction = authActionClient
           id: true,
         },
         where: {
-          name: parsedInput.name,
+          // name: parsedInput.name,
           chatbotId,
         },
       })
@@ -45,12 +46,16 @@ export const createAiTriggerAction = authActionClient
 
       await prisma.aiTrigger.create({
         data: {
-          ...parsedInput,
+          // ...parsedInput,
+          description: parsedInput.description,
+          questions: parsedInput.questions as JsonObject[],
+          flowId: parsedInput.flowId,
+          finalMessage: parsedInput.finalMessage,
           chatbotId,
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiTrigger`)
+      revalidateTag(`${ctx.user.id}#aiTriggers`)
 
       return {
         successful: true,

@@ -30,7 +30,7 @@ export const deleteAiTriggerAction = authActionClient
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiTrigger`)
+      revalidateTag(`${ctx.user.id}#aiTriggers`)
 
       return {
         successful: true,

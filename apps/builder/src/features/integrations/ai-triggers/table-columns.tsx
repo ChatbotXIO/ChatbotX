@@ -103,6 +103,12 @@ export function getAiTriggersColumns({
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem
+                onSelect={() => setRowAction({ row, type: "duplicate" })}
+              >
+                Duplicate
+                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onSelect={() => setRowAction({ row, type: "delete" })}
               >
                 Delete
