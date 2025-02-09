@@ -25,7 +25,6 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
       <SettingRow
         label={<T keyName="settings.integrations.OpenAI.Title" />}
         description={<T keyName="settings.integrations.OpenAI.Descriptions" />}
-        className="mb-4"
       >
         {data?.isConnect ? (
           <div className="flex flex-col gap-2">
@@ -54,7 +53,6 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             description={
               <T keyName="settings.integrations.AutomatedResponses.Descriptions" />
             }
-            className="items-center"
           >
             <Switch />
           </SettingRow>
@@ -64,7 +62,6 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             description={
               <T keyName="settings.integrations.Agents.Descriptions" />
             }
-            className="items-center"
           >
             <Button variant="secondary" size="sm" asChild>
               <Link href="../ai-agents">
@@ -78,7 +75,6 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             description={
               <T keyName="settings.integrations.Assistants.Descriptions" />
             }
-            className="items-center"
           >
             <Button variant="secondary" size="sm">
               <Link href="../ai-assistants">
@@ -92,7 +88,6 @@ export function OpenAIConnect({ promises }: OpenAIConnectProps) {
             description={
               <T keyName="settings.integrations.AITriggers.Descriptions" />
             }
-            className="items-center"
           >
             <Button variant="secondary" size="sm">
               <Link href="../ai-triggers">

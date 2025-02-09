@@ -103,20 +103,20 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
                 />
               </CollapsibleContent>
             </Collapsible>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  <T keyName="common.cancelBtn" />
+                </Button>
+              </DialogClose>
+
+              <Button type="submit">
+                <T keyName="common.confirmBtn" />
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              <T keyName="common.cancelBtn" />
-            </Button>
-          </DialogClose>
-
-          <Button type="button">
-            <T keyName="common.confirmBtn" />
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
