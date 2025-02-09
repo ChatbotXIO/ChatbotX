@@ -17,9 +17,9 @@
   },
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
-    "@turbo/gen": "^2.3.3",
-    "@types/node": "^22.10.7",
-    "@types/react": "19.0.7",
+    "@turbo/gen": "^2.4.0",
+    "@types/node": "^22.13.1",
+    "@types/react": "19.0.8",
     "@types/react-dom": "19.0.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
@@ -27,12 +27,12 @@
     "typescript": "5.7.3"
   },
   "dependencies": {
-    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-slot": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7"
   }
 }

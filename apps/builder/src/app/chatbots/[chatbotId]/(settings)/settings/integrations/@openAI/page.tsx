@@ -1,15 +1,15 @@
-import { OpenAIConnect } from "@/features/integrations/open-ai"
-import { getOpenAIIntegration } from "@/features/integrations/open-ai/queries"
+import { OpenAIConnect } from "@/features/integration-openai/openai-connect"
+import { findIntegrationOpenAI } from "@/features/integration-openai/queries"
 
-export default async function SettingIntegrationOpenAIPage(props: {
+export default async function SettingIntegrationGoogleSheetsPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
   const params = await props.params
   const promises = Promise.all([
-    getOpenAIIntegration({
+    findIntegrationOpenAI({
       chatbotId: params.chatbotId,
     }),
   ])
 
-  return <OpenAIConnect promises={promises} />
+  return <OpenAIConnect chatbotId={params.chatbotId} promises={promises} />
 }

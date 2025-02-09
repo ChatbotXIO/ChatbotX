@@ -21,12 +21,12 @@ export default function SettingIntegrationLayout({
 }: SettingIntegrationLayoutProps) {
   const integrationItems = [
     {
-      keyName: "settings.integrations.OpenAI",
+      keyName: "Settings.Integrations.OpenAI",
       icon: <BotIcon size={24} />,
       content: openAI,
     },
     {
-      keyName: "settings.integrations.GoogleSheets",
+      keyName: "Settings.Integrations.GoogleSheets",
       icon: <TableIcon size={24} />,
       content: googleSheets,
     },

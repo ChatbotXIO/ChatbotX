@@ -9,7 +9,17 @@ import {
 const prisma = new PrismaClient()
 
 async function main() {
-  const user = await prisma.user.findFirstOrThrow()
+  let user = await prisma.user.findFirst()
+  if (user) {
+    return
+  }
+
+  user = await prisma.user.create({
+    data: {
+      email: "admin@ahachat.ai",
+      name: "AhaChat",
+    },
+  })
 
   // create chatbot
   const chatbotsCount = await prisma.chatbot.count()
@@ -17,12 +27,12 @@ async function main() {
     const chatbots = await prisma.chatbot.createManyAndReturn({
       data: [
         {
-          name: "Ahachat FREE",
+          name: "FREE",
           accountTimezone: "Asia/Saigon",
           plan: "Free",
         },
         {
-          name: "Ahachat PRO",
+          name: "PRO",
           accountTimezone: "Asia/Saigon",
           plan: "Pro",
         },
@@ -60,7 +70,7 @@ async function main() {
   const folderTypes = Object.values(FolderType)
 
   for (const chatbot of chatbots) {
-    const foldersCount = faker.number.int({ min: 10, max: 100 })
+    const foldersCount = faker.number.int({ min: 5, max: 20 })
     for (let i = 0; i < foldersCount; i++) {
       for (const folderType of folderTypes) {
         data.push({

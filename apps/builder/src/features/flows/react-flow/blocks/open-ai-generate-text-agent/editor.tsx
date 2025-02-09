@@ -18,7 +18,7 @@ export const OpenAIGenerateTextAgentEditor = ({
   parentName,
 }: OpenAIGenerateTextAgentEditorProps) => {
   return (
-    <OpenAIDialog name="flows.OpenAI.Title.GenerateTextAgent">
+    <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAgent">
       <OpenAIModel name={`${parentName}.model`} />
 
       <AIAgentSelect name={`${parentName}.aiAgentId`} />

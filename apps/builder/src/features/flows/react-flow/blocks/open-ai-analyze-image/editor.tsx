@@ -13,7 +13,7 @@ export const OpenAIAnalyzeImageEditor = ({
   parentName,
 }: OpenAIAnalyzeImageEditorProps) => {
   return (
-    <OpenAIDialog name="flows.OpenAI.Title.AnalyzeImage">
+    <OpenAIDialog name="Flows.OpenAI.Title.AnalyzeImage">
       <OpenAIModel name={`${parentName}.model`} />
 
       <CustomFieldSelect

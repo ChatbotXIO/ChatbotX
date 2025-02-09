@@ -13,7 +13,7 @@ export const OpenAIGenerateTextAssistantEditor = ({
   parentName,
 }: OpenAIGenerateTextAssistantEditorProps) => {
   return (
-    <OpenAIDialog name="flows.OpenAI.Title.GenerateTextAssistant">
+    <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAssistant">
       <AIAsistantSelect name={`${parentName}.aiAssistantId`} />
 
       <FormInput name={`${parentName}.userMessage`} label="User Message" />

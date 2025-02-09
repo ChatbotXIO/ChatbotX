@@ -11,7 +11,7 @@ export const OpenAISpeechToTextEditor = ({
   parentName,
 }: OpenAISpeechToTextEditorProps) => {
   return (
-    <OpenAIDialog name="flows.OpenAI.Title.SpeechToText">
+    <OpenAIDialog name="Flows.OpenAI.Title.SpeechToText">
       <CustomFieldSelect
         name={`${parentName}.audioCustomFieldId`}
         label="Audio"

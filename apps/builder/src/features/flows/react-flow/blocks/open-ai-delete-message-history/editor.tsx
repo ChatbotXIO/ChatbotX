@@ -9,5 +9,5 @@ interface OpenAIDeleteMessageHistoryEditorProps {
 export const OpenAIDeleteMessageHistoryEditor = ({
   parentName,
 }: OpenAIDeleteMessageHistoryEditorProps) => {
-  return <OpenAIDialog name="flows.OpenAI.Title.DeleteMessageHistory" />
+  return <OpenAIDialog name="Flows.OpenAI.Title.DeleteMessageHistory" />
 }
