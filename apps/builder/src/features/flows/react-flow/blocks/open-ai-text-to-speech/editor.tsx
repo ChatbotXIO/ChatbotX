@@ -15,7 +15,7 @@ export const OpenAITextToSpeechEditor = ({
   parentName,
 }: OpenAITextToSpeechEditorProps) => {
   return (
-    <OpenAIDialog name="flows.OpenAI.Title.TextToSpeech">
+    <OpenAIDialog name="Flows.OpenAI.Title.TextToSpeech">
       <FormInput name={`${parentName}.userMessage`} label="Input Text" />
 
       <FormInput name={`${parentName}.voiceType`} label="Voice Type">

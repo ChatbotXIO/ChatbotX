@@ -7,28 +7,18 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { T } from "@tolgee/react"
-import { BotIcon, TableIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
-interface SettingIntegrationLayoutProps {
-  openAI: ReactNode
-  googleSheets: ReactNode
-}
-
-export default function SettingIntegrationLayout({
-  openAI,
-  googleSheets,
-}: SettingIntegrationLayoutProps) {
+export default function SettingsChannelsPage({
+  whatsapp,
+}: {
+  whatsapp: ReactNode
+}) {
   const integrationItems = [
     {
-      keyName: "Settings.Integrations.OpenAI",
-      icon: <BotIcon size={24} />,
-      content: openAI,
-    },
-    {
-      keyName: "Settings.Integrations.GoogleSheets",
-      icon: <TableIcon size={24} />,
-      content: googleSheets,
+      keyName: "Settings.Integrations.Whatsapp",
+      icon: null,
+      content: whatsapp,
     },
   ]
 

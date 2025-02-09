@@ -13,34 +13,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { T, useTranslate } from "@tolgee/react"
+import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { use } from "react"
-import { connectGoogleSheets } from "./actions/connect.action"
-import { disconnectGoogleSheets } from "./actions/disconnect.action"
-import type { getGoogleSheetsIntegration } from "./queries"
+import { disconnectOpenAIAction } from "./actions/disconnect.action"
+import { OpenAIConnectDialog } from "./openai-connect-dialog"
+import type { findIntegrationOpenAI } from "./queries"
 
-type GoogleSheetsConnectProps = {
+type OpenAIConnectProps = {
   chatbotId: string
-  promises: Promise<[Awaited<ReturnType<typeof getGoogleSheetsIntegration>>]>
+  promises: Promise<[Awaited<ReturnType<typeof findIntegrationOpenAI>>]>
 }
 
-export function GoogleSheetsConnect({
-  chatbotId,
-  promises,
-}: GoogleSheetsConnectProps) {
-  const [{ data: integrationGoogleSheets }] = use(promises)
+export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
+  const [{ data: integrationOpenAI }] = use(promises)
   const router = useRouter()
-  const { t } = useTranslate()
 
-  const { executeAsync: onConnect, isPending: isPendingConnect } = useAction(
-    connectGoogleSheets.bind(null, chatbotId),
-  )
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectGoogleSheets.bind(null, chatbotId), {
+    useAction(disconnectOpenAIAction.bind(null, chatbotId), {
       onSuccess: () => {
         router.refresh()
       },
@@ -53,7 +46,7 @@ export function GoogleSheetsConnect({
         <T keyName="settings.integrations.GoogleSheets.Descriptions" />
       }
     >
-      {integrationGoogleSheets ? (
+      {integrationOpenAI ? (
         <div className="flex flex-col gap-2">
           <Button variant="secondary" size="sm">
             <Link href="../google-sheets">
@@ -64,24 +57,21 @@ export function GoogleSheetsConnect({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm">
-                {/* {isPendingDisconnect && (
-                  <Loader2Icon className="animate-spin" />
-                )} */}
                 <T keyName="settings.integrations.DisconnectBtn" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  {t("Integration.Disconnect.Confirm")}
+                  <T keyName="Integration.Disconnect.Confirm" />
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {t("Integration.Disconnect.Description")}
+                  <T keyName="Integration.Disconnect.Description" />
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>
-                  {t("Integration.CancelBtn")}
+                  <T keyName="Integration.CancelBtn" />
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={async (e) => {
@@ -100,18 +90,7 @@ export function GoogleSheetsConnect({
           </AlertDialog>
         </div>
       ) : (
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={async (e) => {
-            e.preventDefault()
-            await onConnect({ referer: window.location.href })
-          }}
-          disabled={isPendingConnect}
-        >
-          {isPendingConnect && <Loader2Icon className="animate-spin" />}
-          <T keyName="common.integrations.Connect" />
-        </Button>
+        <OpenAIConnectDialog chatbotId={chatbotId} />
       )}
     </SettingRow>
   )

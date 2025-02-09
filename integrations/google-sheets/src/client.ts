@@ -6,8 +6,12 @@ import {
 import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
 
-export function getClient(oauth2Props: Oauth2PropsSchema): OAuth2Client {
-  const client = new OAuth2Client(oauth2Props)
+export function getClient(oauth2Props: Oauth2PropsSchema) {
+  const client = new OAuth2Client(
+    oauth2Props.clientId,
+    oauth2Props.clientSecret,
+    oauth2Props.redirectUri,
+  )
   if (oauth2Props.tokens) {
     client.setCredentials({
       access_token: oauth2Props.tokens.accessToken,
@@ -34,6 +38,7 @@ export function generateAuthUrl(oauth2Props: Oauth2PropsSchema): string {
 export async function getToken(
   oauth2Props: Oauth2PropsSchema,
 ): Promise<TokenAuthSchema> {
+  console.log("sdffffffffffffffffffffffffffff", oauth2Props)
   const { tokens } = await getClient(oauth2Props).getToken(
     oauth2Props.code ?? "",
   )
@@ -56,8 +61,6 @@ export function getSheetsClient(oauth2Props: Oauth2PropsSchema) {
 
 export async function revokeToken(oauth2Props: Oauth2PropsSchema) {
   const client = getClient(oauth2Props)
-
-  console.log("oauth2Props.tokens", oauth2Props.tokens)
 
   if (oauth2Props.tokens) {
     await client.revokeToken(oauth2Props.tokens.accessToken ?? "")

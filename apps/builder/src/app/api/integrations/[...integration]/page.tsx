@@ -5,9 +5,12 @@ import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 
 enum IntegrationHandlerAction {
+  NewChatbot = "new-chatbot",
   Callback = "callback",
   Webhook = "webhook",
 }
+
+const channels = ["whatsapp"]
 
 const stateValidationSchema = z.object({
   chatbotId: z.string().cuid2(),
@@ -15,6 +18,11 @@ const stateValidationSchema = z.object({
   referer: z.string().url(),
 })
 type StateValidationSchema = z.infer<typeof stateValidationSchema>
+
+const newChatbotValidationSchema = z.object({
+  chatbotId: z.string().cuid2(),
+})
+type NewChatbotValidationShema = z.infer<typeof newChatbotValidationSchema>
 
 async function handleCallback(
   providerName: string,
@@ -32,16 +40,14 @@ async function handleCallback(
     })
 
     const auth = await googleSheets.authorize?.({
-      oauth2Props: {
-        clientId: process.env.AUTH_GOOGLE_ID ?? "",
-        clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-        redirectUri: `${process.env.BASE_URL}/api/integrations/callback`,
-      },
+      clientId: process.env.AUTH_GOOGLE_ID ?? "",
+      clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
+      redirectUri: `${process.env.BASE_URL}/api/integrations/callback`,
       code,
     })
 
     if (!auth) {
-      logger.error("Missing authorize method")
+      logger.warn("Missing authorize method")
       return notFound()
     }
 
@@ -86,6 +92,10 @@ async function handleCallback(
   return redirect(parentUrl)
 }
 
+async function handleNewChatbot(providerName: string, chatbotId?: string) {
+  return "ok"
+}
+
 export default async function IntegrationHandlerPage(props: {
   params: Promise<{ integration: string[] }>
   searchParams: Promise<{ code: string; state: string }>
@@ -94,23 +104,41 @@ export default async function IntegrationHandlerPage(props: {
   const searchParams = await props.searchParams
   const action = params.integration[0] as IntegrationHandlerAction
 
-  // validate state
-  let state: StateValidationSchema
-  try {
-    const rawState = JSON.parse(atob((searchParams.state as string) || ""))
-    state = stateValidationSchema.parse(rawState)
-  } catch (error) {
-    console.log("state is not valid", error, searchParams.state)
-    return notFound()
-  }
-
   if (action === IntegrationHandlerAction.Callback) {
+    // validate state
+    let state: StateValidationSchema
+    try {
+      const rawState = JSON.parse(atob((searchParams.state as string) || ""))
+      state = stateValidationSchema.parse(rawState)
+    } catch (error) {
+      console.log("state is not valid", error, searchParams.state)
+      return notFound()
+    }
+
     return await handleCallback(
       state.providerName,
       state.chatbotId,
       searchParams.code,
       state.referer,
     )
+  }
+
+  if (action === IntegrationHandlerAction.NewChatbot) {
+    const providerName = params.integration[1] ?? ""
+
+    if (!channels.includes(providerName)) {
+      return notFound()
+    }
+
+    let validatedParams: NewChatbotValidationShema
+    try {
+      validatedParams = newChatbotValidationSchema.parse(searchParams)
+    } catch (error) {
+      logger.warn("request parameters are not valid", error, searchParams)
+      return notFound()
+    }
+
+    return handleNewChatbot(providerName, validatedParams.chatbotId)
   }
 
   return notFound()

@@ -17,7 +17,7 @@ export const OpenAIGenerateImageEditor = ({
   const { control } = useFormContext()
 
   return (
-    <OpenAIDialog name="flows.OpenAI.Title.GenerateImage">
+    <OpenAIDialog name="Flows.OpenAI.Title.GenerateImage">
       <FormInput label="User Message" name={`${parentName}.userMessage`} />
 
       <FormInput label="Size" name={`${parentName}.size`}>

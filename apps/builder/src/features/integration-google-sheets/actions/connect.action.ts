@@ -9,12 +9,12 @@ import { integration } from "@ahachat.ai/integration-google-sheets"
 import { redirect } from "next/navigation"
 import {
   type ConnectGoogleSheetsSchema,
-  connectGoogleSheetsSchame,
+  connectGoogleSheetsSchema,
 } from "../schemas"
 
 export const connectGoogleSheets = authActionClient
   .bindArgsSchemas(chatbotIdBindSchema)
-  .schema(connectGoogleSheetsSchame)
+  .schema(connectGoogleSheetsSchema)
   .action(
     async ({
       parsedInput,
