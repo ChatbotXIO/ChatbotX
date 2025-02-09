@@ -29,6 +29,7 @@ model User {
   activityLogs     ActivityLog[]
   assignedContacts Contact[]       @relation("AssignedUser")
   logs             Log[]           @relation("ExecutorUser")
+  flows            Flow[]
 }
 
 model Account {
@@ -84,24 +85,26 @@ model Chatbot {
   logo            String?
   plan            ChatbotPlan
 
-  chatbotMembers ChatbotMember[]
-  teams          Team[]
-  teamMembers    TeamMember[]
   activityLogs   ActivityLog[]
-  contacts       Contact[]
-  logs           Log[]
-  folders        Folder[]
-  fields         Field[]
-  tags           Tag[]
   aiAgents       AIAgent[]
-  integrations   Integration[]
   aiAssistants   AIAssistant[]
-  spreadsheets   Spreadsheet[]
   aiTriggers     AITrigger[]
-
-  openAIs      IntegrationOpenAI[]
-  googleSheets IntegrationGoogleSheets[]
-  whatsapps    IntegrationWhatsapp[]
+  chatbotMembers ChatbotMember[]
+  contacts       Contact[]
+  fields         Field[]
+  flows          Flow[]
+  flowVersions   FlowVersion[]
+  folders        Folder[]
+  googleSheets   IntegrationGoogleSheets[]
+  inboxes        Inbox[]
+  integrations   Integration[]
+  logs           Log[]
+  openAIs        IntegrationOpenAI[]
+  spreadsheets   Spreadsheet[]
+  tags           Tag[]
+  teamMembers    TeamMember[]
+  teams          Team[]
+  whatsapps      IntegrationWhatsapp[]
 }
 
 model ChatbotMember {
@@ -228,6 +231,7 @@ model Folder {
   chatbot  Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   tags     Tag[]
   fields   Field[]
+  flows    Flow[]
 
   @@index([chatbotId])
   @@index([parentId])
@@ -274,6 +278,7 @@ model Inbox {
   inboxType InboxType
 
   integrationWhatsapps IntegrationWhatsapp[]
+  chatbot              Chatbot               @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
 model Integration {
@@ -389,6 +394,41 @@ model Spreadsheet {
   url       String
 
   chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+model Flow {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  chatbotId        String
+  userId           String
+  folderId         String?
+  title            String
+  isPublished      Boolean  @default(true)
+  enableInInbox    Boolean  @default(true)
+  currentVersionId String?  @unique
+
+  chatbot        Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder         Folder?       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  currentVersion FlowVersion?  @relation(name: "CurrentVersion", fields: [currentVersionId], references: [id])
+  flowVersions   FlowVersion[] @relation(name: "FlowVersions")
+}
+
+model FlowVersion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  flowId    String
+  nodes     Json
+  edges     Json
+  version   DateTime @default(now())
+  isDraft   Boolean  @default(true)
+
+  chatbot     Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  flow        Flow    @relation(name: "FlowVersions", fields: [flowId], references: [id], onDelete: Cascade)
+  currentFlow Flow?   @relation(name: "CurrentVersion")
 }
 
 enum CustomFieldType {
