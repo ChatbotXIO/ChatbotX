@@ -1,4 +1,5 @@
 import NextAuth from "next-auth"
+import { NextResponse } from "next/server"
 import { providers } from "./auth.config"
 
 export const { auth } = NextAuth({ providers })
@@ -9,6 +10,11 @@ export default auth((req) => {
 
     return Response.redirect(newUrl)
   }
+
+  const headers = new Headers(req.headers)
+  headers.set("x-current-path", req.nextUrl.pathname)
+
+  return NextResponse.next({ headers })
 })
 
 export const config = {

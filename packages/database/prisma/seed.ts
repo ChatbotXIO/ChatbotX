@@ -17,9 +17,8 @@ async function main() {
   // create user
   user = await prisma.user.create({
     data: {
-      name: "AhaChat",
       email: "admin@ahachat.ai",
-      emailVerified: new Date(),
+      name: "AhaChat",
     },
   })
 
@@ -29,12 +28,12 @@ async function main() {
     const chatbots = await prisma.chatbot.createManyAndReturn({
       data: [
         {
-          name: "FREE Ahachat",
+          name: "FREE",
           accountTimezone: "Asia/Saigon",
           plan: "Free",
         },
         {
-          name: "PRO Ahachat",
+          name: "PRO",
           accountTimezone: "Asia/Saigon",
           plan: "Pro",
         },

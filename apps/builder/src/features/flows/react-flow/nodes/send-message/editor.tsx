@@ -39,6 +39,24 @@ import { FollowConversationBlockEditor } from "@/features/flows/react-flow/block
 import { followConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/follow-conversation/schema"
 import { MarkEmailVerifiedBlockEditor } from "@/features/flows/react-flow/blocks/mark-email-verified/editor"
 import { markEmailVerifiedBlockDefaultValue } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
+import { OpenAIAnalyzeImageEditor } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/editor"
+import { openAIAnalyzeImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
+import { OpenAIDeleteMessageHistoryEditor } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/editor"
+import { openAIDeleteMessageHistoryDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
+import { OpenAIGenerateImageEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-image/editor"
+import { openAIGenerateImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
+import { OpenAIGenerateTextAdvancedEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/editor"
+import { openAIGenerateTextAdvancedDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
+import { OpenAIGenerateTextAgentEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/editor"
+import { openAIGenerateTextAgentDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
+import { OpenAIGenerateTextAssistantEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/editor"
+import { openAIGenerateTextAssistantDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
+import { OpenAIGenerateTextEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text/editor"
+import { openAIGenerateTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
+import { OpenAISpeechToTextEditor } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/editor"
+import { openAISpeechToTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
+import { OpenAITextToSpeechEditor } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/editor"
+import { openAITextToSpeechDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
 import { OptInEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-in-email/editor"
 import { optInEmailBlockDefaultValue } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
 import { OptOutEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-out-email/editor"
@@ -158,6 +176,35 @@ export default function SendMessageNodeEditor({
     ),
     [ActionType.OptInEmail]: ({ key }) => <OptInEmailBlockEditor key={key} />,
     [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
+
+    // Open AI
+    [ActionType.OpenAIGenerateText]: ({ key, parentName }) => (
+      <OpenAIGenerateTextEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAIGenerateTextAgent]: ({ key, parentName }) => (
+      <OpenAIGenerateTextAgentEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAIGenerateTextAdvanced]: ({ key, parentName }) => (
+      <OpenAIGenerateTextAdvancedEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAIGenerateTextAssistant]: ({ key, parentName }) => (
+      <OpenAIGenerateTextAssistantEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAIGenerateImage]: ({ key, parentName }) => (
+      <OpenAIGenerateImageEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAIAnalyzeImage]: ({ key, parentName }) => (
+      <OpenAIAnalyzeImageEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAISpeechToText]: ({ key, parentName }) => (
+      <OpenAISpeechToTextEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAITextToSpeech]: ({ key, parentName }) => (
+      <OpenAITextToSpeechEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.OpenAIDeleteMessageHistory]: ({ key, parentName }) => (
+      <OpenAIDeleteMessageHistoryEditor key={key} parentName={parentName} />
+    ),
   }
 
   const { t } = useTranslate()
@@ -295,6 +342,35 @@ export default function SendMessageNodeEditor({
       case ActionType.OptOutEmail:
         append(optOutEmailBlockDefaultValue())
         break
+
+      // Action OpenAI
+      case ActionType.OpenAIGenerateText:
+        append(openAIGenerateTextDefaultValue())
+        break
+      case ActionType.OpenAIGenerateTextAgent:
+        append(openAIGenerateTextAgentDefaultValue())
+        break
+      case ActionType.OpenAIGenerateTextAdvanced:
+        append(openAIGenerateTextAdvancedDefaultValue())
+        break
+      case ActionType.OpenAIGenerateTextAssistant:
+        append(openAIGenerateTextAssistantDefaultValue())
+        break
+      case ActionType.OpenAIGenerateImage:
+        append(openAIGenerateImageDefaultValue())
+        break
+      case ActionType.OpenAIAnalyzeImage:
+        append(openAIAnalyzeImageDefaultValue())
+        break
+      case ActionType.OpenAISpeechToText:
+        append(openAISpeechToTextDefaultValue())
+        break
+      case ActionType.OpenAITextToSpeech:
+        append(openAITextToSpeechDefaultValue())
+        break
+      case ActionType.OpenAIDeleteMessageHistory:
+        append(openAIDeleteMessageHistoryDefaultValue())
+        break
     }
   }
 
@@ -412,7 +488,7 @@ export default function SendMessageNodeEditor({
                       )}
                       <div
                         className={cn(
-                          "flex-1",
+                          "flex-1 break-all",
                           field.actionType === ActionType.SendCarousel
                             ? "overflow-hidden"
                             : "",

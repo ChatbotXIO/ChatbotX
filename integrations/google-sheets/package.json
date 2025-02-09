@@ -1,0 +1,18 @@
+{
+  "name": "@ahachat.ai/integration-google-sheets",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@ahachat.ai/sdk": "workspace:*",
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^144.0.0",
+    "tslog": "^4.9.3",
+    "typescript": "5.7.3"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

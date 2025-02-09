@@ -1,0 +1,15 @@
+{
+  "name": "@ahachat.ai/sdk",
+  "version": "0.1.0",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "devDependencies": {
+    "typescript": "5.7.3"
+  },
+  "dependencies": {
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

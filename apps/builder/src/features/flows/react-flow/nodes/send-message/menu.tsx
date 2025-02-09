@@ -193,32 +193,47 @@ export const sendMessageEditorMenus: MenuItem[] = [
           {
             label: <T keyName="flows.ActionType.GenerateText" />,
             icon: <TextIcon />,
-            actionType: ActionType.GenerateText,
+            actionType: ActionType.OpenAIGenerateText,
+          },
+          {
+            label: <T keyName="flows.ActionType.GenerateTextAgents" />,
+            icon: <TextIcon />,
+            actionType: ActionType.OpenAIGenerateTextAgent,
+          },
+          {
+            label: <T keyName="flows.ActionType.GenerateTextAdvanced" />,
+            icon: <TextIcon />,
+            actionType: ActionType.OpenAIGenerateTextAdvanced,
+          },
+          {
+            label: <T keyName="flows.ActionType.GenerateTextAssistant" />,
+            icon: <TextIcon />,
+            actionType: ActionType.OpenAIGenerateTextAssistant,
           },
           {
             label: <T keyName="flows.ActionType.GenerateImage" />,
             icon: <ImageIcon />,
-            actionType: ActionType.GenerateImage,
+            actionType: ActionType.OpenAIGenerateImage,
           },
           {
             label: <T keyName="flows.ActionType.AnalyzeImage" />,
             icon: <ChartNoAxesColumnIcon />,
-            actionType: ActionType.AnalyzeImage,
+            actionType: ActionType.OpenAIAnalyzeImage,
           },
           {
             label: <T keyName="flows.ActionType.SpeechToText" />,
             icon: <TextIcon />,
-            actionType: ActionType.SpeechToText,
+            actionType: ActionType.OpenAISpeechToText,
           },
           {
             label: <T keyName="flows.ActionType.TextToSpeech" />,
             icon: <SpeechIcon />,
-            actionType: ActionType.TextToSpeech,
+            actionType: ActionType.OpenAITextToSpeech,
           },
           {
             label: <T keyName="flows.ActionType.DeleteMessageHistory" />,
             icon: <MessageCircleOffIcon />,
-            actionType: ActionType.DeleteMessageHistory,
+            actionType: ActionType.OpenAIDeleteMessageHistory,
           },
         ],
       },
