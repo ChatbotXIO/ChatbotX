@@ -19,7 +19,7 @@ export const createAiTriggerAction = authActionClient
     async ({
       ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, name, description],
+      bindArgsParsedInputs: [chatbotId],
     }: {
       ctx: { user: User }
       parsedInput: CreateAiTriggerSchema
@@ -32,7 +32,7 @@ export const createAiTriggerAction = authActionClient
           id: true,
         },
         where: {
-          description: parsedInput.name,
+          name: parsedInput.name,
           chatbotId,
         },
       })

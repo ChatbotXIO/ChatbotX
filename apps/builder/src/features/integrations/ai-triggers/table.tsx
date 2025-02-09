@@ -8,18 +8,28 @@ import type {
 } from "@/components/data-table/types"
 import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { AiTriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
+import type {
+  getOpenAIFields,
+  getOpenAIFlows,
+} from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiTrigger } from "@ahachat.ai/database"
 import { use, useMemo, useState } from "react"
 import { getAiTriggersColumns } from "./table-columns"
 
 interface AiTriggersTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getAiTriggers>>]>
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof getAiTriggers>>,
+      Awaited<ReturnType<typeof getOpenAIFlows>>,
+      Awaited<ReturnType<typeof getOpenAIFields>>,
+    ]
+  >
   chatbotId: string
 }
 
 export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
-  const [{ data, pageCount }] = use(promises)
+  const [{ data, pageCount }, flows, fields] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiTrigger> | null>(null)
 

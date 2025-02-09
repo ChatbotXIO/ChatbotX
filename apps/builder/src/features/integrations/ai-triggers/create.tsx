@@ -1,5 +1,6 @@
 "use client"
 
+import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,49 +18,93 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { createAiTriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
+import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { createAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
+import type {
+  getOpenAIFields,
+  getOpenAIFlows,
+} from "@/features/integrations/open-ai/queries"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
-import { Loader2, PlusIcon } from "lucide-react"
+import { ArrowRightIcon, Loader2, PlusIcon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { use, useState } from "react"
+import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 
-export function CreateAiTriggerDialog({ chatbotId }: { chatbotId: string }) {
+type CreateAiTriggerDialogProps = {
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof getAiTriggers>>,
+      Awaited<ReturnType<typeof getOpenAIFlows>>,
+      Awaited<ReturnType<typeof getOpenAIFields>>,
+    ]
+  >
+  chatbotId: string
+}
+
+export function CreateAiTriggerDialog({
+  chatbotId,
+  promises,
+}: CreateAiTriggerDialogProps) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
+  const [_, flows, customFields] = use(promises)
   const router = useRouter()
 
-  const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      createAiTriggerAction.bind(null, chatbotId, "", ""),
-      zodResolver(createAiTriggerSchema),
-      {
-        actionProps: {
-          onSuccess: () => {
-            toast.success("Ai Trigger created successfully")
+  const {
+    form,
+    handleSubmitWithAction,
+    resetFormAndAction,
+    form: { control, setValue },
+  } = useHookFormAction(
+    createAiTriggerAction.bind(null, chatbotId),
+    zodResolver(createAiTriggerSchema),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success("Ai Trigger created successfully")
 
-            setOpen(false)
-            resetFormAndAction()
-            router.refresh()
-          },
-          onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError.message ?? error.serverError)
-            }
-          },
+          setOpen(false)
+          resetFormAndAction()
+          router.refresh()
         },
-        formProps: {
-          mode: "onChange",
-          defaultValues: {
-            name: "",
-          },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError.message ?? error.serverError)
+          }
         },
-        errorMapProps: {},
       },
-    )
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          name: "",
+          questions: [
+            {
+              name: "",
+              fieldId: "",
+            },
+          ],
+        },
+      },
+      errorMapProps: {},
+    },
+  )
+
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "questions",
+  })
+
+  const onAddDataCollection = () => {
+    append({
+      name: "",
+      fieldId: "",
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -87,6 +132,120 @@ export function CreateAiTriggerDialog({ chatbotId }: { chatbotId: string }) {
                     <FormLabel>{t("aiTriggers.name")}</FormLabel>
                     <FormControl>
                       <Input placeholder={t("aiTriggers.name")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("aiTriggers.description")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t("aiTriggers.description")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex flex-col space-y-2">
+                <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
+                {fields.map((field, i) => (
+                  <div className="flex items-center space-x-2" key={field.id}>
+                    <FormField
+                      control={form.control}
+                      name={`questions.${i}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              placeholder={t("aiTriggers.questions.name")}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <ArrowRightIcon />
+
+                    <FormField
+                      control={form.control}
+                      name={`questions.${i}.fieldId`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <SingleSelect
+                              options={customFields.data}
+                              placeholder={t("aiTriggers.questions.fieldId")}
+                              {...field}
+                              onValueChange={(v: string) =>
+                                setValue(`questions.${i}.fieldId`, v)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => remove(i)}
+                    >
+                      <XIcon />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onAddDataCollection}
+                >
+                  {t("aiTriggers.dataCollect.addBtn")}
+                </Button>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="flowId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("aiTriggers.flowId")}</FormLabel>
+                    <FormControl>
+                      <SingleSelect
+                        options={flows.data}
+                        placeholder={t("aiTriggers.flowId")}
+                        {...field}
+                        onValueChange={(v: string) => setValue("flowId", v)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="finalMessage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("aiTriggers.finalMessage")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t("aiTriggers.finalMessage")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

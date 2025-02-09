@@ -3,6 +3,10 @@ import { CreateAiTriggerDialog } from "@/features/integrations/ai-triggers/creat
 import { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { getAiTriggerSearchParamsCache } from "@/features/integrations/ai-triggers/schemas/get.schema"
 import { AiTriggersTable } from "@/features/integrations/ai-triggers/table"
+import {
+  getOpenAIFields,
+  getOpenAIFlows,
+} from "@/features/integrations/open-ai/queries"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -15,12 +19,17 @@ export default async function AITriggersPage(props: {
   const search = getAiTriggerSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
     getAiTriggers({ ...search, chatbotId: params.chatbotId as string }),
+    getOpenAIFlows(),
+    getOpenAIFields(),
   ])
 
   return (
     <>
       <div className="flex w-full justify-end mb-4">
-        <CreateAiTriggerDialog chatbotId={params.chatbotId} />
+        <CreateAiTriggerDialog
+          chatbotId={params.chatbotId}
+          promises={promises}
+        />
       </div>
 
       <Suspense

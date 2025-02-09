@@ -16,7 +16,7 @@ import { EllipsisVerticalIcon } from "lucide-react"
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  type: "update" | "delete"
+  type: "update" | "delete" | "duplicate"
 }
 
 interface GetColumnsProps {

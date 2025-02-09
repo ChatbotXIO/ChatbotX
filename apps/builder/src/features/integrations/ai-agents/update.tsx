@@ -144,6 +144,7 @@ export function UpdateAiAgentDialog({
                   </FormItem>
                 )}
               />
+
               <div className="flex flex-col space-y-2 overflow-auto max-h-[300px]">
                 {fields.map((item, index) => (
                   <div className="flex items-center space-x-2" key={item.id}>
