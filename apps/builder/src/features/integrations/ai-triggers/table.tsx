@@ -6,22 +6,22 @@ import type {
   DataTableFilterField,
   DataTableRowAction,
 } from "@/components/data-table/types"
+import { duplicateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action"
+import { DeleteAiTriggerDialog } from "@/features/integrations/ai-triggers/delete"
 import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { AiTriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
 import { UpdateAiTriggerDialog } from "@/features/integrations/ai-triggers/update"
-import { DeleteAiTriggerDialog } from "@/features/integrations/ai-triggers/delete"
 import type {
   getOpenAIFields,
   getOpenAIFlows,
 } from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiTrigger } from "@ahachat.ai/database"
-import {use, useEffect, useMemo, useState} from "react"
+import { useAction } from "next-safe-action/hooks"
+import { useRouter } from "next/navigation"
+import { use, useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { getAiTriggersColumns } from "./table-columns"
-import {toast} from "sonner";
-import {useAction} from "next-safe-action/hooks";
-import { duplicateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action";
-import {useRouter} from "next/navigation";
 
 interface AiTriggersTableProps {
   promises: Promise<

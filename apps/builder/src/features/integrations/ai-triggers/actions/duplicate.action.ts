@@ -2,8 +2,8 @@
 
 import {
   type DuplicateAiTriggerBindSchema,
-  duplicateAiTriggerBindSchema
-} from "@/features/integrations/ai-triggers/schemas/duplicate.schema";
+  duplicateAiTriggerBindSchema,
+} from "@/features/integrations/ai-triggers/schemas/duplicate.schema"
 
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
@@ -29,7 +29,7 @@ export const duplicateAiTriggerAction = authActionClient
           description: true,
           questions: true,
           flowId: true,
-          finalMessage: true
+          finalMessage: true,
         },
         where: {
           id,

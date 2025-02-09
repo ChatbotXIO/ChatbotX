@@ -1,5 +1,5 @@
-import { z } from "zod"
 import { aiTriggerQuestionsSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
+import { z } from "zod"
 
 export const updateAiTriggerSchema = z.object({
   name: z.string().min(1).max(255).trim(),

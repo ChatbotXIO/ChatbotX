@@ -10,8 +10,8 @@ import { AiTriggerException } from "@/features/integrations/ai-triggers/schemas/
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
-import { revalidateTag } from "next/cache"
 import type { JsonObject } from "@prisma/client/runtime/binary"
+import { revalidateTag } from "next/cache"
 
 export const createAiTriggerAction = authActionClient
   .schema(createAiTriggerSchema)

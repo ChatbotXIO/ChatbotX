@@ -1,5 +1,6 @@
 "use client"
 
+import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -29,7 +30,6 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { SingleSelect } from "@/components/single-select"
 
 type UpdateAiTriggerDialogProps = {
   open: boolean
@@ -98,8 +98,8 @@ export function UpdateAiTriggerDialog({
       if (trigger.questions) {
         setValue("questions", trigger.questions as JsonObject[])
       }
-      setValue("flowId", trigger.flowId ||  "")
-      setValue("finalMessage", trigger.finalMessage ||  "")
+      setValue("flowId", trigger.flowId || "")
+      setValue("finalMessage", trigger.finalMessage || "")
     }
   }, [trigger, setValue])
 
