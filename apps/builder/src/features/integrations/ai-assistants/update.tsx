@@ -86,7 +86,7 @@ export function UpdateAiAssistantDialog({
       setValue("name", assistant.name)
       setValue("model", assistant.model)
       setValue("prompt", assistant.prompt)
-      setValue("temperature", assistant.temperature)
+      setValue("temperature", String(assistant.temperature))
       setValue("aiTriggerIds", assistant.aiTriggerIds)
       setValue("attachmentIds", assistant.attachmentIds)
     }

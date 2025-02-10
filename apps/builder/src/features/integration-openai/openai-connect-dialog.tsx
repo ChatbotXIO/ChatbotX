@@ -1,6 +1,7 @@
 "use client"
 
 import { FormInput } from "@/components/form-input"
+import { NumberField } from "@/components/number-field"
 import { Button } from "@/components/ui/button"
 import {
   Collapsible,
@@ -17,7 +18,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T } from "@tolgee/react"
@@ -53,8 +61,8 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
         mode: "onChange",
         defaultValues: {
           apiKey: "",
-          temperature: 1.0,
-          maxTokens: 200,
+          temperature: "1.0",
+          maxTokens: "200",
         },
       },
     },
@@ -90,16 +98,36 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent className="space-y-2">
-                <FormInput
+                <FormField
+                  control={form.control}
                   name="temperature"
-                  label={<T keyName={"Integrations.OpenAI.APIKey"} />}
-                  // <Controller name="temperature" render={(field) => <NumberField value={0.5} {...field} />}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        <T keyName={"Integrations.OpenAI.temperature"} />
+                      </FormLabel>
+                      <FormControl>
+                        <NumberField step={0.1} min={0} max={2} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
-                <FormInput
+                <FormField
+                  control={form.control}
                   name="maxTokens"
-                  label={<T keyName={"Integrations.OpenAI.MaxTokens"} />}
-                  // <Controller name="temperature" render={(field) => <NumberField value={0.5} {...field} />}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        <T keyName={"Integrations.OpenAI.maxTokens"} />
+                      </FormLabel>
+                      <FormControl>
+                        <NumberField step={1} min={0} max={8192} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </CollapsibleContent>
             </Collapsible>
