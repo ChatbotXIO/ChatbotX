@@ -7,7 +7,6 @@ import { Minus, Plus } from "lucide-react"
 import {
   type InputHTMLAttributes,
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useRef,
   useState,
