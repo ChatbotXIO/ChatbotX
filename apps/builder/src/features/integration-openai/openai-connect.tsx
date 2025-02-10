@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -22,7 +23,6 @@ import { use } from "react"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
 import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
-import {Switch} from "@/components/ui/switch";
 
 type OpenAIConnectProps = {
   chatbotId: string

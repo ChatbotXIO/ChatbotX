@@ -4,7 +4,7 @@ export const updateAiAssistantsSchema = z.object({
   name: z.string().min(1).max(255).trim(),
   model: z.string(),
   prompt: z.string().min(1).max(255).trim(),
-  temperature: z.number(),
+  temperature: z.string().min(1).trim(),
   attachmentIds: z.array(z.string()).optional(),
   aiTriggerIds: z.array(z.string()).optional(),
 })
