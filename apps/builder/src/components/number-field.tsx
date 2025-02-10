@@ -7,6 +7,7 @@ import { Minus, Plus } from "lucide-react"
 import {
   type InputHTMLAttributes,
   forwardRef,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -20,11 +21,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
     const [hitMin, setHitMin] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    useImperativeHandle(
-      ref,
-      () => (inputRef.current ? inputRef.current : null),
-      [],
-    )
+    useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, [])
 
     const increment = () => {
       inputRef.current?.stepUp()
