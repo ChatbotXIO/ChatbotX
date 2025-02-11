@@ -6,10 +6,7 @@ import {
 } from "@/features/integrations/ai-assistants/queries/get.query"
 import { getAiAssistantsSearchParamsCache } from "@/features/integrations/ai-assistants/schemas/get.schema"
 import { AiAssistantsTable } from "@/features/integrations/ai-assistants/table"
-import {
-  getOpenAIModels,
-  getOpenAITriggers,
-} from "@/features/integrations/open-ai/queries"
+import { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -22,8 +19,7 @@ export default async function AIAssistantsPage(props: {
   const search = getAiAssistantsSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
     getAiAssistants({ ...search, chatbotId: params.chatbotId as string }),
-    getOpenAIModels(),
-    getOpenAITriggers(),
+    getAiTriggers({ chatbotId: params.chatbotId as string }),
     getAiAssistantFiles({ chatbotId: params.chatbotId as string }),
   ])
 

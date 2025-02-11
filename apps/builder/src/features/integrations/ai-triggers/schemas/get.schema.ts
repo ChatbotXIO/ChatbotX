@@ -22,8 +22,8 @@ export type AiTriggersSchema = Awaited<
   chatbotId: string
 }
 
-export type GetAiTriggersSchema = Awaited<
-  ReturnType<typeof getAiTriggerSearchParamsCache.parse>
+export type GetAiTriggersSchema = Partial<
+  Awaited<ReturnType<typeof getAiTriggerSearchParamsCache.parse>>
 > & {
-  chatbotId: string
+  chatbotId?: string
 }

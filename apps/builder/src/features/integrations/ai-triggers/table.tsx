@@ -6,15 +6,12 @@ import type {
   DataTableFilterField,
   DataTableRowAction,
 } from "@/components/data-table/types"
+import type { getFlows } from "@/features/flows/queries/get.query"
 import { duplicateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action"
 import { DeleteAiTriggerDialog } from "@/features/integrations/ai-triggers/delete"
 import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { AiTriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
 import { UpdateAiTriggerDialog } from "@/features/integrations/ai-triggers/update"
-import type {
-  getOpenAIFields,
-  getOpenAIFlows,
-} from "@/features/integrations/open-ai/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiTrigger } from "@ahachat.ai/database"
 import { useAction } from "next-safe-action/hooks"
@@ -27,15 +24,14 @@ interface AiTriggersTableProps {
   promises: Promise<
     [
       Awaited<ReturnType<typeof getAiTriggers>>,
-      Awaited<ReturnType<typeof getOpenAIFlows>>,
-      Awaited<ReturnType<typeof getOpenAIFields>>,
+      Awaited<ReturnType<typeof getFlows>>,
     ]
   >
   chatbotId: string
 }
 
 export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
-  const [{ data, pageCount }, flows, fields] = use(promises)
+  const [{ data, pageCount }, flows] = use(promises)
   const router = useRouter()
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiTrigger> | null>(null)
@@ -112,7 +108,6 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
         chatbotId={chatbotId}
         trigger={rowAction?.row.original || null}
         flows={flows.data}
-        customFields={fields.data}
       />
     </>
   )

@@ -19,13 +19,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import type { getFlows } from "@/features/flows/queries/get.query"
 import { createAiTriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
 import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { createAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
-import type {
-  getOpenAIFields,
-  getOpenAIFlows,
-} from "@/features/integrations/open-ai/queries"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -39,8 +37,7 @@ type CreateAiTriggerDialogProps = {
   promises: Promise<
     [
       Awaited<ReturnType<typeof getAiTriggers>>,
-      Awaited<ReturnType<typeof getOpenAIFlows>>,
-      Awaited<ReturnType<typeof getOpenAIFields>>,
+      Awaited<ReturnType<typeof getFlows>>,
     ]
   >
   chatbotId: string
@@ -52,7 +49,7 @@ export function CreateAiTriggerDialog({
 }: CreateAiTriggerDialogProps) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
-  const [_, flows, customFields] = use(promises)
+  const [_, flows] = use(promises)
   const router = useRouter()
 
   const {
@@ -171,24 +168,9 @@ export function CreateAiTriggerDialog({
 
                     <ArrowRightIcon />
 
-                    <FormField
-                      control={form.control}
+                    <CustomFieldSelect
                       name={`questions.${i}.fieldId`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <SingleSelect
-                              options={customFields.data}
-                              placeholder={t("aiTriggers.questions.fieldId")}
-                              {...field}
-                              onValueChange={(v: string) =>
-                                setValue(`questions.${i}.fieldId`, v)
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      label=""
                     />
 
                     <Button
@@ -218,7 +200,9 @@ export function CreateAiTriggerDialog({
                     <FormLabel>{t("aiTriggers.flowId")}</FormLabel>
                     <FormControl>
                       <SingleSelect
-                        options={flows.data}
+                        options={
+                          flows.data as { label: string; value: string }[]
+                        }
                         placeholder={t("aiTriggers.flowId")}
                         {...field}
                         onValueChange={(v: string) => setValue("flowId", v)}

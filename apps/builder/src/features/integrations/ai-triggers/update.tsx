@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { updateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
 import { updateAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import type { AiTrigger } from "@ahachat.ai/database"
@@ -36,8 +37,7 @@ type UpdateAiTriggerDialogProps = {
   onOpenChange: (val: boolean) => void
   chatbotId: string
   trigger: AiTrigger | null
-  flows: { label: string; value: string }[]
-  customFields: { label: string; value: string }[]
+  flows: Record<string, string>[]
 }
 
 export function UpdateAiTriggerDialog({
@@ -46,7 +46,6 @@ export function UpdateAiTriggerDialog({
   open,
   onOpenChange,
   flows,
-  customFields,
 }: UpdateAiTriggerDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()
@@ -168,24 +167,9 @@ export function UpdateAiTriggerDialog({
 
                     <ArrowRightIcon />
 
-                    <FormField
-                      control={form.control}
+                    <CustomFieldSelect
+                      label=""
                       name={`questions.${i}.fieldId`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <SingleSelect
-                              options={customFields}
-                              placeholder={t("aiTriggers.questions.fieldId")}
-                              {...field}
-                              onValueChange={(v: string) =>
-                                setValue(`questions.${i}.fieldId`, v)
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
                     />
 
                     <Button
@@ -215,7 +199,7 @@ export function UpdateAiTriggerDialog({
                     <FormLabel>{t("aiTriggers.flowId")}</FormLabel>
                     <FormControl>
                       <SingleSelect
-                        options={flows}
+                        options={flows as { label: string; value: string }[]}
                         placeholder={t("aiTriggers.flowId")}
                         {...field}
                         onValueChange={(v: string) => setValue("flowId", v)}

@@ -11,7 +11,7 @@ export const getAiTriggers = async (
   pageCount: number
 }> => {
   const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await findChatbotOrFail(userId, input.chatbotId as string)
 
   return await unstable_cache(
     async () => {
@@ -31,21 +31,27 @@ export const getAiTriggers = async (
           ]
         }
 
-        const orderBy = input.sort.map((sortItem) => ({
-          [sortItem.id]: sortItem.desc ? "desc" : "asc",
-        }))
+        let orderBy: Record<string, string>[]
+        const page = input.page ? input.page - 1 : 1
+        const perPage = input.perPage ? input.perPage : 10
+
+        if (input.sort) {
+          orderBy = input.sort.map((sortItem) => ({
+            [sortItem.id]: sortItem.desc ? "desc" : "asc",
+          }))
+        }
 
         const [data, total] = await prisma.$transaction([
           prisma.aiTrigger.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
+            skip: page * perPage,
+            take: perPage,
             where,
             orderBy,
           }),
           prisma.aiTrigger.count({ where }),
         ])
 
-        const pageCount = Math.ceil(total / input.perPage)
+        const pageCount = Math.ceil(total / perPage)
 
         return { data, pageCount }
       } catch (err) {

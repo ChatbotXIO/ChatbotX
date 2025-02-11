@@ -13,10 +13,7 @@ import type {
 } from "@/features/integrations/ai-assistants/queries/get.query"
 import { AiAssistantTableToolbarActions } from "@/features/integrations/ai-assistants/table-toolbar-actions"
 import { UpdateAiAssistantDialog } from "@/features/integrations/ai-assistants/update"
-import type {
-  getOpenAIModels,
-  getOpenAITriggers,
-} from "@/features/integrations/open-ai/queries"
+import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { AiAssistant } from "@ahachat.ai/database"
 import { use, useMemo, useState } from "react"
@@ -26,8 +23,7 @@ interface AiAssistantsTableProps {
   promises: Promise<
     [
       Awaited<ReturnType<typeof getAiAssistants>>,
-      Awaited<ReturnType<typeof getOpenAIModels>>,
-      Awaited<ReturnType<typeof getOpenAITriggers>>,
+      Awaited<ReturnType<typeof getAiTriggers>>,
       Awaited<ReturnType<typeof getAiAssistantFiles>>,
     ]
   >
@@ -38,7 +34,7 @@ export function AiAssistantsTable({
   promises,
   chatbotId,
 }: AiAssistantsTableProps) {
-  const [{ data, pageCount }, aiModels, aiTriggers, aiFiles] = use(promises)
+  const [{ data, pageCount }, aiTriggers, aiFiles] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AiAssistant> | null>(null)
 
@@ -97,8 +93,10 @@ export function AiAssistantsTable({
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         assistant={rowAction?.row.original || null}
-        aiModels={aiModels.data}
-        aiTriggers={aiTriggers.data}
+        aiTriggers={aiTriggers.data.map((item) => ({
+          label: item.name,
+          value: item.id,
+        }))}
         aiFiles={aiFiles.data}
       />
     </>

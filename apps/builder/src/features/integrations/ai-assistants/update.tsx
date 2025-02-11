@@ -2,7 +2,6 @@
 
 import { MultiSelect } from "@/components/multi-select"
 import { NumberField } from "@/components/number-field"
-import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/open-ai-model-select"
 import { updateAiAssistantsAction } from "@/features/integrations/ai-assistants/actions/update.action"
 import { updateAiAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/update.schema"
 import type { AiAssistant } from "@ahachat.ai/database"
@@ -35,7 +35,6 @@ type UpdateAiAssistantDialogProps = {
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  aiModels: Record<string, string | number>[]
   aiTriggers: Record<string, string>[]
   aiFiles: Record<string, string>[]
   assistant: AiAssistant | null
@@ -46,7 +45,6 @@ export function UpdateAiAssistantDialog({
   assistant,
   open,
   onOpenChange,
-  aiModels,
   aiTriggers,
   aiFiles,
 }: UpdateAiAssistantDialogProps) {
@@ -131,28 +129,7 @@ export function UpdateAiAssistantDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="model"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("aiAssistants.model")}</FormLabel>
-                  <FormControl>
-                    <SingleSelect
-                      options={
-                        aiModels.map((item) => ({
-                          label: item.name,
-                          value: item.id,
-                        })) as { label: string; value: string }[]
-                      }
-                      {...field}
-                      onValueChange={(v: string) => setValue("model", v)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <OpenAIModel name="model" />
 
             <FormField
               control={form.control}
