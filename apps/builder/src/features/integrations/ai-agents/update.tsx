@@ -1,45 +1,33 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { updateAIAgentAction } from "@/features/integrations/ai-agents/actions/update.action"
-import { updateAIAgentSchema } from "@/features/integrations/ai-agents/schemas/update.schema"
+import {
+  type MessageSchema,
+  updateAIAgentSchema,
+} from "@/features/integrations/ai-agents/schemas/update.schema"
 import type { AIAgent } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import type { JsonObject } from "@prisma/client/runtime/binary"
 import { useTranslate } from "@tolgee/react"
-import { Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 
 export function UpdateAIAgentDialog({
   chatbotId,
-  agent,
+  aiAgent,
   open,
   onOpenChange,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  agent: AIAgent | null
+  aiAgent: AIAgent | null
 }) {
   const { t } = useTranslate()
   const router = useRouter()
@@ -49,7 +37,7 @@ export function UpdateAIAgentDialog({
     handleSubmitWithAction,
     form: { setValue, control, reset },
   } = useHookFormAction(
-    updateAIAgentAction.bind(null, chatbotId, agent?.id ?? ""),
+    updateAIAgentAction.bind(null, chatbotId, aiAgent?.id ?? ""),
     zodResolver(updateAIAgentSchema),
     {
       actionProps: {
@@ -67,44 +55,15 @@ export function UpdateAIAgentDialog({
       },
       formProps: {
         mode: "onChange",
+        defaultValues: {
+          name: aiAgent?.name,
+          prompt: aiAgent?.prompt || "",
+          messages: (aiAgent?.messages as MessageSchema[]) ?? [],
+        },
       },
       errorMapProps: {},
     },
   )
-
-  const { fields, append, remove, update } = useFieldArray({
-    control,
-    name: "messages",
-  })
-
-  const addOptions = () => {
-    const lastRole: string = fields.at(-1)?.role || "agent"
-    append({ role: lastRole === "user" ? "agent" : "user", content: "" })
-  }
-
-  const onChangeRole = (index: number) => {
-    update(index, {
-      role: fields[index]?.role === "user" ? "agent" : "user",
-      content: "",
-      ...fields[index],
-    })
-  }
-
-  useEffect(() => {
-    if (!open) {
-      reset({
-        messages: [],
-      })
-    }
-  }, [open, reset])
-
-  useEffect(() => {
-    if (agent) {
-      setValue("name", agent.name)
-      setValue("prompt", agent.prompt || "")
-      setValue("messages", agent.messages as JsonObject[])
-    }
-  }, [agent, setValue])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +71,9 @@ export function UpdateAIAgentDialog({
         <DialogHeader>
           <DialogTitle>{t("aiAgents.update.title")}</DialogTitle>
         </DialogHeader>
-        <div className="flex items-center space-x-2">
+
+        <div>updating...</div>
+        {/* <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
               onSubmit={handleSubmitWithAction}
@@ -218,7 +179,7 @@ export function UpdateAIAgentDialog({
               </div>
             </form>
           </Form>
-        </div>
+        </div> */}
       </DialogContent>
     </Dialog>
   )

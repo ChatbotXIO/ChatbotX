@@ -37,7 +37,6 @@ type UpdateAITriggerDialogProps = {
   onOpenChange: (val: boolean) => void
   chatbotId: string
   trigger: AITrigger | null
-  flows: Record<string, string>[]
 }
 
 export function UpdateAITriggerDialog({
@@ -45,7 +44,6 @@ export function UpdateAITriggerDialog({
   trigger,
   open,
   onOpenChange,
-  flows,
 }: UpdateAITriggerDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()

@@ -56,10 +56,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 )
 Button.displayName = "Button"
 
-interface ButtonGroupProps {
-  className?: string
-  orientation?: "horizontal" | "vertical"
-  children: React.ReactElement<ButtonProps>[]
-}
-
 export { Button, buttonVariants }

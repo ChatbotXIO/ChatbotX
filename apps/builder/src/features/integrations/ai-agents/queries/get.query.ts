@@ -1,11 +1,11 @@
 import { getCurrentUserId } from "@/auth"
-import type { GetAIAgentsSchema } from "@/features/integrations/ai-agents/schemas/get.schema"
+import type { ListAIAgentsSchema } from "@/features/integrations/ai-agents/schemas/get.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type AIAgent, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
 export async function getAIAgents(
-  input: GetAIAgentsSchema,
+  input: ListAIAgentsSchema,
 ): Promise<{ data: AIAgent[]; pageCount: number }> {
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
@@ -33,13 +33,13 @@ export async function getAIAgents(
         }))
 
         const [data, total] = await prisma.$transaction([
-          prisma.aiAgent.findMany({
+          prisma.aIAgent.findMany({
             skip: (input.page - 1) * input.perPage,
             take: input.perPage,
             where,
             orderBy,
           }),
-          prisma.aiAgent.count({ where }),
+          prisma.aIAgent.count({ where }),
         ])
 
         const pageCount = Math.ceil(total / input.perPage)
@@ -55,26 +55,4 @@ export async function getAIAgents(
       tags: [`${userId}#aiAgents`],
     },
   )()
-}
-
-export const getAIAgentById = async ({
-  id,
-}: { id: string }): Promise<{
-  data: Record<
-    string,
-    string | Record<string, string | Record<string, string>[]>
-  >
-  status: string
-}> => {
-  return {
-    data: {
-      id: "816038",
-      json_builder: {
-        messages: [],
-        system: "You are a helpful assistant.",
-      },
-      name: "11232132",
-    },
-    status: "ok",
-  }
 }

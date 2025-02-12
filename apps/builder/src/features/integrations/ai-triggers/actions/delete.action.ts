@@ -21,7 +21,7 @@ export const deleteAITriggerAction = authActionClient
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      await prisma.aiTrigger.deleteMany({
+      await prisma.aITrigger.deleteMany({
         where: {
           id: {
             in: ids,

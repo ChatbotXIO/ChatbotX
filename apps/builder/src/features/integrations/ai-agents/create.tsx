@@ -1,41 +1,34 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Form } from "@/components/ui/form"
 import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/create.action"
 import { createAIAgentSchema } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
+import { T } from "@tolgee/react"
 import { Loader2, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
 export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
-  const { t } = useTranslate()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAIAgentAction.bind(null, chatbotId, ""),
+      createAIAgentAction.bind(null, chatbotId),
       zodResolver(createAIAgentSchema),
       {
         actionProps: {
@@ -72,7 +65,9 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
       </DialogTrigger>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>{t("aiAgents.create.title")}</DialogTitle>
+          <DialogTitle>
+            <T keyName="aiAgents.create.title" />
+          </DialogTitle>
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>
@@ -80,28 +75,14 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiAgents.name")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("aiAgents.name")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput name="name" label={<T keyName="aiAgents.name" />} />
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setOpen(false)}
-                >
-                  {t("common.cancel-btn")}
-                </Button>
+              <DialogFooter className="justify-end">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Close
+                  </Button>
+                </DialogClose>
                 <Button
                   type="submit"
                   disabled={
@@ -111,9 +92,9 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
                   {form.formState.isSubmitting && (
                     <Loader2 className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  <T keyName="common.confirm-btn" />
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </Form>
         </div>

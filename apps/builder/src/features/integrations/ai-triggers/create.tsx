@@ -1,10 +1,12 @@
 "use client"
 
-import { SingleSelect } from "@/components/single-select"
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -18,45 +20,35 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
-import type { getFlows } from "@/features/flows/queries/get.query"
+import { FlowSelect } from "@/features/flows/flow-select"
 import { createAITriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
-import type { getAITriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { createAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
 import { ArrowRightIcon, Loader2, PlusIcon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { use, useState } from "react"
+import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 
 type CreateAITriggerDialogProps = {
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof getAITriggers>>,
-      Awaited<ReturnType<typeof getFlows>>,
-    ]
-  >
   chatbotId: string
 }
 
 export function CreateAITriggerDialog({
   chatbotId,
-  promises,
 }: CreateAITriggerDialogProps) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
-  const [_, flows] = use(promises)
   const router = useRouter()
 
   const {
     form,
     handleSubmitWithAction,
     resetFormAndAction,
-    form: { control, setValue },
+    form: { control },
   } = useHookFormAction(
     createAITriggerAction.bind(null, chatbotId),
     zodResolver(createAITriggerSchema),
@@ -115,35 +107,13 @@ export function CreateAITriggerDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.name")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("aiTriggers.name")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput name="name" label={t("aiTriggers.name")} />
 
-              <FormField
-                control={form.control}
+              <FormInput
                 name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.description")}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t("aiTriggers.description")}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("aiTriggers.description")}
+                inputType="textarea"
+                isRequired={false}
               />
 
               <div className="flex flex-col space-y-2">
@@ -192,52 +162,25 @@ export function CreateAITriggerDialog({
                 </Button>
               </div>
 
-              <FormField
-                control={form.control}
+              <FlowSelect
                 name="flowId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.flowId")}</FormLabel>
-                    <FormControl>
-                      <SingleSelect
-                        options={
-                          flows.data as { label: string; value: string }[]
-                        }
-                        placeholder={t("aiTriggers.flowId")}
-                        {...field}
-                        onValueChange={(v: string) => setValue("flowId", v)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("aiTriggers.flowId")}
+                isRequired={false}
               />
 
-              <FormField
-                control={form.control}
+              <FormInput
                 name="finalMessage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.finalMessage")}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t("aiTriggers.finalMessage")}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("aiTriggers.finalMessage")}
+                inputType="textarea"
+                isRequired={false}
               />
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setOpen(false)}
-                >
-                  {t("common.cancel-btn")}
-                </Button>
+              <DialogFooter className="justify-end">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Close
+                  </Button>
+                </DialogClose>
                 <Button
                   type="submit"
                   disabled={
@@ -249,7 +192,7 @@ export function CreateAITriggerDialog({
                   )}
                   {t("common.confirm-btn")}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </Form>
         </div>

@@ -16,14 +16,14 @@ export const getAITriggerSearchParamsCache = createSearchParamsCache({
   flowId: parseAsString,
 })
 
-export type AITriggersSchema = Awaited<
-  ReturnType<typeof getAITriggerSearchParamsCache.parse>
-> & {
-  chatbotId: string
-}
-
 export type GetAITriggersSchema = Partial<
   Awaited<ReturnType<typeof getAITriggerSearchParamsCache.parse>>
 > & {
   chatbotId?: string
+}
+
+export type AITriggerResource = AITrigger
+export type AITriggerCollection = {
+  data: AITriggerResource[]
+  pageCount: number
 }

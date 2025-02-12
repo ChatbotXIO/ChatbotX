@@ -1,5 +1,4 @@
 import type { ColumnSort, Row } from "@tanstack/react-table"
-// import { type SQL } from "drizzle-orm"
 import type { z } from "zod"
 
 import type { filterSchema } from "@/components/data-table/parsers"

@@ -1,9 +1,11 @@
 "use server"
 
 import {
-  type CreateAITriggerBindSchema,
+  type ChatbotIdBindSchema,
+  chatbotIdBindSchema,
+} from "@/features/chatbots/schemas"
+import {
   type CreateAITriggerSchema,
-  createAITriggerBindSchema,
   createAITriggerSchema,
 } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { AITriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
@@ -15,7 +17,7 @@ import { revalidateTag } from "next/cache"
 
 export const createAITriggerAction = authActionClient
   .schema(createAITriggerSchema)
-  .bindArgsSchemas(createAITriggerBindSchema)
+  .bindArgsSchemas(chatbotIdBindSchema)
   .action(
     async ({
       ctx,
@@ -24,11 +26,11 @@ export const createAITriggerAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: CreateAITriggerSchema
-      bindArgsParsedInputs: CreateAITriggerBindSchema
+      bindArgsParsedInputs: ChatbotIdBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAITrigger = await prisma.aiTrigger.findFirst({
+      const existingAITrigger = await prisma.aITrigger.findFirst({
         select: {
           id: true,
         },
@@ -44,7 +46,7 @@ export const createAITriggerAction = authActionClient
         )
       }
 
-      await prisma.aiTrigger.create({
+      await prisma.aITrigger.create({
         data: {
           ...parsedInput,
           questions: parsedInput.questions as JsonObject[],

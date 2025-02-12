@@ -14,7 +14,7 @@ export default async function AIAgentsPage(props: {
   const searchParams = await props.searchParams
   const search = getAIAgentSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
-    getAIAgents({ ...search, chatbotId: params.chatbotId as string }),
+    getAIAgents({ ...search, chatbotId: params.chatbotId }),
   ])
 
   return (
@@ -29,7 +29,7 @@ export default async function AIAgentsPage(props: {
             columnCount={4}
             searchableColumnCount={1}
             filterableColumnCount={2}
-            cellWidths={["10rem", "20rem", "40rem", "12rem", "10rem"]}
+            cellWidths={["10rem", "20rem", "40rem", "12rem"]}
             shrinkZero
           />
         }

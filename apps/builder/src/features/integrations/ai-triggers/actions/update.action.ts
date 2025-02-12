@@ -28,7 +28,7 @@ export const updateAITriggerAction = authActionClient
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAITrigger = await prisma.aiTrigger.findFirst({
+      const existingAITrigger = await prisma.aITrigger.findFirst({
         select: {
           id: true,
         },
@@ -47,7 +47,7 @@ export const updateAITriggerAction = authActionClient
         )
       }
 
-      await prisma.aiTrigger.update({
+      await prisma.aITrigger.update({
         where: {
           id: triggerId,
         },

@@ -43,10 +43,8 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
   return (
     <>
       <SettingRow
-        label={<T keyName="settings.integrations.GoogleSheets.Title" />}
-        description={
-          <T keyName="settings.integrations.GoogleSheets.Descriptions" />
-        }
+        label={<T keyName="settings.integrations.OpenAI.Title" />}
+        description={<T keyName="settings.integrations.OpenAI.Descriptions" />}
       >
         {integrationOpenAI ? (
           <div className="flex flex-col gap-2">
@@ -122,7 +120,7 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
             </Button>
           </SettingRow>
 
-          <SettingRow
+          {/* <SettingRow
             label={<T keyName="settings.integrations.Assistants.Title" />}
             description={
               <T keyName="settings.integrations.Assistants.Descriptions" />
@@ -133,7 +131,7 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
             </Button>
-          </SettingRow>
+          </SettingRow> */}
 
           <SettingRow
             label={<T keyName="settings.integrations.AITriggers.Title" />}

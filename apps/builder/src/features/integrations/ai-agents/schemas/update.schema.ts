@@ -1,13 +1,15 @@
+import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
 import { z } from "zod"
 
-const messageSchema = z.object({
-  role: z.string().min(1).optional(),
+export const messageSchema = z.object({
+  role: z.nativeEnum(OpenAIMessageRole).optional(),
   content: z.string().min(1).optional(),
 })
+export type MessageSchema = z.infer<typeof messageSchema>
 
 export const updateAIAgentSchema = z.object({
   name: z.string().min(1).max(255).trim(),
-  prompt: z.string().max(255).optional(),
+  prompt: z.string().max(1000).optional(),
   messages: z.array(messageSchema),
 })
 

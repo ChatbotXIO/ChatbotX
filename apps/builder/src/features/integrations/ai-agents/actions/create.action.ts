@@ -1,9 +1,11 @@
 "use server"
 
 import {
-  type CreateAIAgentBindSchema,
+  type ChatbotIdBindSchema,
+  chatbotIdBindSchema,
+} from "@/features/chatbots/schemas"
+import {
   type CreateAIAgentSchema,
-  createAIAgentBindSchema,
   createAIAgentSchema,
 } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { AIAgentException } from "@/features/integrations/ai-agents/schemas/errors.schema"
@@ -14,20 +16,20 @@ import { revalidateTag } from "next/cache"
 
 export const createAIAgentAction = authActionClient
   .schema(createAIAgentSchema)
-  .bindArgsSchemas(createAIAgentBindSchema)
+  .bindArgsSchemas(chatbotIdBindSchema)
   .action(
     async ({
       ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, name],
+      bindArgsParsedInputs: [chatbotId],
     }: {
       ctx: { user: User }
       parsedInput: CreateAIAgentSchema
-      bindArgsParsedInputs: CreateAIAgentBindSchema
+      bindArgsParsedInputs: ChatbotIdBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAIAgent = await prisma.aiAgent.findFirst({
+      const existingAIAgent = await prisma.aIAgent.findFirst({
         select: {
           id: true,
         },
@@ -43,7 +45,7 @@ export const createAIAgentAction = authActionClient
         )
       }
 
-      await prisma.aiAgent.create({
+      await prisma.aIAgent.create({
         data: {
           ...parsedInput,
           chatbotId,

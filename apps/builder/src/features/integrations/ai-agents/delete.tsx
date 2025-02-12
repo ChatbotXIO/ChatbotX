@@ -18,7 +18,7 @@ import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
-import { type ComponentPropsWithoutRef, useTransition } from "react"
+import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 
 interface DeleteAIAgentsDialogProps
@@ -41,32 +41,25 @@ export function DeleteAIAgentsDialog({
   const { t } = useTranslate()
   const router = useRouter()
 
-  const { execute, result } = useAction(
+  const { execute, isExecuting } = useAction(
     deleteAIAgentAction.bind(
       null,
       chatbotId,
-      (agents ?? []).map((agent) => agent.id as string),
+      (agents ?? []).map((agent) => agent.id),
     ),
-  )
-
-  const [isDeletePending, startDeleteTransition] = useTransition()
-  const onDelete = () => {
-    if (!agents || agents.length === 0) {
-      return
-    }
-
-    startDeleteTransition(async () => {
-      await execute()
-
-      if (result.serverError) {
-        toast.error(result.serverError.message ?? result.serverError)
-      } else {
+    {
+      onSuccess: () => {
         toast.success(t("aiAgents.deleted"))
         onOpenChange(false)
         router.refresh()
-      }
-    })
-  }
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError.message ?? error.serverError)
+        }
+      },
+    },
+  )
 
   return (
     <Dialog {...props}>
@@ -97,10 +90,10 @@ export function DeleteAIAgentsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={onDelete}
-            disabled={isDeletePending}
+            onClick={() => execute()}
+            disabled={isExecuting}
           >
-            {isDeletePending && (
+            {isExecuting && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             {t("common.deleteBtn")}

@@ -18,14 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Form } from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T } from "@tolgee/react"
@@ -61,8 +54,8 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
         mode: "onChange",
         defaultValues: {
           apiKey: "",
-          temperature: "1.0",
-          maxTokens: "200",
+          temperature: 1.0,
+          maxTokens: 200,
         },
       },
     },
@@ -88,47 +81,33 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
             />
 
             <Collapsible open={isOpenOptions} onOpenChange={setIsOpenOptions}>
-              <div className="flex items-center justify-between space-x-4 px-4">
-                <h4 className="text-sm font-semibold">More options</h4>
+              <div className="flex items-center justify-between space-x-4">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-9 p-0">
-                    <ChevronsUpDown className="h-4 w-4" />
-                    <span className="sr-only">Toggle</span>
-                  </Button>
+                  <div className="w-full flex items-center">
+                    <div className="text-sm font-semibold flex-1">
+                      More options
+                    </div>
+                    <Button variant="ghost" size="sm" className="w-9 p-0">
+                      <ChevronsUpDown className="h-4 w-4" />
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                  </div>
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent className="space-y-2">
-                <FormField
-                  control={form.control}
+                <FormInput
                   name="temperature"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        <T keyName={"Integrations.OpenAI.temperature"} />
-                      </FormLabel>
-                      <FormControl>
-                        <NumberField step={0.1} min={0} max={2} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  label={<T keyName={"Integrations.OpenAI.Temperature"} />}
+                >
+                  <NumberField name="temperature" step={0.1} min={0} max={2} />
+                </FormInput>
 
-                <FormField
-                  control={form.control}
+                <FormInput
                   name="maxTokens"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        <T keyName={"Integrations.OpenAI.maxTokens"} />
-                      </FormLabel>
-                      <FormControl>
-                        <NumberField step={1} min={0} max={8192} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  label={<T keyName={"Integrations.OpenAI.MaxTokens"} />}
+                >
+                  <NumberField name="maxTokens" step={1} min={1} max={8192} />
+                </FormInput>
               </CollapsibleContent>
             </Collapsible>
 

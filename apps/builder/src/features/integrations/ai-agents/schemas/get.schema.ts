@@ -16,13 +16,7 @@ export const getAIAgentSearchParamsCache = createSearchParamsCache({
   promptId: parseAsString,
 })
 
-export type AIAgentsSchema = Awaited<
-  ReturnType<typeof getAIAgentSearchParamsCache.parse>
-> & {
-  chatbotId: string
-}
-
-export type GetAIAgentsSchema = Awaited<
+export type ListAIAgentsSchema = Awaited<
   ReturnType<typeof getAIAgentSearchParamsCache.parse>
 > & {
   chatbotId: string

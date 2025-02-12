@@ -22,35 +22,24 @@ export const duplicateAIAgentAction = authActionClient
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAIAgent = await prisma.aiAgent.findFirst({
-        select: {
-          name: true,
-          prompt: true,
-          messages: true,
-          chatbotId: true,
-        },
+      const aiAgent = await prisma.aIAgent.findFirst({
         where: {
           id,
           chatbotId,
         },
       })
+      if (!aiAgent) {
+        return {
+          successful: true,
+        }
+      }
 
-      const dupAgent = await prisma.aiAgent.create({
+      await prisma.aIAgent.create({
         data: {
-          name: `${existingAIAgent?.name}_copy_${new Date().getTime()}`,
-          chatbotId,
-        },
-      })
-
-      await prisma.aiAgent.update({
-        where: {
-          id: dupAgent.id,
-        },
-        data: {
-          prompt: existingAIAgent?.prompt || "",
-          messages: existingAIAgent?.messages.length
-            ? (existingAIAgent.messages as JsonObject[])
-            : [],
+          name: `${aiAgent.name}  _copy`,
+          prompt: aiAgent.prompt,
+          messages: aiAgent.messages as JsonObject[],
+          chatbotId: aiAgent.chatbotId,
         },
       })
 

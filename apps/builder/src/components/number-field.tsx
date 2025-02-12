@@ -11,11 +11,16 @@ import {
   useRef,
   useState,
 } from "react"
+import { Controller, useFormContext } from "react-hook-form"
 
-interface NumberFieldProps extends InputHTMLAttributes<HTMLInputElement> {}
+interface NumberFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  name: string
+}
 
 export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
-  ({ ...props }, ref) => {
+  ({ name, ...rest }, ref) => {
+    const { control } = useFormContext()
+
     const [hitMax, setHitMax] = useState(false)
     const [hitMin, setHitMin] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
@@ -37,38 +42,45 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(
     }
 
     return (
-      <div
-        className={cn(
-          "flex items-center rounded-lg border border-slate-200 transition-all focus-visible:ring-1",
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <div
+            className={cn(
+              "flex items-center rounded-lg border border-slate-200 transition-all focus-visible:ring-1",
+            )}
+          >
+            <Button
+              type="button"
+              size="icon"
+              className="min-w-10 rounded-r-none hover:bg-gray-200 focus-visible:ring-1"
+              variant="secondary"
+              disabled={hitMin}
+              onClick={decrement}
+            >
+              <Minus />
+            </Button>
+            <Input
+              type="number"
+              className="text-center w-full border-0 rounded-none focus-visible:ring-0"
+              {...field}
+              {...rest}
+              ref={inputRef}
+            />
+            <Button
+              type="button"
+              size="icon"
+              className="min-w-10 rounded-l-none hover:bg-gray-200 focus-visible:ring-1"
+              variant="secondary"
+              disabled={hitMax}
+              onClick={increment}
+            >
+              <Plus />
+            </Button>
+          </div>
         )}
-      >
-        <Button
-          type="button"
-          size="icon"
-          className="min-w-10 rounded-r-none hover:bg-gray-200 focus-visible:ring-1"
-          variant="secondary"
-          disabled={hitMin}
-          onClick={decrement}
-        >
-          <Minus />
-        </Button>
-        <Input
-          type="number"
-          className="text-center w-full border-0 rounded-none focus-visible:ring-0"
-          ref={inputRef}
-          {...props}
-        />
-        <Button
-          type="button"
-          size="icon"
-          className="min-w-10 rounded-l-none hover:bg-gray-200 focus-visible:ring-1"
-          variant="secondary"
-          disabled={hitMax}
-          onClick={increment}
-        >
-          <Plus />
-        </Button>
-      </div>
+      />
     )
   },
 )

@@ -27,7 +27,7 @@ export const updateAIAgentAction = authActionClient
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAIAgent = await prisma.aiAgent.findFirst({
+      const existingAIAgent = await prisma.aIAgent.findFirst({
         select: {
           id: true,
         },
@@ -46,14 +46,14 @@ export const updateAIAgentAction = authActionClient
         )
       }
 
-      await prisma.aiAgent.update({
+      await prisma.aIAgent.update({
         where: {
           id: agentId,
         },
         data: parsedInput,
       })
 
-      revalidateTag(`${ctx.user.id}#aiAgents`)
+      revalidateTag(`${ctx.user.id}#aIAgents`)
 
       return {
         successful: true,

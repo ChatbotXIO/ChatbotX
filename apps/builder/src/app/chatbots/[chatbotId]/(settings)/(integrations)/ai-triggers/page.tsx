@@ -1,7 +1,6 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { getFlows } from "@/features/flows/queries/get.query"
 import { CreateAITriggerDialog } from "@/features/integrations/ai-triggers/create"
-import { getAITriggers } from "@/features/integrations/ai-triggers/queries/get.query"
+import { getAITriggers } from "@/features/integrations/ai-triggers/queries"
 import { getAITriggerSearchParamsCache } from "@/features/integrations/ai-triggers/schemas/get.schema"
 import { AITriggersTable } from "@/features/integrations/ai-triggers/table"
 import type { SearchParams } from "nuqs/server"
@@ -15,8 +14,7 @@ export default async function AITriggersPage(props: {
   const searchParams = await props.searchParams
   const search = getAITriggerSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
-    getAITriggers({ ...search, chatbotId: params.chatbotId as string }),
-    getFlows({ chatbotId: params.chatbotId as string }),
+    getAITriggers({ ...search, chatbotId: params.chatbotId }),
   ])
 
   return (
@@ -34,7 +32,7 @@ export default async function AITriggersPage(props: {
             columnCount={4}
             searchableColumnCount={1}
             filterableColumnCount={2}
-            cellWidths={["10rem", "20rem", "40rem", "12rem", "10rem"]}
+            cellWidths={["10rem", "20rem", "40rem", "12rem"]}
             shrinkZero
           />
         }

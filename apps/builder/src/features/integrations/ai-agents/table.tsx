@@ -57,7 +57,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
     {
       id: "name",
       label: "Search",
-      placeholder: "Enter ai-agent name...",
+      placeholder: "Enter name",
     },
   ]
 

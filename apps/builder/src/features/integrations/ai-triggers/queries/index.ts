@@ -1,15 +1,15 @@
 import { getCurrentUserId } from "@/auth"
-import type { GetAITriggersSchema } from "@/features/integrations/ai-triggers/schemas/get.schema"
+import type {
+  AITriggerCollection,
+  GetAITriggersSchema,
+} from "@/features/integrations/ai-triggers/schemas/get.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type AITrigger, type Prisma, prisma } from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
 export const getAITriggers = async (
   input: GetAITriggersSchema,
-): Promise<{
-  data: AITrigger[]
-  pageCount: number
-}> => {
+): Promise<AITriggerCollection> => {
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId as string)
 
@@ -18,17 +18,6 @@ export const getAITriggers = async (
       try {
         const where: Prisma.AITriggerWhereInput = {
           chatbotId: input.chatbotId,
-        }
-
-        if (input.name) {
-          where.AND = [
-            {
-              // name: {
-              //   contains: input.name,
-              //   mode: "insensitive",
-              // },
-            },
-          ]
         }
 
         let orderBy: Record<string, string>[]
@@ -42,13 +31,13 @@ export const getAITriggers = async (
         }
 
         const [data, total] = await prisma.$transaction([
-          prisma.aiTrigger.findMany({
+          prisma.aITrigger.findMany({
             skip: page * perPage,
             take: perPage,
             where,
             orderBy,
           }),
-          prisma.aiTrigger.count({ where }),
+          prisma.aITrigger.count({ where }),
         ])
 
         const pageCount = Math.ceil(total / perPage)
