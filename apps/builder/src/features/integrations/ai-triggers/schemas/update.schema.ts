@@ -1,13 +1,13 @@
-import { createAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
+import { createAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { z } from "zod"
 
-export const updateAiTriggerSchema = createAiTriggerSchema
+export const updateAITriggerSchema = createAITriggerSchema
 
-export type UpdateAiTriggerSchema = z.infer<typeof updateAiTriggerSchema>
+export type UpdateAITriggerSchema = z.infer<typeof updateAITriggerSchema>
 
-export const updateAiTriggerBindSchema: [
+export const updateAITriggerBindSchema: [
   chatbotId: z.ZodString,
   triggerId: z.ZodString,
 ] = [z.string().cuid2(), z.string().cuid2()]
 
-export type UpdateAiTriggerBindSchema = [chatbotId: string, triggerId: string]
+export type UpdateAITriggerBindSchema = [chatbotId: string, triggerId: string]

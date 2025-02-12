@@ -1,17 +1,17 @@
 import { z } from "zod"
 
-export const createAiAssistantsSchema = z.object({
+export const createAIAssistantsSchema = z.object({
   name: z.string().min(1).max(255).trim(),
 })
 
-export type CreateAiAssistantsSchema = z.infer<typeof createAiAssistantsSchema>
+export type CreateAIAssistantsSchema = z.infer<typeof createAIAssistantsSchema>
 
-export const createAiAssistantsBindSchema: [
+export const createAIAssistantsBindSchema: [
   chatbotId: z.ZodString,
   name: z.ZodNullable<z.ZodString>,
 ] = [z.string().cuid2(), z.string().nullable()]
 
-export type CreateAiAssistantsBindSchema = [
+export type CreateAIAssistantsBindSchema = [
   chatbotId: string,
   name: string | null,
 ]

@@ -1,20 +1,20 @@
 "use server"
 
-import { AiAgentException } from "@/features/integrations/ai-agents/schemas/errors.schema"
+import { AIAgentException } from "@/features/integrations/ai-agents/schemas/errors.schema"
 import {
-  type UpdateAiAgentBindSchema,
-  type UpdateAiAgentSchema,
-  updateAiAgentBindSchema,
-  updateAiAgentSchema,
+  type UpdateAIAgentBindSchema,
+  type UpdateAIAgentSchema,
+  updateAIAgentBindSchema,
+  updateAIAgentSchema,
 } from "@/features/integrations/ai-agents/schemas/update.schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const updateAiAgentAction = authActionClient
-  .schema(updateAiAgentSchema)
-  .bindArgsSchemas(updateAiAgentBindSchema)
+export const updateAIAgentAction = authActionClient
+  .schema(updateAIAgentSchema)
+  .bindArgsSchemas(updateAIAgentBindSchema)
   .action(
     async ({
       ctx,
@@ -22,12 +22,12 @@ export const updateAiAgentAction = authActionClient
       bindArgsParsedInputs: [chatbotId, agentId],
     }: {
       ctx: { user: User }
-      parsedInput: UpdateAiAgentSchema
-      bindArgsParsedInputs: UpdateAiAgentBindSchema
+      parsedInput: UpdateAIAgentSchema
+      bindArgsParsedInputs: UpdateAIAgentBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAiAgent = await prisma.aiAgent.findFirst({
+      const existingAIAgent = await prisma.aiAgent.findFirst({
         select: {
           id: true,
         },
@@ -40,9 +40,9 @@ export const updateAiAgentAction = authActionClient
         },
       })
 
-      if (existingAiAgent) {
-        throw new AiAgentException(
-          `AiAgent with the name "${parsedInput.name}" already exists.`,
+      if (existingAIAgent) {
+        throw new AIAgentException(
+          `AIAgent with the name "${parsedInput.name}" already exists.`,
         )
       }
 

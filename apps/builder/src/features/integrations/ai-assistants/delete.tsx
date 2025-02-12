@@ -11,8 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { deleteAiAssistantsAction } from "@/features/integrations/ai-assistants/actions/delete.action"
-import type { AiAssistant } from "@ahachat.ai/database"
+import { deleteAIAssistantsAction } from "@/features/integrations/ai-assistants/actions/delete.action"
+import type { AIAssistant } from "@ahachat.ai/database"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -21,10 +21,10 @@ import { useRouter } from "next/navigation"
 import { type ComponentPropsWithoutRef, useTransition } from "react"
 import { toast } from "sonner"
 
-interface DeleteAiAgentsDialogProps
+interface DeleteAIAgentsDialogProps
   extends ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  assistant: Row<AiAssistant>["original"][]
+  assistant: Row<AIAssistant>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
@@ -37,15 +37,15 @@ export function DeleteAssistantDialog({
   onSuccess,
   onOpenChange,
   ...props
-}: DeleteAiAgentsDialogProps) {
+}: DeleteAIAgentsDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()
 
   const { execute, result } = useAction(
-    deleteAiAssistantsAction.bind(
+    deleteAIAssistantsAction.bind(
       null,
       chatbotId,
-      (assistant ?? []).map((item: AiAssistant) => item.id),
+      (assistant ?? []).map((item: AIAssistant) => item.id),
     ),
   )
 

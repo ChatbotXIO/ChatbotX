@@ -1,8 +1,8 @@
 "use server"
 
 import {
-  type DuplicateAiTriggerBindSchema,
-  duplicateAiTriggerBindSchema,
+  type DuplicateAITriggerBindSchema,
+  duplicateAITriggerBindSchema,
 } from "@/features/integrations/ai-triggers/schemas/duplicate.schema"
 
 import { authActionClient } from "@/lib/safe-action"
@@ -11,19 +11,19 @@ import { type User, prisma } from "@ahachat.ai/database"
 import type { JsonObject } from "@prisma/client/runtime/binary"
 import { revalidateTag } from "next/cache"
 
-export const duplicateAiTriggerAction = authActionClient
-  .bindArgsSchemas(duplicateAiTriggerBindSchema)
+export const duplicateAITriggerAction = authActionClient
+  .bindArgsSchemas(duplicateAITriggerBindSchema)
   .action(
     async ({
       ctx,
       bindArgsParsedInputs: [chatbotId, id],
     }: {
       ctx: { user: User }
-      bindArgsParsedInputs: DuplicateAiTriggerBindSchema
+      bindArgsParsedInputs: DuplicateAITriggerBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAiTrigger = await prisma.aiTrigger.findFirst({
+      const existingAITrigger = await prisma.aiTrigger.findFirst({
         select: {
           name: true,
           description: true,
@@ -39,7 +39,7 @@ export const duplicateAiTriggerAction = authActionClient
 
       const dupTrigger = await prisma.aiTrigger.create({
         data: {
-          name: `${existingAiTrigger?.name}_copy_${new Date().getTime()}`,
+          name: `${existingAITrigger?.name}_copy_${new Date().getTime()}`,
           chatbotId,
         },
       })
@@ -49,12 +49,12 @@ export const duplicateAiTriggerAction = authActionClient
           id: dupTrigger.id,
         },
         data: {
-          description: existingAiTrigger?.description,
-          questions: existingAiTrigger?.questions.length
-            ? (existingAiTrigger.questions as JsonObject[])
+          description: existingAITrigger?.description,
+          questions: existingAITrigger?.questions.length
+            ? (existingAITrigger.questions as JsonObject[])
             : [],
-          flowId: existingAiTrigger?.flowId || "",
-          finalMessage: existingAiTrigger?.finalMessage || "",
+          flowId: existingAITrigger?.flowId || "",
+          finalMessage: existingAITrigger?.finalMessage || "",
         },
       })
 

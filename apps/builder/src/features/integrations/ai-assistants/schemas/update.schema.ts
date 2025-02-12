@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const updateAiAssistantsSchema = z.object({
+export const updateAIAssistantsSchema = z.object({
   name: z.string().min(1).max(255).trim(),
   model: z.string(),
   prompt: z.string().min(1).max(255).trim(),
@@ -17,14 +17,14 @@ export const updateAiAssistantsSchema = z.object({
   aiTriggerIds: z.array(z.string()).optional(),
 })
 
-export type UpdateAiAssistantsSchema = z.infer<typeof updateAiAssistantsSchema>
+export type UpdateAIAssistantsSchema = z.infer<typeof updateAIAssistantsSchema>
 
-export const updateAiAssistantsBindSchema: [
+export const updateAIAssistantsBindSchema: [
   chatbotId: z.ZodString,
   assistantId: z.ZodString,
 ] = [z.string().cuid2(), z.string().cuid2()]
 
-export type UpdateAiAssistantsBindSchema = [
+export type UpdateAIAssistantsBindSchema = [
   chatbotId: string,
   assistantId: string,
 ]

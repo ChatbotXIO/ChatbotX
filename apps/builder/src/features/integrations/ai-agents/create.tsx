@@ -18,8 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createAiAgentAction } from "@/features/integrations/ai-agents/actions/create.action"
-import { createAiAgentSchema } from "@/features/integrations/ai-agents/schemas/create.schema"
+import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/create.action"
+import { createAIAgentSchema } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -28,19 +28,19 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
-export function CreateAiAgentDialog({ chatbotId }: { chatbotId: string }) {
+export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAiAgentAction.bind(null, chatbotId, ""),
-      zodResolver(createAiAgentSchema),
+      createAIAgentAction.bind(null, chatbotId, ""),
+      zodResolver(createAIAgentSchema),
       {
         actionProps: {
           onSuccess: () => {
-            toast.success("AiAgent created successfully")
+            toast.success("AIAgent created successfully")
 
             setOpen(false)
             resetFormAndAction()

@@ -17,9 +17,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { updateAiAgentAction } from "@/features/integrations/ai-agents/actions/update.action"
-import { updateAiAgentSchema } from "@/features/integrations/ai-agents/schemas/update.schema"
-import type { AiAgent } from "@ahachat.ai/database"
+import { updateAIAgentAction } from "@/features/integrations/ai-agents/actions/update.action"
+import { updateAIAgentSchema } from "@/features/integrations/ai-agents/schemas/update.schema"
+import type { AIAgent } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import type { JsonObject } from "@prisma/client/runtime/binary"
@@ -30,7 +30,7 @@ import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 
-export function UpdateAiAgentDialog({
+export function UpdateAIAgentDialog({
   chatbotId,
   agent,
   open,
@@ -39,7 +39,7 @@ export function UpdateAiAgentDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  agent: AiAgent | null
+  agent: AIAgent | null
 }) {
   const { t } = useTranslate()
   const router = useRouter()
@@ -49,8 +49,8 @@ export function UpdateAiAgentDialog({
     handleSubmitWithAction,
     form: { setValue, control, reset },
   } = useHookFormAction(
-    updateAiAgentAction.bind(null, chatbotId, agent?.id ?? ""),
-    zodResolver(updateAiAgentSchema),
+    updateAIAgentAction.bind(null, chatbotId, agent?.id ?? ""),
+    zodResolver(updateAIAgentSchema),
     {
       actionProps: {
         onSuccess: () => {

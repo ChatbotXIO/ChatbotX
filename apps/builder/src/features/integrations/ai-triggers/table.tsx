@@ -7,43 +7,43 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import type { getFlows } from "@/features/flows/queries/get.query"
-import { duplicateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action"
-import { DeleteAiTriggerDialog } from "@/features/integrations/ai-triggers/delete"
-import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
-import { AiTriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
-import { UpdateAiTriggerDialog } from "@/features/integrations/ai-triggers/update"
+import { duplicateAITriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action"
+import { DeleteAITriggerDialog } from "@/features/integrations/ai-triggers/delete"
+import type { getAITriggers } from "@/features/integrations/ai-triggers/queries/get.query"
+import { AITriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
+import { UpdateAITriggerDialog } from "@/features/integrations/ai-triggers/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AiTrigger } from "@ahachat.ai/database"
+import type { AITrigger } from "@ahachat.ai/database"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { getAiTriggersColumns } from "./table-columns"
+import { getAITriggersColumns } from "./table-columns"
 
-interface AiTriggersTableProps {
+interface AITriggersTableProps {
   promises: Promise<
     [
-      Awaited<ReturnType<typeof getAiTriggers>>,
+      Awaited<ReturnType<typeof getAITriggers>>,
       Awaited<ReturnType<typeof getFlows>>,
     ]
   >
   chatbotId: string
 }
 
-export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
+export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
   const [{ data, pageCount }, flows] = use(promises)
   const router = useRouter()
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<AiTrigger> | null>(null)
+    useState<DataTableRowAction<AITrigger> | null>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
-    () => getAiTriggersColumns({ setRowAction }),
+    () => getAITriggersColumns({ setRowAction }),
     [setRowAction],
   )
 
   const { execute, result } = useAction(
-    duplicateAiTriggerAction.bind(
+    duplicateAITriggerAction.bind(
       null,
       chatbotId,
       rowAction?.row.original ? rowAction.row.original.id : "",
@@ -59,7 +59,7 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
     }
   }, [rowAction, execute, router])
 
-  const filterFields: DataTableFilterField<AiTrigger & { name?: string }>[] = [
+  const filterFields: DataTableFilterField<AITrigger & { name?: string }>[] = [
     {
       id: "name",
       label: "Search",
@@ -76,7 +76,7 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow: AiTrigger) => originalRow.id,
+    getRowId: (originalRow: AITrigger) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -85,7 +85,7 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          <AiTriggersTableToolbarActions
+          <AITriggersTableToolbarActions
             table={table}
             chatbotId={chatbotId}
             onOpenChange={() => setRowAction(null)}
@@ -93,7 +93,7 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
         </DataTableToolbar>
       </DataTable>
 
-      <DeleteAiTriggerDialog
+      <DeleteAITriggerDialog
         open={rowAction?.type === "delete"}
         onOpenChange={() => setRowAction(null)}
         trigger={rowAction?.row.original ? [rowAction?.row.original] : []}
@@ -102,7 +102,7 @@ export function AiTriggersTable({ promises, chatbotId }: AiTriggersTableProps) {
         chatbotId={chatbotId}
       />
 
-      <UpdateAiTriggerDialog
+      <UpdateAITriggerDialog
         open={rowAction?.type === "update"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}

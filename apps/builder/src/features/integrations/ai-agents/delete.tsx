@@ -11,8 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { deleteAiAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
-import type { AiAgent } from "@ahachat.ai/database"
+import { deleteAIAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
+import type { AIAgent } from "@ahachat.ai/database"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -21,28 +21,28 @@ import { useRouter } from "next/navigation"
 import { type ComponentPropsWithoutRef, useTransition } from "react"
 import { toast } from "sonner"
 
-interface DeleteAiAgentsDialogProps
+interface DeleteAIAgentsDialogProps
   extends ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  agents: Row<AiAgent>["original"][]
+  agents: Row<AIAgent>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
 }
 
-export function DeleteAiAgentsDialog({
+export function DeleteAIAgentsDialog({
   chatbotId,
   agents,
   showTrigger = true,
   onSuccess,
   onOpenChange,
   ...props
-}: DeleteAiAgentsDialogProps) {
+}: DeleteAIAgentsDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()
 
   const { execute, result } = useAction(
-    deleteAiAgentAction.bind(
+    deleteAIAgentAction.bind(
       null,
       chatbotId,
       (agents ?? []).map((agent) => agent.id as string),

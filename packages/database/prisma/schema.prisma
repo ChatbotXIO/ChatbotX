@@ -93,11 +93,11 @@ model Chatbot {
   folders        Folder[]
   fields         Field[]
   tags           Tag[]
-  aiAgents       AiAgent[]
+  aiAgents       AIAgent[]
   integrations   Integration[]
-  aiAssistants   AiAssistant[]
+  aiAssistants   AIAssistant[]
   spreadsheets   Spreadsheet[]
-  aiTriggers     AiTrigger[]
+  aiTriggers     AITrigger[]
 
   openAIs      IntegrationOpenAI[]
   googleSheets IntegrationGoogleSheets[]
@@ -288,7 +288,7 @@ model Integration {
   chatbot      Chatbot                  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
-model AiAgent {
+model AIAgent {
   id        String   @id @default(cuid(2))
   chatbotId String
   createdAt DateTime @default(now())
@@ -301,7 +301,7 @@ model AiAgent {
   integrationOpenAIs IntegrationOpenAI[]
 }
 
-model AiAssistant {
+model AIAssistant {
   id            String   @id @default(cuid(2))
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -317,7 +317,7 @@ model AiAssistant {
   integrationOpenAI IntegrationOpenAI[]
 }
 
-model AiTrigger {
+model AITrigger {
   id           String   @id @default(cuid(2))
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -351,9 +351,9 @@ model IntegrationOpenAI {
 
   chatbot     Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   integration Integration  @relation(fields: [integrationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  aiTriggers  AiTrigger[]
-  aiAssistant AiAssistant? @relation(fields: [aiAssistantId], references: [id])
-  aiAgent     AiAgent?     @relation(fields: [aiAgentId], references: [id])
+  aiTriggers  AITrigger[]
+  aiAssistant AIAssistant? @relation(fields: [aiAssistantId], references: [id])
+  aiAgent     AIAgent?     @relation(fields: [aiAgentId], references: [id])
 }
 
 model IntegrationGoogleSheets {

@@ -1,21 +1,21 @@
 "use server"
 
 import {
-  type CreateAiTriggerBindSchema,
-  type CreateAiTriggerSchema,
-  createAiTriggerBindSchema,
-  createAiTriggerSchema,
+  type CreateAITriggerBindSchema,
+  type CreateAITriggerSchema,
+  createAITriggerBindSchema,
+  createAITriggerSchema,
 } from "@/features/integrations/ai-triggers/schemas/create.schema"
-import { AiTriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
+import { AITriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import type { JsonObject } from "@prisma/client/runtime/binary"
 import { revalidateTag } from "next/cache"
 
-export const createAiTriggerAction = authActionClient
-  .schema(createAiTriggerSchema)
-  .bindArgsSchemas(createAiTriggerBindSchema)
+export const createAITriggerAction = authActionClient
+  .schema(createAITriggerSchema)
+  .bindArgsSchemas(createAITriggerBindSchema)
   .action(
     async ({
       ctx,
@@ -23,12 +23,12 @@ export const createAiTriggerAction = authActionClient
       bindArgsParsedInputs: [chatbotId],
     }: {
       ctx: { user: User }
-      parsedInput: CreateAiTriggerSchema
-      bindArgsParsedInputs: CreateAiTriggerBindSchema
+      parsedInput: CreateAITriggerSchema
+      bindArgsParsedInputs: CreateAITriggerBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAiTrigger = await prisma.aiTrigger.findFirst({
+      const existingAITrigger = await prisma.aiTrigger.findFirst({
         select: {
           id: true,
         },
@@ -38,9 +38,9 @@ export const createAiTriggerAction = authActionClient
         },
       })
 
-      if (existingAiTrigger) {
-        throw new AiTriggerException(
-          `Ai Trigger with the name "${parsedInput.name}" already exists.`,
+      if (existingAITrigger) {
+        throw new AITriggerException(
+          `AI Trigger with the name "${parsedInput.name}" already exists.`,
         )
       }
 

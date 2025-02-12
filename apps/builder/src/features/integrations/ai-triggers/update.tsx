@@ -19,9 +19,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
-import { updateAiTriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
-import { updateAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
-import type { AiTrigger } from "@ahachat.ai/database"
+import { updateAITriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
+import { updateAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
+import type { AITrigger } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import type { JsonObject } from "@prisma/client/runtime/binary"
@@ -32,21 +32,21 @@ import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 
-type UpdateAiTriggerDialogProps = {
+type UpdateAITriggerDialogProps = {
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  trigger: AiTrigger | null
+  trigger: AITrigger | null
   flows: Record<string, string>[]
 }
 
-export function UpdateAiTriggerDialog({
+export function UpdateAITriggerDialog({
   chatbotId,
   trigger,
   open,
   onOpenChange,
   flows,
-}: UpdateAiTriggerDialogProps) {
+}: UpdateAITriggerDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()
 
@@ -55,8 +55,8 @@ export function UpdateAiTriggerDialog({
     handleSubmitWithAction,
     form: { setValue, control, reset },
   } = useHookFormAction(
-    updateAiTriggerAction.bind(null, chatbotId, trigger?.id ?? ""),
-    zodResolver(updateAiTriggerSchema),
+    updateAITriggerAction.bind(null, chatbotId, trigger?.id ?? ""),
+    zodResolver(updateAITriggerSchema),
     {
       actionProps: {
         onSuccess: () => {

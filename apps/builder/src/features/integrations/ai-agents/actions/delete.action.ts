@@ -1,23 +1,23 @@
 "use server"
 
 import {
-  type DeleteAiAgentBindSchema,
-  deleteAiAgentBindSchema,
+  type DeleteAIAgentBindSchema,
+  deleteAIAgentBindSchema,
 } from "@/features/integrations/ai-agents/schemas/delete.schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const deleteAiAgentAction = authActionClient
-  .bindArgsSchemas(deleteAiAgentBindSchema)
+export const deleteAIAgentAction = authActionClient
+  .bindArgsSchemas(deleteAIAgentBindSchema)
   .action(
     async ({
       ctx,
       bindArgsParsedInputs: [chatbotId, ids],
     }: {
       ctx: { user: User }
-      bindArgsParsedInputs: DeleteAiAgentBindSchema
+      bindArgsParsedInputs: DeleteAIAgentBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 

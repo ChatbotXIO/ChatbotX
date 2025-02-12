@@ -1,13 +1,13 @@
 import { getCurrentUserId } from "@/auth"
-import type { GetAiAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/get.schema"
+import type { GetAIAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/get.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type AiAssistant, type Prisma, prisma } from "@ahachat.ai/database"
+import { type AIAssistant, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
-export const getAiAssistants = async (
-  input: GetAiAssistantsSchema,
+export const getAIAssistants = async (
+  input: GetAIAssistantsSchema,
 ): Promise<{
-  data: AiAssistant[]
+  data: AIAssistant[]
   pageCount: number
 }> => {
   const userId = await getCurrentUserId()
@@ -16,7 +16,7 @@ export const getAiAssistants = async (
   return await unstable_cache(
     async () => {
       try {
-        const where: Prisma.AiAssistantWhereInput = {
+        const where: Prisma.AIAssistantWhereInput = {
           chatbotId: input.chatbotId,
         }
 
@@ -60,7 +60,7 @@ export const getAiAssistants = async (
   )()
 }
 
-export const getAiAssistantFiles = async (
+export const getAIAssistantFiles = async (
   input: Record<string, string>,
 ): Promise<{
   data: Record<string, string>[]

@@ -18,8 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createAiAssistantsAction } from "@/features/integrations/ai-assistants/actions/create.action"
-import { createAiAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/create.schema"
+import { createAIAssistantsAction } from "@/features/integrations/ai-assistants/actions/create.action"
+import { createAIAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -28,15 +28,15 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
-export function CreateAiAssistantsDialog({ chatbotId }: { chatbotId: string }) {
+export function CreateAIAssistantsDialog({ chatbotId }: { chatbotId: string }) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAiAssistantsAction.bind(null, chatbotId, ""),
-      zodResolver(createAiAssistantsSchema),
+      createAIAssistantsAction.bind(null, chatbotId, ""),
+      zodResolver(createAIAssistantsSchema),
       {
         actionProps: {
           onSuccess: () => {

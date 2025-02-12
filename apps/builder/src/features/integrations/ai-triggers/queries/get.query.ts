@@ -1,13 +1,13 @@
 import { getCurrentUserId } from "@/auth"
-import type { GetAiTriggersSchema } from "@/features/integrations/ai-triggers/schemas/get.schema"
+import type { GetAITriggersSchema } from "@/features/integrations/ai-triggers/schemas/get.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type AiTrigger, type Prisma, prisma } from "@ahachat.ai/database"
+import { type AITrigger, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
-export const getAiTriggers = async (
-  input: GetAiTriggersSchema,
+export const getAITriggers = async (
+  input: GetAITriggersSchema,
 ): Promise<{
-  data: AiTrigger[]
+  data: AITrigger[]
   pageCount: number
 }> => {
   const userId = await getCurrentUserId()
@@ -16,7 +16,7 @@ export const getAiTriggers = async (
   return await unstable_cache(
     async () => {
       try {
-        const where: Prisma.AiTriggerWhereInput = {
+        const where: Prisma.AITriggerWhereInput = {
           chatbotId: input.chatbotId,
         }
 

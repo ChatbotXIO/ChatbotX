@@ -1,20 +1,20 @@
 "use server"
 
-import { AiAssistantException } from "@/features/integrations/ai-assistants/schemas/error.schema"
+import { AIAssistantException } from "@/features/integrations/ai-assistants/schemas/error.schema"
 import {
-  type UpdateAiAssistantsBindSchema,
-  type UpdateAiAssistantsSchema,
-  updateAiAssistantsBindSchema,
-  updateAiAssistantsSchema,
+  type UpdateAIAssistantsBindSchema,
+  type UpdateAIAssistantsSchema,
+  updateAIAssistantsBindSchema,
+  updateAIAssistantsSchema,
 } from "@/features/integrations/ai-assistants/schemas/update.schema"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const updateAiAssistantsAction = authActionClient
-  .schema(updateAiAssistantsSchema)
-  .bindArgsSchemas(updateAiAssistantsBindSchema)
+export const updateAIAssistantsAction = authActionClient
+  .schema(updateAIAssistantsSchema)
+  .bindArgsSchemas(updateAIAssistantsBindSchema)
   .action(
     async ({
       ctx,
@@ -22,12 +22,12 @@ export const updateAiAssistantsAction = authActionClient
       bindArgsParsedInputs: [chatbotId, assistantId],
     }: {
       ctx: { user: User }
-      parsedInput: UpdateAiAssistantsSchema
-      bindArgsParsedInputs: UpdateAiAssistantsBindSchema
+      parsedInput: UpdateAIAssistantsSchema
+      bindArgsParsedInputs: UpdateAIAssistantsBindSchema
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingAiAssistant = await prisma.aiAssistant.findFirst({
+      const existingAIAssistant = await prisma.aiAssistant.findFirst({
         select: {
           id: true,
         },
@@ -40,9 +40,9 @@ export const updateAiAssistantsAction = authActionClient
         },
       })
 
-      if (existingAiAssistant) {
-        throw new AiAssistantException(
-          `Ai Assistant with the name "${parsedInput.name}" already exists.`,
+      if (existingAIAssistant) {
+        throw new AIAssistantException(
+          `AI Assistant with the name "${parsedInput.name}" already exists.`,
         )
       }
 

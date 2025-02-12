@@ -1,24 +1,24 @@
 "use client"
 
-import { DeleteAiAgentsDialog } from "@/features/integrations/ai-agents/delete"
-import type { AiAgent } from "@ahachat.ai/database"
+import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
+import type { AIAgent } from "@ahachat.ai/database"
 import type { Table } from "@tanstack/react-table"
 
-type AiAgentsTableToolbarActionsProps = {
-  table: Table<AiAgent>
+type AIAgentsTableToolbarActionsProps = {
+  table: Table<AIAgent>
   chatbotId: string
   onOpenChange: () => void
 }
 
-export function AiAgentsTableToolbarActions({
+export function AIAgentsTableToolbarActions({
   table,
   chatbotId,
   onOpenChange,
-}: AiAgentsTableToolbarActionsProps) {
+}: AIAgentsTableToolbarActionsProps) {
   return (
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <DeleteAiAgentsDialog
+        <DeleteAIAgentsDialog
           agents={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}

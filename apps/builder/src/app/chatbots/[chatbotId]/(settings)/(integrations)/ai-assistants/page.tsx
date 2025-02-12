@@ -1,12 +1,12 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { CreateAiAssistantsDialog } from "@/features/integrations/ai-assistants/create"
+import { CreateAIAssistantsDialog } from "@/features/integrations/ai-assistants/create"
 import {
-  getAiAssistantFiles,
-  getAiAssistants,
+  getAIAssistantFiles,
+  getAIAssistants,
 } from "@/features/integrations/ai-assistants/queries/get.query"
-import { getAiAssistantsSearchParamsCache } from "@/features/integrations/ai-assistants/schemas/get.schema"
-import { AiAssistantsTable } from "@/features/integrations/ai-assistants/table"
-import { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
+import { getAIAssistantsSearchParamsCache } from "@/features/integrations/ai-assistants/schemas/get.schema"
+import { AIAssistantsTable } from "@/features/integrations/ai-assistants/table"
+import { getAITriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -16,17 +16,17 @@ export default async function AIAssistantsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getAiAssistantsSearchParamsCache.parse(searchParams)
+  const search = getAIAssistantsSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
-    getAiAssistants({ ...search, chatbotId: params.chatbotId as string }),
-    getAiTriggers({ chatbotId: params.chatbotId as string }),
-    getAiAssistantFiles({ chatbotId: params.chatbotId as string }),
+    getAIAssistants({ ...search, chatbotId: params.chatbotId as string }),
+    getAITriggers({ chatbotId: params.chatbotId as string }),
+    getAIAssistantFiles({ chatbotId: params.chatbotId as string }),
   ])
 
   return (
     <>
       <div className="flex w-full justify-end mb-4">
-        <CreateAiAssistantsDialog chatbotId={params.chatbotId} />
+        <CreateAIAssistantsDialog chatbotId={params.chatbotId} />
       </div>
 
       <Suspense
@@ -40,7 +40,7 @@ export default async function AIAssistantsPage(props: {
           />
         }
       >
-        <AiAssistantsTable promises={promises} chatbotId={params.chatbotId} />
+        <AIAssistantsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </>
   )

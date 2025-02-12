@@ -1,8 +1,8 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { CreateAiAgentDialog } from "@/features/integrations/ai-agents/create"
-import { getAiAgents } from "@/features/integrations/ai-agents/queries/get.query"
-import { getAiAgentSearchParamsCache } from "@/features/integrations/ai-agents/schemas/get.schema"
-import { AiAgentsTable } from "@/features/integrations/ai-agents/table"
+import { CreateAIAgentDialog } from "@/features/integrations/ai-agents/create"
+import { getAIAgents } from "@/features/integrations/ai-agents/queries/get.query"
+import { getAIAgentSearchParamsCache } from "@/features/integrations/ai-agents/schemas/get.schema"
+import { AIAgentsTable } from "@/features/integrations/ai-agents/table"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -12,15 +12,15 @@ export default async function AIAgentsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getAiAgentSearchParamsCache.parse(searchParams)
+  const search = getAIAgentSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
-    getAiAgents({ ...search, chatbotId: params.chatbotId as string }),
+    getAIAgents({ ...search, chatbotId: params.chatbotId as string }),
   ])
 
   return (
     <>
       <div className="flex w-full justify-end mb-4">
-        <CreateAiAgentDialog chatbotId={params.chatbotId} />
+        <CreateAIAgentDialog chatbotId={params.chatbotId} />
       </div>
 
       <Suspense
@@ -34,7 +34,7 @@ export default async function AIAgentsPage(props: {
           />
         }
       >
-        <AiAgentsTable promises={promises} chatbotId={params.chatbotId} />
+        <AIAgentsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </>
   )

@@ -1,24 +1,24 @@
 "use client"
 
-import { DeleteAiTriggerDialog } from "@/features/integrations/ai-triggers/delete"
-import type { AiTrigger } from "@ahachat.ai/database"
+import { DeleteAITriggerDialog } from "@/features/integrations/ai-triggers/delete"
+import type { AITrigger } from "@ahachat.ai/database"
 import type { Table } from "@tanstack/react-table"
 
-type AiTriggersTableToolbarActionsProps = {
-  table: Table<AiTrigger>
+type AITriggersTableToolbarActionsProps = {
+  table: Table<AITrigger>
   chatbotId: string
   onOpenChange: () => void
 }
 
-export function AiTriggersTableToolbarActions({
+export function AITriggersTableToolbarActions({
   table,
   chatbotId,
   onOpenChange,
-}: AiTriggersTableToolbarActionsProps) {
+}: AITriggersTableToolbarActionsProps) {
   return (
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <DeleteAiTriggerDialog
+        <DeleteAITriggerDialog
           trigger={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}

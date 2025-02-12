@@ -10,7 +10,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { AiAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisVerticalIcon } from "lucide-react"
@@ -21,13 +21,13 @@ export interface DataTableRowAction<TData> {
   type: "update" | "delete" | "duplicate"
 }
 
-interface GetAiAgentsColumnsProps {
-  setRowAction: Dispatch<SetStateAction<DataTableRowAction<AiAgent> | null>>
+interface GetAIAgentsColumnsProps {
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<AIAgent> | null>>
 }
 
-export function GetAiAgentsColumns({
+export function GetAIAgentsColumns({
   setRowAction,
-}: GetAiAgentsColumnsProps): ColumnDef<AiAgent>[] {
+}: GetAIAgentsColumnsProps): ColumnDef<AIAgent>[] {
   return [
     {
       id: "select",

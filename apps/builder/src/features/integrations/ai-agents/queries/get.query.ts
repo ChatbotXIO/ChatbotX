@@ -1,19 +1,19 @@
 import { getCurrentUserId } from "@/auth"
-import type { GetAiAgentsSchema } from "@/features/integrations/ai-agents/schemas/get.schema"
+import type { GetAIAgentsSchema } from "@/features/integrations/ai-agents/schemas/get.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type AiAgent, type Prisma, prisma } from "@ahachat.ai/database"
+import { type AIAgent, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
-export async function getAiAgents(
-  input: GetAiAgentsSchema,
-): Promise<{ data: AiAgent[]; pageCount: number }> {
+export async function getAIAgents(
+  input: GetAIAgentsSchema,
+): Promise<{ data: AIAgent[]; pageCount: number }> {
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
     async () => {
       try {
-        const where: Prisma.AiAgentWhereInput = {
+        const where: Prisma.AIAgentWhereInput = {
           chatbotId: input.chatbotId,
         }
 
@@ -57,7 +57,7 @@ export async function getAiAgents(
   )()
 }
 
-export const getAiAgentById = async ({
+export const getAIAgentById = async ({
   id,
 }: { id: string }): Promise<{
   data: Record<

@@ -9,7 +9,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { AiTrigger } from "@ahachat.ai/database"
+import type { AITrigger } from "@ahachat.ai/database"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisVerticalIcon } from "lucide-react"
@@ -21,13 +21,13 @@ export interface DataTableRowAction<TData> {
 
 interface GetColumnsProps {
   setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<AiTrigger> | null>
+    React.SetStateAction<DataTableRowAction<AITrigger> | null>
   >
 }
 
-export function getAiTriggersColumns({
+export function getAITriggersColumns({
   setRowAction,
-}: GetColumnsProps): ColumnDef<AiTrigger>[] {
+}: GetColumnsProps): ColumnDef<AITrigger>[] {
   return [
     {
       id: "select",

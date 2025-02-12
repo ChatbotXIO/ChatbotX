@@ -20,9 +20,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/open-ai-model-select"
-import { updateAiAssistantsAction } from "@/features/integrations/ai-assistants/actions/update.action"
-import { updateAiAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/update.schema"
-import type { AiAssistant } from "@ahachat.ai/database"
+import { updateAIAssistantsAction } from "@/features/integrations/ai-assistants/actions/update.action"
+import { updateAIAssistantsSchema } from "@/features/integrations/ai-assistants/schemas/update.schema"
+import type { AIAssistant } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -31,23 +31,23 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { toast } from "sonner"
 
-type UpdateAiAssistantDialogProps = {
+type UpdateAIAssistantDialogProps = {
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
   aiTriggers: Record<string, string>[]
   aiFiles: Record<string, string>[]
-  assistant: AiAssistant | null
+  assistant: AIAssistant | null
 }
 
-export function UpdateAiAssistantDialog({
+export function UpdateAIAssistantDialog({
   chatbotId,
   assistant,
   open,
   onOpenChange,
   aiTriggers,
   aiFiles,
-}: UpdateAiAssistantDialogProps) {
+}: UpdateAIAssistantDialogProps) {
   const { t } = useTranslate()
   const router = useRouter()
 
@@ -56,8 +56,8 @@ export function UpdateAiAssistantDialog({
     handleSubmitWithAction,
     form: { setValue, control, reset },
   } = useHookFormAction(
-    updateAiAssistantsAction.bind(null, chatbotId, assistant?.id ?? ""),
-    zodResolver(updateAiAssistantsSchema),
+    updateAIAssistantsAction.bind(null, chatbotId, assistant?.id ?? ""),
+    zodResolver(updateAIAssistantsSchema),
     {
       actionProps: {
         onSuccess: () => {

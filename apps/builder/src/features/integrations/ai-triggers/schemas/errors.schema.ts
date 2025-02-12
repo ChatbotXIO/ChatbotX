@@ -1,3 +1,3 @@
 import { BaseException } from "@/lib/error"
 
-export class AiTriggerException extends BaseException {}
+export class AITriggerException extends BaseException {}

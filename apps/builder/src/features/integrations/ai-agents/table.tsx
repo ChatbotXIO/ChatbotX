@@ -6,32 +6,32 @@ import type {
   DataTableFilterField,
   DataTableRowAction,
 } from "@/components/data-table/types"
-import { duplicateAiAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
-import { DeleteAiAgentsDialog } from "@/features/integrations/ai-agents/delete"
-import type { getAiAgents } from "@/features/integrations/ai-agents/queries/get.query"
-import { AiAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
-import { UpdateAiAgentDialog } from "@/features/integrations/ai-agents/update"
+import { duplicateAIAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
+import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
+import type { getAIAgents } from "@/features/integrations/ai-agents/queries/get.query"
+import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
+import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AiAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { GetAiAgentsColumns } from "./table-columns"
+import { GetAIAgentsColumns } from "./table-columns"
 
-interface AiAgentsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getAiAgents>>]>
+interface AIAgentsTableProps {
+  promises: Promise<[Awaited<ReturnType<typeof getAIAgents>>]>
   chatbotId: string
 }
 
-export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
+export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
   const [{ data, pageCount }] = use(promises)
   const router = useRouter()
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<AiAgent> | null>(null)
+    useState<DataTableRowAction<AIAgent> | null>(null)
 
   const { execute, result } = useAction(
-    duplicateAiAgentAction.bind(
+    duplicateAIAgentAction.bind(
       null,
       chatbotId,
       rowAction?.row.original ? rowAction.row.original.id : "",
@@ -49,11 +49,11 @@ export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
-    () => GetAiAgentsColumns({ setRowAction }),
+    () => GetAIAgentsColumns({ setRowAction }),
     [setRowAction],
   )
 
-  const filterFields: DataTableFilterField<AiAgent & { name?: string }>[] = [
+  const filterFields: DataTableFilterField<AIAgent & { name?: string }>[] = [
     {
       id: "name",
       label: "Search",
@@ -70,7 +70,7 @@ export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow: AiAgent) => originalRow.id as string,
+    getRowId: (originalRow: AIAgent) => originalRow.id as string,
     shallow: false,
     clearOnDefault: true,
   })
@@ -79,7 +79,7 @@ export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          <AiAgentsTableToolbarActions
+          <AIAgentsTableToolbarActions
             table={table}
             chatbotId={chatbotId}
             onOpenChange={() => setRowAction(null)}
@@ -87,7 +87,7 @@ export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
         </DataTableToolbar>
       </DataTable>
 
-      <DeleteAiAgentsDialog
+      <DeleteAIAgentsDialog
         open={rowAction?.type === "delete"}
         onOpenChange={() => setRowAction(null)}
         agents={rowAction?.row.original ? [rowAction?.row.original] : []}
@@ -96,7 +96,7 @@ export function AiAgentsTable({ promises, chatbotId }: AiAgentsTableProps) {
         chatbotId={chatbotId}
       />
 
-      <UpdateAiAgentDialog
+      <UpdateAIAgentDialog
         open={rowAction?.type === "update"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}

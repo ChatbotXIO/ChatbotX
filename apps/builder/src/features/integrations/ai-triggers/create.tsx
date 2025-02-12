@@ -21,9 +21,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import type { getFlows } from "@/features/flows/queries/get.query"
-import { createAiTriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
-import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
-import { createAiTriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
+import { createAITriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
+import type { getAITriggers } from "@/features/integrations/ai-triggers/queries/get.query"
+import { createAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -33,20 +33,20 @@ import { use, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 
-type CreateAiTriggerDialogProps = {
+type CreateAITriggerDialogProps = {
   promises: Promise<
     [
-      Awaited<ReturnType<typeof getAiTriggers>>,
+      Awaited<ReturnType<typeof getAITriggers>>,
       Awaited<ReturnType<typeof getFlows>>,
     ]
   >
   chatbotId: string
 }
 
-export function CreateAiTriggerDialog({
+export function CreateAITriggerDialog({
   chatbotId,
   promises,
-}: CreateAiTriggerDialogProps) {
+}: CreateAITriggerDialogProps) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
   const [_, flows] = use(promises)
@@ -58,12 +58,12 @@ export function CreateAiTriggerDialog({
     resetFormAndAction,
     form: { control, setValue },
   } = useHookFormAction(
-    createAiTriggerAction.bind(null, chatbotId),
-    zodResolver(createAiTriggerSchema),
+    createAITriggerAction.bind(null, chatbotId),
+    zodResolver(createAITriggerSchema),
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Ai Trigger created successfully")
+          toast.success("AI Trigger created successfully")
 
           setOpen(false)
           resetFormAndAction()

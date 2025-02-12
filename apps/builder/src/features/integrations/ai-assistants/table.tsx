@@ -8,35 +8,35 @@ import type {
 } from "@/components/data-table/types"
 import { DeleteAssistantDialog } from "@/features/integrations/ai-assistants/delete"
 import type {
-  getAiAssistantFiles,
-  getAiAssistants,
+  getAIAssistantFiles,
+  getAIAssistants,
 } from "@/features/integrations/ai-assistants/queries/get.query"
-import { AiAssistantTableToolbarActions } from "@/features/integrations/ai-assistants/table-toolbar-actions"
-import { UpdateAiAssistantDialog } from "@/features/integrations/ai-assistants/update"
-import type { getAiTriggers } from "@/features/integrations/ai-triggers/queries/get.query"
+import { AIAssistantTableToolbarActions } from "@/features/integrations/ai-assistants/table-toolbar-actions"
+import { UpdateAIAssistantDialog } from "@/features/integrations/ai-assistants/update"
+import type { getAITriggers } from "@/features/integrations/ai-triggers/queries/get.query"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AiAssistant } from "@ahachat.ai/database"
+import type { AIAssistant } from "@ahachat.ai/database"
 import { use, useMemo, useState } from "react"
 import { getAssistantColumns } from "./table-columns"
 
-interface AiAssistantsTableProps {
+interface AIAssistantsTableProps {
   promises: Promise<
     [
-      Awaited<ReturnType<typeof getAiAssistants>>,
-      Awaited<ReturnType<typeof getAiTriggers>>,
-      Awaited<ReturnType<typeof getAiAssistantFiles>>,
+      Awaited<ReturnType<typeof getAIAssistants>>,
+      Awaited<ReturnType<typeof getAITriggers>>,
+      Awaited<ReturnType<typeof getAIAssistantFiles>>,
     ]
   >
   chatbotId: string
 }
 
-export function AiAssistantsTable({
+export function AIAssistantsTable({
   promises,
   chatbotId,
-}: AiAssistantsTableProps) {
+}: AIAssistantsTableProps) {
   const [{ data, pageCount }, aiTriggers, aiFiles] = use(promises)
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<AiAssistant> | null>(null)
+    useState<DataTableRowAction<AIAssistant> | null>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
@@ -44,7 +44,7 @@ export function AiAssistantsTable({
     [setRowAction],
   )
 
-  const filterFields: DataTableFilterField<AiAssistant & { name?: string }>[] =
+  const filterFields: DataTableFilterField<AIAssistant & { name?: string }>[] =
     [
       {
         id: "name",
@@ -62,7 +62,7 @@ export function AiAssistantsTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow: AiAssistant) => originalRow.id,
+    getRowId: (originalRow: AIAssistant) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -71,7 +71,7 @@ export function AiAssistantsTable({
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table} filterFields={filterFields}>
-          <AiAssistantTableToolbarActions
+          <AIAssistantTableToolbarActions
             table={table}
             chatbotId={chatbotId}
             onOpenChange={() => setRowAction(null)}
@@ -88,7 +88,7 @@ export function AiAssistantsTable({
         chatbotId={chatbotId}
       />
 
-      <UpdateAiAssistantDialog
+      <UpdateAIAssistantDialog
         open={rowAction?.type === "update"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}

@@ -1,22 +1,22 @@
 import { getSortingStateParser } from "@/components/data-table/parsers"
-import type { AiAssistant } from "@ahachat.ai/database"
+import type { AIAssistant } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
 
-export const getAiAssistantsSearchParamsCache = createSearchParamsCache({
+export const getAIAssistantsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
-  sort: getSortingStateParser<AiAssistant>().withDefault([
+  sort: getSortingStateParser<AIAssistant>().withDefault([
     { id: "createdAt", desc: true },
   ]),
   name: parseAsString.withDefault(""),
 })
 
-export type GetAiAssistantsSchema = Awaited<
-  ReturnType<typeof getAiAssistantsSearchParamsCache.parse>
+export type GetAIAssistantsSchema = Awaited<
+  ReturnType<typeof getAIAssistantsSearchParamsCache.parse>
 > & {
   chatbotId: string
 }

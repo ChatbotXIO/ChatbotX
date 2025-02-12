@@ -9,7 +9,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { AiAssistant } from "@ahachat.ai/database"
+import type { AIAssistant } from "@ahachat.ai/database"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisVerticalIcon } from "lucide-react"
@@ -21,13 +21,13 @@ export interface DataTableRowAction<TData> {
 
 interface GetColumnsProps {
   setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<AiAssistant> | null>
+    React.SetStateAction<DataTableRowAction<AIAssistant> | null>
   >
 }
 
 export function getAssistantColumns({
   setRowAction,
-}: GetColumnsProps): ColumnDef<AiAssistant>[] {
+}: GetColumnsProps): ColumnDef<AIAssistant>[] {
   return [
     {
       id: "select",
