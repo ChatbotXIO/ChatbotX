@@ -22,16 +22,12 @@ const SplitTrafficNodeEditor = dynamic(
 )
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-const getEditor = (activeNode: Node<any>) => {
+const getEditor = (props: { activeNode: Node<any> }) => {
   return {
     [PanelAction.AddNotes]: <AddNotesEditor />,
-    [PanelAction.SendMessage]: (
-      <SendMessageNodeEditor activeNode={activeNode} />
-    ),
-    [PanelAction.SplitTraffic]: (
-      <SplitTrafficNodeEditor activeNode={activeNode} />
-    ),
-  }[activeNode.type ?? ""]
+    [PanelAction.SendMessage]: <SendMessageNodeEditor {...props} />,
+    [PanelAction.SplitTraffic]: <SplitTrafficNodeEditor {...props} />,
+  }[props.activeNode.type ?? ""]
 }
 
 export function NodeDetailSheet({
@@ -55,7 +51,7 @@ export function NodeDetailSheet({
           <SheetDescription />
         </SheetHeader>
         <div className="flex flex-col flex-1 gap-4 overflow-hidden">
-          {activeNode?.type && getEditor(activeNode)}
+          {activeNode?.type && getEditor({ activeNode })}
         </div>
       </SheetContent>
     </Sheet>

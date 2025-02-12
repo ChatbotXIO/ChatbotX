@@ -19,6 +19,12 @@ export type GetFieldsSchema = Awaited<
   ReturnType<typeof getFieldsSearchParamsCache.parse>
 > & {
   chatbotId: string
-  folderId: string | null
+  folderId?: string | null
   fieldType: FieldType
+}
+
+export type CustomFieldResource = Field
+export type CustomFieldCollection = {
+  data: CustomFieldResource[]
+  pageCount: number
 }

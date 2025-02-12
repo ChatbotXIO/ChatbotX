@@ -14,11 +14,11 @@ import { useCopyToClipboard } from "usehooks-ts"
 import { getColumns } from "./custom-field-table-columns"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
-import type { getFields } from "./queries"
+import type { listFields } from "./queries"
 import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
 
 interface FieldsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getFields>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listFields>>]>
   chatbotId: string
 }
 
