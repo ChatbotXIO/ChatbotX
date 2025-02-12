@@ -4,7 +4,6 @@ import {
   type ChatbotIdBindSchema,
   chatbotIdBindSchema,
 } from "@/features/chatbots/schemas"
-import { OpenAIModel } from "@/features/flows/react-flow/blocks/open-ai/schema"
 import { authActionClient } from "@/lib/safe-action"
 import { IntegrationType, prisma } from "@ahachat.ai/database"
 import { integration } from "@ahachat.ai/integration-google-sheets"
@@ -13,7 +12,11 @@ import {
   IntegrationException,
   type SecretTextAuthSchema,
 } from "@ahachat.ai/sdk"
-import { type ConnectOpenAISchema, connectOpenAISchema } from "../schemas"
+import {
+  type ConnectOpenAISchema,
+  OpenAIModel,
+  connectOpenAISchema,
+} from "../schemas"
 
 export const connectOpenAIAction = authActionClient
   .bindArgsSchemas(chatbotIdBindSchema)

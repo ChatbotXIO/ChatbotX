@@ -1,7 +1,7 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { AccountFieldsTable } from "@/features/fields/account-field-table"
 import { CreateAccountFieldDialog } from "@/features/fields/create-account-field-dialog"
-import { getFields } from "@/features/fields/queries"
+import { listFields } from "@/features/fields/queries"
 import { getFieldsSearchParamsCache } from "@/features/fields/schemas/get-fields-schema"
 import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema"
 import { T } from "@/tolgee/server"
@@ -19,7 +19,7 @@ export default async function AccountFieldsPage(props: {
   const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
 
   const promises = Promise.all([
-    getFields({
+    listFields({
       ...search,
       chatbotId: params.chatbotId,
       folderId: folderId,

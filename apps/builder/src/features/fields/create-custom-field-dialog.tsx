@@ -1,6 +1,7 @@
 "use client"
 
 import { FormInput } from "@/components/form-input"
+import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -11,21 +12,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { CustomFieldType, FieldType } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { Controller } from "react-hook-form"
+import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-field-action"
 import { createCustomFieldSchema } from "./schemas/create-field-schema"
@@ -33,68 +26,93 @@ import { createCustomFieldSchema } from "./schemas/create-field-schema"
 export function CreateCustomFieldDialog({
   chatbotId,
   folderId,
-}: { chatbotId: string; folderId: string | null }) {
+  triggerButton,
+  onSuccess,
+}: {
+  chatbotId: string
+  folderId: string | null
+  triggerButton?: ReactNode
+  onSuccess?: () => void
+}) {
   const { t } = useTranslate()
 
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  const {
-    form,
-    handleSubmitWithAction,
-    resetFormAndAction,
-    form: { control },
-  } = useHookFormAction(
-    createCustomFieldAction.bind(
-      null,
-      chatbotId,
-      folderId,
-      FieldType.CustomField,
-    ),
-    zodResolver(createCustomFieldSchema),
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      createCustomFieldAction.bind(
+        null,
+        chatbotId,
+        folderId,
+        FieldType.CustomField,
+      ),
+      zodResolver(createCustomFieldSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success("Field created successfully")
+
+            setOpen(false)
+            resetFormAndAction()
+            onSuccess ? onSuccess() : router.refresh()
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError.message ?? error.serverError)
+            }
+          },
+        },
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: "",
+            customFieldType: CustomFieldType.ShortText,
+            description: "",
+          },
+        },
+        errorMapProps: {},
+      },
+    )
+
+  const customFieldTypeOptions = [
     {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Field created successfully")
-
-          setOpen(false)
-          resetFormAndAction()
-          router.refresh()
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
-        },
-      },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: "",
-          customFieldType: CustomFieldType.ShortText,
-          description: "",
-        },
-      },
-      errorMapProps: {},
+      value: CustomFieldType.ShortText,
+      label: t("customField.customFieldType.ShortText"),
     },
-  )
-
-  const customFieldTypeLabels: Record<CustomFieldType, string> = {
-    ShortText: t("customField.customFieldType.ShortText"),
-    Number: t("customField.customFieldType.Number"),
-    Date: t("customField.customFieldType.Date"),
-    DateTime: t("customField.customFieldType.DateTime"),
-    Boolean: t("customField.customFieldType.Boolean"),
-    LongText: t("customField.customFieldType.LongText"),
-  }
+    {
+      value: CustomFieldType.Number,
+      label: t("customField.customFieldType.Number"),
+    },
+    {
+      value: CustomFieldType.Date,
+      label: t("customField.customFieldType.Date"),
+    },
+    {
+      value: CustomFieldType.DateTime,
+      label: t("customField.customFieldType.DateTime"),
+    },
+    {
+      value: CustomFieldType.Boolean,
+      label: t("customField.customFieldType.Boolean"),
+    },
+    {
+      value: CustomFieldType.LongText,
+      label: t("customField.customFieldType.LongText"),
+    },
+  ]
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon />
-          <T keyName="customField.createBtn" />
-        </Button>
+        {triggerButton ? (
+          triggerButton
+        ) : (
+          <Button size="sm">
+            <PlusIcon />
+            <T keyName="customField.createBtn" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -115,29 +133,9 @@ export function CreateCustomFieldDialog({
               name="customFieldType"
               label={<T keyName="customField.customFieldType.label" />}
             >
-              <Controller
+              <SingleSelect
                 name="customFieldType"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={t(
-                          "customField.customFieldType.placeholder",
-                        )}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(customFieldTypeLabels).map(
-                        (label: string) => (
-                          <SelectItem key={label} value={label}>
-                            {customFieldTypeLabels[label as CustomFieldType]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                )}
+                options={customFieldTypeOptions}
               />
             </FormInput>
 
@@ -155,7 +153,7 @@ export function CreateCustomFieldDialog({
                 variant="ghost"
                 onClick={() => setOpen(false)}
               >
-                {t("common.cancel-btn")}
+                {t("Common.CancelBtn")}
               </Button>
               <Button
                 type="submit"
@@ -166,7 +164,7 @@ export function CreateCustomFieldDialog({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("common.confirm-btn")}
+                {t("Common.ConfirmBtn")}
               </Button>
             </div>
           </form>

@@ -1,6 +1,12 @@
 import { Children, type ReactNode } from "react"
 import { useFormContext } from "react-hook-form"
-import { FormControl, FormItem, FormLabel, FormMessage } from "./ui/form"
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./ui/form"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 
@@ -21,29 +27,40 @@ export const FormInput = ({
   isRequired?: boolean
   children?: ReactNode
 }) => {
-  const { register } = useFormContext()
+  const { control } = useFormContext()
   const hasChildren = Children.count(children) > 0
 
   return (
-    <FormItem>
-      {label && (
-        <FormLabel className="flex gap-1">
-          {label}
-          {!isRequired && (
-            <span className="text-xxs self-start font-normal">(optional)</span>
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          {label && (
+            <FormLabel className="flex gap-1">
+              {label}
+              {!isRequired && (
+                <span className="text-xxs self-start font-normal">
+                  (optional)
+                </span>
+              )}
+            </FormLabel>
           )}
-        </FormLabel>
+          {hasChildren ? (
+            children
+          ) : (
+            <FormControl>
+              {inputType === "input" ? (
+                <Input placeholder={placeholder} {...field} />
+              ) : (
+                <Textarea placeholder={placeholder} {...field} />
+              )}
+            </FormControl>
+          )}
+
+          <FormMessage />
+        </FormItem>
       )}
-      <FormControl>
-        {hasChildren ? (
-          children
-        ) : inputType === "input" ? (
-          <Input placeholder={placeholder} {...register(name)} />
-        ) : (
-          <Textarea placeholder={placeholder} {...register(name)} />
-        )}
-      </FormControl>
-      <FormMessage />
-    </FormItem>
+    />
   )
 }

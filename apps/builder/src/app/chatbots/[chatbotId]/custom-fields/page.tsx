@@ -1,9 +1,7 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { Calendar } from "@/components/ui/calendar"
 import { CreateCustomFieldDialog } from "@/features/fields/create-custom-field-dialog"
-// import { CreateCustomFieldDialog } from "@/features/fields/create-custom-field-dialog"
 import { CustomFieldsTable } from "@/features/fields/custom-field-table"
-import { getFields } from "@/features/fields/queries"
+import { listFields } from "@/features/fields/queries"
 import { getFieldsSearchParamsCache } from "@/features/fields/schemas/get-fields-schema"
 import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema"
 import { T } from "@/tolgee/server"
@@ -21,7 +19,7 @@ export default async function CustomFieldsPage(props: {
   const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
 
   const promises = Promise.all([
-    getFields({
+    listFields({
       ...search,
       chatbotId: params.chatbotId,
       folderId: folderId,
