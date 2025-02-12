@@ -1,8 +1,22 @@
-import { addNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema"
-import { sendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
-import { splitTrafficNodeSchema } from "@/features/flows/react-flow/nodes/split-traffic/schema"
+import {
+  type AddNotesNodeSchema,
+  addNotesNodeSchema,
+} from "@/features/flows/react-flow/nodes/add-notes/schema"
+import {
+  type SendMessageNodeSchema,
+  sendMessageNodeSchema,
+} from "@/features/flows/react-flow/nodes/send-message/schema"
+import {
+  type SplitTrafficNodeSchema,
+  splitTrafficNodeSchema,
+} from "@/features/flows/react-flow/nodes/split-traffic/schema"
+import {
+  type WaitNodeSchema,
+  waitNodeSchema,
+} from "@/features/flows/react-flow/nodes/wait/schema"
 import { PanelAction } from "@/features/flows/react-flow/types"
-import { any, z } from "zod"
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
 
 export const nodeSchema = z
   .object({
@@ -14,6 +28,7 @@ export const nodeSchema = z
       PanelAction.SendMessage,
       PanelAction.AddNotes,
       PanelAction.SplitTraffic,
+      PanelAction.Wait,
     ]),
   })
   .and(
@@ -30,6 +45,10 @@ export const nodeSchema = z
         type: z.literal(PanelAction.SplitTraffic),
         data: splitTrafficNodeSchema,
       }),
+      z.object({
+        type: z.literal(PanelAction.Wait),
+        data: waitNodeSchema,
+      }),
     ]),
   )
 
@@ -40,11 +59,37 @@ export const draftNodeSchema = z.object({
     PanelAction.SendMessage,
     PanelAction.AddNotes,
     PanelAction.SplitTraffic,
+    PanelAction.Wait,
   ]),
   data: z.any(),
 })
 
 export type NodeSchema = z.infer<typeof nodeSchema>
+
+export type DataDefaultSchema =
+  | SendMessageNodeSchema
+  | AddNotesNodeSchema
+  | SplitTrafficNodeSchema
+  | WaitNodeSchema
+
+export const nodeDefaultValue = (
+  type:
+    | PanelAction.SendMessage
+    | PanelAction.AddNotes
+    | PanelAction.SplitTraffic
+    | PanelAction.Wait,
+  data: DataDefaultSchema,
+): NodeSchema => {
+  return {
+    id: createId(),
+    type,
+    position: {
+      x: 100,
+      y: 100,
+    },
+    data,
+  } as NodeSchema
+}
 
 export const edgeSchema = z.object({
   id: z.string(),

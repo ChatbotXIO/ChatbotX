@@ -19,6 +19,7 @@ import {
   type Edge,
   MiniMap,
   type Node,
+  type NodeProps,
   Panel,
   ReactFlow,
   ReactFlowProvider,
@@ -27,19 +28,20 @@ import {
   useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
+import type { getFields } from "@/features/fields/queries"
 import { draftFlowAction } from "@/features/flows/actions/draft-flow-action"
 import type { getCurrentFlow } from "@/features/flows/queries"
+import { nodeDefaultValue } from "@/features/flows/react-flow/nodes/schema"
+import {
+  WaitNodeSchema,
+  waitNodeDefaultValue,
+} from "@/features/flows/react-flow/nodes/wait/schema"
+import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
-import { use, useCallback, useEffect, useState } from "react"
+import { use, useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useDebouncedCallback } from "use-debounce"
-
-const nodeTypes = {
-  [PanelAction.SendMessage]: SendMessageNodeViewer,
-  // [PanelAction.SplitTraffic]: SplitTrafficNodeViewer,
-  [PanelAction.AddNotes]: AddNotesNode,
-}
 
 const data: SendMessageNodeSchema = {
   id: createId(),
@@ -63,13 +65,30 @@ const defaultNodes: Node[] = [
 ]
 
 interface ReactFlowFrameProps {
-  promises: Promise<Awaited<ReturnType<typeof getCurrentFlow>>>
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof getCurrentFlow>>,
+      Awaited<ReturnType<typeof getFields>>,
+    ]
+  >
 }
 
 export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
-  const { flow } = use(promises)
+  const [{ flow }, { data: customFields }] = use(promises)
   const { t } = useTranslate()
   const router = useRouter()
+
+  const nodeTypes = useMemo(
+    () => ({
+      [PanelAction.SendMessage]: SendMessageNodeViewer,
+      // [PanelAction.SplitTraffic]: SplitTrafficNodeViewer,
+      [PanelAction.AddNotes]: AddNotesNode,
+      [PanelAction.Wait]: (props: NodeProps<Node>) => (
+        <WaitNodeViewer customFields={customFields} {...props} />
+      ),
+    }),
+    [customFields],
+  )
 
   useEffect(() => {
     if (flow.folder?.isTrash) {
@@ -81,17 +100,16 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
   const initialNodes = (): Node[] => {
     let nodes = flow.currentVersion?.nodes ?? flow.flowVersions?.[0]?.nodes
     if (!nodes || (Array.isArray(nodes) && !nodes.length)) {
-      nodes = defaultNodes
+      nodes = JSON.parse(JSON.stringify(defaultNodes))
     }
-
-    return nodes
+    return JSON.parse(JSON.stringify(nodes)) as unknown as Node[]
   }
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes())
 
   const initialEdges = (): Edge[] => {
     const edges = flow.currentVersion?.edges ?? flow.flowVersions?.[0]?.edges
     if (Array.isArray(edges)) {
-      return edges
+      return edges as unknown as Edge[]
     }
 
     return []
@@ -175,6 +193,10 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
       }
     }
 
+    if (name === PanelAction.Wait) {
+      newNode = nodeDefaultValue(PanelAction.Wait, waitNodeDefaultValue())
+    }
+
     if (newNode) {
       setNodes((nds) => nds.concat(newNode))
     }
@@ -212,6 +234,7 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
         open={openNodeDetailSheet}
         onOpenChange={setOpenNodeDetailSheet}
         activeNode={activeNode}
+        flow={flow}
       />
     </ReactFlowProvider>
   )
