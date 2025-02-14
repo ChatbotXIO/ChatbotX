@@ -53,7 +53,7 @@ export const updateAIAgentAction = authActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`${ctx.user.id}#aIAgents`)
+      revalidateTag(`${ctx.user.id}#aiAgents`)
 
       return {
         successful: true,
