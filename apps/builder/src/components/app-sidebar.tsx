@@ -1,6 +1,17 @@
 "use client"
 
-import type { Chatbot } from "@ahachat.ai/database"
+import { ChatbotSwitcher } from "@/components/chatbot-switcher"
+import { NavMain } from "@/components/nav-main"
+import { NavUser } from "@/components/nav-user"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from "@/components/ui/sidebar"
+import type { ChatbotResource } from "@/features/chatbots/schemas"
+import { useTranslate } from "@tolgee/react"
 import {
   Atom,
   ChartPie,
@@ -13,29 +24,17 @@ import {
 } from "lucide-react"
 import { type ComponentProps, use } from "react"
 
-import { ChatbotSwitcher } from "@/components/chatbot-switcher"
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-import { useTranslate } from "@tolgee/react"
-
 export function AppSidebar({
   chatbotId,
   allChatbotsPromise,
   ...props
 }: ComponentProps<typeof Sidebar> & {
   chatbotId: string
-  allChatbotsPromise: Promise<Chatbot[]>
+  allChatbotsPromise: Promise<{ chatbots: ChatbotResource[] }>
 }) {
   const { t } = useTranslate()
 
-  const chatbots = use(allChatbotsPromise)
+  const { chatbots } = use(allChatbotsPromise)
 
   const data = {
     user: {

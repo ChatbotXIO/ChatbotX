@@ -6,12 +6,12 @@ import { authActionClient } from "@/lib/safe-action"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
-  type UpdateFlowSchema,
-  updateFlowSchema,
+  type UpdateDraftFlowVersionSchema,
+  updateDraftFlowVersionSchema,
 } from "../schemas/update-flow-schema"
 
-export const updateFlowAction = authActionClient
-  .schema(updateFlowSchema)
+export const updateDraftFlowVersionAction = authActionClient
+  .schema(updateDraftFlowVersionSchema)
   .bindArgsSchemas(idBindParams.items)
   .action(
     async ({
@@ -20,26 +20,30 @@ export const updateFlowAction = authActionClient
       bindArgsParsedInputs: [id],
     }: {
       ctx: { user: User }
-      parsedInput: UpdateFlowSchema
+      parsedInput: UpdateDraftFlowVersionSchema
       bindArgsParsedInputs: IdBindParams
     }) => {
       const { chatbotIds } = await getAllChatbotMembers(ctx.user.id)
-      const flow = await prisma.flow.findFirstOrThrow({
+      const flowVersion = await prisma.flowVersion.findFirstOrThrow({
         where: {
           id,
           chatbotId: {
             in: chatbotIds,
           },
+          isDraft: true,
         },
       })
 
-      await prisma.flow.update({
-        where: {
-          id: flow.id,
+      await prisma.flowVersion.update({
+        where: { id: flowVersion.id },
+        data: {
+          nodes: parsedInput.nodes,
+          edges: parsedInput.edges,
         },
-        data: parsedInput,
       })
 
-      revalidateTag(`chatbots#${flow.chatbotId}#flows`)
+      revalidateTag(
+        `chatbots#${flowVersion.chatbotId}#flows#${flowVersion.flowId}`,
+      )
     },
   )

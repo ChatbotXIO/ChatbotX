@@ -2,7 +2,7 @@ import { addNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/
 import { sendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
 import { splitTrafficNodeSchema } from "@/features/flows/react-flow/nodes/split-traffic/schema"
 import { PanelAction } from "@/features/flows/react-flow/types"
-import { any, z } from "zod"
+import { z } from "zod"
 
 export const nodeSchema = z
   .object({
@@ -32,8 +32,9 @@ export const nodeSchema = z
       }),
     ]),
   )
+export type NodeSchema = z.infer<typeof nodeSchema>
 
-export const draftNodeSchema = z.object({
+export const flowVersionSchema = z.object({
   id: z.string(),
   position: z.object({ x: z.number(), y: z.number() }),
   type: z.enum([
@@ -44,8 +45,6 @@ export const draftNodeSchema = z.object({
   data: z.any(),
 })
 
-export type NodeSchema = z.infer<typeof nodeSchema>
-
 export const edgeSchema = z.object({
   id: z.string(),
   source: z.string(),
@@ -53,5 +52,4 @@ export const edgeSchema = z.object({
   target: z.string(),
   targetHandle: z.string(),
 })
-
 export type EdgeSchema = z.infer<typeof edgeSchema>

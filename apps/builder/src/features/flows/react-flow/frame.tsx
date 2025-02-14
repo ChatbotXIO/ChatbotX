@@ -1,13 +1,14 @@
 "use client"
 
+// import { splitTrafficNodeDefaultValue } from '@/features/flows/react-flow/nodes/split-traffic/schema';
+// import SplitTrafficNodeViewer from '@/features/flows/react-flow/nodes/split-traffic/viewer';
+import type { findFlow } from "@/features/flows/queries"
 import { buttonBlockDefaultValue } from "@/features/flows/react-flow/blocks/button/schema"
 import { sendTextBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-text/schema"
 import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
 import type { AddNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema"
 import type { SendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
 import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer"
-// import { splitTrafficNodeDefaultValue } from '@/features/flows/react-flow/nodes/split-traffic/schema';
-// import SplitTrafficNodeViewer from '@/features/flows/react-flow/nodes/split-traffic/viewer';
 import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block"
 import { NodeDetailSheet } from "@/features/flows/react-flow/panels/node-detail-sheet"
 import { PanelAction } from "@/features/flows/react-flow/types"
@@ -27,13 +28,11 @@ import {
   useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
-import { draftFlowAction } from "@/features/flows/actions/draft-flow-action"
-import type { getCurrentFlow } from "@/features/flows/queries"
-import { useAction } from "next-safe-action/hooks"
-import { useRouter } from "next/navigation"
+import { useOptimisticAction } from "next-safe-action/hooks"
+import { notFound } from "next/navigation"
 import { use, useCallback, useEffect, useState } from "react"
-import { toast } from "sonner"
 import { useDebouncedCallback } from "use-debounce"
+import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 
 const nodeTypes = {
   [PanelAction.SendMessage]: SendMessageNodeViewer,
@@ -63,44 +62,30 @@ const defaultNodes: Node[] = [
 ]
 
 interface ReactFlowFrameProps {
-  promises: Promise<Awaited<ReturnType<typeof getCurrentFlow>>>
+  promises: Promise<Awaited<ReturnType<typeof findFlow>>>
+  flowVersionId?: string
 }
 
 export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
-  const { flow } = use(promises)
+  const { data: flow } = use(promises)
   const { t } = useTranslate()
-  const router = useRouter()
 
-  useEffect(() => {
-    if (flow.folder?.isTrash) {
-      toast.error("Resource was deleted")
-      router.push(`/chatbots/${flow.chatbotId}/flows`)
-    }
-  }, [flow, router])
-
-  const initialNodes = (): Node[] => {
-    let nodes = flow.currentVersion?.nodes ?? flow.flowVersions?.[0]?.nodes
-    if (!nodes || (Array.isArray(nodes) && !nodes.length)) {
-      nodes = defaultNodes
-    }
-
-    return nodes
+  if (!flow) {
+    return notFound()
   }
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes())
 
-  const initialEdges = (): Edge[] => {
-    const edges = flow.currentVersion?.edges ?? flow.flowVersions?.[0]?.edges
-    if (Array.isArray(edges)) {
-      return edges
-    }
-
-    return []
+  // if flowVersionId is not specified, use draft version
+  const targetFlowVersion = flow.flowVersions?.find((v) => v.isDraft)
+  if (!targetFlowVersion) {
+    return notFound()
   }
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges())
 
-  useEffect(() => {
-    updateTemporaryFlow({ nodes, edges })
-  }, [nodes, edges])
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    targetFlowVersion.nodes as unknown as Node[],
+  )
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    targetFlowVersion.edges as unknown as Edge[],
+  )
 
   const [activeNode, setActiveNode] = useState<Node | null>(null)
   const [openNodeDetailSheet, setOpenNodeDetailSheet] = useState<boolean>(false)
@@ -111,19 +96,32 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
     [setEdges],
   )
 
-  const { execute: executeDraft } = useAction(
-    draftFlowAction.bind(null, flow.chatbotId, flow.id),
+  const { execute: savingDraft } = useOptimisticAction(
+    updateDraftFlowVersionAction.bind(null, targetFlowVersion.id),
     {
-      onError: ({ error }) => {
-        console.log("error", error)
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
+      currentState: { targetFlowVersion },
+      updateFn: (state, updatedData) => {
+        console.log(222222)
+        return {
+          targetFlowVersion: {
+            ...state.targetFlowVersion,
+            ...updatedData,
+          },
         }
       },
     },
   )
 
-  const updateTemporaryFlow = useDebouncedCallback(executeDraft, 300)
+  const handleChanges = useDebouncedCallback((nodes, edges) => {
+    console.log(111111)
+    savingDraft({ nodes, edges })
+  }, 1000)
+
+  useEffect(() => {
+    handleChanges(nodes, edges)
+  }, [nodes, edges, handleChanges])
+
+  // const updateTemporaryFlow = useDebouncedCallback(executeDraft, 300)
 
   const onChooseAction = (name: PanelAction) => {
     let newNode: Node<SendMessageNodeSchema | AddNotesNodeSchema> | undefined

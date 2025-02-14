@@ -1,14 +1,18 @@
 import { getCurrentUserId } from "@/auth"
-import type { GetCurrentFlowSchema } from "@/features/flows/schemas/get-flows-schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Flow, prisma } from "@ahachat.ai/database"
-import type { FlowVersion, Folder, Prisma } from "@ahachat.ai/database"
+import type { Prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { GetFlowsSchema } from "../schemas/get-flows-schema"
+import type {
+  FindFlowParams,
+  FlowCollection,
+  FlowResource,
+  ListFlowsParams,
+} from "../schemas/get-flows-schema"
 
 export async function getFlows(
-  input: GetFlowsSchema,
-): Promise<{ data: Flow[]; pageCount: number }> {
+  input: ListFlowsParams,
+): Promise<FlowCollection> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)
@@ -27,11 +31,11 @@ export async function getFlows(
               : input.folderId
         }
 
-        if (input.title) {
+        if (input.name) {
           where.AND = [
             {
-              title: {
-                contains: input.title,
+              name: {
+                contains: input.name,
                 mode: "insensitive",
               },
             },
@@ -48,17 +52,18 @@ export async function getFlows(
             take: input.perPage,
             where,
             orderBy,
-            include: {
-              _count: {
-                select: {
-                  flowVersions: {
-                    where: {
-                      isDraft: true,
-                    },
-                  },
-                },
-              },
-            },
+            // include: {
+            //   _count: {
+            //     select: {
+            // contacts: true
+            // flowVersions: {
+            //   where: {
+            //     isDraft: true,
+            //   },
+            // },
+            //   },
+            // },
+            // },
           }),
           prisma.flow.count({ where }),
         ])
@@ -73,47 +78,35 @@ export async function getFlows(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#flows`],
+      tags: [`chatbots#${input.chatbotId}#flows`],
     },
   )()
 }
 
-type CurrentFlowResource = Flow & {
-  folder: Folder | null
-  currentVersion: FlowVersion | null
-  flowVersions: FlowVersion[]
-}
-
-export const getCurrentFlow = async (
-  input: GetCurrentFlowSchema,
-): Promise<{ flow: CurrentFlowResource }> => {
+export const findFlow = async (
+  input: FindFlowParams,
+): Promise<{ data: FlowResource | null }> => {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
     async () => {
-      const flow = await prisma.flow.findFirstOrThrow({
+      const flow = await prisma.flow.findFirst({
         where: {
           ...input,
         },
         include: {
-          folder: true,
-          currentVersion: true,
-          flowVersions: {
-            where: {
-              isDraft: true,
-            },
-          },
+          flowVersions: true,
         },
       })
 
-      return { flow }
+      return { data: flow }
     },
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#flows`, `${userId}#flows#${input.id}`],
+      tags: [`chatbots#${input.chatbotId}#flows#${input.id}`],
     },
   )()
 }

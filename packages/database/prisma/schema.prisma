@@ -29,7 +29,6 @@ model User {
   activityLogs     ActivityLog[]
   assignedContacts Contact[]       @relation("AssignedUser")
   logs             Log[]           @relation("ExecutorUser")
-  flows            Flow[]
 }
 
 model Account {
@@ -401,18 +400,16 @@ model Flow {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   chatbotId        String
-  userId           String
   folderId         String?
-  title            String
-  isPublished      Boolean  @default(true)
+  name             String
+  active           Boolean  @default(true)
   enableInInbox    Boolean  @default(true)
-  currentVersionId String?  @unique
+  currentVersionId String?
+  draftVersionId   String?
 
-  chatbot        Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folder         Folder?       @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  currentVersion FlowVersion?  @relation(name: "CurrentVersion", fields: [currentVersionId], references: [id])
-  flowVersions   FlowVersion[] @relation(name: "FlowVersions")
+  chatbot      Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  folder       Folder?       @relation(fields: [folderId], references: [id])
+  flowVersions FlowVersion[]
 }
 
 model FlowVersion {
@@ -423,12 +420,10 @@ model FlowVersion {
   flowId    String
   nodes     Json
   edges     Json
-  version   DateTime @default(now())
-  isDraft   Boolean  @default(true)
+  isDraft   Boolean
 
-  chatbot     Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  flow        Flow    @relation(name: "FlowVersions", fields: [flowId], references: [id], onDelete: Cascade)
-  currentFlow Flow?   @relation(name: "CurrentVersion")
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  flow    Flow    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 }
 
 enum CustomFieldType {

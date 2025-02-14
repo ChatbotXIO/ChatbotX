@@ -11,14 +11,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { permanentDeleteFlowAction } from "@/features/flows/actions/permanent-delete-flow-action"
 import type { Flow } from "@ahachat.ai/database"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
-import { useTransition } from "react"
 import { toast } from "sonner"
 import { deleteFlowAction } from "./actions/delete-flow-action"
 
@@ -26,7 +24,6 @@ interface DeleteFlowsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
   flows: Row<Flow>["original"][]
-  permanent: boolean
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
@@ -35,7 +32,6 @@ interface DeleteFlowsDialogProps
 export function DeleteFlowsDialog({
   chatbotId,
   flows,
-  permanent,
   showTrigger = true,
   onSuccess,
   onOpenChange,
@@ -44,56 +40,16 @@ export function DeleteFlowsDialog({
   const { t } = useTranslate()
   const router = useRouter()
 
-  const { execute: executePermanentDelete } = useAction(
-    permanentDeleteFlowAction.bind(
-      null,
-      chatbotId,
-      (flows ?? []).map((flow) => flow.id),
-    ),
-    {
-      onSuccess: () => {
-        toast.success(t("flows.deleted"))
-        onOpenChange(false)
-        router.refresh()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
-      },
+  const { execute, isPending } = useAction(deleteFlowAction, {
+    onSuccess: () => {
+      toast.success(t("flows.deleted"))
+      onOpenChange(false)
+      router.refresh()
     },
-  )
-
-  const { execute: executeDelete } = useAction(
-    deleteFlowAction.bind(
-      null,
-      chatbotId,
-      (flows ?? []).map((flow) => flow.id),
-    ),
-    {
-      onSuccess: () => {
-        toast.success(t("flows.deleted"))
-        onOpenChange(false)
-        router.refresh()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
-      },
+    onError: ({ error }) => {
+      error.serverError && toast.error(error.serverError)
     },
-  )
-
-  const [isDeletePending, startDeleteTransition] = useTransition()
-  const onDelete = () => {
-    if (!flows || flows.length === 0) {
-      return
-    }
-
-    startDeleteTransition(async () => {
-      permanent ? executePermanentDelete() : executeDelete()
-    })
-  }
+  })
 
   return (
     <Dialog {...props}>
@@ -111,7 +67,7 @@ export function DeleteFlowsDialog({
           <DialogDescription>
             {t("flows.confirmDeleteDesc")}{" "}
             <span className="font-medium">{flows.length}</span>
-            {flows.length === 1 ? " log " : " flows "}
+            {flows.length === 1 ? " flow " : " flows "}
             {t("flows.confirmDeleteDesc")}
           </DialogDescription>
         </DialogHeader>
@@ -124,10 +80,10 @@ export function DeleteFlowsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={onDelete}
-            disabled={isDeletePending}
+            onClick={() => execute({ chatbotId, ids: flows.map((f) => f.id) })}
+            disabled={isPending}
           >
-            {isDeletePending && (
+            {isPending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             {t("common.deleteBtn")}

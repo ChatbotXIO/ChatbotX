@@ -2,9 +2,8 @@ import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateFlowDialog } from "@/features/flows/create-flow-dialog"
 import { FlowsTable } from "@/features/flows/flows-table"
 import { getFlows } from "@/features/flows/queries"
-import { getFlowsSearchParamsCache } from "@/features/flows/schemas/get-flows-schema"
+import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
 import { getCurrentFolder } from "@/features/folders/queries"
-import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema"
 import type { Folder } from "@ahachat.ai/database"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -15,7 +14,7 @@ export default async function FlowsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getFlowsSearchParamsCache.parse(searchParams)
+  const search = listFlowsSearchParams.parse(searchParams)
 
   const promises = Promise.all([
     search.folderId

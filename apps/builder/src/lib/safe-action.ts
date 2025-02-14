@@ -9,35 +9,26 @@ import { BaseException } from "./error"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
+    console.log("errrrrr", error)
     if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === "P2025" || error.code === "P2016") {
-        return {
-          message: `Unable to find ${error.meta?.modelName ?? ""} record`,
-        }
+        return `Unable to find ${error.meta?.modelName ?? ""} record`
       }
 
-      return {
-        message: error.message,
-      }
+      return error.message
     }
 
     if (error instanceof BaseException) {
-      return {
-        message: error.message,
-      }
+      return error.message
     }
 
-    return {
-      message: DEFAULT_SERVER_ERROR_MESSAGE,
-    }
+    return DEFAULT_SERVER_ERROR_MESSAGE
   },
 }).use(async ({ next, clientInput, metadata }) => {
   console.log("LOGGING MIDDLEWARE")
 
   const startTime = performance.now()
-
   const result = await next()
-
   const endTime = performance.now()
 
   console.log("Result ->", result)

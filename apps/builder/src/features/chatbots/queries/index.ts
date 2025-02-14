@@ -1,17 +1,19 @@
 import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
-export const getAllChatbotsOfUser = async (userId: string) => {
+export const getAllChatbotMembers = async (userId: string) => {
   return await unstable_cache(
     async () => {
       try {
-        return await prisma.chatbot.findMany({
+        const chatbotMember = await prisma.chatbotMember.findMany({
           where: {
-            chatbotMembers: {
-              some: {
-                userId,
-              },
-            },
+            userId,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          include: {
+            chatbot: true,
           },
         })
       } catch (error) {

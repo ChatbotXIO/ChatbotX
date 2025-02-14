@@ -1,22 +1,17 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Form } from "@/components/ui/form"
 import type { Flow } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -47,7 +42,7 @@ export function RenameFlowDialog({
     handleSubmitWithAction,
     form: { setValue },
   } = useHookFormAction(
-    updateFlowAction.bind(null, chatbotId, flow?.id ?? ""),
+    updateFlowAction.bind(null, flow?.id ?? ""),
     zodResolver(updateFlowSchema),
     {
       actionProps: {
@@ -58,9 +53,7 @@ export function RenameFlowDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {
@@ -72,7 +65,7 @@ export function RenameFlowDialog({
 
   useEffect(() => {
     if (flow) {
-      setValue("title", flow.title)
+      setValue("name", flow.name)
     }
   }, [flow, setValue])
 
@@ -89,28 +82,14 @@ export function RenameFlowDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("flows.title")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("flows.title")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput name="name" label={t("flows.name")} />
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => onOpenChange(false)}
-                >
-                  {t("common.cancel-btn")}
-                </Button>
+              <DialogFooter className="justify-end">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary" size="sm">
+                    Close
+                  </Button>
+                </DialogClose>
                 <Button
                   type="submit"
                   disabled={
@@ -122,7 +101,7 @@ export function RenameFlowDialog({
                   )}
                   {t("common.confirm-btn")}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </Form>
         </div>

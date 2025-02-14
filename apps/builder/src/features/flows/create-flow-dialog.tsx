@@ -1,24 +1,18 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
+import { Form } from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -38,33 +32,29 @@ export function CreateFlowDialog({
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      createFlowAction.bind(null, chatbotId, folderId),
-      zodResolver(createFlowSchema),
-      {
-        actionProps: {
-          onSuccess: () => {
-            toast.success("Flow created successfully")
+    useHookFormAction(createFlowAction, zodResolver(createFlowSchema), {
+      actionProps: {
+        onSuccess: () => {
+          toast.success("Flow created successfully")
 
-            setOpen(false)
-            resetFormAndAction()
-            router.refresh()
-          },
-          onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError.message ?? error.serverError)
-            }
-          },
+          setOpen(false)
+          resetFormAndAction()
+          router.refresh()
         },
-        formProps: {
-          mode: "onChange",
-          defaultValues: {
-            title: "",
-          },
+        onError: ({ error }) => {
+          error.serverError && toast.error(error.serverError)
         },
-        errorMapProps: {},
       },
-    )
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          name: "",
+          chatbotId,
+          folderId,
+        },
+      },
+      errorMapProps: {},
+    })
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -85,28 +75,14 @@ export function CreateFlowDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("flows.title")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("flows.title")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput name="name" label={t("flows.name")} />
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setOpen(false)}
-                >
-                  {t("common.cancel-btn")}
-                </Button>
+              <DialogFooter className="justify-end">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Close
+                  </Button>
+                </DialogClose>
                 <Button
                   type="submit"
                   disabled={
@@ -118,7 +94,7 @@ export function CreateFlowDialog({
                   )}
                   {t("common.confirm-btn")}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </Form>
         </div>

@@ -1,61 +1,65 @@
 "use server"
 
+import { ensureUserCanAccessChatbot } from "@/features/chatbot-members/queries"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
 import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { FolderType, type User, prisma } from "@ahachat.ai/database"
+import { createId } from "@paralleldrive/cuid2"
 import { revalidateTag } from "next/cache"
 import {
-  type CreateFlowBindSchema,
   type CreateFlowSchema,
-  createFlowBindSchema,
   createFlowSchema,
 } from "../schemas/create-flow-schema"
+import { MessageType } from "../schemas/types"
 
 export const createFlowAction = authActionClient
   .schema(createFlowSchema)
-  .bindArgsSchemas(createFlowBindSchema)
   .action(
     async ({
       ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, folderId],
     }: {
       ctx: { user: User }
       parsedInput: CreateFlowSchema
-      bindArgsParsedInputs: CreateFlowBindSchema
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
+      await ensureUserCanAccessChatbot(ctx.user.id, parsedInput.chatbotId)
 
-      if (folderId) {
-        await ensureFolderIdIsExists(folderId, chatbotId, FolderType.Flow)
+      if (parsedInput.folderId) {
+        await ensureFolderIdIsExists(
+          parsedInput.folderId,
+          parsedInput.chatbotId,
+          FolderType.Flow,
+        )
       }
 
       await prisma.flow.create({
         data: {
           ...parsedInput,
-          userId: ctx.user.id,
-          chatbotId,
-          folderId,
           flowVersions: {
             create: [
               {
-                chatbotId,
-                nodes: [],
+                chatbotId: parsedInput.chatbotId,
+                nodes: [
+                  {
+                    id: createId(),
+                    type: "SendMessage",
+                    position: { x: 100, y: 100 },
+                    data: {
+                      id: createId(),
+                      name: "Send Message #1",
+                      messageType: MessageType.Omnichannel,
+                      blocks: [],
+                    },
+                  },
+                ],
                 edges: [],
+                isDraft: true,
               },
             ],
           },
         },
-        include: {
-          flowVersions: true,
-        },
       })
 
-      revalidateTag(`${chatbotId}#flows`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbots#${parsedInput.chatbotId}#flows`)
     },
   )

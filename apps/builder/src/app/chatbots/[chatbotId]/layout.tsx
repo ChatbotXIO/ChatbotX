@@ -6,7 +6,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { getAllChatbotsOfUser } from "@/features/chatbots/queries"
+import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { redirect } from "next/navigation"
 
@@ -21,7 +21,7 @@ export default async function ChatbotLayout({
 }) {
   const userId = await getCurrentUserId()
   const chatbotId = (await params).chatbotId
-  const allChatbotsPromise = getAllChatbotsOfUser(userId)
+  const allChatbotsPromise = getAllChatbotMembers(userId)
 
   try {
     await findChatbotOrFail(userId, chatbotId)

@@ -11,33 +11,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import type { UpdateFlowSchema } from "@/features/flows/schemas/update-flow-schema"
 import type { Flow } from "@ahachat.ai/database"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
+import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
+import { updateFlowAction } from "./actions/update-flow-action"
+import type { FlowResource } from "./schemas/get-flows-schema"
+
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  type: "update" | "delete"
-}
-
-type FlowWithContacts = Flow & {
-  _count?: {
-    contacts: number
-  }
+  type: "rename" | "delete" | "duplicate" | "toggleActive" | "toggleInbox"
+  value?: unknown
 }
 
 interface GetColumnsProps {
   setRowAction: React.Dispatch<
     React.SetStateAction<DataTableRowAction<Flow> | null>
   >
-  update: (id: string, payload: UpdateFlowSchema) => void
 }
 
 export function getFlowColumns({
   setRowAction,
-  update,
-}: GetColumnsProps): ColumnDef<FlowWithContacts>[] {
+}: GetColumnsProps): ColumnDef<FlowResource>[] {
   return [
     {
       id: "select",
@@ -73,7 +69,7 @@ export function getFlowColumns({
         <Link
           href={`/chatbots/${row.original.chatbotId}/flows/${row.original.id}`}
         >
-          {row.original.title}
+          {row.original.name}
         </Link>
       ),
       size: 300,
@@ -81,18 +77,29 @@ export function getFlowColumns({
       enableHiding: false,
     },
     {
-      accessorKey: "status",
+      accessorKey: "active",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
       ),
-      cell: ({ row }) => (
-        <Switch
-          checked={row.original.isPublished}
-          onCheckedChange={(value) =>
-            update(row.original.id, { isPublished: value })
-          }
-        />
-      ),
+      cell: ({ row }) => {
+        const { execute, isPending } = useAction(
+          updateFlowAction.bind(null, row.original.id),
+          {
+            onSuccess: () => {
+              row.original.active = !row.original.active
+            },
+          },
+        )
+        return (
+          <Switch
+            disabled={isPending}
+            checked={row.original.active}
+            onCheckedChange={(value) => {
+              execute({ active: value })
+            }}
+          />
+        )
+      },
       size: 50,
       enableSorting: false,
       enableHiding: false,
@@ -102,14 +109,26 @@ export function getFlowColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Inbox" />
       ),
-      cell: ({ row }) => (
-        <Switch
-          checked={row.original.enableInInbox}
-          onCheckedChange={(value) =>
-            update(row.original.id, { enableInInbox: value })
-          }
-        />
-      ),
+      cell: ({ row }) => {
+        const { execute, isPending } = useAction(
+          updateFlowAction.bind(null, row.original.id),
+          {
+            onSuccess: () => {
+              row.original.enableInInbox = !row.original.enableInInbox
+            },
+          },
+        )
+
+        return (
+          <Switch
+            disabled={isPending}
+            checked={row.original.enableInInbox}
+            onCheckedChange={(value) => {
+              execute({ enableInInbox: value })
+            }}
+          />
+        )
+      },
       size: 50,
       enableSorting: false,
       enableHiding: false,
@@ -141,7 +160,7 @@ export function getFlowColumns({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "update" })}
+                onSelect={() => setRowAction({ row, type: "rename" })}
               >
                 <TextIcon className="mr-2" />
                 Rename

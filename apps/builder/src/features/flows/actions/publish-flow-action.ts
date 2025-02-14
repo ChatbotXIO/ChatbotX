@@ -1,74 +1,56 @@
 "use server"
 
+import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
+import { type IdBindParams, idBindParams } from "@/lib/common-types"
 import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
-import { revalidateTag } from "next/cache"
-import {
-  type PublishFlowSchema,
-  type UpdateFlowBindSchema,
-  publishFlowSchema,
-  updateFlowBindSchema,
-} from "../schemas/update-flow-schema"
+import { FlowException } from "../schemas/exception"
+import { publishFlowSchema } from "../schemas/update-flow-schema"
 
 export const publishFlowAction = authActionClient
-  .schema(publishFlowSchema)
-  .bindArgsSchemas(updateFlowBindSchema)
+  .bindArgsSchemas(idBindParams.items)
   .action(
     async ({
       ctx,
-      parsedInput,
-      bindArgsParsedInputs: [chatbotId, flowId],
+      bindArgsParsedInputs: [id],
     }: {
       ctx: { user: User }
-      parsedInput: PublishFlowSchema
-      bindArgsParsedInputs: UpdateFlowBindSchema
+      bindArgsParsedInputs: IdBindParams
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-      let currentDraftVersion = await prisma.flowVersion.findFirst({
+      const { chatbotIds } = await getAllChatbotMembers(ctx.user.id)
+      const flow = await prisma.flow.findFirst({
         where: {
-          chatbotId,
-          flowId: flowId,
-          isDraft: true,
+          id,
+          chatbotId: {
+            in: chatbotIds,
+          },
+        },
+        include: {
+          flowVersions: {
+            where: {
+              isDraft: true,
+            },
+          },
         },
       })
-      await prisma.$transaction(async (prisma) => {
-        if (currentDraftVersion) {
-          await prisma.flowVersion.update({
-            where: {
-              id: currentDraftVersion.id,
-            },
-            data: {
-              nodes: parsedInput.nodes,
-              edges: parsedInput.edges,
-              isDraft: false,
-            },
-          })
-        } else {
-          currentDraftVersion = await prisma.flowVersion.create({
-            data: {
-              chatbotId,
-              flowId,
-              isDraft: false,
-              nodes: parsedInput.nodes,
-              edges: parsedInput.edges,
-            },
-          })
-        }
-        prisma.flow.update({
-          where: {
-            id: flowId,
-          },
-          data: {
-            currentVersionId: currentDraftVersion.id,
-          },
-        })
+
+      if (!flow || flow.flowVersions.length === 0) {
+        throw new FlowException("Flow not found")
+      }
+
+      const draftVersion = flow.flowVersions[0]
+      const validated = publishFlowSchema.parse({
+        nodes: draftVersion?.nodes,
+        edges: draftVersion?.edges,
       })
 
-      revalidateTag(`${chatbotId}#flows`)
-
-      return {
-        successful: true,
-      }
+      await prisma.flowVersion.create({
+        data: {
+          chatbotId: flow.chatbotId,
+          flowId: flow.id,
+          isDraft: false,
+          ...validated,
+        },
+      })
     },
   )
