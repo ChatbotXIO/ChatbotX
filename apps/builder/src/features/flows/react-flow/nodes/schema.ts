@@ -11,6 +11,10 @@ import {
   splitTrafficNodeSchema,
 } from "@/features/flows/react-flow/nodes/split-traffic/schema"
 import {
+  type StartFlowNodeSchema,
+  startFlowNodeSchema,
+} from "@/features/flows/react-flow/nodes/start-flow/schema"
+import {
   type WaitNodeSchema,
   waitNodeSchema,
 } from "@/features/flows/react-flow/nodes/wait/schema"
@@ -29,6 +33,7 @@ export const nodeSchema = z
       PanelAction.AddNotes,
       PanelAction.SplitTraffic,
       PanelAction.Wait,
+      PanelAction.StartFlow,
     ]),
   })
   .and(
@@ -49,6 +54,10 @@ export const nodeSchema = z
         type: z.literal(PanelAction.Wait),
         data: waitNodeSchema,
       }),
+      z.object({
+        type: z.literal(PanelAction.StartFlow),
+        data: startFlowNodeSchema,
+      }),
     ]),
   )
 
@@ -60,6 +69,7 @@ export const draftNodeSchema = z.object({
     PanelAction.AddNotes,
     PanelAction.SplitTraffic,
     PanelAction.Wait,
+    PanelAction.StartFlow,
   ]),
   data: z.any(),
 })
@@ -71,13 +81,10 @@ export type DataDefaultSchema =
   | AddNotesNodeSchema
   | SplitTrafficNodeSchema
   | WaitNodeSchema
+  | StartFlowNodeSchema
 
 export const nodeDefaultValue = (
-  type:
-    | PanelAction.SendMessage
-    | PanelAction.AddNotes
-    | PanelAction.SplitTraffic
-    | PanelAction.Wait,
+  type: PanelAction,
   data: DataDefaultSchema,
 ): NodeSchema => {
   return {

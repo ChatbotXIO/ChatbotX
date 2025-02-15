@@ -7,14 +7,14 @@ import {
   SortableDragHandle,
   SortableItem,
 } from "@/components/ui/sortable"
-import { fetchCustomFields } from "@/features/fields/actions/get-fields-action"
+import { fetchFlows } from "@/features/flows/actions/get-flows-action"
 import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert"
-import { WaitBlockEditor } from "@/features/flows/react-flow/blocks/wait/editor"
+import { StartFlowBlockEditor } from "@/features/flows/react-flow/blocks/start-flow//editor"
 import {
-  type WaitNodeSchema,
-  waitNodeSchema,
-} from "@/features/flows/react-flow/nodes/wait/schema"
-import type { Field } from "@ahachat.ai/database"
+  type StartFlowNodeSchema,
+  startFlowNodeSchema,
+} from "@/features/flows/react-flow/nodes/start-flow/schema"
+import type { Flow } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
 import { type Node, useReactFlow } from "@xyflow/react"
@@ -23,16 +23,16 @@ import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 
-export default function WaitNodeEditor({
+export default function StartFlowNodeEditor({
   activeNode,
   chatbotId,
 }: {
-  activeNode: Node<WaitNodeSchema>
+  activeNode: Node<StartFlowNodeSchema>
   chatbotId: string
 }) {
   const { setNodes } = useReactFlow()
-  const [customFields, setCustomFields] = useState<Field[]>([])
-  const [loadedCustomFields, setLoadedCustomFields] = useState<boolean>(false)
+  const [flows, setFlows] = useState<Flow[]>([])
+  const [loadedFlows, setLoadedFlows] = useState<boolean>(false)
 
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -55,8 +55,8 @@ export default function WaitNodeEditor({
     [activeNode, setNodes],
   )
 
-  const { control, getValues, watch, ...form } = useForm<WaitNodeSchema>({
-    resolver: zodResolver(waitNodeSchema),
+  const { control, getValues, watch, ...form } = useForm<StartFlowNodeSchema>({
+    resolver: zodResolver(startFlowNodeSchema),
     defaultValues: activeNode.data,
   })
 
@@ -80,22 +80,22 @@ export default function WaitNodeEditor({
     }
   }
 
-  const getCustomFields = useCallback(async () => {
-    if (loadedCustomFields) {
+  const getFlows = useCallback(async () => {
+    if (loadedFlows) {
       return
     }
-    setLoadedCustomFields(true)
+    setLoadedFlows(true)
     try {
-      const fields = await fetchCustomFields(chatbotId)
-      setCustomFields(fields)
+      const flows = await fetchFlows(chatbotId)
+      setFlows(flows)
     } catch (error) {
       console.error("Failed to fetch custom fields:", error)
     }
-  }, [loadedCustomFields, chatbotId])
+  }, [loadedFlows, chatbotId])
 
   useEffect(() => {
-    getCustomFields()
-  }, [getCustomFields])
+    getFlows()
+  }, [getFlows])
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const onSubmit = (data: any) => {
@@ -103,7 +103,7 @@ export default function WaitNodeEditor({
   }
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const onError = (error: any) => {
-    console.log("Form error:", fields, error)
+    console.log("Form error:", error)
   }
 
   return (
@@ -126,10 +126,10 @@ export default function WaitNodeEditor({
                         <ErrorAlert
                           message={
                             typeof form.formState.errors.blocks?.[index]
-                              ?.message === "object"
+                              ?.flowId === "object"
                               ? ((
                                   form.formState.errors.blocks?.[index]
-                                    ?.message as { message: string }
+                                    ?.flowId as { message: string }
                                 ).message as string)
                               : ""
                           }
@@ -138,9 +138,9 @@ export default function WaitNodeEditor({
                         <div className="w-4">{"\u00A0"}</div>
                       )}
                       <div className="flex-1 break-all">
-                        <WaitBlockEditor
+                        <StartFlowBlockEditor
                           parentName={`blocks.${index}`}
-                          customFields={customFields}
+                          flows={flows}
                         />
                       </div>
                       <div className="flex flex-col">

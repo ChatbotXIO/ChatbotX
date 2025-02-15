@@ -24,6 +24,9 @@ const SplitTrafficNodeEditor = dynamic(
 const WaitNodeEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/wait/editor"),
 )
+const StartFlowNodeEditor = dynamic(
+  () => import("@/features/flows/react-flow/nodes/start-flow/editor"),
+)
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const getEditor = (activeNode: Node<any>, flow: Flow) => {
@@ -37,6 +40,9 @@ const getEditor = (activeNode: Node<any>, flow: Flow) => {
     ),
     [PanelAction.Wait]: (
       <WaitNodeEditor activeNode={activeNode} chatbotId={flow.chatbotId} />
+    ),
+    [PanelAction.StartFlow]: (
+      <StartFlowNodeEditor activeNode={activeNode} chatbotId={flow.chatbotId} />
     ),
   }[activeNode.type ?? ""]
 }

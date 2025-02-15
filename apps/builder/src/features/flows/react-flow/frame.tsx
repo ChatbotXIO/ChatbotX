@@ -30,12 +30,11 @@ import {
 import "@xyflow/react/dist/style.css"
 import type { getFields } from "@/features/fields/queries"
 import { draftFlowAction } from "@/features/flows/actions/draft-flow-action"
-import type { getCurrentFlow } from "@/features/flows/queries"
+import type { getCurrentFlow, getFlows } from "@/features/flows/queries"
 import { nodeDefaultValue } from "@/features/flows/react-flow/nodes/schema"
-import {
-  WaitNodeSchema,
-  waitNodeDefaultValue,
-} from "@/features/flows/react-flow/nodes/wait/schema"
+import { startFlowNodeDefaultValue } from "@/features/flows/react-flow/nodes/start-flow/schema"
+import StartFlowNodeViewer from "@/features/flows/react-flow/nodes/start-flow/viewer"
+import { waitNodeDefaultValue } from "@/features/flows/react-flow/nodes/wait/schema"
 import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
@@ -69,12 +68,13 @@ interface ReactFlowFrameProps {
     [
       Awaited<ReturnType<typeof getCurrentFlow>>,
       Awaited<ReturnType<typeof getFields>>,
+      Awaited<ReturnType<typeof getFlows>>,
     ]
   >
 }
 
 export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
-  const [{ flow }, { data: customFields }] = use(promises)
+  const [{ flow }, { data: customFields }, { data: flows }] = use(promises)
   const { t } = useTranslate()
   const router = useRouter()
 
@@ -86,8 +86,11 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
       [PanelAction.Wait]: (props: NodeProps<Node>) => (
         <WaitNodeViewer customFields={customFields} {...props} />
       ),
+      [PanelAction.StartFlow]: (props: NodeProps<Node>) => (
+        <StartFlowNodeViewer flows={flows} {...props} />
+      ),
     }),
-    [customFields],
+    [customFields, flows],
   )
 
   useEffect(() => {
@@ -125,7 +128,13 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
 
   const onConnect = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
+    (params: any) =>
+      setEdges((eds) => {
+        return addEdge(
+          params,
+          eds.filter((obj) => obj.sourceHandle !== params.sourceHandle),
+        )
+      }),
     [setEdges],
   )
 
@@ -195,6 +204,13 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
 
     if (name === PanelAction.Wait) {
       newNode = nodeDefaultValue(PanelAction.Wait, waitNodeDefaultValue())
+    }
+
+    if (name === PanelAction.StartFlow) {
+      newNode = nodeDefaultValue(
+        PanelAction.StartFlow,
+        startFlowNodeDefaultValue(),
+      )
     }
 
     if (newNode) {

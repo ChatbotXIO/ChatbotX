@@ -13,14 +13,13 @@ export const getFlowsSearchParamsCache = createSearchParamsCache({
     { id: "updatedAt", desc: true },
   ]),
   title: parseAsString.withDefault(""),
-  folderId: parseAsString,
 })
 
 export type GetFlowsSchema = Awaited<
   ReturnType<typeof getFlowsSearchParamsCache.parse>
 > & {
   chatbotId: string
-  folderId: string | null
+  folderId: string | null | undefined
 }
 
 export type GetCurrentFlowSchema = {

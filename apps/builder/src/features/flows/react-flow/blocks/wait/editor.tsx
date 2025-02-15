@@ -116,8 +116,11 @@ export const WaitBlockEditor = ({
         <>
           <div className="flex justify-between gap-2">
             <Input
-              {...register(`${parentName}.duration`)}
-              defaultValue={duration}
+              type="number"
+              {...register(`${parentName}.duration`, { valueAsNumber: true })}
+              defaultValue={
+                !Number.isNaN(Number(duration)) ? Number(duration) : 0
+              }
             />
             <Select
               onValueChange={(value) => setValue(`${parentName}.unit`, value)}

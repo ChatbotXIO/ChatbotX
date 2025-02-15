@@ -17,7 +17,9 @@ export const WaitBlockViewer = ({
   const { t } = useTranslate()
   const customFieldLabel = useMemo(() => {
     const customField = customFields.find(
-      (obj) => obj.id === data.customFieldId,
+      (obj) =>
+        data.delayType === DelayType.DatetimeCustomField &&
+        obj.id === data.customFieldId,
     )
     if (customField) {
       return customField.name
