@@ -1,5 +1,6 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -7,11 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormLabel,
-} from "@/components/ui/form"
+import { Form, FormLabel } from "@/components/ui/form"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { FlowSelect } from "@/features/flows/flow-select"
 import { updateAITriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
 import { updateAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import type { AITrigger } from "@ahachat.ai/database"
@@ -24,8 +23,6 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { FormInput } from "@/components/form-input";
-import { FlowSelect } from "@/features/flows/flow-select";
 
 type UpdateAITriggerDialogProps = {
   open: boolean
@@ -88,7 +85,7 @@ export function UpdateAITriggerDialog({
       setValue("name", trigger?.name)
       setValue("description", trigger.description || "")
       if (trigger.questions) {
-        setValue("questions", trigger.questions as JsonObject[] || [])
+        setValue("questions", (trigger.questions as JsonObject[]) || [])
       }
       setValue("flowId", trigger.flowId || "")
       setValue("finalMessage", trigger.finalMessage || "")
@@ -107,10 +104,7 @@ export function UpdateAITriggerDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput
-                name="name"
-                label={t("aiTriggers.name")}
-              />
+              <FormInput name="name" label={t("aiTriggers.name")} />
 
               <FormInput
                 name="description"
@@ -122,10 +116,7 @@ export function UpdateAITriggerDialog({
                 <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
                 {fields.map((field, i) => (
                   <div className="flex items-center space-x-2" key={field.id}>
-                    <FormInput
-                      name={`questions.${i}.name`}
-                      label=''
-                    />
+                    <FormInput name={`questions.${i}.name`} label="" />
 
                     <ArrowRightIcon />
 
@@ -154,10 +145,7 @@ export function UpdateAITriggerDialog({
                 </Button>
               </div>
 
-              <FlowSelect
-                name="flowId"
-                label={t("aiTriggers.flowId")}
-              />
+              <FlowSelect name="flowId" label={t("aiTriggers.flowId")} />
 
               <FormInput
                 name="finalMessage"
