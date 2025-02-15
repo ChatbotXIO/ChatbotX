@@ -20,7 +20,7 @@ import type { Folder } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
-import { Loader2 } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { toast } from "sonner"
@@ -102,7 +102,7 @@ export function EditFolderDialog({
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   {t("common.confirm-btn")}
                 </Button>

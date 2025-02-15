@@ -44,13 +44,24 @@ export const publishFlowAction = authActionClient
         edges: draftVersion?.edges,
       })
 
-      await prisma.flowVersion.create({
-        data: {
-          chatbotId: flow.chatbotId,
-          flowId: flow.id,
-          isDraft: false,
-          ...validated,
-        },
+      await prisma.$transaction(async (tx) => {
+        const newVersion = await prisma.flowVersion.create({
+          data: {
+            chatbotId: flow.chatbotId,
+            flowId: flow.id,
+            isDraft: false,
+            ...validated,
+          },
+        })
+
+        await tx.flow.update({
+          where: {
+            id: flow.id,
+          },
+          data: {
+            currentVersionId: newVersion.id,
+          },
+        })
       })
     },
   )

@@ -17,7 +17,7 @@ import type { FolderType } from "@ahachat.ai/database"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
-import { Loader2, PlusIcon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -100,7 +100,7 @@ export function CreateFolderDialog({
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   {t("common.confirm-btn")}
                 </Button>

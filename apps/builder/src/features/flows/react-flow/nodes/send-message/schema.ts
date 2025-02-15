@@ -16,12 +16,13 @@ import { sendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send
 import { sendImageBlockSchema } from "@/features/flows/react-flow/blocks/send-image/schema"
 import { sendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema"
 import { sendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema"
+import { MessageType } from "@/features/flows/schemas/types"
 import { z } from "zod"
 
 export const sendMessageNodeSchema = z.object({
   id: z.string(),
   name: z.string().min(1).max(255).trim(),
-  messageType: z.enum(["Omnichannel", "Messenger", "Whatsapp", "Webchat"]),
+  messageType: z.nativeEnum(MessageType),
   blocks: z.array(
     z.union([
       sendTextBlockSchema,

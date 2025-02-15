@@ -27,7 +27,7 @@ import { createAITriggerSchema } from "@/features/integrations/ai-triggers/schem
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
-import { ArrowRightIcon, Loader2, PlusIcon, XIcon } from "lucide-react"
+import { ArrowRightIcon, Loader2Icon, PlusIcon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -186,7 +186,7 @@ export function CreateAITriggerDialog({
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   {t("common.confirm-btn")}
                 </Button>

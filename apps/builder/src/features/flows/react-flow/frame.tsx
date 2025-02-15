@@ -1,10 +1,6 @@
 "use client"
 
-// import { splitTrafficNodeDefaultValue } from '@/features/flows/react-flow/nodes/split-traffic/schema';
-// import SplitTrafficNodeViewer from '@/features/flows/react-flow/nodes/split-traffic/viewer';
 import type { findFlow } from "@/features/flows/queries"
-import { buttonBlockDefaultValue } from "@/features/flows/react-flow/blocks/button/schema"
-import { sendTextBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-text/schema"
 import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
 import type { AddNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema"
 import type { SendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
@@ -33,33 +29,12 @@ import { notFound } from "next/navigation"
 import { use, useCallback, useEffect, useState } from "react"
 import { useDebouncedCallback } from "use-debounce"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
+import { MessageType } from "../schemas/types"
 
 const nodeTypes = {
   [PanelAction.SendMessage]: SendMessageNodeViewer,
-  // [PanelAction.SplitTraffic]: SplitTrafficNodeViewer,
   [PanelAction.AddNotes]: AddNotesNode,
 }
-
-const data: SendMessageNodeSchema = {
-  id: createId(),
-  name: "Send Message",
-  messageType: "Whatsapp",
-  blocks: [
-    sendTextBlockDefaultValue("Ok chưa", [
-      buttonBlockDefaultValue("bt1"),
-      buttonBlockDefaultValue("bt2"),
-    ]),
-  ],
-}
-
-const defaultNodes: Node[] = [
-  {
-    id: createId(),
-    type: PanelAction.SendMessage,
-    position: { x: 200, y: 200 },
-    data,
-  },
-]
 
 interface ReactFlowFrameProps {
   promises: Promise<Awaited<ReturnType<typeof findFlow>>>
@@ -101,7 +76,6 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
     {
       currentState: { targetFlowVersion },
       updateFn: (state, updatedData) => {
-        console.log(222222)
         return {
           targetFlowVersion: {
             ...state.targetFlowVersion,
@@ -113,7 +87,6 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
   )
 
   const handleChanges = useDebouncedCallback((nodes, edges) => {
-    console.log(111111)
     savingDraft({ nodes, edges })
   }, 1000)
 
@@ -151,7 +124,7 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
         data: {
           id: createId(),
           name: `Send Message #${labelVersion + 1}`,
-          messageType: "Messenger",
+          messageType: MessageType.Omnichannel,
           blocks: [],
         },
       }
