@@ -19,10 +19,11 @@ import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { use } from "react"
+import { use, useState } from "react"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
 import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
+import { OpenAIUpdateDialog } from "@/features/integration-openai/openai-update"
 
 type OpenAIConnectProps = {
   chatbotId: string
@@ -31,6 +32,7 @@ type OpenAIConnectProps = {
 
 export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
   const [{ data: integrationOpenAI }] = use(promises)
+  const [isEdit, setIsEdit] = useState<boolean>(false)
   const router = useRouter()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
@@ -48,11 +50,21 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
       >
         {integrationOpenAI ? (
           <div className="flex flex-col gap-2">
-            <Button variant="secondary" size="sm">
-              <Link href="../google-sheets">
-                <T keyName="settings.integrations.ManageBtn" />
-              </Link>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsEdit(true)}
+            >
+              <T keyName="settings.integrations.ManageBtn" />
             </Button>
+
+            <OpenAIUpdateDialog
+              open={isEdit}
+              chatbotId={chatbotId}
+              trigger={null}
+              agent={null}
+              onOpenChange={setIsEdit}
+            />
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
