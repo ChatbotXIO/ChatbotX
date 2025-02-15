@@ -63,8 +63,9 @@ import { type Node, useReactFlow } from "@xyflow/react"
 import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
 import { type ReactNode, useCallback, useEffect } from "react"
-import { useFieldArray, useForm } from "react-hook-form"
+import { type FieldArrayWithId, useFieldArray, useForm } from "react-hook-form"
 import { ActionType, disabledCopyActionTypes } from "../../action-type"
+import type { ButtonBlockSchema } from "../../blocks/button/schema"
 import { SendTextBlockEditor } from "../../blocks/send-text/editor"
 import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
@@ -126,6 +127,11 @@ const maps: Record<
   [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
 }
 
+type FieldType = FieldArrayWithId<SendMessageNodeSchema, "blocks", "id"> & {
+  actionType: ActionType
+  buttons?: ButtonBlockSchema[]
+}
+
 export default function SendMessageNodeEditor({
   activeNode,
 }: {
@@ -137,6 +143,7 @@ export default function SendMessageNodeEditor({
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (data: any) => {
+      console.log(11111)
       setNodes((nodes) =>
         nodes.map((node) => {
           if (node.id === activeNode.id) {
@@ -246,20 +253,20 @@ export default function SendMessageNodeEditor({
     }
   }
 
-  // const removeBlock = (field: object, index: number) => {
-  //   remove(index)
-  //   if (!field.buttons?.length) {
-  //     return
-  //   }
-  //   for (const button of field.buttons) {
-  //     setEdges((edges) => {
-  //       return edges.filter(
-  //         (edge) =>
-  //           edge.targetHandle !== button.id && edge.sourceHandle !== button.id,
-  //       )
-  //     })
-  //   }
-  // }
+  const removeBlock = (field: FieldType, index: number) => {
+    remove(index)
+    if (!field.buttons?.length) {
+      return
+    }
+    for (const button of field.buttons) {
+      setEdges((edges) => {
+        return edges.filter(
+          (edge) =>
+            edge.targetHandle !== button.id && edge.sourceHandle !== button.id,
+        )
+      })
+    }
+  }
 
   return (
     <>
@@ -345,6 +352,7 @@ export default function SendMessageNodeEditor({
                         variant="ghost"
                         size="icon"
                         className="size-8 shrink-0"
+                        onClick={() => removeBlock(field, index)}
                       >
                         <XIcon className="size-4" aria-hidden="true" />
                       </Button>

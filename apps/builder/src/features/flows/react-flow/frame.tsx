@@ -1,6 +1,5 @@
 "use client"
 
-import type { findFlow } from "@/features/flows/queries"
 import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
 import type { AddNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema"
 import type { SendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
@@ -24,6 +23,12 @@ import {
   useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
+import type { findFlow } from "@/features/flows/queries"
+import { nodeDefaultValue } from "@/features/flows/react-flow/nodes/schema"
+import { startFlowNodeDefaultValue } from "@/features/flows/react-flow/nodes/start-flow/schema"
+import StartFlowNodeViewer from "@/features/flows/react-flow/nodes/start-flow/viewer"
+import { waitNodeDefaultValue } from "@/features/flows/react-flow/nodes/wait/schema"
+import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
 import { useOptimisticAction } from "next-safe-action/hooks"
 import { notFound } from "next/navigation"
 import { use, useCallback, useEffect, useState } from "react"
@@ -34,6 +39,8 @@ import { MessageType } from "../schemas/types"
 const nodeTypes = {
   [PanelAction.SendMessage]: SendMessageNodeViewer,
   [PanelAction.AddNotes]: AddNotesNode,
+  [PanelAction.Wait]: WaitNodeViewer,
+  [PanelAction.StartFlow]: StartFlowNodeViewer,
 }
 
 interface ReactFlowFrameProps {
@@ -67,7 +74,13 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
 
   const onConnect = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
+    (params: any) =>
+      setEdges((eds) => {
+        return addEdge(
+          params,
+          eds.filter((obj) => obj.sourceHandle !== params.sourceHandle),
+        )
+      }),
     [setEdges],
   )
 
@@ -144,6 +157,17 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
           message: "",
         },
       }
+    }
+
+    if (name === PanelAction.Wait) {
+      newNode = nodeDefaultValue(PanelAction.Wait, waitNodeDefaultValue(nodes))
+    }
+
+    if (name === PanelAction.StartFlow) {
+      newNode = nodeDefaultValue(
+        PanelAction.StartFlow,
+        startFlowNodeDefaultValue(nodes),
+      )
     }
 
     if (newNode) {
