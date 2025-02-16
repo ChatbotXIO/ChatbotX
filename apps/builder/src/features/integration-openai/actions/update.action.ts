@@ -46,7 +46,13 @@ export const updateOpenAIAction = authActionClient
         where: {
           id: integrationId,
         },
-        data: parsedInput,
+        data: {
+          temperature: Number(parsedInput.temperature),
+          maxTokens: Number(parsedInput.maxTokens),
+          prompt: parsedInput.prompt,
+          model: parsedInput.model,
+          aiAgentId: parsedInput.aiAgentId,
+        },
       })
 
       return {

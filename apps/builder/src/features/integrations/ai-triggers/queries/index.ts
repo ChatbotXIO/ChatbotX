@@ -20,7 +20,7 @@ export const getAITriggers = async (
           chatbotId: input.chatbotId,
         }
 
-        let orderBy: Record<string, string>[]
+        let orderBy = undefined
         const page = input.page ? input.page - 1 : 1
         const perPage = input.perPage ? input.perPage : 10
 

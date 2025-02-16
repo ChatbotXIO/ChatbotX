@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { OpenAIUpdateDialog } from "@/features/integration-openai/openai-update"
+import type { getAIAgents } from "@/features/integrations/ai-agents/queries/get.query"
+import type { getAITriggers } from "@/features/integrations/ai-triggers/queries"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -27,11 +29,17 @@ import type { findIntegrationOpenAI } from "./queries"
 
 type OpenAIConnectProps = {
   chatbotId: string
-  promises: Promise<[Awaited<ReturnType<typeof findIntegrationOpenAI>>]>
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof findIntegrationOpenAI>>,
+      Awaited<ReturnType<typeof getAIAgents>>,
+      Awaited<ReturnType<typeof getAITriggers>>,
+    ]
+  >
 }
 
 export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
-  const [{ data: integrationOpenAI }] = use(promises)
+  const [{ data: integrationOpenAI }, agents, triggers] = use(promises)
   const [isEdit, setIsEdit] = useState<boolean>(false)
   const router = useRouter()
 
@@ -63,8 +71,9 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
             <OpenAIUpdateDialog
               open={isEdit}
               chatbotId={chatbotId}
-              trigger={null}
-              agent={null}
+              openAi={integrationOpenAI}
+              agents={agents.data}
+              triggers={triggers.data}
               onOpenChange={setIsEdit}
             />
 

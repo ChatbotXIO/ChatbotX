@@ -5,10 +5,10 @@ import { type AIAgent, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
 export async function getAIAgents(
-  input: ListAIAgentsSchema,
+  input: Partial<ListAIAgentsSchema>,
 ): Promise<{ data: AIAgent[]; pageCount: number }> {
   const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await findChatbotOrFail(userId, input.chatbotId as string)
 
   return await unstable_cache(
     async () => {
@@ -28,21 +28,27 @@ export async function getAIAgents(
           ]
         }
 
-        const orderBy = input.sort.map((sortItem) => ({
-          [sortItem.id]: sortItem.desc ? "desc" : "asc",
-        }))
+        let orderBy = undefined
+        const page = input.page || 1
+        const perPage = input.perPage || 10
+
+        if (input.sort) {
+          orderBy = input.sort.map((sortItem) => ({
+            [sortItem.id]: sortItem.desc ? "desc" : "asc",
+          }))
+        }
 
         const [data, total] = await prisma.$transaction([
           prisma.aIAgent.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
+            skip: (page - 1) * perPage,
+            take: perPage,
             where,
             orderBy,
           }),
           prisma.aIAgent.count({ where }),
         ])
 
-        const pageCount = Math.ceil(total / input.perPage)
+        const pageCount = Math.ceil(total / perPage)
 
         return { data, pageCount }
       } catch (err) {
