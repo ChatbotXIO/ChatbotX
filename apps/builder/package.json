@@ -11,6 +11,7 @@
     "workers:flow:dev": "dotenv -e ../../.env -- tsx --watch src/workers/flow.worker.ts",
     "workers:chat:dev": "dotenv -e ../../.env -- tsx --watch src/workers/chat.worker.ts",
     "workers:low:dev": "dotenv -e ../../.env -- tsx --watch src/workers/low.worker.ts",
+    "scheduler:dev": "dotenv -e ../../.env -- tsx --watch src/scheduler/index.ts",
     "lint": "biome check .",
     "start": "next start"
   },
@@ -59,6 +60,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
+    "croner": "^9.0.0",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.5.2",
     "emoji-mart": "^5.6.0",
