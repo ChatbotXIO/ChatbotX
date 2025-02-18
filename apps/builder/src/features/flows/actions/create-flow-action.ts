@@ -6,11 +6,11 @@ import { authActionClient } from "@/lib/safe-action"
 import { FolderType, type User, prisma } from "@ahachat.ai/database"
 import { createId } from "@paralleldrive/cuid2"
 import { revalidateTag } from "next/cache"
+import { MessageType } from "../react-flow/types"
 import {
   type CreateFlowSchema,
   createFlowSchema,
 } from "../schemas/create-flow-schema"
-import { MessageType } from "../schemas/types"
 
 export const createFlowAction = authActionClient
   .schema(createFlowSchema)

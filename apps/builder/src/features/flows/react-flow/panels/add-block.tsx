@@ -20,84 +20,84 @@ import {
   ZapIcon,
 } from "lucide-react"
 import { useState } from "react"
-import { PanelAction } from "../types"
+import { NodeType } from "../types"
 
 export function AddBlockButton({
   onChooseAction,
 }: {
-  onChooseAction: (name: PanelAction) => void
+  onChooseAction: (name: NodeType) => void
 }) {
   const { t } = useTranslate()
 
   const [open, setOpen] = useState(false)
-  const onClickAction = (name: PanelAction) => {
+  const onClickAction = (name: NodeType) => {
     onChooseAction(name)
     setOpen(false)
   }
 
   const buttons = [
     {
-      type: PanelAction.SendMessage,
+      type: NodeType.SendMessage,
       icon: <MessageCircleMoreIcon />,
       label: t("flows.sendMessageBtn"),
       proFeature: false,
-      onClick: () => onClickAction(PanelAction.SendMessage),
+      onClick: () => onClickAction(NodeType.SendMessage),
     },
     {
-      type: PanelAction.StartFlow,
+      type: NodeType.StartFlow,
       icon: <ExternalLinkIcon />,
       label: t("flows.startFlowBtn"),
       proFeature: false,
-      onClick: () => onClickAction(PanelAction.StartFlow),
+      onClick: () => onClickAction(NodeType.StartFlow),
     },
     {
-      type: PanelAction.Actions,
+      type: NodeType.Actions,
       icon: <ZapIcon />,
       label: t("flows.actionsBtn"),
       proFeature: false,
-      onClick: () => onClickAction(PanelAction.Actions),
+      onClick: () => onClickAction(NodeType.Actions),
     },
     {
-      type: PanelAction.Condition,
+      type: NodeType.Condition,
       icon: <FilterIcon />,
       label: t("flows.conditionBtn"),
       proFeature: true,
-      onClick: () => onClickAction(PanelAction.Condition),
+      onClick: () => onClickAction(NodeType.Condition),
     },
     {
-      type: PanelAction.SendMail,
+      type: NodeType.SendMail,
       icon: <MailIcon />,
       label: t("flows.sendMailBtn"),
       proFeature: true,
-      onClick: () => onClickAction(PanelAction.SendMail),
+      onClick: () => onClickAction(NodeType.SendMail),
     },
     {
-      type: PanelAction.SplitTraffic,
+      type: NodeType.SplitTraffic,
       icon: <ShuffleIcon />,
       label: t("flows.splitTrafficBtn"),
       proFeature: true,
-      onClick: () => onClickAction(PanelAction.SplitTraffic),
+      onClick: () => onClickAction(NodeType.SplitTraffic),
     },
     {
-      type: PanelAction.Wait,
+      type: NodeType.Wait,
       icon: <ClockIcon />,
       label: t("flows.waitBtn"),
       proFeature: true,
-      onClick: () => onClickAction(PanelAction.Wait),
+      onClick: () => onClickAction(NodeType.Wait),
     },
     {
-      type: PanelAction.LandingPage,
+      type: NodeType.LandingPage,
       icon: <CompassIcon />,
       label: t("flows.landingPageBtn"),
       proFeature: true,
-      onClick: () => onClickAction(PanelAction.LandingPage),
+      onClick: () => onClickAction(NodeType.LandingPage),
     },
     {
-      type: PanelAction.AddNotes,
+      type: NodeType.AddNotes,
       icon: <InfoIcon />,
       label: t("flows.addNotesBtn"),
       proFeature: false,
-      onClick: () => onClickAction(PanelAction.AddNotes),
+      onClick: () => onClickAction(NodeType.AddNotes),
     },
   ]
 

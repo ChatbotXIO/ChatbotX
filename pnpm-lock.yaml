@@ -191,6 +191,12 @@ importers:
       lodash.clonedeep:
         specifier: ^4.5.0
         version: 4.5.0
+      lodash.isobject:
+        specifier: ^3.0.2
+        version: 3.0.2
+      lodash.reduce:
+        specifier: ^4.6.0
+        version: 4.6.0
       lucide-react:
         specifier: ^0.475.0
         version: 0.475.0(react@19.0.0)
@@ -270,6 +276,12 @@ importers:
       '@types/lodash.clonedeep':
         specifier: ^4.5.9
         version: 4.5.9
+      '@types/lodash.isobject':
+        specifier: ^3.0.9
+        version: 3.0.9
+      '@types/lodash.reduce':
+        specifier: ^4.6.9
+        version: 4.6.9
       '@types/node':
         specifier: ^22.13.1
         version: 22.13.1
@@ -1838,6 +1850,12 @@ packages:
   '@types/lodash.clonedeep@4.5.9':
     resolution: {integrity: sha512-19429mWC+FyaAhOLzsS8kZUsI+/GmBAQ0HFiCPsKGU+7pBXOQWhyrY6xNNDwUSX8SMZMJvuFVMF9O5dQOlQK9Q==}
 
+  '@types/lodash.isobject@3.0.9':
+    resolution: {integrity: sha512-eVsQuAMn8SyrD11SIv2P9ke4j+6kGs5JAQsIFhIw7iIiHfIzKWVEL6ZVSmXfJC4naO/GoZKJW+gC2vAtVjCa8Q==}
+
+  '@types/lodash.reduce@4.6.9':
+    resolution: {integrity: sha512-bzG9dQQzkBmeJSosF8EIQ9G9F3buYj6Ny7w2/BT8MelmA8mB3e0Cm0Km0RfyxhT8JWHpIh+G2fqU0I25HMU0hw==}
+
   '@types/lodash@4.17.15':
     resolution: {integrity: sha512-w/P33JFeySuhN6JLkysYUK2gEmy9kHHFN7E8ro0tkfmlDOgxBDzWEZ/J8cWA+fHqFevpswDTFZnDx+R9lbL6xw==}
 
@@ -2811,6 +2829,12 @@ packages:
 
   lodash.isarguments@3.1.0:
     resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
+
+  lodash.isobject@3.0.2:
+    resolution: {integrity: sha512-3/Qptq2vr7WeJbB4KHUSKlq8Pl7ASXi3UG6CMbBm8WRtXi8+GHm7mKaU3urfpSEzWe2wCIChs6/sdocUsTKJiA==}
+
+  lodash.reduce@4.6.0:
+    resolution: {integrity: sha512-6raRe2vxCYBhpBu+B+TtNGUzah+hQjVdu3E17wfusjyrXBka2nBS8OH/gjVZ5PvHOhWmIZTYri09Z6n/QfnNMw==}
 
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
@@ -5157,6 +5181,14 @@ snapshots:
     dependencies:
       '@types/lodash': 4.17.15
 
+  '@types/lodash.isobject@3.0.9':
+    dependencies:
+      '@types/lodash': 4.17.15
+
+  '@types/lodash.reduce@4.6.9':
+    dependencies:
+      '@types/lodash': 4.17.15
+
   '@types/lodash@4.17.15': {}
 
   '@types/minimatch@5.1.2': {}
@@ -6231,6 +6263,10 @@ snapshots:
   lodash.get@4.4.2: {}
 
   lodash.isarguments@3.1.0: {}
+
+  lodash.isobject@3.0.2: {}
+
+  lodash.reduce@4.6.0: {}
 
   lodash@4.17.21: {}
 

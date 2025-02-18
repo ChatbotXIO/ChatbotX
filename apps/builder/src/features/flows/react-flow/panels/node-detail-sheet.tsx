@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet"
 import type { Node } from "@xyflow/react"
 import dynamic from "next/dynamic"
-import { PanelAction } from "../types"
+import { type NodeData, NodeType } from "../types"
 
 const AddNotesEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/add-notes/add-notes-editor"),
@@ -24,9 +24,9 @@ const SplitTrafficNodeEditor = dynamic(
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const getEditor = (props: { activeNode: Node<any> }) => {
   return {
-    [PanelAction.AddNotes]: <AddNotesEditor />,
-    [PanelAction.SendMessage]: <SendMessageNodeEditor {...props} />,
-    [PanelAction.SplitTraffic]: <SplitTrafficNodeEditor {...props} />,
+    [NodeType.AddNotes]: <AddNotesEditor />,
+    [NodeType.SendMessage]: <SendMessageNodeEditor {...props} />,
+    [NodeType.SplitTraffic]: <SplitTrafficNodeEditor {...props} />,
   }[props.activeNode.type ?? ""]
 }
 
@@ -37,16 +37,15 @@ export function NodeDetailSheet({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  activeNode?: Node<any> | null
+  activeNode?: Node | null
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="flex flex-col">
         <SheetHeader>
           <SheetTitle>
-            {activeNode ? activeNode.data.icon : null}
-            {activeNode ? activeNode.data.name : "\u00A0"}
+            {/* {activeNode ? activeNode.data.icon : null} */}
+            {activeNode ? (activeNode as Node<NodeData>).data.name : "\u00A0"}
           </SheetTitle>
           <SheetDescription />
         </SheetHeader>

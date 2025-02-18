@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useReactFlow } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
   CopyIcon,
@@ -23,15 +24,44 @@ import {
   TypeIcon,
 } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
-import { publishFlowAction } from "./actions/publish-flow-action"
+import { useState } from "react"
+import { toast } from "sonner"
+import { publishFlowAction } from "../actions/publish-flow-action"
+import { updateFlowVersionSchema } from "../schemas/update-flow-schema"
 
 export function FlowEditToolbar({ flowId }: { flowId: string }) {
+  const { getNodes, getEdges } = useReactFlow()
+
+  const [isValidating, setIsValidating] = useState<boolean>(false)
+
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
     publishFlowAction.bind(null, flowId),
+    {
+      onSuccess: () => {
+        toast.success("A new version has been published")
+      },
+    },
   )
+
+  const onClickPublish = () => {
+    setIsValidating(true)
+
+    // validate nodes & edges
+    const { success, error } = updateFlowVersionSchema.safeParse({
+      nodes: getNodes(),
+      edges: getEdges(),
+    })
+    if (!success) {
+      toast.error("Some configurations are incomplete")
+    } else {
+      executePublish()
+    }
+    setIsValidating(false)
+  }
 
   return (
     <div className="flex gap-2">
+      {/* <div>{isValidating}</div> */}
       <Button variant="ghost" size="sm" className="px-1.5">
         <RotateCcwIcon />
       </Button>
@@ -42,10 +72,12 @@ export function FlowEditToolbar({ flowId }: { flowId: string }) {
         variant="default"
         size="sm"
         className="ml-5"
-        onClick={() => executePublish()}
-        disabled={isPendingPublish}
+        onClick={onClickPublish}
+        disabled={isValidating || isPendingPublish}
       >
-        {isPendingPublish && <Loader2Icon className="animate-spin" />}
+        {(isValidating || isPendingPublish) && (
+          <Loader2Icon className="animate-spin" />
+        )}
         Publish
       </Button>
       <DropdownMenu>
