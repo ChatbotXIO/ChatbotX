@@ -1,9 +1,13 @@
 import { getCurrentUserId } from "@/auth"
+import { parseQueryFilterContact } from "@/features/contacts/actions/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@ahachat.ai/database"
 import type { Contact, Prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { GetContactsSchema } from "../schemas/get-contacts-schema"
+import type {
+  CountContactsSchema,
+  GetContactsSchema,
+} from "../schemas/get-contacts-schema"
 
 export async function getContacts(
   input: GetContactsSchema,
@@ -58,4 +62,25 @@ export async function getContacts(
       tags: [`${userId}#contacts`],
     },
   )()
+}
+
+export async function countContacts(
+  input: CountContactsSchema,
+): Promise<{ total: number }> {
+  const userId = await getCurrentUserId()
+
+  await findChatbotOrFail(userId, input.chatbotId)
+
+  try {
+    const where: Prisma.ContactWhereInput = {
+      chatbotId: input.chatbotId,
+      ...parseQueryFilterContact(input.filter),
+    }
+
+    const total = await prisma.contact.count({ where })
+
+    return { total }
+  } catch (err) {
+    return { total: 0 }
+  }
 }

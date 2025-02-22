@@ -1,3 +1,6 @@
+import scheduleBroadcast from "@/jobs/scheduler/broadcast"
+import startFlow from "@/jobs/start-flow"
+import { JOB_NAMES } from "@/scheduler/types"
 import { Queue, Worker } from "bullmq"
 import IORedis from "ioredis"
 import { QueueName } from "./schema"
@@ -22,9 +25,16 @@ export const flowQueue = new Queue(QueueName.Flow, {
 const flowWorker = new Worker(
   QueueName.Flow,
   async (job) => {
-    // Will print { foo: 'bar'} for the first job
-    // and { qux: 'baz' } for the second.
     console.log(job)
+    // if (job.name === JOB_NAMES.ScheduleBroadcast) {
+    //   return scheduleBroadcast()
+    // }
+    //
+    // if (job.name === JOB_NAMES.StartFlow) {
+    //   const { flowId, contactId } = job.data
+    //
+    //   return startFlow(flowId, contactId)
+    // }
   },
   {
     connection,

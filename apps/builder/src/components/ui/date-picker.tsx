@@ -536,7 +536,7 @@ type Granularity = "day" | "hour" | "minute" | "second"
 type DateTimePickerProps = {
   value?: Date
   onChange?: (date: Date | undefined) => void
-  disabled?: boolean
+  readonly?: boolean
   /** showing `AM/PM` or not. */
   hourCycle?: 12 | 24
   placeholder?: string
@@ -583,7 +583,7 @@ const DateTimePicker = React.forwardRef<
       onChange,
       hourCycle = 24,
       yearRange = 50,
-      disabled = false,
+      readonly = false,
       displayFormat,
       granularity = "second",
       placeholder = "Pick a date",
@@ -669,7 +669,7 @@ const DateTimePicker = React.forwardRef<
 
     return (
       <Popover>
-        <PopoverTrigger asChild disabled={disabled}>
+        <PopoverTrigger asChild disabled={readonly}>
           <Button
             variant="outline"
             className={cn(

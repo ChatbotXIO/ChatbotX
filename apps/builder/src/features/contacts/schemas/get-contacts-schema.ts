@@ -1,3 +1,4 @@
+import type { FilterContactSchema } from "@/features/contacts/filter/schema"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -13,3 +14,8 @@ export const getContactsSearchParamsCache = createSearchParamsCache({
 export type GetContactsSchema = Awaited<
   ReturnType<typeof getContactsSearchParamsCache.parse>
 > & { chatbotId: string }
+
+export type CountContactsSchema = {
+  chatbotId: string
+  filter: FilterContactSchema
+}

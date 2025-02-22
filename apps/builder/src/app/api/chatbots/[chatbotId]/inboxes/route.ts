@@ -1,5 +1,5 @@
-import { getFlows } from "@/features/flows/queries"
-import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
+import { listInboxes } from "@/features/inboxes/queries"
+import { getInboxesSearchParamsCache } from "@/features/inboxes/schemas/get-inboxes-schema"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
@@ -7,12 +7,12 @@ export async function GET(
   { params }: { params: Promise<{ chatbotId: string }> },
 ) {
   const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-  const search = listFlowsSearchParams.parse(searchParams)
+  const search = getInboxesSearchParamsCache.parse(searchParams)
 
-  const allFlows = await getFlows({
+  const allInboxes = await listInboxes({
     ...search,
     chatbotId: (await params).chatbotId,
   })
 
-  return NextResponse.json(allFlows)
+  return NextResponse.json(allInboxes)
 }
