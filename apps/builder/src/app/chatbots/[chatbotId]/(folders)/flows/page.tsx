@@ -4,6 +4,7 @@ import { FlowsTable } from "@/features/flows/flows-table"
 import { getFlows } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
 import { getCurrentFolder } from "@/features/folders/queries"
+import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema"
 import type { Folder } from "@ahachat.ai/database"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -15,6 +16,7 @@ export default async function FlowsPage(props: {
   const params = await props.params
   const searchParams = await props.searchParams
   const search = listFlowsSearchParams.parse(searchParams)
+  const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
 
   const promises = Promise.all([
     search.folderId
@@ -26,6 +28,7 @@ export default async function FlowsPage(props: {
     getFlows({
       ...search,
       chatbotId: params.chatbotId,
+      folderId,
     }),
   ])
 
