@@ -4,6 +4,7 @@ import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import { FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { callAPI } from "@/lib/swr"
+import type { CustomFieldType } from "@ahachat.ai/database"
 import { PlusCircleIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { mutate } from "swr"
@@ -15,6 +16,7 @@ interface ICustomFieldSelectProps {
   label: string
   isRequired?: boolean
   allowCreate?: boolean
+  customFieldType?: CustomFieldType
 }
 
 export const CustomFieldSelect = ({
@@ -22,17 +24,25 @@ export const CustomFieldSelect = ({
   label = "Select Custom Field",
   isRequired = true,
   allowCreate = false,
+  customFieldType,
 }: ICustomFieldSelectProps) => {
   const params = useParams<{ chatbotId: string }>()
 
-  const custormFieldsUrl = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
-  const { data } = callAPI(custormFieldsUrl)
-  const customFields = ((data as CustomFieldCollection)?.data ?? []).map(
-    (v) => ({
-      label: v.name,
-      value: v.id,
-    }),
-  )
+  const customFieldsUrl = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
+  const { data } = callAPI(customFieldsUrl)
+  const filterCustomFields = (
+    (data as CustomFieldCollection)?.data ?? []
+  ).filter((obj) => {
+    if (!customFieldType) {
+      return true
+    }
+
+    return obj.customFieldType === customFieldType
+  })
+  const customFields = filterCustomFields.map((v) => ({
+    label: v.name,
+    value: v.id,
+  }))
 
   return (
     <FormItem>
@@ -62,7 +72,7 @@ export const CustomFieldSelect = ({
               </Button>
             }
             onSuccess={() => {
-              mutate(custormFieldsUrl)
+              mutate(customFieldsUrl)
             }}
           />
         )}
