@@ -1,9 +1,3 @@
 {
-  "extends": "@ahachat.ai/typescript-config/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "extends": "@ahachat.ai/typescript-config/library.json"
 }

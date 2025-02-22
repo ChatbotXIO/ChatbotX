@@ -22,13 +22,14 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  chatbotMembers   ChatbotMember[]
-  accounts         Account[]
-  sessions         Session[]
-  teamMembers      TeamMember[]
-  activityLogs     ActivityLog[]
-  assignedContacts Contact[]       @relation("AssignedUser")
-  logs             Log[]           @relation("ExecutorUser")
+  chatbotMembers          ChatbotMember[]
+  accounts                Account[]
+  sessions                Session[]
+  teamMembers             TeamMember[]
+  activityLogs            ActivityLog[]
+  assignedContacts        Contact[]                 @relation("AssignedUser")
+  logs                    Log[]                     @relation("ExecutorUser")
+  ConversationParticipant ConversationParticipant[]
 }
 
 model Account {
@@ -84,26 +85,30 @@ model Chatbot {
   logo            String?
   plan            ChatbotPlan
 
-  activityLogs   ActivityLog[]
-  aiAgents       AIAgent[]
-  aiAssistants   AIAssistant[]
-  aiTriggers     AITrigger[]
-  chatbotMembers ChatbotMember[]
-  contacts       Contact[]
-  fields         Field[]
-  flows          Flow[]
-  flowVersions   FlowVersion[]
-  folders        Folder[]
-  googleSheets   IntegrationGoogleSheets[]
-  inboxes        Inbox[]
-  integrations   Integration[]
-  logs           Log[]
-  openAIs        IntegrationOpenAI[]
-  spreadsheets   Spreadsheet[]
-  tags           Tag[]
-  teamMembers    TeamMember[]
-  teams          Team[]
-  whatsapps      IntegrationWhatsapp[]
+  activityLogs             ActivityLog[]
+  aiAgents                 AIAgent[]
+  aiAssistants             AIAssistant[]
+  aiTriggers               AITrigger[]
+  attachments              Attachment[]
+  chatbotMembers           ChatbotMember[]
+  contacts                 Contact[]
+  conversationParticipants ConversationParticipant[]
+  conversations            Conversation[]
+  fields                   Field[]
+  flows                    Flow[]
+  flowVersions             FlowVersion[]
+  folders                  Folder[]
+  googleSheets             IntegrationGoogleSheets[]
+  inboxes                  Inbox[]
+  integrations             Integration[]
+  logs                     Log[]
+  messages                 Message[]
+  openAIs                  IntegrationOpenAI[]
+  spreadsheets             Spreadsheet[]
+  tags                     Tag[]
+  teamMembers              TeamMember[]
+  teams                    Team[]
+  whatsapps                IntegrationWhatsapp[]
 }
 
 model ChatbotMember {
@@ -206,12 +211,16 @@ model Contact {
   assignedType AssignedType?
   assignedId   String?
   lastSeenAt   DateTime?
+  sourceId     String?
 
-  chatbot      Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  assignedUser User?   @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
-  assignedTeam Team?   @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
-  logs         Log[]   @relation("ExecutorContact")
+  chatbot      Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  assignedUser User?         @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
+  assignedTeam Team?         @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
+  logs         Log[]         @relation("ExecutorContact")
   tags         Tag[]
+  conversation Conversation?
+
+  @@unique([chatbotId, sourceId])
 }
 
 model Folder {
@@ -276,8 +285,102 @@ model Inbox {
   chatbotId String
   inboxType InboxType
 
-  integrationWhatsapps IntegrationWhatsapp[]
-  chatbot              Chatbot               @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integrationWhatsapp IntegrationWhatsapp?
+  messages            Message[]
+  chatbot             Chatbot              @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
+}
+
+model Conversation {
+  id                     String    @id @default(cuid())
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  chatbotId              String
+  contactId              String    @unique
+  inboxType              InboxType
+  liveChatEnabled        Boolean   @default(false)
+  followed               Boolean   @default(false)
+  archivedAt             DateTime?
+  blockedAt              DateTime?
+  sourceId               String?
+  conversationAttributes Json?
+
+  chatbot                  Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  contact                  Contact                   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  messages                 Message[]
+  conversationParticipants ConversationParticipant[]
+  attachment               Attachment[]
+
+  @@index([chatbotId, sourceId])
+}
+
+model ConversationParticipant {
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  chatbotId      String
+  conversationId String
+  userId         String
+
+  chatbot      Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([chatbotId])
+  @@index([conversationId])
+}
+
+model Message {
+  id                String      @id @default(cuid())
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  conversationId    String
+  inboxId           String
+  chatbotId         String
+  content           String?
+  contentAttributes Json?
+  messageType       MessageType
+  contentType       ContentType
+  senderType        SenderType
+  senderId          String?
+  sourceId          String?
+
+  chatbot      Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  inbox        Inbox        @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+  attachments  Attachment[]
+
+  @@unique([chatbotId, sourceId])
+  @@index([chatbotId])
+  @@index([conversationId])
+  @@index([inboxId])
+  @@index([senderType, senderId])
+}
+
+model Attachment {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  chatbotId      String
+  conversationId String
+  fileType       FileType
+  messageId      String
+  sourceId       String?
+  mimeType       String
+  width          Int?
+  height         Int?
+  size           Int      @default(0)
+  thumbnailPath  String?
+  originPath     String
+  name           String?
+
+  chatbot      Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  message      Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
+  @@index([messageId])
 }
 
 model Integration {
@@ -290,6 +393,8 @@ model Integration {
   openAI       IntegrationOpenAI?
   googleSheets IntegrationGoogleSheets?
   chatbot      Chatbot                  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
 }
 
 model AIAgent {
@@ -427,60 +532,84 @@ model FlowVersion {
 }
 
 enum CustomFieldType {
-  ShortText
-  Number
-  Date
-  DateTime
-  Boolean
-  LongText
+  SHORT_TEXT
+  NUMBER
+  DATE
+  DATETIME
+  BOOLEAN
+  LONG_TEXT
 }
 
 enum FieldType {
-  AccountField
-  CustomField
+  ACCOUNT_FIELD
+  CUSTOM_FIELD
 }
 
 enum FolderType {
-  Tag
-  Flow
-  CustomField
-  EmailCampaign
-  AutomatedResponse
+  TAG
+  FLOW
+  CUSTOM_FIELD
+  EMAIL_CAMPAIGN
+  AUTOMATED_RESPONSE
 }
 
 enum ChatbotPlan {
-  Free
-  Pro
+  FREE
+  PRO
 }
 
 enum ChatbotMemberRole {
-  Owner
-  Agent
+  OWNER
+  AGENT
 }
 
 enum Gender {
-  Male
-  Female
-  Unknown
+  MALE
+  FEMALE
+  UNKNOWN
 }
 
 enum AssignedType {
-  User
-  Team
+  USER
+  TEAM
 }
 
 enum IntegrationType {
-  ChatWidget
-  GoogleSheets
-  Instagram
-  Messenger
-  OpenAI
-  Whatsapp
+  CHATWIDGET
+  GOOGLESHEETS
+  INSTAGRAM
+  MESSENGER
+  OPENAI
+  WHATSAPP
 }
 
 enum InboxType {
-  ChatWidget
-  Instagram
-  Messenger
-  Whatsapp
+  CHATWIDGET
+  INSTAGRAM
+  MESSENGER
+  WHATSAPP
+}
+
+enum SenderType {
+  BOT
+  CONTACT
+  SYSTEM
+  USER
+}
+
+enum MessageType {
+  INCOMING
+  OUTGOING
+  ACTIVITY
+}
+
+enum ContentType {
+  TEXT
+}
+
+enum FileType {
+  IMAGE
+  AUDIO
+  VIDEO
+  FILE
 }

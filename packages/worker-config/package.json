@@ -1,0 +1,18 @@
+{
+  "name": "@ahachat.ai/worker-config",
+  "version": "0.1.0",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "type": "module",
+  "devDependencies": {
+    "typescript": "5.7.3"
+  },
+  "dependencies": {
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "bullmq": "^5.41.2",
+    "ioredis": "^5.5.0",
+    "tslog": "^4.9.3"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

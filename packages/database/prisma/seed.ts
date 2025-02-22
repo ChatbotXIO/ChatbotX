@@ -1,6 +1,8 @@
 import { faker } from "@faker-js/faker"
 import {
   type Chatbot,
+  ChatbotMemberRole,
+  ChatbotPlan,
   type Folder,
   FolderType,
   PrismaClient,
@@ -29,12 +31,12 @@ async function main() {
         {
           name: "FREE",
           accountTimezone: "Asia/Saigon",
-          plan: "Free",
+          plan: ChatbotPlan.FREE,
         },
         {
           name: "PRO",
           accountTimezone: "Asia/Saigon",
-          plan: "Pro",
+          plan: ChatbotPlan.PRO,
         },
       ] as Chatbot[],
     })
@@ -42,7 +44,7 @@ async function main() {
       data: chatbots.map((chatbot) => ({
         chatbotId: chatbot.id,
         userId: user.id,
-        role: "Owner",
+        role: ChatbotMemberRole.OWNER,
         isAdmin: true,
         enableAnalytics: true,
         enableFlows: true,
