@@ -20,6 +20,12 @@ const SendMessageNodeEditor = dynamic(
 const SplitTrafficNodeEditor = dynamic(
   () => import("@/features/flows/react-flow/nodes/split-traffic/editor"),
 )
+const WaitNodeEditor = dynamic(
+  () => import("@/features/flows/react-flow/nodes/wait/editor"),
+)
+const StartFlowNodeEditor = dynamic(
+  () => import("@/features/flows/react-flow/nodes/start-flow/editor"),
+)
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const getEditor = (props: { activeNode: Node<any> }) => {
@@ -27,21 +33,25 @@ const getEditor = (props: { activeNode: Node<any> }) => {
     [NodeType.AddNotes]: <AddNotesEditor />,
     [NodeType.SendMessage]: <SendMessageNodeEditor {...props} />,
     [NodeType.SplitTraffic]: <SplitTrafficNodeEditor {...props} />,
+    [NodeType.Wait]: <WaitNodeEditor {...props} />,
+    [NodeType.StartFlow]: <StartFlowNodeEditor {...props} />,
   }[props.activeNode.type ?? ""]
+}
+
+interface NodeDetailSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  activeNode?: Node | null
 }
 
 export function NodeDetailSheet({
   open,
   onOpenChange,
   activeNode,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  activeNode?: Node | null
-}) {
+}: NodeDetailSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="flex flex-col">
+      <SheetContent side="left" className="flex flex-col overflow-auto">
         <SheetHeader>
           <SheetTitle>
             {/* {activeNode ? activeNode.data.icon : null} */}
@@ -49,7 +59,7 @@ export function NodeDetailSheet({
           </SheetTitle>
           <SheetDescription />
         </SheetHeader>
-        <div className="flex flex-col flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-col flex-1 gap-4">
           {activeNode?.type && getEditor({ activeNode })}
         </div>
       </SheetContent>
