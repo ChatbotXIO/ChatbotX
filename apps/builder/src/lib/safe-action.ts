@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@ahachat.ai/database"
+import { SdkException } from "@ahachat.ai/sdk"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import {
   DEFAULT_SERVER_ERROR_MESSAGE,
@@ -17,7 +18,7 @@ export const actionClient = createSafeActionClient({
       return error.message
     }
 
-    if (error instanceof BaseException) {
+    if (error instanceof BaseException || error instanceof SdkException) {
       return error.message
     }
 

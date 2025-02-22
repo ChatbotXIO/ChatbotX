@@ -1,0 +1,27 @@
+{
+  "name": "worker",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ahachat.ai/database": "workspace:*",
+    "@ahachat.ai/filesystem": "workspace:*",
+    "@ahachat.ai/integration-whatsapp": "workspace:*",
+    "@ahachat.ai/sdk": "workspace:*",
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "@ahachat.ai/worker-config": "workspace:^",
+    "bullmq": "^5.41.2",
+    "dot-prop": "^9.0.0",
+    "ioredis": "^5.5.0",
+    "ky": "^1.7.5",
+    "tslog": "^4.9.3"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^8.0.0"
+  }
+}

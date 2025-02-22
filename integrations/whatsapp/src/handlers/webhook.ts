@@ -1,0 +1,33 @@
+import { type HandleRequestProps, SdkException } from "@ahachat.ai/sdk"
+import type { OnMessageArgs } from "whatsapp-api-js/emitters"
+import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
+import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
+import type { WhatsappConfig } from "../schemas"
+
+export const webhookHandler = async ({
+  config,
+  req,
+  queue,
+}: HandleRequestProps<WhatsappConfig>) => {
+  const middleware = new Middleware({
+    token: "",
+    v: DEFAULT_API_VERSION,
+    secure: true,
+    ...config,
+  })
+  middleware.on.message = async (props: OnMessageArgs) => {
+    await queue?.add("whatsapp.actions.receiveMessage", props, {
+      // jobId: `whatsapp:conversation:${props.from}`,
+    })
+  }
+
+  if (req.method === "GET") {
+    return await middleware.handle_get(req)
+  }
+
+  if (req.method === "POST") {
+    return await middleware.handle_post(req)
+  }
+
+  throw SdkException.methodNotImplemented()
+}
