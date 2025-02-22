@@ -41,7 +41,7 @@ export function UpdateAccountFieldNameDialog({
 }) {
   const { t } = useTranslate()
   const router = useRouter()
-  const fieldType = FieldType.AccountField
+  const fieldType = FieldType.ACCOUNT_FIELD
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateFieldNameAction.bind(

@@ -58,7 +58,7 @@ export function CreateContactForm({
           email: "",
           firstName: "",
           lastName: "",
-          gender: Gender.Unknown,
+          gender: Gender.UNKNOWN,
         },
       },
       errorMapProps: {},
@@ -66,9 +66,9 @@ export function CreateContactForm({
   )
 
   const genderLabels: Record<Gender, string> = {
-    Male: t("contacts.gender.male"),
-    Female: t("contacts.gender.female"),
-    Unknown: t("contacts.gender.unknown"),
+    [Gender.MALE]: t("contacts.gender.male"),
+    [Gender.FEMALE]: t("contacts.gender.female"),
+    [Gender.UNKNOWN]: t("contacts.gender.unknown"),
   }
 
   return (
@@ -117,7 +117,7 @@ export function CreateContactForm({
                   value={field.value}
                   name={field.name}
                   onValueChange={field.onChange}
-                  defaultValue={Gender.Unknown}
+                  defaultValue={Gender.UNKNOWN}
                 >
                   <SelectTrigger>
                     <SelectValue onBlur={field.onBlur} ref={field.ref} />

@@ -532,12 +532,12 @@ model FlowVersion {
 }
 
 enum CustomFieldType {
-  SHORT_TEXT
+  SHORTTEXT
   NUMBER
   DATE
   DATETIME
   BOOLEAN
-  LONG_TEXT
+  LONGTEXT
 }
 
 enum FieldType {

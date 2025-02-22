@@ -28,7 +28,7 @@ export function AccountFieldsTableToolbarActions({
           onSuccess={() => table.toggleAllRowsSelected(false)}
           chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
-          fieldType={FieldType.AccountField}
+          fieldType={FieldType.ACCOUNT_FIELD}
         />
       ) : null}
     </div>

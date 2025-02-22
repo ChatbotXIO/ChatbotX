@@ -10,7 +10,7 @@ export const createContactSchema = z.object({
   email: z.union([z.literal(""), z.string().max(100).email()]),
   firstName: z.optional(z.string().max(100).trim()),
   lastName: z.optional(z.string().max(100).trim()),
-  gender: z.nativeEnum(Gender).default(Gender.Unknown),
+  gender: z.nativeEnum(Gender).default(Gender.UNKNOWN),
 })
 export type CreateContactSchema = z.infer<typeof createContactSchema>
 

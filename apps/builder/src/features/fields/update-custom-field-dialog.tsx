@@ -34,7 +34,7 @@ export function UpdateCustomFieldDialog({
 }) {
   const { t } = useTranslate()
   const router = useRouter()
-  const fieldType = FieldType.CustomField
+  const fieldType = FieldType.CUSTOM_FIELD
 
   const {
     form,

@@ -36,10 +36,7 @@ export const WaitBlockEditor = ({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex justify-between items-center gap-2">
-        <T keyName="flows.Wait.DelayType" />
-        <DelayTypeSelect name={`${parentName}.delayType`} />
-      </div>
+      <DelayTypeSelect name={`${parentName}.delayType`} />
       {delayType === DelayType.Duration && (
         <>
           <div className="flex justify-between gap-2">
@@ -78,7 +75,7 @@ export const WaitBlockEditor = ({
       )}
       {delayType === DelayType.SpecificDate && (
         <>
-          <div className="flex items-center gap-1 font-bold">
+          <div className="flex items-center gap-2">
             {t("common.selectDate")}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -104,24 +101,23 @@ export const WaitBlockEditor = ({
         </>
       )}
       {delayType === DelayType.DatetimeCustomField && (
-        <>
-          <div className="flex items-center gap-1 font-bold">
-            {t("flows.Wait.DateTimeCustomField")}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <InfoIcon size={18} />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t("flows.Wait.Datetime.tooltip")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <CustomFieldSelect
-            label=""
-            name={`${parentName}.customFieldId`}
-            customFieldType={CustomFieldType.DateTime}
-          />
-        </>
+        <CustomFieldSelect
+          label={
+            <>
+              <T keyName="flows.Wait.DateTimeCustomField" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <InfoIcon size={18} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("flows.Wait.Datetime.tooltip")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          }
+          name={`${parentName}.customFieldId`}
+          customFieldType={CustomFieldType.DATETIME}
+        />
       )}
     </div>
   )

@@ -12,16 +12,19 @@ export const addNotesNodeSchema = baseNodeSchema.extend({
 
 export type AddNotesNodeSchema = z.infer<typeof addNotesNodeSchema>
 
-export const defaultAddNotesNode = (): AddNotesNodeSchema => {
+export const defaultAddNotesNode = ({
+  labelVersion,
+  position = { x: 100, y: 100 },
+}: {
+  labelVersion: number
+  position?: { x: number; y: number }
+}): AddNotesNodeSchema => {
   return {
     id: createId(),
     type: NodeType.AddNotes,
-    position: {
-      x: 100,
-      y: 100,
-    },
+    position,
     data: {
-      name: "Add notes",
+      name: `Add notes ${labelVersion}`,
       message: "",
     },
   }

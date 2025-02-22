@@ -86,7 +86,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         showTrigger={false}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
-        fieldType={FieldType.CustomField}
+        fieldType={FieldType.CUSTOM_FIELD}
       />
 
       <UpdateCustomFieldDialog

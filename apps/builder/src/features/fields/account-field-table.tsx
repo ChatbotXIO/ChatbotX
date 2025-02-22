@@ -89,7 +89,7 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         showTrigger={false}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
-        fieldType={FieldType.AccountField}
+        fieldType={FieldType.ACCOUNT_FIELD}
       />
 
       {/* <UpdateAccountFieldDialog

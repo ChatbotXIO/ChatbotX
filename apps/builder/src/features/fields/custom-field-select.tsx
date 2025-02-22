@@ -7,13 +7,14 @@ import { callAPI } from "@/lib/swr"
 import type { CustomFieldType } from "@ahachat.ai/database"
 import { PlusCircleIcon } from "lucide-react"
 import { useParams } from "next/navigation"
+import type { ReactNode } from "react"
 import { mutate } from "swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
 import type { CustomFieldCollection } from "./schemas/get-fields-schema"
 
 interface ICustomFieldSelectProps {
   name: string
-  label: string
+  label: ReactNode | string
   isRequired?: boolean
   allowCreate?: boolean
   customFieldType?: CustomFieldType

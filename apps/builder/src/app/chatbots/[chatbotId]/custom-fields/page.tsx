@@ -23,7 +23,7 @@ export default async function CustomFieldsPage(props: {
       ...search,
       chatbotId: params.chatbotId,
       folderId: folderId,
-      fieldType: FieldType.CustomField,
+      fieldType: FieldType.CUSTOM_FIELD,
     }),
   ])
   return (

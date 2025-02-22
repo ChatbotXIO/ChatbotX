@@ -1,7 +1,7 @@
 import { FormInput } from "@/components/form-input"
 import { SingleSelect } from "@/components/single-select"
 import { DelayType } from "@/features/flows/react-flow/blocks/wait/schema"
-import { useTranslate } from "@tolgee/react"
+import { T, useTranslate } from "@tolgee/react"
 
 export const DelayTypeSelect = ({ name }: { name: string }) => {
   const { t } = useTranslate()
@@ -16,7 +16,7 @@ export const DelayTypeSelect = ({ name }: { name: string }) => {
   ]
 
   return (
-    <FormInput name={name} label="">
+    <FormInput name={name} label={<T keyName="flows.Wait.DelayType" />}>
       <SingleSelect
         name={name}
         placeholder="Select a type"

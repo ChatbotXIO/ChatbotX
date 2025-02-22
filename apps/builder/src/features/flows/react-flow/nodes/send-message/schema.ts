@@ -52,16 +52,17 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
 
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
 
-export const defaultSendMessageNode = (
-  labelVersion: number,
-): SendMessageNodeSchema => {
+export const defaultSendMessageNode = ({
+  labelVersion,
+  position = { x: 100, y: 100 },
+}: {
+  labelVersion: number
+  position?: { x: number; y: number }
+}): SendMessageNodeSchema => {
   return {
     id: createId(),
     type: NodeType.SendMessage,
-    position: {
-      x: 100,
-      y: 100,
-    },
+    position,
     data: {
       name: `Send Message #${labelVersion}`,
       messageType: MessageType.Omnichannel,

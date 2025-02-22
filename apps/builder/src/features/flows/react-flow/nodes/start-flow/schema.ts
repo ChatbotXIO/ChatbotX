@@ -16,16 +16,19 @@ export const startFlowNodeSchema = baseNodeSchema.extend({
 
 export type StartFlowNodeSchema = z.infer<typeof startFlowNodeSchema>
 
-export const startFlowNodeDefaultValue = (): StartFlowNodeSchema => {
+export const startFlowNodeDefaultValue = ({
+  labelVersion,
+  position = { x: 100, y: 100 },
+}: {
+  labelVersion: number
+  position?: { x: number; y: number }
+}): StartFlowNodeSchema => {
   return {
     id: createId(),
     type: NodeType.StartFlow,
-    position: {
-      x: 100,
-      y: 100,
-    },
+    position,
     data: {
-      name: "Start Flow",
+      name: `Start Flow #${labelVersion}`,
       blocks: [startFlowBlockDefaultValue()],
     },
   }

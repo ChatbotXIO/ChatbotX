@@ -50,12 +50,12 @@ export function CreateAccountFieldDialog({
   const router = useRouter()
 
   const customFieldTypeLabels: Record<CustomFieldType, string> = {
-    ShortText: t("accountField.customFieldType.ShortText"),
-    Number: t("accountField.customFieldType.Number"),
-    Date: t("accountField.customFieldType.Date"),
-    DateTime: t("accountField.customFieldType.DateTime"),
-    Boolean: t("accountField.customFieldType.Boolean"),
-    LongText: t("accountField.customFieldType.LongText"),
+    [CustomFieldType.SHORTTEXT]: t("accountField.customFieldType.ShortText"),
+    [CustomFieldType.NUMBER]: t("accountField.customFieldType.Number"),
+    [CustomFieldType.DATE]: t("accountField.customFieldType.Date"),
+    [CustomFieldType.DATETIME]: t("accountField.customFieldType.DateTime"),
+    [CustomFieldType.BOOLEAN]: t("accountField.customFieldType.Boolean"),
+    [CustomFieldType.LONGTEXT]: t("accountField.customFieldType.LongText"),
   }
 
   const {
@@ -68,7 +68,7 @@ export function CreateAccountFieldDialog({
       null,
       chatbotId,
       folderId,
-      FieldType.AccountField,
+      FieldType.ACCOUNT_FIELD,
     ),
     zodResolver(createAccountFieldSchema),
     {
@@ -88,7 +88,7 @@ export function CreateAccountFieldDialog({
         mode: "onChange",
         defaultValues: {
           name: "",
-          customFieldType: "ShortText",
+          customFieldType: CustomFieldType.SHORTTEXT,
           value: "",
           description: "",
         },
@@ -99,12 +99,12 @@ export function CreateAccountFieldDialog({
 
   const watchCustomFieldType = watch(
     "customFieldType",
-    CustomFieldType.ShortText,
+    CustomFieldType.SHORTTEXT,
   )
 
   const renderValueInput = () => {
     switch (watchCustomFieldType) {
-      case CustomFieldType.Number:
+      case CustomFieldType.NUMBER:
         return (
           <Input
             type="number"
@@ -112,7 +112,7 @@ export function CreateAccountFieldDialog({
             {...register("value")}
           />
         )
-      case CustomFieldType.Boolean:
+      case CustomFieldType.BOOLEAN:
         return (
           <Controller
             name="value"
@@ -130,7 +130,7 @@ export function CreateAccountFieldDialog({
             )}
           />
         )
-      case CustomFieldType.Date:
+      case CustomFieldType.DATE:
         return (
           <DateTimePicker
             granularity="day"
@@ -142,7 +142,7 @@ export function CreateAccountFieldDialog({
           />
         )
 
-      case CustomFieldType.DateTime:
+      case CustomFieldType.DATETIME:
         return (
           <DateTimePicker
             displayFormat={{ hour24: "yyyy-MM-dd hh:mm" }}
@@ -152,7 +152,7 @@ export function CreateAccountFieldDialog({
             }}
           />
         )
-      case CustomFieldType.LongText:
+      case CustomFieldType.LONGTEXT:
         return <Textarea placeholder="Enter text" {...register("value")} />
       default:
         return <Input placeholder="Enter text" {...register("value")} />

@@ -54,7 +54,7 @@ export const connectOpenAIAction = authActionClient
         await tx.integration.create({
           data: {
             chatbotId,
-            integrationType: IntegrationType.OpenAI,
+            integrationType: IntegrationType.OPENAI,
             openAI: {
               create: {
                 chatbotId,

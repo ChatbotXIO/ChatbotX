@@ -7,7 +7,7 @@ import {
 import { NodeType, baseNodeSchema } from "../../types"
 
 export const waitNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.StartFlow),
+  type: z.literal(NodeType.Wait),
   data: z.object({
     name: z.string().min(1).max(255).trim(),
     blocks: z.array(waitBlockSchema),
@@ -16,16 +16,19 @@ export const waitNodeSchema = baseNodeSchema.extend({
 
 export type WaitNodeSchema = z.infer<typeof waitNodeSchema>
 
-export const waitNodeDefaultValue = (): WaitNodeSchema => {
+export const waitNodeDefaultValue = ({
+  labelVersion,
+  position = { x: 100, y: 100 },
+}: {
+  labelVersion: number
+  position?: { x: number; y: number }
+}): WaitNodeSchema => {
   return {
     id: createId(),
-    type: NodeType.StartFlow,
-    position: {
-      x: 100,
-      y: 100,
-    },
+    type: NodeType.Wait,
+    position,
     data: {
-      name: "Wait",
+      name: `Wait #${labelVersion}`,
       blocks: [waitBlockDefaultValue()],
     },
   }
