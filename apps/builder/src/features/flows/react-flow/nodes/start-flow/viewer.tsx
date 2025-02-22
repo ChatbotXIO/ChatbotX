@@ -1,7 +1,7 @@
 import { BaseHandle } from "@/components/base-handle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Position } from "@xyflow/react"
-import { ClockIcon } from "lucide-react"
+import { ExternalLinkIcon } from "lucide-react"
 import { useState } from "react"
 import { StartFlowBlockViewer } from "../../blocks/start-flow/viewer"
 import { FlowFlowNodeToolbar } from "../../toolbars"
@@ -10,7 +10,10 @@ import type { StartFlowNodeSchema } from "./schema"
 export default function StartFlowNodeViewer({
   data,
   id,
-}: { data: StartFlowNodeSchema; id: string }) {
+}: {
+  data: StartFlowNodeSchema["data"]
+  id: string
+}) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   return (
@@ -21,10 +24,10 @@ export default function StartFlowNodeViewer({
         onMouseOver={() => onOpenToolbar(true)}
         onMouseOut={() => onOpenToolbar(false)}
       >
-        <CardHeader className="p-4 border-b-2 border-red-500 relative">
+        <CardHeader className="p-4 border-b-2 border-purple-200 relative">
           <BaseHandle id={id} type="target" position={Position.Left} />
           <CardTitle className="flex gap-2 items-center">
-            <ClockIcon size={20} className="text-red-500" />
+            <ExternalLinkIcon size={20} className="text-purple-200" />
             {data.name}
           </CardTitle>
         </CardHeader>

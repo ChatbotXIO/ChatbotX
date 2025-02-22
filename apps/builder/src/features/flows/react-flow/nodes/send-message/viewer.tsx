@@ -100,7 +100,7 @@ export default function SendMessageNodeViewer({
   data,
   id,
 }: {
-  data: SendMessageNodeSchema
+  data: SendMessageNodeSchema["data"]
   id: string
 }) {
   const [openToolbar, onOpenToolbar] = useState(false)

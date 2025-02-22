@@ -1,26 +1,13 @@
+import { FormInput } from "@/components/form-input"
+import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, TriggerFormInitially } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
 } from "@/components/ui/sortable"
-import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert"
 import { MarkEmailVerifiedBlockEditor } from "@/features/flows/react-flow/blocks/mark-email-verified/editor"
 import { markEmailVerifiedBlockDefaultValue } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
 import { OpenAIAnalyzeImageEditor } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/editor"
@@ -58,16 +45,17 @@ import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/s
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
-import { useTranslate } from "@tolgee/react"
 import { type Node, useReactFlow } from "@xyflow/react"
 import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
 import { type ReactNode, useCallback, useEffect } from "react"
-import { type FieldArrayWithId, useFieldArray, useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { ActionType, disabledCopyActionTypes } from "../../action-type"
-import type { ButtonBlockSchema } from "../../blocks/button/schema"
+import { ErrorAlert } from "../../blocks/error-alert"
 import { SendTextBlockEditor } from "../../blocks/send-text/editor"
 import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
+import { messageTypeLabels } from "../../types"
+import { getAllIds } from "../../utils"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
@@ -127,23 +115,16 @@ const maps: Record<
   [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
 }
 
-type FieldType = FieldArrayWithId<SendMessageNodeSchema, "blocks", "id"> & {
-  actionType: ActionType
-  buttons?: ButtonBlockSchema[]
-}
-
 export default function SendMessageNodeEditor({
   activeNode,
 }: {
-  activeNode: Node<SendMessageNodeSchema>
+  activeNode: Node<SendMessageNodeSchema["data"]>
 }) {
-  const { t } = useTranslate()
-
   const { setNodes, setEdges } = useReactFlow()
+
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (data: any) => {
-      console.log(11111)
       setNodes((nodes) =>
         nodes.map((node) => {
           if (node.id === activeNode.id) {
@@ -162,28 +143,26 @@ export default function SendMessageNodeEditor({
     [activeNode, setNodes],
   )
 
-  const { control, getValues, watch, ...form } = useForm<SendMessageNodeSchema>(
-    {
-      resolver: zodResolver(sendMessageNodeSchema),
-      defaultValues: activeNode.data,
-    },
-  )
+  const form = useForm<SendMessageNodeSchema["data"]>({
+    resolver: zodResolver(sendMessageNodeSchema.shape.data),
+    defaultValues: activeNode.data,
+    mode: "onBlur",
+  })
+  const { control, getValues, watch } = form
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const { unsubscribe } = watch((value) => {
       onChange(value)
     })
     return () => unsubscribe()
-  }, [watch])
+  }, [watch, onChange])
 
-  const { fields, append, move, update, remove, insert } = useFieldArray({
+  const { fields, append, move, remove, insert } = useFieldArray({
     control,
     name: "blocks",
   })
 
   const onClickAction = (name: ActionType) => {
-    console.log("onClickAction => ", name)
     switch (name) {
       case ActionType.SendText:
         append(sendTextBlockDefaultValue())
@@ -246,67 +225,45 @@ export default function SendMessageNodeEditor({
     }
   }
 
-  const onCopy = (index: number) => {
+  const onCopyBlock = (index: number) => {
     const values = getValues(`blocks.${index}`)
     if (values) {
       insert(index + 1, { ...cloneDeep(values), id: createId() })
     }
   }
 
-  const removeBlock = (field: FieldType, index: number) => {
+  const onRemoveBlock = (index: number) => {
+    const block = getValues(`blocks.${index}`)
+    const handlerIds = getAllIds(block)
+
+    setEdges((edges) => {
+      return edges.filter(
+        (edge) =>
+          !handlerIds.includes(edge.targetHandle ?? "") &&
+          !handlerIds.includes(edge.sourceHandle ?? ""),
+      )
+    })
+
     remove(index)
-    if (!field.buttons?.length) {
-      return
-    }
-    for (const button of field.buttons) {
-      setEdges((edges) => {
-        return edges.filter(
-          (edge) =>
-            edge.targetHandle !== button.id && edge.sourceHandle !== button.id,
-        )
-      })
-    }
   }
 
   return (
-    <>
-      <Form {...form} getValues={getValues} control={control} watch={watch}>
-        <FormField
-          control={control}
-          name="messageType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("flows.SendMessageNodeViewer.channel")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select channel" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Omnichannel">Omnichannel</SelectItem>
-                  <SelectItem value="Messenger">Messenger</SelectItem>
-                  <SelectItem value="Whatsapp">Whatsapp</SelectItem>
-                  <SelectItem value="Webchat">Webchat</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Form {...form}>
+      <FormInput name={"messageType"} label="Message Type">
+        <SingleSelect name={"messageType"} options={messageTypeLabels} />
+      </FormInput>
 
-        <Separator />
+      <Separator />
 
-        <div className="flex flex-col flex-1 gap-2 my-2">
-          <Sortable
-            value={fields}
-            onMove={({ activeIndex, overIndex }) =>
-              move(activeIndex, overIndex)
-            }
-            overlay={<div className="w-full h-32 rounded-sm bg-primary/10" />}
-          >
-            <div className="flex w-full flex-col gap-4">
-              {fields.map((field, index) => (
+      <div className="flex flex-col flex-1 gap-2 my-2">
+        <Sortable
+          value={fields}
+          onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
+          overlay={<div className="w-full h-32 rounded-sm bg-primary/10" />}
+        >
+          <div className="flex w-full flex-col gap-4">
+            {(fields as SendMessageNodeSchema["data"]["blocks"]).map(
+              (field, index) => (
                 <SortableItem key={field.id} value={field.id} asChild>
                   <div
                     className={cn(
@@ -352,7 +309,7 @@ export default function SendMessageNodeEditor({
                         variant="ghost"
                         size="icon"
                         className="size-8 shrink-0"
-                        onClick={() => removeBlock(field, index)}
+                        onClick={() => onRemoveBlock(index)}
                       >
                         <XIcon className="size-4" aria-hidden="true" />
                       </Button>
@@ -372,7 +329,7 @@ export default function SendMessageNodeEditor({
                           variant="ghost"
                           size="icon"
                           className="size-8 shrink-0"
-                          onClick={() => onCopy(index)}
+                          onClick={() => onCopyBlock(index)}
                         >
                           <CopyIcon className="size-4" aria-hidden="true" />
                         </Button>
@@ -380,13 +337,15 @@ export default function SendMessageNodeEditor({
                     </div>
                   </div>
                 </SortableItem>
-              ))}
-            </div>
-          </Sortable>
-        </div>
+              ),
+            )}
+          </div>
+        </Sortable>
+      </div>
 
-        <SendMessageEditorAction onClick={onClickAction} />
-      </Form>
-    </>
+      <SendMessageEditorAction onClick={onClickAction} />
+
+      <TriggerFormInitially form={form} />
+    </Form>
   )
 }

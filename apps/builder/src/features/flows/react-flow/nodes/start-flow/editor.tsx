@@ -24,14 +24,13 @@ import { useFieldArray, useForm } from "react-hook-form"
 export default function StartFlowNodeEditor({
   activeNode,
 }: {
-  activeNode: Node<StartFlowNodeSchema>
+  activeNode: Node<StartFlowNodeSchema["data"]>
 }) {
   const { setNodes } = useReactFlow()
 
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (data: any) => {
-      console.log(11111)
       setNodes((nodes) =>
         nodes.map((node) => {
           if (node.id === activeNode.id) {
@@ -50,8 +49,10 @@ export default function StartFlowNodeEditor({
     [activeNode, setNodes],
   )
 
-  const { control, getValues, watch, ...form } = useForm<StartFlowNodeSchema>({
-    resolver: zodResolver(startFlowNodeSchema),
+  const { control, getValues, watch, ...form } = useForm<
+    StartFlowNodeSchema["data"]
+  >({
+    resolver: zodResolver(startFlowNodeSchema.shape.data),
     defaultValues: activeNode.data,
   })
 

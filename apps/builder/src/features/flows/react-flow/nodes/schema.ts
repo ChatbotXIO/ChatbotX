@@ -18,7 +18,7 @@ import {
   type WaitNodeSchema,
   waitNodeSchema,
 } from "@/features/flows/react-flow/nodes/wait/schema"
-import { PanelAction } from "@/features/flows/react-flow/types"
+import { NodeType } from "@/features/flows/react-flow/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 
@@ -29,33 +29,33 @@ export const nodeSchema = z
   })
   .extend({
     type: z.enum([
-      PanelAction.SendMessage,
-      PanelAction.AddNotes,
-      PanelAction.SplitTraffic,
-      PanelAction.Wait,
-      PanelAction.StartFlow,
+      NodeType.SendMessage,
+      NodeType.AddNotes,
+      NodeType.SplitTraffic,
+      NodeType.Wait,
+      NodeType.StartFlow,
     ]),
   })
   .and(
     z.discriminatedUnion("type", [
       z.object({
-        type: z.literal(PanelAction.SendMessage),
+        type: z.literal(NodeType.SendMessage),
         data: sendMessageNodeSchema,
       }),
       z.object({
-        type: z.literal(PanelAction.AddNotes),
+        type: z.literal(NodeType.AddNotes),
         data: addNotesNodeSchema,
       }),
       z.object({
-        type: z.literal(PanelAction.SplitTraffic),
+        type: z.literal(NodeType.SplitTraffic),
         data: splitTrafficNodeSchema,
       }),
       z.object({
-        type: z.literal(PanelAction.Wait),
+        type: z.literal(NodeType.Wait),
         data: waitNodeSchema,
       }),
       z.object({
-        type: z.literal(PanelAction.StartFlow),
+        type: z.literal(NodeType.StartFlow),
         data: startFlowNodeSchema,
       }),
     ]),
@@ -66,11 +66,11 @@ export const flowVersionSchema = z.object({
   id: z.string(),
   position: z.object({ x: z.number(), y: z.number() }),
   type: z.enum([
-    PanelAction.SendMessage,
-    PanelAction.AddNotes,
-    PanelAction.SplitTraffic,
-    PanelAction.Wait,
-    PanelAction.StartFlow,
+    NodeType.SendMessage,
+    NodeType.AddNotes,
+    NodeType.SplitTraffic,
+    NodeType.Wait,
+    NodeType.StartFlow,
   ]),
   data: z.any(),
 })
@@ -83,7 +83,7 @@ export type DataDefaultSchema =
   | StartFlowNodeSchema
 
 export const nodeDefaultValue = (
-  type: PanelAction,
+  type: NodeType,
   data: DataDefaultSchema,
 ): NodeSchema => {
   return {

@@ -10,7 +10,7 @@ import type { WaitNodeSchema } from "./schema"
 export default function WaitNodeViewer({
   data,
   id,
-}: { data: WaitNodeSchema; id: string }) {
+}: { data: WaitNodeSchema["data"]; id: string }) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   return (

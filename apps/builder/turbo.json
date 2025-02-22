@@ -26,8 +26,17 @@
       "cache": false,
       "persistent": false
     },
+    "scheduler:dev": {
+      "cache": false,
+      "persistent": false
+    },
     "dev": {
-      "dependsOn": ["next:dev", "partysocket:dev", "workers:dev"],
+      "dependsOn": [
+        "next:dev",
+        "partysocket:dev",
+        "workers:dev",
+        "scheduler:dev"
+      ],
       "cache": false,
       "persistent": true
     }

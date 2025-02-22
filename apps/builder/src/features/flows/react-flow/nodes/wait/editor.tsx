@@ -24,7 +24,7 @@ import { useFieldArray, useForm } from "react-hook-form"
 export default function WaitNodeEditor({
   activeNode,
 }: {
-  activeNode: Node<WaitNodeSchema>
+  activeNode: Node<WaitNodeSchema["data"]>
 }) {
   const { setNodes } = useReactFlow()
 
@@ -49,8 +49,10 @@ export default function WaitNodeEditor({
     [activeNode, setNodes],
   )
 
-  const { control, getValues, watch, ...form } = useForm<WaitNodeSchema>({
-    resolver: zodResolver(waitNodeSchema),
+  const { control, getValues, watch, ...form } = useForm<
+    WaitNodeSchema["data"]
+  >({
+    resolver: zodResolver(waitNodeSchema.shape.data),
     defaultValues: activeNode.data,
   })
 
