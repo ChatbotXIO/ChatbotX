@@ -7,7 +7,6 @@ export enum ActionType {
   SplitTraffic = "SplitTraffic",
   Wait = "Wait",
   LandingPage = "LandingPage",
-  AddNotes = "AddNotes",
 
   SendText = "SendText",
   SendImage = "SendImage",
@@ -32,17 +31,17 @@ export enum ActionType {
   RemoveContact = "RemoveContact",
   CallApi = "CallApi",
 
-  EnableBot = "EnableBot",
-  DisableBot = "DisableBot",
-  AssignConversaton = "AssignConversaton",
-  UnassignConversation = "UnassignConversation",
-  AutoAssignConversation = "AutoAssignConversation",
-
   InboxActions = "InboxActions",
+  DisableBot = "DisableBot",
+  EnableBot = "EnableBot",
+  AssignConversation = "AssignConversation",
+  AutoAssignConversation = "AutoAssignConversation",
+  UnassignConversation = "UnassignConversation",
+  AddNote = "AddNote",
   FollowConversation = "FollowConversation",
   UnfollowConversation = "UnfollowConversation",
   ArchiveConversation = "ArchiveConversation",
-  UnarchiveConversation = "UnarchiveConversation",
+  UnArchiveConversation = "UnArchiveConversation",
   BlockContact = "BlockContact",
 
   OpenAIActions = "OpenAIActions",

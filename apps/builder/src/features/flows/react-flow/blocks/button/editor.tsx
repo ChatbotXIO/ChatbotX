@@ -11,9 +11,11 @@ import { buttonBlockDefaultValue } from "./schema"
 
 export const ButtonBlockEditor = ({
   parentName,
+  onEditButton,
   ...rest
 }: {
   parentName: string
+  onEditButton: () => void
 }) => {
   const { watch } = useFormContext()
 
@@ -21,18 +23,26 @@ export const ButtonBlockEditor = ({
 
   return (
     <div className="w-full flex-1" {...rest}>
-      <Button type="button" variant="secondary" className="w-full">
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full hover:text-blue-500"
+        onClick={onEditButton}
+      >
         {buttonName}
       </Button>
     </div>
   )
 }
 
-export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
+export const ButtonGroupEditor = ({
+  parentName,
+  onEditButton,
+}: { parentName: string; onEditButton: (name: string) => void }) => {
   const { t } = useTranslate()
 
   const { control } = useFormContext()
-  const { fields, append, move, update, remove } = useFieldArray({
+  const { fields, append, move } = useFieldArray({
     control,
     name: parentName,
   })
@@ -52,7 +62,10 @@ export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
           {fields.map((field, index) => (
             <SortableItem key={field.id} value={field.id} asChild>
               <div className="w-full flex">
-                <ButtonBlockEditor parentName={`${parentName}.${index}`} />
+                <ButtonBlockEditor
+                  parentName={`${parentName}.${index}`}
+                  onEditButton={() => onEditButton(`${parentName}.${index}`)}
+                />
                 <SortableDragHandle
                   variant="ghost"
                   size="icon"

@@ -20,6 +20,24 @@ import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { MessageType, NodeType, baseNodeSchema } from "../../types"
 
+export const actionsBlockSchema = [
+  // Open AI
+  openAIGenerateTextSchema,
+  openAIGenerateTextAgentSchema,
+  openAIGenerateTextAdvancedSchema,
+  openAIGenerateTextAssistantSchema,
+  openAIGenerateImageSchema,
+  openAIAnalyzeImageSchema,
+  openAISpeechToTextSchema,
+  openAITextToSpeechSchema,
+  openAIDeleteMessageHistorySchema,
+
+  // Email
+  markEmailVerifiedBlockSchema,
+  optInEmailBlockSchema,
+  optOutEmailBlockSchema,
+]
+
 export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.SendMessage),
   data: z.object({
@@ -33,18 +51,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         sendVideoBlockSchema,
         sendAudioBlockSchema,
         sendCarouselBlockSchema,
-        openAIGenerateTextSchema,
-        openAIGenerateTextAgentSchema,
-        openAIGenerateTextAdvancedSchema,
-        openAIGenerateTextAssistantSchema,
-        openAIGenerateImageSchema,
-        openAIAnalyzeImageSchema,
-        openAISpeechToTextSchema,
-        openAITextToSpeechSchema,
-        openAIDeleteMessageHistorySchema,
-        markEmailVerifiedBlockSchema,
-        optInEmailBlockSchema,
-        optOutEmailBlockSchema,
+        ...actionsBlockSchema,
       ]),
     ),
   }),

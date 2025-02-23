@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input"
 import { useFormContext } from "react-hook-form"
 import { ButtonGroupEditor } from "../button/editor"
 
-export const SendCardBlockEditor = ({ parentName }: { parentName: string }) => {
+export const SendCardBlockEditor = ({
+  parentName,
+  onEditButton,
+}: { parentName: string; onEditButton: (name: string) => void }) => {
   const { register } = useFormContext()
 
   return (
@@ -35,7 +38,10 @@ export const SendCardBlockEditor = ({ parentName }: { parentName: string }) => {
         />
       </CardContent>
       <CardFooter className="p-2 bg-gray-200 flex-col">
-        <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+        <ButtonGroupEditor
+          parentName={`${parentName}.buttons`}
+          onEditButton={(name: string) => onEditButton(name)}
+        />
       </CardFooter>
     </Card>
   )

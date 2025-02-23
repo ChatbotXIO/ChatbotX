@@ -8,79 +8,49 @@ import {
   SortableDragHandle,
   SortableItem,
 } from "@/components/ui/sortable"
+import { EditButtonDialog } from "@/features/flows/react-flow/blocks/button/components/edit-button-dialog"
 import { MarkEmailVerifiedBlockEditor } from "@/features/flows/react-flow/blocks/mark-email-verified/editor"
-import { markEmailVerifiedBlockDefaultValue } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
 import { OpenAIAnalyzeImageEditor } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/editor"
-import { openAIAnalyzeImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
 import { OpenAIDeleteMessageHistoryEditor } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/editor"
-import { openAIDeleteMessageHistoryDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
 import { OpenAIGenerateImageEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-image/editor"
-import { openAIGenerateImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
 import { OpenAIGenerateTextAdvancedEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/editor"
-import { openAIGenerateTextAdvancedDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
 import { OpenAIGenerateTextAgentEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/editor"
-import { openAIGenerateTextAgentDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
 import { OpenAIGenerateTextAssistantEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/editor"
-import { openAIGenerateTextAssistantDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
 import { OpenAIGenerateTextEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text/editor"
-import { openAIGenerateTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
 import { OpenAISpeechToTextEditor } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/editor"
-import { openAISpeechToTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
 import { OpenAITextToSpeechEditor } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/editor"
-import { openAITextToSpeechDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
 import { OptInEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-in-email/editor"
-import { optInEmailBlockDefaultValue } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
 import { OptOutEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-out-email/editor"
-import { optOutEmailBlockDefaultValue } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
 import { SendAudioBlockEditor } from "@/features/flows/react-flow/blocks/send-audio/editor"
-import { sendAudioBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-audio/schema"
 import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor"
-import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema"
 import { SendCarouselBlockEditor } from "@/features/flows/react-flow/blocks/send-carousel/editor"
-import { sendCarouselBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-carousel/schema"
 import { SendImageBlockEditor } from "@/features/flows/react-flow/blocks/send-image/editor"
-import { sendImageBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-image/schema"
 import { SendVideoBlockEditor } from "@/features/flows/react-flow/blocks/send-video/editor"
-import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-video/schema"
+import { generateDefaultValue } from "@/features/flows/react-flow/blocks/utils"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
 import { type Node, useReactFlow } from "@xyflow/react"
 import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
-import { type ReactNode, useCallback, useEffect } from "react"
+import React, { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { ActionType, disabledCopyActionTypes } from "../../action-type"
 import { ErrorAlert } from "../../blocks/error-alert"
 import { SendTextBlockEditor } from "../../blocks/send-text/editor"
-import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
 import { messageTypeLabels } from "../../types"
 import { getAllIds } from "../../utils"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
-const maps: Record<
-  ActionType,
-  (props: { key: string; parentName: string }) => ReactNode
+export interface BlockEditorProps {
+  key: string
+  parentName: string
+}
+
+export const actionsBlockEditor: Partial<
+  Record<ActionType, (props: BlockEditorProps) => ReactNode>
 > = {
-  [ActionType.SendText]: ({ key, parentName }) => (
-    <SendTextBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendImage]: ({ key, parentName }) => (
-    <SendImageBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendCard]: ({ key, parentName }) => (
-    <SendCardBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendVideo]: ({ key, parentName }) => (
-    <SendVideoBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendAudio]: ({ key, parentName }) => (
-    <SendAudioBlockEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.SendCarousel]: ({ key, parentName }) => (
-    <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />
-  ),
   [ActionType.OpenAIGenerateText]: ({ key, parentName }) => (
     <OpenAIGenerateTextEditor key={key} parentName={parentName} />
   ),
@@ -120,6 +90,38 @@ export default function SendMessageNodeEditor({
 }: {
   activeNode: Node<SendMessageNodeSchema["data"]>
 }) {
+  const maps: Partial<
+    Record<ActionType, (props: BlockEditorProps) => ReactNode>
+  > = {
+    [ActionType.SendText]: ({ key, parentName }) => (
+      <SendTextBlockEditor
+        key={key}
+        parentName={parentName}
+        onEditButton={(name: string) => openEditButton(name)}
+      />
+    ),
+    [ActionType.SendImage]: ({ key, parentName }) => (
+      <SendImageBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendCard]: ({ key, parentName }) => (
+      <SendCardBlockEditor
+        key={key}
+        parentName={parentName}
+        onEditButton={(name: string) => openEditButton(name)}
+      />
+    ),
+    [ActionType.SendVideo]: ({ key, parentName }) => (
+      <SendVideoBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendAudio]: ({ key, parentName }) => (
+      <SendAudioBlockEditor key={key} parentName={parentName} />
+    ),
+    [ActionType.SendCarousel]: ({ key, parentName }) => (
+      <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />
+    ),
+    ...actionsBlockEditor,
+  }
+
   const { setNodes, setEdges } = useReactFlow()
 
   const onChange = useCallback(
@@ -162,66 +164,23 @@ export default function SendMessageNodeEditor({
     name: "blocks",
   })
 
+  const [parentNameBlockButton, setParentNameBlockButton] = useState<string>("")
+  const [openedEditButton, setOpenedEditButton] = useState<boolean>(false)
+
+  const openEditButton = (parentName: string) => {
+    setParentNameBlockButton(parentName)
+    setOpenedEditButton(true)
+  }
+
+  const closeEditButton = () => {
+    setParentNameBlockButton("")
+    setOpenedEditButton(false)
+  }
+
   const onClickAction = (name: ActionType) => {
-    switch (name) {
-      case ActionType.SendText:
-        append(sendTextBlockDefaultValue())
-        break
-      case ActionType.SendImage:
-        append(sendImageBlockDefaultValue())
-        break
-      case ActionType.SendCard:
-        append(sendCardBlockDefaultValue())
-        break
-      case ActionType.SendCarousel:
-        append(sendCarouselBlockDefaultValue(2))
-        break
-      case ActionType.SendVideo:
-        append(sendVideoBlockDefaultValue())
-        break
-      case ActionType.SendAudio:
-        append(sendAudioBlockDefaultValue())
-        break
-      case ActionType.SendFile:
-        append(sendAudioBlockDefaultValue())
-        break
-      // Action OpenAI
-      case ActionType.OpenAIGenerateText:
-        append(openAIGenerateTextDefaultValue())
-        break
-      case ActionType.OpenAIGenerateTextAgent:
-        append(openAIGenerateTextAgentDefaultValue())
-        break
-      case ActionType.OpenAIGenerateTextAdvanced:
-        append(openAIGenerateTextAdvancedDefaultValue())
-        break
-      case ActionType.OpenAIGenerateTextAssistant:
-        append(openAIGenerateTextAssistantDefaultValue())
-        break
-      case ActionType.OpenAIGenerateImage:
-        append(openAIGenerateImageDefaultValue())
-        break
-      case ActionType.OpenAIAnalyzeImage:
-        append(openAIAnalyzeImageDefaultValue())
-        break
-      case ActionType.OpenAISpeechToText:
-        append(openAISpeechToTextDefaultValue())
-        break
-      case ActionType.OpenAITextToSpeech:
-        append(openAITextToSpeechDefaultValue())
-        break
-      case ActionType.OpenAIDeleteMessageHistory:
-        append(openAIDeleteMessageHistoryDefaultValue())
-        break
-      case ActionType.MarkEmailVerified:
-        append(markEmailVerifiedBlockDefaultValue())
-        break
-      case ActionType.OptInEmail:
-        append(optInEmailBlockDefaultValue())
-        break
-      case ActionType.OptOutEmail:
-        append(optOutEmailBlockDefaultValue())
-        break
+    const value = generateDefaultValue(name)
+    if (value) {
+      append(value)
     }
   }
 
@@ -344,6 +303,14 @@ export default function SendMessageNodeEditor({
       </div>
 
       <SendMessageEditorAction onClick={onClickAction} />
+      {openedEditButton && (
+        <EditButtonDialog
+          activeNode={activeNode}
+          parentName={parentNameBlockButton}
+          open={openedEditButton}
+          onOpenChange={closeEditButton}
+        />
+      )}
 
       <TriggerFormInitially form={form} />
     </Form>
