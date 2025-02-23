@@ -20,9 +20,6 @@ export const waitBlockSchema = z
     id: z.string().cuid2(),
     actionType: z.literal(ActionType.Wait),
   })
-  .extend({
-    delayType: z.nativeEnum(DelayType),
-  })
   .and(
     z.discriminatedUnion("delayType", [
       z.object({

@@ -7,8 +7,14 @@ export const DelayTypeSelect = ({ name }: { name: string }) => {
   const { t } = useTranslate()
 
   const delayTypes = [
-    { value: DelayType.Duration, label: t("flows.DelayType.Duration") },
-    { value: DelayType.SpecificDate, label: t("flows.DelayType.SpecificDate") },
+    {
+      value: DelayType.Duration,
+      label: t("flows.DelayType.Duration"),
+    },
+    {
+      value: DelayType.SpecificDate,
+      label: t("flows.DelayType.SpecificDate"),
+    },
     {
       value: DelayType.DatetimeCustomField,
       label: t("flows.DelayType.DatetimeCustomField"),

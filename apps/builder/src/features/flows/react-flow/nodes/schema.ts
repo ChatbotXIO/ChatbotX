@@ -82,21 +82,6 @@ export type DataDefaultSchema =
   | WaitNodeSchema
   | StartFlowNodeSchema
 
-export const nodeDefaultValue = (
-  type: NodeType,
-  data: DataDefaultSchema,
-): NodeSchema => {
-  return {
-    id: createId(),
-    type,
-    position: {
-      x: 100,
-      y: 100,
-    },
-    data,
-  } as NodeSchema
-}
-
 export const edgeSchema = z.object({
   id: z.string(),
   source: z.string(),
