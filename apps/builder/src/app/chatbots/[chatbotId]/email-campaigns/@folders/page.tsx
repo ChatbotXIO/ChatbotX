@@ -15,7 +15,7 @@ export default async function FoldersPage(props: {
   const searchParams = await props.searchParams
   const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
 
-  const folderType = FolderType.EmailCampaign
+  const folderType = FolderType.EMAIL_CAMPAIGN
 
   const promises = Promise.all([
     folderId

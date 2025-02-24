@@ -1,19 +1,7 @@
+import { FormInput } from "@/components/form-input"
+import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, TriggerFormInitially } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 import {
   Sortable,
@@ -77,12 +65,9 @@ import { UnassignConversationBlockEditor } from "@/features/flows/react-flow/blo
 import { unassignConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/unassign-conversation/schema"
 import { UnfollowConversationBlockEditor } from "@/features/flows/react-flow/blocks/unfollow-conversation/editor"
 import { unfollowConversationBlockDefaultValue } from "@/features/flows/react-flow/blocks/unfollow-conversation/schema"
-import { EditNoteDialog } from "@/features/flows/react-flow/nodes/send-message/edit-note-dialog"
-import type { RecipientSchema } from "@/features/flows/react-flow/types"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
-import { useTranslate } from "@tolgee/react"
 import { type Node, useReactFlow } from "@xyflow/react"
 import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
@@ -91,19 +76,21 @@ import { useFieldArray, useForm } from "react-hook-form"
 import { ActionType, disabledCopyActionTypes } from "../../action-type"
 import { SendTextBlockEditor } from "../../blocks/send-text/editor"
 import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
+import { messageTypeLabels } from "../../types"
+import { getAllIds } from "../../utils"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
 export interface BlockEditorProps {
   key: string
   parentName: string
-  recipients?: RecipientSchema[]
+  recipients?: []
 }
 
 export default function SendMessageNodeEditor({
   activeNode,
 }: {
-  activeNode: Node<SendMessageNodeSchema>
+  activeNode: Node<SendMessageNodeSchema["data"]>
 }) {
   const maps: Record<ActionType, (props: BlockEditorProps) => ReactNode> = {
     [ActionType.SendText]: ({ key, parentName }) => (
@@ -207,9 +194,8 @@ export default function SendMessageNodeEditor({
     ),
   }
 
-  const { t } = useTranslate()
+  const { setNodes, setEdges } = useReactFlow()
 
-  const { setNodes } = useReactFlow()
   const onChange = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     (data: any) => {
@@ -231,47 +217,26 @@ export default function SendMessageNodeEditor({
     [activeNode, setNodes],
   )
 
-  const { control, getValues, watch, ...form } = useForm<SendMessageNodeSchema>(
-    {
-      resolver: zodResolver(sendMessageNodeSchema),
-      defaultValues: activeNode.data,
-    },
-  )
+  const form = useForm<SendMessageNodeSchema["data"]>({
+    resolver: zodResolver(sendMessageNodeSchema.shape.data),
+    defaultValues: activeNode.data,
+    mode: "onBlur",
+  })
+  const { control, getValues, watch } = form
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const { unsubscribe } = watch((value) => {
       onChange(value)
     })
     return () => unsubscribe()
-  }, [watch])
+  }, [watch, onChange])
 
-  const { fields, append, move, update, remove, insert } = useFieldArray({
+  const { fields, append, move, remove, insert } = useFieldArray({
     control,
     name: "blocks",
   })
 
-  const generateEditor = (
-    field: { id: string; actionType: ActionType },
-    index: number,
-  ) => {
-    let props = {
-      key: field.id,
-      parentName: `blocks.${index}`,
-    }
-    switch (field.actionType) {
-      case ActionType.AssignConversation:
-      case ActionType.AutoAssignConversation:
-        props = { ...props, ...{ recipients } }
-        break
-      default:
-        break
-    }
-
-    return maps[field.actionType as ActionType](props)
-  }
-
-  const onClickAction = async (name: ActionType) => {
+  const onClickAction = (name: ActionType) => {
     switch (name) {
       case ActionType.SendText:
         append(sendTextBlockDefaultValue())
@@ -303,11 +268,9 @@ export default function SendMessageNodeEditor({
         append(enableBotBlockDefaultValue())
         break
       case ActionType.AssignConversation:
-        await getRecipients()
         append(assignConversationBlockDefaultValue())
         break
       case ActionType.AutoAssignConversation:
-        await getRecipients()
         append(autoAssignConversationBlockDefaultValue())
         break
       case ActionType.UnassignConversation:
@@ -374,7 +337,7 @@ export default function SendMessageNodeEditor({
     }
   }
 
-  const onCopy = (index: number) => {
+  const onCopyBlock = (index: number) => {
     const values = getValues(`blocks.${index}`)
     if (values) {
       insert(index + 1, { ...cloneDeep(values), id: createId() })
@@ -394,163 +357,120 @@ export default function SendMessageNodeEditor({
     setOpenEditNoteDialog(false)
   }
 
-  const [recipients, setRecipients] = useState<RecipientSchema[]>([])
-  const [loadedRecipients, setLoadedRecipients] = useState<boolean>(false)
-  const getRecipients = async () => {
-    if (loadedRecipients) {
-      return
-    }
-    setLoadedRecipients(true)
-    await Promise.resolve(() => setTimeout(() => {}, 100))
-    setRecipients(
-      Array.from({ length: 10 }, (_, i) => i + 1).map((i) => {
-        return {
-          id: createId(),
-          name: `Recipient ${i}`,
-        }
-      }),
-    )
-  }
+  const onRemoveBlock = (index: number) => {
+    const block = getValues(`blocks.${index}`)
+    const handlerIds = getAllIds(block)
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const onSubmit = (data: any) => {
-    console.log("Form Data:", data)
+    setEdges((edges) => {
+      return edges.filter(
+        (edge) =>
+          !handlerIds.includes(edge.targetHandle ?? "") &&
+          !handlerIds.includes(edge.sourceHandle ?? ""),
+      )
+    })
+
+    remove(index)
   }
 
   return (
-    <>
-      <Form {...form} getValues={getValues} control={control} watch={watch}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FormField
-            control={control}
-            name="messageType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  {t("flows.SendMessageNodeViewer.channel")}
-                </FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select channel" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Omnichannel">Omnichannel</SelectItem>
-                    <SelectItem value="Messenger">Messenger</SelectItem>
-                    <SelectItem value="Whatsapp">Whatsapp</SelectItem>
-                    <SelectItem value="Webchat">Webchat</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <Form {...form}>
+      <FormInput name={"messageType"} label="Message Type">
+        <SingleSelect name={"messageType"} options={messageTypeLabels} />
+      </FormInput>
 
-          <Separator />
+      <Separator />
 
-          <div className="flex flex-col flex-1 gap-2 my-2">
-            <Sortable
-              value={fields}
-              onMove={({ activeIndex, overIndex }) =>
-                move(activeIndex, overIndex)
-              }
-              overlay={<div className="w-full h-32 rounded-sm bg-primary/10" />}
-            >
-              <div className="flex w-full flex-col gap-4">
-                {fields.map((field, index) => (
-                  <SortableItem key={field.id} value={field.id} asChild>
+      <div className="flex flex-col flex-1 gap-2 my-2">
+        <Sortable
+          value={fields}
+          onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
+          overlay={<div className="w-full h-32 rounded-sm bg-primary/10" />}
+        >
+          <div className="flex w-full flex-col gap-4">
+            {(fields as SendMessageNodeSchema["data"]["blocks"]).map(
+              (field, index) => (
+                <SortableItem key={field.id} value={field.id} asChild>
+                  <div
+                    className={cn(
+                      "flex gap-2 items-center",
+                      field.actionType === ActionType.SendCarousel
+                        ? "relative"
+                        : "",
+                    )}
+                  >
+                    {form.formState.errors.blocks?.[index] ? (
+                      <ErrorAlert
+                        message={
+                          typeof form.formState.errors.blocks?.[index]
+                            ?.message === "object"
+                            ? ((
+                                form.formState.errors.blocks?.[index]
+                                  ?.message as { message: string }
+                              ).message as string)
+                            : ""
+                        }
+                      />
+                    ) : (
+                      <div className="w-4">{"\u00A0"}</div>
+                    )}
                     <div
                       className={cn(
-                        "flex gap-2 items-center",
+                        "flex-1 break-all",
                         field.actionType === ActionType.SendCarousel
-                          ? "relative"
+                          ? "overflow-hidden"
                           : "",
                       )}
                     >
-                      {form.formState.errors.blocks?.[index] ? (
-                        <ErrorAlert
-                          message={
-                            typeof form.formState.errors.blocks?.[index]
-                              ?.message === "object"
-                              ? ((
-                                  form.formState.errors.blocks?.[index]
-                                    ?.message as { message: string }
-                                ).message as string)
-                              : ""
-                          }
-                        />
-                      ) : (
-                        <div className="w-4">{"\u00A0"}</div>
-                      )}
-                      <div
-                        className={cn(
-                          "flex-1 break-all",
-                          field.actionType === ActionType.SendCarousel
-                            ? "overflow-hidden"
-                            : "",
-                        )}
+                      {field.actionType in ActionType
+                        ? maps[field.actionType as ActionType]({
+                            key: field.id,
+                            parentName: `blocks.${index}`,
+                          })
+                        : null}
+                    </div>
+                    <div className="flex flex-col">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0"
+                        onClick={() => onRemoveBlock(index)}
                       >
-                        {field.actionType in ActionType
-                          ? generateEditor(field, index)
-                          : null}
-                      </div>
-                      <div className="flex flex-col">
+                        <XIcon className="size-4" aria-hidden="true" />
+                      </Button>
+                      <SortableDragHandle
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0"
+                      >
+                        <MoveVerticalIcon
+                          className="size-4"
+                          aria-hidden="true"
+                        />
+                      </SortableDragHandle>
+                      {!disabledCopyActionTypes.includes(field.actionType) && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           className="size-8 shrink-0"
-                          onClick={() => remove(index)}
+                          onClick={() => onCopyBlock(index)}
                         >
-                          <XIcon className="size-4" aria-hidden="true" />
+                          <CopyIcon className="size-4" aria-hidden="true" />
                         </Button>
-                        <SortableDragHandle
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 shrink-0"
-                        >
-                          <MoveVerticalIcon
-                            className="size-4"
-                            aria-hidden="true"
-                          />
-                        </SortableDragHandle>
-                        {!disabledCopyActionTypes.includes(
-                          field.actionType,
-                        ) && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 shrink-0"
-                            onClick={() => onCopy(index)}
-                          >
-                            <CopyIcon className="size-4" aria-hidden="true" />
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </SortableItem>
-                ))}
-              </div>
-            </Sortable>
+                  </div>
+                </SortableItem>
+              ),
+            )}
           </div>
+        </Sortable>
+      </div>
 
-          <Button>Test Form Submit</Button>
+      <SendMessageEditorAction onClick={onClickAction} />
 
-          <SendMessageEditorAction onClick={onClickAction} />
-          {parentNameEditNote && (
-            <EditNoteDialog
-              parentName={parentNameEditNote}
-              open={openedEditNoteDialog}
-              onOpenChange={closeEditNoteDialog}
-            />
-          )}
-        </form>
-      </Form>
-    </>
+      <TriggerFormInitially form={form} />
+    </Form>
   )
 }

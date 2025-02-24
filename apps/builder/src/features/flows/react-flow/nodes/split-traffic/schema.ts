@@ -9,7 +9,6 @@ import {
 export const splitTrafficNodeSchema = z.object({
   id: z.string(),
   name: z.string().min(1).max(255).trim(),
-  actionType: z.enum([ActionType.SplitTraffic]),
   blocks: z.array(splitTrafficBlockSchema),
 })
 
@@ -20,6 +19,5 @@ export const splitTrafficNodeDefaultValue = (
 ): SplitTrafficNodeSchema => ({
   id: createId(),
   name,
-  actionType: ActionType.SplitTraffic,
   blocks: [splitTrafficBlockDefaultValue(), splitTrafficBlockDefaultValue()],
 })

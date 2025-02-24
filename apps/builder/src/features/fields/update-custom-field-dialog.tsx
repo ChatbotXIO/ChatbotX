@@ -34,7 +34,7 @@ export function UpdateCustomFieldDialog({
 }) {
   const { t } = useTranslate()
   const router = useRouter()
-  const fieldType = FieldType.CustomField
+  const fieldType = FieldType.CUSTOM_FIELD
 
   const {
     form,
@@ -59,9 +59,7 @@ export function UpdateCustomFieldDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {
@@ -73,7 +71,6 @@ export function UpdateCustomFieldDialog({
 
   useEffect(() => {
     if (customField) {
-      console.log("customFieldcustomField", customField)
       setValue("name", customField.name)
       setValue("description", customField.description ?? "")
     }

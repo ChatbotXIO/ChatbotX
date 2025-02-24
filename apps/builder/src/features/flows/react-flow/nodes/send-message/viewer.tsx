@@ -1,3 +1,4 @@
+import { BaseHandle } from "@/components/base-handle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { AddNoteBlockSchema } from "@/features/flows/react-flow/blocks/add-note/schema"
 import { AddNoteBlockViewer } from "@/features/flows/react-flow/blocks/add-note/viewer"
@@ -48,6 +49,7 @@ import type { UnassignConversationBlockSchema } from "@/features/flows/react-flo
 import { UnassignConversationBlockViewer } from "@/features/flows/react-flow/blocks/unassign-conversation/viewer"
 import type { UnfollowConversationBlockSchema } from "@/features/flows/react-flow/blocks/unfollow-conversation/schema"
 import { UnfollowConversationBlockViewer } from "@/features/flows/react-flow/blocks/unfollow-conversation/viewer"
+import { Position } from "@xyflow/react"
 import { MessageCircleMoreIcon } from "lucide-react"
 import { type ReactNode, useState } from "react"
 import { ActionType } from "../../action-type"
@@ -159,8 +161,8 @@ export default function SendMessageNodeViewer({
   data,
   id,
 }: {
-  data: SendMessageNodeSchema
-  id: string | number
+  data: SendMessageNodeSchema["data"]
+  id: string
 }) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
@@ -168,11 +170,12 @@ export default function SendMessageNodeViewer({
     <>
       <FlowFlowNodeToolbar visible={openToolbar} />
       <Card
-        className="w-72 hover:border-blue-500"
+        className="w-72 hover:border-blue-500 bg-white/75"
         onMouseOver={() => onOpenToolbar(true)}
         onMouseOut={() => onOpenToolbar(false)}
       >
-        <CardHeader className="p-4">
+        <CardHeader className="p-4 relative">
+          <BaseHandle id={id} type="target" position={Position.Left} />
           <CardTitle className="flex gap-1 items-center">
             <MessageCircleMoreIcon size={20} />
             {data.name}
@@ -184,6 +187,10 @@ export default function SendMessageNodeViewer({
               ? maps[blockItem?.actionType](blockItem)
               : null,
           )}
+          <div className="w-full text-right relative">
+            <span className="mr-4">Continue</span>
+            <BaseHandle id={id} type="source" position={Position.Right} />
+          </div>
         </CardContent>
       </Card>
     </>

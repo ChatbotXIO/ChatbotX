@@ -13,10 +13,10 @@ import { getColumns } from "./account-field-table-columns"
 // import { UpdateAccountFieldDialog } from "./account-field/update-account-field-dialog"
 import { AccountFieldsTableToolbarActions } from "./account-fields-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
-import type { getFields } from "./queries"
+import type { listFields } from "./queries"
 
 interface FieldsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getFields>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listFields>>]>
   chatbotId: string
 }
 
@@ -89,7 +89,7 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         showTrigger={false}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
-        fieldType={FieldType.AccountField}
+        fieldType={FieldType.ACCOUNT_FIELD}
       />
 
       {/* <UpdateAccountFieldDialog

@@ -28,7 +28,7 @@ export function CustomFieldsTableToolbarActions({
           onSuccess={() => table.toggleAllRowsSelected(false)}
           chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
-          fieldType={FieldType.CustomField}
+          fieldType={FieldType.CUSTOM_FIELD}
         />
       ) : null}
     </div>

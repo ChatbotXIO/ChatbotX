@@ -1,6 +1,7 @@
 "use client"
 
 import { FormInput } from "@/components/form-input"
+import { NumberField } from "@/components/number-field"
 import { Button } from "@/components/ui/button"
 import {
   Collapsible,
@@ -44,9 +45,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {
@@ -80,43 +79,49 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
             />
 
             <Collapsible open={isOpenOptions} onOpenChange={setIsOpenOptions}>
-              <div className="flex items-center justify-between space-x-4 px-4">
-                <h4 className="text-sm font-semibold">More options</h4>
+              <div className="flex items-center justify-between space-x-4">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-9 p-0">
-                    <ChevronsUpDown className="h-4 w-4" />
-                    <span className="sr-only">Toggle</span>
-                  </Button>
+                  <div className="w-full flex items-center">
+                    <div className="text-sm font-semibold flex-1">
+                      More options
+                    </div>
+                    <Button variant="ghost" size="sm" className="w-9 p-0">
+                      <ChevronsUpDown className="h-4 w-4" />
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                  </div>
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent className="space-y-2">
                 <FormInput
                   name="temperature"
-                  label={<T keyName={"Integrations.OpenAI.APIKey"} />}
-                  // <Controller name="temperature" render={(field) => <NumberField value={0.5} {...field} />}
-                />
+                  label={<T keyName={"Integrations.OpenAI.Temperature"} />}
+                >
+                  <NumberField name="temperature" step={0.1} min={0} max={2} />
+                </FormInput>
 
                 <FormInput
                   name="maxTokens"
                   label={<T keyName={"Integrations.OpenAI.MaxTokens"} />}
-                  // <Controller name="temperature" render={(field) => <NumberField value={0.5} {...field} />}
-                />
+                >
+                  <NumberField name="maxTokens" step={1} min={1} max={8192} />
+                </FormInput>
               </CollapsibleContent>
             </Collapsible>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  <T keyName="common.cancelBtn" />
+                </Button>
+              </DialogClose>
+
+              <Button type="submit">
+                <T keyName="common.confirmBtn" />
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              <T keyName="common.cancelBtn" />
-            </Button>
-          </DialogClose>
-
-          <Button type="button">
-            <T keyName="common.confirmBtn" />
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

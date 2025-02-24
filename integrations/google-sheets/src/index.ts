@@ -1,4 +1,9 @@
-import { Integration, type Oauth2PropsSchema } from "@ahachat.ai/sdk"
+import {
+  Integration,
+  type IntegrationHandlerProps,
+  type Oauth2AuthProps,
+  type Oauth2AuthValue,
+} from "@ahachat.ai/sdk"
 import {
   generateAuthUrl,
   getSheetsClient,
@@ -6,7 +11,11 @@ import {
   revokeToken,
 } from "./client"
 
-export const integration = new Integration<Oauth2PropsSchema>({
+export const integration = new Integration<
+  Oauth2AuthProps,
+  Oauth2AuthValue,
+  IntegrationHandlerProps<Oauth2AuthValue>
+>({
   name: "googleSheets",
   actions: {
     listSheetNames: async ({ ctx, props }): Promise<string[]> => {
@@ -39,13 +48,13 @@ export const integration = new Integration<Oauth2PropsSchema>({
       })
     },
   },
-  connect: async (props: Oauth2PropsSchema) => {
+  connect: async (props: Oauth2AuthProps) => {
     return await generateAuthUrl(props)
   },
-  disconnect: async (props: Oauth2PropsSchema) => {
+  disconnect: async (props: Oauth2AuthValue) => {
     return await revokeToken(props)
   },
-  authorize: async (props: Oauth2PropsSchema) => {
+  authorize: async (props: Oauth2AuthProps) => {
     return await getToken(props)
   },
 })

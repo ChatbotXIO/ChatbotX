@@ -5,29 +5,12 @@
   - You are about to drop the `_AiTriggerToIntegrationOpenAi` table. If the table is not empty, all the data it contains will be lost.
 
 */
--- DropForeignKey
-ALTER TABLE "IntegrationOpenAi" DROP CONSTRAINT "IntegrationOpenAi_aiAgentId_fkey";
-
--- DropForeignKey
-ALTER TABLE "IntegrationOpenAi" DROP CONSTRAINT "IntegrationOpenAi_aiAssistantId_fkey";
 
 -- DropForeignKey
 ALTER TABLE "IntegrationOpenAi" DROP CONSTRAINT "IntegrationOpenAi_chatbotId_fkey";
 
--- DropForeignKey
-ALTER TABLE "IntegrationOpenAi" DROP CONSTRAINT "IntegrationOpenAi_integrationId_fkey";
-
--- DropForeignKey
-ALTER TABLE "_AiTriggerToIntegrationOpenAi" DROP CONSTRAINT "_AiTriggerToIntegrationOpenAi_A_fkey";
-
--- DropForeignKey
-ALTER TABLE "_AiTriggerToIntegrationOpenAi" DROP CONSTRAINT "_AiTriggerToIntegrationOpenAi_B_fkey";
-
 -- DropTable
 DROP TABLE "IntegrationOpenAi";
-
--- DropTable
-DROP TABLE "_AiTriggerToIntegrationOpenAi";
 
 -- CreateTable
 CREATE TABLE "IntegrationOpenAI" (
@@ -72,12 +55,6 @@ ALTER TABLE "IntegrationOpenAI" ADD CONSTRAINT "IntegrationOpenAI_integrationId_
 
 -- AddForeignKey
 ALTER TABLE "IntegrationOpenAI" ADD CONSTRAINT "IntegrationOpenAI_aiAssistantId_fkey" FOREIGN KEY ("aiAssistantId") REFERENCES "AiAssistant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "IntegrationOpenAI" ADD CONSTRAINT "IntegrationOpenAI_aiAgentId_fkey" FOREIGN KEY ("aiAgentId") REFERENCES "AiAgent"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_AiTriggerToIntegrationOpenAI" ADD CONSTRAINT "_AiTriggerToIntegrationOpenAI_A_fkey" FOREIGN KEY ("A") REFERENCES "AiTrigger"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_AiTriggerToIntegrationOpenAI" ADD CONSTRAINT "_AiTriggerToIntegrationOpenAI_B_fkey" FOREIGN KEY ("B") REFERENCES "IntegrationOpenAI"("id") ON DELETE CASCADE ON UPDATE CASCADE;

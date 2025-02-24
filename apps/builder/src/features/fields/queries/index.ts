@@ -1,12 +1,15 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Field, type Prisma, prisma } from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { GetFieldsSchema } from "../schemas/get-fields-schema"
+import type {
+  CustomFieldCollection,
+  GetFieldsSchema,
+} from "../schemas/get-fields-schema"
 
-export async function getFields(
+export async function listFields(
   input: GetFieldsSchema,
-): Promise<{ data: Field[]; pageCount: number }> {
+): Promise<CustomFieldCollection> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)

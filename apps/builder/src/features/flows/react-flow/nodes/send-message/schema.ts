@@ -27,50 +27,74 @@ import { sendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-vi
 import { unArchiveConversationBlockSchema } from "@/features/flows/react-flow/blocks/unarchive-conversation/schema"
 import { unassignConversationBlockSchema } from "@/features/flows/react-flow/blocks/unassign-conversation/schema"
 import { unfollowConversationBlockSchema } from "@/features/flows/react-flow/blocks/unfollow-conversation/schema"
+import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { MessageType, NodeType, baseNodeSchema } from "../../types"
 
-export const sendMessageNodeSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1).max(255).trim(),
-  messageType: z.enum(["Messenger", "Whatsapp", "Chatwidget"]),
-  blocks: z.array(
-    z.union([
-      sendTextBlockSchema,
-      sendImageBlockSchema,
-      sendCardBlockSchema,
-      sendVideoBlockSchema,
-      sendAudioBlockSchema,
-      sendCarouselBlockSchema,
+export const sendMessageNodeSchema = baseNodeSchema.extend({
+  type: z.literal(NodeType.SendMessage),
+  data: z.object({
+    name: z.string().min(1).max(255).trim(),
+    messageType: z.nativeEnum(MessageType),
+    blocks: z.array(
+      z.union([
+        sendTextBlockSchema,
+        sendImageBlockSchema,
+        sendCardBlockSchema,
+        sendVideoBlockSchema,
+        sendAudioBlockSchema,
+        sendCarouselBlockSchema,
 
-      // Inbox actions
-      disableBotBlockSchema,
-      enableBotBlockSchema,
-      assignConversationBlockSchema,
-      autoAssignConversationBlockSchema,
-      unassignConversationBlockSchema,
-      addNoteBlockSchema,
-      followConversationBlockSchema,
-      unfollowConversationBlockSchema,
-      archiveConversationBlockSchema,
-      unArchiveConversationBlockSchema,
-      blockContactBlockSchema,
+        // Inbox actions
+        disableBotBlockSchema,
+        enableBotBlockSchema,
+        assignConversationBlockSchema,
+        autoAssignConversationBlockSchema,
+        unassignConversationBlockSchema,
+        addNoteBlockSchema,
+        followConversationBlockSchema,
+        unfollowConversationBlockSchema,
+        archiveConversationBlockSchema,
+        unArchiveConversationBlockSchema,
+        blockContactBlockSchema,
 
-      // Email actions
-      markEmailVerifiedBlockSchema,
-      optInEmailBlockSchema,
-      optOutEmailBlockSchema,
+        // Email actions
+        markEmailVerifiedBlockSchema,
+        optInEmailBlockSchema,
+        optOutEmailBlockSchema,
 
-      // Open AI
-      openAIGenerateTextSchema,
-      openAIGenerateTextAgentSchema,
-      openAIGenerateTextAdvancedSchema,
-      openAIGenerateTextAssistantSchema,
-      openAIGenerateImageSchema,
-      openAIAnalyzeImageSchema,
-      openAISpeechToTextSchema,
-      openAITextToSpeechSchema,
-      openAIDeleteMessageHistorySchema,
-    ]),
-  ),
+        // Open AI
+        openAIGenerateTextSchema,
+        openAIGenerateTextAgentSchema,
+        openAIGenerateTextAdvancedSchema,
+        openAIGenerateTextAssistantSchema,
+        openAIGenerateImageSchema,
+        openAIAnalyzeImageSchema,
+        openAISpeechToTextSchema,
+        openAITextToSpeechSchema,
+        openAIDeleteMessageHistorySchema,
+      ]),
+    ),
+  }),
 })
+
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
+
+export const defaultSendMessageNode = ({
+  labelVersion,
+  position = { x: 100, y: 100 },
+}: {
+  labelVersion: number
+  position?: { x: number; y: number }
+}): SendMessageNodeSchema => {
+  return {
+    id: createId(),
+    type: NodeType.SendMessage,
+    position,
+    data: {
+      name: `Send Message #${labelVersion}`,
+      messageType: MessageType.Omnichannel,
+      blocks: [],
+    },
+  }
+}

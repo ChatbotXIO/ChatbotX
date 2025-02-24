@@ -1,8 +1,10 @@
 import { getCurrentUserId } from "@/auth"
+import type { ChatbotResource } from "@/features/chatbots/schemas"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
 import type { Prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
+import { ChatbotMemberException, type ChatbotMemberResource } from "../schemas"
 import type { ChatbotMemberWithUser } from "../schemas/add-chatbot-member-schema"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"
 
@@ -54,4 +56,55 @@ export async function getAgents(
       tags: [`${userId}#chatbotMembers`],
     },
   )()
+}
+
+export const getAllChatbotMembers = async (
+  userId: string,
+): Promise<{
+  chatbotMembers: ChatbotMemberResource[]
+  chatbots: ChatbotResource[]
+  chatbotIds: string[]
+}> => {
+  return await unstable_cache(
+    async () => {
+      try {
+        const chatbotMembers = await prisma.chatbotMember.findMany({
+          where: {
+            userId,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          include: {
+            chatbot: true,
+          },
+        })
+        const chatbots = chatbotMembers
+          .map((cm) => cm.chatbot)
+          .filter((c) => !!c)
+        const chatbotIds = chatbots.map((c) => c.id)
+
+        return { chatbotMembers, chatbots, chatbotIds }
+      } catch (error) {
+        return { chatbotMembers: [], chatbots: [], chatbotIds: [] }
+      }
+    },
+    [userId],
+    {
+      tags: [`${userId}#chatbots`],
+    },
+  )()
+}
+
+export const ensureUserCanAccessChatbot = async (
+  userId: string,
+  chatbotId: string,
+  throwable = true,
+) => {
+  const { chatbots } = await getAllChatbotMembers(userId)
+  const ok = chatbots.some((c) => c.id === chatbotId)
+
+  if (!ok && throwable) {
+    throw new ChatbotMemberException("Chatbot not found")
+  }
 }

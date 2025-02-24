@@ -1,70 +1,74 @@
-import { z } from "zod"
-import type { IntegrationActions } from "./action"
-import type { AuthSchema } from "./auth"
-import type { IntegrationChannels } from "./channel"
+import type { BaseAuthValue } from "./auth"
+import type { BaseConfig, Context, HandleRequestProps, Handler } from "./shared"
 
-const integrationPropsSchema = z.object({
-  name: z.string().trim().min(1),
-})
-
-type Handler<I, O> = (props: I) => Promise<O>
-
-type IntegrationProps<AuthInput> = {
-  name: string
-  actions?: IntegrationActions
-  channels?: IntegrationChannels
-  authorize?: Handler<AuthInput & { code: string }, AuthSchema>
-  connect?: Handler<AuthInput, string>
-  disconnect?: Handler<AuthInput, boolean>
+export type IntegrationActionPropsSchema<AO extends BaseAuthValue> = {
+  ctx: Context<AO>
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  props: any
 }
 
-export class Integration<AuthInput> {
-  private readonly _name: string
-  private readonly _actions: IntegrationActions
-  private readonly _channels: IntegrationChannels
-  private readonly _authorize?: Handler<
-    AuthInput & { code: string },
-    AuthSchema
-  >
-  private readonly _connect?: Handler<AuthInput, string>
-  private readonly _disconnect?: Handler<AuthInput, boolean>
+export type IntegrationActions<AO extends BaseAuthValue> = Record<
+  string,
+  Handler<IntegrationActionPropsSchema<AO>, unknown>
+>
 
-  constructor(props: IntegrationProps<AuthInput>) {
-    this.validateProps(props)
+export type IntegrationHandlerProps<AO extends BaseAuthValue> = {
+  ctx: Context<AO>
+  req: Request
+  queue: {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    add: (name: string, data: any, opts?: any) => Promise<any>
+  }
+}
 
-    this._name = props.name
-    this._actions = props.actions || {}
-    this._channels = props.channels || {}
-    this._authorize = props.authorize
-    this._connect = props.connect
-    this._disconnect = props.disconnect
+export type IntegrationDefinition<
+  IAuth extends BaseAuthValue,
+  IConfig extends BaseConfig,
+> = {
+  name: string
+  actions?: {
+    [key: string]: (props: {
+      ctx: Context<IAuth>
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    }) => Promise<any>
+  }
+  handleRequest?: Handler<HandleRequestProps<IConfig>, string | number>
+}
+
+export class Integration<
+  IAuth extends BaseAuthValue,
+  IConfig extends BaseConfig,
+  T extends IntegrationDefinition<IAuth, IConfig>,
+> {
+  constructor(private readonly props: T) {
+    // this.validateProps(props);
   }
 
-  private validateProps(props: IntegrationProps<AuthInput>) {
-    integrationPropsSchema.parse(props)
-  }
+  // private validateProps(props: IntegrationProps<AI, AO, HI>) {
+  //   integrationPropsSchema.parse(props);
+  // }
 
   get name(): string {
-    return this._name
+    return this.props.name
   }
 
-  get actions(): IntegrationActions {
-    return this._actions
+  get actions(): T["actions"] {
+    return this.props.actions || {}
   }
 
-  get channels(): IntegrationChannels {
-    return this._channels
-  }
+  // get authorize(): Handler<AI, AO> | undefined {
+  //   return this.props.authorize;
+  // }
 
-  get authorize() {
-    return this._authorize
-  }
+  // get connect(): Handler<AI, string> | undefined {
+  //   return this.props.connect;
+  // }
 
-  get connect() {
-    return this._connect
-  }
+  // get disconnect(): Handler<AO, boolean> | undefined {
+  //   return this.props.disconnect;
+  // }
 
-  get disconnect() {
-    return this._disconnect
+  get handleRequest(): T["handleRequest"] {
+    return this.props.handleRequest
   }
 }

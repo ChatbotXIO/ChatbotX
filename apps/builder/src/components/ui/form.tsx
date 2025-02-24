@@ -9,6 +9,7 @@ import {
   type FieldPath,
   type FieldValues,
   FormProvider,
+  UseFormReturn,
   useFormContext,
 } from "react-hook-form"
 
@@ -166,6 +167,17 @@ const FormMessage = React.forwardRef<
 })
 FormMessage.displayName = "FormMessage"
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+function TriggerFormInitially({ form }: { form: any }) {
+  const { trigger } = form
+
+  React.useEffect(() => {
+    trigger()
+  }, [trigger])
+
+  return null
+}
+
 export {
   useFormField,
   Form,
@@ -175,4 +187,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  TriggerFormInitially,
 }

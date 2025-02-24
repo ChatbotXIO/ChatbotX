@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
-import { Loader2, PlusIcon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -51,9 +51,7 @@ export function CreateTagDialog({
             router.refresh()
           },
           onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError.message ?? error.serverError)
-            }
+            error.serverError && toast.error(error.serverError)
           },
         },
         formProps: {
@@ -133,7 +131,7 @@ export function CreateTagDialog({
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   {t("common.confirm-btn")}
                 </Button>

@@ -46,15 +46,18 @@ export const FormInput = ({
               )}
             </FormLabel>
           )}
-          <FormControl>
-            {hasChildren ? (
-              children
-            ) : inputType === "input" ? (
-              <Input placeholder={placeholder} {...field} />
-            ) : (
-              <Textarea placeholder={placeholder} {...field} />
-            )}
-          </FormControl>
+          {hasChildren ? (
+            children
+          ) : (
+            <FormControl>
+              {inputType === "input" ? (
+                <Input placeholder={placeholder} {...field} />
+              ) : (
+                <Textarea placeholder={placeholder} {...field} />
+              )}
+            </FormControl>
+          )}
+
           <FormMessage />
         </FormItem>
       )}
