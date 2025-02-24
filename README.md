@@ -19,8 +19,11 @@ This project is using docker to boost up development experience.
 # start development
 docker compose up -d
 
+# make sure corepack is enabled
+corepack enable
+
 # switch to nodejs version
-nvm use
+pnpm env use --global 22
 
 # install dependencies
 pnpm install

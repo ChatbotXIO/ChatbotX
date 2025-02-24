@@ -11,6 +11,17 @@ import {
 const prisma = new PrismaClient()
 
 async function main() {
+  let worksapce = await prisma.workspace.findFirst()
+  if (worksapce) {
+    return
+  }
+  worksapce = await prisma.workspace.create({
+    data: {
+      name: "AhaChat AI",
+      domain: "localhost:3000"
+    },
+  })
+
   let user = await prisma.user.findFirst()
   if (user) {
     return
@@ -19,6 +30,7 @@ async function main() {
   // create user
   user = await prisma.user.create({
     data: {
+      workspaceId: worksapce.id,
       email: "admin@ahachat.ai",
       name: "AhaChat",
     },
@@ -30,11 +42,13 @@ async function main() {
     const chatbots = await prisma.chatbot.createManyAndReturn({
       data: [
         {
+          workspaceId: worksapce.id,
           name: "FREE",
           accountTimezone: "Asia/Saigon",
           plan: ChatbotPlan.FREE,
         },
         {
+          workspaceId: worksapce.id,
           name: "PRO",
           accountTimezone: "Asia/Saigon",
           plan: ChatbotPlan.PRO,
@@ -85,15 +99,17 @@ async function main() {
     }
   }
   await prisma.folder.createMany({ data })
+
+  return true
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect()
+  .then(() => {
+    return true
   })
-  .catch(async (e) => {
-    console.error(e)
+  .catch((error) => {
+    console.error(error)
+  })
+  .finally(async () => {
     await prisma.$disconnect()
-
-    process.exit(1)
   })

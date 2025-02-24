@@ -8,6 +8,8 @@ import Link from "next/link"
 export default async function MainPage() {
   const session = await auth()
 
+  console.log(session, "sesssionssss")
+
   const { chatbots } = await getAllChatbotMembers(session?.user.id || "")
 
   return (

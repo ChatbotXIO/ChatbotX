@@ -1,10 +1,8 @@
-import { PrismaClient } from "@ahachat.ai/database"
+import { PrismaClient } from "@prisma/client"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import NextAuth, { type DefaultSession } from "next-auth"
 import Nodemailer from "next-auth/providers/nodemailer"
 import { providers } from "./auth.config"
-
-const prisma = new PrismaClient()
 
 declare module "next-auth" {
   /**
@@ -27,13 +25,10 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: true,
-  // session: {
-  //   strategy: 'database',
-  // },
   pages: {
     signIn: "/signin",
   },
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(new PrismaClient()),
   session: { strategy: "jwt" },
   providers: [
     ...providers,
@@ -43,7 +38,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    authorized({ request, auth }) {
+      console.log("Please Remove Me. This is a POC", auth) // <-- This should have your additional user data!
+      return true;
+    },
     jwt({ token, user }) {
+      console.log("jwt", user)
       if (user) {
         // User is available during sign-in
         token.id = user.id
