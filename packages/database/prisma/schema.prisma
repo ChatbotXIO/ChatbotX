@@ -531,6 +531,18 @@ model FlowVersion {
   flow    Flow    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 }
 
+model AutomatedResponse {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  keyword   String
+  flowId    String?
+  folderId  String?
+  replies   Json
+  status Boolean
+}
+
 enum CustomFieldType {
   SHORT_TEXT
   NUMBER
