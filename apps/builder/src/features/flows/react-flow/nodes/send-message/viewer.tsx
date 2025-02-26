@@ -1,5 +1,11 @@
 import { BaseHandle } from "@/components/base-handle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { CountCharacterSchema } from "@/features/flows/react-flow/blocks/count-character/schema"
+import { CountCharacterViewer } from "@/features/flows/react-flow/blocks/count-character/viewer"
+import type { FormatDateSchema } from "@/features/flows/react-flow/blocks/format-date/schema"
+import { FormatDateViewer } from "@/features/flows/react-flow/blocks/format-date/viewer"
+import type { GetDataFromJsonSchema } from "@/features/flows/react-flow/blocks/get-data-from-json/schema"
+import { GetDataFromJsonViewer } from "@/features/flows/react-flow/blocks/get-data-from-json/viewer"
 import type { MarkEmailVerifiedBlockSchema } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
 import { MarkEmailVerifiedBlockViewer } from "@/features/flows/react-flow/blocks/mark-email-verified/viewer"
 import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
@@ -31,6 +37,8 @@ import { Position } from "@xyflow/react"
 import { MessageCircleMoreIcon } from "lucide-react"
 import { type ReactNode, useState } from "react"
 import { ActionType } from "../../action-type"
+import type { GenerateRandomCodeSchema } from "../../blocks/generate-random-code/schema"
+import { GenerateRandomCodeViewer } from "../../blocks/generate-random-code/viewer"
 import { FlowFlowNodeToolbar } from "../../toolbars"
 import type { SendMessageNodeSchema } from "./schema"
 
@@ -93,6 +101,20 @@ const maps: Record<ActionType, (data: any) => ReactNode> = {
   ),
   [ActionType.OptOutEmail]: (data: OptOutEmailBlockSchema) => (
     <OptOutEmailBlockViewer key={data.id} />
+  ),
+
+  // Tools
+  [ActionType.GetDataFromJson]: (data: GetDataFromJsonSchema) => (
+    <GetDataFromJsonViewer key={data.id} />
+  ),
+  [ActionType.FormatDate]: (data: FormatDateSchema) => (
+    <FormatDateViewer key={data.id} />
+  ),
+  [ActionType.RandomCode]: (data: GenerateRandomCodeSchema) => (
+    <GenerateRandomCodeViewer key={data.id} />
+  ),
+  [ActionType.CountCharacters]: (data: CountCharacterSchema) => (
+    <CountCharacterViewer key={data.id} />
   ),
 }
 

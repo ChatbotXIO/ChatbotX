@@ -9,6 +9,10 @@ import {
   SortableItem,
 } from "@/components/ui/sortable"
 import { EditButtonDialog } from "@/features/flows/react-flow/blocks/button/components/edit-button-dialog"
+import { CountCharacterEditor } from "@/features/flows/react-flow/blocks/count-character/editor"
+import { FormatDateEditor } from "@/features/flows/react-flow/blocks/format-date/editor"
+import { GenerateRandomCodeEditor } from "@/features/flows/react-flow/blocks/generate-random-code/editor"
+import { GetDataFromJsonEditor } from "@/features/flows/react-flow/blocks/get-data-from-json/editor"
 import { MarkEmailVerifiedBlockEditor } from "@/features/flows/react-flow/blocks/mark-email-verified/editor"
 import { OpenAIAnalyzeImageEditor } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/editor"
 import { OpenAIDeleteMessageHistoryEditor } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/editor"
@@ -83,6 +87,20 @@ export const actionsBlockEditor: Partial<
   ),
   [ActionType.OptInEmail]: ({ key }) => <OptInEmailBlockEditor key={key} />,
   [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
+
+  // Tools
+  [ActionType.GetDataFromJson]: ({ key, parentName }) => (
+    <GetDataFromJsonEditor key={key} parentName={parentName} />
+  ),
+  [ActionType.FormatDate]: ({ key, parentName }) => (
+    <FormatDateEditor key={key} parentName={parentName} />
+  ),
+  [ActionType.RandomCode]: ({ key, parentName }) => (
+    <GenerateRandomCodeEditor key={key} parentName={parentName} />
+  ),
+  [ActionType.CountCharacters]: ({ key, parentName }) => (
+    <CountCharacterEditor key={key} parentName={parentName} />
+  ),
 }
 
 export default function SendMessageNodeEditor({

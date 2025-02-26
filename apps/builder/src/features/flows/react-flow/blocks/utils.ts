@@ -1,4 +1,8 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
+import { countCharacterDefaultValue } from "@/features/flows/react-flow/blocks/count-character/schema"
+import { formatDateDefaultValue } from "@/features/flows/react-flow/blocks/format-date/schema"
+import { generateRandomCodeDefaultValue } from "@/features/flows/react-flow/blocks/generate-random-code/schema"
+import { getDataFromJsonDefaultValue } from "@/features/flows/react-flow/blocks/get-data-from-json/schema"
 import { markEmailVerifiedBlockDefaultValue } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
 import { openAIAnalyzeImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
 import { openAIDeleteMessageHistoryDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
@@ -62,6 +66,16 @@ export const generateDefaultValue = (name: ActionType) => {
       return optInEmailBlockDefaultValue()
     case ActionType.OptOutEmail:
       return optOutEmailBlockDefaultValue()
+
+    // Tools
+    case ActionType.GetDataFromJson:
+      return getDataFromJsonDefaultValue()
+    case ActionType.FormatDate:
+      return formatDateDefaultValue()
+    case ActionType.RandomCode:
+      return generateRandomCodeDefaultValue()
+    case ActionType.CountCharacters:
+      return countCharacterDefaultValue()
     default:
       return null
   }
