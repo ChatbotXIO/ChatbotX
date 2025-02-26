@@ -1,5 +1,5 @@
 import { findConversation } from "@/features/conversations/queries"
-import { getConversationsSearchParamsCache } from "@/features/conversations/schemas/get-conversations-schema"
+import { listConversationsSearchParams } from "@/features/conversations/schemas/get-conversations-schema"
 import MessageList from "@/features/messages/message-list"
 import { getTeams } from "@/features/teams/queries"
 import { getUsers } from "@/features/users/queries"
@@ -12,8 +12,7 @@ export default async function ListMessagesPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const { conversationId } =
-    getConversationsSearchParamsCache.parse(searchParams)
+  const { conversationId } = listConversationsSearchParams.parse(searchParams)
   const promises = conversationId
     ? Promise.all([
         findConversation({

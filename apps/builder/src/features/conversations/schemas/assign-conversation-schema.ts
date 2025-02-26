@@ -1,4 +1,4 @@
-import { AssignedType } from "@ahachat.ai/database"
+import { AssignedType } from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
 export const assignConversationSchema = z.object({

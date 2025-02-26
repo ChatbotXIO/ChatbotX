@@ -1,5 +1,6 @@
 import { getCurrentUserId } from "@/auth"
 import { AppSidebar } from "@/components/app-sidebar"
+import { cn } from "@/components/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -8,8 +9,7 @@ import {
 } from "@/components/ui/sidebar"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { cn } from "@/lib/utils"
-import { headers } from "next/headers"
+import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 export default async function ChatbotLayout({
@@ -38,8 +38,11 @@ export default async function ChatbotLayout({
     redirect("/")
   }
 
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
         chatbotId={chatbotId}
         allChatbotsPromise={allChatbotsPromise}

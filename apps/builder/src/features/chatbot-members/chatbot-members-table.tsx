@@ -7,7 +7,7 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { ChatbotMember, User } from "@ahachat.ai/database"
+import type { ChatbotMember, User } from "@ahachat.ai/database/browser"
 import { useTranslate } from "@tolgee/react"
 import React, { use, useEffect, useMemo, useState } from "react"
 import { getColumns } from "./chatbot-members-table-columns"

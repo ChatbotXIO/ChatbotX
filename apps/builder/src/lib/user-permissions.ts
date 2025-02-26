@@ -15,6 +15,7 @@ export const findChatbotOrFail = async (
       chatbot: true,
     },
   })
+
   if (!chatbotMember.chatbot) {
     throw new Error("No ChatbotMember found")
   }

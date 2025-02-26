@@ -6,7 +6,7 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { Log } from "@ahachat.ai/database"
+import type { Log } from "@ahachat.ai/database/browser"
 import React from "react"
 import { getAuditColumns } from "./audit-logs-table-columns"
 import type { getLogs } from "./queries"

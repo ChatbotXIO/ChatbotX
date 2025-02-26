@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { AssignConversationSchema } from "@/features/conversations/schemas/assign-conversation-schema"
-import { AssignedType, type Team, type User } from "@ahachat.ai/database"
+import { AssignedType, type Team, type User } from "@ahachat.ai/databasebrowser"
 import { useTranslate } from "@tolgee/react"
 import React, { useState, useTransition } from "react"
 

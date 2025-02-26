@@ -1,22 +1,24 @@
-import type { CursorPagination } from "@/features/common/types"
+import type { BaseCursorCollection } from "@/features/common/types"
 import type {
   Contact,
   Conversation,
+  InboxTeam,
   Message,
-  Team,
   User,
 } from "@ahachat.ai/database"
 import { createSearchParamsCache, parseAsString } from "nuqs/server"
+import { z } from "zod"
 
-export const getConversationsSearchParamsCache = createSearchParamsCache({
+export const listConversationsSearchParams = createSearchParamsCache({
   conversationId: parseAsString,
 })
 
-export type ListConversationsSchema = {
-  chatbotId: string
-  perPage?: number
-  cursor?: CursorPagination
-}
+export const listConversationsSchema = z.object({
+  chatbotId: z.string().cuid2(),
+  perPage: z.number().optional(),
+  cursor: z.string().optional(),
+})
+export type ListConversationsSchema = z.infer<typeof listConversationsSchema>
 
 export type FindConversationSchema = {
   id: string
@@ -27,12 +29,8 @@ export type ConversationResource = Conversation & {
   messages?: Message[]
   contact?: Contact & {
     assignedUser: User | null
-    assignedTeam: Team | null
+    assignedTeam: InboxTeam | null
   }
 }
 
-export type ConversationCollection = {
-  data: ConversationResource[]
-  nextCursor: CursorPagination | null
-  prevCursor: CursorPagination | null
-}
+export type ConversationCollection = BaseCursorCollection<ConversationResource>

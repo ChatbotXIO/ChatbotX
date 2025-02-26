@@ -11,9 +11,9 @@ import {
   AssignedType,
   type Contact,
   type Conversation,
-  type Team,
+  type InboxTeam,
   type User,
-} from "@ahachat.ai/database"
+} from "@ahachat.ai/database/browser"
 import { formatDistanceToNow } from "date-fns"
 import { CheckCircleIcon, GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
@@ -25,10 +25,13 @@ interface ConversationItemProps {
 }
 
 const assignedIcon = (
-  contact: Contact & { assignedUser: User | null; assignedTeam: Team | null },
+  contact: Contact & {
+    assignedUser: User | null
+    assignedTeam: InboxTeam | null
+  },
 ) => {
   switch (contact.assignedType) {
-    case AssignedType.User:
+    case AssignedType.USER:
       return (
         <Avatar className="w-4 h-4">
           <AvatarImage src={contact.assignedUser?.image ?? ""} />
@@ -37,7 +40,7 @@ const assignedIcon = (
           </AvatarFallback>
         </Avatar>
       )
-    case AssignedType.Team:
+    case AssignedType.TEAM:
       return (
         <div className="rounded-full border border-zinc-600 bg-secondary overflow-hidden">
           <UsersRoundIcon size={16} strokeWidth={1} />
@@ -49,7 +52,10 @@ const assignedIcon = (
 }
 
 const sourceIcon = (
-  contact: Contact & { assignedUser: User | null; assignedTeam: Team | null },
+  contact: Contact & {
+    assignedUser: User | null
+    assignedTeam: InboxTeam | null
+  },
 ) => {
   switch (contact.source) {
     case "Whatsapp":
@@ -59,7 +65,11 @@ const sourceIcon = (
     case "Messenger":
       return <MessengerIcon />
     default:
-      return <GlobeIcon />
+      return (
+        <div className="bg-white rounded-full">
+          <GlobeIcon />
+        </div>
+      )
   }
 }
 

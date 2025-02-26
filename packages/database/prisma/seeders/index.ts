@@ -18,7 +18,7 @@ async function main() {
   worksapce = await prisma.workspace.create({
     data: {
       name: "AhaChat AI",
-      domain: "localhost:3000"
+      domain: new URL(process.env.BASE_URL ?? "").hostname,
     },
   })
 

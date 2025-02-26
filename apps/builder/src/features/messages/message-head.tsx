@@ -25,10 +25,9 @@ import type { ConversationResource } from "@/features/conversations/schemas/get-
 import {
   AssignedType,
   type Contact,
-  type Conversation,
-  type Team,
+  type InboxTeam,
   type User,
-} from "@ahachat.ai/database"
+} from "@ahachat.ai/database/browser"
 import { useTranslate } from "@tolgee/react"
 import {
   ArchiveIcon,
@@ -48,7 +47,7 @@ import { toast } from "sonner"
 interface MessagesHeadProps {
   conversation: ConversationResource
   users: User[]
-  teams: Team[]
+  teams: InboxTeam[]
   onUpdateConversation: (data: object) => void
 }
 
@@ -86,9 +85,7 @@ export default function MessageHead({
       onUpdateConversation({ liveChatEnabled: input.liveChatEnabled })
     },
     onError: ({ error }) => {
-      if (error.serverError) {
-        toast.error(error.serverError.message ?? error.serverError)
-      }
+      error.serverError && toast.error(error.serverError)
     },
   })
 
@@ -98,9 +95,7 @@ export default function MessageHead({
         onUpdateConversation({ followed: input.followed })
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     })
 
@@ -111,9 +106,7 @@ export default function MessageHead({
         await setActiveConversationId(null)
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     },
   )
@@ -125,9 +118,7 @@ export default function MessageHead({
         await setActiveConversationId(null)
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     },
   )
@@ -139,9 +130,7 @@ export default function MessageHead({
         await setActiveConversationId(null)
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     },
   )
@@ -153,9 +142,7 @@ export default function MessageHead({
         onUpdateConversation({ blockedAt: null })
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     },
   )
@@ -166,12 +153,12 @@ export default function MessageHead({
     assigner,
   }: AssignConversationResponse) => {
     let data = {}
-    if (assignedType === AssignedType.User) {
+    if (assignedType === AssignedType.USER) {
       data = {
         assignedUser: assigner,
         assignedTeam: null,
       }
-    } else if (assignedType === AssignedType.Team) {
+    } else if (assignedType === AssignedType.TEAM) {
       data = {
         assignedUser: null,
         assignedTeam: assigner,
@@ -200,8 +187,9 @@ export default function MessageHead({
               conversation={conversation}
               users={users}
               teams={teams}
-              onAssigned={(data) =>
-                updateAssigner(data as AssignConversationResponse)
+              onAssigned={
+                (data) => {}
+                // updateAssigner(data as AssignConversationResponse)
               }
             >
               <div className="flex gap-1 items-center w-fit">

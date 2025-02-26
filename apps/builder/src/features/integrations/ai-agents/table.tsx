@@ -12,7 +12,7 @@ import type { getAIAgents } from "@/features/integrations/ai-agents/queries/get.
 import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
 import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/browser"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"

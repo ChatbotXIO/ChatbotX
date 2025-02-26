@@ -4,142 +4,192 @@ import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import ConversationItem from "@/features/conversations/conversation-item"
-import {
-  findConversation,
-  listConversations,
-} from "@/features/conversations/queries"
-import type {
-  ConversationResource,
-  CursorPagination,
-} from "@/features/conversations/schemas/get-conversations-schema"
-import ConversationLoading from "@/features/inbox/conversation-loading"
-import { generateRandomMessage } from "@/mock/messages.mock"
-import type { Message } from "@ahachat.ai/database"
+import type { ConversationCollection } from "@/features/conversations/schemas/get-conversations-schema"
+import ky from "ky"
 import { FilterIcon, UserPlusIcon } from "lucide-react"
-import { parseAsString, useQueryState } from "nuqs"
-import { Suspense, use, useEffect, useRef, useState } from "react"
-import { Virtuoso, type VirtuosoHandle } from "react-virtuoso"
+import { type CSSProperties, useCallback } from "react"
+import AutoSizer from "react-virtualized-auto-sizer"
+import { FixedSizeList } from "react-window"
+import InfiniteLoader from "react-window-infinite-loader"
+import useSWRInfinite from "swr/infinite"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
+import ConversationItem from "./conversation-item"
 
 interface ConversationListProps {
   chatbotId: string
-  promises: Promise<Awaited<ReturnType<typeof listConversations>>>
 }
 
-export default function ConversationList({
-  chatbotId,
-  promises,
-}: ConversationListProps) {
-  const { data, nextCursor: initCursor } = use(promises)
-  const [conversations, setConversations] = useState(data)
-  const [cursor, setCursor] = useState<CursorPagination | null>(initCursor)
-  const [loadingMore, setLoadingMore] = useState<boolean>(false)
+export default function ConversationList({ chatbotId }: ConversationListProps) {
+  const perPage = 50
+  const { data, size, setSize, isValidating, isLoading } =
+    useSWRInfinite<ConversationCollection>(
+      (pageIndex, previousPageData) => {
+        if (previousPageData && !previousPageData.nextCursor) return null // Reached the end
 
-  const [activeConversationId, setActiveConversationId] = useQueryState(
-    "conversationId",
-    parseAsString.withOptions({
-      history: "replace",
-      shallow: false,
-    }),
-  )
+        const url = `/api/chatbots/${chatbotId}/conversations?perPage=${perPage}`
 
-  const virtuosoRef = useRef<VirtuosoHandle>(null)
-  const foundIndex = conversations.findIndex(
-    (c) => c.id === activeConversationId,
-  )
-  const [activeConversationIndex] = useState<number>(
-    foundIndex > -1 ? foundIndex : 0,
-  )
-
-  const loadMoreConversations = async () => {
-    if (loadingMore || !cursor) {
-      return
-    }
-
-    try {
-      setLoadingMore(true)
-      const newConversations = await listConversations({
-        chatbotId,
-        cursor,
-      })
-      setConversations((prev) => [...prev, ...newConversations.data])
-      setCursor(newConversations.nextCursor)
-    } catch (err) {
-      console.log("err", err)
-    } finally {
-      setLoadingMore(false)
-    }
-  }
-
-  const onNewConversation = () => {}
-
-  const mockNewMessageEvent = async () => {
-    const message = generateRandomMessage(chatbotId)
-    const randomNewConversation = Math.random() < 0.5
-    if (!randomNewConversation) {
-      message.conversationId = conversations[
-        Math.floor(Math.random() * conversations.length)
-      ]?.id as string
-    }
-
-    await onNewMessage(message)
-  }
-
-  const onNewMessage = async (message: Message) => {
-    const index = conversations.findIndex(
-      (c) => c.id === message.conversationId,
+        return pageIndex === 0
+          ? url
+          : `${url}&cursor=${previousPageData.nextCursor}`
+      },
+      (url: string) => ky.get(url).json(),
+      {
+        revalidateAll: true,
+      },
     )
-    if (index > -1) {
-      const [existingConversation] = conversations.splice(index, 1) as [
-        ConversationResource,
-      ]
-      // existingConversation.latestMessage = message
-      existingConversation.updatedAt = message.createdAt
-      // existingConversation.unreadCount++
-      conversations.unshift(existingConversation)
-      setConversations([...conversations])
-      return
+
+  const isLoadingInitialData = !data && !isValidating
+  const isLoadingMore =
+    isLoadingInitialData ||
+    (size > 0 && data && typeof data[size - 1] === "undefined")
+  const isEmpty = data?.[0]?.data?.length === 0
+  const isReachingEnd = isEmpty || (data && !data[data.length - 1]?.nextCursor)
+
+  // Flatten the paginated data into a single array
+  const flattenedData = data ? data.flatMap((page) => page.data) : []
+
+  // Determine if an item is loaded
+  const isItemLoaded = (index: number) =>
+    !isLoadingMore && index < flattenedData.length
+
+  // Load more items when needed
+  const loadMoreItems = useCallback(() => {
+    if (!isLoadingMore && !isReachingEnd) {
+      setSize(size + 1)
+    }
+  }, [isLoadingMore, isReachingEnd, size, setSize])
+
+  // Render each row in the virtualized list
+  const Row = ({ index, style }: { index: number; style: CSSProperties }) => {
+    if (!isItemLoaded(index)) {
+      return (
+        <div style={style}>
+          <div style={{ padding: "10px", border: "1px solid #ccc" }}>
+            Loading...
+          </div>
+        </div>
+      )
     }
 
-    const newConversation = await findConversation({
-      chatbotId,
-      id: message.conversationId,
-    })
-    if (!newConversation.data) {
-      return
-    }
-    setConversations([
-      newConversation.data as ConversationResource,
-      ...conversations,
-    ])
+    const item = flattenedData[index]
+    return item ? (
+      <ConversationItem
+        conversation={item}
+        isActive={false}
+        onSelect={(): void => {
+          throw new Error("Function not implemented.")
+        }} // isActive={item.id === activeConversationId}
+        // onSelect={() => setActiveConversationId(item.id)}
+      />
+    ) : null
   }
 
-  useEffect(() => {
-    virtuosoRef.current?.scrollToIndex({
-      index: activeConversationIndex,
-      align: "start",
-      behavior: "smooth",
-    })
-  }, [activeConversationIndex])
+  // const [conversations, setConversations] = useState<ConversationResource[]>(data ?? [])
+  // // const [cursor, setCursor] = useState<CursorPagination | null>(initCursor)
+  // const [loadingMore, setLoadingMore] = useState<boolean>(false)
+
+  // const [activeConversationId, setActiveConversationId] = useQueryState(
+  //   "conversationId",
+  //   parseAsString.withOptions({
+  //     history: "replace",
+  //     shallow: false,
+  //   }),
+  // )
+
+  // const virtuosoRef = useRef<VirtuosoHandle>(null)
+  // const foundIndex = conversations.findIndex(
+  //   (c) => c.id === activeConversationId,
+  // )
+  // const [activeConversationIndex] = useState<number>(
+  //   foundIndex > -1 ? foundIndex : 0,
+  // )
+
+  // const loadMoreConversations = async () => {
+  //   if (loadingMore || !cursor) {
+  //     return
+  //   }
+
+  //   try {
+  //     setLoadingMore(true)
+  //     const newConversations = await listConversations({
+  //       chatbotId,
+  //       cursor,
+  //     })
+  //     setConversations((prev) => [...prev, ...newConversations.data])
+  //     setCursor(newConversations.nextCursor)
+  //   } catch (err) {
+  //     console.log("err", err)
+  //   } finally {
+  //     setLoadingMore(false)
+  //   }
+  // }
+
+  // const onNewConversation = () => {}
+
+  // const mockNewMessageEvent = async () => {
+  //   const message = generateRandomMessage(chatbotId)
+  //   const randomNewConversation = Math.random() < 0.5
+  //   if (!randomNewConversation) {
+  //     message.conversationId = conversations[
+  //       Math.floor(Math.random() * conversations.length)
+  //     ]?.id as string
+  //   }
+
+  //   await onNewMessage(message)
+  // }
+
+  // const onNewMessage = async (message: Message) => {
+  //   const index = conversations.findIndex(
+  //     (c) => c.id === message.conversationId,
+  //   )
+  //   if (index > -1) {
+  //     const [existingConversation] = conversations.splice(index, 1) as [
+  //       ConversationResource,
+  //     ]
+  //     // existingConversation.latestMessage = message
+  //     existingConversation.updatedAt = message.createdAt
+  //     // existingConversation.unreadCount++
+  //     conversations.unshift(existingConversation)
+  //     setConversations([...conversations])
+  //     return
+  //   }
+
+  //   const newConversation = await findConversation({
+  //     chatbotId,
+  //     id: message.conversationId,
+  //   })
+  //   if (!newConversation.data) {
+  //     return
+  //   }
+  //   setConversations([
+  //     newConversation.data as ConversationResource,
+  //     ...conversations,
+  //   ])
+  // }
+
+  // useEffect(() => {
+  //   virtuosoRef.current?.scrollToIndex({
+  //     index: activeConversationIndex,
+  //     align: "start",
+  //     behavior: "smooth",
+  //   })
+  // }, [activeConversationIndex])
 
   return (
     <>
-      <div className="flex itesms-center gap-1 mb-2">
-        <Select defaultValue="all">
+      <div className="flex items-center gap-1 mb-2">
+        <Select defaultValue="2" name="liveChatEnabled">
           <SelectTrigger className="w-[180px] h-8 text-xs">
-            <SelectValue placeholder="Select conversations type" />
+            <SelectValue placeholder="" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="human">Human</SelectItem>
-            <SelectItem value="bot">Bot</SelectItem>
-            <SelectItem value="all">All Conversations</SelectItem>
+            <SelectItem value="1">Human</SelectItem>
+            <SelectItem value="0">Bot</SelectItem>
+            <SelectItem value="2">All</SelectItem>
           </SelectContent>
         </Select>
 
@@ -156,12 +206,36 @@ export default function ConversationList({
           <FilterIcon />
         </Button>
       </div>
-      {/* <div className="flex items-center gap-2 p-3">
-        <Button onClick={onNewConversation}>Add</Button>
-        <Button onClick={mockNewMessageEvent}>New Message</Button>
-      </div> */}
 
-      <Virtuoso
+      <InfiniteLoader
+        itemCount={
+          isReachingEnd ? flattenedData.length : flattenedData.length + 1
+        } // Add 1 for the loading indicator
+        isItemLoaded={isItemLoaded}
+        loadMoreItems={loadMoreItems}
+      >
+        {({ onItemsRendered, ref }) => (
+          <AutoSizer>
+            {({ height, width }) => (
+              <FixedSizeList
+                ref={ref}
+                onItemsRendered={onItemsRendered}
+                height={height}
+                itemCount={flattenedData.length}
+                itemSize={30}
+                width={width}
+              >
+                {Row}
+              </FixedSizeList>
+            )}
+          </AutoSizer>
+        )}
+      </InfiniteLoader>
+
+      {isLoadingMore && <div>Loading more...</div>}
+      {isReachingEnd && <div>No more data to load.</div>}
+
+      {/* <Virtuoso
         data={conversations}
         ref={virtuosoRef}
         className="flex flex-col gap-2"
@@ -176,7 +250,7 @@ export default function ConversationList({
             />
           </Suspense>
         )}
-      />
+      /> */}
     </>
   )
 }

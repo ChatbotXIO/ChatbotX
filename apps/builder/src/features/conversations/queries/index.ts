@@ -1,21 +1,23 @@
 "use server"
 
 import { getCurrentUserId } from "@/auth"
+import { parseCursor } from "@/features/common/types"
 import type {
   ConversationCollection,
   ConversationResource,
-  CursorPagination,
   FindConversationSchema,
   ListConversationsSchema,
 } from "@/features/conversations/schemas/get-conversations-schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { MessageType, type Prisma, prisma } from "@ahachat.ai/database"
-import { revalidateTag, unstable_cache } from "next/cache"
+import { type Prisma, SenderType, prisma } from "@ahachat.ai/database"
+import { unstable_cache } from "next/cache"
 
 export const listConversations = async (
   input: ListConversationsSchema,
 ): Promise<ConversationCollection> => {
   const userId = await getCurrentUserId()
+
+  console.log("ddddddd", input)
 
   await findChatbotOrFail(userId, input.chatbotId)
 
@@ -27,7 +29,7 @@ export const listConversations = async (
       chatbotId: input.chatbotId,
     }
 
-    let conversations = await prisma.conversation.findMany({
+    const params: Prisma.ConversationFindManyArgs = {
       include: {
         contact: {
           include: {
@@ -36,23 +38,37 @@ export const listConversations = async (
           },
         },
         messages: {
-          where: {
-            messageType: {
-              not: MessageType.System,
-            },
-          },
           orderBy: {
             createdAt: "desc",
           },
           take: 1,
         },
+        _count: {
+          select: {
+            messages: {
+              where: {
+                senderType: SenderType.USER,
+                // createdAt: {
+                //   gt: prisma.conversation.fields.contactLastSeenAt
+                // }
+              },
+            },
+          },
+        },
       },
       take: perPage,
       where,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      // cursor: input.cursor,
-      // ...(input.cursor ? { cursor: input.cursor, skip: 1 } : {}),
-    })
+    }
+    if (input.cursor) {
+      const cursor = parseCursor(input.cursor)
+      if (cursor) {
+        params.cursor = cursor
+        // params.skip = 1
+      }
+    }
+
+    let conversations = await prisma.conversation.findMany(params)
 
     // const conversationIds = data.map((conversation) => conversation.id)
     // const unreadMessages = await prisma.$queryRaw<IUnreadMessage[]>`
@@ -67,14 +83,16 @@ export const listConversations = async (
       return { data: [], nextCursor: null, prevCursor: null }
     }
 
-    let nextCursor: CursorPagination | null = null
-    const prevCursor: CursorPagination | null = null
+    let nextCursor: string | null = null
+    const prevCursor: string | null = null
     if (conversations.length === perPage) {
-      nextCursor = {
-        direction: "next",
-        createdAt: conversations[conversations.length - 1]?.createdAt as Date,
-        id: conversations[conversations.length - 1]?.id as string,
-      }
+      nextCursor = Buffer.from(
+        JSON.stringify({
+          direction: "next",
+          createdAt: conversations[conversations.length - 1]?.createdAt as Date,
+          id: conversations[conversations.length - 1]?.id as string,
+        }),
+      ).toString("base64")
 
       conversations = conversations.slice(0, conversations.length - 1)
     }
@@ -143,7 +161,7 @@ export const findConversation = async (
     },
     [JSON.stringify(input)],
     {
-      revalidate: 3600,
+      revalidate: 1,
       tags: [`${userId}#conversations`, `conversations#${input.id}`],
     },
   )()

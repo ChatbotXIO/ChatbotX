@@ -7,7 +7,7 @@ import {
   type Contact,
   type Team,
   type User,
-} from "@ahachat.ai/database"
+} from "@ahachat.ai/database/browser"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 

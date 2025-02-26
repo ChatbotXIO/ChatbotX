@@ -1,7 +1,7 @@
 "use client"
 
 import type { MessageResource } from "@/features/messages/schemas/get-messages-schema"
-import { MessageType } from "@ahachat.ai/database"
+import { MessageType } from "@ahachat.ai/database/browser"
 import { Files } from "lucide-react"
 import Image from "next/image"
 
@@ -10,7 +10,7 @@ interface MessageItemProps {
 }
 
 export default function MessageItem({ message }: MessageItemProps) {
-  if (message.messageType === MessageType.Text) {
+  if (message.messageType === MessageType.TEXT) {
     return message.content
   }
 

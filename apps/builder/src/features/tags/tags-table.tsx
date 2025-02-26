@@ -7,7 +7,7 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { Tag } from "@ahachat.ai/database"
+import type { Tag } from "@ahachat.ai/database/browser"
 import React, { useMemo } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"

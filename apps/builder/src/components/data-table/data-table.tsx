@@ -3,6 +3,7 @@ import type * as React from "react"
 
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { getCommonPinningStyles } from "@/components/data-table/lib"
+import { cn } from "@/components/lib/utils"
 import {
   Table,
   TableBody,
@@ -11,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData> extends React.HTMLAttributes<HTMLDivElement> {
   /**

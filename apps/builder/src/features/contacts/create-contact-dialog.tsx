@@ -17,7 +17,10 @@ import { CreateContactForm } from "./create-contact-form"
 export function CreateContactDialog({
   chatbotId,
   trigger,
-}: { chatbotId: string; trigger?: ReactNode }) {
+}: {
+  chatbotId: string
+  trigger?: ReactNode
+}) {
   const router = useRouter()
   const { t } = useTranslate()
 

@@ -8,17 +8,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  type AssignConversationResponse,
-  assignConversationAction,
-} from "@/features/conversations/actions/assign-conversation-action"
+import { assignConversationAction } from "@/features/conversations/actions/assign-conversation-action"
 import {
   AssignedType,
   type Contact,
   type Conversation,
-  type Team,
+  type InboxTeam,
   type User,
-} from "@ahachat.ai/database"
+} from "@ahachat.ai/database/browser"
 import { useTranslate } from "@tolgee/react"
 import { UserIcon, Users } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -29,8 +26,8 @@ interface MessagesHeadProps {
   children: ReactNode
   conversation: Conversation & { contact: Contact }
   users: User[]
-  teams: Team[]
-  onAssigned: (data: User | Team | null) => void
+  teams: InboxTeam[]
+  onAssigned: (data: User | InboxTeam | null) => void
 }
 
 export default function ConversationAssignedPopover({
@@ -54,7 +51,7 @@ export default function ConversationAssignedPopover({
   const teamOptions = useMemo(() => {
     return teams.filter(
       (team) =>
-        (conversation.contact.assignedType !== AssignedType.Team ||
+        (conversation.contact.assignedType !== AssignedType.TEAM ||
           conversation.contact.assignedId !== team.id) &&
         (!assignerName || team.name.includes(assignerName)),
     )
@@ -69,12 +66,10 @@ export default function ConversationAssignedPopover({
       onSuccess: ({ data }) => {
         // TODO update assigned text on parent component
         // TODO whisper socket to update list conversation
-        onAssigned(data as AssignConversationResponse)
+        // onAssigned(data as AssignConversationResponse)
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     },
   )
@@ -99,7 +94,7 @@ export default function ConversationAssignedPopover({
                   executeAssignConversation({
                     ids: [conversation.contactId],
                     assignedId: user.id,
-                    assignedType: AssignedType.User,
+                    assignedType: AssignedType.USER,
                   })
                 }
               >
@@ -121,7 +116,7 @@ export default function ConversationAssignedPopover({
                   executeAssignConversation({
                     ids: [conversation.contactId],
                     assignedId: team.id,
-                    assignedType: AssignedType.Team,
+                    assignedType: AssignedType.TEAM,
                   })
                 }
               >

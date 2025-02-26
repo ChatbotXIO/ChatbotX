@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/components/lib/utils"
 import * as React from "react"
 
 interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {}

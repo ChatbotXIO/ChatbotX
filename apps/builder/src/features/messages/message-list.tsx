@@ -1,5 +1,6 @@
 "use client"
 
+import { cn } from "@/components/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   ChatBubble,
@@ -15,8 +16,7 @@ import { getMessages } from "@/features/messages/queries"
 import type { MessageResource } from "@/features/messages/schemas/get-messages-schema"
 import type { getTeams } from "@/features/teams/queries"
 import type { getUsers } from "@/features/users/queries"
-import { cn } from "@/lib/utils"
-import { MessageType, SenderType } from "@ahachat.ai/database"
+import { MessageType, SenderType } from "@ahachat.ai/database/browser"
 import { Heart, Reply, SendHorizonalIcon, SmileIcon } from "lucide-react"
 import { Suspense, use, useCallback, useEffect, useRef, useState } from "react"
 import { Virtuoso } from "react-virtuoso"

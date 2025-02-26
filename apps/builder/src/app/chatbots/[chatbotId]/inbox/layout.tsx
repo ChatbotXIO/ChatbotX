@@ -5,21 +5,26 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import ConversationList from "@/features/conversations/conversation-list"
 import type { ReactNode } from "react"
 
 interface InboxLayoutProps {
-  listConversations: ReactNode
-  listMessages: ReactNode
-  contact: ReactNode
+  conversationList: ReactNode
+  messageList: ReactNode
+  contactDetail: ReactNode
+  params: Promise<{ chatbotId: string }>
 }
 
 export default async function InboxLayout({
-  listConversations,
-  listMessages,
-  contact,
+  conversationList,
+  messageList,
+  contactDetail,
+  params,
 }: InboxLayoutProps) {
   const layout = (await cookies()).get("ahachatai:layout:inbox")
   const defaultLayout = layout ? JSON.parse(layout.value) : [25, 50, 25]
+
+  const chatbotId = (await params).chatbotId
 
   return (
     <ResizablePanelGroup
@@ -33,7 +38,7 @@ export default async function InboxLayout({
         maxSize={25}
         className="p-3"
       >
-        {listConversations}
+        <ConversationList chatbotId={chatbotId} />
       </ResizablePanel>
       <ResizableHandle withHandle />
 
@@ -43,7 +48,7 @@ export default async function InboxLayout({
         minSize={40}
         className="py-3"
       >
-        {listMessages}
+        {/* {listMessages} */}
       </ResizablePanel>
       <ResizableHandle withHandle />
 
@@ -54,7 +59,7 @@ export default async function InboxLayout({
         maxSize={25}
         className="p-3"
       >
-        {contact}
+        {/* {contact} */}
       </ResizablePanel>
     </ResizablePanelGroup>
   )
