@@ -27,13 +27,13 @@ import MessageItem from "./message-item"
 interface MessagesProps {
   chatbotId: string
   conversationId: string
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof findConversation>>,
-      Awaited<ReturnType<typeof getUsers>>,
-      Awaited<ReturnType<typeof getTeams>>,
-    ]
-  >
+  // promises: Promise<
+  //   [
+  //     Awaited<ReturnType<typeof findConversation>>,
+  //     Awaited<ReturnType<typeof getUsers>>,
+  //     Awaited<ReturnType<typeof getTeams>>,
+  //   ]
+  // >
 }
 
 const actionIcons = [
@@ -50,7 +50,6 @@ const actionIcons = [
 export default function MessageList({
   chatbotId,
   conversationId,
-  promises,
 }: MessagesProps) {
   const data = use(promises)
   const [conversation, setConversation] = useState(data[0].data)

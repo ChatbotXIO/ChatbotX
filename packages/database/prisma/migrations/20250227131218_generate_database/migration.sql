@@ -26,10 +26,10 @@ CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE', 'UNKNOWN');
 CREATE TYPE "AssignedType" AS ENUM ('USER', 'TEAM');
 
 -- CreateEnum
-CREATE TYPE "IntegrationType" AS ENUM ('CHATWIDGET', 'GOOGLESHEETS', 'INSTAGRAM', 'MESSENGER', 'OPENAI', 'WHATSAPP');
+CREATE TYPE "IntegrationType" AS ENUM ('CHAT_WIDGET', 'GOOGLE_SHEETS', 'INSTAGRAM', 'MESSENGER', 'OPENAI', 'WHATSAPP');
 
 -- CreateEnum
-CREATE TYPE "InboxType" AS ENUM ('CHATWIDGET', 'INSTAGRAM', 'MESSENGER', 'WHATSAPP');
+CREATE TYPE "InboxType" AS ENUM ('CHAT_WIDGET', 'INSTAGRAM', 'MESSENGER', 'WHATSAPP');
 
 -- CreateEnum
 CREATE TYPE "SenderType" AS ENUM ('BOT', 'CONTACT', 'SYSTEM', 'USER');
@@ -480,6 +480,19 @@ CREATE TABLE "IntegrationWhatsapp" (
 );
 
 -- CreateTable
+CREATE TABLE "IntegrationChatWidget" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "chatbotId" TEXT NOT NULL,
+    "inboxId" TEXT NOT NULL,
+    "auth" JSONB NOT NULL,
+    "name" TEXT NOT NULL,
+
+    CONSTRAINT "IntegrationChatWidget_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Spreadsheet" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -541,7 +554,7 @@ CREATE TABLE "_AITriggerToIntegrationOpenAI" (
 CREATE UNIQUE INDEX "Workspace_domain_key" ON "Workspace"("domain");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_workspaceId_email_key" ON "User"("workspaceId", "email");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
@@ -611,6 +624,9 @@ CREATE UNIQUE INDEX "IntegrationGoogleSheets_integrationId_key" ON "IntegrationG
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IntegrationWhatsapp_inboxId_key" ON "IntegrationWhatsapp"("inboxId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IntegrationChatWidget_inboxId_key" ON "IntegrationChatWidget"("inboxId");
 
 -- CreateIndex
 CREATE INDEX "_ContactToTag_B_index" ON "_ContactToTag"("B");
@@ -767,6 +783,12 @@ ALTER TABLE "IntegrationWhatsapp" ADD CONSTRAINT "IntegrationWhatsapp_chatbotId_
 
 -- AddForeignKey
 ALTER TABLE "IntegrationWhatsapp" ADD CONSTRAINT "IntegrationWhatsapp_inboxId_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IntegrationChatWidget" ADD CONSTRAINT "IntegrationChatWidget_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IntegrationChatWidget" ADD CONSTRAINT "IntegrationChatWidget_inboxId_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Spreadsheet" ADD CONSTRAINT "Spreadsheet_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;

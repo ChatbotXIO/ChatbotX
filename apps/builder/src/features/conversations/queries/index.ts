@@ -9,7 +9,13 @@ import type {
   ListConversationsSchema,
 } from "@/features/conversations/schemas/get-conversations-schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, SenderType, prisma } from "@ahachat.ai/database"
+import {
+  type Conversation,
+  type Message,
+  type Prisma,
+  SenderType,
+  prisma,
+} from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
 export const listConversations = async (
@@ -17,13 +23,13 @@ export const listConversations = async (
 ): Promise<ConversationCollection> => {
   const userId = await getCurrentUserId()
 
-  console.log("ddddddd", input)
-
-  await findChatbotOrFail(userId, input.chatbotId)
+  console.log("ddddddd", input, userId)
 
   // return await unstable_cache(
   //   async () => {
   try {
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    await findChatbotOrFail(userId, input.chatbotId!)
     const perPage = (input.perPage || 10) + 1
     const where: Prisma.ConversationWhereInput = {
       chatbotId: input.chatbotId,
@@ -36,12 +42,6 @@ export const listConversations = async (
             assignedUser: true,
             assignedTeam: true,
           },
-        },
-        messages: {
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 1,
         },
         _count: {
           select: {
@@ -68,16 +68,41 @@ export const listConversations = async (
       }
     }
 
-    let conversations = await prisma.conversation.findMany(params)
+    let conversations: Conversation[] =
+      await prisma.conversation.findMany(params)
 
-    // const conversationIds = data.map((conversation) => conversation.id)
-    // const unreadMessages = await prisma.$queryRaw<IUnreadMessage[]>`
-    //     SELECT c.id, COUNT(m.id) AS unread_count
-    //     FROM "Conversation" c
-    //              JOIN "Message" m ON m."conversationId" = c.id
-    //     WHERE m."createdAt" < c."agentLastSeenAt"
-    //       AND c.id IN (${Prisma.join(conversationIds)})
-    //     GROUP BY c.id;`
+    // Get last message of conversation
+    const conversationIds = conversations.map((conversation) => conversation.id)
+    const lastMessages = await prisma.message.findMany({
+      where: {
+        conversationId: {
+          in: conversationIds,
+        },
+      },
+      distinct: ["conversationId"],
+      // orderBy: {
+      //   createdAt: "desc",
+      // },
+    })
+
+    const lastMessagesGroup: Record<string, Message[]> = lastMessages.reduce(
+      (result, message) => {
+        if (!result[message.conversationId]) {
+          result[message.conversationId] = []
+        }
+        result[message.conversationId]?.push(message)
+
+        return result
+      },
+      {} as Record<string, Message[]>,
+    )
+
+    // Mapping last message to conversation
+    for (let i = 0; i < conversations.length; i++) {
+      if (conversations[i]) {
+        conversations[i].messages = lastMessagesGroup[conversations[i].id] ?? []
+      }
+    }
 
     if (conversations.length === 0) {
       return { data: [], nextCursor: null, prevCursor: null }
@@ -96,18 +121,6 @@ export const listConversations = async (
 
       conversations = conversations.slice(0, conversations.length - 1)
     }
-    // const processData = data.map<ConversationResource>((conversation) => {
-    //   const { messages, ...rest } = conversation
-    //   const unreadMessage = unreadMessages.find(
-    //     (obj) => obj.id === conversation.id,
-    //   )
-
-    //   return {
-    //     ...rest,
-    //     latestMessage: messages[0] || null,
-    //     unreadCount: (unreadMessage?.unread_count ?? 0).toString(),
-    //   }
-    // })
 
     return { data: conversations.reverse(), nextCursor, prevCursor }
   } catch (err) {

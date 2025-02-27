@@ -5,7 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["nativeDistinct"]
 }
 
 datasource db {
@@ -111,17 +112,18 @@ model Chatbot {
   flows                    Flow[]
   flowVersions             FlowVersion[]
   folders                  Folder[]
-  googleSheets             IntegrationGoogleSheets[]
   inboxes                  Inbox[]
-  integrations             Integration[]
-  logs                     Log[]
-  messages                 Message[]
-  openAIs                  IntegrationOpenAI[]
-  spreadsheets             Spreadsheet[]
-  tags                     Tag[]
   inboxTeamMembers         InboxTeamMember[]
   inboxTeams               InboxTeam[]
-  whatsapps                IntegrationWhatsapp[]
+  integrationChatWidgets   IntegrationChatWidget[]
+  integrationGoogleSheets  IntegrationGoogleSheets[]
+  integrationOpenAIs       IntegrationOpenAI[]
+  integrations             Integration[]
+  integrationWhatsapps     IntegrationWhatsapp[]
+  logs                     Log[]
+  messages                 Message[]
+  spreadsheets             Spreadsheet[]
+  tags                     Tag[]
   workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
 }
 
@@ -336,9 +338,10 @@ model Inbox {
   chatbotId String
   inboxType InboxType
 
-  integrationWhatsapp IntegrationWhatsapp?
-  messages            Message[]
-  chatbot             Chatbot              @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integrationWhatsapp   IntegrationWhatsapp?
+  integrationChatWidget IntegrationChatWidget?
+  messages              Message[]
+  chatbot               Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
 }
@@ -542,6 +545,19 @@ model IntegrationWhatsapp {
   inbox   Inbox   @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
+model IntegrationChatWidget {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  inboxId   String   @unique
+  auth      Json
+  name      String
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  inbox   Inbox   @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
 model Spreadsheet {
   id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
@@ -628,7 +644,7 @@ enum AssignedType {
 }
 
 enum IntegrationType {
-  CHATWIDGET
+  CHAT_WIDGET
   GOOGLE_SHEETS
   INSTAGRAM
   MESSENGER
@@ -637,7 +653,7 @@ enum IntegrationType {
 }
 
 enum InboxType {
-  CHATWIDGET
+  CHAT_WIDGET
   INSTAGRAM
   MESSENGER
   WHATSAPP

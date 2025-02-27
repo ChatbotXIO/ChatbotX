@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker"
-import { Gender, type Prisma } from "@prisma/client"
 import {
-  type Chatbot,
-  ChatbotMemberRole,
-  ChatbotPlan,
-  type Folder,
-  FolderType,
+  ContentType,
+  Gender,
+  InboxType,
+  MessageType,
+  type Prisma,
   PrismaClient,
+  SenderType,
 } from "@prisma/client"
 
 const prisma = new PrismaClient()
@@ -22,6 +22,22 @@ async function main() {
     return
   }
 
+  const inbox = await prisma.inbox.create({
+    data: {
+      chatbotId: chatbot.id,
+      inboxType: InboxType.CHAT_WIDGET,
+      integrationChatWidget: {
+        create: {
+          chatbotId: chatbot.id,
+          name: "ChatWidget",
+          auth: {
+            authType: "NONE",
+          },
+        },
+      },
+    },
+  })
+
   const contactsData: Prisma.ContactCreateManyInput[] = []
   for (let i = 0; i < 99; i++) {
     contactsData.push({
@@ -35,6 +51,9 @@ async function main() {
       source: "CHATWIDGET",
     })
   }
+  await prisma.contact.createMany({
+    data: contactsData,
+  })
   const contacts = await prisma.contact.findMany({
     where: { chatbotId: chatbot.id },
   })
@@ -44,11 +63,31 @@ async function main() {
     conversationsData.push({
       chatbotId: chatbot.id,
       contactId: contacts[i].id,
-      inboxType: "CHATWIDGET",
+      inboxType: InboxType.CHAT_WIDGET,
     })
   }
   await prisma.conversation.createMany({
     data: conversationsData,
+  })
+
+  const conversations = await prisma.conversation.findMany({
+    where: { chatbotId: chatbot.id },
+  })
+  const messagesData: Prisma.MessageCreateManyInput[] = []
+  for (let i = 0; i < 99; i++) {
+    messagesData.push({
+      chatbotId: chatbot.id,
+      senderType: SenderType.USER,
+      senderId: contacts[i].id,
+      conversationId: conversations[i].id,
+      inboxId: inbox.id,
+      messageType: MessageType.INCOMING,
+      contentType: ContentType.TEXT,
+      content: faker.lorem.sentence(),
+    })
+  }
+  await prisma.message.createMany({
+    data: messagesData,
   })
 }
 

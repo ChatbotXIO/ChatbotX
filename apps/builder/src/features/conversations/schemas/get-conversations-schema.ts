@@ -14,8 +14,8 @@ export const listConversationsSearchParams = createSearchParamsCache({
 })
 
 export const listConversationsSchema = z.object({
-  chatbotId: z.string().cuid2(),
-  perPage: z.number().optional(),
+  chatbotId: z.string().cuid2().optional(),
+  perPage: z.coerce.number().optional(),
   cursor: z.string().optional(),
 })
 export type ListConversationsSchema = z.infer<typeof listConversationsSchema>
@@ -28,8 +28,12 @@ export type FindConversationSchema = {
 export type ConversationResource = Conversation & {
   messages?: Message[]
   contact?: Contact & {
+    fullName: string
     assignedUser: User | null
     assignedTeam: InboxTeam | null
+  },
+  _count?: {
+    messages?: number
   }
 }
 

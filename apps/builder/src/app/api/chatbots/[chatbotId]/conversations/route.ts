@@ -7,8 +7,8 @@ export async function GET(
   { params }: { params: Promise<{ chatbotId: string }> },
 ) {
   const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-  const { data } = listConversationsSchema.safeParse(searchParams)
-  console.log("searchParamssearchParams", data)
+  const { data, error } = listConversationsSchema.safeParse(searchParams)
+  console.log("searchParamssearchParams", data, error)
 
   const result = await listConversations({
     ...data,
