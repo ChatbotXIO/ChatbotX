@@ -31,7 +31,7 @@ export type ConversationResource = Conversation & {
     fullName: string
     assignedUser: User | null
     assignedTeam: InboxTeam | null
-  },
+  }
   _count?: {
     messages?: number
   }

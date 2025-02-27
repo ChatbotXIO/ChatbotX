@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import type { ConversationResource } from "@/features/conversations/schemas/get-conversations-schema"
 import {
   AssignedType,
-  type Contact, type InboxTeam,
-  type User
+  type Contact,
+  type InboxTeam,
+  type User,
 } from "@ahachat.ai/database/browser"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
