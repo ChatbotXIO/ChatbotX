@@ -629,7 +629,7 @@ enum AssignedType {
 
 enum IntegrationType {
   CHATWIDGET
-  GOOGLESHEETS
+  GOOGLE_SHEETS
   INSTAGRAM
   MESSENGER
   OPENAI

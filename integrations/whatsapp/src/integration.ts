@@ -1,38 +1,23 @@
 import {
-  type Context,
-  type ConversationEntity,
-  type Handler,
-  HandlerType,
+  HandleRequestType,
   Integration,
   type IntegrationDefinition,
-  type MessageEntity,
   SdkException,
 } from "@ahachat.ai/sdk"
-import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import { getWhatsappClient, verifyAccessToken } from "./client"
 import { webhookHandler } from "./handlers/webhook"
 import { parseIncomingMessage } from "./incomming-message"
-import type { WhatsappAuthValue, WhatsappConfig } from "./schemas"
-
-type WhatsappIntegrationDefinition = IntegrationDefinition<
-  WhatsappAuthValue,
-  WhatsappConfig
-> & {
-  actions: {
-    verifyAccessToken: Handler<{ ctx: Context<WhatsappAuthValue> }, string>
-    receiveMessage: Handler<
-      { ctx: Context<WhatsappAuthValue>; data: OnMessageArgs },
-      { message: MessageEntity; conversation: ConversationEntity }
-    >
-    // sendMessage: (props: SendMessageProps) => Promise<void>
-  }
-}
-
-export const integration = new Integration<
+import type {
+  WhatsappActions,
   WhatsappAuthValue,
   WhatsappConfig,
-  WhatsappIntegrationDefinition
->({
+} from "./schemas"
+
+const config: IntegrationDefinition<
+  WhatsappConfig,
+  WhatsappAuthValue,
+  WhatsappActions
+> = {
   name: "whatsapp",
   actions: {
     verifyAccessToken: async ({ ctx }) => {
@@ -50,7 +35,7 @@ export const integration = new Integration<
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
 
-    if (segments.includes(HandlerType.WEBHOOK)) {
+    if (segments.includes(HandleRequestType.WEBHOOK)) {
       return await webhookHandler(props)
     }
 
@@ -58,4 +43,6 @@ export const integration = new Integration<
       `Handler: ${props.req.method} ${props.req.url} is not implemented`,
     )
   },
-})
+}
+
+export const integration = new Integration(config)

@@ -45,7 +45,9 @@ if (enableDebug) {
     // @ts-ignore
     console.log(`Params: ${e.params}`)
     // @ts-ignore
-    console.log(`Duration: ${e.duration}ms`)
+    console.log("Params:", e.params)
+    // @ts-ignore
+    console.log("Duration:", `${e.duration}ms`)
   })
 }
 

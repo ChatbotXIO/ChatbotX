@@ -28,7 +28,7 @@ type GoogleSheetsConnectProps = {
   promises: Promise<[Awaited<ReturnType<typeof getGoogleSheetsIntegration>>]>
 }
 
-export function GoogleSheetsConnect({
+export function GoogleSheetsManage({
   chatbotId,
   promises,
 }: GoogleSheetsConnectProps) {
