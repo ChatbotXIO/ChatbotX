@@ -7,8 +7,10 @@ import {
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
-import { integration as integrationGoogleSheets } from "@ahachat.ai/integration-google-sheets"
-import type { Oauth2AuthValue } from "@ahachat.ai/sdk"
+import {
+  type GoogleSheetsAuthValue,
+  integration as integrationGoogleSheets,
+} from "@ahachat.ai/integration-google-sheets"
 
 export const disconnectGoogleSheets = authActionClient
   .bindArgsSchemas(chatbotIdBindSchema)
@@ -24,7 +26,7 @@ export const disconnectGoogleSheets = authActionClient
         })
       try {
         await integrationGoogleSheets.disconnect?.(
-          googleSheets.auth as Oauth2AuthValue,
+          googleSheets.auth as GoogleSheetsAuthValue,
         )
       } catch (e) {
         logger.error(
