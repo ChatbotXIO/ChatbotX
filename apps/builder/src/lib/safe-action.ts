@@ -10,7 +10,6 @@ import { BaseException } from "./error"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
-    console.log("debuggggggg", error)
     if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === "P2025" || error.code === "P2016") {
         return `Unable to find ${error.meta?.modelName ?? ""} record`
