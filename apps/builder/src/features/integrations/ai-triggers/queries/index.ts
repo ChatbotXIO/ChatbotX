@@ -43,7 +43,7 @@ export const getAITriggers = async (
         const pageCount = Math.ceil(total / perPage)
 
         return { data, pageCount }
-      } catch (err) {
+      } catch (_err) {
         return { data: [], pageCount: 0 }
       }
     },

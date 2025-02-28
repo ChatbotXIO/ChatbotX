@@ -10,7 +10,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Tag } from "@ahachat.ai/database"
+import type { Tag } from "@ahachat.ai/database/browser"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { EllipsisVerticalIcon } from "lucide-react"
 export interface DataTableRowAction<TData> {

@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
-    "bullmq": "^5.41.2",
+    "bullmq": "^5.41.5",
     "ioredis": "^5.5.0",
     "tslog": "^4.9.3"
   },

@@ -1,7 +1,6 @@
 "use client"
 
 import { InputWithEmoji } from "@/components/input-with-emoji"
-import { useFormContext } from "react-hook-form"
 import { ButtonGroupEditor } from "../button/editor"
 
 const SendTextBlockEditor = ({ parentName }: { parentName: string }) => {

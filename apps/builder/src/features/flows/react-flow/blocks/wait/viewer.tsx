@@ -8,10 +8,10 @@ import { DelayType, type WaitBlockSchema } from "./schema"
 
 export const WaitBlockViewer = ({
   data,
-  id,
+  // id,
 }: {
   data: WaitBlockSchema
-  id: string
+  // id: string
 }) => {
   const { t } = useTranslate()
   const params = useParams<{ chatbotId: string }>()

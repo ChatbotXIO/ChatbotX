@@ -1,7 +1,6 @@
 "use client"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
-import type { DataTableRowAction } from "@/components/data-table/types"
 import { Avatar } from "@/components/ui/avatar"
 import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -20,14 +19,14 @@ interface GetColumnsProps {
     "name" | "contacts" | "analytics" | "flows" | "settings" | "notifications",
     string
   >
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<ChatbotMemberWithUser> | null>
-  >
+  // setRowAction: React.Dispatch<
+  //   React.SetStateAction<DataTableRowAction<ChatbotMemberWithUser> | null>
+  // >
 }
 
 export function getColumns({
   titles,
-  setRowAction,
+  // setRowAction,
 }: GetColumnsProps): ColumnDef<ChatbotMemberWithUser>[] {
   return [
     {
@@ -163,7 +162,7 @@ export function getColumns({
         <DataTableColumnHeader column={column} title="" />
       ),
       cell: ({ row }) => {
-        const agent = row.original
+        const _agent = row.original
 
         return (
           <div className="justify-items-center">

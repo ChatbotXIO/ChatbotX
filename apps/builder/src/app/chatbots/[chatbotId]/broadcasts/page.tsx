@@ -1,7 +1,3 @@
-export default function BroadcastsPage({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function BroadcastsPage() {
   return "broadcasts"
 }

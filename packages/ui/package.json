@@ -1,6 +1,6 @@
 {
   "name": "@ahachat.ai/ui",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
   "exports": {
@@ -18,11 +18,11 @@
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
     "@turbo/gen": "^2.4.2",
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.13.5",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
     "autoprefixer": "^10.4.20",
-    "postcss": "^8.5.2",
+    "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "5.7.3"
   },
@@ -32,7 +32,7 @@
     "clsx": "^2.1.1",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "tailwind-merge": "^3.0.1",
+    "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7"
   }
 }

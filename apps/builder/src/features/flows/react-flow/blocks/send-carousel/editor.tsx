@@ -25,10 +25,10 @@ export const SendCarouselBlockEditor = ({
   parentName: string
 }) => {
   const [api, setApi] = useState<CarouselApi>()
-  const [current, setCurrent] = useState<number>()
+  const [_current, setCurrent] = useState<number>()
 
   const { control } = useFormContext()
-  const { fields, append, update, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: parentName,
   })
