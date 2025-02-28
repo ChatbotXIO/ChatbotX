@@ -30,7 +30,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslate } from "@tolgee/react"
 import { type Edge, type Node, addEdge, useReactFlow } from "@xyflow/react"
 import { MessageCircleIcon, PencilIcon, XIcon } from "lucide-react"
-import React, { useMemo } from "react"
+import { useMemo } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import { ActionType } from "../../../action-type"
 import {

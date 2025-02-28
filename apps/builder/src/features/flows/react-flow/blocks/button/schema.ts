@@ -10,7 +10,6 @@ import { openAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/ope
 import { openAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
 import { optInEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
 import { optOutEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
-import { actionsBlockSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 

@@ -15,11 +15,11 @@ import { useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 
 export const ButtonActionSelect = ({
-  name,
+  // name,
   label,
   onSelect,
 }: {
-  name: string
+  // name: string
   label: string
   onSelect: (value: ButtonActionType | null) => void
 }) => {
