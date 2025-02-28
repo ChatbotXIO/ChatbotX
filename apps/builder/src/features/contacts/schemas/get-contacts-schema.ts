@@ -1,3 +1,4 @@
+import type { Contact } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -13,3 +14,5 @@ export const getContactsSearchParamsCache = createSearchParamsCache({
 export type GetContactsSchema = Awaited<
   ReturnType<typeof getContactsSearchParamsCache.parse>
 > & { chatbotId: string }
+
+export type ContactResource = Contact

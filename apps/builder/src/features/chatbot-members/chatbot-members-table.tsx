@@ -2,14 +2,10 @@
 
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import type {
-  DataTableFilterField,
-  DataTableRowAction,
-} from "@/components/data-table/types"
+import type { DataTableRowAction } from "@/components/data-table/types"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { ChatbotMember, User } from "@ahachat.ai/database"
 import { useTranslate } from "@tolgee/react"
-import React, { use, useEffect, useMemo, useState } from "react"
+import { use, useMemo, useState } from "react"
 import { getColumns } from "./chatbot-members-table-columns"
 import type { getAgents } from "./queries"
 import type { ChatbotMemberWithUser } from "./schemas/add-chatbot-member-schema"
@@ -22,7 +18,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
   const { t } = useTranslate()
   const [{ data, pageCount }] = use(promises)
 
-  const [rowAction, setRowAction] =
+  const [_rowAction, setRowAction] =
     useState<DataTableRowAction<ChatbotMemberWithUser> | null>(null)
 
   const titles: Record<
@@ -42,16 +38,6 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
     return getColumns({ titles, setRowAction })
     // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   }, [setRowAction, titles])
-
-  const filterFields: DataTableFilterField<
-    ChatbotMember & { keyword?: string }
-  >[] = [
-    {
-      id: "keyword",
-      label: "Search",
-      placeholder: "Enter keyword...",
-    },
-  ]
 
   const { table } = useDataTable({
     data,

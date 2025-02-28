@@ -1,4 +1,4 @@
-import { FolderType } from "@ahachat.ai/database"
+import { FolderType } from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
 export const createFolderSchema = z.object({

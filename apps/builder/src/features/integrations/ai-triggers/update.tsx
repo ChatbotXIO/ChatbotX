@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -21,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { updateAITriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
 import { updateAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
-import type { AITrigger } from "@ahachat.ai/database"
+import type { AITrigger } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import type { JsonObject } from "@prisma/client/runtime/binary"
@@ -51,7 +52,7 @@ export function UpdateAITriggerDialog({
   const {
     form,
     handleSubmitWithAction,
-    form: { setValue, control, reset },
+    form: { setValue, control },
   } = useHookFormAction(
     updateAITriggerAction.bind(null, chatbotId, trigger?.id ?? ""),
     zodResolver(updateAITriggerSchema),
@@ -74,7 +75,7 @@ export function UpdateAITriggerDialog({
     },
   )
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
   })
@@ -103,6 +104,7 @@ export function UpdateAITriggerDialog({
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("aiTriggers.update.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>

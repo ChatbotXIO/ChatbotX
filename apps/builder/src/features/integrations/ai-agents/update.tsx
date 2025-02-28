@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -11,7 +12,7 @@ import {
   type MessageSchema,
   updateAIAgentSchema,
 } from "@/features/integrations/ai-agents/schemas/update.schema"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -32,11 +33,7 @@ export function UpdateAIAgentDialog({
   const { t } = useTranslate()
   const router = useRouter()
 
-  const {
-    form,
-    handleSubmitWithAction,
-    form: { setValue, control, reset },
-  } = useHookFormAction(
+  useHookFormAction(
     updateAIAgentAction.bind(null, chatbotId, aiAgent?.id ?? ""),
     zodResolver(updateAIAgentSchema),
     {
@@ -68,6 +65,7 @@ export function UpdateAIAgentDialog({
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("aiAgents.update.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
 
         <div>updating...</div>

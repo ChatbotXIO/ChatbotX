@@ -16,6 +16,7 @@ import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/c
 import { createAIAgentSchema } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { DialogDescription } from "@radix-ui/react-dialog"
 import { T } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -66,6 +67,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
           <DialogTitle>
             <T keyName="aiAgents.create.title" />
           </DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>

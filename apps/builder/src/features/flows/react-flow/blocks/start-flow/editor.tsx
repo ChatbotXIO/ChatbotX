@@ -3,7 +3,6 @@
 import { FlowSelect } from "@/features/flows/flow-select"
 import { T } from "@tolgee/react"
 import { ExternalLink } from "lucide-react"
-import type React from "react"
 import { useFormContext } from "react-hook-form"
 
 export const StartFlowBlockEditor = ({

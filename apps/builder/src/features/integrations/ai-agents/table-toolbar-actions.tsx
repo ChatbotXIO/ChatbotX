@@ -1,7 +1,7 @@
 "use client"
 
 import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/browser"
 import type { Table } from "@tanstack/react-table"
 
 type AIAgentsTableToolbarActionsProps = {

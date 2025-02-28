@@ -14,7 +14,7 @@ import { DelayTypeSelect } from "@/features/flows/react-flow/blocks/wait/delay-t
 import { DelayUnitSelect } from "@/features/flows/react-flow/blocks/wait/delay-unit-select"
 import { DelayType } from "@/features/flows/react-flow/blocks/wait/schema"
 import { TimeSelect } from "@/features/flows/react-flow/blocks/wait/time-select"
-import { CustomFieldType } from "@ahachat.ai/database"
+import { CustomFieldType } from "@ahachat.ai/database/browser"
 import { T, useTranslate } from "@tolgee/react"
 import { parseISO } from "date-fns"
 import { InfoIcon } from "lucide-react"

@@ -4,8 +4,9 @@ import {
   type ChatbotIdBindSchema,
   chatbotIdBindSchema,
 } from "@/features/chatbots/schemas"
+import { integrations } from "@/integration"
 import { authActionClient } from "@/lib/safe-action"
-import { integration } from "@ahachat.ai/integration-google-sheets"
+import { HandleRequestType } from "@ahachat.ai/sdk"
 import { redirect } from "next/navigation"
 import {
   type ConnectGoogleSheetsSchema,
@@ -23,21 +24,17 @@ export const connectGoogleSheets = authActionClient
       parsedInput: ConnectGoogleSheetsSchema
       bindArgsParsedInputs: ChatbotIdBindSchema
     }) => {
-      if (!integration.connect) {
-        return
-      }
+      const redirectUrl =
+        (await integrations.GOOGLE_SHEETS.integration.handleRequest?.({
+          config: integrations.GOOGLE_SHEETS.getIntegrationConfig({
+            chatbotId,
+            referer: parsedInput.referer,
+          }),
+          req: new Request(
+            `${process.env.BASE_URL}/${HandleRequestType.GENERATE_AUTH_URL}`,
+          ),
+        })) as string
 
-      const redirectUrl = await integration.connect({
-        clientId: process.env.AUTH_GOOGLE_ID ?? "",
-        clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-        redirectUri: `${process.env.BASE_URL}/api/integrations/callback`,
-        stateParams: {
-          chatbotId,
-          providerName: "google-sheets",
-          referer: parsedInput.referer,
-        },
-      })
-
-      return redirect(redirectUrl ?? "")
+      return redirect(redirectUrl)
     },
   )

@@ -1,6 +1,5 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { ActionType } from "../../action-type"
 import {
   splitTrafficBlockDefaultValue,
   splitTrafficBlockSchema,

@@ -19,7 +19,6 @@ import {
   waitNodeSchema,
 } from "@/features/flows/react-flow/nodes/wait/schema"
 import { NodeType } from "@/features/flows/react-flow/types"
-import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 
 export const nodeSchema = z
