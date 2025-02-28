@@ -5,14 +5,14 @@ import { Checkbox } from "@/components/ui/checkbox"
 import {
   AssignedType,
   type Contact,
-  type Team,
+  type InboxTeam,
   type User,
 } from "@ahachat.ai/database/browser"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 
 export function getColumns(): ColumnDef<
-  Contact & { assignedUser: User | null; assignedTeam: Team | null }
+  Contact & { assignedUser: User | null; assignedTeam: InboxTeam | null }
 >[] {
   return [
     {
@@ -71,10 +71,10 @@ export function getColumns(): ColumnDef<
         return (
           <>
             {!row.original.assignedId && <div>Unassigned</div>}
-            {row.original.assignedType === AssignedType.User && (
+            {row.original.assignedType === AssignedType.USER && (
               <div>{row.original.assignedUser?.name}</div>
             )}
-            {row.original.assignedType === AssignedType.Team && (
+            {row.original.assignedType === AssignedType.TEAM && (
               <div>{row.original.assignedTeam?.name}</div>
             )}
           </>
