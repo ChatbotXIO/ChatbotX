@@ -58,7 +58,7 @@ export default function MessageHead({
   onUpdateConversation,
 }: MessagesHeadProps) {
   const { t } = useTranslate()
-  const [activeConversationId, setActiveConversationId] = useQueryState(
+  const [_activeConversationId, setActiveConversationId] = useQueryState(
     "conversationId",
     parseAsString.withOptions({
       history: "replace",
@@ -102,7 +102,7 @@ export default function MessageHead({
   const { execute: executeArchiveConversation } = useAction(
     archiveConversationAction.bind(null, conversation.chatbotId),
     {
-      onSuccess: async ({ data }) => {
+      onSuccess: async () => {
         await setActiveConversationId(null)
       },
       onError: ({ error }) => {
@@ -147,7 +147,7 @@ export default function MessageHead({
     },
   )
 
-  const updateAssigner = ({
+  const _updateAssigner = ({
     assignedId,
     assignedType,
     assigner,
@@ -188,7 +188,7 @@ export default function MessageHead({
               users={users}
               teams={teams}
               onAssigned={
-                (data) => {}
+                (_data) => {}
                 // updateAssigner(data as AssignConversationResponse)
               }
             >

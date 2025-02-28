@@ -6,16 +6,12 @@ import {
   ChatBubble,
   ChatBubbleAction,
   ChatBubbleActionWrapper,
-  ChatBubbleAvatar,
   ChatBubbleMessage,
 } from "@/components/ui/chat/chat-bubble"
 import { ChatInput } from "@/components/ui/chat/chat-input"
-import type { findConversation } from "@/features/conversations/queries"
 import ConversationLoading from "@/features/inbox/conversation-loading"
 import { getMessages } from "@/features/messages/queries"
 import type { MessageResource } from "@/features/messages/schemas/get-messages-schema"
-import type { getTeams } from "@/features/teams/queries"
-import type { getUsers } from "@/features/users/queries"
 import { MessageType, SenderType } from "@ahachat.ai/database/browser"
 import { Heart, Reply, SendHorizonalIcon, SmileIcon } from "lucide-react"
 import { Suspense, use, useCallback, useEffect, useRef, useState } from "react"

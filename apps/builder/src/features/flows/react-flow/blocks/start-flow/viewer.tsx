@@ -8,10 +8,10 @@ import type { StartFlowBlockSchema } from "./schema"
 
 export const StartFlowBlockViewer = ({
   data,
-  id,
+  // id,
 }: {
   data: StartFlowBlockSchema
-  id: string
+  // id: string
 }) => {
   const { t } = useTranslate()
   const params = useParams<{ chatbotId: string }>()

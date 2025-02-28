@@ -5,7 +5,7 @@ import { type VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 import * as React from "react"
 
-import { useIsMobile } from "@/components/hooks/use-mobile"
+import { useIsMobile } from "@/components/lib/use-mobile"
 import { cn } from "@/components/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -215,6 +215,7 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
+            aria-describedby={undefined}
           >
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>

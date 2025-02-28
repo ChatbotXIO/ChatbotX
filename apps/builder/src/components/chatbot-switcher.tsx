@@ -66,7 +66,7 @@ export function ChatbotSwitcher({
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Chatbots
             </DropdownMenuLabel>
-            {chatbots.map((chatbot, index) => (
+            {chatbots.map((chatbot) => (
               <DropdownMenuItem
                 key={chatbot.name}
                 onClick={() => setActiveChatbot(chatbot)}

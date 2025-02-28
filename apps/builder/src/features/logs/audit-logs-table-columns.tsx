@@ -48,7 +48,7 @@ export function getAuditColumns(): ColumnDef<LogWithExecutorUser>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Web page" />
       ),
-      cell: ({ row }) => <a href={"/error-logs"}>View</a>,
+      cell: () => <a href={"/error-logs"}>View</a>,
       size: 50,
       enableSorting: true,
       enableHiding: false,

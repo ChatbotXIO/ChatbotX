@@ -2,7 +2,7 @@
 
 import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
-import { FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { FormItem, FormLabel } from "@/components/ui/form"
 import { callAPI } from "@/lib/swr"
 import type { CustomFieldType } from "@ahachat.ai/database/browser"
 import { PlusCircleIcon } from "lucide-react"

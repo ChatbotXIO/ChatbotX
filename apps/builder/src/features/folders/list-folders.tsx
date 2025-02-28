@@ -28,7 +28,7 @@ type ListFoldersProps = {
   >
 }
 
-const ListFolders = ({ chatbotId, folderType, promises }: ListFoldersProps) => {
+const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
   const [{ folder, parents }, { data: folders }] = use(promises)
   const [, setFolderId] = useQueryState(
     "folderId",

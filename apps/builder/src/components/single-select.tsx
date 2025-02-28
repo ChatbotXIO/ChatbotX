@@ -30,7 +30,7 @@ interface SingleSelectProps extends SelectProps {
 }
 
 export const SingleSelect = forwardRef<HTMLButtonElement, SingleSelectProps>(
-  ({ name, options, placeholder, onChange, ...rest }, ref) => {
+  ({ name, options, placeholder, onChange, ...rest }) => {
     const { control } = useFormContext()
 
     return (

@@ -30,7 +30,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AIAgent> | null>(null)
 
-  const { execute, result } = useAction(
+  const { execute } = useAction(
     duplicateAIAgentAction.bind(
       null,
       chatbotId,

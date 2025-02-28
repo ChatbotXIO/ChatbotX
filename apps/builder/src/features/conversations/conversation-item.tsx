@@ -78,10 +78,10 @@ export default function ConversationItem({
   isActive,
   onSelect,
 }: ConversationItemProps) {
-  const [lastMessage, setLastMessage] = useState<MessageResource | undefined>(
+  const [lastMessage, _setLastMessage] = useState<MessageResource | undefined>(
     conversation.messages?.[0],
   )
-  const [isSeen, setIsSeen] = useState(
+  const [isSeen, _setIsSeen] = useState(
     (conversation.agentLastSeenAt ?? new Date()) >=
       (lastMessage?.createdAt ?? new Date()),
   )

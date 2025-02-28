@@ -26,7 +26,7 @@ export async function getUsers(
         const data = await prisma.user.findMany({ where })
 
         return { data }
-      } catch (err) {
+      } catch (_err) {
         return { data: [] }
       }
     },

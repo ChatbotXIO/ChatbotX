@@ -1,5 +1,4 @@
 import type {
-  BaseConfig,
   Context,
   Handler,
   Oauth2AuthValue,

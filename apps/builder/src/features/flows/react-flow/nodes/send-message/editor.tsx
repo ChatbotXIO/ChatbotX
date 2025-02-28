@@ -344,18 +344,19 @@ export default function SendMessageNodeEditor({
     }
   }
 
-  const [parentNameEditNote, setParentNameEditNote] = useState<string>("")
-  const [openedEditNoteDialog, setOpenEditNoteDialog] = useState<boolean>(false)
+  const [_parentNameEditNote, setParentNameEditNote] = useState<string>("")
+  const [_openedEditNoteDialog, setOpenEditNoteDialog] =
+    useState<boolean>(false)
 
   const openEditNoteDialog = (parentName: string) => {
     setParentNameEditNote(parentName)
     setOpenEditNoteDialog(true)
   }
 
-  const closeEditNoteDialog = () => {
-    setParentNameEditNote("")
-    setOpenEditNoteDialog(false)
-  }
+  // const closeEditNoteDialog = () => {
+  //   setParentNameEditNote("")
+  //   setOpenEditNoteDialog(false)
+  // }
 
   const onRemoveBlock = (index: number) => {
     const block = getValues(`blocks.${index}`)

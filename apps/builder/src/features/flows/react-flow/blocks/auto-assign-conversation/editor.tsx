@@ -4,7 +4,7 @@ import { MultiSelect } from "@/components/ui/multi-select"
 import type { RecipientSchema } from "@/features/flows/react-flow/types"
 import { T } from "@tolgee/react"
 import { MessageCirclePlusIcon } from "lucide-react"
-import React, { useMemo } from "react"
+import { useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 
 const AutoAssignConversationBlockEditor = ({

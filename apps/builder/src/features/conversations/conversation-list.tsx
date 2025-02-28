@@ -25,7 +25,7 @@ interface ConversationListProps {
 
 export default function ConversationList({ chatbotId }: ConversationListProps) {
   const perPage = 50
-  const { data, size, setSize, isValidating, isLoading } =
+  const { data, size, setSize, isValidating } =
     useSWRInfinite<ConversationCollection>(
       (pageIndex, previousPageData) => {
         if (previousPageData && !previousPageData.nextCursor) return null // Reached the end

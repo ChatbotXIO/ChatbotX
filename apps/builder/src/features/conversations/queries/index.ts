@@ -123,7 +123,7 @@ export const listConversations = async (
     }
 
     return { data: conversations.reverse(), nextCursor, prevCursor }
-  } catch (err) {
+  } catch (_err) {
     return { data: [], nextCursor: null, prevCursor: null }
   }
   //   },

@@ -684,8 +684,8 @@ enum FileType {
 }
 
 enum AttachmentType {
-  Image
-  Audio
-  Video
-  File
+  IMAGE
+  AUDIO
+  VIDEO
+  FILE
 }

@@ -36,7 +36,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
     [setRowAction],
   )
 
-  const { execute, result } = useAction(
+  const { execute } = useAction(
     duplicateAITriggerAction.bind(
       null,
       chatbotId,

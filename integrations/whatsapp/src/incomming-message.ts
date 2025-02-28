@@ -243,13 +243,3 @@ export const fetchMedia = async (
     throw new SdkException("Unable to fetch media")
   }
 }
-
-async function streamToUint8Array(readableStream: Readable) {
-  const chunks = []
-  for await (const chunk of readableStream) {
-    // Ensure the chunk is a Uint8Array
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
-  }
-  // Combine all chunks into a single Uint8Array
-  return new Uint8Array(Buffer.concat(chunks))
-}

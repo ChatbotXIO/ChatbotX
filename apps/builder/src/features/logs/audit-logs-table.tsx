@@ -13,12 +13,12 @@ import type { getLogs } from "./queries"
 
 interface LogsTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>
-  chatbotId: string
+  // chatbotId: string
 }
 
-export function AuditLogsTable({ promises, chatbotId }: LogsTableProps) {
+export function AuditLogsTable({ promises }: LogsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const [rowAction, setRowAction] =
+  const [_rowAction, setRowAction] =
     React.useState<DataTableRowAction<Log> | null>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>

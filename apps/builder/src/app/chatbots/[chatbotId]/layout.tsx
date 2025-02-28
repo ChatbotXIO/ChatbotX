@@ -34,7 +34,7 @@ export default async function ChatbotLayout({
 
   try {
     await findChatbotOrFail(userId, chatbotId)
-  } catch (e) {
+  } catch (_e) {
     redirect("/")
   }
 

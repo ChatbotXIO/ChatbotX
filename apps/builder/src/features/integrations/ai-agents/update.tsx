@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -32,11 +33,7 @@ export function UpdateAIAgentDialog({
   const { t } = useTranslate()
   const router = useRouter()
 
-  const {
-    form,
-    handleSubmitWithAction,
-    form: { setValue, control, reset },
-  } = useHookFormAction(
+  useHookFormAction(
     updateAIAgentAction.bind(null, chatbotId, aiAgent?.id ?? ""),
     zodResolver(updateAIAgentSchema),
     {
@@ -68,6 +65,7 @@ export function UpdateAIAgentDialog({
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("aiAgents.update.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
 
         <div>updating...</div>

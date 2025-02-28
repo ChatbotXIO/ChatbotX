@@ -20,17 +20,17 @@ import {
 import type { AssignConversationSchema } from "@/features/conversations/schemas/assign-conversation-schema"
 import { AssignedType, type Team, type User } from "@ahachat.ai/databasebrowser"
 import { useTranslate } from "@tolgee/react"
-import React, { useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 
 export function AssignConversationDialog({
-  chatbotId,
+  // chatbotId,
   users,
   teams,
   open,
   onOpenChange,
   onSubmit,
 }: {
-  chatbotId: string
+  // chatbotId: string
   users: User[]
   teams: Team[]
   open: boolean

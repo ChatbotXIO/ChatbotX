@@ -1,13 +1,13 @@
 import { getCurrentUserId } from "@/auth"
-import type { GetTeamsSchema } from "@/features/teams/schemas/get-teams-schema"
+import type { GetInboxTeamsSchema } from "@/features/inbox-teams/schemas/get-inbox-teams-schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import type { InboxTeam, Prisma } from "@ahachat.ai/database"
 import { prisma } from "@ahachat.ai/database"
-import type { Prisma, Team } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
-export async function getTeams(
-  input: GetTeamsSchema,
-): Promise<{ data: Team[] }> {
+export async function getInboxTeams(
+  input: GetInboxTeamsSchema,
+): Promise<{ data: InboxTeam[] }> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)
@@ -15,21 +15,21 @@ export async function getTeams(
   return await unstable_cache(
     async () => {
       try {
-        const where: Prisma.TeamWhereInput = {
+        const where: Prisma.InboxTeamWhereInput = {
           chatbotId: input.chatbotId,
         }
 
-        const data = await prisma.team.findMany({ where })
+        const data = await prisma.inboxTeam.findMany({ where })
 
         return { data }
-      } catch (err) {
+      } catch (_err) {
         return { data: [] }
       }
     },
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#teams`],
+      tags: [`${userId}#inboxTeams`],
     },
   )()
 }

@@ -11,8 +11,6 @@ import {
 import { assignConversationAction } from "@/features/conversations/actions/assign-conversation-action"
 import {
   AssignedType,
-  type Contact,
-  type Conversation,
   type InboxTeam,
   type User,
 } from "@ahachat.ai/database/browser"
@@ -21,13 +19,14 @@ import { UserIcon, Users } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { type ReactNode, useMemo, useState } from "react"
 import { toast } from "sonner"
+import type { ConversationResource } from "./schemas/get-conversations-schema"
 
 interface MessagesHeadProps {
   children: ReactNode
-  conversation: Conversation & { contact: Contact }
+  conversation: ConversationResource
   users: User[]
   teams: InboxTeam[]
-  onAssigned: (data: User | InboxTeam | null) => void
+  // onAssigned: (data: User | InboxTeam | null) => void
 }
 
 export default function ConversationAssignedPopover({
@@ -35,7 +34,7 @@ export default function ConversationAssignedPopover({
   conversation,
   users,
   teams,
-  onAssigned,
+  // onAssigned,
 }: MessagesHeadProps) {
   const { t } = useTranslate()
   const [assignerName, setAssignerName] = useState("")
@@ -63,7 +62,7 @@ export default function ConversationAssignedPopover({
       onExecute: () => {
         setOpen(false)
       },
-      onSuccess: ({ data }) => {
+      onSuccess: () => {
         // TODO update assigned text on parent component
         // TODO whisper socket to update list conversation
         // onAssigned(data as AssignConversationResponse)

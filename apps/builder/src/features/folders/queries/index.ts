@@ -27,7 +27,7 @@ export const getFolders = async (
         })
 
         return { data }
-      } catch (err) {
+      } catch (_err) {
         return { data: [] }
       }
     },
@@ -79,7 +79,7 @@ export const getCurrentFolder = async (
         }
 
         return { folder, parents }
-      } catch (err) {
+      } catch (_err) {
         return { folder: null, parents: [] }
       }
     },

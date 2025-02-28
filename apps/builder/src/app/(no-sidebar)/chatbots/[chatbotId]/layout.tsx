@@ -14,7 +14,7 @@ export default async function ChatbotNoSidebarLayout({
 
   try {
     await findChatbotOrFail(userId, chatbotId)
-  } catch (e) {
+  } catch (_) {
     redirect("/")
   }
 

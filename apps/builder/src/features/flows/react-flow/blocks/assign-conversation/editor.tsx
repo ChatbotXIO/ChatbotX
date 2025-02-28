@@ -11,7 +11,6 @@ import {
 import type { RecipientSchema } from "@/features/flows/react-flow/types"
 import { T } from "@tolgee/react"
 import { MessageCirclePlusIcon } from "lucide-react"
-import type React from "react"
 import { useFormContext } from "react-hook-form"
 
 const AssignConversationBlockEditor = ({

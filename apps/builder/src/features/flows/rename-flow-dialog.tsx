@@ -24,14 +24,12 @@ import { updateFlowAction } from "./actions/update-flow-action"
 import { updateFlowSchema } from "./schemas/update-flow-schema"
 
 export function RenameFlowDialog({
-  chatbotId,
   flow,
   open,
   onOpenChange,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
   flow: Flow | null
 }) {
   const { t } = useTranslate()

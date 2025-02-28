@@ -43,7 +43,7 @@ export const getMessages = async (
     // }
 
     return { data, nextCursor: null, prevCursor: null }
-  } catch (err) {
+  } catch (_err) {
     return { data: [], nextCursor: null, prevCursor: null }
   }
   // },

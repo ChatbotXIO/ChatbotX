@@ -16,7 +16,7 @@ export const InboxDetail = ({
   chatbotId: string
   layout: number[]
 }) => {
-  const [activeConversationId, setActiveConversationId] = useState<
+  const [activeConversationId, _setActiveConversationId] = useState<
     string | null
   >(null)
 
