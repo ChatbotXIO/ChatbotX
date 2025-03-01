@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import type { Tag } from "@ahachat.ai/database"
+import type { Tag } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -58,9 +58,7 @@ export function UpdateTagDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {

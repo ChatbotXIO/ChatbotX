@@ -40,7 +40,7 @@ const createField = async ({
   }
 
   if (folderId) {
-    await ensureFolderIdIsExists(folderId, chatbotId, FolderType.CustomField)
+    await ensureFolderIdIsExists(folderId, chatbotId, FolderType.CUSTOM_FIELD)
   }
 
   await prisma.field.create({

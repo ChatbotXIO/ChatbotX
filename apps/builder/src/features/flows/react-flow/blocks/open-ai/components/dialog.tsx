@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -36,6 +37,7 @@ export const OpenAIDialog = ({ name, children }: OpenAIDialogProps) => {
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="capitalize">Open AI - {name}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         {children}
 

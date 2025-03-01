@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { deleteAIAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/browser"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -54,9 +54,7 @@ export function DeleteAIAgentsDialog({
         router.refresh()
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     },
   )

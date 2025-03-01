@@ -16,8 +16,9 @@ import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/c
 import { createAIAgentSchema } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { DialogDescription } from "@radix-ui/react-dialog"
 import { T } from "@tolgee/react"
-import { Loader2, PlusIcon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -40,9 +41,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
             router.refresh()
           },
           onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError.message ?? error.serverError)
-            }
+            error.serverError && toast.error(error.serverError)
           },
         },
         formProps: {
@@ -68,6 +67,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
           <DialogTitle>
             <T keyName="aiAgents.create.title" />
           </DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>
@@ -90,7 +90,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   <T keyName="common.confirm-btn" />
                 </Button>

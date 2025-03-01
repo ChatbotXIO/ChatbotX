@@ -11,14 +11,20 @@ import {
 } from "@/components/ui/dialog"
 import { useTranslate } from "@tolgee/react"
 import { useRouter } from "next/navigation"
-import React from "react"
+import { type ReactNode, useState } from "react"
 import { CreateContactForm } from "./create-contact-form"
 
-export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
+export function CreateContactDialog({
+  chatbotId,
+  trigger,
+}: {
+  chatbotId: string
+  trigger?: ReactNode
+}) {
   const router = useRouter()
   const { t } = useTranslate()
 
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = useState(false)
   const onSubmmited = () => {
     setOpen(false)
     router.refresh()
@@ -27,7 +33,11 @@ export function CreateContactDialog({ chatbotId }: { chatbotId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{t("contacts.createBtn")}</Button>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button variant="outline">{t("contacts.createBtn")}</Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

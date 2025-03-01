@@ -1,3 +1,3 @@
-export default function InboxPage({ children }: { children: React.ReactNode }) {
+export default function InboxPage() {
   return "inbox"
 }

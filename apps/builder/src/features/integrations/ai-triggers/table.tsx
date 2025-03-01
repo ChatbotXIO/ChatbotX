@@ -12,7 +12,7 @@ import type { getAITriggers } from "@/features/integrations/ai-triggers/queries"
 import { AITriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
 import { UpdateAITriggerDialog } from "@/features/integrations/ai-triggers/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AITrigger } from "@ahachat.ai/database"
+import type { AITrigger } from "@ahachat.ai/database/browser"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
@@ -36,7 +36,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
     [setRowAction],
   )
 
-  const { execute, result } = useAction(
+  const { execute } = useAction(
     duplicateAITriggerAction.bind(
       null,
       chatbotId,

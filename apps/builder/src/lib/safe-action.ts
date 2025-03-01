@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@ahachat.ai/database"
+import { SdkException } from "@ahachat.ai/sdk"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import {
   DEFAULT_SERVER_ERROR_MESSAGE,
@@ -11,33 +12,23 @@ export const actionClient = createSafeActionClient({
   handleServerError(error) {
     if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === "P2025" || error.code === "P2016") {
-        return {
-          message: `Unable to find ${error.meta?.modelName ?? ""} record`,
-        }
+        return `Unable to find ${error.meta?.modelName ?? ""} record`
       }
 
-      return {
-        message: error.message,
-      }
+      return error.message
     }
 
-    if (error instanceof BaseException) {
-      return {
-        message: error.message,
-      }
+    if (error instanceof BaseException || error instanceof SdkException) {
+      return error.message
     }
 
-    return {
-      message: DEFAULT_SERVER_ERROR_MESSAGE,
-    }
+    return DEFAULT_SERVER_ERROR_MESSAGE
   },
 }).use(async ({ next, clientInput, metadata }) => {
   console.log("LOGGING MIDDLEWARE")
 
   const startTime = performance.now()
-
   const result = await next()
-
   const endTime = performance.now()
 
   console.log("Result ->", result)

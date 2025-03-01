@@ -1,7 +1,7 @@
 "use client"
 
 import type { DataTableRowAction } from "@/components/data-table/types"
-import { type Field, FieldType } from "@ahachat.ai/database"
+import { type Field, FieldType } from "@ahachat.ai/database/browser"
 import type { Table } from "@tanstack/react-table"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 
@@ -28,7 +28,7 @@ export function CustomFieldsTableToolbarActions({
           onSuccess={() => table.toggleAllRowsSelected(false)}
           chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
-          fieldType={FieldType.CustomField}
+          fieldType={FieldType.CUSTOM_FIELD}
         />
       ) : null}
     </div>
