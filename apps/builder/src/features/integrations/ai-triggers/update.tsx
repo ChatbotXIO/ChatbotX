@@ -66,7 +66,7 @@ export function UpdateAITriggerDialog({
         },
       },
       formProps: {
-        mode: "onBlur",
+        mode: "onChange",
       },
       errorMapProps: {},
     },

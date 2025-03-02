@@ -59,7 +59,7 @@ export function CreateAITriggerDialog({
         },
       },
       formProps: {
-        mode: "onBlur",
+        mode: "onChange",
         defaultValues: {
           name: "",
           description: "",
