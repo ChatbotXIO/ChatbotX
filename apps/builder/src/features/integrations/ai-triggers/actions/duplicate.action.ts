@@ -1,27 +1,22 @@
 "use server"
 
 import {
-  type DuplicateAITriggerBindSchema,
-  duplicateAITriggerBindSchema,
-} from "@/features/integrations/ai-triggers/schemas/duplicate.schema"
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
 import type { InputJsonValue } from "@prisma/client/runtime/binary"
 import { revalidateTag } from "next/cache"
 
 export const duplicateAITriggerAction = authActionClient
-  .bindArgsSchemas(duplicateAITriggerBindSchema)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .action(
     async ({
-      ctx,
       bindArgsParsedInputs: [chatbotId, id],
     }: {
-      ctx: { user: User }
-      bindArgsParsedInputs: DuplicateAITriggerBindSchema
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       const {
         id: eid,
         name,
@@ -44,10 +39,6 @@ export const duplicateAITriggerAction = authActionClient
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiTriggers`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbot:${chatbotId}#aiTriggers`)
     },
   )

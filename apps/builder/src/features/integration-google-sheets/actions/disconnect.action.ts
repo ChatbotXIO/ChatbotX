@@ -1,9 +1,9 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
@@ -13,12 +13,12 @@ import {
 } from "@ahachat.ai/integration-google-sheets"
 
 export const disconnectGoogleSheets = authActionClient
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
     }: {
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const googleSheets =
         await prisma.integrationGoogleSheets.findFirstOrThrow({

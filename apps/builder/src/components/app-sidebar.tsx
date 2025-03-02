@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import type { ChatbotResource } from "@/features/chatbots/schemas"
+import type { ChatbotResource } from "@/features/common/schemas"
 import { useTranslate } from "@tolgee/react"
 import {
   Atom,

@@ -276,6 +276,9 @@ importers:
       '@faker-js/faker':
         specifier: ^9.5.0
         version: 9.5.0
+      '@radix-ui/react-visually-hidden':
+        specifier: ^1.1.2
+        version: 1.1.2(@types/react-dom@19.0.4(@types/react@19.0.10))(@types/react@19.0.10)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@types/lodash.clonedeep':
         specifier: ^4.5.9
         version: 4.5.9

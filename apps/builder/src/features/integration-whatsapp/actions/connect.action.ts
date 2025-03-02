@@ -1,9 +1,9 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -13,7 +13,7 @@ import type { InputJsonValue } from "@prisma/client/runtime/library"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
 export const connectWhatsappAction = authActionClient
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .schema(connectWhatsappSchema)
   .action(
     async ({
@@ -21,7 +21,7 @@ export const connectWhatsappAction = authActionClient
       bindArgsParsedInputs: [chatbotId],
     }: {
       parsedInput: ConnectWhatsappSchema
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const integrationWhatsapp = await prisma.integrationWhatsapp.findFirst({
         where: {

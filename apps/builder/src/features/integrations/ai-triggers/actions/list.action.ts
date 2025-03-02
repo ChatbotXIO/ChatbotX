@@ -1,14 +1,14 @@
 import { getCurrentUserId } from "@/auth"
 import type {
   AITriggerCollection,
-  GetAITriggersSchema,
+  ListAITriggersRequest,
 } from "@/features/integrations/ai-triggers/schemas/get.schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 
-export const getAITriggers = async (
-  input: GetAITriggersSchema,
+export const listAITriggers = async (
+  input: ListAITriggersRequest,
 ): Promise<AITriggerCollection> => {
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId as string)
@@ -20,7 +20,7 @@ export const getAITriggers = async (
           chatbotId: input.chatbotId,
         }
 
-        let orderBy: Record<string, string>[]
+        let orderBy: Record<string, string>[] = []
         const page = input.page ? input.page - 1 : 1
         const perPage = input.perPage ? input.perPage : 10
 
@@ -28,6 +28,13 @@ export const getAITriggers = async (
           orderBy = input.sort.map((sortItem) => ({
             [sortItem.id]: sortItem.desc ? "desc" : "asc",
           }))
+        }
+
+        if (input.name) {
+          where.name = {
+            contains: input.name,
+            mode: "insensitive",
+          }
         }
 
         const [data, total] = await prisma.$transaction([
@@ -50,7 +57,7 @@ export const getAITriggers = async (
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#aiTriggers`],
+      tags: [`chatbot:${input.chatbotId}#aiTriggers`],
     },
   )()
 }

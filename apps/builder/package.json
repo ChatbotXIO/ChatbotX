@@ -94,6 +94,7 @@
     "@ahachat.ai/typescript-config": "workspace:*",
     "@biomejs/biome": "^1.9.4",
     "@faker-js/faker": "^9.5.0",
+    "@radix-ui/react-visually-hidden": "^1.1.2",
     "@types/lodash.clonedeep": "^4.5.9",
     "@types/lodash.isobject": "^3.0.9",
     "@types/lodash.reduce": "^4.6.9",

@@ -1,9 +1,9 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import {
   type CreateAIAgentSchema,
   createAIAgentSchema,
@@ -16,7 +16,7 @@ import { revalidateTag } from "next/cache"
 
 export const createAIAgentAction = authActionClient
   .schema(createAIAgentSchema)
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       ctx,
@@ -25,7 +25,7 @@ export const createAIAgentAction = authActionClient
     }: {
       ctx: { user: User }
       parsedInput: CreateAIAgentSchema
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 

@@ -17,13 +17,13 @@ import { updateAITriggerSchema } from "@/features/integrations/ai-triggers/schem
 import type { AITrigger } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import type { JsonObject } from "@prisma/client/runtime/binary"
 import { useTranslate } from "@tolgee/react"
 import { ArrowRightIcon, Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import type { CreateAITriggerRequest } from "./schemas/create.schema"
 
 type UpdateAITriggerDialogProps = {
   open: boolean
@@ -33,7 +33,6 @@ type UpdateAITriggerDialogProps = {
 }
 
 export function UpdateAITriggerDialog({
-  chatbotId,
   trigger,
   open,
   onOpenChange,
@@ -44,15 +43,21 @@ export function UpdateAITriggerDialog({
   const {
     form,
     handleSubmitWithAction,
-    form: { setValue, control },
+    form: { control, reset },
+    resetFormAndAction,
   } = useHookFormAction(
-    updateAITriggerAction.bind(null, chatbotId, trigger?.id ?? ""),
+    updateAITriggerAction.bind(
+      null,
+      trigger?.chatbotId ?? "",
+      trigger?.id ?? "",
+    ),
     zodResolver(updateAITriggerSchema),
     {
       actionProps: {
         onSuccess: () => {
           toast.success("AI Trigger update successfully")
 
+          resetFormAndAction()
           onOpenChange(false)
           router.refresh()
         },
@@ -61,7 +66,7 @@ export function UpdateAITriggerDialog({
         },
       },
       formProps: {
-        mode: "onChange",
+        mode: "onBlur",
       },
       errorMapProps: {},
     },
@@ -79,21 +84,27 @@ export function UpdateAITriggerDialog({
     })
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (trigger) {
-      setValue("name", trigger?.name)
-      setValue("description", trigger.description || "")
-      if (trigger.questions) {
-        setValue("questions", (trigger.questions as JsonObject[]) || [])
-      }
-      setValue("flowId", trigger.flowId || "")
-      setValue("finalMessage", trigger.finalMessage || "")
+      const { questions, ...rest } = trigger
+      reset({
+        ...rest,
+        questions: questions as CreateAITriggerRequest["questions"],
+      })
+      // setValue("name", trigger?.name)
+      // setValue("description", trigger.description || "")
+      // if (trigger.questions) {
+      //   setValue("questions", (trigger.questions as JsonObject[]) || [])
+      // }
+      // setValue("flowId", trigger.flowId || "")
+      // setValue("finalMessage", trigger.finalMessage || "")
     }
-  }, [trigger, setValue])
+  }, [trigger])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("aiTriggers.update.title")}</DialogTitle>
           <DialogDescription />
@@ -116,24 +127,32 @@ export function UpdateAITriggerDialog({
                 <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
                 {fields.map((field, i) => (
                   <div className="flex items-center space-x-2" key={field.id}>
-                    <FormInput name={`questions.${i}.name`} label="" />
+                    <div className="basis-5/12">
+                      <FormInput name={`questions.${i}.name`} label="" />
+                    </div>
 
-                    <ArrowRightIcon />
+                    <div className="basis-1/12 flex justify-center">
+                      <ArrowRightIcon className="mt-2" />
+                    </div>
 
-                    <CustomFieldSelect
-                      label=""
-                      name={`questions.${i}.fieldId`}
-                      isRequired={false}
-                    />
+                    <div className="basis-5/12">
+                      <CustomFieldSelect
+                        label=""
+                        name={`questions.${i}.fieldId`}
+                        isRequired={false}
+                      />
+                    </div>
 
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => remove(i)}
-                    >
-                      <XIcon />
-                    </Button>
+                    <div className="basis-1/12">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => remove(i)}
+                      >
+                        <XIcon />
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 <Button
