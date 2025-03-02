@@ -1,4 +1,4 @@
-import type { ChatbotResource } from "@/features/common/schemas"
+import type { ChatbotResource } from "@/features/chatbots/schemas"
 import { BaseException } from "@/lib/error"
 import type { ChatbotMember } from "@ahachat.ai/database"
 

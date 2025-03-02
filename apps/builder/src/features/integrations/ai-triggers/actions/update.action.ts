@@ -6,8 +6,8 @@ import {
 } from "@/features/common/schemas"
 import { AITriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
 import {
-  type UpdateAITriggerSchema,
-  updateAITriggerSchema,
+  type UpdateAITriggerRequest,
+  updateAITriggerRequest,
 } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import { authActionClient } from "@/lib/safe-action"
 import { type User, prisma } from "@ahachat.ai/database"
@@ -16,7 +16,7 @@ import { revalidateTag } from "next/cache"
 
 export const updateAITriggerAction = authActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateAITriggerSchema)
+  .schema(updateAITriggerRequest)
   .action(
     async ({
       parsedInput,
@@ -24,7 +24,7 @@ export const updateAITriggerAction = authActionClient
     }: {
       ctx: { user: User }
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateAITriggerSchema
+      parsedInput: UpdateAITriggerRequest
     }) => {
       const existingAITrigger = await prisma.aITrigger.findFirst({
         select: {

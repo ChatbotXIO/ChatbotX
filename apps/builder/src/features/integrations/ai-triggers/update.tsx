@@ -13,7 +13,7 @@ import { Form, FormLabel } from "@/components/ui/form"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { FlowSelect } from "@/features/flows/flow-select"
 import { updateAITriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
-import { updateAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
+import { updateAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import type { AITrigger } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -51,7 +51,7 @@ export function UpdateAITriggerDialog({
       trigger?.chatbotId ?? "",
       trigger?.id ?? "",
     ),
-    zodResolver(updateAITriggerSchema),
+    zodResolver(updateAITriggerRequest),
     {
       actionProps: {
         onSuccess: () => {
@@ -84,7 +84,6 @@ export function UpdateAITriggerDialog({
     })
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (trigger) {
       const { questions, ...rest } = trigger
@@ -92,15 +91,8 @@ export function UpdateAITriggerDialog({
         ...rest,
         questions: questions as CreateAITriggerRequest["questions"],
       })
-      // setValue("name", trigger?.name)
-      // setValue("description", trigger.description || "")
-      // if (trigger.questions) {
-      //   setValue("questions", (trigger.questions as JsonObject[]) || [])
-      // }
-      // setValue("flowId", trigger.flowId || "")
-      // setValue("finalMessage", trigger.finalMessage || "")
     }
-  }, [trigger])
+  }, [trigger, reset])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
