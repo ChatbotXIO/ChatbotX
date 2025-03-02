@@ -10,17 +10,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
-import {
-  type EditFolderSchema,
-  editFolderSchema,
-} from "@/features/folders/schemas/edit-folder-schema"
-import type { Folder } from "@ahachat.ai/database"
+import { editFolderSchema } from "@/features/folders/schemas/edit-folder-schema"
+import type { Folder } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
-import { Loader2 } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { toast } from "sonner"
@@ -51,9 +47,7 @@ export function EditFolderDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {
@@ -104,7 +98,7 @@ export function EditFolderDialog({
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   {t("common.confirm-btn")}
                 </Button>

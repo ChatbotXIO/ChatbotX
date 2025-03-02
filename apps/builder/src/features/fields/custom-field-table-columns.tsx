@@ -7,11 +7,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import type { Field } from "@ahachat.ai/database"
+import type { Field } from "@ahachat.ai/database/browser"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { T } from "@tolgee/react"
 import {

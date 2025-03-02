@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { type Field, FieldType } from "@ahachat.ai/database"
+import { type Field, FieldType } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -41,7 +41,7 @@ export function UpdateAccountFieldNameDialog({
 }) {
   const { t } = useTranslate()
   const router = useRouter()
-  const fieldType = FieldType.AccountField
+  const fieldType = FieldType.ACCOUNT_FIELD
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateFieldNameAction.bind(
@@ -60,9 +60,7 @@ export function UpdateAccountFieldNameDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {

@@ -1,34 +1,33 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
-import { integration as integrationGoogleSheets } from "@ahachat.ai/integration-google-sheets"
-import type { TokenAuthSchema } from "@ahachat.ai/sdk"
+import {
+  type GoogleSheetsAuthValue,
+  integration as integrationGoogleSheets,
+} from "@ahachat.ai/integration-google-sheets"
 
 export const disconnectGoogleSheets = authActionClient
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
     }: {
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const googleSheets =
         await prisma.integrationGoogleSheets.findFirstOrThrow({
           where: { chatbotId },
         })
       try {
-        await integrationGoogleSheets.disconnect?.({
-          clientId: process.env.AUTH_GOOGLE_ID ?? "",
-          clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-          redirectUri: `${process.env.BASE_URL}/api/integrations/callback`,
-          tokens: googleSheets.auth as TokenAuthSchema,
-        })
+        await integrationGoogleSheets.disconnect?.(
+          googleSheets.auth as GoogleSheetsAuthValue,
+        )
       } catch (e) {
         logger.error(
           "Unable to disconnect google sheets for chatbot",

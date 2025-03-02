@@ -1,27 +1,22 @@
 "use server"
 
 import {
-  type DuplicateAIAgentBindSchema,
-  duplicateAIAgentBindSchema,
-} from "@/features/integrations/ai-agents/schemas/duplicate.schema"
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
 import type { JsonObject } from "@prisma/client/runtime/binary"
 import { revalidateTag } from "next/cache"
 
 export const duplicateAIAgentAction = authActionClient
-  .bindArgsSchemas(duplicateAIAgentBindSchema)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .action(
     async ({
-      ctx,
       bindArgsParsedInputs: [chatbotId, id],
     }: {
-      ctx: { user: User }
-      bindArgsParsedInputs: DuplicateAIAgentBindSchema
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       const aiAgent = await prisma.aIAgent.findFirst({
         where: {
           id,
@@ -36,17 +31,13 @@ export const duplicateAIAgentAction = authActionClient
 
       await prisma.aIAgent.create({
         data: {
-          name: `${aiAgent.name}  _copy`,
+          name: `${aiAgent.name} _copy`,
           prompt: aiAgent.prompt,
           messages: aiAgent.messages as JsonObject[],
           chatbotId: aiAgent.chatbotId,
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiAgents`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbot:${chatbotId}#aiAgents`)
     },
   )

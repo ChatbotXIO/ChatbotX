@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { deleteAIAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/browser"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -42,11 +42,7 @@ export function DeleteAIAgentsDialog({
   const router = useRouter()
 
   const { execute, isExecuting } = useAction(
-    deleteAIAgentAction.bind(
-      null,
-      chatbotId,
-      (agents ?? []).map((agent) => agent.id),
-    ),
+    deleteAIAgentAction.bind(null, chatbotId),
     {
       onSuccess: () => {
         toast.success(t("aiAgents.deleted"))
@@ -54,9 +50,7 @@ export function DeleteAIAgentsDialog({
         router.refresh()
       },
       onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError.message ?? error.serverError)
-        }
+        error.serverError && toast.error(error.serverError)
       },
     },
   )
@@ -77,7 +71,7 @@ export function DeleteAIAgentsDialog({
           <DialogDescription>
             {t("aiAgents.confirmDeleteDesc")}{" "}
             <span className="font-medium">{agents.length}</span>
-            {agents.length === 1 ? " log " : " agents "}
+            {agents.length === 1 ? " agent " : " agents "}
             {t("aiAgents.confirmDeleteDesc")}
           </DialogDescription>
         </DialogHeader>
@@ -90,7 +84,9 @@ export function DeleteAIAgentsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={() => execute()}
+            onClick={() =>
+              execute({ ids: (agents ?? []).map((agent) => agent.id) })
+            }
             disabled={isExecuting}
           >
             {isExecuting && (

@@ -1,9 +1,0 @@
-{
-  "$schema": "https://www.partykit.io/schema.json",
-  "name": "partysocket",
-  "main": "party/server.ts",
-  "compatibilityDate": "2025-01-03",
-  "parties": {
-    "conversations": "party/parties/conversations.ts"
-  }
-}

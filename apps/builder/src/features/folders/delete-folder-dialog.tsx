@@ -9,9 +9,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action"
-import type { Folder } from "@ahachat.ai/database"
+import type { Folder } from "@ahachat.ai/database/browser"
 import { useTranslate } from "@tolgee/react"
-import { Loader2 } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { useTransition } from "react"
 import { toast } from "sonner"
@@ -71,7 +71,7 @@ export function DeleteFolderDialog({
             disabled={isDeletePending}
             onClick={() => onDelete()}
           >
-            {isDeletePending && <Loader2 className="animate-spin" />}
+            {isDeletePending && <Loader2Icon className="animate-spin" />}
             {t("common.deleteBtn")}
           </Button>
         </div>

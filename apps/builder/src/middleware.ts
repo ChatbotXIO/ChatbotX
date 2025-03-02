@@ -11,12 +11,18 @@ export default auth((req) => {
     return Response.redirect(newUrl)
   }
 
-  const headers = new Headers(req.headers)
-  headers.set("x-current-path", req.nextUrl.pathname)
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set("x-url", req.url)
 
-  return NextResponse.next({ headers })
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
 })
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)"],
+  matcher: [
+    "/((?!api|integrations|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
+  ],
 }

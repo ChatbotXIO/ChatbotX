@@ -1,19 +1,19 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
 
 export const disconnectOpenAIAction = authActionClient
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
     }: {
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const integrationOpenAI = await prisma.integrationOpenAI.findFirstOrThrow(
         {

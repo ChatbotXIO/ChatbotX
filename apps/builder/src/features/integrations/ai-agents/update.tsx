@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -13,9 +14,9 @@ import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
 import { updateAIAgentAction } from "@/features/integrations/ai-agents/actions/update.action"
 import {
   type MessageSchema,
-  updateAIAgentSchema,
+  updateAIAgentRequest,
 } from "@/features/integrations/ai-agents/schemas/update.schema"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -42,10 +43,10 @@ export function UpdateAIAgentDialog({
   const {
     form,
     handleSubmitWithAction,
-    form: { setValue, control, reset },
+    form: { reset, control },
   } = useHookFormAction(
     updateAIAgentAction.bind(null, chatbotId, agent?.id ?? ""),
-    zodResolver(updateAIAgentSchema),
+    zodResolver(updateAIAgentRequest),
     {
       actionProps: {
         onSuccess: () => {
@@ -55,13 +56,14 @@ export function UpdateAIAgentDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {
         mode: "onChange",
+        defaultValues: {
+          prompt: "",
+        },
       },
       errorMapProps: {},
     },
@@ -95,19 +97,20 @@ export function UpdateAIAgentDialog({
 
   useEffect(() => {
     if (agent) {
-      setValue("name", agent.name)
-      setValue("prompt", agent.prompt || "")
-      if (agent.messages.length) {
-        setValue("messages", (agent?.messages as MessageSchema[]) ?? [])
-      }
+      const { messages, ...rest } = agent
+      reset({
+        ...rest,
+        messages: agent?.messages as MessageSchema[],
+      })
     }
-  }, [agent, setValue])
+  }, [agent, reset])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("aiAgents.update.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
 
         <div className="flex items-center space-x-2">

@@ -1,16 +1,15 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
 import { IntegrationType, prisma } from "@ahachat.ai/database"
-import { integration } from "@ahachat.ai/integration-google-sheets"
 import {
   AuthType,
   IntegrationException,
-  type SecretTextAuthSchema,
+  type SecretTextAuthValue,
 } from "@ahachat.ai/sdk"
 import {
   type ConnectOpenAISchema,
@@ -19,7 +18,7 @@ import {
 } from "../schemas"
 
 export const connectOpenAIAction = authActionClient
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .schema(connectOpenAISchema)
   .action(
     async ({
@@ -27,10 +26,17 @@ export const connectOpenAIAction = authActionClient
       bindArgsParsedInputs: [chatbotId],
     }: {
       parsedInput: ConnectOpenAISchema
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      if (!integration.connect) {
-        throw new IntegrationException("Integration is not connected")
+      const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
+        where: {
+          chatbotId,
+        },
+      })
+      if (integrationOpenAI) {
+        throw new IntegrationException(
+          "OpenAI integration is already connected",
+        )
       }
 
       await prisma.$transaction(async (tx) => {
@@ -48,16 +54,15 @@ export const connectOpenAIAction = authActionClient
         await tx.integration.create({
           data: {
             chatbotId,
-            integrationType: IntegrationType.OpenAI,
+            integrationType: IntegrationType.OPENAI,
             openAI: {
               create: {
                 chatbotId,
                 model: OpenAIModel.GPT4oMini,
                 auth: {
                   authType: AuthType.SECRET_TEXT,
-                  issuedAt: new Date().toISOString(),
                   secretText: parsedInput.apiKey,
-                } as SecretTextAuthSchema,
+                } as SecretTextAuthValue,
                 automatedResponse: false,
                 temperature: parsedInput.temperature,
                 maxTokens: parsedInput.maxTokens,

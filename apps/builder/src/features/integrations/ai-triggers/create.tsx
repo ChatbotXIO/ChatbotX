@@ -6,28 +6,21 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Form, FormLabel } from "@/components/ui/form"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { FlowSelect } from "@/features/flows/flow-select"
 import { createAITriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
-import { createAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
+import { createAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
-import { ArrowRightIcon, Loader2, PlusIcon, XIcon } from "lucide-react"
+import { ArrowRightIcon, Loader2Icon, PlusIcon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -51,7 +44,7 @@ export function CreateAITriggerDialog({
     form: { control },
   } = useHookFormAction(
     createAITriggerAction.bind(null, chatbotId),
-    zodResolver(createAITriggerSchema),
+    zodResolver(createAITriggerRequest),
     {
       actionProps: {
         onSuccess: () => {
@@ -62,22 +55,23 @@ export function CreateAITriggerDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError.message ?? error.serverError)
-          }
+          error.serverError && toast.error(error.serverError)
         },
       },
       formProps: {
         mode: "onChange",
         defaultValues: {
           name: "",
+          description: "",
+          finalMessage: "",
+          flowId: null,
         },
       },
       errorMapProps: {},
     },
   )
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
   })
@@ -100,6 +94,7 @@ export function CreateAITriggerDialog({
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("aiTriggers.create.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>
@@ -119,38 +114,31 @@ export function CreateAITriggerDialog({
               <div className="flex flex-col space-y-2">
                 <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
                 {fields.map((field, i) => (
-                  <div className="flex items-center space-x-2" key={field.id}>
-                    <FormField
-                      control={form.control}
-                      name={`questions.${i}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder={t("aiTriggers.questions.name")}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="flex items-top" key={field.id}>
+                    <div className="basis-5/12">
+                      <FormInput name={`questions.${i}.name`} label="" />
+                    </div>
+                    <div className="basis-1/12 flex justify-center">
+                      <ArrowRightIcon className="mt-2" />
+                    </div>
 
-                    <ArrowRightIcon />
+                    <div className="basis-5/12">
+                      <CustomFieldSelect
+                        name={`questions.${i}.fieldId`}
+                        label=""
+                      />
+                    </div>
 
-                    <CustomFieldSelect
-                      name={`questions.${i}.fieldId`}
-                      label=""
-                    />
-
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => remove(i)}
-                    >
-                      <XIcon />
-                    </Button>
+                    <div className="basis-1/12">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => remove(i)}
+                      >
+                        <XIcon />
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 <Button
@@ -188,7 +176,7 @@ export function CreateAITriggerDialog({
                   }
                 >
                   {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
+                    <Loader2Icon className="animate-spin" />
                   )}
                   {t("common.confirm-btn")}
                 </Button>

@@ -1,7 +1,7 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateAIAgentDialog } from "@/features/integrations/ai-agents/create"
-import { getAIAgents } from "@/features/integrations/ai-agents/queries/get.query"
-import { getAIAgentSearchParamsCache } from "@/features/integrations/ai-agents/schemas/get.schema"
+import { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
+import { listAIAgentRequest } from "@/features/integrations/ai-agents/schemas/list.schema"
 import { AIAgentsTable } from "@/features/integrations/ai-agents/table"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -12,7 +12,7 @@ export default async function AIAgentsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getAIAgentSearchParamsCache.parse(searchParams)
+  const search = listAIAgentRequest.parse(searchParams)
   const promises = Promise.all([
     getAIAgents({ ...search, chatbotId: params.chatbotId }),
   ])

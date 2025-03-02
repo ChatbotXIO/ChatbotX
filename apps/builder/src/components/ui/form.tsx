@@ -12,8 +12,8 @@ import {
   useFormContext,
 } from "react-hook-form"
 
+import { cn } from "@/components/lib/utils"
 import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
 
 const Form = FormProvider
 
@@ -166,6 +166,17 @@ const FormMessage = React.forwardRef<
 })
 FormMessage.displayName = "FormMessage"
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+function TriggerFormInitially({ form }: { form: any }) {
+  const { trigger } = form
+
+  React.useEffect(() => {
+    trigger()
+  }, [trigger])
+
+  return null
+}
+
 export {
   useFormField,
   Form,
@@ -175,4 +186,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  TriggerFormInitially,
 }

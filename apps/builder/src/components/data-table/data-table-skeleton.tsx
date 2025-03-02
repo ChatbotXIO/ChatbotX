@@ -1,3 +1,4 @@
+import { cn } from "@/components/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -7,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
 
 interface DataTableSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -90,13 +90,13 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
       <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
         <div className="flex flex-1 items-center space-x-2">
           {searchableColumnCount > 0
-            ? Array.from({ length: searchableColumnCount }).map((row, i) => (
+            ? Array.from({ length: searchableColumnCount }).map((_row, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                 <Skeleton key={`row-${i}`} className="h-7 w-40 lg:w-60" />
               ))
             : null}
           {filterableColumnCount > 0
-            ? Array.from({ length: filterableColumnCount }).map((row, i) => (
+            ? Array.from({ length: filterableColumnCount }).map((_row, i) => (
                 <Skeleton
                   // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                   key={`row-${i}`}
@@ -112,10 +112,10 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {Array.from({ length: 1 }).map((row, i) => (
+            {Array.from({ length: 1 }).map((_row, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               <TableRow key={`row-${i}`} className="hover:bg-transparent">
-                {Array.from({ length: columnCount }).map((rowj, j) => (
+                {Array.from({ length: columnCount }).map((_rowj, j) => (
                   <TableHead
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={`rowj-${j}`}
@@ -131,10 +131,10 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {Array.from({ length: rowCount }).map((row, i) => (
+            {Array.from({ length: rowCount }).map((_row, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               <TableRow key={`row-${i}`} className="hover:bg-transparent">
-                {Array.from({ length: columnCount }).map((rowj, j) => (
+                {Array.from({ length: columnCount }).map((_rowj, j) => (
                   <TableCell
                     // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={`rowj-${j}`}
