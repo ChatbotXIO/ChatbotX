@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DateTimePicker } from "@/components/ui/date-picker"
 import { Form } from "@/components/ui/form"
-import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast-action"
+import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import {
   type BroadcastSchedulesType,

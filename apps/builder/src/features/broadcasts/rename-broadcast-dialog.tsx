@@ -20,7 +20,7 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { toast } from "sonner"
-import { updateBroadcastAction } from "./actions/update-broadcast-action"
+import { updateBroadcastAction } from "./actions/update-broadcast.action"
 import { updateBroadcastSchema } from "./schemas/update-broadcast-schema"
 
 export function RenameBroadcastDialog({
