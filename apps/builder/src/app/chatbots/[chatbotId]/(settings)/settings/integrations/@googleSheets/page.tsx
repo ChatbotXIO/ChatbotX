@@ -1,4 +1,4 @@
-import { GoogleSheetsConnect } from "@/features/integration-google-sheets/google-sheets-connect"
+import { GoogleSheetsManage } from "@/features/integration-google-sheets/google-sheets-manage"
 import { getGoogleSheetsIntegration } from "@/features/integration-google-sheets/queries"
 
 export default async function SettingIntegrationGoogleSheetsPage(props: {
@@ -11,7 +11,5 @@ export default async function SettingIntegrationGoogleSheetsPage(props: {
     }),
   ])
 
-  return (
-    <GoogleSheetsConnect chatbotId={params.chatbotId} promises={promises} />
-  )
+  return <GoogleSheetsManage chatbotId={params.chatbotId} promises={promises} />
 }

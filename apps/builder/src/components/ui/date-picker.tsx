@@ -1,4 +1,5 @@
-import { Button, buttonVariants } from "@/components/ui/button"
+import { cn } from "@/components/lib/utils"
+import { Button } from "@/components/ui/button"
 import { Calendar, type CalendarProps } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import {
@@ -6,10 +7,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 import { add, format } from "date-fns"
-import { type Locale, enUS } from "date-fns/locale"
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { enUS } from "date-fns/locale"
+import { CalendarIcon } from "lucide-react"
 import { Clock } from "lucide-react"
 import * as React from "react"
 import { useImperativeHandle, useRef } from "react"
@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { DayPicker } from "react-day-picker"
 
 // ---------- utils start ----------
 /**
@@ -223,23 +222,6 @@ function display12HourValue(hours: number) {
   if (hours >= 22) return `${hours - 12}`
   if (hours % 12 > 9) return `${hours}`
   return `0${hours % 12}`
-}
-
-function genMonths(
-  locale: Pick<Locale, "options" | "localize" | "formatLong">,
-) {
-  return Array.from({ length: 12 }, (_, i) => ({
-    value: i,
-    label: format(new Date(2021, i), "MMMM", { locale }),
-  }))
-}
-
-function genYears(yearRange = 50) {
-  const today = new Date()
-  return Array.from({ length: yearRange * 2 + 1 }, (_, i) => ({
-    value: today.getFullYear() - yearRange + i,
-    label: (today.getFullYear() - yearRange + i).toString(),
-  }))
 }
 
 interface PeriodSelectorProps {

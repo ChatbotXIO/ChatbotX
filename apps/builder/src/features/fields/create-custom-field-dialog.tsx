@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { CustomFieldType, FieldType } from "@ahachat.ai/database"
+import { CustomFieldType, FieldType } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -45,7 +45,7 @@ export function CreateCustomFieldDialog({
         null,
         chatbotId,
         folderId,
-        FieldType.CustomField,
+        FieldType.CUSTOM_FIELD,
       ),
       zodResolver(createCustomFieldSchema),
       {
@@ -65,7 +65,7 @@ export function CreateCustomFieldDialog({
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: CustomFieldType.ShortText,
+            customFieldType: CustomFieldType.SHORTTEXT,
             description: "",
           },
         },
@@ -75,27 +75,27 @@ export function CreateCustomFieldDialog({
 
   const customFieldTypeOptions = [
     {
-      value: CustomFieldType.ShortText,
+      value: CustomFieldType.SHORTTEXT,
       label: t("customField.customFieldType.ShortText"),
     },
     {
-      value: CustomFieldType.Number,
+      value: CustomFieldType.NUMBER,
       label: t("customField.customFieldType.Number"),
     },
     {
-      value: CustomFieldType.Date,
+      value: CustomFieldType.DATE,
       label: t("customField.customFieldType.Date"),
     },
     {
-      value: CustomFieldType.DateTime,
+      value: CustomFieldType.DATETIME,
       label: t("customField.customFieldType.DateTime"),
     },
     {
-      value: CustomFieldType.Boolean,
+      value: CustomFieldType.BOOLEAN,
       label: t("customField.customFieldType.Boolean"),
     },
     {
-      value: CustomFieldType.LongText,
+      value: CustomFieldType.LONGTEXT,
       label: t("customField.customFieldType.LongText"),
     },
   ]

@@ -17,13 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Gender } from "@ahachat.ai/database"
+import { Gender } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
+import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { toast } from "sonner"
-import { createContactAction } from "./actions/create-contact-action"
+import { createContactAction } from "./actions/create-contact.action"
 import { createContactSchema } from "./schemas/create-contact-schema"
 
 export function CreateContactForm({
@@ -58,7 +58,7 @@ export function CreateContactForm({
           email: "",
           firstName: "",
           lastName: "",
-          gender: Gender.Unknown,
+          gender: Gender.UNKNOWN,
         },
       },
       errorMapProps: {},
@@ -66,9 +66,9 @@ export function CreateContactForm({
   )
 
   const genderLabels: Record<Gender, string> = {
-    Male: t("contacts.gender.male"),
-    Female: t("contacts.gender.female"),
-    Unknown: t("contacts.gender.unknown"),
+    [Gender.MALE]: t("contacts.gender.male"),
+    [Gender.FEMALE]: t("contacts.gender.female"),
+    [Gender.UNKNOWN]: t("contacts.gender.unknown"),
   }
 
   return (
@@ -117,7 +117,7 @@ export function CreateContactForm({
                   value={field.value}
                   name={field.name}
                   onValueChange={field.onChange}
-                  defaultValue={Gender.Unknown}
+                  defaultValue={Gender.UNKNOWN}
                 >
                   <SelectTrigger>
                     <SelectValue onBlur={field.onBlur} ref={field.ref} />

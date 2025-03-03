@@ -1,8 +1,8 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { ContactsTable } from "@/features/contacts/contacts-table"
 import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
-import { getContacts } from "@/features/contacts/queries"
-import { getContactsSearchParamsCache } from "@/features/contacts/schemas/get-contacts-schema"
+import { listContacts } from "@/features/contacts/queries/list-contacts.action"
+import { listContactsNuqs } from "@/features/contacts/schemas/get-contacts-schema"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -12,10 +12,10 @@ export default async function ContactsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getContactsSearchParamsCache.parse(searchParams)
+  const search = listContactsNuqs.parse(searchParams)
 
   const promises = Promise.all([
-    getContacts({
+    listContacts({
       ...search,
       chatbotId: params.chatbotId,
     }),

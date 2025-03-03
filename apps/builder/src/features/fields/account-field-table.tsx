@@ -4,7 +4,7 @@ import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
 import type { DataTableFilterField } from "@/components/data-table/types"
 import { useDataTable } from "@/hooks/use-data-table"
-import { type Field, FieldType } from "@ahachat.ai/database"
+import { type Field, FieldType } from "@ahachat.ai/database/browser"
 import type { Row } from "@tanstack/react-table"
 import { use, useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -89,7 +89,7 @@ export function AccountFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         showTrigger={false}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
-        fieldType={FieldType.AccountField}
+        fieldType={FieldType.ACCOUNT_FIELD}
       />
 
       {/* <UpdateAccountFieldDialog

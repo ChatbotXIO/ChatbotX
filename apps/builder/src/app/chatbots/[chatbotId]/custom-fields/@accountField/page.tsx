@@ -23,7 +23,7 @@ export default async function AccountFieldsPage(props: {
       ...search,
       chatbotId: params.chatbotId,
       folderId: folderId,
-      fieldType: FieldType.AccountField,
+      fieldType: FieldType.ACCOUNT_FIELD,
     }),
   ])
 

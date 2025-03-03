@@ -32,7 +32,7 @@ export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
   const { t } = useTranslate()
 
   const { control } = useFormContext()
-  const { fields, append, move, update, remove } = useFieldArray({
+  const { fields, append, move } = useFieldArray({
     control,
     name: parentName,
   })

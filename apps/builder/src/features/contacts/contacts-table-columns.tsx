@@ -60,7 +60,7 @@ export function getColumns(): ColumnDef<Contact>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Assigned" />
       ),
-      cell: ({ row }) => {
+      cell: () => {
         return <div>Unassigned</div>
       },
       enableSorting: false,

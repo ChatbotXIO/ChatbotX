@@ -1,5 +1,5 @@
 import { getWhastappIntegration } from "@/features/integration-whatsapp/queries"
-import { WhatsappConnect } from "@/features/integration-whatsapp/whatsapp-connect"
+import { WhatsappManage } from "@/features/integration-whatsapp/whatsapp-manage"
 
 export default async function SettingChannelWhatsappPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -11,5 +11,5 @@ export default async function SettingChannelWhatsappPage(props: {
     }),
   ])
 
-  return <WhatsappConnect chatbotId={params.chatbotId} promises={promises} />
+  return <WhatsappManage chatbotId={params.chatbotId} promises={promises} />
 }

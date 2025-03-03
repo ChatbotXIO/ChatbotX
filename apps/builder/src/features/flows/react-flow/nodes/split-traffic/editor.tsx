@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslate } from "@tolgee/react"
 import { type Node, useReactFlow } from "@xyflow/react"
-import { Trash, TrashIcon, XIcon } from "lucide-react"
+import { TrashIcon } from "lucide-react"
 import { useCallback, useEffect } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { SplitTrafficBlockEditor } from "../../blocks/split-traffic/editor"
@@ -54,7 +54,7 @@ export default function SplitTrafficNodeEditor({
     return () => unsubscribe()
   }, [watch])
 
-  const { fields, append, move, update, remove, insert } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "blocks",
   })

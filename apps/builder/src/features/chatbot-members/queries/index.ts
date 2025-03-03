@@ -46,7 +46,7 @@ export async function getAgents(
         const pageCount = Math.ceil(total / input.perPage)
 
         return { data, pageCount }
-      } catch (error) {
+      } catch (_error) {
         return { data: [], pageCount: 0 }
       }
     },
@@ -85,7 +85,7 @@ export const getAllChatbotMembers = async (
         const chatbotIds = chatbots.map((c) => c.id)
 
         return { chatbotMembers, chatbots, chatbotIds }
-      } catch (error) {
+      } catch (_error) {
         return { chatbotMembers: [], chatbots: [], chatbotIds: [] }
       }
     },

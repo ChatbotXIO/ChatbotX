@@ -1,15 +1,11 @@
 "use client"
 
-import type { findFlow } from "@/features/flows/queries"
 import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
-import type { AddNotesNodeSchema } from "@/features/flows/react-flow/nodes/add-notes/schema"
-import type { SendMessageNodeSchema } from "@/features/flows/react-flow/nodes/send-message/schema"
+import { defaultAddNotesNode } from "@/features/flows/react-flow/nodes/add-notes/schema"
+import { defaultSendMessageNode } from "@/features/flows/react-flow/nodes/send-message/schema"
 import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer"
 import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block"
 import { NodeDetailSheet } from "@/features/flows/react-flow/panels/node-detail-sheet"
-import { PanelAction } from "@/features/flows/react-flow/types"
-import { createId } from "@paralleldrive/cuid2"
-import { useTranslate } from "@tolgee/react"
 import {
   Background,
   Controls,
@@ -24,16 +20,24 @@ import {
   useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
+import type { findFlow } from "@/features/flows/queries"
+import { startFlowNodeDefaultValue } from "@/features/flows/react-flow/nodes/start-flow/schema"
+import StartFlowNodeViewer from "@/features/flows/react-flow/nodes/start-flow/viewer"
+import { waitNodeDefaultValue } from "@/features/flows/react-flow/nodes/wait/schema"
+import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
 import { useOptimisticAction } from "next-safe-action/hooks"
 import { notFound } from "next/navigation"
 import { use, useCallback, useEffect, useState } from "react"
 import { useDebouncedCallback } from "use-debounce"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
-import { MessageType } from "../schemas/types"
+import { FrameHeader } from "./frame-header"
+import { NodeType } from "./types"
 
 const nodeTypes = {
-  [PanelAction.SendMessage]: SendMessageNodeViewer,
-  [PanelAction.AddNotes]: AddNotesNode,
+  [NodeType.SendMessage]: SendMessageNodeViewer,
+  [NodeType.AddNotes]: AddNotesNode,
+  [NodeType.Wait]: WaitNodeViewer,
+  [NodeType.StartFlow]: StartFlowNodeViewer,
 }
 
 interface ReactFlowFrameProps {
@@ -43,13 +47,11 @@ interface ReactFlowFrameProps {
 
 export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
   const { data: flow } = use(promises)
-  const { t } = useTranslate()
 
   if (!flow) {
     return notFound()
   }
 
-  // if flowVersionId is not specified, use draft version
   const targetFlowVersion = flow.flowVersions?.find((v) => v.isDraft)
   if (!targetFlowVersion) {
     return notFound()
@@ -67,7 +69,13 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
 
   const onConnect = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
+    (params: any) =>
+      setEdges((eds) => {
+        return addEdge(
+          params,
+          eds.filter((obj) => obj.sourceHandle !== params.sourceHandle),
+        )
+      }),
     [setEdges],
   )
 
@@ -94,96 +102,104 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
     handleChanges(nodes, edges)
   }, [nodes, edges, handleChanges])
 
-  // const updateTemporaryFlow = useDebouncedCallback(executeDraft, 300)
+  // const { getViewport } = useReactFlow()
+  const getCenterViewport = () => {
+    // Get the current viewport
+    // const { x, y, zoom } = getViewport()
 
-  const onChooseAction = (name: PanelAction) => {
-    let newNode: Node<SendMessageNodeSchema | AddNotesNodeSchema> | undefined
-    if (name === PanelAction.SendMessage) {
-      let labelVersion = 0
-      for (const node of nodes) {
-        if (node.type === PanelAction.SendMessage) {
-          const matched = (node.data.name as string).match(
-            /^Send Message #(\d+)$/,
-          )
-          if (matched) {
-            const version = Number.parseInt(matched[1] ?? "0", 10)
-            if (version > labelVersion) {
-              labelVersion = version
-            }
-          }
-        }
-      }
+    // // Calculate the center of the viewport
+    // const centerX = -x + window.innerWidth / 2 / zoom
+    // const centerY = -y + window.innerHeight / 2 / zoom
 
-      newNode = {
-        id: createId(),
-        type: PanelAction.SendMessage,
-        position: {
-          x: 100,
-          y: 100,
-        },
-        data: {
-          id: createId(),
-          name: `Send Message #${labelVersion + 1}`,
-          messageType: MessageType.Omnichannel,
-          blocks: [],
-        },
+    return { x: 100, y: 200 }
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  const mappingNodeAttributes: Record<NodeType, { defaultFn: any }> = {
+    [NodeType.SendMessage]: {
+      defaultFn: defaultSendMessageNode,
+    },
+    [NodeType.AddNotes]: {
+      defaultFn: defaultAddNotesNode,
+    },
+    [NodeType.Wait]: {
+      defaultFn: waitNodeDefaultValue,
+    },
+    [NodeType.StartFlow]: {
+      defaultFn: startFlowNodeDefaultValue,
+    },
+    [NodeType.Actions]: {
+      defaultFn: undefined,
+    },
+    [NodeType.Condition]: {
+      defaultFn: undefined,
+    },
+    [NodeType.SendMail]: {
+      defaultFn: undefined,
+    },
+    [NodeType.SplitTraffic]: {
+      defaultFn: undefined,
+    },
+    [NodeType.LandingPage]: {
+      defaultFn: undefined,
+    },
+  }
+
+  mappingNodeAttributes[NodeType.SendMessage]
+
+  const onChooseAction = (name: NodeType) => {
+    // calc version
+    let labelVersion = 1
+    for (const node of nodes) {
+      if (node.type === name) {
+        labelVersion++
       }
     }
 
-    if (name === PanelAction.AddNotes) {
-      newNode = {
-        id: createId(),
-        type: PanelAction.AddNotes,
-        position: {
-          x: 100,
-          y: 100,
-        },
-        data: {
-          id: createId(),
-          name: t("flows.addNotes"),
-          message: "",
-        },
-      }
-    }
-
-    if (newNode) {
-      setNodes((nds) => nds.concat(newNode))
-    }
+    const newNode = mappingNodeAttributes[name].defaultFn({
+      labelVersion,
+      position: getCenterViewport(),
+    })
+    setNodes((nds) => nds.concat(newNode))
   }
 
   return (
-    <ReactFlowProvider>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        proOptions={{ hideAttribution: true }}
-        onNodeClick={(_, node: Node) => {
-          setActiveNode(node)
-          setOpenNodeDetailSheet(true)
-        }}
-        onPaneClick={() => {
-          setActiveNode(null)
-          setOpenNodeDetailSheet(false)
-        }}
-      >
-        <MiniMap />
-        <Background />
-        <Panel position="bottom-center">
-          <Controls orientation="horizontal">
-            <AddBlockButton onChooseAction={onChooseAction} />
-          </Controls>
-        </Panel>
-      </ReactFlow>
+    <>
+      <ReactFlowProvider>
+        <FrameHeader />
 
-      <NodeDetailSheet
-        open={openNodeDetailSheet}
-        onOpenChange={setOpenNodeDetailSheet}
-        activeNode={activeNode}
-      />
-    </ReactFlowProvider>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          proOptions={{ hideAttribution: true }}
+          onNodeClick={(_, node: Node) => {
+            setActiveNode(node)
+            setOpenNodeDetailSheet(true)
+          }}
+          onPaneClick={() => {
+            setActiveNode(null)
+            setOpenNodeDetailSheet(false)
+          }}
+        >
+          <MiniMap />
+          <Background />
+          <Panel position="bottom-center">
+            <Controls orientation="horizontal">
+              <AddBlockButton onChooseAction={onChooseAction} />
+            </Controls>
+          </Panel>
+        </ReactFlow>
+
+        <NodeDetailSheet
+          open={openNodeDetailSheet}
+          onOpenChange={setOpenNodeDetailSheet}
+          activeNode={activeNode}
+        />
+      </ReactFlowProvider>
+    </>
   )
 }
