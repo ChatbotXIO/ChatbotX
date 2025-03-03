@@ -4,7 +4,6 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFlowIdIsExists } from "@/features/flows/actions/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import {
@@ -19,6 +18,7 @@ import {
   type CreateBroadcastRequest,
   createBroadcastRequest,
 } from "../schemas/create-broadcast-schema"
+import { ensureFlowIdIsExists } from "@/features/flows/queries"
 export const createBroadcastAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
   .schema(createBroadcastRequest)
@@ -33,7 +33,7 @@ export const createBroadcastAction = chatbotActionClient
       parsedInput: CreateBroadcastRequest
     }) => {
       const { chatbot } = await findChatbotOrFail(ctx.user.id, chatbotId)
-      const flow = await ensureFlowIdIsExists(parsedInput.flowId, chatbotId)
+      const flow = await ensureFlowIdIsExists(chatbotId, parsedInput.flowId)
 
       const data: Prisma.BroadcastUncheckedCreateInput = {
         ...parsedInput,

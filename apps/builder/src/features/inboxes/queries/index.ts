@@ -3,7 +3,7 @@ import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { Inbox, Prisma } from "@ahachat.ai/database"
 import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { ListInboxesRequest } from "../schemas/get-inboxes-schema"
+import type { ListInboxesRequest } from "../schemas/list-inboxes.schema"
 
 export async function listInboxes(
   input: ListInboxesRequest,

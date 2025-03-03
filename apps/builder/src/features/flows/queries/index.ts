@@ -1,6 +1,6 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import type { Prisma } from "@ahachat.ai/database"
+import type { Flow, Prisma } from "@ahachat.ai/database"
 import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 import type {
@@ -9,6 +9,7 @@ import type {
   FlowResource,
   ListFlowsParams,
 } from "../schemas/get-flows-schema"
+import { FlowException } from "../schemas/exception"
 
 export async function getFlows(
   input: ListFlowsParams,
@@ -109,4 +110,22 @@ export const findFlow = async (
       tags: [`chatbots#${input.chatbotId}#flows#${input.id}`],
     },
   )()
+}
+
+export const ensureFlowIdIsExists = async (
+  chatbotId: string,
+  id: string,
+): Promise<Flow> => {
+  const flow = await prisma.flow.findFirst({
+    where: {
+      chatbotId,
+      id,
+    },
+  })
+
+  if (!flow) {
+    throw new FlowException("Flow does not exists.")
+  }
+
+  return flow
 }
