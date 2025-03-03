@@ -1,11 +1,13 @@
 import { auth } from "@/auth"
 import { prisma } from "@ahachat.ai/database"
+import { SdkException } from "@ahachat.ai/sdk"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import {
   DEFAULT_SERVER_ERROR_MESSAGE,
   createSafeActionClient,
 } from "next-safe-action"
 import { BaseException } from "./error"
+import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
@@ -17,7 +19,7 @@ export const actionClient = createSafeActionClient({
       return error.message
     }
 
-    if (error instanceof BaseException) {
+    if (error instanceof BaseException || error instanceof SdkException) {
       return error.message
     }
 
@@ -50,3 +52,22 @@ export const authActionClient = actionClient.use(async ({ next }) => {
 
   return next({ ctx: { user } })
 })
+
+export const chatbotActionClient = authActionClient.use(
+  async ({ bindArgsClientInputs, ctx, next }) => {
+    const { user } = ctx
+
+    const [chatbotId] = bindArgsClientInputs
+    if (!chatbotId) {
+      throw new Error("Chatbot not found")
+    }
+
+    const { chatbots } = await getAllChatbotMembers(user.id)
+    const chatbot = chatbots.find((c) => c.id === chatbotId)
+    if (!chatbot) {
+      throw new Error("Chatbot not found")
+    }
+
+    return next({ ctx: { chatbot } })
+  },
+)

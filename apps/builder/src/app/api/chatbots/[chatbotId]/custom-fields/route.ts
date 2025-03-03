@@ -13,7 +13,7 @@ export async function GET(
   const allCustomFields = await listFields({
     ...search,
     chatbotId: (await params).chatbotId,
-    fieldType: FieldType.CustomField,
+    fieldType: FieldType.CUSTOM_FIELD,
   })
 
   return NextResponse.json(allCustomFields)

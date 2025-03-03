@@ -1,6 +1,5 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
-import { CreateBroadcastDialog } from "@/features/broadcasts/create-broadcast-dialog"
 import { listBroadcasts } from "@/features/broadcasts/queries"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schemas/get-broadcasts-schema"
 import type { SearchParams } from "nuqs/server"
@@ -23,11 +22,17 @@ export default async function BroadcastsPage(props: {
 
   return (
     <div>
-      <div className="flex w-full justify-end mb-4">
+      {/* <div className="flex w-full justify-end mb-4">
         <div className="flex w-full justify-end mb-4">
+          <Button size="sm" asChild>
+            <Link href="/create">
+              <PlusIcon />
+              <T keyName="broadcasts.addBtn" />
+            </Link>
+          </Button>
           <CreateBroadcastDialog chatbotId={params.chatbotId} />
         </div>
-      </div>
+      </div> */}
       <Suspense
         fallback={
           <DataTableSkeleton

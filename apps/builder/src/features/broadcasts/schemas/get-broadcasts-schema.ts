@@ -11,5 +11,8 @@ export type GetBroadcastsSchema = Awaited<
 > & { chatbotId: string }
 
 export type BroadcastResource = Broadcast & {
-  flow: Flow
+  flow?: Flow
+  _count?: {
+    contacts?: number
+  }
 }

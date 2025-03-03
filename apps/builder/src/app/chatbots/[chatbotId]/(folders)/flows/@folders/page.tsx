@@ -15,7 +15,7 @@ export default async function FoldersPage(props: {
   const searchParams = await props.searchParams
   const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
 
-  const folderType = FolderType.Flow
+  const folderType = FolderType.FLOW
 
   const promises = Promise.all([
     folderId

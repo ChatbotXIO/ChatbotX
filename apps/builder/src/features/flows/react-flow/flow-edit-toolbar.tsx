@@ -52,6 +52,7 @@ export function FlowEditToolbar({ flowId }: { flowId: string }) {
       edges: getEdges(),
     })
     if (!success) {
+      console.error(error)
       toast.error("Some configurations are incomplete")
     } else {
       executePublish()

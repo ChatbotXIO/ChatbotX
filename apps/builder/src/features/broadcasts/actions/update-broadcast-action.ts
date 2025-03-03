@@ -1,35 +1,32 @@
 "use server"
 
-import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
-import { type IdBindParams, idBindParams } from "@/lib/common-types"
-import { authActionClient } from "@/lib/safe-action"
-import { type User, prisma } from "@ahachat.ai/database"
+import {
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
   type UpdateBroadcastSchema,
   updateBroadcastSchema,
 } from "../schemas/update-broadcast-schema"
 
-export const updateBroadcastAction = authActionClient
+export const updateBroadcastAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .schema(updateBroadcastSchema)
-  .bindArgsSchemas(idBindParams.items)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
-      bindArgsParsedInputs: [id],
     }: {
-      ctx: { user: User }
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateBroadcastSchema
-      bindArgsParsedInputs: IdBindParams
     }) => {
-      const { chatbotIds } = await getAllChatbotMembers(ctx.user.id)
       const broadcast = await prisma.broadcast.findFirstOrThrow({
         where: {
           id,
-          chatbotId: {
-            in: chatbotIds,
-          },
+          chatbotId,
         },
       })
 
@@ -40,6 +37,6 @@ export const updateBroadcastAction = authActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`${ctx.user.id}#broadcasts`)
+      revalidateTag(`chatbot:${chatbotId}#broadcasts`)
     },
   )

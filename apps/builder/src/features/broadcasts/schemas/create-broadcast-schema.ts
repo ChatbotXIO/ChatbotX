@@ -1,29 +1,29 @@
-import { filterContactSchema } from "@/features/contacts/filter/schema"
-import { BroadcastType } from "@ahachat.ai/database"
+import {
+  BroadcastSchedulesType,
+  BroadcastSubaction,
+  InboxType,
+} from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
-export const createBroadcastSchema = z.object({
-  broadcastType: z.nativeEnum(BroadcastType),
+export const createBroadcastRequest = z.object({
+  inboxType: z.nativeEnum(InboxType).nullable(),
   flowId: z.string().cuid2(),
+  subaction: z.nativeEnum(BroadcastSubaction),
+  schedulesType: z.nativeEnum(BroadcastSchedulesType),
   schedulesAt: z
     .string()
-    .datetime()
     .refine(
       (value) => {
-        console.log(new Date(value), new Date())
-        return new Date(value) > new Date()
+        const date = new Date(value)
+        const currentDate = new Date()
+
+        return !Number.isNaN(date.getTime()) && date > currentDate
       },
       {
-        message: "Datetime must be after now.",
+        message: "Schedules must be after now.",
       },
     )
-    .nullable()
-    .optional(),
-  conditions: filterContactSchema,
+    .nullable(),
+  conditions: z.any().nullable(),
 })
-export type CreateBroadcastSchema = z.infer<typeof createBroadcastSchema>
-
-export const createBroadcastBindSchema: [chatbotId: z.ZodString] = [
-  z.string().cuid2(),
-]
-export type CreateBroadcastBindSchema = [chatbotId: string]
+export type CreateBroadcastRequest = z.infer<typeof createBroadcastRequest>

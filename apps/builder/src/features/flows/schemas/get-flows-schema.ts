@@ -20,6 +20,7 @@ export type ListFlowsParams = Awaited<
   ReturnType<typeof listFlowsSearchParams.parse>
 > & {
   chatbotId: string
+  folderId?: string | null
 }
 
 export type FindFlowParams = {

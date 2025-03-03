@@ -10,13 +10,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
-import {
-  type EditFolderSchema,
-  editFolderSchema,
-} from "@/features/folders/schemas/edit-folder-schema"
-import type { Folder } from "@ahachat.ai/database"
+import { editFolderSchema } from "@/features/folders/schemas/edit-folder-schema"
+import type { Folder } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"

@@ -28,7 +28,7 @@ export const createFlowAction = authActionClient
         await ensureFolderIdIsExists(
           parsedInput.folderId,
           parsedInput.chatbotId,
-          FolderType.Flow,
+          FolderType.FLOW,
         )
       }
 

@@ -20,50 +20,49 @@ import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { MessageType, NodeType, baseNodeSchema } from "../../types"
 
-export const sendMessageNodeDataSchema = z.object({
-  name: z.string().min(1).max(255).trim(),
-  messageType: z.nativeEnum(MessageType),
-  blocks: z.array(
-    z.union([
-      sendTextBlockSchema,
-      sendImageBlockSchema,
-      sendCardBlockSchema,
-      sendVideoBlockSchema,
-      sendAudioBlockSchema,
-      sendCarouselBlockSchema,
-      openAIGenerateTextSchema,
-      openAIGenerateTextAgentSchema,
-      openAIGenerateTextAdvancedSchema,
-      openAIGenerateTextAssistantSchema,
-      openAIGenerateImageSchema,
-      openAIAnalyzeImageSchema,
-      openAISpeechToTextSchema,
-      openAITextToSpeechSchema,
-      openAIDeleteMessageHistorySchema,
-      markEmailVerifiedBlockSchema,
-      optInEmailBlockSchema,
-      optOutEmailBlockSchema,
-    ]),
-  ),
-})
-
 export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.SendMessage),
-  data: sendMessageNodeDataSchema,
+  data: z.object({
+    name: z.string().min(1).max(255).trim(),
+    messageType: z.nativeEnum(MessageType),
+    blocks: z.array(
+      z.union([
+        sendTextBlockSchema,
+        sendImageBlockSchema,
+        sendCardBlockSchema,
+        sendVideoBlockSchema,
+        sendAudioBlockSchema,
+        sendCarouselBlockSchema,
+        openAIGenerateTextSchema,
+        openAIGenerateTextAgentSchema,
+        openAIGenerateTextAdvancedSchema,
+        openAIGenerateTextAssistantSchema,
+        openAIGenerateImageSchema,
+        openAIAnalyzeImageSchema,
+        openAISpeechToTextSchema,
+        openAITextToSpeechSchema,
+        openAIDeleteMessageHistorySchema,
+        markEmailVerifiedBlockSchema,
+        optInEmailBlockSchema,
+        optOutEmailBlockSchema,
+      ]),
+    ),
+  }),
 })
 
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
 
-export const defaultSendMessageNode = (
-  labelVersion: number,
-): SendMessageNodeSchema => {
+export const defaultSendMessageNode = ({
+  labelVersion,
+  position = { x: 100, y: 100 },
+}: {
+  labelVersion: number
+  position?: { x: number; y: number }
+}): SendMessageNodeSchema => {
   return {
     id: createId(),
     type: NodeType.SendMessage,
-    position: {
-      x: 100,
-      y: 100,
-    },
+    position,
     data: {
       name: `Send Message #${labelVersion}`,
       messageType: MessageType.Omnichannel,

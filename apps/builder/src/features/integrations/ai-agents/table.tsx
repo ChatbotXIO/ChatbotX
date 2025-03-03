@@ -8,11 +8,11 @@ import type {
 } from "@/components/data-table/types"
 import { duplicateAIAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
 import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
-import type { getAIAgents } from "@/features/integrations/ai-agents/queries/get.query"
+import type { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
 import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
 import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/browser"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
@@ -30,7 +30,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AIAgent> | null>(null)
 
-  const { execute, result } = useAction(
+  const { execute } = useAction(
     duplicateAIAgentAction.bind(
       null,
       chatbotId,

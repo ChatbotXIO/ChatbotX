@@ -61,7 +61,7 @@ export async function getTags(
         const pageCount = Math.ceil(total / input.perPage)
 
         return { data, pageCount }
-      } catch (err) {
+      } catch (_err) {
         return { data: [], pageCount: 0 }
       }
     },

@@ -1,4 +1,5 @@
 import { FormInput } from "@/components/form-input"
+import { cn } from "@/components/lib/utils"
 import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import { Form, TriggerFormInitially } from "@/components/ui/form"
@@ -42,7 +43,6 @@ import { SendImageBlockEditor } from "@/features/flows/react-flow/blocks/send-im
 import { sendImageBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-image/schema"
 import { SendVideoBlockEditor } from "@/features/flows/react-flow/blocks/send-video/editor"
 import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-video/schema"
-import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
 import { type Node, useReactFlow } from "@xyflow/react"
@@ -56,7 +56,7 @@ import { SendTextBlockEditor } from "../../blocks/send-text/editor"
 import { sendTextBlockDefaultValue } from "../../blocks/send-text/schema"
 import { messageTypeLabels } from "../../types"
 import { getAllIds } from "../../utils"
-import { type SendMessageNodeSchema, sendMessageNodeDataSchema } from "./schema"
+import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
 
 const maps: Record<
@@ -144,7 +144,7 @@ export default function SendMessageNodeEditor({
   )
 
   const form = useForm<SendMessageNodeSchema["data"]>({
-    resolver: zodResolver(sendMessageNodeDataSchema),
+    resolver: zodResolver(sendMessageNodeSchema.shape.data),
     defaultValues: activeNode.data,
     mode: "onBlur",
   })

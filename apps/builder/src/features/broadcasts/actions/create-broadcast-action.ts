@@ -1,52 +1,62 @@
 "use server"
 
-import { parseQueryFilterContact } from "@/features/contacts/actions/utils"
+import {
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { ensureFlowIdIsExists } from "@/features/flows/actions/utils"
-import { authActionClient } from "@/lib/safe-action"
+import { chatbotActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { JOB_NAMES } from "@/scheduler/types"
-import { flowQueue } from "@/workers/flow.worker"
-import { BroadcastStatus, type User, prisma } from "@ahachat.ai/database"
+import {
+  BroadcastSchedulesType,
+  BroadcastStatus,
+  prisma,
+  type Prisma,
+  type User,
+} from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
-  type CreateBroadcastBindSchema,
-  type CreateBroadcastSchema,
-  createBroadcastBindSchema,
-  createBroadcastSchema,
+  type CreateBroadcastRequest,
+  createBroadcastRequest,
 } from "../schemas/create-broadcast-schema"
-
-export const createBroadcastAction = authActionClient
-  .schema(createBroadcastSchema)
-  .bindArgsSchemas(createBroadcastBindSchema)
+export const createBroadcastAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(createBroadcastRequest)
   .action(
     async ({
       ctx,
-      parsedInput,
       bindArgsParsedInputs: [chatbotId],
+      parsedInput,
     }: {
       ctx: { user: User }
-      parsedInput: CreateBroadcastSchema
-      bindArgsParsedInputs: CreateBroadcastBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: CreateBroadcastRequest
     }) => {
       const { chatbot } = await findChatbotOrFail(ctx.user.id, chatbotId)
       const flow = await ensureFlowIdIsExists(parsedInput.flowId, chatbotId)
-      const data = {
+
+      const data: Prisma.BroadcastUncheckedCreateInput = {
         ...parsedInput,
         name: flow.name,
         chatbotId: chatbot.id,
-        status: BroadcastStatus.Scheduled as BroadcastStatus,
+        status: BroadcastStatus.SCHEDULED,
+        schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
       }
-      if (!parsedInput.schedulesAt) {
-        data.schedulesAt = new Date().toISOString()
-        data.status = BroadcastStatus.Sent
+      if (
+        data.schedulesType === BroadcastSchedulesType.NOW ||
+        data.schedulesAt <= new Date()
+      ) {
+        data.status = BroadcastStatus.SENT
       }
       const contacts = await prisma.contact.findMany({
-        where: {
-          chatbotId: chatbotId,
-          ...parseQueryFilterContact(parsedInput.conditions),
+        select: {
+          id: true,
         },
-        // todo Add query via inboxType and message on 24h
+        where: {
+          chatbotId: chatbot.id,
+        },
       })
+
       await prisma.broadcast.create({
         data: {
           ...data,
@@ -57,19 +67,9 @@ export const createBroadcastAction = authActionClient
           },
         },
       })
-      if (!parsedInput.schedulesAt) {
-        for (const contact of contacts) {
-          // flowQueue.add(JOB_NAMES.StartFlow, {
-          //   flowId: flow.id,
-          //   contactId: contact.id,
-          // })
-        }
-      }
 
-      revalidateTag(`${ctx.user.id}#broadcasts`)
+      // TODO: add logic to send broadcast
 
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbot:${chatbotId}#broadcasts`)
     },
   )

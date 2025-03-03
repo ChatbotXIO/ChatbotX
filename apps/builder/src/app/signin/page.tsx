@@ -1,9 +1,7 @@
 import { SignInForm } from "@/features/auth/signin-form"
 import Image from "next/image"
 
-export default async function SignInPage(props: {
-  searchParams: Promise<{ callbackUrl: string | undefined }>
-}) {
+export default async function SignInPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">

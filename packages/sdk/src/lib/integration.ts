@@ -1,70 +1,66 @@
-import { z } from "zod"
-import type { IntegrationActions } from "./action"
-import type { AuthSchema } from "./auth"
-import type { IntegrationChannels } from "./channel"
+import type { BaseAuthValue, Oauth2AuthValue } from "./auth"
+import type { BaseConfig, HandleRequestProps, Handler } from "./shared"
 
-const integrationPropsSchema = z.object({
-  name: z.string().trim().min(1),
-})
-
-type Handler<I, O> = (props: I) => Promise<O>
-
-type IntegrationProps<AuthInput> = {
+export type IntegrationDefinition<
+  IConfig extends BaseConfig,
+  IAuth extends BaseAuthValue,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  IActions extends Record<string, Handler<any, any>>,
+> = {
   name: string
-  actions?: IntegrationActions
-  channels?: IntegrationChannels
-  authorize?: Handler<AuthInput & { code: string }, AuthSchema>
-  connect?: Handler<AuthInput, string>
-  disconnect?: Handler<AuthInput, boolean>
+  actions?: IActions
+  handleRequest?: Handler<
+    HandleRequestProps<IConfig>,
+    Oauth2AuthValue | string | number
+  >
+  disconnect?: Handler<IAuth, void>
 }
 
-export class Integration<AuthInput> {
-  private readonly _name: string
-  private readonly _actions: IntegrationActions
-  private readonly _channels: IntegrationChannels
-  private readonly _authorize?: Handler<
-    AuthInput & { code: string },
-    AuthSchema
-  >
-  private readonly _connect?: Handler<AuthInput, string>
-  private readonly _disconnect?: Handler<AuthInput, boolean>
-
-  constructor(props: IntegrationProps<AuthInput>) {
-    this.validateProps(props)
-
-    this._name = props.name
-    this._actions = props.actions || {}
-    this._channels = props.channels || {}
-    this._authorize = props.authorize
-    this._connect = props.connect
-    this._disconnect = props.disconnect
+export class Integration<
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  T extends IntegrationDefinition<any, any, any>,
+> {
+  constructor(private readonly props: T) {
+    // this.validateProps(props);
   }
 
-  private validateProps(props: IntegrationProps<AuthInput>) {
-    integrationPropsSchema.parse(props)
-  }
+  // private validateProps(props: IntegrationProps<AI, AO, HI>) {
+  //   integrationPropsSchema.parse(props);
+  // }
 
   get name(): string {
-    return this._name
+    return this.props.name
   }
 
-  get actions(): IntegrationActions {
-    return this._actions
+  get actions(): T["actions"] {
+    return this.props.actions || {}
   }
 
-  get channels(): IntegrationChannels {
-    return this._channels
+  // get authorize(): Handler<AI, AO> | undefined {
+  //   return this.props.authorize;
+  // }
+
+  // get connect(): Handler<AI, string> | undefined {
+  //   return this.props.connect;
+  // }
+
+  get disconnect(): T["disconnect"] {
+    return this.props.disconnect
   }
 
-  get authorize() {
-    return this._authorize
+  get handleRequest(): T["handleRequest"] {
+    return this.props.handleRequest
   }
 
-  get connect() {
-    return this._connect
-  }
-
-  get disconnect() {
-    return this._disconnect
+  async executeAction<ActionName extends keyof T["actions"]>(
+    actionName: ActionName,
+    props: Parameters<Exclude<T["actions"][ActionName], undefined>>[0],
+  ): Promise<void> {
+    const action = this.actions?.[actionName]
+    if (action) {
+      await action(props)
+    } else {
+      throw new Error(`Action "${String(actionName)}" not found.`)
+    }
   }
 }

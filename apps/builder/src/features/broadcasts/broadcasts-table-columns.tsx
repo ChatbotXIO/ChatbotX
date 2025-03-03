@@ -45,7 +45,7 @@ export function getColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Channel" />
       ),
-      cell: ({ row }) => <div>{row.original.broadcastType}</div>,
+      cell: ({ row }) => <div>{row.original.inboxType ?? "Omnichannel"}</div>,
       size: 300,
       enableSorting: false,
       enableHiding: false,
@@ -124,9 +124,7 @@ export function getColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Date" />
       ),
-      cell: ({ row }) => (
-        <div>{formatDate(row.original.schedulesAt, "yyyy-MM-dd hh:mm")}</div>
-      ),
+      cell: ({ row }) => <div>{formatDate(row.original.schedulesAt)}</div>,
       enableSorting: false,
       enableHiding: false,
     },

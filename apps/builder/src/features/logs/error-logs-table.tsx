@@ -9,7 +9,7 @@ import type {
   DataTableRowAction,
 } from "@/components/data-table/types"
 import { useDataTable } from "@/hooks/use-data-table"
-import { type Log, LogType } from "@ahachat.ai/database"
+import { type Log, LogType } from "@ahachat.ai/database/browser"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 import { getColumns } from "./error-logs-table-columns"
 import { LogsTableToolbarActions } from "./logs-table-toolbar-actions"

@@ -1,16 +1,20 @@
-import type { FilterContactSchema } from "@/features/contacts/filter/schema"
-import { countContacts } from "@/features/contacts/queries"
+import { countContacts } from "@/features/contacts/actions/list-contacts.action"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   {
     params,
-  }: { params: Promise<{ chatbotId: string; filter: FilterContactSchema }> },
+  }: {
+    params: Promise<{ chatbotId: string }>
+  },
 ) {
+  const { chatbotId } = await params
+  const searchParams = request.nextUrl.searchParams
+
   const data = await countContacts({
-    chatbotId: (await params).chatbotId,
-    filter: (await params).filter,
+    chatbotId,
+    ...searchParams,
   })
 
   return NextResponse.json(data)

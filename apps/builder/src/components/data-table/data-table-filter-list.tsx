@@ -26,6 +26,7 @@ import {
 } from "@/components/data-table/lib"
 import { formatDate } from "@/components/data-table/lib/utils"
 import { getFiltersStateParser } from "@/components/data-table/parsers"
+import { cn } from "@/components/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -66,7 +67,6 @@ import {
   SortableItem,
 } from "@/components/ui/sortable"
 import { dataTableConfig } from "@/config/data-table"
-import { cn } from "@/lib/utils"
 import { useDebouncedCallback } from "use-debounce"
 
 interface DataTableFilterListProps<TData> {

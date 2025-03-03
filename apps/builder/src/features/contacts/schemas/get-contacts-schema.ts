@@ -1,21 +1,21 @@
-import type { FilterContactSchema } from "@/features/contacts/filter/schema"
 import {
   createSearchParamsCache,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
+import { z } from "zod"
 
-export const getContactsSearchParamsCache = createSearchParamsCache({
+export const listContactsNuqs = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   keyword: parseAsString.withDefault(""),
 })
 
-export type GetContactsSchema = Awaited<
-  ReturnType<typeof getContactsSearchParamsCache.parse>
-> & { chatbotId: string }
+export const listContactsRequest = z.object({
+  chatbotId: z.string().cuid2(),
+  page: z.number().int().min(1).default(1).optional(),
+  perPage: z.number().int().min(1).default(10).optional(),
+  keyword: z.string().optional(),
+})
 
-export type CountContactsSchema = {
-  chatbotId: string
-  filter: FilterContactSchema
-}
+export type ListContactsRequest = z.infer<typeof listContactsRequest>

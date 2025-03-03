@@ -1,12 +1,12 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
 import type { Inbox, Prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { GetInboxesSchema } from "../schemas/get-inboxes-schema"
+import type { ListInboxesRequest } from "../schemas/get-inboxes-schema"
 
 export async function listInboxes(
-  input: GetInboxesSchema,
+  input: ListInboxesRequest,
 ): Promise<{ data: Inbox[]; pageCount: number }> {
   const userId = await getCurrentUserId()
 
@@ -19,26 +19,28 @@ export async function listInboxes(
           chatbotId: input.chatbotId,
         }
 
+        const take = input.perPage || 10
+        const skip = (input.page ?? 1 - 1) * take
         const [data, total] = await prisma.$transaction([
           prisma.inbox.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
+            skip,
+            take,
             where,
           }),
           prisma.inbox.count({ where }),
         ])
 
-        const pageCount = Math.ceil(total / input.perPage)
+        const pageCount = Math.ceil(total / take)
 
         return { data, pageCount }
-      } catch (err) {
+      } catch (_err) {
         return { data: [], pageCount: 0 }
       }
     },
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#inboxs`],
+      tags: [`chatbot:${input.chatbotId}#inboxs`],
     },
   )()
 }

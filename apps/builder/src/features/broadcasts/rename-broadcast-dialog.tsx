@@ -40,7 +40,11 @@ export function RenameBroadcastDialog({
     handleSubmitWithAction,
     form: { setValue },
   } = useHookFormAction(
-    updateBroadcastAction.bind(null, broadcast?.id ?? ""),
+    updateBroadcastAction.bind(
+      null,
+      broadcast?.chatbotId ?? "",
+      broadcast?.id ?? "",
+    ),
     zodResolver(updateBroadcastSchema),
     {
       actionProps: {
