@@ -5,7 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["nativeDistinct"]
 }
 
 datasource db {
@@ -13,23 +14,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Workspace {
+  id     String @id @default(cuid(2))
+  name   String
+  domain String @unique
+
+  users    User[]
+  chatbots Chatbot[]
+}
+
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(cuid(2))
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   name          String?
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  workspaceId   String
 
-  chatbotMembers          ChatbotMember[]
-  accounts                Account[]
-  sessions                Session[]
-  teamMembers             TeamMember[]
-  activityLogs            ActivityLog[]
-  assignedContacts        Contact[]                 @relation("AssignedUser")
-  logs                    Log[]                     @relation("ExecutorUser")
-  ConversationParticipant ConversationParticipant[]
+  accounts                 Account[]
+  activityLogs             ActivityLog[]
+  assignedContacts         Contact[]                 @relation("AssignedUser")
+  chatbotMembers           ChatbotMember[]
+  conversationParticipants ConversationParticipant[]
+  logs                     Log[]                     @relation("ExecutorUser")
+  sessions                 Session[]
+  inboxTeamMembers         InboxTeamMember[]
+  workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
 }
 
 model Account {
@@ -72,7 +84,7 @@ model VerificationToken {
 }
 
 model Chatbot {
-  id              String      @id @default(cuid())
+  id              String      @id @default(cuid(2))
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   name            String
@@ -84,12 +96,15 @@ model Chatbot {
   developmentMode Boolean     @default(false)
   logo            String?
   plan            ChatbotPlan
+  workspaceId     String
 
   activityLogs             ActivityLog[]
   aiAgents                 AIAgent[]
   aiAssistants             AIAssistant[]
   aiTriggers               AITrigger[]
   attachments              Attachment[]
+  broadcasts               Broadcast[]
+  channelWebWidgets        ChannelWebWidget[]
   chatbotMembers           ChatbotMember[]
   contacts                 Contact[]
   conversationParticipants ConversationParticipant[]
@@ -98,21 +113,24 @@ model Chatbot {
   flows                    Flow[]
   flowVersions             FlowVersion[]
   folders                  Folder[]
-  googleSheets             IntegrationGoogleSheets[]
   inboxes                  Inbox[]
+  inboxTeamMembers         InboxTeamMember[]
+  inboxTeams               InboxTeam[]
+  integrationChatWidgets   IntegrationChatWidget[]
+  integrationGoogleSheets  IntegrationGoogleSheets[]
+  integrationOpenAIs       IntegrationOpenAI[]
   integrations             Integration[]
+  integrationWhatsapps     IntegrationWhatsapp[]
   logs                     Log[]
   messages                 Message[]
-  openAIs                  IntegrationOpenAI[]
   spreadsheets             Spreadsheet[]
   tags                     Tag[]
-  teamMembers              TeamMember[]
-  teams                    Team[]
-  whatsapps                IntegrationWhatsapp[]
+  workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
+  automatedResponses       AutomatedResponse[]
 }
 
 model ChatbotMember {
-  id                         String            @id @default(cuid())
+  id                         String            @id @default(cuid(2))
   createdAt                  DateTime          @default(now())
   updatedAt                  DateTime          @updatedAt
   chatbotId                  String
@@ -131,34 +149,34 @@ model ChatbotMember {
   chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
-model Team {
-  id        String   @id @default(cuid())
+model InboxTeam {
+  id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   chatbotId String
   name      String
 
-  chatbot          Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  teamMembers      TeamMember[]
-  assignedContacts Contact[]    @relation("AssignedTeam")
+  chatbot           Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  inxboxTeamMembers InboxTeamMember[]
+  assignedContacts  Contact[]         @relation("AssignedTeam")
 }
 
-model TeamMember {
-  id        String @id @default(cuid())
-  chatbotId String
-  teamId    String
-  userId    String
+model InboxTeamMember {
+  id          String @id @default(cuid(2))
+  chatbotId   String
+  inboxTeamId String
+  userId      String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team    Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inboxTeam InboxTeam @relation(fields: [inboxTeamId], references: [id], onDelete: Cascade)
+  chatbot   Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
 model ActivityLog {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   chatbotId String
@@ -171,7 +189,7 @@ model ActivityLog {
 }
 
 model Log {
-  id           String        @id @default(cuid())
+  id           String        @id @default(cuid(2))
   createdAt    DateTime      @default(now())
   chatbotId    String
   logType      LogType
@@ -197,7 +215,7 @@ enum ExecutorType {
 }
 
 model Contact {
-  id           String        @id @default(cuid())
+  id           String        @id @default(cuid(2))
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   avatar       String?
@@ -213,18 +231,19 @@ model Contact {
   lastSeenAt   DateTime?
   sourceId     String?
 
-  chatbot      Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  assignedUser User?         @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
-  assignedTeam Team?         @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
-  logs         Log[]         @relation("ExecutorContact")
-  tags         Tag[]
+  assignedTeam InboxTeam?             @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
+  assignedUser User?                  @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
+  broadcasts   ContactsOnBroadcasts[]
+  chatbot      Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   conversation Conversation?
+  logs         Log[]                  @relation("ExecutorContact")
+  tags         Tag[]
 
   @@unique([chatbotId, sourceId])
 }
 
 model Folder {
-  id         String     @id @default(cuid())
+  id         String     @id @default(cuid(2))
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   name       String
@@ -246,7 +265,7 @@ model Folder {
 }
 
 model Tag {
-  id              String   @id @default(cuid())
+  id              String   @id @default(cuid(2))
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   name            String
@@ -259,6 +278,43 @@ model Tag {
   contacts Contact[]
 
   @@index([folderId])
+}
+
+model ContactInbox {
+  contactId String
+  inboxId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  sourceId  String // Id message of messenger or whatsapp, ...
+
+  @@id([contactId, inboxId])
+}
+
+model WebWidgetTemplate {
+  id   String @id @default(cuid(2))
+  name String
+
+  channelWebWidgets ChannelWebWidget[]
+}
+
+model ChannelWebWidget {
+  id                  String   @id @default(cuid(2))
+  chatbotId           String
+  authorizedDomains   String[]
+  webWidgetTemplateId String
+  brandColor          String   @default("#007bff")
+  showHeader          Boolean  @default(true)
+  showPersonalLogo    Boolean  @default(false)
+  showMessageInput    Boolean  @default(true)
+  customizeStyles     String?
+
+  // welcomeFlow Flow? @relation(fields: [welcomeFlowId], references: [id])
+  chatbot  Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  template WebWidgetTemplate @relation(fields: [webWidgetTemplateId], references: [id])
+
+  @@index([chatbotId])
+  @@index([webWidgetTemplateId])
 }
 
 model Field {
@@ -285,15 +341,16 @@ model Inbox {
   chatbotId String
   inboxType InboxType
 
-  integrationWhatsapp IntegrationWhatsapp?
-  messages            Message[]
-  chatbot             Chatbot              @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  integrationWhatsapp   IntegrationWhatsapp?
+  integrationChatWidget IntegrationChatWidget?
+  messages              Message[]
+  chatbot               Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
 }
 
 model Conversation {
-  id                     String    @id @default(cuid())
+  id                     String    @id @default(cuid(2))
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
   chatbotId              String
@@ -305,6 +362,8 @@ model Conversation {
   blockedAt              DateTime?
   sourceId               String?
   conversationAttributes Json?
+  contactLastSeenAt      DateTime?
+  agentLastSeenAt        DateTime?
 
   chatbot                  Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   contact                  Contact                   @relation(fields: [contactId], references: [id], onDelete: Cascade)
@@ -332,7 +391,7 @@ model ConversationParticipant {
 }
 
 model Message {
-  id                String      @id @default(cuid())
+  id                String      @id @default(cuid(2))
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   conversationId    String
@@ -359,7 +418,7 @@ model Message {
 }
 
 model Attachment {
-  id             String   @id @default(cuid())
+  id             String   @id @default(cuid(2))
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   chatbotId      String
@@ -489,6 +548,19 @@ model IntegrationWhatsapp {
   inbox   Inbox   @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
+model IntegrationChatWidget {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatbotId String
+  inboxId   String   @unique
+  auth      Json
+  name      String
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  inbox   Inbox   @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
 model Spreadsheet {
   id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
@@ -501,7 +573,7 @@ model Spreadsheet {
 }
 
 model Flow {
-  id               String   @id @default(cuid())
+  id               String   @id @default(cuid(2))
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   chatbotId        String
@@ -515,10 +587,11 @@ model Flow {
   chatbot      Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   folder       Folder?       @relation(fields: [folderId], references: [id])
   flowVersions FlowVersion[]
+  broadcasts   Broadcast[]
 }
 
 model FlowVersion {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   chatbotId String
@@ -531,25 +604,66 @@ model FlowVersion {
   flow    Flow    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 }
 
+model Broadcast {
+  id            String                 @id @default(cuid(2))
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  name          String
+  chatbotId     String
+  flowId        String
+  inboxType     InboxType?
+  subaction     BroadcastSubaction?
+  status        BroadcastStatus
+  schedulesType BroadcastSchedulesType
+  schedulesAt   DateTime
+  conditions    Json?
+
+  chatbot  Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  flow     Flow                   @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  contacts ContactsOnBroadcasts[]
+
+  @@index([chatbotId])
+  @@index([flowId])
+  @@index([schedulesAt])
+}
+
+model ContactsOnBroadcasts {
+  broadcastId String
+  contactId   String
+  sent        Boolean @default(false)
+  delivered   Boolean @default(false)
+  seen        Boolean @default(false)
+  clicked     Boolean @default(false)
+  failed      Boolean @default(false)
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  contact   Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@id([broadcastId, contactId])
+}
+
 model AutomatedResponse {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  chatbotId String
-  keyword   String
-  flowId    String?
-  folderId  String?
-  replies   Json
-  status Boolean
+  id           String   @id @default(cuid(2))
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  chatbotId    String
+  userMessages String[]
+  folderId     String?
+  replies      Json[]
+  status       Boolean
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
 }
 
 enum CustomFieldType {
-  SHORT_TEXT
+  SHORTTEXT
   NUMBER
   DATE
   DATETIME
   BOOLEAN
-  LONG_TEXT
+  LONGTEXT
 }
 
 enum FieldType {
@@ -587,8 +701,8 @@ enum AssignedType {
 }
 
 enum IntegrationType {
-  CHATWIDGET
-  GOOGLESHEETS
+  CHAT_WIDGET
+  GOOGLE_SHEETS
   INSTAGRAM
   MESSENGER
   OPENAI
@@ -596,7 +710,7 @@ enum IntegrationType {
 }
 
 enum InboxType {
-  CHATWIDGET
+  CHAT_WIDGET
   INSTAGRAM
   MESSENGER
   WHATSAPP
@@ -624,4 +738,27 @@ enum FileType {
   AUDIO
   VIDEO
   FILE
+}
+
+enum AttachmentType {
+  IMAGE
+  AUDIO
+  VIDEO
+  FILE
+}
+
+enum BroadcastStatus {
+  SCHEDULED
+  SENT
+}
+
+enum BroadcastSchedulesType {
+  NOW
+  FUTURE
+}
+
+enum BroadcastSubaction {
+  TEMPLATE_MESSAGE
+  RECENT_CONTACTS
+  ALL_CONTACTS
 }

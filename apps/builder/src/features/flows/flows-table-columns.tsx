@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import type { Flow } from "@ahachat.ai/database"
+import type { Flow } from "@ahachat.ai/database/browser"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"

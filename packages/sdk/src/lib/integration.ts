@@ -1,44 +1,24 @@
-import type { BaseAuthValue } from "./auth"
-import type { BaseConfig, Context, HandleRequestProps, Handler } from "./shared"
-
-export type IntegrationActionPropsSchema<AO extends BaseAuthValue> = {
-  ctx: Context<AO>
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  props: any
-}
-
-export type IntegrationActions<AO extends BaseAuthValue> = Record<
-  string,
-  Handler<IntegrationActionPropsSchema<AO>, unknown>
->
-
-export type IntegrationHandlerProps<AO extends BaseAuthValue> = {
-  ctx: Context<AO>
-  req: Request
-  queue: {
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    add: (name: string, data: any, opts?: any) => Promise<any>
-  }
-}
+import type { BaseAuthValue, Oauth2AuthValue } from "./auth"
+import type { BaseConfig, HandleRequestProps, Handler } from "./shared"
 
 export type IntegrationDefinition<
-  IAuth extends BaseAuthValue,
   IConfig extends BaseConfig,
+  IAuth extends BaseAuthValue,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  IActions extends Record<string, Handler<any, any>>,
 > = {
   name: string
-  actions?: {
-    [key: string]: (props: {
-      ctx: Context<IAuth>
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    }) => Promise<any>
-  }
-  handleRequest?: Handler<HandleRequestProps<IConfig>, string | number>
+  actions?: IActions
+  handleRequest?: Handler<
+    HandleRequestProps<IConfig>,
+    Oauth2AuthValue | string | number
+  >
+  disconnect?: Handler<IAuth, void>
 }
 
 export class Integration<
-  IAuth extends BaseAuthValue,
-  IConfig extends BaseConfig,
-  T extends IntegrationDefinition<IAuth, IConfig>,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  T extends IntegrationDefinition<any, any, any>,
 > {
   constructor(private readonly props: T) {
     // this.validateProps(props);
@@ -64,11 +44,23 @@ export class Integration<
   //   return this.props.connect;
   // }
 
-  // get disconnect(): Handler<AO, boolean> | undefined {
-  //   return this.props.disconnect;
-  // }
+  get disconnect(): T["disconnect"] {
+    return this.props.disconnect
+  }
 
   get handleRequest(): T["handleRequest"] {
     return this.props.handleRequest
+  }
+
+  async executeAction<ActionName extends keyof T["actions"]>(
+    actionName: ActionName,
+    props: Parameters<Exclude<T["actions"][ActionName], undefined>>[0],
+  ): Promise<void> {
+    const action = this.actions?.[actionName]
+    if (action) {
+      await action(props)
+    } else {
+      throw new Error(`Action "${String(actionName)}" not found.`)
+    }
   }
 }

@@ -2,12 +2,10 @@
 
 import { OpenAIDialog } from "@/features/flows/react-flow/blocks/open-ai/components/dialog"
 
-interface OpenAIDeleteMessageHistoryEditorProps {
-  parentName: string
-}
+// interface OpenAIDeleteMessageHistoryEditorProps {
+//   parentName: string
+// }
 
-export const OpenAIDeleteMessageHistoryEditor = ({
-  parentName,
-}: OpenAIDeleteMessageHistoryEditorProps) => {
+export const OpenAIDeleteMessageHistoryEditor = () => {
   return <OpenAIDialog name="Flows.OpenAI.Title.DeleteMessageHistory" />
 }

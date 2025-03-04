@@ -22,7 +22,9 @@ export default async function BreadcrumbSlot(props: {
     if (i === params.all.length - 1) {
       breadcrumbPage = (
         <BreadcrumbItem>
-          <BreadcrumbPage className="capitalize">{route}</BreadcrumbPage>
+          <BreadcrumbPage className="capitalize">
+            {route?.replaceAll("-", " ")}
+          </BreadcrumbPage>
         </BreadcrumbItem>
       )
     } else {
@@ -30,7 +32,7 @@ export default async function BreadcrumbSlot(props: {
         <Fragment key={href}>
           <BreadcrumbItem>
             <BreadcrumbLink href={href} className="capitalize">
-              {route}
+              {route?.replaceAll("-", " ")}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

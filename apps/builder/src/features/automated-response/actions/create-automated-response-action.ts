@@ -1,45 +1,55 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
 import {
-  type CreateAutomatedResponseBindSchema,
-  type CreateAutomatedResponseSchema,
-  createAutomatedResponseBindSchema,
-  createAutomatedResponseSchema,
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { ensureAllFlowIdsExists } from "@/features/flows/queries"
+import { ensureFolderIdExists } from "@/features/folders/queries"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { FolderType, prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
+import {
+  type CreateAutomatedResponseRequest,
+  createAutomatedResponseRequest,
 } from "../schemas/create-automated-responses-schema"
 
-export const createAutomatedResponseAction = authActionClient
-  .schema(createAutomatedResponseSchema)
-  .bindArgsSchemas(createAutomatedResponseBindSchema)
+export const createAutomatedResponseAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(createAutomatedResponseRequest)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId],
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, flowId, folderId],
     }: {
-      ctx: { user: User }
-      parsedInput: CreateAutomatedResponseSchema
-      bindArgsParsedInputs: CreateAutomatedResponseBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: CreateAutomatedResponseRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
-      const data = {
-        ...parsedInput,
-        chatbotId,
-        folderId,
-        flowId,
-        replies: JSON.stringify(parsedInput.replies),
-        status: false,
+      if (parsedInput.folderId) {
+        await ensureFolderIdExists(
+          chatbotId,
+          FolderType.AUTOMATED_RESPONSE,
+          parsedInput.folderId,
+        )
       }
+
+      // validate all flow ids
+      const flowIds = []
+      for (const reply of parsedInput.replies) {
+        if ("flowId" in reply) {
+          flowIds.push(reply.flowId)
+        }
+      }
+      await ensureAllFlowIdsExists(chatbotId, [...new Set(flowIds)])
 
       await prisma.automatedResponse.create({
-        data,
+        data: {
+          ...parsedInput,
+          chatbotId,
+          status: true,
+        },
       })
 
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbot:${chatbotId}#automatedResponses`)
     },
   )

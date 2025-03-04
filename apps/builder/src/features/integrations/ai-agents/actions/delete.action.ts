@@ -1,26 +1,27 @@
 "use server"
 
 import {
-  type DeleteAIAgentBindSchema,
-  deleteAIAgentBindSchema,
-} from "@/features/integrations/ai-agents/schemas/delete.schema"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+  type DeleteRequestSchema,
+  deleteRequestSchema,
+} from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type User, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
 export const deleteAIAgentAction = authActionClient
-  .bindArgsSchemas(deleteAIAgentBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(deleteRequestSchema)
   .action(
     async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId, ids],
+      bindArgsParsedInputs: [chatbotId],
+      parsedInput: { ids },
     }: {
       ctx: { user: User }
-      bindArgsParsedInputs: DeleteAIAgentBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: DeleteRequestSchema
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       await prisma.aIAgent.deleteMany({
         where: {
           id: {
@@ -30,10 +31,6 @@ export const deleteAIAgentAction = authActionClient
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiAgents`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbot:${chatbotId}#aiAgents`)
     },
   )

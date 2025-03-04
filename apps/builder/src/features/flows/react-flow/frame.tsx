@@ -1,15 +1,8 @@
 "use client"
 
-import type { findFlow } from "@/features/flows/queries"
 import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
-import {
-  type AddNotesNodeSchema,
-  defaultAddNotesNode,
-} from "@/features/flows/react-flow/nodes/add-notes/schema"
-import {
-  type SendMessageNodeSchema,
-  defaultSendMessageNode,
-} from "@/features/flows/react-flow/nodes/send-message/schema"
+import { defaultAddNotesNode } from "@/features/flows/react-flow/nodes/add-notes/schema"
+import { defaultSendMessageNode } from "@/features/flows/react-flow/nodes/send-message/schema"
 import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer"
 import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block"
 import { NodeDetailSheet } from "@/features/flows/react-flow/panels/node-detail-sheet"
@@ -27,6 +20,11 @@ import {
   useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
+import type { findFlow } from "@/features/flows/queries"
+import { startFlowNodeDefaultValue } from "@/features/flows/react-flow/nodes/start-flow/schema"
+import StartFlowNodeViewer from "@/features/flows/react-flow/nodes/start-flow/viewer"
+import { waitNodeDefaultValue } from "@/features/flows/react-flow/nodes/wait/schema"
+import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
 import { useOptimisticAction } from "next-safe-action/hooks"
 import { notFound } from "next/navigation"
 import { use, useCallback, useEffect, useState } from "react"
@@ -38,6 +36,8 @@ import { NodeType } from "./types"
 const nodeTypes = {
   [NodeType.SendMessage]: SendMessageNodeViewer,
   [NodeType.AddNotes]: AddNotesNode,
+  [NodeType.Wait]: WaitNodeViewer,
+  [NodeType.StartFlow]: StartFlowNodeViewer,
 }
 
 interface ReactFlowFrameProps {
@@ -69,7 +69,13 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
 
   const onConnect = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
+    (params: any) =>
+      setEdges((eds) => {
+        return addEdge(
+          params,
+          eds.filter((obj) => obj.sourceHandle !== params.sourceHandle),
+        )
+      }),
     [setEdges],
   )
 
@@ -96,38 +102,65 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
     handleChanges(nodes, edges)
   }, [nodes, edges, handleChanges])
 
-  // const updateTemporaryFlow = useDebouncedCallback(executeDraft, 300)
+  // const { getViewport } = useReactFlow()
+  const getCenterViewport = () => {
+    // Get the current viewport
+    // const { x, y, zoom } = getViewport()
+
+    // // Calculate the center of the viewport
+    // const centerX = -x + window.innerWidth / 2 / zoom
+    // const centerY = -y + window.innerHeight / 2 / zoom
+
+    return { x: 100, y: 200 }
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  const mappingNodeAttributes: Record<NodeType, { defaultFn: any }> = {
+    [NodeType.SendMessage]: {
+      defaultFn: defaultSendMessageNode,
+    },
+    [NodeType.AddNotes]: {
+      defaultFn: defaultAddNotesNode,
+    },
+    [NodeType.Wait]: {
+      defaultFn: waitNodeDefaultValue,
+    },
+    [NodeType.StartFlow]: {
+      defaultFn: startFlowNodeDefaultValue,
+    },
+    [NodeType.Actions]: {
+      defaultFn: undefined,
+    },
+    [NodeType.Condition]: {
+      defaultFn: undefined,
+    },
+    [NodeType.SendMail]: {
+      defaultFn: undefined,
+    },
+    [NodeType.SplitTraffic]: {
+      defaultFn: undefined,
+    },
+    [NodeType.LandingPage]: {
+      defaultFn: undefined,
+    },
+  }
+
+  mappingNodeAttributes[NodeType.SendMessage]
 
   const onChooseAction = (name: NodeType) => {
-    let newNode:
-      | Node<SendMessageNodeSchema["data"] | AddNotesNodeSchema["data"]>
-      | undefined
-    if (name === NodeType.SendMessage) {
-      let labelVersion = 0
-      for (const node of nodes) {
-        if (node.type === NodeType.SendMessage) {
-          const matched = (node.data.name as string).match(
-            /^Send Message #(\d+)$/,
-          )
-          if (matched) {
-            const version = Number.parseInt(matched[1] ?? "0", 10)
-            if (version > labelVersion) {
-              labelVersion = version
-            }
-          }
-        }
+    // calc version
+    let labelVersion = 1
+    for (const node of nodes) {
+      if (node.type === name) {
+        labelVersion++
       }
-
-      newNode = defaultSendMessageNode(labelVersion + 1)
     }
 
-    if (name === NodeType.AddNotes) {
-      newNode = defaultAddNotesNode()
-    }
-
-    if (newNode) {
-      setNodes((nds) => nds.concat(newNode))
-    }
+    const newNode = mappingNodeAttributes[name].defaultFn({
+      labelVersion,
+      position: getCenterViewport(),
+    })
+    setNodes((nds) => nds.concat(newNode))
   }
 
   return (

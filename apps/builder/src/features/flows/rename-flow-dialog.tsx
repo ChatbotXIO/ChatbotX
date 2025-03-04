@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import type { Flow } from "@ahachat.ai/database"
+import type { Flow } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -24,14 +24,12 @@ import { updateFlowAction } from "./actions/update-flow-action"
 import { updateFlowSchema } from "./schemas/update-flow-schema"
 
 export function RenameFlowDialog({
-  chatbotId,
   flow,
   open,
   onOpenChange,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
   flow: Flow | null
 }) {
   const { t } = useTranslate()

@@ -10,23 +10,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
-import type { AutomatedResponse } from "@ahachat.ai/database"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { T } from "@tolgee/react"
 import Link from "next/link"
-import { useState } from "react"
-import { toast } from "sonner"
-import { updateStatusAutomatedResponseAction } from "./actions/update-automated-response-action"
-import {
-  type AutomatedResponseReply,
-  ReplyType,
-} from "./schemas/create-automated-responses-schema"
+import type { AutomatedResponseResource } from "./schemas/get-automated-responses-schema"
 
-export function getColumns(
-  chatbotId: string,
-  onDeleteRow: (row: Row<AutomatedResponse>) => void,
-): ColumnDef<AutomatedResponse>[] {
+export interface DataTableRowAction<TData> {
+  row: Row<TData>
+  type: "update" | "delete" | "rename"
+}
+
+interface GetColumnsProps {
+  setRowAction: React.Dispatch<
+    React.SetStateAction<DataTableRowAction<AutomatedResponseResource> | null>
+  >
+}
+
+export function getColumns({
+  setRowAction,
+}: GetColumnsProps): ColumnDef<AutomatedResponseResource>[] {
   return [
     {
       id: "select",
@@ -62,9 +64,9 @@ export function getColumns(
       cell: ({ row }) => {
         return (
           <Link
-            href={`/chatbots/${chatbotId}/automated-responses/${row.original.id}`}
+            href={`/chatbots/${row.original.chatbotId}/automated-responses/${row.original.id}`}
           >
-            {row.original.keyword}
+            {row.original.userMessages.join(",")}
           </Link>
         )
       },
@@ -76,14 +78,15 @@ export function getColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Bot Response" />
       ),
-      cell: ({ row }) => {
-        return JSON.parse((row.original as AutomatedResponse).replies as string)
-          .map((reply: AutomatedResponseReply) => {
-            return reply.type === ReplyType.Message
-              ? reply.answer
-              : reply.flowId
-          })
-          .join("\n_______")
+      cell: () => {
+        return "ok"
+        // return JSON.parse((row.original as AutomatedResponse).replies as string)
+        //   .map((reply: AutomatedResponseReply) => {
+        //     return reply.type === ReplyType.Message
+        //       ? reply.answer
+        //       : reply.flowId
+        //   })
+        //   .join("\n_______")
       },
       enableSorting: false,
       enableHiding: false,
@@ -94,25 +97,24 @@ export function getColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="" />
       ),
-      cell: ({ row }) => {
-        const [checked, setChecked] = useState(row.original.status)
-        return (
-          <Switch
-            checked={checked}
-            onCheckedChange={(e) => {
-              setChecked(e)
-              updateStatusAutomatedResponseAction(row.id, { status: e })
-                .then((_) => {
-                  toast.success("Automated Response updated successfully")
-                  setChecked(e)
-                })
-                .catch((error) => {
-                  setChecked(!e)
-                })
-            }}
-            id={`status:${row.original.id}`}
-          />
-        )
+      cell: () => {
+        // const [checked, setChecked] = useState(row.original.status)
+        return "ok"
+        // <Switch
+        //   checked={checked}
+        //   onCheckedChange={(e) => {
+        //     setChecked(e)
+        //     updateStatusAutomatedResponseAction(row.id, { status: e })
+        //       .then((_) => {
+        //         toast.success("Automated Response updated successfully")
+        //         setChecked(e)
+        //       })
+        //       .catch((error) => {
+        //         setChecked(!e)
+        //       })
+        //   }}
+        //   id={`status:${row.original.id}`}
+        // />
       },
       enableSorting: false,
       enableHiding: false,
@@ -131,8 +133,10 @@ export function getColumns(
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => onDeleteRow(row)}>
-                  <T keyName="automatedResponse.del" />
+                <DropdownMenuItem
+                  onClick={() => setRowAction({ row, type: "delete" })}
+                >
+                  <T keyName="common.deleteBtn" />
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>

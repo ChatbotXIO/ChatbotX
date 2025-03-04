@@ -1,19 +1,19 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import type { Prisma } from "@ahachat.ai/database"
 import { prisma } from "@ahachat.ai/database"
-import type { AutomatedResponse, Flow, Prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 import type {
-  GetAutomatedResponseSchema,
-  ShowAutomatedResponseSchema,
+  AutomatedResponseCollection,
+  AutomatedResponseResource,
+  FindAutomatedResponseRequest,
+  ListAutomatedResponsesRequest,
 } from "../schemas/get-automated-responses-schema"
-import type { GetFlowSchema } from "../schemas/get-flow-schema"
 
 export async function getAutomatedResponses(
-  input: GetAutomatedResponseSchema,
-): Promise<{ data: Array<AutomatedResponse>; pageCount: number }> {
+  input: ListAutomatedResponsesRequest,
+): Promise<AutomatedResponseCollection> {
   const userId = await getCurrentUserId()
-
   await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
@@ -26,9 +26,8 @@ export async function getAutomatedResponses(
         if (input.keyword) {
           where.OR = [
             {
-              keyword: {
-                contains: input.keyword,
-                mode: "insensitive",
+              userMessages: {
+                has: input.keyword,
               },
             },
           ]
@@ -46,66 +45,25 @@ export async function getAutomatedResponses(
         const pageCount = Math.ceil(total / input.perPage)
 
         return { data, pageCount }
-      } catch (err) {
+      } catch (_err) {
         return { data: [], pageCount: 0 }
       }
     },
     [JSON.stringify(input)],
     {
       revalidate: 1,
-      tags: [`${userId}#automatedResponse`],
+      tags: [`chatbot:${input.chatbotId}#automatedResponses`],
     },
   )()
 }
 
 export async function showAutomatedResponses(
-  input: ShowAutomatedResponseSchema,
-): Promise<AutomatedResponse> {
+  input: FindAutomatedResponseRequest,
+): Promise<AutomatedResponseResource> {
   const userId = await getCurrentUserId()
-
-  const where: Prisma.AutomatedResponseWhereInput = {
-    id: input.id,
-  }
-
-  const [result] = await prisma.$transaction([
-    prisma.automatedResponse.findFirst({
-      where,
-    }),
-  ])
-
-  return result as AutomatedResponse
-}
-
-export async function getActiveFlows(
-  input: GetFlowSchema,
-): Promise<{ data: Array<Flow> }> {
-  const userId = await getCurrentUserId()
-
   await findChatbotOrFail(userId, input.chatbotId)
 
-  return await unstable_cache(
-    async () => {
-      try {
-        const where: Prisma.FlowWhereInput = {
-          chatbotId: input.chatbotId,
-          active: true,
-        }
-
-        const [data] = await prisma.$transaction([
-          prisma.flow.findMany({
-            where,
-          }),
-        ])
-
-        return { data }
-      } catch (err) {
-        return { data: [] }
-      }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 1,
-      tags: [`${userId}#flows_for_automated_response`],
-    },
-  )()
+  return await prisma.automatedResponse.findFirstOrThrow({
+    where: input,
+  })
 }

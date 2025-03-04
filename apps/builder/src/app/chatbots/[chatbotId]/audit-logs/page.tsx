@@ -35,7 +35,7 @@ export default async function AuditLogsPage(props: {
           />
         }
       >
-        <AuditLogsTable promises={promises} chatbotId={params.chatbotId} />
+        <AuditLogsTable promises={promises} />
       </Suspense>
     </div>
   )

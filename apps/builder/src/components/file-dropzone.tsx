@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/components/lib/utils"
 import { T } from "@tolgee/react"
 import { File, Image, ImagePlay, Undo2, Video, Volume2, X } from "lucide-react"
 import { useState } from "react"

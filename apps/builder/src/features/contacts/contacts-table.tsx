@@ -8,7 +8,7 @@ import { useDataTable } from "@/hooks/use-data-table"
 import type { Contact } from "@ahachat.ai/database"
 
 import { getColumns } from "./contacts-table-columns"
-import type { getContacts } from "./queries"
+import type { listContacts } from "./queries/list-contacts.action"
 
 import type {
   DataTableFilterField,
@@ -16,7 +16,7 @@ import type {
 } from "@/components/data-table/types"
 
 interface ContactsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getContacts>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
 }
 
 export function ContactsTable({ promises }: ContactsTableProps) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { type Field, FieldType } from "@ahachat.ai/database"
+import { type Field, FieldType } from "@ahachat.ai/database/browser"
 import type { Table } from "@tanstack/react-table"
 import type { DataTableRowAction } from "./account-field-table-columns"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
@@ -28,7 +28,7 @@ export function AccountFieldsTableToolbarActions({
           onSuccess={() => table.toggleAllRowsSelected(false)}
           chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
-          fieldType={FieldType.AccountField}
+          fieldType={FieldType.ACCOUNT_FIELD}
         />
       ) : null}
     </div>

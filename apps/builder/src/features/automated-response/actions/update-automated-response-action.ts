@@ -1,60 +1,51 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
-import { type User, prisma } from "@ahachat.ai/database"
 import {
-  type UpdateAutomatedResponseBindSchema,
-  type UpdateAutomatedResponseSchema,
-  type UpdateStatusAutomatedResponseSchema,
-  updateAutomatedResponseBindSchema,
-  updateAutomatedResponseSchema,
-  updateStatusAutomatedResponseSchema,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { ensureAllFlowIdsExists } from "@/features/flows/queries"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
+import {
+  type UpdateAutomatedResponseRequest,
+  updateAutomatedResponseRequest,
 } from "../schemas/update-automated-responses-schema"
+import { AutomatedResponseException } from "../schemas/utils"
+import { revalidateTag } from "next/cache"
 
-export const updateAutomatedResponseAction = authActionClient
-  .schema(updateAutomatedResponseSchema)
-  .bindArgsSchemas(updateAutomatedResponseBindSchema)
+export const updateAutomatedResponseAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .schema(updateAutomatedResponseRequest)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
-      bindArgsParsedInputs: [id],
     }: {
-      ctx: { user: User }
-      parsedInput: UpdateAutomatedResponseSchema
-      bindArgsParsedInputs: UpdateAutomatedResponseBindSchema
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      parsedInput: UpdateAutomatedResponseRequest
     }) => {
-      const data = {
-        ...parsedInput,
-        replies: JSON.stringify(parsedInput.replies),
-      }
-
-      await prisma.automatedResponse.update({
+      const automatedResponse = await prisma.automatedResponse.findFirst({
         where: {
+          chatbotId,
           id,
         },
-        data: data,
       })
-
-      return {
-        successful: true,
+      if (!automatedResponse) {
+        throw new AutomatedResponseException("Automated response not found")
       }
-    },
-  )
 
-export const updateStatusAutomatedResponseAction = authActionClient
-  .schema(updateStatusAutomatedResponseSchema)
-  .bindArgsSchemas(updateAutomatedResponseBindSchema)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-      bindArgsParsedInputs: [id],
-    }: {
-      ctx: { user: User }
-      parsedInput: UpdateStatusAutomatedResponseSchema
-      bindArgsParsedInputs: UpdateAutomatedResponseBindSchema
-    }) => {
+      // ensure all input flows are exists
+      const flowIds = []
+      if (parsedInput.replies) {
+        for (const reply of parsedInput.replies) {
+          if ("flowId" in reply) {
+            flowIds.push(reply.flowId)
+          }
+        }
+      }
+      await ensureAllFlowIdsExists(chatbotId, [...new Set(flowIds)])
+
       await prisma.automatedResponse.update({
         where: {
           id,
@@ -62,8 +53,6 @@ export const updateStatusAutomatedResponseAction = authActionClient
         data: parsedInput,
       })
 
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbot:${chatbotId}#automatedResponses`)
     },
   )

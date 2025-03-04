@@ -4,7 +4,7 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "typescript": "5.7.3"
+    "typescript": "5.8.2"
   },
   "dependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",

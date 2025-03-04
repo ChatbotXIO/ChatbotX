@@ -2,199 +2,29 @@
 
 import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Form,
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import type { AutomatedResponse, Flow } from "@prisma/client"
-import { T, useTranslate } from "@tolgee/react"
-import { Loader2Icon } from "lucide-react"
-import { Trash } from "lucide-react"
+import { useTranslate } from "@tolgee/react"
+import { Loader2Icon, PlusCircleIcon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { type Control, useFieldArray, useFormContext } from "react-hook-form"
+import { Controller, useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { FlowSelect } from "../flows/flow-select"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
-import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import {
-  type AutomatedResponseReply,
-  type CreateAutomatedResponseSchema,
+  createAutomatedResponseRequest,
   ReplyType,
-  createAutomatedResponseSchema,
 } from "./schemas/create-automated-responses-schema"
-
-const AutomatedResponseReplyFlowForm = ({
-  label,
-  index,
-  removeRepliesField,
-  flows,
-}: {
-  index: number
-  label?: string
-  removeRepliesField: (index: number) => void
-  flows: Flow[]
-}) => {
-  const { getValues, setValue } = useFormContext()
-  const name = `replies.${index}.flowId`
-  const [hideTrash, setHideTrash] = useState(true)
-
-  return (
-    <>
-      <div
-        className="relative"
-        onMouseEnter={() => setHideTrash(false)}
-        onMouseLeave={() => setHideTrash(true)}
-      >
-        <div
-          onClick={() => removeRepliesField(index)}
-          onKeyUp={() => {}}
-          hidden={hideTrash}
-          aria-hidden="true"
-          className={`absolute right-0 cursor-pointer ${index === 0 ? "top-7" : "top-1"}`}
-        >
-          <Trash />
-        </div>
-        <FormItem>
-          {label && <FormLabel className="flex gap-1">{label}</FormLabel>}
-          <Select
-            onValueChange={(e) => setValue(name, e)}
-            defaultValue={getValues(name)}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={"Select a flow"} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {flows.map((flow) => (
-                <SelectItem key={flow.id} value={flow.id}>
-                  {flow.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <FormMessage />
-        </FormItem>
-      </div>
-    </>
-  )
-}
-
-const AutomatedResponseReplyMessageForm = ({
-  index,
-  label,
-  control,
-  removeRepliesField,
-}: {
-  index: number
-  label?: string
-  control: Control<CreateAutomatedResponseSchema>
-  removeRepliesField: (index: number) => void
-}) => {
-  const { fields: urlFields, append } = useFieldArray({
-    control: control,
-    name: `replies.${index}.buttons`,
-  })
-
-  const addLink = () => {
-    append({ url: "", label: "" })
-  }
-
-  const [hideTrash, setHideTrash] = useState(true)
-
-  return (
-    <>
-      <div
-        className="relative"
-        onMouseEnter={() => setHideTrash(false)}
-        onMouseLeave={() => setHideTrash(true)}
-      >
-        <div
-          onClick={() => removeRepliesField(index)}
-          onKeyUp={() => {}}
-          hidden={hideTrash}
-          className={`absolute right-0 cursor-pointer ${index === 0 ? "top-10" : "top-4"}`}
-          aria-hidden="true"
-        >
-          <Trash />
-        </div>
-        <FormInput
-          name={`replies.${index}.answer`}
-          label={label}
-          placeholder="Type a message"
-          inputType="textarea"
-        />
-
-        {urlFields.map((field, bIndex) => {
-          return (
-            <div
-              key={`replies.${index}.buttons.${field.id}`}
-              className="flex mt-3 px-4"
-            >
-              <FormInput
-                name={`replies.${index}.buttons.${bIndex}.label`}
-                placeholder="Button label"
-                label={""}
-              />
-              <div className="flex-1 ml-2">
-                <FormInput
-                  name={`replies.${index}.buttons.${bIndex}.url`}
-                  placeholder="https://www.example.com"
-                  label={""}
-                />
-              </div>
-            </div>
-          )
-        })}
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault()
-              addLink()
-            }}
-          >
-            <T keyName="automatedResponse.addLink" />
-          </button>
-        </div>
-      </div>
-    </>
-  )
-}
 
 export function CreateAutomatedResponseForm({
   chatbotId,
   folderId,
-  flows,
-  onSubmitted,
-  onCancelled,
 }: {
   chatbotId: string
   folderId: string | null
-  onSubmitted?: () => void
-  onCancelled?: () => void
-  flows: Flow[]
 }) {
   const { t } = useTranslate()
   const router = useRouter()
@@ -204,14 +34,12 @@ export function CreateAutomatedResponseForm({
     handleSubmitWithAction,
     form: { control },
   } = useHookFormAction(
-    createAutomatedResponseAction.bind(null, chatbotId, null, folderId),
-    zodResolver(createAutomatedResponseSchema),
+    createAutomatedResponseAction.bind(null, chatbotId),
+    zodResolver(createAutomatedResponseRequest),
     {
       actionProps: {
         onSuccess: () => {
           toast.success("Automated Response created successfully")
-
-          onSubmitted?.()
           router.push(`/chatbots/${chatbotId}/automated-responses`)
         },
         onError: ({ error }) => {
@@ -221,7 +49,8 @@ export function CreateAutomatedResponseForm({
       formProps: {
         mode: "onChange",
         defaultValues: {
-          keyword: "",
+          folderId: folderId ?? null,
+          userMessages: [""],
           replies: [],
         },
       },
@@ -230,241 +59,128 @@ export function CreateAutomatedResponseForm({
   )
 
   const {
-    fields,
-    append,
-    remove: removeRepliesField,
+    fields: replies,
+    append: appendReplies,
+    remove: removeReplies,
   } = useFieldArray({
     control,
     name: "replies",
   })
 
-  const onAddedBotReplies = (type: ReplyType) => {
-    if (type === ReplyType.Message) {
-      append({
-        type,
-        answer: "",
-        buttons: [],
-      })
-    } else {
-      append({ type, flowId: "" })
-    }
-  }
-
   return (
     <Form {...form}>
-      <form
-        key="automatedResponse.create"
-        onSubmit={(e) => {
-          handleSubmitWithAction(e)
-        }}
-        method="POST"
-        className="flex-1 space-y-4"
-      >
-        <FormInput
-          name="keyword"
-          label={t("automatedResponse.keyword")}
-          placeholder="Hello"
+      <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
+        <Controller
+          name="userMessages"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="userMessages" className="flex-1">
+                User message
+              </Label>
+              {/* Render existing inputs */}
+              {field.value.map((m, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                <div key={index} className="flex gap-2">
+                  <Input
+                    className="flex-1"
+                    value={m}
+                    onChange={(e) => {
+                      const userMessages = [...field.value]
+                      userMessages[index] = e.target.value
+                      field.onChange(userMessages)
+                    }}
+                  />
+                  {index === 0 ? (
+                    <div className="w-12">&nbsp;</div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        const newTags = field.value.filter(
+                          (_, i) => i !== index,
+                        ) // Remove the input
+                        field.onChange(newTags)
+                      }}
+                    >
+                      <XIcon />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <FormMessage />
+              <div>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    field.onChange([...field.value, ""])
+                  }}
+                >
+                  <PlusCircleIcon /> Add more
+                </Button>
+              </div>
+            </div>
+          )}
         />
 
-        {fields.map((field, index) => {
-          const label = index === 0 ? t("automatedResponse.botResponse") : ""
-          return (
-            <>
-              <div key={`replies.${field.id}`}>
-                {field.type === ReplyType.Message ? (
-                  <AutomatedResponseReplyMessageForm
-                    removeRepliesField={removeRepliesField}
-                    control={control}
-                    index={index}
-                    label={label}
-                    {...field}
-                  />
-                ) : (
-                  <AutomatedResponseReplyFlowForm
-                    removeRepliesField={removeRepliesField}
-                    index={index}
-                    label={label}
-                    flows={flows}
-                    {...field}
-                  />
-                )}
-              </div>
-            </>
-          )
-        })}
+        {/* Bot response block */}
+        <div className="mt-4">
+          <Label htmlFor="replies.0" className="font-bold mt-5">
+            Bot response
+          </Label>
+        </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <T keyName="automatedResponse.addReplies" />
+        {replies.map((reply, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+          <div key={index} className="flex gap-2 w-full">
+            <div className="flex-1">
+              {reply.type === ReplyType.MESSAGE ? (
+                <FormInput
+                  name={`replies.${index}.message`}
+                  label=""
+                  placeholder="Type a message"
+                  isRequired={false}
+                />
+              ) : (
+                <FlowSelect name={`replies.${index}.flowId`} label="" />
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                removeReplies(index)
+              }}
+            >
+              <XIcon />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => onAddedBotReplies(ReplyType.Message)}
-              >
-                <T keyName="automatedResponse.textMessage" />
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onAddedBotReplies(ReplyType.Flow)}
-              >
-                <T keyName="automatedResponse.flow" />
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <div className="flex justify-end gap-4">
+          </div>
+        ))}
+        <div className="flex gap-2">
           <Button
-            type="button"
             variant="ghost"
             onClick={() =>
-              router.push(`/chatbots/${chatbotId}/automated-responses`)
+              appendReplies({
+                type: ReplyType.MESSAGE,
+                message: "",
+                buttons: [],
+              })
             }
           >
-            {t("common.cancel-btn")}
+            <PlusCircleIcon /> Add text reply
           </Button>
-          <Button type="submit">
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="animate-spin" />
-            )}
-            {t("common.confirm-btn")}
+
+          <Button
+            variant="ghost"
+            onClick={() =>
+              appendReplies({
+                type: ReplyType.FLOW,
+                flowId: "",
+              })
+            }
+          >
+            <PlusCircleIcon /> Add flow reply
           </Button>
         </div>
-      </form>
-    </Form>
-  )
-}
-
-export function EditAutomatedResponseForm({
-  data,
-  flows,
-  chatbotId,
-  onSubmitted,
-  onCancelled,
-}: {
-  data: AutomatedResponse
-  chatbotId: string
-  onSubmitted?: () => void
-  onCancelled?: () => void
-  flows: Flow[]
-}) {
-  const { t } = useTranslate()
-  const router = useRouter()
-
-  const {
-    form,
-    handleSubmitWithAction,
-    form: { control },
-  } = useHookFormAction(
-    updateAutomatedResponseAction.bind(null, data.id),
-    zodResolver(createAutomatedResponseSchema),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Automated Response updated successfully")
-
-          onSubmitted?.()
-        },
-        onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
-        },
-      },
-      formProps: {
-        mode: "onChange",
-        defaultValues: { ...data, replies: JSON.parse(data.replies as string) },
-      },
-      errorMapProps: {},
-    },
-  )
-
-  const {
-    fields,
-    append,
-    remove: removeRepliesField,
-  } = useFieldArray({
-    control,
-    name: "replies",
-  })
-
-  const onAddedBotReplies = (type: ReplyType) => {
-    if (type === ReplyType.Message) {
-      append({
-        type,
-        answer: "",
-        buttons: [],
-      })
-    } else {
-      append({ type, flowId: "" })
-    }
-  }
-
-  return (
-    <Form {...form}>
-      <form
-        key="automatedResponse.update"
-        onSubmit={(e) => {
-          handleSubmitWithAction(e)
-        }}
-        method="POST"
-        className="flex-1 space-y-4"
-      >
-        <FormInput
-          name="keyword"
-          label={t("automatedResponse.keyword")}
-          placeholder="Hello"
-        />
-
-        {fields.map((field, index) => {
-          const label = index === 0 ? t("automatedResponse.botResponse") : ""
-          return (
-            <>
-              <div key={`replies.${field.id}`}>
-                {(field as AutomatedResponseReply).type ===
-                ReplyType.Message ? (
-                  <AutomatedResponseReplyMessageForm
-                    removeRepliesField={removeRepliesField}
-                    control={control}
-                    index={index}
-                    label={label}
-                    {...field}
-                  />
-                ) : (
-                  <AutomatedResponseReplyFlowForm
-                    removeRepliesField={removeRepliesField}
-                    index={index}
-                    label={label}
-                    flows={flows}
-                    {...field}
-                  />
-                )}
-              </div>
-            </>
-          )
-        })}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <T keyName="automatedResponse.addReplies" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => onAddedBotReplies(ReplyType.Message)}
-              >
-                <T keyName="automatedResponse.textMessage" />
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onAddedBotReplies(ReplyType.Flow)}
-              >
-                <T keyName="automatedResponse.flow" />
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         <div className="flex justify-end gap-4">
           <Button
@@ -476,7 +192,10 @@ export function EditAutomatedResponseForm({
           >
             {t("common.cancel-btn")}
           </Button>
-          <Button type="submit">
+          <Button
+            type="submit"
+            disabled={!form.formState.isValid || form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />
             )}

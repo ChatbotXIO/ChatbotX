@@ -7,18 +7,18 @@ export default class ConversationParty implements Party.Server {
   async onStart() {}
 
   async onConnect(
-    connection: Party.Connection,
+    _connection: Party.Connection,
     { request }: Party.ConnectionContext,
   ) {
     const userId = request.headers.get("X-User-ID")
     this.room.broadcast(`Hello ${userId} from party!`)
   }
 
-  async onMessage(message: string | ArrayBuffer, sender: Party.Connection) {}
+  // async onMessage(message: string | ArrayBuffer, sender: Party.Connection) {}
 
-  async onClose(connection: Party.Connection) {}
+  // async onClose(connection: Party.Connection) {}
 
-  async onError(connection: Party.Connection, error: Error) {}
+  // async onError(connection: Party.Connection, error: Error) {}
 
   async onRequest(req: Party.Request) {
     console.log("received emit from HTTP request", await req.json())

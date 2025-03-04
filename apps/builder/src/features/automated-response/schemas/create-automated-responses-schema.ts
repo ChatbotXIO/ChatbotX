@@ -1,53 +1,32 @@
 import { z } from "zod"
 
-export type AutomatedResponseReply = {
-  type: ReplyType
-  flowId?: string
-  answer?: string
-  buttons?: Array<{
-    label: string
-    url: string
-  }>
-}
-
 export enum ReplyType {
-  Message = "message",
-  Flow = "flow",
+  MESSAGE = "MESSAGE",
+  FLOW = "FLOW",
 }
 
-export const createAutomatedResponseSchema = z.object({
-  keyword: z.string().max(255).min(1),
+export const createAutomatedResponseRequest = z.object({
+  folderId: z.union([z.string().cuid2(), z.null()]).default(null),
+  userMessages: z.array(z.string().min(1).max(255)),
   replies: z.array(
-    z.object({
-      type: z.enum([ReplyType.Message, ReplyType.Flow]),
-      flowId: z.string().cuid2().optional(),
-      answer: z.string().max(255).optional(),
-      buttons: z
-        .array(
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal(ReplyType.FLOW),
+        flowId: z.string(),
+      }),
+      z.object({
+        type: z.literal(ReplyType.MESSAGE),
+        message: z.string().min(1).max(255),
+        buttons: z.array(
           z.object({
-            label: z.string().max(255),
+            label: z.string().min(1).max(255),
             url: z.string().url(),
           }),
-        )
-        .optional(),
-    }),
+        ),
+      }),
+    ]),
   ),
 })
-export type CreateAutomatedResponseSchema = z.infer<
-  typeof createAutomatedResponseSchema
+export type CreateAutomatedResponseRequest = z.infer<
+  typeof createAutomatedResponseRequest
 >
-
-export const createAutomatedResponseBindSchema: [
-  chatbotId: z.ZodString,
-  flowId: z.ZodNullable<z.ZodString>,
-  folderId: z.ZodNullable<z.ZodString>,
-] = [
-  z.string().cuid2(),
-  z.string().cuid2().nullable(),
-  z.string().cuid2().nullable(),
-]
-export type CreateAutomatedResponseBindSchema = [
-  chatbotId: string,
-  flowId: string | null,
-  folderId: string | null,
-]

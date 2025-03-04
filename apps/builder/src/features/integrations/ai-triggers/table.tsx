@@ -8,11 +8,11 @@ import type {
 } from "@/components/data-table/types"
 import { duplicateAITriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action"
 import { DeleteAITriggerDialog } from "@/features/integrations/ai-triggers/delete"
-import type { getAITriggers } from "@/features/integrations/ai-triggers/queries"
+import type { listAITriggers } from "@/features/integrations/ai-triggers/actions/list.action"
 import { AITriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
 import { UpdateAITriggerDialog } from "@/features/integrations/ai-triggers/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AITrigger } from "@ahachat.ai/database"
+import type { AITrigger } from "@ahachat.ai/database/browser"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
@@ -20,7 +20,7 @@ import { toast } from "sonner"
 import { getAITriggersColumns } from "./table-columns"
 
 interface AITriggersTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getAITriggers>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listAITriggers>>]>
   chatbotId: string
 }
 
@@ -36,7 +36,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
     [setRowAction],
   )
 
-  const { execute, result } = useAction(
+  const { execute } = useAction(
     duplicateAITriggerAction.bind(
       null,
       chatbotId,
