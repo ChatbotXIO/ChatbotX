@@ -23,7 +23,6 @@ import { use } from "react"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
 import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
-// import { SingleSelect } from "@/components/single-select";
 
 type OpenAIConnectProps = {
   chatbotId: string
