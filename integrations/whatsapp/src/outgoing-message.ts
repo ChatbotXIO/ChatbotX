@@ -4,7 +4,15 @@ import {
   FileType,
   type MessageEntity,
 } from "@ahachat.ai/sdk"
-import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
+import {
+  Audio,
+  Body,
+  Button,
+  Document,
+  Image,
+  Text,
+  Video,
+} from "whatsapp-api-js/messages"
 import type {
   ClientMessage,
   ServerErrorResponse,
@@ -12,6 +20,10 @@ import type {
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client"
 import type { WhatsappAuthValue } from "./schemas"
+import {
+  ActionButtons,
+  Interactive,
+} from "whatsapp-api-js/messages/interactive"
 
 export type SendMessageProps = {
   ctx: Context<WhatsappAuthValue>
@@ -22,6 +34,20 @@ export type SendMessageProps = {
 const convertMessageToWhatsappMessage = (
   message: MessageEntity,
 ): ClientMessage | null => {
+  const attributes = message.contentAttributes
+
+  if (attributes?.buttons?.length) {
+    const actionsButtons = new ActionButtons(
+      attributes.buttons.map(
+        (button: { id: string; label: string }) =>
+          new Button(button.id, button.label),
+      ),
+    )
+    const body = new Body(attributes?.title)
+
+    return new Interactive(actionsButtons, body)
+  }
+
   if (!message.attachments || !message.attachments[0]) {
     return new Text(message.content ?? "")
   }

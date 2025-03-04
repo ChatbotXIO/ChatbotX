@@ -13,7 +13,7 @@ import type { InputJsonValue } from "@prisma/client/runtime/library"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
 export const connectWhatsappAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .schema(connectWhatsappSchema)
   .action(
     async ({
@@ -48,9 +48,8 @@ export const connectWhatsappAction = authActionClient
           phoneNumberId: "",
         },
       }
-
       auth.metadata.phoneNumberId =
-        await integrations.whatsapp.actions.verifyAccessToken({
+        await integrations.WHATSAPP.integration.actions.verifyAccessToken({
           ctx: {
             auth,
             logger: logger.getSubLogger({
