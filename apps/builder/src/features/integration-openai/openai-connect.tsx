@@ -13,14 +13,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { use, useEffect, useState } from "react"
+import { use } from "react"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
 import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
@@ -33,9 +32,6 @@ type OpenAIConnectProps = {
 
 export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
   const [{ data: integrationOpenAI }] = use(promises)
-  const [isResponse, setIsResponse] = useState<boolean>(false)
-  const [voice, setVoice] = useState<string>("")
-  const [isVoiceResponse, setIsVoiceResponse] = useState<boolean>(false)
   const router = useRouter()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
@@ -44,14 +40,6 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
         router.refresh()
       },
     })
-
-  useEffect(() => {
-    if (integrationOpenAI) {
-      setIsResponse(integrationOpenAI.automatedResponse)
-      setIsVoiceResponse(integrationOpenAI.automatedVoiceResponse)
-      setVoice(integrationOpenAI.voice as string)
-    }
-  }, [integrationOpenAI])
 
   return (
     <>
@@ -118,64 +106,10 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
             }
           >
             <Switch
-              checked={isResponse}
-              onCheckedChange={() => setIsResponse(!isResponse)}
+              disabled={true}
+              checked={integrationOpenAI.automatedResponse}
             />
           </SettingRow>
-
-          {isResponse && (
-            <SettingRow
-              label={
-                <T keyName="settings.integrations.AutomatedVoiceResponse.Title" />
-              }
-              description={
-                <T keyName="settings.integrations.AutomatedVoiceResponse.Descriptions" />
-              }
-            >
-              <div className="flex flex-col gap-2">
-                <Switch
-                  checked={isVoiceResponse}
-                  onCheckedChange={() => setIsVoiceResponse(!isVoiceResponse)}
-                />
-                <div className="flex gap-2">
-                  <Label>
-                    <T keyName="settings.integrations.Voice.title" />
-                  </Label>
-                  {/*<SingleSelect*/}
-                  {/*  name="voice"*/}
-                  {/*  options={[*/}
-                  {/*    {*/}
-                  {/*      label: 'Male - Alloy',*/}
-                  {/*      value: 'male-alloy',*/}
-                  {/*    },*/}
-                  {/*    {*/}
-                  {/*      label: 'Male - Echo',*/}
-                  {/*      value: 'male-echo',*/}
-                  {/*    },*/}
-                  {/*    {*/}
-                  {/*      label: 'Male - Fable',*/}
-                  {/*      value: 'male-fable',*/}
-                  {/*    },*/}
-                  {/*    {*/}
-                  {/*      label: 'Male - Onyx',*/}
-                  {/*      value: 'male-onyx',*/}
-                  {/*    },*/}
-                  {/*    {*/}
-                  {/*      label: 'Female - Nova',*/}
-                  {/*      value: 'female-nova',*/}
-                  {/*    },*/}
-                  {/*    {*/}
-                  {/*      label:  'Female - Shimmer',*/}
-                  {/*      value: 'female-shimmer',*/}
-                  {/*    }*/}
-                  {/*  ]}*/}
-                  {/*  value={voice}*/}
-                  {/*  onValueChange={(value) => setVoice(value)}*/}
-                  {/*/>*/}
-                </div>
-              </div>
-            </SettingRow>
-          )}
 
           <SettingRow
             label={<T keyName="settings.integrations.Agents.Title" />}
@@ -189,19 +123,6 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
               </Link>
             </Button>
           </SettingRow>
-
-          {/* <SettingRow
-            label={<T keyName="settings.integrations.Assistants.Title" />}
-            description={
-              <T keyName="settings.integrations.Assistants.Descriptions" />
-            }
-          >
-            <Button variant="secondary" size="sm">
-              <Link href="../ai-assistants">
-                <T keyName="settings.integrations.ManageBtn" />
-              </Link>
-            </Button>
-          </SettingRow> */}
 
           <SettingRow
             label={<T keyName="settings.integrations.AITriggers.Title" />}

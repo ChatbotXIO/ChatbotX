@@ -18,6 +18,7 @@
     "db:migrate": "dotenv -e ../../.env -- prisma migrate deploy",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
     "db:seed": "dotenv -e ../../.env -- tsx prisma/seeders/index.ts",
+    "db:seed:all": "dotenv -e ../../.env -- tsx prisma/seeders/index.ts && tsx prisma/seeders/conversation-seeder.ts",
     "db:client": "dotenv -e ../../.env -- prisma generate",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force"
   },

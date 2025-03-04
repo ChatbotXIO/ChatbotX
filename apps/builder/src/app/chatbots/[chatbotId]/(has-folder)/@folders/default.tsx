@@ -4,18 +4,46 @@ import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema"
 import { T } from "@/tolgee/server"
 import { type Folder, FolderType } from "@ahachat.ai/database"
+import { headers } from "next/headers"
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
-export default async function FoldersPage(props: {
+export default async function FoldersDetault(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
+  const headersList = await headers()
+  const url = new URL(headersList.get("x-url") as string)
+  const featureName = url.pathname.split("/").pop()
+
+  let folderType: FolderType | null = null
+  switch (featureName) {
+    case "automated-responses":
+      folderType = FolderType.AUTOMATED_RESPONSE
+      break
+    case "flows":
+      folderType = FolderType.FLOW
+      break
+    case "custom-fields":
+      folderType = FolderType.CUSTOM_FIELD
+      break
+    case "email-campaigns":
+      folderType = FolderType.EMAIL_CAMPAIGN
+      break
+    case "tags":
+      folderType = FolderType.TAG
+      break
+    default:
+      break
+  }
+  if (!folderType) {
+    return notFound()
+  }
+
   const params = await props.params
   const searchParams = await props.searchParams
   const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
-
-  const folderType = FolderType.EMAIL_CAMPAIGN
 
   const promises = Promise.all([
     folderId
@@ -35,7 +63,7 @@ export default async function FoldersPage(props: {
     <>
       <div className="flex">
         <h3 className="font-bold flex-1">
-          <T keyName="tags.header" />
+          <T keyName="folders.header" />
         </h3>
         <CreateFolderDialog
           chatbotId={params.chatbotId}

@@ -126,6 +126,7 @@ model Chatbot {
   spreadsheets             Spreadsheet[]
   tags                     Tag[]
   workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
+  automatedResponses       AutomatedResponse[]
 }
 
 model ChatbotMember {
@@ -639,6 +640,21 @@ model ContactsOnBroadcasts {
   contact   Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@id([broadcastId, contactId])
+}
+
+model AutomatedResponse {
+  id           String   @id @default(cuid(2))
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  chatbotId    String
+  userMessages String[]
+  folderId     String?
+  replies      Json[]
+  status       Boolean
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
 }
 
 enum CustomFieldType {

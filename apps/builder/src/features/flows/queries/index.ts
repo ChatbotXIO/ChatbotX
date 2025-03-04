@@ -129,3 +129,21 @@ export const ensureFlowIdIsExists = async (
 
   return flow
 }
+
+export const ensureAllFlowIdsExists = async (
+  chatbotId: string,
+  flowIds: string[],
+): Promise<void> => {
+  const count = await prisma.flow.count({
+    where: {
+      chatbotId,
+      id: {
+        in: flowIds,
+      },
+    },
+  })
+
+  if (count !== flowIds.length) {
+    throw new FlowException("Flow does not exists.")
+  }
+}

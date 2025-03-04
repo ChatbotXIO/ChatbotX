@@ -13,7 +13,6 @@ import type { getLogs } from "./queries"
 
 interface LogsTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>
-  // chatbotId: string
 }
 
 export function AuditLogsTable({ promises }: LogsTableProps) {

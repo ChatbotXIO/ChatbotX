@@ -25,7 +25,8 @@
           "level": "error",
           "fix": "safe"
         },
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "error",
+        "noUnknownProperty": "error"
       }
     }
   },
