@@ -32,6 +32,8 @@ export const createFlowAction = authActionClient
         )
       }
 
+      const firstNodeId = createId()
+
       await prisma.flow.create({
         data: {
           ...parsedInput,
@@ -41,7 +43,7 @@ export const createFlowAction = authActionClient
                 chatbotId: parsedInput.chatbotId,
                 nodes: [
                   {
-                    id: createId(),
+                    id: firstNodeId,
                     type: "SendMessage",
                     position: { x: 100, y: 100 },
                     data: {
@@ -54,6 +56,7 @@ export const createFlowAction = authActionClient
                 ],
                 edges: [],
                 isDraft: true,
+                startNodeId: firstNodeId,
               },
             ],
           },

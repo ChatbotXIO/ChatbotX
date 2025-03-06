@@ -1,0 +1,388 @@
+import { z } from "zod"
+import type {
+  EdgeSchema,
+  NodeSchema,
+} from "@/features/flows/react-flow/nodes/schema"
+import {
+  ActionType,
+  waitUserReplyActionTypes,
+} from "@/features/flows/react-flow/action-type"
+import type { BlockData } from "@/features/flows/react-flow/types"
+import type { ButtonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema"
+import type { SendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema"
+import {
+  type Conversation,
+  type FlowVersion,
+  prisma,
+} from "@ahachat.ai/database"
+import type { SendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
+import type { SendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema"
+import type { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema"
+import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
+import type { MarkEmailVerifiedBlockSchema } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
+import type { OptInEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
+import type { OptOutEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
+import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
+import type { OpenAIGenerateImageSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
+import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
+import type { OpenAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
+import type { OpenAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
+import type { OpenAIGenerateTextAgentSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
+import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
+import type { StartFlowBlockSchema } from "@/features/flows/react-flow/blocks/start-flow/schema"
+import type { WaitBlockSchema } from "@/features/flows/react-flow/blocks/wait/schema"
+import type { UserInputBlockSchema } from "@/features/flows/react-flow/blocks/user-input/schema"
+import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
+import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
+
+const messagePayloadSchema = z.object({
+  nodeId: z.string().cuid2(),
+  blockId: z.string().cuid2().optional(), // Current block for create new Message
+  text: z.string().optional(),
+})
+
+type MessagePayloadSchema = z.infer<typeof messagePayloadSchema>
+
+const handlers = {
+  // Send message blocks
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  [`handle${ActionType.SendText}`]: async (
+    _conversation: Conversation,
+    _block: SendTextBlockSchema,
+  ) => {
+    // todo create message text
+    return
+  },
+  [`handle${ActionType.SendImage}`]: async (
+    _conversation: Conversation,
+    _block: SendTextBlockSchema,
+  ) => {
+    // todo send message image
+    return
+  },
+  [`handle${ActionType.SendCard}`]: async (
+    _conversation: Conversation,
+    _block: SendCardBlockSchema,
+  ) => {
+    // todo send message card
+    return
+  },
+  [`handle${ActionType.SendCarousel}`]: async (
+    _conversation: Conversation,
+    _block: SendCarouselBlockSchema,
+  ) => {
+    // todo send message carousel
+    return
+  },
+  [`handle${ActionType.SendVideo}`]: async (
+    _conversation: Conversation,
+    _block: SendVideoBlockSchema,
+  ) => {
+    // todo send message video
+    return
+  },
+  [`handle${ActionType.SendAudio}`]: async (
+    _conversation: Conversation,
+    _block: SendAudioBlockSchema,
+  ) => {
+    // todo send message audio
+    return
+  },
+
+  [`handle${ActionType.UserInput}`]: async (
+    _conversation: Conversation,
+    _block: UserInputBlockSchema,
+  ) => {
+    // TODO: Implement User Input logic
+    return
+  },
+
+  // Action Email
+  [`handle${ActionType.MarkEmailVerified}`]: async (
+    _conversation: Conversation,
+    _block: MarkEmailVerifiedBlockSchema,
+  ) => {
+    // TODO: Implement Mark Email Verified logic
+    return
+  },
+  [`handle${ActionType.OptInEmail}`]: async (
+    _conversation: Conversation,
+    _block: OptInEmailBlockSchema,
+  ) => {
+    // TODO: Implement Opt-In Email logic
+    return
+  },
+  [`handle${ActionType.OptOutEmail}`]: async (
+    _conversation: Conversation,
+    _block: OptOutEmailBlockSchema,
+  ) => {
+    // TODO: Implement Opt-Out Email logic
+    return
+  },
+
+  // Action OpenAI Generate
+  [`handle${ActionType.OpenAIGenerateText}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text logic
+    return
+  },
+  [`handle${ActionType.OpenAIGenerateImage}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateImageSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Image logic
+    return
+  },
+  [`handle${ActionType.OpenAIAnalyzeImage}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIAnalyzeImageSchema,
+  ) => {
+    // TODO: Implement OpenAI Analyze Image logic
+    return
+  },
+  [`handle${ActionType.OpenAIDeleteMessageHistory}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIDeleteMessageHistorySchema,
+  ) => {
+    // TODO: Implement OpenAI Delete Message History logic
+    return
+  },
+  [`handle${ActionType.OpenAIGenerateTextAssistant}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextAssistantSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Assistant logic
+    return
+  },
+  [`handle${ActionType.OpenAIGenerateTextAgent}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextAgentSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Agent logic
+    return
+  },
+  [`handle${ActionType.OpenAIGenerateTextAdvanced}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextAdvancedSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Advanced logic
+    return
+  },
+  [`handle${ActionType.OpenAISpeechToText}`]: async (
+    _conversation: Conversation,
+    _block: OpenAISpeechToTextSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Advanced logic
+    return
+  },
+  [`handle${ActionType.OpenAITextToSpeech}`]: async (
+    _conversation: Conversation,
+    _block: OpenAITextToSpeechSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Advanced logic
+    return
+  },
+
+  // Start Flow
+  [`handle${ActionType.StartFlow}`]: async (
+    _conversation: Conversation,
+    _block: StartFlowBlockSchema,
+  ) => {
+    // TODO: Implement Start Flow logic
+    return
+  },
+
+  // Wait
+  [`handle${ActionType.Wait}`]: async (
+    _conversation: Conversation,
+    _block: WaitBlockSchema,
+  ) => {
+    // TODO: Implement Wait logic
+    return
+  },
+}
+
+async function main(
+  conversationId: string,
+  flowVersionId: string,
+  payload: MessagePayloadSchema,
+) {
+  const conversation = await prisma.conversation.findFirst({
+    where: {
+      id: conversationId,
+    },
+  })
+  if (!conversation) {
+    console.error("Conversation not found")
+    return
+  }
+  const flowVersion = await prisma.flowVersion.findFirst({
+    where: {
+      id: flowVersionId,
+      flowRuns: {
+        some: {
+          conversationId: conversationId,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
+
+  if (!flowVersion) {
+    console.error("Flow not found")
+    return
+  }
+
+  const mapPayload = payload.nodeId
+    ? payload
+    : { nodeId: flowVersion.startNodeId, blockId: "" }
+
+  await handleFlowExecution(conversation, flowVersion, mapPayload)
+}
+
+/**
+ * If message from user block type is can continue other node as button, saved data, ...
+ * Create message for block
+ * Return handleId every block type if have.
+ */
+async function replyMessage(block: BlockData, payload: MessagePayloadSchema) {
+  // TODO create message text
+
+  switch (block.actionType) {
+    case ActionType.SendText:
+    case ActionType.SendImage:
+    case ActionType.SendVideo:
+    case ActionType.SendCard:
+    case ActionType.SendAudio:
+      return block.buttons?.find(
+        (button: ButtonBlockSchema) => button.label === payload.text,
+      )?.id
+
+    // Check case reply to trigger next block.
+    // See apps/builder/src/features/flows/react-flow/action-type.ts waitUserReplyActionTypes
+    case ActionType.UserInput:
+      // todo Parse text data
+      return
+    default:
+      return undefined
+  }
+}
+
+async function handleCurrentBlock(
+  conversation: Conversation,
+  block: BlockData,
+) {
+  const handlerName = `handle${block.actionType}` as keyof typeof handlers
+
+  if (typeof handlers[handlerName] === "function") {
+    console.log("handleCurrentBlock", handlerName, block.id)
+    await handlers[handlerName](conversation, block)
+  }
+}
+
+async function handleFlowExecution(
+  conversation: Conversation,
+  flowVersion: FlowVersion,
+  payload: MessagePayloadSchema,
+) {
+  const nodes = (flowVersion.nodes ?? []) as NodeSchema[]
+
+  const node = nodes.find((obj) => obj.id === payload.nodeId)
+  if (!node) {
+    console.error("NodeId not exists on current version")
+    return
+  }
+
+  // If empty node, check next node
+  if (!node.data.blocks?.length) {
+    await triggerNextNode(conversation, flowVersion, payload.nodeId)
+    return
+  }
+
+  // If empty blockId, check first block or find block by blockId
+  const blockIndex = !payload.blockId
+    ? 0
+    : node.data.blocks.findIndex((obj: BlockData) => obj.id === payload.blockId)
+  if (blockIndex === -1) {
+    console.error("BlockId not exists on current version")
+    return
+  }
+
+  const block = node.data.blocks[blockIndex]
+  // Check is reply message from user.
+  if (payload.text) {
+    const handleId = await replyMessage(block, payload)
+    if (handleId) {
+      console.log("Continue node after reply message", handleId)
+      await triggerNextNode(conversation, flowVersion, handleId)
+    }
+    return
+  }
+
+  /**
+   * If message from system block type is can continue
+   * Handle action logic for this block, create message if need
+   * Trigger next block
+   */
+  await handleCurrentBlock(conversation, block)
+
+  // If block type is wait user reply, skip loop trigger next block.
+  if (waitUserReplyActionTypes.includes(block.actionType)) {
+    console.log("Skip trigger next block when wait user reply")
+    return
+  }
+
+  if (blockIndex === node.data.blocks.length - 1) {
+    console.log("Trigger to next node because block is latest of node", node.id)
+    await triggerNextNode(conversation, flowVersion, node.id)
+    return
+  }
+
+  const nextBlock = node.data.blocks[blockIndex + 1]
+  // If block type is can continue, trigger next block
+  await handleFlowExecution(conversation, flowVersion, {
+    nodeId: payload.nodeId,
+    blockId: nextBlock.id,
+  })
+}
+
+async function triggerNextNode(
+  conversation: Conversation,
+  flowVersion: FlowVersion,
+  sourceHandle: string,
+) {
+  const edge = ((flowVersion.edges ?? []) as EdgeSchema[]).find(
+    (obj) => obj.sourceHandle === sourceHandle,
+  )
+  if (!edge) {
+    return
+  }
+
+  await handleFlowExecution(conversation, flowVersion, {
+    nodeId: edge.targetHandle,
+  })
+}
+
+const args = process.argv.slice(2)
+main(
+  args[0] as string,
+  args[1] as string,
+  {
+    nodeId: args[2] ?? "",
+    blockId: args[3] ?? "",
+    text: args[4] ?? "",
+  } as MessagePayloadSchema,
+)
+  .then(() => {
+    return true
+  })
+  .catch((error) => {
+    console.error("error", error)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

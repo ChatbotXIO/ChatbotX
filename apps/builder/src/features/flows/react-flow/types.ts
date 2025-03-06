@@ -1,6 +1,8 @@
 import { z } from "zod"
 import type { AddNotesNodeSchema } from "./nodes/add-notes/schema"
 import type { SendMessageNodeSchema } from "./nodes/send-message/schema"
+import type { StartFlowNodeSchema } from "@/features/flows/react-flow/nodes/start-flow/schema"
+import type { WaitNodeSchema } from "@/features/flows/react-flow/nodes/wait/schema"
 
 export enum NodeType {
   SendMessage = "SendMessage",
@@ -42,3 +44,8 @@ export const baseNodeSchema = z.object({
 export type NodeData =
   | SendMessageNodeSchema["data"]
   | AddNotesNodeSchema["data"]
+
+export type BlockData =
+  | SendMessageNodeSchema["data"]["blocks"][number]
+  | StartFlowNodeSchema["data"]["blocks"][number]
+  | WaitNodeSchema["data"]["blocks"][number]
