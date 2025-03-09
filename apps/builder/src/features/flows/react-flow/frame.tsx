@@ -1,9 +1,14 @@
 "use client"
 
+import type { findFlow } from "@/features/flows/queries"
 import AddNotesNode from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
 import { defaultAddNotesNode } from "@/features/flows/react-flow/nodes/add-notes/schema"
 import { defaultSendMessageNode } from "@/features/flows/react-flow/nodes/send-message/schema"
 import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer"
+import { startFlowNodeDefaultValue } from "@/features/flows/react-flow/nodes/start-flow/schema"
+import StartFlowNodeViewer from "@/features/flows/react-flow/nodes/start-flow/viewer"
+import { waitNodeDefaultValue } from "@/features/flows/react-flow/nodes/wait/schema"
+import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
 import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block"
 import { NodeDetailSheet } from "@/features/flows/react-flow/panels/node-detail-sheet"
 import {
@@ -20,13 +25,8 @@ import {
   useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
-import type { findFlow } from "@/features/flows/queries"
-import { startFlowNodeDefaultValue } from "@/features/flows/react-flow/nodes/start-flow/schema"
-import StartFlowNodeViewer from "@/features/flows/react-flow/nodes/start-flow/viewer"
-import { waitNodeDefaultValue } from "@/features/flows/react-flow/nodes/wait/schema"
-import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
 import { useOptimisticAction } from "next-safe-action/hooks"
-import { notFound } from "next/navigation"
+import { notFound, useParams } from "next/navigation"
 import { use, useCallback, useEffect, useState } from "react"
 import { useDebouncedCallback } from "use-debounce"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
@@ -47,6 +47,7 @@ interface ReactFlowFrameProps {
 
 export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
   const { data: flow } = use(promises)
+  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   if (!flow) {
     return notFound()
@@ -80,7 +81,7 @@ export function ReactFlowFrame({ promises }: ReactFlowFrameProps) {
   )
 
   const { execute: savingDraft } = useOptimisticAction(
-    updateDraftFlowVersionAction.bind(null, targetFlowVersion.id),
+    updateDraftFlowVersionAction.bind(null, chatbotId, targetFlowVersion.id),
     {
       currentState: { targetFlowVersion },
       updateFn: (state, updatedData) => {

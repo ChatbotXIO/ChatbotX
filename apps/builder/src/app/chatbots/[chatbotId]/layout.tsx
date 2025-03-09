@@ -26,9 +26,9 @@ export default async function ChatbotLayout({
 
   const headersList = await headers()
   const chatbotId = allParams.chatbotId
-  const requiredPadding = headersList.get("x-url")?.includes("/inbox")
-    ? ""
-    : "p-4"
+
+  const isInboxPage = headersList.get("x-url")?.includes("/inbox")
+  const requiredPadding = isInboxPage ? "" : "p-4"
 
   const allChatbotsPromise = getAllChatbotMembers(userId)
 
@@ -48,11 +48,13 @@ export default async function ChatbotLayout({
         allChatbotsPromise={allChatbotsPromise}
       />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          {breadcrumb}
-        </header>
+        {!isInboxPage && (
+          <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            {breadcrumb}
+          </header>
+        )}
         <main className={cn("flex flex-1 flex-col gap-4", requiredPadding)}>
           {children}
         </main>

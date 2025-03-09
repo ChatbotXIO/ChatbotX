@@ -40,7 +40,7 @@ export function RenameFlowDialog({
     handleSubmitWithAction,
     form: { setValue },
   } = useHookFormAction(
-    updateFlowAction.bind(null, flow?.id ?? ""),
+    updateFlowAction.bind(null, flow?.chatbotId ?? "", flow?.id ?? ""),
     zodResolver(updateFlowSchema),
     {
       actionProps: {

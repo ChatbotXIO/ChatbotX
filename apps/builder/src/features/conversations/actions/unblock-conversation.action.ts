@@ -1,5 +1,3 @@
-"use server"
-
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -10,7 +8,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const deleteAutomatedResponseAction = chatbotActionClient
+export const unblockConversationAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
   .schema(bulkUpdateIdsRequest)
   .action(
@@ -21,15 +19,21 @@ export const deleteAutomatedResponseAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.automatedResponse.deleteMany({
+      await prisma.conversation.updateMany({
         where: {
-          chatbotId,
           id: {
             in: parsedInput.ids,
           },
+          chatbotId,
+        },
+        data: {
+          blockedAt: null,
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}:automatedResponses`)
+      revalidateTag(`chatbots:${chatbotId}#conversations`)
+      for (const id of parsedInput.ids) {
+        revalidateTag(`chatbots:${chatbotId}#conversations:${id}`)
+      }
     },
   )

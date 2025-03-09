@@ -2,9 +2,9 @@
 
 import {
   type ChatbotIdRequestParams,
-  type DeleteRequestSchema,
+  type BulkUpdateIdsRequest,
   chatbotIdRequestParams,
-  deleteRequestSchema,
+  bulkUpdateIdsRequest,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
@@ -12,14 +12,14 @@ import { revalidateTag } from "next/cache"
 
 export const deleteAITriggerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(deleteRequestSchema)
+  .schema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
       parsedInput: { ids },
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: DeleteRequestSchema
+      parsedInput: BulkUpdateIdsRequest
     }) => {
       await prisma.aITrigger.deleteMany({
         where: {

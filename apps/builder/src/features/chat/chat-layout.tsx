@@ -5,6 +5,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
 import { MessageInput } from "../messages/message-input"
 import { MessageList } from "../messages/message-list"
@@ -40,7 +41,7 @@ export const ChatLayout = ({
     <ChatStoreProvider>
       <ResizablePanelGroup
         direction="horizontal"
-        className="h-full max-h-[calc(100vh-48px)] items-stretch"
+        className="h-full items-stretch"
       >
         {/* CONVERSATION LIST */}
         <ResizablePanel
@@ -69,9 +70,9 @@ export const ChatLayout = ({
           defaultSize={layout[2] ?? 25}
           minSize={20}
           maxSize={30}
-          className="p-3"
+          className="px-4 py-3"
         >
-          {/* {contact} */}
+          <ContactInboxPanel />
         </ResizablePanel>
       </ResizablePanelGroup>
     </ChatStoreProvider>

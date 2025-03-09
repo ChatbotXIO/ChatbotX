@@ -139,10 +139,8 @@ export const MessageInput = () => {
     }
   }
 
-  return (
+  return activeConversationId ? (
     <div className="rounded-xl m-3 pt-2 border">
-      {/* {JSON.stringify(conversations)} */}
-      {JSON.stringify(activeConversationId)}
       <Form {...form}>
         <form
           onSubmit={handleSubmitWithAction}
@@ -205,5 +203,5 @@ export const MessageInput = () => {
         </form>
       </Form>
     </div>
-  )
+  ) : null
 }

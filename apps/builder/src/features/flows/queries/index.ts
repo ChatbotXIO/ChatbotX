@@ -79,7 +79,7 @@ export async function getFlows(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbots#${input.chatbotId}#flows`],
+      tags: [`chatbots:${input.chatbotId}#flows`],
     },
   )()
 }
@@ -107,7 +107,7 @@ export const findFlow = async (
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbots#${input.chatbotId}#flows#${input.id}`],
+      tags: [`chatbots:${input.chatbotId}#flows:${input.id}`],
     },
   )()
 }

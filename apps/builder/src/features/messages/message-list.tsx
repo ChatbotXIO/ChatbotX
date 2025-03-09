@@ -25,10 +25,11 @@ export function MessageList() {
   const [page, setPage] = useState(1)
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
+    setPage(1)
     if (activeConversationId) {
       loadMoreMessages(chatbotId, MESSAGE_LIST_PER_PAGE)
     }
-  }, [page, activeConversationId])
+  }, [activeConversationId])
 
   // Load more items when reaching the end of the list
   const loadMoreItems = () => {
@@ -44,7 +45,7 @@ export function MessageList() {
         followOutput
         initialTopMostItemIndex={messages.length - 1}
         rangeChanged={({ startIndex }) => {
-          if (startIndex <= 5 && messages.length >= MESSAGE_LIST_PER_PAGE) {
+          if (startIndex <= 5 && page !== 1) {
             loadMoreItems()
           }
         }}
