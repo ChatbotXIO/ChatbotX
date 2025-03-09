@@ -1,7 +1,7 @@
 "use client"
 
 import { FormInput } from "@/components/form-input"
-import { WhastsappIcon } from "@/components/icons/whatsapp-icon"
+import { WhastsappIcon } from "@/components/icons/whatsapp"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

@@ -1,7 +1,7 @@
 import type * as Party from "partykit/server"
-import { getNextAuthSession } from "../utils/auth"
+import { getNextAuthSession } from "../utils/auth.js"
 
-export default class ConversationParty implements Party.Server {
+export default class UserParty implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
   async onStart() {}
@@ -14,7 +14,9 @@ export default class ConversationParty implements Party.Server {
     this.room.broadcast(`Hello ${userId} from party!`)
   }
 
-  // async onMessage(message: string | ArrayBuffer, sender: Party.Connection) {}
+  async onMessage(message: string | ArrayBuffer, sender: Party.Connection) {
+    console.log("message from", sender, message)
+  }
 
   // async onClose(connection: Party.Connection) {}
 

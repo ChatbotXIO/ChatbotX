@@ -30,6 +30,6 @@ export const deleteAITriggerAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbot:${chatbotId}#aiTriggers`)
+      revalidateTag(`chatbots:${chatbotId}#aiTriggers`)
     },
   )

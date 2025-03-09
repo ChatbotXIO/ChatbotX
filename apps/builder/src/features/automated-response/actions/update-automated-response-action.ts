@@ -53,6 +53,6 @@ export const updateAutomatedResponseAction = chatbotActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`chatbot:${chatbotId}#automatedResponses`)
+      revalidateTag(`chatbots:${chatbotId}#automatedResponses`)
     },
   )

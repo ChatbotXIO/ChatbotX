@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts"
+    "integration:dev": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
+    "chat:dev": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
+    "dev": "pnpm run integration:dev"
   },
   "keywords": [],
   "author": "",

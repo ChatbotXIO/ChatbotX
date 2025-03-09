@@ -38,6 +38,6 @@ export const duplicateAIAgentAction = authActionClient
         },
       })
 
-      revalidateTag(`chatbot:${chatbotId}#aiAgents`)
+      revalidateTag(`chatbots:${chatbotId}#aiAgents`)
     },
   )

@@ -37,6 +37,6 @@ export const updateBroadcastAction = chatbotActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`chatbot:${chatbotId}#broadcasts`)
+      revalidateTag(`chatbots:${chatbotId}#broadcasts`)
     },
   )

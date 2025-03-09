@@ -44,7 +44,16 @@ CREATE TYPE "ContentType" AS ENUM ('TEXT');
 CREATE TYPE "FileType" AS ENUM ('IMAGE', 'AUDIO', 'VIDEO', 'FILE');
 
 -- CreateEnum
-CREATE TYPE "AttachmentType" AS ENUM ('Image', 'Audio', 'Video', 'File');
+CREATE TYPE "AttachmentType" AS ENUM ('IMAGE', 'AUDIO', 'VIDEO', 'FILE');
+
+-- CreateEnum
+CREATE TYPE "BroadcastStatus" AS ENUM ('SCHEDULED', 'SENT');
+
+-- CreateEnum
+CREATE TYPE "BroadcastSchedulesType" AS ENUM ('NOW', 'FUTURE');
+
+-- CreateEnum
+CREATE TYPE "BroadcastSubaction" AS ENUM ('TEMPLATE_MESSAGE', 'RECENT_CONTACTS', 'ALL_CONTACTS');
 
 -- CreateTable
 CREATE TABLE "Workspace" (
@@ -315,7 +324,7 @@ CREATE TABLE "Conversation" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "chatbotId" TEXT NOT NULL,
     "contactId" TEXT NOT NULL,
-    "inboxType" "InboxType" NOT NULL,
+    "inboxId" TEXT NOT NULL,
     "liveChatEnabled" BOOLEAN NOT NULL DEFAULT false,
     "followed" BOOLEAN NOT NULL DEFAULT false,
     "archivedAt" TIMESTAMP(3),
@@ -535,6 +544,51 @@ CREATE TABLE "FlowVersion" (
 );
 
 -- CreateTable
+CREATE TABLE "Broadcast" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "name" TEXT NOT NULL,
+    "chatbotId" TEXT NOT NULL,
+    "flowId" TEXT NOT NULL,
+    "inboxType" "InboxType",
+    "subaction" "BroadcastSubaction",
+    "status" "BroadcastStatus" NOT NULL,
+    "schedulesType" "BroadcastSchedulesType" NOT NULL,
+    "schedulesAt" TIMESTAMP(3) NOT NULL,
+    "conditions" JSONB,
+
+    CONSTRAINT "Broadcast_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ContactsOnBroadcasts" (
+    "broadcastId" TEXT NOT NULL,
+    "contactId" TEXT NOT NULL,
+    "sent" BOOLEAN NOT NULL DEFAULT false,
+    "delivered" BOOLEAN NOT NULL DEFAULT false,
+    "seen" BOOLEAN NOT NULL DEFAULT false,
+    "clicked" BOOLEAN NOT NULL DEFAULT false,
+    "failed" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "ContactsOnBroadcasts_pkey" PRIMARY KEY ("broadcastId","contactId")
+);
+
+-- CreateTable
+CREATE TABLE "AutomatedResponse" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "chatbotId" TEXT NOT NULL,
+    "userMessages" TEXT[],
+    "folderId" TEXT,
+    "replies" JSONB[],
+    "status" BOOLEAN NOT NULL,
+
+    CONSTRAINT "AutomatedResponse_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_ContactToTag" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
@@ -629,6 +683,18 @@ CREATE UNIQUE INDEX "IntegrationWhatsapp_inboxId_key" ON "IntegrationWhatsapp"("
 CREATE UNIQUE INDEX "IntegrationChatWidget_inboxId_key" ON "IntegrationChatWidget"("inboxId");
 
 -- CreateIndex
+CREATE INDEX "Broadcast_chatbotId_idx" ON "Broadcast"("chatbotId");
+
+-- CreateIndex
+CREATE INDEX "Broadcast_flowId_idx" ON "Broadcast"("flowId");
+
+-- CreateIndex
+CREATE INDEX "Broadcast_schedulesAt_idx" ON "Broadcast"("schedulesAt");
+
+-- CreateIndex
+CREATE INDEX "AutomatedResponse_chatbotId_idx" ON "AutomatedResponse"("chatbotId");
+
+-- CreateIndex
 CREATE INDEX "_ContactToTag_B_index" ON "_ContactToTag"("B");
 
 -- CreateIndex
@@ -680,13 +746,13 @@ ALTER TABLE "Log" ADD CONSTRAINT "user_executorId" FOREIGN KEY ("executorId") RE
 ALTER TABLE "Log" ADD CONSTRAINT "contact_executorId" FOREIGN KEY ("executorId") REFERENCES "Contact"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Contact" ADD CONSTRAINT "Contact_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Contact" ADD CONSTRAINT "team_assignedId" FOREIGN KEY ("assignedId") REFERENCES "InboxTeam"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Contact" ADD CONSTRAINT "user_assignedId" FOREIGN KEY ("assignedId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Contact" ADD CONSTRAINT "team_assignedId" FOREIGN KEY ("assignedId") REFERENCES "InboxTeam"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Contact" ADD CONSTRAINT "Contact_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Folder" ADD CONSTRAINT "Folder_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Folder"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -720,6 +786,9 @@ ALTER TABLE "Conversation" ADD CONSTRAINT "Conversation_chatbotId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "Conversation" ADD CONSTRAINT "Conversation_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Conversation" ADD CONSTRAINT "Conversation_inboxId_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ConversationParticipant" ADD CONSTRAINT "ConversationParticipant_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -804,6 +873,21 @@ ALTER TABLE "FlowVersion" ADD CONSTRAINT "FlowVersion_chatbotId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "FlowVersion" ADD CONSTRAINT "FlowVersion_flowId_fkey" FOREIGN KEY ("flowId") REFERENCES "Flow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Broadcast" ADD CONSTRAINT "Broadcast_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Broadcast" ADD CONSTRAINT "Broadcast_flowId_fkey" FOREIGN KEY ("flowId") REFERENCES "Flow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ContactsOnBroadcasts" ADD CONSTRAINT "ContactsOnBroadcasts_broadcastId_fkey" FOREIGN KEY ("broadcastId") REFERENCES "Broadcast"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ContactsOnBroadcasts" ADD CONSTRAINT "ContactsOnBroadcasts_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AutomatedResponse" ADD CONSTRAINT "AutomatedResponse_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_ContactToTag" ADD CONSTRAINT "_ContactToTag_A_fkey" FOREIGN KEY ("A") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;

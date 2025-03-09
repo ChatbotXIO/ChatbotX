@@ -31,6 +31,6 @@ export const deleteAIAgentAction = authActionClient
         },
       })
 
-      revalidateTag(`chatbot:${chatbotId}#aiAgents`)
+      revalidateTag(`chatbots:${chatbotId}#aiAgents`)
     },
   )

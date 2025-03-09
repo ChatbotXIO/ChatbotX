@@ -30,6 +30,6 @@ export const deleteAutomatedResponseAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbot:${chatbotId}:automatedResponses`)
+      revalidateTag(`chatbots:${chatbotId}:automatedResponses`)
     },
   )

@@ -1,4 +1,4 @@
-import { countContacts } from "@/features/contacts/actions/list-contacts.action"
+import { countContacts } from "@/features/contacts/queries/list-contacts.queries"
 import { listContactsRequest } from "@/features/contacts/schemas/get-contacts-schema"
 import { type NextRequest, NextResponse } from "next/server"
 

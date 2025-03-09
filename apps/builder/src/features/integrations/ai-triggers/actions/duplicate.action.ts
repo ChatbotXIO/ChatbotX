@@ -39,6 +39,6 @@ export const duplicateAITriggerAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbot:${chatbotId}#aiTriggers`)
+      revalidateTag(`chatbots:${chatbotId}#aiTriggers`)
     },
   )

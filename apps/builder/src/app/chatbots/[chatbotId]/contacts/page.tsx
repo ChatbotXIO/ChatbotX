@@ -1,5 +1,5 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
-import { listContacts } from "@/features/contacts/actions/list-contacts.action"
+import { listContacts } from "@/features/contacts/queries/list-contacts.queries"
 import { ContactsTable } from "@/features/contacts/contacts-table"
 import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
 import { listContactsNuqs } from "@/features/contacts/schemas/get-contacts-schema"

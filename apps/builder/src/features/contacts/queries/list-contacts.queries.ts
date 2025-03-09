@@ -37,7 +37,7 @@ export async function listContacts(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbot:${input.chatbotId}#contacts`],
+      tags: [`chatbots:${input.chatbotId}#contacts`],
     },
   )()
 }

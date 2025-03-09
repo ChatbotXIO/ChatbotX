@@ -344,6 +344,7 @@ model Inbox {
   integrationWhatsapp   IntegrationWhatsapp?
   integrationChatWidget IntegrationChatWidget?
   messages              Message[]
+  conversations         Conversation[]
   chatbot               Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
@@ -355,7 +356,7 @@ model Conversation {
   updatedAt              DateTime  @updatedAt
   chatbotId              String
   contactId              String    @unique
-  inboxType              InboxType
+  inboxId                String
   liveChatEnabled        Boolean   @default(false)
   followed               Boolean   @default(false)
   archivedAt             DateTime?
@@ -364,9 +365,11 @@ model Conversation {
   conversationAttributes Json?
   contactLastSeenAt      DateTime?
   agentLastSeenAt        DateTime?
+  lastActivityAt         DateTime  @default(now())
 
   chatbot                  Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   contact                  Contact                   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  inbox                    Inbox                     @relation(fields: [inboxId], references: [id], onDelete: Cascade)
   messages                 Message[]
   conversationParticipants ConversationParticipant[]
   attachment               Attachment[]
