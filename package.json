@@ -15,12 +15,12 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@tolgee/cli": "^2.9.0",
-    "@types/node": "^22.13.5",
+    "@types/node": "^22.13.8",
     "husky": "^9.1.7",
     "prettier": "^3.5.2",
     "tsx": "^4.19.3",
     "turbo": "^2.4.4",
-    "typescript": "5.7.3"
+    "typescript": "5.8.2"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {

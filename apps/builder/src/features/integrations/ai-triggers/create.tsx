@@ -12,19 +12,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Form, FormLabel } from "@/components/ui/form"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { FlowSelect } from "@/features/flows/flow-select"
 import { createAITriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
-import { createAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/create.schema"
+import { createAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -52,7 +44,7 @@ export function CreateAITriggerDialog({
     form: { control },
   } = useHookFormAction(
     createAITriggerAction.bind(null, chatbotId),
-    zodResolver(createAITriggerSchema),
+    zodResolver(createAITriggerRequest),
     {
       actionProps: {
         onSuccess: () => {
@@ -70,6 +62,9 @@ export function CreateAITriggerDialog({
         mode: "onChange",
         defaultValues: {
           name: "",
+          description: "",
+          finalMessage: "",
+          flowId: null,
         },
       },
       errorMapProps: {},
@@ -119,38 +114,31 @@ export function CreateAITriggerDialog({
               <div className="flex flex-col space-y-2">
                 <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
                 {fields.map((field, i) => (
-                  <div className="flex items-center space-x-2" key={field.id}>
-                    <FormField
-                      control={form.control}
-                      name={`questions.${i}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder={t("aiTriggers.questions.name")}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="flex items-top" key={field.id}>
+                    <div className="basis-5/12">
+                      <FormInput name={`questions.${i}.name`} label="" />
+                    </div>
+                    <div className="basis-1/12 flex justify-center">
+                      <ArrowRightIcon className="mt-2" />
+                    </div>
 
-                    <ArrowRightIcon />
+                    <div className="basis-5/12">
+                      <CustomFieldSelect
+                        name={`questions.${i}.fieldId`}
+                        label=""
+                      />
+                    </div>
 
-                    <CustomFieldSelect
-                      name={`questions.${i}.fieldId`}
-                      label=""
-                    />
-
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => remove(i)}
-                    >
-                      <XIcon />
-                    </Button>
+                    <div className="basis-1/12">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => remove(i)}
+                      >
+                        <XIcon />
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 <Button

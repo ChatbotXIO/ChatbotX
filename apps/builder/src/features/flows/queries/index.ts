@@ -1,6 +1,6 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import type { Prisma } from "@ahachat.ai/database"
+import type { Flow, Prisma } from "@ahachat.ai/database"
 import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 import type {
@@ -9,6 +9,7 @@ import type {
   FlowResource,
   ListFlowsParams,
 } from "../schemas/get-flows-schema"
+import { FlowException } from "../schemas/exception"
 
 export async function getFlows(
   input: ListFlowsParams,
@@ -78,7 +79,7 @@ export async function getFlows(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbots#${input.chatbotId}#flows`],
+      tags: [`chatbots:${input.chatbotId}#flows`],
     },
   )()
 }
@@ -106,7 +107,43 @@ export const findFlow = async (
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbots#${input.chatbotId}#flows#${input.id}`],
+      tags: [`chatbots:${input.chatbotId}#flows:${input.id}`],
     },
   )()
+}
+
+export const ensureFlowIdIsExists = async (
+  chatbotId: string,
+  id: string,
+): Promise<Flow> => {
+  const flow = await prisma.flow.findFirst({
+    where: {
+      chatbotId,
+      id,
+    },
+  })
+
+  if (!flow) {
+    throw new FlowException("Flow does not exists.")
+  }
+
+  return flow
+}
+
+export const ensureAllFlowIdsExists = async (
+  chatbotId: string,
+  flowIds: string[],
+): Promise<void> => {
+  const count = await prisma.flow.count({
+    where: {
+      chatbotId,
+      id: {
+        in: flowIds,
+      },
+    },
+  })
+
+  if (count !== flowIds.length) {
+    throw new FlowException("Flow does not exists.")
+  }
 }

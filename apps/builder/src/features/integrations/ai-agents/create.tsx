@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
 import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/create.action"
-import { createAIAgentSchema } from "@/features/integrations/ai-agents/schemas/create.schema"
+import { createAIAgentRequest } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { DialogDescription } from "@radix-ui/react-dialog"
@@ -30,7 +30,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
       createAIAgentAction.bind(null, chatbotId),
-      zodResolver(createAIAgentSchema),
+      zodResolver(createAIAgentRequest),
       {
         actionProps: {
           onSuccess: () => {

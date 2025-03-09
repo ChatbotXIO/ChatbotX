@@ -1,19 +1,25 @@
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import {
+  createPresignedPost,
+  type PresignedPostOptions,
+} from "@aws-sdk/s3-presigned-post"
 import type { Readable } from "node:stream"
-import { Client } from "minio"
 
 class Uploader {
-  #client: Client
+  #client: S3Client
   #bucketName: string
 
   private static instance: Uploader
 
   constructor() {
-    this.#client = new Client({
-      endPoint: process.env.AWS_ENDPOINT ?? "",
-      useSSL: false,
-      port: 9000,
-      accessKey: process.env.AWS_ACCESS_KEY_ID ?? "",
-      secretKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
+    this.#client = new S3Client({
+      endpoint: process.env.AWS_URL ?? "",
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
+      },
+      region: process.env.AWS_DEFAULT_REGION,
+      forcePathStyle: true,
     })
     this.#bucketName = process.env.AWS_BUCKET ?? ""
   }
@@ -25,19 +31,15 @@ class Uploader {
     return Uploader.instance
   }
 
-  async putObject(
-    newPath: string,
-    body: string | Readable | Buffer<ArrayBufferLike>,
-    size = 0,
-    metadata?: Record<string, string | number>,
-  ) {
-    await this.#client.putObject(
-      this.#bucketName,
-      newPath,
-      body,
-      size,
-      metadata,
-    )
+  async putObject(path: string, body: string | Uint8Array | Buffer | Readable) {
+    const command = new PutObjectCommand({
+      Bucket: this.#bucketName,
+      Key: path,
+      ACL: "private",
+      Body: body,
+    })
+
+    return await this.#client.send(command)
   }
 
   async putFile(
@@ -46,6 +48,25 @@ class Uploader {
     metadata?: Record<string, string | number>,
   ) {
     await this.#client.fPutObject(this.#bucketName, newPath, oldPath, metadata)
+  }
+
+  async getPresignedUpload(path: string, contentType: string) {
+    const command: PresignedPostOptions = {
+      Bucket: this.#bucketName,
+      Key: path,
+      Expires: 5 * 60, // 5 minutes
+      Conditions: [
+        ["content-length-range", 0, 5242880], // 5 MB
+        {
+          bucket: this.#bucketName,
+          acl: "private",
+          key: path,
+          "Content-Type": contentType,
+        },
+        // ["starts-with", "$Content-Type", contentType],
+      ],
+    }
+    return await createPresignedPost(this.#client, command)
   }
 }
 

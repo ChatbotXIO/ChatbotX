@@ -18,7 +18,7 @@ import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { deleteFlowAction } from "./actions/delete-flow-action"
+import { deleteFlowAction } from "./actions/delete-flow.action"
 
 interface DeleteFlowsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
@@ -40,16 +40,19 @@ export function DeleteFlowsDialog({
   const { t } = useTranslate()
   const router = useRouter()
 
-  const { execute, isPending } = useAction(deleteFlowAction, {
-    onSuccess: () => {
-      toast.success(t("flows.deleted"))
-      onOpenChange(false)
-      router.refresh()
+  const { execute, isPending } = useAction(
+    deleteFlowAction.bind(null, chatbotId),
+    {
+      onSuccess: () => {
+        toast.success(t("flows.deleted"))
+        onOpenChange(false)
+        router.refresh()
+      },
+      onError: ({ error }) => {
+        error.serverError && toast.error(error.serverError)
+      },
     },
-    onError: ({ error }) => {
-      error.serverError && toast.error(error.serverError)
-    },
-  })
+  )
 
   return (
     <Dialog {...props}>
@@ -80,7 +83,7 @@ export function DeleteFlowsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={() => execute({ chatbotId, ids: flows.map((f) => f.id) })}
+            onClick={() => execute({ ids: flows.map((f) => f.id) })}
             disabled={isPending}
           >
             {isPending && (

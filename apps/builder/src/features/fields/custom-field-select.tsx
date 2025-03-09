@@ -47,8 +47,8 @@ export const CustomFieldSelect = ({
 
   return (
     <FormItem>
-      <div className="flex items-center">
-        {label && (
+      {label && label !== "" && (
+        <div className="flex items-center">
           <FormLabel className="flex flex-1 gap-1 items-center">
             {label}
             {!isRequired && (
@@ -57,27 +57,27 @@ export const CustomFieldSelect = ({
               </span>
             )}
           </FormLabel>
-        )}
-        {allowCreate && (
-          <CreateCustomFieldDialog
-            chatbotId={params.chatbotId}
-            folderId={null}
-            triggerButton={
-              <Button
-                size="xs"
-                variant="ghost"
-                className="cursor-pointer"
-                asChild
-              >
-                <PlusCircleIcon />
-              </Button>
-            }
-            onSuccess={() => {
-              mutate(customFieldsUrl)
-            }}
-          />
-        )}
-      </div>
+          {allowCreate && (
+            <CreateCustomFieldDialog
+              chatbotId={params.chatbotId}
+              folderId={null}
+              triggerButton={
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  className="cursor-pointer"
+                  asChild
+                >
+                  <PlusCircleIcon />
+                </Button>
+              }
+              onSuccess={() => {
+                mutate(customFieldsUrl)
+              }}
+            />
+          )}
+        </div>
+      )}
       <SingleSelect
         name={name}
         placeholder="Please select"

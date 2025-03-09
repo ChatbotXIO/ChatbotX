@@ -8,7 +8,7 @@ import type {
 } from "@/components/data-table/types"
 import { duplicateAIAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
 import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
-import type { getAIAgents } from "@/features/integrations/ai-agents/queries/get.query"
+import type { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
 import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
 import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"

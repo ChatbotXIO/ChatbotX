@@ -1,9 +1,9 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { authActionClient } from "@/lib/safe-action"
 import { HandleRequestType } from "@ahachat.ai/sdk"
@@ -14,7 +14,7 @@ import {
 } from "../schemas"
 
 export const connectGoogleSheets = authActionClient
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .schema(connectGoogleSheetsSchema)
   .action(
     async ({
@@ -22,7 +22,7 @@ export const connectGoogleSheets = authActionClient
       bindArgsParsedInputs: [chatbotId],
     }: {
       parsedInput: ConnectGoogleSheetsSchema
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const redirectUrl =
         (await integrations.GOOGLE_SHEETS.integration.handleRequest?.({

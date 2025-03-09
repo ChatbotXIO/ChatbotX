@@ -83,7 +83,7 @@ export function getFlowColumns({
       ),
       cell: ({ row }) => {
         const { execute, isPending } = useAction(
-          updateFlowAction.bind(null, row.original.id),
+          updateFlowAction.bind(null, row.original.chatbotId, row.original.id),
           {
             onSuccess: () => {
               row.original.active = !row.original.active
@@ -111,7 +111,7 @@ export function getFlowColumns({
       ),
       cell: ({ row }) => {
         const { execute, isPending } = useAction(
-          updateFlowAction.bind(null, row.original.id),
+          updateFlowAction.bind(null, row.original.chatbotId, row.original.id),
           {
             onSuccess: () => {
               row.original.enableInInbox = !row.original.enableInInbox

@@ -1,9 +1,8 @@
 "use server"
 
-import { ensureUserCanAccessChatbot } from "@/features/chatbot-members/queries"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
-import { authActionClient } from "@/lib/safe-action"
-import { FolderType, type User, prisma } from "@ahachat.ai/database"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { FolderType, prisma } from "@ahachat.ai/database"
 import { createId } from "@paralleldrive/cuid2"
 import { revalidateTag } from "next/cache"
 import { MessageType } from "../react-flow/types"
@@ -11,23 +10,26 @@ import {
   type CreateFlowSchema,
   createFlowSchema,
 } from "../schemas/create-flow-schema"
+import {
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 
-export const createFlowAction = authActionClient
+export const createFlowAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .schema(createFlowSchema)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
-      ctx: { user: User }
+      bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateFlowSchema
     }) => {
-      await ensureUserCanAccessChatbot(ctx.user.id, parsedInput.chatbotId)
-
       if (parsedInput.folderId) {
         await ensureFolderIdIsExists(
           parsedInput.folderId,
-          parsedInput.chatbotId,
+          chatbotId,
           FolderType.FLOW,
         )
       }
@@ -35,6 +37,7 @@ export const createFlowAction = authActionClient
       await prisma.flow.create({
         data: {
           ...parsedInput,
+          chatbotId,
           flowVersions: {
             create: [
               {
@@ -60,6 +63,6 @@ export const createFlowAction = authActionClient
         },
       })
 
-      revalidateTag(`chatbots#${parsedInput.chatbotId}#flows`)
+      revalidateTag(`chatbots:${chatbotId}#flows`)
     },
   )

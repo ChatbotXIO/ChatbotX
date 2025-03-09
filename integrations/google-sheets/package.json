@@ -10,7 +10,7 @@
     "google-auth-library": "^9.15.1",
     "googleapis": "^146.0.0",
     "tslog": "^4.9.3",
-    "typescript": "5.7.3"
+    "typescript": "5.8.2"
   },
   "exports": {
     ".": "./src/index.ts"
