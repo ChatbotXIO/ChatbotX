@@ -7,6 +7,7 @@ import type {
   Oauth2AuthValue,
 } from "@ahachat.ai/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
+import type { SendMessageProps } from "./outgoing-message.js"
 
 export type WhatsappConfig = BaseConfig & {
   appSecret: string
@@ -26,5 +27,5 @@ export type WhatsappActions = {
     { ctx: Context<WhatsappAuthValue>; data: OnMessageArgs },
     { message: MessageEntity; conversation: ConversationEntity }
   >
-  // sendMessage: (props: SendMessageProps) => Promise<void>
+  sendMessage: (props: SendMessageProps) => Promise<void>
 }

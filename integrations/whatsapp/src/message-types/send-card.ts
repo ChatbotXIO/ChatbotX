@@ -1,0 +1,57 @@
+import {
+  Text,
+  Interactive,
+  ActionButtons,
+  type Button,
+  Image,
+  Header,
+} from "whatsapp-api-js/messages"
+import { chunkArray } from "../util.js"
+import type { ILogObj, Logger } from "tslog"
+import { generateBody, generateButton, generateFooter } from "../interactive.js"
+
+export const INTERACTIVE_MAX_BUTTONS_COUNT = 3
+
+export type SendCardPayload = {
+  title: string
+  subtitle?: string
+  image?: { url: string }
+  buttons?: { id: string; label: string }[]
+}
+
+export function* generateOutgoingMessages(
+  payload: SendCardPayload,
+  logger: Logger<ILogObj>,
+) {
+  if (!payload.buttons?.length) {
+    if (payload.image?.url) {
+      yield new Image(payload.image.url)
+    }
+    if (payload.title) {
+      yield new Text(payload.title)
+    }
+    if (payload.subtitle) {
+      yield new Text(payload.subtitle)
+    }
+  } else {
+    const chunks = chunkArray(payload.buttons, INTERACTIVE_MAX_BUTTONS_COUNT)
+
+    if (payload.buttons.length > INTERACTIVE_MAX_BUTTONS_COUNT) {
+      logger.info(
+        `Splitting ${payload.buttons.length} buttons into groups of ${INTERACTIVE_MAX_BUTTONS_COUNT} buttons each due to a limitation of Whatsapp.`,
+      )
+    }
+
+    for (const chunk of chunks) {
+      const buttons: Button[] = chunk.map((button) =>
+        generateButton({ id: button.id, title: button.label }),
+      )
+      yield new Interactive(
+        new ActionButtons(...buttons),
+        generateBody(payload.title),
+        payload.image ? new Header(new Image(payload.image.url)) : undefined,
+        payload.subtitle ? generateFooter(payload.subtitle) : undefined,
+      )
+    }
+  }
+}

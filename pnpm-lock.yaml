@@ -38,6 +38,9 @@ importers:
       '@ahachat.ai/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@ahachat.ai/filesystem':
+        specifier: workspace:*
+        version: link:../../packages/filesystem
       '@ahachat.ai/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets

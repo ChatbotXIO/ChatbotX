@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ahachat.ai/database": "workspace:*",
+    "@ahachat.ai/filesystem": "workspace:*",
     "@ahachat.ai/integration-google-sheets": "workspace:*",
     "@ahachat.ai/integration-whatsapp": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",

@@ -1,3 +1,7 @@
+// Commands for running flows
+// cd apps/builder/src/features/flows/actions
+// dotenv -e ../../../../../../.env -- tsx run-flow.ts {conversationId} {flowVersionId}
+
 import { z } from "zod"
 import type {
   EdgeSchema,
@@ -11,9 +15,12 @@ import type { BlockData } from "@/features/flows/react-flow/types"
 import type { ButtonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema"
 import type { SendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema"
 import {
+  ContentType,
   type Conversation,
   type FlowVersion,
+  MessageType,
   prisma,
+  SenderType,
 } from "@ahachat.ai/database"
 import type { SendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
 import type { SendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema"
@@ -34,6 +41,10 @@ import type { WaitBlockSchema } from "@/features/flows/react-flow/blocks/wait/sc
 import type { UserInputBlockSchema } from "@/features/flows/react-flow/blocks/user-input/schema"
 import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
 import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
+import { integrations } from "@/integration"
+import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
+import { uploader } from "@ahachat.ai/filesystem"
+import { getLogger } from "@/lib/log"
 
 const messagePayloadSchema = z.object({
   nodeId: z.string().cuid2(),
@@ -45,33 +56,37 @@ type MessagePayloadSchema = z.infer<typeof messagePayloadSchema>
 
 const handlers = {
   // Send message blocks
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   [`handle${ActionType.SendText}`]: async (
-    _conversation: Conversation,
-    _block: SendTextBlockSchema,
+    conversation: Conversation,
+    block: SendTextBlockSchema,
+    _flowVersion: FlowVersion,
   ) => {
-    // todo create message text
+    await createMessage(conversation, block.message, block)
+
     return
   },
   [`handle${ActionType.SendImage}`]: async (
-    _conversation: Conversation,
-    _block: SendTextBlockSchema,
+    conversation: Conversation,
+    block: SendTextBlockSchema,
   ) => {
-    // todo send message image
+    await createMessage(conversation, block.message, block)
+
     return
   },
   [`handle${ActionType.SendCard}`]: async (
-    _conversation: Conversation,
-    _block: SendCardBlockSchema,
+    conversation: Conversation,
+    block: SendCardBlockSchema,
   ) => {
-    // todo send message card
+    await createMessage(conversation, block.title, block)
+
     return
   },
   [`handle${ActionType.SendCarousel}`]: async (
-    _conversation: Conversation,
-    _block: SendCarouselBlockSchema,
+    conversation: Conversation,
+    block: SendCarouselBlockSchema,
   ) => {
-    // todo send message carousel
+    await createMessage(conversation, block.cards[0]?.title, block)
+
     return
   },
   [`handle${ActionType.SendVideo}`]: async (
@@ -204,6 +219,45 @@ const handlers = {
   },
 }
 
+const createMessage = async (
+  conversation: Conversation,
+  content?: string | null,
+  attributes?,
+) => {
+  const dbIntegrationWhatsapp =
+    await prisma.integrationWhatsapp.findFirstOrThrow({
+      where: {
+        auth: {
+          path: ["metadata", "phoneNumberId"],
+          equals: conversation.conversationAttributes?.phoneNumberId as string,
+        },
+      },
+    })
+  const ctx = {
+    auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
+    logger: getLogger("whatsapp"),
+    uploader,
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      conversationId: conversation.id,
+      inboxId: dbIntegrationWhatsapp.inboxId,
+      chatbotId: conversation.chatbotId,
+      content: content,
+      contentAttributes: attributes,
+      messageType: MessageType.OUTGOING,
+      contentType: ContentType.TEXT,
+      senderType: SenderType.BOT,
+    },
+  })
+  await integrations.WHATSAPP.integration.actions?.sendMessage({
+    ctx,
+    conversation,
+    message,
+  })
+}
+
 async function main(
   conversationId: string,
   flowVersionId: string,
@@ -272,18 +326,6 @@ async function replyMessage(block: BlockData, payload: MessagePayloadSchema) {
   }
 }
 
-async function handleCurrentBlock(
-  conversation: Conversation,
-  block: BlockData,
-) {
-  const handlerName = `handle${block.actionType}` as keyof typeof handlers
-
-  if (typeof handlers[handlerName] === "function") {
-    console.log("handleCurrentBlock", handlerName, block.id)
-    await handlers[handlerName](conversation, block)
-  }
-}
-
 async function handleFlowExecution(
   conversation: Conversation,
   flowVersion: FlowVersion,
@@ -328,7 +370,12 @@ async function handleFlowExecution(
    * Handle action logic for this block, create message if need
    * Trigger next block
    */
-  await handleCurrentBlock(conversation, block)
+  const handlerName = `handle${block.actionType}` as keyof typeof handlers
+
+  if (typeof handlers[handlerName] === "function") {
+    console.log("handleCurrentBlock", handlerName, block.id)
+    await handlers[handlerName](conversation, block, flowVersion)
+  }
 
   // If block type is wait user reply, skip loop trigger next block.
   if (waitUserReplyActionTypes.includes(block.actionType)) {

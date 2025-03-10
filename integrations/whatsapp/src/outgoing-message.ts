@@ -12,39 +12,85 @@ import type {
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client"
 import type { WhatsappAuthValue } from "./schemas"
+import { generateOutgoingMessages as generateSendTextOutgoingMessages } from "./message-types/send-text.js"
+import { generateOutgoingMessages as generateSendImageOutgoingMessages } from "./message-types/send-image.js"
+import { generateOutgoingMessages as generateSendCardOutgoingMessages } from "./message-types/send-card.js"
+import { generateOutgoingMessages as generateSendCarouselOutgoingMessages } from "./message-types/send-carousel.js"
+import type { ILogObj, Logger } from "tslog"
+import { sleep } from "./util.js"
 
-export type SendMessageProps = {
-  ctx: Context<WhatsappAuthValue>
-  conversation: ConversationEntity
-  message: MessageEntity
-}
-
-const convertMessageToWhatsappMessage = (
+export function* convertMessageToWhatsappMessage(
   message: MessageEntity,
-): ClientMessage | null => {
+  logger: Logger<ILogObj>,
+): Generator<ClientMessage | null> {
+  const attributes = message.contentAttributes
+
+  if (attributes) {
+    // Check message from flow
+    switch (attributes.actionType) {
+      case "SendText":
+        for (const message of generateSendTextOutgoingMessages(
+          attributes,
+          logger,
+        )) {
+          yield message
+        }
+        return
+      case "SendImage":
+        for (const message of generateSendImageOutgoingMessages(
+          attributes,
+          logger,
+        )) {
+          yield message
+        }
+        return
+      case "SendCard":
+        for (const message of generateSendCardOutgoingMessages(
+          attributes,
+          logger,
+        )) {
+          yield message
+        }
+        return
+      case "SendCarousel":
+        for (const message of generateSendCarouselOutgoingMessages(
+          attributes,
+          logger,
+        )) {
+          yield message
+        }
+        return
+    }
+  }
+
   if (!message.attachments || !message.attachments[0]) {
-    return new Text(message.content ?? "")
+    yield new Text(message.content ?? "")
+    return
   }
 
   const attachment = message.attachments[0]
 
   if (attachment.fileType === FileType.AUDIO) {
-    return new Audio(attachment.publicUrl ?? "")
+    yield new Audio(attachment.publicUrl ?? "")
+    return
   }
 
   if (attachment.fileType === FileType.FILE) {
-    return new Document(attachment.publicUrl ?? "")
+    yield new Document(attachment.publicUrl ?? "")
+    return
   }
 
   if (attachment.fileType === FileType.IMAGE) {
-    return new Image(attachment.publicUrl ?? "")
+    yield new Image(attachment.publicUrl ?? "")
+    return
   }
 
   if (attachment.fileType === FileType.VIDEO) {
-    return new Video(attachment.publicUrl ?? "")
+    yield new Video(attachment.publicUrl ?? "")
+    return
   }
 
-  return null
+  yield null
 }
 
 export const sendOutgoingMessage = async (
@@ -53,43 +99,52 @@ export const sendOutgoingMessage = async (
   message: MessageEntity,
 ) => {
   const whatsappClient = getWhatsappClient(ctx.auth)
+  let startGenerator = false
 
   try {
-    const whatsappMessage = convertMessageToWhatsappMessage(message)
-    if (!whatsappMessage) {
-      ctx.logger.error("Unable to parse outgoing message", message)
-      return
-    }
+    for (const whatsappMessage of convertMessageToWhatsappMessage(
+      message,
+      ctx.logger,
+    )) {
+      if (startGenerator) {
+        await sleep(1000)
+      }
+      if (!whatsappMessage) {
+        ctx.logger.error("Unable to parse outgoing message", message)
+        continue
+      }
 
-    const sendResponse = await whatsappClient.sendMessage(
-      conversation.conversationAttributes.phoneNumberId as string,
-      conversation.sourceId,
-      whatsappMessage,
-    )
-    const serverError = sendResponse as ServerErrorResponse
-
-    if (serverError?.error) {
-      ctx.logger.error(
-        `Failed to send message of type ${whatsappMessage._type}`,
-        serverError.error,
+      const sendResponse = await whatsappClient.sendMessage(
+        conversation.conversationAttributes.phoneNumberId as string,
+        conversation.sourceId,
+        whatsappMessage,
       )
-      return
-    }
+      const serverError = sendResponse as ServerErrorResponse
 
-    const messageId = (sendResponse as ServerSentMessageResponse)?.messages?.[0]
-      ?.id
-    if (messageId) {
-      ctx.logger.info("Message sent successfully", {
-        messageId,
-        messageType: whatsappMessage._type,
-      })
-      return
-    }
+      if (serverError?.error) {
+        ctx.logger.error(
+          `Failed to send message of type ${whatsappMessage._type}`,
+          serverError.error,
+        )
+        continue
+      }
 
-    ctx.logger.warn(
-      `Message of type ${whatsappMessage._type} could not be sent`,
-      sendResponse,
-    )
+      const messageId = (sendResponse as ServerSentMessageResponse)
+        ?.messages?.[0]?.id
+      if (messageId) {
+        ctx.logger.info("Message sent successfully", {
+          messageId,
+          messageType: whatsappMessage._type,
+        })
+        continue
+      }
+
+      ctx.logger.warn(
+        `Message of type ${whatsappMessage._type} could not be sent`,
+        sendResponse,
+      )
+      startGenerator = true
+    }
   } catch (error) {
     ctx.logger.error("An error occurred while sending the message", error)
   }

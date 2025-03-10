@@ -12,6 +12,7 @@ import type {
   WhatsappAuthValue,
   WhatsappConfig,
 } from "./schemas"
+import { sendOutgoingMessage } from "./outgoing-message.js"
 
 const config: IntegrationDefinition<
   WhatsappConfig,
@@ -28,9 +29,9 @@ const config: IntegrationDefinition<
 
       return await parseIncomingMessage(ctx, whatsappClient, data)
     },
-    // sendMessage: async ({ ctx, message, conversation }) => {
-    //   await sendOutgoingMessage(ctx, conversation, message)
-    // },
+    sendMessage: async ({ ctx, message, conversation }) => {
+      await sendOutgoingMessage(ctx, conversation, message)
+    },
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

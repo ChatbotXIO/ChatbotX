@@ -19,7 +19,6 @@ import type {
   ServerContactsMessage,
   ServerDocumentMessage,
   ServerImageMessage,
-  ServerInteractiveMessage,
   ServerLocationMessage,
   ServerOrderMessage,
   ServerStickerMessage,
@@ -47,6 +46,7 @@ export const parseIncomingMessage = async (
       name: props.name,
     },
   }
+  let handleId = null
 
   switch (props.message.type) {
     case "text":
@@ -167,10 +167,21 @@ export const parseIncomingMessage = async (
       break
     }
     case "interactive": {
-      message.content = "Received interactive (coming soon)"
-      message.contentAttributes = (
-        props.message as ServerInteractiveMessage
-      ).interactive
+      switch (props.message.interactive.type) {
+        case "button_reply":
+          message.content = props.message.interactive.button_reply.title
+          handleId = props.message.interactive.button_reply.id
+          break
+        case "list_reply":
+          message.content = props.message.interactive.list_reply
+          break
+        case "nfm_reply":
+          message.content = props.message.interactive.nfm_reply.body
+          break
+        default:
+          message.content = "Received interactive (coming soon)"
+          return
+      }
       break
     }
     case "button": {
@@ -189,7 +200,7 @@ export const parseIncomingMessage = async (
       break
   }
 
-  return { message, conversation }
+  return { message, conversation, handleId }
 }
 
 export const fetchMedia = async (
