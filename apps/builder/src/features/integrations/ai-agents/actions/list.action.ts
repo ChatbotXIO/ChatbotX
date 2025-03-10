@@ -48,7 +48,7 @@ export async function getAIAgents(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbot:${input.chatbotId}#aiAgents`],
+      tags: [`chatbots:${input.chatbotId}#aiAgents`],
     },
   )()
 }

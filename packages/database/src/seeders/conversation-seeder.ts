@@ -38,8 +38,10 @@ async function main() {
     },
   })
 
+  const maxContacts = 49
+
   const contactsData: Prisma.ContactCreateManyInput[] = []
-  for (let i = 0; i < 99; i++) {
+  for (let i = 0; i < maxContacts; i++) {
     contactsData.push({
       chatbotId: chatbot.id,
       firstName: faker.person.firstName(),
@@ -59,11 +61,11 @@ async function main() {
   })
 
   const conversationsData: Prisma.ConversationCreateManyInput[] = []
-  for (let i = 0; i < 99; i++) {
+  for (let i = 0; i < maxContacts; i++) {
     conversationsData.push({
       chatbotId: chatbot.id,
-      contactId: contacts[i].id,
-      inboxType: InboxType.CHAT_WIDGET,
+      contactId: contacts[i]?.id as string,
+      inboxId: inbox.id,
     })
   }
   await prisma.conversation.createMany({
@@ -74,12 +76,12 @@ async function main() {
     where: { chatbotId: chatbot.id },
   })
   const messagesData: Prisma.MessageCreateManyInput[] = []
-  for (let i = 0; i < 99; i++) {
+  for (let i = 0; i < maxContacts; i++) {
     messagesData.push({
       chatbotId: chatbot.id,
       senderType: SenderType.USER,
-      senderId: contacts[i].id,
-      conversationId: conversations[i].id,
+      senderId: contacts[i]?.id as string,
+      conversationId: conversations[i]?.id as string,
       inboxId: inbox.id,
       messageType: MessageType.INCOMING,
       contentType: ContentType.TEXT,

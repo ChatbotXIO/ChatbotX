@@ -1,35 +1,32 @@
 "use server"
 
-import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
-import { type IdBindParams, idBindParams } from "@/lib/common-types"
-import { authActionClient } from "@/lib/safe-action"
-import { type User, prisma } from "@ahachat.ai/database"
+import {
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
   type UpdateFlowSchema,
   updateFlowSchema,
 } from "../schemas/update-flow-schema"
 
-export const updateFlowAction = authActionClient
+export const updateFlowAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .schema(updateFlowSchema)
-  .bindArgsSchemas(idBindParams.items)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
-      bindArgsParsedInputs: [id],
     }: {
-      ctx: { user: User }
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateFlowSchema
-      bindArgsParsedInputs: IdBindParams
     }) => {
-      const { chatbotIds } = await getAllChatbotMembers(ctx.user.id)
       const flow = await prisma.flow.findFirstOrThrow({
         where: {
           id,
-          chatbotId: {
-            in: chatbotIds,
-          },
+          chatbotId,
         },
       })
 
@@ -40,6 +37,6 @@ export const updateFlowAction = authActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`chatbots#${flow.chatbotId}#flows`)
+      revalidateTag(`chatbots:${flow.chatbotId}#flows`)
     },
   )

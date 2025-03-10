@@ -40,7 +40,7 @@ export async function listInboxes(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbot:${input.chatbotId}#inboxs`],
+      tags: [`chatbots:${input.chatbotId}#inboxs`],
     },
   )()
 }

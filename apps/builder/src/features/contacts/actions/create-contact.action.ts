@@ -39,14 +39,30 @@ export const createContactAction = chatbotActionClient
         })
       }
 
-      await prisma.contact.create({
-        data: {
-          ...parsedInput,
+      const inbox = await prisma.inbox.findFirstOrThrow({
+        where: {
           chatbotId,
-          source: "web",
+        },
+        orderBy: {
+          createdAt: "asc",
         },
       })
 
-      revalidateTag(`chatbot:${chatbotId}#contacts`)
+      await prisma.$transaction(async (tx) => {
+        const contact = await tx.contact.create({
+          data: { ...parsedInput, chatbotId, source: "whatsapp" },
+        })
+
+        await tx.conversation.create({
+          data: {
+            chatbotId,
+            contactId: contact.id,
+            inboxId: inbox.id,
+          },
+        })
+      })
+
+      revalidateTag(`chatbots:${chatbotId}#contacts`)
+      revalidateTag(`chatbots:${chatbotId}#conversations`)
     },
   )

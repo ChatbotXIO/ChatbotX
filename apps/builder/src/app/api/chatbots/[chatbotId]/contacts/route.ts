@@ -1,4 +1,4 @@
-import { countContacts } from "@/features/contacts/actions/list-contacts.action"
+import { countContacts } from "@/features/contacts/queries/list-contacts.queries"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(

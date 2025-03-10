@@ -6,9 +6,7 @@ export const { auth } = NextAuth({ providers })
 
 export default auth((req) => {
   if (!req.auth && req.nextUrl.pathname !== "/signin") {
-    const newUrl = new URL("/signin", req.nextUrl.origin)
-
-    return Response.redirect(newUrl)
+    return NextResponse.redirect(new URL("/signin", req.url))
   }
 
   const requestHeaders = new Headers(req.headers)

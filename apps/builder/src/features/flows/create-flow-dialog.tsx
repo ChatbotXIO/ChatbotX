@@ -42,7 +42,6 @@ export function CreateFlowDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          console.log(2222, error)
           error.serverError && toast.error(error.serverError)
         },
       },

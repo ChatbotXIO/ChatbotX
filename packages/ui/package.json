@@ -18,7 +18,7 @@
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
     "@turbo/gen": "^2.4.4",
-    "@types/node": "^22.13.8",
+    "@types/node": "^22.13.9",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
     "autoprefixer": "^10.4.20",

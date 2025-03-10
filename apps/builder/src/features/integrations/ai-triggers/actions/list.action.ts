@@ -57,7 +57,7 @@ export const listAITriggers = async (
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbot:${input.chatbotId}#aiTriggers`],
+      tags: [`chatbots:${input.chatbotId}#aiTriggers`],
     },
   )()
 }

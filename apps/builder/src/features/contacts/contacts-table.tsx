@@ -8,7 +8,7 @@ import { useDataTable } from "@/hooks/use-data-table"
 import type { Contact } from "@ahachat.ai/database"
 
 import { getColumns } from "./contacts-table-columns"
-import type { listContacts } from "./queries/list-contacts.action"
+import type { listContacts } from "./queries/list-contacts.queries"
 
 import type {
   DataTableFilterField,

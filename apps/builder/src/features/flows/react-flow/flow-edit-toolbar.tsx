@@ -29,13 +29,16 @@ import { toast } from "sonner"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { updateFlowVersionSchema } from "../schemas/update-flow-schema"
 
-export function FlowEditToolbar({ flowId }: { flowId: string }) {
+export function FlowEditToolbar({
+  chatbotId,
+  flowId,
+}: { chatbotId: string; flowId: string }) {
   const { getNodes, getEdges } = useReactFlow()
 
   const [isValidating, setIsValidating] = useState<boolean>(false)
 
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
-    publishFlowAction.bind(null, flowId),
+    publishFlowAction.bind(null, chatbotId, flowId),
     {
       onSuccess: () => {
         toast.success("A new version has been published")

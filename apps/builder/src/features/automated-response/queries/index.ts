@@ -52,7 +52,7 @@ export async function getAutomatedResponses(
     [JSON.stringify(input)],
     {
       revalidate: 1,
-      tags: [`chatbot:${input.chatbotId}#automatedResponses`],
+      tags: [`chatbots:${input.chatbotId}#automatedResponses`],
     },
   )()
 }

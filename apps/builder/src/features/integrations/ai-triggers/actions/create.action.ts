@@ -49,6 +49,6 @@ export const createAITriggerAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbot:${chatbotId}#aiTriggers`)
+      revalidateTag(`chatbots:${chatbotId}#aiTriggers`)
     },
   )
