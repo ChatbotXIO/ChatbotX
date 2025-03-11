@@ -43,7 +43,7 @@ const worker = new Worker(
         },
       })
 
-    const { conversation, message, handleId } =
+    const { conversation, message, flow } =
       await integration.actions.receiveMessage({
         ctx: {
           auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
@@ -53,7 +53,7 @@ const worker = new Worker(
         data,
       })
 
-    const { message: _newMessage, conversation: newConversation } =
+    const { message: _newMessage, conversation: _newConversation } =
       await prisma.$transaction(async (tx) => {
         const newContact = await tx.contact.upsert({
           where: {
@@ -147,20 +147,15 @@ const worker = new Worker(
         return { message: newMessage, conversation: newConversation }
       })
 
-    if (handleId && newConversation.currentFlowRunId) {
-      const _flowVersion = await prisma.flowVersion.findFirst({
-        where: {
-          flowRuns: {
-            some: {
-              id: newConversation.currentFlowRunId,
-              conversationId: newConversation.id,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      })
+    if (flow) {
+      // const flowVersion = await prisma.flowVersion.findFirst({
+      //   where: {
+      //     id: flow.flowVersionId
+      //   }
+      // })
+      // if (!flowVersion) {
+      //   return
+      // }
       // todo trigger current run flow
       // Call run-flow.ts handleFlowExecution()
     }

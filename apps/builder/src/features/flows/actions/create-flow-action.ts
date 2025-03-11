@@ -43,7 +43,7 @@ export const createFlowAction = chatbotActionClient
           flowVersions: {
             create: [
               {
-                chatbotId: parsedInput.chatbotId,
+                chatbotId,
                 nodes: [
                   {
                     id: firstNodeId,

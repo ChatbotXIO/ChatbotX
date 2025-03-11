@@ -1,7 +1,7 @@
 "use client"
 
 import { FormInput } from "@/components/form-input"
-import { WhastsappIcon } from "@/components/icons/whatsapp"
+import { WhatsappIcon } from "@/components/icons/whatsapp"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -65,7 +65,7 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <WhastsappIcon />
+            <WhatsappIcon />
             <span>Whatsapp</span>
           </DialogTitle>
           <DialogDescription />

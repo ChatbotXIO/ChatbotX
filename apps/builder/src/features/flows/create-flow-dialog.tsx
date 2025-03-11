@@ -32,29 +32,32 @@ export function CreateFlowDialog({
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(createFlowAction, zodResolver(createFlowSchema), {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Flow created successfully")
+    useHookFormAction(
+      createFlowAction.bind(null, chatbotId),
+      zodResolver(createFlowSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success("Flow created successfully")
 
-          setOpen(false)
-          resetFormAndAction()
-          router.refresh()
+            setOpen(false)
+            resetFormAndAction()
+            router.refresh()
+          },
+          onError: ({ error }) => {
+            error.serverError && toast.error(error.serverError)
+          },
         },
-        onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: "",
+            folderId,
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: "",
-          chatbotId,
-          folderId,
-        },
-      },
-      errorMapProps: {},
-    })
+    )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

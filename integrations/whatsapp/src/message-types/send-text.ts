@@ -11,6 +11,7 @@ import { generateBody, generateButton } from "../interactive.js"
 export const INTERACTIVE_MAX_BUTTONS_COUNT = 3
 
 export function* generateOutgoingMessages(
+  flowVersionId: string,
   payload: { message: string; buttons: { id: string; label: string }[] },
   logger: Logger<ILogObj>,
 ) {
@@ -27,7 +28,10 @@ export function* generateOutgoingMessages(
 
     for (const chunk of chunks) {
       const buttons: Button[] = chunk.map((button) =>
-        generateButton({ id: button.id, title: button.label }),
+        generateButton({
+          id: `${flowVersionId}-${button.id}`,
+          title: button.label,
+        }),
       )
       yield new Interactive(
         new ActionButtons(...buttons),

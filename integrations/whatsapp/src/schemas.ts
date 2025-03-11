@@ -25,7 +25,11 @@ export type WhatsappActions = {
   verifyAccessToken: Handler<{ ctx: Context<WhatsappAuthValue> }, string>
   receiveMessage: Handler<
     { ctx: Context<WhatsappAuthValue>; data: OnMessageArgs },
-    { message: MessageEntity; conversation: ConversationEntity }
+    {
+      message: MessageEntity
+      conversation: ConversationEntity
+      flow: { flowVersionID: string; buttonId: string } | null
+    }
   >
   sendMessage: (props: SendMessageProps) => Promise<void>
 }

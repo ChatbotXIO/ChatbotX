@@ -29,8 +29,8 @@ const config: IntegrationDefinition<
 
       return await parseIncomingMessage(ctx, whatsappClient, data)
     },
-    sendMessage: async ({ ctx, message, conversation }) => {
-      await sendOutgoingMessage(ctx, conversation, message)
+    sendMessage: async ({ ctx, message, conversation, flowVersion }) => {
+      await sendOutgoingMessage(ctx, conversation, message, flowVersion)
     },
   },
   handleRequest: async (props) => {

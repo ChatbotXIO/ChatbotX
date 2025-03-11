@@ -59,33 +59,36 @@ const handlers = {
   [`handle${ActionType.SendText}`]: async (
     conversation: Conversation,
     block: SendTextBlockSchema,
-    _flowVersion: FlowVersion,
+    flowVersion: FlowVersion,
   ) => {
-    await createMessage(conversation, block.message, block)
+    await createMessage(conversation, flowVersion, block.message, block)
 
     return
   },
   [`handle${ActionType.SendImage}`]: async (
     conversation: Conversation,
     block: SendTextBlockSchema,
+    flowVersion: FlowVersion,
   ) => {
-    await createMessage(conversation, block.message, block)
+    await createMessage(conversation, flowVersion, block.message, block)
 
     return
   },
   [`handle${ActionType.SendCard}`]: async (
     conversation: Conversation,
     block: SendCardBlockSchema,
+    flowVersion: FlowVersion,
   ) => {
-    await createMessage(conversation, block.title, block)
+    await createMessage(conversation, flowVersion, block.title, block)
 
     return
   },
   [`handle${ActionType.SendCarousel}`]: async (
     conversation: Conversation,
     block: SendCarouselBlockSchema,
+    flowVersion: FlowVersion,
   ) => {
-    await createMessage(conversation, block.cards[0]?.title, block)
+    await createMessage(conversation, flowVersion, block.cards[0]?.title, block)
 
     return
   },
@@ -221,6 +224,7 @@ const handlers = {
 
 const createMessage = async (
   conversation: Conversation,
+  flowVersion: FlowVersion,
   content?: string | null,
   attributes?,
 ) => {
@@ -255,6 +259,7 @@ const createMessage = async (
     ctx,
     conversation,
     message,
+    flowVersion,
   })
 }
 

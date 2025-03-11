@@ -46,7 +46,7 @@ export const parseIncomingMessage = async (
       name: props.name,
     },
   }
-  let handleId = null
+  let flow = {}
 
   switch (props.message.type) {
     case "text":
@@ -168,10 +168,14 @@ export const parseIncomingMessage = async (
     }
     case "interactive": {
       switch (props.message.interactive.type) {
-        case "button_reply":
+        case "button_reply": {
           message.content = props.message.interactive.button_reply.title
-          handleId = props.message.interactive.button_reply.id
+          const arr = props.message.interactive.button_reply.id.split("-")
+          if (arr.length > 1) {
+            flow = { flowVersionId: arr[0], buttonId: arr[1] }
+          }
           break
+        }
         case "list_reply":
           message.content = props.message.interactive.list_reply
           break
@@ -200,7 +204,7 @@ export const parseIncomingMessage = async (
       break
   }
 
-  return { message, conversation, handleId }
+  return { message, conversation, flow }
 }
 
 export const fetchMedia = async (

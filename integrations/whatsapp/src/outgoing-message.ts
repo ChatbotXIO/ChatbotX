@@ -20,6 +20,7 @@ import type { ILogObj, Logger } from "tslog"
 import { sleep } from "./util.js"
 
 export function* convertMessageToWhatsappMessage(
+  flowVersionId: string,
   message: MessageEntity,
   logger: Logger<ILogObj>,
 ): Generator<ClientMessage | null> {
@@ -30,6 +31,7 @@ export function* convertMessageToWhatsappMessage(
     switch (attributes.actionType) {
       case "SendText":
         for (const message of generateSendTextOutgoingMessages(
+          flowVersionId,
           attributes,
           logger,
         )) {
@@ -46,6 +48,7 @@ export function* convertMessageToWhatsappMessage(
         return
       case "SendCard":
         for (const message of generateSendCardOutgoingMessages(
+          flowVersionId,
           attributes,
           logger,
         )) {
@@ -54,6 +57,7 @@ export function* convertMessageToWhatsappMessage(
         return
       case "SendCarousel":
         for (const message of generateSendCarouselOutgoingMessages(
+          flowVersionId,
           attributes,
           logger,
         )) {
@@ -97,12 +101,14 @@ export const sendOutgoingMessage = async (
   ctx: Context<WhatsappAuthValue>,
   conversation: ConversationEntity,
   message: MessageEntity,
+  flowVersionId: string,
 ) => {
   const whatsappClient = getWhatsappClient(ctx.auth)
   let startGenerator = false
 
   try {
     for (const whatsappMessage of convertMessageToWhatsappMessage(
+      flowVersionId,
       message,
       ctx.logger,
     )) {
