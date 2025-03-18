@@ -1,6 +1,4 @@
-import { FormInput } from "@/components/form-input"
 import { cn } from "@/components/lib/utils"
-import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import { Form, TriggerFormInitially } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
@@ -9,176 +7,58 @@ import {
   SortableDragHandle,
   SortableItem,
 } from "@/components/ui/sortable"
-import { EditButtonDialog } from "@/features/flows/react-flow/blocks/button/components/edit-button-dialog"
-import { MarkEmailVerifiedBlockEditor } from "@/features/flows/react-flow/blocks/mark-email-verified/editor"
-import { OpenAIAnalyzeImageEditor } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/editor"
-import { OpenAIDeleteMessageHistoryEditor } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/editor"
-import { OpenAIGenerateImageEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-image/editor"
-import { OpenAIGenerateTextAdvancedEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/editor"
-import { OpenAIGenerateTextAgentEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/editor"
-import { OpenAIGenerateTextAssistantEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/editor"
-import { OpenAIGenerateTextEditor } from "@/features/flows/react-flow/blocks/open-ai-generate-text/editor"
-import { OpenAISpeechToTextEditor } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/editor"
-import { OpenAITextToSpeechEditor } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/editor"
-import { OptInEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-in-email/editor"
-import { OptOutEmailBlockEditor } from "@/features/flows/react-flow/blocks/opt-out-email/editor"
-import { SendAudioBlockEditor } from "@/features/flows/react-flow/blocks/send-audio/editor"
-import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor"
-import { SendCarouselBlockEditor } from "@/features/flows/react-flow/blocks/send-carousel/editor"
-import { SendImageBlockEditor } from "@/features/flows/react-flow/blocks/send-image/editor"
-import { SendVideoBlockEditor } from "@/features/flows/react-flow/blocks/send-video/editor"
-import { generateDefaultValue } from "@/features/flows/react-flow/blocks/utils"
+import { generateDefaultFn } from "@/features/flows/react-flow/blocks/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
-import { type Node, useReactFlow } from "@xyflow/react"
+import type { Node } from "@xyflow/react"
 import cloneDeep from "lodash.clonedeep"
 import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
-import { type ReactNode, useCallback, useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { ActionType, disabledCopyActionTypes } from "../../action-type"
+import { DynamicBlockEditor } from "../../blocks"
 import { ErrorAlert } from "../../blocks/error-alert"
-import { SendTextBlockEditor } from "../../blocks/send-text/editor"
-import { messageTypeLabels } from "../../types"
-import { getAllIds } from "../../utils"
+import { useFlowStore } from "../../stores/flow-store-provider"
 import { type SendMessageNodeSchema, sendMessageNodeSchema } from "./schema"
 import SendMessageEditorAction from "./send-message-editor-action"
+import { InboxSelect } from "@/features/inboxes/inbox-select"
 
-export interface BlockEditorProps {
-  key: string
-  parentName: string
-}
-
-export const actionsBlockEditor: Partial<
-  Record<ActionType, (props: BlockEditorProps) => ReactNode>
-> = {
-  [ActionType.OpenAIGenerateText]: ({ key, parentName }) => (
-    <OpenAIGenerateTextEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAIGenerateTextAgent]: ({ key, parentName }) => (
-    <OpenAIGenerateTextAgentEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAIGenerateTextAdvanced]: ({ key, parentName }) => (
-    <OpenAIGenerateTextAdvancedEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAIGenerateTextAssistant]: ({ key, parentName }) => (
-    <OpenAIGenerateTextAssistantEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAIGenerateImage]: ({ key, parentName }) => (
-    <OpenAIGenerateImageEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAIAnalyzeImage]: ({ key, parentName }) => (
-    <OpenAIAnalyzeImageEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAISpeechToText]: ({ key, parentName }) => (
-    <OpenAISpeechToTextEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAITextToSpeech]: ({ key, parentName }) => (
-    <OpenAITextToSpeechEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.OpenAIDeleteMessageHistory]: ({ key, parentName }) => (
-    <OpenAIDeleteMessageHistoryEditor key={key} parentName={parentName} />
-  ),
-  [ActionType.MarkEmailVerified]: ({ key }) => (
-    <MarkEmailVerifiedBlockEditor key={key} />
-  ),
-  [ActionType.OptInEmail]: ({ key }) => <OptInEmailBlockEditor key={key} />,
-  [ActionType.OptOutEmail]: ({ key }) => <OptOutEmailBlockEditor key={key} />,
-}
-
-export default function SendMessageNodeEditor({
+export function SendMessageNodeEditor({
   activeNode,
 }: {
   activeNode: Node<SendMessageNodeSchema["data"]>
 }) {
-  const maps: Partial<
-    Record<ActionType, (props: BlockEditorProps) => ReactNode>
-  > = {
-    [ActionType.SendText]: ({ key, parentName }) => (
-      <SendTextBlockEditor
-        key={key}
-        parentName={parentName}
-        onEditButton={(name: string) => openEditButton(name)}
-      />
-    ),
-    [ActionType.SendImage]: ({ key, parentName }) => (
-      <SendImageBlockEditor key={key} parentName={parentName} />
-    ),
-    [ActionType.SendCard]: ({ key, parentName }) => (
-      <SendCardBlockEditor
-        key={key}
-        parentName={parentName}
-        onEditButton={(name: string) => openEditButton(name)}
-      />
-    ),
-    [ActionType.SendVideo]: ({ key, parentName }) => (
-      <SendVideoBlockEditor key={key} parentName={parentName} />
-    ),
-    [ActionType.SendAudio]: ({ key, parentName }) => (
-      <SendAudioBlockEditor key={key} parentName={parentName} />
-    ),
-    [ActionType.SendCarousel]: ({ key, parentName }) => (
-      <SendCarouselBlockEditor key={key} parentName={`${parentName}.cards`} />
-    ),
-    ...actionsBlockEditor,
-  }
-
-  const { setNodes, setEdges } = useReactFlow()
-
-  const onChange = useCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    (data: any) => {
-      setNodes((nodes) =>
-        nodes.map((node) => {
-          if (node.id === activeNode.id) {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                ...data,
-              },
-            }
-          }
-          return node
-        }),
-      )
-    },
-    [activeNode, setNodes],
-  )
+  const { updateNode, removeBlock } = useFlowStore((state) => state)
 
   const form = useForm<SendMessageNodeSchema["data"]>({
     resolver: zodResolver(sendMessageNodeSchema.shape.data),
-    defaultValues: activeNode.data,
+    defaultValues: {
+      ...activeNode.data,
+    },
     mode: "onBlur",
   })
   const { control, getValues, watch } = form
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const { unsubscribe } = watch((value) => {
-      onChange(value)
+      updateNode(
+        activeNode.id,
+        value as unknown as SendMessageNodeSchema["data"],
+      )
+      // onChange(value)
     })
     return () => unsubscribe()
-  }, [watch, onChange])
+  }, [watch, activeNode.id])
 
+  // @ts-ignore
   const { fields, append, move, remove, insert } = useFieldArray({
     control,
     name: "blocks",
   })
 
-  const [parentNameBlockButton, setParentNameBlockButton] = useState<string>("")
-  const [openedEditButton, setOpenedEditButton] = useState<boolean>(false)
-
-  const openEditButton = (parentName: string) => {
-    setParentNameBlockButton(parentName)
-    setOpenedEditButton(true)
-  }
-
-  const closeEditButton = () => {
-    setParentNameBlockButton("")
-    setOpenedEditButton(false)
-  }
-
   const onClickAction = (name: ActionType) => {
-    const value = generateDefaultValue(name)
+    const value = generateDefaultFn(name)
     if (value) {
       append(value)
     }
@@ -193,24 +73,13 @@ export default function SendMessageNodeEditor({
 
   const onRemoveBlock = (index: number) => {
     const block = getValues(`blocks.${index}`)
-    const handlerIds = getAllIds(block)
-
-    setEdges((edges) => {
-      return edges.filter(
-        (edge) =>
-          !handlerIds.includes(edge.targetHandle ?? "") &&
-          !handlerIds.includes(edge.sourceHandle ?? ""),
-      )
-    })
-
+    removeBlock(block.id)
     remove(index)
   }
 
   return (
     <Form {...form}>
-      <FormInput name={"messageType"} label="Message Type">
-        <SingleSelect name={"messageType"} options={messageTypeLabels} />
-      </FormInput>
+      <InboxSelect name={"messageType"} />
 
       <Separator />
 
@@ -255,12 +124,11 @@ export default function SendMessageNodeEditor({
                           : "",
                       )}
                     >
-                      {field.actionType in ActionType
-                        ? maps[field.actionType as ActionType]({
-                            key: field.id,
-                            parentName: `blocks.${index}`,
-                          })
-                        : null}
+                      <DynamicBlockEditor
+                        type={field.actionType}
+                        key={field.id}
+                        parentName={`blocks.${index}`}
+                      />
                     </div>
                     <div className="flex flex-col">
                       <Button
@@ -303,14 +171,6 @@ export default function SendMessageNodeEditor({
       </div>
 
       <SendMessageEditorAction onClick={onClickAction} />
-      {openedEditButton && (
-        <EditButtonDialog
-          activeNode={activeNode}
-          parentName={parentNameBlockButton}
-          open={openedEditButton}
-          onOpenChange={closeEditButton}
-        />
-      )}
 
       <TriggerFormInitially form={form} />
     </Form>

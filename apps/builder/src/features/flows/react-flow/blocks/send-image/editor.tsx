@@ -15,7 +15,7 @@ const SendImageBlockEditor = ({ parentName }: { parentName: string }) => {
         parentName={parentName}
         mode="link"
       />
-      <div className="bg-slate-200 p-4">
+      <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>
     </div>

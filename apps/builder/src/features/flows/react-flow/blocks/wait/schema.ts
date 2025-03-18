@@ -43,14 +43,14 @@ export const waitBlockSchema = z
 
 export type WaitBlockSchema = z.infer<typeof waitBlockSchema>
 
-export const waitBlockDefaultValue = (): WaitBlockSchema => ({
+export const waitBlockDefaultFn = (): WaitBlockSchema => ({
   id: createId(),
   actionType: ActionType.Wait,
   delayType: DelayType.Duration,
-  ...delayTypeDurationDefaultValue(),
+  ...delayTypeDurationDefaultFn(),
 })
 
-export const delayTypeDurationDefaultValue = () => {
+export const delayTypeDurationDefaultFn = () => {
   return {
     duration: 1,
     unit: DelayUnit.Hours,

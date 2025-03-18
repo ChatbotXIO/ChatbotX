@@ -21,7 +21,7 @@ export function SendVideoBlockEditor({ parentName }: { parentName: string }) {
           accept: { "video/*": [] },
         }}
       />
-      <div className="bg-slate-200 p-4">
+      <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>
     </div>

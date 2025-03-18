@@ -41,7 +41,7 @@ export enum ActionType {
   FollowConversation = "FollowConversation",
   UnfollowConversation = "UnfollowConversation",
   ArchiveConversation = "ArchiveConversation",
-  UnArchiveConversation = "UnArchiveConversation",
+  UnarchiveConversation = "UnarchiveConversation",
   BlockContact = "BlockContact",
 
   OpenAIActions = "OpenAIActions",

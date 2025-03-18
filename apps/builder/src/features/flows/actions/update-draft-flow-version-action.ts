@@ -39,6 +39,6 @@ export const updateDraftFlowVersionAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#flows:${id}`)
+      // revalidateTag(`chatbots:${chatbotId}#flows:${id}`)
     },
   )

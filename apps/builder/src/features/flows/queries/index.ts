@@ -91,8 +91,8 @@ export const findFlow = async (
 
   await findChatbotOrFail(userId, input.chatbotId)
 
-  return await unstable_cache(
-    async () => {
+  // return await unstable_cache(
+  //   async () => {
       const flow = await prisma.flow.findFirst({
         where: {
           ...input,
@@ -103,13 +103,13 @@ export const findFlow = async (
       })
 
       return { data: flow }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#flows:${input.id}`],
-    },
-  )()
+  //   },
+  //   [JSON.stringify(input)],
+  //   {
+  //     revalidate: 3600,
+  //     tags: [`chatbots:${input.chatbotId}#flows:${input.id}`],
+  //   },
+  // )()
 }
 
 export const ensureFlowIdIsExists = async (

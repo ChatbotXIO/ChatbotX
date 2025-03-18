@@ -1,105 +1,41 @@
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { useTranslate } from "@tolgee/react"
-import { ControlButton } from "@xyflow/react"
-import {
-  ClockIcon,
-  CompassIcon,
-  ExternalLinkIcon,
-  FilterIcon,
-  InfoIcon,
-  MailIcon,
-  MessageCircleMoreIcon,
-  Plus,
-  ShuffleIcon,
-  ZapIcon,
-} from "lucide-react"
+import { T } from "@tolgee/react"
+import { ControlButton, useReactFlow } from "@xyflow/react"
+import { Plus } from "lucide-react"
 import { useState } from "react"
-import { NodeType } from "../types"
+import type { NodeType } from "../types"
+// import { useFlowStore } from "../stores/flow-store-provider"
+import { DynamicIcon } from "lucide-react/dynamic"
+import { allNodesConfig } from "../nodes/node-config"
+import { useFlowStore } from "../stores/flow-store-provider"
 
-export function AddBlockButton({
-  onChooseAction,
-}: {
-  onChooseAction: (name: NodeType) => void
-}) {
-  const { t } = useTranslate()
-
+export function AddBlockButton() {
   const [open, setOpen] = useState(false)
-  const onClickAction = (name: NodeType) => {
-    onChooseAction(name)
+
+  const addNode = useFlowStore((state) => state.addNode)
+  const { screenToFlowPosition } = useReactFlow()
+
+  // const nodes = useStore((state) => state.nodes)
+  // const setNodes = useStore((state) => state.setNodes)
+
+  // const { onAddNode } = useFlowStore(state => state)
+  const onClickAction = (nodeType: NodeType) => {
+    addNode(
+      nodeType,
+      {
+        position: screenToFlowPosition({
+          x: window.innerWidth - 400,
+          y: 50,
+        }),
+      }
+    )
     setOpen(false)
   }
-
-  const buttons = [
-    {
-      type: NodeType.SendMessage,
-      icon: <MessageCircleMoreIcon />,
-      label: t("flows.sendMessageBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.SendMessage),
-    },
-    {
-      type: NodeType.StartFlow,
-      icon: <ExternalLinkIcon />,
-      label: t("flows.startFlowBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.StartFlow),
-    },
-    {
-      type: NodeType.Actions,
-      icon: <ZapIcon />,
-      label: t("flows.actionsBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.Actions),
-    },
-    {
-      type: NodeType.Condition,
-      icon: <FilterIcon />,
-      label: t("flows.conditionBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.Condition),
-    },
-    {
-      type: NodeType.SendMail,
-      icon: <MailIcon />,
-      label: t("flows.sendMailBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.SendMail),
-    },
-    {
-      type: NodeType.SplitTraffic,
-      icon: <ShuffleIcon />,
-      label: t("flows.splitTrafficBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.SplitTraffic),
-    },
-    {
-      type: NodeType.Wait,
-      icon: <ClockIcon />,
-      label: t("flows.waitBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.Wait),
-    },
-    {
-      type: NodeType.LandingPage,
-      icon: <CompassIcon />,
-      label: t("flows.landingPageBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.LandingPage),
-    },
-    {
-      type: NodeType.AddNotes,
-      icon: <InfoIcon />,
-      label: t("flows.addNotesBtn"),
-      proFeature: false,
-      onClick: () => onClickAction(NodeType.AddNotes),
-    },
-  ]
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -110,17 +46,16 @@ export function AddBlockButton({
       </PopoverTrigger>
       <PopoverContent>
         <div className="flex flex-col items-start">
-          {buttons.map((item) => {
+          {allNodesConfig.map((item) => {
             return (
               <Button
-                key={item.label}
+                key={item.type}
                 variant="ghost"
                 className="w-full justify-start"
-                onClick={item.onClick}
+                onClick={() => onClickAction(item.type)}
               >
-                {item.icon}
-                {item.label}
-                {item.proFeature && <Badge variant="destructive">Pro</Badge>}
+                <DynamicIcon name={item.icon} />
+                <T keyName={item.label} />
               </Button>
             )
           })}

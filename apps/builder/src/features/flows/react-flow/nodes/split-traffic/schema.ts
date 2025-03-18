@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import {
-  splitTrafficBlockDefaultValue,
+  splitTrafficBlockDefaultFn,
   splitTrafficBlockSchema,
 } from "../../blocks/split-traffic/schema"
 
@@ -13,10 +13,10 @@ export const splitTrafficNodeSchema = z.object({
 
 export type SplitTrafficNodeSchema = z.infer<typeof splitTrafficNodeSchema>
 
-export const splitTrafficNodeDefaultValue = (
+export const splitTrafficNodeDefaultFn = (
   name = "Split Traffic",
 ): SplitTrafficNodeSchema => ({
   id: createId(),
   name,
-  blocks: [splitTrafficBlockDefaultValue(), splitTrafficBlockDefaultValue()],
+  blocks: [splitTrafficBlockDefaultFn(), splitTrafficBlockDefaultFn()],
 })

@@ -12,7 +12,7 @@ export const sendVideoBlockSchema = z.object({
 
 export type SendVideoBlockSchema = z.infer<typeof sendVideoBlockSchema>
 
-export const sendVideoBlockDefaultValue = (): SendVideoBlockSchema => ({
+export const sendVideoBlockDefaultFn = (): SendVideoBlockSchema => ({
   id: createId(),
   actionType: ActionType.SendVideo,
   url: "https://www.w3schools.com/html/mov_bbb.mp4",

@@ -1,6 +1,6 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
 import {
-  openAIDefaultValue,
+  openAIDefaultFn,
   openAISchema,
 } from "@/features/flows/react-flow/blocks/open-ai/schema"
 import { z } from "zod"
@@ -20,9 +20,9 @@ export type OpenAIGenerateTextAgentSchema = z.infer<
   typeof openAIGenerateTextAgentSchema
 >
 
-export const openAIGenerateTextAgentDefaultValue =
+export const openAIGenerateTextAgentDefaultFn =
   (): OpenAIGenerateTextAgentSchema => ({
-    ...openAIDefaultValue(),
+    ...openAIDefaultFn(),
     actionType: ActionType.OpenAIGenerateTextAgent,
     aiAgentId: "",
     userMessage: "",

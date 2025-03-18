@@ -5,15 +5,15 @@ import { ButtonGroupEditor } from "../button/editor"
 
 const SendTextBlockEditor = ({
   parentName,
-  onEditButton,
-}: { parentName: string; onEditButton: (name: string) => void }) => {
+  // onEditButton,
+}: { parentName: string }) => {
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center">
       <InputWithEmoji name={`${parentName}.message`} />
-      <div className="bg-slate-200 p-4">
+      <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor
           parentName={`${parentName}.buttons`}
-          onEditButton={(name: string) => onEditButton(name)}
+          // onEditButton={(name: string) => onEditButton(name)}
         />
       </div>
     </div>

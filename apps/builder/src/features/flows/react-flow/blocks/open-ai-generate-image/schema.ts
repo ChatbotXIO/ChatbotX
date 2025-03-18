@@ -1,6 +1,6 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
 import {
-  openAIDefaultValue,
+  openAIDefaultFn,
   openAISchema,
 } from "@/features/flows/react-flow/blocks/open-ai/schema"
 import { z } from "zod"
@@ -27,9 +27,9 @@ export type OpenAIGenerateImageSchema = z.infer<
   typeof openAIGenerateImageSchema
 >
 
-export const openAIGenerateImageDefaultValue =
+export const openAIGenerateImageDefaultFn =
   (): OpenAIGenerateImageSchema => ({
-    ...openAIDefaultValue(),
+    ...openAIDefaultFn(),
     actionType: ActionType.OpenAIGenerateImage,
     size: "dall-e-2::1024x1024",
     resultCustomFieldId: "",

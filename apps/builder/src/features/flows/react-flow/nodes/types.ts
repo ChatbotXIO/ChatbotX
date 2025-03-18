@@ -7,3 +7,10 @@ export type MenuItem = {
   actionType: ActionType
   children?: MenuItem[]
 }
+
+export type NewNodeProps = {
+  id?: string,
+  labelVersion: number,
+  position: { x: number, y: number }
+  measured?: { width: number, height: number }
+}

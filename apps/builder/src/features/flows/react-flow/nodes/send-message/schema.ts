@@ -18,7 +18,10 @@ import { sendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-tex
 import { sendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { MessageType, NodeType, baseNodeSchema } from "../../types"
+import { NodeType, baseNodeSchema } from "../../types"
+import type { NewNodeProps } from "../types"
+import { InboxType } from "@ahachat.ai/database/browser"
+import { propagateServerField } from "next/dist/server/lib/render-server"
 
 export const actionsBlockSchema = [
   // Open AI
@@ -42,7 +45,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.SendMessage),
   data: z.object({
     name: z.string().min(1).max(255).trim(),
-    messageType: z.nativeEnum(MessageType),
+    inboxType: z.union([z.nativeEnum(InboxType), z.literal("OMNICHANNEL")]),
     blocks: z.array(
       z.union([
         sendTextBlockSchema,
@@ -56,23 +59,17 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
     ),
   }),
 })
-
 export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
 
-export const defaultSendMessageNode = ({
-  labelVersion,
-  position = { x: 100, y: 100 },
-}: {
-  labelVersion: number
-  position?: { x: number; y: number }
-}): SendMessageNodeSchema => {
+export const sendMessageNodeDefaultFn = ({ labelVersion, ...props }: NewNodeProps): SendMessageNodeSchema => {
   return {
     id: createId(),
     type: NodeType.SendMessage,
-    position,
+    measured: { width: 288, height: 100 },
+    ...props,
     data: {
       name: `Send Message #${labelVersion}`,
-      messageType: MessageType.Omnichannel,
+      inboxType: "OMNICHANNEL",
       blocks: [],
     },
   }

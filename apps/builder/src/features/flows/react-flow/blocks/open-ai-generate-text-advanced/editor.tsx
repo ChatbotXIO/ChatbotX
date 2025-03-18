@@ -51,7 +51,12 @@ export const OpenAIGenerateTextAdvancedEditor = ({
       </FormInput>
 
       <FormInput name={`${parentName}.temperature`} label="Temperature">
-        <NumberField value={0.4} max={2} onChange={console.log} />
+        <NumberField
+          name={`${parentName}.temperature`}
+          value={0.4}
+          max={2}
+          onChange={console.log}
+        />
       </FormInput>
 
       <FormInput
@@ -59,7 +64,13 @@ export const OpenAIGenerateTextAdvancedEditor = ({
         label="Maximum number of output tokens"
         isRequired={false}
       >
-        <NumberField value={250} step={1} max={4096} onChange={console.log} />
+        <NumberField
+          name={`${parentName}.temperature`}
+          value={250}
+          step={1}
+          max={4096}
+          onChange={console.log}
+        />
       </FormInput>
     </OpenAIDialog>
   )

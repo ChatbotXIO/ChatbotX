@@ -9,7 +9,7 @@ export const optInEmailBlockSchema = z.object({
 
 export type OptInEmailBlockSchema = z.infer<typeof optInEmailBlockSchema>
 
-export const optInEmailBlockDefaultValue = (): OptInEmailBlockSchema => ({
+export const optInEmailBlockDefaultFn = (): OptInEmailBlockSchema => ({
   id: createId(),
   actionType: ActionType.OptInEmail,
 })

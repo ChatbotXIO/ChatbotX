@@ -21,7 +21,7 @@ export const sendCardBlockSchema = z.object({
 
 export type SendCardBlockSchema = z.infer<typeof sendCardBlockSchema>
 
-export const sendCardBlockDefaultValue = (): SendCardBlockSchema => ({
+export const sendCardBlockDefaultFn = (): SendCardBlockSchema => ({
   id: createId(),
   actionType: ActionType.SendCard,
   title: "",

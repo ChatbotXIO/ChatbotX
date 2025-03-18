@@ -12,7 +12,7 @@ export const sendAudioBlockSchema = z.object({
 
 export type SendAudioBlockSchema = z.infer<typeof sendAudioBlockSchema>
 
-export const sendAudioBlockDefaultValue = (): SendAudioBlockSchema => ({
+export const sendAudioBlockDefaultFn = (): SendAudioBlockSchema => ({
   id: createId(),
   actionType: ActionType.SendAudio,
   url: "https://www.w3schools.com/html/horse.ogg",

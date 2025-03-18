@@ -1,6 +1,6 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
 import {
-  openAIDefaultValue,
+  openAIDefaultFn,
   openAISchema,
 } from "@/features/flows/react-flow/blocks/open-ai/schema"
 import { z } from "zod"
@@ -13,8 +13,8 @@ export type OpenAIDeleteMessageHistorySchema = z.infer<
   typeof openAIDeleteMessageHistorySchema
 >
 
-export const openAIDeleteMessageHistoryDefaultValue =
+export const openAIDeleteMessageHistoryDefaultFn =
   (): OpenAIDeleteMessageHistorySchema => ({
-    ...openAIDefaultValue(),
+    ...openAIDefaultFn(),
     actionType: ActionType.OpenAIDeleteMessageHistory,
   })

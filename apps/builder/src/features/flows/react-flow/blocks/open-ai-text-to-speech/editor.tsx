@@ -24,6 +24,7 @@ export const OpenAITextToSpeechEditor = ({
           render={(field) => (
             <SingleSelect
               value="alloy"
+              name={`${parentName}.voiceType`}
               options={Object.keys(voiceTypes).map((k) => ({
                 value: k,
                 label: voiceTypes[k] as string,

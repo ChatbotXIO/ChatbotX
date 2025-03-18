@@ -7,63 +7,37 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import type { Node } from "@xyflow/react"
-import dynamic from "next/dynamic"
-import { type NodeData, NodeType } from "../types"
-
-const AddNotesEditor = dynamic(
-  () => import("@/features/flows/react-flow/nodes/add-notes/add-notes-editor"),
-)
-const SendMessageNodeEditor = dynamic(
-  () => import("@/features/flows/react-flow/nodes/send-message/editor"),
-)
-const SplitTrafficNodeEditor = dynamic(
-  () => import("@/features/flows/react-flow/nodes/split-traffic/editor"),
-)
-const WaitNodeEditor = dynamic(
-  () => import("@/features/flows/react-flow/nodes/wait/editor"),
-)
-const StartFlowNodeEditor = dynamic(
-  () => import("@/features/flows/react-flow/nodes/start-flow/editor"),
-)
-
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-const getEditor = (props: { activeNode: Node<any> }) => {
-  return {
-    [NodeType.AddNotes]: <AddNotesEditor />,
-    [NodeType.SendMessage]: <SendMessageNodeEditor {...props} />,
-    [NodeType.SplitTraffic]: <SplitTrafficNodeEditor {...props} />,
-    [NodeType.Wait]: <WaitNodeEditor {...props} />,
-    [NodeType.StartFlow]: <StartFlowNodeEditor {...props} />,
-  }[props.activeNode.type ?? ""]
-}
+import { DynamicIcon } from "lucide-react/dynamic"
+import { allNodesConfig } from "../nodes/node-config"
+import { useFlowStore } from "../stores/flow-store-provider"
 
 interface NodeDetailSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  activeNode?: Node<any> | null
 }
 
-export function NodeDetailSheet({
-  open,
-  onOpenChange,
-  activeNode,
-}: NodeDetailSheetProps) {
-  return (
+export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
+  const activeNode = useFlowStore((state) => state.activeNode)
+  const nodeConfig = allNodesConfig.find(
+    (item) => item.type === activeNode?.type,
+  )
+
+  return activeNode ? (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>
-            {/* {activeNode ? activeNode.data.icon : null} */}
-            {activeNode ? (activeNode as Node<NodeData>).data.name : "\u00A0"}
+          <SheetTitle className="flex items-center gap-2">
+            {nodeConfig ? <DynamicIcon name={nodeConfig.icon} /> : " "}
+            {activeNode.data.name}
           </SheetTitle>
           <SheetDescription />
         </SheetHeader>
         <div className="flex flex-col flex-1 gap-4 overflow-hidden">
-          {activeNode?.type && getEditor({ activeNode })}
+          {nodeConfig?.editor ? (
+            <nodeConfig.editor activeNode={activeNode} />
+          ) : null}
         </div>
       </SheetContent>
     </Sheet>
-  )
+  ) : null
 }

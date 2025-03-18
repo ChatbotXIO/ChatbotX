@@ -102,9 +102,9 @@ export const actionsEditorMenus = [
         actionType: ActionType.ArchiveConversation,
       },
       {
-        label: <T keyName="flows.ActionType.UnArchiveConversation" />,
+        label: <T keyName="flows.ActionType.UnarchiveConversation" />,
         icon: <PackageOpenIcon />,
-        actionType: ActionType.UnArchiveConversation,
+        actionType: ActionType.UnarchiveConversation,
       },
       {
         label: <T keyName="flows.ActionType.BlockContact" />,

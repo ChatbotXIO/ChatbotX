@@ -8,7 +8,7 @@ export type AddNotesNodeProps = {
   message: string
 }
 
-export default function AddNotesNode({ data }: { data: AddNotesNodeProps }) {
+export function AddNotesNodeViewer({ data }: { data: AddNotesNodeProps }) {
   const [openToolbar, onOpenToolbar] = useState(false)
 
   return (

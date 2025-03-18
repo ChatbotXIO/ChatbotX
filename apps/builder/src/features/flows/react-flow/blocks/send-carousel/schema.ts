@@ -1,6 +1,6 @@
 import {
   type SendCardBlockSchema,
-  sendCardBlockDefaultValue,
+  sendCardBlockDefaultFn,
   sendCardBlockSchema,
 } from "@/features/flows/react-flow/blocks/send-card/schema"
 import { createId } from "@paralleldrive/cuid2"
@@ -15,12 +15,12 @@ export const sendCarouselBlockSchema = z.object({
 
 export type SendCarouselBlockSchema = z.infer<typeof sendCarouselBlockSchema>
 
-export const sendCarouselBlockDefaultValue = (
+export const sendCarouselBlockDefaultFn = (
   count = 1,
 ): SendCarouselBlockSchema => {
   const cards: SendCardBlockSchema[] = []
   for (let i = 0; i < count; i++) {
-    cards.push(sendCardBlockDefaultValue())
+    cards.push(sendCardBlockDefaultFn())
   }
   return {
     id: createId(),

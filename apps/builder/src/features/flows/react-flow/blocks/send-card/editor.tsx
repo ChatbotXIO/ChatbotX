@@ -4,12 +4,14 @@ import FileDropzone from "@/components/file-dropzone"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useFormContext } from "react-hook-form"
-import { ButtonGroupEditor } from "../button/editor"
 
 export const SendCardBlockEditor = ({
   parentName,
-  onEditButton,
-}: { parentName: string; onEditButton: (name: string) => void }) => {
+  // onEditButton,
+}: {
+  parentName: string
+  // onEditButton: (name: string) => void
+}) => {
   const { register } = useFormContext()
 
   return (
@@ -38,10 +40,10 @@ export const SendCardBlockEditor = ({
         />
       </CardContent>
       <CardFooter className="p-2 bg-gray-200 flex-col">
-        <ButtonGroupEditor
+        {/* <ButtonGroupEditor
           parentName={`${parentName}.buttons`}
           onEditButton={(name: string) => onEditButton(name)}
-        />
+        /> */}
       </CardFooter>
     </Card>
   )

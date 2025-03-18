@@ -10,7 +10,7 @@ export const openAISpeechToTextSchema = z.object({
 })
 export type OpenAISpeechToTextSchema = z.infer<typeof openAISpeechToTextSchema>
 
-export const openAISpeechToTextDefaultValue = (): OpenAISpeechToTextSchema => ({
+export const openAISpeechToTextDefaultFn = (): OpenAISpeechToTextSchema => ({
   id: createId(),
   actionType: ActionType.OpenAISpeechToText,
   audioCustomFieldId: "",

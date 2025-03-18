@@ -1,6 +1,6 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
 import {
-  openAIDefaultValue,
+  openAIDefaultFn,
   openAISchema,
 } from "@/features/flows/react-flow/blocks/open-ai/schema"
 import { z } from "zod"
@@ -28,8 +28,8 @@ export const openAITextToSpeechSchema = openAISchema.extend({
 
 export type OpenAITextToSpeechSchema = z.infer<typeof openAITextToSpeechSchema>
 
-export const openAITextToSpeechDefaultValue = (): OpenAITextToSpeechSchema => ({
-  ...openAIDefaultValue(),
+export const openAITextToSpeechDefaultFn = (): OpenAITextToSpeechSchema => ({
+  ...openAIDefaultFn(),
   actionType: ActionType.OpenAITextToSpeech,
   userMessage: "",
   voiceType: "",

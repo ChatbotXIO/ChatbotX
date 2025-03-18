@@ -1,67 +1,67 @@
 import { ActionType } from "@/features/flows/react-flow/action-type"
-import { markEmailVerifiedBlockDefaultValue } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
-import { openAIAnalyzeImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
-import { openAIDeleteMessageHistoryDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
-import { openAIGenerateImageDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
-import { openAIGenerateTextAdvancedDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
-import { openAIGenerateTextAgentDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
-import { openAIGenerateTextAssistantDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
-import { openAIGenerateTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
-import { openAISpeechToTextDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
-import { openAITextToSpeechDefaultValue } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
-import { optInEmailBlockDefaultValue } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
-import { optOutEmailBlockDefaultValue } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
-import { sendAudioBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-audio/schema"
-import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema"
-import { sendCarouselBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-carousel/schema"
-import { sendImageBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-image/schema"
-import { sendTextBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-text/schema"
-import { sendVideoBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-video/schema"
+import { markEmailVerifiedBlockDefaultFn } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
+import { openAIAnalyzeImageDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
+import { openAIDeleteMessageHistoryDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
+import { openAIGenerateImageDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
+import { openAIGenerateTextAdvancedDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
+import { openAIGenerateTextAgentDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
+import { openAIGenerateTextAssistantDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
+import { openAIGenerateTextDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
+import { openAISpeechToTextDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
+import { openAITextToSpeechDefaultFn } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
+import { optInEmailBlockDefaultFn } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
+import { optOutEmailBlockDefaultFn } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
+import { sendAudioBlockDefaultFn } from "@/features/flows/react-flow/blocks/send-audio/schema"
+import { sendCardBlockDefaultFn } from "@/features/flows/react-flow/blocks/send-card/schema"
+import { sendCarouselBlockDefaultFn } from "@/features/flows/react-flow/blocks/send-carousel/schema"
+import { sendImageBlockDefaultFn } from "@/features/flows/react-flow/blocks/send-image/schema"
+import { sendTextBlockDefaultFn } from "@/features/flows/react-flow/blocks/send-text/schema"
+import { sendVideoBlockDefaultFn } from "@/features/flows/react-flow/blocks/send-video/schema"
 
-export const generateDefaultValue = (name: ActionType) => {
+export const generateDefaultFn = (name: ActionType) => {
   switch (name) {
     case ActionType.SendText:
-      return sendTextBlockDefaultValue()
+      return sendTextBlockDefaultFn()
     case ActionType.SendImage:
-      return sendImageBlockDefaultValue()
+      return sendImageBlockDefaultFn()
     case ActionType.SendCard:
-      return sendCardBlockDefaultValue()
+      return sendCardBlockDefaultFn()
     case ActionType.SendCarousel:
-      return sendCarouselBlockDefaultValue(2)
+      return sendCarouselBlockDefaultFn(2)
     case ActionType.SendVideo:
-      return sendVideoBlockDefaultValue()
+      return sendVideoBlockDefaultFn()
     case ActionType.SendAudio:
-      return sendAudioBlockDefaultValue()
+      return sendAudioBlockDefaultFn()
     case ActionType.SendFile:
-      return sendAudioBlockDefaultValue()
+      return sendAudioBlockDefaultFn()
 
     // Action OpenAI
     case ActionType.OpenAIGenerateText:
-      return openAIGenerateTextDefaultValue()
+      return openAIGenerateTextDefaultFn()
     case ActionType.OpenAIGenerateTextAgent:
-      return openAIGenerateTextAgentDefaultValue()
+      return openAIGenerateTextAgentDefaultFn()
     case ActionType.OpenAIGenerateTextAdvanced:
-      return openAIGenerateTextAdvancedDefaultValue()
+      return openAIGenerateTextAdvancedDefaultFn()
     case ActionType.OpenAIGenerateTextAssistant:
-      return openAIGenerateTextAssistantDefaultValue()
+      return openAIGenerateTextAssistantDefaultFn()
     case ActionType.OpenAIGenerateImage:
-      return openAIGenerateImageDefaultValue()
+      return openAIGenerateImageDefaultFn()
     case ActionType.OpenAIAnalyzeImage:
-      return openAIAnalyzeImageDefaultValue()
+      return openAIAnalyzeImageDefaultFn()
     case ActionType.OpenAISpeechToText:
-      return openAISpeechToTextDefaultValue()
+      return openAISpeechToTextDefaultFn()
     case ActionType.OpenAITextToSpeech:
-      return openAITextToSpeechDefaultValue()
+      return openAITextToSpeechDefaultFn()
     case ActionType.OpenAIDeleteMessageHistory:
-      return openAIDeleteMessageHistoryDefaultValue()
+      return openAIDeleteMessageHistoryDefaultFn()
 
     // Email
     case ActionType.MarkEmailVerified:
-      return markEmailVerifiedBlockDefaultValue()
+      return markEmailVerifiedBlockDefaultFn()
     case ActionType.OptInEmail:
-      return optInEmailBlockDefaultValue()
+      return optInEmailBlockDefaultFn()
     case ActionType.OptOutEmail:
-      return optOutEmailBlockDefaultValue()
+      return optOutEmailBlockDefaultFn()
     default:
       return null
   }

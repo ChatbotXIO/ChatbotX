@@ -13,7 +13,7 @@ export const sendImageBlockSchema = z.object({
 
 export type SendImageBlockSchema = z.infer<typeof sendImageBlockSchema>
 
-export const sendImageBlockDefaultValue = (): SendImageBlockSchema => ({
+export const sendImageBlockDefaultFn = (): SendImageBlockSchema => ({
   id: createId(),
   actionType: ActionType.SendImage,
   url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQf5GRKMzldUwuZJ7IfmvoLMru3gjphUJDGuA&s",

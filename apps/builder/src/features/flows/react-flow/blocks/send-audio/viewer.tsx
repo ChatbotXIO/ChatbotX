@@ -6,7 +6,7 @@ import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/se
 
 import { Volume2 } from "lucide-react"
 
-export const AudioBlockViewer = ({ data }: { data: SendAudioBlockSchema }) => {
+export const SendAudioBlockViewer = ({ data }: { data: SendAudioBlockSchema }) => {
   const getFileNameFromUrl = () => {
     const urlObject = new URL(data.url as string)
     const path = urlObject.pathname

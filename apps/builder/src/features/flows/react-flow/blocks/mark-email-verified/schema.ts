@@ -11,7 +11,7 @@ export type MarkEmailVerifiedBlockSchema = z.infer<
   typeof markEmailVerifiedBlockSchema
 >
 
-export const markEmailVerifiedBlockDefaultValue =
+export const markEmailVerifiedBlockDefaultFn =
   (): MarkEmailVerifiedBlockSchema => ({
     id: createId(),
     actionType: ActionType.MarkEmailVerified,

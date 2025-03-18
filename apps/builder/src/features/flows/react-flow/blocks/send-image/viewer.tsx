@@ -18,7 +18,7 @@ export const SendImageBlockViewer = ({
         />
       </div>
       {data.buttons.length > 0 && (
-        <div className="bg-slate-200 p-4">
+        <div className="bg-slate-200 px-3 py-2">
           <ButtonGroupViewer data={data.buttons} />
         </div>
       )}

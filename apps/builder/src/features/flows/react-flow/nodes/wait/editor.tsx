@@ -21,7 +21,7 @@ import { CopyIcon, MoveVerticalIcon, XIcon } from "lucide-react"
 import { useCallback, useEffect } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 
-export default function WaitNodeEditor({
+export function WaitNodeEditor({
   activeNode,
 }: {
   activeNode: Node<WaitNodeSchema["data"]>

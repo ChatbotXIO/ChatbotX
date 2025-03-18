@@ -17,7 +17,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createFlowAction } from "./actions/create-flow-action"
@@ -29,32 +28,33 @@ export function CreateFlowDialog({
 }: { chatbotId: string; folderId: string | null }) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
-  const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(createFlowAction, zodResolver(createFlowSchema), {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Flow created successfully")
+    useHookFormAction(
+      createFlowAction.bind(null, chatbotId),
+      zodResolver(createFlowSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success("Flow created successfully")
 
-          setOpen(false)
-          resetFormAndAction()
-          router.refresh()
+            setOpen(false)
+            resetFormAndAction()
+          },
+          onError: ({ error }) => {
+            error.serverError && toast.error(error.serverError)
+          },
         },
-        onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: "",
+            folderId,
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: "",
-          chatbotId,
-          folderId,
-        },
-      },
-      errorMapProps: {},
-    })
+    )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -1,10 +1,11 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import {
-  waitBlockDefaultValue,
+  waitBlockDefaultFn,
   waitBlockSchema,
 } from "../../blocks/wait/schema"
 import { NodeType, baseNodeSchema } from "../../types"
+import type { NewNodeProps } from "../types"
 
 export const waitNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.Wait),
@@ -16,20 +17,15 @@ export const waitNodeSchema = baseNodeSchema.extend({
 
 export type WaitNodeSchema = z.infer<typeof waitNodeSchema>
 
-export const waitNodeDefaultValue = ({
-  labelVersion,
-  position = { x: 100, y: 100 },
-}: {
-  labelVersion: number
-  position?: { x: number; y: number }
-}): WaitNodeSchema => {
+export const waitNodeDefaultFn = ({ labelVersion, ...props }: NewNodeProps): WaitNodeSchema => {
   return {
     id: createId(),
     type: NodeType.Wait,
-    position,
+    measured: { width: 288, height: 100 },
+    ...props,
     data: {
       name: `Wait #${labelVersion}`,
-      blocks: [waitBlockDefaultValue()],
+      blocks: [waitBlockDefaultFn()],
     },
   }
 }

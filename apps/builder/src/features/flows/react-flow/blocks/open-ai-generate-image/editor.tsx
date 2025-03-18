@@ -26,6 +26,7 @@ export const OpenAIGenerateImageEditor = ({
           name={`${parentName}.size`}
           render={(field) => (
             <SingleSelect
+              name={`${parentName}.size`}
               value="dall-e-2::1024x1024"
               options={Object.keys(openAIGenerateImageSizes).map(
                 (k: string) => ({

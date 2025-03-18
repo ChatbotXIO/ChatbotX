@@ -1,6 +1,5 @@
-import { BaseHandle } from "@/components/base-handle"
 import { Button } from "@/components/ui/button"
-import { Position } from "@xyflow/react"
+import { Handle, Position } from "@xyflow/react"
 import type { ButtonBlockSchema } from "./schema"
 
 export const ButtonBlockViewer = ({ data }: { data: ButtonBlockSchema }) => {
@@ -9,7 +8,7 @@ export const ButtonBlockViewer = ({ data }: { data: ButtonBlockSchema }) => {
       <Button type="button" variant="secondary" className="w-full" disabled>
         {data.label}
       </Button>
-      <BaseHandle
+      <Handle
         id={data.id}
         type="source"
         position={Position.Right}

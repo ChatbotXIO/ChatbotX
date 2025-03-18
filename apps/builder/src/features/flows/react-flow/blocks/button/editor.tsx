@@ -7,38 +7,40 @@ import {
 import { useTranslate } from "@tolgee/react"
 import { MoveIcon, PlusIcon } from "lucide-react"
 import { useFieldArray, useFormContext } from "react-hook-form"
-import { buttonBlockDefaultValue } from "./schema"
+import { buttonBlockDefaultFn } from "./schema"
+import { EditButtonDialog } from "./components/edit-button-dialog"
 
 export const ButtonBlockEditor = ({
   parentName,
-  onEditButton,
   ...rest
 }: {
   parentName: string
-  onEditButton: () => void
 }) => {
-  const { watch } = useFormContext()
+  const { getValues } = useFormContext()
 
-  const buttonName = watch(`${parentName}.label`)
+  const buttonData = getValues(`${parentName}`)
 
   return (
     <div className="w-full flex-1" {...rest}>
-      <Button
+      <EditButtonDialog data={buttonData} />
+      {/* <Button
         type="button"
         variant="secondary"
         className="w-full hover:text-blue-500"
-        onClick={onEditButton}
       >
         {buttonName}
-      </Button>
+      </Button> */}
     </div>
   )
 }
 
 export const ButtonGroupEditor = ({
   parentName,
-  onEditButton,
-}: { parentName: string; onEditButton: (name: string) => void }) => {
+  // onEditButton,
+}: {
+  parentName: string
+  // onEditButton: (name: string) => void
+}) => {
   const { t } = useTranslate()
 
   const { control } = useFormContext()
@@ -48,7 +50,7 @@ export const ButtonGroupEditor = ({
   })
 
   function addButton() {
-    append(buttonBlockDefaultValue(`Button #${fields.length + 1}`))
+    append(buttonBlockDefaultFn(`Button #${fields.length + 1}`))
   }
 
   return (
@@ -62,10 +64,7 @@ export const ButtonGroupEditor = ({
           {fields.map((field, index) => (
             <SortableItem key={field.id} value={field.id} asChild>
               <div className="w-full flex">
-                <ButtonBlockEditor
-                  parentName={`${parentName}.${index}`}
-                  onEditButton={() => onEditButton(`${parentName}.${index}`)}
-                />
+                <ButtonBlockEditor parentName={`${parentName}.${index}`} />
                 <SortableDragHandle
                   variant="ghost"
                   size="icon"

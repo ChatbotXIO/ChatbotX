@@ -10,7 +10,7 @@ export const startFlowBlockSchema = z.object({
 
 export type StartFlowBlockSchema = z.infer<typeof startFlowBlockSchema>
 
-export const startFlowBlockDefaultValue = (): StartFlowBlockSchema => ({
+export const startFlowBlockDefaultFn = (): StartFlowBlockSchema => ({
   id: createId(),
   actionType: ActionType.StartFlow,
   flowId: "",

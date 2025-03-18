@@ -11,23 +11,57 @@ import { openAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/ope
 import { optInEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
 import { optOutEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
 import { createId } from "@paralleldrive/cuid2"
+import type { IconName } from "lucide-react/dynamic"
 import { z } from "zod"
 
-export enum ButtonActionType {
+export enum ButtonType {
   SendMessage = "SendMessage",
   OpenWebsite = "OpenWebsite",
-  CallPhoneNumber = "CallPhoneNumber",
+  // CallPhoneNumber = "CallPhoneNumber",
   PerformAction = "PerformAction",
   StartAnotherFlow = "StartAnotherFlow",
   StartAnotherStep = "StartAnotherStep",
   StartExternalStep = "StartExternalStep",
 }
 
-export const ButtonActionFlow = [
-  ButtonActionType.SendMessage,
-  ButtonActionType.PerformAction,
-  ButtonActionType.StartAnotherFlow,
-  ButtonActionType.StartAnotherStep,
+export interface IButtonConfig { icon: IconName, label: string, buttonType: ButtonType }
+
+export const allButtonsConfig: IButtonConfig[] = [
+  {
+    buttonType: ButtonType.SendMessage,
+    icon: "message-circle",
+    label: "Send Message"
+  },
+  {
+    buttonType: ButtonType.OpenWebsite,
+    icon: "link",
+    label: "Open Website"
+  },
+  // {
+  // buttonType: ButtonType.CallPhoneNumber,
+  //   icon: "phone",
+  //   label: "Call Phone Number"
+  // },
+  {
+    buttonType: ButtonType.PerformAction,
+    icon: "zap",
+    label: "Perform Action"
+  },
+  {
+    buttonType: ButtonType.StartAnotherFlow,
+    icon: "square-arrow-out-up-right",
+    label: "Start Another Flow"
+  },
+  {
+    buttonType: ButtonType.StartAnotherStep,
+    icon: "skip-forward",
+    label: "Start Another Step"
+  },
+  {
+    buttonType: ButtonType.StartExternalStep,
+    icon: "square-arrow-out-up-right",
+    label: "Start External Step"
+  }
 ]
 
 export enum BrowserSize {
@@ -61,44 +95,44 @@ export const buttonBlockSchema = z
     ),
   })
   .and(
-    z.discriminatedUnion("type", [
+    z.discriminatedUnion("buttonType", [
       z.object({
-        type: z.literal(ButtonActionType.SendMessage),
+        buttonType: z.literal(ButtonType.SendMessage),
       }),
       z.object({
-        type: z.literal(ButtonActionType.OpenWebsite),
+        buttonType: z.literal(ButtonType.OpenWebsite),
         url: z.string().url(),
         browserSize: z.nativeEnum(BrowserSize),
       }),
+      // z.object({
+      //   type: z.literal(ButtonType.CallPhoneNumber),
+      //   phoneNumber: z
+      //     .string()
+      //     .regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/),
+      // }),
       z.object({
-        type: z.literal(ButtonActionType.CallPhoneNumber),
-        phoneNumber: z
-          .string()
-          .regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/),
+        buttonType: z.literal(ButtonType.PerformAction),
       }),
       z.object({
-        type: z.literal(ButtonActionType.PerformAction),
+        buttonType: z.literal(ButtonType.StartAnotherFlow),
       }),
       z.object({
-        type: z.literal(ButtonActionType.StartAnotherFlow),
+        buttonType: z.literal(ButtonType.StartAnotherStep),
       }),
       z.object({
-        type: z.literal(ButtonActionType.StartAnotherStep),
-      }),
-      z.object({
-        type: z.literal(ButtonActionType.StartExternalStep),
+        buttonType: z.literal(ButtonType.StartExternalStep),
         stepId: z.string().min(1),
       }),
       z.object({
-        type: z.literal(null),
+        buttonType: z.literal(null),
       }),
     ]),
   )
 export type ButtonBlockSchema = z.infer<typeof buttonBlockSchema>
 
-export const buttonBlockDefaultValue = (label = ""): ButtonBlockSchema => ({
+export const buttonBlockDefaultFn = (label = ""): ButtonBlockSchema => ({
   id: createId(),
   label,
-  type: null,
+  buttonType: null,
   actions: [],
 })

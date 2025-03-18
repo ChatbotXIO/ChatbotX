@@ -12,7 +12,7 @@ export const sendTextBlockSchema = z.object({
 
 export type SendTextBlockSchema = z.infer<typeof sendTextBlockSchema>
 
-export const sendTextBlockDefaultValue = (
+export const sendTextBlockDefaultFn = (
   message = "",
   buttons: ButtonBlockSchema[] = [],
 ): SendTextBlockSchema => ({

@@ -13,7 +13,7 @@ export type OpenAIGenerateTextAssistantSchema = z.infer<
   typeof openAIGenerateTextAssistantSchema
 >
 
-export const openAIGenerateTextAssistantDefaultValue =
+export const openAIGenerateTextAssistantDefaultFn =
   (): OpenAIGenerateTextAssistantSchema => ({
     id: createId(),
     actionType: ActionType.OpenAIGenerateTextAssistant,

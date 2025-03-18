@@ -1,10 +1,11 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import {
-  startFlowBlockDefaultValue,
+  startFlowBlockDefaultFn,
   startFlowBlockSchema,
 } from "../../blocks/start-flow/schema"
 import { NodeType, baseNodeSchema } from "../../types"
+import { guessLabelAndPosition } from "../utils/name-helper"
 
 export const startFlowNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.StartFlow),
@@ -16,20 +17,16 @@ export const startFlowNodeSchema = baseNodeSchema.extend({
 
 export type StartFlowNodeSchema = z.infer<typeof startFlowNodeSchema>
 
-export const startFlowNodeDefaultValue = ({
-  labelVersion,
-  position = { x: 100, y: 100 },
-}: {
-  labelVersion: number
-  position?: { x: number; y: number }
-}): StartFlowNodeSchema => {
+export const startFlowNodeDefaultFn = (): StartFlowNodeSchema => {
+  const { labelVersion, position } = guessLabelAndPosition(NodeType.StartFlow)
+
   return {
     id: createId(),
     type: NodeType.StartFlow,
     position,
     data: {
       name: `Start Flow #${labelVersion}`,
-      blocks: [startFlowBlockDefaultValue()],
+      blocks: [startFlowBlockDefaultFn()],
     },
   }
 }

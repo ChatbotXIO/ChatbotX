@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { SendCardBlockEditor } from "@/features/flows/react-flow/blocks/send-card/editor"
-import { sendCardBlockDefaultValue } from "@/features/flows/react-flow/blocks/send-card/schema"
+import { sendCardBlockDefaultFn } from "@/features/flows/react-flow/blocks/send-card/schema"
 import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react"
 import { useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
@@ -34,7 +34,7 @@ export const SendCarouselBlockEditor = ({
   })
 
   const addCard = () => {
-    append(sendCardBlockDefaultValue())
+    append(sendCardBlockDefaultFn())
     setCurrent(api?.selectedScrollSnap())
   }
 

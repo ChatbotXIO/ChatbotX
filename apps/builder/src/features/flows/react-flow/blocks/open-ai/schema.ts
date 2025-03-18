@@ -8,7 +8,7 @@ export const openAISchema = z.object({
 })
 export type OpenAISchema = z.infer<typeof openAISchema>
 
-export const openAIDefaultValue = (): OpenAISchema => ({
+export const openAIDefaultFn = (): OpenAISchema => ({
   id: createId(),
   model: OpenAIModel.GPT4oMini,
 })

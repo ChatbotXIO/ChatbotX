@@ -10,7 +10,7 @@ export const splitTrafficBlockSchema = z.object({
 
 export type SplitTrafficBlockSchema = z.infer<typeof splitTrafficBlockSchema>
 
-export const splitTrafficBlockDefaultValue = (): SplitTrafficBlockSchema => ({
+export const splitTrafficBlockDefaultFn = (): SplitTrafficBlockSchema => ({
   id: createId(),
   actionType: ActionType.SplitTraffic,
   value: 100,

@@ -8,7 +8,7 @@ import { TrashIcon } from "lucide-react"
 import { useCallback, useEffect } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { SplitTrafficBlockEditor } from "../../blocks/split-traffic/editor"
-import { splitTrafficBlockDefaultValue } from "../../blocks/split-traffic/schema"
+import { splitTrafficBlockDefaultFn } from "../../blocks/split-traffic/schema"
 import { type SplitTrafficNodeSchema, splitTrafficNodeSchema } from "./schema"
 
 export default function SplitTrafficNodeEditor({
@@ -60,16 +60,16 @@ export default function SplitTrafficNodeEditor({
   })
 
   const addTraffic = () => {
-    append(splitTrafficBlockDefaultValue())
+    append(splitTrafficBlockDefaultFn())
   }
 
   // const onClickAction = (name: SendMessageEditorItemType) => {
   //   switch (name) {
   //     case SendMessageEditorItem.SendText:
-  //       append(sendTextBlockDefaultValue())
+  //       append(sendTextBlockDefaultFn())
   //       break
   // case SendMessageEditorItem.Image:
-  //   append(sendImageBlockDefaultValue())
+  //   append(sendImageBlockDefaultFn())
   //   break
   //   }
   // }

@@ -1,6 +1,6 @@
 import { FormLabel } from "@/components/ui/form"
 import { ButtonActionType } from "@/features/flows/react-flow/blocks/button/schema"
-import { cn } from "@/lib/utils"
+import { cn } from "@/components/lib/utils"
 import { useTranslate } from "@tolgee/react"
 import {
   ExternalLinkIcon,
@@ -18,54 +18,57 @@ export const ButtonActionSelect = ({
   // name,
   label,
   onSelect,
+  onDeselect,
 }: {
   // name: string
   label: string
   onSelect: (value: ButtonActionType | null) => void
+  onDeselect: (value: ButtonActionType | null) => void
 }) => {
   const { t } = useTranslate()
   const { watch } = useFormContext()
   const type = watch("type")
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const options = useMemo(
     () => [
       {
         label: t(`flows.ButtonAction.${ButtonActionType.SendMessage}`),
         value: ButtonActionType.SendMessage,
-        icon: <MessageCirclePlus />,
+        icon: MessageCirclePlus,
       },
       {
         label: t(`flows.ButtonAction.${ButtonActionType.OpenWebsite}`),
         value: ButtonActionType.OpenWebsite,
-        icon: <LinkIcon />,
+        icon: LinkIcon,
       },
       {
         label: t(`flows.ButtonAction.${ButtonActionType.CallPhoneNumber}`),
         value: ButtonActionType.CallPhoneNumber,
-        icon: <PhoneIcon />,
+        icon: PhoneIcon,
       },
       {
         label: t(`flows.ButtonAction.${ButtonActionType.PerformAction}`),
         value: ButtonActionType.PerformAction,
-        icon: <ZapIcon />,
+        icon: ZapIcon,
       },
       {
         label: t(`flows.ButtonAction.${ButtonActionType.StartAnotherFlow}`),
         value: ButtonActionType.StartAnotherFlow,
-        icon: <ExternalLinkIcon />,
+        icon: ExternalLinkIcon,
       },
       {
         label: t(`flows.ButtonAction.${ButtonActionType.StartAnotherStep}`),
         value: ButtonActionType.StartAnotherStep,
-        icon: <StepForwardIcon />,
+        icon: StepForwardIcon,
       },
       {
         label: t(`flows.ButtonAction.${ButtonActionType.StartExternalStep}`),
         value: ButtonActionType.StartExternalStep,
-        icon: <ExternalLinkIcon />,
+        icon: ExternalLinkIcon,
       },
     ],
-    [t],
+    [],
   )
 
   const filterOptions = useMemo(() => {
@@ -77,6 +80,7 @@ export const ButtonActionSelect = ({
   return (
     <>
       <FormLabel className="flex gap-1">{label}</FormLabel>
+
       <div className="flex flex-col items-center gap-2">
         {filterOptions.map((option) => (
           <div
@@ -90,7 +94,9 @@ export const ButtonActionSelect = ({
             onClick={() => onSelect(option.value)}
             onKeyDown={() => {}}
           >
-            <div className="w-8">{option.icon}</div>
+            <div className="w-8">
+              <option.icon />
+            </div>
             <div className="flex-1 text-center">{option.label}</div>
             <div className="w-8 cursor-pointer">
               {type === option.value && (
