@@ -1,5 +1,6 @@
 "use client"
 
+import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -9,8 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-// import { actionsStepEditor } from "@/features/flows/react-flow/nodes/send-message/editor"
-import { FormInput } from "@/components/form-input"
 import { Form } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
 import { sendMessageNodeDefaultFn } from "@/features/flows/react-flow/nodes/send-message/schema"
@@ -19,7 +18,6 @@ import { T, useTranslate } from "@tolgee/react"
 import { useNodes, useReactFlow } from "@xyflow/react"
 import { getProperty, setProperty } from "dot-prop"
 import { XIcon } from "lucide-react"
-import { DynamicIcon } from "lucide-react/dynamic"
 import { useEffect, useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import {
@@ -44,7 +42,7 @@ function AllButtonOptions({
           className="flex gap-2 w-full justify-start"
           onClick={() => onChooseButton(buttonConfig.buttonType)}
         >
-          <DynamicIcon name={buttonConfig.icon} />
+          <buttonConfig.icon />
           <span className="text-center">{buttonConfig.label}</span>
         </Button>
       ))}
@@ -63,7 +61,7 @@ function ActiveButton({ buttonType }: { buttonType: ButtonType }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-1 pl-4 items-center text-sm border border-dashed rounded">
-        <DynamicIcon className="size-4" name={activeButton.icon} />
+        <activeButton.icon className="size-4" />
         <span className="text-center flex-1">{activeButton.label}</span>
         <Button
           variant="ghost"

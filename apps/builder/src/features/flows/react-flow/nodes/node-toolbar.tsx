@@ -1,8 +1,17 @@
 import { Button } from "@/components/ui/button"
-import { DynamicIcon, type IconName } from "lucide-react/dynamic"
+import {
+  CopyIcon,
+  EyeIcon,
+  FingerprintIcon,
+  LinkIcon,
+  type LucideIcon,
+  PlayIcon,
+  Trash2Icon,
+  TypeIcon,
+} from "lucide-react"
 
 interface IToolbarItem {
-  icon: IconName
+  icon: LucideIcon
   label: string
   onClick: () => void
 }
@@ -10,37 +19,37 @@ interface IToolbarItem {
 export function FlowNodeToolbar() {
   const configs: IToolbarItem[] = [
     {
-      icon: "eye",
+      icon: EyeIcon,
       label: "flows.previewBtn",
       onClick: () => {},
     },
     {
-      icon: "play",
+      icon: PlayIcon,
       label: "flows.setAsStartingStepBtn",
       onClick: () => {},
     },
     {
-      icon: "link",
+      icon: LinkIcon,
       label: "flows.getPublishedLinkBtn",
       onClick: () => {},
     },
     {
-      icon: "fingerprint",
+      icon: FingerprintIcon,
       label: "flows.getStepIdBtn",
       onClick: () => {},
     },
     {
-      icon: "type",
+      icon: TypeIcon,
       label: "flows.renameBtn",
       onClick: () => {},
     },
     {
-      icon: "copy",
+      icon: CopyIcon,
       label: "flows.duplicateBtn",
       onClick: () => {},
     },
     {
-      icon: "trash-2",
+      icon: Trash2Icon,
       label: "flows.deleteBtn",
       onClick: () => {},
     },
@@ -50,7 +59,7 @@ export function FlowNodeToolbar() {
     <div className="flex gap-2 justify-center bg-white border rounded-md py-1">
       {configs.map((config) => (
         <Button variant="ghost" size="xs" key={config.label}>
-          <DynamicIcon name={config.icon} />
+          <config.icon />
         </Button>
       ))}
     </div>

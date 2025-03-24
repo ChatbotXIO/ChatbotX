@@ -1,6 +1,6 @@
 "use client"
 
-import { AddNodeButton } from "@/features/flows/react-flow/panels/add-node"
+import { AddNodeButton } from "@/features/flows/react-flow/nodes/add-node"
 import {
   Background,
   Controls,
@@ -19,7 +19,7 @@ import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-versi
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
 import { ButtonEditorDialog } from "./button-editor-dialog"
 import { NodeViewer } from "./nodes/viewer"
-import { NodeDetailSheet } from "./panels/node-detail-sheet"
+import { NodeDetailSheet } from "./nodes/node-detail-sheet"
 import { useStepStore } from "./stores/step-store-provider"
 import { type FlowNode, NodeType } from "./types"
 import { FrameHeader } from "./frame-header"
@@ -77,6 +77,7 @@ export function ReactFlowFrame({ flowVersion }: ReactFlowFrameProps) {
   return (
     <>
       <FrameHeader />
+
       <ReactFlow
         nodes={nodes}
         edges={edges}

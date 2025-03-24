@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetDescription } from "@/components/ui/sheet"
 import { useStore } from "@xyflow/react"
-import { NodeEditor } from "../nodes/editor"
+import { NodeEditor } from "./editor"
 import type { FlowNode } from "../types"
 
 interface NodeDetailSheetProps {

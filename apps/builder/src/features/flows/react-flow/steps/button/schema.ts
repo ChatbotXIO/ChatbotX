@@ -11,7 +11,14 @@ import { openAITextToSpeechSchema } from "@/features/flows/react-flow/steps/open
 import { optInEmailStepSchema } from "@/features/flows/react-flow/steps/opt-in-email/schema"
 import { optOutEmailStepSchema } from "@/features/flows/react-flow/steps/opt-out-email/schema"
 import { createId } from "@paralleldrive/cuid2"
-import type { IconName } from "lucide-react/dynamic"
+import {
+  LinkIcon,
+  type LucideIcon,
+  MessageCircleIcon,
+  SkipForwardIcon,
+  SquareArrowOutUpRight,
+  ZapIcon,
+} from "lucide-react"
 import { z } from "zod"
 
 export enum ButtonType {
@@ -25,7 +32,7 @@ export enum ButtonType {
 }
 
 export interface IButtonConfig {
-  icon: IconName
+  icon: LucideIcon
   label: string
   buttonType: ButtonType
 }
@@ -33,12 +40,12 @@ export interface IButtonConfig {
 export const allButtonsConfig: IButtonConfig[] = [
   {
     buttonType: ButtonType.SendMessage,
-    icon: "message-circle",
+    icon: MessageCircleIcon,
     label: "Send Message",
   },
   {
     buttonType: ButtonType.OpenWebsite,
-    icon: "link",
+    icon: LinkIcon,
     label: "Open Website",
   },
   // {
@@ -48,22 +55,22 @@ export const allButtonsConfig: IButtonConfig[] = [
   // },
   {
     buttonType: ButtonType.PerformAction,
-    icon: "zap",
+    icon: ZapIcon,
     label: "Perform Action",
   },
   {
     buttonType: ButtonType.StartAnotherFlow,
-    icon: "square-arrow-out-up-right",
+    icon: SquareArrowOutUpRight,
     label: "Start Another Flow",
   },
   {
     buttonType: ButtonType.StartAnotherStep,
-    icon: "skip-forward",
+    icon: SkipForwardIcon,
     label: "Start Another Step",
   },
   {
     buttonType: ButtonType.StartExternalStep,
-    icon: "square-arrow-out-up-right",
+    icon: SquareArrowOutUpRight,
     label: "Start External Step",
   },
 ]

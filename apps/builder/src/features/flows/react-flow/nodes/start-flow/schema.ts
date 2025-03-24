@@ -5,7 +5,6 @@ import {
   startFlowStepSchema,
 } from "../../steps/start-flow/schema"
 import { NodeType, baseNodeSchema } from "../../types"
-import { guessLabelAndPosition } from "../utils/name-helper"
 
 export const startFlowNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.StartFlow),
@@ -18,14 +17,13 @@ export const startFlowNodeSchema = baseNodeSchema.extend({
 export type StartFlowNodeSchema = z.infer<typeof startFlowNodeSchema>
 
 export const startFlowNodeDefaultFn = (): StartFlowNodeSchema => {
-  const { labelVersion, position } = guessLabelAndPosition(NodeType.StartFlow)
-
   return {
     id: createId(),
     type: NodeType.StartFlow,
-    position,
+    position: { x: 100, y: 100 },
+    measured: { width: 288, height: 100 },
     data: {
-      name: `Start Flow #${labelVersion}`,
+      name: "Start Flow #1",
       steps: [startFlowStepDefaultFn()],
     },
   }

@@ -6,7 +6,6 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
 import { Handle, Position } from "@xyflow/react"
-import { DynamicIcon } from "lucide-react/dynamic"
 import { DynamicStepViewer } from "../steps"
 import type { FlowNode } from "../types"
 import { allNodesConfig } from "./node-config"
@@ -22,11 +21,7 @@ export function NodeViewer({ id, type, data }: FlowNode) {
           <CardHeader className="p-4 relative">
             <Handle id={id} type="target" position={Position.Left} />
             <CardTitle className="flex gap-1 items-center">
-              {nodeConfig?.icon ? (
-                <DynamicIcon name={nodeConfig.icon} className="size-5" />
-              ) : (
-                " "
-              )}
+              {nodeConfig?.icon ? <nodeConfig.icon className="size-5" /> : " "}
               {data.name}
             </CardTitle>
           </CardHeader>

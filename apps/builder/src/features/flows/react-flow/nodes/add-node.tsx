@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { createId } from "@paralleldrive/cuid2"
 import { T } from "@tolgee/react"
 import {
   ControlButton,
@@ -12,10 +13,8 @@ import {
 } from "@xyflow/react"
 import { Plus } from "lucide-react"
 import { useState } from "react"
+import { allNodesConfig } from "./node-config"
 import type { NodeType } from "../types"
-import { createId } from "@paralleldrive/cuid2"
-import { DynamicIcon } from "lucide-react/dynamic"
-import { allNodesConfig } from "../nodes/node-config"
 
 export function AddNodeButton() {
   const [open, setOpen] = useState(false)
@@ -43,7 +42,7 @@ export function AddNodeButton() {
                 className="w-full justify-start"
                 onClick={() => onClickAction(item.type)}
               >
-                <DynamicIcon name={item.icon} />
+                <item.icon />
                 <T keyName={item.label} />
               </Button>
             )

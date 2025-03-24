@@ -7,7 +7,6 @@ import type { Metadata } from "next"
 import { SessionProvider } from "next-auth/react"
 import type { ReactNode } from "react"
 import "./globals.css"
-import { ReactScan } from "@/components/react-scan"
 
 export const metadata: Metadata = {
   title: "AhaChat AI",
@@ -28,7 +27,12 @@ export default async function RootLayout({ children }: Props) {
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <ReactScan />
+      <head>
+        <script
+          crossOrigin="anonymous"
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+        />
+      </head>
       <body>
         <SessionProvider>
           <ThemeProvider

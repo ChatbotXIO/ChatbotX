@@ -41,7 +41,7 @@ export const createFlowAction = chatbotActionClient
           flowVersions: {
             create: [
               {
-                chatbotId: chatbotId,
+                chatbotId,
                 nodes: [
                   {
                     id: createId(),
