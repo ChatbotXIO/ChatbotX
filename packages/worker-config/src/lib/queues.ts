@@ -7,4 +7,9 @@ const integrationQueue = new Queue(QueueName.INTEGRATION, {
   defaultJobOptions,
 })
 
-export { integrationQueue }
+const chatQueue = new Queue(QueueName.CHAT, {
+  connection,
+  defaultJobOptions,
+})
+
+export { integrationQueue, chatQueue }

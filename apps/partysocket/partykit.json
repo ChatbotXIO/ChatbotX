@@ -4,6 +4,6 @@
   "main": "src/server.ts",
   "compatibilityDate": "2025-01-03",
   "parties": {
-    "conversations": "src/parties/conversations.ts"
+    "users": "src/parties/users.ts"
   }
 }

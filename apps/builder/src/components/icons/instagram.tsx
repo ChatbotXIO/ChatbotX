@@ -1,12 +1,17 @@
-export const InstagramIcon = () => {
+export const InstagramIcon = ({
+  width,
+  height,
+  ...props
+}: { width?: string; height?: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       x="0px"
       y="0px"
-      width="100"
-      height="100"
+      width={width ?? "24px"}
+      height={height ?? "24px"}
       viewBox="0 0 48 48"
+      {...props}
     >
       <title>Instagram</title>
       <radialGradient

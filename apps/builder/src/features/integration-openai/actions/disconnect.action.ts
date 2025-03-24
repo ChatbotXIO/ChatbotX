@@ -8,7 +8,7 @@ import { authActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
 
 export const disconnectOpenAIAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

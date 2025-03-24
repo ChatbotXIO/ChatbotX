@@ -4,7 +4,7 @@ import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { Prisma } from "@ahachat.ai/database"
 import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import { ChatbotMemberException, type ChatbotMemberResource } from "../schemas"
+import type { ChatbotMemberResource } from "../schemas"
 import type { ChatbotMemberWithUser } from "../schemas/add-chatbot-member-schema"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"
 
@@ -94,17 +94,4 @@ export const getAllChatbotMembers = async (
       tags: [`${userId}#chatbots`],
     },
   )()
-}
-
-export const ensureUserCanAccessChatbot = async (
-  userId: string,
-  chatbotId: string,
-  throwable = true,
-) => {
-  const { chatbots } = await getAllChatbotMembers(userId)
-  const ok = chatbots.some((c) => c.id === chatbotId)
-
-  if (!ok && throwable) {
-    throw new ChatbotMemberException("Chatbot not found")
-  }
 }

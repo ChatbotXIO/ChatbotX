@@ -10,7 +10,10 @@ import { useParams } from "next/navigation"
 import { FlowEditToolbar } from "./flow-edit-toolbar"
 
 export function FrameHeader() {
-  const params = useParams()
+  const { chatbotId, flowId } = useParams<{
+    chatbotId: string
+    flowId: string
+  }>()
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -18,7 +21,7 @@ export function FrameHeader() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              href={`/chatbots/${params.chatbotId}/flows`}
+              href={`/chatbots/${chatbotId}/flows`}
               className="capitalize"
             >
               Flows
@@ -26,14 +29,12 @@ export function FrameHeader() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="capitalize">
-              {params.flowId}
-            </BreadcrumbPage>
+            <BreadcrumbPage className="capitalize">{flowId}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <FlowEditToolbar flowId={params.flowId as string} />
+      <FlowEditToolbar chatbotId={chatbotId} flowId={flowId} />
     </header>
   )
 }

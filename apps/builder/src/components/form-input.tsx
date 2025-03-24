@@ -21,7 +21,7 @@ export const FormInput = ({
   children,
 }: {
   name: string
-  label: ReactNode
+  label?: ReactNode
   inputType?: InputType
   placeholder?: string
   isRequired?: boolean

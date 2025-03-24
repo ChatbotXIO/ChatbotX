@@ -13,7 +13,7 @@ export type ChatbotIdAndIdRequestParams = z.infer<
   typeof chatbotIdAndIdRequestParams
 >
 
-export const deleteRequestSchema = z.object({
+export const bulkUpdateIdsRequest = z.object({
   ids: z.array(z.string().cuid2()),
 })
-export type DeleteRequestSchema = z.infer<typeof deleteRequestSchema>
+export type BulkUpdateIdsRequest = z.infer<typeof bulkUpdateIdsRequest>

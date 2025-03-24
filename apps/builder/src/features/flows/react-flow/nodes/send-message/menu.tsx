@@ -1,399 +1,351 @@
 import { T } from "@tolgee/react"
-import {
-  ArchiveIcon,
-  AudioLinesIcon,
-  BellIcon,
-  BellOffIcon,
-  BellRingIcon,
-  BotIcon,
-  BotMessageSquareIcon,
-  BotOffIcon,
-  CalculatorIcon,
-  CalendarSync as CalendarSyncIcon,
-  ChartNoAxesColumnIcon,
-  ChartNoAxesCombinedIcon,
-  CircleCheckIcon,
-  CircleEllipsisIcon,
-  ClockIcon,
-  CodeIcon,
-  CogIcon,
-  CreditCardIcon,
-  FileAudioIcon,
-  ImageIcon,
-  ImagePlayIcon,
-  KeyboardIcon,
-  LogsIcon,
-  MailIcon,
-  MessageCircleMoreIcon,
-  MessageCircleOffIcon,
-  MessageCirclePlusIcon,
-  MessageCircleXIcon,
-  MessageSquareIcon,
-  MessagesSquareIcon,
-  OctagonXIcon,
-  PackageOpenIcon,
-  PaperclipIcon,
-  PictureInPicture2Icon,
-  SaveIcon,
-  SaveOffIcon,
-  ShuffleIcon,
-  SpeechIcon,
-  StarIcon,
-  StarOffIcon,
-  TagIcon,
-  TextIcon,
-  UserIcon,
-  UserRoundMinusIcon,
-  UserRoundXIcon,
-  VideoIcon,
-  ZapIcon,
-} from "lucide-react"
-import { ActionType } from "../../action-type"
+import { TextIcon } from "lucide-react"
+import { StepType } from "../../steps/step-action"
 import type { MenuItem } from "../types"
 
 export const sendMessageEditorMenus: MenuItem[] = [
   {
-    label: <T keyName="flows.ActionType.SendText" />,
-    icon: <TextIcon />,
-    actionType: ActionType.SendText,
+    label: <T keyName="flows.StepType.SendText" />,
+    icon: TextIcon,
+    stepType: StepType.SendText,
   },
-  {
-    label: <T keyName="flows.ActionType.SendImage" />,
-    icon: <ImageIcon />,
-    actionType: ActionType.SendImage,
-  },
-  {
-    label: <T keyName="flows.ActionType.SendCard" />,
-    icon: <CreditCardIcon />,
-    actionType: ActionType.SendCard,
-  },
-  {
-    label: <T keyName="flows.ActionType.SendCarousel" />,
-    icon: <PictureInPicture2Icon />,
-    actionType: ActionType.SendCarousel,
-  },
-  {
-    label: <T keyName="flows.ActionType.UserInput" />,
-    icon: <KeyboardIcon />,
-    actionType: ActionType.UserInput,
-  },
-  {
-    label: <T keyName="flows.ActionType.SendVideo" />,
-    icon: <VideoIcon />,
-    actionType: ActionType.SendVideo,
-  },
-  {
-    label: <T keyName="flows.ActionType.SendGif" />,
-    icon: <ImagePlayIcon />,
-    actionType: ActionType.SendGif,
-  },
-  {
-    label: <T keyName="flows.ActionType.SetDebounce" />,
-    icon: <ClockIcon />,
-    actionType: ActionType.SetDebounce,
-  },
-  {
-    label: <T keyName="flows.ActionType.SendFile" />,
-    icon: <PaperclipIcon />,
-    actionType: ActionType.SendFile,
-    children: [
-      {
-        label: <T keyName="flows.ActionType.SendAudio" />,
-        icon: <FileAudioIcon />,
-        actionType: ActionType.SendAudio,
-      },
-      {
-        label: <T keyName="flows.ActionType.SendFile" />,
-        icon: <PaperclipIcon />,
-        actionType: ActionType.SendFile,
-      },
-    ],
-  },
-  {
-    label: <T keyName="flows.ActionType.Actions" />,
-    icon: <ZapIcon />,
-    actionType: ActionType.Actions,
-    children: [
-      {
-        label: <T keyName="flows.ActionType.InboxActions" />,
-        icon: <MessagesSquareIcon />,
-        actionType: ActionType.InboxActions,
-        children: [
-          {
-            label: <T keyName="flows.ActionType.UnsubscribeBot" />,
-            icon: <UserIcon />,
-            actionType: ActionType.UnsubscribeBot,
-          },
-          {
-            label: <T keyName="flows.ActionType.SubscribeBot" />,
-            icon: <BotIcon />,
-            actionType: ActionType.SubscribeBot,
-          },
-          {
-            label: <T keyName="flows.ActionType.AssignConversaton" />,
-            icon: <MessageCirclePlusIcon />,
-            actionType: ActionType.AssignConversaton,
-          },
-          {
-            label: <T keyName="flows.ActionType.AutoAssignConversation" />,
-            icon: <MessageCirclePlusIcon />,
-            actionType: ActionType.AutoAssignConversation,
-          },
-          {
-            label: <T keyName="flows.ActionType.UnassignConversation" />,
-            icon: <MessageCircleXIcon />,
-            actionType: ActionType.UnassignConversation,
-          },
-          {
-            label: <T keyName="flows.ActionType.AddNotes" />,
-            icon: <MessageCircleMoreIcon />,
-            actionType: ActionType.AddNotes,
-          },
-          {
-            label: <T keyName="flows.ActionType.FollowConversation" />,
-            icon: <StarIcon />,
-            actionType: ActionType.FollowConversation,
-          },
-          {
-            label: <T keyName="flows.ActionType.UnfollowConversation" />,
-            icon: <StarOffIcon />,
-            actionType: ActionType.UnfollowConversation,
-          },
-          {
-            label: <T keyName="flows.ActionType.ArchiveConversation" />,
-            icon: <ArchiveIcon />,
-            actionType: ActionType.ArchiveConversation,
-          },
-          {
-            label: <T keyName="flows.ActionType.UnarchiveConversation" />,
-            icon: <PackageOpenIcon />,
-            actionType: ActionType.UnarchiveConversation,
-          },
-          {
-            label: <T keyName="flows.ActionType.BlockContact" />,
-            icon: <UserRoundMinusIcon />,
-            actionType: ActionType.BlockContact,
-          },
-        ],
-      },
-      {
-        label: <T keyName="flows.ActionType.AddTag" />,
-        icon: <TagIcon />,
-        actionType: ActionType.AddTag,
-      },
-      {
-        label: <T keyName="flows.ActionType.RemoveTag" />,
-        icon: <OctagonXIcon />,
-        actionType: ActionType.RemoveTag,
-      },
-      {
-        label: <T keyName="flows.ActionType.OpenAIActions" />,
-        icon: <BotMessageSquareIcon />,
-        actionType: ActionType.OpenAIActions,
-        children: [
-          {
-            label: <T keyName="flows.ActionType.GenerateText" />,
-            icon: <TextIcon />,
-            actionType: ActionType.OpenAIGenerateText,
-          },
-          {
-            label: <T keyName="flows.ActionType.GenerateTextAgents" />,
-            icon: <TextIcon />,
-            actionType: ActionType.OpenAIGenerateTextAgent,
-          },
-          {
-            label: <T keyName="flows.ActionType.GenerateTextAdvanced" />,
-            icon: <TextIcon />,
-            actionType: ActionType.OpenAIGenerateTextAdvanced,
-          },
-          {
-            label: <T keyName="flows.ActionType.GenerateTextAssistant" />,
-            icon: <TextIcon />,
-            actionType: ActionType.OpenAIGenerateTextAssistant,
-          },
-          {
-            label: <T keyName="flows.ActionType.GenerateImage" />,
-            icon: <ImageIcon />,
-            actionType: ActionType.OpenAIGenerateImage,
-          },
-          {
-            label: <T keyName="flows.ActionType.AnalyzeImage" />,
-            icon: <ChartNoAxesColumnIcon />,
-            actionType: ActionType.OpenAIAnalyzeImage,
-          },
-          {
-            label: <T keyName="flows.ActionType.SpeechToText" />,
-            icon: <TextIcon />,
-            actionType: ActionType.OpenAISpeechToText,
-          },
-          {
-            label: <T keyName="flows.ActionType.TextToSpeech" />,
-            icon: <SpeechIcon />,
-            actionType: ActionType.OpenAITextToSpeech,
-          },
-          {
-            label: <T keyName="flows.ActionType.DeleteMessageHistory" />,
-            icon: <MessageCircleOffIcon />,
-            actionType: ActionType.OpenAIDeleteMessageHistory,
-          },
-        ],
-      },
+  // {
+  //   label: <T keyName="flows.StepType.SendImage" />,
+  //   icon: ImageIcon,
+  //   stepType: StepType.SendImage,
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.SendCard" />,
+  //   icon: CreditCardIcon,
+  //   stepType: StepType.SendCard,
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.SendCarousel" />,
+  //   icon: PictureInPicture2Icon,
+  //   stepType: StepType.SendCarousel,
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.UserInput" />,
+  //   icon: KeyboardIcon,
+  //   stepType: StepType.UserInput,
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.SendVideo" />,
+  //   icon: VideoIcon,
+  //   stepType: StepType.SendVideo,
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.SendGif" />,
+  //   icon: ImagePlayIcon,
+  //   stepType: StepType.SendGif,
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.SetDebounce" />,
+  //   icon: ClockIcon,
+  //   stepType: StepType.SetDebounce,
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.SendFile" />,
+  //   icon: PaperclipIcon,
+  //   stepType: null,
+  //   children: [
+  //     {
+  //       label: <T keyName="flows.StepType.SendAudio" />,
+  //       icon: FileAudioIcon,
+  //       stepType: StepType.SendAudio,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.SendFile" />,
+  //       icon: PaperclipIcon,
+  //       stepType: StepType.SendFile,
+  //     },
+  //   ],
+  // },
+  // {
+  //   label: <T keyName="flows.StepType.Actions" />,
+  //   icon: ZapIcon,
+  //   stepType: null,
+  //   children: [
+  //     {
+  //       label: <T keyName="flows.StepType.InboxActions" />,
+  //       icon: MessagesSquareIcon,
+  //       stepType: null,
+  //       children: [
+  //         {
+  //           label: <T keyName="flows.StepType.DisableBot" />,
+  //           icon: UserIcon,
+  //           stepType: StepType.DisableBot,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.EnableBot" />,
+  //           icon: BotIcon,
+  //           stepType: StepType.EnableBot,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.AssignConversation" />,
+  //           icon: MessageCirclePlusIcon,
+  //           stepType: StepType.AssignConversation,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.AutoAssignConversation" />,
+  //           icon: MessageCirclePlusIcon,
+  //           stepType: StepType.AutoAssignConversation,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.UnassignConversation" />,
+  //           icon: MessageCircleXIcon,
+  //           stepType: StepType.UnassignConversation,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.AddNote" />,
+  //           icon: MessageCircleMoreIcon,
+  //           stepType: StepType.AddNote,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.FollowConversation" />,
+  //           icon: StarIcon,
+  //           stepType: StepType.FollowConversation,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.UnfollowConversation" />,
+  //           icon: StarOffIcon,
+  //           stepType: StepType.UnfollowConversation,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.ArchiveConversation" />,
+  //           icon: ArchiveIcon,
+  //           stepType: StepType.ArchiveConversation,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.UnarchiveConversation" />,
+  //           icon: PackageOpenIcon,
+  //           stepType: StepType.UnarchiveConversation,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.StepContact" />,
+  //           icon: UserRoundXIcon,
+  //           stepType: StepType.StepContact,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.AddTag" />,
+  //       icon: TagIcon,
+  //       stepType: StepType.AddTag,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.RemoveTag" />,
+  //       icon: OctagonXIcon,
+  //       stepType: StepType.RemoveTag,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.OpenAIActions" />,
+  //       icon: BotMessageSquareIcon,
+  //       stepType: null,
+  //       children: [
+  //         {
+  //           label: <T keyName="flows.StepType.GenerateText" />,
+  //           icon: TextIcon,
+  //           stepType: StepType.OpenAIGenerateText,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.GenerateTextAgents" />,
+  //           icon: TextIcon,
+  //           stepType: StepType.OpenAIGenerateTextAgent,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.GenerateTextAdvanced" />,
+  //           icon: TextIcon,
+  //           stepType: StepType.OpenAIGenerateTextAdvanced,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.GenerateTextAssistant" />,
+  //           icon: TextIcon,
+  //           stepType: StepType.OpenAIGenerateTextAssistant,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.GenerateImage" />,
+  //           icon: ImageIcon,
+  //           stepType: StepType.OpenAIGenerateImage,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.AnalyzeImage" />,
+  //           icon: ChartNoAxesColumnIcon,
+  //           stepType: StepType.OpenAIAnalyzeImage,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.SpeechToText" />,
+  //           icon: TextIcon,
+  //           stepType: StepType.OpenAISpeechToText,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.TextToSpeech" />,
+  //           icon: SpeechIcon,
+  //           stepType: StepType.OpenAITextToSpeech,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.DeleteMessageHistory" />,
+  //           icon: MessageCircleOffIcon,
+  //           stepType: StepType.OpenAIDeleteMessageHistory,
+  //         },
+  //       ],
+  //     },
 
-      {
-        label: <T keyName="flows.ActionType.EmailActions" />,
-        icon: <MailIcon />,
-        actionType: ActionType.EmailActions,
-        children: [
-          {
-            label: <T keyName="flows.ActionType.MarkEmailVerified" />,
-            icon: <CircleCheckIcon className="text-green-500" />,
-            actionType: ActionType.MarkEmailVerified,
-          },
-          {
-            label: <T keyName="flows.ActionType.OptInEmail" />,
-            icon: <BellRingIcon />,
-            actionType: ActionType.OptInEmail,
-          },
-          {
-            label: <T keyName="flows.ActionType.OptOutEmail" />,
-            icon: <BellOffIcon />,
-            actionType: ActionType.OptOutEmail,
-          },
-        ],
-      },
-      {
-        label: <T keyName="flows.ActionType.MessengerActions" />,
-        icon: <MessageSquareIcon />,
-        actionType: ActionType.MessengerActions,
-        children: [
-          {
-            label: <T keyName="flows.ActionType.AddMessengerCustomAudience" />,
-            icon: <AudioLinesIcon />,
-            actionType: ActionType.AddMessengerCustomAudience,
-          },
-          {
-            label: <T keyName="flows.ActionType.AddMessengerRichmenu" />,
-            icon: <LogsIcon />,
-            actionType: ActionType.AddMessengerRichmenu,
-          },
-        ],
-      },
-      {
-        label: <T keyName="flows.ActionType.NotifyAgent" />,
-        icon: <BellIcon />,
-        actionType: ActionType.NotifyAgent,
-      },
-      {
-        label: <T keyName="flows.ActionType.AddCustomField" />,
-        icon: <SaveIcon />,
-        actionType: ActionType.AddCustomField,
-      },
-      {
-        label: <T keyName="flows.ActionType.RemoveCustomField" />,
-        icon: <SaveOffIcon />,
-        actionType: ActionType.RemoveCustomField,
-      },
-      {
-        label: <T keyName="flows.ActionType.AddCustomLog" />,
-        icon: <ChartNoAxesCombinedIcon />,
-        actionType: ActionType.AddCustomLog,
-      },
-      {
-        label: <T keyName="flows.ActionType.SubscribeBot" />,
-        icon: <BotIcon />,
-        actionType: ActionType.SubscribeBot,
-      },
-      {
-        label: <T keyName="flows.ActionType.UnsubscribeBot" />,
-        icon: <BotOffIcon />,
-        actionType: ActionType.UnsubscribeBot,
-      },
-      {
-        label: <T keyName="flows.ActionType.RemoveContact" />,
-        icon: <UserRoundXIcon />,
-        actionType: ActionType.RemoveContact,
-      },
-      {
-        label: <T keyName="flows.ActionType.CallApi" />,
-        icon: <CodeIcon />,
-        actionType: ActionType.CallApi,
-      },
-      {
-        label: <T keyName="flows.ActionType.AddTrigger" />,
-        icon: <ZapIcon />,
-        actionType: ActionType.AddTrigger,
-        children: [
-          {
-            label: <T keyName="flows.ActionType.TriggerZapier" />,
-            icon: <ZapIcon />,
-            actionType: ActionType.TriggerZapier,
-          },
-          {
-            label: <T keyName="flows.ActionType.TriggerMake" />,
-            icon: <ZapIcon />,
-            actionType: ActionType.TriggerMake,
-          },
-          {
-            label: <T keyName="flows.ActionType.TriggerPabbly" />,
-            icon: <ZapIcon />,
-            actionType: ActionType.TriggerPabbly,
-          },
-        ],
-      },
-      {
-        label: <T keyName="flows.ActionType.Others" />,
-        icon: <CircleEllipsisIcon />,
-        actionType: ActionType.Others,
-        children: [
-          {
-            label: <T keyName="flows.ActionType.StartAnotherFlow" />,
-            icon: <ZapIcon />,
-            actionType: ActionType.StartAnotherFlow,
-          },
-          {
-            label: <T keyName="flows.ActionType.StartAnotherStep" />,
-            icon: <ZapIcon />,
-            actionType: ActionType.StartAnotherStep,
-          },
-          {
-            label: <T keyName="flows.ActionType.StartExternalStep" />,
-            icon: <ZapIcon />,
-            actionType: ActionType.StartExternalStep,
-          },
-          {
-            label: <T keyName="flows.ActionType.CancelContactInput" />,
-            icon: <ZapIcon />,
-            actionType: ActionType.CancelContactInput,
-          },
-        ],
-      },
-      {
-        label: <T keyName="flows.ActionType.Tools" />,
-        icon: <CogIcon />,
-        actionType: ActionType.Tools,
-        children: [
-          {
-            label: <T keyName="flows.ActionType.GetDataFromJson" />,
-            icon: <CodeIcon />,
-            actionType: ActionType.GetDataFromJson,
-          },
-          {
-            label: <T keyName="flows.ActionType.FormatDate" />,
-            icon: <CalendarSyncIcon />,
-            actionType: ActionType.FormatDate,
-          },
-          {
-            label: <T keyName="flows.ActionType.RandomCode" />,
-            icon: <ShuffleIcon />,
-            actionType: ActionType.RandomCode,
-          },
-          {
-            label: <T keyName="flows.ActionType.CountCharacters" />,
-            icon: <CalculatorIcon />,
-            actionType: ActionType.CountCharacters,
-          },
-        ],
-      },
-    ],
-  },
+  //     {
+  //       label: <T keyName="flows.StepType.EmailActions" />,
+  //       icon: MailIcon,
+  //       stepType: null,
+  //       children: [
+  //         {
+  //           label: <T keyName="flows.StepType.MarkEmailVerified" />,
+  //           icon: CircleCheckIcon,
+  //           stepType: StepType.MarkEmailVerified,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.OptInEmail" />,
+  //           icon: BellRingIcon,
+  //           stepType: StepType.OptInEmail,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.OptOutEmail" />,
+  //           icon: BellOffIcon,
+  //           stepType: StepType.OptOutEmail,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.MessengerActions" />,
+  //       icon: MessageSquareIcon,
+  //       stepType: null,
+  //       children: [
+  //         {
+  //           label: <T keyName="flows.StepType.AddMessengerCustomAudience" />,
+  //           icon: AudioLinesIcon,
+  //           stepType: StepType.AddMessengerCustomAudience,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.AddMessengerRichmenu" />,
+  //           icon: LogsIcon,
+  //           stepType: StepType.AddMessengerRichmenu,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.NotifyAgent" />,
+  //       icon: BellIcon,
+  //       stepType: StepType.NotifyAgent,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.AddCustomField" />,
+  //       icon: SaveIcon,
+  //       stepType: StepType.AddCustomField,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.RemoveCustomField" />,
+  //       icon: SaveOffIcon,
+  //       stepType: StepType.RemoveCustomField,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.AddCustomLog" />,
+  //       icon: ChartNoAxesCombinedIcon,
+  //       stepType: StepType.AddCustomLog,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.SubscribeBot" />,
+  //       icon: BotIcon,
+  //       stepType: StepType.SubscribeBot,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.UnsubscribeBot" />,
+  //       icon: BotOffIcon,
+  //       stepType: StepType.UnsubscribeBot,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.RemoveContact" />,
+  //       icon: UserRoundXIcon,
+  //       stepType: StepType.RemoveContact,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.CallApi" />,
+  //       icon: CodeIcon,
+  //       stepType: StepType.CallApi,
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.AddTrigger" />,
+  //       icon: ZapIcon,
+  //       stepType: null,
+  //       children: [
+  //         {
+  //           label: <T keyName="flows.StepType.TriggerZapier" />,
+  //           icon: ZapIcon,
+  //           stepType: StepType.TriggerZapier,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.TriggerMake" />,
+  //           icon: ZapIcon,
+  //           stepType: StepType.TriggerMake,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.TriggerPabbly" />,
+  //           icon: ZapIcon,
+  //           stepType: StepType.TriggerPabbly,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.Others" />,
+  //       icon: CircleEllipsisIcon,
+  //       stepType: null,
+  //       children: [
+  //         {
+  //           label: <T keyName="flows.StepType.StartAnotherFlow" />,
+  //           icon: ZapIcon,
+  //           stepType: StepType.StartAnotherFlow,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.StartAnotherStep" />,
+  //           icon: ZapIcon,
+  //           stepType: StepType.StartAnotherStep,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.StartExternalStep" />,
+  //           icon: ZapIcon,
+  //           stepType: StepType.StartExternalStep,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.CancelContactInput" />,
+  //           icon: ZapIcon,
+  //           stepType: StepType.CancelContactInput,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       label: <T keyName="flows.StepType.Tools" />,
+  //       icon: CogIcon,
+  //       stepType: null,
+  //       children: [
+  //         {
+  //           label: <T keyName="flows.StepType.GetDataFromJson" />,
+  //           icon: CodeIcon,
+  //           stepType: StepType.GetDataFromJson,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.FormatDate" />,
+  //           icon: CalendarSyncIcon,
+  //           stepType: StepType.FormatDate,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.RandomCode" />,
+  //           icon: ShuffleIcon,
+  //           stepType: StepType.RandomCode,
+  //         },
+  //         {
+  //           label: <T keyName="flows.StepType.CountCharacters" />,
+  //           icon: CalculatorIcon,
+  //           stepType: StepType.CountCharacters,
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
 ]

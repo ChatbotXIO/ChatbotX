@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { NodeType, baseNodeSchema } from "../../types"
+import type { NewNodeProps } from "../types"
 
 export const addNotesNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.AddNotes),
@@ -12,17 +13,18 @@ export const addNotesNodeSchema = baseNodeSchema.extend({
 
 export type AddNotesNodeSchema = z.infer<typeof addNotesNodeSchema>
 
-export const defaultAddNotesNode = ({
+export const addNotesNodeDefaultFn = ({
   labelVersion,
-  position = { x: 100, y: 100 },
-}: {
-  labelVersion: number
-  position?: { x: number; y: number }
-}): AddNotesNodeSchema => {
+  ...props
+}: NewNodeProps): AddNotesNodeSchema => {
   return {
     id: createId(),
     type: NodeType.AddNotes,
-    position,
+    measured: {
+      width: 288,
+      height: 100,
+    },
+    ...props,
     data: {
       name: `Add notes ${labelVersion}`,
       message: "",

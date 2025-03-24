@@ -104,7 +104,10 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
               <T keyName="settings.integrations.AutomatedResponses.Descriptions" />
             }
           >
-            <Switch />
+            <Switch
+              disabled={true}
+              checked={integrationOpenAI.automatedResponse}
+            />
           </SettingRow>
 
           <SettingRow
@@ -119,19 +122,6 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
               </Link>
             </Button>
           </SettingRow>
-
-          {/* <SettingRow
-            label={<T keyName="settings.integrations.Assistants.Title" />}
-            description={
-              <T keyName="settings.integrations.Assistants.Descriptions" />
-            }
-          >
-            <Button variant="secondary" size="sm">
-              <Link href="../ai-assistants">
-                <T keyName="settings.integrations.ManageBtn" />
-              </Link>
-            </Button>
-          </SettingRow> */}
 
           <SettingRow
             label={<T keyName="settings.integrations.AITriggers.Title" />}

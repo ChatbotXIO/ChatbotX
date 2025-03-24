@@ -79,7 +79,7 @@ export async function getFlows(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbots#${input.chatbotId}#flows`],
+      tags: [`chatbots:${input.chatbotId}#flows`],
     },
   )()
 }
@@ -91,25 +91,25 @@ export const findFlow = async (
 
   await findChatbotOrFail(userId, input.chatbotId)
 
-  return await unstable_cache(
-    async () => {
-      const flow = await prisma.flow.findFirst({
-        where: {
-          ...input,
-        },
-        include: {
-          flowVersions: true,
-        },
-      })
+  // return await unstable_cache(
+  //   async () => {
+  const flow = await prisma.flow.findFirst({
+    where: {
+      ...input,
+    },
+    include: {
+      flowVersions: true,
+    },
+  })
 
-      return { data: flow }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots#${input.chatbotId}#flows#${input.id}`],
-    },
-  )()
+  return { data: flow }
+  //   },
+  //   [JSON.stringify(input)],
+  //   {
+  //     revalidate: 3600,
+  //     tags: [`chatbots:${input.chatbotId}#flows:${input.id}`],
+  //   },
+  // )()
 }
 
 export const ensureFlowIdIsExists = async (
@@ -128,4 +128,22 @@ export const ensureFlowIdIsExists = async (
   }
 
   return flow
+}
+
+export const ensureAllFlowIdsExists = async (
+  chatbotId: string,
+  flowIds: string[],
+): Promise<void> => {
+  const count = await prisma.flow.count({
+    where: {
+      chatbotId,
+      id: {
+        in: flowIds,
+      },
+    },
+  })
+
+  if (count !== flowIds.length) {
+    throw new FlowException("Flow does not exists.")
+  }
 }

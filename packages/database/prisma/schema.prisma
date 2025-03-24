@@ -126,6 +126,7 @@ model Chatbot {
   spreadsheets             Spreadsheet[]
   tags                     Tag[]
   workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
+  automatedResponses       AutomatedResponse[]
 }
 
 model ChatbotMember {
@@ -343,6 +344,7 @@ model Inbox {
   integrationWhatsapp   IntegrationWhatsapp?
   integrationChatWidget IntegrationChatWidget?
   messages              Message[]
+  conversations         Conversation[]
   chatbot               Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
@@ -354,7 +356,7 @@ model Conversation {
   updatedAt              DateTime  @updatedAt
   chatbotId              String
   contactId              String    @unique
-  inboxType              InboxType
+  inboxId                String
   liveChatEnabled        Boolean   @default(false)
   followed               Boolean   @default(false)
   archivedAt             DateTime?
@@ -363,9 +365,11 @@ model Conversation {
   conversationAttributes Json?
   contactLastSeenAt      DateTime?
   agentLastSeenAt        DateTime?
+  lastActivityAt         DateTime  @default(now())
 
   chatbot                  Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   contact                  Contact                   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  inbox                    Inbox                     @relation(fields: [inboxId], references: [id], onDelete: Cascade)
   messages                 Message[]
   conversationParticipants ConversationParticipant[]
   attachment               Attachment[]
@@ -639,6 +643,21 @@ model ContactsOnBroadcasts {
   contact   Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@id([broadcastId, contactId])
+}
+
+model AutomatedResponse {
+  id           String   @id @default(cuid(2))
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  chatbotId    String
+  userMessages String[]
+  folderId     String?
+  replies      Json[]
+  status       Boolean
+
+  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
 }
 
 enum CustomFieldType {

@@ -1,5 +1,5 @@
+import type { Node } from "@xyflow/react"
 import { z } from "zod"
-import type { AddNotesNodeSchema } from "./nodes/add-notes/schema"
 import type { SendMessageNodeSchema } from "./nodes/send-message/schema"
 
 export enum NodeType {
@@ -37,8 +37,13 @@ export const baseNodeSchema = z.object({
     x: z.number(),
     y: z.number(),
   }),
+  measured: z.object({
+    width: z.number(),
+    height: z.number(),
+  }),
 })
 
-export type NodeData =
-  | SendMessageNodeSchema["data"]
-  | AddNotesNodeSchema["data"]
+export type NodeData = SendMessageNodeSchema["data"]
+// | AddNotesNodeSchema["data"]
+
+export type FlowNode = Node<NodeData>

@@ -1,7 +1,8 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Folder, prisma } from "@ahachat.ai/database"
+import { type Folder, type FolderType, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
+import { FolderException } from "../schemas/exception"
 import type {
   GetCurrentFoldersSchema,
   GetFoldersSchema,
@@ -89,4 +90,24 @@ export const getCurrentFolder = async (
       tags: [`${userId}#folders`, `${userId}#folders#${input.id}`],
     },
   )()
+}
+
+export const ensureFolderIdExists = async (
+  chatbotId: string,
+  folderType: FolderType,
+  id: string,
+): Promise<void> => {
+  const existingFolder = await prisma.folder.findFirst({
+    select: {
+      id: true,
+    },
+    where: {
+      chatbotId,
+      folderType,
+      id,
+    },
+  })
+  if (!existingFolder) {
+    throw new FolderException("Folder does not exists.")
+  }
 }
