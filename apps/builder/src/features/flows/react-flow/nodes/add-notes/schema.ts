@@ -13,7 +13,10 @@ export const addNotesNodeSchema = baseNodeSchema.extend({
 
 export type AddNotesNodeSchema = z.infer<typeof addNotesNodeSchema>
 
-export const addNotesNodeDefaultFn = ({ labelVersion, ...props }: NewNodeProps): AddNotesNodeSchema => {
+export const addNotesNodeDefaultFn = ({
+  labelVersion,
+  ...props
+}: NewNodeProps): AddNotesNodeSchema => {
   return {
     id: createId(),
     type: NodeType.AddNotes,

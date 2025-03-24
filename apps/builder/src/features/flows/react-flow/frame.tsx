@@ -1,34 +1,34 @@
 "use client"
 
-import { AddNotesNodeViewer } from "@/features/flows/react-flow/nodes/add-notes/add-notes-node"
-import SendMessageNodeViewer from "@/features/flows/react-flow/nodes/send-message/viewer"
-import StartFlowNodeViewer from "@/features/flows/react-flow/nodes/start-flow/viewer"
-import WaitNodeViewer from "@/features/flows/react-flow/nodes/wait/viewer"
-import { AddBlockButton } from "@/features/flows/react-flow/panels/add-block"
+import { AddNodeButton } from "@/features/flows/react-flow/panels/add-node"
 import {
   Background,
   Controls,
+  type Edge,
   MiniMap,
   Panel,
   ReactFlow,
-  ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import { useOptimisticAction } from "next-safe-action/hooks"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useDebouncedCallback } from "use-debounce"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
+import { ButtonEditorDialog } from "./button-editor-dialog"
+import { NodeViewer } from "./nodes/viewer"
 import { NodeDetailSheet } from "./panels/node-detail-sheet"
-import type { FlowNode } from "./stores/flow-store"
-import { useFlowStore } from "./stores/flow-store-provider"
-import { NodeType } from "./types"
+import { useStepStore } from "./stores/step-store-provider"
+import { type FlowNode, NodeType } from "./types"
+import { FrameHeader } from "./frame-header"
 
 const nodeTypes = {
-  [NodeType.SendMessage]: SendMessageNodeViewer,
-  [NodeType.AddNotes]: AddNotesNodeViewer,
-  [NodeType.Wait]: WaitNodeViewer,
-  [NodeType.StartFlow]: StartFlowNodeViewer,
+  [NodeType.SendMessage]: NodeViewer,
+  [NodeType.AddNotes]: NodeViewer,
+  [NodeType.Wait]: NodeViewer,
+  [NodeType.StartFlow]: NodeViewer,
 }
 
 interface ReactFlowFrameProps {
@@ -36,17 +36,16 @@ interface ReactFlowFrameProps {
 }
 
 export function ReactFlowFrame({ flowVersion }: ReactFlowFrameProps) {
-  const {
-    nodes,
-    onNodesChange,
-    setActiveNode,
-    edges,
-    onEdgesChange,
-    onConnect,
-  } = useFlowStore((state) => state)
+  const [nodes, _setNodes, onNodesChange] = useNodesState(
+    flowVersion.nodes as unknown as FlowNode[],
+  )
+  const [edges, _setEdges, onEdgesChange] = useEdgesState(
+    flowVersion.edges as unknown as Edge[],
+  )
 
-  // const [activeNode, setActiveNode] = useState<Node | null>(null)
-  const [openNodeDetailSheet, setOpenNodeDetailSheet] = useState<boolean>(false)
+  const { openNodeDetailSheet, setOpenNodeDetailSheet } = useStepStore(
+    (state) => state,
+  )
 
   const { execute: savingDraft } = useOptimisticAction(
     updateDraftFlowVersionAction.bind(
@@ -77,40 +76,39 @@ export function ReactFlowFrame({ flowVersion }: ReactFlowFrameProps) {
 
   return (
     <>
-      <ReactFlowProvider>
-        {/* <FrameHeader /> */}
+      <FrameHeader />
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        // // onConnect={onConnect}
+        nodeTypes={nodeTypes}
+        proOptions={{ hideAttribution: true }}
+        onNodeClick={() => {
+          // setActiveNode(node)
+          setOpenNodeDetailSheet(true)
+        }}
+        onPaneClick={() => {
+          // setActiveNode(null)
+          setOpenNodeDetailSheet(false)
+        }}
+      >
+        <MiniMap />
+        <Background />
+        <Panel position="bottom-center">
+          <Controls orientation="horizontal">
+            <AddNodeButton />
+          </Controls>
+        </Panel>
+      </ReactFlow>
 
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          proOptions={{ hideAttribution: true }}
-          onNodeClick={(_, node: FlowNode) => {
-            setActiveNode(node)
-            setOpenNodeDetailSheet(true)
-          }}
-          onPaneClick={() => {
-            setActiveNode(null)
-            setOpenNodeDetailSheet(false)
-          }}
-        >
-          <MiniMap />
-          <Background />
-          <Panel position="bottom-center">
-            <Controls orientation="horizontal">
-              <AddBlockButton />
-            </Controls>
-          </Panel>
-        </ReactFlow>
+      <NodeDetailSheet
+        open={openNodeDetailSheet}
+        onOpenChange={setOpenNodeDetailSheet}
+      />
 
-        <NodeDetailSheet
-          open={openNodeDetailSheet}
-          onOpenChange={setOpenNodeDetailSheet}
-        />
-      </ReactFlowProvider>
+      <ButtonEditorDialog />
     </>
   )
 }

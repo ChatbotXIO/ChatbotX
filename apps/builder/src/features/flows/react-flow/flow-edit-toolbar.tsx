@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useEdges, useNodes } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
   CopyIcon,
@@ -27,15 +28,14 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { updateFlowVersionSchema } from "../schemas/update-flow-schema"
-import { useFlowStore } from "./stores/flow-store-provider"
 
 export function FlowEditToolbar({
   chatbotId,
   flowId,
 }: { chatbotId: string; flowId: string }) {
-  const { getNodes, getEdges } = useFlowStore((state) => state)
-
   const [isValidating, setIsValidating] = useState<boolean>(false)
+  const nodes = useNodes()
+  const edges = useEdges()
 
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
     publishFlowAction.bind(null, chatbotId, flowId),
@@ -51,8 +51,8 @@ export function FlowEditToolbar({
 
     // validate nodes & edges
     const { success, error } = updateFlowVersionSchema.safeParse({
-      nodes: getNodes(),
-      edges: getEdges(),
+      nodes,
+      edges,
     })
     if (!success) {
       console.error(error)

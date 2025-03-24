@@ -93,16 +93,16 @@ export const findFlow = async (
 
   // return await unstable_cache(
   //   async () => {
-      const flow = await prisma.flow.findFirst({
-        where: {
-          ...input,
-        },
-        include: {
-          flowVersions: true,
-        },
-      })
+  const flow = await prisma.flow.findFirst({
+    where: {
+      ...input,
+    },
+    include: {
+      flowVersions: true,
+    },
+  })
 
-      return { data: flow }
+  return { data: flow }
   //   },
   //   [JSON.stringify(input)],
   //   {

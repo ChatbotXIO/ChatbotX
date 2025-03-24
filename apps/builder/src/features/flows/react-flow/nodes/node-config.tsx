@@ -1,37 +1,27 @@
-import type { Node } from "@xyflow/react"
 import type { IconName } from "lucide-react/dynamic"
-import { NodeType } from "../types"
-import { addNotesNodeDefaultFn } from "./add-notes/schema"
-import { sendMessageNodeDefaultFn } from "./send-message/schema"
-import type { NewNodeProps } from "./types"
-import { SendMessageNodeEditor } from "./send-message/editor"
-import type { JSX } from "react"
-import { AddNotesNodeEditor } from "./add-notes/editor"
-import type { FlowNode } from "../stores/flow-store"
+import type { ZodSchema } from "zod"
+import { type FlowNode, NodeType } from "../types"
+import sendMessageNodeConfig from "./send-message"
+import type { MenuItem, NewNodeProps } from "./types"
 
 export interface NodeConfigProps {
   type: NodeType
   icon: IconName
   label: string
   defaultFn: ((config: NewNodeProps) => FlowNode) | undefined
-  editor: ({ activeNode }: { activeNode: any }) => JSX.Element
+  validator: ZodSchema
+  menus: MenuItem[]
 }
 
-export const allNodesConfig: NodeConfigProps[] = [
-  {
-    type: NodeType.SendMessage,
-    icon: "message-circle-more",
-    label: "flows.sendMessageBtn",
-    defaultFn: sendMessageNodeDefaultFn,
-    editor: SendMessageNodeEditor,
-  },
-  {
-    type: NodeType.AddNotes,
-    icon: "info",
-    label: "flows.addNotesBtn",
-    defaultFn: addNotesNodeDefaultFn,
-    editor: AddNotesNodeEditor,
-  },
+export const allNodesConfig: Record<NodeType, NodeConfigProps> = {
+  [NodeType.SendMessage]: sendMessageNodeConfig,
+  // {
+  //   type: NodeType.AddNotes,
+  //   icon: "info",
+  //   label: "flows.addNotesBtn",
+  //   defaultFn: addNotesNodeDefaultFn,
+  //   editor: AddNotesNodeEditor,
+  // },
   // {
   //   type: NodeType.Wait,
   //   icon: "clock",
@@ -75,4 +65,4 @@ export const allNodesConfig: NodeConfigProps[] = [
   //   label: "flows.landingPageBtn",
   //   defaultFn: undefined,
   // },
-]
+}

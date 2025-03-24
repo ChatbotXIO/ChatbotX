@@ -1,14 +1,14 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import {
-  splitTrafficBlockDefaultFn,
-  splitTrafficBlockSchema,
-} from "../../blocks/split-traffic/schema"
+  splitTrafficStepDefaultFn,
+  splitTrafficStepSchema,
+} from "../../steps/split-traffic/schema"
 
 export const splitTrafficNodeSchema = z.object({
   id: z.string(),
   name: z.string().min(1).max(255).trim(),
-  blocks: z.array(splitTrafficBlockSchema),
+  steps: z.array(splitTrafficStepSchema),
 })
 
 export type SplitTrafficNodeSchema = z.infer<typeof splitTrafficNodeSchema>
@@ -18,5 +18,5 @@ export const splitTrafficNodeDefaultFn = (
 ): SplitTrafficNodeSchema => ({
   id: createId(),
   name,
-  blocks: [splitTrafficBlockDefaultFn(), splitTrafficBlockDefaultFn()],
+  steps: [splitTrafficStepDefaultFn(), splitTrafficStepDefaultFn()],
 })

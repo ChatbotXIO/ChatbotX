@@ -12,7 +12,6 @@ export function InboxSelect({ name }: { name: string }) {
   const api = `/api/chatbots/${params.chatbotId}/inboxes?perPage=9999`
   const { data } = callAPI<InboxCollection>(api)
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const inboxes: { label: string; value: string }[] = (data?.data ?? []).map(
     (v) => ({
       label: v.inboxType,

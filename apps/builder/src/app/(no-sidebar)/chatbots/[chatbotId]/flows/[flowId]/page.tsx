@@ -1,8 +1,5 @@
+import { FlowDetail } from "@/features/flows/flow-detail"
 import { findFlow } from "@/features/flows/queries"
-import { ReactFlowFrame } from "@/features/flows/react-flow/frame"
-import type { FlowNode } from "@/features/flows/react-flow/stores/flow-store"
-import { FlowStoreProvider } from "@/features/flows/react-flow/stores/flow-store-provider"
-import type { Edge } from "@xyflow/react"
 
 export default async function FlowPage(props: {
   params: Promise<{ chatbotId: string; flowId: string }>
@@ -18,12 +15,5 @@ export default async function FlowPage(props: {
     return null
   }
 
-  return (
-    <FlowStoreProvider
-      nodes={targetFlowVersion.nodes as unknown as FlowNode[]}
-      edges={targetFlowVersion.edges as unknown as Edge[]}
-    >
-      <ReactFlowFrame flowVersion={targetFlowVersion} />
-    </FlowStoreProvider>
-  )
+  return <FlowDetail flowVersion={targetFlowVersion} />
 }

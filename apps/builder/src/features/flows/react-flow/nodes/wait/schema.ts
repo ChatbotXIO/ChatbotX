@@ -1,9 +1,6 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import {
-  waitBlockDefaultFn,
-  waitBlockSchema,
-} from "../../blocks/wait/schema"
+import { waitStepDefaultFn, waitStepSchema } from "../../steps/wait/schema"
 import { NodeType, baseNodeSchema } from "../../types"
 import type { NewNodeProps } from "../types"
 
@@ -11,13 +8,16 @@ export const waitNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.Wait),
   data: z.object({
     name: z.string().min(1).max(255).trim(),
-    blocks: z.array(waitBlockSchema),
+    steps: z.array(waitStepSchema),
   }),
 })
 
 export type WaitNodeSchema = z.infer<typeof waitNodeSchema>
 
-export const waitNodeDefaultFn = ({ labelVersion, ...props }: NewNodeProps): WaitNodeSchema => {
+export const waitNodeDefaultFn = ({
+  labelVersion,
+  ...props
+}: NewNodeProps): WaitNodeSchema => {
   return {
     id: createId(),
     type: NodeType.Wait,
@@ -25,7 +25,7 @@ export const waitNodeDefaultFn = ({ labelVersion, ...props }: NewNodeProps): Wai
     ...props,
     data: {
       name: `Wait #${labelVersion}`,
-      blocks: [waitBlockDefaultFn()],
+      steps: [waitStepDefaultFn()],
     },
   }
 }

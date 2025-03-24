@@ -22,11 +22,11 @@ export async function getAgents(
           chatbotId: input.chatbotId,
           user: input.keyword
             ? {
-              name: {
-                contains: input.keyword,
-                mode: "insensitive",
-              },
-            }
+                name: {
+                  contains: input.keyword,
+                  mode: "insensitive",
+                },
+              }
             : undefined,
         }
 

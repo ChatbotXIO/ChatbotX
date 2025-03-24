@@ -1,15 +1,9 @@
 "use client"
 
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
-import { DynamicIcon } from "lucide-react/dynamic"
-import { allNodesConfig } from "../nodes/node-config"
-import { useFlowStore } from "../stores/flow-store-provider"
+import { Sheet, SheetContent, SheetDescription } from "@/components/ui/sheet"
+import { useStore } from "@xyflow/react"
+import { NodeEditor } from "../nodes/editor"
+import type { FlowNode } from "../types"
 
 interface NodeDetailSheetProps {
   open: boolean
@@ -17,25 +11,16 @@ interface NodeDetailSheetProps {
 }
 
 export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
-  const activeNode = useFlowStore((state) => state.activeNode)
-  const nodeConfig = allNodesConfig.find(
-    (item) => item.type === activeNode?.type,
-  )
+  const activeNode = useStore((state) =>
+    state.nodes.find((node) => node.selected),
+  ) as FlowNode
 
   return activeNode ? (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            {nodeConfig ? <DynamicIcon name={nodeConfig.icon} /> : " "}
-            {activeNode.data.name}
-          </SheetTitle>
-          <SheetDescription />
-        </SheetHeader>
+        <SheetDescription />
         <div className="flex flex-col flex-1 gap-4 overflow-hidden">
-          {nodeConfig?.editor ? (
-            <nodeConfig.editor activeNode={activeNode} />
-          ) : null}
+          <NodeEditor activeNode={activeNode} />
         </div>
       </SheetContent>
     </Sheet>
