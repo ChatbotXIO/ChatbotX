@@ -135,7 +135,7 @@ export const MessageInput = () => {
   const onClickAttachment = () => {
     if (fileUploadRef.current) {
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      ;(fileUploadRef.current as any).openFileDialog() // Trigger the file dialog
+      ; (fileUploadRef.current as any).openFileDialog() // Trigger the file dialog
     }
   }
 
