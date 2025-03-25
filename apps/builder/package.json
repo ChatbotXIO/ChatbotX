@@ -17,7 +17,7 @@
     "@ahachat.ai/integration-google-sheets": "workspace:*",
     "@ahachat.ai/integration-whatsapp": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
-    "@ahachat.ai/worker-config": "workspace:^",
+    "@ahachat.ai/worker-config": "workspace:*",
     "@auth/prisma-adapter": "^2.8.0",
     "@dagrejs/graphlib": "^2.2.4",
     "@dnd-kit/core": "^6.3.1",

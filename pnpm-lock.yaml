@@ -48,7 +48,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       '@ahachat.ai/worker-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/worker-config
       '@auth/prisma-adapter':
         specifier: ^2.8.0
@@ -361,7 +361,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@ahachat.ai/worker-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/worker-config
       bullmq:
         specifier: ^5.44.4
@@ -407,7 +407,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@ahachat.ai/worker-config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/worker-config
       bullmq:
         specifier: ^5.44.4
