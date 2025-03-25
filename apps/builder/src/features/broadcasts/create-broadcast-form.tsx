@@ -2,7 +2,7 @@
 
 import { FormInput } from "@/components/form-input"
 import { MessengerIcon } from "@/components/icons/messenger"
-import { WhatsappIcon } from "@/components/icons/whatsapp"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
