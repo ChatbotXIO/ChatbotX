@@ -17,9 +17,9 @@
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
     "@ahachat.ai/worker-config": "workspace:^",
-    "bullmq": "^5.41.7",
+    "bullmq": "^5.44.4",
     "dot-prop": "^9.0.0",
-    "ioredis": "^5.5.0",
+    "ioredis": "^5.6.0",
     "ky": "^1.7.5",
     "tslog": "^4.9.3"
   },

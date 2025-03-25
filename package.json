@@ -14,10 +14,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@tolgee/cli": "^2.9.0",
-    "@types/node": "^22.13.8",
+    "@tolgee/cli": "^2.10.2",
+    "@types/node": "^22.13.13",
     "husky": "^9.1.7",
-    "prettier": "^3.5.2",
+    "prettier": "^3.5.3",
     "tsx": "^4.19.3",
     "turbo": "^2.4.4",
     "typescript": "5.8.2"

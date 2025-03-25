@@ -1,7 +1,7 @@
 import { cn } from "@/components/lib/utils"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-import { forwardRef, type HTMLAttributes } from "react"
+import type { HTMLAttributes } from "react"
 
 const messageBubbleVariant = cva("flex gap-2", {
   variants: {
@@ -22,18 +22,24 @@ export interface MessageProps
   asChild?: boolean
 }
 
-const MessageBubble = forwardRef<HTMLDivElement, MessageProps>(
-  ({ className, variant, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "div"
-    return (
-      <Comp
-        className={cn(messageBubbleVariant({ variant, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  },
-)
+const MessageBubble = ({
+  ref,
+  className,
+  variant,
+  asChild = false,
+  ...props
+}: MessageProps & {
+  ref: React.RefObject<HTMLDivElement>
+}) => {
+  const Comp = asChild ? Slot : "div"
+  return (
+    <Comp
+      className={cn(messageBubbleVariant({ variant, className }))}
+      ref={ref}
+      {...props}
+    />
+  )
+}
 MessageBubble.displayName = "MessageBubble"
 
 export { MessageBubble, messageBubbleVariant }

@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  type HTMLAttributes,
-  type ReactNode,
-} from "react"
+import { useCallback, type HTMLAttributes, type ReactNode } from "react"
 import { useNodeId, useReactFlow } from "@xyflow/react"
 import { EllipsisVertical, Trash } from "lucide-react"
 
@@ -24,22 +19,26 @@ export type NodeHeaderProps = HTMLAttributes<HTMLElement>
  * A container for a consistent header layout intended to be used inside the
  * `<BaseNode />` component.
  */
-export const NodeHeader = forwardRef<HTMLElement, NodeHeaderProps>(
-  ({ className, ...props }, ref) => {
-    return (
-      <header
-        ref={ref}
-        {...props}
-        className={cn(
-          "flex items-center justify-between gap-2 px-3 py-2",
-          // Remove or modify these classes if you modify the padding in the
-          // `<BaseNode />` component.
-          className,
-        )}
-      />
-    )
-  },
-)
+export const NodeHeader = ({
+  ref,
+  className,
+  ...props
+}: NodeHeaderProps & {
+  ref: React.RefObject<HTMLElement>
+}) => {
+  return (
+    <header
+      ref={ref}
+      {...props}
+      className={cn(
+        "flex items-center justify-between gap-2 px-3 py-2",
+        // Remove or modify these classes if you modify the padding in the
+        // `<BaseNode />` component.
+        className,
+      )}
+    />
+  )
+}
 
 NodeHeader.displayName = "NodeHeader"
 
@@ -53,10 +52,14 @@ export type NodeHeaderTitleProps = HTMLAttributes<HTMLHeadingElement> & {
  * The title text for the node. To maintain a native application feel, the title
  * text is not selectable.
  */
-export const NodeHeaderTitle = forwardRef<
-  HTMLHeadingElement,
-  NodeHeaderTitleProps
->(({ className, asChild, ...props }, ref) => {
+export const NodeHeaderTitle = ({
+  ref,
+  className,
+  asChild,
+  ...props
+}: NodeHeaderTitleProps & {
+  ref: React.RefObject<HTMLHeadingElement>
+}) => {
   const Comp = asChild ? Slot : "h3"
 
   return (
@@ -66,7 +69,7 @@ export const NodeHeaderTitle = forwardRef<
       className={cn(className, "user-select-none flex-1 font-semibold")}
     />
   )
-})
+}
 
 NodeHeaderTitle.displayName = "NodeHeaderTitle"
 
@@ -74,13 +77,15 @@ NodeHeaderTitle.displayName = "NodeHeaderTitle"
 
 export type NodeHeaderIconProps = HTMLAttributes<HTMLSpanElement>
 
-export const NodeHeaderIcon = forwardRef<HTMLSpanElement, NodeHeaderIconProps>(
-  ({ className, ...props }, ref) => {
-    return (
-      <span ref={ref} {...props} className={cn(className, "[&>*]:size-5")} />
-    )
-  },
-)
+export const NodeHeaderIcon = ({
+  ref,
+  className,
+  ...props
+}: NodeHeaderIconProps & {
+  ref: React.RefObject<HTMLSpanElement>
+}) => {
+  return <span ref={ref} {...props} className={cn(className, "*:size-5")} />
+}
 
 NodeHeaderIcon.displayName = "NodeHeaderIcon"
 
@@ -91,10 +96,13 @@ export type NodeHeaderActionsProps = HTMLAttributes<HTMLDivElement>
 /**
  * A container for right-aligned action buttons in the node header.
  */
-export const NodeHeaderActions = forwardRef<
-  HTMLDivElement,
-  NodeHeaderActionsProps
->(({ className, ...props }, ref) => {
+export const NodeHeaderActions = ({
+  ref,
+  className,
+  ...props
+}: NodeHeaderActionsProps & {
+  ref: React.RefObject<HTMLDivElement>
+}) => {
   return (
     <div
       ref={ref}
@@ -105,7 +113,7 @@ export const NodeHeaderActions = forwardRef<
       )}
     />
   )
-})
+}
 
 NodeHeaderActions.displayName = "NodeHeaderActions"
 
@@ -123,10 +131,15 @@ export type NodeHeaderActionProps = ButtonProps & {
  * important to provide a meaningful and accessible `label` prop that describes
  * the action.
  */
-export const NodeHeaderAction = forwardRef<
-  HTMLButtonElement,
-  NodeHeaderActionProps
->(({ className, label, title, ...props }, ref) => {
+export const NodeHeaderAction = ({
+  ref,
+  className,
+  label,
+  title,
+  ...props
+}: NodeHeaderActionProps & {
+  ref: React.RefObject<HTMLButtonElement>
+}) => {
   return (
     <Button
       ref={ref}
@@ -137,7 +150,7 @@ export const NodeHeaderAction = forwardRef<
       {...props}
     />
   )
-})
+}
 
 NodeHeaderAction.displayName = "NodeHeaderAction"
 
@@ -160,10 +173,14 @@ export type NodeHeaderMenuActionProps = Omit<
  * here: https://ui.shadcn.com/docs/components/dropdown-menu
  *
  */
-export const NodeHeaderMenuAction = forwardRef<
-  HTMLButtonElement,
-  NodeHeaderMenuActionProps
->(({ trigger, children, ...props }, ref) => {
+export const NodeHeaderMenuAction = ({
+  ref,
+  trigger,
+  children,
+  ...props
+}: NodeHeaderMenuActionProps & {
+  ref: React.RefObject<HTMLButtonElement>
+}) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -174,7 +191,7 @@ export const NodeHeaderMenuAction = forwardRef<
       <DropdownMenuContent>{children}</DropdownMenuContent>
     </DropdownMenu>
   )
-})
+}
 
 NodeHeaderMenuAction.displayName = "NodeHeaderMenuAction"
 

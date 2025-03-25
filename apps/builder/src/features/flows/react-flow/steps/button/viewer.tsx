@@ -12,7 +12,7 @@ export const ButtonStepViewer = ({ data }: { data: ButtonStepSchema }) => {
         id={data.id}
         type="source"
         position={Position.Right}
-        className="!right-3"
+        className="right-3!"
       />
     </div>
   )

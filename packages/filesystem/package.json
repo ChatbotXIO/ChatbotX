@@ -8,10 +8,10 @@
   },
   "dependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
-    "@aws-sdk/client-s3": "^3.758.0",
-    "@aws-sdk/s3-presigned-post": "^3.758.0",
+    "@aws-sdk/client-s3": "^3.774.0",
+    "@aws-sdk/s3-presigned-post": "^3.774.0",
     "ky": "^1.7.5",
-    "minio": "^8.0.4",
+    "minio": "^8.0.5",
     "tslog": "^4.9.3",
     "zod": "^3.24.2"
   },

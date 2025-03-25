@@ -49,14 +49,15 @@ export const connectWhatsappAction = authActionClient
         },
       }
 
-      const phoneNumberId = await integrations.WHATSAPP.integration.actions?.verifyAccessToken({
-        ctx: {
-          auth,
-          logger: logger.getSubLogger({
-            name: "whatsapp",
-          }),
-        },
-      })
+      const phoneNumberId =
+        await integrations.WHATSAPP.integration.actions?.verifyAccessToken({
+          ctx: {
+            auth,
+            logger: logger.getSubLogger({
+              name: "whatsapp",
+            }),
+          },
+        })
       if (phoneNumberId) {
         auth.metadata.phoneNumberId = phoneNumberId
       }
