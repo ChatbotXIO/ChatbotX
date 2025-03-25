@@ -16,13 +16,12 @@
     "@biomejs/biome": "^1.9.4",
     "@tolgee/cli": "^2.10.2",
     "@types/node": "^22.13.13",
-    "husky": "^9.1.7",
-    "prettier": "^3.5.3",
+    "lefthook": "^1.11.5",
     "tsx": "^4.19.3",
     "turbo": "^2.4.4",
     "typescript": "5.8.2"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.6.5",
   "engines": {
     "node": ">=22"
   },

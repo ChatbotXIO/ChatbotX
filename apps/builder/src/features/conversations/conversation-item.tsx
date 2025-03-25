@@ -83,7 +83,7 @@ export default function ConversationItem({
   )
   const [isSeen, _setIsSeen] = useState(
     (conversation.agentLastSeenAt ?? new Date()) >=
-    (lastMessage?.createdAt ?? new Date()),
+      (lastMessage?.createdAt ?? new Date()),
   )
 
   const contactFullName = useMemo(() => {
@@ -105,7 +105,7 @@ export default function ConversationItem({
   }, [conversation.contact])
 
   return (
-    <div className="w-full" onClick={() => onSelect()} onKeyUp={() => { }}>
+    <div className="w-full" onClick={() => onSelect()} onKeyUp={() => {}}>
       <Button
         variant={isActive ? "secondary" : "ghost"}
         className="h-auto w-full justify-center font-normal px-3 py-2"
