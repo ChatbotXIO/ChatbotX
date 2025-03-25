@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { SelectProps } from "@radix-ui/react-select"
-import { type ComponentType, forwardRef } from "react"
+import type { ComponentType } from "react"
 import { Controller, useFormContext } from "react-hook-form"
 import { FormControl } from "./ui/form"
 
@@ -29,38 +29,45 @@ interface SingleSelectProps extends SelectProps {
   onChange?: (...event: any[]) => void
 }
 
-export const SingleSelect = forwardRef<HTMLButtonElement, SingleSelectProps>(
-  ({ name, options, placeholder, onChange, ...rest }, _ref) => {
-    const { control } = useFormContext()
+export const SingleSelect = ({
+  ref: _ref,
+  name,
+  options,
+  placeholder,
+  onChange,
+  ...rest
+}: SingleSelectProps & {
+  ref: React.RefObject<HTMLButtonElement>
+}) => {
+  const { control } = useFormContext()
 
-    return (
-      <Controller
-        control={control}
-        name={name}
-        render={({ field }) => (
-          <Select
-            onValueChange={field.onChange}
-            defaultValue={field.value}
-            {...field}
-            {...rest}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={placeholder} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {options.map((o) => (
-                <SelectItem value={o.value} key={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      />
-    )
-  },
-)
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <Select
+          onValueChange={field.onChange}
+          defaultValue={field.value}
+          {...field}
+          {...rest}
+        >
+          <FormControl>
+            <SelectTrigger>
+              <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            {options.map((o) => (
+              <SelectItem value={o.value} key={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    />
+  )
+}
 
 SingleSelect.displayName = "SingleSelect"

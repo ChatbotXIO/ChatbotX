@@ -1,4 +1,4 @@
-export const WhatsappIcon = ({
+const WhatsappIcon = ({
   width,
   height,
   ...props
@@ -39,3 +39,5 @@ export const WhatsappIcon = ({
     </svg>
   )
 }
+
+export default WhatsappIcon

@@ -7,8 +7,8 @@
   "dependencies": {
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
-    "@ai-sdk/openai": "^1.2.0",
-    "ai": "^4.1.52",
+    "@ai-sdk/openai": "^1.3.2",
+    "ai": "^4.2.5",
     "tslog": "^4.9.3",
     "typescript": "5.8.2"
   },

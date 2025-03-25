@@ -2,7 +2,7 @@
 
 import { InstagramIcon } from "@/components/icons/instagram"
 import { MessengerIcon } from "@/components/icons/messenger"
-import { WhatsappIcon } from "@/components/icons/whatsapp"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"

@@ -48,8 +48,9 @@ export const connectWhatsappAction = authActionClient
           phoneNumberId: "",
         },
       }
-      auth.metadata.phoneNumberId =
-        await integrations.WHATSAPP.integration.actions.verifyAccessToken({
+
+      const phoneNumberId =
+        await integrations.WHATSAPP.integration.actions?.verifyAccessToken({
           ctx: {
             auth,
             logger: logger.getSubLogger({
@@ -57,6 +58,9 @@ export const connectWhatsappAction = authActionClient
             }),
           },
         })
+      if (phoneNumberId) {
+        auth.metadata.phoneNumberId = phoneNumberId
+      }
 
       await prisma.$transaction(async (tx) => {
         await tx.inbox.create({

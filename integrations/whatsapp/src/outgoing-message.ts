@@ -4,6 +4,7 @@ import {
   FileType,
   type MessageEntity,
 } from "@ahachat.ai/sdk"
+import type { ILogObj, Logger } from "tslog"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
 import type {
   ClientMessage,
@@ -11,12 +12,11 @@ import type {
   ServerSentMessageResponse,
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client"
-import type { WhatsappAuthValue } from "./schemas"
-import { generateOutgoingMessages as generateSendTextOutgoingMessages } from "./message-types/send-text.js"
-import { generateOutgoingMessages as generateSendImageOutgoingMessages } from "./message-types/send-image.js"
 import { generateOutgoingMessages as generateSendCardOutgoingMessages } from "./message-types/send-card.js"
 import { generateOutgoingMessages as generateSendCarouselOutgoingMessages } from "./message-types/send-carousel.js"
-import type { ILogObj, Logger } from "tslog"
+import { generateOutgoingMessages as generateSendImageOutgoingMessages } from "./message-types/send-image.js"
+import { generateOutgoingMessages as generateSendTextOutgoingMessages } from "./message-types/send-text.js"
+import type { WhatsappAuthValue } from "./schemas"
 import { sleep } from "./util.js"
 
 export function* convertMessageToWhatsappMessage(

@@ -39,7 +39,7 @@ export function DataTableViewOptions<TData>({
           // biome-ignore lint: lint/a11y/useSemanticElements
           role="combobox"
           size="sm"
-          className="ml-auto hidden h-8 gap-2 focus:outline-none focus:ring-1 focus:ring-ring focus-visible:ring-0 lg:flex"
+          className="ml-auto hidden h-8 gap-2 focus:outline-hidden focus:ring-1 focus:ring-ring focus-visible:ring-0 lg:flex"
         >
           <Settings2 className="size-4" />
           View

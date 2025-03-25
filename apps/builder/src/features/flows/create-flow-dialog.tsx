@@ -17,7 +17,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createFlowAction } from "./actions/create-flow-action"
@@ -29,7 +28,6 @@ export function CreateFlowDialog({
 }: { chatbotId: string; folderId: string | null }) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
-  const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -42,7 +40,6 @@ export function CreateFlowDialog({
 
             setOpen(false)
             resetFormAndAction()
-            router.refresh()
           },
           onError: ({ error }) => {
             error.serverError && toast.error(error.serverError)
