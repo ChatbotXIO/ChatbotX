@@ -4,15 +4,21 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@ahachat.ai/sdk"
-import { getWhatsappClient, verifyAccessToken } from "./client"
-import { webhookHandler } from "./handlers/webhook"
-import { parseIncomingMessage } from "./incomming-message"
+import {
+  getTemplates,
+  getWhatsappClient,
+  uploadMedia,
+  verifyAccessToken,
+} from "./client.js"
+import { webhookHandler } from "./handlers/webhook.js"
+import { parseIncomingMessage } from "./incomming-message.js"
 import type {
   WhatsappActions,
   WhatsappAuthValue,
   WhatsappConfig,
-} from "./schemas"
+} from "./schemas.js"
 import { sendOutgoingMessage } from "./outgoing-message.js"
+import { createTemplate } from "./client.js"
 
 const config: IntegrationDefinition<
   WhatsappConfig,
@@ -24,6 +30,9 @@ const config: IntegrationDefinition<
     verifyAccessToken: async ({ ctx }) => {
       return await verifyAccessToken(ctx.auth)
     },
+    uploadMedia: async ({ ctx, file }) => {
+      return await uploadMedia(ctx.auth, file)
+    },
     receiveMessage: async ({ ctx, data }) => {
       const whatsappClient = getWhatsappClient(ctx.auth)
 
@@ -31,6 +40,12 @@ const config: IntegrationDefinition<
     },
     sendMessage: async ({ ctx, message, conversation, flowVersion }) => {
       await sendOutgoingMessage(ctx, conversation, message, flowVersion)
+    },
+    getTemplates: async ({ ctx, params }) => {
+      return await getTemplates(ctx.auth, params)
+    },
+    createTemplate: async ({ ctx, body }) => {
+      return await createTemplate(ctx.auth, body)
     },
   },
   handleRequest: async (props) => {
