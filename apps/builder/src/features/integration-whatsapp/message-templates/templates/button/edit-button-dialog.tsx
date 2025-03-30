@@ -21,6 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMemo } from "react"
 import { SingleSelect } from "@/components/single-select"
 import { FormInput } from "@/components/form-input"
+import { FlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
 
 export function EditButtonDialog({
   parentName,
@@ -50,6 +51,10 @@ export function EditButtonDialog({
       {
         label: t("whatsapp.Button.phoneNumber"),
         value: ButtonActionType.PhoneNumber,
+      },
+      {
+        label: t("whatsapp.Button.WhatsappFlow"),
+        value: ButtonActionType.Flow,
       },
     ]
   }, [t])
@@ -86,6 +91,9 @@ export function EditButtonDialog({
                   name="phone_number"
                   label={t("flows.Button.phoneNumber")}
                 />
+              )}
+              {type === ButtonActionType.Flow && (
+                <FlowSelect name="flow_id" label={"WhatsApp Flow"} />
               )}
             </div>
           </Form>

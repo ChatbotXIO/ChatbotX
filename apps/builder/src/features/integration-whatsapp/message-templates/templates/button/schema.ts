@@ -21,6 +21,10 @@ export const buttonBlockSchema = z
         url: z.string().url(),
       }),
       z.object({
+        type: z.literal(ButtonActionType.Flow),
+        flow_id: z.string().min(1),
+      }),
+      z.object({
         type: z.literal(ButtonActionType.PhoneNumber),
         phone_number: z
           .string()

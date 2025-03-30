@@ -5,6 +5,7 @@ import {
   SdkException,
 } from "@ahachat.ai/sdk"
 import {
+  getFlows,
   getTemplates,
   getWhatsappClient,
   uploadMedia,
@@ -46,6 +47,9 @@ const config: IntegrationDefinition<
     },
     createTemplate: async ({ ctx, body }) => {
       return await createTemplate(ctx.auth, body)
+    },
+    getFlows: async ({ ctx, params }) => {
+      return await getFlows(ctx.auth, params)
     },
   },
   handleRequest: async (props) => {

@@ -23,6 +23,7 @@ export type WhatsappAuthValue = Oauth2AuthValue & {
 
 export type WhatsappActions = {
   verifyAccessToken: Handler<{ ctx: Context<WhatsappAuthValue> }, string>
+  uploadMedia: Handler<{ ctx: Context<WhatsappAuthValue>; file: File }, string>
   receiveMessage: Handler<
     { ctx: Context<WhatsappAuthValue>; data: OnMessageArgs },
     {
@@ -32,4 +33,34 @@ export type WhatsappActions = {
     }
   >
   sendMessage: (props: SendMessageProps) => Promise<void>
+  getTemplates: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { limit: number }
+    },
+    {
+      id: string
+      name: string
+    }[]
+  >
+  createTemplate: Handler<
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    { ctx: Context<WhatsappAuthValue>; body: any },
+    {
+      id: string
+      name: string
+      status: string
+    }
+  >
+  getFlows: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { limit: number }
+    },
+    {
+      id: string
+      name: string
+      status: string
+    }[]
+  >
 }
