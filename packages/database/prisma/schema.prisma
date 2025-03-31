@@ -594,7 +594,7 @@ model Flow {
   folder       Folder?       @relation(fields: [folderId], references: [id])
   flowVersions FlowVersion[]
   broadcasts   Broadcast[]
-  FlowRun      FlowRun[]
+  flowRuns     FlowRun[]
 }
 
 model FlowVersion {
@@ -606,10 +606,11 @@ model FlowVersion {
   nodes       Json
   edges       Json
   isDraft     Boolean
-  startNodeId String
+  startNodeId String?
 
   chatbot  Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   flow     Flow      @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
   flowRuns FlowRun[]
 }
 

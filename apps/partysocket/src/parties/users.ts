@@ -1,5 +1,5 @@
 import type * as Party from "partykit/server"
-import { getNextAuthSession } from "../utils/auth.js"
+import { getNextAuthSession } from "../utils/auth"
 
 export default class UserParty implements Party.Server {
   constructor(readonly room: Party.Room) {}

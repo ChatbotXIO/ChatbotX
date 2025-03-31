@@ -1,10 +1,8 @@
 import {
-  Gender,
-  InboxType,
-  MessageType,
+  Gender, MessageType,
   type Prisma,
   SenderType,
-  prisma,
+  prisma
 } from "@ahachat.ai/database"
 import { uploader } from "@ahachat.ai/filesystem"
 import type {
@@ -12,7 +10,7 @@ import type {
   WhatsappAuthValue,
 } from "@ahachat.ai/integration-whatsapp"
 import { integration } from "@ahachat.ai/integration-whatsapp"
-import type { AttachmentEntity } from "@ahachat.ai/sdk"
+import type { AttachmentEntity, ConversationEntity, MessageEntity } from "@ahachat.ai/sdk"
 import {
   QueueName,
   connection,
@@ -37,14 +35,14 @@ const worker = new Worker(
       await prisma.integrationWhatsapp.findFirstOrThrow({
         where: {
           auth: {
-            path: ["metadata", "phoneNumberId"],
+            path: ["metadata", "phoneNumber", "id"],
             equals: data.phoneID,
           },
         },
       })
 
-    const { conversation, message, flow } =
-      await integration.actions.receiveMessage({
+    const { message, conversation, postbackAction }: { message: MessageEntity, conversation: ConversationEntity, postbackAction: { flowVersionId: string, buttonId: string } } =
+      await integration.runAction("receiveMessage", {
         ctx: {
           auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
           logger: getLogger(integrationName),
@@ -83,7 +81,7 @@ const worker = new Worker(
             sourceId: conversation.sourceId,
             conversationAttributes:
               conversation.conversationAttributes as Prisma.InputJsonValue,
-            inboxType: InboxType.WHATSAPP,
+            inboxId: dbIntegrationWhatsapp.inboxId,
             chatbotId: dbIntegrationWhatsapp.chatbotId,
             contactId: newContact.id,
           },
@@ -112,16 +110,16 @@ const worker = new Worker(
               message.contentAttributes as Prisma.InputJsonValue,
             attachments: message.attachments
               ? {
-                  create: message.attachments.map(
-                    (attachment: AttachmentEntity) => {
-                      return {
-                        chatbotId: newConversation.chatbotId,
-                        conversationId: newConversation.id,
-                        ...attachment,
-                      }
-                    },
-                  ),
-                }
+                create: message.attachments.map(
+                  (attachment: AttachmentEntity) => {
+                    return {
+                      chatbotId: newConversation.chatbotId,
+                      conversationId: newConversation.id,
+                      ...attachment,
+                    }
+                  },
+                ),
+              }
               : undefined,
           },
           update: {},
@@ -147,18 +145,18 @@ const worker = new Worker(
         return { message: newMessage, conversation: newConversation }
       })
 
-    if (flow) {
-      // const flowVersion = await prisma.flowVersion.findFirst({
-      //   where: {
-      //     id: flow.flowVersionId
-      //   }
-      // })
-      // if (!flowVersion) {
-      //   return
-      // }
-      // todo trigger current run flow
-      // Call run-flow.ts handleFlowExecution()
-    }
+    // if (flow) {
+    // const flowVersion = await prisma.flowVersion.findFirst({
+    //   where: {
+    //     id: flow.flowVersionId
+    //   }
+    // })
+    // if (!flowVersion) {
+    //   return
+    // }
+    // todo trigger current run flow
+    // Call run-flow.ts handleFlowExecution()
+    // }
   },
   {
     connection,

@@ -2,7 +2,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
-  SdkException,
+  SdkException
 } from "@ahachat.ai/sdk"
 import { getWhatsappClient, verifyAccessToken } from "./client"
 import { webhookHandler } from "./handlers/webhook"
@@ -12,17 +12,17 @@ import type {
   WhatsappAuthValue,
   WhatsappConfig,
 } from "./schemas"
-import { sendOutgoingMessage } from "./outgoing-message.js"
+import { sendOutgoingMessage } from "./outgoing-message"
 
-const config: IntegrationDefinition<
-  WhatsappConfig,
-  WhatsappAuthValue,
-  WhatsappActions
-> = {
+// type WhatsappIntegrationDefinition = IntegrationDefinition<
+//   WhatsappConfig, WhatsappAuthValue, WhatsappActions
+  // >
+
+const config: IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappActions> = {
   name: "whatsapp",
   actions: {
     verifyAccessToken: async ({ ctx }) => {
-      return await verifyAccessToken(ctx.auth)
+      return await verifyAccessToken(ctx)
     },
     receiveMessage: async ({ ctx, data }) => {
       const whatsappClient = getWhatsappClient(ctx.auth)
@@ -46,4 +46,4 @@ const config: IntegrationDefinition<
   },
 }
 
-export const integration = new Integration(config)
+export const integration = new Integration<IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappActions>>(config)

@@ -6,9 +6,9 @@ import {
   Image,
   Header,
 } from "whatsapp-api-js/messages"
-import { chunkArray } from "../util.js"
+import { chunkArray } from "../util"
 import type { ILogObj, Logger } from "tslog"
-import { generateBody, generateButton, generateFooter } from "../interactive.js"
+import { generateBody, generateButton, generateFooter } from "../interactive"
 
 export const INTERACTIVE_MAX_BUTTONS_COUNT = 3
 

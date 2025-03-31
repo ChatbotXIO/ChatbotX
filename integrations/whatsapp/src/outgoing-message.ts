@@ -12,12 +12,12 @@ import type {
   ServerSentMessageResponse,
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client"
-import { generateOutgoingMessages as generateSendCardOutgoingMessages } from "./message-types/send-card.js"
-import { generateOutgoingMessages as generateSendCarouselOutgoingMessages } from "./message-types/send-carousel.js"
-import { generateOutgoingMessages as generateSendImageOutgoingMessages } from "./message-types/send-image.js"
-import { generateOutgoingMessages as generateSendTextOutgoingMessages } from "./message-types/send-text.js"
+import { generateOutgoingMessages as generateSendCardOutgoingMessages } from "./message-types/send-card"
+import { generateOutgoingMessages as generateSendCarouselOutgoingMessages } from "./message-types/send-carousel"
+import { generateOutgoingMessages as generateSendImageOutgoingMessages } from "./message-types/send-image"
+import { generateOutgoingMessages as generateSendTextOutgoingMessages } from "./message-types/send-text"
 import type { WhatsappAuthValue } from "./schemas"
-import { sleep } from "./util.js"
+import { sleep } from "./util"
 
 export function* convertMessageToWhatsappMessage(
   flowVersionId: string,

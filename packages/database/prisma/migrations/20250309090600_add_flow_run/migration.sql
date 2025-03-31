@@ -17,7 +17,7 @@ COMMIT;
 ALTER TABLE "Conversation" ADD COLUMN     "currentFlowRunId" TEXT;
 
 -- AlterTable
-ALTER TABLE "FlowVersion" ADD COLUMN     "startNodeId" TEXT NOT NULL;
+ALTER TABLE "FlowVersion" ADD COLUMN     "startNodeId" TEXT;
 
 -- CreateTable
 CREATE TABLE "FlowRun" (

@@ -8,13 +8,24 @@ import { logger } from "../lib/log"
 import {
   addMessageHandler,
   type AddMessageHandlerProps,
-} from "./handlers/add-message.js"
+} from "./handlers/add-message"
+import { prisma } from "@ahachat.ai/database"
 
 const worker = new Worker(
   QueueName.CHAT,
   async (job) => {
     if (job.name === "add") {
-      await addMessageHandler(job.data as AddMessageHandlerProps)
+      console.log("hhhhh", job.data)
+      // await addMessageHandler(job.data as AddMessageHandlerProps)
+      // const dbIntegrationWhatsapp =
+      //   await prisma.integrationWhatsapp.findFirstOrThrow({
+      //     where: {
+      //       auth: {
+      //         path: ["metadata", "phoneNumber", "id"],
+      //         equals: data.phoneID,
+      //       },
+      //     },
+      //   })
     }
   },
   {

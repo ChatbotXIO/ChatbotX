@@ -51,7 +51,7 @@ export const SignInForm = ({
                 >
                   <Button
                     variant="outline"
-                    size="xl"
+                    size="lg"
                     className="w-full text-left"
                   >
                     <span>

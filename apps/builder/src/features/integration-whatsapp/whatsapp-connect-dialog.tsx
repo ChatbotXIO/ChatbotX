@@ -22,9 +22,11 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { connectWhatsappAction } from "./actions/connect.action"
 import { connectWhatsappSchema } from "./schemas"
+import { useRouter } from "next/navigation"
 
 export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -36,6 +38,7 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
             toast.success("Connected Whatsapp successfully")
             resetFormAndAction()
             setOpen(false)
+            router.refresh()
           },
           onError: ({ error }) => {
             error.serverError && toast.error(error.serverError)

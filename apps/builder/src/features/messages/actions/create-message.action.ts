@@ -101,7 +101,7 @@ export const createMessageAction = chatbotActionClient
 
       // (message as MessageResource).clientId = parsedInput.clientId
       await chatQueue.add("add", {
-        conversationId: conversation.id,
+        conversation,
         message: { ...message, clientId: parsedInput.clientId },
       })
 

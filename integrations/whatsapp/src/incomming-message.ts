@@ -1,5 +1,3 @@
-import { Readable } from "node:stream"
-import type { ReadableStream } from "node:stream/web"
 import {
   ContentType,
   type Context,
@@ -11,6 +9,8 @@ import {
   SdkException,
 } from "@ahachat.ai/sdk"
 import imageSize from "image-size"
+import { Readable } from "node:stream"
+import type { ReadableStream } from "node:stream/web"
 import type { WhatsAppAPI } from "whatsapp-api-js"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import type {
@@ -46,7 +46,7 @@ export const parseIncomingMessage = async (
       name: props.name,
     },
   }
-  let flow = {}
+  let postbackAction = undefined
 
   switch (props.message.type) {
     case "text":
@@ -172,19 +172,19 @@ export const parseIncomingMessage = async (
           message.content = props.message.interactive.button_reply.title
           const arr = props.message.interactive.button_reply.id.split("-")
           if (arr.length > 1) {
-            flow = { flowVersionId: arr[0], buttonId: arr[1] }
+            postbackAction = { flowVersionId: arr[0], buttonId: arr[1] }
           }
           break
         }
         case "list_reply":
-          message.content = props.message.interactive.list_reply
+          message.contentAttributes = props.message.interactive.list_reply
           break
         case "nfm_reply":
           message.content = props.message.interactive.nfm_reply.body
           break
         default:
           message.content = "Received interactive (coming soon)"
-          return
+          break
       }
       break
     }
@@ -199,12 +199,15 @@ export const parseIncomingMessage = async (
     }
     // case "request_welcome": do nothing
     // case "reaction": do nothing
-    // case "system": do nothin
+    // case "system": do nothing
     default:
+      message.content = `Received ${props.message.type}`
       break
   }
 
-  return { message, conversation, flow }
+  console.log("debugggg11111", message)
+
+  return { message, conversation, postbackAction }
 }
 
 export const fetchMedia = async (

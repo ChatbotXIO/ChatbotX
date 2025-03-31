@@ -8,6 +8,7 @@ export interface ContactEntity {
 
 export interface ConversationEntity {
   sourceId: string
+  inboxId?: string
   conversationAttributes: Record<string, unknown>
   contact: ContactEntity
 }
