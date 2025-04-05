@@ -6,6 +6,7 @@ import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { syncFlowAction } from "./actions/sync-flows"
 import { toast } from "sonner"
+import Link from "next/link"
 
 export function FlowsTableToolbarActions({ chatbotId }: { chatbotId: string }) {
   const { t } = useTranslate()
@@ -24,11 +25,9 @@ export function FlowsTableToolbarActions({ chatbotId }: { chatbotId: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      {/* <Button size="sm" asChild>
-        <Link href={`/chatbots/${chatbotId}/whatsapp/message-templates`}>
-          {t("common.manage")}
-        </Link>
-      </Button> */}
+      <Button size="sm" asChild>
+        <Link href="#">{t("common.manage")}</Link>
+      </Button>
       <Button
         variant="secondary"
         disabled={isPending}

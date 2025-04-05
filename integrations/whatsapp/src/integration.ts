@@ -4,13 +4,7 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@ahachat.ai/sdk"
-import {
-  getFlows,
-  getTemplates,
-  getWhatsappClient,
-  uploadMedia,
-  verifyAccessToken,
-} from "./client.js"
+import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client.js"
 import { webhookHandler } from "./handlers/webhook.js"
 import { parseIncomingMessage } from "./incomming-message.js"
 import type {
@@ -19,7 +13,9 @@ import type {
   WhatsappConfig,
 } from "./schemas.js"
 import { sendOutgoingMessage } from "./outgoing-message.js"
-import { createTemplate } from "./client.js"
+import { getIceBreakers, updateIceBreaker } from "./ice-breaker.js"
+import { createTemplate, getTemplates } from "./message-templates.js"
+import { getFlows } from "./flows.js"
 
 const config: IntegrationDefinition<
   WhatsappConfig,
@@ -50,6 +46,12 @@ const config: IntegrationDefinition<
     },
     getFlows: async ({ ctx, params }) => {
       return await getFlows(ctx.auth, params)
+    },
+    getIceBreakers: async ({ ctx }) => {
+      return await getIceBreakers(ctx.auth)
+    },
+    updateIceBreaker: async ({ ctx, prompts }) => {
+      return await updateIceBreaker(ctx.auth, prompts)
     },
   },
   handleRequest: async (props) => {

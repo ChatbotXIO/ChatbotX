@@ -63,4 +63,17 @@ export type WhatsappActions = {
       status: string
     }[]
   >
+  getIceBreakers: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+    },
+    string[]
+  >
+  updateIceBreaker: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      prompts: string[]
+    },
+    void
+  >
 }

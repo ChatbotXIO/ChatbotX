@@ -20,7 +20,7 @@ export function SettingsTab() {
     },
     {
       label: "whatsapp.tab.conversationStarters",
-      value: "conversation-starters",
+      value: "ice-breakers",
     },
     {
       label: "whatsapp.tab.flows",
