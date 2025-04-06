@@ -161,7 +161,9 @@ export const MessageInput = () => {
               )}
             />
           </div>
-          <FileUploadPreview ref={fileUploadRef} />
+          <div className="px-2 5">
+            <FileUploadPreview ref={fileUploadRef} />
+          </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1 flex gap-1 items-center">
               {

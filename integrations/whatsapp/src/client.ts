@@ -48,7 +48,7 @@ export const verifyAccessToken = async (
   }
 
   try {
-    const body = await res.json() as WhatsappPhoneNumberResponse
+    const body = (await res.json()) as WhatsappPhoneNumberResponse
     if (body.data[0].id) {
       return body.data[0]
     }

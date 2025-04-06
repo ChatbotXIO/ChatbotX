@@ -1,3 +1,4 @@
+import { Separator } from "@/components/ui/separator"
 import type { ReactNode } from "react"
 
 export default function FolderableLayout({
@@ -10,6 +11,7 @@ export default function FolderableLayout({
   return (
     <>
       {folders}
+      <Separator />
       {children}
     </>
   )

@@ -6,7 +6,7 @@ export enum ReplyType {
 }
 
 export const createAutomatedResponseRequest = z.object({
-  folderId: z.union([z.string().cuid2(), z.null()]).default(null),
+  folderId: z.string().cuid2().nullish(),
   userMessages: z.array(z.string().min(1).max(255)),
   replies: z
     .array(

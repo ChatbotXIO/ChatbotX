@@ -19,7 +19,7 @@ export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="flex flex-col">
         <SheetDescription />
-        <div className="flex flex-col flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-col flex-1 gap-4 overflow-hidden p-5">
           <NodeEditor activeNode={activeNode} />
         </div>
       </SheetContent>

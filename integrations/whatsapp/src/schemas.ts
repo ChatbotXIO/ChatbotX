@@ -31,7 +31,7 @@ export type WhatsappActions = {
   >
   receiveMessage: Handler<
     {
-      ctx: Context<WhatsappAuthValue>,
+      ctx: Context<WhatsappAuthValue>
       data: OnMessageArgs
     },
     {

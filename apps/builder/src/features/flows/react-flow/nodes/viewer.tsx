@@ -17,7 +17,7 @@ export function NodeViewer({ id, type, data }: FlowNode) {
   return (
     <HoverCard openDelay={0} closeDelay={0}>
       <HoverCardTrigger asChild>
-        <Card className="w-72 hover:border-blue-500 bg-white/75">
+        <Card className="w-72 hover:border-blue-500 bg-white/75 p-0">
           <CardHeader className="p-4 relative">
             <Handle id={id} type="target" position={Position.Left} />
             <CardTitle className="flex gap-1 items-center">

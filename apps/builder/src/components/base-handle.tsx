@@ -10,7 +10,7 @@ export const BaseHandle = ({
   children,
   ...props
 }: BaseHandleProps & {
-  ref: React.RefObject<HTMLDivElement>
+  ref?: React.RefObject<HTMLDivElement>
 }) => {
   return (
     <Handle

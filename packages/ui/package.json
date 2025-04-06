@@ -18,12 +18,12 @@
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
     "@turbo/gen": "^2.4.4",
-    "@types/node": "^22.13.14",
-    "@types/react": "19.0.12",
-    "@types/react-dom": "19.0.4",
+    "@types/node": "^22.14.0",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.1",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.17",
+    "tailwindcss": "^4.1.1",
     "typescript": "5.8.2"
   },
   "dependencies": {
@@ -32,7 +32,7 @@
     "clsx": "^2.1.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "tailwind-merge": "^3.0.2",
+    "tailwind-merge": "^3.1.0",
     "tailwindcss-animate": "^1.0.7"
   }
 }

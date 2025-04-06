@@ -67,7 +67,7 @@ export const FileUploadPreview = ({
         <Button
           type="button"
           variant="ghost"
-          className="absolute -top-2 -right-2 p-0 h-auto bg-white rounded-full"
+          className="absolute -top-2 -right-2 p-0 px-0 h-auto bg-white rounded-full"
           onClick={() => onRemoveChooseFile(file.name)}
         >
           <XCircleIcon />

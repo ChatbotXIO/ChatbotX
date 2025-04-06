@@ -88,4 +88,4 @@ export const disabledCopyActionTypes = [
   StepType.OptOutEmail,
 ]
 
-export const waitUserReplyActionTypes = [ActionType.UserInput]
+export const waitUserReplyActionTypes = [StepType.UserInput]

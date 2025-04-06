@@ -198,7 +198,7 @@ const SortableOverlay = ({
   children,
   ...props
 }: SortableOverlayProps & {
-  ref: React.RefObject<HTMLDivElement>
+  ref?: React.RefObject<HTMLDivElement>
 }) => {
   return (
     <DragOverlay dropAnimation={dropAnimation} {...props}>

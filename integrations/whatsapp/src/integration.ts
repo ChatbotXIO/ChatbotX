@@ -2,7 +2,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
-  SdkException
+  SdkException,
 } from "@ahachat.ai/sdk"
 import { getWhatsappClient, verifyAccessToken } from "./client"
 import { webhookHandler } from "./handlers/webhook"
@@ -16,9 +16,13 @@ import { sendOutgoingMessage } from "./outgoing-message"
 
 // type WhatsappIntegrationDefinition = IntegrationDefinition<
 //   WhatsappConfig, WhatsappAuthValue, WhatsappActions
-  // >
+// >
 
-const config: IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappActions> = {
+const config: IntegrationDefinition<
+  WhatsappConfig,
+  WhatsappAuthValue,
+  WhatsappActions
+> = {
   name: "whatsapp",
   actions: {
     verifyAccessToken: async ({ ctx }) => {
@@ -29,8 +33,8 @@ const config: IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappA
 
       return await parseIncomingMessage(ctx, whatsappClient, data)
     },
-    sendMessage: async ({ ctx, message, conversation, flowVersion }) => {
-      await sendOutgoingMessage(ctx, conversation, message, flowVersion)
+    sendMessage: async ({ ctx, message, conversation }) => {
+      await sendOutgoingMessage(ctx, conversation, message)
     },
   },
   handleRequest: async (props) => {
@@ -46,4 +50,6 @@ const config: IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappA
   },
 }
 
-export const integration = new Integration<IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappActions>>(config)
+export const integration = new Integration<
+  IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappActions>
+>(config)

@@ -41,6 +41,14 @@ export const prisma =
           },
         },
       },
+      attachment: {
+        url: {
+          needs: { originPath: true },
+          compute(attachment) {
+            return new URL(attachment.originPath, process.env.ASSET_URL)
+          },
+        },
+      },
     },
   })
 

@@ -158,25 +158,29 @@ export function CreateAutomatedResponseForm({
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={() =>
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
               appendReplies({
                 type: ReplyType.MESSAGE,
                 message: "",
                 buttons: [],
               })
-            }
+            }}
           >
             <PlusCircleIcon /> Add text reply
           </Button>
 
           <Button
             variant="ghost"
-            onClick={() =>
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
               appendReplies({
                 type: ReplyType.FLOW,
                 flowId: "",
               })
-            }
+            }}
           >
             <PlusCircleIcon /> Add flow reply
           </Button>

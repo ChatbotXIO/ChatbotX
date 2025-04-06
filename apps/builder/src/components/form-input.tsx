@@ -1,4 +1,4 @@
-import { Children, useEffect, type ReactNode } from "react"
+import { Children, type ReactNode } from "react"
 import { useFormContext } from "react-hook-form"
 import {
   FormControl,
@@ -63,15 +63,4 @@ export const FormInput = ({
       )}
     />
   )
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-export function TriggerFormInitially({ form }: { form: any }) {
-  const { trigger } = form
-
-  useEffect(() => {
-    trigger()
-  }, [trigger])
-
-  return null
 }

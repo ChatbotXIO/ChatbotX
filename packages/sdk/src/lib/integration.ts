@@ -1,5 +1,5 @@
-import type { BaseAuthValue, Oauth2AuthValue } from "./auth";
-import type { BaseConfig, HandleRequestProps, Handler } from "./shared";
+import type { BaseAuthValue, Oauth2AuthValue } from "./auth"
+import type { BaseConfig, HandleRequestProps, Handler } from "./shared"
 
 export type IntegrationDefinition<
   IConfig extends BaseConfig,

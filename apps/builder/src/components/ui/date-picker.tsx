@@ -242,7 +242,7 @@ const TimePeriodSelect = ({
   onLeftFocus,
   onRightFocus,
 }: PeriodSelectorProps & {
-  ref: React.RefObject<HTMLButtonElement>
+  ref?: React.RefObject<HTMLButtonElement>
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === "ArrowRight") onRightFocus?.()
@@ -571,7 +571,7 @@ const DateTimePicker = ({
   className,
   ...props
 }: DateTimePickerProps & {
-  ref: React.RefObject<Partial<DateTimePickerRef>>
+  ref?: React.RefObject<Partial<DateTimePickerRef>>
 }) => {
   const [month, setMonth] = React.useState<Date>(value ?? defaultPopupValue)
   const buttonRef = useRef<HTMLButtonElement>(null)

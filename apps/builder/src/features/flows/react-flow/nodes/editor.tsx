@@ -1,6 +1,6 @@
 import { cn } from "@/components/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Form, TriggerFormInitially } from "@/components/ui/form"
+import { Form } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 import {
   Sortable,
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { T } from "@tolgee/react"
+import { TriggerFormInitially } from "@/components/form/form-trigger-initially"
+import { InboxSelect } from "@/features/inboxes/inbox-select"
 
 export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
   const { updateNodeData } = useReactFlow()
@@ -103,7 +105,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
       <Separator />
 
-      {/* <InboxSelect name={"messageType"} /> */}
+      <InboxSelect name={"inboxType"} />
 
       {/* <Separator /> */}
 

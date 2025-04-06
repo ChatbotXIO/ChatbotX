@@ -756,20 +756,14 @@ enum MessageType {
 
 enum ContentType {
   TEXT
+  LOCATION
 }
 
 enum FileType {
   IMAGE
   AUDIO
   VIDEO
-  FILE
-}
-
-enum AttachmentType {
-  IMAGE
-  AUDIO
-  VIDEO
-  FILE
+  DOCUMENT
 }
 
 enum BroadcastStatus {

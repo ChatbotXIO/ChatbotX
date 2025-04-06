@@ -29,7 +29,7 @@ const MessageBubble = ({
   asChild = false,
   ...props
 }: MessageProps & {
-  ref: React.RefObject<HTMLDivElement>
+  ref?: React.RefObject<HTMLDivElement>
 }) => {
   const Comp = asChild ? Slot : "div"
   return (

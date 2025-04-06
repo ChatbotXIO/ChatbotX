@@ -61,7 +61,8 @@ export const connectWhatsappAction = authActionClient
             },
           })
         if (whatsappPhoneNumber) {
-          (auth as WhatsappAuthValue).metadata.phoneNumber = whatsappPhoneNumber
+          ;(auth as WhatsappAuthValue).metadata.phoneNumber =
+            whatsappPhoneNumber
         }
 
         await prisma.$transaction(async (tx) => {
@@ -79,9 +80,11 @@ export const connectWhatsappAction = authActionClient
           })
         })
       } catch (err: unknown) {
-        logger.getSubLogger({
-          name: "whatsapp",
-        }).error("Unable to verify whatsapp token: ", err)
+        logger
+          .getSubLogger({
+            name: "whatsapp",
+          })
+          .error("Unable to verify whatsapp token: ", err)
 
         throw new BaseException("Unable to verify Whatsapp token")
       }
