@@ -7,13 +7,8 @@ import type {
   EdgeSchema,
   NodeSchema,
 } from "@/features/flows/react-flow/nodes/schema"
-import {
-  ActionType,
-  waitUserReplyActionTypes,
-} from "@/features/flows/react-flow/action-type"
-import type { BlockData } from "@/features/flows/react-flow/types"
-import type { ButtonBlockSchema } from "@/features/flows/react-flow/blocks/button/schema"
-import type { SendTextBlockSchema } from "@/features/flows/react-flow/blocks/send-text/schema"
+import type { ButtonStepSchema } from "@/features/flows/react-flow/steps/button/schema"
+import type { SendTextStepSchema } from "@/features/flows/react-flow/steps/send-text/schema"
 import {
   ContentType,
   type Conversation,
@@ -22,29 +17,28 @@ import {
   prisma,
   SenderType,
 } from "@ahachat.ai/database"
-import type { SendCardBlockSchema } from "@/features/flows/react-flow/blocks/send-card/schema"
-import type { SendCarouselBlockSchema } from "@/features/flows/react-flow/blocks/send-carousel/schema"
-import type { SendVideoBlockSchema } from "@/features/flows/react-flow/blocks/send-video/schema"
-import type { SendAudioBlockSchema } from "@/features/flows/react-flow/blocks/send-audio/schema"
-import type { MarkEmailVerifiedBlockSchema } from "@/features/flows/react-flow/blocks/mark-email-verified/schema"
-import type { OptInEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-in-email/schema"
-import type { OptOutEmailBlockSchema } from "@/features/flows/react-flow/blocks/opt-out-email/schema"
-import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text/schema"
-import type { OpenAIGenerateImageSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-image/schema"
-import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/blocks/open-ai-analyze-image/schema"
-import type { OpenAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/blocks/open-ai-delete-message-history/schema"
-import type { OpenAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-assistant/schema"
-import type { OpenAIGenerateTextAgentSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-agent/schema"
-import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/blocks/open-ai-generate-text-advanced/schema"
-import type { StartFlowBlockSchema } from "@/features/flows/react-flow/blocks/start-flow/schema"
-import type { WaitBlockSchema } from "@/features/flows/react-flow/blocks/wait/schema"
-import type { UserInputBlockSchema } from "@/features/flows/react-flow/blocks/user-input/schema"
-import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/blocks/open-ai-speech-to-text/schema"
-import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/blocks/open-ai-text-to-speech/schema"
+import type { SendCardStepSchema } from "@/features/flows/react-flow/steps/send-card/schema"
+import type { SendCarouselStepSchema } from "@/features/flows/react-flow/steps/send-carousel/schema"
+import type { SendVideoStepSchema } from "@/features/flows/react-flow/steps/send-video/schema"
+import type { SendAudioStepSchema } from "@/features/flows/react-flow/steps/send-audio/schema"
+import type { MarkEmailVerifiedStepSchema } from "@/features/flows/react-flow/steps/mark-email-verified/schema"
+import type { OptInEmailStepSchema } from "@/features/flows/react-flow/steps/opt-in-email/schema"
+import type { OptOutEmailStepSchema } from "@/features/flows/react-flow/steps/opt-out-email/schema"
+import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text/schema"
+import type { OpenAIGenerateImageSchema } from "@/features/flows/react-flow/steps/open-ai-generate-image/schema"
+import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/steps/open-ai-analyze-image/schema"
+import type { OpenAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/steps/open-ai-delete-message-history/schema"
+import type { OpenAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-assistant/schema"
+import type { OpenAIGenerateTextAgentSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-agent/schema"
+import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-advanced/schema"
+import type { UserInputStepSchema } from "@/features/flows/react-flow/steps/user-input/schema"
+import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/steps/open-ai-speech-to-text/schema"
+import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/steps/open-ai-text-to-speech/schema"
 import { integrations } from "@/integration"
 import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
 import { uploader } from "@ahachat.ai/filesystem"
 import { getLogger } from "@/lib/log"
+import { StepType } from "../react-flow/steps/step-action"
 
 const messagePayloadSchema = z.object({
   nodeId: z.string().cuid2(),
@@ -56,168 +50,150 @@ type MessagePayloadSchema = z.infer<typeof messagePayloadSchema>
 
 const handlers = {
   // Send message blocks
-  [`handle${ActionType.SendText}`]: async (
+  [`handle${StepType.SendText}`]: async (
     conversation: Conversation,
-    block: SendTextBlockSchema,
+    block: SendTextStepSchema,
     flowVersion: FlowVersion,
   ) => {
     await createMessage(conversation, flowVersion, block.message, block)
 
     return
   },
-  [`handle${ActionType.SendImage}`]: async (
+  [`handle${StepType.SendImage}`]: async (
     conversation: Conversation,
-    block: SendTextBlockSchema,
+    block: SendTextStepSchema,
     flowVersion: FlowVersion,
   ) => {
     await createMessage(conversation, flowVersion, block.message, block)
 
     return
   },
-  [`handle${ActionType.SendCard}`]: async (
+  [`handle${StepType.SendCard}`]: async (
     conversation: Conversation,
-    block: SendCardBlockSchema,
+    block: SendCardStepSchema,
     flowVersion: FlowVersion,
   ) => {
     await createMessage(conversation, flowVersion, block.title, block)
 
     return
   },
-  [`handle${ActionType.SendCarousel}`]: async (
+  [`handle${StepType.SendCarousel}`]: async (
     conversation: Conversation,
-    block: SendCarouselBlockSchema,
+    block: SendCarouselStepSchema,
     flowVersion: FlowVersion,
   ) => {
     await createMessage(conversation, flowVersion, block.cards[0]?.title, block)
 
     return
   },
-  [`handle${ActionType.SendVideo}`]: async (
+  [`handle${StepType.SendVideo}`]: async (
     _conversation: Conversation,
-    _block: SendVideoBlockSchema,
+    _block: SendVideoStepSchema,
   ) => {
     // todo send message video
     return
   },
-  [`handle${ActionType.SendAudio}`]: async (
+  [`handle${StepType.SendAudio}`]: async (
     _conversation: Conversation,
-    _block: SendAudioBlockSchema,
+    _block: SendAudioStepSchema,
   ) => {
     // todo send message audio
     return
   },
 
-  [`handle${ActionType.UserInput}`]: async (
+  [`handle${StepType.UserInput}`]: async (
     _conversation: Conversation,
-    _block: UserInputBlockSchema,
+    _block: UserInputStepSchema,
   ) => {
     // TODO: Implement User Input logic
     return
   },
 
   // Action Email
-  [`handle${ActionType.MarkEmailVerified}`]: async (
+  [`handle${StepType.MarkEmailVerified}`]: async (
     _conversation: Conversation,
-    _block: MarkEmailVerifiedBlockSchema,
+    _block: MarkEmailVerifiedStepSchema,
   ) => {
     // TODO: Implement Mark Email Verified logic
     return
   },
-  [`handle${ActionType.OptInEmail}`]: async (
+  [`handle${StepType.OptInEmail}`]: async (
     _conversation: Conversation,
-    _block: OptInEmailBlockSchema,
+    _block: OptInEmailStepSchema,
   ) => {
     // TODO: Implement Opt-In Email logic
     return
   },
-  [`handle${ActionType.OptOutEmail}`]: async (
+  [`handle${StepType.OptOutEmail}`]: async (
     _conversation: Conversation,
-    _block: OptOutEmailBlockSchema,
+    _block: OptOutEmailStepSchema,
   ) => {
     // TODO: Implement Opt-Out Email logic
     return
   },
 
   // Action OpenAI Generate
-  [`handle${ActionType.OpenAIGenerateText}`]: async (
+  [`handle${StepType.OpenAIGenerateText}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text logic
     return
   },
-  [`handle${ActionType.OpenAIGenerateImage}`]: async (
+  [`handle${StepType.OpenAIGenerateImage}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateImageSchema,
   ) => {
     // TODO: Implement OpenAI Generate Image logic
     return
   },
-  [`handle${ActionType.OpenAIAnalyzeImage}`]: async (
+  [`handle${StepType.OpenAIAnalyzeImage}`]: async (
     _conversation: Conversation,
     _block: OpenAIAnalyzeImageSchema,
   ) => {
     // TODO: Implement OpenAI Analyze Image logic
     return
   },
-  [`handle${ActionType.OpenAIDeleteMessageHistory}`]: async (
+  [`handle${StepType.OpenAIDeleteMessageHistory}`]: async (
     _conversation: Conversation,
     _block: OpenAIDeleteMessageHistorySchema,
   ) => {
     // TODO: Implement OpenAI Delete Message History logic
     return
   },
-  [`handle${ActionType.OpenAIGenerateTextAssistant}`]: async (
+  [`handle${StepType.OpenAIGenerateTextAssistant}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextAssistantSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Assistant logic
     return
   },
-  [`handle${ActionType.OpenAIGenerateTextAgent}`]: async (
+  [`handle${StepType.OpenAIGenerateTextAgent}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextAgentSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Agent logic
     return
   },
-  [`handle${ActionType.OpenAIGenerateTextAdvanced}`]: async (
+  [`handle${StepType.OpenAIGenerateTextAdvanced}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextAdvancedSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Advanced logic
     return
   },
-  [`handle${ActionType.OpenAISpeechToText}`]: async (
+  [`handle${StepType.OpenAISpeechToText}`]: async (
     _conversation: Conversation,
     _block: OpenAISpeechToTextSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Advanced logic
     return
   },
-  [`handle${ActionType.OpenAITextToSpeech}`]: async (
+  [`handle${StepType.OpenAITextToSpeech}`]: async (
     _conversation: Conversation,
     _block: OpenAITextToSpeechSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Advanced logic
-    return
-  },
-
-  // Start Flow
-  [`handle${ActionType.StartFlow}`]: async (
-    _conversation: Conversation,
-    _block: StartFlowBlockSchema,
-  ) => {
-    // TODO: Implement Start Flow logic
-    return
-  },
-
-  // Wait
-  [`handle${ActionType.Wait}`]: async (
-    _conversation: Conversation,
-    _block: WaitBlockSchema,
-  ) => {
-    // TODO: Implement Wait logic
     return
   },
 }
@@ -308,22 +284,22 @@ async function main(
  * Create message for block
  * Return handleId every block type if have.
  */
-async function replyMessage(block: BlockData, payload: MessagePayloadSchema) {
+async function replyMessage(block: StepData, payload: MessagePayloadSchema) {
   // TODO create message text
 
-  switch (block.actionType) {
-    case ActionType.SendText:
-    case ActionType.SendImage:
-    case ActionType.SendVideo:
-    case ActionType.SendCard:
-    case ActionType.SendAudio:
+  switch (block.StepType) {
+    case StepType.SendText:
+    case StepType.SendImage:
+    case StepType.SendVideo:
+    case StepType.SendCard:
+    case StepType.SendAudio:
       return block.buttons?.find(
-        (button: ButtonBlockSchema) => button.label === payload.text,
+        (button: ButtonStepSchema) => button.label === payload.text,
       )?.id
 
     // Check case reply to trigger next block.
     // See apps/builder/src/features/flows/react-flow/action-type.ts waitUserReplyActionTypes
-    case ActionType.UserInput:
+    case StepType.UserInput:
       // todo Parse text data
       return
     default:
@@ -345,7 +321,7 @@ async function handleFlowExecution(
   }
 
   // If empty node, check next node
-  if (!node.data.blocks?.length) {
+  if (!node.data.steps?.length) {
     await triggerNextNode(conversation, flowVersion, payload.nodeId)
     return
   }
@@ -353,13 +329,13 @@ async function handleFlowExecution(
   // If empty blockId, check first block or find block by blockId
   const blockIndex = !payload.blockId
     ? 0
-    : node.data.blocks.findIndex((obj: BlockData) => obj.id === payload.blockId)
+    : node.data.steps.findIndex((obj: StepData) => obj.id === payload.blockId)
   if (blockIndex === -1) {
-    console.error("BlockId not exists on current version")
+    console.error("StepId not exists on current version")
     return
   }
 
-  const block = node.data.blocks[blockIndex]
+  const block = node.data.steps[blockIndex]
   // Check is reply message from user.
   if (payload.text) {
     const handleId = await replyMessage(block, payload)
@@ -375,15 +351,15 @@ async function handleFlowExecution(
    * Handle action logic for this block, create message if need
    * Trigger next block
    */
-  const handlerName = `handle${block.actionType}` as keyof typeof handlers
+  const handlerName = `handle${block.StepType}` as keyof typeof handlers
 
   if (typeof handlers[handlerName] === "function") {
-    console.log("handleCurrentBlock", handlerName, block.id)
+    console.log("handleCurrentStep", handlerName, block.id)
     await handlers[handlerName](conversation, block, flowVersion)
   }
 
   // If block type is wait user reply, skip loop trigger next block.
-  if (waitUserReplyActionTypes.includes(block.actionType)) {
+  if (waitUserReplyActionTypes.includes(block.StepType)) {
     console.log("Skip trigger next block when wait user reply")
     return
   }
@@ -394,11 +370,11 @@ async function handleFlowExecution(
     return
   }
 
-  const nextBlock = node.data.blocks[blockIndex + 1]
+  const nextStep = node.data.blocks[blockIndex + 1]
   // If block type is can continue, trigger next block
   await handleFlowExecution(conversation, flowVersion, {
     nodeId: payload.nodeId,
-    blockId: nextBlock.id,
+    blockId: nextStep.id,
   })
 }
 

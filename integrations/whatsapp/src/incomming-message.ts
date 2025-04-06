@@ -1,5 +1,3 @@
-import { Readable } from "node:stream"
-import type { ReadableStream } from "node:stream/web"
 import {
   ContentType,
   type Context,
@@ -7,9 +5,10 @@ import {
   type ExternalMediaResult,
   FileType,
   type MessageEntity,
-  type MessageLocationEntity,
   SdkException,
 } from "@ahachat.ai/sdk"
+import { createId } from "@paralleldrive/cuid2"
+import fetch from "cross-fetch"
 import imageSize from "image-size"
 import type { WhatsAppAPI } from "whatsapp-api-js"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
@@ -46,7 +45,7 @@ export const parseIncomingMessage = async (
       name: props.name,
     },
   }
-  let flow = {}
+  let postbackAction = undefined
 
   switch (props.message.type) {
     case "text":
@@ -54,12 +53,7 @@ export const parseIncomingMessage = async (
       break
     case "audio": {
       const attached = (props.message as ServerAudioMessage).audio
-      const mediaSpecs = await fetchMedia(
-        ctx,
-        whatsappClient,
-        props.from,
-        attached.id,
-      )
+      const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
 
       message.attachments = [
         {
@@ -73,12 +67,7 @@ export const parseIncomingMessage = async (
     }
     case "document": {
       const attached = (props.message as ServerDocumentMessage).document
-      const mediaSpecs = await fetchMedia(
-        ctx,
-        whatsappClient,
-        props.from,
-        attached.id,
-      )
+      const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
 
       message.content = attached.caption
       message.attachments = [
@@ -86,7 +75,7 @@ export const parseIncomingMessage = async (
           name: attached.filename,
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.FILE,
+          fileType: FileType.DOCUMENT,
           ...mediaSpecs,
         },
       ]
@@ -94,12 +83,7 @@ export const parseIncomingMessage = async (
     }
     case "image": {
       const attached = (props.message as ServerImageMessage).image
-      const mediaSpecs = await fetchMedia(
-        ctx,
-        whatsappClient,
-        props.from,
-        attached.id,
-      )
+      const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
 
       message.content = attached.caption
       message.attachments = [
@@ -115,12 +99,7 @@ export const parseIncomingMessage = async (
     }
     case "sticker": {
       const attached = (props.message as ServerStickerMessage).sticker
-      const mediaSpecs = await fetchMedia(
-        ctx,
-        whatsappClient,
-        props.from,
-        attached.id,
-      )
+      const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
 
       message.attachments = [
         {
@@ -134,12 +113,7 @@ export const parseIncomingMessage = async (
     }
     case "video": {
       const attached = (props.message as ServerVideoMessage).video
-      const mediaSpecs = await fetchMedia(
-        ctx,
-        whatsappClient,
-        props.from,
-        attached.id,
-      )
+      const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
 
       message.attachments = [
         {
@@ -153,14 +127,15 @@ export const parseIncomingMessage = async (
     }
     case "location": {
       const attached = (props.message as ServerLocationMessage).location
-      message.contentAttributes = {
-        latitude: attached.latitude,
-        longitude: attached.longitude,
-      } as MessageLocationEntity
+      // message.contentType = ContentType.LOCATION
+      message.content =
+        [attached.name, attached.address].filter((v) => !!v).join(": ") ??
+        "Received location"
+      message.contentAttributes = attached
       break
     }
     case "contacts": {
-      message.content = "Received contacts (coming soon)"
+      message.content = "Received contacts"
       message.contentAttributes = (
         props.message as ServerContactsMessage
       ).contacts
@@ -172,19 +147,19 @@ export const parseIncomingMessage = async (
           message.content = props.message.interactive.button_reply.title
           const arr = props.message.interactive.button_reply.id.split("-")
           if (arr.length > 1) {
-            flow = { flowVersionId: arr[0], buttonId: arr[1] }
+            postbackAction = { flowVersionId: arr[0], buttonId: arr[1] }
           }
           break
         }
         case "list_reply":
-          message.content = props.message.interactive.list_reply
+          message.contentAttributes = props.message.interactive.list_reply
           break
         case "nfm_reply":
           message.content = props.message.interactive.nfm_reply.body
           break
         default:
           message.content = "Received interactive (coming soon)"
-          return
+          break
       }
       break
     }
@@ -199,62 +174,64 @@ export const parseIncomingMessage = async (
     }
     // case "request_welcome": do nothing
     // case "reaction": do nothing
-    // case "system": do nothin
+    // case "system": do nothing
     default:
+      message.content = `Received ${props.message.type}`
       break
   }
 
-  return { message, conversation, flow }
+  return { message, conversation, postbackAction }
 }
 
 export const fetchMedia = async (
   ctx: Context<WhatsappAuthValue>,
   whatsappClient: WhatsAppAPI,
-  conversationId: string,
   mediaId: string,
 ): Promise<ExternalMediaResult> => {
   try {
     const mediaResponse = await whatsappClient.retrieveMedia(mediaId)
     if ("url" in mediaResponse && "mime_type" in mediaResponse) {
-      const response = await whatsappClient.fetchMedia(mediaResponse.url)
+      // we don't use whatsappClient.fetchMedia
+      // big thanks for: https://stackoverflow.com/questions/77846881/cannot-download-media-from-whatsapp-business-api-working-with-postman-and-curl#answer-77872700
+      const response = await fetch(mediaResponse.url, {
+        headers: {
+          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+          "User-Agent": "node",
+        },
+      })
       if (response.ok && response.body) {
         const result: ExternalMediaResult = {
-          originPath: `contacts/${conversationId}/${mediaId}`,
+          originPath: `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`,
           size: Number.parseInt(response.headers.get("content-length") ?? "0"),
         }
 
+        const bytes = await response.arrayBuffer()
+        const arrayBytes = new Uint8Array(bytes)
+
         const mimeType = mediaResponse.mime_type
         if (mimeType.startsWith("image/")) {
-          const clonedResponse = response.clone()
-          const bytes = await clonedResponse.arrayBuffer()
-
           // Retrieve width / height
-          const dimensions = imageSize(new Uint8Array(bytes))
+          const dimensions = imageSize(arrayBytes)
           result.width = dimensions.width
           result.height = dimensions.height
         }
 
-        await ctx.uploader?.putObject(
-          result.originPath,
-          Readable.fromWeb(
-            response.body as unknown as ReadableStream<Uint8Array>,
-          ),
-          result.size,
-          {
-            "content-type": mimeType,
-          },
-        )
+        await ctx.uploader?.putObject(result.originPath, Buffer.from(bytes), {
+          ACL: "public-read",
+          ContentLength: result.size,
+          ContentType: mimeType,
+        })
 
         return result
       }
     }
 
-    ctx.logger.error("Unable to fetch media", { mediaId, mediaResponse })
+    ctx.logger.error("Unable to fetch media:", { mediaId, mediaResponse })
 
-    throw new SdkException("Unable to fetch media")
+    throw new SdkException("Unable to download media")
   } catch (error) {
-    ctx.logger.error("Unable to fetch media", { error })
+    ctx.logger.error("Unable to fetch media info:", { error })
 
-    throw new SdkException("Unable to fetch media")
+    throw new SdkException("Unable to fetch media info")
   }
 }

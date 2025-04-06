@@ -1,6 +1,10 @@
+import { Button } from "@/components/ui/button"
 import { AutomatedResponsesTable } from "@/features/automated-response/automated-response-table"
 import { getAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesNuqs } from "@/features/automated-response/schemas/get-automated-responses-schema"
+import { T } from "@/tolgee/server"
+import { PlusIcon } from "lucide-react"
+import Link from "next/link"
 import type { SearchParams } from "nuqs/server"
 
 export default async function AutomatedResponesPage(props: {
@@ -18,5 +22,20 @@ export default async function AutomatedResponesPage(props: {
     }),
   ])
 
-  return <AutomatedResponsesTable promises={promises} chatbotId={chatbotId} />
+  return (
+    <>
+      <div className="flex items-center">
+        <h4 className="font-bold flex-1">
+          <T keyName="automatedResponse.heading" />
+        </h4>
+        <Button size={"sm"} asChild>
+          <Link href={`/chatbots/${chatbotId}/automated-responses/create`}>
+            <PlusIcon />
+            <T keyName="common.createBtn" />
+          </Link>
+        </Button>
+      </div>
+      <AutomatedResponsesTable promises={promises} chatbotId={chatbotId} />
+    </>
+  )
 }

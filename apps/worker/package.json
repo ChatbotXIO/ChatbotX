@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "integration:dev": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
-    "chat:dev": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
-    "dev": "pnpm run integration:dev"
+    "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
+    "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
+    "worker:flow": "dotenv -e ../../.env -- tsx --watch src/flow/worker.ts",
+    "dev": "concurrently pnpm:worker:*"
   },
   "keywords": [],
   "author": "",
@@ -16,14 +17,15 @@
     "@ahachat.ai/integration-whatsapp": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
-    "@ahachat.ai/worker-config": "workspace:^",
-    "bullmq": "^5.41.7",
+    "@ahachat.ai/worker-config": "workspace:*",
+    "bullmq": "^5.47.1",
     "dot-prop": "^9.0.0",
-    "ioredis": "^5.5.0",
-    "ky": "^1.7.5",
+    "ioredis": "^5.6.0",
+    "ky": "^1.8.0",
     "tslog": "^4.9.3"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "dotenv-cli": "^8.0.0"
   }
 }

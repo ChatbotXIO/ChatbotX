@@ -2,7 +2,7 @@
 
 import { InstagramIcon } from "@/components/icons/instagram"
 import { MessengerIcon } from "@/components/icons/messenger"
-import { WhatsappIcon } from "@/components/icons/whatsapp"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
@@ -161,7 +161,9 @@ export const MessageInput = () => {
               )}
             />
           </div>
-          <FileUploadPreview ref={fileUploadRef} />
+          <div className="px-2 5">
+            <FileUploadPreview ref={fileUploadRef} />
+          </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1 flex gap-1 items-center">
               {

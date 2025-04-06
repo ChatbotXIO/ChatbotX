@@ -51,7 +51,7 @@ export const createMessageTemplateAction = chatbotActionClient
       }
 
       const res =
-        await integrations.WHATSAPP.integration.actions?.createTemplate({
+        await integrations.WHATSAPP.integration.actions?.createMessageTemplate({
           ctx,
           body,
         })

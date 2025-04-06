@@ -623,7 +623,7 @@ model Flow {
   folder       Folder?       @relation(fields: [folderId], references: [id])
   flowVersions FlowVersion[]
   broadcasts   Broadcast[]
-  FlowRun      FlowRun[]
+  flowRuns     FlowRun[]
 }
 
 model FlowVersion {
@@ -784,20 +784,14 @@ enum MessageType {
 
 enum ContentType {
   TEXT
+  LOCATION
 }
 
 enum FileType {
   IMAGE
   AUDIO
   VIDEO
-  FILE
-}
-
-enum AttachmentType {
-  IMAGE
-  AUDIO
-  VIDEO
-  FILE
+  DOCUMENT
 }
 
 enum BroadcastStatus {

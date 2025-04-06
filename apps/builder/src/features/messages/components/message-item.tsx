@@ -21,11 +21,13 @@ export const MessageItem = ({ message }: { message: MessageResource }) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
     >
       <div className="flex flex-col gap-1 max-w-[70%] mx-3">
-        <div className={cn("text-sm", variants[message.messageType])}>
-          <pre className="whitespace-normal break-all font-sans">
-            {message.content}
-          </pre>
-        </div>
+        {message.content && message.content.length > 0 && (
+          <div className={cn("text-sm", variants[message.messageType])}>
+            <pre className="whitespace-normal break-all font-sans">
+              {message.content}
+            </pre>
+          </div>
+        )}
         {message.attachments &&
           message.attachments.length > 0 &&
           renderAttachments({ message })}
@@ -76,10 +78,10 @@ const renderAttachments = ({
           default:
             return (
               <div
-                className="flex gap-2 px-3 py-2 rounded-xl bg-secondary"
+                className="flex gap-2 px-3 py-2 rounded-xl bg-secondary items-center text-sm"
                 key={attachment.id}
               >
-                <PaperclipIcon />
+                <PaperclipIcon size={16} />
                 <Link href={attachment.url ?? "/#"}>{attachment.name}</Link>
               </div>
             )

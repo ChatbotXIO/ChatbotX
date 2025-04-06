@@ -32,14 +32,13 @@ export const syncMessageTemplateAction = chatbotActionClient
         uploader,
       }
 
-      const res = await integrations.WHATSAPP.integration.actions?.getTemplates(
-        {
+      const res =
+        await integrations.WHATSAPP.integration.actions?.listMessageTemplates({
           ctx,
           params: {
             limit: 100,
           },
-        },
-      )
+        })
       await prisma.$transaction(async (tx) => {
         await tx.whatsappMessageTemplate.deleteMany({
           where: {

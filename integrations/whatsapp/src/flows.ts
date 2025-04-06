@@ -3,6 +3,17 @@ import { getWhatsappClient } from "./client.js"
 import type { WhatsappAuthValue } from "./index.js"
 import { SdkException } from "@ahachat.ai/sdk"
 
+export interface FlowEntity {
+  id: string
+  name: string
+  status: string
+  category: string[]
+}
+
+export interface ListFlowsResponse {
+  data: FlowEntity[]
+}
+
 /**
  * Get list of flows.
  *
@@ -12,17 +23,15 @@ import { SdkException } from "@ahachat.ai/sdk"
 export const getFlows = async (
   auth: WhatsappAuthValue,
   params: { limit: number },
-): Promise<string> => {
+): Promise<ListFlowsResponse> => {
   const client = getWhatsappClient(auth)
 
   const res = await client.$$apiFetch$$(
     `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.wabaId}/flows?limit=${params.limit}`,
   )
   if (!res.ok) {
-    throw new SdkException("Access token is not valid")
+    throw new SdkException(`Unable to list flows: ${res.text()}`)
   }
 
-  const { data } = await res.json()
-
-  return data
+  return await res.json()
 }

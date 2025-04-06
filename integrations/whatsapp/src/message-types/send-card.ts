@@ -1,14 +1,14 @@
+import type { ILogObj, Logger } from "tslog"
 import {
-  Text,
-  Interactive,
   ActionButtons,
   type Button,
-  Image,
   Header,
+  Image,
+  Interactive,
+  Text,
 } from "whatsapp-api-js/messages"
-import { chunkArray } from "../util.js"
-import type { ILogObj, Logger } from "tslog"
-import { generateBody, generateButton, generateFooter } from "../interactive.js"
+import { generateBody, generateButton, generateFooter } from "../interactive"
+import { chunkArray } from "../util"
 
 export const INTERACTIVE_MAX_BUTTONS_COUNT = 3
 

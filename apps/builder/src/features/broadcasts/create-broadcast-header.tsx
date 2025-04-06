@@ -1,4 +1,4 @@
-import { WhatsappIcon } from "@/components/icons/whatsapp"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { BroadcastSubaction, InboxType } from "@ahachat.ai/database/browser"
 import { AtomIcon } from "lucide-react"
 import { useMemo, type ReactNode } from "react"

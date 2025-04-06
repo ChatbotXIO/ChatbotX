@@ -12,4 +12,9 @@ const chatQueue = new Queue(QueueName.CHAT, {
   defaultJobOptions,
 })
 
-export { integrationQueue, chatQueue }
+const flowQueue = new Queue(QueueName.FLOW, {
+  connection,
+  defaultJobOptions,
+})
+
+export { chatQueue, flowQueue, integrationQueue }

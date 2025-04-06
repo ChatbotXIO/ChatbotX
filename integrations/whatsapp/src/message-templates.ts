@@ -1,42 +1,49 @@
+import { SdkException } from "@ahachat.ai/sdk"
 import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client.js"
 import type { WhatsappAuthValue } from "./index.js"
-import { SdkException } from "@ahachat.ai/sdk"
 
-/**
- * Get list of message templates.
- *
- * @param auth WhatsappAuthValue
- * @returns string phoneNumberId
- */
-export const getTemplates = async (
+export interface ListMessageTemplatesReponse {
+  data: MessageTemplateEntity[]
+  paging: {
+    next: string
+  }
+}
+
+export interface MessageTemplateEntity {
+  id: string
+  name: string
+  status: "APPROVED" | "PENDING" | "REJECTED"
+}
+
+export interface CreateMessageTemplateProps {
+  name: string
+  category: "AUTHENTICATION" | "MARKETING" | "UTILITY"
+  language: string
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  components: any[]
+}
+
+export const listMessageTemplates = async (
   auth: WhatsappAuthValue,
   params: { limit: number },
-): Promise<string> => {
+): Promise<ListMessageTemplatesReponse> => {
   const client = getWhatsappClient(auth)
 
   const res = await client.$$apiFetch$$(
     `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.wabaId}/message_templates?limit=${params.limit}`,
   )
   if (!res.ok) {
-    throw new SdkException("Access token is not valid")
+    throw new SdkException(`Unable to list message templates: ${res.text()}`)
   }
 
-  const { data } = await res.json()
-
-  return data
+  return await res.json()
 }
 
-/**
- * Create message templates.
- *
- * @param auth WhatsappAuthValue
- * @returns string phoneNumberId
- */
-export const createTemplate = async (
+export const createMessageTemplate = async (
   auth: WhatsappAuthValue,
-  body,
-): Promise<string> => {
+  data: CreateMessageTemplateProps,
+): Promise<MessageTemplateEntity> => {
   const client = getWhatsappClient(auth)
 
   const res = await client.$$apiFetch$$(
@@ -46,11 +53,11 @@ export const createTemplate = async (
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(data),
     },
   )
   if (!res.ok) {
-    throw new SdkException("Access token is not valid")
+    throw new SdkException(`Unable to create message template: ${res.text()}`)
   }
 
   return await res.json()

@@ -1,6 +1,8 @@
 import type { ILogObj, Logger } from "tslog"
-import type { SendCardPayload } from "./send-card.js"
-import { generateOutgoingMessages as generateSendCarouselOutgoingMessages } from "./send-card.js"
+import {
+  type SendCardPayload,
+  generateOutgoingMessages as generateSendCarouselOutgoingMessages,
+} from "./send-card"
 
 export function* generateOutgoingMessages(
   flowVersionId: string,

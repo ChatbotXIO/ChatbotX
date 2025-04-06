@@ -1,7 +1,7 @@
 "use client"
 
 import { FormInput } from "@/components/form-input"
-import { WhatsappIcon } from "@/components/icons/whatsapp"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -26,7 +26,6 @@ import { connectWhatsappSchema } from "./schemas"
 
 export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
   const [open, setOpen] = useState(false)
-
   const router = useRouter()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =

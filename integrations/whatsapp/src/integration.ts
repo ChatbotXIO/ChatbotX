@@ -4,18 +4,21 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@ahachat.ai/sdk"
-import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client.js"
-import { webhookHandler } from "./handlers/webhook.js"
-import { parseIncomingMessage } from "./incomming-message.js"
+import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client"
+import { getFlows } from "./flows"
+import { webhookHandler } from "./handlers/webhook"
+import { getIceBreakers, updateIceBreaker } from "./ice-breaker"
+import { parseIncomingMessage } from "./incomming-message"
+import {
+  createMessageTemplate,
+  listMessageTemplates,
+} from "./message-templates"
+import { sendOutgoingMessage } from "./outgoing-message"
 import type {
   WhatsappActions,
   WhatsappAuthValue,
   WhatsappConfig,
-} from "./schemas.js"
-import { sendOutgoingMessage } from "./outgoing-message.js"
-import { getIceBreakers, updateIceBreaker } from "./ice-breaker.js"
-import { createTemplate, getTemplates } from "./message-templates.js"
-import { getFlows } from "./flows.js"
+} from "./schemas"
 
 const config: IntegrationDefinition<
   WhatsappConfig,
@@ -25,7 +28,7 @@ const config: IntegrationDefinition<
   name: "whatsapp",
   actions: {
     verifyAccessToken: async ({ ctx }) => {
-      return await verifyAccessToken(ctx.auth)
+      return await verifyAccessToken(ctx)
     },
     uploadMedia: async ({ ctx, file }) => {
       return await uploadMedia(ctx.auth, file)
@@ -35,14 +38,14 @@ const config: IntegrationDefinition<
 
       return await parseIncomingMessage(ctx, whatsappClient, data)
     },
-    sendMessage: async ({ ctx, message, conversation, flowVersion }) => {
-      await sendOutgoingMessage(ctx, conversation, message, flowVersion)
+    sendMessage: async ({ ctx, message, conversation }) => {
+      await sendOutgoingMessage(ctx, conversation, message)
     },
-    getTemplates: async ({ ctx, params }) => {
-      return await getTemplates(ctx.auth, params)
+    listMessageTemplates: async ({ ctx, params }) => {
+      return await listMessageTemplates(ctx.auth, params)
     },
-    createTemplate: async ({ ctx, body }) => {
-      return await createTemplate(ctx.auth, body)
+    createMessageTemplate: async ({ ctx, data }) => {
+      return await createMessageTemplate(ctx.auth, data)
     },
     getFlows: async ({ ctx, params }) => {
       return await getFlows(ctx.auth, params)
@@ -67,4 +70,6 @@ const config: IntegrationDefinition<
   },
 }
 
-export const integration = new Integration(config)
+export const integration = new Integration<
+  IntegrationDefinition<WhatsappConfig, WhatsappAuthValue, WhatsappActions>
+>(config)

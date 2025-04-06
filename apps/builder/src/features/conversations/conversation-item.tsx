@@ -2,7 +2,7 @@
 
 import { InstagramIcon } from "@/components/icons/instagram"
 import { MessengerIcon } from "@/components/icons/messenger"
-import { WhatsappIcon } from "@/components/icons/whatsapp"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { cn } from "@/components/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"

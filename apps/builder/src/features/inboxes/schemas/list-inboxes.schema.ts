@@ -14,4 +14,6 @@ const listInboxRequest = z.object({
 })
 export type ListInboxesRequest = z.infer<typeof listInboxRequest>
 
-export type InboxCollection = Inbox[]
+export type InboxCollection = {
+  data: Inbox[]
+}

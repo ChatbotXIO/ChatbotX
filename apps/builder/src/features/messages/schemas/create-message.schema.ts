@@ -1,4 +1,4 @@
-import { AttachmentType } from "@prisma/client"
+import { FileType } from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000
@@ -30,15 +30,15 @@ export const createMessageRequest = z
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
 
-export const guessAttachmentTypeFromMimeType = (mimeType: string) => {
+export const guessFileTypeFromMimeType = (mimeType: string) => {
   if (mimeType.startsWith("image/")) {
-    return AttachmentType.IMAGE
+    return FileType.IMAGE
   }
   if (mimeType.startsWith("video/")) {
-    return AttachmentType.VIDEO
+    return FileType.VIDEO
   }
   if (mimeType.startsWith("audio/")) {
-    return AttachmentType.AUDIO
+    return FileType.AUDIO
   }
-  return AttachmentType.FILE
+  return FileType.DOCUMENT
 }

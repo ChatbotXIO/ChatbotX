@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import {
+  PutObjectCommand,
+  S3Client,
+  type PutObjectCommandInput,
+} from "@aws-sdk/client-s3"
 import {
   createPresignedPost,
   type PresignedPostOptions,
@@ -31,23 +35,19 @@ class Uploader {
     return Uploader.instance
   }
 
-  async putObject(path: string, body: string | Uint8Array | Buffer | Readable) {
+  async putObject(
+    path: string,
+    body: string | Uint8Array | Buffer | Readable,
+    options?: Partial<PutObjectCommandInput>,
+  ) {
     const command = new PutObjectCommand({
       Bucket: this.#bucketName,
       Key: path,
-      ACL: "private",
       Body: body,
+      ...options,
     })
 
     return await this.#client.send(command)
-  }
-
-  async putFile(
-    newPath: string,
-    oldPath: string,
-    metadata?: Record<string, string | number>,
-  ) {
-    await this.#client.fPutObject(this.#bucketName, newPath, oldPath, metadata)
   }
 
   async getPresignedUpload(path: string, contentType: string) {

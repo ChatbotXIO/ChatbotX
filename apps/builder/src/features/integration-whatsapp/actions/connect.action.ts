@@ -5,9 +5,11 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
+import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { IntegrationType, prisma } from "@ahachat.ai/database"
+import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
 import { AuthType, IntegrationException } from "@ahachat.ai/sdk"
 import type { InputJsonValue } from "@prisma/client/runtime/library"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
@@ -45,34 +47,46 @@ export const connectWhatsappAction = authActionClient
         },
         metadata: {
           wabaId: parsedInput.wabaId,
-          phoneNumberId: "",
         },
       }
-      auth.metadata.phoneNumberId =
-        await integrations.WHATSAPP.integration.actions.verifyAccessToken({
-          ctx: {
-            auth,
-            logger: logger.getSubLogger({
-              name: "whatsapp",
-            }),
-          },
-        })
 
-      await prisma.$transaction(async (tx) => {
-        await tx.inbox.create({
-          data: {
-            chatbotId,
-            inboxType: IntegrationType.WHATSAPP,
-            integrationWhatsapp: {
-              create: {
-                chatbotId,
-                auth: auth as InputJsonValue,
+      try {
+        const whatsappPhoneNumber =
+          await integrations.WHATSAPP.integration.actions?.verifyAccessToken({
+            ctx: {
+              auth,
+              logger: logger.getSubLogger({
+                name: "whatsapp",
+              }),
+            },
+          })
+        if (whatsappPhoneNumber) {
+          ;(auth as WhatsappAuthValue).metadata.phoneNumber =
+            whatsappPhoneNumber
+        }
+
+        await prisma.$transaction(async (tx) => {
+          await tx.inbox.create({
+            data: {
+              chatbotId,
+              inboxType: IntegrationType.WHATSAPP,
+              integrationWhatsapp: {
+                create: {
+                  chatbotId,
+                  auth: auth as InputJsonValue,
+                },
               },
             },
-          },
+          })
         })
-      })
+      } catch (err: unknown) {
+        logger
+          .getSubLogger({
+            name: "whatsapp",
+          })
+          .error("Unable to verify whatsapp token: ", err)
 
-      return
+        throw new BaseException("Unable to verify Whatsapp token")
+      }
     },
   )

@@ -14,15 +14,18 @@ import {
   type User,
 } from "@ahachat.ai/database"
 import { uploader } from "@ahachat.ai/filesystem"
-import { chatQueue } from "@ahachat.ai/worker-config"
+import { chatQueue, ChatQueueAction } from "@ahachat.ai/worker-config"
 import { revalidateTag } from "next/cache"
 import {
   type CreateMessageRequest,
   createMessageRequest,
-  guessAttachmentTypeFromMimeType,
+  guessFileTypeFromMimeType,
 } from "../schemas/create-message.schema"
 import type { MessageResource } from "../schemas/list-messages.schema"
 import type { AttachmentResource } from "@/features/attachments/schemas/get-attachments.schema"
+import { createId } from "@paralleldrive/cuid2"
+import imageSize from "image-size"
+import { logger } from "@/lib/log"
 
 export const createMessageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
@@ -44,11 +47,27 @@ export const createMessageAction = chatbotActionClient
 
       // upload file if exists
       let path: string | null = null
+      let imageDimensions: { width: number; height: number } | null = null
       if ("files" in parsedInput && parsedInput.files.length > 0) {
         const file = parsedInput.files[0] as File
-        path = `u${ctx.user.id}/c${conversationId}/${file?.name}`
+        path = `public/workspaces/${ctx.user.workspaceId}/conversations/${conversationId}/${createId()}`
+
         const buffer = (await file.arrayBuffer()) as unknown as Buffer
-        await uploader.putObject(path, buffer)
+        await uploader.putObject(path, buffer, {
+          ACL: "public-read",
+          ContentLength: file.size,
+          ContentType: file.type,
+        })
+
+        // try to find image dimensions
+        if (file.type.startsWith("image/")) {
+          try {
+            const { width, height } = await imageSize(new Uint8Array(buffer))
+            imageDimensions = { width, height }
+          } catch (error) {
+            logger.warn("Unable to retrieve image dimensions", error)
+          }
+        }
       }
 
       const message = await prisma.$transaction(async (tx) => {
@@ -79,7 +98,8 @@ export const createMessageAction = chatbotActionClient
               name: file.name,
               mimeType: mimeType,
               size: file.size,
-              fileType: guessAttachmentTypeFromMimeType(mimeType),
+              fileType: guessFileTypeFromMimeType(mimeType),
+              ...imageDimensions,
             },
           })
 
@@ -100,8 +120,8 @@ export const createMessageAction = chatbotActionClient
       })
 
       // (message as MessageResource).clientId = parsedInput.clientId
-      await chatQueue.add("add", {
-        conversationId: conversation.id,
+      await chatQueue.add(ChatQueueAction.SEND_MESSAGE, {
+        conversation,
         message: { ...message, clientId: parsedInput.clientId },
       })
 
