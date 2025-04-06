@@ -11,8 +11,8 @@
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
     "tslog": "^4.9.3",
-    "typescript": "5.8.2",
-    "whatsapp-api-js": "^5.1.2",
+    "typescript": "5.8.3",
+    "whatsapp-api-js": "^5.2.0",
     "zod": "^3.24.2"
   },
   "exports": {

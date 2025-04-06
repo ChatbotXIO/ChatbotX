@@ -4,11 +4,11 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "dependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
-    "bullmq": "^5.46.0",
+    "bullmq": "^5.47.1",
     "ioredis": "^5.6.0",
     "tslog": "^4.9.3"
   },
