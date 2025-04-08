@@ -6,12 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createMessageTemplateAction } from "@/features/integration-whatsapp/message-templates/actions/create-message-template.action"
 import { useTranslate } from "@tolgee/react"
-import { type JSX, use, useState } from "react"
+import { type JSX, useState } from "react"
 import { toast } from "sonner"
 import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
 import { TemplateTypeSelect } from "@/features/integration-whatsapp/message-templates/template-type-select"
-import type { getWhastappIntegration } from "@/features/integration-whatsapp/queries"
-import { redirect } from "next/navigation"
 import { FormInput } from "@/components/form-input"
 import { LanguageSelect } from "@/features/integration-whatsapp/message-templates/language-select"
 import { CategorySelect } from "@/features/integration-whatsapp/message-templates/category-select"
@@ -21,7 +19,7 @@ import { TemplateTextPartial } from "./templates/text/partial"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Loader2Icon, ArrowLeftIcon } from "lucide-react"
-import { WhatsappTemplateCategory } from "@prisma/client"
+import { WhatsappTemplateCategory } from "@ahachat.ai/database/browser"
 import { templateTextDefaultValue } from "./templates/text/schema"
 import { templateCatalogDefaultValue } from "./templates/catalog/schema"
 import { TemplateCatalogPreview } from "./templates/catalog/preview"
@@ -69,15 +67,9 @@ const contentVariables: { [key in TemplateType]: JSX.Element } = {
 
 export function CreateMessageTemplateForm({
   chatbotId,
-  promises,
 }: {
   chatbotId: string
-  promises: Promise<[Awaited<ReturnType<typeof getWhastappIntegration>>]>
 }) {
-  const [{ data: whatsappIntegration }] = use(promises)
-  if (!whatsappIntegration) {
-    redirect("/settings")
-  }
   const { t } = useTranslate()
   const [templateType, setTemplateType] = useState<TemplateType | null>(null)
 

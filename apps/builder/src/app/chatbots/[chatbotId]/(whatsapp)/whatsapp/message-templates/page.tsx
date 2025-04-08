@@ -6,7 +6,6 @@ import { T } from "@/tolgee/server"
 import { Suspense } from "react"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { MessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
-import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schemas/get-broadcasts-schema"
 import type { SearchParams } from "nuqs/server"
 
 export default async function WhatsappMessageTemplatePage(props: {
@@ -14,12 +13,11 @@ export default async function WhatsappMessageTemplatePage(props: {
   searchParams: Promise<SearchParams>
 }) {
   const { chatbotId } = await props.params
-  const searchParams = await props.searchParams
-  const search = getBroadcastsSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
     getMessageTemplates({
-      ...search,
       chatbotId,
+      page: 1,
+      perPage: 9999,
     }),
   ])
 

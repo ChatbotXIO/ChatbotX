@@ -5,8 +5,7 @@ import {
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
-import type { InputJsonValue } from "@prisma/client/runtime/binary"
+import { prisma, type Prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
 export const duplicateAITriggerAction = chatbotActionClient
@@ -35,7 +34,7 @@ export const duplicateAITriggerAction = chatbotActionClient
         data: {
           ...rest,
           name: `${name} _copy`,
-          questions: questions as InputJsonValue[],
+          questions: questions as Prisma.InputJsonValue[],
         },
       })
 

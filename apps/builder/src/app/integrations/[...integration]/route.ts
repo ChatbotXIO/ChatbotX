@@ -1,5 +1,5 @@
 import { HandleRequestType } from "@ahachat.ai/sdk"
-import type { IntegrationType } from "@prisma/client"
+import type { IntegrationType } from "@ahachat.ai/database/browser"
 import { notFound } from "next/navigation"
 import { handleCallback } from "./callback"
 import { handleWebhook } from "./webhook"

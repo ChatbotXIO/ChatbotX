@@ -1,7 +1,6 @@
 import { auth } from "@/auth"
-import { prisma } from "@ahachat.ai/database"
+import { Prisma, prisma } from "@ahachat.ai/database"
 import { SdkException } from "@ahachat.ai/sdk"
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import {
   DEFAULT_SERVER_ERROR_MESSAGE,
   createSafeActionClient,
@@ -12,7 +11,7 @@ import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
     console.log("error", error)
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025" || error.code === "P2016") {
         return `Unable to find ${error.meta?.modelName ?? ""} record`
       }

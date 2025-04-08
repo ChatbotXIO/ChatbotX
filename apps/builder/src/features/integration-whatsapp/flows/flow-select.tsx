@@ -1,7 +1,10 @@
 import { FormInput } from "@/components/form-input"
 import { SingleSelect } from "@/components/single-select"
 import { callAPI } from "@/lib/swr"
-import { WhatsappFlowStatus, type WhatsappFlow } from "@prisma/client"
+import {
+  WhatsappFlowStatus,
+  type WhatsappFlow,
+} from "@ahachat.ai/database/browser"
 import { useParams } from "next/navigation"
 
 export const FlowSelect = ({

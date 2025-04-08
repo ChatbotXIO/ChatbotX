@@ -1,6 +1,6 @@
 import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
-import { getWhatsappClient } from "./client.js"
-import type { WhatsappAuthValue } from "./index.js"
+import { getWhatsappClient } from "./client"
+import type { WhatsappAuthValue } from "./index"
 import { SdkException } from "@ahachat.ai/sdk"
 
 /**

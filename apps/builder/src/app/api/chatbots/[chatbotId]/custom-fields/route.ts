@@ -1,6 +1,6 @@
 import { listFields } from "@/features/fields/queries"
 import { getFieldsSearchParamsCache } from "@/features/fields/schemas/get-fields-schema"
-import { FieldType } from "@prisma/client"
+import { FieldType } from "@ahachat.ai/database/browser"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(

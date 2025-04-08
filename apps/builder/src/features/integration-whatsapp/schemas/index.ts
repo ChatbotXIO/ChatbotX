@@ -1,4 +1,4 @@
-import type { IntegrationWhatsapp } from "@prisma/client"
+import type { IntegrationWhatsapp } from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
 export type IntegrationWhatsappResource = IntegrationWhatsapp

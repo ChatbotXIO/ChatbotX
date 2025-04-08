@@ -1,10 +1,10 @@
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 
-export const getMessageTemplatesSearchParamsCache = createSearchParamsCache({
+export const getMessageTemplatesSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
 })
 
 export type GetMessageTemplatesSchema = Awaited<
-  ReturnType<typeof getMessageTemplatesSearchParamsCache.parse>
+  ReturnType<typeof getMessageTemplatesSearchParams.parse>
 > & { chatbotId: string }

@@ -10,8 +10,7 @@ import {
   updateAITriggerRequest,
 } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { type User, prisma } from "@ahachat.ai/database"
-import type { JsonObject } from "@prisma/client/runtime/binary"
+import { type User, prisma, type Prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
 export const updateAITriggerAction = chatbotActionClient
@@ -51,7 +50,7 @@ export const updateAITriggerAction = chatbotActionClient
         },
         data: {
           ...parsedInput,
-          questions: parsedInput.questions as JsonObject[],
+          questions: parsedInput.questions as Prisma.InputJsonValue[],
         },
       })
 

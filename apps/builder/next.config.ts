@@ -5,7 +5,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  serverExternalPackages: ["@aws-sdk/client-s3", "@aws-sdk/s3-presigned-post"],
+  serverExternalPackages: [
+    "@aws-sdk/client-s3",
+    "@aws-sdk/s3-presigned-post",
+    "@prisma/client",
+  ],
   images: {
     remotePatterns: [
       {

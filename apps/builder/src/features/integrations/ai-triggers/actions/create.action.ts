@@ -10,8 +10,7 @@ import {
 } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { AITriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
-import type { JsonObject } from "@prisma/client/runtime/binary"
+import { type Prisma, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
 export const createAITriggerAction = chatbotActionClient
@@ -44,7 +43,7 @@ export const createAITriggerAction = chatbotActionClient
       await prisma.aITrigger.create({
         data: {
           ...parsedInput,
-          questions: parsedInput.questions as JsonObject[],
+          questions: parsedInput.questions as Prisma.InputJsonValue[],
           chatbotId,
         },
       })

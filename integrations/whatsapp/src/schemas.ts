@@ -24,6 +24,7 @@ export type WhatsappConfig = BaseConfig & {
 export type WhatsappAuthValue = Oauth2AuthValue & {
   metadata: {
     wabaId: string
+    businessId?: string
     phoneNumber?: WhatsappPhoneNumber
   }
 }

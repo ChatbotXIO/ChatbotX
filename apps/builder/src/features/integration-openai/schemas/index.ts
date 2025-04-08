@@ -1,4 +1,4 @@
-import type { IntegrationOpenAI } from "@prisma/client"
+import type { IntegrationOpenAI } from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
 export type IntegrationOpenAIResource = IntegrationOpenAI

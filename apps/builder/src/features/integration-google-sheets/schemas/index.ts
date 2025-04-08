@@ -1,4 +1,4 @@
-import type { IntegrationGoogleSheets } from "@prisma/client"
+import type { IntegrationGoogleSheets } from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
 export type IntegrationGoogleSheetsResource = IntegrationGoogleSheets

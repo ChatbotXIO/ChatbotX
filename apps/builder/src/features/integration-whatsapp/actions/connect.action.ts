@@ -8,10 +8,9 @@ import { integrations } from "@/integration"
 import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
-import { IntegrationType, prisma } from "@ahachat.ai/database"
+import { IntegrationType, type Prisma, prisma } from "@ahachat.ai/database"
 import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
 import { AuthType, IntegrationException } from "@ahachat.ai/sdk"
-import type { InputJsonValue } from "@prisma/client/runtime/library"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
 export const connectWhatsappAction = authActionClient
@@ -37,7 +36,7 @@ export const connectWhatsappAction = authActionClient
       }
 
       // Validate wabaId
-      const auth = {
+      const auth: WhatsappAuthValue = {
         clientId: process.env.INTEGRATION_WHATSAPP_ID ?? "",
         clientSecret: process.env.INTEGRATION_WHATSAPP_SECRET ?? "",
         redirectUri: "",
@@ -61,8 +60,11 @@ export const connectWhatsappAction = authActionClient
             },
           })
         if (whatsappPhoneNumber) {
-          ;(auth as WhatsappAuthValue).metadata.phoneNumber =
-            whatsappPhoneNumber
+          auth.metadata = {
+            ...auth.metadata,
+            businessId: "627055339164151",
+            phoneNumber: whatsappPhoneNumber,
+          }
         }
 
         await prisma.$transaction(async (tx) => {
@@ -73,7 +75,7 @@ export const connectWhatsappAction = authActionClient
               integrationWhatsapp: {
                 create: {
                   chatbotId,
-                  auth: auth as InputJsonValue,
+                  auth: auth as Prisma.InputJsonValue,
                 },
               },
             },

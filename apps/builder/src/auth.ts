@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@ahachat.ai/database"
 import NextAuth, { type DefaultSession } from "next-auth"
 import Nodemailer from "next-auth/providers/nodemailer"
 import { providers } from "./auth.config"
