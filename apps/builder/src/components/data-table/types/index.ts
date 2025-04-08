@@ -1,9 +1,8 @@
 import type { ColumnSort, Row } from "@tanstack/react-table"
-// import { type SQL } from "drizzle-orm"
-import { type z } from "zod"
+import type { z } from "zod"
 
-import { type DataTableConfig } from "@/config/data-table"
-import { type filterSchema } from "@/components/data-table/parsers"
+import type { filterSchema } from "@/components/data-table/parsers"
+import type { DataTableConfig } from "@/config/data-table"
 
 export type Prettify<T> = {
   [K in keyof T]: T[K]
@@ -54,7 +53,7 @@ export type Filter<TData> = Prettify<
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  type: "update" | "delete"
+  type: "update" | "delete" | "duplicate"
 }
 
 export interface QueryBuilderOpts {

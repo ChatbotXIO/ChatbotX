@@ -1,7 +1,5 @@
-"use client";
-
-import * as React from 'react';
-import { Button } from "@/components/ui/button";
+"use client"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -10,63 +8,82 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useState } from "react";
+import { useState } from "react"
 import { Switch } from "@/components/ui/switch"
-import { SketchPicker } from 'react-color'
-import { ArrowDown } from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { SketchPicker } from "react-color"
+import { ArrowDown } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslate } from "@tolgee/react";
-import { updateChatbotAction } from "./update-chatbox-action";
-import { updateChatbotSchema } from "./update-chatbot-schema";
+import { useTranslate } from "@tolgee/react"
+import { updateChatbotAction } from "./update-chatbox-action"
+import { updateChatbotSchema } from "./update-chatbot-schema"
 import { toast } from "sonner"
-import { getAllCountries } from "countries-and-timezones";
-import { ComboboxComponent } from '../components/ComboboxComponent';
-
+import { getAllCountries } from "countries-and-timezones"
+import { ComboboxComponent } from "../components/ComboboxComponent"
 
 type Country = {
-  id: string;
-  name: string;
-  timezones: string[];
-};
+  id: string
+  name: string
+  timezones: string[]
+}
 
 type ChatbotData = {
-  defaultReply: string | null | undefined;
-  targetCountry: string | null | undefined;
-  defaultLanguage: string;
-  accountTimezone: string;
-  brandColor: string;
-  developmentMode: boolean;
+  defaultReply: string | null | undefined
+  targetCountry: string | null | undefined
+  defaultLanguage: string
+  accountTimezone: string
+  brandColor: string
+  developmentMode: boolean
 }
 
 const viewListLanguages = [
   { name: "English", code: "en" },
-  { name: 'Vietnamese', code: 'vi' },
+  { name: "Vietnamese", code: "vi" },
 ]
 
-export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: ChatbotData }) {
+export function UpdateChatbotForm({
+  id,
+  chatbot,
+}: { id: string; chatbot: ChatbotData }) {
   const { t } = useTranslate()
 
-  const countries: { [key: string]: Country } = getAllCountries();
-  const viewListCountries = Object.values(countries);
-  const viewListTimeZones = Intl.supportedValuesOf('timeZone');
+  const countries: { [key: string]: Country } = getAllCountries()
+  const viewListCountries = Object.values(countries)
+  const viewListTimeZones = Intl.supportedValuesOf("timeZone")
 
   const [openLanguages, setOpenLanguages] = useState(false)
   const [openCountry, setOpenCountry] = useState(false)
   const [openTimeZone, setOpenTimeZone] = useState(false)
 
-  const [showPicker, setShowPicker] = useState(false);
-  const [currentColor, setCurrentColor] = useState(chatbot.brandColor || "#000000")
+  const [showPicker, setShowPicker] = useState(false)
+  const [currentColor, setCurrentColor] = useState(
+    chatbot.brandColor || "#000000",
+  )
 
   const togglePicker = () => {
-    setShowPicker(!showPicker);
-  };
+    setShowPicker(!showPicker)
+  }
 
-  const handleOnChangeColor = (color: any) => {
-    setCurrentColor(color.hex);
-    setValue('brandColor', color.hex);
+  const handleOnChangeColor = (color: { hex: string }) => {
+    setCurrentColor(color.hex)
+    setValue("brandColor", color.hex)
   }
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -81,7 +98,7 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
           if (error.serverError) {
             toast.error(error.serverError.message ?? error.serverError)
           }
-        }
+        },
       },
       formProps: {
         mode: "onChange",
@@ -92,55 +109,67 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
           accountTimezone: chatbot.accountTimezone,
           brandColor: chatbot.brandColor,
           developmentMode: chatbot.developmentMode,
-        }
+        },
       },
-      errorMapProps: {}
-    });
+      errorMapProps: {},
+    },
+  )
 
-  const { setValue } = form;
+  const { setValue } = form
 
   return (
     <div className="">
       <Form {...form}>
-        <form onSubmit={handleSubmitWithAction} className="flex flex-col gap-y-4 pt-4">
-          <FormField control={form.control} name="defaultReply" render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('chatbot.default-reply')}</FormLabel>
-              <FormDescription>{t('chatbot.default-reply-description')}</FormDescription>
-              <FormControl>
-                <Select
-                  value={field.value || "null"}
-                  onValueChange={(value) => {
-                    field.onChange(value === "null" ? null : value);
-                  }}
-                  name={field.name}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Generic Default Reply" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="null">None</SelectItem>
-                      <SelectItem value="default">Generic Default Reply</SelectItem>
-                      {/* <SelectItem value="list">
+        <form
+          onSubmit={handleSubmitWithAction}
+          className="flex flex-col gap-y-4 pt-4"
+        >
+          <FormField
+            control={form.control}
+            name="defaultReply"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("chatbot.default-reply")}</FormLabel>
+                <FormDescription>
+                  {t("chatbot.default-reply-description")}
+                </FormDescription>
+                <FormControl>
+                  <Select
+                    value={field.value || "null"}
+                    onValueChange={(value) => {
+                      field.onChange(value === "null" ? null : value)
+                    }}
+                    name={field.name}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Generic Default Reply" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="null">None</SelectItem>
+                        <SelectItem value="default">
+                          Generic Default Reply
+                        </SelectItem>
+                        {/* <SelectItem value="list">
                         SYSTEM - List of frequently asked questions
                       </SelectItem> */}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
             name="targetCountry"
             render={({ field }) => (
               <ComboboxComponent
-                label={t('chatbot.target-country')}
-                description={t('chatbot.target-country-description')}
-                placeholder={t('chatbot.target-country-placeholder')}
+                label={t("chatbot.target-country")}
+                description={t("chatbot.target-country-description")}
+                placeholder={t("chatbot.target-country-placeholder")}
                 options={viewListCountries}
                 value={field.value}
                 onChange={(value) => field.onChange(value)}
@@ -157,9 +186,9 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
             name="defaultLanguage"
             render={({ field }) => (
               <ComboboxComponent
-                label={t('chatbot.default-language')}
-                description={t('chatbot.default-language-description')}
-                placeholder={t('chatbot.default-language-placeholder')}
+                label={t("chatbot.default-language")}
+                description={t("chatbot.default-language-description")}
+                placeholder={t("chatbot.default-language-placeholder")}
                 options={viewListLanguages}
                 value={field.value}
                 onChange={(value) => field.onChange(value)}
@@ -176,9 +205,9 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
             name="accountTimezone"
             render={({ field }) => (
               <ComboboxComponent
-                label={t('chatbot.timezone')}
-                description={t('chatbot.timezone-description')}
-                placeholder={t('chatbot.timezone-placeholder')}
+                label={t("chatbot.timezone")}
+                description={t("chatbot.timezone-description")}
+                placeholder={t("chatbot.timezone-placeholder")}
                 options={viewListTimeZones}
                 value={field.value}
                 onChange={(value) => field.onChange(value)}
@@ -190,11 +219,15 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
             )}
           />
 
-          <FormField control={form.control}
-            name="brandColor" render={() => (
+          <FormField
+            control={form.control}
+            name="brandColor"
+            render={() => (
               <FormItem>
-                <FormLabel>{t('chatbot.brand-color')}</FormLabel>
-                <FormDescription>{t('chatbot.brand-color-description')}</FormDescription>
+                <FormLabel>{t("chatbot.brand-color")}</FormLabel>
+                <FormDescription>
+                  {t("chatbot.brand-color-description")}
+                </FormDescription>
                 <FormControl>
                   <Dialog open={showPicker} onOpenChange={togglePicker}>
                     <DialogTrigger asChild>
@@ -210,7 +243,10 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
                       <DialogHeader>
                         <DialogTitle>Brand Color</DialogTitle>
                       </DialogHeader>
-                      <SketchPicker color={currentColor} onChangeComplete={handleOnChangeColor} />
+                      <SketchPicker
+                        color={currentColor}
+                        onChangeComplete={handleOnChangeColor}
+                      />
                       <DialogFooter>
                         <Button variant="destructive" onClick={togglePicker}>
                           Close
@@ -221,13 +257,18 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
                 </FormControl>
                 <FormMessage />
               </FormItem>
-            )} />
+            )}
+          />
 
-          <FormField control={form.control}
-            name="developmentMode" render={({ field }) => (
+          <FormField
+            control={form.control}
+            name="developmentMode"
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('chatbot.development-mode')}</FormLabel>
-                <FormDescription>{t('chatbot.development-mode-description')}</FormDescription>
+                <FormLabel>{t("chatbot.development-mode")}</FormLabel>
+                <FormDescription>
+                  {t("chatbot.development-mode-description")}
+                </FormDescription>
                 <FormControl>
                   <Switch
                     checked={field.value}
@@ -236,33 +277,45 @@ export function UpdateChatbotForm({ id, chatbot }: { id: string, chatbot: Chatbo
                 </FormControl>
                 <FormMessage />
               </FormItem>
-            )} />
+            )}
+          />
 
-          <FormField control={form.control}
-            name="developmentMode" render={({ field }) => (
+          <FormField
+            control={form.control}
+            name="developmentMode"
+            render={() => (
               <FormItem>
-                <FormLabel>{t('chatbot.delete-account')}</FormLabel>
-                <FormDescription>{t('chatbot.delete-account-description')}</FormDescription>
+                <FormLabel>{t("chatbot.delete-account")}</FormLabel>
+                <FormDescription>
+                  {t("chatbot.delete-account-description")}
+                </FormDescription>
                 <FormControl>
-                  <Button variant="destructive">{t('chatbot.button-delete')}</Button>
+                  <Button variant="destructive">
+                    {t("chatbot.button-delete")}
+                  </Button>
                 </FormControl>
                 <FormMessage />
               </FormItem>
-            )} />
+            )}
+          />
 
           <div className="mt-4 text-center">
-            <Button type="submit">{t('chatbot.button-submit')}</Button>
+            <Button type="submit">{t("chatbot.button-submit")}</Button>
           </div>
         </form>
       </Form>
 
       <div className="flex content-center justify-center py-4 gap-x-10">
-        <Button type="button"><u>Rename Account</u></Button>
-        <Button type="button"><u>Change Account Logo</u></Button>
+        <Button type="button">
+          <u>Rename Account</u>
+        </Button>
+        <Button type="button">
+          <u>Change Account Logo</u>
+        </Button>
       </div>
 
       <div className="mt-4 text-center">
-        <p className="text-gray-500">User  ID: 1001966523</p>
+        <p className="text-gray-500">User ID: 1001966523</p>
         <p className="text-gray-500">Account ID: 1712583</p>
         <p className="text-gray-500">Key: n8S4ll3s8ocJ0ykHN77L</p>
       </div>

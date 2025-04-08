@@ -1,9 +1,8 @@
-import NextAuth, { DefaultSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import authConfig from "./auth.config"
-
-const prisma = new PrismaClient()
+import { PrismaClient } from "@ahachat.ai/database"
+import NextAuth, { type DefaultSession } from "next-auth"
+import Nodemailer from "next-auth/providers/nodemailer"
+import { providers } from "./auth.config"
 
 declare module "next-auth" {
   /**
@@ -26,31 +25,35 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: true,
-  // session: {
-  //   strategy: 'database',
-  // },
   pages: {
-    signIn: '/login'
+    signIn: "/signin",
   },
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(new PrismaClient()),
   session: { strategy: "jwt" },
-  ...authConfig,
+  providers: [
+    ...providers,
+    Nodemailer({
+      server: process.env.EMAIL_SERVER,
+      from: process.env.EMAIL_FROM,
+    }),
+  ],
   callbacks: {
     jwt({ token, user }) {
-      if (user) { // User is available during sign-in
+      if (user) {
+        // User is available during sign-in
         token.id = user.id
       }
       return token
     },
     session({ session, token }) {
-      session.user.id = token.sub ?? ''
+      session.user.id = token.sub ?? ""
       return session
     },
-  }
+  },
 })
 
 export const getCurrentUserId = async (): Promise<string> => {
   const session = await auth()
 
-  return session?.user.id || 'unknown'
+  return session?.user.id || "unknown"
 }

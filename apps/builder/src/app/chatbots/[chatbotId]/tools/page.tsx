@@ -1,5 +1,3 @@
-export default function ToolsPage({ children }: { children: React.ReactNode }) {
-  return (
-    'tools page'
-  )
+export default function ToolsPage() {
+  return "tools page"
 }

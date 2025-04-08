@@ -1,0 +1,42 @@
+"use server"
+
+import {
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
+import {
+  type UpdateFlowSchema,
+  updateFlowSchema,
+} from "../schemas/update-flow-schema"
+
+export const updateFlowAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .schema(updateFlowSchema)
+  .action(
+    async ({
+      bindArgsParsedInputs: [chatbotId, id],
+      parsedInput,
+    }: {
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      parsedInput: UpdateFlowSchema
+    }) => {
+      const flow = await prisma.flow.findFirstOrThrow({
+        where: {
+          id,
+          chatbotId,
+        },
+      })
+
+      await prisma.flow.update({
+        where: {
+          id: flow.id,
+        },
+        data: parsedInput,
+      })
+
+      revalidateTag(`chatbots:${flow.chatbotId}#flows`)
+    },
+  )

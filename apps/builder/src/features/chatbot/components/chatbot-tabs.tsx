@@ -1,19 +1,20 @@
-"use client";
+"use client"
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 type Tab = {
-  value: string;
-  label: string;
-  path: string;
-};
+  value: string
+  label: string
+  path: string
+}
 
 export default function ChatbotTabs({ tabs }: { tabs: Tab[] }) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
-  const activeTab = tabs.find((tab) => pathname.startsWith(tab.path))?.value || tabs[0]?.value;
+  const activeTab =
+    tabs.find((tab) => pathname.startsWith(tab.path))?.value || tabs[0]?.value
 
   return (
     <Tabs value={activeTab} className="w-full">
@@ -25,5 +26,5 @@ export default function ChatbotTabs({ tabs }: { tabs: Tab[] }) {
         ))}
       </TabsList>
     </Tabs>
-  );
+  )
 }

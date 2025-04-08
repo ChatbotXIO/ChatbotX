@@ -1,0 +1,21 @@
+{
+  "name": "@ahachat.ai/integration-whatsapp",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@ahachat.ai/sdk": "workspace:*",
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "cross-fetch": "^4.1.0",
+    "image-size": "^2.0.2",
+    "tslog": "^4.9.3",
+    "typescript": "5.8.3",
+    "whatsapp-api-js": "^5.2.0",
+    "zod": "^3.24.2"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

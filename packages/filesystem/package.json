@@ -1,0 +1,21 @@
+{
+  "name": "@ahachat.ai/filesystem",
+  "version": "0.1.0",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "type": "module",
+  "devDependencies": {
+    "typescript": "5.8.3"
+  },
+  "dependencies": {
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "@aws-sdk/client-s3": "^3.782.0",
+    "@aws-sdk/s3-presigned-post": "^3.782.0",
+    "ky": "^1.8.0",
+    "minio": "^8.0.5",
+    "tslog": "^4.9.3",
+    "zod": "^3.24.2"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

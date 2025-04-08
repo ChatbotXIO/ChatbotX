@@ -1,0 +1,26 @@
+import { JOB_NAMES } from "@/scheduler/types"
+import { flowQueue } from "@/workers/flow.worker"
+import { BroadcastStatus, prisma } from "@ahachat.ai/database"
+
+export default async (datetime: Date = new Date()) => {
+  const broadcasts = await prisma.broadcast.findMany({
+    where: {
+      status: BroadcastStatus.SCHEDULED,
+      schedulesAt: {
+        lte: datetime,
+      },
+    },
+    include: {
+      contacts: true,
+    },
+  })
+
+  for (const broadcast of broadcasts) {
+    for (const contact of broadcast.contacts) {
+      flowQueue.add(JOB_NAMES.StartFlow, {
+        flowId: broadcast.flowId,
+        contactId: contact.contactId,
+      })
+    }
+  }
+}

@@ -1,25 +1,33 @@
-import React from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormDescription, FormItem, FormLabel } from "@/components/ui/form";
+} from "@/components/ui/command"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  FormControl,
+  FormDescription,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form"
 
 interface CustomComboboxProps<T> {
-  label: string;
-  description: string;
-  placeholder: string;
-  options: T[];
-  value: string | null;
-  onChange: (value: string | null) => void;
-  getOptionLabel: (option: T) => string;
-  getOptionValue: (option: T) => string | number;
+  label: string
+  description: string
+  placeholder: string
+  options: T[]
+  value: string | null
+  onChange: (value: string | null) => void
+  getOptionLabel: (option: T) => string
+  getOptionValue: (option: T) => string | number
   openPopover: boolean
   setoOpenPopover: (openPopover: boolean) => void
 }
@@ -34,10 +42,9 @@ export function ComboboxComponent<T>({
   getOptionLabel,
   getOptionValue,
   openPopover,
-  setoOpenPopover
+  setoOpenPopover,
 }: CustomComboboxProps<T>) {
-
-  const selectedOption = options.find((opt) => getOptionValue(opt) === value);
+  const selectedOption = options.find((opt) => getOptionValue(opt) === value)
 
   return (
     <FormItem>
@@ -46,7 +53,7 @@ export function ComboboxComponent<T>({
       <FormControl>
         <Popover open={openPopover} onOpenChange={setoOpenPopover}>
           <PopoverTrigger asChild>
-            <Button variant="outline" role="combobox">
+            <Button variant="outline">
               {selectedOption ? getOptionLabel(selectedOption) : placeholder}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -61,7 +68,8 @@ export function ComboboxComponent<T>({
                 <CommandItem
                   value="none"
                   onSelect={() => {
-                    { onChange(null); setoOpenPopover(false) }
+                    onChange(null)
+                    setoOpenPopover(false)
                   }}
                 >
                   <Check
@@ -71,13 +79,20 @@ export function ComboboxComponent<T>({
                 </CommandItem>
                 {options.map((option, index) => (
                   <CommandItem
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={index}
                     value={getOptionValue(option).toString()}
-                    onSelect={() => { onChange(getOptionValue(option).toString()); setoOpenPopover(false) }}
+                    onSelect={() => {
+                      onChange(getOptionValue(option).toString())
+                      setoOpenPopover(false)
+                    }}
                   >
                     <Check
-                      className={`mr-2 h-4 w-4 ${value === getOptionValue(option) ? "opacity-100" : "opacity-0"
-                        }`}
+                      className={`mr-2 h-4 w-4 ${
+                        value === getOptionValue(option)
+                          ? "opacity-100"
+                          : "opacity-0"
+                      }`}
                     />
                     {getOptionLabel(option)}
                   </CommandItem>
@@ -88,5 +103,5 @@ export function ComboboxComponent<T>({
         </Popover>
       </FormControl>
     </FormItem>
-  );
+  )
 }

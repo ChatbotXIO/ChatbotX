@@ -1,0 +1,57 @@
+"use client"
+
+import { DataTable } from "@/components/data-table/data-table"
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import type { DataTableFilterField } from "@/components/data-table/types"
+import type { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
+import { useDataTable } from "@/hooks/use-data-table"
+import type { WhatsappMessageTemplate } from "@ahachat.ai/database"
+import React, { useMemo, useState } from "react"
+import {
+  type DataTableRowAction,
+  getColumns,
+} from "./message-templates-table-columns"
+import { MessageTemplatesTableToolbarActions } from "./message-templates-table-toolbar-actions"
+
+interface MessageTemplatesTableProps {
+  promises: Promise<[Awaited<ReturnType<typeof getMessageTemplates>>]>
+  chatbotId: string
+}
+
+export function MessageTemplatesTable({
+  promises,
+  chatbotId,
+}: MessageTemplatesTableProps) {
+  const [{ data, pageCount }] = React.use(promises)
+  const [_rowAction, setRowAction] =
+    useState<DataTableRowAction<WhatsappMessageTemplate> | null>(null)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const columns = useMemo(() => getColumns({ setRowAction }), [setRowAction])
+
+  const filterFields: DataTableFilterField<WhatsappMessageTemplate>[] = []
+
+  const { table } = useDataTable({
+    data,
+    columns,
+    pageCount,
+    filterFields,
+    initialState: {
+      sorting: [{ id: "createdAt", desc: true }],
+      columnPinning: { right: ["actions"] },
+    },
+    getRowId: (originalRow) => originalRow.id,
+    shallow: false,
+    clearOnDefault: true,
+  })
+
+  return (
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table} filterFields={filterFields}>
+          <MessageTemplatesTableToolbarActions chatbotId={chatbotId} />
+        </DataTableToolbar>
+      </DataTable>
+    </>
+  )
+}

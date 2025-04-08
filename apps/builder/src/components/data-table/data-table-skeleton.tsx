@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/components/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -90,14 +90,19 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
       <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
         <div className="flex flex-1 items-center space-x-2">
           {searchableColumnCount > 0
-            ? Array.from({ length: searchableColumnCount }).map((_, i) => (
-              <Skeleton key={i} className="h-7 w-40 lg:w-60" />
-            ))
+            ? Array.from({ length: searchableColumnCount }).map((_row, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                <Skeleton key={`row-${i}`} className="h-7 w-40 lg:w-60" />
+              ))
             : null}
           {filterableColumnCount > 0
-            ? Array.from({ length: filterableColumnCount }).map((_, i) => (
-              <Skeleton key={i} className="h-7 w-[4.5rem] border-dashed" />
-            ))
+            ? Array.from({ length: filterableColumnCount }).map((_row, i) => (
+                <Skeleton
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  key={`row-${i}`}
+                  className="h-7 w-[4.5rem] border-dashed"
+                />
+              ))
             : null}
         </div>
         {showViewOptions ? (
@@ -107,11 +112,13 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {Array.from({ length: 1 }).map((_, i) => (
-              <TableRow key={i} className="hover:bg-transparent">
-                {Array.from({ length: columnCount }).map((_, j) => (
+            {Array.from({ length: 1 }).map((_row, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              <TableRow key={`row-${i}`} className="hover:bg-transparent">
+                {Array.from({ length: columnCount }).map((_rowj, j) => (
                   <TableHead
-                    key={j}
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={`rowj-${j}`}
                     style={{
                       width: cellWidths[j],
                       minWidth: shrinkZero ? cellWidths[j] : "auto",
@@ -124,11 +131,13 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {Array.from({ length: rowCount }).map((_, i) => (
-              <TableRow key={i} className="hover:bg-transparent">
-                {Array.from({ length: columnCount }).map((_, j) => (
+            {Array.from({ length: rowCount }).map((_row, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              <TableRow key={`row-${i}`} className="hover:bg-transparent">
+                {Array.from({ length: columnCount }).map((_rowj, j) => (
                   <TableCell
-                    key={j}
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={`rowj-${j}`}
                     style={{
                       width: cellWidths[j],
                       minWidth: shrinkZero ? cellWidths[j] : "auto",
