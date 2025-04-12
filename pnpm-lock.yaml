@@ -44,6 +44,9 @@ importers:
       '@ahachat.ai/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
+      '@ahachat.ai/party-config':
+        specifier: workspace:*
+        version: link:../../packages/party-config
       '@ahachat.ai/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
@@ -354,6 +357,9 @@ importers:
       '@ahachat.ai/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
+      '@ahachat.ai/party-config':
+        specifier: workspace:*
+        version: link:../../packages/party-config
       '@ahachat.ai/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
@@ -400,6 +406,9 @@ importers:
       '@ahachat.ai/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
+      '@ahachat.ai/party-config':
+        specifier: workspace:*
+        version: link:../../packages/party-config
       '@ahachat.ai/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
@@ -552,6 +561,16 @@ importers:
       zod:
         specifier: ^3.24.2
         version: 3.24.2
+    devDependencies:
+      typescript:
+        specifier: 5.8.3
+        version: 5.8.3
+
+  packages/party-config:
+    dependencies:
+      '@ahachat.ai/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
     devDependencies:
       typescript:
         specifier: 5.8.3

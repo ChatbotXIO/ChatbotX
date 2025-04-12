@@ -26,6 +26,8 @@ import type { AttachmentResource } from "@/features/attachments/schemas/get-atta
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
 import { logger } from "@/lib/log"
+import { PartySocketEvent } from "@ahachat.ai/party-config"
+import ky from "ky"
 
 export const createMessageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
@@ -124,6 +126,18 @@ export const createMessageAction = chatbotActionClient
         conversation,
         message: { ...message, clientId: parsedInput.clientId },
       })
+      await ky.post(
+        `${process.env.PARTYSOCKET_URL}/parties/chatbots/${message.chatbotId}`,
+        {
+          headers: {
+            "X-API-KEY": process.env.PARTYSOCKET_API_KEY,
+          },
+          json: {
+            event: PartySocketEvent.CREATE_MESSAGE,
+            data: message,
+          },
+        },
+      )
 
       revalidateTag(`chatbots:${chatbotId}:conversations`)
     },

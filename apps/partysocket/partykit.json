@@ -4,6 +4,7 @@
   "main": "src/server.ts",
   "compatibilityDate": "2025-01-03",
   "parties": {
-    "users": "src/parties/users.ts"
+    "users": "src/parties/users.ts",
+    "chatbots": "src/parties/chatbots.ts"
   }
 }

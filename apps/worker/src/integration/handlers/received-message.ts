@@ -21,6 +21,7 @@ import type {
 import { getLogger } from "../../lib/log"
 import { uploader } from "@ahachat.ai/filesystem"
 import ky from "ky"
+import { PartySocketEvent } from "@ahachat.ai/party-config"
 
 interface RunActionResult {
   message: MessageEntity
@@ -142,13 +143,14 @@ export const receiveMessage = async ({
     // emit new message to socket
     try {
       await ky.post(
-        `${process.env.PARTYSOCKET_URL}/parties/conversations/${newConversation.id}`,
+        `${process.env.PARTYSOCKET_URL}/parties/chatbots/${newConversation.chatbotId}`,
         {
           headers: {
             "X-API-KEY": process.env.PARTYSOCKET_API_KEY,
           },
           json: {
-            message: newMessage,
+            event: PartySocketEvent.CREATE_MESSAGE,
+            data: newMessage,
           },
         },
       )

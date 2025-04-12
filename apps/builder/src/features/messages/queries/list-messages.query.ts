@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Message, type Prisma, prisma } from "@ahachat.ai/database"
 import type {
+  FindMessageSchema,
   MessageCollection,
   MessageResource,
 } from "../schemas/list-messages.schema"
@@ -65,4 +66,20 @@ export const listMessages = async (
   //     tags: [`u${userId}#c${input.chatbotId}#conversations`],
   //   },
   // )()
+}
+
+export const findMessage = async (
+  input: FindMessageSchema,
+): Promise<MessageResource> => {
+  const userId = await getCurrentUserId()
+  await findChatbotOrFail(userId, input.chatbotId)
+
+  const message = await prisma.message.findFirstOrThrow({
+    include: {
+      attachments: true,
+    },
+    where: input,
+  })
+
+  return message as MessageResource
 }

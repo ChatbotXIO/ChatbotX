@@ -12,6 +12,7 @@
     "@ahachat.ai/database": "workspace:*",
     "@ahachat.ai/filesystem": "workspace:*",
     "@ahachat.ai/integration-whatsapp": "workspace:*",
+    "@ahachat.ai/party-config": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
     "@ahachat.ai/worker-config": "workspace:*",

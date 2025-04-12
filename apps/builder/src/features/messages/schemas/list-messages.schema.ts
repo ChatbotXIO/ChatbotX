@@ -12,6 +12,11 @@ export const listMessagesRequest = z.object({
 })
 export type ListMessagesRequest = z.infer<typeof listMessagesRequest>
 
+export type FindMessageSchema = {
+  id: string
+  chatbotId: string
+}
+
 export type MessageResource = Message & {
   user?: User
   contact?: ContactResource

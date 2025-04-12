@@ -34,6 +34,8 @@ export type ChatActions = {
   setActiveConversationId: (activeConversationId: string | null) => void
   appendMessage: (message: MessageResource) => void
   loadMoreMessages: (chatbotId: string, perPage: number) => Promise<void>
+  updateConversationViaMessage: (message: MessageResource) => void
+  handleNewMessage: (message: MessageResource) => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -135,6 +137,82 @@ export const createChatStore = () => {
         nextCursorMessage: nextCursor,
         isLoadMoreMessage: false,
       })
+    },
+
+    updateConversationViaMessage: async (message: MessageResource) => {
+      const { conversations, activeConversationId, prependConversation } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === message.conversationId,
+      )
+
+      if (conversationIndex > -1) {
+        // Update existing conversation
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+
+        // Update the latest message
+        conversation.messages = [message]
+        conversation.lastActivityAt = new Date()
+        conversation.agentLastSeenAt = new Date()
+
+        // Handle unread count
+        if (conversation.id !== activeConversationId) {
+          if (!conversation._count) {
+            conversation._count = { messages: 1 }
+          }
+          conversation._count.messages = (conversation._count.messages || 0) + 1
+        }
+
+        // Remove conversation from current position
+        updatedConversations.splice(conversationIndex, 1)
+
+        // Add to the beginning of the list
+        set({ conversations: [conversation, ...updatedConversations] })
+      } else {
+        // New conversation, we'll need basic details
+        const newConversation = await ky
+          .get<{ data: ConversationResource }>(
+            `/api/chatbots/${message.chatbotId}/conversations/${message.conversationId}`,
+          )
+          .json()
+        newConversation.data.messages = [message]
+        prependConversation({ ...newConversation.data, isActive: true })
+      }
+    },
+
+    handleNewMessage: async (message: MessageResource) => {
+      const {
+        messages,
+        activeConversationId,
+        appendMessage,
+        updateConversationViaMessage,
+      } = get()
+
+      // Update the conversation list
+      updateConversationViaMessage(message)
+
+      // Add to messages list if this is the active conversation
+      if (message.conversationId !== activeConversationId) {
+        return
+      }
+      const messageIndex = messages.findIndex(
+        (m) => m.clientId === message.clientId,
+      )
+      if (messageIndex > -1) {
+        const newMessages = [...messages]
+        newMessages[messageIndex] = { ...newMessages[messageIndex], ...message }
+        set({
+          messages: newMessages,
+        })
+      } else {
+        // New conversation, we'll need basic details
+        const newMessage = await ky
+          .get<MessageResource>(
+            `/api/chatbots/${message.chatbotId}/messages/${message.id}`,
+          )
+          .json()
+        appendMessage(newMessage)
+      }
     },
   }))
 }

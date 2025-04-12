@@ -9,36 +9,48 @@ import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
 import { MessageInput } from "../messages/message-input"
 import { MessageList } from "../messages/message-list"
-import { ChatStoreProvider } from "./store/chat-store-provider"
+import { useChatStore } from "./store/chat-store-provider"
+import usePartySocket from "partysocket/react"
+import { useParams } from "next/navigation"
+import { PartySocketEvent } from "@ahachat.ai/party-config"
+import type { MessageResource } from "../messages/schemas/list-messages.schema"
 
 export const ChatLayout = ({
   layout = [25, 50, 25],
 }: {
   layout: number[]
 }) => {
-  // const ws = usePartySocket({
-  //   // usePartySocket takes the same arguments as PartySocket.
-  //   host: "project-name.username.partykit.dev", // or localhost:1999 in dev
-  //   room: "my-room",
+  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const { handleNewMessage } = useChatStore((state) => state)
+  const _ws = usePartySocket({
+    host: "localhost:1999", // or localhost:1999 in dev
+    room: chatbotId,
+    party: "chatbots",
 
-  //   // in addition, you can provide socket lifecycle event handlers
-  //   // (equivalent to using ws.addEventListener in an effect hook)
-  //   onOpen() {
-  //     console.log("connected");
-  //   },
-  //   onMessage(e) {
-  //     console.log("message", e.data);
-  //   },
-  //   onClose() {
-  //     console.log("closed");
-  //   },
-  //   onError(e) {
-  //     console.log("error");
-  //   }
-  // });
+    onOpen() {
+      console.log("connected")
+    },
+    onMessage(e) {
+      const { event, data } = JSON.parse(e.data) as {
+        event: PartySocketEvent
+        data: MessageResource
+      }
+      switch (event) {
+        case PartySocketEvent.CREATE_MESSAGE:
+          handleNewMessage(data as MessageResource)
+          break
+      }
+    },
+    onClose() {
+      console.log("closed")
+    },
+    onError() {
+      console.log("error")
+    },
+  })
 
   return (
-    <ChatStoreProvider>
+    <>
       <ResizablePanelGroup
         direction="horizontal"
         className="h-full items-stretch"
@@ -75,6 +87,6 @@ export const ChatLayout = ({
           <ContactInboxPanel />
         </ResizablePanel>
       </ResizablePanelGroup>
-    </ChatStoreProvider>
+    </>
   )
 }

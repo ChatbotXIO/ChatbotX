@@ -134,12 +134,19 @@ export const findConversation = async (
       const conversation = await prisma.conversation.findFirstOrThrow({
         include: {
           contact: true,
-          //   messages: {
-          //     orderBy: {
-          //       createdAt: "desc",
-          //     },
-          //     take: 1,
-          //   },
+          inbox: true,
+          _count: {
+            select: {
+              messages: {
+                where: {
+                  senderType: SenderType.USER,
+                  // createdAt: {
+                  //   gt: prisma.conversation.fields.contactLastSeenAt
+                  // }
+                },
+              },
+            },
+          },
         },
         where: input,
       })

@@ -16,6 +16,7 @@
     "@ahachat.ai/filesystem": "workspace:*",
     "@ahachat.ai/integration-google-sheets": "workspace:*",
     "@ahachat.ai/integration-whatsapp": "workspace:*",
+    "@ahachat.ai/party-config": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/worker-config": "workspace:*",
     "@auth/prisma-adapter": "^2.8.0",
