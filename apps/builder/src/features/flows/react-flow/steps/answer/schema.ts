@@ -17,8 +17,8 @@ export enum AnswerType {
 const answerBaseStepSchema = z.object({
   stepType: z.enum([AnswerType.Number]),
   customFieldId: z.string().cuid2(),
-  validationMessage: z.string().max(255).trim().nullable(),
-  skipButtonLabel: z.string().max(255).trim().nullable(),
+  validationMessage: z.string().trim().max(255).nullable(),
+  skipButtonLabel: z.string().trim().max(255).nullable(),
   autoSkipAfter: z.object({
     period: z.enum(["Second", "Minute", "Hour"]),
     unit: z.number().int().nullable(),

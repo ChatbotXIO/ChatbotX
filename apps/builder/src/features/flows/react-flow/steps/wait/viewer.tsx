@@ -1,10 +1,10 @@
 "use client"
 
-import type { CustomFieldCollection } from "@/features/fields/schemas/get-fields-schema"
 import { callAPI } from "@/lib/swr"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
 import { DelayType, type WaitStepSchema } from "./schema"
+import type { CustomFieldCollection } from "@/features/fields/schemas/types"
 
 export const WaitStepViewer = ({
   data,
@@ -16,11 +16,9 @@ export const WaitStepViewer = ({
   const { t } = useTranslate()
   const params = useParams<{ chatbotId: string }>()
   const url = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
-  const { data: dataCustomFields } = callAPI(url)
+  const { data: dataCustomFields } = callAPI<CustomFieldCollection>(url)
 
-  const customField = (
-    (dataCustomFields as CustomFieldCollection)?.data ?? []
-  ).find(
+  const customField = (dataCustomFields?.data ?? []).find(
     (obj) =>
       data.delayType === DelayType.DatetimeCustomField &&
       obj.id === data.customFieldId,

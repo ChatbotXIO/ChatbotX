@@ -1,6 +1,5 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import { Form, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -18,6 +17,7 @@ import {
   createAutomatedResponseRequest,
   ReplyType,
 } from "./schemas/create-automated-responses-schema"
+import { InputField } from "@/components/form/input-field"
 
 export function CreateAutomatedResponseForm({
   chatbotId,
@@ -135,7 +135,7 @@ export function CreateAutomatedResponseForm({
           <div key={index} className="flex gap-2 w-full">
             <div className="flex-1">
               {reply.type === ReplyType.MESSAGE ? (
-                <FormInput
+                <InputField
                   name={`replies.${index}.message`}
                   label=""
                   placeholder="Type a message"

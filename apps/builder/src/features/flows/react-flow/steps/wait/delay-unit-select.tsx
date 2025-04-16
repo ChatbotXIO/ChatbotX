@@ -1,5 +1,4 @@
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
+import { SelectField } from "@/components/form/select-field"
 import { DelayUnit } from "@/features/flows/react-flow/steps/wait/schema"
 import { useTranslate } from "@tolgee/react"
 
@@ -14,12 +13,6 @@ export const DelayUnitSelect = ({ name }: { name: string }) => {
   ]
 
   return (
-    <FormInput name={name} label="">
-      <SingleSelect
-        name={name}
-        placeholder="Select a unit"
-        options={delayUnits}
-      />
-    </FormInput>
+    <SelectField name={name} placeholder="Select a unit" options={delayUnits} />
   )
 }

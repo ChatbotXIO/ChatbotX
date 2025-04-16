@@ -3,14 +3,13 @@
 import type { Flow } from "@ahachat.ai/database/browser"
 import type { Table } from "@tanstack/react-table"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
-import type { DataTableRowAction } from "./flows-table-columns"
+import type { Dispatch, SetStateAction } from "react"
+import type { DataTableRowAction } from "@/types/data-table"
 
 interface FlowsTableToolbarActionsProps {
   table: Table<Flow>
   chatbotId: string
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<Flow> | null>
-  >
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<Flow> | null>>
 }
 
 export function FlowsTableToolbarActions({

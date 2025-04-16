@@ -10,3 +10,14 @@ export interface WhatsappPhoneNumber {
 export interface WhatsappPhoneNumberResponse {
   data: WhatsappPhoneNumber[]
 }
+
+export interface FlowEntity {
+  id: string
+  name: string
+  status: string
+  category: string[]
+}
+
+export interface ListFlowsResponse {
+  data: FlowEntity[]
+}

@@ -1,4 +1,4 @@
-import { type IntegrationKey, integrations } from "@/integration"
+import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { IntegrationType, prisma } from "@ahachat.ai/database"
 import type { BaseAuthValue, Oauth2AuthValue } from "@ahachat.ai/sdk"
@@ -10,10 +10,7 @@ const stateValidationSchema = z.object({
   referer: z.string().url(),
 })
 
-export const handleCallback = async (
-  integrationName: IntegrationKey,
-  req: Request,
-) => {
+export const handleCallback = async (integrationName: string, req: Request) => {
   if (!(integrationName in integrations)) {
     return notFound()
   }
@@ -27,7 +24,12 @@ export const handleCallback = async (
     return notFound()
   }
 
-  if (!("handleRequest" in integrations[integrationName].integration)) {
+  if (
+    !(
+      "handleRequest" in
+      integrations[integrationName as keyof typeof integrations].integration
+    )
+  ) {
     logger.warn(`${integrationName} is missing handleRequest method`)
     return notFound()
   }

@@ -36,7 +36,7 @@ export function CreateContactDialog({
         {trigger ? (
           trigger
         ) : (
-          <Button variant="outline">{t("contacts.createBtn")}</Button>
+          <Button variant="outline">{t("common.createBtn")}</Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

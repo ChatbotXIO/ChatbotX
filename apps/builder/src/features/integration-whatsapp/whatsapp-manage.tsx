@@ -15,7 +15,7 @@ type WhatsappManageProps = {
 }
 
 export function WhatsappManage({ chatbotId, promises }: WhatsappManageProps) {
-  const [{ data: integrationWhatsapp }] = use(promises)
+  const [integrationWhatsapp] = use(promises)
 
   return (
     <SettingRow

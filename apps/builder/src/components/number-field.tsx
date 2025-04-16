@@ -21,7 +21,7 @@ export const NumberField = ({
   name,
   ...rest
 }: NumberFieldProps & {
-  ref: React.RefObject<HTMLInputElement>
+  ref?: React.RefObject<HTMLInputElement>
 }) => {
   const { control } = useFormContext()
 

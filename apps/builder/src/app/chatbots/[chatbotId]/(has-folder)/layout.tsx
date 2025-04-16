@@ -11,7 +11,7 @@ export default function FolderableLayout({
   return (
     <>
       {folders}
-      <Separator />
+      <Separator className="my-4" />
       {children}
     </>
   )

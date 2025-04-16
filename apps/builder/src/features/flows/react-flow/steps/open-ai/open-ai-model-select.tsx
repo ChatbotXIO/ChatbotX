@@ -1,5 +1,4 @@
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
+import { SelectField } from "@/components/form/select-field"
 import { openAIModelOptions } from "@/features/integration-openai/schemas"
 
 type OpenAIModelProps = {
@@ -8,12 +7,11 @@ type OpenAIModelProps = {
 
 export const OpenAIModel = ({ name }: OpenAIModelProps) => {
   return (
-    <FormInput name={name} label="Model">
-      <SingleSelect
-        name={name}
-        placeholder="Select model Open AI"
-        options={openAIModelOptions}
-      />
-    </FormInput>
+    <SelectField
+      name={name}
+      label="Model"
+      placeholder="Select model Open AI"
+      options={openAIModelOptions}
+    />
   )
 }

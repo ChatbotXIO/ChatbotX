@@ -1,17 +1,14 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, prisma } from "@ahachat.ai/database"
+import { FieldType, type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type {
-  CustomFieldCollection,
-  GetFieldsSchema,
-} from "../schemas/get-fields-schema"
+import type { ListCustomFieldsSearchParams } from "../schemas/get-fields-schema"
+import type { CustomFieldCollection } from "../schemas/types"
 
-export async function listFields(
-  input: GetFieldsSchema,
+export async function listCustomFields(
+  input: ListCustomFieldsSearchParams,
 ): Promise<CustomFieldCollection> {
   const userId = await getCurrentUserId()
-
   await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
@@ -19,7 +16,7 @@ export async function listFields(
       try {
         const where: Prisma.FieldWhereInput = {
           chatbotId: input.chatbotId,
-          fieldType: input.fieldType,
+          fieldType: FieldType.CUSTOM_FIELD,
         }
 
         if (input.folderId !== undefined) {
@@ -64,7 +61,7 @@ export async function listFields(
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#fields#${input.fieldType}`],
+      tags: [`chatbots:${input.chatbotId}#customFields`],
     },
   )()
 }

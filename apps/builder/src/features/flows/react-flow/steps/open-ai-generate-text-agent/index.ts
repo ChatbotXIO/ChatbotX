@@ -9,6 +9,6 @@ import { OpenAIGenerateTextAgentViewer } from "./viewer"
 export const openAIGenerateTextAgentStep: StepDefinition = {
   editor: OpenAIGenerateTextAgentEditor,
   viewer: OpenAIGenerateTextAgentViewer,
-  schema: openAIGenerateTextAgentSchema,
-  defaultValue: openAIGenerateTextAgentDefaultFn,
+  validator: openAIGenerateTextAgentSchema,
+  defaultFn: openAIGenerateTextAgentDefaultFn,
 }

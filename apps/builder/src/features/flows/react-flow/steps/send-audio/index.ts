@@ -6,6 +6,6 @@ import { SendAudioStepViewer } from "./viewer"
 export const sendAudioStep: StepDefinition = {
   editor: SendAudioStepEditor,
   viewer: SendAudioStepViewer,
-  schema: sendAudioStepSchema,
-  defaultValue: sendAudioStepDefaultFn,
+  validator: sendAudioStepSchema,
+  defaultFn: sendAudioStepDefaultFn,
 }

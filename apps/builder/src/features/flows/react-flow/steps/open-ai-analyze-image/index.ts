@@ -6,6 +6,6 @@ import { OpenAIAnalyzeImageViewer } from "./viewer"
 export const openAIAnalyzeImageStep: StepDefinition = {
   editor: OpenAIAnalyzeImageEditor,
   viewer: OpenAIAnalyzeImageViewer,
-  schema: openAIAnalyzeImageSchema,
-  defaultValue: openAIAnalyzeImageDefaultFn,
+  validator: openAIAnalyzeImageSchema,
+  defaultFn: openAIAnalyzeImageDefaultFn,
 }

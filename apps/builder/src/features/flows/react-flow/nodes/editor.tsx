@@ -1,41 +1,42 @@
+import { TriggerFormInitially } from "@/components/form/form-trigger-initially"
+import { InputField } from "@/components/form/input-field"
 import { cn } from "@/components/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Form } from "@/components/ui/form"
-import { Separator } from "@/components/ui/separator"
-import {
-  Sortable,
-  SortableDragHandle,
-  SortableItem,
-} from "@/components/ui/sortable"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { createId } from "@paralleldrive/cuid2"
-import { useReactFlow } from "@xyflow/react"
-import { funnel } from "remeda"
-import { CopyIcon, MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
-import { useEffect } from "react"
-import { useFieldArray, useForm, useWatch } from "react-hook-form"
-import { StepType, disabledCopyActionTypes } from "../steps/step-action"
-import { allSteps, DynamicStepEditor } from "../steps"
-import { ErrorAlert } from "../steps/error-alert"
-import { FormInput } from "@/components/form-input"
-import { allNodesConfig } from "./node-config"
-import type { FlowNode, NodeType } from "../types"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
-import { T } from "@tolgee/react"
-import { TriggerFormInitially } from "@/components/form/form-trigger-initially"
+import { Form } from "@/components/ui/form"
+import { Separator } from "@/components/ui/separator"
+import {
+  Sortable,
+  SortableItem,
+  SortableItemHandle,
+} from "@/components/ui/sortable"
 import { InboxSelect } from "@/features/inboxes/inbox-select"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { createId } from "@paralleldrive/cuid2"
+import { T } from "@tolgee/react"
+import { useReactFlow } from "@xyflow/react"
+import { CopyIcon, MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
+import { useEffect } from "react"
+import { useFieldArray, useForm, useWatch } from "react-hook-form"
+import { funnel } from "remeda"
+import { z } from "zod"
+import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
+import { allSteps, DynamicStepEditor } from "../steps"
+import { ErrorAlert } from "../steps/error-alert"
+import { disabledCopyActionTypes, StepType } from "../steps/step-action"
+import type { FlowNode, NodeType } from "../types"
+import { allNodesConfig } from "./node-config"
 
 export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
   const { updateNodeData } = useReactFlow()
   const nodeConfig = allNodesConfig[activeNode.type as NodeType]
 
-  const form = useForm<typeof nodeConfig.validator>({
-    resolver: zodResolver(nodeConfig.validator),
+  const form = useForm({
+    resolver: zodResolver(nodeConfig ? nodeConfig.validator : z.object({})),
     defaultValues: {
       ...activeNode.data,
     },
@@ -54,7 +55,6 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
     debounceUpdateNodeData.call()
   }, [debounceUpdateNodeData])
 
-  // @ts-ignore
   const { fields, append, move, remove, insert } = useFieldArray({
     control,
     name: "steps",
@@ -101,7 +101,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
   return (
     <Form {...form}>
-      <FormInput name="name" label="Node Name" />
+      <InputField name="name" label="Node Name" />
 
       <Separator />
 
@@ -113,7 +113,9 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
         <Sortable
           value={fields}
           onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
-          overlay={<div className="w-full h-32 rounded-sm bg-primary/10" />}
+          getItemValue={(item) => item.id}
+
+          // overlay={<div className="w-full h-32 rounded-sm bg-primary/10" />}
         >
           <div className="flex w-full flex-col gap-4">
             {fields.map((field, index) => (
@@ -121,20 +123,24 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                 <div
                   className={cn(
                     "flex gap-2 items-center",
-                    field.stepType === StepType.SendCarousel ? "relative" : "",
+                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    (field as any).stepType === StepType.SendCarousel
+                      ? "relative"
+                      : "",
                   )}
                 >
-                  {form.formState.errors.steps?.[index] ? (
+                  {form.formState.errors.steps ? (
                     <ErrorAlert
                       message={
-                        typeof form.formState.errors.steps?.[index]?.message ===
-                        "object"
-                          ? ((
-                              form.formState.errors.steps?.[index]?.message as {
-                                message: string
-                              }
-                            ).message as string)
-                          : ""
+                        JSON.stringify(form.formState.errors)
+                        // typeof form.formState.errors.steps?.[index]?.message ===
+                        //   "object"
+                        //   ? ((
+                        //     form.formState.errors.steps?.[index]?.message as {
+                        //       message: string
+                        //     }
+                        //   ).message as string)
+                        //   : ""
                       }
                     />
                   ) : (
@@ -143,13 +149,15 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                   <div
                     className={cn(
                       "flex-1 break-all",
-                      field.stepType === StepType.SendCarousel
+                      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                      (field as any).stepType === StepType.SendCarousel
                         ? "overflow-hidden"
                         : "",
                     )}
                   >
                     <DynamicStepEditor
-                      type={field.stepType}
+                      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                      type={(field as any).stepType}
                       key={field.id}
                       parentName={`steps.${index}`}
                     />
@@ -164,14 +172,22 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                     >
                       <XIcon className="size-4" aria-hidden="true" />
                     </Button>
-                    <SortableDragHandle
+                    {/* <SortableDragHandle
                       variant="ghost"
                       size="icon"
                       className="size-8 shrink-0"
                     >
                       <MoveVerticalIcon className="size-4" aria-hidden="true" />
-                    </SortableDragHandle>
-                    {!disabledCopyActionTypes.includes(field.stepType) && (
+                    </SortableDragHandle> */}
+                    <SortableItemHandle asChild>
+                      <Button variant="ghost" size="icon" className="size-8">
+                        <MoveVerticalIcon className="h-4 w-4" />
+                      </Button>
+                    </SortableItemHandle>
+                    {!disabledCopyActionTypes.includes(
+                      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                      (field as any).stepType,
+                    ) && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -199,7 +215,10 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="w-full">
-          <RecursiveDropdownMenu data={nodeConfig.menus} onClick={onAddStep} />
+          <RecursiveDropdownMenu
+            data={nodeConfig ? nodeConfig.menus : []}
+            onClick={onAddStep}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
 

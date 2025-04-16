@@ -35,7 +35,7 @@ export function AddNodeButton() {
       <PopoverContent>
         <div className="flex flex-col items-start">
           {Object.values(allNodesConfig).map((item) => {
-            return (
+            return item ? (
               <Button
                 key={item.type}
                 variant="ghost"
@@ -45,7 +45,7 @@ export function AddNodeButton() {
                 <item.icon />
                 <T keyName={item.label} />
               </Button>
-            )
+            ) : null
           })}
         </div>
       </PopoverContent>

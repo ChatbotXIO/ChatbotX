@@ -67,9 +67,9 @@ export function DeleteAIAgentsDialog({
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("aiAgents.delete.dialog_title")}</DialogTitle>
+          <DialogTitle>{t("aiAgents.deleteAction.title")}</DialogTitle>
           <DialogDescription>
-            {t("aiAgents.confirmDeleteDesc")}{" "}
+            {t("aiAgents.deleteAction")}{" "}
             <span className="font-medium">{agents.length}</span>
             {agents.length === 1 ? " agent " : " agents "}
             {t("aiAgents.confirmDeleteDesc")}

@@ -28,7 +28,7 @@ const FacetedFilterTrigger = ({
   children,
   ...props
 }: React.ComponentPropsWithoutRef<typeof PopoverTrigger> & {
-  ref: React.RefObject<React.ComponentRef<typeof PopoverTrigger>>
+  ref?: React.RefObject<React.ComponentRef<typeof PopoverTrigger>>
 }) => (
   <PopoverTrigger ref={ref} className={cn(className)} {...props}>
     {children}
@@ -42,7 +42,7 @@ const FacetedFilterContent = ({
   children,
   ...props
 }: React.ComponentPropsWithoutRef<typeof PopoverContent> & {
-  ref: React.RefObject<React.ComponentRef<typeof PopoverContent>>
+  ref?: React.RefObject<React.ComponentRef<typeof PopoverContent>>
 }) => (
   <PopoverContent
     ref={ref}
@@ -75,7 +75,7 @@ const FacetedFilterItem = ({
   selected,
   ...props
 }: FacetedFilterItemProps & {
-  ref: React.RefObject<React.ComponentRef<typeof CommandItem>>
+  ref?: React.RefObject<React.ComponentRef<typeof CommandItem>>
 }) => {
   return (
     <CommandItem

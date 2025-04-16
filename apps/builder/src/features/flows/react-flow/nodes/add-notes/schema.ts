@@ -6,8 +6,8 @@ import type { NewNodeProps } from "../types"
 export const addNotesNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.AddNotes),
   data: z.object({
-    name: z.string().min(1).max(255).trim(),
-    message: z.string().min(1).max(1000).trim(),
+    name: z.string().trim().min(1).max(255),
+    message: z.string().trim().min(1).max(1000),
   }),
 })
 

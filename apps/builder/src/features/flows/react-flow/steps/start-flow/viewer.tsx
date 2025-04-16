@@ -5,6 +5,7 @@ import type { Flow } from "@ahachat.ai/database/browser"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
 import type { StartFlowStepSchema } from "./schema"
+import type { FlowCollection } from "@/features/flows/schemas/get-flows-schema"
 
 export const StartFlowStepViewer = ({
   data,
@@ -17,7 +18,7 @@ export const StartFlowStepViewer = ({
   const params = useParams<{ chatbotId: string }>()
 
   const url = `/api/chatbots/${params.chatbotId}/flows?perPage=9999`
-  const { data: flowData } = callAPI(url)
+  const { data: flowData } = callAPI<FlowCollection>(url)
   const flow = ((flowData?.data ?? []) as Flow[]).find(
     (obj) => obj.id === data.flowId,
   )

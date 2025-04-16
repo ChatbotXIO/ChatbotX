@@ -1,13 +1,17 @@
 import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
-import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema"
 import { T } from "@/tolgee/server"
 import { type Folder, FolderType } from "@ahachat.ai/database"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
-import type { SearchParams } from "nuqs/server"
+import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+
+const folderSearchParams = {
+  folderId: parseAsString.withDefault(""),
+}
+const loadSearchParams = createLoader(folderSearchParams)
 
 export default async function FoldersDetault(props: {
   params: Promise<{ chatbotId: string }>
@@ -25,6 +29,7 @@ export default async function FoldersDetault(props: {
     case "flows":
       folderType = FolderType.FLOW
       break
+    case "account-fields":
     case "custom-fields":
       folderType = FolderType.CUSTOM_FIELD
       break
@@ -43,7 +48,7 @@ export default async function FoldersDetault(props: {
 
   const params = await props.params
   const searchParams = await props.searchParams
-  const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
+  const { folderId } = await loadSearchParams(searchParams)
 
   const promises = Promise.all([
     folderId
@@ -55,15 +60,15 @@ export default async function FoldersDetault(props: {
     getFolders({
       chatbotId: params.chatbotId,
       folderType: folderType,
-      parentId: folderId,
+      folderId: folderId,
     }),
   ])
 
   return (
     <>
       <div className="flex">
-        <h3 className="font-bold flex-1">
-          <T keyName="folders.header" />
+        <h3 className="font-bold flex-1 text-xl">
+          <T keyName="folders.heading" />
         </h3>
         <CreateFolderDialog
           chatbotId={params.chatbotId}

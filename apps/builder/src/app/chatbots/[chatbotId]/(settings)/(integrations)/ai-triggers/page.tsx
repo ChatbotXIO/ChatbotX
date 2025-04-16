@@ -1,4 +1,3 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { listAITriggers } from "@/features/integrations/ai-triggers/actions/list.action"
 import { CreateAITriggerDialog } from "@/features/integrations/ai-triggers/create"
 import { listAITriggersRequest } from "@/features/integrations/ai-triggers/schemas/get.schema"
@@ -23,17 +22,7 @@ export default async function AITriggersPage(props: {
         <CreateAITriggerDialog chatbotId={params.chatbotId} />
       </div>
 
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={4}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "20rem", "40rem", "12rem"]}
-            shrinkZero
-          />
-        }
-      >
+      <Suspense>
         <AITriggersTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </>

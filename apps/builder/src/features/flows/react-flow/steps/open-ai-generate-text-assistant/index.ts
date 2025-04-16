@@ -9,6 +9,6 @@ import { OpenAIGenerateTextAssistantViewer } from "./viewer"
 export const openAIGenerateTextAssistantStep: StepDefinition = {
   editor: OpenAIGenerateTextAssistantEditor,
   viewer: OpenAIGenerateTextAssistantViewer,
-  schema: openAIGenerateTextAssistantSchema,
-  defaultValue: openAIGenerateTextAssistantDefaultFn,
+  validator: openAIGenerateTextAssistantSchema,
+  defaultFn: openAIGenerateTextAssistantDefaultFn,
 }

@@ -12,8 +12,8 @@ export enum CardLayout {
 export const sendCardStepSchema = z.object({
   id: z.string(),
   stepType: z.enum([StepType.SendCard]),
-  title: z.string().min(1).max(255).trim(),
-  subtitle: z.string().max(255).trim().optional(),
+  title: z.string().trim().min(1).max(255),
+  subtitle: z.string().trim().max(255).optional(),
   cardType: z.nativeEnum(CardLayout),
   image: sendImageStepSchema.optional(),
   buttons: z.array(buttonStepSchema).optional(),

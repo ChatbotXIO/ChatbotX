@@ -1,22 +1,8 @@
-import { FieldType } from "@ahachat.ai/database/browser"
 import { z } from "zod"
 
-const FieldTypeEnum = z.nativeEnum(FieldType)
-
 export const updateCustomFieldSchema = z.object({
-  name: z.string().min(1).max(255).trim(),
+  name: z.string().trim().min(1).max(255),
   description: z.string().optional(),
+  folderId: z.string().cuid2().nullish(),
 })
 export type UpdateCustomFieldSchema = z.infer<typeof updateCustomFieldSchema>
-
-export const updateFieldBindSchema: [
-  chatbotId: z.ZodString,
-  fieldId: z.ZodString,
-  fieldType: typeof FieldTypeEnum,
-] = [z.string().cuid2(), z.string().cuid2(), FieldTypeEnum]
-
-export type UpdateFieldBindSchema = [
-  chatbotId: string,
-  fieldId: string,
-  fieldType: FieldType,
-]

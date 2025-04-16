@@ -22,6 +22,7 @@ export function TagsTableToolbarActions({
             .rows.map((row) => row.original)}
           onSuccess={() => table.toggleAllRowsSelected(false)}
           chatbotId={chatbotId}
+          onOpenChange={() => {}}
         />
       ) : null}
     </div>

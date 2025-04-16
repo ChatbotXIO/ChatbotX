@@ -4,8 +4,10 @@ export enum StepType {
   // Actions = "Actions",
   // Condition = "Condition",
   // SendMail = "SendMail",
-  // SplitTraffic = "SplitTraffic",
-  // Wait = "Wait",
+  SplitTraffic = "SplitTraffic",
+  StartFLow = "StartFlow",
+  StartFlowStep = "StartFlowStep",
+  Wait = "Wait",
   // LandingPage = "LandingPage",
 
   SendText = "SendText",

@@ -33,8 +33,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     ...providers,
     Nodemailer({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
+      server:
+        process.env.EMAIL_SERVER ?? "smtp://username:password@localhost:1025",
+      from: process.env.EMAIL_FROM ?? "",
     }),
   ],
   callbacks: {

@@ -6,6 +6,6 @@ import { WaitStepViewer } from "./viewer"
 export const waitStep: StepDefinition = {
   editor: WaitStepEditor,
   viewer: WaitStepViewer,
-  schema: waitStepSchema,
-  defaultValue: waitStepDefaultFn,
+  validator: waitStepSchema,
+  defaultFn: waitStepDefaultFn,
 }

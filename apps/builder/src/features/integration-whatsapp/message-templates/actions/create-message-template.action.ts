@@ -13,7 +13,10 @@ import {
 } from "../schemas/create-message-templates-schema"
 import { getLogger } from "@/lib/log"
 import { uploader } from "@ahachat.ai/filesystem"
-import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
+import type {
+  CreateMessageTemplateProps,
+  WhatsappAuthValue,
+} from "@ahachat.ai/integration-whatsapp"
 import { integrations } from "@/integration"
 import { parseComponents, slugify } from "./utils"
 
@@ -39,7 +42,7 @@ export const createMessageTemplateAction = chatbotActionClient
         logger: getLogger("whatsapp"),
         uploader,
       }
-      const body = {
+      const body: CreateMessageTemplateProps = {
         name: slugify(parsedInput.name),
         category: parsedInput.category,
         language: parsedInput.language,
@@ -50,11 +53,14 @@ export const createMessageTemplateAction = chatbotActionClient
         ),
       }
 
-      const res =
-        await integrations.WHATSAPP.integration.actions?.createMessageTemplate({
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      const res: any = await integrations.WHATSAPP.integration.runAction(
+        "createMessageTemplate",
+        {
           ctx,
-          body,
-        })
+          data: body,
+        },
+      )
 
       await prisma.whatsappMessageTemplate.create({
         data: {

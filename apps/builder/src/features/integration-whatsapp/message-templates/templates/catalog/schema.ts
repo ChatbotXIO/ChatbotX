@@ -3,6 +3,7 @@ import { ButtonActionType, buttonBlockSchema } from "../button/schema"
 
 export const templateCatalogSchema = z
   .object({
+    showHeader: z.boolean(),
     showFooter: z.boolean(),
     body: z.object({
       text: z.string().min(1).max(1024),
@@ -24,6 +25,7 @@ export const templateCatalogSchema = z
 export type TemplateCatalogSchema = z.infer<typeof templateCatalogSchema>
 
 export const templateCatalogDefaultValue = (): TemplateCatalogSchema => ({
+  showHeader: false,
   showFooter: false,
   body: {
     text: "",

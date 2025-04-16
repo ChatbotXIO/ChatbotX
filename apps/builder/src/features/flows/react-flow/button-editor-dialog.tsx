@@ -1,6 +1,4 @@
 "use client"
-
-import { FormInput } from "@/components/form-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -28,6 +26,7 @@ import {
 } from "./steps/button/schema"
 import { useStepStore } from "./stores/step-store-provider"
 import type { FlowNode } from "./types"
+import { InputField } from "@/components/form/input-field"
 
 function AllButtonOptions({
   onChooseButton,
@@ -174,7 +173,6 @@ export function ButtonEditorDialog() {
   }
 
   const onDelete = () => {
-    // console.log("onDelete")
     // removeOldEdge()
     // const arr = parentName.split(".")
     // const btnIndex = Number.parseInt(arr.pop() as string)
@@ -215,7 +213,7 @@ export function ButtonEditorDialog() {
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form className="flex flex-col gap-3 w-full">
-              <FormInput name="label" label={t("flows.Button.label")} />
+              <InputField name="label" label={t("flows.Button.label")} />
 
               <Label>When This Button is Pressed</Label>
 

@@ -1,22 +1,9 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
+import { SelectField } from "@/components/form/select-field"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form } from "@/components/ui/form"
 import { Gender } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -65,75 +52,57 @@ export function CreateContactForm({
     },
   )
 
-  const genderLabels: Record<Gender, string> = {
-    [Gender.MALE]: t("contacts.gender.male"),
-    [Gender.FEMALE]: t("contacts.gender.female"),
-    [Gender.UNKNOWN]: t("contacts.gender.unknown"),
-  }
+  const genderLabels = [
+    {
+      value: Gender.MALE,
+      label: t("contacts.gender.male"),
+    },
+    {
+      value: Gender.FEMALE,
+      label: t("contacts.gender.female"),
+    },
+    {
+      value: Gender.UNKNOWN,
+      label: t("contacts.gender.unknown"),
+    },
+  ]
 
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
-        <FormInput
+        <InputField
           name="phoneNumber"
           label={t("contacts.phoneNumber")}
           placeholder="090xxxxxxx"
         />
 
-        <FormInput
+        <InputField
           name="email"
           label={t("contacts.email")}
           placeholder="email@ahachat.ai"
           isRequired={false}
         />
 
-        <FormInput
+        <InputField
           name="firstName"
           label={t("contacts.firstName")}
           placeholder={t("contacts.firstName.placeholder")}
           isRequired={false}
         />
 
-        <FormInput
+        <InputField
           name="lastName"
           label={t("contacts.lastName")}
           placeholder={t("contacts.lastName.placeholder")}
           isRequired={false}
         />
 
-        <FormField
-          control={form.control}
+        <SelectField
           name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex gap-1">
-                {t("contacts.gender")}
-                <span className="text-xxs self-start font-normal">
-                  (optional)
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Select
-                  value={field.value}
-                  name={field.name}
-                  onValueChange={field.onChange}
-                  defaultValue={Gender.UNKNOWN}
-                >
-                  <SelectTrigger>
-                    <SelectValue onBlur={field.onBlur} ref={field.ref} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(Gender).map((option: Gender) => (
-                      <SelectItem value={option} key={option}>
-                        {genderLabels[option]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label={t("contacts.gender")}
+          isRequired={false}
+          defaultValue={Gender.UNKNOWN}
+          options={genderLabels}
         />
 
         <div className="flex justify-end gap-4">

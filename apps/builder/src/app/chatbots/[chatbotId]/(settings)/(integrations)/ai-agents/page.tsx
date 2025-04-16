@@ -1,4 +1,3 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateAIAgentDialog } from "@/features/integrations/ai-agents/create"
 import { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
 import { listAIAgentRequest } from "@/features/integrations/ai-agents/schemas/list.schema"
@@ -23,17 +22,7 @@ export default async function AIAgentsPage(props: {
         <CreateAIAgentDialog chatbotId={params.chatbotId} />
       </div>
 
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={4}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "20rem", "40rem", "12rem"]}
-            shrinkZero
-          />
-        }
-      >
+      <Suspense>
         <AIAgentsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </>

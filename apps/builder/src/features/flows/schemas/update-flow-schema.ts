@@ -7,7 +7,7 @@ import { addNotesNodeSchema } from "../react-flow/nodes/add-notes/schema"
 import { sendMessageNodeSchema } from "../react-flow/nodes/send-message/schema"
 
 export const updateFlowSchema = z.object({
-  name: z.optional(z.string().min(1).max(255).trim()),
+  name: z.optional(z.string().trim().min(1).max(255)),
   active: z.optional(z.boolean()),
   enableInInbox: z.optional(z.boolean()),
 })

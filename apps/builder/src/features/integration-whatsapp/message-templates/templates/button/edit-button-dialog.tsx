@@ -1,5 +1,7 @@
 "use client"
 
+import { InputField } from "@/components/form/input-field"
+import { SelectField } from "@/components/form/select-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,18 +12,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
+import { FlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslate } from "@tolgee/react"
+import { useMemo } from "react"
+import { useForm, useFormContext } from "react-hook-form"
 import {
   ButtonActionType,
   buttonBlockSchema,
   type ButtonBlockSchema,
 } from "./schema"
-import { useTranslate } from "@tolgee/react"
-import { useForm, useFormContext } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useMemo } from "react"
-import { SingleSelect } from "@/components/single-select"
-import { FormInput } from "@/components/form-input"
-import { FlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
 
 export function EditButtonDialog({
   parentName,
@@ -77,17 +77,19 @@ export function EditButtonDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <div className="flex-1 space-y-4">
-              <FormInput name="text" label={t("common.Button.label")} />
+              <InputField name="text" label={t("common.Button.label")} />
               {changeType && (
-                <FormInput name="type" label={t("common.Button.whenPressed")}>
-                  <SingleSelect options={buttonOptions} name="type" />
-                </FormInput>
+                <SelectField
+                  name="type"
+                  label={t("common.Button.whenPressed")}
+                  options={buttonOptions}
+                />
               )}
               {type === ButtonActionType.Url && (
-                <FormInput name="url" label={t("common.link")} />
+                <InputField name="url" label={t("common.link")} />
               )}
               {type === ButtonActionType.PhoneNumber && (
-                <FormInput
+                <InputField
                   name="phone_number"
                   label={t("flows.Button.phoneNumber")}
                 />

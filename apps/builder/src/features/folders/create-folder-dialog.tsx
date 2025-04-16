@@ -1,6 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,7 +18,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -33,18 +32,16 @@ export function CreateFolderDialog({
 }) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
-  const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createFolderAction.bind(null, chatbotId, folderType, parentId),
+    createFolderAction.bind(null, chatbotId),
     zodResolver(createFolderSchema),
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Folder created successfully")
+          toast.success(t("folders.created"))
 
           setOpen(false)
-          router.refresh()
         },
         onError: ({ error }) => {
           error.serverError && toast.error(error.serverError)
@@ -54,6 +51,8 @@ export function CreateFolderDialog({
         mode: "onChange",
         defaultValues: {
           name: "",
+          folderType,
+          parentId: parentId === "" ? null : parentId,
         },
       },
       errorMapProps: {},
@@ -65,12 +64,12 @@ export function CreateFolderDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          <T keyName="tags.createBtn" />
+          <T keyName="common.createBtn" />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("folders.create.title")}</DialogTitle>
+          <DialogTitle>{t("folders.createAction.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -79,11 +78,7 @@ export function CreateFolderDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput
-                name="name"
-                label={t("folders.name")}
-                placeholder={t("folders.name.placeholder")}
-              />
+              <InputField name="name" label={t("folders.name.label")} />
 
               <div className="flex justify-end gap-4">
                 <Button
@@ -91,7 +86,7 @@ export function CreateFolderDialog({
                   variant="ghost"
                   onClick={() => setOpen(false)}
                 >
-                  {t("common.cancel-btn")}
+                  {t("common.cancelBtn")}
                 </Button>
                 <Button
                   type="submit"
@@ -102,7 +97,7 @@ export function CreateFolderDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("common.createBtn")}
                 </Button>
               </div>
             </form>

@@ -9,8 +9,12 @@ import { prisma, type WhatsappFlowStatus } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import { getLogger } from "@/lib/log"
 import { uploader } from "@ahachat.ai/filesystem"
-import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
 import { integrations } from "@/integration"
+import type { Context } from "@ahachat.ai/sdk"
+import type {
+  ListFlowsResponse,
+  WhatsappAuthValue,
+} from "@ahachat.ai/integration-whatsapp"
 
 export const syncFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
@@ -26,25 +30,28 @@ export const syncFlowAction = chatbotActionClient
             chatbotId,
           },
         })
-      const ctx = {
+      const ctx: Context<WhatsappAuthValue> = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
         logger: getLogger("whatsapp"),
         uploader,
       }
 
-      const res = await integrations.WHATSAPP.integration.actions?.getFlows({
-        ctx,
-        params: {
-          limit: 1000,
+      const res = (await integrations.WHATSAPP.integration.runAction(
+        "getFlows",
+        {
+          ctx,
+          params: {
+            limit: 1000,
+          },
         },
-      })
+      )) as unknown as ListFlowsResponse
       await prisma.$transaction(async (tx) => {
         await tx.whatsappFlow.deleteMany({
           where: {
             integrationWhatsappId: integrationWhatsapp.id,
           },
         })
-        const data = res.map((flow) => {
+        const data = res.data.map((flow) => {
           return {
             name: flow.name,
             integrationWhatsappId: integrationWhatsapp.id,

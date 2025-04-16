@@ -1,6 +1,7 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
+import { TextareaField } from "@/components/form/textarea-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -107,12 +108,11 @@ export function UpdateAITriggerDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput name="name" label={t("aiTriggers.name")} />
+              <InputField name="name" label={t("aiTriggers.name")} />
 
-              <FormInput
+              <TextareaField
                 name="description"
                 label={t("aiTriggers.description")}
-                inputType="textarea"
               />
 
               <div className="flex flex-col space-y-2">
@@ -120,7 +120,7 @@ export function UpdateAITriggerDialog({
                 {fields.map((field, i) => (
                   <div className="flex items-center space-x-2" key={field.id}>
                     <div className="basis-5/12">
-                      <FormInput name={`questions.${i}.name`} label="" />
+                      <InputField name={`questions.${i}.name`} />
                     </div>
 
                     <div className="basis-1/12 flex justify-center">
@@ -158,10 +158,9 @@ export function UpdateAITriggerDialog({
 
               <FlowSelect name="flowId" label={t("aiTriggers.flowId")} />
 
-              <FormInput
+              <TextareaField
                 name="finalMessage"
                 label={t("aiTriggers.finalMessage")}
-                inputType="textarea"
               />
 
               <div className="flex justify-end gap-4">

@@ -1,6 +1,5 @@
-import { listFields } from "@/features/fields/queries"
-import { getFieldsSearchParamsCache } from "@/features/fields/schemas/get-fields-schema"
-import { FieldType } from "@ahachat.ai/database/browser"
+import { listCustomFields } from "@/features/fields/queries"
+import { listCustomFieldsSearchParams } from "@/features/fields/schemas/get-fields-schema"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
@@ -8,12 +7,11 @@ export async function GET(
   { params }: { params: Promise<{ chatbotId: string }> },
 ) {
   const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-  const search = getFieldsSearchParamsCache.parse(searchParams)
+  const search = listCustomFieldsSearchParams.parse(searchParams)
 
-  const allCustomFields = await listFields({
+  const allCustomFields = await listCustomFields({
     ...search,
     chatbotId: (await params).chatbotId,
-    fieldType: FieldType.CUSTOM_FIELD,
   })
 
   return NextResponse.json(allCustomFields)

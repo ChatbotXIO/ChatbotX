@@ -11,8 +11,12 @@ import type { FlowNode } from "../types"
 import { allNodesConfig } from "./node-config"
 import { FlowNodeToolbar } from "./node-toolbar"
 
-export function NodeViewer({ id, type, data }: FlowNode) {
-  const nodeConfig = Object.values(allNodesConfig).find((n) => n.type === type)
+export function NodeViewer({
+  id,
+  type,
+  data,
+}: { id: string; type: FlowNode["type"]; data: FlowNode["data"] }) {
+  const nodeConfig = Object.values(allNodesConfig).find((n) => n?.type === type)
 
   return (
     <HoverCard openDelay={0} closeDelay={0}>

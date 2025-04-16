@@ -7,12 +7,12 @@ import {
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
 import {
   type UpdateAutomatedResponseRequest,
   updateAutomatedResponseRequest,
 } from "../schemas/update-automated-responses-schema"
 import { AutomatedResponseException } from "../schemas/utils"
-import { revalidateTag } from "next/cache"
 
 export const updateAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
@@ -43,8 +43,8 @@ export const updateAutomatedResponseAction = chatbotActionClient
             flowIds.push(reply.flowId)
           }
         }
+        await ensureAllFlowIdsExists(chatbotId, [...new Set(flowIds)])
       }
-      await ensureAllFlowIdsExists(chatbotId, [...new Set(flowIds)])
 
       await prisma.automatedResponse.update({
         where: {

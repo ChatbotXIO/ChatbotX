@@ -1,4 +1,3 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { Button } from "@/components/ui/button"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
 import { listBroadcasts } from "@/features/broadcasts/queries"
@@ -36,17 +35,8 @@ export default async function BroadcastsPage(props: {
           </Button>
         </div>
       </div>
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={6}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "40rem", "12rem", "12rem", "8rem", "8rem"]}
-            shrinkZero
-          />
-        }
-      >
+
+      <Suspense>
         <BroadcastsTable promises={promises} />
       </Suspense>
     </div>

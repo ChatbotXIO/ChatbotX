@@ -39,7 +39,7 @@ export const actionsStepSchema = [
 export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.SendMessage),
   data: z.object({
-    name: z.string().min(1).max(255).trim(),
+    name: z.string().trim().min(1).max(255),
     inboxType: z.union([z.nativeEnum(InboxType), z.literal("OMNICHANNEL")]),
     steps: z.array(
       z.union([

@@ -1,12 +1,11 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
-import { NumberField } from "@/components/number-field"
-import { Checkbox } from "@/components/ui/checkbox"
+import { CheckboxGroupField } from "@/components/form/checkbox-field"
+import { InputField } from "@/components/form/input-field"
+import { TextareaField } from "@/components/form/textarea-field"
 import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
-import { Controller } from "react-hook-form"
 import { OpenAIModel } from "../open-ai/open-ai-model-select"
 
 interface OpenAIGenerateTextAdvancedEditorProps {
@@ -20,14 +19,13 @@ export const OpenAIGenerateTextAdvancedEditor = ({
     <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAdvanced">
       <OpenAIModel name={`${parentName}.model`} />
 
-      <FormInput
+      <TextareaField
         name={`${parentName}.prompt`}
         label="Prompt"
-        inputType="textarea"
         isRequired={false}
       />
 
-      <FormInput name={`${parentName}.userMessage`} label="User Message" />
+      <InputField name={`${parentName}.userMessage`} label="User Message" />
 
       <CustomFieldSelect
         name={`${parentName}.resultCustomFieldId`}
@@ -40,38 +38,25 @@ export const OpenAIGenerateTextAdvancedEditor = ({
         isRequired={false}
       />
 
-      <FormInput
+      <CheckboxGroupField
         name={`${parentName}.rememberConversation`}
-        label="Remember Conversation"
-      >
-        <Controller
-          name={`${parentName}.rememberConversation`}
-          render={(field) => <Checkbox id="rememberConversation" {...field} />}
-        />
-      </FormInput>
+        options={[{ value: "1", label: "Remember Conversation" }]}
+      />
 
-      <FormInput name={`${parentName}.temperature`} label="Temperature">
-        <NumberField
-          name={`${parentName}.temperature`}
-          value={0.4}
-          max={2}
-          onChange={console.log}
-        />
-      </FormInput>
+      <InputField
+        type="number"
+        name={`${parentName}.temperature`}
+        label="Temperature"
+        defaultValue={"0.4"}
+      />
 
-      <FormInput
+      <InputField
+        type="number"
         name={`${parentName}.maxTokens`}
         label="Maximum number of output tokens"
         isRequired={false}
-      >
-        <NumberField
-          name={`${parentName}.temperature`}
-          value={250}
-          step={1}
-          max={4096}
-          onChange={console.log}
-        />
-      </FormInput>
+        defaultValue={"250"}
+      />
     </OpenAIDialog>
   )
 }

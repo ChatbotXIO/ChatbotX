@@ -8,12 +8,12 @@ export type IntegrationDefinition<
   IActions extends Record<string, Handler<any, any>>,
 > = {
   name: string
-  actions?: IActions
-  handleRequest?: Handler<
+  actions: IActions
+  handleRequest: Handler<
     HandleRequestProps<IConfig>,
     Oauth2AuthValue | string | number
   >
-  disconnect?: Handler<IAuth, void>
+  disconnect: Handler<IAuth, void>
 }
 
 export class Integration<

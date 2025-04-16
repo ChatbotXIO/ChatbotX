@@ -6,6 +6,6 @@ import { OpenAITextToSpeechViewer } from "./viewer"
 export const openAITextToSpeechStep: StepDefinition = {
   editor: OpenAITextToSpeechEditor,
   viewer: OpenAITextToSpeechViewer,
-  schema: openAITextToSpeechSchema,
-  defaultValue: openAITextToSpeechDefaultFn,
+  validator: openAITextToSpeechSchema,
+  defaultFn: openAITextToSpeechDefaultFn,
 }

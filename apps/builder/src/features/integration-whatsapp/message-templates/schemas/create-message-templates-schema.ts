@@ -23,18 +23,7 @@ export const createMessageTemplateRequest = z
       WhatsappTemplateCategory.MARKETING,
       WhatsappTemplateCategory.UTILITY,
     ]),
-  })
-  .extend({
-    templateType: z.enum([
-      TemplateType.Text,
-      TemplateType.Image,
-      TemplateType.Video,
-      TemplateType.Document,
-      TemplateType.CarouselImage,
-      TemplateType.CarouselVideo,
-      TemplateType.ViewCatalog,
-      TemplateType.ViewProduct,
-    ]),
+    templateType: z.nativeEnum(TemplateType),
   })
   .and(
     z.discriminatedUnion("templateType", [

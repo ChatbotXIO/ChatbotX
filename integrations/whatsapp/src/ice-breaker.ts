@@ -37,7 +37,6 @@ export const updateIceBreaker = async (
   prompts: string[],
 ): Promise<void> => {
   const client = getWhatsappClient(auth)
-  console.log("prompts", prompts)
 
   const res = await client.$$apiFetch$$(
     `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.phoneNumberId}/conversational_automation`,
