@@ -23,7 +23,6 @@ export const allSupportedLanguages = [
 export const allLanguageCodes = allSupportedLanguages.map(
   (language) => language.value,
 )
-console.log("getAllTimezones", getAllTimezones())
 
 export const allTimezoneOptions = Object.values(getAllTimezones()).map(
   (timezone) => {

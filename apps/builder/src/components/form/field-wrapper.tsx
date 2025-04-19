@@ -5,6 +5,7 @@ import {
   type FieldValues,
 } from "react-hook-form"
 import {
+  FormControl,
   FormDescription,
   FormField,
   FormItem,
@@ -53,7 +54,7 @@ export function FormFieldWrapper<T extends FieldValues>({
               )}
             </FormLabel>
           )}
-          {children(field)}
+          <FormControl>{children(field)}</FormControl>
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>

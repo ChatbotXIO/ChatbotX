@@ -63,8 +63,6 @@ export function UpdateChatbotAdvancedForm({
     },
   )
 
-  console.log("form.state", form.formState.dirtyFields)
-
   return (
     <Card>
       <CardContent>

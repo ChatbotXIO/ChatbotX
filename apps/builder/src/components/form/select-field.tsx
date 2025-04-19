@@ -8,7 +8,6 @@ import {
   SelectValue,
 } from "../ui/select"
 import { FormFieldWrapper } from "./field-wrapper"
-import { FormControl } from "../ui/form"
 
 interface SelectFieldProps<T extends FieldValues> {
   name: FieldPath<T>
@@ -43,11 +42,9 @@ export function SelectField<T extends FieldValues>({
           {...props}
           {...field}
         >
-          <FormControl>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={placeholder} />
-            </SelectTrigger>
-          </FormControl>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
               <SelectItem key={option.value} value={String(option.value)}>

@@ -21,8 +21,6 @@ export const FlowSelect = ({
     value: v.id,
   }))
 
-  console.log("flowOptionsflowOptionsflowOptions", flowOptions, name)
-
   return (
     <SelectField
       name={name}
