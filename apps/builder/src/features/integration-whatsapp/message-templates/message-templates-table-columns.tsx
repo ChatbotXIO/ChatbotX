@@ -1,18 +1,14 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
+import type { DataTableRowAction } from "@/types/data-table"
 import type { WhatsappMessageTemplate } from "@ahachat.ai/database"
-import type { ColumnDef, Row } from "@tanstack/react-table"
-
-export interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: ""
-  value?: unknown
-}
+import type { ColumnDef } from "@tanstack/react-table"
+import type { Dispatch, SetStateAction } from "react"
 
 interface GetColumnsProps {
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<WhatsappMessageTemplate> | null>
+  setRowAction: Dispatch<
+    SetStateAction<DataTableRowAction<WhatsappMessageTemplate> | null>
   >
 }
 

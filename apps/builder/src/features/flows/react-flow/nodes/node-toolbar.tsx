@@ -58,7 +58,7 @@ export function FlowNodeToolbar() {
   return (
     <div className="flex gap-2 justify-center bg-white border rounded-md py-1">
       {configs.map((config) => (
-        <Button variant="ghost" size="xs" key={config.label}>
+        <Button variant="ghost" size="sm" key={config.label}>
           <config.icon />
         </Button>
       ))}

@@ -8,9 +8,9 @@ export const createContactSchema = z.object({
     .max(20)
     .regex(/\+?\d{10,20}/),
   email: z.union([z.literal(""), z.string().max(100).email()]),
-  firstName: z.optional(z.string().max(100).trim()),
-  lastName: z.optional(z.string().max(100).trim()),
-  gender: z.nativeEnum(Gender).default(Gender.UNKNOWN),
+  firstName: z.optional(z.string().trim().max(100)),
+  lastName: z.optional(z.string().trim().max(100)),
+  gender: z.nativeEnum(Gender),
 })
 export type CreateContactRequest = z.infer<typeof createContactSchema>
 

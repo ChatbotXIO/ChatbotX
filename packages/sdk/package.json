@@ -9,7 +9,7 @@
   "dependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
     "tslog": "^4.9.3",
-    "zod": "^3.24.2"
+    "zod": "^3.24.3"
   },
   "exports": {
     ".": "./src/index.ts"

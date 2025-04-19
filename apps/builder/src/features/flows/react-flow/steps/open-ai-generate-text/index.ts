@@ -6,6 +6,6 @@ import { OpenAIGenerateTextViewer } from "./viewer"
 export const sendAIGenerateTextStep: StepDefinition = {
   editor: OpenAIGenerateTextEditor,
   viewer: OpenAIGenerateTextViewer,
-  schema: openAIGenerateTextSchema,
-  defaultValue: openAIGenerateTextDefaultFn,
+  validator: openAIGenerateTextSchema,
+  defaultFn: openAIGenerateTextDefaultFn,
 }

@@ -1,5 +1,4 @@
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
+import { SelectField } from "@/components/form/select-field"
 import { BrowserSize } from "@/features/flows/react-flow/steps/button/schema"
 
 export const BrowserSizeSelect = ({
@@ -17,8 +16,12 @@ export const BrowserSizeSelect = ({
   }))
 
   return (
-    <FormInput name={name} label={label} isRequired={isRequired}>
-      <SingleSelect name={name} placeholder="Please select" options={options} />
-    </FormInput>
+    <SelectField
+      name={name}
+      label={label}
+      isRequired={isRequired}
+      placeholder="Please select"
+      options={options}
+    />
   )
 }

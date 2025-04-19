@@ -1,6 +1,7 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
+import { TextareaField } from "@/components/form/textarea-field"
 import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
@@ -17,14 +18,13 @@ export const OpenAIGenerateTextEditor = ({
     <OpenAIDialog name="Flows.OpenAI.Title.GenerateText">
       <OpenAIModel name={`${parentName}.model`} />
 
-      <FormInput
+      <TextareaField
         label="Prompt"
         name={`${parentName}.prompt`}
         isRequired={false}
-        inputType="textarea"
       />
 
-      <FormInput label="User Message" name={`${parentName}.userMessage`} />
+      <InputField label="User Message" name={`${parentName}.userMessage`} />
 
       <CustomFieldSelect
         name={`${parentName}.resultCustomFieldId`}

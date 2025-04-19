@@ -1,46 +1,116 @@
 "use client"
 
-import * as React from "react"
-
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import { DataTable } from "@/components/data-table"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { Contact } from "@ahachat.ai/database"
-
-import { getColumns } from "./contacts-table-columns"
+import type { Column, ColumnDef } from "@tanstack/react-table"
+import { format, formatDistance } from "date-fns"
+import { use, useMemo } from "react"
 import type { listContacts } from "./queries/list-contacts.queries"
-
-import type {
-  DataTableFilterField,
-  DataTableRowAction,
-} from "@/components/data-table/types"
+import type { ContactResource } from "./schemas/get-contacts-schema"
 
 interface ContactsTableProps {
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
 }
 
 export function ContactsTable({ promises }: ContactsTableProps) {
-  const [{ data, pageCount }] = React.use(promises)
-  const [, setRowAction] = React.useState<DataTableRowAction<Contact> | null>(
-    null,
+  const [{ data, pageCount }] = use(promises)
+
+  const columns = useMemo<ColumnDef<ContactResource>[]>(
+    () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        size: 32,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "name",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Name" />
+        ),
+        cell: ({ row }) => {
+          const fullName = [row.original.firstName, row.original.lastName]
+            .filter((v) => v)
+            .join(" ")
+
+          return <div>{fullName}</div>
+        },
+      },
+      {
+        accessorKey: "source",
+        header: ({ column }: { column: Column<ContactResource, unknown> }) => (
+          <DataTableColumnHeader column={column} title="Source" />
+        ),
+        cell: ({ cell }) => (
+          <div>{cell.getValue<ContactResource["source"]>()}</div>
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: "assignee",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Assigned To" />
+        ),
+        cell: () => {
+          return <div>Unassigned</div>
+        },
+        enableSorting: false,
+      },
+      {
+        accessorKey: "lastSeenAt",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Last seen" />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div>
+              {row.original.lastSeenAt
+                ? formatDistance(new Date(), row.original.lastSeenAt, {
+                    addSuffix: true,
+                  })
+                : null}
+            </div>
+          )
+        },
+        enableSorting: false,
+      },
+      {
+        accessorKey: "createdAt",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Created" />
+        ),
+        cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd"),
+      },
+    ],
+    [],
   )
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const columns = React.useMemo(() => getColumns(), [setRowAction])
-
-  const filterFields: DataTableFilterField<Contact & { keyword?: string }>[] = [
-    {
-      id: "keyword",
-      label: "Search",
-      placeholder: "Enter keyword...",
-    },
-  ]
 
   const { table } = useDataTable({
     data,
     columns,
     pageCount,
-    filterFields,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -53,7 +123,7 @@ export function ContactsTable({ promises }: ContactsTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} filterFields={filterFields} />
+        <DataTableToolbar table={table} />
       </DataTable>
     </>
   )

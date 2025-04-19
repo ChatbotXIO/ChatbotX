@@ -1,4 +1,3 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { ErrorLogsTable } from "@/features/logs/error-logs-table"
 import { getLogs } from "@/features/logs/queries"
 import { getLogsSearchParamsCache } from "@/features/logs/schemas/get-logs-schema"
@@ -24,17 +23,7 @@ export default async function ErrorLogsPage(props: {
 
   return (
     <div>
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={6}
-            searchableColumnCount={1}
-            filterableColumnCount={1}
-            cellWidths={["10rem", "40rem", "12rem", "12rem", "12rem", "12rem"]}
-            shrinkZero
-          />
-        }
-      >
+      <Suspense>
         <ErrorLogsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </div>

@@ -9,6 +9,6 @@ import { OpenAIGenerateTextAdvancedViewer } from "./viewer"
 export const openAIGenerateTextAdvancedStep: StepDefinition = {
   editor: OpenAIGenerateTextAdvancedEditor,
   viewer: OpenAIGenerateTextAdvancedViewer,
-  schema: openAIGenerateTextAdvancedSchema,
-  defaultValue: openAIGenerateTextAdvancedDefaultFn,
+  validator: openAIGenerateTextAdvancedSchema,
+  defaultFn: openAIGenerateTextAdvancedDefaultFn,
 }

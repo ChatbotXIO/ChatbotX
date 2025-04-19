@@ -1,9 +1,8 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { SelectField } from "@/components/form/select-field"
 import { MessengerIcon } from "@/components/icons/messenger"
 import WhatsappIcon from "@/components/icons/whatsapp"
-import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DateTimePicker } from "@/components/ui/date-picker"
@@ -37,7 +36,7 @@ export function CreateBroadcastForm({
 
   const [hasInboxType, setHasInboxType] = useState(false)
   const [hasSubAction, setHasSubAction] = useState(false)
-  const [schedulesType, setSchedulesType] =
+  const [schedulesType, _setSchedulesType] =
     useState<BroadcastSchedulesType | null>(null)
 
   const { data } = use(promises)
@@ -65,7 +64,6 @@ export function CreateBroadcastForm({
       actionProps: {
         onSuccess: () => {
           toast.success("Broadcast created successfully")
-
           resetFormAndAction()
         },
         onError: ({ error }) => {
@@ -117,19 +115,15 @@ export function CreateBroadcastForm({
                     isRequired={true}
                   />
 
-                  <FormInput
+                  <SelectField
                     name="schedulesType"
                     label={t("broadcasts.scheduleSendMessage")}
-                  >
-                    <SingleSelect
-                      options={schedulesOptions}
-                      onValueChange={(value) =>
-                        setSchedulesType(value as BroadcastSchedulesType)
-                      }
-                      defaultValue="Now"
-                      name="schedulesType"
-                    />
-                  </FormInput>
+                    options={schedulesOptions}
+                    // onValueChange={(value) =>
+                    //   setSchedulesType(value as BroadcastSchedulesType)
+                    // }
+                    defaultValue="Now"
+                  />
 
                   {schedulesType === "FUTURE" && (
                     <DateTimePicker

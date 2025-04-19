@@ -1,49 +1,49 @@
 "use client"
 
+import { InputField } from "@/components/form/input-field"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Form } from "@/components/ui/form"
+import { createMessageTemplateAction } from "@/features/integration-whatsapp/message-templates/actions/create-message-template.action"
+import { CategorySelect } from "@/features/integration-whatsapp/message-templates/category-select"
+import { LanguageSelect } from "@/features/integration-whatsapp/message-templates/language-select"
+import { createMessageTemplateRequest } from "@/features/integration-whatsapp/message-templates/schemas/create-message-templates-schema"
+import { TemplateTypeSelect } from "@/features/integration-whatsapp/message-templates/template-type-select"
+import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
+import { WhatsappTemplateCategory } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { createMessageTemplateAction } from "@/features/integration-whatsapp/message-templates/actions/create-message-template.action"
 import { useTranslate } from "@tolgee/react"
+import { ArrowLeftIcon, Loader2Icon } from "lucide-react"
+import Link from "next/link"
 import { type JSX, useState } from "react"
 import { toast } from "sonner"
-import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
-import { TemplateTypeSelect } from "@/features/integration-whatsapp/message-templates/template-type-select"
-import { FormInput } from "@/components/form-input"
-import { LanguageSelect } from "@/features/integration-whatsapp/message-templates/language-select"
-import { CategorySelect } from "@/features/integration-whatsapp/message-templates/category-select"
-import { createMessageTemplateRequest } from "@/features/integration-whatsapp/message-templates/schemas/create-message-templates-schema"
-import { TemplateTextPreview } from "./templates/text/preview"
-import { TemplateTextPartial } from "./templates/text/partial"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { Loader2Icon, ArrowLeftIcon } from "lucide-react"
-import { WhatsappTemplateCategory } from "@ahachat.ai/database/browser"
-import { templateTextDefaultValue } from "./templates/text/schema"
-import { templateCatalogDefaultValue } from "./templates/catalog/schema"
-import { TemplateCatalogPreview } from "./templates/catalog/preview"
-import { TemplateCatalogPartial } from "./templates/catalog/partial"
-import { templateProductDefaultValue } from "./templates/product/schema"
-import { TemplateProductPreview } from "./templates/product/preview"
-import { TemplateProductPartial } from "./templates/product/partial"
-import { TemplateImagePreview } from "./templates/image/preview"
-import { TemplateImagePartial } from "./templates/image/partial"
-import { templateImageDefaultValue } from "./templates/image/schema"
-import { TemplateVideoPreview } from "./templates/video/preview"
-import { TemplateDocumentPreview } from "./templates/document/preview"
-import { TemplateVideoPartial } from "./templates/video/partial"
-import { TemplateDocumentPartial } from "./templates/document/partial"
-import { templateVideoDefaultValue } from "./templates/video/schema"
-import { templateDocumentDefaultValue } from "./templates/document/schema"
-import { TemplateCarouselImagePreview } from "./templates/carousel-image/preview"
 import { TemplateCarouselImagePartial } from "./templates/carousel-image/partial"
+import { TemplateCarouselImagePreview } from "./templates/carousel-image/preview"
 import { templateCarouselImageDefaultValue } from "./templates/carousel-image/schema"
-import { templateCarouselVideoDefaultValue } from "./templates/carousel-video/schema"
-import { TemplateCarouselVideoPreview } from "./templates/carousel-video/preview"
 import { TemplateCarouselVideoPartial } from "./templates/carousel-video/partial"
+import { TemplateCarouselVideoPreview } from "./templates/carousel-video/preview"
+import { templateCarouselVideoDefaultValue } from "./templates/carousel-video/schema"
+import { TemplateCatalogPartial } from "./templates/catalog/partial"
+import { TemplateCatalogPreview } from "./templates/catalog/preview"
+import { templateCatalogDefaultValue } from "./templates/catalog/schema"
+import { TemplateDocumentPartial } from "./templates/document/partial"
+import { TemplateDocumentPreview } from "./templates/document/preview"
+import { templateDocumentDefaultValue } from "./templates/document/schema"
+import { TemplateImagePartial } from "./templates/image/partial"
+import { TemplateImagePreview } from "./templates/image/preview"
+import { templateImageDefaultValue } from "./templates/image/schema"
+import { TemplateProductPartial } from "./templates/product/partial"
+import { TemplateProductPreview } from "./templates/product/preview"
+import { templateProductDefaultValue } from "./templates/product/schema"
+import { TemplateTextPartial } from "./templates/text/partial"
+import { TemplateTextPreview } from "./templates/text/preview"
+import { templateTextDefaultValue } from "./templates/text/schema"
+import { TemplateVideoPartial } from "./templates/video/partial"
+import { TemplateVideoPreview } from "./templates/video/preview"
+import { templateVideoDefaultValue } from "./templates/video/schema"
 
-const previews: { [key in TemplateType]: JSX.Element } = {
+const previews: { [key in TemplateType]: JSX.Element | undefined } = {
   [TemplateType.Text]: <TemplateTextPreview />,
   [TemplateType.Image]: <TemplateImagePreview />,
   [TemplateType.Video]: <TemplateVideoPreview />,
@@ -52,9 +52,10 @@ const previews: { [key in TemplateType]: JSX.Element } = {
   [TemplateType.CarouselVideo]: <TemplateCarouselVideoPreview />,
   [TemplateType.ViewCatalog]: <TemplateCatalogPreview />,
   [TemplateType.ViewProduct]: <TemplateProductPreview />,
+  [TemplateType.Location]: undefined,
 }
 
-const contentVariables: { [key in TemplateType]: JSX.Element } = {
+const contentVariables: { [key in TemplateType]: JSX.Element | undefined } = {
   [TemplateType.Text]: <TemplateTextPartial />,
   [TemplateType.Image]: <TemplateImagePartial />,
   [TemplateType.Video]: <TemplateVideoPartial />,
@@ -63,6 +64,7 @@ const contentVariables: { [key in TemplateType]: JSX.Element } = {
   [TemplateType.CarouselVideo]: <TemplateCarouselVideoPartial />,
   [TemplateType.ViewCatalog]: <TemplateCatalogPartial />,
   [TemplateType.ViewProduct]: <TemplateProductPartial />,
+  [TemplateType.Location]: undefined,
 }
 
 export function CreateMessageTemplateForm({
@@ -118,7 +120,8 @@ export function CreateMessageTemplateForm({
 
   const onSelectTemplateType = (type: TemplateType) => {
     setTemplateType(type)
-    setValue("templateType", type)
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    setValue("templateType", type as any)
     setValue("name", "")
     setValue("category", WhatsappTemplateCategory.MARKETING)
     switch (type) {
@@ -178,7 +181,7 @@ export function CreateMessageTemplateForm({
               <div className="grid grid-cols-2 gap-4 mx-10">
                 <Card>
                   <CardContent className="flex flex-col gap-4 py-4">
-                    <FormInput
+                    <InputField
                       name="name"
                       label="Name"
                       placeholder="order_shipping_update"

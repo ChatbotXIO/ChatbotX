@@ -6,6 +6,6 @@ import { SendCarouselStepViewer } from "./viewer"
 export const sendCarouselStep: StepDefinition = {
   editor: SendCarouselStepEditor,
   viewer: SendCarouselStepViewer,
-  schema: sendCarouselStepSchema,
-  defaultValue: sendCarouselStepDefaultFn,
+  validator: sendCarouselStepSchema,
+  defaultFn: sendCarouselStepDefaultFn,
 }

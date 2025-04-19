@@ -11,20 +11,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { Field, FieldType } from "@ahachat.ai/database/browser"
+import type { FieldType } from "@ahachat.ai/database/browser"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
-import { useRouter } from "next/navigation"
-import { type ComponentPropsWithoutRef, useTransition } from "react"
+import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteFieldsAction } from "./actions/delete-field-action"
+import type { CustomFieldResource } from "./schemas/types"
 
 interface DeleteFieldsDialogProps
   extends ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  fields: Row<Field>["original"][]
+  records: Row<CustomFieldResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
@@ -33,7 +33,7 @@ interface DeleteFieldsDialogProps
 
 export function DeleteFieldsDialog({
   chatbotId,
-  fields,
+  records,
   showTrigger = true,
   fieldType,
   onSuccess,
@@ -41,35 +41,19 @@ export function DeleteFieldsDialog({
   ...props
 }: DeleteFieldsDialogProps) {
   const { t } = useTranslate()
-  const router = useRouter()
 
-  const { execute, result } = useAction(
-    deleteFieldsAction.bind(
-      null,
-      chatbotId,
-      fieldType,
-      (fields ?? []).map((field) => field.id),
-    ),
-  )
-
-  const [isDeleting, startDeleteTransition] = useTransition()
-  const onDelete = () => {
-    if (!fields || fields.length === 0) {
-      return
-    }
-
-    startDeleteTransition(async () => {
-      await execute()
-
-      if (result.serverError) {
-        toast.error(result.serverError.message ?? result.serverError)
-      } else {
+  const { execute, isPending } = useAction(
+    deleteFieldsAction.bind(null, chatbotId),
+    {
+      onSuccess: () => {
         toast.success(t("field.deleted"))
         onOpenChange(false)
-        router.refresh()
-      }
-    })
-  }
+      },
+      onError: ({ error }) => {
+        error.serverError && toast.error(error.serverError)
+      },
+    },
+  )
 
   return (
     <Dialog {...props}>
@@ -77,7 +61,7 @@ export function DeleteFieldsDialog({
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
             <Trash className="mr-2 size-4" aria-hidden="true" />
-            {t("common.deleteBtn")} ({fields.length})
+            {t("common.deleteBtn")} ({records.length})
           </Button>
         </DialogTrigger>
       ) : null}
@@ -95,10 +79,10 @@ export function DeleteFieldsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={onDelete}
-            disabled={isDeleting}
+            onClick={() => execute({ ids: records.map((r) => r.id) })}
+            disabled={isPending}
           >
-            {isDeleting && (
+            {isPending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             {t("common.deleteBtn")}

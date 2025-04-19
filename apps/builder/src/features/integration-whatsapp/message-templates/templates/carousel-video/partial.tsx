@@ -1,9 +1,9 @@
 "use client"
 
-import { useFormContext } from "react-hook-form"
-import { FormInput } from "@/components/form-input"
-import { useTranslate } from "@tolgee/react"
+import { InputField } from "@/components/form/input-field"
 import { Button } from "@/components/ui/button"
+import { useTranslate } from "@tolgee/react"
+import { useFormContext } from "react-hook-form"
 
 export const TemplateCarouselVideoPartial = ({
   parentName = "content",
@@ -28,7 +28,7 @@ export const TemplateCarouselVideoPartial = ({
             <div key={index + 1} className="flex gap-2 mt-2 w-full">
               <Button variant="secondary">{`{{${index + 1}}}`}</Button>
               <div className="flex-1">
-                <FormInput
+                <InputField
                   name={`${parentName}.body.variables.${index}`}
                   label=""
                   placeholder="Type a message"
@@ -50,9 +50,8 @@ export const TemplateCarouselVideoPartial = ({
               <div key={index} className="flex gap-2 mt-2 w-full">
                 <Button variant="secondary">{`{{${index + 1}}}`}</Button>
                 <div className="flex-1">
-                  <FormInput
+                  <InputField
                     name={`${parentName}.cards.${indexCard}.body.variables.${index}`}
-                    label=""
                     placeholder="Type a message"
                   />
                 </div>

@@ -33,7 +33,7 @@ export const syncMessageTemplateAction = chatbotActionClient
       }
 
       const res =
-        await integrations.WHATSAPP.integration.actions?.listMessageTemplates({
+        await integrations.WHATSAPP.integration.actions.listMessageTemplates({
           ctx,
           params: {
             limit: 100,
@@ -45,7 +45,7 @@ export const syncMessageTemplateAction = chatbotActionClient
             integrationWhatsappId: integrationWhatsapp.id,
           },
         })
-        const data = res.map((template) => {
+        const data = res.data.map((template) => {
           return {
             name: template.name,
             integrationWhatsappId: integrationWhatsapp.id,

@@ -1,62 +1,43 @@
 "use server"
 
 import {
-  type EditFolderBindSchema,
+  chatbotIdAndIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import {
   type EditFolderSchema,
-  editFolderBindSchema,
   editFolderSchema,
 } from "@/features/folders/schemas/edit-folder-schema"
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, type User, prisma } from "@ahachat.ai/database"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const editFolderAction = authActionClient
+export const editFolderAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .schema(editFolderSchema)
-  .bindArgsSchemas(editFolderBindSchema)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, folderId],
     }: {
-      ctx: { user: User }
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: EditFolderSchema
-      bindArgsParsedInputs: EditFolderBindSchema
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       const folder = await prisma.folder.findFirstOrThrow({
         where: {
-          chatbotId: chatbotId,
-          id: folderId,
+          chatbotId,
+          id,
         },
       })
 
-      const data: Prisma.FolderUpdateInput = {
-        name: parsedInput.name,
-      }
-      // if (parsedInput.parentId && parsedInput.parentId !== folder.parentId) {
-      //   const parentFolder = await prisma.folder.findFirstOrThrow({
-      //     where: {
-      //       chatbotId: chatbotId,
-      //       id: folderId,
-      //       folderType: folder.folderType
-      //     }
-      //   })
+      await prisma.$transaction(async (tx) => {
+        await tx.folder.update({
+          where: { id },
+          data: parsedInput,
+        })
 
-      //   data.paths = [...parentFolder.paths, parentFolder.id]
-      // }
-
-      await prisma.folder.update({
-        where: { id: folderId },
-        data,
+        revalidateTag(`chatbots:${chatbotId}#folders:${folder.folderType}`)
+        revalidateTag(`chatbots:${chatbotId}#folders:${folder.id}`)
       })
-
-      revalidateTag(`${ctx.user.id}#folders#${folder.folderType}`)
-
-      return {
-        successful: true,
-      }
     },
   )

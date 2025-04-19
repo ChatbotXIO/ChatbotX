@@ -1,10 +1,9 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateFlowDialog } from "@/features/flows/create-flow-dialog"
 import { FlowsTable } from "@/features/flows/flows-table"
 import { getFlows } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
 import { getCurrentFolder } from "@/features/folders/queries"
-import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema"
+import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
 import type { Folder } from "@ahachat.ai/database"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -16,7 +15,7 @@ export default async function FlowsPage(props: {
   const params = await props.params
   const searchParams = await props.searchParams
   const search = listFlowsSearchParams.parse(searchParams)
-  const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
+  const { folderId } = listFoldersSearchParams.parse(searchParams)
 
   const promises = Promise.all([
     search.folderId
@@ -40,17 +39,7 @@ export default async function FlowsPage(props: {
           folderId={search.folderId}
         />
       </div>
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={5}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "20rem", "40rem", "12rem", "10rem"]}
-            shrinkZero
-          />
-        }
-      >
+      <Suspense>
         <FlowsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </div>

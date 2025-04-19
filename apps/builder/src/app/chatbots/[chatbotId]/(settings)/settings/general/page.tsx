@@ -1,5 +1,14 @@
-"use client"
+import { getCurrentUserId } from "@/auth"
+import { UpdateChatbotForm } from "@/features/chatbot/update-chatbot-form"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 
-export default function SettingsGeneralPage() {
-  return <h1>SettingsGeneralPage</h1>
+export default async function GeneralPage(props: {
+  params: Promise<{ chatbotId: string }>
+}) {
+  const params = await props.params
+
+  const userId = await getCurrentUserId()
+  const { chatbot } = await findChatbotOrFail(userId, params.chatbotId)
+
+  return <UpdateChatbotForm chatbot={chatbot} />
 }

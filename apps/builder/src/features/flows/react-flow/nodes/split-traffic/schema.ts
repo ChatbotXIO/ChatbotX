@@ -7,7 +7,7 @@ import {
 
 export const splitTrafficNodeSchema = z.object({
   id: z.string(),
-  name: z.string().min(1).max(255).trim(),
+  name: z.string().trim().min(1).max(255),
   steps: z.array(splitTrafficStepSchema),
 })
 

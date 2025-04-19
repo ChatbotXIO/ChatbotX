@@ -242,7 +242,7 @@ const TimePeriodSelect = ({
   onLeftFocus,
   onRightFocus,
 }: PeriodSelectorProps & {
-  ref?: React.RefObject<HTMLButtonElement>
+  ref?: React.RefObject<HTMLButtonElement | null>
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === "ArrowRight") onRightFocus?.()
@@ -321,7 +321,7 @@ const TimePickerInput = ({
   onRightFocus,
   ...props
 }: TimePickerInputProps & {
-  ref: React.RefObject<HTMLInputElement>
+  ref: React.RefObject<HTMLInputElement | null>
 }) => {
   const [flag, setFlag] = React.useState<boolean>(false)
   const [prevIntKey, setPrevIntKey] = React.useState<string>("0")
@@ -431,7 +431,7 @@ const TimePicker = ({
   hourCycle = 24,
   granularity = "second",
 }: TimePickerProps & {
-  ref: React.RefObject<TimePickerRef>
+  ref?: React.RefObject<TimePickerRef>
 }) => {
   const minuteRef = React.useRef<HTMLInputElement>(null)
   const hourRef = React.useRef<HTMLInputElement>(null)
@@ -690,7 +690,7 @@ const DateTimePicker = ({
             }
           }}
           onMonthChange={handleSelect}
-          yearRange={yearRange}
+          // yearRange={yearRange}
           locale={locale}
           {...props}
         />

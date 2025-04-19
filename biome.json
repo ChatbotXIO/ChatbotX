@@ -27,6 +27,9 @@
         },
         "noUnusedVariables": "error",
         "noUnknownProperty": "error"
+      },
+      "style": {
+        "useNodejsImportProtocol": "off"
       }
     }
   },

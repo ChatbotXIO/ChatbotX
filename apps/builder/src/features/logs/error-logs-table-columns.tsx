@@ -1,6 +1,6 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -10,20 +10,15 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { DataTableRowAction } from "@/types/data-table"
 import type { Log } from "@ahachat.ai/database/browser"
-import type { ColumnDef, Row } from "@tanstack/react-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisIcon, UserRoundIcon } from "lucide-react"
-
-export interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: "update" | "delete"
-}
+import type { Dispatch, SetStateAction } from "react"
 
 interface GetColumnsProps {
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<Log> | null>
-  >
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<Log> | null>>
 }
 
 export function getColumns({
@@ -116,7 +111,7 @@ export function getColumns({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "delete" })}
+                onSelect={() => setRowAction({ row, variant: "delete" })}
               >
                 Delete
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

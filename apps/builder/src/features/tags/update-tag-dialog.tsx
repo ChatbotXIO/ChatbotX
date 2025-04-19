@@ -45,6 +45,7 @@ export function UpdateTagDialog({
   const {
     form,
     handleSubmitWithAction,
+    resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
     updateTagAction.bind(null, chatbotId, tag?.id ?? ""),
@@ -53,7 +54,7 @@ export function UpdateTagDialog({
       actionProps: {
         onSuccess: () => {
           toast.success("Tag update successfully")
-
+          resetFormAndAction()
           onOpenChange(false)
           router.refresh()
         },

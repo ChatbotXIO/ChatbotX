@@ -9,6 +9,6 @@ import { OpenAIGenerateImageViewer } from "./viewer"
 export const openAIGenerateImageStep: StepDefinition = {
   editor: OpenAIGenerateImageEditor,
   viewer: OpenAIGenerateImageViewer,
-  schema: openAIGenerateImageSchema,
-  defaultValue: openAIGenerateImageDefaultFn,
+  validator: openAIGenerateImageSchema,
+  defaultFn: openAIGenerateImageDefaultFn,
 }

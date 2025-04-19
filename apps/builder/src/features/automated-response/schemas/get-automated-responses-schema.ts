@@ -8,6 +8,7 @@ import type { AutomatedResponse } from "@ahachat.ai/database/browser"
 import type { FlowResource } from "@/features/flows/schemas/get-flows-schema"
 
 export const listAutomatedResponsesNuqs = createSearchParamsCache({
+  folderId: parseAsString,
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   keyword: parseAsString.withDefault(""),

@@ -8,7 +8,7 @@ export const messageSchema = z.object({
 export type MessageSchema = z.infer<typeof messageSchema>
 
 export const updateAIAgentRequest = z.object({
-  name: z.string().min(1).max(255).trim(),
+  name: z.string().trim().min(1).max(255),
   prompt: z.string().max(1000).nullable(),
   messages: z.array(messageSchema),
 })

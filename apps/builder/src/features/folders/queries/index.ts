@@ -2,24 +2,26 @@ import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Folder, type FolderType, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import { FolderException } from "../schemas/exception"
+import { FolderException } from "../schemas/types"
 import type {
-  GetCurrentFoldersSchema,
-  GetFoldersSchema,
-} from "../schemas/get-folders-schema"
+  GetCurrentFolderSchema,
+  ListFoldersSearchParams,
+} from "../schemas/list-folders-schema"
 
 export const getFolders = async (
-  input: GetFoldersSchema,
+  input: ListFoldersSearchParams,
 ): Promise<{ data: Folder[] }> => {
   const userId = await getCurrentUserId()
-
   await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
     async () => {
       try {
         const data = await prisma.folder.findMany({
-          where: input,
+          where: {
+            ...input,
+            parentId: input.parentId === "" ? null : input.parentId,
+          },
           orderBy: [
             {
               createdAt: "asc",
@@ -35,16 +37,15 @@ export const getFolders = async (
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#folders#${input.folderType}`],
+      tags: [`chatbots:${input.chatbotId}#folders`],
     },
   )()
 }
 
 export const getCurrentFolder = async (
-  input: GetCurrentFoldersSchema,
+  input: GetCurrentFolderSchema,
 ): Promise<{ folder: Folder | null; parents: Folder[] }> => {
   const userId = await getCurrentUserId()
-
   await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
@@ -87,7 +88,10 @@ export const getCurrentFolder = async (
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#folders`, `${userId}#folders#${input.id}`],
+      tags: [
+        `chatbots:${input.chatbotId}#folders`,
+        `chatbots:${input.chatbotId}#folders:${input.id}`,
+      ],
     },
   )()
 }

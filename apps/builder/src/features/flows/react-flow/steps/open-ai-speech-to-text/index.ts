@@ -6,6 +6,6 @@ import { OpenAISpeechToTextViewer } from "./viewer"
 export const openAISpeechToTextStep: StepDefinition = {
   editor: OpenAISpeechToTextEditor,
   viewer: OpenAISpeechToTextViewer,
-  schema: openAISpeechToTextSchema,
-  defaultValue: openAISpeechToTextDefaultFn,
+  validator: openAISpeechToTextSchema,
+  defaultFn: openAISpeechToTextDefaultFn,
 }

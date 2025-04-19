@@ -131,7 +131,7 @@ export const MultiSelect = ({
   className,
   ...props
 }: MultiSelectProps & {
-  ref: React.RefObject<HTMLButtonElement>
+  ref?: React.RefObject<HTMLButtonElement>
 }) => {
   const [selectedValues, setSelectedValues] =
     React.useState<string[]>(defaultValue)

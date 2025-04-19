@@ -1,18 +1,15 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
+import type { DataTableRowAction } from "@/types/data-table"
 import type { WhatsappFlow } from "@ahachat.ai/database"
-import type { ColumnDef, Row } from "@tanstack/react-table"
-
-export interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: ""
-  value?: unknown
-}
+import type { ColumnDef } from "@tanstack/react-table"
+import { TextIcon } from "lucide-react"
+import type { Dispatch, SetStateAction } from "react"
 
 interface GetColumnsProps {
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<WhatsappFlow> | null>
+  setRowAction: Dispatch<
+    SetStateAction<DataTableRowAction<WhatsappFlow> | null>
   >
 }
 
@@ -21,6 +18,7 @@ export function getColumns({
 }: GetColumnsProps): ColumnDef<WhatsappFlow>[] {
   return [
     {
+      id: "name",
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
@@ -29,6 +27,13 @@ export function getColumns({
       size: 300,
       enableSorting: true,
       enableHiding: false,
+      meta: {
+        label: "Name",
+        placeholder: "Search names...",
+        variant: "text",
+        icon: TextIcon,
+      },
+      enableColumnFilter: true,
     },
     {
       accessorKey: "status",
@@ -37,7 +42,7 @@ export function getColumns({
       ),
       cell: ({ row }) => <div>{row.original.status}</div>,
       size: 300,
-      enableSorting: true,
+      enableSorting: false,
       enableHiding: false,
     },
     {
@@ -47,7 +52,7 @@ export function getColumns({
       ),
       cell: ({ row }) => <div>{row.original.isCompleted.toString()}</div>,
       size: 300,
-      enableSorting: true,
+      enableSorting: false,
       enableHiding: false,
     },
   ]

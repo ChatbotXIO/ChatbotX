@@ -1,28 +1,38 @@
 import { integrations } from "@/integration"
 import type { CreateMessageTemplateRequest } from "../schemas/create-message-templates-schema"
 import { TemplateType } from "../type"
+import type { Context } from "@ahachat.ai/sdk"
+import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
+import type { TemplateImageSchema } from "../templates/image/schema"
+import type { TemplateVideoSchema } from "../templates/video/schema"
+import type { TemplateDocumentSchema } from "../templates/document/schema"
+import type { TemplateTextSchema } from "../templates/text/schema"
 
 export type HeaderMediaFormat = "IMAGE" | "VIDEO" | "DOCUMENT"
 
 export const parseComponents = async (
-  ctx,
+  ctx: Context<WhatsappAuthValue>,
   templateType: TemplateType,
   content: CreateMessageTemplateRequest["content"],
 ) => {
-  let components = []
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  let components: any[] = []
 
   switch (templateType) {
     case TemplateType.CarouselImage: {
       components = parseBody(components, content)
       const cards = []
-      for (const card of content.cards) {
-        const cardComponents = await parseComponents(
-          ctx,
-          TemplateType.Image,
-          card,
-        )
-        cards.push({ components: cardComponents })
+      if ("cards" in content) {
+        for (const card of content.cards) {
+          const cardComponents = await parseComponents(
+            ctx,
+            TemplateType.Image,
+            card,
+          )
+          cards.push({ components: cardComponents })
+        }
       }
+
       components.push({
         type: "CAROUSEL",
         cards,
@@ -33,13 +43,15 @@ export const parseComponents = async (
     case TemplateType.CarouselVideo: {
       components = parseBody(components, content)
       const cards = []
-      for (const card of content.cards) {
-        const cardComponents = await parseComponents(
-          ctx,
-          TemplateType.Video,
-          card,
-        )
-        cards.push({ components: cardComponents })
+      if ("cards" in content) {
+        for (const card of content.cards) {
+          const cardComponents = await parseComponents(
+            ctx,
+            TemplateType.Video,
+            card,
+          )
+          cards.push({ components: cardComponents })
+        }
       }
       components.push({
         type: "CAROUSEL",
@@ -52,7 +64,7 @@ export const parseComponents = async (
       components = await parseHeader(components, templateType, content, ctx)
       components = parseBody(components, content)
       components = parseFooter(components, content)
-      if (content.buttons?.length) {
+      if ("buttons" in content && content.buttons.length) {
         components.push({
           type: "BUTTONS",
           buttons: content.buttons,
@@ -67,36 +79,53 @@ export const parseHeader = async (
   components: Array<Record<string, unknown>>,
   templateType: TemplateType,
   content: CreateMessageTemplateRequest["content"],
-  ctx,
+  ctx: Context<WhatsappAuthValue>,
 ) => {
-  if (!content.showHeader) {
+  if (!("showHeader" in content) || !("header" in content)) {
     return components
   }
   switch (templateType) {
     case TemplateType.Image:
-      components.push(await parseHeaderMedia(ctx, content.header.file, "IMAGE"))
+      components.push(
+        await parseHeaderMedia(
+          ctx,
+          (content as TemplateImageSchema).header.file,
+          "IMAGE",
+        ),
+      )
 
       return components
 
     case TemplateType.Video:
-      components.push(await parseHeaderMedia(ctx, content.header.file, "VIDEO"))
+      components.push(
+        await parseHeaderMedia(
+          ctx,
+          (content as TemplateVideoSchema).header.file,
+          "VIDEO",
+        ),
+      )
 
       return components
 
     case TemplateType.Document:
       components.push(
-        await parseHeaderMedia(ctx, content.header.file, "DOCUMENT"),
+        await parseHeaderMedia(
+          ctx,
+          (content as TemplateDocumentSchema).header.file,
+          "DOCUMENT",
+        ),
       )
 
       return components
 
     default: {
-      let header = {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      let header: any = {
         type: "HEADER",
-        text: content.header.text,
+        text: (content as TemplateTextSchema).header.text,
       }
 
-      if (content.header.variables?.length) {
+      if ((content as TemplateTextSchema).header.variables?.length) {
         header = {
           ...header,
           example: {
@@ -112,7 +141,7 @@ export const parseHeader = async (
 }
 
 export const parseHeaderMedia = async (
-  ctx,
+  ctx: Context<WhatsappAuthValue>,
   file: File,
   format: HeaderMediaFormat,
 ): Promise<{
@@ -140,7 +169,8 @@ export const parseBody = (
   components: Array<Record<string, unknown>>,
   content: CreateMessageTemplateRequest["content"],
 ) => {
-  let body = {
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  let body: any = {
     type: "BODY",
     text: content.body.text,
   }
@@ -163,7 +193,7 @@ export const parseFooter = (
   components: Array<Record<string, unknown>>,
   content: CreateMessageTemplateRequest["content"],
 ) => {
-  if (content.showFooter) {
+  if ("showFooter" in content) {
     components.push({
       type: "FOOTER",
       text: content.footer,

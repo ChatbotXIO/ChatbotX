@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button"
 import {
   Sortable,
-  SortableDragHandle,
+  SortableItemHandle,
   SortableItem,
 } from "@/components/ui/sortable"
 import { T } from "@tolgee/react"
-import { MoveIcon, PlusIcon } from "lucide-react"
+import { GripVerticalIcon, PlusIcon } from "lucide-react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { useStepStore } from "../../stores/step-store-provider"
 import { buttonStepDefaultFn } from "./schema"
@@ -53,20 +53,24 @@ export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
       <Sortable
         value={fields}
         onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
-        overlay={<div className="h-8 w-full rounded-sm bg-primary/10" />}
+        getItemValue={(item) => item.id}
+        // overlay={<div className="h-8 w-full rounded-sm bg-primary/10" />}
       >
         <div className="flex w-full flex-col gap-2">
           {fields.map((field, index) => (
             <SortableItem key={field.id} value={field.id} asChild>
               <div className="w-full flex">
                 <ButtonStepEditor parentName={`${parentName}.${index}`} />
-                <SortableDragHandle
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 shrink-0 flex-none hover:bg-transparent"
+                <SortableItemHandle
+                  // variant="ghost"
+                  // size="icon"
+                  // className="size-8 shrink-0 flex-none hover:bg-transparent"
+                  asChild
                 >
-                  <MoveIcon size={16} />
-                </SortableDragHandle>
+                  <Button variant="ghost" size="icon" className="size-8">
+                    <GripVerticalIcon className="h-4 w-4" />
+                  </Button>
+                </SortableItemHandle>
               </div>
             </SortableItem>
           ))}

@@ -10,8 +10,10 @@ import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
-    console.log("error", error)
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return `Unique constraint failed on ${error.meta?.target ?? ""}`
+      }
       if (error.code === "P2025" || error.code === "P2016") {
         return `Unable to find ${error.meta?.modelName ?? ""} record`
       }

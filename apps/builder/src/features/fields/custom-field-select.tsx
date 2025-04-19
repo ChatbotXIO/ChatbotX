@@ -10,7 +10,7 @@ import { useParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { mutate } from "swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
-import type { CustomFieldCollection } from "./schemas/get-fields-schema"
+import type { CustomFieldCollection } from "./schemas/types"
 
 interface ICustomFieldSelectProps {
   name: string
@@ -30,10 +30,8 @@ export const CustomFieldSelect = ({
   const params = useParams<{ chatbotId: string }>()
 
   const customFieldsUrl = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
-  const { data } = callAPI(customFieldsUrl)
-  const filterCustomFields = (
-    (data as CustomFieldCollection)?.data ?? []
-  ).filter((obj) => {
+  const { data } = callAPI<CustomFieldCollection>(customFieldsUrl)
+  const filterCustomFields = (data?.data ?? []).filter((obj) => {
     if (!customFieldType) {
       return true
     }
@@ -63,7 +61,7 @@ export const CustomFieldSelect = ({
               folderId={null}
               triggerButton={
                 <Button
-                  size="xs"
+                  size="sm"
                   variant="ghost"
                   className="cursor-pointer"
                   asChild

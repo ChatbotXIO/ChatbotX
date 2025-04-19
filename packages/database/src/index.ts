@@ -1,4 +1,4 @@
-import * as util from "node:util"
+import * as util from "util"
 import { PrismaClient } from "@prisma/client"
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }

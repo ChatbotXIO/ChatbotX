@@ -1,28 +1,19 @@
 "use client"
 
-import { Form, FormControl } from "@/components/ui/form"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Form } from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
-import { toast } from "sonner"
-import type { getIceBreakers } from "./queries"
-import { use } from "react"
-import { updateIceBreakerAction } from "./actions/update-ice-breakers"
-import { updateIceBreakerSchema } from "./schemas/update-ice-breaker-schema"
-import { useFieldArray } from "react-hook-form"
-import { Card, CardContent } from "@/components/ui/card"
-import { FormInput } from "@/components/form-input"
-import { Button } from "@/components/ui/button"
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  Loader2Icon,
-  PlusCircleIcon,
-  TrashIcon,
-} from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { use } from "react"
+import { toast } from "sonner"
+import { updateIceBreakerAction } from "./actions/update-ice-breakers"
+import type { getIceBreakers } from "./queries"
+import { updateIceBreakerSchema } from "./schemas/update-ice-breaker-schema"
 
 export function IceBreakerForm({
   chatbotId,
@@ -31,15 +22,11 @@ export function IceBreakerForm({
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof getIceBreakers>>]>
 }) {
-  const [{ data: prompts }] = use(promises)
+  const [{ data: allPrompts }] = use(promises)
   const { t } = useTranslate()
   const router = useRouter()
 
-  const {
-    form,
-    handleSubmitWithAction,
-    form: { control, register },
-  } = useHookFormAction(
+  const { form, handleSubmitWithAction } = useHookFormAction(
     updateIceBreakerAction.bind(null, chatbotId),
     zodResolver(updateIceBreakerSchema),
     {
@@ -55,17 +42,17 @@ export function IceBreakerForm({
       formProps: {
         mode: "onChange",
         defaultValues: {
-          prompts,
+          prompts: allPrompts,
         },
       },
       errorMapProps: {},
     },
   )
 
-  const { fields, append, remove, swap } = useFieldArray({
-    control,
-    name: "prompts",
-  })
+  // const { fields, append, remove, swap } = useFieldArray({
+  //   control,
+  //   name: "prompts",
+  // })
 
   return (
     <div className="flex flex-col items-center">
@@ -77,7 +64,7 @@ export function IceBreakerForm({
         >
           <Card className="w-4/6 mx-auto">
             <CardContent className="flex flex-col gap-6 px-6 py-8">
-              {fields.map((_field, index) => (
+              {/* {fields.map((_field, index) => (
                 <FormInput
                   key={`${index + 1}`}
                   name={`prompts.${index}`}
@@ -124,7 +111,7 @@ export function IceBreakerForm({
                     <PlusCircleIcon /> {t("common.addMore")}
                   </Button>
                 </div>
-              )}
+              )} */}
               <div className="flex justify-center gap-2 mt-6">
                 <Button variant="outline" asChild>
                   <Link href={`/chatbots/${chatbotId}/whatsapp/ice-breakers`}>

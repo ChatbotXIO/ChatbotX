@@ -36,9 +36,9 @@ export const templateDocumentSchema = z
     }
   })
 
-export type TemplateVideoSchema = z.infer<typeof templateDocumentSchema>
+export type TemplateDocumentSchema = z.infer<typeof templateDocumentSchema>
 
-export const templateDocumentDefaultValue = (): TemplateVideoSchema => ({
+export const templateDocumentDefaultValue = (): TemplateDocumentSchema => ({
   showHeader: true,
   showFooter: false,
   header: {

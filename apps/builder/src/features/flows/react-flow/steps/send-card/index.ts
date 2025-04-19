@@ -6,6 +6,6 @@ import { SendCardStepViewer } from "./viewer"
 export const sendCardStep: StepDefinition = {
   editor: SendCardStepEditor,
   viewer: SendCardStepViewer,
-  schema: sendCardStepSchema,
-  defaultValue: sendCardStepDefaultFn,
+  validator: sendCardStepSchema,
+  defaultFn: sendCardStepDefaultFn,
 }

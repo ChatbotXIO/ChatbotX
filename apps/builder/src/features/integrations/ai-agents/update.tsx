@@ -1,6 +1,8 @@
 "use client"
 
 import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
+import { TextareaField } from "@/components/form/textarea-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -119,13 +121,9 @@ export function UpdateAIAgentDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput name="name" label={t("aiAgent.name")} />
+              <InputField name="name" label={t("aiAgent.name")} />
 
-              <FormInput
-                name="prompt"
-                label={t("aiAgent.prompt")}
-                inputType="textarea"
-              />
+              <TextareaField name="prompt" label={t("aiAgent.prompt")} />
 
               <div className="flex flex-col space-y-2 overflow-auto max-h-[300px]">
                 {fields.map((item, index) => (

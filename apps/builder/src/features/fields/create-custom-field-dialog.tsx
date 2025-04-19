@@ -1,7 +1,7 @@
 "use client"
-
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
+import { InputField } from "@/components/form/input-field"
+import { SelectField } from "@/components/form/select-field"
+import { TextareaField } from "@/components/form/textarea-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { CustomFieldType, FieldType } from "@ahachat.ai/database/browser"
+import { CustomFieldType } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -30,7 +30,7 @@ export function CreateCustomFieldDialog({
   onSuccess,
 }: {
   chatbotId: string
-  folderId: string | null
+  folderId?: string | null
   triggerButton?: ReactNode
   onSuccess?: () => void
 }) {
@@ -41,12 +41,7 @@ export function CreateCustomFieldDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createCustomFieldAction.bind(
-        null,
-        chatbotId,
-        folderId,
-        FieldType.CUSTOM_FIELD,
-      ),
+      createCustomFieldAction.bind(null, chatbotId),
       zodResolver(createCustomFieldSchema),
       {
         actionProps: {
@@ -67,6 +62,7 @@ export function CreateCustomFieldDialog({
             name: "",
             customFieldType: CustomFieldType.SHORTTEXT,
             description: "",
+            folderId,
           },
         },
         errorMapProps: {},
@@ -76,27 +72,27 @@ export function CreateCustomFieldDialog({
   const customFieldTypeOptions = [
     {
       value: CustomFieldType.SHORTTEXT,
-      label: t("customField.customFieldType.ShortText"),
+      label: t("customFieldType.ShortText"),
     },
     {
       value: CustomFieldType.NUMBER,
-      label: t("customField.customFieldType.Number"),
+      label: t("customFieldType.Number"),
     },
     {
       value: CustomFieldType.DATE,
-      label: t("customField.customFieldType.Date"),
+      label: t("customFieldType.Date"),
     },
     {
       value: CustomFieldType.DATETIME,
-      label: t("customField.customFieldType.DateTime"),
+      label: t("customFieldType.DateTime"),
     },
     {
       value: CustomFieldType.BOOLEAN,
-      label: t("customField.customFieldType.Boolean"),
+      label: t("customFieldType.Boolean"),
     },
     {
       value: CustomFieldType.LONGTEXT,
-      label: t("customField.customFieldType.LongText"),
+      label: t("customFieldType.LongText"),
     },
   ]
 
@@ -121,27 +117,22 @@ export function CreateCustomFieldDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
-            <FormInput
+            <InputField
               name="name"
-              label={<T keyName="customField.name.label" />}
+              label={t("customField.name.label")}
               placeholder={t("customField.name.placeholder")}
             />
 
-            <FormInput
+            <SelectField
               name="customFieldType"
-              label={<T keyName="customField.customFieldType.label" />}
-            >
-              <SingleSelect
-                name="customFieldType"
-                options={customFieldTypeOptions}
-              />
-            </FormInput>
+              label={t("customFieldType.label")}
+              options={customFieldTypeOptions}
+            />
 
-            <FormInput
+            <TextareaField
               name="description"
-              inputType="textarea"
               isRequired={false}
-              label={<T keyName="customField.description.label" />}
+              label={t("customField.description.label")}
               placeholder={t("customField.description.placeholder")}
             />
 
@@ -162,7 +153,7 @@ export function CreateCustomFieldDialog({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("Common.ConfirmBtn")}
+                {t("common.confirmBtn")}
               </Button>
             </div>
           </form>

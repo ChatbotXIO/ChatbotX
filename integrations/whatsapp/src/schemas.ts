@@ -8,13 +8,12 @@ import type {
   SendMessageProps,
 } from "@ahachat.ai/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
-import type { ListFlowsResponse } from "./flows"
 import type {
   CreateMessageTemplateProps,
   ListMessageTemplatesReponse,
   MessageTemplateEntity,
 } from "./message-templates"
-import type { WhatsappPhoneNumber } from "./types"
+import type { ListFlowsResponse, WhatsappPhoneNumber } from "./types"
 
 export type WhatsappConfig = BaseConfig & {
   appSecret: string

@@ -4,7 +4,6 @@ import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 import { T } from "@/tolgee/server"
 import { Suspense } from "react"
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { MessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
 import type { SearchParams } from "nuqs/server"
 
@@ -35,17 +34,7 @@ export default async function WhatsappMessageTemplatePage(props: {
           </Button>
         </div>
       </div>
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={6}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "40rem", "12rem", "12rem", "8rem", "8rem"]}
-            shrinkZero
-          />
-        }
-      >
+      <Suspense>
         <MessageTemplatesTable promises={promises} chatbotId={chatbotId} />
       </Suspense>
     </div>

@@ -1,6 +1,7 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
+import { TextareaField } from "@/components/form/textarea-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { type Field, FieldType } from "@ahachat.ai/database/browser"
+import type { Field } from "@ahachat.ai/database/browser"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -34,7 +35,6 @@ export function UpdateCustomFieldDialog({
 }) {
   const { t } = useTranslate()
   const router = useRouter()
-  const fieldType = FieldType.CUSTOM_FIELD
 
   const {
     form,
@@ -42,12 +42,7 @@ export function UpdateCustomFieldDialog({
     resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
-    updateCustomFieldAction.bind(
-      null,
-      chatbotId,
-      customField?.id ?? "",
-      fieldType,
-    ),
+    updateCustomFieldAction.bind(null, chatbotId, customField?.id ?? ""),
     zodResolver(updateCustomFieldSchema),
     {
       actionProps: {
@@ -91,17 +86,16 @@ export function UpdateCustomFieldDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput
+              <InputField
                 name="name"
                 label={t("customField.name.label")}
                 placeholder={t("customField.name.placeholder")}
               />
 
-              <FormInput
+              <TextareaField
                 name="description"
                 label={t("customField.description.label")}
                 placeholder={t("customField.description.placeholder")}
-                inputType="textarea"
                 isRequired={false}
               />
 
