@@ -1,27 +1,28 @@
 {
-  "name": "@ahachat.ai",
+  "name": "ahachat.ai",
   "private": true,
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "lint": "turbo lint",
+    "format": "biome format --fix",
+    "lint": "biome check . --write",
     "locale:pull": "tolgee pull",
-    "locale:push": "tolgee sync --continue-on-warning --remove-unused --patterns './apps/builder/src/**/*.ts?(x)' --backup './.tolgee/backup'"
+    "locale:push": "tolgee sync --continue-on-warning --remove-unused --patterns './apps/builder/src/**/*.ts?(x)' --backup './.tolgee/backup'",
+    "format-and-lint": "biome check .",
+    "format-and-lint:fix": "biome check . --write"
   },
   "devDependencies": {
-    "@tolgee/cli": "^2.4.2",
-    "@types/node": "^22.10.5",
-    "prettier": "^3.4.2",
-    "turbo": "^2.3.3",
-    "typescript": "5.7.2"
+    "@biomejs/biome": "^1.9.4",
+    "@tolgee/cli": "^2.10.2",
+    "@types/node": "^22.14.1",
+    "lefthook": "^1.11.10",
+    "tsx": "^4.19.3",
+    "turbo": "^2.5.0",
+    "typescript": "5.8.3"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971",
   "engines": {
     "node": ">=22"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "workspaces": ["apps/*", "packages/*"]
 }

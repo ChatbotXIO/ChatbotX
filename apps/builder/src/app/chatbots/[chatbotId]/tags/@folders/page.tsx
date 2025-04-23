@@ -1,32 +1,33 @@
-
-import { CreateFolderDialog } from "@/features/folders/create-folder-dialog";
-import { ListFolders } from "@/features/folders/list-folders";
-import { getCurrentFolder, getFolders } from "@/features/folders/queries";
-import { getFoldersSearchParamsCache } from "@/features/folders/schemas/get-folders-schema";
-import { T } from "@/tolgee/server";
-import { Folder, FolderType } from "@ahachat.ai/database";
-import { type SearchParams } from 'nuqs/server';
-import { Suspense } from "react";
+import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
+import { ListFolders } from "@/features/folders/list-folders"
+import { getCurrentFolder, getFolders } from "@/features/folders/queries"
+import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
+import { T } from "@/tolgee/server"
+import { type Folder, FolderType } from "@ahachat.ai/database"
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 
 export default async function FoldersPage(props: {
-  params: Promise<{ chatbotId: string }>,
+  params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const { folderId } = getFoldersSearchParamsCache.parse(searchParams)
+  const { folderId } = listFoldersSearchParams.parse(searchParams)
 
-  const folderType = FolderType.Tag
+  const folderType = FolderType.TAG
 
   const promises = Promise.all([
-    folderId ? getCurrentFolder({
-      id: folderId,
-      chatbotId: params.chatbotId,
-    }) : Promise.resolve({ folder: null, parents: [] as Folder[] }),
+    folderId
+      ? getCurrentFolder({
+          id: folderId,
+          chatbotId: params.chatbotId,
+        })
+      : Promise.resolve({ folder: null, parents: [] as Folder[] }),
     getFolders({
       chatbotId: params.chatbotId,
       folderType: folderType,
-      parentId: folderId,
+      folderId: folderId,
     }),
   ])
 
@@ -36,13 +37,20 @@ export default async function FoldersPage(props: {
         <h3 className="font-bold flex-1">
           <T keyName="tags.header" />
         </h3>
-        <CreateFolderDialog chatbotId={params.chatbotId} folderType={folderType} parentId={folderId} />
+        <CreateFolderDialog
+          chatbotId={params.chatbotId}
+          folderType={folderType}
+          parentId={folderId}
+        />
       </div>
 
       <Suspense>
-        <ListFolders chatbotId={params.chatbotId}  folderType={folderType} promises={promises} />
+        <ListFolders
+          chatbotId={params.chatbotId}
+          folderType={folderType}
+          promises={promises}
+        />
       </Suspense>
     </>
-  );
+  )
 }
-

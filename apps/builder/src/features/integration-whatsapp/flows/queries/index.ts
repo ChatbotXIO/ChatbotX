@@ -1,0 +1,60 @@
+import {
+  type Prisma,
+  prisma,
+  type WhatsappFlow,
+  type WhatsappFlowStatus,
+} from "@ahachat.ai/database"
+import type { GetFlowsSchema } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
+import { getCurrentUserId } from "@/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { unstable_cache } from "next/cache"
+
+export const getFlows = async (
+  input: GetFlowsSchema,
+): Promise<{
+  data: WhatsappFlow[]
+  pageCount: number
+}> => {
+  const userId = await getCurrentUserId()
+
+  await findChatbotOrFail(userId, input.chatbotId)
+
+  return await unstable_cache(
+    async () => {
+      try {
+        let where: Prisma.WhatsappFlowWhereInput = {
+          integrationWhatsapp: {
+            is: {
+              chatbotId: input.chatbotId,
+            },
+          },
+        }
+        if (input.status) {
+          where = {
+            ...where,
+            status: input.status as WhatsappFlowStatus,
+          }
+        }
+        const [data, total] = await prisma.$transaction([
+          prisma.whatsappFlow.findMany({
+            skip: (input.page - 1) * input.perPage,
+            take: input.perPage,
+            where,
+          }),
+          prisma.whatsappFlow.count({ where }),
+        ])
+
+        const pageCount = Math.ceil(total / input.perPage)
+
+        return { data, pageCount }
+      } catch (_err) {
+        return { data: [], pageCount: 0 }
+      }
+    },
+    [JSON.stringify(input)],
+    {
+      revalidate: 3600,
+      tags: [`chatbots:${input.chatbotId}#whatsapp#flows`],
+    },
+  )()
+}

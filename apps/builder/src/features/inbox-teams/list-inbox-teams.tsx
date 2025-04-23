@@ -1,106 +1,169 @@
-"use client";
+"use client"
 
-import React, { useState } from 'react';
-import { Team } from "@ahachat.ai/database"
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { getInboxTeams } from './queries';
-import { Button } from '@/components/ui/button';
-import { FolderIcon, PencilIcon, TrashIcon } from 'lucide-react';
-import { parseAsString, useQueryState } from 'nuqs';
-import { DeleteTeamDialog } from './delete-team-dialog';
-import { UpdateTeamDialog } from './update-team-dialog';
+// import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
+import { T } from "@tolgee/react"
+import { MoreHorizontalIcon, Trash2Icon } from "lucide-react"
+import { use, useState } from "react"
+import type { getUsers } from "../users/queries"
+import type { UserResource } from "../users/schemas/types"
+import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
+import type { getInboxTeams } from "./queries"
+import type {
+  InboxTeamMemberResource,
+  InboxTeamResourse,
+} from "./schemas/types"
+import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
+import { DeleteInboxTeamMembersDialog } from "./delete-inbox-team-member-dialog"
+import { DeleteInboxTeamDialog } from "./delete-inbox-team-dialog"
+import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 
 interface ListInboxTeamsProps {
-  promises: Promise<[
-    Awaited<ReturnType<typeof getInboxTeams>>
-  ]>;
   chatbotId: string
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof getInboxTeams>>,
+      Awaited<ReturnType<typeof getUsers>>,
+    ]
+  >
 }
 
-interface TeamWithCount extends Team {
-  _count: {
-    teamMembers: number;
-  };
-}
-
-export function ListInboxTeams({ promises, chatbotId }: ListInboxTeamsProps) {
-  const [{ data }] = React.use(promises);
-  const [, setTeamId] = useQueryState("teamId", parseAsString.withOptions({
-    history: "replace",
-    shallow: false,
-  }))
-
-  const [targetTeam, setTargetTeam] = useState<TeamWithCount | null>(null)
-
-  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false)
-  const onEdit = (team: TeamWithCount) => {
-    setTargetTeam(team)
-    setOpenEditDialog(true)
-  }
-
-  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false)
-  const onDelete = (team: TeamWithCount) => {
-    setTargetTeam(team)
-    setOpenDeleteDialog(true)
-  }
-
-  console.log("Xem data của team list", data)
+function ListInboxTeamsDetail({
+  chatbotId,
+  allInboxTeams,
+  allUsers,
+}: {
+  chatbotId: string
+  allInboxTeams: InboxTeamResourse[]
+  allUsers: UserResource[]
+}) {
+  const [renameInboxTeam, setRenameInboxTeam] =
+    useState<InboxTeamResourse | null>(null)
+  const [deleteInboxTeam, setDeleteInboxTeam] =
+    useState<InboxTeamResourse | null>(null)
+  const [addInboxTeamMember, setAddInboxTeamMember] =
+    useState<InboxTeamResourse | null>(null)
+  const [deleteInboxTeamMember, setDeleteInboxTeamMember] =
+    useState<InboxTeamMemberResource | null>(null)
 
   return (
     <>
-      <ScrollArea className="max-h-44" type="auto">
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 lg:grid-cols-5">
-          {
-            data.map((team: any) => {
-              return (
-                <div className="overflow-hidden" key={team.id}>
-                  <div className="group flex items-center border rounded-lg gap-2 hover:border-primary pr-3">
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className="flex overflow-hidden whitespace-nowrap text-ellipsis hover:bg-transparent"
-                      onClick={() => setTeamId(team.id)}
-                    >
-                      <FolderIcon />
-                      <div className="flex">
-                        <p>
-                          {team.name}
-                        </p>
-                        <p className='text-gray-400 ml-10'>
-                          {team._count.teamMembers}
-                        </p>
-                      </div>
+      <Accordion type="single" collapsible className="w-full">
+        {allInboxTeams.map((team) => {
+          return (
+            <AccordionItem key={team.id} value={team.id}>
+              <div className="flex w-full items-center">
+                <AccordionTrigger className="flex-1 text-left gap-2">
+                  <span className="flex-1 text-left">{team.name}</span>
+                </AccordionTrigger>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontalIcon className="h-4 w-4" />
+                      <span className="sr-only">Open menu</span>
                     </Button>
-                    <>
-                      <Button size="sm" variant="ghost" className="px-1 lg:hidden lg:group-hover:inline-flex" onClick={() => onEdit(team)}>
-                        <PencilIcon />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="px-1 lg:hidden lg:group-hover:inline-flex" onClick={() => onDelete(team)}>
-                        <TrashIcon />
-                      </Button>
-                    </>
-                  </div>
-                </div>
-              )
-            })
-          }
-        </div>
-      </ScrollArea>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="p-3 flex flex-col gap-2">
+                    <DropdownMenuItem
+                      className="cursor-pointer text-sm"
+                      onClick={() => setRenameInboxTeam(team)}
+                    >
+                      <T keyName="common.renameBtn" />
+                    </DropdownMenuItem>
 
-      <DeleteTeamDialog
-        open={openDeleteDialog}
-        onOpenChange={setOpenDeleteDialog}
+                    <DropdownMenuItem
+                      className="cursor-pointer text-sm"
+                      onClick={() => setAddInboxTeamMember(team)}
+                    >
+                      <T keyName="inboxTeams.addMemberBtn" />
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      className="cursor-pointer text-sm text-destructive"
+                      onClick={() => setDeleteInboxTeam(team)}
+                    >
+                      <T keyName="common.deleteBtn" />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <AccordionContent>
+                {(team.inboxTeamMembers || []).map((member) => {
+                  return (
+                    <div
+                      key={`${team.id}-${member.id}`}
+                      className="flex w-full items-center"
+                    >
+                      <span className="flex-1 gap-1">{member.user?.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-6"
+                        onClick={() => setDeleteInboxTeamMember(member)}
+                      >
+                        <Trash2Icon className="text-destructive" />
+                      </Button>
+                    </div>
+                  )
+                })}
+              </AccordionContent>
+            </AccordionItem>
+          )
+        })}
+      </Accordion>
+
+      <RenameInboxTeamDialog
+        open={!!renameInboxTeam}
+        onOpenChange={() => setRenameInboxTeam(null)}
         chatbotId={chatbotId}
-        team={targetTeam}
+        inboxTeam={renameInboxTeam}
       />
-
-      <UpdateTeamDialog
-        open={openEditDialog}
-        onOpenChange={setOpenEditDialog}
+      <AddInboxTeamMemberDialog
+        open={!!addInboxTeamMember}
+        onOpenChange={() => setAddInboxTeamMember(null)}
         chatbotId={chatbotId}
-        team={targetTeam}
+        listUsers={allUsers}
+        inboxTeam={addInboxTeamMember}
+      />
+      <DeleteInboxTeamDialog
+        open={!!deleteInboxTeam}
+        onOpenChange={() => setDeleteInboxTeam(null)}
+        chatbotId={chatbotId}
+        inboxTeam={deleteInboxTeam}
+      />
+      <DeleteInboxTeamMembersDialog
+        open={!!deleteInboxTeamMember}
+        onOpenChange={() => setDeleteInboxTeamMember(null)}
+        chatbotId={chatbotId}
+        teamMember={deleteInboxTeamMember}
       />
     </>
-  );
+  )
 }
 
+export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
+  const [{ data: allInboxTeams }, { data: allUsers }] = use(promises)
+
+  return (
+    <>
+      <CreateInboxTeamDialog chatbotId={chatbotId} users={allUsers} />
+      <ListInboxTeamsDetail
+        chatbotId={chatbotId}
+        allInboxTeams={allInboxTeams || []}
+        allUsers={allUsers || []}
+      />
+    </>
+  )
+}

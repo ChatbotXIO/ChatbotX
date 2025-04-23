@@ -1,69 +1,55 @@
-"use server";
+"use server"
 
 import {
-  DeleteFolderBindSchema,
-  deleteFolderBindSchema,
-} from "@/features/folders/schemas/delete-folder-schema";
-import { authActionClient } from "@/lib/safe-action";
-import { findChatbotOrFail } from "@/lib/user-permissions";
-import { Folder, prisma, User } from "@ahachat.ai/database";
-import { revalidateTag } from "next/cache";
+  bulkUpdateIdsRequest,
+  chatbotIdRequestParams,
+  type BulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
 
-export const deleteFolderAction = authActionClient
-  .bindArgsSchemas(deleteFolderBindSchema)
-  .action(async ({
-    ctx,
-    bindArgsParsedInputs: [chatbotId, id],
-  }: {
-    ctx: { user: User }
-    bindArgsParsedInputs: DeleteFolderBindSchema
-  }) => {
-    await findChatbotOrFail(ctx.user.id, chatbotId)
+export const deleteFolderAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(bulkUpdateIdsRequest)
+  .action(
+    async ({
+      bindArgsParsedInputs: [chatbotId],
+      parsedInput,
+    }: {
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: BulkUpdateIdsRequest
+    }) => {
+      await prisma.$transaction(async (tx) => {
+        for (const id in parsedInput.ids) {
+          const folder = await tx.folder.findFirst({
+            where: {
+              chatbotId,
+              id,
+            },
+          })
+          if (!folder) continue
 
-    const folder: Folder = await prisma.folder.findFirstOrThrow({
-      where: {
-        id,
-        chatbotId
-      }
-    })
+          await tx.folder.deleteMany({
+            where: {
+              chatbotId,
+              OR: [
+                {
+                  id,
+                },
+                {
+                  paths: {
+                    has: id,
+                  },
+                },
+              ],
+            },
+          })
 
-    // TODO: move to trash
-
-    // const trashFolder: Folder|null = await prisma.folder.findFirst({
-    //   where: {
-    //     chatbotId,
-    //     folderType: folder.folderType,
-    //     isTrash: true
-    //   }
-    // })
-
-    // if (trashFolder && folder.parentId !== trashFolder.id) {
-    //   await prisma.folder.update({
-    //     where: { id },
-    //     data: {
-    //       parentId: trashFolder.parentId,
-    //       paths
-    //     }
-    //    })
-    // } else {
-    await prisma.folder.deleteMany({
-      where: {
-        OR: [
-          {
-            id,
-          },
-          {
-            paths: {
-              has: folder.id
-            }
-          }
-        ]
-      }
-    })
-
-    revalidateTag(`${ctx.user.id}#folders#${folder.folderType}`)
-
-    return {
-      successful: true,
-    }
-  })
+          revalidateTag(`chatbots:${chatbotId}#folders:${folder.folderType}`)
+          revalidateTag(`chatbots:${chatbotId}#folders:${folder.id}`)
+        }
+      })
+    },
+  )

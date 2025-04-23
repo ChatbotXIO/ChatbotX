@@ -5,15 +5,10 @@ import {
   Bell,
   ChevronsUpDown,
   CreditCard,
-  LogOut,
   Sparkles,
 } from "lucide-react"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,8 +24,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { LangSelector } from "./lang-selector"
+import { SignOut } from "@/features/auth/sign-out"
 import { useTranslate } from "@tolgee/react"
+import { LangSelector } from "./lang-selector"
 import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
@@ -44,10 +40,6 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { t } = useTranslate()
-
-  const onLogout = () => {
-    console.log('logout')
-  }
 
   return (
     <SidebarMenu>
@@ -70,7 +62,7 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -97,14 +89,14 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                {t('common.language')}
+                {t("common.language")}
                 <LangSelector />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                {t('common.theme')}
+                {t("common.theme")}
                 <ThemeSwitcher />
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -124,9 +116,8 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onLogout()}>
-              <LogOut />
-              Log out
+            <DropdownMenuItem asChild>
+              <SignOut />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

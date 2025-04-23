@@ -1,9 +1,9 @@
 "use client"
 
-import * as React from "react"
 import { Check } from "lucide-react"
+import type * as React from "react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/components/lib/utils"
 import {
   Command,
   CommandEmpty,
@@ -22,20 +22,28 @@ import {
 
 const FacetedFilter = Popover
 
-const FacetedFilterTrigger = React.forwardRef<
-  React.ComponentRef<typeof PopoverTrigger>,
-  React.ComponentPropsWithoutRef<typeof PopoverTrigger>
->(({ className, children, ...props }, ref) => (
+const FacetedFilterTrigger = ({
+  ref,
+  className,
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof PopoverTrigger> & {
+  ref?: React.RefObject<React.ComponentRef<typeof PopoverTrigger>>
+}) => (
   <PopoverTrigger ref={ref} className={cn(className)} {...props}>
     {children}
   </PopoverTrigger>
-))
+)
 FacetedFilterTrigger.displayName = "FacetedFilterTrigger"
 
-const FacetedFilterContent = React.forwardRef<
-  React.ComponentRef<typeof PopoverContent>,
-  React.ComponentPropsWithoutRef<typeof PopoverContent>
->(({ className, children, ...props }, ref) => (
+const FacetedFilterContent = ({
+  ref,
+  className,
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof PopoverContent> & {
+  ref?: React.RefObject<React.ComponentRef<typeof PopoverContent>>
+}) => (
   <PopoverContent
     ref={ref}
     className={cn("w-[12.5rem] p-0", className)}
@@ -44,7 +52,7 @@ const FacetedFilterContent = React.forwardRef<
   >
     <Command>{children}</Command>
   </PopoverContent>
-))
+)
 FacetedFilterContent.displayName = "FacetedFilterContent"
 
 const FacetedFilterInput = CommandInput
@@ -60,10 +68,15 @@ interface FacetedFilterItemProps
   selected: boolean
 }
 
-const FacetedFilterItem = React.forwardRef<
-  React.ComponentRef<typeof CommandItem>,
-  FacetedFilterItemProps
->(({ className, children, selected, ...props }, ref) => {
+const FacetedFilterItem = ({
+  ref,
+  className,
+  children,
+  selected,
+  ...props
+}: FacetedFilterItemProps & {
+  ref?: React.RefObject<React.ComponentRef<typeof CommandItem>>
+}) => {
   return (
     <CommandItem
       ref={ref}
@@ -77,7 +90,7 @@ const FacetedFilterItem = React.forwardRef<
           "mr-2 flex size-4 items-center justify-center rounded-sm border border-primary",
           selected
             ? "bg-primary text-primary-foreground"
-            : "opacity-50 [&_svg]:invisible"
+            : "opacity-50 [&_svg]:invisible",
         )}
       >
         <Check className="size-4" />
@@ -85,7 +98,7 @@ const FacetedFilterItem = React.forwardRef<
       {children}
     </CommandItem>
   )
-})
+}
 FacetedFilterItem.displayName = "FacetedFilterItem"
 
 const FacetedFilterSeparator = CommandSeparator

@@ -1,45 +1,29 @@
-"use client";
+"use client"
 
-import { DataTable } from "@/components/data-table/data-table";
-import type {
-  DataTableFilterField,
-  DataTableRowAction,
-} from "@/components/data-table/types";
-import { useDataTable } from "@/hooks/use-data-table";
-import { Log } from "@ahachat.ai/database";
-import React from 'react';
-import { getAuditColumns } from './audit-logs-table-columns';
-import { getLogs } from "./queries";
+import { useDataTable } from "@/hooks/use-data-table"
+import type { Log } from "@ahachat.ai/database/browser"
+import React from "react"
+import { getAuditColumns } from "./audit-logs-table-columns"
+import type { getLogs } from "./queries"
+import type { DataTableRowAction } from "@/types/data-table"
+import { DataTable } from "@/components/data-table"
 
 interface LogsTableProps {
-  promises: Promise<[
-    Awaited<ReturnType<typeof getLogs>>
-  ]>;
-  chatbotId: string
+  promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>
 }
 
-export function AuditLogsTable({ promises, chatbotId }: LogsTableProps) {
-  const [{ data, pageCount }] = React.use(promises);
-  const [rowAction, setRowAction] = React.useState<DataTableRowAction<Log> | null>(null);
+export function AuditLogsTable({ promises }: LogsTableProps) {
+  const [{ data, pageCount }] = React.use(promises)
+  const [_rowAction, setRowAction] =
+    React.useState<DataTableRowAction<Log> | null>(null)
 
-  const columns = React.useMemo(
-    () => getAuditColumns(),
-    [setRowAction]
-  )
-
-  const filterFields: DataTableFilterField<Log & { action?: string }>[] = [
-    {
-      id: "action",
-      label: "Search",
-      placeholder: "Enter Action name...",
-    },
-  ];
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const columns = React.useMemo(() => getAuditColumns(), [setRowAction])
 
   const { table } = useDataTable({
     data,
     columns,
     pageCount,
-    filterFields,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -47,11 +31,11 @@ export function AuditLogsTable({ promises, chatbotId }: LogsTableProps) {
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
-  });
+  })
 
   return (
     <>
       <DataTable table={table} />
     </>
-  );
+  )
 }

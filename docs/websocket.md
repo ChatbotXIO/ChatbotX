@@ -1,6 +1,7 @@
 # Implement websocket
 
 ### Browser connect websocket
+
 ```mermaid
 sequenceDiagram
   participant Browser
@@ -18,6 +19,7 @@ sequenceDiagram
 ```
 
 ### Broadcast messages
+
 ```mermaid
 sequenceDiagram
   participant Browser

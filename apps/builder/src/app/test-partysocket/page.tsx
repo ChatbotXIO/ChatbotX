@@ -1,6 +1,6 @@
 "use client"
 
-import usePartySocket from "partysocket/react";
+import usePartySocket from "partysocket/react"
 
 export default function SamplePartysocketPage() {
   const ws = usePartySocket({
@@ -12,21 +12,19 @@ export default function SamplePartysocketPage() {
     // in addition, you can provide socket lifecycle event handlers
     // (equivalent to using ws.addEventListener in an effect hook)
     onOpen() {
-      console.log("connected");
-      ws.send("hello!1111");
+      console.log("connected")
+      ws.send("hello!1111")
     },
-    onMessage(e: any) {
-      console.log("message", e.data);
+    onMessage(e: WebSocketEventMap["message"]) {
+      console.log("message", e.data)
     },
     onClose() {
-      console.log("closed");
+      console.log("closed")
     },
-    onError(e: any) {
-      console.log("error", e);
-    }
-  });
+    onError(e: WebSocketEventMap["error"]) {
+      console.log("error", e)
+    },
+  })
 
-  return (
-    <div>socket ne</div>
-  )
+  return <div>socket ne</div>
 }
