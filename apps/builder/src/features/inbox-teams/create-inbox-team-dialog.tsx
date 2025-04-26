@@ -56,7 +56,6 @@ export function CreateInboxTeamDialog({
       errorMapProps: {},
     },
   )
-  console.log("usersssssss", users)
 
   const userOptions = users.map((user) => ({
     value: user.id,
