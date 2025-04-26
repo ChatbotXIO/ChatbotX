@@ -15,34 +15,29 @@ export const getMessageTemplates = async (
   pageCount: number
 }> => {
   const userId = await getCurrentUserId()
-
   await findChatbotOrFail(userId, input.chatbotId)
 
   return await unstable_cache(
     async () => {
-      try {
-        const where: Prisma.WhatsappMessageTemplateWhereInput = {
-          integrationWhatsapp: {
-            is: {
-              chatbotId: input.chatbotId,
-            },
+      const where: Prisma.WhatsappMessageTemplateWhereInput = {
+        integrationWhatsapp: {
+          is: {
+            chatbotId: input.chatbotId,
           },
-        }
-        const [data, total] = await prisma.$transaction([
-          prisma.whatsappMessageTemplate.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
-            where,
-          }),
-          prisma.whatsappMessageTemplate.count({ where }),
-        ])
-
-        const pageCount = Math.ceil(total / input.perPage)
-
-        return { data, pageCount }
-      } catch (_err) {
-        return { data: [], pageCount: 0 }
+        },
       }
+      const [data, total] = await prisma.$transaction([
+        prisma.whatsappMessageTemplate.findMany({
+          skip: (input.page - 1) * input.perPage,
+          take: input.perPage,
+          where,
+        }),
+        prisma.whatsappMessageTemplate.count({ where }),
+      ])
+
+      const pageCount = Math.ceil(total / input.perPage)
+
+      return { data, pageCount }
     },
     [JSON.stringify(input)],
     {

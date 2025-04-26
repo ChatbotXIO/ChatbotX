@@ -14,38 +14,34 @@ export async function listBroadcasts(
 
   return await unstable_cache(
     async () => {
-      try {
-        const where: Prisma.BroadcastWhereInput = {
-          chatbotId: input.chatbotId,
-        }
+      const where: Prisma.BroadcastWhereInput = {
+        chatbotId: input.chatbotId,
+      }
 
-        const [data, total] = await prisma.$transaction([
-          prisma.broadcast.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
-            where,
-            include: {
-              _count: {
-                select: {
-                  contacts: true,
-                },
+      const [data, total] = await prisma.$transaction([
+        prisma.broadcast.findMany({
+          skip: (input.page - 1) * input.perPage,
+          take: input.perPage,
+          where,
+          include: {
+            _count: {
+              select: {
+                contacts: true,
               },
             },
-          }),
-          prisma.broadcast.count({ where }),
-        ])
+          },
+        }),
+        prisma.broadcast.count({ where }),
+      ])
 
-        const pageCount = Math.ceil(total / input.perPage)
+      const pageCount = Math.ceil(total / input.perPage)
 
-        return { data, pageCount }
-      } catch (_err) {
-        return { data: [], pageCount: 0 }
-      }
+      return { data, pageCount }
     },
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#broadcasts`],
+      tags: [`chatbots:${input.chatbotId}#broadcasts`],
     },
   )()
 }

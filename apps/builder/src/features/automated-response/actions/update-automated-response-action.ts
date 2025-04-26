@@ -12,7 +12,7 @@ import {
   type UpdateAutomatedResponseRequest,
   updateAutomatedResponseRequest,
 } from "../schemas/update-automated-responses-schema"
-import { AutomatedResponseException } from "../schemas/utils"
+import { AutomatedResponseException } from "../schemas/types"
 
 export const updateAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)

@@ -7,7 +7,12 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": [".next", ".tolgee", ".turbo"]
+    "ignore": [
+      ".next",
+      ".tolgee",
+      ".turbo",
+      "packages/database/generated/client"
+    ]
   },
   "formatter": {
     "enabled": true,

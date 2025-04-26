@@ -20,61 +20,57 @@ export async function getFlows(
 
   return await unstable_cache(
     async () => {
-      try {
-        const where: Prisma.FlowWhereInput = {
-          chatbotId: input.chatbotId,
-        }
-
-        if (input.folderId !== undefined) {
-          where.folderId =
-            input.folderId === null || input.folderId === "0"
-              ? null
-              : input.folderId
-        }
-
-        if (input.name) {
-          where.AND = [
-            {
-              name: {
-                contains: input.name,
-                mode: "insensitive",
-              },
-            },
-          ]
-        }
-
-        const orderBy = input.sort.map((sortItem) => ({
-          [sortItem.id]: sortItem.desc ? "desc" : "asc",
-        }))
-
-        const [data, total] = await prisma.$transaction([
-          prisma.flow.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
-            where,
-            orderBy,
-            // include: {
-            //   _count: {
-            //     select: {
-            // contacts: true
-            // flowVersions: {
-            //   where: {
-            //     isDraft: true,
-            //   },
-            // },
-            //   },
-            // },
-            // },
-          }),
-          prisma.flow.count({ where }),
-        ])
-
-        const pageCount = Math.ceil(total / input.perPage)
-
-        return { data, pageCount }
-      } catch (_err) {
-        return { data: [], pageCount: 0 }
+      const where: Prisma.FlowWhereInput = {
+        chatbotId: input.chatbotId,
       }
+
+      if (input.folderId !== undefined) {
+        where.folderId =
+          input.folderId === null || input.folderId === "0"
+            ? null
+            : input.folderId
+      }
+
+      if (input.name) {
+        where.AND = [
+          {
+            name: {
+              contains: input.name,
+              mode: "insensitive",
+            },
+          },
+        ]
+      }
+
+      const orderBy = input.sort.map((sortItem) => ({
+        [sortItem.id]: sortItem.desc ? "desc" : "asc",
+      }))
+
+      const [data, total] = await prisma.$transaction([
+        prisma.flow.findMany({
+          skip: (input.page - 1) * input.perPage,
+          take: input.perPage,
+          where,
+          orderBy,
+          // include: {
+          //   _count: {
+          //     select: {
+          // contacts: true
+          // flowVersions: {
+          //   where: {
+          //     isDraft: true,
+          //   },
+          // },
+          //   },
+          // },
+          // },
+        }),
+        prisma.flow.count({ where }),
+      ])
+
+      const pageCount = Math.ceil(total / input.perPage)
+
+      return { data, pageCount }
     },
     [JSON.stringify(input)],
     {

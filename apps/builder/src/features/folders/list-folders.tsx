@@ -34,7 +34,7 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
     "folderId",
     parseAsString.withOptions({
       history: "push",
-      // shallow: false,
+      shallow: false,
     }),
   )
 

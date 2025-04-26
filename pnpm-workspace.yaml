@@ -1,4 +1,8 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-  - "integrations/*"
+  - apps/*
+  - packages/*
+  - integrations/*
+
+onlyBuiltDependencies:
+  - esbuild
+  - lefthook

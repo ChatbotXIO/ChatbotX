@@ -1,20 +1,16 @@
 import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
+import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
 import { T } from "@/tolgee/server"
 import { type Folder, FolderType } from "@ahachat.ai/database"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
-import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
+import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
-const folderSearchParams = {
-  folderId: parseAsString.withDefault(""),
-}
-const loadSearchParams = createLoader(folderSearchParams)
-
-export default async function FoldersDetault(props: {
-  params: Promise<{ chatbotId: string }>
+export default async function SharedFolderSlot(props: {
+  chatbotId: string
   searchParams: Promise<SearchParams>
 }) {
   const headersList = await headers()
@@ -46,19 +42,18 @@ export default async function FoldersDetault(props: {
     return notFound()
   }
 
-  const params = await props.params
   const searchParams = await props.searchParams
-  const { folderId } = await loadSearchParams(searchParams)
+  const { folderId } = await listFoldersSearchParams.parse(searchParams)
 
   const promises = Promise.all([
     folderId
       ? getCurrentFolder({
           id: folderId,
-          chatbotId: params.chatbotId,
+          chatbotId: props.chatbotId,
         })
       : Promise.resolve({ folder: null, parents: [] as Folder[] }),
     getFolders({
-      chatbotId: params.chatbotId,
+      chatbotId: props.chatbotId,
       folderType: folderType,
       folderId: folderId,
     }),
@@ -71,7 +66,7 @@ export default async function FoldersDetault(props: {
           <T keyName="folders.heading" />
         </h3>
         <CreateFolderDialog
-          chatbotId={params.chatbotId}
+          chatbotId={props.chatbotId}
           folderType={folderType}
           parentId={folderId}
         />
@@ -79,7 +74,7 @@ export default async function FoldersDetault(props: {
 
       <Suspense>
         <ListFolders
-          chatbotId={params.chatbotId}
+          chatbotId={props.chatbotId}
           folderType={folderType}
           promises={promises}
         />

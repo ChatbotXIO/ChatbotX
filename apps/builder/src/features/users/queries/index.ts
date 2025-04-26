@@ -14,26 +14,22 @@ export async function getUsers(
 
   return await unstable_cache(
     async () => {
-      try {
-        const where: Prisma.UserWhereInput = {
-          chatbotMembers: {
-            some: {
-              chatbotId: input.chatbotId,
-            },
+      const where: Prisma.UserWhereInput = {
+        chatbotMembers: {
+          some: {
+            chatbotId: input.chatbotId,
           },
-        }
-
-        const data = await prisma.user.findMany({ where })
-
-        return { data }
-      } catch (_err) {
-        return { data: [] }
+        },
       }
+
+      const data = await prisma.user.findMany({ where })
+
+      return { data }
     },
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#users`],
+      tags: [`chatbots:${input.chatbotId}#users`],
     },
   )()
 }

@@ -2,11 +2,11 @@ import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Folder, type FolderType, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import { FolderException } from "../schemas/types"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
 } from "../schemas/list-folders-schema"
+import { FolderException } from "../schemas/types"
 
 export const getFolders = async (
   input: ListFoldersSearchParams,
@@ -14,30 +14,28 @@ export const getFolders = async (
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
+  const { folderId, ...others } = input
+
   return await unstable_cache(
     async () => {
-      try {
-        const data = await prisma.folder.findMany({
-          where: {
-            ...input,
-            parentId: input.parentId === "" ? null : input.parentId,
+      const data = await prisma.folder.findMany({
+        where: {
+          ...others,
+          parentId: !folderId || input.folderId === "" ? null : input.folderId,
+        },
+        orderBy: [
+          {
+            createdAt: "asc",
           },
-          orderBy: [
-            {
-              createdAt: "asc",
-            },
-          ],
-        })
+        ],
+      })
 
-        return { data }
-      } catch (_err) {
-        return { data: [] }
-      }
+      return { data }
     },
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#folders`],
+      tags: [`chatbots:${input.chatbotId}#folders#${input.folderType}`],
     },
   )()
 }
@@ -48,42 +46,41 @@ export const getCurrentFolder = async (
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
+  const folder = await prisma.folder.findFirst({
+    where: input,
+  })
+  if (!folder) {
+    return { folder: null, parents: [] }
+  }
+
   return await unstable_cache(
     async () => {
-      try {
-        const folder = await prisma.folder.findFirstOrThrow({
-          where: input,
+      let parents: Folder[] = []
+      if (folder.paths.length > 0) {
+        const tempParents = await prisma.folder.findMany({
+          where: {
+            id: { in: folder.paths },
+          },
         })
 
-        let parents: Folder[] = []
-        if (folder.paths.length > 0) {
-          const tempParents = await prisma.folder.findMany({
-            where: {
-              id: { in: folder.paths },
-            },
-          })
+        // Sort by path's order
+        const orderedPaths = folder.paths.reduce(
+          (result, value) => {
+            result[value] = null
+            return result
+          },
+          {} as Record<string, Folder | null>,
+        )
 
-          // Sort by path's order
-          const orderedPaths = folder.paths.reduce(
-            (result, value) => {
-              result[value] = null
-              return result
-            },
-            {} as Record<string, Folder | null>,
-          )
-
-          for (const temp of tempParents) {
-            orderedPaths[temp.id] = temp
-          }
-
-          // Remove null value
-          parents = Object.values(orderedPaths).filter((v) => !!v)
+        for (const temp of tempParents) {
+          orderedPaths[temp.id] = temp
         }
 
-        return { folder, parents }
-      } catch (_err) {
-        return { folder: null, parents: [] }
+        // Remove null value
+        parents = Object.values(orderedPaths).filter((v) => !!v)
       }
+
+      return { folder, parents }
     },
     [JSON.stringify(input)],
     {

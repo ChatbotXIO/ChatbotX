@@ -28,7 +28,7 @@ import {
   ReplyType,
   type CreateAutomatedResponseRequest,
 } from "./schemas/create-automated-responses-schema"
-import type { AutomatedResponseResource } from "./schemas/get-automated-responses-schema"
+import type { AutomatedResponseResource } from "./schemas/types"
 
 interface AutomatedResponseTableProps {
   chatbotId: string
