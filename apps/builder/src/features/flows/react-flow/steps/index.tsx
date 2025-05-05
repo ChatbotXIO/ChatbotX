@@ -2,6 +2,7 @@ import { StepType } from "./step-action"
 import type { JSX } from "react"
 import type { ZodTypeAny } from "zod"
 import sendTextStep from "./send-text"
+import sendImageStep from "./send-image"
 
 interface StepEditorProps {
   parentName: string
@@ -23,7 +24,7 @@ export interface StepDefinition {
 
 export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.SendText]: sendTextStep,
-  [StepType.SendImage]: undefined,
+  [StepType.SendImage]: sendImageStep,
   [StepType.SendCard]: undefined,
   [StepType.SendCarousel]: undefined,
   [StepType.UserInput]: undefined,
@@ -90,6 +91,8 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.StartFLow]: undefined,
   [StepType.StartFlowStep]: undefined,
   [StepType.Wait]: undefined,
+  [StepType.SendMessageNode]: undefined,
+  [StepType.PerformAction]: undefined,
 }
 
 export function DynamicStepEditor({

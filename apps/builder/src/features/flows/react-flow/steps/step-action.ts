@@ -82,6 +82,9 @@ export enum StepType {
   FormatDate = "FormatDate",
   RandomCode = "RandomCode",
   CountCharacters = "CountCharacters",
+
+  SendMessageNode = "SendMessageNode",
+  PerformAction = "PerformAction",
 }
 
 export const disabledCopyActionTypes = [

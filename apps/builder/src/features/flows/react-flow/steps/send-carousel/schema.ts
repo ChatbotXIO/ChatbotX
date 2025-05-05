@@ -9,7 +9,7 @@ import { StepType } from "../step-action"
 
 export const sendCarouselStepSchema = z.object({
   id: z.string(),
-  stepType: z.enum([StepType.SendCarousel]),
+  stepType: z.literal(StepType.SendCarousel),
   cards: z.array(sendCardStepSchema),
 })
 

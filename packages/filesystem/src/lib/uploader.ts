@@ -50,21 +50,20 @@ class Uploader {
     return await this.#client.send(command)
   }
 
-  async getPresignedUpload(path: string, contentType: string) {
+  async getPresignedUpload(path: string, fileName: string, fileType: string) {
     const command: PresignedPostOptions = {
       Bucket: this.#bucketName,
       Key: path,
       Expires: 5 * 60, // 5 minutes
       Conditions: [
-        ["content-length-range", 0, 5242880], // 5 MB
-        {
-          bucket: this.#bucketName,
-          acl: "private",
-          key: path,
-          "Content-Type": contentType,
-        },
-        // ["starts-with", "$Content-Type", contentType],
+        // ['starts-with', '$Content-Type', 'image/'], // Only allow image files
+        ["content-length-range", 1024, 5242880], // 1KB to 5MB file size
       ],
+      Fields: {
+        "Content-Type": fileType, // MIME type of the file
+        "x-amz-meta-uploaded-by": "web-app",
+        "x-amz-meta-original-filename": fileName,
+      },
     }
     return await createPresignedPost(this.#client, command)
   }

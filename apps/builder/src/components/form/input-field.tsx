@@ -10,6 +10,7 @@ interface InputFieldProps<T extends FieldValues> {
   description?: string
   defaultValue?: string
   disabled?: boolean
+  className?: string
 }
 
 export function InputField<T extends FieldValues>({

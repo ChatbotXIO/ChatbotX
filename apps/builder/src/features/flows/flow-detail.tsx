@@ -1,3 +1,5 @@
+"use client"
+
 import { ReactFlowProvider } from "@xyflow/react"
 import { ReactFlowFrame } from "./react-flow/frame"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"

@@ -7,7 +7,7 @@ import {
   type Prisma,
   PrismaClient,
   SenderType,
-} from "@prisma/client"
+} from "../../generated/client"
 
 const prisma = new PrismaClient()
 
@@ -17,13 +17,10 @@ async function main() {
       name: "FREE",
     },
   })
-  if (!chatbot) {
-    console.log("Chatbot not found")
-    return
-  }
+  if (!chatbot) return
 
   let inbox = await prisma.inbox.findFirst()
-  if (inbox) return //
+  if (inbox) return
 
   inbox = await prisma.inbox.create({
     data: {

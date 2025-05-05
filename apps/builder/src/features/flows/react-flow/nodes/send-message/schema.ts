@@ -40,6 +40,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.SendMessage),
   data: z.object({
     name: z.string().trim().min(1).max(255),
+    isStartNode: z.boolean(),
     inboxType: z.union([z.nativeEnum(InboxType), z.literal("OMNICHANNEL")]),
     steps: z.array(
       z.union([
@@ -68,6 +69,7 @@ export const sendMessageNodeDefaultFn = ({
     data: {
       name: `Send Message #${labelVersion}`,
       inboxType: "OMNICHANNEL",
+      isStartNode: false,
       steps: [],
     },
   }

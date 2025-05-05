@@ -1,11 +1,11 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { StepType } from "../step-action"
 import { type ButtonStepSchema, buttonStepSchema } from "../button/schema"
+import { StepType } from "../step-action"
 
 export const sendTextStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.enum([StepType.SendText]),
+  stepType: z.literal(StepType.SendText),
   message: z.string().trim().min(1).max(1000),
   buttons: z.array(buttonStepSchema),
 })

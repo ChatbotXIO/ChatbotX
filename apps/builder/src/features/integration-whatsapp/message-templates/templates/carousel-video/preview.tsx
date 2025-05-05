@@ -1,108 +1,64 @@
-import { useFieldArray, useFormContext } from "react-hook-form"
-import { TemplateBody } from "../components/body"
-import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import {
   Carousel,
-  type CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Button } from "@/components/ui/button"
+import { CardContent } from "@/components/ui/card"
 import {
   ArrowLeft,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Minus,
   Plus,
 } from "lucide-react"
+import { useFieldArray, useFormContext } from "react-hook-form"
 import { useState } from "react"
 import { templateVideoDefaultValue } from "../video/schema"
-import { TemplateVideoPreview } from "../video/preview"
 
 export const TemplateCarouselVideoPreview = ({
-  parentName = "content",
+  parentName,
 }: {
-  parentName?: string
+  parentName: string
 }) => {
   const { control } = useFormContext()
-  const [api, setApi] = useState<CarouselApi>()
-  const [current, setCurrent] = useState<number>()
-
-  const { fields, append, remove, swap } = useFieldArray({
+  const { fields, append, swap } = useFieldArray({
     control,
     name: `${parentName}.cards`,
   })
+  const [current, setCurrent] = useState(0)
 
   const addCard = () => {
-    append(templateVideoDefaultValue())
-    setCurrent(api?.selectedScrollSnap())
-  }
-
-  const removeCard = () => {
-    remove(api?.selectedScrollSnap())
+    append(templateVideoDefaultValue)
   }
 
   const onNext = () => {
-    if (!api) {
-      return
-    }
-
-    api.scrollNext()
-    setCurrent(api.selectedScrollSnap())
+    setCurrent((prev) => (prev + 1) % fields.length)
   }
 
   const onPrev = () => {
-    if (!api) {
-      return
-    }
-
-    api.scrollPrev()
-    setCurrent(api.selectedScrollSnap())
+    setCurrent((prev) => (prev - 1 + fields.length) % fields.length)
   }
 
   return (
     <>
-      <CardContent className="bg-white p-4 rounded">
-        <TemplateBody parentName={`${parentName}.body`} />
-      </CardContent>
-      <CardContent className="bg-white py-4 px-8 rounded mt-4 relative">
-        <Carousel setApi={setApi} opts={{ dragFree: false }}>
+      <CardContent className="relative">
+        <Carousel
+          opts={{
+            align: "start",
+          }}
+          className="w-full"
+        >
           <CarouselContent>
             {fields.map((field, index) => (
               <CarouselItem className="" key={field.id}>
-                <Card className="p-1">
-                  <TemplateVideoPreview
-                    parentName={`${parentName}.cards.${index}`}
-                    maxButtons={2}
-                  />
-                </Card>
-                <div className="flex justify-center items-center mt-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={removeCard}
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={fields.length <= 2}
-                        >
-                          <Minus size={25} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -118,9 +74,7 @@ export const TemplateCarouselVideoPreview = ({
                         <p>Move Left</p>
                       </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
 
-                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -136,8 +90,6 @@ export const TemplateCarouselVideoPreview = ({
                         <p>Move Right</p>
                       </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button type="button" variant="ghost" onClick={addCard}>
@@ -148,7 +100,7 @@ export const TemplateCarouselVideoPreview = ({
                         <p>Add</p>
                       </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
+                  </div>
                 </div>
               </CarouselItem>
             ))}
@@ -157,43 +109,39 @@ export const TemplateCarouselVideoPreview = ({
 
         {fields.length > 1 && (
           <>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="absolute size-8 shrink-0 top-1/2 right-0 -translate-y-1/2"
-                    disabled={current === fields.length - 1}
-                    onClick={onNext}
-                  >
-                    <ChevronRight size={25} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Next</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute size-8 shrink-0 top-1/2 right-0 -translate-y-1/2"
+                  disabled={current === fields.length - 1}
+                  onClick={onNext}
+                >
+                  <ChevronRight size={25} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Next</p>
+              </TooltipContent>
+            </Tooltip>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="absolute size-8 shrink-0 top-1/2 -left-0 -translate-y-1/2"
-                    disabled={current === 0}
-                    onClick={onPrev}
-                  >
-                    <ChevronLeft size={25} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Prev</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute size-8 shrink-0 top-1/2 -left-0 -translate-y-1/2"
+                  disabled={current === 0}
+                  onClick={onPrev}
+                >
+                  <ChevronLeft size={25} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Prev</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         )}
       </CardContent>

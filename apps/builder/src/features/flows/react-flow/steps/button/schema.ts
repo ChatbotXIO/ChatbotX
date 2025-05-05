@@ -1,15 +1,3 @@
-import { markEmailVerifiedStepSchema } from "@/features/flows/react-flow/steps/mark-email-verified/schema"
-import { openAIAnalyzeImageSchema } from "@/features/flows/react-flow/steps/open-ai-analyze-image/schema"
-import { openAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/steps/open-ai-delete-message-history/schema"
-import { openAIGenerateImageSchema } from "@/features/flows/react-flow/steps/open-ai-generate-image/schema"
-import { openAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-advanced/schema"
-import { openAIGenerateTextAgentSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-agent/schema"
-import { openAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-assistant/schema"
-import { openAIGenerateTextSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text/schema"
-import { openAISpeechToTextSchema } from "@/features/flows/react-flow/steps/open-ai-speech-to-text/schema"
-import { openAITextToSpeechSchema } from "@/features/flows/react-flow/steps/open-ai-text-to-speech/schema"
-import { optInEmailStepSchema } from "@/features/flows/react-flow/steps/opt-in-email/schema"
-import { optOutEmailStepSchema } from "@/features/flows/react-flow/steps/opt-out-email/schema"
 import { createId } from "@paralleldrive/cuid2"
 import {
   LinkIcon,
@@ -20,6 +8,20 @@ import {
   ZapIcon,
 } from "lucide-react"
 import { z } from "zod"
+import { markEmailVerifiedStep } from "../mark-email-verified"
+import { openAIAnalyzeImageStep } from "../open-ai-analyze-image"
+import { openAIDeleteMessageHistoryStep } from "../open-ai-delete-message-history"
+import { openAIGenerateImageStep } from "../open-ai-generate-image"
+import { openAIGenerateTextStep } from "../open-ai-generate-text"
+import { openAIGenerateTextAdvancedStep } from "../open-ai-generate-text-advanced"
+import { openAIGenerateTextAgentStep } from "../open-ai-generate-text-agent"
+import { openAIGenerateTextAssistantStep } from "../open-ai-generate-text-assistant"
+import { openAISpeechToTextStep } from "../open-ai-speech-to-text"
+import { openAITextToSpeechStep } from "../open-ai-text-to-speech"
+import { optInEmailStep } from "../opt-in-email"
+import { optOutEmailStep } from "../opt-out-email"
+import performActionStep from "../perform-action"
+import sendMessageNodeStep from "../send-message-node"
 
 export enum ButtonType {
   SendMessage = "SendMessage",
@@ -88,20 +90,20 @@ export const buttonStepSchema = z
     steps: z.array(
       z.union([
         // Open AI
-        openAIGenerateTextSchema,
-        openAIGenerateTextAgentSchema,
-        openAIGenerateTextAdvancedSchema,
-        openAIGenerateTextAssistantSchema,
-        openAIGenerateImageSchema,
-        openAIAnalyzeImageSchema,
-        openAISpeechToTextSchema,
-        openAITextToSpeechSchema,
-        openAIDeleteMessageHistorySchema,
+        openAIGenerateTextStep.validator,
+        openAIGenerateTextAgentStep.validator,
+        openAIGenerateTextAdvancedStep.validator,
+        openAIGenerateTextAssistantStep.validator,
+        openAIGenerateImageStep.validator,
+        openAIAnalyzeImageStep.validator,
+        openAISpeechToTextStep.validator,
+        openAITextToSpeechStep.validator,
+        openAIDeleteMessageHistoryStep.validator,
 
         // Email
-        markEmailVerifiedStepSchema,
-        optInEmailStepSchema,
-        optOutEmailStepSchema,
+        markEmailVerifiedStep.validator,
+        optInEmailStep.validator,
+        optOutEmailStep.validator,
       ]),
     ),
   })
@@ -109,11 +111,14 @@ export const buttonStepSchema = z
     z.discriminatedUnion("buttonType", [
       z.object({
         buttonType: z.literal(ButtonType.SendMessage),
+        steps: z.array(
+          z.union([sendMessageNodeStep.validator, performActionStep.validator]),
+        ),
       }),
       z.object({
         buttonType: z.literal(ButtonType.OpenWebsite),
-        url: z.string().url(),
-        browserSize: z.nativeEnum(BrowserSize),
+        // url: z.string().url(),
+        // browserSize: z.nativeEnum(BrowserSize),
       }),
       // z.object({
       //   type: z.literal(ButtonType.CallPhoneNumber),
@@ -132,7 +137,7 @@ export const buttonStepSchema = z
       }),
       z.object({
         buttonType: z.literal(ButtonType.StartExternalStep),
-        stepId: z.string().min(1),
+        // stepId: z.string().min(1),
       }),
       z.object({
         buttonType: z.literal(null),

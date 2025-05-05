@@ -5,7 +5,7 @@ import { buttonStepSchema } from "../button/schema"
 
 export const sendAudioStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.enum([StepType.SendAudio]),
+  stepType: z.literal(StepType.SendAudio),
   url: z.string().url(),
   buttons: z.array(buttonStepSchema),
 })
@@ -15,6 +15,6 @@ export type SendAudioStepSchema = z.infer<typeof sendAudioStepSchema>
 export const sendAudioStepDefaultFn = (): SendAudioStepSchema => ({
   id: createId(),
   stepType: StepType.SendAudio,
-  url: "https://www.w3schools.com/html/horse.ogg",
+  url: "",
   buttons: [],
 })

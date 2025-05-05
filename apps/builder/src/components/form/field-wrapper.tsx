@@ -43,7 +43,7 @@ export function FormFieldWrapper<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="w-full">
           {label && (
             <FormLabel className="flex gap-1">
               {label}

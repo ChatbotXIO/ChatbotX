@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
 import NextAuth, { type DefaultSession } from "next-auth"
 import Nodemailer from "next-auth/providers/nodemailer"
 import { providers } from "./auth.config"
@@ -28,7 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/signin",
   },
-  adapter: PrismaAdapter(new PrismaClient()),
+  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
     ...providers,

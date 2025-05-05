@@ -48,8 +48,12 @@ const previews: { [key in TemplateType]: JSX.Element | undefined } = {
   [TemplateType.Image]: <TemplateImagePreview />,
   [TemplateType.Video]: <TemplateVideoPreview />,
   [TemplateType.Document]: <TemplateDocumentPreview />,
-  [TemplateType.CarouselImage]: <TemplateCarouselImagePreview />,
-  [TemplateType.CarouselVideo]: <TemplateCarouselVideoPreview />,
+  [TemplateType.CarouselImage]: (
+    <TemplateCarouselImagePreview parentName={""} />
+  ),
+  [TemplateType.CarouselVideo]: (
+    <TemplateCarouselVideoPreview parentName={""} />
+  ),
   [TemplateType.ViewCatalog]: <TemplateCatalogPreview />,
   [TemplateType.ViewProduct]: <TemplateProductPreview />,
   [TemplateType.Location]: undefined,

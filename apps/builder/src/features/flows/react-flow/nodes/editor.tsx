@@ -11,6 +11,7 @@ import { Form } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 import {
   Sortable,
+  SortableContent,
   SortableItem,
   SortableItemHandle,
 } from "@/components/ui/sortable"
@@ -114,95 +115,89 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
           value={fields}
           onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
           getItemValue={(item) => item.id}
-
-          // overlay={<div className="w-full h-32 rounded-sm bg-primary/10" />}
         >
-          <div className="flex w-full flex-col gap-4">
-            {fields.map((field, index) => (
-              <SortableItem key={field.id} value={field.id} asChild>
-                <div
-                  className={cn(
-                    "flex gap-2 items-center",
-                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                    (field as any).stepType === StepType.SendCarousel
-                      ? "relative"
-                      : "",
-                  )}
-                >
-                  {form.formState.errors.steps ? (
-                    <ErrorAlert
-                      message={
-                        JSON.stringify(form.formState.errors)
-                        // typeof form.formState.errors.steps?.[index]?.message ===
-                        //   "object"
-                        //   ? ((
-                        //     form.formState.errors.steps?.[index]?.message as {
-                        //       message: string
-                        //     }
-                        //   ).message as string)
-                        //   : ""
-                      }
-                    />
-                  ) : (
-                    <div className="w-4">{"\u00A0"}</div>
-                  )}
+          <SortableContent asChild>
+            <div className="flex w-full flex-col gap-4">
+              {fields.map((field, index) => (
+                <SortableItem key={field.id} value={field.id} asChild>
                   <div
                     className={cn(
-                      "flex-1 break-all",
+                      "flex gap-2 items-center",
                       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                       (field as any).stepType === StepType.SendCarousel
-                        ? "overflow-hidden"
+                        ? "relative"
                         : "",
                     )}
                   >
-                    <DynamicStepEditor
-                      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                      type={(field as any).stepType}
-                      key={field.id}
-                      parentName={`steps.${index}`}
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      onClick={() => onRemoveStep(index)}
+                    {form.formState.errors.steps ? (
+                      <ErrorAlert
+                        message={
+                          JSON.stringify(form.formState.errors)
+                          // typeof form.formState.errors.steps?.[index]?.message ===
+                          //   "object"
+                          //   ? ((
+                          //     form.formState.errors.steps?.[index]?.message as {
+                          //       message: string
+                          //     }
+                          //   ).message as string)
+                          //   : ""
+                        }
+                      />
+                    ) : (
+                      <div className="w-4">{"\u00A0"}</div>
+                    )}
+                    <div
+                      className={cn(
+                        "flex-1 break-all",
+                        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                        (field as any).stepType === StepType.SendCarousel
+                          ? "overflow-hidden"
+                          : "",
+                      )}
                     >
-                      <XIcon className="size-4" aria-hidden="true" />
-                    </Button>
-                    {/* <SortableDragHandle
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                    >
-                      <MoveVerticalIcon className="size-4" aria-hidden="true" />
-                    </SortableDragHandle> */}
-                    <SortableItemHandle asChild>
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <MoveVerticalIcon className="h-4 w-4" />
-                      </Button>
-                    </SortableItemHandle>
-                    {!disabledCopyActionTypes.includes(
-                      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                      (field as any).stepType,
-                    ) && (
+                      <DynamicStepEditor
+                        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                        type={(field as any).stepType}
+                        key={field.id}
+                        parentName={`steps.${index}`}
+                      />
+                    </div>
+                    <div className="flex flex-col">
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="size-8 shrink-0"
-                        onClick={() => onCopyStep(index)}
+                        onClick={() => onRemoveStep(index)}
                       >
-                        <CopyIcon className="size-4" aria-hidden="true" />
+                        <XIcon className="size-4" aria-hidden="true" />
                       </Button>
-                    )}
+
+                      <SortableItemHandle asChild>
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <MoveVerticalIcon className="h-4 w-4" />
+                        </Button>
+                      </SortableItemHandle>
+                      {!disabledCopyActionTypes.includes(
+                        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                        (field as any).stepType,
+                      ) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 shrink-0"
+                          onClick={() => onCopyStep(index)}
+                        >
+                          <CopyIcon className="size-4" aria-hidden="true" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </SortableItem>
-            ))}
-          </div>
+                </SortableItem>
+              ))}
+            </div>
+          </SortableContent>
         </Sortable>
       </div>
 

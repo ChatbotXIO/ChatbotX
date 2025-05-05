@@ -25,6 +25,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./browser": "./src/browser.ts"
+    "./browser": "./src/browser.ts",
+    "./types": "./src/types.ts"
   }
 }

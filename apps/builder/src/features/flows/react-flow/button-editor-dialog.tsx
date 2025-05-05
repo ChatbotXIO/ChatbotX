@@ -9,7 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { Label } from "@/components/ui/label"
 import { sendMessageNodeDefaultFn } from "@/features/flows/react-flow/nodes/send-message/schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T, useTranslate } from "@tolgee/react"
@@ -17,7 +16,7 @@ import { useNodes, useReactFlow } from "@xyflow/react"
 import { getProperty, setProperty } from "dot-prop"
 import { XIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-import { useForm, useFormContext } from "react-hook-form"
+import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import {
   allButtonsConfig,
   buttonStepSchema,
@@ -30,7 +29,9 @@ import { InputField } from "@/components/form/input-field"
 
 function AllButtonOptions({
   onChooseButton,
-}: { onChooseButton: (buttonType: ButtonType) => void }) {
+}: {
+  onChooseButton: (buttonType: ButtonType | null) => void
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       {allButtonsConfig.map((buttonConfig) => (
@@ -49,27 +50,48 @@ function AllButtonOptions({
   )
 }
 
-function ActiveButton({ buttonType }: { buttonType: ButtonType }) {
-  const { setValue } = useFormContext()
-
+function ActiveButton({
+  buttonType,
+  onChooseButton,
+}: {
+  buttonType: ButtonType
+  onChooseButton: (buttonType: ButtonType | null) => void
+}) {
   const activeButton = allButtonsConfig.find(
     (button) => button.buttonType === buttonType,
   )
   if (!activeButton) return null
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-1 pl-4 items-center text-sm border border-dashed rounded">
-        <activeButton.icon className="size-4" />
-        <span className="text-center flex-1">{activeButton.label}</span>
-        <Button
-          variant="ghost"
-          className="hover:bg-red hover:text-destructive"
-          onClick={() => setValue("buttonType", null)}
-        >
-          <XIcon />
-        </Button>
-      </div>
+    <div className="flex gap-1 pl-4 items-center text-sm border border-dashed rounded">
+      <activeButton.icon className="size-4" />
+      <span className="text-center flex-1">{activeButton.label}</span>
+      <Button
+        variant="ghost"
+        className="hover:bg-red hover:text-destructive"
+        onClick={() => onChooseButton(null)}
+      >
+        <XIcon />
+      </Button>
+    </div>
+  )
+}
+
+function AdditionalSteps() {
+  const { control, register, getValues } = useFormContext()
+  const { fields } = useFieldArray({
+    control,
+    name: "steps",
+  })
+
+  return (
+    <div className="flex flex-col gap-2 mt-2">
+      <div className="text-sm font-medium">Additional steps</div>
+      {fields.map((field, index) => (
+        <div key={field.id} {...register(`steps.${index}`)}>
+          {getValues(`steps.${index}.type`)}
+        </div>
+      ))}
     </div>
   )
 }
@@ -78,6 +100,7 @@ export function ButtonEditorDialog() {
   const [open, setOpen] = useState<boolean>(false)
   const [data, setData] = useState<ButtonStepSchema | null>(null)
   const [activeNode, setActiveNode] = useState<FlowNode | null>(null)
+  const [buttonType, setButtonType] = useState<ButtonType | null>(null)
 
   const nodes = useNodes() as FlowNode[]
   const { t } = useTranslate()
@@ -120,15 +143,15 @@ export function ButtonEditorDialog() {
     defaultValues: data || {},
     mode: "onChange",
   })
-  const { formState, setValue, watch, getValues } = form
+  const { formState, setValue, getValues } = form
   useEffect(() => {
     if (data) {
       form.reset(data)
     }
   }, [data, form])
 
-  const activeButtonType = watch("buttonType")
-  const onChooseButton = (buttonType: ButtonType) => {
+  // const activeButtonType = watch("buttonType")
+  const onChooseButton = (buttonType: ButtonType | null) => {
     switch (buttonType) {
       case ButtonType.SendMessage: {
         // create new node
@@ -160,16 +183,17 @@ export function ButtonEditorDialog() {
             newData,
           )
           updateNodeData(activeNode.id, updatedCurrentNodeData)
+
+          onSave()
         }
 
-        setOpenNodeDetailSheet(false)
-        setOpen(false)
         break
       }
       default:
         setValue("steps", [])
         break
     }
+    setButtonType(buttonType)
   }
 
   const onDelete = () => {
@@ -179,25 +203,28 @@ export function ButtonEditorDialog() {
     // const currentBtns = getValuesOriginEditor(arr.join("."))
     // currentBtns.splice(btnIndex, 1)
     // setValueOriginEditor(arr.join("."), currentBtns)
-    // onOpenChange(false)
+    onOpenChange(false)
   }
 
   const onSave = () => {
     setOpenNodeDetailSheet(false)
-    //   // Check if change type next flow, reset edge
-    //   const type = getValues("type")
-    //   if (!type || !ButtonActionFlow.includes(type)) {
+    setOpen(false)
+
+    // Check if change type next flow, reset edge
+    // const type = getValues("type")
+    // if (!type || !ButtonActionFlow.includes(type)) {
+    //   removeOldEdge()
+    // }
+    // if (type === ButtonActionType.StartAnotherStep) {
+    //   const newNode = nodes.find((node) => node.id === getValues("nodeId"))
+    //   if (newNode) {
     //     removeOldEdge()
+    //     setNewEdge(newNode)
     //   }
-    //   if (type === ButtonActionType.StartAnotherStep) {
-    //     const newNode = getNodes().find((node) => node.id === getValues("nodeId"))
-    //     if (newNode) {
-    //       removeOldEdge()
-    //       setNewEdge(newNode)
-    //     }
-    //   }
-    //   setValueOriginEditor(parentName, getValues())
-    //   onOpenChange(false)
+    // }
+    // setValueOriginEditor(parentName, getValues())
+    // onOpenChange(false)
+    // setOpenNodeDetailSheet(false)
   }
 
   return data ? (
@@ -215,10 +242,18 @@ export function ButtonEditorDialog() {
             <form className="flex flex-col gap-3 w-full">
               <InputField name="label" label={t("flows.Button.label")} />
 
-              <Label>When This Button is Pressed</Label>
+              <div className="mt-2 text-sm font-medium">
+                When this button is pressed
+              </div>
 
-              {activeButtonType ? (
-                <ActiveButton buttonType={activeButtonType} />
+              {buttonType ? (
+                <div className="flex flex-col gap-2">
+                  <ActiveButton
+                    buttonType={buttonType}
+                    onChooseButton={onChooseButton}
+                  />
+                  <AdditionalSteps />
+                </div>
               ) : (
                 <AllButtonOptions onChooseButton={onChooseButton} />
               )}

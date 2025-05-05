@@ -1,5 +1,5 @@
 import { T } from "@tolgee/react"
-import { TextIcon } from "lucide-react"
+import { ImageIcon, TextIcon } from "lucide-react"
 import { StepType } from "../../steps/step-action"
 import type { MenuItem } from "../types"
 
@@ -9,11 +9,11 @@ export const sendMessageEditorMenus: MenuItem[] = [
     icon: TextIcon,
     stepType: StepType.SendText,
   },
-  // {
-  //   label: <T keyName="flows.StepType.SendImage" />,
-  //   icon: ImageIcon,
-  //   stepType: StepType.SendImage,
-  // },
+  {
+    label: <T keyName="flows.StepType.SendImage" />,
+    icon: ImageIcon,
+    stepType: StepType.SendImage,
+  },
   // {
   //   label: <T keyName="flows.StepType.SendCard" />,
   //   icon: CreditCardIcon,

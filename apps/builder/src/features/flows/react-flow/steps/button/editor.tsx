@@ -54,19 +54,13 @@ export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
         value={fields}
         onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
         getItemValue={(item) => item.id}
-        // overlay={<div className="h-8 w-full rounded-sm bg-primary/10" />}
       >
         <div className="flex w-full flex-col gap-2">
           {fields.map((field, index) => (
             <SortableItem key={field.id} value={field.id} asChild>
-              <div className="w-full flex">
+              <div className="w-full flex items-center gap-1">
                 <ButtonStepEditor parentName={`${parentName}.${index}`} />
-                <SortableItemHandle
-                  // variant="ghost"
-                  // size="icon"
-                  // className="size-8 shrink-0 flex-none hover:bg-transparent"
-                  asChild
-                >
+                <SortableItemHandle asChild>
                   <Button variant="ghost" size="icon" className="size-8">
                     <GripVerticalIcon className="h-4 w-4" />
                   </Button>
