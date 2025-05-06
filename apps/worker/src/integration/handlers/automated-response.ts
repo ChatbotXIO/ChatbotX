@@ -1,9 +1,7 @@
 import { prisma } from "@ahachat.ai/database"
 import { getLogger } from "../../lib/log"
-import { integrationQueue } from "@ahachat.ai/worker-config"
-import type { TriggerFlowProps } from "./trigger-flow-node"
-import type { TriggerMessageProps } from "./trigger-message"
-import { IntegrationAction } from "../types"
+import { chatQueue, ChatJobAction } from "@ahachat.ai/worker-config"
+import type { OutgoingMessageEntity } from "@ahachat.ai/sdk"
 
 enum ReplyType {
   MESSAGE = "MESSAGE",
@@ -41,27 +39,42 @@ export const listAllAutomatedResponses = async ({
   }
 }
 
-export const triggerAutomatedResponse = async ({
-  chatbotId,
-  messageContent,
-}: { chatbotId: string; messageContent: string }) => {
-  const allAutomatedResponses = await listAllAutomatedResponses({ chatbotId })
+export async function triggerAutomatedResponse({
+  message,
+}: {
+  message: OutgoingMessageEntity
+}) {
+  if (!message.content) return
+
+  const allAutomatedResponses = await listAllAutomatedResponses({
+    chatbotId: message.chatbotId,
+  })
   for (const automatedResponse of allAutomatedResponses) {
     // Trigger flow if message matched automatedResponses config
     const matched = automatedResponse.userMessages.some((v) =>
-      messageContent.includes(v),
+      (message.content ?? "").includes(v),
     )
     if (matched) {
       for (const reply of automatedResponse.replies as Reply[]) {
-        if (reply.type === ReplyType.FLOW) {
-          await integrationQueue.add(IntegrationAction.SEND_FLOW_NODE, {
-            flowId: reply.flowId,
-          } as TriggerFlowProps)
-        } else if (reply.type === ReplyType.MESSAGE) {
-          await integrationQueue.add(
-            IntegrationAction.SEND_MESSAGE,
-            {} as TriggerMessageProps,
-          )
+        switch (reply.type) {
+          case ReplyType.MESSAGE:
+            await chatQueue.add(ChatJobAction.TRIGGER_MESSAGE, {
+              type: ChatJobAction.TRIGGER_MESSAGE,
+              data: {
+                conversationId: message.conversationId,
+                content: reply.message,
+              },
+            })
+            break
+
+          // case ReplyType.FLOW:
+          //   await integrationQueue.add(IntegrationJobAction.SEND_FLOW_NODE, {
+          //     flowId: reply.flowId,
+          //   } as TriggerFlowProps)
+          //   break
+
+          default:
+            break
         }
       }
     }

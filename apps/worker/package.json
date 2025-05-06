@@ -5,7 +5,6 @@
   "scripts": {
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
-    "worker:flow": "dotenv -e ../../.env -- tsx --watch src/flow/worker.ts",
     "dev": "concurrently pnpm:worker:*"
   },
   "keywords": [],

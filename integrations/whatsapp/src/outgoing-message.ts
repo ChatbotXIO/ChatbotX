@@ -18,6 +18,10 @@ export function* convertMessageToWhatsappMessage(
   message: MessageEntity,
 ): Generator<ClientMessage | null> {
   if (message.contentType === ContentType.TEXT) {
+    if (message.content) {
+      yield new Text(message.content)
+    }
+
     for (const attachment of message.attachments || []) {
       switch (attachment.fileType) {
         case FileType.IMAGE:
@@ -86,6 +90,7 @@ export const sendOutgoingMessage = async (
   message: MessageEntity,
 ) => {
   const whatsappClient = getWhatsappClient(ctx.auth)
+
   try {
     for (const whatsappMessage of convertMessageToWhatsappMessage(message)) {
       if (!whatsappMessage) {

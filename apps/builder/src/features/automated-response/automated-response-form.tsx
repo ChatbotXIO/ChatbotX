@@ -1,5 +1,6 @@
 "use client"
 
+import { InputField } from "@/components/form/input-field"
 import { Button } from "@/components/ui/button"
 import { Form, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -7,7 +8,13 @@ import { Label } from "@/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
-import { Loader2Icon, PlusCircleIcon, XIcon } from "lucide-react"
+import {
+  Loader2Icon,
+  MessageSquareMoreIcon,
+  PlusCircleIcon,
+  XIcon,
+  ZapIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Controller, useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
@@ -17,7 +24,6 @@ import {
   createAutomatedResponseRequest,
   ReplyType,
 } from "./schemas/create-automated-responses-schema"
-import { InputField } from "@/components/form/input-field"
 
 export function CreateAutomatedResponseForm({
   chatbotId,
@@ -133,16 +139,27 @@ export function CreateAutomatedResponseForm({
         {replies.map((reply, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <div key={index} className="flex gap-2 w-full">
-            <div className="flex-1">
+            <div className="flex flex-1 gap-2 items-center">
               {reply.type === ReplyType.MESSAGE ? (
-                <InputField
-                  name={`replies.${index}.message`}
-                  label=""
-                  placeholder="Type a message"
-                  isRequired={false}
-                />
+                <>
+                  <MessageSquareMoreIcon />
+                  <InputField
+                    name={`replies.${index}.message`}
+                    label=""
+                    placeholder="Type a message"
+                    isRequired={false}
+                    className="flex-1"
+                  />
+                </>
               ) : (
-                <FlowSelect name={`replies.${index}.flowId`} label="" />
+                <>
+                  <ZapIcon />
+                  <FlowSelect
+                    name={`replies.${index}.flowId`}
+                    label=""
+                    className="flex-1"
+                  />
+                </>
               )}
             </div>
             <Button

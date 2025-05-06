@@ -641,6 +641,9 @@ importers:
 
   packages/worker-config:
     dependencies:
+      '@ahachat.ai/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@ahachat.ai/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config

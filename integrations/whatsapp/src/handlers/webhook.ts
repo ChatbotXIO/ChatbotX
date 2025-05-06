@@ -16,9 +16,12 @@ export const webhookHandler = async ({
     ...config,
   })
   middleware.on.message = async (props: OnMessageArgs) => {
-    await queue?.add("receiveMessage", {
-      integrationName: "whatsapp",
-      payload: props,
+    await queue?.add("RECEIVE_MESSAGE", {
+      type: "RECEIVE_MESSAGE",
+      data: {
+        integrationName: "whatsapp",
+        payload: props,
+      },
     })
   }
 

@@ -17,6 +17,7 @@ interface SelectFieldProps<T extends FieldValues> {
   description?: string
   defaultValue?: string
   options: { value: string; label: string }[]
+  className?: string
 }
 
 export function SelectField<T extends FieldValues>({

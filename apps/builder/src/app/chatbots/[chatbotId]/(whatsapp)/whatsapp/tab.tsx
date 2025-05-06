@@ -36,7 +36,7 @@ export function SettingsTab() {
   const activeTab = pathname.split("/").pop()
 
   return (
-    <div className="flex gap-1 p-1 bg-muted w-full rounded-md">
+    <div className="flex flex-wrap gap-1 p-1 bg-muted w-full rounded-md">
       {tabs.map((tab) => (
         <Button
           key={tab.label}

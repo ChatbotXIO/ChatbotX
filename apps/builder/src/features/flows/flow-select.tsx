@@ -7,10 +7,12 @@ export const FlowSelect = ({
   name,
   label,
   isRequired = false,
+  className,
 }: {
   name: string
   label?: string
   isRequired?: boolean
+  className?: string
 }) => {
   const params = useParams<{ chatbotId: string }>()
 
@@ -26,8 +28,9 @@ export const FlowSelect = ({
       name={name}
       label={label}
       isRequired={isRequired}
-      placeholder="Please select"
+      placeholder="Please select flow"
       options={flowOptions}
+      className={className}
     />
   )
 }

@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { DataTableRowAction } from "@/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { useTranslate } from "@tolgee/react"
+import { T } from "@tolgee/react"
 import { format } from "date-fns"
 import { MoreHorizontalIcon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -23,6 +23,7 @@ import Link from "next/link"
 import React, { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
+import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
 import {
   ReplyType,
@@ -36,15 +37,14 @@ interface AutomatedResponseTableProps {
 }
 
 export function AutomatedResponsesTable({
+  chatbotId,
   promises,
 }: AutomatedResponseTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const { t } = useTranslate()
 
-  const [_, setRowAction] =
+  const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AutomatedResponseResource> | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo<ColumnDef<AutomatedResponseResource>[]>(
     () => [
       {
@@ -179,14 +179,14 @@ export function AutomatedResponsesTable({
                   variant="destructive"
                   onClick={() => setRowAction({ row, variant: "update" })}
                 >
-                  {t("common.updateBtn")}
+                  <T keyName="common.updateBtn" />
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => setRowAction({ row, variant: "delete" })}
                 >
-                  {t("common.deleteBtn")}
+                  <T keyName="common.deleteBtn" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -217,6 +217,17 @@ export function AutomatedResponsesTable({
       <DataTable table={table}>
         <DataTableToolbar table={table} />
       </DataTable>
+
+      <DeleteAutomatedResponsesDialog
+        open={rowAction?.variant === "delete"}
+        onOpenChange={() => setRowAction(null)}
+        chatbotId={chatbotId}
+        automatedResponses={
+          rowAction?.row.original ? [rowAction?.row.original] : []
+        }
+        showTrigger={false}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+      />
     </>
   )
 }
