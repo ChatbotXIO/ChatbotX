@@ -6,6 +6,6 @@ import { SendVideoStepViewer } from "./viewer"
 export const sendVideoStep: StepDefinition = {
   editor: SendVideoStepEditor,
   viewer: SendVideoStepViewer,
-  schema: sendVideoStepSchema,
-  defaultValue: sendVideoStepDefaultFn,
+  validator: sendVideoStepSchema,
+  defaultFn: sendVideoStepDefaultFn,
 }

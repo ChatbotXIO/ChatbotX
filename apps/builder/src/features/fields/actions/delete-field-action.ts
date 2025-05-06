@@ -1,40 +1,36 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
-import { revalidateTag } from "next/cache"
 import {
-  type DeleteFieldBindSchema,
-  deleteFieldBindSchema,
-} from "../schemas/delete-field-schema"
+  bulkUpdateIdsRequest,
+  chatbotIdRequestParams,
+  type BulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { FieldType, prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
 
-export const deleteFieldsAction = authActionClient
-  .bindArgsSchemas(deleteFieldBindSchema)
+export const deleteFieldsAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(bulkUpdateIdsRequest)
   .action(
     async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId, fieldType, ids],
+      bindArgsParsedInputs: [chatbotId],
+      parsedInput,
     }: {
-      ctx: { user: User }
-      bindArgsParsedInputs: DeleteFieldBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: BulkUpdateIdsRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       await prisma.field.deleteMany({
         where: {
           id: {
-            in: ids,
+            in: parsedInput.ids,
           },
           chatbotId,
-          fieldType,
+          fieldType: FieldType.CUSTOM_FIELD,
         },
       })
 
-      revalidateTag(`${ctx.user.id}#fields#${fieldType}`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbots:${chatbotId}#customFields`)
     },
   )

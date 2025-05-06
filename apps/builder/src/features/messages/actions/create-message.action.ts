@@ -14,7 +14,7 @@ import {
   type User,
 } from "@ahachat.ai/database"
 import { uploader } from "@ahachat.ai/filesystem"
-import { chatQueue, ChatQueueAction } from "@ahachat.ai/worker-config"
+import { chatQueue, ChatJobAction } from "@ahachat.ai/worker-config"
 import { revalidateTag } from "next/cache"
 import {
   type CreateMessageRequest,
@@ -28,6 +28,11 @@ import imageSize from "image-size"
 import { logger } from "@/lib/log"
 import { PartySocketEvent } from "@ahachat.ai/party-config"
 import ky from "ky"
+import type {
+  AttachmentEntity,
+  ConversationEntity,
+  ContentType as SdkContentType,
+} from "@ahachat.ai/sdk"
 
 export const createMessageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
@@ -122,9 +127,19 @@ export const createMessageAction = chatbotActionClient
       })
 
       // (message as MessageResource).clientId = parsedInput.clientId
-      await chatQueue.add(ChatQueueAction.SEND_MESSAGE, {
-        conversation,
-        message: { ...message, clientId: parsedInput.clientId },
+      await chatQueue.add(ChatJobAction.SEND_MESSAGE, {
+        type: ChatJobAction.SEND_MESSAGE,
+        data: {
+          conversation: conversation as ConversationEntity,
+          message: {
+            ...message,
+            clientId: parsedInput.clientId,
+            sourceId: message.sourceId || "",
+            contentType: message.contentType as unknown as SdkContentType,
+            content: message.content ?? "",
+            attachments: message.attachments as AttachmentEntity[],
+          },
+        },
       })
       await ky.post(
         `${process.env.PARTYSOCKET_URL}/parties/chatbots/${message.chatbotId}`,

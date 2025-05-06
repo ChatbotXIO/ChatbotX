@@ -9,6 +9,6 @@ import { MarkEmailVerifiedStepViewer } from "./viewer"
 export const markEmailVerifiedStep: StepDefinition = {
   editor: MarkEmailVerifiedStepEditor,
   viewer: MarkEmailVerifiedStepViewer,
-  schema: markEmailVerifiedStepSchema,
-  defaultValue: markEmailVerifiedStepDefaultFn,
+  validator: markEmailVerifiedStepSchema,
+  defaultFn: markEmailVerifiedStepDefaultFn,
 }

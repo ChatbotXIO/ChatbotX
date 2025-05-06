@@ -8,7 +8,8 @@ export interface ContextUploader {
     newPath: string,
     body: string | Readable | Buffer<ArrayBufferLike>,
     options?: unknown,
-  ): Promise<void>
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  ): Promise<any>
 }
 
 export interface ContextQueue {

@@ -1,11 +1,5 @@
 "use client"
 
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import type {
-  DataTableFilterField,
-  DataTableRowAction,
-} from "@/components/data-table/types"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { Tag } from "@ahachat.ai/database/browser"
 import React, { useMemo } from "react"
@@ -16,6 +10,9 @@ import type { getTags } from "./queries"
 import { getTagColumns } from "./tags-table-columns"
 import { TagsTableToolbarActions } from "./tags-table-toolbar-actions"
 import { UpdateTagDialog } from "./update-tag-dialog"
+import type { DataTableRowAction } from "@/types/data-table"
+import { DataTable } from "@/components/data-table"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
 
 interface TagsTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getTags>>]>
@@ -39,24 +36,12 @@ export function TagsTable({ promises, chatbotId }: TagsTableProps) {
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const columns = useMemo(
-    () => getTagColumns({ setRowAction, handleCopy }),
-    [setRowAction],
-  )
-
-  const filterFields: DataTableFilterField<Tag & { name?: string }>[] = [
-    {
-      id: "name",
-      label: "Search",
-      placeholder: "Enter tags name...",
-    },
-  ]
+  const columns = useMemo(() => getTagColumns({ setRowAction, handleCopy }), [])
 
   const { table } = useDataTable({
     data,
     columns,
     pageCount,
-    filterFields,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -69,13 +54,13 @@ export function TagsTable({ promises, chatbotId }: TagsTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} filterFields={filterFields}>
+        <DataTableToolbar table={table}>
           <TagsTableToolbarActions table={table} chatbotId={chatbotId} />
         </DataTableToolbar>
       </DataTable>
 
       <DeleteTagsDialog
-        open={rowAction?.type === "delete"}
+        open={rowAction?.variant === "delete"}
         onOpenChange={() => setRowAction(null)}
         tags={rowAction?.row.original ? [rowAction?.row.original] : []}
         showTrigger={false}
@@ -84,7 +69,7 @@ export function TagsTable({ promises, chatbotId }: TagsTableProps) {
       />
 
       <UpdateTagDialog
-        open={rowAction?.type === "update"}
+        open={rowAction?.variant === "update"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         tag={rowAction?.row.original || null}

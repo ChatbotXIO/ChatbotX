@@ -1,7 +1,6 @@
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
+import { SelectField } from "@/components/form/select-field"
 import { DelayType } from "@/features/flows/react-flow/steps/wait/schema"
-import { T, useTranslate } from "@tolgee/react"
+import { useTranslate } from "@tolgee/react"
 
 export const DelayTypeSelect = ({ name }: { name: string }) => {
   const { t } = useTranslate()
@@ -22,12 +21,11 @@ export const DelayTypeSelect = ({ name }: { name: string }) => {
   ]
 
   return (
-    <FormInput name={name} label={<T keyName="flows.Wait.DelayType" />}>
-      <SingleSelect
-        name={name}
-        placeholder="Select a type"
-        options={delayTypes}
-      />
-    </FormInput>
+    <SelectField
+      name={name}
+      label={t("flows.Wait.DelayType")}
+      placeholder="Select a type"
+      options={delayTypes}
+    />
   )
 }

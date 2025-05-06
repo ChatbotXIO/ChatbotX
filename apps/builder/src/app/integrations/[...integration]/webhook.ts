@@ -29,6 +29,10 @@ export const handleWebhook = async (integrationName: string, req: Request) => {
           process.env[`INTEGRATION_${integrationNameUpper}_SECRET`] ?? "",
         webhookVerifyToken:
           process.env.INTEGRATION_VERIFY_TOKEN ?? "ahachat.ai",
+        clientId: process.env[`INTEGRATION_${integrationNameUpper}_ID`] ?? "",
+        clientSecret:
+          process.env[`INTEGRATION_${integrationNameUpper}_SECRET`] ?? "",
+        redirectUri: "",
       },
       req,
       queue: integrationQueue,

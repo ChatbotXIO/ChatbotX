@@ -1,4 +1,12 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-  - "integrations/*"
+  - apps/*
+  - packages/*
+  - integrations/*
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - core-js-pure
+  - esbuild
+  - lefthook
+  - prisma

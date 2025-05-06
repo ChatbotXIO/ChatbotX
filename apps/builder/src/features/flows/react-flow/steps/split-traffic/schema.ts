@@ -4,7 +4,7 @@ import { StepType } from "../step-action"
 
 export const splitTrafficStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.enum([StepType.SplitTraffic]),
+  stepType: z.literal(StepType.SplitTraffic),
   value: z.number().int().min(0).max(100),
 })
 

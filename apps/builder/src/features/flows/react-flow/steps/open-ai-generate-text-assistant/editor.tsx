@@ -1,6 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
 import { AIAsistantSelect } from "@/features/ai-assistants/ai-assistant-select"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
@@ -16,7 +16,7 @@ export const OpenAIGenerateTextAssistantEditor = ({
     <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAssistant">
       <AIAsistantSelect name={`${parentName}.aiAssistantId`} />
 
-      <FormInput name={`${parentName}.userMessage`} label="User Message" />
+      <InputField name={`${parentName}.userMessage`} label="User Message" />
 
       <CustomFieldSelect
         name={`${parentName}.resultCustomFieldId`}

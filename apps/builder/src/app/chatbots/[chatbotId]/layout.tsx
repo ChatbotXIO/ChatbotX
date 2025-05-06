@@ -27,7 +27,9 @@ export default async function ChatbotLayout({
   const headersList = await headers()
   const chatbotId = allParams.chatbotId
 
-  const isInboxPage = headersList.get("x-url")?.includes("/inbox")
+  const isInboxPage = (headersList.get("x-url") ?? "")
+    .split("/")
+    .includes("inbox")
   const requiredPadding = isInboxPage ? "" : "p-4"
 
   const allChatbotsPromise = getAllChatbotMembers(userId)

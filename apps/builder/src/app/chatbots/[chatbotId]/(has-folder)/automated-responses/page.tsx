@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { AutomatedResponsesTable } from "@/features/automated-response/automated-response-table"
 import { getAutomatedResponses } from "@/features/automated-response/queries"
-import { listAutomatedResponsesNuqs } from "@/features/automated-response/schemas/get-automated-responses-schema"
+import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schemas/get-automated-responses-schema"
 import { T } from "@/tolgee/server"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
@@ -13,7 +13,7 @@ export default async function AutomatedResponesPage(props: {
 }) {
   const { chatbotId } = await props.params
   const searchParams = await props.searchParams
-  const search = listAutomatedResponsesNuqs.parse(searchParams)
+  const search = listAutomatedResponsesSearchParams.parse(searchParams)
 
   const promises = Promise.all([
     getAutomatedResponses({
@@ -35,6 +35,7 @@ export default async function AutomatedResponesPage(props: {
           </Link>
         </Button>
       </div>
+
       <AutomatedResponsesTable promises={promises} chatbotId={chatbotId} />
     </>
   )

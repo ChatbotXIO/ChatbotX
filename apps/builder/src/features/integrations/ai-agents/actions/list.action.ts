@@ -12,38 +12,34 @@ export async function getAIAgents(
 
   return await unstable_cache(
     async () => {
-      try {
-        const where: Prisma.AIAgentWhereInput = {
-          chatbotId: input.chatbotId,
-        }
-
-        if (input.name) {
-          where.name = {
-            contains: input.name,
-            mode: "insensitive",
-          }
-        }
-
-        const orderBy = input.sort.map((sortItem) => ({
-          [sortItem.id]: sortItem.desc ? "desc" : "asc",
-        }))
-
-        const [data, total] = await prisma.$transaction([
-          prisma.aIAgent.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
-            where,
-            orderBy,
-          }),
-          prisma.aIAgent.count({ where }),
-        ])
-
-        const pageCount = Math.ceil(total / input.perPage)
-
-        return { data, pageCount }
-      } catch (_err) {
-        return { data: [], pageCount: 0 }
+      const where: Prisma.AIAgentWhereInput = {
+        chatbotId: input.chatbotId,
       }
+
+      if (input.name) {
+        where.name = {
+          contains: input.name,
+          mode: "insensitive",
+        }
+      }
+
+      const orderBy = input.sort.map((sortItem) => ({
+        [sortItem.id]: sortItem.desc ? "desc" : "asc",
+      }))
+
+      const [data, total] = await prisma.$transaction([
+        prisma.aIAgent.findMany({
+          skip: (input.page - 1) * input.perPage,
+          take: input.perPage,
+          where,
+          orderBy,
+        }),
+        prisma.aIAgent.count({ where }),
+      ])
+
+      const pageCount = Math.ceil(total / input.perPage)
+
+      return { data, pageCount }
     },
     [JSON.stringify(input)],
     {

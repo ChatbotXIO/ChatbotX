@@ -1,5 +1,6 @@
 "use client"
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -9,20 +10,15 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { DataTableRowAction } from "@/types/data-table"
 import type { AITrigger } from "@ahachat.ai/database/browser"
-import type { ColumnDef, Row } from "@tanstack/react-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisVerticalIcon } from "lucide-react"
-
-export interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: "update" | "delete" | "duplicate"
-}
+import type { Dispatch, SetStateAction } from "react"
 
 interface GetColumnsProps {
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<AITrigger> | null>
-  >
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<AITrigger> | null>>
 }
 
 export function getAITriggersColumns({
@@ -97,19 +93,19 @@ export function getAITriggersColumns({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "update" })}
+                onSelect={() => setRowAction({ row, variant: "update" })}
               >
                 Update
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "duplicate" })}
+                onSelect={() => setRowAction({ row, variant: "duplicate" })}
               >
                 Duplicate
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "delete" })}
+                onSelect={() => setRowAction({ row, variant: "delete" })}
               >
                 Delete
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

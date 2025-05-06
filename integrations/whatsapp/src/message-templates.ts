@@ -14,6 +14,8 @@ export interface MessageTemplateEntity {
   id: string
   name: string
   status: "APPROVED" | "PENDING" | "REJECTED"
+  language: string
+  category: "AUTHENTICATION" | "MARKETING" | "UTILITY"
 }
 
 export interface CreateMessageTemplateProps {

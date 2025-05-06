@@ -138,7 +138,7 @@ export const NodeHeaderAction = ({
   title,
   ...props
 }: NodeHeaderActionProps & {
-  ref: React.RefObject<HTMLButtonElement>
+  ref?: React.RefObject<HTMLButtonElement>
 }) => {
   return (
     <Button

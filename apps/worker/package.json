@@ -5,7 +5,6 @@
   "scripts": {
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
-    "worker:flow": "dotenv -e ../../.env -- tsx --watch src/flow/worker.ts",
     "dev": "concurrently pnpm:worker:*"
   },
   "keywords": [],
@@ -19,10 +18,10 @@
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
     "@ahachat.ai/worker-config": "workspace:*",
-    "bullmq": "^5.47.2",
+    "bullmq": "^5.51.0",
     "dot-prop": "^9.0.0",
-    "ioredis": "^5.6.0",
-    "ky": "^1.8.0",
+    "ioredis": "^5.6.1",
+    "ky": "^1.8.1",
     "tslog": "^4.9.3"
   },
   "devDependencies": {

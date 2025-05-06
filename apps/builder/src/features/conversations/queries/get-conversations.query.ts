@@ -26,92 +26,88 @@ export const listConversations = async (
 
   // return await unstable_cache(
   //   async () => {
-  try {
-    const perPage = (input.perPage || 10) + 1
-    const where: Prisma.ConversationWhereInput = {
-      chatbotId,
-    }
+  const perPage = (input.perPage || 10) + 1
+  const where: Prisma.ConversationWhereInput = {
+    chatbotId,
+  }
 
-    const params: Prisma.ConversationFindManyArgs = {
-      include: {
-        contact: true,
-        inbox: true,
-        _count: {
-          select: {
-            messages: {
-              where: {
-                senderType: SenderType.USER,
-                // createdAt: {
-                //   gt: prisma.conversation.fields.contactLastSeenAt
-                // }
-              },
+  const params: Prisma.ConversationFindManyArgs = {
+    include: {
+      contact: true,
+      inbox: true,
+      _count: {
+        select: {
+          messages: {
+            where: {
+              senderType: SenderType.USER,
+              // createdAt: {
+              //   gt: prisma.conversation.fields.contactLastSeenAt
+              // }
             },
           },
         },
       },
-      take: perPage,
-      where,
-      cursor: input.cursor
-        ? {
-            id: input.cursor,
-          }
-        : undefined,
-      orderBy: [{ lastActivityAt: "desc" }, { id: "desc" }],
-    }
-
-    let conversations: ConversationResource[] =
-      await prisma.conversation.findMany(params)
-
-    // Get last message of conversation
-    const conversationIds = conversations.map((conversation) => conversation.id)
-    const lastMessages = await prisma.message.findMany({
-      where: {
-        conversationId: {
-          in: conversationIds,
-        },
-      },
-      distinct: ["conversationId"],
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
-
-    const lastMessagesGroup: Record<string, Message[]> = lastMessages.reduce(
-      (result, message) => {
-        if (!result[message.conversationId]) {
-          result[message.conversationId] = []
+    },
+    take: perPage,
+    where,
+    cursor: input.cursor
+      ? {
+          id: input.cursor,
         }
-        result[message.conversationId]?.push(message)
+      : undefined,
+    orderBy: [{ lastActivityAt: "desc" }, { id: "desc" }],
+  }
 
-        return result
+  let conversations: ConversationResource[] =
+    await prisma.conversation.findMany(params)
+
+  // Get last message of conversation
+  const conversationIds = conversations.map((conversation) => conversation.id)
+  const lastMessages = await prisma.message.findMany({
+    where: {
+      conversationId: {
+        in: conversationIds,
       },
-      {} as Record<string, Message[]>,
-    )
+    },
+    distinct: ["conversationId"],
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
 
-    // Mapping last message to conversation
-    for (const conversation of conversations) {
-      conversation.messages = lastMessagesGroup[conversation.id] ?? []
-    }
+  const lastMessagesGroup: Record<string, Message[]> = lastMessages.reduce(
+    (result, message) => {
+      if (!result[message.conversationId]) {
+        result[message.conversationId] = []
+      }
+      result[message.conversationId]?.push(message)
 
-    if (conversations.length === 0) {
-      return { data: [], nextCursor: null, prevCursor: null }
-    }
+      return result
+    },
+    {} as Record<string, Message[]>,
+  )
 
-    let nextCursor: string | null = null
-    const prevCursor: string | null = null
-    if (conversations.length === perPage) {
-      const lastConversation = conversations[
-        conversations.length - 1
-      ] as Conversation
-      nextCursor = lastConversation.id
+  // Mapping last message to conversation
+  for (const conversation of conversations) {
+    conversation.messages = lastMessagesGroup[conversation.id] ?? []
+  }
 
-      conversations = conversations.slice(0, conversations.length - 1)
-    }
-
-    return { data: conversations, nextCursor, prevCursor }
-  } catch (_err) {
+  if (conversations.length === 0) {
     return { data: [], nextCursor: null, prevCursor: null }
   }
+
+  let nextCursor: string | null = null
+  const prevCursor: string | null = null
+  if (conversations.length === perPage) {
+    const lastConversation = conversations[
+      conversations.length - 1
+    ] as Conversation
+    nextCursor = lastConversation.id
+
+    conversations = conversations.slice(0, conversations.length - 1)
+  }
+
+  return { data: conversations, nextCursor, prevCursor }
   //   },
   //   [JSON.stringify(input)],
   //   {

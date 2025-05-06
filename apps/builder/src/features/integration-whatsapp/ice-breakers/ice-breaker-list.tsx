@@ -61,12 +61,12 @@ export function IceBreakersList({
           </div>
         </AccordionTrigger>
         <AccordionContent className="p-4">
-          <Alert variant="secondary" className="mt-2">
+          <Alert variant="default" className="mt-2">
             <AlertDescription className="flex gap-2 items-center">
               <InfoIcon size={16} /> {t("whatsapp.iceBreakers.description1")}
             </AlertDescription>
           </Alert>
-          <Alert variant="secondary" className="mt-2">
+          <Alert variant="default" className="mt-2">
             <AlertDescription className="flex gap-2 items-center">
               <InfoIcon size={16} /> {t("whatsapp.iceBreakers.description2")}
             </AlertDescription>

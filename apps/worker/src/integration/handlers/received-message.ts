@@ -13,21 +13,11 @@ import {
   type OnMessageArgs,
   type WhatsappAuthValue,
 } from "@ahachat.ai/integration-whatsapp"
-import type {
-  AttachmentEntity,
-  ConversationEntity,
-  MessageEntity,
-} from "@ahachat.ai/sdk"
+import type { AttachmentEntity } from "@ahachat.ai/sdk"
 import { getLogger } from "../../lib/log"
 import { uploader } from "@ahachat.ai/filesystem"
 import ky from "ky"
 import { PartySocketEvent } from "@ahachat.ai/party-config"
-
-interface RunActionResult {
-  message: MessageEntity
-  conversation: ConversationEntity
-  postbackAction: { flowVersionId: string; buttonId: string }
-}
 
 export const receiveMessage = async ({
   integrationName,
@@ -58,7 +48,7 @@ export const receiveMessage = async ({
     message,
     conversation,
     // postbackAction,
-  } = (await integration.runAction("receiveMessage", {
+  } = await integration.runAction("receiveMessage", {
     ctx: {
       chatbot: dbIntegrationWhatsapp.chatbot,
       auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
@@ -66,7 +56,7 @@ export const receiveMessage = async ({
       uploader,
     },
     data: payload,
-  })) as RunActionResult
+  })
 
   return await prisma.$transaction(async (tx) => {
     const newContact = await tx.contact.upsert({
@@ -110,7 +100,7 @@ export const receiveMessage = async ({
       where: {
         chatbotId_sourceId: {
           chatbotId: dbIntegrationWhatsapp.chatbotId,
-          sourceId: message.sourceId,
+          sourceId: message.sourceId ?? "",
         },
       },
       create: {

@@ -1,4 +1,3 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { CreateTagDialog } from "@/features/tags/create-tag-dialog"
 import { getTags } from "@/features/tags/queries"
 import { getTagsSearchParamsCache } from "@/features/tags/schemas/get-tags-schema"
@@ -29,17 +28,7 @@ export default async function TagsPage(props: {
           folderId={search.folderId}
         />
       </div>
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={5}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "20rem", "40rem", "12rem", "10rem"]}
-            shrinkZero
-          />
-        }
-      >
+      <Suspense>
         <TagsTable promises={promises} chatbotId={params.chatbotId} />
       </Suspense>
     </div>

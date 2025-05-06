@@ -1,6 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { TextareaField } from "@/components/form/textarea-field"
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 import { OpenAIModel } from "../open-ai/open-ai-model-select"
@@ -21,11 +21,7 @@ export const OpenAIAnalyzeImageEditor = ({
         name={`${parentName}.imageCustomFieldId`}
       />
 
-      <FormInput
-        label="Prompt"
-        name={`${parentName}.prompt`}
-        inputType="textarea"
-      />
+      <TextareaField label="Prompt" name={`${parentName}.prompt`} />
 
       <CustomFieldSelect
         name={`${parentName}.resultCustomFieldId`}

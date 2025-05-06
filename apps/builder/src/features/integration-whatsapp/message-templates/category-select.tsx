@@ -1,13 +1,12 @@
 "use client"
 
-import { SingleSelect } from "@/components/single-select"
-import { FormInput } from "@/components/form-input"
 import { WhatsappTemplateCategory } from "@ahachat.ai/database/browser"
 import { useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 import { VolumeIcon } from "lucide-react"
 import { useTranslate } from "@tolgee/react"
 import { TemplateType } from "./type"
+import { SelectField } from "@/components/form/select-field"
 
 export function CategorySelect({
   name,
@@ -52,13 +51,13 @@ export function CategorySelect({
 
   return (
     <>
-      <FormInput name={name} label={label} isRequired={isRequired}>
-        <SingleSelect
-          name={name}
-          placeholder="Please select"
-          options={options}
-        />
-      </FormInput>
+      <SelectField
+        name={name}
+        label={label}
+        isRequired={isRequired}
+        placeholder="Please select"
+        options={options}
+      />
       {category === WhatsappTemplateCategory.MARKETING && (
         <div className="grid grid-flow-col auto-cols-min gap-x-4 items-center bg-slate-200 p-6 rounded">
           <VolumeIcon size={36} className="row-span-2" />

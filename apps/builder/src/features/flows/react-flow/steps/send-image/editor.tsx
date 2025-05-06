@@ -1,20 +1,10 @@
-"use client"
-
-import FileDropzone from "@/components/file-dropzone"
-import { useFormContext } from "react-hook-form"
 import { ButtonGroupEditor } from "../button/editor"
+import { DirectUpload } from "@/components/direct-upload"
 
 const SendImageStepEditor = ({ parentName }: { parentName: string }) => {
-  const { register, unregister } = useFormContext()
-
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center">
-      <FileDropzone
-        register={register}
-        unregister={unregister}
-        parentName={parentName}
-        mode="link"
-      />
+      <DirectUpload parentName={parentName} />
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>

@@ -33,7 +33,7 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
   const [, setFolderId] = useQueryState(
     "folderId",
     parseAsString.withOptions({
-      history: "replace",
+      history: "push",
       shallow: false,
     }),
   )

@@ -1,7 +1,7 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
-import { NumberField } from "@/components/number-field"
+import { InputField } from "@/components/form/input-field"
+import { InputNumberField } from "@/components/form/input-number-field"
 import { Button } from "@/components/ui/button"
 import {
   Collapsible,
@@ -21,7 +21,7 @@ import {
 import { Form } from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
+import { T, useTranslate } from "@tolgee/react"
 import { ChevronsUpDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -33,6 +33,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
   const [open, setOpen] = useState(false)
   const [isOpenOptions, setIsOpenOptions] = useState<boolean>(false)
 
+  const { t } = useTranslate()
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -73,10 +74,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
-            <FormInput
-              label={<T keyName={"Integrations.OpenAI.APIKey"} />}
-              name="apiKey"
-            />
+            <InputField label={t("Integrations.OpenAI.APIKey")} name="apiKey" />
 
             <Collapsible open={isOpenOptions} onOpenChange={setIsOpenOptions}>
               <div className="flex items-center justify-between space-x-4">
@@ -93,19 +91,21 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent className="space-y-2">
-                <FormInput
+                <InputNumberField
                   name="temperature"
-                  label={<T keyName={"Integrations.OpenAI.Temperature"} />}
-                >
-                  <NumberField name="temperature" step={0.1} min={0} max={2} />
-                </FormInput>
+                  label={t("Integrations.OpenAI.Temperature")}
+                  step={0.1}
+                  min={0}
+                  max={2}
+                />
 
-                <FormInput
+                <InputNumberField
                   name="maxTokens"
-                  label={<T keyName={"Integrations.OpenAI.MaxTokens"} />}
-                >
-                  <NumberField name="maxTokens" step={1} min={1} max={8192} />
-                </FormInput>
+                  label={t("Integrations.OpenAI.MaxTokens")}
+                  step={1}
+                  min={1}
+                  max={8192}
+                />
               </CollapsibleContent>
             </Collapsible>
 

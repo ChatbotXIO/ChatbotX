@@ -1,64 +1,55 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import {
+  chatbotIdAndIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { FieldType, FolderType, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
   type UpdateCustomFieldSchema,
-  type UpdateFieldBindSchema,
   updateCustomFieldSchema,
-  updateFieldBindSchema,
 } from "../schemas/update-custom-field-schema"
 
-export const updateCustomFieldAction = authActionClient
+export const updateCustomFieldAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .schema(updateCustomFieldSchema)
-  .bindArgsSchemas(updateFieldBindSchema)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, fieldId, fieldType],
     }: {
-      ctx: { user: User }
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateCustomFieldSchema
-      bindArgsParsedInputs: UpdateFieldBindSchema
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
-      const existingField = await prisma.field.findFirst({
+      const customField = await prisma.field.findFirstOrThrow({
         where: {
-          name: parsedInput.name,
+          id,
           chatbotId,
-          fieldType,
-          NOT: {
-            id: fieldId,
-          },
+          fieldType: FieldType.ACCOUNT_FIELD,
         },
       })
 
-      if (existingField) {
-        throw new Error(
-          `Tag with the name "${parsedInput.name}" already exists.`,
+      if (
+        parsedInput.folderId &&
+        parsedInput.folderId !== customField.folderId
+      ) {
+        await ensureFolderIdIsExists(
+          parsedInput.folderId,
+          chatbotId,
+          FolderType.CUSTOM_FIELD,
         )
       }
 
       await prisma.field.update({
         where: {
-          id: fieldId,
-          chatbotId,
-          fieldType,
+          id,
         },
-        data: {
-          name: parsedInput.name,
-          description: parsedInput.description,
-        },
+        data: parsedInput,
       })
 
-      revalidateTag(`${ctx.user.id}#fields#${fieldType}`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbots:${chatbotId}#customFields`)
     },
   )

@@ -14,13 +14,13 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@tolgee/cli": "^2.10.2",
-    "@types/node": "^22.14.0",
-    "lefthook": "^1.11.6",
+    "@types/node": "^22.15.2",
+    "lefthook": "^1.11.11",
     "tsx": "^4.19.3",
-    "turbo": "^2.5.0",
+    "turbo": "^2.5.2",
     "typescript": "5.8.3"
   },
-  "packageManager": "pnpm@10.7.1+sha512.2d92c86b7928dc8284f53494fb4201f983da65f0fb4f0d40baafa5cf628fa31dae3e5968f12466f17df7e97310e30f343a648baea1b9b350685dafafffdf5808",
+  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f",
   "engines": {
     "node": ">=22"
   },

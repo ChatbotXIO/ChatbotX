@@ -1,6 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -75,7 +75,7 @@ export function CreateFlowDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput name="name" label={t("flows.name")} />
+              <InputField name="name" label={t("flows.name")} />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>

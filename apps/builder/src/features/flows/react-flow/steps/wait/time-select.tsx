@@ -1,5 +1,4 @@
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
+import { SelectField } from "@/components/form/select-field"
 
 export const TimeSelect = ({ name }: { name: string }) => {
   const times = []
@@ -11,9 +10,5 @@ export const TimeSelect = ({ name }: { name: string }) => {
     })
   }
 
-  return (
-    <FormInput name={name} label="">
-      <SingleSelect name={name} placeholder="Select a time" options={times} />
-    </FormInput>
-  )
+  return <SelectField name={name} placeholder="Select a time" options={times} />
 }

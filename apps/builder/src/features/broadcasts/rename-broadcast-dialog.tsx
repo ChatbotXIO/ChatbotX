@@ -1,6 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,7 +17,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateBroadcastAction } from "./actions/update-broadcast.action"
@@ -33,11 +32,11 @@ export function RenameBroadcastDialog({
   broadcast: Broadcast | null
 }) {
   const { t } = useTranslate()
-  const router = useRouter()
 
   const {
     form,
     handleSubmitWithAction,
+    resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
     updateBroadcastAction.bind(
@@ -50,9 +49,8 @@ export function RenameBroadcastDialog({
       actionProps: {
         onSuccess: () => {
           toast.success("Broadcast update successfully")
-
+          resetFormAndAction()
           onOpenChange(false)
-          router.refresh()
         },
         onError: ({ error }) => {
           error.serverError && toast.error(error.serverError)
@@ -84,7 +82,7 @@ export function RenameBroadcastDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput name="name" label={t("broadcasts.name")} />
+              <InputField name="name" label={t("broadcasts.name")} />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>

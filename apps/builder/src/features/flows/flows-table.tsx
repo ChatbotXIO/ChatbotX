@@ -1,17 +1,17 @@
 "use client"
 
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import type { DataTableFilterField } from "@/components/data-table/types"
 import type { getCurrentFolder } from "@/features/folders/queries"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { Flow } from "@ahachat.ai/database/browser"
 import React, { useMemo, useState } from "react"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
-import { type DataTableRowAction, getFlowColumns } from "./flows-table-columns"
+import { getFlowColumns } from "./flows-table-columns"
 import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
 import type { getFlows } from "./queries"
 import { RenameFlowDialog } from "./rename-flow-dialog"
+import { DataTable } from "@/components/data-table"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
+import type { DataTableRowAction } from "@/types/data-table"
+import type { FlowResource } from "./schemas/get-flows-schema"
 
 interface FlowsTableProps {
   promises: Promise<
@@ -25,29 +25,15 @@ interface FlowsTableProps {
 
 export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
   const [_, { data, pageCount }] = React.use(promises)
-  const [rowAction, setRowAction] = useState<DataTableRowAction<Flow> | null>(
-    null,
-  )
+  const [rowAction, setRowAction] =
+    useState<DataTableRowAction<FlowResource> | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const columns = useMemo(
-    () => getFlowColumns({ setRowAction }),
-    [setRowAction],
-  )
-
-  const filterFields: DataTableFilterField<Flow & { title?: string }>[] = [
-    {
-      id: "title",
-      label: "Search",
-      placeholder: "Enter flows.name...",
-    },
-  ]
+  const columns = useMemo(() => getFlowColumns({ setRowAction }), [])
 
   const { table } = useDataTable({
     data,
     columns,
     pageCount,
-    filterFields,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -60,7 +46,7 @@ export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} filterFields={filterFields}>
+        <DataTableToolbar table={table}>
           <FlowsTableToolbarActions
             table={table}
             chatbotId={chatbotId}
@@ -70,7 +56,7 @@ export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
       </DataTable>
 
       <DeleteFlowsDialog
-        open={rowAction?.type === "delete"}
+        open={rowAction?.variant === "delete"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         flows={rowAction?.row.original ? [rowAction?.row.original] : []}
@@ -79,9 +65,8 @@ export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
       />
 
       <RenameFlowDialog
-        open={rowAction?.type === "rename"}
+        open={rowAction?.variant === "rename"}
         onOpenChange={() => setRowAction(null)}
-        chatbotId={chatbotId}
         flow={rowAction?.row.original || null}
       />
     </>

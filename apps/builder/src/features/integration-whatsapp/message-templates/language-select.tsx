@@ -1,8 +1,7 @@
 "use client"
 
+import { SelectField } from "@/components/form/select-field"
 import { LanguageOptions } from "@/features/integration-whatsapp/message-templates/type"
-import { SingleSelect } from "@/components/single-select"
-import { FormInput } from "@/components/form-input"
 
 export function LanguageSelect({
   name,
@@ -14,12 +13,12 @@ export function LanguageSelect({
   isRequired?: boolean
 }) {
   return (
-    <FormInput name={name} label={label} isRequired={isRequired}>
-      <SingleSelect
-        name={name}
-        placeholder="Please select"
-        options={LanguageOptions}
-      />
-    </FormInput>
+    <SelectField
+      name={name}
+      label={label}
+      isRequired={isRequired}
+      placeholder="Please select"
+      options={LanguageOptions}
+    />
   )
 }

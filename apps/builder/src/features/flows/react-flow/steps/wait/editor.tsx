@@ -1,7 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
-import { NumberField } from "@/components/number-field"
+import { InputNumberField } from "@/components/form/input-number-field"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "@/components/ui/date-picker"
 import {
@@ -40,12 +39,10 @@ export const WaitStepEditor = ({
       {delayType === DelayType.Duration && (
         <>
           <div className="flex justify-between gap-2">
-            <FormInput name={`${parentName}.duration`} label="">
-              <NumberField
-                name={`${parentName}.duration`}
-                className="min-w-[50px] px-1"
-              />
-            </FormInput>
+            <InputNumberField
+              name={`${parentName}.duration`}
+              className="min-w-[50px] px-1"
+            />
             <DelayUnitSelect name={`${parentName}.unit`} />
           </div>
           <div className="flex items-center space-x-2">

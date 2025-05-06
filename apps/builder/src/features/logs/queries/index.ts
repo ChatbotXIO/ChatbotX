@@ -13,52 +13,48 @@ export async function getLogs(
 
   return await unstable_cache(
     async () => {
-      try {
-        const where: Prisma.LogWhereInput = {
-          chatbotId: input.chatbotId,
-          logType: input.logType,
-        }
-
-        if (input.action) {
-          where.AND = [
-            {
-              action: {
-                contains: input.action,
-                mode: "insensitive",
-              },
-            },
-          ]
-        }
-
-        const orderBy = input.sort.map((sortItem) => ({
-          [sortItem.id]: sortItem.desc ? "desc" : "asc",
-        }))
-
-        const [data, total] = await prisma.$transaction([
-          prisma.log.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
-            where,
-            orderBy,
-            include: {
-              executorUser: true,
-              executorContact: true,
-            },
-          }),
-          prisma.log.count({ where }),
-        ])
-
-        const pageCount = Math.ceil(total / input.perPage)
-
-        return { data, pageCount }
-      } catch (_err) {
-        return { data: [], pageCount: 0 }
+      const where: Prisma.LogWhereInput = {
+        chatbotId: input.chatbotId,
+        logType: input.logType,
       }
+
+      if (input.action) {
+        where.AND = [
+          {
+            action: {
+              contains: input.action,
+              mode: "insensitive",
+            },
+          },
+        ]
+      }
+
+      const orderBy = input.sort.map((sortItem) => ({
+        [sortItem.id]: sortItem.desc ? "desc" : "asc",
+      }))
+
+      const [data, total] = await prisma.$transaction([
+        prisma.log.findMany({
+          skip: (input.page - 1) * input.perPage,
+          take: input.perPage,
+          where,
+          orderBy,
+          include: {
+            executorUser: true,
+            executorContact: true,
+          },
+        }),
+        prisma.log.count({ where }),
+      ])
+
+      const pageCount = Math.ceil(total / input.perPage)
+
+      return { data, pageCount }
     },
     [JSON.stringify(input)],
     {
       revalidate: 3600,
-      tags: [`${userId}#logs#${input.logType}`],
+      tags: [`chatbots:${input.chatbotId}#logs#${input.logType}`],
     },
   )()
 }

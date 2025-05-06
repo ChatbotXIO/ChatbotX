@@ -2,17 +2,7 @@ import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client"
 import type { WhatsappAuthValue } from "./index"
 import { SdkException } from "@ahachat.ai/sdk"
-
-export interface FlowEntity {
-  id: string
-  name: string
-  status: string
-  category: string[]
-}
-
-export interface ListFlowsResponse {
-  data: FlowEntity[]
-}
+import type { ListFlowsResponse } from "./types"
 
 /**
  * Get list of flows.

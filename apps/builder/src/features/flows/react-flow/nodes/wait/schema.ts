@@ -7,7 +7,7 @@ import type { NewNodeProps } from "../types"
 export const waitNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.Wait),
   data: z.object({
-    name: z.string().min(1).max(255).trim(),
+    name: z.string().trim().min(1).max(255),
     steps: z.array(waitStepSchema),
   }),
 })

@@ -6,6 +6,7 @@
 
 generator client {
   provider        = "prisma-client-js"
+  output          = "../generated/client"
   previewFeatures = ["nativeDistinct"]
 }
 
@@ -157,9 +158,9 @@ model InboxTeam {
   chatbotId String
   name      String
 
-  chatbot           Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  inxboxTeamMembers InboxTeamMember[]
-  assignedContacts  Contact[]         @relation("AssignedTeam")
+  chatbot          Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  inboxTeamMembers InboxTeamMember[]
+  assignedContacts Contact[]         @relation("AssignedTeam")
 }
 
 model InboxTeamMember {
@@ -791,6 +792,7 @@ enum FileType {
   IMAGE
   AUDIO
   VIDEO
+  GIF
   DOCUMENT
 }
 

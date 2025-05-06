@@ -16,8 +16,6 @@ import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
-import { useRouter } from "next/navigation"
-import { useTransition } from "react"
 import { toast } from "sonner"
 import { deleteTagAction } from "./actions/delete-tag-action"
 
@@ -39,34 +37,23 @@ export function DeleteTagsDialog({
   ...props
 }: DeleteTagsDialogProps) {
   const { t } = useTranslate()
-  const router = useRouter()
 
-  const { execute, result } = useAction(
+  const { execute, result, isPending } = useAction(
     deleteTagAction.bind(
       null,
       chatbotId,
       (tags ?? []).map((tag) => tag.id),
     ),
-  )
-
-  const [isDeletePending, startDeleteTransition] = useTransition()
-  const onDelete = () => {
-    if (!tags || tags.length === 0) {
-      return
-    }
-
-    startDeleteTransition(async () => {
-      await execute()
-
-      if (result.serverError) {
-        toast.error(result.serverError.message ?? result.serverError)
-      } else {
+    {
+      onSuccess: () => {
         toast.success(t("tags.deleted"))
         onOpenChange(false)
-        router.refresh()
-      }
-    })
-  }
+      },
+      onError: ({ error }) => {
+        error.serverError && toast.error(result.serverError)
+      },
+    },
+  )
 
   return (
     <Dialog {...props}>
@@ -95,10 +82,10 @@ export function DeleteTagsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={onDelete}
-            disabled={isDeletePending}
+            onClick={() => execute()}
+            disabled={isPending}
           >
-            {isDeletePending && (
+            {isPending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             {t("common.deleteBtn")}

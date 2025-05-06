@@ -4,7 +4,7 @@ import { AnswerType } from "../answer/schema"
 
 export const userInputStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.enum([StepType.UserInput]),
+  stepType: z.literal(StepType.UserInput),
   answerType: z.nativeEnum(AnswerType),
 })
 

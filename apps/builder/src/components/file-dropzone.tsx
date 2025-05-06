@@ -24,14 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
-enum FileType {
-  VIDEO = "VIDEO",
-  IMAGE = "IMAGE",
-  DOCUMENT = "DOCUMENT",
-  AUDIO = "AUDIO",
-  GIF = "GIF",
-}
+import { FileType } from "@ahachat.ai/database/browser"
 
 type FileDropzoneConfigs = {
   uploadKeyName: string

@@ -68,6 +68,9 @@ const config: IntegrationDefinition<
       `Handler: ${props.req.method} ${props.req.url} is not implemented`,
     )
   },
+  disconnect: (_props: WhatsappAuthValue): Promise<void> => {
+    throw new Error("Function not implemented.")
+  },
 }
 
 export const integration = new Integration<

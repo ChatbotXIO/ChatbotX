@@ -6,7 +6,7 @@ import {
   type Folder,
   FolderType,
   PrismaClient,
-} from "@prisma/client"
+} from "../../generated/client"
 
 const prisma = new PrismaClient()
 

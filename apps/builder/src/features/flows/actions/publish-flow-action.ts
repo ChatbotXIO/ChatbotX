@@ -49,6 +49,7 @@ export const publishFlowAction = chatbotActionClient
             flowId: flow.id,
             isDraft: false,
             ...validated,
+            startNodeId: "",
           },
         })
 

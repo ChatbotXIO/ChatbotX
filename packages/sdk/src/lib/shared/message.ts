@@ -17,15 +17,24 @@ export const conversationEntitySchema = z.custom<ConversationEntity>((data) => {
   return typeof data === "object"
 })
 
+export interface OutgoingMessageEntity {
+  chatbotId: string
+  conversationId: string
+  contentType: ContentType
+  content?: string
+  attachments?: AttachmentEntity[]
+}
+
 export interface MessageEntity {
   sourceId: string
   contentType: ContentType
   content?: string
   contentAttributes?: MessageLocationEntity | unknown
   attachments?: AttachmentEntity[]
+  clientId?: string | null
 }
 
-export const messageEntitySchema = z.custom<MessageEntity>((data) => {
+export const MessageEntitySchema = z.custom<MessageEntity>((data) => {
   return typeof data === "object"
 })
 

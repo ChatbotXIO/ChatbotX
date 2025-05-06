@@ -8,12 +8,12 @@ export type IntegrationDefinition<
   IActions extends Record<string, Handler<any, any>>,
 > = {
   name: string
-  actions?: IActions
-  handleRequest?: Handler<
+  actions: IActions
+  handleRequest: Handler<
     HandleRequestProps<IConfig>,
     Oauth2AuthValue | string | number
   >
-  disconnect?: Handler<IAuth, void>
+  disconnect: Handler<IAuth, void>
 }
 
 export class Integration<
@@ -55,7 +55,7 @@ export class Integration<
   async runAction<ActionName extends keyof T["actions"]>(
     actionName: ActionName,
     props: Parameters<Exclude<T["actions"][ActionName], undefined>>[0],
-  ): Promise<Parameters<Exclude<T["actions"][ActionName], undefined>>[1]> {
+  ): Promise<ReturnType<Exclude<T["actions"][ActionName], undefined>>> {
     const action = this.actions?.[actionName]
     if (action) {
       return await action(props)

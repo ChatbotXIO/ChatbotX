@@ -1,55 +1,28 @@
-import { prisma } from "@ahachat.ai/database"
-import type { ConversationEntity, MessageEntity } from "@ahachat.ai/sdk"
 import {
-  ChatQueueAction,
+  ChatJobAction,
   QueueName,
   connection,
   defaultWorkerOptions,
+  type ChatJobData,
 } from "@ahachat.ai/worker-config"
-import { Worker } from "bullmq"
-import { getLogger, logger } from "../lib/log"
-import { getIntegrationAuth } from "./handlers/integration.query"
-import { allIntegrations } from "../shared/integrations"
+import { Worker, type Job } from "bullmq"
+import { logger } from "../lib/log"
+import { sendMessage } from "./handlers/send-message"
+import { SdkException } from "@ahachat.ai/sdk"
+import { triggerMessage } from "./handlers/trigger-message"
 
 const worker = new Worker(
   QueueName.CHAT,
-  async (job) => {
-    if (job.name === ChatQueueAction.SEND_MESSAGE) {
-      const { conversation, message } = job.data as {
-        conversation: ConversationEntity
-        message: MessageEntity
-      }
-
-      // Find integration auth
-      const inbox = await prisma.inbox.findFirstOrThrow({
-        where: { id: conversation.inboxId },
-        include: {
-          integrationWhatsapp: true,
-          chatbot: true,
-        },
-      })
-      const integrationAuth = await getIntegrationAuth(inbox)
-      if (!integrationAuth) {
-        logger.error("Unable to find integration auth:", inbox.inboxType)
+  async (job: Job<ChatJobData>) => {
+    switch (job.data.type) {
+      case ChatJobAction.SEND_MESSAGE:
+        await sendMessage(job.data)
         return
-      }
-
-      // Find integration detail
-      const intergationDetail = allIntegrations[inbox.inboxType]
-      if (!intergationDetail) {
-        logger.error("Unable to find integration detail:", inbox.inboxType)
+      case ChatJobAction.TRIGGER_MESSAGE:
+        await triggerMessage(job.data)
         return
-      }
-
-      await intergationDetail.runAction("sendMessage", {
-        ctx: {
-          chatbot: inbox.chatbot,
-          auth: integrationAuth,
-          logger: getLogger(inbox.inboxType),
-        },
-        conversation,
-        message,
-      })
+      default:
+        throw new SdkException("ChatJobAction action is not defined")
     }
   },
   {

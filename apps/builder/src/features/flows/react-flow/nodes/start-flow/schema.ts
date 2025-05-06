@@ -9,7 +9,7 @@ import { NodeType, baseNodeSchema } from "../../types"
 export const startFlowNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.StartFlow),
   data: z.object({
-    name: z.string().min(1).max(255).trim(),
+    name: z.string().trim().min(1).max(255),
     steps: z.array(startFlowStepSchema),
   }),
 })

@@ -13,26 +13,22 @@ export async function listContacts(
 
   return await unstable_cache(
     async () => {
-      try {
-        const where = generateWhere(input)
+      const where = generateWhere(input)
 
-        const take = input.perPage || 10
-        const skip = (input.page ?? 1 - 1) * take
-        const [data, total] = await prisma.$transaction([
-          prisma.contact.findMany({
-            skip,
-            take,
-            where,
-          }),
-          prisma.contact.count({ where }),
-        ])
+      const take = input.perPage || 10
+      const skip = (input.page ?? 1 - 1) * take
+      const [data, total] = await prisma.$transaction([
+        prisma.contact.findMany({
+          skip,
+          take,
+          where,
+        }),
+        prisma.contact.count({ where }),
+      ])
 
-        const pageCount = Math.ceil(total / take)
+      const pageCount = Math.ceil(total / take)
 
-        return { data, pageCount }
-      } catch (_err) {
-        return { data: [], pageCount: 0 }
-      }
+      return { data, pageCount }
     },
     [JSON.stringify(input)],
     {
@@ -48,14 +44,11 @@ export async function countContacts(
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
-  try {
-    const where = generateWhere(input)
-    const total = await prisma.contact.count({ where })
+  const where = generateWhere(input)
 
-    return { total }
-  } catch (_err) {
-    return { total: 0 }
-  }
+  const total = await prisma.contact.count({ where })
+
+  return { total }
 }
 
 const generateWhere = (

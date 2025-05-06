@@ -1,6 +1,7 @@
 "use client"
 
 import FileDropzone from "@/components/file-dropzone"
+import { FileType } from "@ahachat.ai/database"
 import { useFormContext } from "react-hook-form"
 
 export function SendAudioStepEditor({ parentName }: { parentName: string }) {
@@ -12,7 +13,7 @@ export function SendAudioStepEditor({ parentName }: { parentName: string }) {
       unregister={unregister}
       parentName={parentName}
       mode="link"
-      type="audio"
+      type={FileType.AUDIO}
       configs={{
         uploadKeyName: "common.uploadAudioOr",
         linkKeyName: "common.insertLink",

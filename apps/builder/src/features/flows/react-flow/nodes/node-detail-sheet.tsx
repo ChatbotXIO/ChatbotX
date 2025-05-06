@@ -1,6 +1,11 @@
 "use client"
 
-import { Sheet, SheetContent, SheetDescription } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { useStore } from "@xyflow/react"
 import { NodeEditor } from "./editor"
 import type { FlowNode } from "../types"
@@ -18,6 +23,7 @@ export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
   return activeNode ? (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="flex flex-col">
+        <SheetTitle />
         <SheetDescription />
         <div className="flex flex-col flex-1 gap-4 overflow-hidden p-5">
           <NodeEditor activeNode={activeNode} />

@@ -1,7 +1,6 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
-import { formatDate } from "@/components/data-table/lib/utils"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -11,23 +10,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import type { Flow } from "@ahachat.ai/database/browser"
-import type { ColumnDef, Row } from "@tanstack/react-table"
+import { formatDate } from "@/lib/format"
+import type { DataTableRowAction } from "@/types/data-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
+import type { Dispatch, SetStateAction } from "react"
 import { updateFlowAction } from "./actions/update-flow-action"
 import type { FlowResource } from "./schemas/get-flows-schema"
 
-export interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: "rename" | "delete" | "duplicate" | "toggleActive" | "toggleInbox"
-  value?: unknown
-}
-
 interface GetColumnsProps {
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<Flow> | null>
+  setRowAction: Dispatch<
+    SetStateAction<DataTableRowAction<FlowResource> | null>
   >
 }
 
@@ -160,13 +155,13 @@ export function getFlowColumns({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "rename" })}
+                onSelect={() => setRowAction({ row, variant: "rename" })}
               >
                 <TextIcon className="mr-2" />
                 Rename
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "delete" })}
+                onSelect={() => setRowAction({ row, variant: "delete" })}
               >
                 <Trash className="mr-2" />
                 Delete
