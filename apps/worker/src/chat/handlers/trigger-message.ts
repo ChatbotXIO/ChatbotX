@@ -5,11 +5,15 @@ import {
   SenderType,
 } from "@ahachat.ai/database"
 import {
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@ahachat.ai/party-config"
+import type { ConversationEntity, MessageEntity } from "@ahachat.ai/sdk"
+import {
   ChatJobAction,
   type ChatJobTriggerMessage,
 } from "@ahachat.ai/worker-config"
-import { sendMessage } from "./send-message"
-import type { ConversationEntity, MessageEntity } from "@ahachat.ai/sdk"
+import { sendMessageToExternal } from "./send-message"
 
 export async function triggerMessage(props: ChatJobTriggerMessage) {
   const conversation = await prisma.conversation.findFirst({
@@ -31,11 +35,17 @@ export async function triggerMessage(props: ChatJobTriggerMessage) {
     },
   })
 
-  await sendMessage({
-    type: ChatJobAction.SEND_MESSAGE,
-    data: {
-      conversation: conversation as ConversationEntity,
-      message: message as MessageEntity,
-    },
-  })
+  await Promise.all([
+    broadcastToChatbotParty(conversation.chatbotId, {
+      eventType: RealtimeEventType.CREATE_MESSAGE,
+      data: message,
+    }),
+    sendMessageToExternal({
+      type: ChatJobAction.SEND_MESSAGE,
+      data: {
+        conversation: conversation as ConversationEntity,
+        message: message as MessageEntity,
+      },
+    }),
+  ])
 }

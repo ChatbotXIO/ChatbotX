@@ -1,4 +1,7 @@
+import { auth } from "@/auth"
 import { findConversation } from "@/features/conversations/queries/get-conversations.query"
+import { errorResponse } from "@/lib/error-handling"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
@@ -7,9 +10,16 @@ export async function GET(
     params,
   }: { params: Promise<{ conversationId: string; chatbotId: string }> },
 ) {
-  const { chatbotId, conversationId } = await params
+  try {
+    const { chatbotId, conversationId } = await params
 
-  const result = await findConversation({ id: conversationId, chatbotId })
+    const session = await auth()
+    await findChatbotOrFail(session?.user.id, chatbotId)
 
-  return NextResponse.json(result)
+    const result = await findConversation({ id: conversationId, chatbotId })
+
+    return NextResponse.json(result)
+  } catch (e) {
+    return errorResponse(e)
+  }
 }

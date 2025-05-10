@@ -7,7 +7,7 @@ import {
 } from "@ahachat.ai/worker-config"
 import { Worker, type Job } from "bullmq"
 import { logger } from "../lib/log"
-import { sendMessage } from "./handlers/send-message"
+import { sendMessageToExternal } from "./handlers/send-message"
 import { SdkException } from "@ahachat.ai/sdk"
 import { triggerMessage } from "./handlers/trigger-message"
 
@@ -16,7 +16,7 @@ const worker = new Worker(
   async (job: Job<ChatJobData>) => {
     switch (job.data.type) {
       case ChatJobAction.SEND_MESSAGE:
-        await sendMessage(job.data)
+        await sendMessageToExternal(job.data)
         return
       case ChatJobAction.TRIGGER_MESSAGE:
         await triggerMessage(job.data)

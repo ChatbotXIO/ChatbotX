@@ -35,18 +35,6 @@ export const listConversations = async (
     include: {
       contact: true,
       inbox: true,
-      _count: {
-        select: {
-          messages: {
-            where: {
-              senderType: SenderType.USER,
-              // createdAt: {
-              //   gt: prisma.conversation.fields.contactLastSeenAt
-              // }
-            },
-          },
-        },
-      },
     },
     take: perPage,
     where,

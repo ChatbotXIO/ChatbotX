@@ -195,23 +195,35 @@ export const createChatStore = () => {
       if (message.conversationId !== activeConversationId) {
         return
       }
-      const messageIndex = messages.findIndex(
-        (m) => m.clientId === message.clientId,
-      )
-      if (messageIndex > -1) {
-        const newMessages = [...messages]
-        newMessages[messageIndex] = { ...newMessages[messageIndex], ...message }
-        set({
-          messages: newMessages,
-        })
+
+      // If the message contains the clientId, it can be sent from this tab itself.
+      if (message.clientId) {
+        const messageIndex = messages.findIndex(
+          (m) => m.clientId === message.clientId,
+        )
+
+        // let replace the returned content if found
+        if (messageIndex > -1) {
+          const newMessages = [...messages]
+          newMessages[messageIndex] = {
+            ...newMessages[messageIndex],
+            ...message,
+          }
+          set({
+            messages: newMessages,
+          })
+        } else {
+          // New conversation, we'll need basic details
+          const newMessage = await ky
+            .get<MessageResource>(
+              `/api/chatbots/${message.chatbotId}/messages/${message.id}`,
+            )
+            .json()
+          appendMessage(newMessage)
+        }
       } else {
-        // New conversation, we'll need basic details
-        const newMessage = await ky
-          .get<MessageResource>(
-            `/api/chatbots/${message.chatbotId}/messages/${message.id}`,
-          )
-          .json()
-        appendMessage(newMessage)
+        // just append the messages to the end of messages list
+        appendMessage(message)
       }
     },
   }))

@@ -1,21 +1,27 @@
+import { auth } from "@/auth"
 import { countContacts } from "@/features/contacts/queries/list-contacts.queries"
+import { errorResponse } from "@/lib/error-handling"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   request: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{ chatbotId: string }>
-  },
+  { params }: { params: Promise<{ chatbotId: string }> },
 ) {
-  const { chatbotId } = await params
-  const searchParams = request.nextUrl.searchParams
+  try {
+    const { chatbotId } = await params
 
-  const data = await countContacts({
-    chatbotId,
-    ...searchParams,
-  })
+    const session = await auth()
+    await findChatbotOrFail(session?.user.id, chatbotId)
 
-  return NextResponse.json(data)
+    const searchParams = request.nextUrl.searchParams
+    const data = await countContacts({
+      chatbotId,
+      ...searchParams,
+    })
+
+    return NextResponse.json(data)
+  } catch (e) {
+    return errorResponse(e)
+  }
 }

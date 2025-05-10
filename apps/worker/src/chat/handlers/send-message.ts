@@ -4,7 +4,7 @@ import { getLogger, logger } from "../../lib/log"
 import { allIntegrations } from "../../shared/integrations"
 import { getIntegrationAuth } from "./integration.query"
 
-export async function sendMessage(data: ChatJobSendMessage) {
+export async function sendMessageToExternal(data: ChatJobSendMessage) {
   const { conversation, message } = data.data
 
   // Find integration auth

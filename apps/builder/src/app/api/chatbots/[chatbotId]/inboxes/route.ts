@@ -1,18 +1,30 @@
+import { auth } from "@/auth"
 import { listInboxes } from "@/features/inboxes/queries"
 import { listInboxesNuqs } from "@/features/inboxes/schemas/list-inboxes.schema"
+import { errorResponse } from "@/lib/error-handling"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ chatbotId: string }> },
 ) {
-  const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-  const search = listInboxesNuqs.parse(searchParams)
+  try {
+    const { chatbotId } = await params
 
-  const allInboxes = await listInboxes({
-    ...search,
-    chatbotId: (await params).chatbotId,
-  })
+    const session = await auth()
+    await findChatbotOrFail(session?.user.id, chatbotId)
 
-  return NextResponse.json(allInboxes)
+    const searchParams = Object.fromEntries(req.nextUrl.searchParams)
+    const search = listInboxesNuqs.parse(searchParams)
+
+    const allInboxes = await listInboxes({
+      ...search,
+      chatbotId: (await params).chatbotId,
+    })
+
+    return NextResponse.json(allInboxes)
+  } catch (e) {
+    return errorResponse(e)
+  }
 }

@@ -580,10 +580,13 @@ importers:
 
   packages/party-config:
     dependencies:
+      ky:
+        specifier: ^1.8.1
+        version: 1.8.1
+    devDependencies:
       '@ahachat.ai/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-    devDependencies:
       typescript:
         specifier: 5.8.3
         version: 5.8.3

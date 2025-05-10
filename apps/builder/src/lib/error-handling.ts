@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { NotfoundException } from "./error"
 
 export function errorResponse(error: unknown) {
   if (error instanceof z.ZodError) {
@@ -9,40 +10,27 @@ export function errorResponse(error: unknown) {
     }))
 
     return NextResponse.json(
-      {
-        errors,
-      },
-      {
-        status: 422,
-      },
+      { message: "Validation error", errors },
+      { status: 422 },
+    )
+  }
+
+  if (error instanceof NotfoundException) {
+    return NextResponse.json(
+      { message: error.message, errors: [] },
+      { status: 404 },
     )
   }
 
   if (error instanceof Error) {
     return NextResponse.json(
-      {
-        errors: [
-          {
-            message: error.message,
-          },
-        ],
-      },
-      {
-        status: 400,
-      },
+      { message: error.message, errors: [] },
+      { status: 400 },
     )
   }
 
   return NextResponse.json(
-    {
-      errors: [
-        {
-          message: "Unknow error",
-        },
-      ],
-    },
-    {
-      status: 500,
-    },
+    { message: "Unknown error", errors: [] },
+    { status: 500 },
   )
 }

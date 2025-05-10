@@ -1,9 +1,10 @@
-export enum PartySocketEvent {
+export enum RealtimeEventType {
   CREATE_MESSAGE = "CREATE_MESSAGE",
 }
 
-export type EventData = {
-  event: PartySocketEvent
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  data: any
+export type RealtimeEventCreateMessage = {
+  eventType: RealtimeEventType.CREATE_MESSAGE
+  data: unknown
 }
+
+export type RealtimeEventData = RealtimeEventCreateMessage
