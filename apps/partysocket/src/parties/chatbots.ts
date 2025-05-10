@@ -1,7 +1,7 @@
 import type * as Party from "partykit/server"
 import { getNextAuthSession } from "../utils/auth"
 
-export default class ConversationParty implements Party.Server {
+export default class ChatbotParty implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
   async onConnect(
