@@ -1,8 +1,8 @@
 import { auth } from "@/auth"
-import { getFlows } from "@/features/integration-whatsapp/flows/queries"
-import { getFlowsSearchParamsCache } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
+import { getWhatsappFlowsSearchParamsCache } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
@@ -16,9 +16,9 @@ export async function GET(
     await findChatbotOrFail(session?.user.id, chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-    const search = getFlowsSearchParamsCache.parse(searchParams)
+    const search = getWhatsappFlowsSearchParamsCache.parse(searchParams)
 
-    const allFlows = await getFlows({
+    const allFlows = await getWhatsappFlows({
       ...search,
       chatbotId: (await params).chatbotId,
     })

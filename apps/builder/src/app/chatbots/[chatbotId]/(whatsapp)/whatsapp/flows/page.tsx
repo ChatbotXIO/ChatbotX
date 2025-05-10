@@ -1,8 +1,8 @@
 import { Suspense } from "react"
 import type { SearchParams } from "nuqs/server"
-import { FlowsTable } from "@/features/integration-whatsapp/flows/flows-table"
-import { getFlows } from "@/features/integration-whatsapp/flows/queries"
-import { getFlowsSearchParamsCache } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
+import { WhatsappFlowsTable } from "@/features/integration-whatsapp/flows/flows-table"
+import { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
+import { getWhatsappFlowsSearchParamsCache } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 
 export default async function WhatsappMessageTemplatePage(props: {
   params: Promise<{ chatbotId: string }>
@@ -10,9 +10,9 @@ export default async function WhatsappMessageTemplatePage(props: {
 }) {
   const { chatbotId } = await props.params
   const searchParams = await props.searchParams
-  const search = getFlowsSearchParamsCache.parse(searchParams)
+  const search = getWhatsappFlowsSearchParamsCache.parse(searchParams)
   const promises = Promise.all([
-    getFlows({
+    getWhatsappFlows({
       ...search,
       chatbotId,
       status: "",
@@ -22,7 +22,7 @@ export default async function WhatsappMessageTemplatePage(props: {
   return (
     <div>
       <Suspense>
-        <FlowsTable promises={promises} chatbotId={chatbotId} />
+        <WhatsappFlowsTable promises={promises} chatbotId={chatbotId} />
       </Suspense>
     </div>
   )

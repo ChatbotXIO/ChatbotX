@@ -18,7 +18,7 @@ export const buttonBlockSchema = z
       }),
       z.object({
         type: z.literal(ButtonActionType.Url),
-        url: z.string().url(),
+        url: z.string().trim().url(),
       }),
       z.object({
         type: z.literal(ButtonActionType.Flow),
@@ -28,7 +28,11 @@ export const buttonBlockSchema = z
         type: z.literal(ButtonActionType.PhoneNumber),
         phone_number: z
           .string()
-          .regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/),
+          .trim()
+          .max(20)
+          .regex(/^\+?[1-9][0-9]{7,18}$/, {
+            message: "Invalid phone number format",
+          }),
       }),
     ]),
   )

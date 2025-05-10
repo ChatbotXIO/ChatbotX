@@ -1,10 +1,10 @@
 import { Textarea } from "@/components/ui/textarea"
 import { useTranslate } from "@tolgee/react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, memo, useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
-export const TemplateFooter = ({
+const TemplateFooterComponent = ({
   parentName,
 }: {
   parentName: string
@@ -19,7 +19,7 @@ export const TemplateFooter = ({
 
   const handleChange = useDebouncedCallback((value) => {
     setValue(`${parentName}.footer`, value, { shouldValidate: true })
-  }, 100)
+  }, 200)
 
   useEffect(() => {
     if (!showForm) {
@@ -27,10 +27,22 @@ export const TemplateFooter = ({
     }
   }, [getValues, parentName, showForm])
 
-  const handleStartEditing = () => {
+  const handleStartEditing = useCallback(() => {
     setLocalFooter(getValues(`${parentName}.footer`) || "")
     setShowForm(true)
-  }
+  }, [getValues, parentName])
+
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setLocalFooter(e.target.value)
+      handleChange(e.target.value)
+    },
+    [handleChange],
+  )
+
+  const displayText = useMemo(() => {
+    return getValues(`${parentName}.footer`) || `---- ${t("common.edit")} ----`
+  }, [getValues, parentName, t])
 
   return (
     <>
@@ -40,7 +52,7 @@ export const TemplateFooter = ({
           onClick={handleStartEditing}
           onKeyUp={() => {}}
         >
-          {getValues(`${parentName}.footer`) || `---- ${t("common.edit")} ----`}
+          {displayText}
         </pre>
       ) : (
         <div className="flex flex-col gap-2">
@@ -49,13 +61,12 @@ export const TemplateFooter = ({
             placeholder="Enter text"
             value={localFooter}
             maxLength={60}
-            onChange={(e) => {
-              setLocalFooter(e.target.value)
-              handleChange(e.target.value)
-            }}
+            onChange={handleTextChange}
           />
         </div>
       )}
     </>
   )
 }
+
+export const TemplateFooter = memo(TemplateFooterComponent)

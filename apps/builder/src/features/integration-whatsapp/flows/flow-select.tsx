@@ -6,7 +6,7 @@ import {
 } from "@ahachat.ai/database/types"
 import { useParams } from "next/navigation"
 
-export const FlowSelect = ({
+export const WhatsappFlowSelect = ({
   name,
   label,
   isRequired = false,

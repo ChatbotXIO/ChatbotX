@@ -11,19 +11,19 @@ import { uploader } from "@ahachat.ai/filesystem"
 import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
 import { integrations } from "@/integration"
 import {
-  type UpdateIceBreakerSchema,
-  updateIceBreakerSchema,
+  type UpdateWhatsappIceBreakerSchema,
+  updateWhatsappIceBreakerSchema,
 } from "../schemas/update-ice-breaker-schema"
 
-export const updateIceBreakerAction = chatbotActionClient
+export const updateWhatsappIceBreakerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(updateIceBreakerSchema)
+  .schema(updateWhatsappIceBreakerSchema)
   .action(
     async ({
       parsedInput,
       bindArgsParsedInputs: [chatbotId],
     }: {
-      parsedInput: UpdateIceBreakerSchema
+      parsedInput: UpdateWhatsappIceBreakerSchema
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const integrationWhatsapp =

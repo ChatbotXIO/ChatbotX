@@ -1,14 +1,14 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import type { GetIceBreakersSchema } from "../schemas/get-ice-breakers-schema"
+import type { GetWhatsappIceBreakersSchema } from "../schemas/get-ice-breakers-schema"
 import { prisma } from "@ahachat.ai/database"
 import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
 import { getLogger } from "@/lib/log"
 import { uploader } from "@ahachat.ai/filesystem"
 import { integrations } from "@/integration"
 
-export const getIceBreakers = async (
-  input: GetIceBreakersSchema,
+export const getWhatsappIceBreakers = async (
+  input: GetWhatsappIceBreakersSchema,
 ): Promise<{
   data: string[]
 }> => {

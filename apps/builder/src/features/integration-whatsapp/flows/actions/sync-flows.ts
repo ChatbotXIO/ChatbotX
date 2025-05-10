@@ -16,7 +16,7 @@ import type {
   WhatsappAuthValue,
 } from "@ahachat.ai/integration-whatsapp"
 
-export const syncFlowAction = chatbotActionClient
+export const syncWhatsappFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
   .action(
     async ({

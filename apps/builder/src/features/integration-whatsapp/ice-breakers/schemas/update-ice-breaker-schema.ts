@@ -1,6 +1,8 @@
 import { z } from "zod"
 
-export const updateIceBreakerSchema = z.object({
+export const updateWhatsappIceBreakerSchema = z.object({
   prompts: z.array(z.string()),
 })
-export type UpdateIceBreakerSchema = z.infer<typeof updateIceBreakerSchema>
+export type UpdateWhatsappIceBreakerSchema = z.infer<
+  typeof updateWhatsappIceBreakerSchema
+>

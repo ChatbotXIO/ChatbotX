@@ -2,21 +2,24 @@
 
 import { DataTable } from "@/components/data-table"
 import { DataTableToolbar } from "@/components/data-table-toolbar"
-import type { getFlows } from "@/features/integration-whatsapp/flows/queries"
+import type { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { DataTableRowAction } from "@/types/data-table"
 import type { WhatsappFlow } from "@ahachat.ai/database"
 import type { ColumnDef } from "@tanstack/react-table"
 import React, { useMemo, useState } from "react"
 import { getColumns } from "./flows-table-columns"
-import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
+import { WhatsappFlowsTableToolbarActions } from "./flows-table-toolbar-actions"
 
-interface FlowsTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
+interface WhatsappFlowsTableProps {
+  promises: Promise<[Awaited<ReturnType<typeof getWhatsappFlows>>]>
   chatbotId: string
 }
 
-export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
+export function WhatsappFlowsTable({
+  promises,
+  chatbotId,
+}: WhatsappFlowsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const [_rowAction, setRowAction] =
     useState<DataTableRowAction<WhatsappFlow> | null>(null)
@@ -43,7 +46,7 @@ export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
-          <FlowsTableToolbarActions chatbotId={chatbotId} />
+          <WhatsappFlowsTableToolbarActions chatbotId={chatbotId} />
         </DataTableToolbar>
       </DataTable>
     </>

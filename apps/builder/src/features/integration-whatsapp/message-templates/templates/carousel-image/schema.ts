@@ -3,7 +3,7 @@ import { templateImageDefaultValue, templateImageSchema } from "../image/schema"
 
 export const templateCarouselImageSchema = z.object({
   body: z.object({
-    text: z.string().min(1).max(1024),
+    text: z.string().trim().min(1).max(1024),
     variables: z.array(z.string().min(1).max(255)),
   }),
   cards: z
@@ -36,5 +36,5 @@ export const templateCarouselImageDefaultValue =
       text: "",
       variables: [],
     },
-    cards: [templateImageDefaultValue(), templateImageDefaultValue()],
+    cards: [templateImageDefaultValue(1), templateImageDefaultValue(1)],
   })

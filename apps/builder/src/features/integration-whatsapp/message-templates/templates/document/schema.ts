@@ -20,10 +20,10 @@ export const templateDocumentSchema = z
         }),
     }),
     body: z.object({
-      text: z.string().min(1).max(1024),
+      text: z.string().trim().min(1).max(1024),
       variables: z.array(z.string().min(1).max(255)),
     }),
-    footer: z.string().max(60).nullable(),
+    footer: z.string().trim().max(60).nullable(),
     buttons: z.array(buttonBlockSchema).max(3),
   })
   .superRefine((data, ctx) => {

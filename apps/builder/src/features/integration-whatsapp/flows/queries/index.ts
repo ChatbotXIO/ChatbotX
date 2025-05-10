@@ -4,13 +4,13 @@ import {
   type WhatsappFlow,
   type WhatsappFlowStatus,
 } from "@ahachat.ai/database"
-import type { GetFlowsSchema } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
+import type { GetWhatsappFlowsSchema } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { unstable_cache } from "next/cache"
 
-export const getFlows = async (
-  input: GetFlowsSchema,
+export const getWhatsappFlows = async (
+  input: GetWhatsappFlowsSchema,
 ): Promise<{
   data: WhatsappFlow[]
   pageCount: number

@@ -1,1 +1,1 @@
-export type GetIceBreakersSchema = { chatbotId: string }
+export type GetWhatsappIceBreakersSchema = { chatbotId: string }

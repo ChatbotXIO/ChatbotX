@@ -3,7 +3,7 @@ import { templateVideoDefaultValue, templateVideoSchema } from "../video/schema"
 
 export const templateCarouselVideoSchema = z.object({
   body: z.object({
-    text: z.string().min(1).max(1024),
+    text: z.string().trim().min(1).max(1024),
     variables: z.array(z.string().min(1).max(255)),
   }),
   cards: z
@@ -36,5 +36,5 @@ export const templateCarouselVideoDefaultValue =
       text: "",
       variables: [],
     },
-    cards: [templateVideoDefaultValue(), templateVideoDefaultValue()],
+    cards: [templateVideoDefaultValue(1), templateVideoDefaultValue(1)],
   })

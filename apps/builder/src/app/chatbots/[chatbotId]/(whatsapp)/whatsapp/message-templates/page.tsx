@@ -4,7 +4,7 @@ import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 import { T } from "@/tolgee/server"
 import { Suspense } from "react"
-import { MessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
+import { WhatsappMessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
 import type { SearchParams } from "nuqs/server"
 
 export default async function WhatsappMessageTemplatePage(props: {
@@ -35,7 +35,10 @@ export default async function WhatsappMessageTemplatePage(props: {
         </div>
       </div>
       <Suspense>
-        <MessageTemplatesTable promises={promises} chatbotId={chatbotId} />
+        <WhatsappMessageTemplatesTable
+          promises={promises}
+          chatbotId={chatbotId}
+        />
       </Suspense>
     </div>
   )

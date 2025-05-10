@@ -11,24 +11,24 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { use } from "react"
 import { toast } from "sonner"
-import { updateIceBreakerAction } from "./actions/update-ice-breakers"
-import type { getIceBreakers } from "./queries"
-import { updateIceBreakerSchema } from "./schemas/update-ice-breaker-schema"
+import { updateWhatsappIceBreakerAction } from "./actions/update-ice-breakers"
+import type { getWhatsappIceBreakers } from "./queries"
+import { updateWhatsappIceBreakerSchema } from "./schemas/update-ice-breaker-schema"
 
-export function IceBreakerForm({
+export function WhatsappIceBreakerForm({
   chatbotId,
   promises,
 }: {
   chatbotId: string
-  promises: Promise<[Awaited<ReturnType<typeof getIceBreakers>>]>
+  promises: Promise<[Awaited<ReturnType<typeof getWhatsappIceBreakers>>]>
 }) {
   const [{ data: allPrompts }] = use(promises)
   const { t } = useTranslate()
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateIceBreakerAction.bind(null, chatbotId),
-    zodResolver(updateIceBreakerSchema),
+    updateWhatsappIceBreakerAction.bind(null, chatbotId),
+    zodResolver(updateWhatsappIceBreakerSchema),
     {
       actionProps: {
         onSuccess: () => {

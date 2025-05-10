@@ -8,7 +8,7 @@ import { useTranslate } from "@tolgee/react"
 import { TemplateType } from "./type"
 import { SelectField } from "@/components/form/select-field"
 
-export function CategorySelect({
+export function WhatsappMessageTemplateCategorySelect({
   name,
   label,
   isRequired = false,

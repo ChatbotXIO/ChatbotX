@@ -1,19 +1,26 @@
-import { useFormContext } from "react-hook-form"
+import { useFormContext, useWatch } from "react-hook-form"
 import { TemplateFooter } from "../components/footer"
 import { TemplateHeader } from "../components/header"
 import { TemplateBody } from "../components/body"
-import { ButtonGroupEditor } from "../button/preview"
+import { ButtonGroupPreview } from "../button/preview"
 import { CardContent } from "@/components/ui/card"
+import { memo } from "react"
 
-export const TemplateTextPreview = ({
+const TemplateTextPreviewComponent = ({
   parentName = "content",
   ...rest
 }: {
   parentName?: string
 }) => {
-  const { watch } = useFormContext()
-  const showHeader = watch(`${parentName}.showHeader`)
-  const showFooter = watch(`${parentName}.showFooter`)
+  const { control } = useFormContext()
+  const showHeader = useWatch({
+    control,
+    name: `${parentName}.showHeader`,
+  })
+  const showFooter = useWatch({
+    control,
+    name: `${parentName}.showFooter`,
+  })
 
   return (
     <CardContent className="bg-white p-4 rounded">
@@ -22,8 +29,10 @@ export const TemplateTextPreview = ({
         <TemplateBody parentName={`${parentName}.body`} />
         {showFooter && <TemplateFooter parentName={parentName} />}
         <hr />
-        <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+        <ButtonGroupPreview parentName={`${parentName}.buttons`} />
       </div>
     </CardContent>
   )
 }
+
+export const TemplateTextPreview = memo(TemplateTextPreviewComponent)

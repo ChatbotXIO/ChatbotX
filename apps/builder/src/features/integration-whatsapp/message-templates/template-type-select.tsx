@@ -13,7 +13,7 @@ import {
   StoreIcon,
 } from "lucide-react"
 
-export function TemplateTypeSelect({
+export function WhatsappMessageTemplateTypeSelect({
   onSelectTemplateType,
 }: {
   onSelectTemplateType: (templateType: TemplateType) => void

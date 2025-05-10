@@ -3,7 +3,7 @@
 import { SelectField } from "@/components/form/select-field"
 import { LanguageOptions } from "@/features/integration-whatsapp/message-templates/type"
 
-export function LanguageSelect({
+export function WhatsappMessageTemplateLanguageSelect({
   name,
   label,
   isRequired = false,
