@@ -5,10 +5,8 @@ import {
   ChatbotPlan,
   type Folder,
   FolderType,
-  PrismaClient,
 } from "../../generated/client"
-
-const prisma = new PrismaClient()
+import { prisma } from ".."
 
 async function main() {
   let worksapce = await prisma.workspace.findFirst()

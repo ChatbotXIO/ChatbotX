@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { deleteAIAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
-import type { AIAgent } from "@ahachat.ai/database/browser"
+import type { AIAgent } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"

@@ -1,6 +1,6 @@
 "use client"
 
-import type { Flow } from "@ahachat.ai/database/browser"
+import type { Flow } from "@ahachat.ai/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import type { Dispatch, SetStateAction } from "react"

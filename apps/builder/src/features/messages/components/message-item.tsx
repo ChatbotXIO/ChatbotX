@@ -1,5 +1,5 @@
 import { cn } from "@/components/lib/utils"
-import { FileType, MessageType } from "@ahachat.ai/database/browser"
+import { FileType, MessageType } from "@ahachat.ai/database/types"
 import { format } from "date-fns"
 import { PaperclipIcon } from "lucide-react"
 import Image from "next/image"

@@ -1,4 +1,4 @@
-import type { IntegrationOpenAI } from "@ahachat.ai/database/browser"
+import type { IntegrationOpenAI } from "@ahachat.ai/database/types"
 import { z } from "zod"
 
 export type IntegrationOpenAIResource = IntegrationOpenAI

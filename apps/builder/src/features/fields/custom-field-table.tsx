@@ -14,7 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { DataTableRowAction } from "@/types/data-table"
-import { type Field, FieldType } from "@ahachat.ai/database/browser"
+import { type Field, FieldType } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon } from "lucide-react"
 import { use, useMemo, useState } from "react"

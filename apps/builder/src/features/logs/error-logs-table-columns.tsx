@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { Log } from "@ahachat.ai/database/browser"
+import type { Log } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisIcon, UserRoundIcon } from "lucide-react"

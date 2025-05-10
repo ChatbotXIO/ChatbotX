@@ -12,7 +12,7 @@ import { optInEmailStepSchema } from "@/features/flows/react-flow/steps/opt-in-e
 import { optOutEmailStepSchema } from "@/features/flows/react-flow/steps/opt-out-email/schema"
 import { sendImageStepSchema } from "@/features/flows/react-flow/steps/send-image/schema"
 import { sendTextStepSchema } from "@/features/flows/react-flow/steps/send-text/schema"
-import { InboxType } from "@ahachat.ai/database/browser"
+import { InboxType } from "@ahachat.ai/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { NodeType, baseNodeSchema } from "../../types"

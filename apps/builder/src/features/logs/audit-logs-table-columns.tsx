@@ -2,7 +2,7 @@
 
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import type { Contact, Log, User } from "@ahachat.ai/database/browser"
+import type { Contact, Log, User } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 

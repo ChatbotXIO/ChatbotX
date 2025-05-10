@@ -13,7 +13,7 @@ import { DelayTypeSelect } from "@/features/flows/react-flow/steps/wait/delay-ty
 import { DelayUnitSelect } from "@/features/flows/react-flow/steps/wait/delay-unit-select"
 import { DelayType } from "@/features/flows/react-flow/steps/wait/schema"
 import { TimeSelect } from "@/features/flows/react-flow/steps/wait/time-select"
-import { CustomFieldType } from "@ahachat.ai/database/browser"
+import { CustomFieldType } from "@ahachat.ai/database/types"
 import { T, useTranslate } from "@tolgee/react"
 import { parseISO } from "date-fns"
 import { InfoIcon } from "lucide-react"

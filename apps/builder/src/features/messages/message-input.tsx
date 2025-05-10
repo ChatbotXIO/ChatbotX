@@ -11,7 +11,7 @@ import {
   InboxType,
   MessageType,
   SenderType,
-} from "@ahachat.ai/database/browser"
+} from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"

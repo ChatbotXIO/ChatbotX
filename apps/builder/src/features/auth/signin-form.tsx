@@ -43,7 +43,7 @@ export const SignInForm = ({
                         // not existing, or the user not having the correct role.
                         // In some cases, you may want to redirect to a custom error
                         if (error instanceof AuthError) {
-                          return redirect(`/signin?error=${error.type}`)
+                          return redirect(`/signin?error=${error.message}`)
                         }
                         // Otherwise if a redirects happens Next.js can handle it
                         // so you can just re-thrown the error and let Next.js handle it.

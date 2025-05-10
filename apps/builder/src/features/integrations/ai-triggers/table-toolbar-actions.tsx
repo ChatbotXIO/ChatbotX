@@ -1,7 +1,7 @@
 "use client"
 
 import { DeleteAITriggerDialog } from "@/features/integrations/ai-triggers/delete"
-import type { AITrigger } from "@ahachat.ai/database/browser"
+import type { AITrigger } from "@ahachat.ai/database/types"
 import type { Table } from "@tanstack/react-table"
 
 type AITriggersTableToolbarActionsProps = {

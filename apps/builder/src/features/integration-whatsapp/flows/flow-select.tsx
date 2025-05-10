@@ -3,7 +3,7 @@ import { callAPI } from "@/lib/swr"
 import {
   WhatsappFlowStatus,
   type WhatsappFlow,
-} from "@ahachat.ai/database/browser"
+} from "@ahachat.ai/database/types"
 import { useParams } from "next/navigation"
 
 export const FlowSelect = ({

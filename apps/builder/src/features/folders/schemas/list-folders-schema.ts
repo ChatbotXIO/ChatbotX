@@ -1,4 +1,4 @@
-import type { FolderType } from "@ahachat.ai/database/browser"
+import type { FolderType } from "@ahachat.ai/database/types"
 import { createSearchParamsCache, parseAsString } from "nuqs/server"
 
 export const listFoldersSearchParams = createSearchParamsCache({

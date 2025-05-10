@@ -2,7 +2,7 @@
 
 import { useMemo, useState, use } from "react"
 import { useDataTable } from "@/hooks/use-data-table"
-import { type Log, LogType } from "@ahachat.ai/database/browser"
+import { type Log, LogType } from "@ahachat.ai/database/types"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 import { getColumns } from "./error-logs-table-columns"
 import { LogsTableToolbarActions } from "./logs-table-toolbar-actions"

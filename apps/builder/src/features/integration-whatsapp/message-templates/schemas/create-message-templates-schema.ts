@@ -3,7 +3,7 @@ import {
   LanguageOptions,
   TemplateType,
 } from "@/features/integration-whatsapp/message-templates/type"
-import { WhatsappTemplateCategory } from "@ahachat.ai/database/browser"
+import { WhatsappTemplateCategory } from "@ahachat.ai/database/types"
 import { templateTextSchema } from "../templates/text/schema"
 import { templateCatalogSchema } from "../templates/catalog/schema"
 import { templateProductSchema } from "../templates/product/schema"

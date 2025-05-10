@@ -1,6 +1,6 @@
 "use client"
 
-import { WhatsappTemplateCategory } from "@ahachat.ai/database/browser"
+import { WhatsappTemplateCategory } from "@ahachat.ai/database/types"
 import { useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 import { VolumeIcon } from "lucide-react"

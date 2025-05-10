@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/lib/parsers"
-import type { AITrigger } from "@ahachat.ai/database/browser"
+import type { AITrigger } from "@ahachat.ai/database/types"
 import {
   createSearchParamsCache,
   parseAsInteger,

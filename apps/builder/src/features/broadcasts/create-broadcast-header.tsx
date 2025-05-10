@@ -1,5 +1,5 @@
 import WhatsappIcon from "@/components/icons/whatsapp"
-import { BroadcastSubaction, InboxType } from "@ahachat.ai/database/browser"
+import { BroadcastSubaction, InboxType } from "@ahachat.ai/database/types"
 import { AtomIcon } from "lucide-react"
 import { useMemo, type ReactNode } from "react"
 

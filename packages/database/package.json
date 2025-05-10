@@ -4,14 +4,14 @@
   "type": "module",
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
-    "@prisma/client": "^6.6.0"
+    "@prisma/client": "^6.7.0"
   },
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
     "@faker-js/faker": "^9.7.0",
-    "@types/node": "^22.15.2",
+    "@types/node": "^22.15.17",
     "dotenv-cli": "^8.0.0",
-    "prisma": "^6.6.0"
+    "prisma": "^6.7.0"
   },
   "scripts": {
     "db:generate": "dotenv -e ../../.env -- prisma migrate dev --create-only",

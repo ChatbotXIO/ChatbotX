@@ -1,4 +1,4 @@
-import type { Chatbot } from "@ahachat.ai/database/browser"
+import type { Chatbot } from "@ahachat.ai/database/types"
 import { getAllCountries, getAllTimezones } from "countries-and-timezones"
 
 export const UNKNOWN_COUNTRY = "unknown"

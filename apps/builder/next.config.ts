@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "20mb",
     },
   },
+  poweredByHeader: false,
   async rewrites() {
     return [
       {

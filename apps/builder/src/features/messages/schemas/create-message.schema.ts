@@ -1,4 +1,4 @@
-import { FileType } from "@ahachat.ai/database/browser"
+import { FileType } from "@ahachat.ai/database/types"
 import { z } from "zod"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000

@@ -1,7 +1,7 @@
 "use client"
 
 import { callAPI } from "@/lib/swr"
-import type { Flow } from "@ahachat.ai/database/browser"
+import type { Flow } from "@ahachat.ai/database/types"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
 import type { StartFlowStepSchema } from "./schema"

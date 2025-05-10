@@ -12,7 +12,7 @@ import {
   type Contact,
   type InboxTeam,
   type User,
-} from "@ahachat.ai/database/browser"
+} from "@ahachat.ai/database/types"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"

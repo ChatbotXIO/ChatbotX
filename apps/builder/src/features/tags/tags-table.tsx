@@ -1,7 +1,7 @@
 "use client"
 
 import { useDataTable } from "@/hooks/use-data-table"
-import type { Tag } from "@ahachat.ai/database/browser"
+import type { Tag } from "@ahachat.ai/database/types"
 import React, { useMemo } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"

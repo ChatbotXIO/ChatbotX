@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Folder, FolderType } from "@ahachat.ai/database/browser"
+import type { Folder, FolderType } from "@ahachat.ai/database/types"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
 import { parseAsString, useQueryState } from "nuqs"
 import { Fragment, use, useState } from "react"

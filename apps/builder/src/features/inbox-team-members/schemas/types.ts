@@ -1,4 +1,4 @@
-import type { InboxTeamMember } from "@ahachat.ai/database/browser"
+import type { InboxTeamMember } from "@ahachat.ai/database/types"
 
 export type InboxTeamMemberResource = InboxTeamMember
 

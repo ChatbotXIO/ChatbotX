@@ -1,4 +1,4 @@
-import { CustomFieldType } from "@ahachat.ai/database/browser"
+import { CustomFieldType } from "@ahachat.ai/database/types"
 import { z } from "zod"
 
 export const createCustomFieldSchema = z.object({

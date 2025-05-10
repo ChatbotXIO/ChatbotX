@@ -2,7 +2,7 @@ import {
   BroadcastSchedulesType,
   BroadcastSubaction,
   InboxType,
-} from "@ahachat.ai/database/browser"
+} from "@ahachat.ai/database/types"
 import { z } from "zod"
 
 export const createBroadcastRequest = z.object({

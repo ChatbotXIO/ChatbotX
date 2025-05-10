@@ -1,3 +1,3 @@
-import type { User } from "@ahachat.ai/database/browser"
+import type { User } from "@ahachat.ai/database/types"
 
 export type UserResource = User

@@ -5,11 +5,9 @@ import {
   InboxType,
   MessageType,
   type Prisma,
-  PrismaClient,
   SenderType,
 } from "../../generated/client"
-
-const prisma = new PrismaClient()
+import { prisma } from ".."
 
 async function main() {
   const chatbot = await prisma.chatbot.findFirst({

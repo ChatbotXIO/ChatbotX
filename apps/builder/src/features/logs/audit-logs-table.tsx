@@ -1,7 +1,7 @@
 "use client"
 
 import { useDataTable } from "@/hooks/use-data-table"
-import type { Log } from "@ahachat.ai/database/browser"
+import type { Log } from "@ahachat.ai/database/types"
 import React from "react"
 import { getAuditColumns } from "./audit-logs-table-columns"
 import type { getLogs } from "./queries"

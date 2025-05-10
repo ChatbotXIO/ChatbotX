@@ -1,4 +1,4 @@
-import type { IntegrationGoogleSheets } from "@ahachat.ai/database/browser"
+import type { IntegrationGoogleSheets } from "@ahachat.ai/database/types"
 import { z } from "zod"
 
 export type IntegrationGoogleSheetsResource = IntegrationGoogleSheets

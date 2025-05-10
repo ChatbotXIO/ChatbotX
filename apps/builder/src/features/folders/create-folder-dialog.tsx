@@ -13,7 +13,7 @@ import {
 import { Form } from "@/components/ui/form"
 import { createFolderAction } from "@/features/folders/actions/create-folder-action"
 import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema"
-import type { FolderType } from "@ahachat.ai/database/browser"
+import type { FolderType } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
