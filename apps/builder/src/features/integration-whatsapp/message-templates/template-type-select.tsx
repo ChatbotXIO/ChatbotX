@@ -72,7 +72,7 @@ export function WhatsappMessageTemplateTypeSelect({
       {validTypes.map((t) => (
         <Button
           key={t.value}
-          className="flex justify-start items-center w-full gap-4 p-6 !h-auto text-xl"
+          className="flex justify-start items-center w-full gap-4 p-6 !h-auto text-xl truncate"
           variant="secondary"
           disabled={t.value === TemplateType.Location}
           onClick={() => onSelectTemplateType(t.value)}
