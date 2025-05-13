@@ -15,7 +15,7 @@ export const getIceBreakers = async (
   const client = getWhatsappClient(auth)
 
   const res = await client.$$apiFetch$$(
-    `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.phoneNumberId}?fields=conversational_automation`,
+    `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.phoneNumber?.id}?fields=conversational_automation`,
   )
   if (!res.ok) {
     throw new SdkException("Access token is not valid")
@@ -39,7 +39,7 @@ export const updateIceBreaker = async (
   const client = getWhatsappClient(auth)
 
   const res = await client.$$apiFetch$$(
-    `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.phoneNumberId}/conversational_automation`,
+    `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.phoneNumber?.id}/conversational_automation`,
     {
       method: "POST",
       headers: {
