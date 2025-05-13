@@ -40,7 +40,7 @@ export const updateWhatsappIceBreakerAction = chatbotActionClient
 
       await integrations.WHATSAPP.integration.actions?.updateIceBreaker({
         ctx,
-        prompts: parsedInput.prompts,
+        prompts: parsedInput.prompts.map((obj) => obj.value),
       })
     },
   )

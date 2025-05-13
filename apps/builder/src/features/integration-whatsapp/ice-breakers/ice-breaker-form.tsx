@@ -2,11 +2,17 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Form } from "@/components/ui/form"
+import { Form, FormControl } from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
-import { Loader2Icon } from "lucide-react"
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Loader2Icon,
+  PlusCircleIcon,
+  TrashIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { use } from "react"
@@ -14,6 +20,9 @@ import { toast } from "sonner"
 import { updateWhatsappIceBreakerAction } from "./actions/update-ice-breakers"
 import type { getWhatsappIceBreakers } from "./queries"
 import { updateWhatsappIceBreakerSchema } from "./schemas/update-ice-breaker-schema"
+import { FormInput } from "@/components/form-input"
+import { Input } from "@/components/ui/input"
+import { useFieldArray } from "react-hook-form"
 
 export function WhatsappIceBreakerForm({
   chatbotId,
@@ -26,7 +35,11 @@ export function WhatsappIceBreakerForm({
   const { t } = useTranslate()
   const router = useRouter()
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
+  const {
+    form,
+    handleSubmitWithAction,
+    form: { control, register },
+  } = useHookFormAction(
     updateWhatsappIceBreakerAction.bind(null, chatbotId),
     zodResolver(updateWhatsappIceBreakerSchema),
     {
@@ -42,17 +55,19 @@ export function WhatsappIceBreakerForm({
       formProps: {
         mode: "onChange",
         defaultValues: {
-          prompts: allPrompts,
+          prompts: allPrompts.map((value) => ({
+            value,
+          })),
         },
       },
       errorMapProps: {},
     },
   )
 
-  // const { fields, append, remove, swap } = useFieldArray({
-  //   control,
-  //   name: "prompts",
-  // })
+  const { fields, append, remove, swap } = useFieldArray({
+    control,
+    name: "prompts",
+  })
 
   return (
     <div className="flex flex-col items-center">
@@ -64,15 +79,15 @@ export function WhatsappIceBreakerForm({
         >
           <Card className="w-4/6 mx-auto">
             <CardContent className="flex flex-col gap-6 px-6 py-8">
-              {/* {fields.map((_field, index) => (
+              {fields.map((_field, index) => (
                 <FormInput
                   key={`${index + 1}`}
-                  name={`prompts.${index}`}
+                  name={`prompts.${index}.value`}
                   label={t("common.question")}
                 >
                   <div className="flex justify-center items-center gap-4">
                     <FormControl>
-                      <Input {...register(`prompts.${index}`)} />
+                      <Input {...register(`prompts.${index}.value`)} />
                     </FormControl>
                     <div className="flex gap-1 items-center">
                       <Button
@@ -107,11 +122,11 @@ export function WhatsappIceBreakerForm({
               ))}
               {fields.length < 4 && (
                 <div>
-                  <Button variant="ghost" onClick={() => append("")}>
+                  <Button variant="ghost" onClick={() => append({ value: "" })}>
                     <PlusCircleIcon /> {t("common.addMore")}
                   </Button>
                 </div>
-              )} */}
+              )}
               <div className="flex justify-center gap-2 mt-6">
                 <Button variant="outline" asChild>
                   <Link href={`/chatbots/${chatbotId}/whatsapp/ice-breakers`}>
