@@ -81,7 +81,10 @@ export const parseHeader = async (
   content: CreateMessageTemplateRequest["content"],
   ctx: Context<WhatsappAuthValue>,
 ) => {
-  if (!("showHeader" in content) || !("header" in content)) {
+  if (
+    !("showHeader" in content && content.showHeader) ||
+    !("header" in content && content.header)
+  ) {
     return components
   }
   switch (templateType) {
@@ -122,6 +125,7 @@ export const parseHeader = async (
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       let header: any = {
         type: "HEADER",
+        format: "TEXT",
         text: (content as TemplateTextSchema).header.text,
       }
 
@@ -193,7 +197,7 @@ export const parseFooter = (
   components: Array<Record<string, unknown>>,
   content: CreateMessageTemplateRequest["content"],
 ) => {
-  if ("showFooter" in content) {
+  if ("showFooter" in content && content.showFooter) {
     components.push({
       type: "FOOTER",
       text: content.footer,

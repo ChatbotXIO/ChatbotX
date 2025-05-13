@@ -1,10 +1,10 @@
 import { Textarea } from "@/components/ui/textarea"
 import { useTranslate } from "@tolgee/react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, memo, useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
-export const TemplateHeader = ({
+const TemplateHeaderComponent = ({
   parentName,
 }: {
   parentName: string
@@ -19,7 +19,7 @@ export const TemplateHeader = ({
 
   const handleChange = useDebouncedCallback((value) => {
     setValue(`${parentName}.text`, value, { shouldValidate: true })
-  }, 100)
+  }, 200)
 
   useEffect(() => {
     if (!showForm) {
@@ -27,35 +27,47 @@ export const TemplateHeader = ({
     }
   }, [getValues, parentName, showForm])
 
-  const handleStartEditing = () => {
+  const handleStartEditing = useCallback(() => {
     setLocalHeader(getValues(`${parentName}.text`) || "")
     setShowForm(true)
-  }
+  }, [getValues, parentName])
 
-  const onChangeValue = (value: string) => {
-    setLocalHeader(value)
-    handleChange(value)
-    // Keep header variable allow only 1 variable
+  const processVariables = useDebouncedCallback((value: string) => {
     if (!value.includes("{{1}}")) {
       setValue(`${parentName}.variables`, [], { shouldValidate: true })
-    } else {
-      const values = getValues(`${parentName}.variables`)
-      if (!values.length) {
-        setValue(`${parentName}.variables`, [""], { shouldValidate: true })
-      }
-    }
-  }
 
-  const addParam = () => {
+      return
+    }
+    const values = getValues(`${parentName}.variables`)
+    setValue(`${parentName}.variables`, values.length ? values : [""], {
+      shouldValidate: true,
+    })
+  }, 200)
+
+  const onChangeValue = useCallback(
+    (value: string) => {
+      setLocalHeader(value)
+      handleChange(value)
+      processVariables(value)
+    },
+    [handleChange, processVariables],
+  )
+
+  const addParam = useCallback(() => {
     const values = getValues(`${parentName}.variables`)
     if (values.length === 0) {
-      setLocalHeader(`${localHeader} {{${values.length + 1}}}`)
-      handleChange(`${localHeader} {{${values.length + 1}}}`)
+      const newHeader = `${localHeader} {{${values.length + 1}}}`
+      setLocalHeader(newHeader)
+      handleChange(newHeader)
       setValue(`${parentName}.variables`, [...(values || []), ""], {
         shouldValidate: true,
       })
     }
-  }
+  }, [getValues, handleChange, localHeader, parentName, setValue])
+
+  const displayText = useMemo(() => {
+    return getValues(`${parentName}.text`) || `---- ${t("common.edit")} ----`
+  }, [getValues, parentName, t])
 
   return (
     <>
@@ -65,7 +77,7 @@ export const TemplateHeader = ({
           onClick={handleStartEditing}
           onKeyUp={() => {}}
         >
-          {getValues(`${parentName}.text`) || `---- ${t("common.edit")} ----`}
+          {displayText}
         </pre>
       ) : (
         <div className="flex flex-col gap-2">
@@ -88,3 +100,5 @@ export const TemplateHeader = ({
     </>
   )
 }
+
+export const TemplateHeader = memo(TemplateHeaderComponent)

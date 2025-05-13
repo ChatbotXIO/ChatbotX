@@ -7,7 +7,7 @@ import { useAction } from "next-safe-action/hooks"
 import { syncMessageTemplateAction } from "./actions/sync-message-templates"
 import { toast } from "sonner"
 
-export function MessageTemplatesTableToolbarActions({
+export function WhatsappMessageTemplatesTableToolbarActions({
   chatbotId,
 }: { chatbotId: string }) {
   const { t } = useTranslate()

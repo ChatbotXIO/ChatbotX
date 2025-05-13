@@ -20,7 +20,7 @@ export const getFlows = async (
     `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.wabaId}/flows?limit=${params.limit}`,
   )
   if (!res.ok) {
-    throw new SdkException(`Unable to list flows: ${res.text()}`)
+    throw new SdkException(`Unable to list flows: ${await res.text()}`)
   }
 
   return await res.json()

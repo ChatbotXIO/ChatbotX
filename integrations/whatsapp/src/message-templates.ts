@@ -36,7 +36,9 @@ export const listMessageTemplates = async (
     `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.metadata.wabaId}/message_templates?limit=${params.limit}`,
   )
   if (!res.ok) {
-    throw new SdkException(`Unable to list message templates: ${res.text()}`)
+    throw new SdkException(
+      `Unable to list message templates: ${await res.text()}`,
+    )
   }
 
   return await res.json()
@@ -59,7 +61,9 @@ export const createMessageTemplate = async (
     },
   )
   if (!res.ok) {
-    throw new SdkException(`Unable to create message template: ${res.text()}`)
+    throw new SdkException(
+      `Unable to create message template: ${await res.text()}`,
+    )
   }
 
   return await res.json()

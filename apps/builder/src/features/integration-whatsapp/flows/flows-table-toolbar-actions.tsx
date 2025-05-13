@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
-import { syncFlowAction } from "./actions/sync-flows"
+import { syncWhatsappFlowAction } from "./actions/sync-flows"
 import { toast } from "sonner"
 import Link from "next/link"
 
-export function FlowsTableToolbarActions({ chatbotId }: { chatbotId: string }) {
+export function WhatsappFlowsTableToolbarActions({
+  chatbotId,
+}: { chatbotId: string }) {
   const { t } = useTranslate()
 
   const { execute, isPending } = useAction(
-    syncFlowAction.bind(null, chatbotId),
+    syncWhatsappFlowAction.bind(null, chatbotId),
     {
       onSuccess() {
         toast.success(t("common.synced"))

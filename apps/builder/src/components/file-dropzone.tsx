@@ -129,6 +129,9 @@ export default function FileDropzone({
     reader.onloadend = () => {
       setPreview(reader.result as string)
     }
+    reader.onerror = () => {
+      toast.error("Failed to preview image")
+    }
     reader.readAsDataURL(file)
   }
 
@@ -138,12 +141,10 @@ export default function FileDropzone({
         return toast("common.upload.fileMaxSize")
       }
 
-      if (file.type.includes(FileType.VIDEO)) {
-        _videoPreview(file)
-      }
-
-      if (file.type.includes(FileType.IMAGE)) {
+      if (file.type.startsWith("image/")) {
         _imagePreview(file)
+      } else if (file.type.startsWith("video/")) {
+        _videoPreview(file)
       }
 
       onDrop?.(file)

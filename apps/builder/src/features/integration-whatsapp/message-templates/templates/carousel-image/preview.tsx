@@ -80,6 +80,7 @@ export const TemplateCarouselImagePreview = ({
                 <Card className="p-1">
                   <TemplateImagePreview
                     parentName={`${parentName}.cards.${index}`}
+                    minButtons={1}
                     maxButtons={2}
                   />
                 </Card>

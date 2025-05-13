@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Form } from "@/components/ui/form"
 import { createMessageTemplateAction } from "@/features/integration-whatsapp/message-templates/actions/create-message-template.action"
-import { CategorySelect } from "@/features/integration-whatsapp/message-templates/category-select"
-import { LanguageSelect } from "@/features/integration-whatsapp/message-templates/language-select"
+import { WhatsappMessageTemplateCategorySelect } from "@/features/integration-whatsapp/message-templates/category-select"
+import { WhatsappMessageTemplateLanguageSelect } from "@/features/integration-whatsapp/message-templates/language-select"
 import { createMessageTemplateRequest } from "@/features/integration-whatsapp/message-templates/schemas/create-message-templates-schema"
-import { TemplateTypeSelect } from "@/features/integration-whatsapp/message-templates/template-type-select"
+import { WhatsappMessageTemplateTypeSelect } from "@/features/integration-whatsapp/message-templates/template-type-select"
 import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
 import { WhatsappTemplateCategory } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -48,12 +48,8 @@ const previews: { [key in TemplateType]: JSX.Element | undefined } = {
   [TemplateType.Image]: <TemplateImagePreview />,
   [TemplateType.Video]: <TemplateVideoPreview />,
   [TemplateType.Document]: <TemplateDocumentPreview />,
-  [TemplateType.CarouselImage]: (
-    <TemplateCarouselImagePreview parentName={""} />
-  ),
-  [TemplateType.CarouselVideo]: (
-    <TemplateCarouselVideoPreview parentName={""} />
-  ),
+  [TemplateType.CarouselImage]: <TemplateCarouselImagePreview />,
+  [TemplateType.CarouselVideo]: <TemplateCarouselVideoPreview />,
   [TemplateType.ViewCatalog]: <TemplateCatalogPreview />,
   [TemplateType.ViewProduct]: <TemplateProductPreview />,
   [TemplateType.Location]: undefined,
@@ -167,7 +163,7 @@ export function CreateMessageTemplateForm({
           {!templateType && (
             <Card className="w-5/6 mx-auto">
               <CardContent className="py-4">
-                <TemplateTypeSelect
+                <WhatsappMessageTemplateTypeSelect
                   onSelectTemplateType={(type) => onSelectTemplateType(type)}
                 />
               </CardContent>
@@ -190,8 +186,14 @@ export function CreateMessageTemplateForm({
                       label="Name"
                       placeholder="order_shipping_update"
                     />
-                    <LanguageSelect name="language" label="Language" />
-                    <CategorySelect name="category" label="Category" />
+                    <WhatsappMessageTemplateLanguageSelect
+                      name="language"
+                      label="Language"
+                    />
+                    <WhatsappMessageTemplateCategorySelect
+                      name="category"
+                      label="Category"
+                    />
                     {contentVariables[templateType]}
                   </CardContent>
                 </Card>

@@ -8,17 +8,17 @@ import type { DataTableRowAction } from "@/types/data-table"
 import type { WhatsappMessageTemplate } from "@ahachat.ai/database"
 import React, { useMemo, useState } from "react"
 import { getColumns } from "./message-templates-table-columns"
-import { MessageTemplatesTableToolbarActions } from "./message-templates-table-toolbar-actions"
+import { WhatsappMessageTemplatesTableToolbarActions } from "./message-templates-table-toolbar-actions"
 
-interface MessageTemplatesTableProps {
+interface WhatsappMessageTemplatesTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getMessageTemplates>>]>
   chatbotId: string
 }
 
-export function MessageTemplatesTable({
+export function WhatsappMessageTemplatesTable({
   promises,
   chatbotId,
-}: MessageTemplatesTableProps) {
+}: WhatsappMessageTemplatesTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const [_rowAction, setRowAction] =
     useState<DataTableRowAction<WhatsappMessageTemplate> | null>(null)
@@ -42,7 +42,7 @@ export function MessageTemplatesTable({
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
-          <MessageTemplatesTableToolbarActions chatbotId={chatbotId} />
+          <WhatsappMessageTemplatesTableToolbarActions chatbotId={chatbotId} />
         </DataTableToolbar>
       </DataTable>
     </>

@@ -1,10 +1,10 @@
 import { Textarea } from "@/components/ui/textarea"
 import { useTranslate } from "@tolgee/react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, memo, useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
-export const TemplateBody = ({
+const TemplateBodyComponent = ({
   parentName,
 }: {
   parentName: string
@@ -19,7 +19,7 @@ export const TemplateBody = ({
 
   const handleChange = useDebouncedCallback((value) => {
     setValue(`${parentName}.text`, value, { shouldValidate: true })
-  }, 100)
+  }, 200)
 
   useEffect(() => {
     if (!showForm) {
@@ -27,44 +27,55 @@ export const TemplateBody = ({
     }
   }, [getValues, parentName, showForm])
 
-  const handleStartEditing = () => {
+  const handleStartEditing = useCallback(() => {
     setLocalBody(getValues(`${parentName}.text`) || "")
     setShowForm(true)
-  }
-  const onChangeValue = (value: string) => {
-    setLocalBody(value)
-    handleChange(value)
+  }, [getValues, parentName])
 
-    // Find all variable patterns like {{1}}, {{2}}, etc.
+  const processVariables = useDebouncedCallback((value: string) => {
     const variableMatches = value.match(/\{\{(\d+)\}\}/g) || []
+    const values = getValues(`${parentName}.variables`)
 
     if (variableMatches.length === 0) {
-      // No variables found, clear the array
       setValue(`${parentName}.variables`, [], { shouldValidate: true })
-    } else {
-      let index = 1
-      const values = getValues(`${parentName}.variables`)
-      const newValues = []
-      for (const match of variableMatches) {
-        if (match === `{{${index}}}`) {
-          index++
-          newValues.push(values.length ? values.shift() : "")
-        }
-      }
-
-      // Update the variables array
-      setValue(`${parentName}.variables`, newValues, { shouldValidate: true })
+      return
     }
-  }
 
-  const addParam = () => {
+    const newValues = []
+
+    let index = 1
+    for (const match of variableMatches) {
+      if (match === `{{${index}}}`) {
+        index++
+        newValues.push(values.length ? values.shift() : "")
+      }
+    }
+    setValue(`${parentName}.variables`, newValues, { shouldValidate: true })
+  }, 200)
+
+  const onChangeValue = useCallback(
+    (value: string) => {
+      setLocalBody(value)
+      handleChange(value)
+
+      processVariables(value)
+    },
+    [handleChange, processVariables],
+  )
+
+  const addParam = useCallback(() => {
     const values = getValues(`${parentName}.variables`)
-    setLocalBody(`${localBody} {{${values.length + 1}}}`)
-    handleChange(`${localBody} {{${values.length + 1}}}`)
+    const newBody = `${localBody} {{${values.length + 1}}}`
+    setLocalBody(newBody)
+    handleChange(newBody)
     setValue(`${parentName}.variables`, [...(values || []), ""], {
       shouldValidate: true,
     })
-  }
+  }, [getValues, handleChange, localBody, parentName, setValue])
+
+  const displayText = useMemo(() => {
+    return getValues(`${parentName}.text`) || `---- ${t("common.edit")} ----`
+  }, [getValues, parentName, t])
 
   return (
     <>
@@ -74,7 +85,7 @@ export const TemplateBody = ({
           onClick={handleStartEditing}
           onKeyUp={() => {}}
         >
-          {getValues(`${parentName}.text`) || `---- ${t("common.edit")} ----`}
+          {displayText}
         </pre>
       ) : (
         <div className="flex flex-col gap-2">
@@ -97,3 +108,5 @@ export const TemplateBody = ({
     </>
   )
 }
+
+export const TemplateBody = memo(TemplateBodyComponent)

@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { FlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
+import { WhatsappFlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslate } from "@tolgee/react"
 import { useMemo } from "react"
@@ -44,6 +44,7 @@ export function EditButtonDialog({
     defaultValues: getValuesOriginEditor(parentName),
     mode: "onChange",
   })
+
   const buttonOptions = useMemo(() => {
     return [
       { label: t("whatsapp.Button.url"), value: ButtonActionType.Url },
@@ -59,13 +60,13 @@ export function EditButtonDialog({
     ]
   }, [t])
 
-  const { watch, formState, getValues } = form
+  const { watch, formState, handleSubmit } = form
   const type = watch("type")
 
-  const onSave = () => {
-    setValueOriginEditor(parentName, getValues())
+  const onSubmit = handleSubmit((data) => {
+    setValueOriginEditor(parentName, data)
     onOpenChange(false)
-  }
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,48 +75,42 @@ export function EditButtonDialog({
           <DialogTitle>{t("common.edit")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
-        <div className="flex items-center space-x-2">
-          <Form {...form}>
-            <div className="flex-1 space-y-4">
-              <InputField name="text" label={t("common.Button.label")} />
-              {changeType && (
-                <SelectField
-                  name="type"
-                  label={t("common.Button.whenPressed")}
-                  options={buttonOptions}
-                />
-              )}
-              {type === ButtonActionType.Url && (
-                <InputField name="url" label={t("common.link")} />
-              )}
-              {type === ButtonActionType.PhoneNumber && (
-                <InputField
-                  name="phone_number"
-                  label={t("flows.Button.phoneNumber")}
-                />
-              )}
-              {type === ButtonActionType.Flow && (
-                <FlowSelect name="flow_id" label={"WhatsApp Flow"} />
-              )}
-            </div>
-          </Form>
-        </div>
-        <DialogFooter>
-          <Button
-            aria-label="Cancel button"
-            variant="secondary"
-            onClick={() => onOpenChange(false)}
-          >
-            {t("common.cancelBtn")}
-          </Button>
-          <Button
-            aria-label="Save button"
-            onClick={onSave}
-            disabled={!formState.isValid}
-          >
-            {t("common.Btn")}
-          </Button>
-        </DialogFooter>
+        <Form {...form}>
+          <form onSubmit={onSubmit} className="flex-1 space-y-4">
+            <InputField name="text" label={t("common.Button.label")} />
+            {changeType && (
+              <SelectField
+                name="type"
+                label={t("common.Button.whenPressed")}
+                options={buttonOptions}
+              />
+            )}
+            {type === ButtonActionType.Url && (
+              <InputField name="url" label={t("common.link")} />
+            )}
+            {type === ButtonActionType.PhoneNumber && (
+              <InputField
+                name="phone_number"
+                label={t("flows.Button.phoneNumber")}
+              />
+            )}
+            {type === ButtonActionType.Flow && (
+              <WhatsappFlowSelect name="flow_id" label={"WhatsApp Flow"} />
+            )}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => onOpenChange(false)}
+              >
+                {t("common.cancelBtn")}
+              </Button>
+              <Button type="submit" disabled={!formState.isValid}>
+                {t("common.Btn")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

@@ -8,31 +8,31 @@ import {
 } from "@/components/ui/accordion"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import type { getIceBreakers } from "@/features/integration-whatsapp/ice-breakers/queries"
+import type { getWhatsappIceBreakers } from "@/features/integration-whatsapp/ice-breakers/queries"
 import { useTranslate } from "@tolgee/react"
 import { InfoIcon, Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import React, { useTransition } from "react"
-import { updateIceBreakerAction } from "./actions/update-ice-breakers"
+import { updateWhatsappIceBreakerAction } from "./actions/update-ice-breakers"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
-interface IceBreakersTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getIceBreakers>>]>
+interface WhatsappIceBreakersListProps {
+  promises: Promise<[Awaited<ReturnType<typeof getWhatsappIceBreakers>>]>
   chatbotId: string
 }
 
-export function IceBreakersList({
+export function WhatsappIceBreakersList({
   promises,
   chatbotId,
-}: IceBreakersTableProps) {
+}: WhatsappIceBreakersListProps) {
   const { t } = useTranslate()
   const [{ data: prompts }] = React.use(promises)
   const router = useRouter()
 
   const { execute, result } = useAction(
-    updateIceBreakerAction.bind(null, chatbotId),
+    updateWhatsappIceBreakerAction.bind(null, chatbotId),
   )
 
   const [isDeleting, startDeleteTransition] = useTransition()
