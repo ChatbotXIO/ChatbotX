@@ -106,6 +106,8 @@
   },
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
+    "@aws-sdk/client-s3": "^3.797.0",
+    "@aws-sdk/s3-presigned-post": "^3.797.0",
     "@biomejs/biome": "^1.9.4",
     "@faker-js/faker": "^9.7.0",
     "@prisma/client": "^6.6.0",

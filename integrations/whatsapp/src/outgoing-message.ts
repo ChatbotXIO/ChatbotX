@@ -103,6 +103,8 @@ export const sendOutgoingMessage = async (
         conversation.sourceId,
         whatsappMessage,
       )
+      console.log("sendResponsesendResponse", sendResponse)
+
       const serverError = sendResponse as ServerErrorResponse
 
       if (serverError?.error) {
@@ -129,6 +131,7 @@ export const sendOutgoingMessage = async (
       )
     }
   } catch (error) {
+    console.log("errrrrrrrr", error)
     ctx.logger.error("An error occurred while sending the message", error)
   }
 }

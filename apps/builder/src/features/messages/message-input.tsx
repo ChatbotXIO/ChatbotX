@@ -17,7 +17,13 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { createId } from "@paralleldrive/cuid2"
 import { GlobeIcon, PaperclipIcon, SendHorizonalIcon } from "lucide-react"
 import { useSession } from "next-auth/react"
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react"
 import { Controller } from "react-hook-form"
 import type { ClientConversationResource } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
@@ -139,6 +145,13 @@ export const MessageInput = () => {
     }
   }
 
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Enter" && e.shiftKey === false) {
+      e.preventDefault()
+      handleSubmitWithAction()
+    }
+  }
+
   return activeConversationId ? (
     <div className="rounded-xl m-3 pt-2 border">
       <Form {...form}>
@@ -156,6 +169,7 @@ export const MessageInput = () => {
                   className="resize-none h-16 border-0 shadow-none focus:ring-0 focus-visible:ring-0 px-1.5 py-0"
                   placeholder="Message..."
                   {...field}
+                  onKeyDown={onKeyDown}
                   ref={textareaRef}
                 />
               )}

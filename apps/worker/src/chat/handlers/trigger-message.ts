@@ -27,7 +27,7 @@ export async function triggerMessage(props: ChatJobTriggerMessage) {
       inboxId: conversation.inboxId,
       chatbotId: conversation.chatbotId,
       conversationId: conversation.id,
-      messageType: MessageType.INCOMING,
+      messageType: MessageType.OUTGOING,
       contentType: ContentType.TEXT,
       senderType: SenderType.BOT,
       sourceId: null,

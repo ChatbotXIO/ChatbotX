@@ -43,6 +43,7 @@ model User {
   sessions                 Session[]
   inboxTeamMembers         InboxTeamMember[]
   workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
+  contactNotes             ContactNote[]
 }
 
 model Account {
@@ -240,6 +241,7 @@ model Contact {
   conversation Conversation?
   logs         Log[]                  @relation("ExecutorContact")
   tags         Tag[]
+  contactNotes ContactNote[]
 
   @@unique([chatbotId, sourceId])
 }
@@ -709,6 +711,19 @@ model AutomatedResponse {
   chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
+}
+
+model ContactNote {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content   String
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
 
 enum CustomFieldType {
