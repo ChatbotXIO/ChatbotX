@@ -1,0 +1,26 @@
+import { StepType } from "@aha.chat/flow-config"
+import { z } from "zod"
+import {
+  spreadsheetColumnFilterDefaultFn,
+  spreadsheetColumnFilterSchema,
+  spreadsheetDefaultFn,
+  spreadsheetMappingSchema,
+  spreadsheetSchema,
+} from "../spreadsheet/schema"
+
+export const spreadsheetGetRandomRowSchema = spreadsheetSchema.extend({
+  stepType: z.literal(StepType.SPREADSHEET_GET_RANDOM_ROW),
+  lookup: spreadsheetColumnFilterSchema,
+  map: z.array(spreadsheetMappingSchema).min(1),
+})
+export type SpreadsheetGetRandomRowSchema = z.infer<
+  typeof spreadsheetGetRandomRowSchema
+>
+
+export const spreadsheetGetRandomRowDefaultFn =
+  (): SpreadsheetGetRandomRowSchema => ({
+    ...spreadsheetDefaultFn(),
+    stepType: StepType.SPREADSHEET_GET_RANDOM_ROW,
+    lookup: spreadsheetColumnFilterDefaultFn(),
+    map: [],
+  })

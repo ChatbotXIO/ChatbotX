@@ -27,6 +27,11 @@ import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
 import { setCustomFieldStep } from "./set-custom-field"
+import { spreadsheetClearRowStep } from "./spreadsheet-clear-row"
+import { spreadsheetGetRandomRowStep } from "./spreadsheet-get-random-row"
+import { spreadsheetGetRowStep } from "./spreadsheet-get-row"
+import { spreadsheetSendDataStep } from "./spreadsheet-send-data"
+import { spreadsheetUpdateRowStep } from "./spreadsheet-update-row"
 import { unarchiveConversationStep } from "./unarchive-conversation"
 import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
@@ -117,6 +122,12 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.SET_CUSTOM_FIELD]: setCustomFieldStep,
   [StepType.CLEAR_CUSTOM_FIELD]: clearCustomFieldStep,
   [StepType.LANDING_PAGE]: undefined,
+  [StepType.SPREADSHEET_CLEAR_ROW]: spreadsheetClearRowStep,
+  [StepType.SPREADSHEET_GET_ROW]: spreadsheetGetRowStep,
+  [StepType.SPREADSHEET_GET_RANDOM_ROW]: spreadsheetGetRandomRowStep,
+  [StepType.SPREADSHEET_UPDATE_ROW]: spreadsheetUpdateRowStep,
+  [StepType.SPREADSHEET_ACTIONS]: undefined,
+  [StepType.SPREADSHEET_SEND_DATA]: spreadsheetSendDataStep,
 }
 
 export function DynamicStepEditor({

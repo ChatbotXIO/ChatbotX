@@ -49,18 +49,19 @@ export const handleCallback = async (integrationName: string, req: Request) => {
 
   switch (integrationName) {
     case IntegrationType.GOOGLE_SHEETS: {
-      authResult = integrations.GOOGLE_SHEETS.integration.handleRequest?.({
-        config: {
-          clientId: organizationSettings.googleSheets?.clientId as string,
-          clientSecret: organizationSettings.googleSheets
-            ?.clientSecret as string,
-          redirectUrl: new URL(
-            "/integrations/google-sheets/callback",
-            env.NEXT_PUBLIC_BUILDER_URL,
-          ).toString(),
-        },
-        req,
-      }) as unknown as Oauth2AuthValue
+      authResult =
+        (await integrations.GOOGLE_SHEETS.integration.handleRequest?.({
+          config: {
+            clientId: organizationSettings.googleSheets?.clientId as string,
+            clientSecret: organizationSettings.googleSheets
+              ?.clientSecret as string,
+            redirectUrl: new URL(
+              "/integrations/google-sheets/callback",
+              env.NEXT_PUBLIC_BUILDER_URL,
+            ).toString(),
+          },
+          req,
+        })) as unknown as Oauth2AuthValue
 
       additionalIntegrationCreationData = {
         googleSheets: {
