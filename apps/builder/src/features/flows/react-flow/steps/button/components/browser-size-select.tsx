@@ -1,5 +1,5 @@
 import { SelectField } from "@/components/form/select-field"
-import { BrowserSize } from "@/features/flows/react-flow/steps/button/schema"
+import { BrowserSize } from "@ahachat.ai/flow-config"
 
 export const BrowserSizeSelect = ({
   name,

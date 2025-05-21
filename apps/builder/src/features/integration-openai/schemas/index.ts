@@ -1,5 +1,6 @@
 import type { IntegrationOpenAI } from "@ahachat.ai/database/types"
 import { z } from "zod"
+import { OpenAIModel } from "@ahachat.ai/flow-config"
 
 export type IntegrationOpenAIResource = IntegrationOpenAI
 
@@ -9,18 +10,6 @@ export const connectOpenAISchema = z.object({
   maxTokens: z.coerce.number().int().min(1).max(8192),
 })
 export type ConnectOpenAISchema = z.infer<typeof connectOpenAISchema>
-
-export enum OpenAIModel {
-  GPT4oMini = "gpt-4o-mini",
-  GPT35Turbo16K = "gpt-35-turbo-16K",
-  GPT4o = "gpt-4o",
-  GPT4 = "gpt-4",
-  GPT4Turbo = "gpt-4-turbo",
-  GPT4TurboPreview = "gpt-4-turbo-preview",
-  ChatGPT4oLatest = "chat-gpt-4o-latest",
-  O1Preview = "o1-preview",
-  O1Mini = "o1-mini",
-}
 
 export enum OpenAIMessageRole {
   Assistant = "assistant",

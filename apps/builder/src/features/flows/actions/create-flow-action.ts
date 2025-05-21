@@ -5,7 +5,6 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import { FolderType, prisma } from "@ahachat.ai/database"
 import { createId } from "@paralleldrive/cuid2"
 import { revalidateTag } from "next/cache"
-import { MessageType } from "../react-flow/types"
 import {
   type CreateFlowSchema,
   createFlowSchema,
@@ -14,6 +13,7 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { OMNICHANNEL } from "@ahachat.ai/database/types"
 
 export const createFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
@@ -52,7 +52,8 @@ export const createFlowAction = chatbotActionClient
                     data: {
                       id: createId(),
                       name: "Send Message #1",
-                      messageType: MessageType.Omnichannel,
+                      isStartNode: true,
+                      inboxType: OMNICHANNEL,
                       steps: [],
                     },
                   },

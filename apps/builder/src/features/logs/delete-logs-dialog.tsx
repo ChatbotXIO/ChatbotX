@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { Log } from "@ahachat.ai/database/types"
+import type { Log, LogType } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -39,12 +39,7 @@ export function DeleteLogsDialog({
   const { t } = useTranslate()
 
   const { execute, result, isPending } = useAction(
-    deleteLogAction.bind(
-      null,
-      chatbotId,
-      (logs ?? []).map((log) => log.id),
-      logType,
-    ),
+    deleteLogAction.bind(null, chatbotId),
     {
       onSuccess: () => {
         toast.success(t("logs.deleted"))
@@ -83,7 +78,12 @@ export function DeleteLogsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={() => execute()}
+            onClick={() =>
+              execute({
+                ids: (logs ?? []).map((log) => log.id),
+                logType: logType as LogType,
+              })
+            }
             disabled={isPending}
           >
             {isPending && (

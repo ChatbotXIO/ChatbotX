@@ -1,8 +1,10 @@
-import { StepType } from "./step-action"
+import { StepType } from "@ahachat.ai/flow-config"
 import type { JSX } from "react"
 import type { ZodTypeAny } from "zod"
 import sendTextStep from "./send-text"
 import sendImageStep from "./send-image"
+import { openWebsiteStep } from "./open-website"
+import { addCustomFieldStep } from "./add-custom-field"
 
 interface StepEditorProps {
   parentName: string
@@ -37,7 +39,6 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.AddTag]: undefined,
   [StepType.RemoveTag]: undefined,
   [StepType.NotifyAgent]: undefined,
-  [StepType.AddCustomField]: undefined,
   [StepType.RemoveCustomField]: undefined,
   [StepType.AddCustomLog]: undefined,
   [StepType.SubscribeBot]: undefined,
@@ -93,6 +94,8 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.Wait]: undefined,
   [StepType.SendMessageNode]: undefined,
   [StepType.PerformAction]: undefined,
+  [StepType.OPEN_WEBSITE]: openWebsiteStep,
+  [StepType.ADD_CUSTOM_FIELD]: addCustomFieldStep,
 }
 
 export function DynamicStepEditor({

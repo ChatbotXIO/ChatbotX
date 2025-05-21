@@ -2,6 +2,7 @@ import { SelectField } from "@/components/form/select-field"
 import { callAPI } from "@/lib/swr"
 import { useParams } from "next/navigation"
 import type { InboxCollection } from "./schemas/list-inboxes.schema"
+import { OMNICHANNEL } from "@ahachat.ai/database/types"
 
 export function InboxSelect({ name }: { name: string }) {
   const params = useParams<{ chatbotId: string }>()
@@ -15,7 +16,7 @@ export function InboxSelect({ name }: { name: string }) {
       value: v.id,
     }),
   )
-  inboxes.unshift({ label: "Omnichannel", value: "OMNICHANNEL" })
+  inboxes.unshift({ label: "Omnichannel", value: OMNICHANNEL })
 
   return (
     <SelectField

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { FormItem, FormLabel } from "@/components/ui/form"
 import { callAPI } from "@/lib/swr"
 import type { CustomFieldType } from "@ahachat.ai/database/types"
-import { PlusCircleIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { mutate } from "swr"
@@ -61,12 +60,10 @@ export const CustomFieldSelect = ({
               folderId={null}
               triggerButton={
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  className="cursor-pointer"
-                  asChild
+                  variant="link"
+                  className="cursor-pointer text-[12px] text-destructive p-0 h-auto"
                 >
-                  <PlusCircleIcon />
+                  Add new
                 </Button>
               }
               onSuccess={() => {

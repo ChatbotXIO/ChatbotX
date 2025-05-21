@@ -1,6 +1,6 @@
 "use client"
 
-import type { PerformActionStepSchema } from "./schema"
+import type { PerformActionStepSchema } from "@ahachat.ai/flow-config"
 
 const PerformActionStepViewer = ({
   // biome-ignore lint/correctness/noUnusedVariables: <explanation>

@@ -13,7 +13,7 @@ import {
   createMessageTemplate,
   listMessageTemplates,
 } from "./message-templates"
-import { sendOutgoingMessage } from "./outgoing-message"
+import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
 import type {
   WhatsappActions,
   WhatsappAuthValue,
@@ -40,6 +40,9 @@ const config: IntegrationDefinition<
     },
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
+    },
+    sendFlowStep: async ({ ctx, step, conversation }) => {
+      await sendFlowStep(ctx, conversation, step)
     },
     listMessageTemplates: async ({ ctx, params }) => {
       return await listMessageTemplates(ctx.auth, params)

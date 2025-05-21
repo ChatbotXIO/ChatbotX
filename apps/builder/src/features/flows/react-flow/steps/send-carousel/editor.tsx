@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { SendCardStepEditor } from "@/features/flows/react-flow/steps/send-card/editor"
-import { sendCardStepDefaultFn } from "@/features/flows/react-flow/steps/send-card/schema"
+import { sendCardStepDefaultFn } from "@ahachat.ai/flow-config"
 import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react"
 import { useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"

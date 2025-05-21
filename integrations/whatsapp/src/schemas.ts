@@ -5,6 +5,7 @@ import type {
   Handler,
   MessageEntity,
   Oauth2AuthValue,
+  SendFlowStepProps,
   SendMessageProps,
 } from "@ahachat.ai/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
@@ -48,6 +49,7 @@ export type WhatsappActions = {
     }
   >
   sendMessage: (props: SendMessageProps<WhatsappAuthValue>) => Promise<void>
+  sendFlowStep: (props: SendFlowStepProps<WhatsappAuthValue>) => Promise<void>
   listMessageTemplates: Handler<
     {
       ctx: Context<WhatsappAuthValue>

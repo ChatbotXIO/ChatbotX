@@ -2,7 +2,7 @@
 
 import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
-import { openAIGenerateImageSizes } from "./schema"
+import { openAIGenerateImageSizes } from "@ahachat.ai/flow-config"
 import { InputField } from "@/components/form/input-field"
 import { SelectField } from "@/components/form/select-field"
 

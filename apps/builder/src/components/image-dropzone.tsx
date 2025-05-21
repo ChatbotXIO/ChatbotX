@@ -1,7 +1,7 @@
 import { T } from "@tolgee/react"
 import { ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type MouseEvent } from "react"
 import Dropzone from "react-dropzone"
 import { Button } from "./ui/button"
 
@@ -12,8 +12,7 @@ function AttachedImage({
   image: string
   onRemove: () => void
 }) {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const onClick = (e: any) => {
+  const onClick = (e: MouseEvent) => {
     e.stopPropagation()
     onRemove()
   }
@@ -42,8 +41,7 @@ function NeedAttachedImage({
 }: {
   onSwitchToImageLink: () => void
 }) {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const switchToImageLinkMode = (e: any) => {
+  const switchToImageLinkMode = (e: MouseEvent) => {
     e.stopPropagation()
     onSwitchToImageLink()
   }

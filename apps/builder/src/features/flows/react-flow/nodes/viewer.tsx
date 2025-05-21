@@ -2,10 +2,10 @@ import { BaseHandle } from "@/components/base-handle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Handle, NodeToolbar, Position } from "@xyflow/react"
 import { DynamicStepViewer } from "../steps"
-import type { FlowNode } from "../types"
 import { allNodesConfig } from "./node-config"
 import { FlowNodeToolbar } from "../toolbar/node-toolbar"
 import { PlayCircleIcon } from "lucide-react"
+import type { FlowNode } from "@ahachat.ai/flow-config"
 
 export function NodeViewer({
   id,

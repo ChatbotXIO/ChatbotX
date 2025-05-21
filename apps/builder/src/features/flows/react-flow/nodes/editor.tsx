@@ -28,13 +28,19 @@ import { z } from "zod"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ErrorAlert } from "../steps/error-alert"
-import { disabledCopyActionTypes, StepType } from "../steps/step-action"
-import type { FlowNode, NodeType } from "../types"
 import { allNodesConfig } from "./node-config"
+import {
+  disabledCopyActionTypes,
+  StepType,
+  type FlowNode,
+  type NodeType,
+} from "@ahachat.ai/flow-config"
 
 export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
   const { updateNodeData } = useReactFlow()
-  const nodeConfig = allNodesConfig[activeNode.type as NodeType]
+  const nodeConfig = activeNode.type
+    ? allNodesConfig[activeNode.type as NodeType]
+    : null
 
   const form = useForm({
     resolver: zodResolver(nodeConfig ? nodeConfig.validator : z.object({})),
@@ -63,6 +69,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
   const onAddStep = (name: StepType) => {
     const newStep = allSteps[name]?.defaultFn()
+    console.log("debugggggg", name, newStep)
     if (newStep) {
       append(newStep)
     }

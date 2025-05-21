@@ -3,7 +3,7 @@ import SendMessageNodeStepEditor from "./editor"
 import {
   sendMessageNodeStepDefaultFn,
   sendMessageNodeStepSchema,
-} from "./schema"
+} from "@ahachat.ai/flow-config"
 import SendMessageNodeStepViewer from "./viewer"
 
 const sendMessageNodeStep: StepDefinition = {

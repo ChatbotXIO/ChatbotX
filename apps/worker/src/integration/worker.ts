@@ -10,6 +10,7 @@ import { logger } from "../lib/log"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { receiveMessage } from "./handlers/received-message"
 import type { OutgoingMessageEntity } from "@ahachat.ai/sdk"
+import { sendFlowNode } from "./handlers/send-flow-node"
 
 const worker = new Worker(
   QueueName.INTEGRATION,
@@ -23,6 +24,10 @@ const worker = new Worker(
             message: message as OutgoingMessageEntity,
           })
         }
+        return
+      }
+      case IntegrationJobAction.SEND_FLOW: {
+        await sendFlowNode(job.data)
         return
       }
       default:

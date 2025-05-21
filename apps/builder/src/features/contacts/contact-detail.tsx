@@ -7,8 +7,11 @@ import type { ContactResource } from "./schemas/get-contacts-schema"
 import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EditContactField } from "./edit-contact-field"
+import { useParams } from "next/navigation"
+import { ContactCustomFieldManage } from "../fields/contact-custom-field-manage"
 
 export const ContactDetail = () => {
+  const { chatbotId } = useParams<{ chatbotId: string }>()
   const { activeConversationId, conversations } = useChatStore((state) => state)
 
   const [contact, setContact] = useState<ContactResource | null>(null)
@@ -84,9 +87,13 @@ export const ContactDetail = () => {
             </div>
           )
         })}
+
+        <ContactCustomFieldManage chatbotId={chatbotId} />
       </div>
 
       <EditContactField
+        chatbotId={chatbotId}
+        id={contact.id}
         open={!!selectedField}
         onOpenChange={() => setSelectedField(null)}
         contact={contact}

@@ -13,11 +13,13 @@
   "dependencies": {
     "@ahachat.ai/database": "workspace:*",
     "@ahachat.ai/filesystem": "workspace:*",
+    "@ahachat.ai/flow-config": "workspace:*",
     "@ahachat.ai/integration-whatsapp": "workspace:*",
     "@ahachat.ai/party-config": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
     "@ahachat.ai/worker-config": "workspace:*",
+    "@paralleldrive/cuid2": "^2.2.2",
     "bullmq": "^5.52.2",
     "dot-prop": "^9.0.0",
     "ioredis": "^5.6.1",

@@ -4,7 +4,7 @@ import { callAPI } from "@/lib/swr"
 import type { Flow } from "@ahachat.ai/database/types"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
-import type { StartFlowStepSchema } from "./schema"
+import type { StartFlowStepSchema } from "@ahachat.ai/flow-config"
 import type { FlowCollection } from "@/features/flows/schemas/get-flows-schema"
 
 export const StartFlowStepViewer = ({

@@ -1,36 +1,36 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
-  type DeleteTagBindSchema,
-  deleteTagBindSchema,
-} from "../schemas/delete-tag-schema"
+  bulkUpdateIdsRequest,
+  chatbotIdRequestParams,
+  type BulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
+} from "@/features/common/schemas"
 
-export const deleteTagAction = authActionClient
-  .bindArgsSchemas(deleteTagBindSchema)
+export const deleteTagAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(bulkUpdateIdsRequest)
   .action(
     async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId, ids],
+      bindArgsParsedInputs: [chatbotId],
+      parsedInput,
     }: {
-      ctx: { user: User }
-      bindArgsParsedInputs: DeleteTagBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: BulkUpdateIdsRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       await prisma.tag.deleteMany({
         where: {
           id: {
-            in: ids,
+            in: parsedInput.ids,
           },
           chatbotId,
         },
       })
 
-      revalidateTag(`${ctx.user.id}#tags`)
+      revalidateTag(`chatbots:${chatbotId}#tags`)
 
       return {
         successful: true,

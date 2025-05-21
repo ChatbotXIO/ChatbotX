@@ -1,6 +1,9 @@
 import type { StepDefinition } from ".."
 import { StartFlowStepEditor } from "./editor"
-import { startFlowStepDefaultFn, startFlowStepSchema } from "./schema"
+import {
+  startFlowStepDefaultFn,
+  startFlowStepSchema,
+} from "@ahachat.ai/flow-config"
 import { StartFlowStepViewer } from "./viewer"
 
 export const sendVideoStep: StepDefinition = {

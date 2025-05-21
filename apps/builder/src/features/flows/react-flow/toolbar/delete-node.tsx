@@ -11,7 +11,9 @@ export function DeleteNode() {
   const targetNode = nodes.find((n) => n.data.forceToolbarVisible)
 
   const deleteNode = useCallback(() => {
-    setNodes(nodes.filter((node) => !node.data.forceToolbarVisible))
+    setTimeout(() => {
+      setNodes(nodes.filter((node) => !node.data.forceToolbarVisible))
+    })
   }, [setNodes, nodes])
 
   const onClick = (e: MouseEvent) => {

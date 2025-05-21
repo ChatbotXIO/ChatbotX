@@ -3,7 +3,7 @@
 import { callAPI } from "@/lib/swr"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
-import { DelayType, type WaitStepSchema } from "./schema"
+import { DelayType, type WaitStepSchema } from "@ahachat.ai/flow-config"
 import type { CustomFieldCollection } from "@/features/fields/schemas/types"
 
 export const WaitStepViewer = ({

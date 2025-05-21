@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet"
 import { useStore } from "@xyflow/react"
 import { NodeEditor } from "./editor"
-import type { FlowNode } from "../types"
+import type { FlowNode } from "@ahachat.ai/flow-config"
 
 interface NodeDetailSheetProps {
   open: boolean

@@ -11,11 +11,8 @@ import {
   IntegrationException,
   type SecretTextAuthValue,
 } from "@ahachat.ai/sdk"
-import {
-  type ConnectOpenAISchema,
-  OpenAIModel,
-  connectOpenAISchema,
-} from "../schemas"
+import { type ConnectOpenAISchema, connectOpenAISchema } from "../schemas"
+import { OpenAIModel } from "@ahachat.ai/flow-config"
 
 export const connectOpenAIAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

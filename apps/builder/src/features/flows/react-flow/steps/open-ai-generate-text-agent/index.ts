@@ -3,7 +3,7 @@ import { OpenAIGenerateTextAgentEditor } from "./editor"
 import {
   openAIGenerateTextAgentSchema,
   openAIGenerateTextAgentDefaultFn,
-} from "./schema"
+} from "@ahachat.ai/flow-config"
 import { OpenAIGenerateTextAgentViewer } from "./viewer"
 
 export const openAIGenerateTextAgentStep: StepDefinition = {

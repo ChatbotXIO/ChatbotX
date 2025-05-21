@@ -1,6 +1,6 @@
 "use client"
 
-import type { SplitTrafficStepSchema } from "./schema"
+import type { SplitTrafficStepSchema } from "@ahachat.ai/flow-config"
 
 export const SplitTrafficStepViewer = ({
   data,

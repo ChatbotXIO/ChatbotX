@@ -3,7 +3,7 @@ import { OpenAIDeleteMessageHistoryEditor } from "./editor"
 import {
   openAIDeleteMessageHistoryDefaultFn,
   openAIDeleteMessageHistorySchema,
-} from "./schema"
+} from "@ahachat.ai/flow-config"
 import { OpenAIDeleteMessageHistoryViewer } from "./viewer"
 
 export const openAIDeleteMessageHistoryStep: StepDefinition = {

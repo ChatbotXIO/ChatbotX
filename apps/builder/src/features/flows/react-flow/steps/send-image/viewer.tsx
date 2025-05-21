@@ -1,6 +1,6 @@
 "use client"
 
-import type { SendImageStepSchema } from "@/features/flows/react-flow/steps/send-image/schema"
+import type { SendImageStepSchema } from "@ahachat.ai/flow-config"
 import { ButtonGroupViewer } from "../button/viewer"
 
 export const SendImageStepViewer = ({

@@ -1,9 +1,12 @@
 import type { ZodSchema } from "zod"
-import { type FlowNode, NodeType } from "../types"
 import sendMessageNodeConfig from "./send-message"
-import type { MenuItem, NewNodeProps } from "./types"
+import type { MenuItem } from "./types"
 import type { LucideIcon } from "lucide-react"
-
+import {
+  NodeType,
+  type NewNodeProps,
+  type FlowNode,
+} from "@ahachat.ai/flow-config"
 export interface NodeConfigProps {
   type: NodeType
   icon: LucideIcon

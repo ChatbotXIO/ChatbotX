@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { ButtonGroupViewer } from "@/features/flows/react-flow/steps/button/viewer"
 import { Image } from "lucide-react"
-import type { SendCardStepSchema } from "./schema"
+import type { SendCardStepSchema } from "@ahachat.ai/flow-config"
 
 export const SendCardStepViewer = ({
   data,

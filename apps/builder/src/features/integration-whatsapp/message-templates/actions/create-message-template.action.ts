@@ -53,8 +53,7 @@ export const createMessageTemplateAction = chatbotActionClient
         ),
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      const res: any = await integrations.WHATSAPP.integration.runAction(
+      const res = await integrations.WHATSAPP.integration.runAction(
         "createMessageTemplate",
         {
           ctx,

@@ -1,7 +1,7 @@
 "use client"
 
+import type { SendTextStepSchema } from "@ahachat.ai/flow-config"
 import { ButtonGroupViewer } from "../button/viewer"
-import type { SendTextStepSchema } from "./schema"
 
 const SendTextStepViewer = ({
   data,

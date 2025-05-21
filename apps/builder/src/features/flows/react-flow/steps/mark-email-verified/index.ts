@@ -1,10 +1,10 @@
 import type { StepDefinition } from ".."
 import { MarkEmailVerifiedStepEditor } from "./editor"
+import { MarkEmailVerifiedStepViewer } from "./viewer"
 import {
   markEmailVerifiedStepDefaultFn,
   markEmailVerifiedStepSchema,
-} from "./schema"
-import { MarkEmailVerifiedStepViewer } from "./viewer"
+} from "@ahachat.ai/flow-config"
 
 export const markEmailVerifiedStep: StepDefinition = {
   editor: MarkEmailVerifiedStepEditor,

@@ -1,6 +1,6 @@
 "use client"
 
-import type { SendMessageNodeStepSchema } from "./schema"
+import type { SendMessageNodeStepSchema } from "@ahachat.ai/flow-config"
 
 const SendMessageNodeStepViewer = ({
   data,

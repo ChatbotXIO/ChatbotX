@@ -9,7 +9,7 @@ import { Worker, type Job } from "bullmq"
 import { logger } from "../lib/log"
 import { sendMessageToExternal } from "./handlers/send-message"
 import { SdkException } from "@ahachat.ai/sdk"
-import { triggerMessage } from "./handlers/trigger-message"
+import { sendFlowStep } from "./handlers/send-flow-step"
 
 const worker = new Worker(
   QueueName.CHAT,
@@ -18,8 +18,8 @@ const worker = new Worker(
       case ChatJobAction.SEND_MESSAGE:
         await sendMessageToExternal(job.data)
         return
-      case ChatJobAction.TRIGGER_MESSAGE:
-        await triggerMessage(job.data)
+      case ChatJobAction.SEND_FLOW_STEP:
+        await sendFlowStep(job.data.data)
         return
       default:
         throw new SdkException("ChatJobAction action is not defined")

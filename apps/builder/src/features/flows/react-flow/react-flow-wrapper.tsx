@@ -21,7 +21,7 @@ import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-versi
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
 import { AddNodeButton } from "./nodes/add-node"
 import { NodeViewer } from "./nodes/viewer"
-import { NodeType, type FlowNode } from "./types"
+import { NodeType, type FlowNode } from "@ahachat.ai/flow-config"
 
 const nodeTypes = {
   [NodeType.SendMessage]: NodeViewer,
@@ -128,15 +128,13 @@ export function ReactFlowWrapper({
 
   const onNodeMouseLeave = useCallback(
     (_: MouseEvent, node: Node) => {
-      setTimeout(() => {
-        setNodes((nds) =>
-          nds.map((n) =>
-            n.id === node.id
-              ? { ...n, data: { ...n.data, forceToolbarVisible: false } }
-              : n,
-          ),
-        )
-      }, 100)
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === node.id
+            ? { ...n, data: { ...n.data, forceToolbarVisible: false } }
+            : n,
+        ),
+      )
     },
     [setNodes],
   )

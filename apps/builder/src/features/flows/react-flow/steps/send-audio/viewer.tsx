@@ -2,7 +2,7 @@
 
 import { Card, CardFooter, CardHeader } from "@/components/ui/card"
 import { ButtonGroupViewer } from "@/features/flows/react-flow/steps/button/viewer"
-import type { SendAudioStepSchema } from "@/features/flows/react-flow/steps/send-audio/schema"
+import type { SendAudioStepSchema } from "@ahachat.ai/flow-config"
 
 import { Volume2 } from "lucide-react"
 

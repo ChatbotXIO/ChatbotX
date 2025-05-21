@@ -9,23 +9,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { sendMessageNodeDefaultFn } from "@/features/flows/react-flow/nodes/send-message/schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T, useTranslate } from "@tolgee/react"
 import { useNodes, useReactFlow } from "@xyflow/react"
-import { getProperty, setProperty } from "dot-prop"
+import { getProperty, setProperty, deleteProperty } from "dot-prop"
 import { XIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import {
-  allButtonsConfig,
   buttonStepSchema,
   type ButtonStepSchema,
   ButtonType,
-} from "./steps/button/schema"
+  sendMessageNodeDefaultFn,
+} from "@ahachat.ai/flow-config"
 import { useStepStore } from "./stores/step-store-provider"
-import type { FlowNode } from "./types"
+import type { FlowNode } from "@ahachat.ai/flow-config"
 import { InputField } from "@/components/form/input-field"
+import { allButtonsConfig } from "./steps/button-config"
+import { openWebsiteStepDefaultFn } from "node_modules/@ahachat.ai/flow-config/src/schemas/steps/open-website"
+import { DynamicStepEditor } from "./steps"
 
 function AllButtonOptions({
   onChooseButton,
@@ -77,8 +79,8 @@ function ActiveButton({
   )
 }
 
-function AdditionalSteps() {
-  const { control, register, getValues } = useFormContext()
+function ButtonSteps() {
+  const { control } = useFormContext()
   const { fields } = useFieldArray({
     control,
     name: "steps",
@@ -88,9 +90,12 @@ function AdditionalSteps() {
     <div className="flex flex-col gap-2 mt-2">
       <div className="text-sm font-medium">Additional steps</div>
       {fields.map((field, index) => (
-        <div key={field.id} {...register(`steps.${index}`)}>
-          {getValues(`steps.${index}.type`)}
-        </div>
+        <DynamicStepEditor
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          type={(field as any).stepType}
+          key={field.id}
+          parentName={`steps.${index}`}
+        />
       ))}
     </div>
   )
@@ -100,7 +105,6 @@ export function ButtonEditorDialog() {
   const [open, setOpen] = useState<boolean>(false)
   const [data, setData] = useState<ButtonStepSchema | null>(null)
   const [activeNode, setActiveNode] = useState<FlowNode | null>(null)
-  const [buttonType, setButtonType] = useState<ButtonType | null>(null)
 
   const nodes = useNodes() as FlowNode[]
   const { t } = useTranslate()
@@ -143,7 +147,9 @@ export function ButtonEditorDialog() {
     defaultValues: data || {},
     mode: "onChange",
   })
-  const { formState, setValue, getValues } = form
+  const { formState, setValue, getValues, watch } = form
+  const [buttonType] = watch(["buttonType"])
+
   useEffect(() => {
     if (data) {
       form.reset(data)
@@ -152,6 +158,8 @@ export function ButtonEditorDialog() {
 
   // const activeButtonType = watch("buttonType")
   const onChooseButton = (buttonType: ButtonType | null) => {
+    setValue("buttonType", buttonType)
+
     switch (buttonType) {
       case ButtonType.SendMessage: {
         // create new node
@@ -182,28 +190,45 @@ export function ButtonEditorDialog() {
             buttonPath,
             newData,
           )
-          updateNodeData(activeNode.id, updatedCurrentNodeData)
+
+          updateNodeData(activeNode.id, updatedCurrentNodeData.data)
 
           onSave()
         }
 
         break
       }
+      case ButtonType.OPEN_WEBSITE: {
+        setValue("steps", [openWebsiteStepDefaultFn()])
+        break
+      }
       default:
         setValue("steps", [])
         break
     }
-    setButtonType(buttonType)
+    setValue("buttonType", buttonType)
   }
 
   const onDelete = () => {
+    if (!activeNode || !buttonPath) return
+
+    const deleted = deleteProperty(activeNode, buttonPath)
+    if (deleted) {
+      console.log("activeNode", activeNode)
+      console.log("buttonPath", buttonPath)
+      // updateNodeData(activeNode.id, updatedCurrentNodeData.data)
+
+      // onSave()
+    }
+    updateNodeData(activeNode.id, activeNode.data)
+    onSave()
     // removeOldEdge()
     // const arr = parentName.split(".")
     // const btnIndex = Number.parseInt(arr.pop() as string)
     // const currentBtns = getValuesOriginEditor(arr.join("."))
     // currentBtns.splice(btnIndex, 1)
     // setValueOriginEditor(arr.join("."), currentBtns)
-    onOpenChange(false)
+    // onOpenChange(false)
   }
 
   const onSave = () => {
@@ -252,7 +277,7 @@ export function ButtonEditorDialog() {
                     buttonType={buttonType}
                     onChooseButton={onChooseButton}
                   />
-                  <AdditionalSteps />
+                  <ButtonSteps />
                 </div>
               ) : (
                 <AllButtonOptions onChooseButton={onChooseButton} />

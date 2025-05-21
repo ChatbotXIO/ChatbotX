@@ -1,6 +1,9 @@
 import type { StepDefinition } from ".."
 import PerformActionStepEditor from "./editor"
-import { performActionStepDefaultFn, performActionStepSchema } from "./schema"
+import {
+  performActionStepDefaultFn,
+  performActionStepSchema,
+} from "@ahachat.ai/flow-config"
 import PerformActionStepViewer from "./viewer"
 
 const performActionStep: StepDefinition = {

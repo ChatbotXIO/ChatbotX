@@ -1,6 +1,9 @@
+import {
+  sendTextStepDefaultFn,
+  sendTextStepSchema,
+} from "@ahachat.ai/flow-config"
 import type { StepDefinition } from ".."
 import SendTextStepEditor from "./editor"
-import { sendTextStepDefaultFn, sendTextStepSchema } from "./schema"
 import SendTextStepViewer from "./viewer"
 
 const sendTextStep: StepDefinition = {

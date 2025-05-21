@@ -5,8 +5,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { StepType } from "../steps/step-action"
 import type { MenuItem } from "../nodes/types"
+import type { StepType } from "@ahachat.ai/flow-config"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
   return (

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Handle, Position } from "@xyflow/react"
-import type { ButtonStepSchema } from "./schema"
+import type { ButtonStepSchema } from "@ahachat.ai/flow-config"
 
 export const ButtonStepViewer = ({ data }: { data: ButtonStepSchema }) => {
   return (

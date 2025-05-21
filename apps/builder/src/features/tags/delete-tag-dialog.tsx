@@ -39,11 +39,7 @@ export function DeleteTagsDialog({
   const { t } = useTranslate()
 
   const { execute, result, isPending } = useAction(
-    deleteTagAction.bind(
-      null,
-      chatbotId,
-      (tags ?? []).map((tag) => tag.id),
-    ),
+    deleteTagAction.bind(null, chatbotId),
     {
       onSuccess: () => {
         toast.success(t("tags.deleted"))
@@ -82,7 +78,11 @@ export function DeleteTagsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={() => execute()}
+            onClick={() =>
+              execute({
+                ids: (tags ?? []).map((tag) => tag.id),
+              })
+            }
             disabled={isPending}
           >
             {isPending && (

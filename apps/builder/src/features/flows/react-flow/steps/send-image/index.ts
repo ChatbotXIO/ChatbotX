@@ -1,6 +1,9 @@
 import type { StepDefinition } from ".."
 import { SendImageStepEditor } from "./editor"
-import { sendImageStepSchema, sendImageStepDefaultFn } from "./schema"
+import {
+  sendImageStepSchema,
+  sendImageStepDefaultFn,
+} from "@ahachat.ai/flow-config"
 import { SendImageStepViewer } from "./viewer"
 
 const sendImageStep: StepDefinition = {

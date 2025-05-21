@@ -1,8 +1,11 @@
 import { MessageCircleMoreIcon } from "lucide-react"
-import { NodeType } from "../../types"
 import type { NodeConfigProps } from "../node-config"
 import { sendMessageEditorMenus } from "./menu"
-import { sendMessageNodeDefaultFn, sendMessageNodeSchema } from "./schema"
+import {
+  NodeType,
+  sendMessageNodeDefaultFn,
+  sendMessageNodeSchema,
+} from "@ahachat.ai/flow-config"
 
 const sendMessageNodeConfig: NodeConfigProps = {
   defaultFn: sendMessageNodeDefaultFn,

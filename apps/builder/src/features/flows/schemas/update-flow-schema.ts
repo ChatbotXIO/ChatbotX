@@ -1,10 +1,10 @@
 import {
   edgeSchema,
   flowVersionSchema,
-} from "@/features/flows/react-flow/nodes/schema"
+  sendMessageNodeSchema,
+  addNotesNodeSchema,
+} from "@ahachat.ai/flow-config"
 import { z } from "zod"
-import { addNotesNodeSchema } from "../react-flow/nodes/add-notes/schema"
-import { sendMessageNodeSchema } from "../react-flow/nodes/send-message/schema"
 
 export const updateFlowSchema = z.object({
   name: z.optional(z.string().trim().min(1).max(255)),
