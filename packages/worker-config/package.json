@@ -10,7 +10,7 @@
   "dependencies": {
     "@ahachat.ai/flow-config": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
-    "bullmq": "^5.51.0",
+    "bullmq": "^5.53.0",
     "ioredis": "^5.6.1",
     "tslog": "^4.9.3"
   },

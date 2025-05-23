@@ -8,7 +8,7 @@
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
     "google-auth-library": "^9.15.1",
-    "googleapis": "^148.0.0",
+    "googleapis": "^149.0.0",
     "tslog": "^4.9.3",
     "typescript": "5.8.3"
   },

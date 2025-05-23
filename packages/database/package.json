@@ -4,21 +4,22 @@
   "type": "module",
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
-    "@prisma/client": "^6.6.0"
+    "@prisma/adapter-pg": "^6.8.2",
+    "@prisma/client": "^6.8.2"
   },
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
-    "@faker-js/faker": "^9.7.0",
-    "@types/node": "^22.15.17",
+    "@faker-js/faker": "^9.8.0",
+    "@types/node": "^22.15.21",
     "dotenv-cli": "^8.0.0",
-    "prisma": "^6.6.0"
+    "prisma": "^6.8.2"
   },
   "scripts": {
     "db:generate": "dotenv -e ../../.env -- prisma migrate dev --create-only",
     "db:migrate": "dotenv -e ../../.env -- prisma migrate deploy",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
     "db:seed": "dotenv -e ../../.env -- tsx src/seeders/index.ts",
-    "db:seed:all": "dotenv -e ../../.env -- tsx src/seeders/index.ts && tsx src/seeders/conversation-seeder.ts",
+    "db:seed:all": "dotenv -e ../../.env -- tsx src/seeders/index.ts",
     "db:client": "dotenv -e ../../.env -- prisma generate",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
     "db:setup": "pnpm db:migrate && pnpm db:client && pnpm db:seed:all"

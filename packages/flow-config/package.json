@@ -10,8 +10,8 @@
   "dependencies": {
     "@ahachat.ai/database": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
-    "@xyflow/react": "^12.6.0",
-    "zod": "^3.25.7"
+    "@xyflow/react": "^12.6.4",
+    "zod": "^3.25.23"
   },
   "exports": {
     ".": "./src/index.ts"

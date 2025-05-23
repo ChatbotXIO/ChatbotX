@@ -20,11 +20,11 @@
     "@ahachat.ai/typescript-config": "workspace:*",
     "@ahachat.ai/worker-config": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
-    "bullmq": "^5.52.2",
+    "bullmq": "^5.53.0",
     "dot-prop": "^9.0.0",
     "ioredis": "^5.6.1",
     "ky": "^1.8.1",
-    "remeda": "^2.21.3",
+    "remeda": "^2.21.9",
     "tslog": "^4.9.3"
   },
   "devDependencies": {

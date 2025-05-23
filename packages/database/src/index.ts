@@ -1,11 +1,14 @@
 import { PrismaClient } from "../generated/client"
+// import { PrismaPg } from '@prisma/adapter-pg'
 
+// const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 const enableDebug = process.env.PRISMA_DEBUG === "true"
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
+    // adapter,
     log: enableDebug ? ["query"] : [],
   }).$extends({
     // query: enableDebug

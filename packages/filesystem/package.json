@@ -8,12 +8,12 @@
   },
   "dependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
-    "@aws-sdk/client-s3": "^3.797.0",
-    "@aws-sdk/s3-presigned-post": "^3.797.0",
+    "@aws-sdk/client-s3": "^3.816.0",
+    "@aws-sdk/s3-presigned-post": "^3.816.0",
     "ky": "^1.8.1",
     "minio": "^8.0.5",
     "tslog": "^4.9.3",
-    "zod": "^3.24.3"
+    "zod": "^3.25.23"
   },
   "exports": {
     ".": "./src/index.ts"

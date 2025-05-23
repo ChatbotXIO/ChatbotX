@@ -109,7 +109,7 @@ export default function ImageDropzone({
         <section>
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center rounded-lg border border-dashed border-2 h-36 overflow-hidden justify-center hover:cursor-pointer hover:border-solid hover:border-blue-500">
+            <div className="flex flex-col items-center rounded-lg border-dashed border-2 h-36 overflow-hidden justify-center hover:cursor-pointer hover:border-solid hover:border-blue-500">
               {image ? (
                 <AttachedImage image={image} onRemove={handleRemove} />
               ) : (
