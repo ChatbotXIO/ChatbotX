@@ -33,6 +33,6 @@ export const updateContactAction = chatbotActionClient
         throw new ContactException("Contact was not found")
       }
 
-      console.log("parsedInputparsedInput", parsedInput)
+      console.log("parsedInput", parsedInput)
     },
   )

@@ -47,13 +47,16 @@ export function* convertMessageToWhatsappMessage(
   }
 }
 
-export function* convertFlowStepToWhatsappMessage(step: SendFlowStepData) {
+export function* convertFlowStepToWhatsappMessage(
+  flowVersionId: string,
+  step: SendFlowStepData,
+) {
   switch (step.stepType) {
     case StepType.SendText:
-      yield* convertFlowStepText(step)
+      yield* convertFlowStepText(flowVersionId, step)
       break
     case StepType.SendImage:
-      yield* convertFlowStepImage(step)
+      yield* convertFlowStepImage(flowVersionId, step)
       break
     default:
       break
@@ -113,12 +116,16 @@ export const sendOutgoingMessage = async (
 export const sendFlowStep = async (
   ctx: Context<WhatsappAuthValue>,
   conversation: ConversationEntity,
+  flowVersionId: string,
   step: SendFlowStepData,
 ) => {
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   try {
-    for (const whatsappMessage of convertFlowStepToWhatsappMessage(step)) {
+    for (const whatsappMessage of convertFlowStepToWhatsappMessage(
+      flowVersionId,
+      step,
+    )) {
       if (!whatsappMessage) {
         ctx.logger.error("Unable to parse outgoing message", step)
         continue

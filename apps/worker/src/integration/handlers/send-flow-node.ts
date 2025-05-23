@@ -1,4 +1,4 @@
-import { prisma } from "@ahachat.ai/database"
+import { prisma, type Conversation } from "@ahachat.ai/database"
 import { StepType, type FlowNode } from "@ahachat.ai/flow-config"
 import { SdkException } from "@ahachat.ai/sdk"
 import {
@@ -8,6 +8,10 @@ import {
 } from "@ahachat.ai/worker-config"
 
 export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
+  if (!props.data.flowId && !props.data.flowVersionId) {
+    throw new SdkException("Expect flowId or flowVersionId to sendFlowNode")
+  }
+
   const conversation = await prisma.conversation.findFirst({
     where: {
       id: props.data.conversationId,
@@ -17,44 +21,59 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     throw new SdkException("Conversation not found")
   }
 
-  const flow = await prisma.flow.findFirst({
-    where: {
-      chatbotId: conversation.chatbotId,
-      id: props.data.flowId,
-      active: true,
-    },
-  })
-  if (!flow || !flow.currentVersionId) {
-    throw new SdkException("Flow not valid")
-  }
+  // Try to find corresponding flowVersion
+  let flowVersion = null
+  if (props.data.flowVersionId) {
+    flowVersion = await prisma.flowVersion.findFirst({
+      where: {
+        id: props.data.flowVersionId,
+        chatbotId: conversation.chatbotId,
+      },
+    })
+  } else {
+    const flow = await prisma.flow.findFirst({
+      where: {
+        chatbotId: conversation.chatbotId,
+        id: props.data.flowId,
+        active: true,
+      },
+    })
+    if (!flow || !flow.currentVersionId) {
+      throw new SdkException("Flow not valid")
+    }
 
-  const flowVersion = await prisma.flowVersion.findFirst({
-    where: {
-      id: flow.currentVersionId,
-    },
-  })
+    flowVersion = await prisma.flowVersion.findFirst({
+      where: {
+        id: flow.currentVersionId,
+      },
+    })
+  }
   if (!flowVersion) {
     throw new SdkException("FlowVersion not found")
   }
 
   // NOTES: process flow
-  const startNode = (flowVersion.nodes as unknown as FlowNode[]).find(
-    (n) => n.data.isStartNode,
+  const startNode = (flowVersion.nodes as unknown as FlowNode[]).find((n) =>
+    props.data.nodeId ? n.id === props.data.nodeId : n.data.isStartNode,
   )
   if (!startNode) {
     throw new SdkException("FlowVersion does not contain start node")
   }
 
   for await (const stepResponse of runFlowNode(
-    props.data.conversationId,
+    conversation,
+    flowVersion.id,
     startNode,
   )) {
-    console.log(`Running: ${stepResponse}`)
+    console.log(`Handled: ${stepResponse}`)
   }
 }
 
-async function* runFlowNode(conversationId: string, node: FlowNode) {
-  console.log("node.data.steps", node.data.steps)
+async function* runFlowNode(
+  conversation: Conversation,
+  flowVersionId: string,
+  node: FlowNode,
+) {
   for (const step of node.data.steps) {
     switch (step.stepType) {
       case StepType.SendText:
@@ -68,8 +87,37 @@ async function* runFlowNode(conversationId: string, node: FlowNode) {
         chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
           type: ChatJobAction.SEND_FLOW_STEP,
           data: {
-            conversationId,
+            conversationId: conversation.id,
+            flowVersionId,
             step,
+          },
+        })
+        break
+      }
+      case StepType.SET_CUSTOM_FIELD: {
+        await prisma.contactCustomField.upsert({
+          create: {
+            contactId: conversation.contactId,
+            customFieldId: step.customFieldId,
+            value: step.value,
+          },
+          where: {
+            contactId_customFieldId: {
+              contactId: conversation.contactId,
+              customFieldId: step.customFieldId,
+            },
+          },
+          update: {
+            value: step.value,
+          },
+        })
+        break
+      }
+      case StepType.CLEAR_CUSTOM_FIELD: {
+        await prisma.contactCustomField.deleteMany({
+          where: {
+            contactId: conversation.contactId,
+            customFieldId: step.customFieldId,
           },
         })
         break

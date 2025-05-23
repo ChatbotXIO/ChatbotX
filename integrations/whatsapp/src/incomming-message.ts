@@ -145,7 +145,7 @@ export const parseIncomingMessage = async (
       switch (props.message.interactive.type) {
         case "button_reply": {
           message.content = props.message.interactive.button_reply.title
-          const arr = props.message.interactive.button_reply.id.split("-")
+          const arr = props.message.interactive.button_reply.id.split("_")
           if (arr.length > 1) {
             postbackAction = { flowVersionId: arr[0], buttonId: arr[1] }
           }
@@ -179,6 +179,8 @@ export const parseIncomingMessage = async (
       message.content = `Received ${props.message.type}`
       break
   }
+
+  console.log("postbackAction", postbackAction)
 
   return { message, conversation, postbackAction }
 }

@@ -15,6 +15,7 @@ import { sendFlowStepToExternal } from "./send-message"
 
 export async function sendFlowStep({
   conversationId,
+  flowVersionId,
   step,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await prisma.conversation.findFirst({
@@ -43,6 +44,7 @@ export async function sendFlowStep({
     }),
     sendFlowStepToExternal({
       conversation: conversation as ConversationEntity,
+      flowVersionId,
       step,
     }),
   ])

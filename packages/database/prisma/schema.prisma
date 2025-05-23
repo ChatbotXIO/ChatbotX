@@ -234,14 +234,15 @@ model Contact {
   lastSeenAt   DateTime?
   sourceId     String?
 
-  assignedTeam InboxTeam?             @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
-  assignedUser User?                  @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
-  broadcasts   ContactsOnBroadcasts[]
-  chatbot      Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  conversation Conversation?
-  logs         Log[]                  @relation("ExecutorContact")
-  tags         Tag[]
-  contactNotes ContactNote[]
+  assignedTeam        InboxTeam?             @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
+  assignedUser        User?                  @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
+  broadcasts          ContactsOnBroadcasts[]
+  chatbot             Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  conversation        Conversation?
+  logs                Log[]                  @relation("ExecutorContact")
+  tags                Tag[]
+  contactNotes        ContactNote[]
+  contactCustomFields ContactCustomField[]
 
   @@unique([chatbotId, sourceId])
 }
@@ -334,8 +335,9 @@ model Field {
   showInInbox     Boolean
   chatbotId       String
 
-  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  folder  Folder? @relation(fields: [folderId], references: [id])
+  chatbot             Chatbot              @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  folder              Folder?              @relation(fields: [folderId], references: [id])
+  contactCustomFields ContactCustomField[]
 }
 
 model Inbox {
@@ -724,6 +726,21 @@ model ContactNote {
 
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model ContactCustomField {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  value     String
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  customFieldId String
+  customField   Field  @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, customFieldId])
 }
 
 enum CustomFieldType {

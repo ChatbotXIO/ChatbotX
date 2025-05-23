@@ -1,4 +1,3 @@
-import * as util from "util"
 import { PrismaClient } from "../generated/client"
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
@@ -6,26 +5,29 @@ const enableDebug = process.env.PRISMA_DEBUG === "true"
 
 export const prisma =
   globalForPrisma.prisma ||
-  new PrismaClient().$extends({
-    query: enableDebug
-      ? {
-          $allModels: {
-            async $allOperations({ operation, model, args, query }) {
-              const start = performance.now()
-              const result = await query(args)
-              const end = performance.now()
-              const time = end - start
-              console.log(
-                util.inspect(
-                  { model, operation, args, time },
-                  { showHidden: false, depth: null, colors: true },
-                ),
-              )
-              return result
-            },
-          },
-        }
-      : undefined,
+  new PrismaClient({
+    log: enableDebug ? ["query"] : [],
+  }).$extends({
+    // query: enableDebug
+    //   ? {
+    //       $allModels: {
+    //         async $allOperations({ operation, model, args, query }) {
+    //           console.log("debugggg", arguments)
+    //           const start = performance.now()
+    //           const result = await query(args)
+    //           const end = performance.now()
+    //           const time = end - start
+    //           console.log(
+    //             util.inspect(
+    //               { query, time },
+    //               { showHidden: false, depth: null, colors: true },
+    //             ),
+    //           )
+    //           return result
+    //         },
+    //       },
+    //     }
+    //   : undefined,
     result: {
       contact: {
         fullName: {

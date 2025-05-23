@@ -20,6 +20,10 @@ import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@ahachat.ai/party-config"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@ahachat.ai/worker-config"
 
 export const receiveMessage = async ({
   integrationName,
@@ -46,21 +50,20 @@ export const receiveMessage = async ({
       },
     })
 
-  const {
-    message,
-    conversation,
-    // postbackAction,
-  } = await integration.runAction("receiveMessage", {
-    ctx: {
-      chatbot: dbIntegrationWhatsapp.chatbot,
-      auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
-      logger: getLogger(integrationName),
-      uploader,
+  const { message, conversation, postbackAction } = await integration.runAction(
+    "receiveMessage",
+    {
+      ctx: {
+        chatbot: dbIntegrationWhatsapp.chatbot,
+        auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
+        logger: getLogger(integrationName),
+        uploader,
+      },
+      data: payload,
     },
-    data: payload,
-  })
+  )
 
-  return await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const newContact = await tx.contact.upsert({
       where: {
         chatbotId_sourceId: {
@@ -144,4 +147,17 @@ export const receiveMessage = async ({
 
     return { message: newMessage, conversation: newConversation }
   })
+
+  if (postbackAction) {
+    await integrationQueue.add(IntegrationJobAction.SEND_FLOW_POSTBACK, {
+      type: IntegrationJobAction.SEND_FLOW_POSTBACK,
+      data: {
+        conversationId: result.conversation.id,
+        flowVersionId: postbackAction.flowVersionId,
+        buttonId: postbackAction.buttonId,
+      },
+    })
+  }
+
+  return result
 }

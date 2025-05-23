@@ -4,7 +4,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import { z } from "zod"
-import type { Contact } from "@ahachat.ai/database"
+import type { Contact, ContactCustomField } from "@ahachat.ai/database/types"
 
 export const listContactsNuqs = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -21,4 +21,6 @@ export const listContactsRequest = z.object({
 
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
-export type ContactResource = Contact
+export type ContactResource = Contact & {
+  contactCustomFields?: ContactCustomField[]
+}

@@ -69,7 +69,6 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
   const onAddStep = (name: StepType) => {
     const newStep = allSteps[name]?.defaultFn()
-    console.log("debugggggg", name, newStep)
     if (newStep) {
       append(newStep)
     }

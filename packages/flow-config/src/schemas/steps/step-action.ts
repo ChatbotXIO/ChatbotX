@@ -25,8 +25,8 @@ export enum StepType {
   AddTag = "AddTag",
   RemoveTag = "RemoveTag",
   NotifyAgent = "NotifyAgent",
-  ADD_CUSTOM_FIELD = "ADD_CUSTOM_FIELD",
-  RemoveCustomField = "RemoveCustomField",
+  SET_CUSTOM_FIELD = "SET_CUSTOM_FIELD",
+  CLEAR_CUSTOM_FIELD = "CLEAR_CUSTOM_FIELD",
   AddCustomLog = "AddCustomLog",
   SubscribeBot = "SubscribeBot",
   UnsubscribeBot = "UnsubscribeBot",
@@ -82,11 +82,10 @@ export enum StepType {
   FormatDate = "FormatDate",
   RandomCode = "RandomCode",
   CountCharacters = "CountCharacters",
-
-  SendMessageNode = "SendMessageNode",
   PerformAction = "PerformAction",
 
   OPEN_WEBSITE = "OPEN_WEBSITE",
+  SEND_FLOW_NODE = "SEND_FLOW_NODE",
 }
 
 export const disabledCopyActionTypes = [

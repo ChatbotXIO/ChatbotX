@@ -28,6 +28,7 @@ export type ChatJobSendFlowStep = {
   type: ChatJobAction.SEND_FLOW_STEP
   data: {
     conversationId: string
+    flowVersionId: string
     step:
       | SendTextStepSchema
       | SendImageStepSchema

@@ -69,6 +69,7 @@ export async function triggerAutomatedResponse({
               type: ChatJobAction.SEND_FLOW_STEP,
               data: {
                 conversationId: message.conversationId,
+                flowVersionId: "",
                 step: {
                   id: createId(),
                   message: reply.message,

@@ -1,5 +1,11 @@
 import { T } from "@tolgee/react"
-import { ImageIcon, SaveIcon, TextIcon, ZapIcon } from "lucide-react"
+import {
+  ImageIcon,
+  SaveIcon,
+  SaveOffIcon,
+  TextIcon,
+  ZapIcon,
+} from "lucide-react"
 import type { MenuItem } from "../types"
 import { StepType } from "@ahachat.ai/flow-config"
 
@@ -236,15 +242,15 @@ export const sendMessageEditorMenus: MenuItem[] = [
       //       stepType: StepType.NotifyAgent,
       //     },
       {
-        label: <T keyName="flows.StepType.AddCustomField" />,
+        label: <T keyName="flows.StepType.SetCustomField" />,
         icon: SaveIcon,
-        stepType: StepType.ADD_CUSTOM_FIELD,
+        stepType: StepType.SET_CUSTOM_FIELD,
       },
-      // {
-      //   label: <T keyName="flows.StepType.RemoveCustomField" />,
-      //   icon: SaveOffIcon,
-      //   stepType: StepType.RemoveCustomField,
-      // },
+      {
+        label: <T keyName="flows.StepType.ClearCustomField" />,
+        icon: SaveOffIcon,
+        stepType: StepType.CLEAR_CUSTOM_FIELD,
+      },
       //     {
       //       label: <T keyName="flows.StepType.AddCustomLog" />,
       //       icon: ChartNoAxesCombinedIcon,

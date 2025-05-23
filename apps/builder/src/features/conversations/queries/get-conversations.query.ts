@@ -32,7 +32,11 @@ export const listConversations = async (
 
   const params: Prisma.ConversationFindManyArgs = {
     include: {
-      contact: true,
+      contact: {
+        include: {
+          contactCustomFields: true,
+        },
+      },
       inbox: true,
     },
     take: perPage,

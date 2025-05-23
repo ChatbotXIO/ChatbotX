@@ -1,4 +1,5 @@
 import {
+  clearCustomFieldStepSchema,
   markEmailVerifiedStepSchema,
   openAIAnalyzeImageSchema,
   openAIDeleteMessageHistorySchema,
@@ -13,6 +14,7 @@ import {
   optOutEmailStepSchema,
   sendImageStepSchema,
   sendTextStepSchema,
+  setCustomFieldStepSchema,
 } from "../steps"
 import { InboxType, OMNICHANNEL } from "@ahachat.ai/database/types"
 import { createId } from "@paralleldrive/cuid2"
@@ -47,6 +49,8 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
       z.union([
         sendTextStepSchema,
         sendImageStepSchema,
+        setCustomFieldStepSchema,
+        clearCustomFieldStepSchema,
         // sendCardStepSchema,
         // sendVideoStepSchema,
         // sendAudioStepSchema,

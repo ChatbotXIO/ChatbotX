@@ -20,6 +20,7 @@ import {
   buttonStepSchema,
   type ButtonStepSchema,
   ButtonType,
+  sendFlowNodeStepDefaultFn,
   sendMessageNodeDefaultFn,
 } from "@ahachat.ai/flow-config"
 import { useStepStore } from "./stores/step-store-provider"
@@ -181,10 +182,12 @@ export function ButtonEditorDialog() {
 
         // update current node
         if (activeNode && buttonPath) {
+          setValue("steps", [sendFlowNodeStepDefaultFn(newNode.id)])
           const newData = {
             ...data,
             ...getValues(),
           }
+
           const updatedCurrentNodeData = setProperty(
             activeNode,
             buttonPath,

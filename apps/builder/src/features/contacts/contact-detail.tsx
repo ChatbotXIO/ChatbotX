@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { EditContactField } from "./edit-contact-field"
 import { useParams } from "next/navigation"
 import { ContactCustomFieldManage } from "../fields/contact-custom-field-manage"
+import { callAPI } from "@/lib/swr"
+import type { CustomFieldCollection } from "../fields/schemas/types"
 
 export const ContactDetail = () => {
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -28,6 +30,11 @@ export const ContactDetail = () => {
       setContact(null)
     }
   }, [activeConversationId])
+
+  // Get all custom fields
+  const customFieldsUrl = `/api/chatbots/${chatbotId}/custom-fields?perPage=9999`
+  const { data } = callAPI<CustomFieldCollection>(customFieldsUrl)
+  const allCustomFields = data?.data || []
 
   const editableData = [
     {
@@ -55,6 +62,20 @@ export const ContactDetail = () => {
       value: contact?.phoneNumber,
     },
   ]
+
+  for (const cc of contact?.contactCustomFields || []) {
+    const targetCustomField = allCustomFields.find(
+      (c) => c.id === cc.customFieldId,
+    )
+    if (targetCustomField) {
+      editableData.push({
+        key: cc.customFieldId,
+        icon: TextIcon,
+        label: targetCustomField.name,
+        value: cc.value,
+      })
+    }
+  }
 
   return contact ? (
     <div className="flex flex-col">

@@ -4,7 +4,8 @@ import type { ZodTypeAny } from "zod"
 import sendTextStep from "./send-text"
 import sendImageStep from "./send-image"
 import { openWebsiteStep } from "./open-website"
-import { addCustomFieldStep } from "./add-custom-field"
+import { setCustomFieldStep } from "./set-custom-field"
+import { clearCustomFieldStep } from "./clear-custom-field"
 
 interface StepEditorProps {
   parentName: string
@@ -39,7 +40,6 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.AddTag]: undefined,
   [StepType.RemoveTag]: undefined,
   [StepType.NotifyAgent]: undefined,
-  [StepType.RemoveCustomField]: undefined,
   [StepType.AddCustomLog]: undefined,
   [StepType.SubscribeBot]: undefined,
   [StepType.UnsubscribeBot]: undefined,
@@ -92,10 +92,11 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.StartFLow]: undefined,
   [StepType.StartFlowStep]: undefined,
   [StepType.Wait]: undefined,
-  [StepType.SendMessageNode]: undefined,
+  [StepType.SEND_FLOW_NODE]: undefined,
   [StepType.PerformAction]: undefined,
   [StepType.OPEN_WEBSITE]: openWebsiteStep,
-  [StepType.ADD_CUSTOM_FIELD]: addCustomFieldStep,
+  [StepType.SET_CUSTOM_FIELD]: setCustomFieldStep,
+  [StepType.CLEAR_CUSTOM_FIELD]: clearCustomFieldStep,
 }
 
 export function DynamicStepEditor({

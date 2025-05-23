@@ -3,7 +3,7 @@
 import { useNodes } from "@xyflow/react"
 import { useFormContext } from "react-hook-form"
 
-const SendMessageNodeStepEditor = ({ parentName }: { parentName: string }) => {
+const SendFlowNodeStepEditor = ({ parentName }: { parentName: string }) => {
   const nodes = useNodes()
 
   // trying to get target node ID
@@ -20,4 +20,4 @@ const SendMessageNodeStepEditor = ({ parentName }: { parentName: string }) => {
   )
 }
 
-export default SendMessageNodeStepEditor
+export default SendFlowNodeStepEditor

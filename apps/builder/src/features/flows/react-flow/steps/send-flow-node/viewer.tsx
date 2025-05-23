@@ -1,11 +1,11 @@
 "use client"
 
-import type { SendMessageNodeStepSchema } from "@ahachat.ai/flow-config"
+import type { SendFlowNodeStepSchema } from "@ahachat.ai/flow-config"
 
-const SendMessageNodeStepViewer = ({
+const SendFlowNodeStepViewer = ({
   data,
 }: {
-  data: SendMessageNodeStepSchema
+  data: SendFlowNodeStepSchema
 }) => {
   return (
     <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary">
@@ -14,4 +14,4 @@ const SendMessageNodeStepViewer = ({
   )
 }
 
-export default SendMessageNodeStepViewer
+export default SendFlowNodeStepViewer

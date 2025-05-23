@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { sendMessageNodeStepSchema } from "./send-message-node"
 import { performActionStepSchema } from "./perform-action"
 import { openWebsiteStepSchema } from "./open-website"
+import { sendFlowNodeStepSchema } from "./send-flow-node"
 
 export enum ButtonType {
   SendMessage = "SendMessage",
@@ -49,7 +49,7 @@ export const buttonStepSchema = z
       z.object({
         buttonType: z.literal(ButtonType.SendMessage),
         steps: z.array(
-          z.union([sendMessageNodeStepSchema, performActionStepSchema]),
+          z.union([sendFlowNodeStepSchema, performActionStepSchema]),
         ),
       }),
       z.object({
