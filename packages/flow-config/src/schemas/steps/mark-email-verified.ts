@@ -4,7 +4,7 @@ import { StepType } from "./step-action"
 
 export const markEmailVerifiedStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.literal(StepType.MarkEmailVerified),
+  stepType: z.literal(StepType.MARK_EMAIL_VERIFIED),
 })
 
 export type MarkEmailVerifiedStepSchema = z.infer<
@@ -14,5 +14,5 @@ export type MarkEmailVerifiedStepSchema = z.infer<
 export const markEmailVerifiedStepDefaultFn =
   (): MarkEmailVerifiedStepSchema => ({
     id: createId(),
-    stepType: StepType.MarkEmailVerified,
+    stepType: StepType.MARK_EMAIL_VERIFIED,
   })

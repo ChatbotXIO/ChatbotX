@@ -3,7 +3,7 @@ import { openAIDefaultFn, openAISchema } from "./open-ai"
 import { z } from "zod"
 
 export const openAIDeleteMessageHistorySchema = openAISchema.extend({
-  stepType: z.literal(StepType.OpenAIDeleteMessageHistory),
+  stepType: z.literal(StepType.OPENAI_DELETE_MESSAGE_HISTORY),
 })
 
 export type OpenAIDeleteMessageHistorySchema = z.infer<
@@ -13,5 +13,5 @@ export type OpenAIDeleteMessageHistorySchema = z.infer<
 export const openAIDeleteMessageHistoryDefaultFn =
   (): OpenAIDeleteMessageHistorySchema => ({
     ...openAIDefaultFn(),
-    stepType: StepType.OpenAIDeleteMessageHistory,
+    stepType: StepType.OPENAI_DELETE_MESSAGE_HISTORY,
   })

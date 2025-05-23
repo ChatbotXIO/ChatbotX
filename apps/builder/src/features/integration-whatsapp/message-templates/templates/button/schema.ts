@@ -7,7 +7,7 @@ export enum ButtonActionType {
   Flow = "FLOW",
 }
 
-export const buttonBlockSchema = z
+export const buttonStepSchema = z
   .object({
     text: z.string().min(1).max(100),
   })
@@ -37,9 +37,9 @@ export const buttonBlockSchema = z
     ]),
   )
 
-export type ButtonBlockSchema = z.infer<typeof buttonBlockSchema>
+export type ButtonStepSchema = z.infer<typeof buttonStepSchema>
 
-export const buttonBlockDefaultValue = (text = ""): ButtonBlockSchema => ({
+export const buttonStepDefaultFn = (text = ""): ButtonStepSchema => ({
   text,
   type: ButtonActionType.QuickReply,
 })

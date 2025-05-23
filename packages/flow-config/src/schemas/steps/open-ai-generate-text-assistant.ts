@@ -4,7 +4,7 @@ import { z } from "zod"
 
 export const openAIGenerateTextAssistantSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.literal(StepType.OpenAIGenerateTextAssistant),
+  stepType: z.literal(StepType.OPENAI_GENERATE_TEXT_ASSISTANT),
   aiAssistantId: z.string().cuid2(),
   userMessage: z.string(),
   resultCustomFieldId: z.string().cuid2(),
@@ -16,7 +16,7 @@ export type OpenAIGenerateTextAssistantSchema = z.infer<
 export const openAIGenerateTextAssistantDefaultFn =
   (): OpenAIGenerateTextAssistantSchema => ({
     id: createId(),
-    stepType: StepType.OpenAIGenerateTextAssistant,
+    stepType: StepType.OPENAI_GENERATE_TEXT_ASSISTANT,
     aiAssistantId: "",
     userMessage: "",
     resultCustomFieldId: "",

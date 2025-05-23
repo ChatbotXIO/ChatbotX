@@ -50,7 +50,7 @@ type MessagePayloadSchema = z.infer<typeof messagePayloadSchema>
 
 const handlers = {
   // Send message blocks
-  [`handle${StepType.SendText}`]: async (
+  [`handle${StepType.SEND_TEXT}`]: async (
     conversation: Conversation,
     block: SendTextStepSchema,
     flowVersion: FlowVersion,
@@ -59,7 +59,7 @@ const handlers = {
 
     return
   },
-  [`handle${StepType.SendImage}`]: async (
+  [`handle${StepType.SEND_IMAGE}`]: async (
     conversation: Conversation,
     block: SendTextStepSchema,
     flowVersion: FlowVersion,
@@ -68,7 +68,7 @@ const handlers = {
 
     return
   },
-  [`handle${StepType.SendCard}`]: async (
+  [`handle${StepType.SEND_CARD}`]: async (
     conversation: Conversation,
     block: SendCardStepSchema,
     flowVersion: FlowVersion,
@@ -77,7 +77,7 @@ const handlers = {
 
     return
   },
-  [`handle${StepType.SendCarousel}`]: async (
+  [`handle${StepType.SEND_CAROUSEL}`]: async (
     conversation: Conversation,
     block: SendCarouselStepSchema,
     flowVersion: FlowVersion,
@@ -86,14 +86,14 @@ const handlers = {
 
     return
   },
-  [`handle${StepType.SendVideo}`]: async (
+  [`handle${StepType.SEND_VIDEO}`]: async (
     _conversation: Conversation,
     _block: SendVideoStepSchema,
   ) => {
     // todo send message video
     return
   },
-  [`handle${StepType.SendAudio}`]: async (
+  [`handle${StepType.SEND_AUDIO}`]: async (
     _conversation: Conversation,
     _block: SendAudioStepSchema,
   ) => {
@@ -101,7 +101,7 @@ const handlers = {
     return
   },
 
-  [`handle${StepType.UserInput}`]: async (
+  [`handle${StepType.USER_INPUT}`]: async (
     _conversation: Conversation,
     _block: UserInputStepSchema,
   ) => {
@@ -110,21 +110,21 @@ const handlers = {
   },
 
   // Action Email
-  [`handle${StepType.MarkEmailVerified}`]: async (
+  [`handle${StepType.MARK_EMAIL_VERIFIED}`]: async (
     _conversation: Conversation,
     _block: MarkEmailVerifiedStepSchema,
   ) => {
     // TODO: Implement Mark Email Verified logic
     return
   },
-  [`handle${StepType.OptInEmail}`]: async (
+  [`handle${StepType.OPT_IN_EMAIL}`]: async (
     _conversation: Conversation,
     _block: OptInEmailStepSchema,
   ) => {
     // TODO: Implement Opt-In Email logic
     return
   },
-  [`handle${StepType.OptOutEmail}`]: async (
+  [`handle${StepType.OPT_OUT_EMAIL}`]: async (
     _conversation: Conversation,
     _block: OptOutEmailStepSchema,
   ) => {
@@ -133,63 +133,63 @@ const handlers = {
   },
 
   // Action OpenAI Generate
-  [`handle${StepType.OpenAIGenerateText}`]: async (
+  [`handle${StepType.OPENAI_GENERATE_TEXT}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text logic
     return
   },
-  [`handle${StepType.OpenAIGenerateImage}`]: async (
+  [`handle${StepType.OPENAI_GENERATE_IMAGE}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateImageSchema,
   ) => {
     // TODO: Implement OpenAI Generate Image logic
     return
   },
-  [`handle${StepType.OpenAIAnalyzeImage}`]: async (
+  [`handle${StepType.OPENAI_ANALYZE_IMAGE}`]: async (
     _conversation: Conversation,
     _block: OpenAIAnalyzeImageSchema,
   ) => {
     // TODO: Implement OpenAI Analyze Image logic
     return
   },
-  [`handle${StepType.OpenAIDeleteMessageHistory}`]: async (
+  [`handle${StepType.OPENAI_DELETE_MESSAGE_HISTORY}`]: async (
     _conversation: Conversation,
     _block: OpenAIDeleteMessageHistorySchema,
   ) => {
     // TODO: Implement OpenAI Delete Message History logic
     return
   },
-  [`handle${StepType.OpenAIGenerateTextAssistant}`]: async (
+  [`handle${StepType.OPENAI_GENERATE_TEXT_ASSISTANT}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextAssistantSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Assistant logic
     return
   },
-  [`handle${StepType.OpenAIGenerateTextAgent}`]: async (
+  [`handle${StepType.OPENAI_GENERATE_TEXT_AGENT}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextAgentSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Agent logic
     return
   },
-  [`handle${StepType.OpenAIGenerateTextAdvanced}`]: async (
+  [`handle${StepType.OPENAI_GENERATE_TEXT_ADVANCED}`]: async (
     _conversation: Conversation,
     _block: OpenAIGenerateTextAdvancedSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Advanced logic
     return
   },
-  [`handle${StepType.OpenAISpeechToText}`]: async (
+  [`handle${StepType.OPENAI_SPEECH_TO_TEXT}`]: async (
     _conversation: Conversation,
     _block: OpenAISpeechToTextSchema,
   ) => {
     // TODO: Implement OpenAI Generate Text Advanced logic
     return
   },
-  [`handle${StepType.OpenAITextToSpeech}`]: async (
+  [`handle${StepType.OPENAI_TEXT_TO_SPEECH}`]: async (
     _conversation: Conversation,
     _block: OpenAITextToSpeechSchema,
   ) => {
@@ -290,18 +290,18 @@ async function replyMessage(block: StepData, payload: MessagePayloadSchema) {
   // TODO create message text
 
   switch (block.StepType) {
-    case StepType.SendText:
-    case StepType.SendImage:
-    case StepType.SendVideo:
-    case StepType.SendCard:
-    case StepType.SendAudio:
+    case StepType.SEND_TEXT:
+    case StepType.SEND_IMAGE:
+    case StepType.SEND_VIDEO:
+    case StepType.SEND_CARD:
+    case StepType.SEND_AUDIO:
       return block.buttons?.find(
         (button: ButtonStepSchema) => button.label === payload.text,
       )?.id
 
     // Check case reply to trigger next block.
     // See apps/builder/src/features/flows/react-flow/action-type.ts waitUserReplyActionTypes
-    case StepType.UserInput:
+    case StepType.USER_INPUT:
       // todo Parse text data
       return
     default:

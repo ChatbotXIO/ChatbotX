@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { ButtonActionType, buttonBlockSchema } from "../button/schema"
+import { ButtonActionType, buttonStepSchema } from "../button/schema"
 
 export const templateCatalogSchema = z
   .object({
@@ -10,7 +10,7 @@ export const templateCatalogSchema = z
       variables: z.array(z.string().min(1).max(255)),
     }),
     footer: z.string().trim().max(60).nullable(),
-    buttons: z.array(buttonBlockSchema).length(1),
+    buttons: z.array(buttonStepSchema).length(1),
   })
   .superRefine((data, ctx) => {
     if (data.showFooter && !data.footer?.length) {

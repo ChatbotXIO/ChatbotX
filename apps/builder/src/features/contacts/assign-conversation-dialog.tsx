@@ -69,7 +69,7 @@ export function AssignConversationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("flows.ActionType.AssignConversation")}</DialogTitle>
+          <DialogTitle>{t("flows.StepType.AssignConversation")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -82,7 +82,7 @@ export function AssignConversationDialog({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="unassign">
-                {t("flows.ActionType.UnassignConversation")}
+                {t("flows.StepType.UnassignConversation")}
               </SelectItem>
               <SelectGroup>
                 <SelectLabel>User</SelectLabel>

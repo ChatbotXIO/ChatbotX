@@ -45,7 +45,7 @@ export function EditNoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("flows.ActionType.AddNote")}</DialogTitle>
+          <DialogTitle>{t("flows.StepType.AddNote")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div>

@@ -194,7 +194,7 @@ export default function MessageHead({
             >
               <div className="flex gap-1 items-center w-fit">
                 {!conversation.contact.assignedId
-                  ? t("flows.ActionType.AssignConversation")
+                  ? t("flows.StepType.AssignConversation")
                   : t("inboxes.assignedTo", {
                       name:
                         conversation.contact.assignedUser?.name ??
@@ -223,7 +223,7 @@ export default function MessageHead({
                   <Bot size="24" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t("flows.ActionType.enableBot")}</TooltipContent>
+              <TooltipContent>{t("flows.StepType.enableBot")}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}
@@ -250,11 +250,11 @@ export default function MessageHead({
             </TooltipTrigger>
             {conversation.followed ? (
               <TooltipContent>
-                {t("flows.ActionType.UnfollowConversation")}
+                {t("flows.StepType.UnfollowConversation")}
               </TooltipContent>
             ) : (
               <TooltipContent>
-                {t("flows.ActionType.FollowConversation")}
+                {t("flows.StepType.FollowConversation")}
               </TooltipContent>
             )}
           </Tooltip>
@@ -282,7 +282,7 @@ export default function MessageHead({
               >
                 <div className="flex items-center gap-3">
                   <ArchiveIcon size="20" />
-                  {t("flows.ActionType.ArchiveConversation")}
+                  {t("flows.StepType.ArchiveConversation")}
                 </div>
               </DropdownMenuItem>
             ) : (
@@ -293,7 +293,7 @@ export default function MessageHead({
               >
                 <div className="flex items-center gap-3">
                   <PackageOpenIcon size="20" />
-                  {t("flows.ActionType.UnArchiveConversation")}
+                  {t("flows.StepType.UnArchiveConversation")}
                 </div>
               </DropdownMenuItem>
             )}
@@ -303,7 +303,7 @@ export default function MessageHead({
               >
                 <div className="flex items-center gap-3">
                   <UserRoundMinusIcon size="20" />
-                  {t("flows.ActionType.BlockContact")}
+                  {t("flows.StepType.BlockContact")}
                 </div>
               </DropdownMenuItem>
             ) : (
@@ -340,7 +340,7 @@ export default function MessageHead({
               {t("inboxes.bot.isActive")}
             </div>
           </TooltipTrigger>
-          <TooltipContent>{t("flows.ActionType.disableBot")}</TooltipContent>
+          <TooltipContent>{t("flows.StepType.disableBot")}</TooltipContent>
         </Tooltip>
       )}
     </>

@@ -16,7 +16,7 @@ export const voiceTypes: Record<string, string> = {
 const [fistVoiceType, ...otherVoiceTypes] = Object.keys(voiceTypes)
 
 export const openAITextToSpeechSchema = openAISchema.extend({
-  stepType: z.literal(StepType.OpenAITextToSpeech),
+  stepType: z.literal(StepType.OPENAI_TEXT_TO_SPEECH),
   userMessage: z.string(),
   // biome-ignore lint/style/noNonNullAssertion: <explanation>
   voiceType: z.enum([fistVoiceType!, ...otherVoiceTypes]),
@@ -27,7 +27,7 @@ export type OpenAITextToSpeechSchema = z.infer<typeof openAITextToSpeechSchema>
 
 export const openAITextToSpeechDefaultFn = (): OpenAITextToSpeechSchema => ({
   ...openAIDefaultFn(),
-  stepType: StepType.OpenAITextToSpeech,
+  stepType: StepType.OPENAI_TEXT_TO_SPEECH,
   userMessage: "",
   voiceType: "",
   resultCustomFieldId: "",

@@ -139,7 +139,7 @@ export default function ConversationAssignedPopover({
                 })
               }
             >
-              {t("flows.ActionType.UnassignConversation")}
+              {t("flows.StepType.UnassignConversation")}
             </Button>
           </div>
         </PopoverContent>

@@ -6,7 +6,7 @@ import {
 } from "@ahachat.ai/flow-config"
 import { StartFlowStepViewer } from "./viewer"
 
-export const sendVideoStep: StepDefinition = {
+export const startFlowStep: StepDefinition = {
   editor: StartFlowStepEditor,
   viewer: StartFlowStepViewer,
   validator: startFlowStepSchema,

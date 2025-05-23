@@ -4,12 +4,12 @@ import { StepType } from "./step-action"
 
 export const optOutEmailStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.literal(StepType.OptOutEmail),
+  stepType: z.literal(StepType.OPT_OUT_EMAIL),
 })
 
 export type OptOutEmailStepSchema = z.infer<typeof optOutEmailStepSchema>
 
 export const optOutEmailStepDefaultFn = (): OptOutEmailStepSchema => ({
   id: createId(),
-  stepType: StepType.OptOutEmail,
+  stepType: StepType.OPT_OUT_EMAIL,
 })

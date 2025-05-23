@@ -11,7 +11,7 @@ import { AssignConversationDialog } from "@/features/contacts/assign-conversatio
 import { archiveConversationAction } from "@/features/conversations/actions/archive-conversation-action"
 import { assignConversationAction } from "@/features/conversations/actions/assign-conversation-action"
 import { enableLiveChatAction } from "@/features/conversations/actions/enable-live-chat-action"
-import type { Team, User } from "@ahachat.ai/database/browser"
+import type { Team, User } from "@ahachat.ai/database/types"
 import type { RowModel } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import {
@@ -132,7 +132,7 @@ export function ContactListAction<TData>({
               className="flex items-center gap-3"
             >
               <MessageCirclePlusIcon size="20" />
-              {t("flows.ActionType.AssignConversation")}
+              {t("flows.StepType.AssignConversation")}
             </Button>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -151,7 +151,7 @@ export function ContactListAction<TData>({
               className="flex items-center gap-3"
             >
               <UserIcon size="20" />
-              {t("flows.ActionType.DisableBot")}
+              {t("flows.StepType.DisableBot")}
             </Button>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -170,7 +170,7 @@ export function ContactListAction<TData>({
               className="flex items-center gap-3"
             >
               <BotIcon size="20" />
-              {t("flows.ActionType.EnableBot")}
+              {t("flows.StepType.EnableBot")}
             </Button>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -188,7 +188,7 @@ export function ContactListAction<TData>({
               className="flex items-center gap-3"
             >
               <ArchiveIcon size="20" />
-              {t("flows.ActionType.ArchiveConversation")}
+              {t("flows.StepType.ArchiveConversation")}
             </Button>
           </DropdownMenuItem>
         </DropdownMenuContent>
