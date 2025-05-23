@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const updateContactRequest = z.object({
-  ohoneNumber: z
+  phoneNumber: z
     .string()
     .min(10)
     .max(20)

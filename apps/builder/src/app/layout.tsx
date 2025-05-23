@@ -42,7 +42,7 @@ export default async function RootLayout({ children }: Props) {
           >
             <TolgeeNextProvider language={locale} staticData={staticData}>
               {children}
-              <Toaster richColors position="top-right" duration={700} />
+              <Toaster richColors position="top-right" duration={600} />
             </TolgeeNextProvider>
           </ThemeProvider>
         </SessionProvider>

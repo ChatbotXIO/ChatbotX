@@ -61,7 +61,7 @@ export const CustomFieldSelect = ({
               triggerButton={
                 <Button
                   variant="link"
-                  className="cursor-pointer text-[12px] text-destructive p-0 h-auto"
+                  className="cursor-pointer text-[12px] text-primary p-0 h-auto"
                 >
                   Add new
                 </Button>

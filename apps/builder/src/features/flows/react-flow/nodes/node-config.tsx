@@ -7,6 +7,7 @@ import {
   type NewNodeProps,
   type FlowNode,
 } from "@ahachat.ai/flow-config"
+
 export interface NodeConfigProps {
   type: NodeType
   icon: LucideIcon
