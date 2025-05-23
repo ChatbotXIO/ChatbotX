@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import type { Tag } from "@ahachat.ai/database/browser"
+import type { Tag } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -45,6 +45,7 @@ export function UpdateTagDialog({
   const {
     form,
     handleSubmitWithAction,
+    resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
     updateTagAction.bind(null, chatbotId, tag?.id ?? ""),
@@ -53,7 +54,7 @@ export function UpdateTagDialog({
       actionProps: {
         onSuccess: () => {
           toast.success("Tag update successfully")
-
+          resetFormAndAction()
           onOpenChange(false)
           router.refresh()
         },

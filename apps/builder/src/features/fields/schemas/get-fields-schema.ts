@@ -1,30 +1,23 @@
-import { getSortingStateParser } from "@/components/data-table/parsers"
-import type { Field, FieldType } from "@ahachat.ai/database"
+import { getSortingStateParser } from "@/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
+import type { CustomFieldResource } from "./types"
 
-export const getFieldsSearchParamsCache = createSearchParamsCache({
+export const listCustomFieldsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
-  name: parseAsString.withDefault(""),
-  sort: getSortingStateParser<Field>().withDefault([
+  name: parseAsString,
+  folderId: parseAsString,
+  sort: getSortingStateParser<CustomFieldResource>().withDefault([
     { id: "createdAt", desc: true },
   ]),
 })
 
-export type GetFieldsSchema = Awaited<
-  ReturnType<typeof getFieldsSearchParamsCache.parse>
+export type ListCustomFieldsSearchParams = Awaited<
+  ReturnType<typeof listCustomFieldsSearchParams.parse>
 > & {
   chatbotId: string
-  folderId?: string | null
-  fieldType: FieldType
-}
-
-export type CustomFieldResource = Field
-export type CustomFieldCollection = {
-  data: CustomFieldResource[]
-  pageCount: number
 }

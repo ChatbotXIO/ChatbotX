@@ -2,21 +2,21 @@
 
 import { InstagramIcon } from "@/components/icons/instagram"
 import { MessengerIcon } from "@/components/icons/messenger"
-import { WhatsappIcon } from "@/components/icons/whatsapp"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { cn } from "@/components/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import type { ConversationResource } from "@/features/conversations/schemas/get-conversations-schema"
+import type { ConversationResource } from "@/features/conversations/schemas/get-conversations.schema"
 import {
   AssignedType,
   type Contact,
   type InboxTeam,
   type User,
-} from "@ahachat.ai/database/browser"
+} from "@ahachat.ai/database/types"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
-import type { MessageResource } from "../messages/schemas/get-messages-schema"
+import type { MessageResource } from "../messages/schemas/list-messages.schema"
 
 interface ConversationItemProps {
   conversation: ConversationResource
@@ -130,7 +130,7 @@ export default function ConversationItem({
           </div>
           <p
             className={cn(
-              "text-sm text-gray-600 w-full truncate",
+              "text-sm text-gray-600 w-full text-left truncate",
               isSeen ? "font-semibold" : "",
             )}
           >

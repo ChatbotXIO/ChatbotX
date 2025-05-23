@@ -12,13 +12,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { deleteAITriggerAction } from "@/features/integrations/ai-triggers/actions/delete.action"
-import type { AITrigger } from "@ahachat.ai/database/browser"
+import type { AITrigger } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
-import { useRouter } from "next/navigation"
-import { type ComponentPropsWithoutRef, useTransition } from "react"
+import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 
 interface DeleteAITriggerDialogProps
@@ -39,34 +38,18 @@ export function DeleteAITriggerDialog({
   ...props
 }: DeleteAITriggerDialogProps) {
   const { t } = useTranslate()
-  const router = useRouter()
 
-  const { execute, result } = useAction(
-    deleteAITriggerAction.bind(
-      null,
-      chatbotId,
-      (trigger ?? []).map((item: AITrigger) => item.id),
-    ),
-  )
-
-  const [isDeletePending, startDeleteTransition] = useTransition()
-  const onDelete = () => {
-    if (!trigger || trigger.length === 0) {
-      return
-    }
-
-    startDeleteTransition(async () => {
-      await execute()
-
-      if (result.serverError) {
-        toast.error(result.serverError.message ?? result.serverError)
-      } else {
+  const { execute, isPending } = useAction(
+    deleteAITriggerAction.bind(null, chatbotId),
+    {
+      onSuccess() {
         toast.success(t("aiTriggers.deleted"))
-        onOpenChange(false)
-        router.refresh()
-      }
-    })
-  }
+      },
+      onError({ error }) {
+        error.serverError && toast.error(error.serverError)
+      },
+    },
+  )
 
   return (
     <Dialog {...props}>
@@ -97,10 +80,14 @@ export function DeleteAITriggerDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={onDelete}
-            disabled={isDeletePending}
+            onClick={() => {
+              execute({
+                ids: (trigger ?? []).map((item: AITrigger) => item.id),
+              })
+            }}
+            disabled={isPending}
           >
-            {isDeletePending && (
+            {isPending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             {t("common.deleteBtn")}

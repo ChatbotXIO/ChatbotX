@@ -1,13 +1,12 @@
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
-import { Controller, useFormContext } from "react-hook-form"
+import { SelectField } from "@/components/form/select-field"
 
 export const AIAgentSelect = ({
   name,
   isRequired = true,
-}: { name: string; isRequired?: boolean }) => {
-  const { control } = useFormContext()
-
+}: {
+  name: string
+  isRequired?: boolean
+}) => {
   const frameworksList = [
     { value: "react", label: "React" },
     { value: "angular", label: "Angular" },
@@ -17,18 +16,11 @@ export const AIAgentSelect = ({
   ]
 
   return (
-    <FormInput label="Agents" name="aiAgentId" isRequired={isRequired}>
-      <Controller
-        name={name}
-        control={control}
-        render={({ field }) => (
-          <SingleSelect
-            options={frameworksList}
-            onValueChange={() => {}}
-            {...field}
-          />
-        )}
-      />
-    </FormInput>
+    <SelectField
+      label="Agents"
+      name={name}
+      isRequired={isRequired}
+      options={frameworksList}
+    />
   )
 }

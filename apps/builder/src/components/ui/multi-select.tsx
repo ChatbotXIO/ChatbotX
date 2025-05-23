@@ -1,18 +1,24 @@
-// src/components/multi-select.tsx
+// credits: https://shadcn-multi-select-component.vercel.app/
 
-import { type VariantProps, cva } from "class-variance-authority"
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 import {
   CheckIcon,
-  ChevronDown,
-  WandSparkles,
   XCircle,
+  ChevronDown,
   XIcon,
+  WandSparkles,
 } from "lucide-react"
-import * as React from "react"
 
-import { cn } from "@/components/lib/utils"
-import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Command,
   CommandEmpty,
@@ -22,12 +28,6 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
 
 /**
  * Variants for the multi-select component to handle different styles.

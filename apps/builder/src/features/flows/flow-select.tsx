@@ -1,30 +1,36 @@
-import { FormInput } from "@/components/form-input"
-import { SingleSelect } from "@/components/single-select"
+import { SelectField } from "@/components/form/select-field"
 import { callAPI } from "@/lib/swr"
 import { useParams } from "next/navigation"
+import type { FlowCollection } from "./schemas/get-flows-schema"
 
 export const FlowSelect = ({
   name,
   label,
   isRequired = false,
+  className,
 }: {
   name: string
-  label: string
+  label?: string
   isRequired?: boolean
+  className?: string
 }) => {
   const params = useParams<{ chatbotId: string }>()
 
-  const custormFieldsUrl = `/api/chatbots/${params.chatbotId}/flows?perPage=9999`
-  const { data } = callAPI(custormFieldsUrl)
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const flows = ((data as { data: any[] })?.data ?? []).map((v) => ({
+  const flowUrl = `/api/chatbots/${params.chatbotId}/flows?perPage=9999`
+  const { data } = callAPI<FlowCollection>(flowUrl)
+  const flowOptions = (data?.data ?? []).map((v) => ({
     label: v.name,
     value: v.id,
   }))
 
   return (
-    <FormInput name={name} label={label} isRequired={isRequired}>
-      <SingleSelect name={name} placeholder="Please select" options={flows} />
-    </FormInput>
+    <SelectField
+      name={name}
+      label={label}
+      isRequired={isRequired}
+      placeholder="Please select flow"
+      options={flowOptions}
+      className={className}
+    />
   )
 }

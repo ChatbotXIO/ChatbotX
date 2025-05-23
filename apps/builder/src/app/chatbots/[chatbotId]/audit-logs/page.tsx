@@ -1,4 +1,3 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { AuditLogsTable } from "@/features/logs/audit-logs-table"
 import { getLogs } from "@/features/logs/queries"
 import { getLogsSearchParamsCache } from "@/features/logs/schemas/get-logs-schema"
@@ -24,18 +23,8 @@ export default async function AuditLogsPage(props: {
 
   return (
     <div>
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={5}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "20rem", "40rem", "12rem", "10rem"]}
-            shrinkZero
-          />
-        }
-      >
-        <AuditLogsTable promises={promises} chatbotId={params.chatbotId} />
+      <Suspense>
+        <AuditLogsTable promises={promises} />
       </Suspense>
     </div>
   )

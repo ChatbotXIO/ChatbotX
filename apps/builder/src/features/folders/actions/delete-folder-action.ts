@@ -1,71 +1,55 @@
 "use server"
 
 import {
-  type DeleteFolderBindSchema,
-  deleteFolderBindSchema,
-} from "@/features/folders/schemas/delete-folder-schema"
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Folder, type User, prisma } from "@ahachat.ai/database"
+  bulkUpdateIdsRequest,
+  chatbotIdRequestParams,
+  type BulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const deleteFolderAction = authActionClient
-  .bindArgsSchemas(deleteFolderBindSchema)
+export const deleteFolderAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(bulkUpdateIdsRequest)
   .action(
     async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId, id],
+      bindArgsParsedInputs: [chatbotId],
+      parsedInput,
     }: {
-      ctx: { user: User }
-      bindArgsParsedInputs: DeleteFolderBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: BulkUpdateIdsRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
-      const folder: Folder = await prisma.folder.findFirstOrThrow({
-        where: {
-          id,
-          chatbotId,
-        },
-      })
-
-      // TODO: move to trash
-
-      // const trashFolder: Folder|null = await prisma.folder.findFirst({
-      //   where: {
-      //     chatbotId,
-      //     folderType: folder.folderType,
-      //     isTrash: true
-      //   }
-      // })
-
-      // if (trashFolder && folder.parentId !== trashFolder.id) {
-      //   await prisma.folder.update({
-      //     where: { id },
-      //     data: {
-      //       parentId: trashFolder.parentId,
-      //       paths
-      //     }
-      //    })
-      // } else {
-      await prisma.folder.deleteMany({
-        where: {
-          OR: [
-            {
+      await prisma.$transaction(async (tx) => {
+        for (const id in parsedInput.ids) {
+          const folder = await tx.folder.findFirst({
+            where: {
+              chatbotId,
               id,
             },
-            {
-              paths: {
-                has: folder.id,
-              },
+          })
+          if (!folder) continue
+
+          await tx.folder.deleteMany({
+            where: {
+              chatbotId,
+              OR: [
+                {
+                  id,
+                },
+                {
+                  paths: {
+                    has: id,
+                  },
+                },
+              ],
             },
-          ],
-        },
+          })
+
+          revalidateTag(`chatbots:${chatbotId}#folders:${folder.folderType}`)
+          revalidateTag(`chatbots:${chatbotId}#folders:${folder.id}`)
+        }
       })
-
-      revalidateTag(`${ctx.user.id}#folders#${folder.folderType}`)
-
-      return {
-        successful: true,
-      }
     },
   )

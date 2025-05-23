@@ -4,13 +4,12 @@ import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import { FormItem, FormLabel } from "@/components/ui/form"
 import { callAPI } from "@/lib/swr"
-import type { CustomFieldType } from "@ahachat.ai/database/browser"
-import { PlusCircleIcon } from "lucide-react"
+import type { CustomFieldType } from "@ahachat.ai/database/types"
 import { useParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { mutate } from "swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
-import type { CustomFieldCollection } from "./schemas/get-fields-schema"
+import type { CustomFieldCollection } from "./schemas/types"
 
 interface ICustomFieldSelectProps {
   name: string
@@ -30,10 +29,8 @@ export const CustomFieldSelect = ({
   const params = useParams<{ chatbotId: string }>()
 
   const customFieldsUrl = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
-  const { data } = callAPI(customFieldsUrl)
-  const filterCustomFields = (
-    (data as CustomFieldCollection)?.data ?? []
-  ).filter((obj) => {
+  const { data } = callAPI<CustomFieldCollection>(customFieldsUrl)
+  const filterCustomFields = (data?.data ?? []).filter((obj) => {
     if (!customFieldType) {
       return true
     }
@@ -47,8 +44,8 @@ export const CustomFieldSelect = ({
 
   return (
     <FormItem>
-      <div className="flex items-center">
-        {label && (
+      {label && label !== "" && (
+        <div className="flex items-center">
           <FormLabel className="flex flex-1 gap-1 items-center">
             {label}
             {!isRequired && (
@@ -57,27 +54,25 @@ export const CustomFieldSelect = ({
               </span>
             )}
           </FormLabel>
-        )}
-        {allowCreate && (
-          <CreateCustomFieldDialog
-            chatbotId={params.chatbotId}
-            folderId={null}
-            triggerButton={
-              <Button
-                size="xs"
-                variant="ghost"
-                className="cursor-pointer"
-                asChild
-              >
-                <PlusCircleIcon />
-              </Button>
-            }
-            onSuccess={() => {
-              mutate(customFieldsUrl)
-            }}
-          />
-        )}
-      </div>
+          {allowCreate && (
+            <CreateCustomFieldDialog
+              chatbotId={params.chatbotId}
+              folderId={null}
+              triggerButton={
+                <Button
+                  variant="link"
+                  className="cursor-pointer text-[12px] text-primary p-0 h-auto"
+                >
+                  Add new
+                </Button>
+              }
+              onSuccess={() => {
+                mutate(customFieldsUrl)
+              }}
+            />
+          )}
+        </div>
+      )}
       <SingleSelect
         name={name}
         placeholder="Please select"

@@ -54,7 +54,7 @@ export const updateTagAction = authActionClient
         },
       })
 
-      revalidateTag(`${ctx.user.id}#tags`)
+      revalidateTag(`chatbots:${chatbotId}#tags`)
 
       return {
         successful: true,

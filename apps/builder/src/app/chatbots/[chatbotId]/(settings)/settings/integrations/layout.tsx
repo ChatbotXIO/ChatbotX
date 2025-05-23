@@ -22,12 +22,12 @@ export default function SettingIntegrationLayout({
   const integrationItems = [
     {
       keyName: "Settings.Integrations.OpenAI",
-      icon: <BotIcon size={24} />,
+      icon: BotIcon,
       content: openAI,
     },
     {
       keyName: "Settings.Integrations.GoogleSheets",
-      icon: <TableIcon size={24} />,
+      icon: TableIcon,
       content: googleSheets,
     },
   ]
@@ -38,11 +38,11 @@ export default function SettingIntegrationLayout({
         <AccordionItem
           key={integration.keyName}
           value={integration.keyName}
-          className="transition-all hover:rounded-lg hover:[&[data-state=open]]:rounded-none"
+          className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
         >
-          <AccordionTrigger className="px-4 rounded-none transition-all [&[data-state=open]]:bg-gray-200 hover:no-underline hover:bg-gray-200">
+          <AccordionTrigger className="px-4 rounded-none transition-all data-[state=open]:bg-gray-200 hover:no-underline hover:bg-gray-200">
             <div className="flex items-center gap-2">
-              {integration.icon}
+              <integration.icon size={24} />
               <T keyName={integration.keyName} />
             </div>
           </AccordionTrigger>

@@ -5,8 +5,16 @@ import type {
   Handler,
   MessageEntity,
   Oauth2AuthValue,
+  SendFlowStepProps,
+  SendMessageProps,
 } from "@ahachat.ai/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
+import type {
+  CreateMessageTemplateProps,
+  ListMessageTemplatesReponse,
+  MessageTemplateEntity,
+} from "./message-templates"
+import type { ListFlowsResponse, WhatsappPhoneNumber } from "./types"
 
 export type WhatsappConfig = BaseConfig & {
   appSecret: string
@@ -16,15 +24,64 @@ export type WhatsappConfig = BaseConfig & {
 export type WhatsappAuthValue = Oauth2AuthValue & {
   metadata: {
     wabaId: string
-    phoneNumberId: string
+    businessId?: string
+    phoneNumber?: WhatsappPhoneNumber
   }
 }
 
 export type WhatsappActions = {
-  verifyAccessToken: Handler<{ ctx: Context<WhatsappAuthValue> }, string>
-  receiveMessage: Handler<
-    { ctx: Context<WhatsappAuthValue>; data: OnMessageArgs },
-    { message: MessageEntity; conversation: ConversationEntity }
+  verifyAccessToken: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+    },
+    WhatsappPhoneNumber
   >
-  // sendMessage: (props: SendMessageProps) => Promise<void>
+  uploadMedia: Handler<{ ctx: Context<WhatsappAuthValue>; file: File }, string>
+  receiveMessage: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      data: OnMessageArgs
+    },
+    {
+      message: MessageEntity
+      conversation: ConversationEntity
+      postbackAction?: { flowVersionId: string; buttonId: string }
+    }
+  >
+  sendMessage: (props: SendMessageProps<WhatsappAuthValue>) => Promise<void>
+  sendFlowStep: (props: SendFlowStepProps<WhatsappAuthValue>) => Promise<void>
+  listMessageTemplates: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { limit: number }
+    },
+    ListMessageTemplatesReponse
+  >
+  createMessageTemplate: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      data: CreateMessageTemplateProps
+    },
+    MessageTemplateEntity
+  >
+  getFlows: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { limit: number }
+    },
+    ListFlowsResponse
+  >
+  getIceBreakers: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+    },
+    string[]
+  >
+  updateIceBreaker: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      prompts: string[]
+    },
+    void
+  >
 }

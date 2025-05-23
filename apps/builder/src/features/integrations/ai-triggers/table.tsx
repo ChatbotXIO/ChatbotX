@@ -1,26 +1,23 @@
 "use client"
 
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import type {
-  DataTableFilterField,
-  DataTableRowAction,
-} from "@/components/data-table/types"
 import { duplicateAITriggerAction } from "@/features/integrations/ai-triggers/actions/duplicate.action"
 import { DeleteAITriggerDialog } from "@/features/integrations/ai-triggers/delete"
-import type { getAITriggers } from "@/features/integrations/ai-triggers/queries"
+import type { listAITriggers } from "@/features/integrations/ai-triggers/actions/list.action"
 import { AITriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
 import { UpdateAITriggerDialog } from "@/features/integrations/ai-triggers/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AITrigger } from "@ahachat.ai/database/browser"
+import type { AITrigger } from "@ahachat.ai/database/types"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { getAITriggersColumns } from "./table-columns"
+import type { DataTableRowAction } from "@/types/data-table"
+import { DataTable } from "@/components/data-table"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
 
 interface AITriggersTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getAITriggers>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listAITriggers>>]>
   chatbotId: string
 }
 
@@ -45,7 +42,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
   )
 
   useEffect(() => {
-    if (rowAction && rowAction.type === "duplicate") {
+    if (rowAction && rowAction.variant === "duplicate") {
       execute()
       setRowAction(null)
       toast.success("Duplicate successfully!")
@@ -53,19 +50,10 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
     }
   }, [rowAction, execute, router])
 
-  const filterFields: DataTableFilterField<AITrigger & { name?: string }>[] = [
-    {
-      id: "name",
-      label: "Search",
-      placeholder: "Enter trigger name...",
-    },
-  ]
-
   const { table } = useDataTable({
     data,
     columns,
     pageCount,
-    filterFields,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -78,7 +66,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} filterFields={filterFields}>
+        <DataTableToolbar table={table}>
           <AITriggersTableToolbarActions
             table={table}
             chatbotId={chatbotId}
@@ -88,7 +76,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
       </DataTable>
 
       <DeleteAITriggerDialog
-        open={rowAction?.type === "delete"}
+        open={rowAction?.variant === "delete"}
         onOpenChange={() => setRowAction(null)}
         trigger={rowAction?.row.original ? [rowAction?.row.original] : []}
         showTrigger={false}
@@ -97,7 +85,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
       />
 
       <UpdateAITriggerDialog
-        open={rowAction?.type === "update"}
+        open={rowAction?.variant === "update"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         trigger={rowAction?.row.original || null}

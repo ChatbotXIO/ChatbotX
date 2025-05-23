@@ -1,13 +1,12 @@
-import { FormInput } from "@/components/form-input"
-import { MultiSelect } from "@/components/multi-select"
-import { Controller, useFormContext } from "react-hook-form"
+import { MultiSelectField } from "@/components/form/select-field"
 
 export const AITriggersMultipleSelect = ({
   name,
   isRequired = true,
-}: { name: string; isRequired?: boolean }) => {
-  const { control } = useFormContext()
-
+}: {
+  name: string
+  isRequired?: boolean
+}) => {
   const frameworksList = [
     { value: "react", label: "React" },
     { value: "angular", label: "Angular" },
@@ -17,18 +16,11 @@ export const AITriggersMultipleSelect = ({
   ]
 
   return (
-    <FormInput label="AI Triggers" name="aiTriggerIds" isRequired={isRequired}>
-      <Controller
-        name={name}
-        control={control}
-        render={({ field }) => (
-          <MultiSelect
-            options={frameworksList}
-            onValueChange={() => {}}
-            {...field}
-          />
-        )}
-      />
-    </FormInput>
+    <MultiSelectField
+      label="AI Triggers"
+      name={name}
+      isRequired={isRequired}
+      options={frameworksList}
+    />
   )
 }

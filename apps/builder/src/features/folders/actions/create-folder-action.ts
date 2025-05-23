@@ -1,37 +1,34 @@
 "use server"
 
 import {
-  type CreateFolderBindSchema,
+  chatbotIdRequestParams,
+  type ChatbotIdRequestParams,
+} from "@/features/common/schemas"
+import {
   type CreateFolderSchema,
-  createFolderBindSchema,
   createFolderSchema,
 } from "@/features/folders/schemas/create-folder-schema"
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
-import type { Folder, User } from "@ahachat.ai/database"
+import type { Folder } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const createFolderAction = authActionClient
+export const createFolderAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .schema(createFolderSchema)
-  .bindArgsSchemas(createFolderBindSchema)
   .action(
     async ({
-      ctx,
+      bindArgsParsedInputs: [chatbotId],
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, folderType, parentId],
     }: {
-      ctx: { user: User }
+      bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateFolderSchema
-      bindArgsParsedInputs: CreateFolderBindSchema
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       let paths: string[] = []
       let parentFolder: Folder | null = null
-      if (parentId) {
+      if (parsedInput.parentId) {
         parentFolder = await prisma.folder.findFirst({
-          where: { id: parentId },
+          where: { id: parsedInput.parentId },
         })
         if (!parentFolder) {
           throw new Error("Parent folder does not exists!")
@@ -44,16 +41,10 @@ export const createFolderAction = authActionClient
         data: {
           ...parsedInput,
           chatbotId,
-          parentId,
-          folderType,
           paths,
         },
       })
 
-      revalidateTag(`${ctx.user.id}#folders#${folderType}`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbots:${chatbotId}#folders:${parsedInput.folderType}`)
     },
   )

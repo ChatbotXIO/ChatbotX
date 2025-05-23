@@ -1,0 +1,418 @@
+// Commands for running flows
+// cd apps/builder/src/features/flows/actions
+// dotenv -e ../../../../../../.env -- tsx run-flow.ts {conversationId} {flowVersionId}
+
+import { z } from "zod"
+import type {
+  EdgeSchema,
+  NodeSchema,
+} from "@/features/flows/react-flow/nodes/schema"
+import type { ButtonStepSchema } from "@/features/flows/react-flow/steps/button/schema"
+import type { SendTextStepSchema } from "@/features/flows/react-flow/steps/send-text/schema"
+import {
+  ContentType,
+  type Conversation,
+  type FlowVersion,
+  MessageType,
+  prisma,
+  SenderType,
+} from "@ahachat.ai/database"
+import type { SendCardStepSchema } from "@/features/flows/react-flow/steps/send-card/schema"
+import type { SendCarouselStepSchema } from "@/features/flows/react-flow/steps/send-carousel/schema"
+import type { SendVideoStepSchema } from "@/features/flows/react-flow/steps/send-video/schema"
+import type { SendAudioStepSchema } from "@/features/flows/react-flow/steps/send-audio/schema"
+import type { MarkEmailVerifiedStepSchema } from "@/features/flows/react-flow/steps/mark-email-verified/schema"
+import type { OptInEmailStepSchema } from "@/features/flows/react-flow/steps/opt-in-email/schema"
+import type { OptOutEmailStepSchema } from "@/features/flows/react-flow/steps/opt-out-email/schema"
+import type { OpenAIGenerateTextSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text/schema"
+import type { OpenAIGenerateImageSchema } from "@/features/flows/react-flow/steps/open-ai-generate-image/schema"
+import type { OpenAIAnalyzeImageSchema } from "@/features/flows/react-flow/steps/open-ai-analyze-image/schema"
+import type { OpenAIDeleteMessageHistorySchema } from "@/features/flows/react-flow/steps/open-ai-delete-message-history/schema"
+import type { OpenAIGenerateTextAssistantSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-assistant/schema"
+import type { OpenAIGenerateTextAgentSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-agent/schema"
+import type { OpenAIGenerateTextAdvancedSchema } from "@/features/flows/react-flow/steps/open-ai-generate-text-advanced/schema"
+import type { UserInputStepSchema } from "@/features/flows/react-flow/steps/user-input/schema"
+import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/steps/open-ai-speech-to-text/schema"
+import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/steps/open-ai-text-to-speech/schema"
+import { integrations } from "@/integration"
+import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
+import { uploader } from "@ahachat.ai/filesystem"
+import { getLogger } from "@/lib/log"
+import { StepType } from "../react-flow/steps/step-action"
+
+const messagePayloadSchema = z.object({
+  nodeId: z.string().cuid2(),
+  blockId: z.string().cuid2().optional(), // Current block for create new Message
+  text: z.string().optional(),
+})
+
+type MessagePayloadSchema = z.infer<typeof messagePayloadSchema>
+
+const handlers = {
+  // Send message blocks
+  [`handle${StepType.SendText}`]: async (
+    conversation: Conversation,
+    block: SendTextStepSchema,
+    flowVersion: FlowVersion,
+  ) => {
+    await createMessage(conversation, flowVersion, block.message, block)
+
+    return
+  },
+  [`handle${StepType.SendImage}`]: async (
+    conversation: Conversation,
+    block: SendTextStepSchema,
+    flowVersion: FlowVersion,
+  ) => {
+    await createMessage(conversation, flowVersion, block.message, block)
+
+    return
+  },
+  [`handle${StepType.SendCard}`]: async (
+    conversation: Conversation,
+    block: SendCardStepSchema,
+    flowVersion: FlowVersion,
+  ) => {
+    await createMessage(conversation, flowVersion, block.title, block)
+
+    return
+  },
+  [`handle${StepType.SendCarousel}`]: async (
+    conversation: Conversation,
+    block: SendCarouselStepSchema,
+    flowVersion: FlowVersion,
+  ) => {
+    await createMessage(conversation, flowVersion, block.cards[0]?.title, block)
+
+    return
+  },
+  [`handle${StepType.SendVideo}`]: async (
+    _conversation: Conversation,
+    _block: SendVideoStepSchema,
+  ) => {
+    // todo send message video
+    return
+  },
+  [`handle${StepType.SendAudio}`]: async (
+    _conversation: Conversation,
+    _block: SendAudioStepSchema,
+  ) => {
+    // todo send message audio
+    return
+  },
+
+  [`handle${StepType.UserInput}`]: async (
+    _conversation: Conversation,
+    _block: UserInputStepSchema,
+  ) => {
+    // TODO: Implement User Input logic
+    return
+  },
+
+  // Action Email
+  [`handle${StepType.MarkEmailVerified}`]: async (
+    _conversation: Conversation,
+    _block: MarkEmailVerifiedStepSchema,
+  ) => {
+    // TODO: Implement Mark Email Verified logic
+    return
+  },
+  [`handle${StepType.OptInEmail}`]: async (
+    _conversation: Conversation,
+    _block: OptInEmailStepSchema,
+  ) => {
+    // TODO: Implement Opt-In Email logic
+    return
+  },
+  [`handle${StepType.OptOutEmail}`]: async (
+    _conversation: Conversation,
+    _block: OptOutEmailStepSchema,
+  ) => {
+    // TODO: Implement Opt-Out Email logic
+    return
+  },
+
+  // Action OpenAI Generate
+  [`handle${StepType.OpenAIGenerateText}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text logic
+    return
+  },
+  [`handle${StepType.OpenAIGenerateImage}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateImageSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Image logic
+    return
+  },
+  [`handle${StepType.OpenAIAnalyzeImage}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIAnalyzeImageSchema,
+  ) => {
+    // TODO: Implement OpenAI Analyze Image logic
+    return
+  },
+  [`handle${StepType.OpenAIDeleteMessageHistory}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIDeleteMessageHistorySchema,
+  ) => {
+    // TODO: Implement OpenAI Delete Message History logic
+    return
+  },
+  [`handle${StepType.OpenAIGenerateTextAssistant}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextAssistantSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Assistant logic
+    return
+  },
+  [`handle${StepType.OpenAIGenerateTextAgent}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextAgentSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Agent logic
+    return
+  },
+  [`handle${StepType.OpenAIGenerateTextAdvanced}`]: async (
+    _conversation: Conversation,
+    _block: OpenAIGenerateTextAdvancedSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Advanced logic
+    return
+  },
+  [`handle${StepType.OpenAISpeechToText}`]: async (
+    _conversation: Conversation,
+    _block: OpenAISpeechToTextSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Advanced logic
+    return
+  },
+  [`handle${StepType.OpenAITextToSpeech}`]: async (
+    _conversation: Conversation,
+    _block: OpenAITextToSpeechSchema,
+  ) => {
+    // TODO: Implement OpenAI Generate Text Advanced logic
+    return
+  },
+}
+
+const createMessage = async (
+  conversation: Conversation,
+  flowVersion: FlowVersion,
+  content?: string | null,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  attributes?: any,
+) => {
+  const dbIntegrationWhatsapp =
+    await prisma.integrationWhatsapp.findFirstOrThrow({
+      where: {
+        auth: {
+          path: ["metadata", "phoneNumberId"],
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          equals: (conversation.conversationAttributes as any)?.phoneNumberId as string,
+        },
+      },
+    })
+  const ctx = {
+    auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
+    logger: getLogger("whatsapp"),
+    uploader,
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      conversationId: conversation.id,
+      inboxId: dbIntegrationWhatsapp.inboxId,
+      chatbotId: conversation.chatbotId,
+      content: content,
+      contentAttributes: attributes,
+      messageType: MessageType.OUTGOING,
+      contentType: ContentType.TEXT,
+      senderType: SenderType.BOT,
+    },
+  })
+  await integrations.WHATSAPP.integration.runAction("sendMessage", {
+    ctx,
+    conversation,
+    message,
+    flowVersion,
+  })
+}
+
+async function main(
+  conversationId: string,
+  flowVersionId: string,
+  payload: MessagePayloadSchema,
+) {
+  const conversation = await prisma.conversation.findFirst({
+    where: {
+      id: conversationId,
+    },
+  })
+  if (!conversation) {
+    console.error("Conversation not found")
+    return
+  }
+  const flowVersion = await prisma.flowVersion.findFirst({
+    where: {
+      id: flowVersionId,
+      flowRuns: {
+        some: {
+          conversationId: conversationId,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
+
+  if (!flowVersion) {
+    console.error("Flow not found")
+    return
+  }
+
+  const mapPayload = payload.nodeId
+    ? payload
+    : { nodeId: flowVersion.startNodeId, blockId: "" }
+
+  await handleFlowExecution(conversation, flowVersion, mapPayload)
+}
+
+/**
+ * If message from user block type is can continue other node as button, saved data, ...
+ * Create message for block
+ * Return handleId every block type if have.
+ */
+async function replyMessage(block: StepData, payload: MessagePayloadSchema) {
+  // TODO create message text
+
+  switch (block.StepType) {
+    case StepType.SendText:
+    case StepType.SendImage:
+    case StepType.SendVideo:
+    case StepType.SendCard:
+    case StepType.SendAudio:
+      return block.buttons?.find(
+        (button: ButtonStepSchema) => button.label === payload.text,
+      )?.id
+
+    // Check case reply to trigger next block.
+    // See apps/builder/src/features/flows/react-flow/action-type.ts waitUserReplyActionTypes
+    case StepType.UserInput:
+      // todo Parse text data
+      return
+    default:
+      return undefined
+  }
+}
+
+async function handleFlowExecution(
+  conversation: Conversation,
+  flowVersion: FlowVersion,
+  payload: MessagePayloadSchema,
+) {
+  const nodes = (flowVersion.nodes ?? []) as NodeSchema[]
+
+  const node = nodes.find((obj) => obj.id === payload.nodeId)
+  if (!node) {
+    console.error("NodeId not exists on current version")
+    return
+  }
+
+  // If empty node, check next node
+  if (!node.data.steps?.length) {
+    await triggerNextNode(conversation, flowVersion, payload.nodeId)
+    return
+  }
+
+  // If empty blockId, check first block or find block by blockId
+  const blockIndex = !payload.blockId
+    ? 0
+    : node.data.steps.findIndex((obj: StepData) => obj.id === payload.blockId)
+  if (blockIndex === -1) {
+    console.error("StepId not exists on current version")
+    return
+  }
+
+  const block = node.data.steps[blockIndex]
+  // Check is reply message from user.
+  if (payload.text) {
+    const handleId = await replyMessage(block, payload)
+    if (handleId) {
+      console.log("Continue node after reply message", handleId)
+      await triggerNextNode(conversation, flowVersion, handleId)
+    }
+    return
+  }
+
+  /**
+   * If message from system block type is can continue
+   * Handle action logic for this block, create message if need
+   * Trigger next block
+   */
+  const handlerName = `handle${block.StepType}` as keyof typeof handlers
+
+  if (typeof handlers[handlerName] === "function") {
+    console.log("handleCurrentStep", handlerName, block.id)
+    await handlers[handlerName](conversation, block, flowVersion)
+  }
+
+  // If block type is wait user reply, skip loop trigger next block.
+  if (waitUserReplyActionTypes.includes(block.StepType)) {
+    console.log("Skip trigger next block when wait user reply")
+    return
+  }
+
+  if (blockIndex === node.data.blocks.length - 1) {
+    console.log("Trigger to next node because block is latest of node", node.id)
+    await triggerNextNode(conversation, flowVersion, node.id)
+    return
+  }
+
+  const nextStep = node.data.blocks[blockIndex + 1]
+  // If block type is can continue, trigger next block
+  await handleFlowExecution(conversation, flowVersion, {
+    nodeId: payload.nodeId,
+    blockId: nextStep.id,
+  })
+}
+
+async function triggerNextNode(
+  conversation: Conversation,
+  flowVersion: FlowVersion,
+  sourceHandle: string,
+) {
+  const edge = ((flowVersion.edges ?? []) as EdgeSchema[]).find(
+    (obj) => obj.sourceHandle === sourceHandle,
+  )
+  if (!edge) {
+    return
+  }
+
+  await handleFlowExecution(conversation, flowVersion, {
+    nodeId: edge.targetHandle,
+  })
+}
+
+const args = process.argv.slice(2)
+main(
+  args[0] as string,
+  args[1] as string,
+  {
+    nodeId: args[2] ?? "",
+    blockId: args[3] ?? "",
+    text: args[4] ?? "",
+  } as MessagePayloadSchema,
+)
+  .then(() => {
+    return true
+  })
+  .catch((error) => {
+    console.error("error", error)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

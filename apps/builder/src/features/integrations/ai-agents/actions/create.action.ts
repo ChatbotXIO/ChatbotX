@@ -1,34 +1,29 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import {
-  type CreateAIAgentSchema,
-  createAIAgentSchema,
+  type CreateAIAgentRequest,
+  createAIAgentRequest,
 } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { AIAgentException } from "@/features/integrations/ai-agents/schemas/errors.schema"
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const createAIAgentAction = authActionClient
-  .schema(createAIAgentSchema)
-  .bindArgsSchemas(chatbotIdBindSchema)
+export const createAIAgentAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(createAIAgentRequest)
   .action(
     async ({
-      ctx,
-      parsedInput,
       bindArgsParsedInputs: [chatbotId],
+      parsedInput,
     }: {
-      ctx: { user: User }
-      parsedInput: CreateAIAgentSchema
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: CreateAIAgentRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       const existingAIAgent = await prisma.aIAgent.findFirst({
         select: {
           id: true,
@@ -52,10 +47,6 @@ export const createAIAgentAction = authActionClient
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiAgents`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbots:${chatbotId}#aiAgents`)
     },
   )

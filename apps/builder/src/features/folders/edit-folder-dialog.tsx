@@ -1,6 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,12 +12,11 @@ import {
 import { Form } from "@/components/ui/form"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
 import { editFolderSchema } from "@/features/folders/schemas/edit-folder-schema"
-import type { Folder } from "@ahachat.ai/database/browser"
+import type { Folder } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { toast } from "sonner"
 
@@ -33,32 +32,31 @@ export function EditFolderDialog({
   folder: Folder | null
 }) {
   const { t } = useTranslate()
-  const router = useRouter()
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    editFolderAction.bind(null, chatbotId, folder?.id ?? ""),
-    zodResolver(editFolderSchema),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Folder updated successfully")
-
-          onOpenChange(false)
-          router.refresh()
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      editFolderAction.bind(null, chatbotId, folder?.id ?? ""),
+      zodResolver(editFolderSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(t("folders.editAction.successMessage"))
+            resetFormAndAction()
+            onOpenChange(false)
+          },
+          onError: ({ error }) => {
+            error.serverError && toast.error(error.serverError)
+          },
         },
-        onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: folder?.name ?? "",
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: folder?.name ?? "",
-        },
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
   useEffect(() => {
     form.reset({ name: folder?.name })
@@ -68,7 +66,7 @@ export function EditFolderDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("folders.edit.title")}</DialogTitle>
+          <DialogTitle>{t("folders.editForm.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -77,11 +75,7 @@ export function EditFolderDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput
-                name="name"
-                label={t("folders.name")}
-                placeholder={t("folders.name.placeholder")}
-              />
+              <InputField name="name" label={t("folders.name.label")} />
 
               <div className="flex justify-end gap-4">
                 <Button
@@ -89,7 +83,7 @@ export function EditFolderDialog({
                   variant="ghost"
                   onClick={() => onOpenChange(false)}
                 >
-                  {t("common.cancel-btn")}
+                  {t("common.cancelBtn")}
                 </Button>
                 <Button
                   type="submit"
@@ -100,7 +94,7 @@ export function EditFolderDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("common.editBtn")}
                 </Button>
               </div>
             </form>

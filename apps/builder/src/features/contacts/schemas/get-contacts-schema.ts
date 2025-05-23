@@ -1,18 +1,26 @@
-import type { Contact } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
+import { z } from "zod"
+import type { Contact, ContactCustomField } from "@ahachat.ai/database/types"
 
-export const getContactsSearchParamsCache = createSearchParamsCache({
+export const listContactsNuqs = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   keyword: parseAsString.withDefault(""),
 })
 
-export type GetContactsSchema = Awaited<
-  ReturnType<typeof getContactsSearchParamsCache.parse>
-> & { chatbotId: string }
+export const listContactsRequest = z.object({
+  chatbotId: z.string().cuid2(),
+  page: z.number().int().min(1).default(1).optional(),
+  perPage: z.number().int().min(1).default(10).optional(),
+  keyword: z.string().optional(),
+})
 
-export type ContactResource = Contact
+export type ListContactsRequest = z.infer<typeof listContactsRequest>
+
+export type ContactResource = Contact & {
+  contactCustomFields?: ContactCustomField[]
+}

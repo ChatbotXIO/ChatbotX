@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import type { Chatbot } from "@ahachat.ai/database/browser"
+import type { Chatbot } from "@ahachat.ai/database/types"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
 export function ChatbotSwitcher({
@@ -58,7 +58,7 @@ export function ChatbotSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}

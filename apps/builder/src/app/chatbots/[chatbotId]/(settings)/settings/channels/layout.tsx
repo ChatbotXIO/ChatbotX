@@ -1,5 +1,6 @@
 "use client"
 
+import WhatsappIcon from "@/components/icons/whatsapp"
 import {
   Accordion,
   AccordionContent,
@@ -17,7 +18,7 @@ export default function SettingsChannelsPage({
   const integrationItems = [
     {
       keyName: "Settings.Integrations.Whatsapp",
-      icon: null,
+      icon: WhatsappIcon,
       content: whatsapp,
     },
   ]
@@ -28,11 +29,11 @@ export default function SettingsChannelsPage({
         <AccordionItem
           key={integration.keyName}
           value={integration.keyName}
-          className="transition-all hover:rounded-lg hover:[&[data-state=open]]:rounded-none"
+          className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
         >
-          <AccordionTrigger className="px-4 rounded-none transition-all [&[data-state=open]]:bg-gray-200 hover:no-underline hover:bg-gray-200">
+          <AccordionTrigger className="px-4 rounded-none transition-all data-[state=open]:bg-gray-200 hover:no-underline hover:bg-gray-200">
             <div className="flex items-center gap-2">
-              {integration.icon}
+              <integration.icon />
               <T keyName={integration.keyName} />
             </div>
           </AccordionTrigger>

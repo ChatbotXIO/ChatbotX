@@ -8,12 +8,12 @@ export type IntegrationDefinition<
   IActions extends Record<string, Handler<any, any>>,
 > = {
   name: string
-  actions?: IActions
-  handleRequest?: Handler<
+  actions: IActions
+  handleRequest: Handler<
     HandleRequestProps<IConfig>,
     Oauth2AuthValue | string | number
   >
-  disconnect?: Handler<IAuth, void>
+  disconnect: Handler<IAuth, void>
 }
 
 export class Integration<
@@ -52,15 +52,15 @@ export class Integration<
     return this.props.handleRequest
   }
 
-  async executeAction<ActionName extends keyof T["actions"]>(
+  async runAction<ActionName extends keyof T["actions"]>(
     actionName: ActionName,
     props: Parameters<Exclude<T["actions"][ActionName], undefined>>[0],
-  ): Promise<void> {
+  ): Promise<ReturnType<Exclude<T["actions"][ActionName], undefined>>> {
     const action = this.actions?.[actionName]
     if (action) {
-      await action(props)
-    } else {
-      throw new Error(`Action "${String(actionName)}" not found.`)
+      return await action(props)
     }
+
+    throw new Error(`Action "${String(actionName)}" not found.`)
   }
 }

@@ -32,10 +32,10 @@ pnpm install
 cp .env.example .env
 
 # run migration and seed data
-turbo db:migrate && turbo db:seed
+pnpm turbo db:migrate && turbo db:seed
 
 # start the dev server and enjoy the moment
-turbo dev
+pnpm turbo dev
 ```
 
 The seeder mad default user `admin@ahachat.ai` with email provider

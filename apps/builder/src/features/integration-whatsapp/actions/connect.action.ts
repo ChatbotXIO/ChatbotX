@@ -1,19 +1,20 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import { integrations } from "@/integration"
+import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
-import { IntegrationType, prisma } from "@ahachat.ai/database"
+import { IntegrationType, type Prisma, prisma } from "@ahachat.ai/database"
+import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
 import { AuthType, IntegrationException } from "@ahachat.ai/sdk"
-import type { InputJsonValue } from "@prisma/client/runtime/library"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
 export const connectWhatsappAction = authActionClient
-  .bindArgsSchemas(chatbotIdBindSchema)
+  .bindArgsSchemas(chatbotIdRequestParams.items)
   .schema(connectWhatsappSchema)
   .action(
     async ({
@@ -21,7 +22,7 @@ export const connectWhatsappAction = authActionClient
       bindArgsParsedInputs: [chatbotId],
     }: {
       parsedInput: ConnectWhatsappSchema
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const integrationWhatsapp = await prisma.integrationWhatsapp.findFirst({
         where: {
@@ -35,7 +36,7 @@ export const connectWhatsappAction = authActionClient
       }
 
       // Validate wabaId
-      const auth = {
+      const auth: WhatsappAuthValue = {
         clientId: process.env.INTEGRATION_WHATSAPP_ID ?? "",
         clientSecret: process.env.INTEGRATION_WHATSAPP_SECRET ?? "",
         redirectUri: "",
@@ -45,35 +46,49 @@ export const connectWhatsappAction = authActionClient
         },
         metadata: {
           wabaId: parsedInput.wabaId,
-          phoneNumberId: "",
         },
       }
 
-      auth.metadata.phoneNumberId =
-        await integrations.whatsapp.actions.verifyAccessToken({
-          ctx: {
-            auth,
-            logger: logger.getSubLogger({
-              name: "whatsapp",
-            }),
-          },
-        })
+      try {
+        const whatsappPhoneNumber =
+          await integrations.WHATSAPP.integration.actions?.verifyAccessToken({
+            ctx: {
+              auth,
+              logger: logger.getSubLogger({
+                name: "whatsapp",
+              }),
+            },
+          })
+        if (whatsappPhoneNumber) {
+          auth.metadata = {
+            ...auth.metadata,
+            businessId: "627055339164151",
+            phoneNumber: whatsappPhoneNumber,
+          }
+        }
 
-      await prisma.$transaction(async (tx) => {
-        await tx.inbox.create({
-          data: {
-            chatbotId,
-            inboxType: IntegrationType.WHATSAPP,
-            integrationWhatsapp: {
-              create: {
-                chatbotId,
-                auth: auth as InputJsonValue,
+        await prisma.$transaction(async (tx) => {
+          await tx.inbox.create({
+            data: {
+              chatbotId,
+              inboxType: IntegrationType.WHATSAPP,
+              integrationWhatsapp: {
+                create: {
+                  chatbotId,
+                  auth: auth as Prisma.InputJsonValue,
+                },
               },
             },
-          },
+          })
         })
-      })
+      } catch (err: unknown) {
+        logger
+          .getSubLogger({
+            name: "whatsapp",
+          })
+          .error("Unable to verify whatsapp token: ", err)
 
-      return
+        throw new BaseException("Unable to verify Whatsapp token")
+      }
     },
   )

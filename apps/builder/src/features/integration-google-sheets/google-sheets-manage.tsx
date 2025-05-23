@@ -48,10 +48,8 @@ export function GoogleSheetsManage({
 
   return (
     <SettingRow
-      label={<T keyName="settings.integrations.GoogleSheets.Title" />}
-      description={
-        <T keyName="settings.integrations.GoogleSheets.Descriptions" />
-      }
+      label={t("settings.integrations.GoogleSheets.Title")}
+      description={t("settings.integrations.GoogleSheets.Descriptions")}
     >
       {integrationGoogleSheets ? (
         <div className="flex flex-col gap-2">

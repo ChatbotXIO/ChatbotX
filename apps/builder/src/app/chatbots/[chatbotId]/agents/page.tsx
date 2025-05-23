@@ -1,4 +1,3 @@
-import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { ChatbotMembersTable } from "@/features/chatbot-members/chatbot-members-table"
 import { getAgents } from "@/features/chatbot-members/queries"
 import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
@@ -22,17 +21,7 @@ export default async function AgentsPage(props: {
 
   return (
     <>
-      <Suspense
-        fallback={
-          <DataTableSkeleton
-            columnCount={6}
-            searchableColumnCount={1}
-            filterableColumnCount={2}
-            cellWidths={["10rem", "12rem", "12rem", "12rem", "8rem", "8rem"]}
-            shrinkZero
-          />
-        }
-      >
+      <Suspense>
         <ChatbotMembersTable promises={promises} />
       </Suspense>
     </>
