@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  domain    String   @unique
+
+  workspaceUsage         WorkspaceUsage?
+  workspaceSubscriptions WorkspaceSubscription[]
+  chatbots               Chatbot[]
+  chatbotSubscriptions   ChatbotSubscription[]
+  chatbotUsages          ChatbotUsage[]
+}
+
+model WorkspacePricingTier {
+  id          String   @id @default(cuid(2))
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String
+  features    String[]
+  priceId     Json
+}
+
+model WorkspaceSubscription {
+  id                 String   @id @default(cuid(2))
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  subscriptionId     String   @unique
+  subscriptionStatus String
+  priceId            String?
+  productId          String?
+  scheduledChange    String?
+  maxChatbots        Int
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model WorkspaceUsage {
+  id              String   @id @default(cuid(2))
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  currentChatbots Int
+  maxChatbots     Int
+
+  workspaceId String    @unique
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Chatbot {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspaceId          String
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id])
+  chatbotSubscriptions ChatbotSubscription[]
+  chatbotUsages        ChatbotUsage[]
+}
+
+model ChabotPricingTier {
+  id          String   @id @default(cuid(2))
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String
+  features    String[]
+  priceId     Json
+}
+
+model ChatbotSubscription {
+  id                 String   @id @default(cuid(2))
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  subscriptionId     String   @unique
+  subscriptionStatus String
+  priceId            String?
+  productId          String?
+  scheduledChange    String?
+  maxChatbots        Int
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id])
+}
+
+model ChatbotUsage {
+  id              String   @id @default(cuid(2))
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  currentContacts Int
+  maxContacts     Int
+
+  workspaceId String    @unique
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  chatbotId String  @unique
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id])
+}

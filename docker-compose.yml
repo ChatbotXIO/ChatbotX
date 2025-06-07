@@ -5,7 +5,7 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - ahachatai_db:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-ahachatai}
       - POSTGRES_USER=${POSTGRES_USER:-ahachatai}
@@ -32,7 +32,7 @@ services:
       MINIO_ROOT_USER: ahachatai
       MINIO_ROOT_PASSWORD: nr541Kv59xB4f48bhZOy5wBz
     volumes:
-      - s3_data:/data
+      - ahachatai_s3:/data
   createbuckets:
     image: minio/mc
     depends_on:
@@ -47,11 +47,10 @@ services:
       "
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - ahachatai_cache:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -60,6 +59,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  db_data:
-  s3_data:
-  redis_data:
+  ahachatai_db:
+  ahachatai_s3:
+  ahachatai_cache:

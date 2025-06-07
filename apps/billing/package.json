@@ -1,0 +1,29 @@
+{
+  "name": "billing",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- next dev -H billing.ahachat.localhost -p 3124 --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ahachat.ai/database": "workspace:*",
+    "@auth/prisma-adapter": "^2.9.1",
+    "next": "15.3.3",
+    "next-auth": "5.0.0-beta.28",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "dotenv-cli": "^8.0.0",
+    "postcss": "^8.5.4",
+    "prisma": "6.8.2",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5.8.3"
+  }
+}
