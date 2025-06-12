@@ -233,7 +233,6 @@ model Contact {
   lastSeenAt  DateTime?
   sourceId    String?
   blockedAt   DateTime?
-  followed    Boolean   @default(false)
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -370,6 +369,7 @@ model Conversation {
   agentLastSeenAt        DateTime?
   currentFlowRunId       String?
   lastActivityAt         DateTime  @default(now())
+  followed               Boolean   @default(false)
 
   assignedUserId String?
   assignedUser   User?   @relation(fields: [assignedUserId], references: [id])

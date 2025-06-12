@@ -69,7 +69,7 @@ export function MultiSelectField<T extends FieldValues>({
   ...props
 }: SelectFieldProps<T> & { defaultValue?: string[] }) {
   return (
-    <FormFieldWrapper
+    <FormFieldWrapper<T>
       name={name}
       label={label}
       isRequired={isRequired}

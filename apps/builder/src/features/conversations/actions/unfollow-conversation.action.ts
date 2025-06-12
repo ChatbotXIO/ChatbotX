@@ -8,7 +8,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const unfollowChatAction = chatbotActionClient
+export const unfollowConversationAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .action(
     async ({
@@ -16,14 +16,11 @@ export const unfollowChatAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.contact.findFirstOrThrow({
+      await prisma.conversation.update({
         where: {
           id,
           chatbotId,
         },
-      })
-      await prisma.contact.update({
-        where: { id },
         data: {
           followed: false,
         },

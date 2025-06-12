@@ -11,7 +11,8 @@
       ".next",
       ".tolgee",
       ".turbo",
-      "packages/database/generated/client"
+      "packages/database/generated/client",
+      "dist"
     ]
   },
   "formatter": {
