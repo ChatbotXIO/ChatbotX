@@ -1,7 +1,7 @@
-import type { UserResource } from "@/features/users/schemas/types"
+import type { UserResource } from "@/features/users/schemas"
 import type { InboxTeam, InboxTeamMember } from "@ahachat.ai/database/types"
 
-export type InboxTeamResourse = InboxTeam & {
+export type InboxTeamResource = InboxTeam & {
   _count?: {
     inboxTeamMembers?: number
   }
@@ -9,7 +9,7 @@ export type InboxTeamResourse = InboxTeam & {
 }
 
 export type InboxTeamCollection = {
-  data: InboxTeamResourse[]
+  data: InboxTeamResource[]
 }
 
 export type InboxTeamMemberResource = InboxTeamMember & {

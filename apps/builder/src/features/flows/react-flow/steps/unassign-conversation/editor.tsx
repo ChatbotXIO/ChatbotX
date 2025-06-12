@@ -1,12 +1,15 @@
 "use client"
 
 import { T } from "@tolgee/react"
+import { BaseStepEditor } from "../base/editor"
+import { MessageCircleXIcon } from "lucide-react"
 
 const UnassignConversationStepEditor = () => {
   return (
-    <div className="font-bold text-center break-all">
-      <T keyName="flows.StepType.UnassignConversation" />
-    </div>
+    <BaseStepEditor
+      icon={MessageCircleXIcon}
+      title={<T keyName="flows.StepType.UnassignConversation" />}
+    />
   )
 }
 

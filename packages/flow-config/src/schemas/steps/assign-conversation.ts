@@ -4,9 +4,8 @@ import { StepType } from "./step-action"
 
 export const assignConversationStepSchema = z.object({
   id: z.string().cuid2(),
-  actionType: z.literal(StepType.ASSIGN_CONVERSATION),
-  recipientId: z.string().cuid2(),
-  recipientName: z.string().nullable(),
+  stepType: z.literal(StepType.ASSIGN_CONVERSATION),
+  assignedId: z.string().cuid2().nullable(),
 })
 
 export type AssignConversationStepSchema = z.infer<
@@ -16,7 +15,6 @@ export type AssignConversationStepSchema = z.infer<
 export const assignConversationStepDefaultFn =
   (): AssignConversationStepSchema => ({
     id: createId(),
-    actionType: StepType.ASSIGN_CONVERSATION,
-    recipientId: "",
-    recipientName: "",
+    stepType: StepType.ASSIGN_CONVERSATION,
+    assignedId: "",
   })

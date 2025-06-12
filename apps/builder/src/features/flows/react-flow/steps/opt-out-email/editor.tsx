@@ -1,12 +1,15 @@
 "use client"
 
 import { T } from "@tolgee/react"
+import { BellOffIcon } from "lucide-react"
+import { BaseStepEditor } from "../base/editor"
 
 const OptOutEmailStepEditor = () => {
   return (
-    <div className="font-bold text-center">
-      <T keyName="flows.StepType.OptOutEmail" />
-    </div>
+    <BaseStepEditor
+      icon={BellOffIcon}
+      title={<T keyName="flows.StepType.OptOutEmail" />}
+    />
   )
 }
 

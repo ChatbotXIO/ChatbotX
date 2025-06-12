@@ -5,7 +5,7 @@ import { buttonStepSchema } from "./button"
 
 export const sendVideoStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.literal(StepType.SendVideo),
+  stepType: z.literal(StepType.SEND_VIDEO),
   url: z.string().url(),
   buttons: z.array(buttonStepSchema),
 })
@@ -14,7 +14,7 @@ export type SendVideoStepSchema = z.infer<typeof sendVideoStepSchema>
 
 export const sendVideoStepDefaultFn = (): SendVideoStepSchema => ({
   id: createId(),
-  stepType: StepType.SendVideo,
+  stepType: StepType.SEND_VIDEO,
   url: "",
   buttons: [],
 })

@@ -17,7 +17,7 @@ export enum AnswerType {
 
 export const userInputStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.literal(StepType.UserInput),
+  stepType: z.literal(StepType.USER_INPUT),
   answerType: z.nativeEnum(AnswerType),
 })
 

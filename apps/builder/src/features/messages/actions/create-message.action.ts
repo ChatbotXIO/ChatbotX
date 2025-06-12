@@ -1,10 +1,12 @@
 "use server"
 
+import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { findConversation } from "@/features/conversations/queries/get-conversations.query"
+import { findConversation } from "@/features/conversations/queries/list-conversations.query"
+import { logger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   ContentType,
@@ -14,18 +16,6 @@ import {
   type User,
 } from "@ahachat.ai/database"
 import { uploader } from "@ahachat.ai/filesystem"
-import { chatQueue, ChatJobAction } from "@ahachat.ai/worker-config"
-import { revalidateTag } from "next/cache"
-import {
-  type CreateMessageRequest,
-  createMessageRequest,
-  guessFileTypeFromMimeType,
-} from "../schemas/create-message.schema"
-import type { MessageResource } from "../schemas/list-messages.schema"
-import type { AttachmentResource } from "@/features/attachments/schemas/get-attachments.schema"
-import { createId } from "@paralleldrive/cuid2"
-import imageSize from "image-size"
-import { logger } from "@/lib/log"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
@@ -35,6 +25,16 @@ import type {
   ConversationEntity,
   ContentType as SdkContentType,
 } from "@ahachat.ai/sdk"
+import { ChatJobAction, chatQueue } from "@ahachat.ai/worker-config"
+import { createId } from "@paralleldrive/cuid2"
+import imageSize from "image-size"
+import { revalidateTag } from "next/cache"
+import type { MessageResource } from "../schemas"
+import {
+  type CreateMessageRequest,
+  createMessageRequest,
+  guessFileTypeFromMimeType,
+} from "../schemas/create-message.schema"
 
 export const createMessageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)

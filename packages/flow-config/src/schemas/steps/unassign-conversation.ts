@@ -4,7 +4,7 @@ import { StepType } from "./step-action"
 
 export const unassignConversationStepSchema = z.object({
   id: z.string().cuid2(),
-  actionType: z.literal(StepType.UNASSIGN_CONVERSATION),
+  stepType: z.literal(StepType.UNASSIGN_CONVERSATION),
 })
 export type UnassignConversationStepSchema = z.infer<
   typeof unassignConversationStepSchema
@@ -13,5 +13,5 @@ export type UnassignConversationStepSchema = z.infer<
 export const unassignConversationStepDefaultFn =
   (): UnassignConversationStepSchema => ({
     id: createId(),
-    actionType: StepType.UNASSIGN_CONVERSATION,
+    stepType: StepType.UNASSIGN_CONVERSATION,
   })

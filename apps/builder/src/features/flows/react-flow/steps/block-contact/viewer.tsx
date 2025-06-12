@@ -2,12 +2,13 @@
 
 import { T } from "@tolgee/react"
 import { UserRoundXIcon } from "lucide-react"
+import { BaseStepViewer } from "../base/viewer"
 
 export const BlockContactStepViewer = () => {
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center break-all">
-      <UserRoundXIcon size={18} className="text-yellow-500" />
-      <T keyName="flows.StepType.BlockContact" />
-    </div>
+    <BaseStepViewer
+      icon={UserRoundXIcon}
+      title={<T keyName="flows.StepType.BlockContact" />}
+    />
   )
 }

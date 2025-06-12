@@ -1,7 +1,7 @@
 import { listContacts } from "@/features/contacts/queries/list-contacts.queries"
 import { ContactsTable } from "@/features/contacts/contacts-table"
 import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
-import { listContactsNuqs } from "@/features/contacts/schemas/get-contacts-schema"
+import { listContactsRequest } from "@/features/contacts/schemas/get-contacts-schema"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -11,7 +11,7 @@ export default async function ContactsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = listContactsNuqs.parse(searchParams)
+  const search = listContactsRequest.parse(searchParams)
 
   const promises = Promise.all([
     listContacts({
@@ -26,7 +26,7 @@ export default async function ContactsPage(props: {
         <CreateContactDialog chatbotId={params.chatbotId} />
       </div>
       <Suspense>
-        <ContactsTable promises={promises} />
+        <ContactsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
     </div>
   )

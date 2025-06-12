@@ -1,13 +1,12 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Tag, prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
 import type { Prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 import type { GetTagsSchema } from "../schemas/get-tags-schema"
+import type { TagCollection } from "../schemas"
 
-export async function getTags(
-  input: GetTagsSchema,
-): Promise<{ data: Tag[]; pageCount: number }> {
+export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)

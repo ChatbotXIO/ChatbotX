@@ -1,40 +1,46 @@
 "use client"
 
+import { SelectField } from "@/components/form/select-field"
+import { UserMultipleSelect } from "@/features/users/user-select"
+import { AutoAssignConversationRule } from "@ahachat.ai/flow-config"
 import { T } from "@tolgee/react"
 import { MessageCirclePlusIcon } from "lucide-react"
+import { BaseStepEditor } from "../base/editor"
 
 const AutoAssignConversationStepEditor = ({
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   parentName,
 }: {
   parentName: string
 }) => {
-  // const selectedRecipients = watch(name)
-  // const recipientsList = useMemo(() => {
-  //   return recipients.map((obj) => {
-  //     return {
-  //       value: obj.id,
-  //       label: obj.name,
-  //     }
-  //   })
-  // }, [recipients])
+  const ruleOptions = [
+    {
+      label: "Equal conversation distribution (All time)",
+      value: AutoAssignConversationRule.ALL_TIME,
+    },
+    {
+      label: "Equal conversation distribution (Last Hour)",
+      value: AutoAssignConversationRule.LAST_HOUR,
+    },
+    {
+      label: "Equal conversation distribution (Last 8 hours)",
+      value: AutoAssignConversationRule.LAST_8HOURS,
+    },
+    {
+      label: "Equal conversation distribution (Last 24 hours)",
+      value: AutoAssignConversationRule.LAST_24HOURS,
+    },
+  ]
 
   return (
-    <>
-      <div className="flex justify-center items-center gap-2 p-2 font-bold text-center break-all">
-        <MessageCirclePlusIcon size={20} className="text-yellow-500" />
-        <T keyName="flows.StepType.AutoAssignConversation" />
+    <BaseStepEditor
+      icon={MessageCirclePlusIcon}
+      title={<T keyName="flows.StepType.AutoAssignConversation" />}
+    >
+      <div className="flex flex-wrap w-[243px] gap-1.5 overflow-hidden">
+        <UserMultipleSelect name={`${parentName}.userIds`} />
+        <SelectField name={`${parentName}.rule`} options={ruleOptions} />
       </div>
-      {/* <MultiSelect
-        options={recipientsList}
-        onValueChange={(value) => setValue(name, value)}
-        defaultValue={selectedRecipients}
-        placeholder="Select options"
-        variant="inverted"
-        animation={2}
-        maxCount={3}
-      /> */}
-    </>
+    </BaseStepEditor>
   )
 }
 

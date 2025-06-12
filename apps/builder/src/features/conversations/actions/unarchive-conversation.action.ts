@@ -1,8 +1,10 @@
+"use server"
+
 import {
-  type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
   chatbotIdRequestParams,
+  type BulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
@@ -21,10 +23,10 @@ export const unarchiveConversationAction = chatbotActionClient
     }) => {
       await prisma.conversation.updateMany({
         where: {
+          chatbotId,
           id: {
             in: parsedInput.ids,
           },
-          chatbotId,
         },
         data: {
           archivedAt: null,
@@ -32,8 +34,5 @@ export const unarchiveConversationAction = chatbotActionClient
       })
 
       revalidateTag(`chatbots:${chatbotId}#conversations`)
-      for (const id of parsedInput.ids) {
-        revalidateTag(`chatbots:${chatbotId}#conversations:${id}`)
-      }
     },
   )

@@ -130,7 +130,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                     className={cn(
                       "flex gap-2 items-center",
                       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                      (field as any).stepType === StepType.SendCarousel
+                      (field as any).stepType === StepType.SEND_CAROUSEL
                         ? "relative"
                         : "",
                     )}
@@ -156,7 +156,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                       className={cn(
                         "flex-1 break-all",
                         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                        (field as any).stepType === StepType.SendCarousel
+                        (field as any).stepType === StepType.SEND_CAROUSEL
                           ? "overflow-hidden"
                           : "",
                       )}

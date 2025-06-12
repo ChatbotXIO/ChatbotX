@@ -1,12 +1,11 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Log, type Prisma, prisma } from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
 import type { GetLogsSchema } from "../schemas/get-logs-schema"
+import type { LogCollection } from "../schemas"
 
-export async function getLogs(
-  input: GetLogsSchema,
-): Promise<{ data: Log[]; pageCount: number }> {
+export async function getLogs(input: GetLogsSchema): Promise<LogCollection> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)
@@ -40,8 +39,8 @@ export async function getLogs(
           where,
           orderBy,
           include: {
-            executorUser: true,
-            executorContact: true,
+            user: true,
+            contact: true,
           },
         }),
         prisma.log.count({ where }),

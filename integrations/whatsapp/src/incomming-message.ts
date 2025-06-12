@@ -180,8 +180,6 @@ export const parseIncomingMessage = async (
       break
   }
 
-  console.log("postbackAction", postbackAction)
-
   return { message, conversation, postbackAction }
 }
 

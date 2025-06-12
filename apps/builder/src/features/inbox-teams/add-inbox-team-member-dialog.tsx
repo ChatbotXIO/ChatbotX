@@ -15,7 +15,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { T } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import type { UserResource } from "../users/schemas/types"
+import type { UserResource } from "../users/schemas"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
 import { addInboxTeamMemberRequest } from "./schemas/add-inbox-team-member.request"
 import { MultiSelectField } from "@/components/form/select-field"

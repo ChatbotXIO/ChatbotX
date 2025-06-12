@@ -1,12 +1,15 @@
 "use client"
 
 import { T } from "@tolgee/react"
+import { BaseStepEditor } from "../base/editor"
+import { StarOffIcon } from "lucide-react"
 
 const UnfollowConversationStepEditor = () => {
   return (
-    <div className="font-bold text-center break-all">
-      <T keyName="flows.StepType.UnfollowConversation" />
-    </div>
+    <BaseStepEditor
+      icon={StarOffIcon}
+      title={<T keyName="flows.StepType.UnfollowConversation" />}
+    />
   )
 }
 

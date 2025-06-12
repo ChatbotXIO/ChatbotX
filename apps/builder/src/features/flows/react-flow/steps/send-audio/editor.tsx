@@ -1,7 +1,7 @@
 "use client"
 
 import FileDropzone from "@/components/file-dropzone"
-import { FileType } from "@ahachat.ai/database"
+import { FileType } from "@ahachat.ai/database/types"
 import { useFormContext } from "react-hook-form"
 
 export function SendAudioStepEditor({ parentName }: { parentName: string }) {

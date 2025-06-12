@@ -69,7 +69,7 @@ export function MultiSelectField<T extends FieldValues>({
   ...props
 }: SelectFieldProps<T> & { defaultValue?: string[] }) {
   return (
-    <FormFieldWrapper<T>
+    <FormFieldWrapper
       name={name}
       label={label}
       isRequired={isRequired}
@@ -78,6 +78,7 @@ export function MultiSelectField<T extends FieldValues>({
       {(field) => (
         <MultiSelect
           options={options}
+          defaultValue={field.value}
           onValueChange={(value) => field.onChange(value as T[Path<T>])}
           {...props}
           {...field}

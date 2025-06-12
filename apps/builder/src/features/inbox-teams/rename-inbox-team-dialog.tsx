@@ -20,7 +20,7 @@ import { useEffect } from "react"
 import "react-day-picker/style.css"
 import { toast } from "sonner"
 import { updateInboxTeamAction } from "./actions/update-inbox-team.action"
-import type { InboxTeamResourse } from "./schemas/types"
+import type { InboxTeamResource } from "./schemas/types"
 import { updateInboxTeamRequest } from "./schemas/update-inbox-team.request"
 
 export function RenameInboxTeamDialog({
@@ -32,7 +32,7 @@ export function RenameInboxTeamDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  inboxTeam: InboxTeamResourse | null
+  inboxTeam: InboxTeamResource | null
 }) {
   const {
     form,

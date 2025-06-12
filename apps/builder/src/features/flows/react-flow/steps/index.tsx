@@ -22,6 +22,7 @@ import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
+import { markEmailVerifiedStep } from "./mark-email-verified"
 
 interface StepEditorProps {
   parentName: string
@@ -84,7 +85,7 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.OPENAI_TEXT_TO_SPEECH]: undefined,
   [StepType.OPENAI_DELETE_MESSAGE_HISTORY]: undefined,
   [StepType.EMAIL_ACTIONS]: undefined,
-  [StepType.MARK_EMAIL_VERIFIED]: undefined,
+  [StepType.MARK_EMAIL_VERIFIED]: markEmailVerifiedStep,
   [StepType.OPT_IN_EMAIL]: optInEmailStep,
   [StepType.OPT_OUT_EMAIL]: optOutEmailStep,
   [StepType.ADD_TRIGGER]: undefined,

@@ -76,14 +76,14 @@ async function* runFlowNode(
 ) {
   for (const step of node.data.steps) {
     switch (step.stepType) {
-      case StepType.SendText:
+      case StepType.SEND_TEXT:
       // case StepType.SendAudio:
       // case StepType.SendVideo:
       // case StepType.SendFile:
       // case StepType.SendGif:
       // case StepType.SendCard:
       // case StepType.SendCarousel:
-      case StepType.SendImage: {
+      case StepType.SEND_IMAGE: {
         chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
           type: ChatJobAction.SEND_FLOW_STEP,
           data: {
@@ -121,6 +121,14 @@ async function* runFlowNode(
           },
         })
         break
+      }
+      case StepType.ADD_NOTES: {
+        await prisma.contactNote.create({
+          data: {
+            contactId: conversation.contactId,
+            content: step.content,
+          },
+        })
       }
     }
     yield step.stepType

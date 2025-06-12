@@ -4,12 +4,12 @@ import { StepType } from "./step-action"
 
 export const blockContactStepSchema = z.object({
   id: z.string().cuid2(),
-  actionType: z.literal(StepType.BLOCK_CONTACT),
+  stepType: z.literal(StepType.BLOCK_CONTACT),
 })
 
 export type BlockContactStepSchema = z.infer<typeof blockContactStepSchema>
 
 export const blockContactStepDefaultFn = (): BlockContactStepSchema => ({
   id: createId(),
-  actionType: StepType.BLOCK_CONTACT,
+  stepType: StepType.BLOCK_CONTACT,
 })

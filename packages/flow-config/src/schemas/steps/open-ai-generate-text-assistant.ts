@@ -7,7 +7,7 @@ export const openAIGenerateTextAssistantSchema = z.object({
   stepType: z.literal(StepType.OPENAI_GENERATE_TEXT_ASSISTANT),
   aiAssistantId: z.string().cuid2(),
   userMessage: z.string(),
-  resultCustomFieldId: z.string().cuid2(),
+  outputCustomFieldId: z.string().cuid2(),
 })
 export type OpenAIGenerateTextAssistantSchema = z.infer<
   typeof openAIGenerateTextAssistantSchema
@@ -19,5 +19,5 @@ export const openAIGenerateTextAssistantDefaultFn =
     stepType: StepType.OPENAI_GENERATE_TEXT_ASSISTANT,
     aiAssistantId: "",
     userMessage: "",
-    resultCustomFieldId: "",
+    outputCustomFieldId: "",
   })

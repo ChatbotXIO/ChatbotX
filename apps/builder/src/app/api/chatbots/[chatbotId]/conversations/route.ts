@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
-import { listConversations } from "@/features/conversations/queries/get-conversations.query"
-import { listConversationsRequest } from "@/features/conversations/schemas/get-conversations.schema"
+import { listConversations } from "@/features/conversations/queries/list-conversations.query"
+import { listConversationsRequest } from "@/features/conversations/schemas/list-conversations.request"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"

@@ -1,10 +1,10 @@
 "use client"
 
+import type { CustomFieldCollection } from "@/features/custom-fields/schemas"
 import { callAPI } from "@/lib/swr"
+import { DelayType, type WaitStepSchema } from "@ahachat.ai/flow-config"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
-import { DelayType, type WaitStepSchema } from "@ahachat.ai/flow-config"
-import type { CustomFieldCollection } from "@/features/fields/schemas/types"
 
 export const WaitStepViewer = ({
   data,

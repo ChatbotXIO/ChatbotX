@@ -5,7 +5,8 @@
   "scripts": {
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
-    "dev": "concurrently pnpm:worker:*"
+    "dev": "concurrently pnpm:worker:*",
+    "build": "tsup"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +26,8 @@
     "ioredis": "^5.6.1",
     "ky": "^1.8.1",
     "remeda": "^2.21.9",
-    "tslog": "^4.9.3"
+    "tslog": "^4.9.3",
+    "tsup": "^8.5.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

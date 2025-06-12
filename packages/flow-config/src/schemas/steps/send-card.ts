@@ -11,7 +11,7 @@ export enum CardLayout {
 
 export const sendCardStepSchema = z.object({
   id: z.string(),
-  stepType: z.literal(StepType.SendCard),
+  stepType: z.literal(StepType.SEND_CARD),
   title: z.string().trim().min(1).max(255),
   subtitle: z.string().trim().max(255).optional(),
   cardType: z.nativeEnum(CardLayout),
@@ -23,7 +23,7 @@ export type SendCardStepSchema = z.infer<typeof sendCardStepSchema>
 
 export const sendCardStepDefaultFn = (): SendCardStepSchema => ({
   id: createId(),
-  stepType: StepType.SendCard,
+  stepType: StepType.SEND_CARD,
   title: "",
   cardType: CardLayout.Horizontal,
 })

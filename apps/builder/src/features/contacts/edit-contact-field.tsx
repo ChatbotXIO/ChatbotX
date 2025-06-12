@@ -1,3 +1,5 @@
+import { InputField } from "@/components/form/input-field"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -6,16 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { ContactResource } from "./schemas/get-contacts-schema"
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { updateContactAction } from "./actions/update-contact.action"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { updateContactRequest } from "./schemas/update-contact.request"
-import { toast } from "sonner"
 import { Form } from "@/components/ui/form"
-import { InputField } from "@/components/form/input-field"
-import { useTranslate, T } from "@tolgee/react"
-import { Button } from "@/components/ui/button"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { T, useTranslate } from "@tolgee/react"
+import { toast } from "sonner"
+import { updateContactAction } from "./actions/update-contact.action"
+import type { ContactResource } from "./schemas"
+import { updateContactRequest } from "./schemas/update-contact.request"
 
 interface EditContactField {
   chatbotId: string

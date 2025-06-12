@@ -2,12 +2,13 @@
 
 import { T } from "@tolgee/react"
 import { StarIcon } from "lucide-react"
+import { BaseStepViewer } from "../base/viewer"
 
 export const FollowConversationStepViewer = () => {
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center break-all">
-      <StarIcon size={18} className="text-yellow-500" />
-      <T keyName="flows.StepType.FollowConversation" />
-    </div>
+    <BaseStepViewer
+      icon={StarIcon}
+      title={<T keyName="flows.StepType.FollowConversation" />}
+    />
   )
 }

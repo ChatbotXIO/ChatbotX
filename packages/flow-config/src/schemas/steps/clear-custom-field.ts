@@ -5,7 +5,7 @@ import { StepType } from "./step-action"
 export const clearCustomFieldStepSchema = z.object({
   id: z.string().cuid2(),
   stepType: z.literal(StepType.CLEAR_CUSTOM_FIELD),
-  customFieldId: z.string().cuid2(),
+  customFieldId: z.string().trim(),
 })
 
 export type ClearCustomFieldStepSchema = z.infer<

@@ -15,11 +15,13 @@ export async function GET(
     const session = await auth()
     await findChatbotOrFail(session?.user.id, chatbotId)
 
-    const { data } = listContactsRequest.safeParse(request.nextUrl.searchParams)
+    const searchParams = listContactsRequest.parse(
+      Object.fromEntries(request.nextUrl.searchParams),
+    )
 
     const result = await countContacts({
       chatbotId,
-      ...data,
+      ...searchParams,
     })
 
     return NextResponse.json(result)

@@ -7,10 +7,11 @@ import {
 } from "@/components/ui/resizable"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
-import { MessageInput } from "../messages/message-input"
+import { MessageInput } from "../messages/components/message-input"
 import { MessageList } from "../messages/message-list"
 import { ChatStoreProvider } from "./store/chat-store-provider"
 import { ChatRealtime } from "./chat-realtime"
+import MessageHead from "../messages/message-head"
 
 export const ChatLayout = ({
   layout = [25, 50, 25],
@@ -38,6 +39,7 @@ export const ChatLayout = ({
         {/* MESSAGE LIST */}
         <ResizablePanel defaultSize={layout[1] ?? 50} className="pt-3">
           <div className="flex flex-col w-full h-full">
+            <MessageHead />
             <MessageList />
             <MessageInput />
           </div>

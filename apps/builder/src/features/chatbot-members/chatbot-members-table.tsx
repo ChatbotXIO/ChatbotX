@@ -16,7 +16,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
 import { use, useMemo, useState } from "react"
 import type { getAgents } from "./queries"
-import type { ChatbotMemberWithUser } from "./schemas/add-chatbot-member-schema"
+import type { ChatbotMemberResource } from "./schemas"
 
 type ChatbotMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getAgents>>]>
@@ -26,9 +26,9 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
   const [{ data, pageCount }] = use(promises)
 
   const [_rowAction, setRowAction] =
-    useState<DataTableRowAction<ChatbotMemberWithUser> | null>(null)
+    useState<DataTableRowAction<ChatbotMemberResource> | null>(null)
 
-  const columns = useMemo<ColumnDef<ChatbotMemberWithUser>[]>(() => {
+  const columns = useMemo<ColumnDef<ChatbotMemberResource>[]>(() => {
     return [
       {
         id: "name",
@@ -44,7 +44,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
         //           {(row.original.user.name ?? "").charAt(0).toUpperCase()}
         //         </AvatarFallback>
         //       </Avatar>
-        cell: ({ row }) => <div>{row.original.user.name}</div>,
+        cell: ({ row }) => <div>{row.original.user?.name}</div>,
       },
       {
         id: "enableContacts",
@@ -52,7 +52,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           <DataTableColumnHeader column={column} title="Contacts" />
         ),
         cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberWithUser["enableContacts"]>() ? (
+          return cell.getValue<ChatbotMemberResource["enableContacts"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
@@ -65,7 +65,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           <DataTableColumnHeader column={column} title="Analytics" />
         ),
         cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberWithUser["enableAnalytics"]>() ? (
+          return cell.getValue<ChatbotMemberResource["enableAnalytics"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
@@ -78,7 +78,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           <DataTableColumnHeader column={column} title="Flows" />
         ),
         cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberWithUser["enableFlows"]>() ? (
+          return cell.getValue<ChatbotMemberResource["enableFlows"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
@@ -91,7 +91,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           <DataTableColumnHeader column={column} title="Flows" />
         ),
         cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberWithUser["isAdmin"]>() ? (
+          return cell.getValue<ChatbotMemberResource["isAdmin"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
@@ -105,7 +105,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
         ),
         cell: ({ cell }) => {
           return cell.getValue<
-            ChatbotMemberWithUser["enableEmailAndPhone"]
+            ChatbotMemberResource["enableEmailAndPhone"]
           >() ? (
             <CheckCircle2Icon />
           ) : (

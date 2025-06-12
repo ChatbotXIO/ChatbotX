@@ -2,7 +2,7 @@
 
 import { InputField } from "@/components/form/input-field"
 import { SelectField } from "@/components/form/select-field"
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 import { voiceTypes } from "@ahachat.ai/flow-config"
 

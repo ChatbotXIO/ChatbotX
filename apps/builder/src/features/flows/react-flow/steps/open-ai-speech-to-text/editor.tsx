@@ -1,6 +1,6 @@
 "use client"
 
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 
 interface OpenAISpeechToTextEditorProps {

@@ -4,13 +4,12 @@ import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { Prisma } from "@ahachat.ai/database"
 import { prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { ChatbotMemberResource } from "../schemas"
-import type { ChatbotMemberWithUser } from "../schemas/add-chatbot-member-schema"
+import type { ChatbotMemberCollection, ChatbotMemberResource } from "../schemas"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"
 
 export async function getAgents(
   input: GetChatbotMembersSchema,
-): Promise<{ data: ChatbotMemberWithUser[]; pageCount: number }> {
+): Promise<ChatbotMemberCollection> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)

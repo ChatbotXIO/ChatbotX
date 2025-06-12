@@ -46,6 +46,25 @@ export const prisma =
           },
         },
       },
+      conversation: {
+        assignedId: {
+          needs: {
+            assignedUserId: true,
+            assignedInboxTeamId: true,
+          },
+          compute(item) {
+            if (item.assignedUserId) {
+              return `u_${item.assignedUserId}`
+            }
+
+            if (item.assignedInboxTeamId) {
+              return `t_${item.assignedUserId}`
+            }
+
+            return null
+          },
+        },
+      },
       attachment: {
         url: {
           needs: { originPath: true },

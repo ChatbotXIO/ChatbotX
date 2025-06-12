@@ -1,34 +1,18 @@
 "use client"
 
-import { Checkbox } from "@/components/ui/checkbox"
+import { SwitchField } from "@/components/form/switch-field"
 import { T } from "@tolgee/react"
-import { useFormContext } from "react-hook-form"
+import { UserIcon } from "lucide-react"
+import { BaseStepEditor } from "../base/editor"
 
 const DisableBotStepEditor = ({ parentName }: { parentName: string }) => {
-  const { watch, register, setValue } = useFormContext()
-  const { name } = register(`${parentName}.notifyAdmin`)
-  const notifyAdmin = watch(name)
-
   return (
-    <>
-      <div className="font-bold text-center break-all">
-        <T keyName="flows.StepType.DisableBot" />
-      </div>
-      <div className="flex items-center justify-center space-x-2 mt-1">
-        <Checkbox
-          id="notifyAdmin"
-          name={name}
-          defaultChecked={notifyAdmin}
-          onCheckedChange={(checked) => setValue(name, checked)}
-        />
-        <label
-          htmlFor="notifyAdmin"
-          className="text-sm font-medium leading-none cursor-pointer"
-        >
-          <T keyName="flows.notifyAdmin" />
-        </label>
-      </div>
-    </>
+    <BaseStepEditor
+      icon={UserIcon}
+      title={<T keyName="flows.StepType.DisableBot" />}
+    >
+      <SwitchField name={`${parentName}.notifyAdmin`} label="Notify Admin" />
+    </BaseStepEditor>
   )
 }
 

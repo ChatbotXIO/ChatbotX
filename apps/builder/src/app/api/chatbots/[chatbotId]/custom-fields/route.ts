@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
-import { listCustomFields } from "@/features/fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/fields/schemas/get-fields-schema"
+import { listCustomFields } from "@/features/custom-fields/queries"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"

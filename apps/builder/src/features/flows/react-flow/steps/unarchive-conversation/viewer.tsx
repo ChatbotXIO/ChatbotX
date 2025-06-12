@@ -2,12 +2,13 @@
 
 import { T } from "@tolgee/react"
 import { PackageOpenIcon } from "lucide-react"
+import { BaseStepViewer } from "../base/viewer"
 
 export const UnarchiveConversationStepViewer = () => {
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center break-all">
-      <PackageOpenIcon size={18} className="text-yellow-500" />
-      <T keyName="flows.StepType.UnArchiveConversation" />
-    </div>
+    <BaseStepViewer
+      icon={PackageOpenIcon}
+      title={<T keyName="flows.StepType.UnarchiveConversation" />}
+    />
   )
 }

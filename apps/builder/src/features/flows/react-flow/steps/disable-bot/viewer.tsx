@@ -1,13 +1,14 @@
 "use client"
 
 import { T } from "@tolgee/react"
-import { ZapIcon } from "lucide-react"
+import { UserIcon } from "lucide-react"
+import { BaseStepViewer } from "../base/viewer"
 
 export const DisableBotStepViewer = () => {
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center break-all">
-      <ZapIcon size={18} className="text-yellow-500" />
-      <T keyName="flows.StepType.DisableBot" />
-    </div>
+    <BaseStepViewer
+      icon={UserIcon}
+      title={<T keyName="flows.StepType.DisableBot" />}
+    />
   )
 }

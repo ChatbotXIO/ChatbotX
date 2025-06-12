@@ -1,0 +1,37 @@
+"use server"
+
+import {
+  bulkUpdateIdsRequest,
+  chatbotIdRequestParams,
+  type BulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
+
+export const deleteContactAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(bulkUpdateIdsRequest)
+  .action(
+    async ({
+      bindArgsParsedInputs: [chatbotId],
+      parsedInput,
+    }: {
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: BulkUpdateIdsRequest
+    }) => {
+      await prisma.$transaction(async (tx) => {
+        await tx.contact.deleteMany({
+          where: {
+            chatbotId,
+            id: {
+              in: parsedInput.ids,
+            },
+          },
+        })
+      })
+
+      revalidateTag(`chatbots:${chatbotId}#contacts`)
+    },
+  )

@@ -1,12 +1,15 @@
 "use client"
 
 import { T } from "@tolgee/react"
+import { BellRingIcon } from "lucide-react"
+import { BaseStepEditor } from "../base/editor"
 
 const OptInEmailStepEditor = () => {
   return (
-    <div className="font-bold text-center">
-      <T keyName="flows.StepType.OptInEmail" />
-    </div>
+    <BaseStepEditor
+      icon={BellRingIcon}
+      title={<T keyName="flows.StepType.OptInEmail" />}
+    />
   )
 }
 

@@ -36,14 +36,14 @@ model User {
 
   accounts                 Account[]
   activityLogs             ActivityLog[]
-  assignedContacts         Contact[]                 @relation("AssignedUser")
   chatbotMembers           ChatbotMember[]
   conversationParticipants ConversationParticipant[]
-  logs                     Log[]                     @relation("ExecutorUser")
+  logs                     Log[]
   sessions                 Session[]
   inboxTeamMembers         InboxTeamMember[]
   workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
   contactNotes             ContactNote[]
+  assignedConversations    Conversation[]
 }
 
 model Account {
@@ -159,9 +159,9 @@ model InboxTeam {
   chatbotId String
   name      String
 
-  chatbot          Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  inboxTeamMembers InboxTeamMember[]
-  assignedContacts Contact[]         @relation("AssignedTeam")
+  chatbot               Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  inboxTeamMembers      InboxTeamMember[]
+  assignedConversations Conversation[]
 }
 
 model InboxTeamMember {
@@ -192,19 +192,21 @@ model ActivityLog {
 }
 
 model Log {
-  id           String        @id @default(cuid(2))
-  createdAt    DateTime      @default(now())
-  chatbotId    String
-  logType      LogType
-  action       String
-  detail       String
-  url          String?
-  executorType ExecutorType?
-  executorId   String?
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  logType   LogType
+  action    String
+  detail    String
+  url       String?
 
-  chatbot         Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  executorUser    User?    @relation("ExecutorUser", fields: [executorId], references: [id], map: "user_executorId")
-  executorContact Contact? @relation("ExecutorContact", fields: [executorId], references: [id], map: "contact_executorId")
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id])
 }
 
 enum LogType {
@@ -218,28 +220,27 @@ enum ExecutorType {
 }
 
 model Contact {
-  id           String        @id @default(cuid(2))
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  avatar       String?
-  chatbotId    String
-  phoneNumber  String?
-  email        String?
-  firstName    String?
-  lastName     String?
-  gender       Gender
-  source       String
-  assignedType AssignedType?
-  assignedId   String?
-  lastSeenAt   DateTime?
-  sourceId     String?
+  id          String    @id @default(cuid(2))
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  avatar      String?
+  phoneNumber String?
+  email       String?
+  firstName   String?
+  lastName    String?
+  gender      Gender
+  source      String
+  lastSeenAt  DateTime?
+  sourceId    String?
+  blockedAt   DateTime?
+  followed    Boolean   @default(false)
 
-  assignedTeam        InboxTeam?             @relation("AssignedTeam", fields: [assignedId], references: [id], map: "team_assignedId")
-  assignedUser        User?                  @relation("AssignedUser", fields: [assignedId], references: [id], map: "user_assignedId")
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
   broadcasts          ContactsOnBroadcasts[]
-  chatbot             Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   conversation        Conversation?
-  logs                Log[]                  @relation("ExecutorContact")
+  logs                Log[]
   tags                Tag[]
   contactNotes        ContactNote[]
   contactCustomFields ContactCustomField[]
@@ -275,13 +276,14 @@ model Tag {
   updatedAt       DateTime @updatedAt
   name            String
   folderId        String?
-  syncToMessenger Boolean
+  syncToMessenger Boolean  @default(false)
   chatbotId       String
 
   chatbot  Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   folder   Folder?   @relation(fields: [folderId], references: [id])
   contacts Contact[]
 
+  @@unique([chatbotId, name])
   @@index([folderId])
 }
 
@@ -360,13 +362,8 @@ model Conversation {
   id                     String    @id @default(cuid(2))
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
-  chatbotId              String
-  contactId              String    @unique
-  inboxId                String
   liveChatEnabled        Boolean   @default(false)
-  followed               Boolean   @default(false)
   archivedAt             DateTime?
-  blockedAt              DateTime?
   sourceId               String?
   conversationAttributes Json?
   contactLastSeenAt      DateTime?
@@ -374,9 +371,21 @@ model Conversation {
   currentFlowRunId       String?
   lastActivityAt         DateTime  @default(now())
 
-  chatbot                  Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  contact                  Contact                   @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  inbox                    Inbox                     @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+  assignedUserId String?
+  assignedUser   User?   @relation(fields: [assignedUserId], references: [id])
+
+  assignedInboxTeamId String?
+  assignedInboxTeam   InboxTeam? @relation(fields: [assignedInboxTeamId], references: [id])
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  contactId String  @unique
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  inboxId String
+  inbox   Inbox  @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+
   messages                 Message[]
   conversationParticipants ConversationParticipant[]
   attachment               Attachment[]
@@ -724,8 +733,8 @@ model ContactNote {
   contactId String
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
 
 model ContactCustomField {

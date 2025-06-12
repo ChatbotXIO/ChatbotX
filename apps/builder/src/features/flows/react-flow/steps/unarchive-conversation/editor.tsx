@@ -1,12 +1,15 @@
 "use client"
 
 import { T } from "@tolgee/react"
+import { BaseStepEditor } from "../base/editor"
+import { PackageOpenIcon } from "lucide-react"
 
 const UnarchiveConversationStepEditor = () => {
   return (
-    <div className="font-bold text-center break-all">
-      <T keyName="flows.StepType.UnarchiveConversation" />
-    </div>
+    <BaseStepEditor
+      icon={PackageOpenIcon}
+      title={<T keyName="flows.StepType.UnarchiveConversation" />}
+    />
   )
 }
 

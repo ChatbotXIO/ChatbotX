@@ -1,12 +1,15 @@
 "use client"
 
 import { T } from "@tolgee/react"
+import { CircleCheckIcon } from "lucide-react"
+import { BaseStepEditor } from "../base/editor"
 
 const MarkEmailVerifiedStepEditor = () => {
   return (
-    <div className="font-bold text-center">
-      <T keyName="flows.StepType.MarkEmailVerified" />
-    </div>
+    <BaseStepEditor
+      icon={CircleCheckIcon}
+      title={<T keyName="flows.StepType.MarkEmailVerified" />}
+    />
   )
 }
 

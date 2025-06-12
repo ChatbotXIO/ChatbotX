@@ -9,13 +9,15 @@ import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 import { use, useMemo } from "react"
 import type { listContacts } from "./queries/list-contacts.queries"
-import type { ContactResource } from "./schemas/get-contacts-schema"
+import type { ContactResource } from "./schemas"
+import { ContactListAction } from "./contacts-list-action"
 
 interface ContactsTableProps {
+  chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
 }
 
-export function ContactsTable({ promises }: ContactsTableProps) {
+export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
   const [{ data, pageCount }] = use(promises)
 
   const columns = useMemo<ColumnDef<ContactResource>[]>(
@@ -46,17 +48,20 @@ export function ContactsTable({ promises }: ContactsTableProps) {
         enableHiding: false,
       },
       {
-        id: "name",
+        id: "keyword",
+        accessorKey: "keyword",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
         cell: ({ row }) => {
-          const fullName = [row.original.firstName, row.original.lastName]
-            .filter((v) => v)
-            .join(" ")
-
-          return <div>{fullName}</div>
+          return <div>{row.original.fullName}</div>
         },
+        meta: {
+          label: "Name",
+          placeholder: "Search name...",
+          variant: "text",
+        },
+        enableColumnFilter: true,
       },
       {
         accessorKey: "source",
@@ -71,10 +76,16 @@ export function ContactsTable({ promises }: ContactsTableProps) {
       {
         accessorKey: "assignee",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Assigned To" />
+          <DataTableColumnHeader column={column} title="Assignee" />
         ),
-        cell: () => {
-          return <div>Unassigned</div>
+        cell: ({ row }) => {
+          return (
+            <div>
+              {row.original.conversation?.assignedUser?.name ||
+                row.original.conversation?.assignedInboxTeam?.name ||
+                "Unassigned"}
+            </div>
+          )
         },
         enableSorting: false,
       },
@@ -123,7 +134,9 @@ export function ContactsTable({ promises }: ContactsTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} />
+        <DataTableToolbar table={table} className="flex gap-1.5">
+          <ContactListAction chatbotId={chatbotId} table={table} />
+        </DataTableToolbar>
       </DataTable>
     </>
   )

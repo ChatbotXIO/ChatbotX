@@ -3,12 +3,11 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Message, type Prisma, prisma } from "@ahachat.ai/database"
+import type { MessageCollection, MessageResource } from "../schemas"
 import type {
   FindMessageSchema,
-  MessageCollection,
-  MessageResource,
+  ListMessagesRequest,
 } from "../schemas/list-messages.schema"
-import type { ListMessagesRequest } from "../schemas/list-messages.schema"
 
 export const listMessages = async (
   chatbotId: string,
