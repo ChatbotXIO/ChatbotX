@@ -1,6 +1,6 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -10,25 +10,20 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Log } from "@ahachat.ai/database"
-import type { ColumnDef, Row } from "@tanstack/react-table"
+import type { DataTableRowAction } from "@/types/data-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisIcon, UserRoundIcon } from "lucide-react"
-
-export interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: "update" | "delete"
-}
+import type { Dispatch, SetStateAction } from "react"
+import type { LogResource } from "./schemas"
 
 interface GetColumnsProps {
-  setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<Log> | null>
-  >
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<LogResource> | null>>
 }
 
 export function getColumns({
   setRowAction,
-}: GetColumnsProps): ColumnDef<Log>[] {
+}: GetColumnsProps): ColumnDef<LogResource>[] {
   return [
     {
       id: "select",
@@ -81,9 +76,7 @@ export function getColumns({
         <DataTableColumnHeader column={column} title="Contact" />
       ),
       cell: ({ row }) => (
-        <div>
-          {row.original.executorType ? <UserRoundIcon size={16} /> : null}
-        </div>
+        <div>{row.original.userId ? <UserRoundIcon size={16} /> : null}</div>
       ),
       size: 50,
       enableSorting: false,
@@ -116,7 +109,7 @@ export function getColumns({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
-                onSelect={() => setRowAction({ row, type: "delete" })}
+                onSelect={() => setRowAction({ row, variant: "delete" })}
               >
                 Delete
                 <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

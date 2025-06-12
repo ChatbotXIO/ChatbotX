@@ -1,0 +1,25 @@
+import { auth } from "@/auth"
+import { findConversation } from "@/features/conversations/queries/list-conversations.query"
+import { errorResponse } from "@/lib/error-handling"
+import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type NextRequest, NextResponse } from "next/server"
+
+export async function GET(
+  _req: NextRequest,
+  {
+    params,
+  }: { params: Promise<{ conversationId: string; chatbotId: string }> },
+) {
+  try {
+    const { chatbotId, conversationId } = await params
+
+    const session = await auth()
+    await findChatbotOrFail(session?.user.id, chatbotId)
+
+    const result = await findConversation({ id: conversationId, chatbotId })
+
+    return NextResponse.json(result)
+  } catch (e) {
+    return errorResponse(e)
+  }
+}

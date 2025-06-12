@@ -1,57 +1,148 @@
 "use client"
 
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import type {
-  DataTableFilterField,
-  DataTableRowAction,
-} from "@/components/data-table/types"
+import { DataTable } from "@/components/data-table"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { ChatbotMember, User } from "@ahachat.ai/database"
-import { useTranslate } from "@tolgee/react"
-import React, { use, useEffect, useMemo, useState } from "react"
-import { getColumns } from "./chatbot-members-table-columns"
+import type { DataTableRowAction } from "@/types/data-table"
+import type { ColumnDef } from "@tanstack/react-table"
+import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
+import { use, useMemo, useState } from "react"
 import type { getAgents } from "./queries"
-import type { ChatbotMemberWithUser } from "./schemas/add-chatbot-member-schema"
+import type { ChatbotMemberResource } from "./schemas"
 
 type ChatbotMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getAgents>>]>
 }
 
 export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
-  const { t } = useTranslate()
   const [{ data, pageCount }] = use(promises)
 
-  const [rowAction, setRowAction] =
-    useState<DataTableRowAction<ChatbotMemberWithUser> | null>(null)
+  const [_rowAction, setRowAction] =
+    useState<DataTableRowAction<ChatbotMemberResource> | null>(null)
 
-  const titles: Record<
-    "name" | "contacts" | "analytics" | "flows" | "settings" | "notifications",
-    string
-  > = {
-    name: t("chatbotMembers.name"),
-    contacts: t("chatbotMembers.contacts"),
-    analytics: t("chatbotMembers.analytics"),
-    flows: t("chatbotMembers.flows"),
-    settings: t("chatbotMembers.settings"),
-    notifications: t("chatbotMembers.notifications"),
-  }
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const columns = useMemo(() => {
-    return getColumns({ titles, setRowAction })
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  }, [setRowAction, titles])
-
-  const filterFields: DataTableFilterField<
-    ChatbotMember & { keyword?: string }
-  >[] = [
-    {
-      id: "keyword",
-      label: "Search",
-      placeholder: "Enter keyword...",
-    },
-  ]
+  const columns = useMemo<ColumnDef<ChatbotMemberResource>[]>(() => {
+    return [
+      {
+        id: "name",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Name" />
+        ),
+        // <Avatar className="justify-items-center w-5 h-5">
+        //         <AvatarImage
+        //           src={row.original.user.image ?? undefined}
+        //           alt="avatar"
+        //         />
+        //         <AvatarFallback>
+        //           {(row.original.user.name ?? "").charAt(0).toUpperCase()}
+        //         </AvatarFallback>
+        //       </Avatar>
+        cell: ({ row }) => <div>{row.original.user?.name}</div>,
+      },
+      {
+        id: "enableContacts",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Contacts" />
+        ),
+        cell: ({ cell }) => {
+          return cell.getValue<ChatbotMemberResource["enableContacts"]>() ? (
+            <CheckCircle2Icon />
+          ) : (
+            <XCircleIcon />
+          )
+        },
+      },
+      {
+        id: "enableAnalytics",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Analytics" />
+        ),
+        cell: ({ cell }) => {
+          return cell.getValue<ChatbotMemberResource["enableAnalytics"]>() ? (
+            <CheckCircle2Icon />
+          ) : (
+            <XCircleIcon />
+          )
+        },
+      },
+      {
+        id: "enableFlows",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Flows" />
+        ),
+        cell: ({ cell }) => {
+          return cell.getValue<ChatbotMemberResource["enableFlows"]>() ? (
+            <CheckCircle2Icon />
+          ) : (
+            <XCircleIcon />
+          )
+        },
+      },
+      {
+        id: "settings",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Flows" />
+        ),
+        cell: ({ cell }) => {
+          return cell.getValue<ChatbotMemberResource["isAdmin"]>() ? (
+            <CheckCircle2Icon />
+          ) : (
+            <XCircleIcon />
+          )
+        },
+      },
+      {
+        id: "notifications",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Notifications" />
+        ),
+        cell: ({ cell }) => {
+          return cell.getValue<
+            ChatbotMemberResource["enableEmailAndPhone"]
+          >() ? (
+            <CheckCircle2Icon />
+          ) : (
+            <XCircleIcon />
+          )
+        },
+      },
+      {
+        id: "actions",
+        cell: ({ row }) => {
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setRowAction({ row, variant: "update" })}
+                >
+                  Update
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                  variant="destructive"
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        },
+      },
+    ]
+  }, [])
 
   const { table } = useDataTable({
     data,

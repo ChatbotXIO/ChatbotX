@@ -4,12 +4,12 @@ import {
   parseAsString,
 } from "nuqs/server"
 
-export const getContactsSearchParamsCache = createSearchParamsCache({
+export const listContactsRequest = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   keyword: parseAsString.withDefault(""),
 })
 
-export type GetContactsSchema = Awaited<
-  ReturnType<typeof getContactsSearchParamsCache.parse>
+export type ListContactsRequest = Awaited<
+  ReturnType<typeof listContactsRequest.parse>
 > & { chatbotId: string }

@@ -1,6 +1,6 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
+import { InputField } from "@/components/form/input-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import type { Flow } from "@ahachat.ai/database"
+import type { Flow } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -24,14 +24,12 @@ import { updateFlowAction } from "./actions/update-flow-action"
 import { updateFlowSchema } from "./schemas/update-flow-schema"
 
 export function RenameFlowDialog({
-  chatbotId,
   flow,
   open,
   onOpenChange,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
   flow: Flow | null
 }) {
   const { t } = useTranslate()
@@ -40,15 +38,16 @@ export function RenameFlowDialog({
   const {
     form,
     handleSubmitWithAction,
+    resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
-    updateFlowAction.bind(null, flow?.id ?? ""),
+    updateFlowAction.bind(null, flow?.chatbotId ?? "", flow?.id ?? ""),
     zodResolver(updateFlowSchema),
     {
       actionProps: {
         onSuccess: () => {
           toast.success("Flow update successfully")
-
+          resetFormAndAction()
           onOpenChange(false)
           router.refresh()
         },
@@ -82,7 +81,7 @@ export function RenameFlowDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormInput name="name" label={t("flows.name")} />
+              <InputField name="name" label={t("flows.name")} />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>

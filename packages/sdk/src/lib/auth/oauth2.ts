@@ -1,10 +1,9 @@
 import type { AuthType, BaseAuthValue } from "./base"
 
-export type Oauth2AuthProps = {
+export type Oauth2Config = {
   clientId: string
   clientSecret: string
   redirectUri: string
-  code?: string
   stateParams?: Record<string, unknown>
 }
 

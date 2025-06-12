@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 
 type Props = {
   children: ReactNode
-  params: { locale: string }
 }
 
 export default async function RootLayout({ children }: Props) {
@@ -27,6 +26,12 @@ export default async function RootLayout({ children }: Props) {
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <script
+          crossOrigin="anonymous"
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+        />
+      </head>
       <body>
         <SessionProvider>
           <ThemeProvider
@@ -37,7 +42,7 @@ export default async function RootLayout({ children }: Props) {
           >
             <TolgeeNextProvider language={locale} staticData={staticData}>
               {children}
-              <Toaster richColors position="top-right" />
+              <Toaster richColors position="top-right" duration={800} />
             </TolgeeNextProvider>
           </ThemeProvider>
         </SessionProvider>

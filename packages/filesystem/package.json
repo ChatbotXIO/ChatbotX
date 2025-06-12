@@ -4,13 +4,16 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "dependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
-    "minio": "^8.0.4",
+    "@aws-sdk/client-s3": "^3.816.0",
+    "@aws-sdk/s3-presigned-post": "^3.816.0",
+    "ky": "^1.8.1",
+    "minio": "^8.0.5",
     "tslog": "^4.9.3",
-    "zod": "^3.24.2"
+    "zod": "^3.25.23"
   },
   "exports": {
     ".": "./src/index.ts"

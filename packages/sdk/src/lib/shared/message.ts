@@ -8,6 +8,7 @@ export interface ContactEntity {
 
 export interface ConversationEntity {
   sourceId: string
+  inboxId?: string
   conversationAttributes: Record<string, unknown>
   contact: ContactEntity
 }
@@ -16,15 +17,24 @@ export const conversationEntitySchema = z.custom<ConversationEntity>((data) => {
   return typeof data === "object"
 })
 
+export interface OutgoingMessageEntity {
+  chatbotId: string
+  conversationId: string
+  contentType: ContentType
+  content?: string
+  attachments?: AttachmentEntity[]
+}
+
 export interface MessageEntity {
   sourceId: string
   contentType: ContentType
   content?: string
   contentAttributes?: MessageLocationEntity | unknown
   attachments?: AttachmentEntity[]
+  clientId?: string | null
 }
 
-export const messageEntitySchema = z.custom<MessageEntity>((data) => {
+export const MessageEntitySchema = z.custom<MessageEntity>((data) => {
   return typeof data === "object"
 })
 
@@ -34,7 +44,7 @@ export interface AttachmentEntity {
   mimeType: string
   originPath: string
   size: number
-  publicUrl?: string
+  url?: string
   width?: number
   height?: number
   name?: string
@@ -55,11 +65,12 @@ export interface MessageLocationEntity {
 
 export enum ContentType {
   TEXT = "TEXT",
+  LOCATION = "LOCATION",
 }
 
 export enum FileType {
   IMAGE = "IMAGE",
   AUDIO = "AUDIO",
   VIDEO = "VIDEO",
-  FILE = "FILE",
+  DOCUMENT = "DOCUMENT",
 }

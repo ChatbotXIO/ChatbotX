@@ -7,14 +7,9 @@ export interface ContextUploader {
   putObject(
     newPath: string,
     body: string | Readable | Buffer<ArrayBufferLike>,
-    size: number,
-    metadata?: Record<string, string | number>,
-  ): Promise<void>
-  putFile(
-    newPath: string,
-    oldPath: string,
-    metadata?: Record<string, string | number>,
-  ): Promise<void>
+    options?: unknown,
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  ): Promise<any>
 }
 
 export interface ContextQueue {
@@ -22,7 +17,12 @@ export interface ContextQueue {
   add(name: string, payload: any, opts?: any): Promise<any>
 }
 
+export interface ChatbotEntity {
+  id: string
+}
+
 export type Context<AO extends BaseAuthValue> = {
+  chatbot?: ChatbotEntity
   uploader?: ContextUploader
   auth: AO
   logger: Logger<ILogObj>

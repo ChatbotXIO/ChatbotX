@@ -1,3 +1,9 @@
-import type * as Prisma from "@prisma/client"
+export * from "../generated/client"
 
-export type { Prisma }
+export const OMNICHANNEL = "OMNICHANNEL"
+
+export enum CustomFieldOperation {
+  SET = "SET",
+  APPEND = "APPEND",
+  PREPEND = "PREPEND",
+}

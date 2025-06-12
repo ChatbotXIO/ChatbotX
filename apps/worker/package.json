@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts"
+    "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
+    "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
+    "dev": "concurrently pnpm:worker:*",
+    "build": "tsup"
   },
   "keywords": [],
   "author": "",
@@ -11,17 +14,23 @@
   "dependencies": {
     "@ahachat.ai/database": "workspace:*",
     "@ahachat.ai/filesystem": "workspace:*",
+    "@ahachat.ai/flow-config": "workspace:*",
     "@ahachat.ai/integration-whatsapp": "workspace:*",
+    "@ahachat.ai/party-config": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
-    "@ahachat.ai/worker-config": "workspace:^",
-    "bullmq": "^5.41.2",
+    "@ahachat.ai/worker-config": "workspace:*",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "bullmq": "^5.53.0",
     "dot-prop": "^9.0.0",
-    "ioredis": "^5.5.0",
-    "ky": "^1.7.5",
-    "tslog": "^4.9.3"
+    "ioredis": "^5.6.1",
+    "ky": "^1.8.1",
+    "remeda": "^2.21.9",
+    "tslog": "^4.9.3",
+    "tsup": "^8.5.0"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "dotenv-cli": "^8.0.0"
   }
 }

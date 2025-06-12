@@ -1,10 +1,8 @@
-import { PrismaClient } from "@ahachat.ai/database"
 import { PrismaAdapter } from "@auth/prisma-adapter"
+import { prisma } from "@ahachat.ai/database"
 import NextAuth, { type DefaultSession } from "next-auth"
 import Nodemailer from "next-auth/providers/nodemailer"
 import { providers } from "./auth.config"
-
-const prisma = new PrismaClient()
 
 declare module "next-auth" {
   /**
@@ -27,9 +25,6 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: true,
-  // session: {
-  //   strategy: 'database',
-  // },
   pages: {
     signIn: "/signin",
   },
@@ -38,8 +33,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     ...providers,
     Nodemailer({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
+      server:
+        process.env.EMAIL_SERVER ?? "smtp://username:password@localhost:1025",
+      from: process.env.EMAIL_FROM ?? "",
     }),
   ],
   callbacks: {

@@ -6,19 +6,21 @@ export const { auth } = NextAuth({ providers })
 
 export default auth((req) => {
   if (!req.auth && req.nextUrl.pathname !== "/signin") {
-    const newUrl = new URL("/signin", req.nextUrl.origin)
-
-    return Response.redirect(newUrl)
+    return NextResponse.redirect(new URL("/signin", req.url))
   }
 
-  const headers = new Headers(req.headers)
-  headers.set("x-current-path", req.nextUrl.pathname)
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set("x-url", req.url)
 
-  return NextResponse.next({ headers })
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
 })
 
 export const config = {
   matcher: [
-    "/((?!api|integrations|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
+    "/((?!api|integrations|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
   ],
 }

@@ -1,20 +1,30 @@
-import { listFields } from "@/features/fields/queries"
-import { getFieldsSearchParamsCache } from "@/features/fields/schemas/get-fields-schema"
-import { FieldType } from "@prisma/client"
+import { auth } from "@/auth"
+import { listCustomFields } from "@/features/custom-fields/queries"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
+import { errorResponse } from "@/lib/error-handling"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ chatbotId: string }> },
 ) {
-  const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-  const search = getFieldsSearchParamsCache.parse(searchParams)
+  try {
+    const { chatbotId } = await params
 
-  const allCustomFields = await listFields({
-    ...search,
-    chatbotId: (await params).chatbotId,
-    fieldType: FieldType.CUSTOM_FIELD,
-  })
+    const session = await auth()
+    await findChatbotOrFail(session?.user.id, chatbotId)
 
-  return NextResponse.json(allCustomFields)
+    const searchParams = Object.fromEntries(req.nextUrl.searchParams)
+    const search = listCustomFieldsSearchParams.parse(searchParams)
+
+    const allCustomFields = await listCustomFields({
+      ...search,
+      chatbotId: (await params).chatbotId,
+    })
+
+    return NextResponse.json(allCustomFields)
+  } catch (e) {
+    return errorResponse(e)
+  }
 }

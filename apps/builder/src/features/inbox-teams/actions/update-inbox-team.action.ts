@@ -1,0 +1,36 @@
+"use server"
+
+import {
+  chatbotIdAndIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
+import {
+  type UpdateInboxTeamRequest,
+  updateInboxTeamRequest,
+} from "../schemas/update-inbox-team.request"
+
+export const updateInboxTeamAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .schema(updateInboxTeamRequest)
+  .action(
+    async ({
+      bindArgsParsedInputs: [chatbotId, id],
+      parsedInput,
+    }: {
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      parsedInput: UpdateInboxTeamRequest
+    }) => {
+      await prisma.inboxTeam.update({
+        where: {
+          id,
+          chatbotId,
+        },
+        data: parsedInput,
+      })
+
+      revalidateTag(`chatbots:${chatbotId}#inboxTeams`)
+    },
+  )

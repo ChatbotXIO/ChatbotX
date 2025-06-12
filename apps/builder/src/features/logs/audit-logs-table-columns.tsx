@@ -1,22 +1,12 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import type { Contact, Log, User } from "@ahachat.ai/database"
-import type { ColumnDef, Row } from "@tanstack/react-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
+import type { LogResource } from "./schemas"
 
-export interface DataTableRowAction<TData> {
-  row: Row<TData>
-  type: "update" | "delete"
-}
-
-type LogWithExecutorUser = Log & {
-  executorUser?: User
-  executorContact?: Contact
-}
-
-export function getAuditColumns(): ColumnDef<LogWithExecutorUser>[] {
+export function getAuditColumns(): ColumnDef<LogResource>[] {
   return [
     {
       accessorKey: "executorType",
@@ -25,16 +15,16 @@ export function getAuditColumns(): ColumnDef<LogWithExecutorUser>[] {
       ),
       cell: ({ row }) => (
         <div>
-          {row.original.executorType ? (
+          {row.original.user ? (
             <div className="flex items-center gap-2">
               <Avatar className="h-5 w-5">
                 <AvatarImage
-                  src={row.original.executorUser?.image || undefined}
+                  src={row.original.user.image || undefined}
                   alt="userImage"
                 />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
-              {row.original.executorUser?.name}
+              {row.original.user.name}
             </div>
           ) : null}
         </div>
@@ -48,7 +38,7 @@ export function getAuditColumns(): ColumnDef<LogWithExecutorUser>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Web page" />
       ),
-      cell: ({ row }) => <a href={"/error-logs"}>View</a>,
+      cell: () => <a href={"/error-logs"}>View</a>,
       size: 50,
       enableSorting: true,
       enableHiding: false,

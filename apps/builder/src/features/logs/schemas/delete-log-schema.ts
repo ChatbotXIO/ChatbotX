@@ -1,13 +1,8 @@
+import { bulkUpdateIdsRequest } from "@/features/common/schemas"
+import { LogType } from "@ahachat.ai/database/types"
 import { z } from "zod"
 
-export const deleteLogBindSchema: [
-  chatbotId: z.ZodString,
-  ids: z.ZodArray<Zod.ZodString>,
-  logType: z.ZodString,
-] = [z.string().cuid2(), z.array(z.string().cuid2()), z.string()]
-
-export type DeleteLogBindSchema = [
-  chatbotId: string,
-  ids: string[],
-  logType: string,
-]
+export const deleteLogsRequest = bulkUpdateIdsRequest.extend({
+  logType: z.nativeEnum(LogType),
+})
+export type DeleteLogsRequest = z.infer<typeof deleteLogsRequest>

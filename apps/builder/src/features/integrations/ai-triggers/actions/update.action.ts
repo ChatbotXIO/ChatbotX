@@ -1,42 +1,39 @@
 "use server"
 
+import {
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
 import { AITriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
 import {
-  type UpdateAITriggerBindSchema,
-  type UpdateAITriggerSchema,
-  updateAITriggerBindSchema,
-  updateAITriggerSchema,
+  type UpdateAITriggerRequest,
+  updateAITriggerRequest,
 } from "@/features/integrations/ai-triggers/schemas/update.schema"
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
-import type { JsonObject } from "@prisma/client/runtime/binary"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { type User, prisma, type Prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const updateAITriggerAction = authActionClient
-  .schema(updateAITriggerSchema)
-  .bindArgsSchemas(updateAITriggerBindSchema)
+export const updateAITriggerAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .schema(updateAITriggerRequest)
   .action(
     async ({
-      ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, triggerId],
+      bindArgsParsedInputs: [chatbotId, id],
     }: {
       ctx: { user: User }
-      parsedInput: UpdateAITriggerSchema
-      bindArgsParsedInputs: UpdateAITriggerBindSchema
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      parsedInput: UpdateAITriggerRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       const existingAITrigger = await prisma.aITrigger.findFirst({
         select: {
           id: true,
         },
         where: {
-          description: parsedInput.name,
+          name: parsedInput.name,
           chatbotId,
           id: {
-            not: triggerId,
+            not: id,
           },
         },
       })
@@ -49,18 +46,14 @@ export const updateAITriggerAction = authActionClient
 
       await prisma.aITrigger.update({
         where: {
-          id: triggerId,
+          id,
         },
         data: {
           ...parsedInput,
-          questions: parsedInput.questions as JsonObject[],
+          questions: parsedInput.questions as Prisma.InputJsonValue[],
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiTriggers`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbots:${chatbotId}#aiTriggers`)
     },
   )

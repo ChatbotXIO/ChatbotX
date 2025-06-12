@@ -11,12 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { Log } from "@ahachat.ai/database"
+import type { Log, LogType } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
-import { useTransition } from "react"
 import { toast } from "sonner"
 import { deleteLogAction } from "./actions/delete-log-action"
 
@@ -39,32 +38,18 @@ export function DeleteLogsDialog({
 }: DeleteLogsDialogProps) {
   const { t } = useTranslate()
 
-  const { execute, result } = useAction(
-    deleteLogAction.bind(
-      null,
-      chatbotId,
-      (logs ?? []).map((log) => log.id),
-      logType,
-    ),
-  )
-
-  const [isDeletePending, startDeleteTransition] = useTransition()
-  const onDelete = () => {
-    if (!logs || logs.length === 0) {
-      return
-    }
-
-    startDeleteTransition(async () => {
-      await execute()
-
-      if (result.serverError) {
-        toast.error(result.serverError.message ?? result.serverError)
-      } else {
+  const { execute, result, isPending } = useAction(
+    deleteLogAction.bind(null, chatbotId),
+    {
+      onSuccess: () => {
         toast.success(t("logs.deleted"))
         onSuccess?.()
-      }
-    })
-  }
+      },
+      onError: ({ error }) => {
+        error.serverError && toast.error(result.serverError)
+      },
+    },
+  )
 
   return (
     <Dialog {...props}>
@@ -93,10 +78,15 @@ export function DeleteLogsDialog({
           <Button
             aria-label="Delete selected rows"
             variant="destructive"
-            onClick={onDelete}
-            disabled={isDeletePending}
+            onClick={() =>
+              execute({
+                ids: (logs ?? []).map((log) => log.id),
+                logType: logType as LogType,
+              })
+            }
+            disabled={isPending}
           >
-            {isDeletePending && (
+            {isPending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             {t("common.deleteBtn")}

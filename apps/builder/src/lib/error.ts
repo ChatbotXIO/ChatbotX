@@ -5,3 +5,5 @@ export class BaseException extends Error {
     Object.setPrototypeOf(this, BaseException.prototype)
   }
 }
+
+export class NotfoundException extends BaseException {}

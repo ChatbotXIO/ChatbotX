@@ -1,0 +1,12 @@
+import { CustomFieldOperation } from "@ahachat.ai/database/types"
+import { z } from "zod"
+
+export const addContactCustomFieldRequest = z.object({
+  ids: z.array(z.string().cuid2()),
+  customFieldId: z.string().cuid2(),
+  operation: z.nativeEnum(CustomFieldOperation),
+  value: z.string().trim(),
+})
+export type AddContactCustomFieldRequest = z.infer<
+  typeof addContactCustomFieldRequest
+>

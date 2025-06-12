@@ -1,36 +1,30 @@
 "use client"
 
-import { SingleSelect } from "@/components/single-select"
+import { InputField } from "@/components/form/input-field"
+import { TextareaField } from "@/components/form/textarea-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { Form, FormLabel } from "@/components/ui/form"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { FlowSelect } from "@/features/flows/flow-select"
 import { updateAITriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
-import { updateAITriggerSchema } from "@/features/integrations/ai-triggers/schemas/update.schema"
-import type { AITrigger } from "@ahachat.ai/database"
+import { updateAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/update.schema"
+import type { AITrigger } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import type { JsonObject } from "@prisma/client/runtime/binary"
 import { useTranslate } from "@tolgee/react"
 import { ArrowRightIcon, Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import type { CreateAITriggerRequest } from "./schemas/create.schema"
 
 type UpdateAITriggerDialogProps = {
   open: boolean
@@ -40,7 +34,6 @@ type UpdateAITriggerDialogProps = {
 }
 
 export function UpdateAITriggerDialog({
-  chatbotId,
   trigger,
   open,
   onOpenChange,
@@ -51,15 +44,21 @@ export function UpdateAITriggerDialog({
   const {
     form,
     handleSubmitWithAction,
-    form: { setValue, control, reset },
+    form: { control, reset },
+    resetFormAndAction,
   } = useHookFormAction(
-    updateAITriggerAction.bind(null, chatbotId, trigger?.id ?? ""),
-    zodResolver(updateAITriggerSchema),
+    updateAITriggerAction.bind(
+      null,
+      trigger?.chatbotId ?? "",
+      trigger?.id ?? "",
+    ),
+    zodResolver(updateAITriggerRequest),
     {
       actionProps: {
         onSuccess: () => {
           toast.success("AI Trigger update successfully")
 
+          resetFormAndAction()
           onOpenChange(false)
           router.refresh()
         },
@@ -74,7 +73,7 @@ export function UpdateAITriggerDialog({
     },
   )
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
   })
@@ -88,21 +87,20 @@ export function UpdateAITriggerDialog({
 
   useEffect(() => {
     if (trigger) {
-      // setValue("name", trigger?.name)
-      setValue("description", trigger.description || "")
-      if (trigger.questions) {
-        setValue("questions", trigger.questions as JsonObject[])
-      }
-      setValue("flowId", trigger.flowId || "")
-      setValue("finalMessage", trigger.finalMessage || "")
+      const { questions, ...rest } = trigger
+      reset({
+        ...rest,
+        questions: questions as CreateAITriggerRequest["questions"],
+      })
     }
-  }, [trigger, setValue])
+  }, [trigger, reset])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("aiTriggers.update.title")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <Form {...form}>
@@ -110,72 +108,43 @@ export function UpdateAITriggerDialog({
               onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
             >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.name")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("aiTriggers.name")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <InputField name="name" label={t("aiTriggers.name")} />
 
-              <FormField
-                control={form.control}
+              <TextareaField
                 name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.description")}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t("aiTriggers.description")}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("aiTriggers.description")}
               />
 
               <div className="flex flex-col space-y-2">
                 <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
                 {fields.map((field, i) => (
                   <div className="flex items-center space-x-2" key={field.id}>
-                    <FormField
-                      control={form.control}
-                      name={`questions.${i}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder={t("aiTriggers.questions.name")}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="basis-5/12">
+                      <InputField name={`questions.${i}.name`} />
+                    </div>
 
-                    <ArrowRightIcon />
+                    <div className="basis-1/12 flex justify-center">
+                      <ArrowRightIcon className="mt-2" />
+                    </div>
 
-                    <CustomFieldSelect
-                      label=""
-                      name={`questions.${i}.fieldId`}
-                    />
+                    <div className="basis-5/12">
+                      <CustomFieldSelect
+                        label=""
+                        name={`questions.${i}.fieldId`}
+                        isRequired={false}
+                      />
+                    </div>
 
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => remove(i)}
-                    >
-                      <XIcon />
-                    </Button>
+                    <div className="basis-1/12">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => remove(i)}
+                      >
+                        <XIcon />
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 <Button
@@ -187,40 +156,11 @@ export function UpdateAITriggerDialog({
                 </Button>
               </div>
 
-              <FormField
-                control={form.control}
-                name="flowId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.flowId")}</FormLabel>
-                    <FormControl>
-                      <SingleSelect
-                        options={flows as { label: string; value: string }[]}
-                        placeholder={t("aiTriggers.flowId")}
-                        {...field}
-                        onValueChange={(v: string) => setValue("flowId", v)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FlowSelect name="flowId" label={t("aiTriggers.flowId")} />
 
-              <FormField
-                control={form.control}
+              <TextareaField
                 name="finalMessage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("aiTriggers.finalMessage")}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t("aiTriggers.finalMessage")}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={t("aiTriggers.finalMessage")}
               />
 
               <div className="flex justify-end gap-4">

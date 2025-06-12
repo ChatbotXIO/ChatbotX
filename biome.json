@@ -7,19 +7,36 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": [".next", ".tolgee", ".turbo"]
+    "ignore": [
+      ".next",
+      ".tolgee",
+      ".turbo",
+      "packages/database/generated/client",
+      "dist"
+    ]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
   },
   "organizeImports": {
-    "enabled": true
+    "enabled": false
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "noUnusedVariables": "error",
+        "noUnknownProperty": "error"
+      },
+      "style": {
+        "useNodejsImportProtocol": "off"
+      }
     }
   },
   "javascript": {

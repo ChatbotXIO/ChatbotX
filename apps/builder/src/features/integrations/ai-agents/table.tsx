@@ -1,23 +1,20 @@
 "use client"
 
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
-import type {
-  DataTableFilterField,
-  DataTableRowAction,
-} from "@/components/data-table/types"
 import { duplicateAIAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
 import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
-import type { getAIAgents } from "@/features/integrations/ai-agents/queries/get.query"
+import type { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
 import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
 import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgent } from "@ahachat.ai/database/types"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { GetAIAgentsColumns } from "./table-columns"
+import type { DataTableRowAction } from "@/types/data-table"
+import { DataTable } from "@/components/data-table"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
 
 interface AIAgentsTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getAIAgents>>]>
@@ -30,7 +27,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AIAgent> | null>(null)
 
-  const { execute, result } = useAction(
+  const { execute } = useAction(
     duplicateAIAgentAction.bind(
       null,
       chatbotId,
@@ -39,7 +36,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
   )
 
   useEffect(() => {
-    if (rowAction && rowAction.type === "duplicate") {
+    if (rowAction && rowAction.variant === "duplicate") {
       execute()
       setRowAction(null)
       toast.success("Duplicate successfully!")
@@ -53,19 +50,10 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
     [setRowAction],
   )
 
-  const filterFields: DataTableFilterField<AIAgent & { name?: string }>[] = [
-    {
-      id: "name",
-      label: "Search",
-      placeholder: "Enter name",
-    },
-  ]
-
   const { table } = useDataTable({
     data,
     columns,
     pageCount,
-    filterFields,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -78,7 +66,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} filterFields={filterFields}>
+        <DataTableToolbar table={table}>
           <AIAgentsTableToolbarActions
             table={table}
             chatbotId={chatbotId}
@@ -88,7 +76,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
       </DataTable>
 
       <DeleteAIAgentsDialog
-        open={rowAction?.type === "delete"}
+        open={rowAction?.variant === "delete"}
         onOpenChange={() => setRowAction(null)}
         agents={rowAction?.row.original ? [rowAction?.row.original] : []}
         showTrigger={false}
@@ -97,7 +85,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
       />
 
       <UpdateAIAgentDialog
-        open={rowAction?.type === "update"}
+        open={rowAction?.variant === "update"}
         onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         agent={rowAction?.row.original || null}

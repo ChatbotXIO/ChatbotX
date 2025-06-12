@@ -5,14 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { T } from "@tolgee/react"
-import {
-  EllipsisVertical,
-  EllipsisVerticalIcon,
-  Pencil,
-  PencilIcon,
-  Trash,
-  TrashIcon,
-} from "lucide-react"
+import { EllipsisVerticalIcon, PencilIcon, TrashIcon } from "lucide-react"
 
 interface ChatbotMembersActionsProps {
   onEdit: () => void

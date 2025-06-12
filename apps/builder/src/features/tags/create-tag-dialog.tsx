@@ -106,7 +106,7 @@ export function CreateTagDialog({
                     <FormLabel>{t("tags.syncToMessenger")}</FormLabel>
                     <FormControl>
                       <Switch
-                        className="!mt-0"
+                        className="mt-0!"
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />

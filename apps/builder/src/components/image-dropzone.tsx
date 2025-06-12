@@ -1,7 +1,7 @@
 import { T } from "@tolgee/react"
 import { ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type MouseEvent } from "react"
 import Dropzone from "react-dropzone"
 import { Button } from "./ui/button"
 
@@ -12,8 +12,7 @@ function AttachedImage({
   image: string
   onRemove: () => void
 }) {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const onClick = (e: any) => {
+  const onClick = (e: MouseEvent) => {
     e.stopPropagation()
     onRemove()
   }
@@ -42,8 +41,7 @@ function NeedAttachedImage({
 }: {
   onSwitchToImageLink: () => void
 }) {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const switchToImageLinkMode = (e: any) => {
+  const switchToImageLinkMode = (e: MouseEvent) => {
     e.stopPropagation()
     onSwitchToImageLink()
   }
@@ -111,7 +109,7 @@ export default function ImageDropzone({
         <section>
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center rounded-lg border border-dashed border-2 h-36 overflow-hidden justify-center hover:cursor-pointer hover:border-solid hover:border-blue-500">
+            <div className="flex flex-col items-center rounded-lg border-dashed border-2 h-36 overflow-hidden justify-center hover:cursor-pointer hover:border-solid hover:border-blue-500">
               {image ? (
                 <AttachedImage image={image} onRemove={handleRemove} />
               ) : (

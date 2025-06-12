@@ -1,36 +1,39 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 import {
-  type DeleteLogBindSchema,
-  deleteLogBindSchema,
+  chatbotIdRequestParams,
+  type ChatbotIdRequestParams,
+} from "@/features/common/schemas"
+import {
+  deleteLogsRequest,
+  type DeleteLogsRequest,
 } from "../schemas/delete-log-schema"
 
-export const deleteLogAction = authActionClient
-  .bindArgsSchemas(deleteLogBindSchema)
+export const deleteLogAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(deleteLogsRequest)
   .action(
     async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId, ids, logType],
+      bindArgsParsedInputs: [chatbotId],
+      parsedInput,
     }: {
-      ctx: { user: User }
-      bindArgsParsedInputs: DeleteLogBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: DeleteLogsRequest
     }) => {
-      const { chatbot } = await findChatbotOrFail(ctx.user.id, chatbotId)
-
       await prisma.log.deleteMany({
         where: {
           id: {
-            in: ids,
+            in: parsedInput.ids,
           },
-          chatbotId: chatbot.id,
+          chatbotId,
+          logType: parsedInput.logType,
         },
       })
 
-      revalidateTag(`${ctx.user.id}#logs#${logType}`)
+      revalidateTag(`chatbots:${chatbotId}#logs#${parsedInput.logType}`)
 
       return {
         successful: true,

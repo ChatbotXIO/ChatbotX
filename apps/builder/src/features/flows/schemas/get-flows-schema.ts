@@ -1,4 +1,4 @@
-import { getSortingStateParser } from "@/components/data-table/parsers"
+import { getSortingStateParser } from "@/lib/parsers"
 import type { Flow, FlowVersion } from "@ahachat.ai/database"
 import {
   createSearchParamsCache,

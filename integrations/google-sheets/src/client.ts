@@ -1,13 +1,8 @@
-import {
-  AuthType,
-  type Oauth2AuthProps,
-  type Oauth2AuthValue,
-  SdkException,
-} from "@ahachat.ai/sdk"
 import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
+import type { GoogleSheetsAuthValue, GoogleSheetsConfig } from "./schemas"
 
-export function getClient(props: Oauth2AuthProps | Oauth2AuthValue) {
+export function getClient(props: GoogleSheetsConfig | GoogleSheetsAuthValue) {
   const client = new OAuth2Client(
     props.clientId,
     props.clientSecret,
@@ -15,19 +10,20 @@ export function getClient(props: Oauth2AuthProps | Oauth2AuthValue) {
   )
 
   if ("tokens" in props) {
+    const tokens = props.tokens as GoogleSheetsAuthValue["tokens"]
     client.setCredentials({
-      access_token: props.tokens.accessToken,
-      expiry_date: props.tokens.expiresAt
-        ? new Date(props.tokens.expiresAt).getTime()
+      access_token: tokens.accessToken,
+      expiry_date: tokens.expiresAt
+        ? new Date(tokens.expiresAt).getTime()
         : null,
-      refresh_token: props.tokens.refreshToken,
+      refresh_token: tokens.refreshToken,
     })
   }
 
   return client
 }
 
-export function generateAuthUrl(props: Oauth2AuthProps): string {
+export function generateAuthUrl(props: GoogleSheetsConfig): string {
   return getClient(props).generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
@@ -39,43 +35,14 @@ export function generateAuthUrl(props: Oauth2AuthProps): string {
   })
 }
 
-export async function getToken(
-  props: Oauth2AuthProps,
-): Promise<Oauth2AuthValue> {
-  if (!props.code) {
-    throw new SdkException("Code is required")
-  }
-
-  const { tokens } = await getClient(props).getToken(props.code)
-
-  return {
-    authType: AuthType.OAUTH2,
-    clientId: props.clientId,
-    clientSecret: props.clientSecret,
-    redirectUri: props.redirectUri,
-    tokens: {
-      accessToken: tokens.access_token || "",
-      expiresAt: new Date(tokens.expiry_date ?? "").toISOString(),
-      refreshToken: tokens.refresh_token ?? null,
-      metadata: {
-        scope: tokens.scope,
-      },
-    },
-  }
-}
-
-export function getSheetsClient(props: Oauth2AuthValue) {
+export function getSheetsClient(props: GoogleSheetsAuthValue) {
   const client = getClient(props)
 
   return google.sheets({ version: "v4", auth: client })
 }
 
-export async function revokeToken(auth: Oauth2AuthValue) {
+export async function revokeToken(auth: GoogleSheetsAuthValue): Promise<void> {
   const client = getClient(auth)
 
-  if (auth.tokens) {
-    await client.revokeToken(auth.tokens.accessToken ?? "")
-  }
-
-  return true
+  await client.revokeToken(auth.tokens.accessToken ?? "")
 }

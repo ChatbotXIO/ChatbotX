@@ -1,9 +1,18 @@
 "use client"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/components/lib/utils"
 import { T } from "@tolgee/react"
-import { File, Image, ImagePlay, Undo2, Video, Volume2, X } from "lucide-react"
-import { useState } from "react"
+import {
+  File,
+  Image,
+  ImagePlay,
+  Undo2,
+  Video,
+  Volume2,
+  X,
+  type LucideIcon,
+} from "lucide-react"
+import { useState, type SVGProps } from "react"
 import Dropzone from "react-dropzone"
 import { toast } from "sonner"
 
@@ -15,14 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
-enum FileType {
-  Video = "video",
-  Image = "image",
-  File = "file",
-  Audio = "audio",
-  Gif = "gif",
-}
+import { FileType } from "@ahachat.ai/database/types"
 
 type FileDropzoneConfigs = {
   uploadKeyName: string
@@ -38,7 +40,7 @@ interface FileDropzoneProps {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   unregister?: any
   parentName: string
-  type?: "video" | "image" | "file" | "audio" | "gif"
+  type?: FileType
   mode?: "file" | "link"
   configs?: Partial<FileDropzoneConfigs>
   onMode?: (mode: "file" | "link") => void
@@ -46,11 +48,37 @@ interface FileDropzoneProps {
   onDrop?: (file: File) => void
 }
 
+function UploadIcon({
+  type,
+  ...props
+}: { type?: FileType; size: number } & SVGProps<SVGSVGElement>) {
+  const uploadIcons: Record<FileType, { icon: LucideIcon }> = {
+    [FileType.VIDEO]: {
+      icon: Video,
+    },
+    [FileType.DOCUMENT]: {
+      icon: File,
+    },
+    [FileType.AUDIO]: {
+      icon: Volume2,
+    },
+    [FileType.GIF]: {
+      icon: ImagePlay,
+    },
+    [FileType.IMAGE]: {
+      icon: Image,
+    },
+  }
+  const dyanmicIcon = uploadIcons[type ?? FileType.IMAGE]
+
+  return <dyanmicIcon.icon {...props} />
+}
+
 export default function FileDropzone({
   register,
   unregister,
   parentName,
-  type = FileType.Image,
+  type = FileType.IMAGE,
   mode = "file",
   configs: {
     uploadKeyName = "common.uploadImageOr",
@@ -101,6 +129,9 @@ export default function FileDropzone({
     reader.onloadend = () => {
       setPreview(reader.result as string)
     }
+    reader.onerror = () => {
+      toast.error("Failed to preview image")
+    }
     reader.readAsDataURL(file)
   }
 
@@ -110,12 +141,10 @@ export default function FileDropzone({
         return toast("common.upload.fileMaxSize")
       }
 
-      if (file.type.includes(FileType.Video)) {
-        _videoPreview(file)
-      }
-
-      if (file.type.includes(FileType.Image)) {
+      if (file.type.startsWith("image/")) {
         _imagePreview(file)
+      } else if (file.type.startsWith("video/")) {
+        _videoPreview(file)
       }
 
       onDrop?.(file)
@@ -141,25 +170,10 @@ export default function FileDropzone({
     onMode?.(fileMode)
   }
 
-  const _uploadIcon = (size = 30) => {
-    switch (type) {
-      case FileType.Video:
-        return <Video size={size} className="text-gray-500" />
-      case FileType.File:
-        return <File size={size} className="text-gray-500" />
-      case FileType.Audio:
-        return <Volume2 size={size} className="text-gray-500" />
-      case FileType.Gif:
-        return <ImagePlay size={size} className="text-gray-500" />
-      default:
-        return <Image size={size} className="text-gray-500" />
-    }
-  }
-
   const _noFile = () => {
     return (
       <div className="flex flex-col items-center">
-        {_uploadIcon()}
+        <UploadIcon type={type} size={30} className="text-gray-500" />
         <div>
           <T keyName={uploadKeyName} />
           {!isCard && (
@@ -230,7 +244,8 @@ export default function FileDropzone({
     return (
       <div className="flex flex-col">
         <div className="flex items-center justify-center gap-2 mb-2 relative">
-          {_uploadIcon(25)} <span className="capitalize">{type}</span>
+          <UploadIcon size={25} />
+          <span className="capitalize">{type}</span>
           <div className="absolute right-0">
             <TooltipProvider>
               <Tooltip>

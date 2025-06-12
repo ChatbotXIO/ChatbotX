@@ -1,5 +1,5 @@
 import { type FolderType, prisma } from "@ahachat.ai/database"
-import { FolderException } from "../schemas/exception"
+import { FolderException } from "../schemas/types"
 
 export const ensureFolderIdIsExists = async (
   id: string,

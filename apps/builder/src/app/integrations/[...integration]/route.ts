@@ -1,4 +1,6 @@
+import { HandleRequestType } from "@ahachat.ai/sdk"
 import { notFound } from "next/navigation"
+import { handleCallback } from "./callback"
 import { handleWebhook } from "./webhook"
 
 const handleRequest = async (
@@ -6,18 +8,19 @@ const handleRequest = async (
   { params }: { params: Promise<{ integration: string[] }> },
 ) => {
   const allParams = await params
-  const integrationName = allParams.integration[0]
+  let integrationName = allParams.integration[0]
   const interationAction = allParams.integration[1]
 
   if (!integrationName) {
     return notFound()
   }
 
+  integrationName = integrationName.replace(/-/g, "_").toUpperCase()
+
   switch (interationAction) {
-    case "callback":
-      console.log("callback")
-      return new Response("ok")
-    case "webhook":
+    case HandleRequestType.CALLBACK:
+      return await handleCallback(integrationName, req)
+    case HandleRequestType.WEBHOOK:
       return await handleWebhook(integrationName, req)
     default:
       return notFound()

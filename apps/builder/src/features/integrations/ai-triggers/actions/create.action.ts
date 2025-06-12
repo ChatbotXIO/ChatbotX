@@ -1,35 +1,29 @@
 "use server"
 
 import {
-  type ChatbotIdBindSchema,
-  chatbotIdBindSchema,
-} from "@/features/chatbots/schemas"
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
 import {
-  type CreateAITriggerSchema,
-  createAITriggerSchema,
+  type CreateAITriggerRequest,
+  createAITriggerRequest,
 } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { AITriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
-import type { JsonObject } from "@prisma/client/runtime/binary"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { type Prisma, prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
-export const createAITriggerAction = authActionClient
-  .schema(createAITriggerSchema)
-  .bindArgsSchemas(chatbotIdBindSchema)
+export const createAITriggerAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .schema(createAITriggerRequest)
   .action(
     async ({
-      ctx,
-      parsedInput,
       bindArgsParsedInputs: [chatbotId],
+      parsedInput,
     }: {
-      ctx: { user: User }
-      parsedInput: CreateAITriggerSchema
-      bindArgsParsedInputs: ChatbotIdBindSchema
+      bindArgsParsedInputs: ChatbotIdRequestParams
+      parsedInput: CreateAITriggerRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
-
       const existingAITrigger = await prisma.aITrigger.findFirst({
         select: {
           id: true,
@@ -49,15 +43,11 @@ export const createAITriggerAction = authActionClient
       await prisma.aITrigger.create({
         data: {
           ...parsedInput,
-          questions: parsedInput.questions as JsonObject[],
+          questions: parsedInput.questions as Prisma.InputJsonValue[],
           chatbotId,
         },
       })
 
-      revalidateTag(`${ctx.user.id}#aiTriggers`)
-
-      return {
-        successful: true,
-      }
+      revalidateTag(`chatbots:${chatbotId}#aiTriggers`)
     },
   )

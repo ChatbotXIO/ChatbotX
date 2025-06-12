@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Folder, FolderType } from "@ahachat.ai/database"
+import type { Folder, FolderType } from "@ahachat.ai/database/types"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
 import { parseAsString, useQueryState } from "nuqs"
 import { Fragment, use, useState } from "react"
@@ -28,12 +28,12 @@ type ListFoldersProps = {
   >
 }
 
-const ListFolders = ({ chatbotId, folderType, promises }: ListFoldersProps) => {
+const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
   const [{ folder, parents }, { data: folders }] = use(promises)
   const [, setFolderId] = useQueryState(
     "folderId",
     parseAsString.withOptions({
-      history: "replace",
+      history: "push",
       shallow: false,
     }),
   )

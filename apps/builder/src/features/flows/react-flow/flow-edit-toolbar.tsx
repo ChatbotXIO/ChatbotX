@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useReactFlow } from "@xyflow/react"
+import { useEdges, useNodes } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
   CopyIcon,
@@ -29,13 +29,16 @@ import { toast } from "sonner"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { updateFlowVersionSchema } from "../schemas/update-flow-schema"
 
-export function FlowEditToolbar({ flowId }: { flowId: string }) {
-  const { getNodes, getEdges } = useReactFlow()
-
+export function FlowEditToolbar({
+  chatbotId,
+  flowId,
+}: { chatbotId: string; flowId: string }) {
   const [isValidating, setIsValidating] = useState<boolean>(false)
+  const nodes = useNodes()
+  const edges = useEdges()
 
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
-    publishFlowAction.bind(null, flowId),
+    publishFlowAction.bind(null, chatbotId, flowId),
     {
       onSuccess: () => {
         toast.success("A new version has been published")
@@ -48,10 +51,11 @@ export function FlowEditToolbar({ flowId }: { flowId: string }) {
 
     // validate nodes & edges
     const { success, error } = updateFlowVersionSchema.safeParse({
-      nodes: getNodes(),
-      edges: getEdges(),
+      nodes,
+      edges,
     })
     if (!success) {
+      console.error(error)
       toast.error("Some configurations are incomplete")
     } else {
       executePublish()

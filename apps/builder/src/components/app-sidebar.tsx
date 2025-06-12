@@ -81,7 +81,7 @@ export function AppSidebar({
       },
       {
         title: t("common.settings"),
-        url: `/chatbots/${chatbotId}/settings`,
+        url: `/chatbots/${chatbotId}/settings/general`,
         icon: SlidersHorizontal,
       },
     ],
