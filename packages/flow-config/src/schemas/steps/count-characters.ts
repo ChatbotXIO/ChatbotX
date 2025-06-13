@@ -1,0 +1,20 @@
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
+import { StepType } from "./step-action"
+
+export const countCharactersStepSchema = z.object({
+  id: z.string().cuid2(),
+  stepType: z.literal(StepType.COUNT_CHARACTERS),
+  inputCustomFieldId: z.string().cuid2(),
+  outputCustomFieldId: z.string().cuid2(),
+})
+export type CountCharactersStepSchema = z.infer<
+  typeof countCharactersStepSchema
+>
+
+export const countCharactersStepDefaultFn = (): CountCharactersStepSchema => ({
+  id: createId(),
+  stepType: StepType.COUNT_CHARACTERS,
+  inputCustomFieldId: "",
+  outputCustomFieldId: "",
+})

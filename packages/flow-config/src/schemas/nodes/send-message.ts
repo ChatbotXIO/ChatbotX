@@ -1,3 +1,6 @@
+import { InboxType, OMNICHANNEL } from "@ahachat.ai/database/types"
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
 import {
   addNotesStepSchema,
   archiveConversationStepSchema,
@@ -5,9 +8,13 @@ import {
   autoAssignConversationStepSchema,
   blockContactStepSchema,
   clearCustomFieldStepSchema,
+  countCharactersStepSchema,
   disableBotStepSchema,
   enableBotStepSchema,
   followConversationStepSchema,
+  formatDateStepSchema,
+  generateCodeStepSchema,
+  getDataFromJsonStepSchema,
   markEmailVerifiedStepSchema,
   openAIAnalyzeImageSchema,
   openAIDeleteMessageHistorySchema,
@@ -27,9 +34,6 @@ import {
   unassignConversationStepSchema,
   unfollowConversationStepSchema,
 } from "../steps"
-import { InboxType, OMNICHANNEL } from "@ahachat.ai/database/types"
-import { createId } from "@paralleldrive/cuid2"
-import { z } from "zod"
 import { baseNodeSchema, NodeType, type NewNodeProps } from "./node-config"
 
 export const actionsStepSchema = [
@@ -58,21 +62,25 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
     inboxType: z.union([z.nativeEnum(InboxType), z.literal(OMNICHANNEL)]),
     steps: z.array(
       z.union([
-        sendTextStepSchema,
-        sendImageStepSchema,
-        setCustomFieldStepSchema,
-        clearCustomFieldStepSchema,
         addNotesStepSchema,
         archiveConversationStepSchema,
         assignConversationStepSchema,
         autoAssignConversationStepSchema,
         blockContactStepSchema,
+        clearCustomFieldStepSchema,
+        countCharactersStepSchema,
         disableBotStepSchema,
         enableBotStepSchema,
         followConversationStepSchema,
+        formatDateStepSchema,
+        generateCodeStepSchema,
+        getDataFromJsonStepSchema,
         markEmailVerifiedStepSchema,
         optInEmailStepSchema,
         optOutEmailStepSchema,
+        sendImageStepSchema,
+        sendTextStepSchema,
+        setCustomFieldStepSchema,
         unarchiveConversationStepSchema,
         unassignConversationStepSchema,
         unfollowConversationStepSchema,

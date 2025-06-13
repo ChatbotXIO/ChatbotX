@@ -11,35 +11,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import { ButtonActionSelect } from "@/features/flows/react-flow/blocks/button/components/action-select"
-import { BrowserSizeSelect } from "@/features/flows/react-flow/blocks/button/components/browser-size-select"
-import { ErrorAlert } from "@/features/flows/react-flow/blocks/error-alert"
-import { generateDefaultValue } from "@/features/flows/react-flow/blocks/utils"
-import { NodeSelect } from "@/features/flows/react-flow/nodes/node-select"
-import { actionsBlockEditor } from "@/features/flows/react-flow/nodes/send-message/editor"
-import {
-  type SendMessageNodeSchema,
-  defaultSendMessageNode,
-} from "@/features/flows/react-flow/nodes/send-message/schema"
-import {
-  type StartFlowNodeSchema,
-  startFlowNodeDefaultValue,
-} from "@/features/flows/react-flow/nodes/start-flow/schema"
-import { NodeType } from "@/features/flows/react-flow/types"
+import type { SendMessageNodeSchema, StartFlowNodeSchema } from "@ahachat.ai/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslate } from "@tolgee/react"
 import { type Edge, type Node, addEdge, useReactFlow } from "@xyflow/react"
 import { MessageCircleIcon, PencilIcon, XIcon } from "lucide-react"
 import { useMemo } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
-import { ActionType } from "../../../action-type"
-import {
-  ButtonActionFlow,
-  ButtonActionType,
-  type ButtonBlockSchema,
-  buttonBlockSchema,
-} from "../schema"
-import ButtonEditorAction from "./editor-action"
 
 type ButtonNewNodeSchema = SendMessageNodeSchema | StartFlowNodeSchema
 
@@ -61,7 +39,7 @@ export function EditButtonDialog({
     setValue: setValueOriginEditor,
     getValues: getValuesOriginEditor,
   } = useFormContext()
-  const button: ButtonBlockSchema = watchOriginEditor(parentName)
+  const button: ButtonBlockSchem = watchOriginEditor(parentName)
   console.log("parentName", parentName)
 
   const form = useForm<ButtonBlockSchema>({
@@ -152,10 +130,10 @@ export function EditButtonDialog({
     setEdges((edges) => edges.filter((edge) => edge.sourceHandle !== button.id))
   }
 
-  const onChangeType = (actionType: ButtonActionType | null) => {
-    setValue("type", actionType)
+  const onChangeType = (stepType: ButtonActionType | null) => {
+    setValue("type", stepType)
 
-    switch (actionType) {
+    switch (stepType) {
       case ButtonActionType.SendMessage:
         addNode(NodeType.SendMessage)
         break
@@ -181,7 +159,7 @@ export function EditButtonDialog({
     }
   }
 
-  const onClickAction = (name: ActionType) => {
+  const onClickAction = (name: StepType) => {
     const value = generateDefaultValue(name)
     if (value) {
       append(value)
@@ -226,7 +204,7 @@ export function EditButtonDialog({
             <div className="flex-1 space-y-4">
               <FormInput name="label" label={t("flows.Button.label")} />
               <ButtonActionSelect
-                name="actions.0.actionType"
+                name="actions.0.stepType"
                 label={t("flows.Button.whenPressed")}
                 onSelect={onChangeType}
               />
@@ -239,23 +217,11 @@ export function EditButtonDialog({
                   <PencilIcon />
                 </div>
               )}
-              {type === ButtonActionType.OpenWebsite && (
-                <>
-                  <FormInput name="url" label={t("common.link")} />
-                  <BrowserSizeSelect
-                    name="browserSize"
-                    label={t("flows.Button.browserSize")}
-                  />
-                </>
-              )}
               {type === ButtonActionType.CallPhoneNumber && (
                 <FormInput
                   name="phoneNumber"
                   label={t("flows.Button.phoneNumber")}
                 />
-              )}
-              {type === ButtonActionType.StartAnotherStep && (
-                <NodeSelect name="nodeId" label={t("flows.node.selectStep")} />
               )}
               {type === ButtonActionType.StartExternalStep && (
                 <FormInput name="stepId" label={t("flows.Button.stepId")} />
@@ -279,9 +245,9 @@ export function EditButtonDialog({
                                   typeof formState.errors.actions?.[index]
                                     ?.message === "object"
                                     ? ((
-                                        formState.errors.actions?.[index]
-                                          ?.message as { message: string }
-                                      ).message as string)
+                                      formState.errors.actions?.[index]
+                                        ?.message as { message: string }
+                                    ).message as string)
                                     : ""
                                 }
                               />
@@ -289,13 +255,13 @@ export function EditButtonDialog({
                               <div className="w-4">{"\u00A0"}</div>
                             )}
                             <div className={"flex-1 break-all"}>
-                              {field.actionType in ActionType
+                              {field.stepType in StepType
                                 ? actionsBlockEditor[
-                                    field.actionType as ActionType
-                                  ]?.({
-                                    key: field.id,
-                                    parentName: `blocks.${index}`,
-                                  })
+                                  field.stepType as StepType
+                                ]?.({
+                                  key: field.id,
+                                  parentName: `blocks.${index}`,
+                                })
                                 : null}
                             </div>
                             <div className="flex flex-col">

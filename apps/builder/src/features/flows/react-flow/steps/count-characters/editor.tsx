@@ -1,7 +1,5 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,47 +14,44 @@ import {
 import { Form } from "@/components/ui/form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import {
-  formatDateStepSchema,
-  FormatTimezone,
-  type FormatDateStepSchema,
+  countCharactersStepSchema,
+  type CountCharactersStepSchema,
 } from "@ahachat.ai/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
-import { ZapIcon } from "lucide-react"
+import { CalculatorIcon } from "lucide-react"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { BaseStepEditor } from "../base/editor"
 
-export default function FormatDateStepEditor({
+export default function CountCharactersStepEditor({
   parentName,
 }: { parentName: string }) {
   return (
     <BaseStepEditor
-      icon={ZapIcon}
-      title={<T keyName="flows.StepType.FormatDate" />}
+      icon={CalculatorIcon}
+      title={<T keyName="flows.StepType.CountCharacters" />}
     >
-      <FormatDateDialog parentName={parentName} />
+      <CountCharactersDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
-function FormatDateDialog({ parentName }: { parentName: string }) {
+function CountCharactersDialog({ parentName }: { parentName: string }) {
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
-  const form = useForm<FormatDateStepSchema>({
-    resolver: zodResolver(formatDateStepSchema),
+  const form = useForm<CountCharactersStepSchema>({
+    resolver: zodResolver(countCharactersStepSchema),
     defaultValues: {
       ...getValues(parentName),
     },
     mode: "onChange",
   })
 
-  const onSubmit = (data: FormatDateStepSchema) => {
+  const onSubmit = (data: CountCharactersStepSchema) => {
     setValue(`${parentName}.inputCustomFieldId`, data.inputCustomFieldId)
-    setValue(`${parentName}.format`, data.format)
     setValue(`${parentName}.outputCustomFieldId`, data.outputCustomFieldId)
-    setValue(`${parentName}.timezone`, data.timezone)
     setOpen(false)
   }
 
@@ -71,7 +66,7 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Format date</DialogTitle>
+          <DialogTitle>Count Characters</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -82,27 +77,15 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
           >
             <CustomFieldSelect
               name="inputCustomFieldId"
-              label="Date & Time Custom field"
+              label="Custom field"
               isRequired
             />
-
-            <InputField name="format" label="Format" isRequired />
 
             <CustomFieldSelect
               name="outputCustomFieldId"
               label="Save to custom field"
               isRequired
               allowCreate={true}
-            />
-
-            <SelectField
-              name="timezone"
-              label="Timezone"
-              options={[
-                { label: "Contact Timezone", value: FormatTimezone.CONTACT },
-                { label: "Account Timezone", value: FormatTimezone.ACCOUNT },
-              ]}
-              isRequired
             />
 
             <DialogFooter>

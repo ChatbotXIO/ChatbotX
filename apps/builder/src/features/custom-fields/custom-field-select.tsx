@@ -1,6 +1,5 @@
 "use client"
 
-import { SingleSelect } from "@/components/single-select"
 import { Button } from "@/components/ui/button"
 import { FormItem, FormLabel } from "@/components/ui/form"
 import { callAPI } from "@/lib/swr"
@@ -10,6 +9,7 @@ import type { ReactNode } from "react"
 import { mutate } from "swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
 import type { CustomFieldCollection } from "./schemas"
+import { SelectField } from "@/components/form/select-field"
 
 interface ICustomFieldSelectProps {
   name: string
@@ -61,7 +61,7 @@ export const CustomFieldSelect = ({
               triggerButton={
                 <Button
                   variant="link"
-                  className="cursor-pointer text-[12px] text-primary p-0 h-auto"
+                  className="cursor-pointer text-[12px] text-destructive p-0 h-auto"
                 >
                   Add new
                 </Button>
@@ -73,7 +73,7 @@ export const CustomFieldSelect = ({
           )}
         </div>
       )}
-      <SingleSelect
+      <SelectField
         name={name}
         placeholder="Please select"
         options={customFields}

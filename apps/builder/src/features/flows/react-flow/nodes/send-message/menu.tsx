@@ -21,6 +21,10 @@ import {
   PackageOpenIcon,
   MessageCircleXIcon,
   StarOffIcon,
+  CogIcon,
+  CalculatorIcon,
+  ShuffleIcon,
+  CodeIcon,
 } from "lucide-react"
 import type { MenuItem } from "../types"
 import { StepType } from "@ahachat.ai/flow-config"
@@ -341,33 +345,33 @@ export const sendMessageEditorMenus: MenuItem[] = [
       //         },
       //       ],
       //     },
-      //     {
-      //       label: <T keyName="flows.StepType.Tools" />,
-      //       icon: CogIcon,
-      //       stepType: null,
-      //       children: [
-      //         {
-      //           label: <T keyName="flows.StepType.GetDataFromJson" />,
-      //           icon: CodeIcon,
-      //           stepType: StepType.GetDataFromJson,
-      //         },
-      //         {
-      //           label: <T keyName="flows.StepType.FormatDate" />,
-      //           icon: CalendarSyncIcon,
-      //           stepType: StepType.FormatDate,
-      //         },
-      //         {
-      //           label: <T keyName="flows.StepType.RandomCode" />,
-      //           icon: ShuffleIcon,
-      //           stepType: StepType.RandomCode,
-      //         },
-      //         {
-      //           label: <T keyName="flows.StepType.CountCharacters" />,
-      //           icon: CalculatorIcon,
-      //           stepType: StepType.CountCharacters,
-      //         },
-      //       ],
-      //     },
+      {
+        label: <T keyName="flows.StepType.Tools" />,
+        icon: CogIcon,
+        stepType: null,
+        children: [
+          {
+            label: <T keyName="flows.StepType.GetDataFromJson" />,
+            icon: CodeIcon,
+            stepType: StepType.GET_DATA_FROM_JSON,
+          },
+          {
+            label: <T keyName="flows.StepType.FormatDate" />,
+            icon: ZapIcon,
+            stepType: StepType.FORMAT_DATE,
+          },
+          {
+            label: <T keyName="flows.StepType.GenerateCode" />,
+            icon: ShuffleIcon,
+            stepType: StepType.GENERATE_CODE,
+          },
+          {
+            label: <T keyName="flows.StepType.CountCharacters" />,
+            icon: CalculatorIcon,
+            stepType: StepType.COUNT_CHARACTERS,
+          },
+        ],
+      },
     ],
   },
 ]

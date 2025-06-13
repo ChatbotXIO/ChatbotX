@@ -23,6 +23,10 @@ import { unfollowConversationStep } from "./unfollow-conversation"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
 import { markEmailVerifiedStep } from "./mark-email-verified"
+import { countCharactersStep } from "./count-characters"
+import { formatDateStep } from "./format-date"
+import { generateCodeStep } from "./generate-code"
+import { getDataFromJsonStep } from "./get-data-from-json"
 
 interface StepEditorProps {
   parentName: string
@@ -101,10 +105,10 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.START_EXTERNAL_STEP]: undefined,
   [StepType.CANCEL_CONTACT_INPUT]: undefined,
   [StepType.TOOLS]: undefined,
-  [StepType.GET_DATA_FROM_JSON]: undefined,
-  [StepType.FORMAT_DATE]: undefined,
-  [StepType.RANDOM_CODE]: undefined,
-  [StepType.COUNT_CHARACTERS]: undefined,
+  [StepType.GET_DATA_FROM_JSON]: getDataFromJsonStep,
+  [StepType.FORMAT_DATE]: formatDateStep,
+  [StepType.GENERATE_CODE]: generateCodeStep,
+  [StepType.COUNT_CHARACTERS]: countCharactersStep,
   [StepType.SPLIT_TRAFFIC]: undefined,
   [StepType.START_FLOW]: undefined,
   [StepType.START_FLOW_STEP]: undefined,

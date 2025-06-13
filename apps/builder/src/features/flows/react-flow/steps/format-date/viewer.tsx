@@ -2,12 +2,13 @@
 
 import { T } from "@tolgee/react"
 import { ZapIcon } from "lucide-react"
+import { BaseStepViewer } from "../base/viewer"
 
-export const FormatDateViewer = () => {
+export const FormatDateStepViewer = () => {
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center break-all">
-      <ZapIcon size={18} className="text-yellow-500" />
-      <T keyName="flows.ActionType.FormatDate" />
-    </div>
+    <BaseStepViewer
+      icon={ZapIcon}
+      title={<T keyName="flows.StepType.FormatDate" />}
+    />
   )
 }

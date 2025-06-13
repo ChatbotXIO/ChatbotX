@@ -16,47 +16,47 @@ import {
 import { Form } from "@/components/ui/form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import {
-  formatDateStepSchema,
-  FormatTimezone,
-  type FormatDateStepSchema,
+  generateCodeStepSchema,
+  type GenerateCodeStepSchema,
+  GenerateCodeType,
 } from "@ahachat.ai/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
-import { ZapIcon } from "lucide-react"
+import { ShuffleIcon } from "lucide-react"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { BaseStepEditor } from "../base/editor"
 
-export default function FormatDateStepEditor({
+export default function GenerateCodeStepEditor({
   parentName,
 }: { parentName: string }) {
   return (
     <BaseStepEditor
-      icon={ZapIcon}
-      title={<T keyName="flows.StepType.FormatDate" />}
+      icon={ShuffleIcon}
+      title={<T keyName="flows.StepType.GenerateCode" />}
     >
-      <FormatDateDialog parentName={parentName} />
+      <GenerateCodeDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
-function FormatDateDialog({ parentName }: { parentName: string }) {
+function GenerateCodeDialog({ parentName }: { parentName: string }) {
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
-  const form = useForm<FormatDateStepSchema>({
-    resolver: zodResolver(formatDateStepSchema),
+  const form = useForm<GenerateCodeStepSchema>({
+    resolver: zodResolver(generateCodeStepSchema),
     defaultValues: {
       ...getValues(parentName),
     },
     mode: "onChange",
   })
 
-  const onSubmit = (data: FormatDateStepSchema) => {
-    setValue(`${parentName}.inputCustomFieldId`, data.inputCustomFieldId)
-    setValue(`${parentName}.format`, data.format)
+  const onSubmit = (data: GenerateCodeStepSchema) => {
+    setValue(`${parentName}.type`, data.type)
+    setValue(`${parentName}.min`, data.min)
+    setValue(`${parentName}.max`, data.max)
     setValue(`${parentName}.outputCustomFieldId`, data.outputCustomFieldId)
-    setValue(`${parentName}.timezone`, data.timezone)
     setOpen(false)
   }
 
@@ -71,7 +71,7 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Format date</DialogTitle>
+          <DialogTitle>Generate code</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -80,29 +80,35 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col w-full gap-4"
           >
-            <CustomFieldSelect
-              name="inputCustomFieldId"
-              label="Date & Time Custom field"
+            <SelectField
+              name="type"
+              label="Type"
+              options={[
+                {
+                  label: "Numeric (Minimum/Maximum length)",
+                  value: GenerateCodeType.NUMERIC_LENGTH,
+                },
+                {
+                  label: "Numeric (Minimum/Maximum number)",
+                  value: GenerateCodeType.NUMERIC_VALUE,
+                },
+                {
+                  label: "Alphanumeric (Minimum/Maximum length)",
+                  value: GenerateCodeType.ALPHANUMERIC_LENGTH,
+                },
+              ]}
               isRequired
             />
 
-            <InputField name="format" label="Format" isRequired />
+            <InputField name="min" label="Min" isRequired />
+
+            <InputField name="max" label="Max" isRequired />
 
             <CustomFieldSelect
               name="outputCustomFieldId"
               label="Save to custom field"
               isRequired
               allowCreate={true}
-            />
-
-            <SelectField
-              name="timezone"
-              label="Timezone"
-              options={[
-                { label: "Contact Timezone", value: FormatTimezone.CONTACT },
-                { label: "Account Timezone", value: FormatTimezone.ACCOUNT },
-              ]}
-              isRequired
             />
 
             <DialogFooter>
