@@ -33,7 +33,7 @@ export async function sendFlowStep({
       contentType: ContentType.TEXT,
       senderType: SenderType.BOT,
       sourceId: null,
-      content: step.stepType === StepType.SendText ? step.message : null,
+      content: step.stepType === StepType.SEND_TEXT ? step.message : null,
     },
   })
 

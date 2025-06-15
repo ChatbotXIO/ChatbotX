@@ -8,7 +8,7 @@ export const AddNotesStepViewer = () => {
   return (
     <BaseStepViewer
       icon={MessageCircleMore}
-      title={<T keyName="flows.StepType.AddNotes" />}
+      title={<T keyName="flows.StepType.AddContactNotes" />}
     />
   )
 }

@@ -1,0 +1,17 @@
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
+import { StepType } from "./step-action"
+
+export const addContactTagStepSchema = z.object({
+  id: z.string().cuid2(),
+  stepType: z.literal(StepType.ADD_CONTACT_TAG),
+  tags: z.array(z.string().trim().min(1)).min(1),
+})
+
+export type AddContactTagStepSchema = z.infer<typeof addContactTagStepSchema>
+
+export const addContactTagStepDefaultFn = (): AddContactTagStepSchema => ({
+  id: createId(),
+  stepType: StepType.ADD_CONTACT_TAG,
+  tags: [],
+})

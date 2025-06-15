@@ -2,6 +2,7 @@ import { InboxType, OMNICHANNEL } from "@ahachat.ai/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import {
+  addContactTagStepSchema,
   addNotesStepSchema,
   archiveConversationStepSchema,
   assignConversationStepSchema,
@@ -9,6 +10,7 @@ import {
   blockContactStepSchema,
   clearCustomFieldStepSchema,
   countCharactersStepSchema,
+  deleteContactStepSchema,
   disableBotStepSchema,
   enableBotStepSchema,
   followConversationStepSchema,
@@ -27,6 +29,7 @@ import {
   openAITextToSpeechSchema,
   optInEmailStepSchema,
   optOutEmailStepSchema,
+  removeContactTagStepSchema,
   sendImageStepSchema,
   sendTextStepSchema,
   setCustomFieldStepSchema,
@@ -84,6 +87,9 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         unarchiveConversationStepSchema,
         unassignConversationStepSchema,
         unfollowConversationStepSchema,
+        addContactTagStepSchema,
+        removeContactTagStepSchema,
+        deleteContactStepSchema,
         // sendCardStepSchema,
         // sendVideoStepSchema,
         // sendAudioStepSchema,

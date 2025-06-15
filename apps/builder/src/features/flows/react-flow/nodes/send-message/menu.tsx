@@ -8,7 +8,6 @@ import {
   SaveOffIcon,
   TextIcon,
   ZapIcon,
-  MessageCircleOffIcon,
   MessageCirclePlusIcon,
   UserRoundXIcon,
   UserIcon,
@@ -25,6 +24,8 @@ import {
   CalculatorIcon,
   ShuffleIcon,
   CodeIcon,
+  TagIcon,
+  OctagonXIcon,
 } from "lucide-react"
 import type { MenuItem } from "../types"
 import { StepType } from "@ahachat.ai/flow-config"
@@ -123,9 +124,9 @@ export const sendMessageEditorMenus: MenuItem[] = [
             stepType: StepType.UNASSIGN_CONVERSATION,
           },
           {
-            label: <T keyName="flows.StepType.AddNotes" />,
+            label: <T keyName="flows.StepType.AddContactNotes" />,
             icon: MessageCircleMoreIcon,
-            stepType: StepType.ADD_NOTES,
+            stepType: StepType.ADD_CONTACT_NOTES,
           },
           {
             label: <T keyName="flows.StepType.FollowConversation" />,
@@ -154,16 +155,16 @@ export const sendMessageEditorMenus: MenuItem[] = [
           },
         ],
       },
-      //     {
-      //       label: <T keyName="flows.StepType.AddTag" />,
-      //       icon: TagIcon,
-      //       stepType: StepType.AddTag,
-      //     },
-      //     {
-      //       label: <T keyName="flows.StepType.RemoveTag" />,
-      //       icon: OctagonXIcon,
-      //       stepType: StepType.RemoveTag,
-      //     },
+      {
+        label: <T keyName="flows.StepType.AddContactTag" />,
+        icon: TagIcon,
+        stepType: StepType.ADD_CONTACT_TAG,
+      },
+      {
+        label: <T keyName="flows.StepType.RemoveContactTag" />,
+        icon: OctagonXIcon,
+        stepType: StepType.REMOVE_CONTACT_TAG,
+      },
       //     {
       //       label: <T keyName="flows.StepType.OpenAIActions" />,
       //       icon: BotMessageSquareIcon,
@@ -209,11 +210,11 @@ export const sendMessageEditorMenus: MenuItem[] = [
       //           icon: SpeechIcon,
       //           stepType: StepType.OpenAITextToSpeech,
       //         },
-      {
-        label: <T keyName="flows.StepType.DeleteMessageHistory" />,
-        icon: MessageCircleOffIcon,
-        stepType: StepType.OPENAI_DELETE_MESSAGE_HISTORY,
-      },
+      // {
+      //   label: <T keyName="flows.StepType.DeleteMessageHistory" />,
+      //   icon: MessageCircleOffIcon,
+      //   stepType: StepType.OPENAI_DELETE_MESSAGE_HISTORY,
+      // },
       //       ],
       //     },
 
@@ -286,11 +287,11 @@ export const sendMessageEditorMenus: MenuItem[] = [
       //       icon: BotOffIcon,
       //       stepType: StepType.UnsubscribeBot,
       //     },
-      //     {
-      //       label: <T keyName="flows.StepType.RemoveContact" />,
-      //       icon: UserRoundXIcon,
-      //       stepType: StepType.RemoveContact,
-      //     },
+      {
+        label: <T keyName="flows.StepType.DeleteContact" />,
+        icon: UserRoundXIcon,
+        stepType: StepType.DELETE_CONTACT,
+      },
       //     {
       //       label: <T keyName="flows.StepType.CallApi" />,
       //       icon: CodeIcon,

@@ -1,6 +1,5 @@
 "use client"
 
-import { FormFieldWrapper } from "@/components/form/field-wrapper"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,19 +12,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import type { TagCollection } from "@/features/tags/schemas"
-import { callAPI } from "@/lib/swr"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T } from "@tolgee/react"
-import { TagInput, type Tag } from "emblor"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useState, type ReactElement } from "react"
-import type { FieldValues } from "react-hook-form"
 import { toast } from "sonner"
 import { addContactTagAction } from "../actions/add-contact-tag.action"
 import { addContactTagRequest } from "../schemas/add-contact-tag.request"
+import { TagMultiSelect } from "@/features/tags/components/tag-multi-select"
 
 interface AddContactTagDialogProps {
   trigger: ReactElement
@@ -37,25 +33,9 @@ export default function AddContactTagDialog({
   ids,
 }: AddContactTagDialogProps) {
   const [open, setOpen] = useState(false)
-  const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null)
-  const [tags, setTags] = useState<Tag[]>([])
-
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
-  // Get tags list
-  const { data: tagsData } = callAPI<TagCollection>(
-    `/api/chatbots/${chatbotId}/tags?perPage=9999`,
-  )
-  const tagOptions = (tagsData?.data ?? []).map((v) => ({
-    text: v.name,
-    id: v.id,
-  }))
-
-  const {
-    form,
-    handleSubmitWithAction,
-    form: { setValue },
-  } = useHookFormAction(
+  const { form, handleSubmitWithAction } = useHookFormAction(
     addContactTagAction.bind(null, chatbotId),
     zodResolver(addContactTagRequest),
     {
@@ -94,32 +74,7 @@ export default function AddContactTagDialog({
             onSubmit={handleSubmitWithAction}
             className="flex flex-col gap-2"
           >
-            <FormFieldWrapper<FieldValues>
-              name="tags"
-              label="Tags"
-              isRequired={true}
-            >
-              {(field) => (
-                <TagInput
-                  {...field}
-                  enableAutocomplete={true}
-                  autocompleteOptions={tagOptions}
-                  // placeholder="Enter a topic"
-                  tags={tags}
-                  className="sm:min-w-[450px]"
-                  setTags={(newTags) => {
-                    setTags(newTags)
-                    setValue(
-                      "tags",
-                      (newTags as Tag[]).map((t) => t.text),
-                      { shouldValidate: true },
-                    )
-                  }}
-                  activeTagIndex={activeTagIndex}
-                  setActiveTagIndex={setActiveTagIndex}
-                />
-              )}
-            </FormFieldWrapper>
+            <TagMultiSelect name="tags" label="Tags" isRequired />
 
             <DialogFooter>
               <DialogClose asChild>

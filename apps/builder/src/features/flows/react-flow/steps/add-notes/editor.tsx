@@ -9,7 +9,7 @@ export const AddNotesStepEditor = ({ parentName }: { parentName: string }) => {
   return (
     <BaseStepEditor
       icon={TextIcon}
-      title={<T keyName="flows.StepType.AddNotes" />}
+      title={<T keyName="flows.StepType.AddContactNotes" />}
     >
       <InputField name={`${parentName}.content`} label="Add Notes" />
     </BaseStepEditor>

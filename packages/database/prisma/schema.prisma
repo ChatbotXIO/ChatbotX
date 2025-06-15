@@ -220,19 +220,22 @@ enum ExecutorType {
 }
 
 model Contact {
-  id          String    @id @default(cuid(2))
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  avatar      String?
-  phoneNumber String?
-  email       String?
-  firstName   String?
-  lastName    String?
-  gender      Gender
-  source      String
-  lastSeenAt  DateTime?
-  sourceId    String?
-  blockedAt   DateTime?
+  id              String    @id @default(cuid(2))
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  avatar          String?
+  phoneNumber     String?
+  email           String?
+  emailVerified   Boolean   @default(false)
+  emailOptIn      Boolean   @default(false)
+  firstName       String?
+  lastName        String?
+  gender          Gender
+  source          String
+  lastSeenAt      DateTime?
+  sourceId        String?
+  blockedAt       DateTime?
+  enableBroadcast Boolean   @default(false)
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)

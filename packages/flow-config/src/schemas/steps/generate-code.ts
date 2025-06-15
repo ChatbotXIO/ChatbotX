@@ -13,8 +13,12 @@ export const generateCodeStepSchema = z
     id: z.string().cuid2(),
     stepType: z.literal(StepType.GENERATE_CODE),
     type: z.nativeEnum(GenerateCodeType),
-    min: z.coerce.number().int().min(0),
-    max: z.coerce.number().int().min(0),
+    min: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(Number.MAX_SAFE_INTEGER - 1),
+    max: z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
     outputCustomFieldId: z.string().cuid2(),
   })
   .refine((data) => data.min <= data.max, {

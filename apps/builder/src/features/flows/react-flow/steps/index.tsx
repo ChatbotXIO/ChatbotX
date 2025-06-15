@@ -27,6 +27,9 @@ import { countCharactersStep } from "./count-characters"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
+import { addContactTagStep } from "./add-contact-tag"
+import { removeContactTagStep } from "./remove-contact-tag"
+import { deleteContactStep } from "./delete-contact"
 
 interface StepEditorProps {
   parentName: string
@@ -58,13 +61,11 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.SEND_MESSENGER_OTN]: undefined,
   [StepType.SEND_AUDIO]: sendAudioStep,
   [StepType.SEND_FILE]: undefined,
-  [StepType.ADD_TAG]: undefined,
-  [StepType.REMOVE_TAG]: undefined,
+  [StepType.ADD_CONTACT_TAG]: addContactTagStep,
+  [StepType.REMOVE_CONTACT_TAG]: removeContactTagStep,
   [StepType.NOTIFY_AGENT]: undefined,
-  [StepType.ADD_CUSTOM_LOG]: undefined,
-  [StepType.SUBSCRIBE_BOT]: undefined,
-  [StepType.UNSUBSCRIBE_BOT]: undefined,
-  [StepType.REMOVE_CONTACT]: undefined,
+  [StepType.ZAPIER_CUSTOM_LOG]: undefined,
+  [StepType.DELETE_CONTACT]: deleteContactStep,
   [StepType.CALL_API]: undefined,
   [StepType.INBOX_ACTIONS]: undefined,
   [StepType.DISABLE_BOT]: disableBotStep,
@@ -72,7 +73,7 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.ASSIGN_CONVERSATION]: assignConversationStep,
   [StepType.AUTO_ASSIGN_CONVERSATION]: autoAssignConversationStep,
   [StepType.UNASSIGN_CONVERSATION]: unassignConversationStep,
-  [StepType.ADD_NOTES]: addNotesStep,
+  [StepType.ADD_CONTACT_NOTES]: addNotesStep,
   [StepType.FOLLOW_CONVERSATION]: followConversationStep,
   [StepType.UNFOLLOW_CONVERSATION]: unfollowConversationStep,
   [StepType.ARCHIVE_CONVERSATION]: archiveConversationStep,
@@ -96,9 +97,6 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.TRIGGER_MAKE]: undefined,
   [StepType.TRIGGER_PABBLY]: undefined,
   [StepType.TRIGGER_ZAPIER]: undefined,
-  [StepType.MESSENGER_ACTIONS]: undefined,
-  [StepType.ADD_MESSENGER_CUSTOM_AUDIENCE]: undefined,
-  [StepType.ADD_MESSENGER_RICHMENU]: undefined,
   [StepType.OTHERS]: undefined,
   [StepType.START_ANOTHER_FLOW]: undefined,
   [StepType.START_ANOTHER_STEP]: undefined,

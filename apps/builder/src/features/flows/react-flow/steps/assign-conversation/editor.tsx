@@ -13,7 +13,7 @@ const AssignConversationStepEditor = ({
       icon={MessageCirclePlusIcon}
       title={<T keyName="flows.StepType.AssignConversation" />}
     >
-      <UserSelect name={`${parentName}.userId`} label="Choose agent" />
+      <UserSelect name={`${parentName}.assignedId`} label="Choose agent" />
     </BaseStepEditor>
   )
 }
