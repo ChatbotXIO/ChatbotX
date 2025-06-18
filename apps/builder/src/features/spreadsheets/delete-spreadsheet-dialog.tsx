@@ -14,7 +14,6 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { Loader, Trash } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -38,7 +37,6 @@ export function DeleteSpreadsheetsDialog({
   ...props
 }: DeleteSpreadsheetsDialogProps) {
   const t = useTranslations()
-  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteSpreadsheetAction.bind(null, chatbotId),
@@ -46,7 +44,6 @@ export function DeleteSpreadsheetsDialog({
       onSuccess: () => {
         toast.success(t("spreadsheets.deleted"))
         onOpenChange(false)
-        router.refresh()
       },
       onError: ({ error }) => {
         error.serverError && toast.error(error.serverError)

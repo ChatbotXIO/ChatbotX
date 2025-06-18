@@ -5,15 +5,13 @@ import { integrations } from "@/integration"
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type {
-  GetSpreadSheetSchema,
   GetWorksheetHeaderSchema,
   GetWorksheetSchema,
   SpreadsheetResource,
 } from "../schemas"
-import { parseSpreadsheetId } from "../utils"
 
 export const getSpreadSheets = async (
-  input: GetSpreadSheetSchema,
+  input: GetWorksheetSchema,
 ): Promise<{
   data: SpreadsheetResource[]
   pageCount: number
@@ -71,16 +69,12 @@ export const getWorkSheets = async (
   const ctx = {
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
   }
-  const spreadsheetId = parseSpreadsheetId(spreadsheet.url)
-  if (!spreadsheetId) {
-    throw new Error("Invalid spreadsheet url")
-  }
 
   const sheets =
     await integrations.GOOGLE_SHEETS.integration.actions.listSheetNames({
       ctx,
       props: {
-        spreadsheetId,
+        spreadsheetId: spreadsheet.spreadsheetId,
       },
     })
 
@@ -111,16 +105,12 @@ export const getWorkSheetHeaders = async (
   const ctx = {
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
   }
-  const spreadsheetId = parseSpreadsheetId(spreadsheet.url)
-  if (!spreadsheetId) {
-    throw new Error("Invalid spreadsheet url")
-  }
 
   const headers =
     await integrations.GOOGLE_SHEETS.integration.actions.listSheetHeaders({
       ctx,
       props: {
-        spreadsheetId,
+        spreadsheetId: spreadsheet.spreadsheetId,
         sheetName: input.sheetName,
       },
     })

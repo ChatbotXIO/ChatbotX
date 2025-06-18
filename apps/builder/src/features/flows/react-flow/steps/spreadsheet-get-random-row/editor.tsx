@@ -5,9 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { SpreadsheetDialog } from "@/features/flows/react-flow/steps/spreadsheet/components/dialog"
+import { SpreadsheetColumnFilter } from "../spreadsheet/components/spreadsheet-column-filter"
+import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
 import { SpreadsheetCustomFieldMapping } from "../spreadsheet/custom-field-mapping"
-import { SpreadsheetColumnFilter } from "../spreadsheet/spreadsheet-column-filter"
-import { SpreadsheetSelect } from "../spreadsheet/spreadsheet-select"
 import { WorksheetSelect } from "../spreadsheet/worksheet-select"
 import { spreadsheetGetRandomRowSchema } from "./schema"
 
@@ -30,7 +30,7 @@ export const SpreadsheetGetRandomRowEditor = ({
     shouldUseNativeValidation: true,
   })
 
-  const { control, resetField, setValue } = form
+  const { control, resetField } = form
 
   const spreadsheetId = useWatch({
     control,
@@ -45,14 +45,6 @@ export const SpreadsheetGetRandomRowEditor = ({
     resetField("map")
     resetField("sheetName")
   }, [resetField])
-
-  const onChangeWorksheet = useCallback(
-    (value: string) => {
-      setValue("sheetName", value)
-      resetField("map")
-    },
-    [setValue, resetField],
-  )
 
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
@@ -72,7 +64,9 @@ export const SpreadsheetGetRandomRowEditor = ({
             name="spreadsheetId"
             onChange={onChangeSpreadsheet}
           />
-          {spreadsheetId && <WorksheetSelect onChange={onChangeWorksheet} />}
+          {spreadsheetId && (
+            <WorksheetSelect name="sheetName" spreadsheetId={spreadsheetId} />
+          )}
 
           {spreadsheetId && sheetName && <SpreadsheetColumnFilter />}
           {spreadsheetId && sheetName && (

@@ -4,10 +4,16 @@ import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { TrashIcon } from "lucide-react"
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
-import { FilterMode, Operator } from "./schema"
-import { SpreadsheetOperatorSelect } from "./spreadsheet-operator-select"
-import { WorksheetColumnSelect } from "./worksheet-column-select"
+import { useFieldArray, useFormContext } from "react-hook-form"
+import { FilterMode, Operator } from "../schema"
+import { SpreadsheetOperatorSelect } from "../spreadsheet-operator-select"
+import { WorksheetColumnSelect } from "../worksheet-column-select"
+
+// interface SpreadsheetColumnFilterProps {
+//   spreadsheetId: string
+//   sheetName: string
+//   parentName: string
+// }
 
 export const SpreadsheetColumnFilter = () => {
   const { control } = useFormContext()
@@ -16,18 +22,18 @@ export const SpreadsheetColumnFilter = () => {
     name: "lookup.conditions",
   })
 
-  const mode = useWatch({
-    control,
-    name: "lookup.mode",
-    defaultValue: FilterMode.AND,
-  })
+  // const mode = useWatch({
+  //   control,
+  //   name: "lookup.mode",
+  //   defaultValue: FilterMode.AND,
+  // })
 
   return (
     <div className="flex flex-col gap-2">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="flex-1 text-nowrap">Lookup Columns:</span>
         <SelectField
-          defaultValue={mode}
+          defaultValue={FilterMode.AND}
           name="lookup.mode"
           options={[
             { label: "AND", value: FilterMode.AND },
@@ -35,6 +41,7 @@ export const SpreadsheetColumnFilter = () => {
           ]}
         />
       </div>
+
       {fields.map((_field, idx) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: wip
         <div className="mb-2 flex items-center gap-2" key={idx}>
@@ -55,6 +62,7 @@ export const SpreadsheetColumnFilter = () => {
           </Button>
         </div>
       ))}
+
       <Button
         onClick={() => append({ column: "", operator: Operator.IS, value: "" })}
         type="button"

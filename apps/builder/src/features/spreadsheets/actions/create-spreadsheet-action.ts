@@ -1,37 +1,39 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import type { UserModel } from "@aha.chat/database/types"
 import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import {
-  type SaveSpreadsheetSchema,
-  saveSpreadsheetSchema,
-} from "../schemas/save-spreadsheet-schema"
+  type CreateSpreadsheetRequest,
+  createSpreadsheetRequest,
+} from "../schemas/create-spreadsheet.request"
+import { verifyGoogleSheetsUrl } from "./util"
 
 export const createSpreadsheetAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .inputSchema(saveSpreadsheetSchema)
+  .inputSchema(createSpreadsheetRequest)
   .action(
     async ({
-      ctx,
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
-      ctx: { user: UserModel }
       bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: SaveSpreadsheetSchema
+      parsedInput: CreateSpreadsheetRequest
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
+      const spreadsheetId = await verifyGoogleSheetsUrl(
+        chatbotId,
+        parsedInput.url,
+      )
+
       await prisma.spreadsheet.create({
         data: {
           ...parsedInput,
           chatbotId,
+          spreadsheetId,
         },
       })
 

@@ -8,20 +8,21 @@ import {
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type SaveSpreadsheetSchema,
-  saveSpreadsheetSchema,
-} from "../schemas/save-spreadsheet-schema"
+  type CreateSpreadsheetRequest,
+  createSpreadsheetRequest,
+} from "../schemas/create-spreadsheet.request"
+import { verifyGoogleSheetsUrl } from "./util"
 
 export const updateSpreadsheetAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .inputSchema(saveSpreadsheetSchema)
+  .inputSchema(createSpreadsheetRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: SaveSpreadsheetSchema
+      parsedInput: CreateSpreadsheetRequest
     }) => {
       const spreadsheet = await prisma.spreadsheet.findFirstOrThrow({
         where: {
@@ -30,11 +31,19 @@ export const updateSpreadsheetAction = chatbotActionClient
         },
       })
 
+      const spreadsheetId = await verifyGoogleSheetsUrl(
+        chatbotId,
+        parsedInput.url,
+      )
+
       await prisma.spreadsheet.update({
         where: {
           id: spreadsheet.id,
         },
-        data: parsedInput,
+        data: {
+          ...parsedInput,
+          spreadsheetId,
+        },
       })
 
       revalidateTag(`chatbots:${spreadsheet.chatbotId}#spreadsheets`)

@@ -514,15 +514,17 @@ model Attachment {
 }
 
 model Integration {
-  id              String          @id @default(cuid(2))
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  chatbotId       String
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   integrationType IntegrationType
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   openAI       IntegrationOpenAI?
   googleSheets IntegrationGoogleSheets?
-  chatbot      Chatbot                  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
 }
@@ -750,12 +752,13 @@ model IntegrationChatWidget {
 }
 
 model Spreadsheet {
-  id        String   @id @default(cuid(2))
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  chatbotId String
-  name      String
-  url       String
+  id            String   @id @default(cuid(2))
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  chatbotId     String
+  name          String
+  url           String
+  spreadsheetId String
 
   chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }

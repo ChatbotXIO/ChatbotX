@@ -1,14 +1,14 @@
 import type { StepDefinition } from ".."
-import { SpreadsheetViewer } from "../spreadsheet/viewer"
-import { SpreadsheetClearRowEditor } from "./editor"
+import SpreadsheetClearRowEditor from "./editor"
 import {
   spreadsheetClearRowDefaultFn,
   spreadsheetClearRowSchema,
 } from "./schema"
+import SpreadsheetClearRowViewer from "./viewer"
 
 export const spreadsheetClearRowStep: StepDefinition = {
   editor: SpreadsheetClearRowEditor,
-  viewer: SpreadsheetViewer,
+  viewer: SpreadsheetClearRowViewer,
   validator: spreadsheetClearRowSchema,
   defaultFn: spreadsheetClearRowDefaultFn,
 }

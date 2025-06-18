@@ -5,8 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { SpreadsheetDialog } from "@/features/flows/react-flow/steps/spreadsheet/components/dialog"
+import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
 import { SpreadsheetCustomFieldMapping } from "../spreadsheet/custom-field-mapping"
-import { SpreadsheetSelect } from "../spreadsheet/spreadsheet-select"
 import { WorksheetSelect } from "../spreadsheet/worksheet-select"
 import { spreadsheetSendDataSchema } from "./schema"
 
@@ -29,7 +29,7 @@ export const SpreadsheetSendDataEditor = ({
     shouldUseNativeValidation: true,
   })
 
-  const { control, resetField, setValue } = form
+  const { control, resetField } = form
 
   const spreadsheetId = useWatch({
     control,
@@ -44,14 +44,6 @@ export const SpreadsheetSendDataEditor = ({
     resetField("map")
     resetField("sheetName")
   }, [resetField])
-
-  const onChangeWorksheet = useCallback(
-    (value: string) => {
-      setValue("sheetName", value)
-      resetField("map")
-    },
-    [setValue, resetField],
-  )
 
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
@@ -71,7 +63,9 @@ export const SpreadsheetSendDataEditor = ({
             name="spreadsheetId"
             onChange={onChangeSpreadsheet}
           />
-          {spreadsheetId && <WorksheetSelect onChange={onChangeWorksheet} />}
+          {spreadsheetId && (
+            <WorksheetSelect name="sheetName" spreadsheetId={spreadsheetId} />
+          )}
 
           {spreadsheetId && sheetName && (
             <SpreadsheetCustomFieldMapping type={"update"} />

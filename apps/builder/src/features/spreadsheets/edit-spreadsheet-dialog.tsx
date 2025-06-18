@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateSpreadsheetAction } from "./actions/update-spreadsheet-action"
-import { saveSpreadsheetSchema } from "./schemas/save-spreadsheet-schema"
+import { createSpreadsheetRequest } from "./schemas/create-spreadsheet.request"
 
 export function UpdateSpreadsheetDialog({
   spreadsheet,
@@ -46,7 +46,7 @@ export function UpdateSpreadsheetDialog({
       spreadsheet?.chatbotId ?? "",
       spreadsheet?.id ?? "",
     ),
-    zodResolver(saveSpreadsheetSchema),
+    zodResolver(createSpreadsheetRequest),
     {
       actionProps: {
         onSuccess: () => {

@@ -1,10 +1,11 @@
 import type { FieldPath, FieldValues } from "react-hook-form"
 import { Input } from "../ui/input"
 import { FormFieldWrapper } from "./field-wrapper"
+import type { ReactElement } from "react"
 
 type InputFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
-  label?: string
+  label?: ReactElement | string
   isRequired?: boolean
   placeholder?: string
   description?: string

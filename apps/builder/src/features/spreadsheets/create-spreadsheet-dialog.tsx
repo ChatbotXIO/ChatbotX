@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { createSpreadsheetAction } from "./actions/create-spreadsheet-action"
-import { saveSpreadsheetSchema } from "./schemas/save-spreadsheet-schema"
+import { createSpreadsheetRequest } from "./schemas/create-spreadsheet.request"
 
 export function CreateSpreadsheetDialog({
   chatbotId,
@@ -39,7 +39,7 @@ export function CreateSpreadsheetDialog({
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
       createSpreadsheetAction.bind(null, chatbotId),
-      zodResolver(saveSpreadsheetSchema),
+      zodResolver(createSpreadsheetRequest),
       {
         actionProps: {
           onSuccess: () => {
@@ -95,10 +95,11 @@ export function CreateSpreadsheetDialog({
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    Close
+                  <Button type="button" variant="link">
+                    {t("actions.cancel")}
                   </Button>
                 </DialogClose>
+
                 <Button
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
@@ -108,7 +109,7 @@ export function CreateSpreadsheetDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </DialogFooter>
             </form>
