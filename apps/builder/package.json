@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "NODE_OPTIONS=--trace-deprecation next build",
+    "build": "next build",
     "check-types": "tsc --noEmit",
     "dev": "dotenv -e ../../.env -- next dev --turbopack -p 3000",
     "lint": "biome check .",

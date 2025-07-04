@@ -1,4 +1,4 @@
-// import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form"
+import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form"
 import { listInboxes } from "@/features/inboxes/queries"
 
 export default async function CreateBroadcastPage({
@@ -7,8 +7,5 @@ export default async function CreateBroadcastPage({
   const { chatbotId } = await params
   const inboxesPromise = listInboxes({ chatbotId, perPage: 9999 })
 
-  console.log(inboxesPromise)
-
-  return null
-  // return <CreateBroadcastForm chatbotId={chatbotId} promises={inboxesPromise} />
+  return <CreateBroadcastForm chatbotId={chatbotId} promises={inboxesPromise} />
 }

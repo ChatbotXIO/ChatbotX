@@ -47,7 +47,7 @@ export function UpdateCustomFieldDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Custom FieldModel update successfully")
+          toast.success("Custom Field update successfully")
 
           onOpenChange(false)
           resetFormAndAction()

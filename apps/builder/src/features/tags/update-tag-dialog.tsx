@@ -53,7 +53,7 @@ export function UpdateTagDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("TagModel update successfully")
+          toast.success("Tag update successfully")
           resetFormAndAction()
           onOpenChange(false)
           router.refresh()

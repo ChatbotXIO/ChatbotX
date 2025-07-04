@@ -28,8 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/signin",
   },
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  adapter: PrismaAdapter(prisma as any),
+  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
     ...providers,

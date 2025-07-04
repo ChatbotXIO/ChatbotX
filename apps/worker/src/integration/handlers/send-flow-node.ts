@@ -119,7 +119,7 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     },
   })
   if (!conversation) {
-    throw new SdkException("ConversationModel not found")
+    throw new SdkException("Conversation not found")
   }
 
   // Try to find corresponding flowVersion

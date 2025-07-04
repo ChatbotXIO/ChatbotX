@@ -121,7 +121,7 @@ export const ensureFlowIdIsExists = async (
   })
 
   if (!flow) {
-    throw new FlowException("FlowModel does not exists.")
+    throw new FlowException("Flow does not exists.")
   }
 
   return flow
@@ -141,6 +141,6 @@ export const ensureAllFlowIdsExists = async (
   })
 
   if (count !== flowIds.length) {
-    throw new FlowException("FlowModel does not exists.")
+    throw new FlowException("Flow does not exists.")
   }
 }

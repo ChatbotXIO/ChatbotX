@@ -1,8 +1,7 @@
 generator client {
   provider        = "prisma-client"
   output          = "../src/generated/prisma"
-  previewFeatures = ["driverAdapters", "queryCompiler"]
-  // previewFeatures = ["nativeDistinct", "metrics"]
+  previewFeatures = ["driverAdapters", "queryCompiler", "nativeDistinct", "metrics"]
 }
 
 datasource db {

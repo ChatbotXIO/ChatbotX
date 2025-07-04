@@ -14,7 +14,7 @@ export const findChatbotOrFail = async (
   }
 
   if (!chatbotId) {
-    throw new NotfoundException("No ChatbotModel found")
+    throw new NotfoundException("No Chatbot found")
   }
 
   const chatbotMember = await prisma.chatbotMember.findFirstOrThrow({
@@ -25,7 +25,7 @@ export const findChatbotOrFail = async (
   })
 
   if (!chatbotMember.chatbot) {
-    throw new NotfoundException("No ChatbotMemberModel found")
+    throw new NotfoundException("No ChatbotMember found")
   }
 
   return { chatbot: chatbotMember.chatbot, chatbotMember }

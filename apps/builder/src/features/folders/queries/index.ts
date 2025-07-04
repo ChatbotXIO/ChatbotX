@@ -110,6 +110,6 @@ export const ensureFolderIdExists = async (
     },
   })
   if (!existingFolder) {
-    throw new FolderException("FolderModel does not exists.")
+    throw new FolderException("Folder does not exists.")
   }
 }

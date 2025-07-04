@@ -46,7 +46,7 @@ export function RenameFlowDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("FlowModel update successfully")
+          toast.success("Flow update successfully")
           resetFormAndAction()
           onOpenChange(false)
           router.refresh()
