@@ -15,7 +15,7 @@ import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
 export const connectWhatsappAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(connectWhatsappSchema)
+  .inputSchema(connectWhatsappSchema)
   .action(
     async ({
       parsedInput,

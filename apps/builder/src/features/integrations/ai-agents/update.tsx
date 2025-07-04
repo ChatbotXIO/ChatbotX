@@ -18,7 +18,7 @@ import {
   type MessageSchema,
   updateAIAgentRequest,
 } from "@/features/integrations/ai-agents/schemas/update.schema"
-import type { AIAgent } from "@ahachat.ai/database/types"
+import type { AIAgentModel } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -37,7 +37,7 @@ export function UpdateAIAgentDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  agent: AIAgent | null
+  agent: AIAgentModel | null
 }) {
   const { t } = useTranslate()
   const router = useRouter()

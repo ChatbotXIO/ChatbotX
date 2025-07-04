@@ -14,7 +14,7 @@ import {
 
 export const clearContactCustomFieldAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(clearContactCustomFieldRequest)
+  .inputSchema(clearContactCustomFieldRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

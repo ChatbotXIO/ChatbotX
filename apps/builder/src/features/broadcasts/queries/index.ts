@@ -1,13 +1,13 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
-import type { Broadcast, Prisma } from "@ahachat.ai/database"
+import { prisma, type Prisma } from "@ahachat.ai/database"
+import type { BroadcastModel } from "@ahachat.ai/database/types"
 import { unstable_cache } from "next/cache"
 import type { GetBroadcastsSchema } from "../schemas/get-broadcasts-schema"
 
 export async function listBroadcasts(
   input: GetBroadcastsSchema,
-): Promise<{ data: Broadcast[]; pageCount: number }> {
+): Promise<{ data: BroadcastModel[]; pageCount: number }> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)

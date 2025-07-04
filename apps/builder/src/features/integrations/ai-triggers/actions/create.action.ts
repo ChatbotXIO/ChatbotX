@@ -15,7 +15,7 @@ import { revalidateTag } from "next/cache"
 
 export const createAITriggerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(createAITriggerRequest)
+  .inputSchema(createAITriggerRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

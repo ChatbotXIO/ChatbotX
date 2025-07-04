@@ -5,7 +5,7 @@ import { DataTableToolbar } from "@/components/data-table-toolbar"
 import type { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { WhatsappMessageTemplate } from "@ahachat.ai/database"
+import type { WhatsappMessageTemplateModel } from "@ahachat.ai/database/types"
 import React, { useMemo, useState } from "react"
 import { getColumns } from "./message-templates-table-columns"
 import { WhatsappMessageTemplatesTableToolbarActions } from "./message-templates-table-toolbar-actions"
@@ -21,7 +21,7 @@ export function WhatsappMessageTemplatesTable({
 }: WhatsappMessageTemplatesTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const [_rowAction, setRowAction] =
-    useState<DataTableRowAction<WhatsappMessageTemplate> | null>(null)
+    useState<DataTableRowAction<WhatsappMessageTemplateModel> | null>(null)
 
   const columns = useMemo(() => getColumns({ setRowAction }), [])
 

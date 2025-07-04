@@ -1,4 +1,4 @@
-import type { Broadcast, Flow } from "@ahachat.ai/database"
+import type { BroadcastModel, FlowModel } from "@ahachat.ai/database/types"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 
 export const getBroadcastsSearchParamsCache = createSearchParamsCache({
@@ -10,8 +10,8 @@ export type GetBroadcastsSchema = Awaited<
   ReturnType<typeof getBroadcastsSearchParamsCache.parse>
 > & { chatbotId: string }
 
-export type BroadcastResource = Broadcast & {
-  flow?: Flow
+export type BroadcastResource = BroadcastModel & {
+  flow?: FlowModel
   _count?: {
     contacts?: number
   }

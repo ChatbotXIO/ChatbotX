@@ -16,7 +16,7 @@ async function updateSettings(payload: SettingSchema) {
 }
 
 export const updateSettingsAction = actionClient
-  .schema(settingSchema)
+  .inputSchema(settingSchema)
   .action(async ({ parsedInput }) => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
 

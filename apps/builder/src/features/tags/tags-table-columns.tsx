@@ -11,19 +11,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { Tag } from "@ahachat.ai/database/types"
+import type { TagModel } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
 
-type TagWithContacts = Tag & {
+type TagWithContacts = TagModel & {
   _count?: {
     contacts: number
   }
 }
 
 interface GetColumnsProps {
-  setRowAction: Dispatch<SetStateAction<DataTableRowAction<Tag> | null>>
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<TagModel> | null>>
   handleCopy: (id: string) => void
 }
 

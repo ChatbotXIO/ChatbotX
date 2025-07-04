@@ -1,6 +1,6 @@
-import type { User } from "@ahachat.ai/database/types"
+import type { UserModel } from "@ahachat.ai/database/types"
 
-export type UserResource = User
+export type UserResource = UserModel
 
 export type UserCollection = {
   data: UserResource[]

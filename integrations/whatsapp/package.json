@@ -11,11 +11,11 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
-    "remeda": "^2.21.9",
+    "remeda": "^2.23.3",
     "tslog": "^4.9.3",
     "typescript": "5.8.3",
-    "whatsapp-api-js": "^5.3.0",
-    "zod": "^3.25.23"
+    "whatsapp-api-js": "^6.0.0",
+    "zod": "^3.25.71"
   },
   "exports": {
     ".": "./src/index.ts"

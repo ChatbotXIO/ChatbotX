@@ -2,7 +2,8 @@
 
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Message, type Prisma, prisma } from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@ahachat.ai/database"
+import type { MessageModel } from "@ahachat.ai/database/types"
 import type { MessageCollection, MessageResource } from "../schemas"
 import type {
   FindMessageSchema,
@@ -47,7 +48,7 @@ export const listMessages = async (
   let nextCursor: string | null = null
   const prevCursor: string | null = null
   if (messages.length === perPage) {
-    const lastMessage = messages[messages.length - 1] as Message
+    const lastMessage = messages[messages.length - 1] as MessageModel
     nextCursor = lastMessage.id
 
     messages = messages.slice(0, messages.length - 1)

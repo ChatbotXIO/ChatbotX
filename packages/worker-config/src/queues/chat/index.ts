@@ -1,6 +1,6 @@
 import type { ConversationEntity, MessageEntity } from "@ahachat.ai/sdk"
 import { Queue } from "bullmq"
-import { connection, defaultJobOptions } from "../../lib/connection"
+import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
 import { QueueName } from "../../lib/types"
 import type {
   SendAudioStepSchema,
@@ -42,6 +42,6 @@ export type ChatJobSendFlowStep = {
 export type ChatJobData = ChatJobSendMessage | ChatJobSendFlowStep
 
 export const chatQueue = new Queue<ChatJobData>(QueueName.CHAT, {
-  connection,
+  connection: getRedisConnection(),
   defaultJobOptions,
 })

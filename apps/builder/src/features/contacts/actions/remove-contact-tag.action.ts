@@ -14,7 +14,7 @@ import {
 
 export const removeContactTagAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(removeContactTagRequest)
+  .inputSchema(removeContactTagRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

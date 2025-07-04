@@ -12,7 +12,7 @@ import { revalidateTag } from "next/cache"
 
 export const enableBotAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(bulkUpdateIdsRequest)
+  .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

@@ -14,7 +14,7 @@ import {
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
 
 export const updateAccountFieldAction = chatbotActionClient
-  .schema(updateAccountFieldRequest)
+  .inputSchema(updateAccountFieldRequest)
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .action(
     async ({

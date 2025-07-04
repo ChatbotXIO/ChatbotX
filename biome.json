@@ -11,7 +11,7 @@
       ".next",
       ".tolgee",
       ".turbo",
-      "packages/database/generated/client",
+      "packages/database/src/generated/prisma",
       "dist"
     ]
   },

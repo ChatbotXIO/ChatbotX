@@ -12,7 +12,7 @@ import {
 
 export const deleteTagAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(bulkUpdateIdsRequest)
+  .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

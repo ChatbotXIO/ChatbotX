@@ -1,5 +1,5 @@
-import type { Attachment } from "@ahachat.ai/database/types"
+import type { AttachmentModel } from "@ahachat.ai/database/types"
 
-export type AttachmentResource = Attachment & {
+export type AttachmentResource = AttachmentModel & {
   url: string
 }

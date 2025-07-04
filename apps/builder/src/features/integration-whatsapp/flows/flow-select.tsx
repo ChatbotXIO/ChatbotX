@@ -2,7 +2,7 @@ import { SelectField } from "@/components/form/select-field"
 import { callAPI } from "@/lib/swr"
 import {
   WhatsappFlowStatus,
-  type WhatsappFlow,
+  type WhatsappFlowModel,
 } from "@ahachat.ai/database/types"
 import { useParams } from "next/navigation"
 
@@ -18,7 +18,7 @@ export const WhatsappFlowSelect = ({
   const params = useParams<{ chatbotId: string }>()
 
   const url = `/api/chatbots/${params.chatbotId}/whatsapp/flows?perPage=9999&status=${WhatsappFlowStatus.PUBLISHED}`
-  const { data } = callAPI<{ data: WhatsappFlow[] }>(url)
+  const { data } = callAPI<{ data: WhatsappFlowModel[] }>(url)
   const flows = (data?.data ?? []).map((v) => ({
     label: v.name,
     value: v.sourceId,

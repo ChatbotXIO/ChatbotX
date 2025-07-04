@@ -14,7 +14,7 @@ import { ContactException } from "../schemas"
 
 export const updateContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateContactRequest)
+  .inputSchema(updateContactRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

@@ -1,4 +1,5 @@
-import { FieldType, prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
+import { FieldType } from "@ahachat.ai/database/types"
 import {
   GenerateCodeType,
   type CountCharactersStepSchema,

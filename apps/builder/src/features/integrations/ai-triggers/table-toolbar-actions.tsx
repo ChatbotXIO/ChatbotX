@@ -1,11 +1,11 @@
 "use client"
 
 import { DeleteAITriggerDialog } from "@/features/integrations/ai-triggers/delete"
-import type { AITrigger } from "@ahachat.ai/database/types"
+import type { AITriggerModel } from "@ahachat.ai/database/types"
 import type { Table } from "@tanstack/react-table"
 
 type AITriggersTableToolbarActionsProps = {
-  table: Table<AITrigger>
+  table: Table<AITriggerModel>
   chatbotId: string
   onOpenChange: () => void
 }

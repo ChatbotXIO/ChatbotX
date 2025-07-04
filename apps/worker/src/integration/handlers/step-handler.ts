@@ -1,9 +1,9 @@
-import type { Conversation } from "@ahachat.ai/database"
+import type { ConversationModel } from "@ahachat.ai/database/types"
 import type { SendTextStepSchema } from "@ahachat.ai/flow-config"
 import { ChatJobAction, chatQueue } from "@ahachat.ai/worker-config"
 
 export interface FlowStepProps<T> {
-  conversation: Conversation
+  conversation: ConversationModel
   flowVersionId: string
   step: T
 }

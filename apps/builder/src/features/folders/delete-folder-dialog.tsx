@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action"
-import type { Folder } from "@ahachat.ai/database/types"
+import type { FolderModel } from "@ahachat.ai/database/types"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -24,7 +24,7 @@ export function DeleteFolderDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  folder: Folder | null
+  folder: FolderModel | null
 }) {
   const { t } = useTranslate()
 

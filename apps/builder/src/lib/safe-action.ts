@@ -1,4 +1,5 @@
 import { auth } from "@/auth"
+import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { Prisma, prisma } from "@ahachat.ai/database"
 import { SdkException } from "@ahachat.ai/sdk"
 import {
@@ -6,7 +7,6 @@ import {
   createSafeActionClient,
 } from "next-safe-action"
 import { BaseException } from "./error"
-import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {

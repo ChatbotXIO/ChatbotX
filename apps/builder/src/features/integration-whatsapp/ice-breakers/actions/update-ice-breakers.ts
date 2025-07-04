@@ -4,12 +4,12 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { integrations } from "@/integration"
+import { getLogger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
-import { getLogger } from "@/lib/log"
 import { uploader } from "@ahachat.ai/filesystem"
 import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
-import { integrations } from "@/integration"
 import {
   type UpdateWhatsappIceBreakerSchema,
   updateWhatsappIceBreakerSchema,
@@ -17,7 +17,7 @@ import {
 
 export const updateWhatsappIceBreakerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(updateWhatsappIceBreakerSchema)
+  .inputSchema(updateWhatsappIceBreakerSchema)
   .action(
     async ({
       parsedInput,

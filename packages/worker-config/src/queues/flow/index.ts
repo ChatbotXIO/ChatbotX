@@ -1,8 +1,8 @@
 import { Queue } from "bullmq"
 import { QueueName } from "../../lib/types"
-import { connection, defaultJobOptions } from "../../lib/connection"
+import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
 
 export const flowQueue = new Queue(QueueName.FLOW, {
-  connection,
+  connection: getRedisConnection(),
   defaultJobOptions,
 })

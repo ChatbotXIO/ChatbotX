@@ -2,8 +2,8 @@ import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Prisma, prisma } from "@ahachat.ai/database"
 import { unstable_cache } from "next/cache"
-import type { GetLogsSchema } from "../schemas/get-logs-schema"
 import type { LogCollection } from "../schemas"
+import type { GetLogsSchema } from "../schemas/get-logs-schema"
 
 export async function getLogs(input: GetLogsSchema): Promise<LogCollection> {
   const userId = await getCurrentUserId()

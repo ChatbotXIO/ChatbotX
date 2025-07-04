@@ -8,13 +8,13 @@ import {
 import { findConversation } from "@/features/conversations/queries/list-conversations.query"
 import { logger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
 import {
   ContentType,
   MessageType,
-  prisma,
   SenderType,
-  type User,
-} from "@ahachat.ai/database"
+  type UserModel,
+} from "@ahachat.ai/database/types"
 import { uploader } from "@ahachat.ai/filesystem"
 import {
   broadcastToChatbotParty,
@@ -38,14 +38,14 @@ import {
 
 export const createMessageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(createMessageRequest)
+  .inputSchema(createMessageRequest)
   .action(
     async ({
       ctx,
       bindArgsParsedInputs: [chatbotId, conversationId],
       parsedInput,
     }: {
-      ctx: { user: User }
+      ctx: { user: UserModel }
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: CreateMessageRequest
     }) => {

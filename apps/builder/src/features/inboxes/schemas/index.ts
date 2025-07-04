@@ -1,6 +1,6 @@
-import type { Inbox } from "@ahachat.ai/database/types"
+import type { InboxModel } from "@ahachat.ai/database/types"
 
-export type InboxResource = Inbox
+export type InboxResource = InboxModel
 
 export type InboxCollection = {
   data: InboxResource[]

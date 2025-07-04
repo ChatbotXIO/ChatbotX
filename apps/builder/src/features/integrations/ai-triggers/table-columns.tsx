@@ -11,19 +11,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { AITrigger } from "@ahachat.ai/database/types"
+import type { AITriggerModel } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisVerticalIcon } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
 
 interface GetColumnsProps {
-  setRowAction: Dispatch<SetStateAction<DataTableRowAction<AITrigger> | null>>
+  setRowAction: Dispatch<
+    SetStateAction<DataTableRowAction<AITriggerModel> | null>
+  >
 }
 
 export function getAITriggersColumns({
   setRowAction,
-}: GetColumnsProps): ColumnDef<AITrigger>[] {
+}: GetColumnsProps): ColumnDef<AITriggerModel>[] {
   return [
     {
       id: "select",

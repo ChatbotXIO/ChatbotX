@@ -20,19 +20,19 @@
     "@ahachat.ai/sdk": "workspace:*",
     "@ahachat.ai/typescript-config": "workspace:*",
     "@ahachat.ai/worker-config": "workspace:*",
-    "@faker-js/faker": "^9.8.0",
+    "@faker-js/faker": "^9.9.0",
     "@paralleldrive/cuid2": "^2.2.2",
-    "bullmq": "^5.53.0",
+    "bullmq": "^5.56.1",
     "date-fns": "^4.1.0",
     "dot-prop": "^9.0.0",
     "ioredis": "^5.6.1",
     "ky": "^1.8.1",
-    "remeda": "^2.21.9",
+    "remeda": "^2.23.3",
     "tslog": "^4.9.3",
     "tsup": "^8.5.0"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
+    "concurrently": "^9.2.0",
     "dotenv-cli": "^8.0.0"
   }
 }

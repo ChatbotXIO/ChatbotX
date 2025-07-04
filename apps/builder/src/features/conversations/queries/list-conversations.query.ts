@@ -6,12 +6,11 @@ import type {
   ListConversationsRequest,
 } from "@/features/conversations/schemas/list-conversations.request"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import {
-  type Conversation,
-  type Message,
-  type Prisma,
-  prisma,
-} from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@ahachat.ai/database"
+import type {
+  ConversationModel,
+  MessageModel,
+} from "@ahachat.ai/database/types"
 import { unstable_cache } from "next/cache"
 import type { ConversationCollection, ConversationResource } from "../schemas"
 
@@ -65,7 +64,7 @@ export const listConversations = async (
     },
   })
 
-  const lastMessagesGroup: Record<string, Message[]> = lastMessages.reduce(
+  const lastMessagesGroup: Record<string, MessageModel[]> = lastMessages.reduce(
     (result, message) => {
       if (!result[message.conversationId]) {
         result[message.conversationId] = []
@@ -74,7 +73,7 @@ export const listConversations = async (
 
       return result
     },
-    {} as Record<string, Message[]>,
+    {} as Record<string, MessageModel[]>,
   )
 
   // Mapping last message to conversation
@@ -91,7 +90,7 @@ export const listConversations = async (
   if (conversations.length === perPage) {
     const lastConversation = conversations[
       conversations.length - 1
-    ] as Conversation
+    ] as ConversationModel
     nextCursor = lastConversation.id
 
     conversations = conversations.slice(0, conversations.length - 1)

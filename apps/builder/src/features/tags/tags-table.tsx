@@ -1,7 +1,10 @@
 "use client"
 
+import { DataTable } from "@/components/data-table"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { Tag } from "@ahachat.ai/database/types"
+import type { DataTableRowAction } from "@/types/data-table"
+import type { TagModel } from "@ahachat.ai/database/types"
 import React, { useMemo } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
@@ -10,9 +13,6 @@ import type { getTags } from "./queries"
 import { getTagColumns } from "./tags-table-columns"
 import { TagsTableToolbarActions } from "./tags-table-toolbar-actions"
 import { UpdateTagDialog } from "./update-tag-dialog"
-import type { DataTableRowAction } from "@/types/data-table"
-import { DataTable } from "@/components/data-table"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
 
 interface TagsTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getTags>>]>
@@ -22,7 +22,7 @@ interface TagsTableProps {
 export function TagsTable({ promises, chatbotId }: TagsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const [rowAction, setRowAction] =
-    React.useState<DataTableRowAction<Tag> | null>(null)
+    React.useState<DataTableRowAction<TagModel> | null>(null)
   const [_, copy] = useCopyToClipboard()
 
   const handleCopy = (id: string) => {

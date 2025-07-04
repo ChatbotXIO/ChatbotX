@@ -1,12 +1,15 @@
 import type { ConversationResource } from "@/features/conversations/schemas"
 import { BaseException } from "@/lib/error"
-import type { Contact, ContactCustomField } from "@ahachat.ai/database/types"
+import type {
+  ContactModel,
+  ContactCustomFieldModel,
+} from "@ahachat.ai/database/types"
 
 export class ContactException extends BaseException {}
 
-export type ContactResource = Contact & {
+export type ContactResource = ContactModel & {
   fullName?: string
-  contactCustomFields?: ContactCustomField[]
+  contactCustomFields?: ContactCustomFieldModel[]
   conversation?: ConversationResource | null
 }
 

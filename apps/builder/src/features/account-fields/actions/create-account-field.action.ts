@@ -14,7 +14,7 @@ import {
 } from "../schemas/create-account-field.schema"
 
 export const createAccountFieldAction = chatbotActionClient
-  .schema(createAccountFieldRequest)
+  .inputSchema(createAccountFieldRequest)
   .bindArgsSchemas(chatbotIdRequestParams.items)
   .action(
     async ({

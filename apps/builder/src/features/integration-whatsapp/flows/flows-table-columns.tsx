@@ -2,20 +2,20 @@
 
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { WhatsappFlow } from "@ahachat.ai/database"
+import type { WhatsappFlowModel } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TextIcon } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
 
 interface GetColumnsProps {
   setRowAction: Dispatch<
-    SetStateAction<DataTableRowAction<WhatsappFlow> | null>
+    SetStateAction<DataTableRowAction<WhatsappFlowModel> | null>
   >
 }
 
 export function getColumns({
   setRowAction: _setRowAction,
-}: GetColumnsProps): ColumnDef<WhatsappFlow>[] {
+}: GetColumnsProps): ColumnDef<WhatsappFlowModel>[] {
   return [
     {
       id: "name",

@@ -2,7 +2,7 @@ import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { T } from "@/tolgee/server"
-import { type Folder, FolderType } from "@ahachat.ai/database"
+import { type FolderModel, FolderType } from "@ahachat.ai/database/types"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
@@ -56,7 +56,7 @@ export default async function FoldersDetault(props: {
           id: folderId,
           chatbotId: params.chatbotId,
         })
-      : Promise.resolve({ folder: null, parents: [] as Folder[] }),
+      : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     getFolders({
       chatbotId: params.chatbotId,
       folderType: folderType,

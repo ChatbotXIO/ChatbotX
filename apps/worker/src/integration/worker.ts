@@ -1,8 +1,8 @@
 import {
   IntegrationJobAction,
   QueueName,
-  connection,
   defaultWorkerOptions,
+  getRedisConnection,
   type IntegrationJobData,
 } from "@ahachat.ai/worker-config"
 import { type Job, Worker } from "bullmq"
@@ -41,7 +41,7 @@ const worker = new Worker(
     }
   },
   {
-    connection,
+    connection: getRedisConnection(),
     ...defaultWorkerOptions,
   },
 )

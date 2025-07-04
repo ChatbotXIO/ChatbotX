@@ -1,9 +1,9 @@
 import { BaseException } from "@/lib/error"
-import type { Field } from "@ahachat.ai/database"
+import type { FieldModel } from "@ahachat.ai/database/types"
 
 export class FieldException extends BaseException {}
 
-export type CustomFieldResource = Field
+export type CustomFieldResource = FieldModel
 
 export type CustomFieldCollection = {
   data: CustomFieldResource[]

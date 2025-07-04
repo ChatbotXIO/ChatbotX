@@ -1,7 +1,7 @@
 "use client"
 
 import { callAPI } from "@/lib/swr"
-import type { Flow } from "@ahachat.ai/database/types"
+import type { FlowModel } from "@ahachat.ai/database/types"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
 import type { StartFlowStepSchema } from "@ahachat.ai/flow-config"
@@ -21,7 +21,7 @@ export const StartFlowStepViewer = ({
 
   const url = `/api/chatbots/${params.chatbotId}/flows?perPage=9999`
   const { data: flowData } = callAPI<FlowCollection>(url)
-  const flow = ((flowData?.data ?? []) as Flow[]).find(
+  const flow = ((flowData?.data ?? []) as FlowModel[]).find(
     (obj) => obj.id === data.flowId,
   )
 

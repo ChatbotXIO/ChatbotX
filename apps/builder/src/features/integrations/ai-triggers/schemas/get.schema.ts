@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/lib/parsers"
-import type { AITrigger } from "@ahachat.ai/database/types"
+import type { AITriggerModel } from "@ahachat.ai/database/types"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -9,7 +9,7 @@ import {
 export const listAITriggersRequest = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
-  sort: getSortingStateParser<AITrigger>().withDefault([
+  sort: getSortingStateParser<AITriggerModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
   name: parseAsString.withDefault(""),
@@ -21,7 +21,7 @@ export type ListAITriggersRequest = Partial<
   chatbotId?: string
 }
 
-export type AITriggerResource = AITrigger
+export type AITriggerResource = AITriggerModel
 
 export type AITriggerCollection = {
   data: AITriggerResource[]

@@ -1,11 +1,11 @@
 "use client"
 
-import type { Tag } from "@ahachat.ai/database/types"
+import type { TagModel } from "@ahachat.ai/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
 
 interface TagsTableToolbarActionsProps {
-  table: Table<Tag>
+  table: Table<TagModel>
   chatbotId: string
 }
 

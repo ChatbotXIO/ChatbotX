@@ -1,4 +1,5 @@
-import { prisma, type Conversation } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
+import type { ConversationModel } from "@ahachat.ai/database/types"
 import { StepType, type FlowNode } from "@ahachat.ai/flow-config"
 import { SdkException } from "@ahachat.ai/sdk"
 import type { IntegrationJobSendFlow } from "@ahachat.ai/worker-config"
@@ -118,7 +119,7 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     },
   })
   if (!conversation) {
-    throw new SdkException("Conversation not found")
+    throw new SdkException("ConversationModel not found")
   }
 
   // Try to find corresponding flowVersion
@@ -170,7 +171,7 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
 }
 
 async function* runFlowNode(
-  conversation: Conversation,
+  conversation: ConversationModel,
   flowVersionId: string,
   node: FlowNode,
 ) {

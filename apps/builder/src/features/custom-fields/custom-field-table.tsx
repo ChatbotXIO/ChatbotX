@@ -14,7 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { DataTableRowAction } from "@/types/data-table"
-import { type Field, FieldType } from "@ahachat.ai/database/types"
+import { type FieldModel, FieldType } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon } from "lucide-react"
 import { use, useMemo, useState } from "react"
@@ -31,9 +31,8 @@ interface FieldsTableProps {
 
 export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
   const [{ data, pageCount }] = use(promises)
-  const [rowAction, setRowAction] = useState<DataTableRowAction<Field> | null>(
-    null,
-  )
+  const [rowAction, setRowAction] =
+    useState<DataTableRowAction<FieldModel> | null>(null)
   // const [_, copyFieldId] = useCopyToClipboard()
 
   // const handleCopy = (id: string) => {

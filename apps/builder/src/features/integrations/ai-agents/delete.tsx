@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { deleteAIAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
-import type { AIAgent } from "@ahachat.ai/database/types"
+import type { AIAgentModel } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -24,7 +24,7 @@ import { toast } from "sonner"
 interface DeleteAIAgentsDialogProps
   extends ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  agents: Row<AIAgent>["original"][]
+  agents: Row<AIAgentModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void

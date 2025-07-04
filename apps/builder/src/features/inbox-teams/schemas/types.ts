@@ -1,7 +1,10 @@
 import type { UserResource } from "@/features/users/schemas"
-import type { InboxTeam, InboxTeamMember } from "@ahachat.ai/database/types"
+import type {
+  InboxTeamModel,
+  InboxTeamMemberModel,
+} from "@ahachat.ai/database/types"
 
-export type InboxTeamResource = InboxTeam & {
+export type InboxTeamResource = InboxTeamModel & {
   _count?: {
     inboxTeamMembers?: number
   }
@@ -12,6 +15,6 @@ export type InboxTeamCollection = {
   data: InboxTeamResource[]
 }
 
-export type InboxTeamMemberResource = InboxTeamMember & {
+export type InboxTeamMemberResource = InboxTeamMemberModel & {
   user: UserResource
 }

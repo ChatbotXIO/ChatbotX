@@ -2,19 +2,19 @@
 
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { WhatsappMessageTemplate } from "@ahachat.ai/database"
+import type { WhatsappMessageTemplateModel } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Dispatch, SetStateAction } from "react"
 
 interface GetColumnsProps {
   setRowAction: Dispatch<
-    SetStateAction<DataTableRowAction<WhatsappMessageTemplate> | null>
+    SetStateAction<DataTableRowAction<WhatsappMessageTemplateModel> | null>
   >
 }
 
 export function getColumns({
   setRowAction: _setRowAction,
-}: GetColumnsProps): ColumnDef<WhatsappMessageTemplate>[] {
+}: GetColumnsProps): ColumnDef<WhatsappMessageTemplateModel>[] {
   return [
     {
       accessorKey: "name",
