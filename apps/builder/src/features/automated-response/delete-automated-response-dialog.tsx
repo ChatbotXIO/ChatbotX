@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { AutomatedResponse } from "@ahachat.ai/database/types"
+import type { AutomatedResponseModel } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { T } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -22,7 +22,7 @@ import { deleteAutomatedResponseAction } from "./actions/delete-automated-respon
 interface DeleteAutomatedResponsesDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  automatedResponses: Row<AutomatedResponse>["original"][]
+  automatedResponses: Row<AutomatedResponseModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void

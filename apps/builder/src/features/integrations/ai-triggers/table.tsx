@@ -6,7 +6,7 @@ import type { listAITriggers } from "@/features/integrations/ai-triggers/actions
 import { AITriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
 import { UpdateAITriggerDialog } from "@/features/integrations/ai-triggers/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AITrigger } from "@ahachat.ai/database/types"
+import type { AITriggerModel } from "@ahachat.ai/database/types"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"
@@ -25,7 +25,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
   const [{ data, pageCount }] = use(promises)
   const router = useRouter()
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<AITrigger> | null>(null)
+    useState<DataTableRowAction<AITriggerModel> | null>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const columns = useMemo(
@@ -58,7 +58,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow: AITrigger) => originalRow.id,
+    getRowId: (originalRow: AITriggerModel) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })

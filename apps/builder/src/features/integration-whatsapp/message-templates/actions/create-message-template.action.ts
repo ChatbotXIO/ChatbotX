@@ -22,7 +22,7 @@ import { parseComponents, slugify } from "./utils"
 
 export const createMessageTemplateAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(createMessageTemplateRequest)
+  .inputSchema(createMessageTemplateRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

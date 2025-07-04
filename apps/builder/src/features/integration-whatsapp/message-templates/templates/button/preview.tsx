@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { useTranslate } from "@tolgee/react"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useFieldArray, useFormContext } from "react-hook-form"
-import { buttonBlockDefaultValue } from "./schema"
+import { buttonStepDefaultFn } from "./schema"
 import { useState, useCallback, memo } from "react"
 import { EditButtonDialog } from "./edit-button-dialog"
 
@@ -74,7 +74,7 @@ const ButtonGroupPreviewComponent = ({
 
   const addButton = useCallback(() => {
     append({
-      ...buttonBlockDefaultValue(`Button #${fields.length + 1}`),
+      ...buttonStepDefaultFn(`Button #${fields.length + 1}`),
       id: `button-${fields.length + 1}`,
     })
   }, [append, fields.length])

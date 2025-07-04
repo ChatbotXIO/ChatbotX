@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { buttonBlockSchema, buttonBlockDefaultValue } from "../button/schema"
+import { buttonStepSchema, buttonStepDefaultFn } from "../button/schema"
 
 export const templateImageSchema = z
   .object({
@@ -26,7 +26,7 @@ export const templateImageSchema = z
       variables: z.array(z.string().min(1).max(255)),
     }),
     footer: z.string().trim().max(60).nullable(),
-    buttons: z.array(buttonBlockSchema).max(3),
+    buttons: z.array(buttonStepSchema).max(3),
   })
   .superRefine((data, ctx) => {
     if (data.showFooter && !data.footer?.length) {
@@ -54,6 +54,6 @@ export const templateImageDefaultValue = (
   },
   footer: "",
   buttons: Array.from({ length: countBtn }, (_, index) =>
-    buttonBlockDefaultValue(`Button #${index + 1}`),
+    buttonStepDefaultFn(`Button #${index + 1}`),
   ),
 })

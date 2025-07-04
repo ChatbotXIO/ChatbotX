@@ -1,6 +1,6 @@
-import type { ContactNote } from "@ahachat.ai/database/types"
+import type { ContactNoteModel } from "@ahachat.ai/database/types"
 
-export type ContactNoteResource = ContactNote
+export type ContactNoteResource = ContactNoteModel
 
 export type ContactNoteCollection = {
   data: ContactNoteResource[]

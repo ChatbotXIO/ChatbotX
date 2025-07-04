@@ -1,11 +1,11 @@
 "use client"
 
-import type { Log } from "@ahachat.ai/database/types"
+import type { LogModel } from "@ahachat.ai/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 
 interface LogsTableToolbarActionsProps {
-  table: Table<Log>
+  table: Table<LogModel>
   chatbotId: string
   logType: string
 }

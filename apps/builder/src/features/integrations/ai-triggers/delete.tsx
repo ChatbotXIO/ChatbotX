@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { deleteAITriggerAction } from "@/features/integrations/ai-triggers/actions/delete.action"
-import type { AITrigger } from "@ahachat.ai/database/types"
+import type { AITriggerModel } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -23,7 +23,7 @@ import { toast } from "sonner"
 interface DeleteAITriggerDialogProps
   extends ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  trigger: Row<AITrigger>["original"][]
+  trigger: Row<AITriggerModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
@@ -82,7 +82,7 @@ export function DeleteAITriggerDialog({
             variant="destructive"
             onClick={() => {
               execute({
-                ids: (trigger ?? []).map((item: AITrigger) => item.id),
+                ids: (trigger ?? []).map((item: AITriggerModel) => item.id),
               })
             }}
             disabled={isPending}

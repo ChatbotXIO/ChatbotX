@@ -1,17 +1,19 @@
 "use client"
 
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import { T } from "@tolgee/react"
+import { SaveOffIcon } from "lucide-react"
+import { BaseStepEditor } from "../base/editor"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 
 export const ClearCustomFieldStepEditor = ({
   parentName,
 }: { parentName: string }) => {
   return (
-    <div className="rounded-lg border-2 border-dashed p-4 text-sm flex flex-col gap-2">
-      <div>
-        <T keyName="flows.StepType.ClearCustomField" />
-      </div>
+    <BaseStepEditor
+      icon={SaveOffIcon}
+      title={<T keyName="flows.StepType.ClearCustomField" />}
+    >
       <CustomFieldSelect name={`${parentName}.customFieldId`} label="" />
-    </div>
+    </BaseStepEditor>
   )
 }

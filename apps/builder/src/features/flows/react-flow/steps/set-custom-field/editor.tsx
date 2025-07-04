@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
 import type { SetCustomFieldStepSchema } from "@ahachat.ai/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
@@ -19,6 +18,7 @@ import { useForm, useFormContext } from "react-hook-form"
 import { setCustomFieldStep } from "."
 import { Form } from "@/components/ui/form"
 import { useState } from "react"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 
 const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
   const { setValue, getValues } = useFormContext()

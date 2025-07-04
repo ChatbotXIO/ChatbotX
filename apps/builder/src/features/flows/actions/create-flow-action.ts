@@ -17,7 +17,7 @@ import { OMNICHANNEL } from "@ahachat.ai/database/types"
 
 export const createFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(createFlowSchema)
+  .inputSchema(createFlowSchema)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

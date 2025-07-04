@@ -3,7 +3,7 @@ import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
 import { T } from "@/tolgee/server"
-import { type Folder, FolderType } from "@ahachat.ai/database"
+import { type FolderModel, FolderType } from "@ahachat.ai/database/types"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 
@@ -23,7 +23,7 @@ export default async function FoldersPage(props: {
           id: folderId,
           chatbotId: params.chatbotId,
         })
-      : Promise.resolve({ folder: null, parents: [] as Folder[] }),
+      : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     getFolders({
       chatbotId: params.chatbotId,
       folderType: folderType,

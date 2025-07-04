@@ -1,6 +1,7 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Folder, type FolderType, prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
+import type { FolderModel, FolderType } from "@ahachat.ai/database/types"
 import { unstable_cache } from "next/cache"
 import type {
   GetCurrentFolderSchema,
@@ -10,7 +11,7 @@ import { FolderException } from "../schemas/types"
 
 export const getFolders = async (
   input: ListFoldersSearchParams,
-): Promise<{ data: Folder[] }> => {
+): Promise<{ data: FolderModel[] }> => {
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
@@ -42,7 +43,7 @@ export const getFolders = async (
 
 export const getCurrentFolder = async (
   input: GetCurrentFolderSchema,
-): Promise<{ folder: Folder | null; parents: Folder[] }> => {
+): Promise<{ folder: FolderModel | null; parents: FolderModel[] }> => {
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
@@ -55,7 +56,7 @@ export const getCurrentFolder = async (
 
   return await unstable_cache(
     async () => {
-      let parents: Folder[] = []
+      let parents: FolderModel[] = []
       if (folder.paths.length > 0) {
         const tempParents = await prisma.folder.findMany({
           where: {
@@ -69,7 +70,7 @@ export const getCurrentFolder = async (
             result[value] = null
             return result
           },
-          {} as Record<string, Folder | null>,
+          {} as Record<string, FolderModel | null>,
         )
 
         for (const temp of tempParents) {

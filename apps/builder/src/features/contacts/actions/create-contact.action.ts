@@ -15,7 +15,7 @@ import {
 
 export const createContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(createContactSchema)
+  .inputSchema(createContactSchema)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

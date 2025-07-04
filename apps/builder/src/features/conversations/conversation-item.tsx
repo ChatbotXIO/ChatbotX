@@ -6,17 +6,12 @@ import WhatsappIcon from "@/components/icons/whatsapp"
 import { cn } from "@/components/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import type { ConversationResource } from "@/features/conversations/schemas/get-conversations.schema"
-import {
-  AssignedType,
-  type Contact,
-  type InboxTeam,
-  type User,
-} from "@ahachat.ai/database/types"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
-import type { MessageResource } from "../messages/schemas/list-messages.schema"
+import type { ContactResource } from "../contacts/schemas"
+import type { ConversationResource } from "./schemas"
+import type { MessageResource } from "../messages/schemas"
 
 interface ConversationItemProps {
   conversation: ConversationResource
@@ -24,39 +19,28 @@ interface ConversationItemProps {
   onSelect: () => void
 }
 
-const assignedIcon = (
-  contact: Contact & {
-    assignedUser: User | null
-    assignedTeam: InboxTeam | null
-  },
-) => {
-  switch (contact.assignedType) {
-    case AssignedType.USER:
-      return (
-        <Avatar className="w-4 h-4">
-          <AvatarImage src={contact.assignedUser?.image ?? ""} />
-          <AvatarFallback>
-            {contact.assignedUser?.name?.slice(0, 2) ?? " "}
-          </AvatarFallback>
-        </Avatar>
-      )
-    case AssignedType.TEAM:
-      return (
-        <div className="rounded-full border border-zinc-600 bg-secondary overflow-hidden">
-          <UsersRoundIcon size={16} strokeWidth={1} />
-        </div>
-      )
-    default:
-      return <></>
+const assignedIcon = (conversation: ConversationResource) => {
+  if (conversation.assignedUserId) {
+    return (
+      <Avatar className="w-4 h-4">
+        <AvatarImage src={conversation.assignedUser?.image ?? ""} />
+        <AvatarFallback>
+          {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
+        </AvatarFallback>
+      </Avatar>
+    )
   }
+  if (conversation.assignedInboxTeamId) {
+    return (
+      <div className="rounded-full border border-zinc-600 bg-secondary overflow-hidden">
+        <UsersRoundIcon size={16} strokeWidth={1} />
+      </div>
+    )
+  }
+  return <></>
 }
 
-const sourceIcon = (
-  contact: Contact & {
-    assignedUser: User | null
-    assignedTeam: InboxTeam | null
-  },
-) => {
+const sourceIcon = (contact: ContactResource) => {
   switch (contact.source) {
     case "Whatsapp":
       return <WhatsappIcon />
@@ -113,8 +97,7 @@ export default function ConversationItem({
         <div className="relative">
           {contactAvatar}
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-            {/* biome-ignore lint/style/noNonNullAssertion: <explanation> */}
-            {assignedIcon(conversation.contact!)}
+            {assignedIcon(conversation)}
           </div>
           <div className="absolute bottom-0 right-0 transform">
             {/* biome-ignore lint/style/noNonNullAssertion: <explanation> */}

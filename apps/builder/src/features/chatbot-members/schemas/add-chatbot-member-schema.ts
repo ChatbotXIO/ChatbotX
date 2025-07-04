@@ -1,11 +1,5 @@
-import {
-  type ChatbotMember,
-  ChatbotMemberRole,
-  type User,
-} from "@ahachat.ai/database"
+import { ChatbotMemberRole } from "@ahachat.ai/database"
 import { z } from "zod"
-
-export type ChatbotMemberWithUser = ChatbotMember & { user: User }
 
 export const addChatbotMemberSchema = z.object({
   chatbotId: z.string().cuid2(),

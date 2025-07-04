@@ -15,7 +15,7 @@ import {
 
 export const updateChatbotBasicAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(updateChatbotBasicRequest)
+  .inputSchema(updateChatbotBasicRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
@@ -33,7 +33,7 @@ export const updateChatbotBasicAction = chatbotActionClient
 
 export const updateChatbotAdvancedAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(updateChatbotAdvancedRequest)
+  .inputSchema(updateChatbotAdvancedRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { Log, LogType } from "@ahachat.ai/database/types"
+import type { LogModel, LogType } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -22,7 +22,7 @@ import { deleteLogAction } from "./actions/delete-log-action"
 interface DeleteLogsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  logs: Row<Log>["original"][]
+  logs: Row<LogModel>["original"][]
   logType: string
   showTrigger?: boolean
   onSuccess?: () => void

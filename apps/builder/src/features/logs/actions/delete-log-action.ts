@@ -1,12 +1,12 @@
 "use server"
 
-import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
-import { revalidateTag } from "next/cache"
 import {
   chatbotIdRequestParams,
   type ChatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import { prisma } from "@ahachat.ai/database"
+import { revalidateTag } from "next/cache"
 import {
   deleteLogsRequest,
   type DeleteLogsRequest,
@@ -14,7 +14,7 @@ import {
 
 export const deleteLogAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(deleteLogsRequest)
+  .inputSchema(deleteLogsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

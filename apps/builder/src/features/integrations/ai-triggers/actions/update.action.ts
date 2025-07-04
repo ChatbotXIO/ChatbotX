@@ -10,18 +10,19 @@ import {
   updateAITriggerRequest,
 } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { type User, prisma, type Prisma } from "@ahachat.ai/database"
+import { prisma, type Prisma } from "@ahachat.ai/database"
+import type { UserModel } from "@ahachat.ai/database/types"
 import { revalidateTag } from "next/cache"
 
 export const updateAITriggerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateAITriggerRequest)
+  .inputSchema(updateAITriggerRequest)
   .action(
     async ({
       parsedInput,
       bindArgsParsedInputs: [chatbotId, id],
     }: {
-      ctx: { user: User }
+      ctx: { user: UserModel }
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAITriggerRequest
     }) => {

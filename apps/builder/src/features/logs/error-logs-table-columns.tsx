@@ -11,19 +11,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { Log } from "@ahachat.ai/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisIcon, UserRoundIcon } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
+import type { LogResource } from "./schemas"
 
 interface GetColumnsProps {
-  setRowAction: Dispatch<SetStateAction<DataTableRowAction<Log> | null>>
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<LogResource> | null>>
 }
 
 export function getColumns({
   setRowAction,
-}: GetColumnsProps): ColumnDef<Log>[] {
+}: GetColumnsProps): ColumnDef<LogResource>[] {
   return [
     {
       id: "select",
@@ -76,9 +76,7 @@ export function getColumns({
         <DataTableColumnHeader column={column} title="Contact" />
       ),
       cell: ({ row }) => (
-        <div>
-          {row.original.executorType ? <UserRoundIcon size={16} /> : null}
-        </div>
+        <div>{row.original.userId ? <UserRoundIcon size={16} /> : null}</div>
       ),
       size: 50,
       enableSorting: false,

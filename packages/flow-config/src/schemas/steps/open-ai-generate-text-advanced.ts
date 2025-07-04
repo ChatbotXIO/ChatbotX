@@ -3,7 +3,7 @@ import { openAIDefaultFn, openAISchema } from "./open-ai"
 import { z } from "zod"
 
 export const openAIGenerateTextAdvancedSchema = openAISchema.extend({
-  stepType: z.literal(StepType.OpenAIGenerateTextAdvanced),
+  stepType: z.literal(StepType.OPENAI_GENERATE_TEXT_ADVANCED),
   prompt: z.string().optional(),
   userMessage: z.string(),
   resultCustomFieldId: z.string().cuid2(),
@@ -20,7 +20,7 @@ export type OpenAIGenerateTextAdvancedSchema = z.infer<
 export const openAIGenerateTextAdvancedDefaultFn =
   (): OpenAIGenerateTextAdvancedSchema => ({
     ...openAIDefaultFn(),
-    stepType: StepType.OpenAIGenerateTextAdvanced,
+    stepType: StepType.OPENAI_GENERATE_TEXT_ADVANCED,
     prompt: "",
     userMessage: "",
     resultCustomFieldId: "",

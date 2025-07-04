@@ -1,29 +1,24 @@
+"use server"
+
 import {
-  type BulkUpdateIdsRequest,
-  bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  chatbotIdAndIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
 import { revalidateTag } from "next/cache"
 
 export const followConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(bulkUpdateIdsRequest)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
-      parsedInput,
+      bindArgsParsedInputs: [chatbotId, id],
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.conversation.updateMany({
+      await prisma.conversation.update({
         where: {
-          id: {
-            in: parsedInput.ids,
-          },
+          id,
           chatbotId,
         },
         data: {
@@ -31,9 +26,7 @@ export const followConversationAction = chatbotActionClient
         },
       })
 
+      revalidateTag(`chatbots:${chatbotId}#contacts`)
       revalidateTag(`chatbots:${chatbotId}#conversations`)
-      for (const id of parsedInput.ids) {
-        revalidateTag(`chatbots:${chatbotId}#conversations:${id}`)
-      }
     },
   )

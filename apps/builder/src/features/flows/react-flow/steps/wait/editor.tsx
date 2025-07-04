@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { DelayTypeSelect } from "@/features/flows/react-flow/steps/wait/delay-type-select"
 import { DelayUnitSelect } from "@/features/flows/react-flow/steps/wait/delay-unit-select"
 import { TimeSelect } from "@/features/flows/react-flow/steps/wait/time-select"

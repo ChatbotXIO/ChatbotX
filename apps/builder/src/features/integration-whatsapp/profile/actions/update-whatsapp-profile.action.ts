@@ -11,7 +11,7 @@ import {
 } from "@/features/common/schemas"
 
 export const updateWhatsappProfileAction = chatbotActionClient
-  .schema(updateWhatsappProfileRequest)
+  .inputSchema(updateWhatsappProfileRequest)
   .bindArgsSchemas(chatbotIdRequestParams.items)
   .action(
     async ({

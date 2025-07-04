@@ -12,7 +12,7 @@ import { openAIDeleteMessageHistorySchema } from "./open-ai-delete-message-histo
 
 export const performActionStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.literal(StepType.PerformAction),
+  stepType: z.literal(StepType.PERFORM_ACTION),
   steps: z.array(
     z.union([
       openAIGenerateTextSchema,
@@ -31,6 +31,6 @@ export type PerformActionStepSchema = z.infer<typeof performActionStepSchema>
 
 export const performActionStepDefaultFn = (): PerformActionStepSchema => ({
   id: createId(),
-  stepType: StepType.PerformAction,
+  stepType: StepType.PERFORM_ACTION,
   steps: [],
 })

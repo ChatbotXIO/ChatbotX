@@ -14,7 +14,7 @@ import { revalidateTag } from "next/cache"
 
 export const editFolderAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(editFolderSchema)
+  .inputSchema(editFolderSchema)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

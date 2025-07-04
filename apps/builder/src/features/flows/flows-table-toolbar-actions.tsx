@@ -1,15 +1,15 @@
 "use client"
 
-import type { Flow } from "@ahachat.ai/database/types"
+import type { FlowModel } from "@ahachat.ai/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import type { Dispatch, SetStateAction } from "react"
 import type { DataTableRowAction } from "@/types/data-table"
 
 interface FlowsTableToolbarActionsProps {
-  table: Table<Flow>
+  table: Table<FlowModel>
   chatbotId: string
-  setRowAction: Dispatch<SetStateAction<DataTableRowAction<Flow> | null>>
+  setRowAction: Dispatch<SetStateAction<DataTableRowAction<FlowModel> | null>>
 }
 
 export function FlowsTableToolbarActions({

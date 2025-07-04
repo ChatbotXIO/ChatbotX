@@ -1,29 +1,28 @@
+import { prisma, type Prisma } from "@ahachat.ai/database"
 import {
   type ContentType,
-  type Conversation,
+  type ConversationModel,
   Gender,
-  type Message,
+  type MessageModel,
   MessageType,
-  type Prisma,
-  prisma,
   SenderType,
-} from "@ahachat.ai/database"
+} from "@ahachat.ai/database/types"
+import { uploader } from "@ahachat.ai/filesystem"
 import {
   integration,
   type OnMessageArgs,
   type WhatsappAuthValue,
 } from "@ahachat.ai/integration-whatsapp"
-import type { AttachmentEntity } from "@ahachat.ai/sdk"
-import { getLogger } from "../../lib/log"
-import { uploader } from "@ahachat.ai/filesystem"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@ahachat.ai/party-config"
+import type { AttachmentEntity } from "@ahachat.ai/sdk"
 import {
   IntegrationJobAction,
   integrationQueue,
 } from "@ahachat.ai/worker-config"
+import { getLogger } from "../../lib/log"
 
 export const receiveMessage = async ({
   integrationName,
@@ -32,8 +31,8 @@ export const receiveMessage = async ({
   integrationName: string
   payload: OnMessageArgs
 }): Promise<{
-  message: Message
-  conversation: Conversation
+  message: MessageModel
+  conversation: ConversationModel
 }> => {
   const logger = getLogger(integrationName)
 

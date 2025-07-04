@@ -26,14 +26,10 @@ export async function listAccountFields(
       }
 
       if (input.name) {
-        where.AND = [
-          {
-            name: {
-              contains: input.name,
-              mode: "insensitive",
-            },
-          },
-        ]
+        where.name = {
+          contains: input.name,
+          mode: "insensitive",
+        }
       }
 
       const orderBy = input.sort.map((sortItem) => ({

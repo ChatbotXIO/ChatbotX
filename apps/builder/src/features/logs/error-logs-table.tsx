@@ -1,15 +1,15 @@
 "use client"
 
-import { useMemo, useState, use } from "react"
+import { DataTable } from "@/components/data-table"
+import { DataTableToolbar } from "@/components/data-table-toolbar"
 import { useDataTable } from "@/hooks/use-data-table"
-import { type Log, LogType } from "@ahachat.ai/database/types"
+import type { DataTableRowAction } from "@/types/data-table"
+import { type LogModel, LogType } from "@ahachat.ai/database/types"
+import { use, useMemo, useState } from "react"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 import { getColumns } from "./error-logs-table-columns"
 import { LogsTableToolbarActions } from "./logs-table-toolbar-actions"
 import type { getLogs } from "./queries"
-import type { DataTableRowAction } from "@/types/data-table"
-import { DataTable } from "@/components/data-table"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
 
 interface LogsTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>
@@ -18,9 +18,8 @@ interface LogsTableProps {
 
 export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
   const [{ data, pageCount }] = use(promises)
-  const [rowAction, setRowAction] = useState<DataTableRowAction<Log> | null>(
-    null,
-  )
+  const [rowAction, setRowAction] =
+    useState<DataTableRowAction<LogModel> | null>(null)
 
   const columns = useMemo(() => getColumns({ setRowAction }), [])
 

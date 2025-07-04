@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { Tag } from "@ahachat.ai/database/types"
+import type { TagModel } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -22,7 +22,7 @@ import { deleteTagAction } from "./actions/delete-tag-action"
 interface DeleteTagsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  tags: Row<Tag>["original"][]
+  tags: Row<TagModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void

@@ -5,9 +5,8 @@ import { buttonStepSchema } from "./button"
 
 export const sendImageStepSchema = z.object({
   id: z.string().cuid2(),
-  stepType: z.literal(StepType.SendImage),
+  stepType: z.literal(StepType.SEND_IMAGE),
   imageMode: z.enum(["link", "file"]),
-  // file: z.instanceof(File).optional(),
   url: z.string().trim().url(),
   buttons: z.array(buttonStepSchema),
 })
@@ -16,7 +15,7 @@ export type SendImageStepSchema = z.infer<typeof sendImageStepSchema>
 
 export const sendImageStepDefaultFn = (): SendImageStepSchema => ({
   id: createId(),
-  stepType: StepType.SendImage,
+  stepType: StepType.SEND_IMAGE,
   imageMode: "file",
   url: "",
   buttons: [],

@@ -1,13 +1,13 @@
 import { getCurrentUserId } from "@/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
-import type { Prisma, User } from "@ahachat.ai/database"
+import { prisma, type Prisma } from "@ahachat.ai/database"
+import type { UserModel } from "@ahachat.ai/database/types"
 import { unstable_cache } from "next/cache"
 import type { GetUsersSchema } from "../schemas/get-users-schema"
 
 export async function getUsers(
   input: GetUsersSchema,
-): Promise<{ data: User[] }> {
+): Promise<{ data: UserModel[] }> {
   const userId = await getCurrentUserId()
 
   await findChatbotOrFail(userId, input.chatbotId)

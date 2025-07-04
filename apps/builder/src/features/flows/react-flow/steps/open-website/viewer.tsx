@@ -2,12 +2,13 @@
 
 import { T } from "@tolgee/react"
 import { LinkIcon } from "lucide-react"
+import { BaseStepViewer } from "../base/viewer"
 
 export const OpenWebsiteStepViewer = () => {
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center">
-      <LinkIcon size={18} className="text-yellow-500" />
-      <T keyName="flows.StepType.OpenWebsite" />
-    </div>
+    <BaseStepViewer
+      icon={LinkIcon}
+      title={<T keyName="flows.StepType.OpenWebsite" />}
+    />
   )
 }

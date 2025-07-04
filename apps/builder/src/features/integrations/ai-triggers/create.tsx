@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Form, FormLabel } from "@/components/ui/form"
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { FlowSelect } from "@/features/flows/flow-select"
 import { createAITriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
 import { createAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/create.schema"

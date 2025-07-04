@@ -4,7 +4,7 @@ import { format } from "date-fns"
 import { PaperclipIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import type { MessageResource } from "../schemas/list-messages.schema"
+import type { MessageResource } from "../schemas"
 import { MessageBubble } from "./message-bubble"
 
 export const MessageItem = ({ message }: { message: MessageResource }) => {

@@ -15,11 +15,11 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { T } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import type { UserResource } from "../users/schemas/types"
+import type { UserResource } from "../users/schemas"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
 import { addInboxTeamMemberRequest } from "./schemas/add-inbox-team-member.request"
 import { MultiSelectField } from "@/components/form/select-field"
-import type { InboxTeam } from "@ahachat.ai/database/types"
+import type { InboxTeamModel } from "@ahachat.ai/database/types"
 
 export function AddInboxTeamMemberDialog({
   open,
@@ -31,7 +31,7 @@ export function AddInboxTeamMemberDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  inboxTeam: InboxTeam | null
+  inboxTeam: InboxTeamModel | null
   listUsers: UserResource[]
 }) {
   const { form, handleSubmitWithAction } = useHookFormAction(

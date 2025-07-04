@@ -15,7 +15,7 @@ import {
 
 export const connectGoogleSheets = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(connectGoogleSheetsSchema)
+  .inputSchema(connectGoogleSheetsSchema)
   .action(
     async ({
       parsedInput,

@@ -10,7 +10,7 @@ import { revalidateTag } from "next/cache"
 
 export const enableLiveChatConversationAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(bulkUpdateIdsRequest)
+  .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

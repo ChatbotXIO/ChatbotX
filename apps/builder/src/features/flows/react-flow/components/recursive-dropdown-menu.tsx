@@ -5,15 +5,15 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { MenuItem } from "../nodes/types"
 import type { StepType } from "@ahachat.ai/flow-config"
+import type { MenuItem } from "../nodes/types"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
   return (
-    <>
-      <menuItem.icon />
+    <div className="flex gap-2">
+      <menuItem.icon size={16} />
       {menuItem.label}
-    </>
+    </div>
   )
 }
 

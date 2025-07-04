@@ -1,18 +1,17 @@
-import {
-  type Prisma,
-  prisma,
-  type WhatsappFlow,
-  type WhatsappFlowStatus,
-} from "@ahachat.ai/database"
-import type { GetWhatsappFlowsSchema } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { getCurrentUserId } from "@/auth"
+import type { GetWhatsappFlowsSchema } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type Prisma, prisma } from "@ahachat.ai/database"
+import type {
+  WhatsappFlowModel,
+  WhatsappFlowStatus,
+} from "@ahachat.ai/database/types"
 import { unstable_cache } from "next/cache"
 
 export const getWhatsappFlows = async (
   input: GetWhatsappFlowsSchema,
 ): Promise<{
-  data: WhatsappFlow[]
+  data: WhatsappFlowModel[]
   pageCount: number
 }> => {
   const userId = await getCurrentUserId()

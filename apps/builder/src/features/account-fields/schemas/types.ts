@@ -1,6 +1,6 @@
-import type { Field } from "@ahachat.ai/database"
+import type { FieldModel } from "@ahachat.ai/database/types"
 
-export type AccountFieldResource = Field
+export type AccountFieldResource = FieldModel
 
 export type AccountFieldCollection = {
   data: AccountFieldResource[]

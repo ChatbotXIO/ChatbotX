@@ -1,6 +1,7 @@
 import { StepType } from "./step-action"
-import { openAIDefaultFn, openAISchema } from "./open-ai"
+import { OpenAIModel } from "./open-ai"
 import { z } from "zod"
+import { createId } from "@paralleldrive/cuid2"
 
 export const voiceTypes: Record<string, string> = {
   alloy: "Alloy",
@@ -15,20 +16,22 @@ export const voiceTypes: Record<string, string> = {
 }
 const [fistVoiceType, ...otherVoiceTypes] = Object.keys(voiceTypes)
 
-export const openAITextToSpeechSchema = openAISchema.extend({
-  stepType: z.literal(StepType.OpenAITextToSpeech),
+export const openAITextToSpeechSchema = z.object({
+  id: z.string().cuid2(),
+  stepType: z.literal(StepType.OPENAI_TEXT_TO_SPEECH),
+  model: z.nativeEnum(OpenAIModel),
   userMessage: z.string(),
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
-  voiceType: z.enum([fistVoiceType!, ...otherVoiceTypes]),
-  resultCustomFieldId: z.string().cuid2(),
+  voiceType: z.enum([fistVoiceType, ...otherVoiceTypes]),
+  outputCustomFieldId: z.string().cuid2(),
 })
 
 export type OpenAITextToSpeechSchema = z.infer<typeof openAITextToSpeechSchema>
 
 export const openAITextToSpeechDefaultFn = (): OpenAITextToSpeechSchema => ({
-  ...openAIDefaultFn(),
-  stepType: StepType.OpenAITextToSpeech,
+  id: createId(),
+  model: OpenAIModel.GPT4oMini,
+  stepType: StepType.OPENAI_TEXT_TO_SPEECH,
   userMessage: "",
   voiceType: "",
-  resultCustomFieldId: "",
+  outputCustomFieldId: "",
 })

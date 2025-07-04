@@ -1,5 +1,5 @@
 import { Queue } from "bullmq"
-import { connection, defaultJobOptions } from "../../lib/connection"
+import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
 import { QueueName } from "../../lib/types"
 
 export enum IntegrationJobAction {
@@ -41,7 +41,7 @@ export type IntegrationJobData =
 export const integrationQueue = new Queue<IntegrationJobData>(
   QueueName.INTEGRATION,
   {
-    connection,
+    connection: getRedisConnection(),
     defaultJobOptions,
   },
 )

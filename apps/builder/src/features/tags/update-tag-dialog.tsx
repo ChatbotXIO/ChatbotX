@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import type { Tag } from "@ahachat.ai/database/types"
+import type { TagModel } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -37,7 +37,7 @@ export function UpdateTagDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  tag: Tag | null
+  tag: TagModel | null
 }) {
   const { t } = useTranslate()
   const router = useRouter()

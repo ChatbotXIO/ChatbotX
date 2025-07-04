@@ -16,7 +16,7 @@ import { OpenAIModel } from "@ahachat.ai/flow-config"
 
 export const connectOpenAIAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(connectOpenAISchema)
+  .inputSchema(connectOpenAISchema)
   .action(
     async ({
       parsedInput,

@@ -3,7 +3,8 @@
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { FolderType, type User, prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
+import { FolderType, type UserModel } from "@ahachat.ai/database/types"
 import { revalidateTag } from "next/cache"
 import {
   type CreateTagBindSchema,
@@ -14,7 +15,7 @@ import {
 import { TagException } from "../schemas/error"
 
 export const createTagAction = authActionClient
-  .schema(createTagSchema)
+  .inputSchema(createTagSchema)
   .bindArgsSchemas(createTagBindSchema)
   .action(
     async ({
@@ -22,7 +23,7 @@ export const createTagAction = authActionClient
       parsedInput,
       bindArgsParsedInputs: [chatbotId, folderId],
     }: {
-      ctx: { user: User }
+      ctx: { user: UserModel }
       parsedInput: CreateTagSchema
       bindArgsParsedInputs: CreateTagBindSchema
     }) => {

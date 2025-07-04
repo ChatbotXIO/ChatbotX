@@ -14,7 +14,7 @@ import {
 
 export const updateBroadcastAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateBroadcastSchema)
+  .inputSchema(updateBroadcastSchema)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

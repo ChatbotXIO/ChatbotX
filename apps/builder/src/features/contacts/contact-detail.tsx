@@ -1,16 +1,16 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { callAPI } from "@/lib/swr"
+import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
+import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import type { ContactResource } from "./schemas/get-contacts-schema"
-import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
+import type { CustomFieldCollection } from "../custom-fields/schemas"
 import { EditContactField } from "./edit-contact-field"
-import { useParams } from "next/navigation"
-import { ContactCustomFieldManage } from "../fields/contact-custom-field-manage"
-import { callAPI } from "@/lib/swr"
-import type { CustomFieldCollection } from "../fields/schemas/types"
+import type { ContactResource } from "./schemas"
 
 export const ContactDetail = () => {
   const { chatbotId } = useParams<{ chatbotId: string }>()

@@ -52,10 +52,10 @@ export function* convertFlowStepToWhatsappMessage(
   step: SendFlowStepData,
 ) {
   switch (step.stepType) {
-    case StepType.SendText:
+    case StepType.SEND_TEXT:
       yield* convertFlowStepText(flowVersionId, step)
       break
-    case StepType.SendImage:
+    case StepType.SEND_IMAGE:
       yield* convertFlowStepImage(flowVersionId, step)
       break
     default:

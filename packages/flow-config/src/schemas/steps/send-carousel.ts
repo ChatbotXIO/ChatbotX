@@ -9,7 +9,7 @@ import { StepType } from "./step-action"
 
 export const sendCarouselStepSchema = z.object({
   id: z.string(),
-  stepType: z.literal(StepType.SendCarousel),
+  stepType: z.literal(StepType.SEND_CAROUSEL),
   cards: z.array(sendCardStepSchema),
 })
 
@@ -24,7 +24,7 @@ export const sendCarouselStepDefaultFn = (
   }
   return {
     id: createId(),
-    stepType: StepType.SendCarousel,
+    stepType: StepType.SEND_CAROUSEL,
     cards,
   }
 }

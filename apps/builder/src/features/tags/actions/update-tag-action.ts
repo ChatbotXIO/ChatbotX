@@ -2,7 +2,8 @@
 
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type User, prisma } from "@ahachat.ai/database"
+import { prisma } from "@ahachat.ai/database"
+import type { UserModel } from "@ahachat.ai/database/types"
 import { revalidateTag } from "next/cache"
 import { TagException } from "../schemas/error"
 import {
@@ -13,7 +14,7 @@ import {
 } from "../schemas/update-tag-schema"
 
 export const updateTagAction = authActionClient
-  .schema(updateTagSchema)
+  .inputSchema(updateTagSchema)
   .bindArgsSchemas(updateTagBindSchema)
   .action(
     async ({
@@ -21,7 +22,7 @@ export const updateTagAction = authActionClient
       parsedInput,
       bindArgsParsedInputs: [chatbotId, tagId],
     }: {
-      ctx: { user: User }
+      ctx: { user: UserModel }
       parsedInput: UpdateTagSchema
       bindArgsParsedInputs: UpdateTagBindSchema
     }) => {

@@ -14,7 +14,7 @@ export const openAIGenerateImageSizes: Record<string, string> = {
 const [firstSize, ...otherSizes] = Object.keys(openAIGenerateImageSizes)
 
 export const openAIGenerateImageSchema = openAISchema.extend({
-  stepType: z.literal(StepType.OpenAIGenerateImage),
+  stepType: z.literal(StepType.OPENAI_GENERATE_IMAGE),
   // biome-ignore lint/style/noNonNullAssertion: <explanation>
   size: z.enum([firstSize!, ...otherSizes]),
   resultCustomFieldId: z.string().cuid2(),
@@ -26,7 +26,7 @@ export type OpenAIGenerateImageSchema = z.infer<
 
 export const openAIGenerateImageDefaultFn = (): OpenAIGenerateImageSchema => ({
   ...openAIDefaultFn(),
-  stepType: StepType.OpenAIGenerateImage,
+  stepType: StepType.OPENAI_GENERATE_IMAGE,
   size: "dall-e-2::1024x1024",
   resultCustomFieldId: "",
 })

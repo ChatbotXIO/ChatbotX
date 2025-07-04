@@ -18,7 +18,7 @@ export enum DelayUnit {
 export const waitStepSchema = z
   .object({
     id: z.string().cuid2(),
-    stepType: z.literal(StepType.Wait),
+    stepType: z.literal(StepType.WAIT),
   })
   .and(
     z.discriminatedUnion("delayType", [
@@ -45,7 +45,7 @@ export type WaitStepSchema = z.infer<typeof waitStepSchema>
 
 export const waitStepDefaultFn = (): WaitStepSchema => ({
   id: createId(),
-  stepType: StepType.Wait,
+  stepType: StepType.WAIT,
   delayType: DelayType.Duration,
   ...delayTypeDurationDefaultFn(),
 })

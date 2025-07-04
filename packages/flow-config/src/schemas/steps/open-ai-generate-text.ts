@@ -1,9 +1,12 @@
 import { StepType } from "./step-action"
-import { openAIDefaultFn, openAISchema } from "./open-ai"
+import { OpenAIModel } from "./open-ai"
 import { z } from "zod"
+import { createId } from "@paralleldrive/cuid2"
 
-export const openAIGenerateTextSchema = openAISchema.extend({
-  stepType: z.literal(StepType.OpenAIGenerateText),
+export const openAIGenerateTextSchema = z.object({
+  id: z.string().cuid2(),
+  stepType: z.literal(StepType.OPENAI_GENERATE_TEXT),
+  model: z.nativeEnum(OpenAIModel),
   prompt: z.string().optional(),
   userMessage: z.string(),
   resultCustomFieldId: z.string().cuid2(),
@@ -12,8 +15,9 @@ export const openAIGenerateTextSchema = openAISchema.extend({
 export type OpenAIGenerateTextSchema = z.infer<typeof openAIGenerateTextSchema>
 
 export const openAIGenerateTextDefaultFn = (): OpenAIGenerateTextSchema => ({
-  ...openAIDefaultFn(),
-  stepType: StepType.OpenAIGenerateText,
+  id: createId(),
+  stepType: StepType.OPENAI_GENERATE_TEXT,
+  model: OpenAIModel.GPT4oMini,
   prompt: "",
   userMessage: "",
   resultCustomFieldId: "",

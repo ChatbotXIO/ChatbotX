@@ -1,11 +1,14 @@
 import { prisma } from "@ahachat.ai/database"
-import type { Chatbot, ChatbotMember } from "@ahachat.ai/database"
+import type {
+  ChatbotMemberModel,
+  ChatbotModel,
+} from "@ahachat.ai/database/types"
 import { NotfoundException } from "./error"
 
 export const findChatbotOrFail = async (
   userId: string | null | undefined,
   chatbotId: string | null,
-): Promise<{ chatbot: Chatbot; chatbotMember: ChatbotMember }> => {
+): Promise<{ chatbot: ChatbotModel; chatbotMember: ChatbotMemberModel }> => {
   if (!userId) {
     throw new NotfoundException("No User found")
   }
@@ -20,6 +23,7 @@ export const findChatbotOrFail = async (
       chatbot: true,
     },
   })
+
   if (!chatbotMember.chatbot) {
     throw new NotfoundException("No ChatbotMember found")
   }

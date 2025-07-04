@@ -1,9 +1,12 @@
 import { StepType } from "./step-action"
-import { openAIDefaultFn, openAISchema } from "./open-ai"
+import { OpenAIModel } from "./open-ai"
 import { z } from "zod"
+import { createId } from "@paralleldrive/cuid2"
 
-export const openAIDeleteMessageHistorySchema = openAISchema.extend({
-  stepType: z.literal(StepType.OpenAIDeleteMessageHistory),
+export const openAIDeleteMessageHistorySchema = z.object({
+  id: z.string().cuid2(),
+  stepType: z.literal(StepType.OPENAI_DELETE_MESSAGE_HISTORY),
+  model: z.nativeEnum(OpenAIModel),
 })
 
 export type OpenAIDeleteMessageHistorySchema = z.infer<
@@ -12,6 +15,7 @@ export type OpenAIDeleteMessageHistorySchema = z.infer<
 
 export const openAIDeleteMessageHistoryDefaultFn =
   (): OpenAIDeleteMessageHistorySchema => ({
-    ...openAIDefaultFn(),
-    stepType: StepType.OpenAIDeleteMessageHistory,
+    id: createId(),
+    stepType: StepType.OPENAI_DELETE_MESSAGE_HISTORY,
+    model: OpenAIModel.GPT4oMini,
   })

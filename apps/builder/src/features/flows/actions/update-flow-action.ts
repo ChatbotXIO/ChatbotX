@@ -14,7 +14,7 @@ import {
 
 export const updateFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateFlowSchema)
+  .inputSchema(updateFlowSchema)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

@@ -3,7 +3,7 @@
 import FileDropzone from "@/components/file-dropzone"
 import { useFormContext } from "react-hook-form"
 import { ButtonGroupEditor } from "../button/editor"
-import { FileType } from "@ahachat.ai/database"
+import { FileType } from "@ahachat.ai/database/types"
 
 export function SendVideoStepEditor({ parentName }: { parentName: string }) {
   const { register, unregister } = useFormContext()

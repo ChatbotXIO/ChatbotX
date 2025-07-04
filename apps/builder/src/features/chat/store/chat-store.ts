@@ -1,11 +1,11 @@
 import type {
   ConversationCollection,
   ConversationResource,
-} from "@/features/conversations/schemas/get-conversations.schema"
+} from "@/features/conversations/schemas"
 import type {
   MessageCollection,
   MessageResource,
-} from "@/features/messages/schemas/list-messages.schema"
+} from "@/features/messages/schemas"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 

@@ -10,12 +10,12 @@ import {
 } from "@/features/folders/schemas/create-folder-schema"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@ahachat.ai/database"
-import type { Folder } from "@ahachat.ai/database"
+import type { FolderModel } from "@ahachat.ai/database/types"
 import { revalidateTag } from "next/cache"
 
 export const createFolderAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .schema(createFolderSchema)
+  .inputSchema(createFolderSchema)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
@@ -25,7 +25,7 @@ export const createFolderAction = chatbotActionClient
       parsedInput: CreateFolderSchema
     }) => {
       let paths: string[] = []
-      let parentFolder: Folder | null = null
+      let parentFolder: FolderModel | null = null
       if (parsedInput.parentId) {
         parentFolder = await prisma.folder.findFirst({
           where: { id: parsedInput.parentId },

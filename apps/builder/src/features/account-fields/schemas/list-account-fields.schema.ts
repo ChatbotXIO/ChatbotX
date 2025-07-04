@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/lib/parsers"
-import type { Field } from "@ahachat.ai/database"
+import type { FieldModel } from "@ahachat.ai/database/types"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -11,7 +11,7 @@ export const listAccountFieldsSearchParams = createSearchParamsCache({
   perPage: parseAsInteger.withDefault(10),
   name: parseAsString,
   folderId: parseAsString,
-  sort: getSortingStateParser<Field>().withDefault([
+  sort: getSortingStateParser<FieldModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
 })

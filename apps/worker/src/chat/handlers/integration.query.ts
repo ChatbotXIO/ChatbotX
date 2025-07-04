@@ -1,6 +1,7 @@
-import { Prisma, prisma, type Inbox } from "@ahachat.ai/database"
+import { Prisma, prisma } from "@ahachat.ai/database"
+import type { InboxModel } from "@ahachat.ai/database/types"
 
-export async function getIntegrationAuth(inbox: Inbox) {
+export async function getIntegrationAuth(inbox: InboxModel) {
   const inboxName = inbox.inboxType
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())

@@ -1,7 +1,7 @@
 import {
   ChatJobAction,
   QueueName,
-  connection,
+  getRedisConnection,
   defaultWorkerOptions,
   type ChatJobData,
 } from "@ahachat.ai/worker-config"
@@ -26,7 +26,7 @@ const worker = new Worker(
     }
   },
   {
-    connection,
+    connection: getRedisConnection(),
     ...defaultWorkerOptions,
   },
 )

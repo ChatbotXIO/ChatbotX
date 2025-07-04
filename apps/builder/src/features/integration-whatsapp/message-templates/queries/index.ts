@@ -1,17 +1,14 @@
-import {
-  type Prisma,
-  prisma,
-  type WhatsappMessageTemplate,
-} from "@ahachat.ai/database"
-import type { GetMessageTemplatesSchema } from "@/features/integration-whatsapp/message-templates/schemas/get-message-templates-schema"
 import { getCurrentUserId } from "@/auth"
+import type { GetMessageTemplatesSchema } from "@/features/integration-whatsapp/message-templates/schemas/get-message-templates-schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
+import { type Prisma, prisma } from "@ahachat.ai/database"
+import type { WhatsappMessageTemplateModel } from "@ahachat.ai/database/types"
 import { unstable_cache } from "next/cache"
 
 export const getMessageTemplates = async (
   input: GetMessageTemplatesSchema,
 ): Promise<{
-  data: WhatsappMessageTemplate[]
+  data: WhatsappMessageTemplateModel[]
   pageCount: number
 }> => {
   const userId = await getCurrentUserId()

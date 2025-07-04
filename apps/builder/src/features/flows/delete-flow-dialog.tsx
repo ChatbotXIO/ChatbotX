@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { Flow } from "@ahachat.ai/database/types"
+import type { FlowModel } from "@ahachat.ai/database/types"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -23,7 +23,7 @@ import { deleteFlowAction } from "./actions/delete-flow.action"
 interface DeleteFlowsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  flows: Row<Flow>["original"][]
+  flows: Row<FlowModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void

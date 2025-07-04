@@ -73,7 +73,7 @@ export async function triggerAutomatedResponse({
                 step: {
                   id: createId(),
                   message: reply.message,
-                  stepType: StepType.SendText,
+                  stepType: StepType.SEND_TEXT,
                   buttons: [],
                 },
               },

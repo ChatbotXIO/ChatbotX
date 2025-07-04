@@ -18,12 +18,12 @@ import { T } from "@tolgee/react"
 import { MoreHorizontalIcon, Trash2Icon } from "lucide-react"
 import { use, useState } from "react"
 import type { getUsers } from "../users/queries"
-import type { UserResource } from "../users/schemas/types"
+import type { UserResource } from "../users/schemas"
 import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
 import type { getInboxTeams } from "./queries"
 import type {
   InboxTeamMemberResource,
-  InboxTeamResourse,
+  InboxTeamResource,
 } from "./schemas/types"
 import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
 import { DeleteInboxTeamMembersDialog } from "./delete-inbox-team-member-dialog"
@@ -46,15 +46,15 @@ function ListInboxTeamsDetail({
   allUsers,
 }: {
   chatbotId: string
-  allInboxTeams: InboxTeamResourse[]
+  allInboxTeams: InboxTeamResource[]
   allUsers: UserResource[]
 }) {
   const [renameInboxTeam, setRenameInboxTeam] =
-    useState<InboxTeamResourse | null>(null)
+    useState<InboxTeamResource | null>(null)
   const [deleteInboxTeam, setDeleteInboxTeam] =
-    useState<InboxTeamResourse | null>(null)
+    useState<InboxTeamResource | null>(null)
   const [addInboxTeamMember, setAddInboxTeamMember] =
-    useState<InboxTeamResourse | null>(null)
+    useState<InboxTeamResource | null>(null)
   const [deleteInboxTeamMember, setDeleteInboxTeamMember] =
     useState<InboxTeamMemberResource | null>(null)
 

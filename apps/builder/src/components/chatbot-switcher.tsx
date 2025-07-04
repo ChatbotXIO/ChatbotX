@@ -17,16 +17,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import type { Chatbot } from "@ahachat.ai/database/types"
+import type { ChatbotModel } from "@ahachat.ai/database/types"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
 export function ChatbotSwitcher({
   chatbots,
 }: {
-  chatbots: Chatbot[]
+  chatbots: ChatbotModel[]
 }) {
   const { isMobile } = useSidebar()
-  const [activeChatbot, setActiveChatbot] = useState<Chatbot | undefined>(
+  const [activeChatbot, setActiveChatbot] = useState<ChatbotModel | undefined>(
     chatbots[0],
   )
 

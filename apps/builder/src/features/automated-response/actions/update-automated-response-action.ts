@@ -16,7 +16,7 @@ import { AutomatedResponseException } from "../schemas/types"
 
 export const updateAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateAutomatedResponseRequest)
+  .inputSchema(updateAutomatedResponseRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

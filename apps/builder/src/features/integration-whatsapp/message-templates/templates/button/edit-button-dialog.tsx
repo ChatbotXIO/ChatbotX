@@ -19,8 +19,8 @@ import { useMemo } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import {
   ButtonActionType,
-  buttonBlockSchema,
-  type ButtonBlockSchema,
+  buttonStepSchema,
+  type ButtonStepSchema,
 } from "./schema"
 
 export function EditButtonDialog({
@@ -39,8 +39,8 @@ export function EditButtonDialog({
   const { setValue: setValueOriginEditor, getValues: getValuesOriginEditor } =
     useFormContext()
 
-  const form = useForm<ButtonBlockSchema>({
-    resolver: zodResolver(buttonBlockSchema),
+  const form = useForm<ButtonStepSchema>({
+    resolver: zodResolver(buttonStepSchema),
     defaultValues: getValuesOriginEditor(parentName),
     mode: "onChange",
   })

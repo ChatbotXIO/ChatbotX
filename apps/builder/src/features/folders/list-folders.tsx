@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Folder, FolderType } from "@ahachat.ai/database/types"
+import type { FolderModel, FolderType } from "@ahachat.ai/database/types"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
 import { parseAsString, useQueryState } from "nuqs"
 import { Fragment, use, useState } from "react"
@@ -38,16 +38,16 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
     }),
   )
 
-  const [targetFolder, setTargetFolder] = useState<Folder | null>(null)
+  const [targetFolder, setTargetFolder] = useState<FolderModel | null>(null)
 
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false)
-  const onEdit = (folder: Folder) => {
+  const onEdit = (folder: FolderModel) => {
     setTargetFolder(folder)
     setOpenEditDialog(true)
   }
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false)
-  const onDelete = (folder: Folder) => {
+  const onDelete = (folder: FolderModel) => {
     setTargetFolder(folder)
     setOpenDeleteDialog(true)
   }
@@ -68,7 +68,7 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
               </Button>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {parents.map((parentFolder: Folder) => {
+          {parents.map((parentFolder: FolderModel) => {
             return (
               <Fragment key={parentFolder.id}>
                 <BreadcrumbSeparator />
@@ -108,7 +108,7 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
       {/* Folders list */}
       <ScrollArea className="max-h-44" type="auto">
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 lg:grid-cols-5">
-          {folders.map((folder: Folder) => {
+          {folders.map((folder: FolderModel) => {
             return (
               <div className="overflow-hidden" key={folder.id}>
                 <div className="group flex items-center border rounded-lg gap-2 hover:border-primary pr-3">

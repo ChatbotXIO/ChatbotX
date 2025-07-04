@@ -1,5 +1,22 @@
+import { InboxType, OMNICHANNEL } from "@ahachat.ai/database/types"
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
 import {
+  addContactTagStepSchema,
+  addNotesStepSchema,
+  archiveConversationStepSchema,
+  assignConversationStepSchema,
+  autoAssignConversationStepSchema,
+  blockContactStepSchema,
   clearCustomFieldStepSchema,
+  countCharactersStepSchema,
+  deleteContactStepSchema,
+  disableBotStepSchema,
+  enableBotStepSchema,
+  followConversationStepSchema,
+  formatDateStepSchema,
+  generateCodeStepSchema,
+  getDataFromJsonStepSchema,
   markEmailVerifiedStepSchema,
   openAIAnalyzeImageSchema,
   openAIDeleteMessageHistorySchema,
@@ -12,13 +29,14 @@ import {
   openAITextToSpeechSchema,
   optInEmailStepSchema,
   optOutEmailStepSchema,
+  removeContactTagStepSchema,
   sendImageStepSchema,
   sendTextStepSchema,
   setCustomFieldStepSchema,
+  unarchiveConversationStepSchema,
+  unassignConversationStepSchema,
+  unfollowConversationStepSchema,
 } from "../steps"
-import { InboxType, OMNICHANNEL } from "@ahachat.ai/database/types"
-import { createId } from "@paralleldrive/cuid2"
-import { z } from "zod"
 import { baseNodeSchema, NodeType, type NewNodeProps } from "./node-config"
 
 export const actionsStepSchema = [
@@ -47,10 +65,31 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
     inboxType: z.union([z.nativeEnum(InboxType), z.literal(OMNICHANNEL)]),
     steps: z.array(
       z.union([
-        sendTextStepSchema,
-        sendImageStepSchema,
-        setCustomFieldStepSchema,
+        addNotesStepSchema,
+        archiveConversationStepSchema,
+        assignConversationStepSchema,
+        autoAssignConversationStepSchema,
+        blockContactStepSchema,
         clearCustomFieldStepSchema,
+        countCharactersStepSchema,
+        disableBotStepSchema,
+        enableBotStepSchema,
+        followConversationStepSchema,
+        formatDateStepSchema,
+        generateCodeStepSchema,
+        getDataFromJsonStepSchema,
+        markEmailVerifiedStepSchema,
+        optInEmailStepSchema,
+        optOutEmailStepSchema,
+        sendImageStepSchema,
+        sendTextStepSchema,
+        setCustomFieldStepSchema,
+        unarchiveConversationStepSchema,
+        unassignConversationStepSchema,
+        unfollowConversationStepSchema,
+        addContactTagStepSchema,
+        removeContactTagStepSchema,
+        deleteContactStepSchema,
         // sendCardStepSchema,
         // sendVideoStepSchema,
         // sendAudioStepSchema,

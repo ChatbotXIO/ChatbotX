@@ -1,4 +1,3 @@
-import type { Inbox } from "@ahachat.ai/database"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
 
@@ -13,7 +12,3 @@ const listInboxRequest = z.object({
   chatbotId: z.string().cuid2(),
 })
 export type ListInboxesRequest = z.infer<typeof listInboxRequest>
-
-export type InboxCollection = {
-  data: Inbox[]
-}

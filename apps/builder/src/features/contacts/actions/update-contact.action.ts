@@ -10,11 +10,11 @@ import {
   type UpdateContactRequest,
 } from "../schemas/update-contact.request"
 import { prisma } from "@ahachat.ai/database"
-import { ContactException } from "../schemas/types"
+import { ContactException } from "../schemas"
 
 export const updateContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateContactRequest)
+  .inputSchema(updateContactRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

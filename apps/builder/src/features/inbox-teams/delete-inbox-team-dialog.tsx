@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { InboxTeam } from "@ahachat.ai/database/types"
+import type { InboxTeamModel } from "@ahachat.ai/database/types"
 import { T } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -24,7 +24,7 @@ export function DeleteInboxTeamDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  inboxTeam: InboxTeam | null
+  inboxTeam: InboxTeamModel | null
 }) {
   const { execute, isPending } = useAction(
     deleteInboxTeamAction.bind(null, chatbotId),

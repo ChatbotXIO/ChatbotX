@@ -1,7 +1,7 @@
-import type { IntegrationWhatsapp } from "@ahachat.ai/database/types"
+import type { IntegrationWhatsappModel } from "@ahachat.ai/database/types"
 import { z } from "zod"
 
-export type IntegrationWhatsappResource = IntegrationWhatsapp
+export type IntegrationWhatsappResource = IntegrationWhatsappModel
 
 export const connectWhatsappSchema = z.object({
   wabaId: z.string(),

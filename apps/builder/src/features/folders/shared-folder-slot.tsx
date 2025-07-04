@@ -3,7 +3,7 @@ import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
 import { T } from "@/tolgee/server"
-import { type Folder, FolderType } from "@ahachat.ai/database/types"
+import { type FolderModel, FolderType } from "@ahachat.ai/database/types"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -51,7 +51,7 @@ export default async function SharedFolderSlot(props: {
           id: folderId,
           chatbotId: props.chatbotId,
         })
-      : Promise.resolve({ folder: null, parents: [] as Folder[] }),
+      : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     getFolders({
       chatbotId: props.chatbotId,
       folderType: folderType,

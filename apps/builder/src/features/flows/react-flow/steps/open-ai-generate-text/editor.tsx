@@ -3,7 +3,7 @@
 import { InputField } from "@/components/form/input-field"
 import { TextareaField } from "@/components/form/textarea-field"
 import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
-import { CustomFieldSelect } from "@/features/fields/custom-field-select"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 import { OpenAIModel } from "../open-ai/open-ai-model-select"
 

@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/popover"
 import { add, format } from "date-fns"
 import { enUS } from "date-fns/locale"
-import { CalendarIcon } from "lucide-react"
-import { Clock } from "lucide-react"
+import { CalendarIcon, Clock } from "lucide-react"
 import * as React from "react"
 import { useImperativeHandle, useRef } from "react"
 
@@ -717,5 +716,5 @@ const DateTimePicker = ({
 
 DateTimePicker.displayName = "DateTimePicker"
 
-export { DateTimePicker, TimePickerInput, TimePicker }
-export type { TimePickerType, DateTimePickerProps, DateTimePickerRef }
+export { DateTimePicker, TimePicker, TimePickerInput }
+export type { DateTimePickerProps, DateTimePickerRef, TimePickerType }

@@ -1,5 +1,5 @@
 import { auth } from "@/auth"
-import { findConversation } from "@/features/conversations/queries/get-conversations.query"
+import { findConversation } from "@/features/conversations/queries/list-conversations.query"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"

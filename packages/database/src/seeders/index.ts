@@ -5,7 +5,7 @@ import {
   ChatbotPlan,
   type Folder,
   FolderType,
-} from "../../generated/client"
+} from "../generated/prisma/client"
 import { prisma } from ".."
 
 async function main() {

@@ -78,6 +78,7 @@ export function MultiSelectField<T extends FieldValues>({
       {(field) => (
         <MultiSelect
           options={options}
+          defaultValue={field.value}
           onValueChange={(value) => field.onChange(value as T[Path<T>])}
           {...props}
           {...field}

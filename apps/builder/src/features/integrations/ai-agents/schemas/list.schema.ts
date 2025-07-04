@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/lib/parsers"
-import type { AIAgent } from "@ahachat.ai/database"
+import type { AIAgentModel } from "@ahachat.ai/database/types"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -9,7 +9,7 @@ import {
 export const listAIAgentRequest = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
-  sort: getSortingStateParser<AIAgent>().withDefault([
+  sort: getSortingStateParser<AIAgentModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
   name: parseAsString.withDefault(""),

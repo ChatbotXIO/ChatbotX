@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/lib/parsers"
-import type { Log, LogType } from "@ahachat.ai/database"
+import type { LogModel, LogType } from "@ahachat.ai/database/types"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -10,7 +10,7 @@ export const getLogsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   action: parseAsString.withDefault(""),
-  sort: getSortingStateParser<Log>().withDefault([
+  sort: getSortingStateParser<LogModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
 })

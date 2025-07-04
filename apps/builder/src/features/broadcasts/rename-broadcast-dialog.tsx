@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
-import type { Broadcast } from "@ahachat.ai/database"
+import type { BroadcastModel } from "@ahachat.ai/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -29,7 +29,7 @@ export function RenameBroadcastDialog({
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  broadcast: Broadcast | null
+  broadcast: BroadcastModel | null
 }) {
   const { t } = useTranslate()
 
@@ -48,7 +48,7 @@ export function RenameBroadcastDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Broadcast update successfully")
+          toast.success("BroadcastModel update successfully")
           resetFormAndAction()
           onOpenChange(false)
         },

@@ -14,7 +14,7 @@ import {
 
 export const updateInboxTeamAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(updateInboxTeamRequest)
+  .inputSchema(updateInboxTeamRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

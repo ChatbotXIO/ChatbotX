@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/lib/parsers"
-import type { Flow, FlowVersion } from "@ahachat.ai/database"
+import type { FlowModel, FlowVersionModel } from "@ahachat.ai/database/types"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -9,7 +9,7 @@ import {
 export const listFlowsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
-  sort: getSortingStateParser<Flow>().withDefault([
+  sort: getSortingStateParser<FlowModel>().withDefault([
     { id: "updatedAt", desc: true },
   ]),
   name: parseAsString.withDefault(""),
@@ -28,9 +28,9 @@ export type FindFlowParams = {
   chatbotId: string
 }
 
-export type FlowVersionResource = FlowVersion
+export type FlowVersionResource = FlowVersionModel
 
-export type FlowResource = Flow & {
+export type FlowResource = FlowModel & {
   _count?: {
     contacts?: number
   }

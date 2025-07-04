@@ -20,6 +20,22 @@
     "//#format-and-lint": {},
     "//#format-and-lint:fix": {
       "cache": false
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:deploy": {
+      "cache": false
+    },
+    "db:reset": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false
     }
   }
 }

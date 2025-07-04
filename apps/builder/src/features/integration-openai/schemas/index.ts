@@ -1,8 +1,8 @@
-import type { IntegrationOpenAI } from "@ahachat.ai/database/types"
+import type { IntegrationOpenAIModel } from "@ahachat.ai/database/types"
 import { z } from "zod"
 import { OpenAIModel } from "@ahachat.ai/flow-config"
 
-export type IntegrationOpenAIResource = IntegrationOpenAI
+export type IntegrationOpenAIResource = IntegrationOpenAIModel
 
 export const connectOpenAISchema = z.object({
   apiKey: z.string(),

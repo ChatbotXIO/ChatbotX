@@ -7,7 +7,7 @@ import {
   RealtimeEventType,
   type RealtimeEventData,
 } from "@ahachat.ai/party-config"
-import type { MessageResource } from "../messages/schemas/list-messages.schema"
+import type { MessageResource } from "../messages/schemas"
 
 export function ChatRealtime() {
   const { chatbotId } = useParams<{ chatbotId: string }>()

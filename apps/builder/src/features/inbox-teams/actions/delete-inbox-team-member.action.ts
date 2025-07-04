@@ -12,7 +12,7 @@ import { revalidateTag } from "next/cache"
 
 export const deleteTeamMembersAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .schema(bulkUpdateIdsRequest)
+  .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],
