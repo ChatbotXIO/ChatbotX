@@ -33,6 +33,9 @@
     },
     "db:reset": {
       "cache": false
+    },
+    "db:studio": {
+      "cache": false
     }
   }
 }
