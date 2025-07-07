@@ -1,5 +1,5 @@
-import { auth } from "@/auth"
 import { findConversation } from "@/features/conversations/queries/list-conversations.query"
+import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"
@@ -13,8 +13,8 @@ export async function GET(
   try {
     const { chatbotId, conversationId } = await params
 
-    const session = await auth()
-    await findChatbotOrFail(session?.user.id, chatbotId)
+    const userId = await getCurrentUserId()
+    await findChatbotOrFail(userId, chatbotId)
 
     const result = await findConversation({ id: conversationId, chatbotId })
 

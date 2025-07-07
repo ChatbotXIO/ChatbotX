@@ -1,4 +1,4 @@
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma, type Prisma } from "@ahachat.ai/database"
 import type { InboxModel } from "@ahachat.ai/database/types"

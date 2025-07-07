@@ -1,4 +1,4 @@
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import type {
   AITriggerCollection,
   ListAITriggersRequest,

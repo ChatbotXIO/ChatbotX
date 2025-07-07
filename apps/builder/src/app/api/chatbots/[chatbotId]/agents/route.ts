@@ -1,6 +1,6 @@
-import { auth } from "@/auth"
 import { getAgents } from "@/features/chatbot-members/queries"
 import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
+import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"
@@ -12,8 +12,8 @@ export async function GET(
   try {
     const { chatbotId } = await params
 
-    const session = await auth()
-    await findChatbotOrFail(session?.user.id, chatbotId)
+    const userId = await getCurrentUserId()
+    await findChatbotOrFail(userId, chatbotId)
 
     const searchParams = getChatbotMembersSearchParamsCache.parse(
       Object.fromEntries(request.nextUrl.searchParams),

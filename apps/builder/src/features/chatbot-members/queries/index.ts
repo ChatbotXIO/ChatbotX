@@ -1,4 +1,4 @@
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { Prisma } from "@ahachat.ai/database"

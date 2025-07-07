@@ -17,6 +17,7 @@ export default async function SignInPage() {
           </div>
           AhaChat AI
         </h1>
+
         <SignInForm />
       </div>
     </div>

@@ -1,6 +1,6 @@
-import { auth } from "@/auth"
 import { listMessages } from "@/features/messages/queries/list-messages.query"
 import { listMessagesRequest } from "@/features/messages/schemas/list-messages.schema"
+import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type NextRequest, NextResponse } from "next/server"
@@ -12,8 +12,8 @@ export async function GET(
   try {
     const { chatbotId } = await params
 
-    const session = await auth()
-    await findChatbotOrFail(session?.user.id, chatbotId)
+    const userId = await getCurrentUserId()
+    await findChatbotOrFail(userId, chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const { data } = listMessagesRequest.safeParse(searchParams)

@@ -37,21 +37,6 @@ const nextConfig: NextConfig = {
         source: "/assets/:path*",
         destination: "http://localhost:9000/ahachatai/:path*", // Proxy to Backend
       },
-      {
-        source: "/:first/:second/billing",
-        destination:
-          "http://billing.ahachat.localhost:3124/:first/:second/billing",
-      },
-      {
-        source: "/:first/:second/billing/:path+",
-        destination:
-          "http://billing.ahachat.localhost:3124/:first/:second/billing/:path+",
-      },
-      {
-        source: "/:first/:second/billing/_next/:path+",
-        destination:
-          "http://billing.ahachat.localhost:3124/:first/:second/billing/_next/:path+",
-      },
     ]
   },
 }

@@ -1,4 +1,4 @@
-import { auth } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { Prisma, prisma } from "@ahachat.ai/database"
 import { SdkException } from "@ahachat.ai/sdk"
@@ -44,13 +44,10 @@ export const actionClient = createSafeActionClient({
 // })
 
 export const authActionClient = actionClient.use(async ({ next }) => {
-  const session = await auth()
-  if (!session || !session?.user || !session.user.email) {
-    throw new Error("Session not found")
-  }
+  const id = await getCurrentUserId()
 
   const user = await prisma.user.findFirstOrThrow({
-    where: { email: session.user.email },
+    where: { id },
   })
 
   return next({ ctx: { user } })

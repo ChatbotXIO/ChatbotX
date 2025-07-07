@@ -1,23 +1,21 @@
-import NextAuth from "next-auth"
-import { NextResponse } from "next/server"
-import { providers } from "./auth.config"
+import { getSessionCookie } from "better-auth/cookies"
+import { NextResponse, type NextRequest } from "next/server"
 
-export const { auth } = NextAuth({ providers })
-
-export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname !== "/signin") {
-    return NextResponse.redirect(new URL("/signin", req.url))
+export async function middleware(request: NextRequest) {
+  const cookies = getSessionCookie(request)
+  if (!cookies) {
+    return NextResponse.redirect(new URL("/signin", request.url))
   }
 
-  const requestHeaders = new Headers(req.headers)
-  requestHeaders.set("x-url", req.url)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set("x-url", request.url)
 
   return NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   })
-})
+}
 
 export const config = {
   matcher: [

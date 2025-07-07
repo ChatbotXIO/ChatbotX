@@ -1,6 +1,6 @@
 "use server"
 
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import type {
   FindConversationSchema,
   ListConversationsRequest,

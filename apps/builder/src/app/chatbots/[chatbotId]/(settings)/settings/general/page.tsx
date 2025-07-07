@@ -1,4 +1,4 @@
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import { UpdateChatbotForm } from "@/features/chatbot/update-chatbot-form"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 

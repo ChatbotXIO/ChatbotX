@@ -6,6 +6,7 @@ import WhatsappIcon from "@/components/icons/whatsapp"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { authClient } from "@/lib/auth-client"
 import {
   ContentType,
   InboxType,
@@ -16,7 +17,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"
 import { GlobeIcon, PaperclipIcon, SendHorizonalIcon } from "lucide-react"
-import { useSession } from "next-auth/react"
 import {
   useEffect,
   useRef,
@@ -28,12 +28,12 @@ import { Controller } from "react-hook-form"
 import type { ClientConversationResource } from "../../chat/store/chat-store"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
+import { createMessageRequest } from "../schemas/create-message.schema"
 import EmojiPicker from "./emoji-picker"
 import { FileUploadPreview } from "./file-upload"
-import { createMessageRequest } from "../schemas/create-message.schema"
 
 export const MessageInput = () => {
-  const { data: session } = useSession()
+  const session = authClient.useSession()
 
   const inboxTypes: Record<InboxType, { icon: ReactNode; label: string }> = {
     CHAT_WIDGET: {
@@ -99,7 +99,7 @@ export const MessageInput = () => {
               messageType: MessageType.OUTGOING,
               contentType: ContentType.TEXT,
               senderType: SenderType.USER,
-              senderId: session?.user.id ?? null,
+              senderId: session?.data?.user.id ?? null,
               clientId: input.clientId,
             })
           }

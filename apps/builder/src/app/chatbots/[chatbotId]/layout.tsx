@@ -1,4 +1,4 @@
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import { AppSidebar } from "@/components/app-sidebar"
 import { cn } from "@/components/lib/utils"
 import { Separator } from "@/components/ui/separator"

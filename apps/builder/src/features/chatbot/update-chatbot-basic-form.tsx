@@ -11,11 +11,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { CopyIcon, Loader2Icon } from "lucide-react"
-import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { updateChatbotBasicAction } from "./actions/update-chatbox-action"
 import { updateChatbotBasicRequest } from "./schemas/update-chatbot-schema"
+import { authClient } from "@/lib/auth-client"
 
 export function UpdateChatbotBasicForm({
   chatbot,
@@ -23,7 +23,8 @@ export function UpdateChatbotBasicForm({
   chatbot: ChatbotResource
 }) {
   const { t } = useTranslate(["chatbot", "updateChatbotForm"])
-  const session = useSession()
+
+  const session = authClient.useSession()
 
   const [_, copyToClipboard] = useCopyToClipboard()
   const onCopy = (value: string) => {
@@ -74,13 +75,13 @@ export function UpdateChatbotBasicForm({
             <SettingRow label={"User ID"} description={""}>
               <div className="flex gap-x-2">
                 <Input
-                  defaultValue={session.data?.user.id}
+                  defaultValue={session?.data?.user.id}
                   disabled
                   className="flex-1"
                 />
                 <Button
                   size={"icon"}
-                  onClick={() => onCopy(session.data?.user.id ?? "")}
+                  onClick={() => onCopy(session?.data?.user.id ?? "")}
                 >
                   <CopyIcon />
                 </Button>

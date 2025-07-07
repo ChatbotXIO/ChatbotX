@@ -1,4 +1,4 @@
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@ahachat.ai/database"
 import type { FolderModel, FolderType } from "@ahachat.ai/database/types"

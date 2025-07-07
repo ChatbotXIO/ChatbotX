@@ -19,14 +19,16 @@ model Workspace {
 }
 
 model User {
-  id            String    @id @default(cuid(2))
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id            String   @id @default(cuid(2))
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   name          String?
-  email         String    @unique
-  emailVerified DateTime?
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  workspaceId   String
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
   accounts                 Account[]
   activityLogs             ActivityLog[]
@@ -35,48 +37,49 @@ model User {
   logs                     Log[]
   sessions                 Session[]
   inboxTeamMembers         InboxTeamMember[]
-  workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
   contactNotes             ContactNote[]
   assignedConversations    Conversation[]
 }
 
 model Account {
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  id                    String    @id @default(cuid(2))
+  accountId             String
+  providerId            String
+  accessToken           String?
+  accessTokenExpiresAt  DateTime?
+  refreshToken          String?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([provider, providerAccountId])
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model VerificationToken {
+model Verification {
+  id         String    @id @default(cuid(2))
   identifier String
-  token      String
-  expires    DateTime
-
-  @@id([identifier, token])
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
 }
 
 model Chatbot {

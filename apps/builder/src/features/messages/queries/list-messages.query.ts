@@ -1,6 +1,6 @@
 "use server"
 
-import { getCurrentUserId } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Prisma, prisma } from "@ahachat.ai/database"
 import type { MessageModel } from "@ahachat.ai/database/types"

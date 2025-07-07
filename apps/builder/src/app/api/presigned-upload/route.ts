@@ -1,17 +1,10 @@
-import { auth } from "@/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { safeJsonParse } from "@/lib/serialize"
 import { createPresignedUploadRequest, uploader } from "@ahachat.ai/filesystem"
-import { unauthorized } from "next/navigation"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session) {
-      return unauthorized()
-    }
-
     const body = await safeJsonParse(req)
     const data = createPresignedUploadRequest.parse(body)
 

@@ -4,7 +4,6 @@ import { TolgeeNextProvider } from "@/tolgee/client"
 import { getLanguage } from "@/tolgee/language"
 import { getStaticData } from "@/tolgee/shared"
 import type { Metadata } from "next"
-import { SessionProvider } from "next-auth/react"
 import type { ReactNode } from "react"
 import "./globals.css"
 
@@ -33,19 +32,17 @@ export default async function RootLayout({ children }: Props) {
         />
       </head>
       <body>
-        <SessionProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TolgeeNextProvider language={locale} staticData={staticData}>
-              {children}
-              <Toaster richColors position="top-right" duration={800} />
-            </TolgeeNextProvider>
-          </ThemeProvider>
-        </SessionProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <TolgeeNextProvider language={locale} staticData={staticData}>
+            {children}
+            <Toaster richColors position="top-right" duration={800} />
+          </TolgeeNextProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

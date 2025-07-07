@@ -1,14 +1,14 @@
-import { auth } from "@/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
+import { getCurrentUserId } from "@/lib/auth"
 import Link from "next/link"
 
 export default async function MainPage() {
-  const session = await auth()
+  const userId = await getCurrentUserId()
 
-  const { chatbots } = await getAllChatbotMembers(session?.user.id || "")
+  const { chatbots } = await getAllChatbotMembers(userId)
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">

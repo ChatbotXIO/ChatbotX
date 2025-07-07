@@ -1,4 +1,4 @@
-import { auth } from "@/auth"
+import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
@@ -12,8 +12,8 @@ export async function GET(
   try {
     const { chatbotId } = await params
 
-    const session = await auth()
-    await findChatbotOrFail(session?.user.id, chatbotId)
+    const userId = await getCurrentUserId()
+    await findChatbotOrFail(userId, chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const search = getWhatsappFlowsSearchParamsCache.parse(searchParams)
