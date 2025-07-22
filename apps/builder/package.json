@@ -6,7 +6,7 @@
   "scripts": {
     "build": "next build",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e ../../.env -- next dev -H builder.ahachat.localhost -p 3123 --turbopack",
+    "dev": "dotenv -e ../../.env -- next dev -p 3123 --turbopack",
     "lint": "biome check .",
     "start": "next start"
   },
