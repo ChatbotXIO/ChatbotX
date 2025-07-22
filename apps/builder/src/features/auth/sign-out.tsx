@@ -9,12 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { authClient } from "@/lib/auth-client"
 import { Loader2Icon, LogOutIcon } from "lucide-react"
-import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export function SignOut() {
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   return (
     <Dialog>
@@ -32,9 +34,16 @@ export function SignOut() {
           <Button
             disabled={isLoading}
             variant="default"
-            onClick={() => {
+            onClick={async () => {
               setIsLoading(true)
-              signOut()
+
+              await authClient.signOut({
+                fetchOptions: {
+                  onSuccess: () => {
+                    router.push("/signin")
+                  },
+                },
+              })
             }}
           >
             {isLoading && <Loader2Icon className="animate-spin" />}

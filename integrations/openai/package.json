@@ -6,10 +6,12 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
     "@ahachat.ai/sdk": "workspace:*",
-    "@ahachat.ai/typescript-config": "workspace:*",
     "@ai-sdk/openai": "^1.3.22",
     "ai": "^4.3.16",
-    "tslog": "^4.9.3",
+    "tslog": "^4.9.3"
+  },
+  "devDependencies": {
+    "@ahachat.ai/typescript-config": "workspace:*",
     "typescript": "5.8.3"
   },
   "exports": {

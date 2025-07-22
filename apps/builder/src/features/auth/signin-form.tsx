@@ -1,15 +1,15 @@
 "use client"
 
+import { InputField } from "@/components/form/input-field"
 import { cn } from "@/components/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form } from "@/components/ui/form"
 import { authClient } from "@/lib/auth-client"
-// import { T } from "@/tolgee/server"
-import { InputField } from "@/components/form/input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import GoogleButton from "react-google-button"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
@@ -57,44 +57,15 @@ export const SignInForm = ({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
-            <div className="flex flex-col gap-4">
-              {/* {providers.map((provider) =>
-                provider.name === "nodemailer" ? null : (
-                  <form
-                    key={provider.name}
-                    action={async () => {
-                      "use server"
-                      try {
-                        await signIn(provider.name, {
-                          redirectTo: callbackUrl ?? "",
-                        })
-                      } catch (error) {
-                        // Signin can fail for a number of reasons, such as the user
-                        // not existing, or the user not having the correct role.
-                        // In some cases, you may want to redirect to a custom error
-                        if (error instanceof AuthError) {
-                          return redirect(`/signin?error=${error.message}`)
-                        }
-                        // Otherwise if a redirects happens Next.js can handle it
-                        // so you can just re-thrown the error and let Next.js handle it.
-                        // Docs:
-                        // https://nextjs.org/docs/app/api-reference/functions/redirect#server-component
-                        throw error
-                      }
-                    }}
-                  >
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="w-full text-left"
-                    >
-                      <span>
-                        <T keyName="signin.provider_label" /> {provider.name}
-                      </span>
-                    </Button>
-                  </form>
-                ),
-              )} */}
+            <div className="flex flex-col space-y-4 items-center">
+              <GoogleButton
+                className="w-full"
+                onClick={async () => {
+                  await authClient.signIn.social({
+                    provider: "google",
+                  })
+                }}
+              />
             </div>
             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
               <span className="relative z-10 bg-background px-2 text-muted-foreground">

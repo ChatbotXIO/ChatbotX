@@ -31,8 +31,7 @@ Key components of the project's tech stack.
 
 ### Authentication
 
-- [Auth.js](https://www.npmjs.com/package/next-auth) (v5)
-- [Prisma Adapter](https://www.npmjs.com/package/@auth/prisma-adapter)
+- [Better Auth](https://github.com/better-auth/better-auth)
 
 ### Utilities
 

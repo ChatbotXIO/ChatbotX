@@ -9,15 +9,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Workspace {
-  id     String @id @default(cuid(2))
-  name   String
-  domain String @unique
-
-  users    User[]
-  chatbots Chatbot[]
-}
-
 model User {
   id            String   @id @default(cuid(2))
   createdAt     DateTime @default(now())
@@ -26,9 +17,6 @@ model User {
   email         String   @unique
   emailVerified Boolean  @default(false)
   image         String?
-
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
   accounts                 Account[]
   activityLogs             ActivityLog[]
@@ -39,6 +27,8 @@ model User {
   inboxTeamMembers         InboxTeamMember[]
   contactNotes             ContactNote[]
   assignedConversations    Conversation[]
+  members                  OrganizationMember[]
+  invitations              OrganizationInvitation[]
 }
 
 model Account {
@@ -74,12 +64,54 @@ model Session {
 }
 
 model Verification {
-  id         String    @id @default(cuid(2))
+  id         String   @id @default(cuid(2))
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Organization {
+  id                      String                   @id @default(cuid(2))
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  name                    String
+  slug                    String?
+  logo                    String?
+  metadata                String?
+  organizationMembers     OrganizationMember[]
+  organizationInvitations OrganizationInvitation[]
+  chatbots                Chatbot[]
+
+  @@unique([slug])
+}
+
+model OrganizationMember {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OrganizationInvitation {
+  id        String   @id @default(cuid(2))
+  email     String
+  role      String?
+  status    String
+  expiresAt DateTime
+
+  inviterId String
+  user      User   @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 model Chatbot {
@@ -95,7 +127,9 @@ model Chatbot {
   developmentMode Boolean     @default(false)
   logo            String?
   plan            ChatbotPlan
-  workspaceId     String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   activityLogs             ActivityLog[]
   aiAgents                 AIAgent[]
@@ -124,7 +158,6 @@ model Chatbot {
   messages                 Message[]
   spreadsheets             Spreadsheet[]
   tags                     Tag[]
-  workspace                Workspace                 @relation(fields: [workspaceId], references: [id])
   automatedResponses       AutomatedResponse[]
   flowRuns                 FlowRun[]
 }
@@ -191,6 +224,7 @@ model ActivityLog {
 model Log {
   id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   logType   LogType
   action    String
   detail    String
@@ -395,6 +429,7 @@ model Conversation {
 }
 
 model ConversationParticipant {
+  id             String   @id @default(cuid(2))
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   chatbotId      String
@@ -405,7 +440,7 @@ model ConversationParticipant {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([conversationId, userId])
+  @@unique([conversationId, userId])
   @@index([chatbotId])
   @@index([conversationId])
 }

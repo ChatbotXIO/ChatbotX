@@ -9,14 +9,14 @@ import {
 import { prisma } from ".."
 
 async function main() {
-  let worksapce = await prisma.workspace.findFirst()
-  if (worksapce) {
+  let organization = await prisma.organization.findFirst()
+  if (organization) {
     return
   }
-  worksapce = await prisma.workspace.create({
+  organization = await prisma.organization.create({
     data: {
       name: "AhaChat AI",
-      domain: new URL(process.env.BASE_URL ?? "").hostname,
+      createdAt: new Date(),
     },
   })
 
@@ -28,9 +28,17 @@ async function main() {
   // create user
   user = await prisma.user.create({
     data: {
-      workspaceId: worksapce.id,
       email: "admin@ahachat.ai",
       name: "AhaChat",
+    },
+  })
+
+  // add user to organization
+  await prisma.organizationMember.create({
+    data: {
+      organizationId: organization.id,
+      userId: user.id,
+      role: "ADMIN",
     },
   })
 
@@ -40,13 +48,13 @@ async function main() {
     const chatbots = await prisma.chatbot.createManyAndReturn({
       data: [
         {
-          workspaceId: worksapce.id,
+          organizationId: organization.id,
           name: "FREE",
           accountTimezone: "Asia/Saigon",
           plan: ChatbotPlan.FREE,
         },
         {
-          workspaceId: worksapce.id,
+          organizationId: organization.id,
           name: "PRO",
           accountTimezone: "Asia/Saigon",
           plan: ChatbotPlan.PRO,

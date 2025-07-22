@@ -7,15 +7,17 @@
   "dependencies": {
     "@ahachat.ai/flow-config": "workspace:*",
     "@ahachat.ai/sdk": "workspace:*",
-    "@ahachat.ai/typescript-config": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
     "remeda": "^2.23.3",
     "tslog": "^4.9.3",
-    "typescript": "5.8.3",
     "whatsapp-api-js": "^6.0.0",
     "zod": "^3.25.71"
+  },
+  "devDependencies": {
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "typescript": "5.8.3"
   },
   "exports": {
     ".": "./src/index.ts"

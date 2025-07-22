@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
   const cookies = getSessionCookie(request)
-  if (!cookies) {
+  if (!cookies && request.nextUrl.pathname !== "/signin") {
     return NextResponse.redirect(new URL("/signin", request.url))
   }
 
