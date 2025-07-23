@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "dotenv -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
     "dev": "dotenv -e ../../.env -- next dev -p 3123 --turbopack",
     "lint": "biome check .",
@@ -108,7 +108,7 @@
     "@ahachat.ai/typescript-config": "workspace:*",
     "@aws-sdk/client-s3": "^3.842.0",
     "@aws-sdk/s3-presigned-post": "^3.842.0",
-    "@biomejs/biome": "^2.0.6",
+    "@biomejs/biome": "^1.9.4",
     "@faker-js/faker": "^9.9.0",
     "@prisma/client": "^6.11.1",
     "@radix-ui/react-visually-hidden": "^1.2.3",

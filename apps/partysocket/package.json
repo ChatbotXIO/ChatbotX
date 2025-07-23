@@ -25,6 +25,7 @@
   "devDependencies": {
     "@ahachat.ai/typescript-config": "workspace:*",
     "dotenv-cli": "^8.0.0",
-    "partykit": "0.0.115"
+    "partykit": "0.0.115",
+    "tsup": "^8.5.0"
   }
 }
