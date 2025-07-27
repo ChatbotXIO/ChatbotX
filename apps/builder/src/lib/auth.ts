@@ -4,7 +4,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma"
 import { magicLink } from "better-auth/plugins"
 import { headers } from "next/headers"
 import { googleSignInConfig } from "./auth-config"
-import { sendMagicLinkMail } from "./mail"
+import { sendMagicLinkMail } from "@ahachat.ai/mail"
 
 export const getCurrentUserId = async (): Promise<string> => {
   const session = await auth.api.getSession({
@@ -24,7 +24,9 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        await sendMagicLinkMail(email, url)
+        await sendMagicLinkMail(email, {
+          url,
+        })
       },
     }),
   ],

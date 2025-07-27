@@ -1,0 +1,30 @@
+{
+  "name": "@ahachat.ai/mail",
+  "version": "0.1.0",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "type": "module",
+  "devDependencies": {
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "@react-email/preview-server": "4.2.4",
+    "@types/node": "^22.16.0",
+    "@types/nodemailer": "^6.4.17",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "react-email": "4.2.4",
+    "typescript": "5.8.3"
+  },
+  "dependencies": {
+    "@ahachat.ai/env": "workspace:*",
+    "@react-email/components": "0.3.2",
+    "nodemailer": "^6.10.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "exports": {
+    ".": "./src/index.tsx",
+    "./emails/*": "./src/emails/*.tsx"
+  },
+  "scripts": {
+    "dev": "email dev -d src/emails -p 3201"
+  }
+}

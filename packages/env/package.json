@@ -1,0 +1,17 @@
+{
+  "name": "@ahachat.ai/env",
+  "version": "0.1.0",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "type": "module",
+  "devDependencies": {
+    "@ahachat.ai/typescript-config": "workspace:*",
+    "typescript": "5.8.3"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "zod": "^3.25.71"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
