@@ -2,8 +2,8 @@
   "name": "ahachat.ai",
   "private": true,
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
+    "build": "dotenv -e .env -- turbo build",
+    "dev": "dotenv -e .env -- turbo dev",
     "format": "biome format --fix",
     "lint": "biome check . --write",
     "locale:pull": "tolgee pull",

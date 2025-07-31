@@ -6,7 +6,7 @@
   "scripts": {
     "build": "dotenv -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e ../../.env -- next dev -p 3123 --turbopack",
+    "dev": "dotenv -e ../../.env -- next dev --turbopack -H builder.ahachat.localhost -p 3123",
     "lint": "biome check .",
     "start": "next start"
   },
@@ -118,7 +118,6 @@
     "@types/nodemailer": "^6.4.17",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.0",
-    "dotenv": "^17.0.1",
     "dotenv-cli": "^8.0.0",
     "partykit": "0.0.115",
     "postcss": "^8.5.6",

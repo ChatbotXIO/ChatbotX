@@ -1,12 +1,16 @@
 {
-  "extends": "@ahachat.ai/typescript-config/react-library.json",
+  "extends": "@ahachat.ai/typescript-config/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@ui/*": ["./src/*"],
-      "@ui/components/ui*": ["./src/components/ui/*"]
+      "@ahachat.ai/ui/*": ["./src/*"]
     }
   },
-  "include": ["."],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }
