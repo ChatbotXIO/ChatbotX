@@ -1,6 +1,6 @@
-# AhaChat.ai
+# Aha.Chat
 
-This is offical source code for AhaChat.ai
+This is offical source code for Aha.Chat
 
 ### Prerequisites
 
