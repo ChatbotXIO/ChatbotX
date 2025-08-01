@@ -14,7 +14,8 @@
     "utils": "@ahachat.ai/ui/lib/utils",
     "hooks": "@ahachat.ai/ui/hooks",
     "lib": "@ahachat.ai/ui/lib",
-    "ui": "@ahachat.ai/ui/components/ui"
+    "ui": "@ahachat.ai/ui/components/ui",
+    "config": "@ahachat.ai/ui/config"
   },
   "iconLibrary": "lucide"
 }

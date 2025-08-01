@@ -30,8 +30,8 @@ import {
 import * as React from "react"
 
 import { useDebouncedCallback } from "@ahachat.ai/hooks/use-debounced-callback"
-import { getSortingStateParser } from "@ahachat.ai/lib/parsers"
-import type { ExtendedColumnSort } from "@ahachat.ai/types/data-table"
+import { getSortingStateParser } from "@ahachat.ai/ui/lib/parsers"
+import type { ExtendedColumnSort } from "@ahachat.ai/ui/types/data-table"
 
 const PAGE_KEY = "page"
 const PER_PAGE_KEY = "perPage"

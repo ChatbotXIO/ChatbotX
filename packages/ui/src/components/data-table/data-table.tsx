@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@ahachat.ai/ui/components/ui/table"
-import { getCommonPinningStyles } from "@ahachat.ai/lib/data-table"
+import { getCommonPinningStyles } from "@ahachat.ai/ui/lib/data-table"
 import { cn } from "@ahachat.ai/ui/lib/utils"
 
 interface DataTableProps<TData> extends React.ComponentProps<"div"> {
