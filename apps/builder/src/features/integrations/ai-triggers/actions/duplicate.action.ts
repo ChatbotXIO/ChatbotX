@@ -5,7 +5,7 @@ import {
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma, type Prisma } from "@ahachat.ai/database"
+import { prisma, type Prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 
 export const duplicateAITriggerAction = chatbotActionClient

@@ -3,7 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
   SdkException,
-} from "@ahachat.ai/sdk"
+} from "@aha.chat/sdk"
 import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client"
 import { getFlows } from "./flows"
 import { webhookHandler } from "./handlers/webhook"

@@ -1,4 +1,4 @@
-import { SdkException, type Context } from "@ahachat.ai/sdk"
+import { SdkException, type Context } from "@aha.chat/sdk"
 import { WhatsAppAPI } from "whatsapp-api-js"
 import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
 import type { WhatsappAuthValue } from "./schemas"

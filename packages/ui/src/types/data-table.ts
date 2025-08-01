@@ -1,6 +1,6 @@
 import type { ColumnSort, Row, RowData } from "@tanstack/react-table"
-import type { DataTableConfig } from "@ahachat.ai/ui/config/data-table"
-import type { FilterItemSchema } from "@ahachat.ai/ui/lib/parsers"
+import type { DataTableConfig } from "@aha.chat/ui/config/data-table"
+import type { FilterItemSchema } from "@aha.chat/ui/lib/parsers"
 
 declare module "@tanstack/react-table" {
   // biome-ignore lint/correctness/noUnusedVariables: TValue is used in the ColumnMeta interface

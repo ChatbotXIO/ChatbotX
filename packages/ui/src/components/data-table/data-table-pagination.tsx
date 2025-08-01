@@ -6,15 +6,15 @@ import {
   ChevronsRight,
 } from "lucide-react"
 
-import { Button } from "@ahachat.ai/ui/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@ahachat.ai/ui/components/ui/select"
-import { cn } from "@ahachat.ai/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/select"
+import { cn } from "@aha.chat/ui/lib/utils"
 
 interface DataTablePaginationProps<TData> extends React.ComponentProps<"div"> {
   table: Table<TData>

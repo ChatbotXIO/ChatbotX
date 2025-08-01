@@ -5,18 +5,18 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
   type CreateMessageTemplateRequest,
   createMessageTemplateRequest,
 } from "../schemas/create-message-templates-schema"
 import { getLogger } from "@/lib/log"
-import { uploader } from "@ahachat.ai/filesystem"
+import { uploader } from "@aha.chat/filesystem"
 import type {
   CreateMessageTemplateProps,
   WhatsappAuthValue,
-} from "@ahachat.ai/integration-whatsapp"
+} from "@aha.chat/integration-whatsapp"
 import { integrations } from "@/integration"
 import { parseComponents, slugify } from "./utils"
 

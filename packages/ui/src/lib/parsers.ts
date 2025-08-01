@@ -1,12 +1,12 @@
 import { createParser } from "nuqs/server"
 import { z } from "zod"
 
-import { dataTableConfig } from "@ahachat.ai/ui/config/data-table"
+import { dataTableConfig } from "@aha.chat/ui/config/data-table"
 
 import type {
   ExtendedColumnFilter,
   ExtendedColumnSort,
-} from "@ahachat.ai/ui/types/data-table"
+} from "@aha.chat/ui/types/data-table"
 
 const sortingItemSchema = z.object({
   id: z.string(),

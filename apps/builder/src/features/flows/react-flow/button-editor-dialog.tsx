@@ -22,12 +22,12 @@ import {
   ButtonType,
   sendFlowNodeStepDefaultFn,
   sendMessageNodeDefaultFn,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { useStepStore } from "./stores/step-store-provider"
-import type { FlowNode } from "@ahachat.ai/flow-config"
+import type { FlowNode } from "@aha.chat/flow-config"
 import { InputField } from "@/components/form/input-field"
 import { allButtonsConfig } from "./steps/button-config"
-import { openWebsiteStepDefaultFn } from "node_modules/@ahachat.ai/flow-config/src/schemas/steps/open-website"
+import { openWebsiteStepDefaultFn } from "node_modules/@aha.chat/flow-config/src/schemas/steps/open-website"
 import { DynamicStepEditor } from "./steps"
 
 function AllButtonOptions({

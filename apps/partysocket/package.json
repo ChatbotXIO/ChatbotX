@@ -9,12 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ahachat.ai/database": "workspace:*",
-    "@ahachat.ai/filesystem": "workspace:*",
-    "@ahachat.ai/integration-whatsapp": "workspace:*",
-    "@ahachat.ai/party-config": "workspace:*",
-    "@ahachat.ai/sdk": "workspace:*",
-    "@ahachat.ai/worker-config": "workspace:*",
+    "@aha.chat/database": "workspace:*",
+    "@aha.chat/filesystem": "workspace:*",
+    "@aha.chat/integration-whatsapp": "workspace:*",
+    "@aha.chat/party-config": "workspace:*",
+    "@aha.chat/sdk": "workspace:*",
+    "@aha.chat/worker-config": "workspace:*",
     "bullmq": "^5.56.1",
     "dot-prop": "^9.0.0",
     "ioredis": "^5.6.1",
@@ -23,7 +23,7 @@
     "tslog": "^4.9.3"
   },
   "devDependencies": {
-    "@ahachat.ai/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "dotenv-cli": "^8.0.0",
     "partykit": "0.0.115",
     "tsup": "^8.5.0"

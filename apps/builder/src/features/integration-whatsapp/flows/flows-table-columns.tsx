@@ -2,7 +2,7 @@
 
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { WhatsappFlowModel } from "@ahachat.ai/database/types"
+import type { WhatsappFlowModel } from "@aha.chat/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TextIcon } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"

@@ -1,5 +1,5 @@
 import { SelectField } from "@/components/form/select-field"
-import { DelayUnit } from "@ahachat.ai/flow-config"
+import { DelayUnit } from "@aha.chat/flow-config"
 import { useTranslate } from "@tolgee/react"
 
 export const DelayUnitSelect = ({ name }: { name: string }) => {

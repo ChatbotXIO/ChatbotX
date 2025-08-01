@@ -1,7 +1,7 @@
 import { type IntegrationKey, integrations } from "@/integration"
-import { integrationQueue } from "@ahachat.ai/worker-config"
+import { integrationQueue } from "@aha.chat/worker-config"
 import { notFound } from "next/navigation"
-import { IntegrationType } from "@ahachat.ai/database"
+import { IntegrationType } from "@aha.chat/database"
 
 export const handleWebhook = async (integrationName: string, req: Request) => {
   const integration =

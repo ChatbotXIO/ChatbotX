@@ -1,3 +1,3 @@
-import type { ChatbotModel } from "@ahachat.ai/database/types"
+import type { ChatbotModel } from "@aha.chat/database/types"
 
 export type ChatbotResource = ChatbotModel

@@ -1,7 +1,7 @@
 import {
   countCharactersStepDefaultFn,
   countCharactersStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import CountCharactersStepEditor from "./editor"
 import CountCharactersStepViewer from "./viewer"

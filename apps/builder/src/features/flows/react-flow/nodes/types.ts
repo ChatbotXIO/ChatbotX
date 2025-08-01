@@ -1,5 +1,5 @@
 import type { ReactElement } from "react"
-import type { StepType } from "@ahachat.ai/flow-config"
+import type { StepType } from "@aha.chat/flow-config"
 import type { LucideIcon } from "lucide-react"
 
 export type MenuItem = {

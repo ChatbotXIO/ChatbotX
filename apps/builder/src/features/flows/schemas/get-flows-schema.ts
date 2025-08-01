@@ -1,5 +1,5 @@
 import { getSortingStateParser } from "@/lib/parsers"
-import type { FlowModel, FlowVersionModel } from "@ahachat.ai/database/types"
+import type { FlowModel, FlowVersionModel } from "@aha.chat/database/types"
 import {
   createSearchParamsCache,
   parseAsInteger,

@@ -1,7 +1,7 @@
 import { getCurrentUserId } from "@/lib/auth"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
-import { Prisma, prisma } from "@ahachat.ai/database"
-import { SdkException } from "@ahachat.ai/sdk"
+import { Prisma, prisma } from "@aha.chat/database"
+import { SdkException } from "@aha.chat/sdk"
 import {
   DEFAULT_SERVER_ERROR_MESSAGE,
   createSafeActionClient,

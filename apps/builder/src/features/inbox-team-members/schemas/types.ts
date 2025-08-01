@@ -1,4 +1,4 @@
-import type { InboxTeamMemberModel } from "@ahachat.ai/database/types"
+import type { InboxTeamMemberModel } from "@aha.chat/database/types"
 
 export type InboxTeamMemberResource = InboxTeamMemberModel
 

@@ -1,8 +1,8 @@
-import { prisma } from "@ahachat.ai/database"
-import type { ConversationModel } from "@ahachat.ai/database/types"
-import { StepType, type FlowNode } from "@ahachat.ai/flow-config"
-import { SdkException } from "@ahachat.ai/sdk"
-import type { IntegrationJobSendFlow } from "@ahachat.ai/worker-config"
+import { prisma } from "@aha.chat/database"
+import type { ConversationModel } from "@aha.chat/database/types"
+import { StepType, type FlowNode } from "@aha.chat/flow-config"
+import { SdkException } from "@aha.chat/sdk"
+import type { IntegrationJobSendFlow } from "@aha.chat/worker-config"
 import {
   addContactNotes,
   addContactTag,

@@ -1,5 +1,5 @@
 {
-  "extends": "@ahachat.ai/typescript-config/nextjs.json",
+  "extends": "@aha.chat/typescript-config/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

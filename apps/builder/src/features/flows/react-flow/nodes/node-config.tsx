@@ -5,7 +5,7 @@ import {
   NodeType,
   type NewNodeProps,
   type FlowNode,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export interface NodeConfigProps {
   type: NodeType

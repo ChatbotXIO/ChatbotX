@@ -5,7 +5,7 @@ import {
   NodeType,
   sendMessageNodeDefaultFn,
   sendMessageNodeSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 const sendMessageNodeConfig: NodeConfigProps = {
   defaultFn: sendMessageNodeDefaultFn,

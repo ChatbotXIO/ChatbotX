@@ -1,4 +1,4 @@
-import { StepType } from "@ahachat.ai/flow-config"
+import { StepType } from "@aha.chat/flow-config"
 import type { JSX } from "react"
 import type { ZodTypeAny } from "zod"
 import sendTextStep from "./send-text"

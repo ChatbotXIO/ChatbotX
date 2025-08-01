@@ -7,7 +7,7 @@ import type {
   Oauth2AuthValue,
   SendFlowStepProps,
   SendMessageProps,
-} from "@ahachat.ai/sdk"
+} from "@aha.chat/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import type {
   CreateMessageTemplateProps,

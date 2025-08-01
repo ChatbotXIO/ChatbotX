@@ -24,7 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { FileType } from "@ahachat.ai/database/types"
+import { FileType } from "@aha.chat/database/types"
 
 type FileDropzoneConfigs = {
   uploadKeyName: string

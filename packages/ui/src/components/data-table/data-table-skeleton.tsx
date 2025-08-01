@@ -1,4 +1,4 @@
-import { Skeleton } from "@ahachat.ai/ui/components/ui/skeleton"
+import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -6,8 +6,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@ahachat.ai/ui/components/ui/table"
-import { cn } from "@ahachat.ai/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/table"
+import { cn } from "@aha.chat/ui/lib/utils"
 
 interface DataTableSkeletonProps extends React.ComponentProps<"div"> {
   columnCount: number

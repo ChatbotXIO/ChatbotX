@@ -6,7 +6,7 @@ import {
 } from "@/features/common/schemas"
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
   type UpdateAutomatedResponseRequest,

@@ -1,6 +1,6 @@
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import type { ListContactNotesRequest } from "../schemas/list-contact-notes.request"
 import type { ContactNoteCollection } from "../schemas/types"

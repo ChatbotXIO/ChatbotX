@@ -4,7 +4,7 @@ import { MarkEmailVerifiedStepViewer } from "./viewer"
 import {
   markEmailVerifiedStepDefaultFn,
   markEmailVerifiedStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export const markEmailVerifiedStep: StepDefinition = {
   editor: MarkEmailVerifiedStepEditor,

@@ -19,7 +19,7 @@ import type { UserResource } from "../users/schemas"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
 import { addInboxTeamMemberRequest } from "./schemas/add-inbox-team-member.request"
 import { MultiSelectField } from "@/components/form/select-field"
-import type { InboxTeamModel } from "@ahachat.ai/database/types"
+import type { InboxTeamModel } from "@aha.chat/database/types"
 
 export function AddInboxTeamMemberDialog({
   open,

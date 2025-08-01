@@ -4,14 +4,14 @@ import type * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchIcon } from "lucide-react"
 
-import { cn } from "@ahachat.ai/ui/lib/utils"
+import { cn } from "@aha.chat/ui/lib/utils"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@ahachat.ai/ui/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 
 function Command({
   className,

@@ -6,7 +6,7 @@ import {
   Image,
   Header,
 } from "whatsapp-api-js/messages"
-import type { SendImageStepSchema } from "@ahachat.ai/flow-config"
+import type { SendImageStepSchema } from "@aha.chat/flow-config"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "./shared"
 

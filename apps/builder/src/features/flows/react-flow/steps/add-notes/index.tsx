@@ -1,7 +1,7 @@
 import {
   addNotesNodeSchema,
   addNotesStepDefaultFn,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { AddNotesStepEditor } from "./editor"
 import { AddNotesStepViewer } from "./viewer"

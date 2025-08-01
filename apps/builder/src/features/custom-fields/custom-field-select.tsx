@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { FormItem, FormLabel } from "@/components/ui/form"
 import { callAPI } from "@/lib/swr"
-import type { CustomFieldType } from "@ahachat.ai/database/types"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import { useParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { mutate } from "swr"

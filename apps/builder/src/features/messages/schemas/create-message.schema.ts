@@ -1,4 +1,4 @@
-import { FileType } from "@ahachat.ai/database/types"
+import { FileType } from "@aha.chat/database/types"
 import { z } from "zod"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000

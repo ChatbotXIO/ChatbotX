@@ -1,4 +1,4 @@
 {
-  "extends": "@ahachat.ai/typescript-config/base.json",
+  "extends": "@aha.chat/typescript-config/base.json",
   "include": ["src/**/*.ts"]
 }

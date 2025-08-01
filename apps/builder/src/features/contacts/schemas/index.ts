@@ -3,7 +3,7 @@ import { BaseException } from "@/lib/error"
 import type {
   ContactModel,
   ContactCustomFieldModel,
-} from "@ahachat.ai/database/types"
+} from "@aha.chat/database/types"
 
 export class ContactException extends BaseException {}
 

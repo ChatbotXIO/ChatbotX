@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { AutomatedResponseModel } from "@ahachat.ai/database/types"
+import type { AutomatedResponseModel } from "@aha.chat/database/types"
 import type { Row } from "@tanstack/react-table"
 import { T } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"

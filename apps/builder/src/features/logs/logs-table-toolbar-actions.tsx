@@ -1,6 +1,6 @@
 "use client"
 
-import type { LogModel } from "@ahachat.ai/database/types"
+import type { LogModel } from "@aha.chat/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 

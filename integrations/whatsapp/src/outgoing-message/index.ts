@@ -5,7 +5,7 @@ import {
   FileType,
   type MessageEntity,
   type SendFlowStepData,
-} from "@ahachat.ai/sdk"
+} from "@aha.chat/sdk"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
 import type {
   ClientMessage,
@@ -14,7 +14,7 @@ import type {
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../client"
 import type { WhatsappAuthValue } from "../schemas"
-import { StepType } from "@ahachat.ai/flow-config"
+import { StepType } from "@aha.chat/flow-config"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepImage } from "./send-image"
 

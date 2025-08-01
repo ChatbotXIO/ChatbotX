@@ -1,7 +1,7 @@
 import {
   enableBotStepDefaultFn,
   enableBotStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { EnableBotStepEditor } from "./editor"
 import { EnableBotStepViewer } from "./viewer"

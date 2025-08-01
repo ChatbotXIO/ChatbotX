@@ -2,7 +2,7 @@ import {
   type BaseConfig,
   Integration,
   type IntegrationDefinition,
-} from "@ahachat.ai/sdk"
+} from "@aha.chat/sdk"
 import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import type { OpenAIActions, OpenAIAuthValue } from "./schemas"

@@ -1,7 +1,7 @@
 import {
   addContactTagStepDefaultFn,
   addContactTagStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { addContactTagStepEditor } from "./editor"
 import { addContactTagStepViewer } from "./viewer"

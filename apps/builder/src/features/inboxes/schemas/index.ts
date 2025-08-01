@@ -1,4 +1,4 @@
-import type { InboxModel } from "@ahachat.ai/database/types"
+import type { InboxModel } from "@aha.chat/database/types"
 
 export type InboxResource = InboxModel
 

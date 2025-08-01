@@ -9,7 +9,7 @@ import {
   updateContactRequest,
   type UpdateContactRequest,
 } from "../schemas/update-contact.request"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { ContactException } from "../schemas"
 
 export const updateContactAction = chatbotActionClient

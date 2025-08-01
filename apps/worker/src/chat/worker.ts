@@ -4,11 +4,11 @@ import {
   getRedisConnection,
   defaultWorkerOptions,
   type ChatJobData,
-} from "@ahachat.ai/worker-config"
+} from "@aha.chat/worker-config"
 import { Worker, type Job } from "bullmq"
 import { logger } from "../lib/log"
 import { sendMessageToExternal } from "./handlers/send-message"
-import { SdkException } from "@ahachat.ai/sdk"
+import { SdkException } from "@aha.chat/sdk"
 import { sendFlowStep } from "./handlers/send-flow-step"
 
 const worker = new Worker(

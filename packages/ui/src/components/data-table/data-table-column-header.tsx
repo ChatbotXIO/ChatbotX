@@ -9,8 +9,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@ahachat.ai/ui/components/ui/dropdown-menu"
-import { cn } from "@ahachat.ai/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { cn } from "@aha.chat/ui/lib/utils"
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.ComponentProps<typeof DropdownMenuTrigger> {

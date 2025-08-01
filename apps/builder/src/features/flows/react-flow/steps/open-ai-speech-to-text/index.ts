@@ -3,7 +3,7 @@ import { OpenAISpeechToTextEditor } from "./editor"
 import {
   openAISpeechToTextDefaultFn,
   openAISpeechToTextSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { OpenAISpeechToTextViewer } from "./viewer"
 
 export const openAISpeechToTextStep: StepDefinition = {

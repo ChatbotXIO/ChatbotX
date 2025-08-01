@@ -1,9 +1,9 @@
-import { prisma } from "@ahachat.ai/database"
-import type { ChatJobSendMessage } from "@ahachat.ai/worker-config"
+import { prisma } from "@aha.chat/database"
+import type { ChatJobSendMessage } from "@aha.chat/worker-config"
 import { getLogger, logger } from "../../lib/log"
 import { allIntegrations } from "../../shared/integrations"
 import { getIntegrationAuth } from "./integration.query"
-import type { ConversationEntity, SendFlowStepData } from "@ahachat.ai/sdk"
+import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
 
 export async function sendMessageToExternal(data: ChatJobSendMessage) {
   const { conversation, message } = data.data

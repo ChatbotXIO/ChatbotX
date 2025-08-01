@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import type { FileWithPreview } from "@ahachat.ai/filesystem"
+import type { FileWithPreview } from "@aha.chat/filesystem"
 import { XCircleIcon } from "lucide-react"
 import { useImperativeHandle } from "react"
 import { useDropzone } from "react-dropzone"

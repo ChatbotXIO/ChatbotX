@@ -4,7 +4,7 @@ import { InputField } from "@/components/form/input-field"
 import { SelectField } from "@/components/form/select-field"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
-import { Gender } from "@ahachat.ai/database/types"
+import { Gender } from "@aha.chat/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -80,7 +80,7 @@ export function CreateContactForm({
         <InputField
           name="email"
           label={t("contacts.email")}
-          placeholder="email@ahachat.ai"
+          placeholder="email@aha.chat"
           isRequired={false}
         />
 

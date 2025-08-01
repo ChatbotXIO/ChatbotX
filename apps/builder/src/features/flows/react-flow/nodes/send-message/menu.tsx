@@ -28,7 +28,7 @@ import {
   OctagonXIcon,
 } from "lucide-react"
 import type { MenuItem } from "../types"
-import { StepType } from "@ahachat.ai/flow-config"
+import { StepType } from "@aha.chat/flow-config"
 
 export const sendMessageEditorMenus: MenuItem[] = [
   {

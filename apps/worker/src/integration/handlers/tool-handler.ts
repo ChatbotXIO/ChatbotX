@@ -1,12 +1,12 @@
-import { prisma } from "@ahachat.ai/database"
-import { FieldType } from "@ahachat.ai/database/types"
+import { prisma } from "@aha.chat/database"
+import { FieldType } from "@aha.chat/database/types"
 import {
   GenerateCodeType,
   type CountCharactersStepSchema,
   type FormatDateStepSchema,
   type GenerateCodeStepSchema,
   type GetDataFromJsonStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { faker } from "@faker-js/faker"
 import { format } from "date-fns"
 import { getProperty } from "dot-prop"

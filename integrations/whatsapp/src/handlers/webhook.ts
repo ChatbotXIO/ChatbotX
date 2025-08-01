@@ -1,4 +1,4 @@
-import { type HandleRequestProps, SdkException } from "@ahachat.ai/sdk"
+import { type HandleRequestProps, SdkException } from "@aha.chat/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"

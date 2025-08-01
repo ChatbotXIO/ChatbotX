@@ -1,4 +1,4 @@
-import { cn } from "@ahachat.ai/ui/lib/utils"
+import { cn } from "@aha.chat/ui/lib/utils"
 import * as TagsInputPrimitive from "@diceui/tags-input"
 import { X } from "lucide-react"
 import * as React from "react"

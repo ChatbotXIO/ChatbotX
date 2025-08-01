@@ -3,7 +3,7 @@
 import type { Table } from "@tanstack/react-table"
 import { Check, ChevronsUpDown, Settings2 } from "lucide-react"
 import * as React from "react"
-import { Button } from "@ahachat.ai/ui/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -11,13 +11,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@ahachat.ai/ui/components/ui/command"
+} from "@aha.chat/ui/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@ahachat.ai/ui/components/ui/popover"
-import { cn } from "@ahachat.ai/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/popover"
+import { cn } from "@aha.chat/ui/lib/utils"
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>

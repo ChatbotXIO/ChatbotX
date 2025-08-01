@@ -2,7 +2,7 @@
 
 import { SelectField } from "@/components/form/select-field"
 import { UserMultipleSelect } from "@/features/users/user-select"
-import { AutoAssignConversationRule } from "@ahachat.ai/flow-config"
+import { AutoAssignConversationRule } from "@aha.chat/flow-config"
 import { T } from "@tolgee/react"
 import { MessageCirclePlusIcon } from "lucide-react"
 import { BaseStepEditor } from "../base/editor"

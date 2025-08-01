@@ -8,7 +8,7 @@ import { T } from "@tolgee/react"
 import { GripVerticalIcon, PlusIcon } from "lucide-react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { useStepStore } from "../../stores/step-store-provider"
-import { buttonStepDefaultFn } from "@ahachat.ai/flow-config"
+import { buttonStepDefaultFn } from "@aha.chat/flow-config"
 
 export const ButtonStepEditor = ({
   parentName,

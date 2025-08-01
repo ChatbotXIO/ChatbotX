@@ -7,9 +7,9 @@ import {
 import { integrations } from "@/integration"
 import { getLogger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
-import { uploader } from "@ahachat.ai/filesystem"
-import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
+import { prisma } from "@aha.chat/database"
+import { uploader } from "@aha.chat/filesystem"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import {
   type UpdateWhatsappIceBreakerSchema,
   updateWhatsappIceBreakerSchema,

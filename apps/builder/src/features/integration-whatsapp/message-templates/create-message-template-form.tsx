@@ -10,7 +10,7 @@ import { WhatsappMessageTemplateLanguageSelect } from "@/features/integration-wh
 import { createMessageTemplateRequest } from "@/features/integration-whatsapp/message-templates/schemas/create-message-templates-schema"
 import { WhatsappMessageTemplateTypeSelect } from "@/features/integration-whatsapp/message-templates/template-type-select"
 import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
-import { WhatsappTemplateCategory } from "@ahachat.ai/database/types"
+import { WhatsappTemplateCategory } from "@aha.chat/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"

@@ -6,7 +6,7 @@ import usePartySocket from "partysocket/react"
 import {
   RealtimeEventType,
   type RealtimeEventData,
-} from "@ahachat.ai/party-config"
+} from "@aha.chat/party-config"
 import type { MessageResource } from "../messages/schemas"
 
 export function ChatRealtime() {

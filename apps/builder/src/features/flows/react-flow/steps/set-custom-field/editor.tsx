@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import type { SetCustomFieldStepSchema } from "@ahachat.ai/flow-config"
+import type { SetCustomFieldStepSchema } from "@aha.chat/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { useForm, useFormContext } from "react-hook-form"

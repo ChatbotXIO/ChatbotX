@@ -1,10 +1,10 @@
 "use client"
 
 import { callAPI } from "@/lib/swr"
-import type { FlowModel } from "@ahachat.ai/database/types"
+import type { FlowModel } from "@aha.chat/database/types"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
-import type { StartFlowStepSchema } from "@ahachat.ai/flow-config"
+import type { StartFlowStepSchema } from "@aha.chat/flow-config"
 import type { FlowCollection } from "@/features/flows/schemas/get-flows-schema"
 import { BaseStepViewer } from "../base/viewer"
 import { ExternalLinkIcon } from "lucide-react"

@@ -2,7 +2,7 @@
 
 import { Card, CardFooter, CardHeader } from "@/components/ui/card"
 import { ButtonGroupViewer } from "@/features/flows/react-flow/steps/button/viewer"
-import type { SendVideoStepSchema } from "@ahachat.ai/flow-config"
+import type { SendVideoStepSchema } from "@aha.chat/flow-config"
 
 export const SendVideoStepViewer = ({
   data,

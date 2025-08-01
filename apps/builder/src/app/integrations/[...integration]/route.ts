@@ -1,4 +1,4 @@
-import { HandleRequestType } from "@ahachat.ai/sdk"
+import { HandleRequestType } from "@aha.chat/sdk"
 import { notFound } from "next/navigation"
 import { handleCallback } from "./callback"
 import { handleWebhook } from "./webhook"

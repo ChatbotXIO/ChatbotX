@@ -1,11 +1,11 @@
 import { getCurrentUserId } from "@/lib/auth"
 import type { GetWhatsappFlowsSchema } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, prisma } from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import type {
   WhatsappFlowModel,
   WhatsappFlowStatus,
-} from "@ahachat.ai/database/types"
+} from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 
 export const getWhatsappFlows = async (

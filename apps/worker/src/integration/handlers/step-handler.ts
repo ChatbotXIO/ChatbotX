@@ -1,6 +1,6 @@
-import type { ConversationModel } from "@ahachat.ai/database/types"
-import type { SendTextStepSchema } from "@ahachat.ai/flow-config"
-import { ChatJobAction, chatQueue } from "@ahachat.ai/worker-config"
+import type { ConversationModel } from "@aha.chat/database/types"
+import type { SendTextStepSchema } from "@aha.chat/flow-config"
+import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 
 export interface FlowStepProps<T> {
   conversation: ConversationModel

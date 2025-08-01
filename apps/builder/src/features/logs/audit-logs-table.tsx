@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/data-table"
 import { useDataTable } from "@/hooks/use-data-table"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { LogModel } from "@ahachat.ai/database/types"
+import type { LogModel } from "@aha.chat/database/types"
 import React from "react"
 import { getAuditColumns } from "./audit-logs-table-columns"
 import type { getLogs } from "./queries"

@@ -1,6 +1,6 @@
-import type { IntegrationOpenAIModel } from "@ahachat.ai/database/types"
+import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
 import { z } from "zod"
-import { OpenAIModel } from "@ahachat.ai/flow-config"
+import { OpenAIModel } from "@aha.chat/flow-config"
 
 export type IntegrationOpenAIResource = IntegrationOpenAIModel
 

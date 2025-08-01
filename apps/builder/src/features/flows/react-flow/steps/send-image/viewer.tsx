@@ -1,6 +1,6 @@
 "use client"
 
-import type { SendImageStepSchema } from "@ahachat.ai/flow-config"
+import type { SendImageStepSchema } from "@aha.chat/flow-config"
 import { ButtonGroupViewer } from "../button/viewer"
 
 export const SendImageStepViewer = ({

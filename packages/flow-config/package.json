@@ -1,14 +1,14 @@
 {
-  "name": "@ahachat.ai/flow-config",
+  "name": "@aha.chat/flow-config",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@ahachat.ai/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.8.3"
   },
   "dependencies": {
-    "@ahachat.ai/database": "workspace:*",
+    "@aha.chat/database": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@xyflow/react": "^12.8.1",
     "zod": "^3.25.71"

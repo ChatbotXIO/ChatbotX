@@ -10,12 +10,12 @@
     "cssVariables": true
   },
   "aliases": {
-    "components": "@ahachat.ai/ui/components",
-    "utils": "@ahachat.ai/ui/lib/utils",
-    "hooks": "@ahachat.ai/ui/hooks",
-    "lib": "@ahachat.ai/ui/lib",
-    "ui": "@ahachat.ai/ui/components/ui",
-    "config": "@ahachat.ai/ui/config"
+    "components": "@aha.chat/ui/components",
+    "utils": "@aha.chat/ui/lib/utils",
+    "hooks": "@aha.chat/ui/hooks",
+    "lib": "@aha.chat/ui/lib",
+    "ui": "@aha.chat/ui/components/ui",
+    "config": "@aha.chat/ui/config"
   },
   "iconLibrary": "lucide"
 }

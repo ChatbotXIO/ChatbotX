@@ -1,7 +1,7 @@
 import {
   assignConversationStepDefaultFn,
   assignConversationStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { AssignConversationStepEditor } from "./editor"
 import { AssignConversationStepViewer } from "./viewer"

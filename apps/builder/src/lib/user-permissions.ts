@@ -1,8 +1,5 @@
-import { prisma } from "@ahachat.ai/database"
-import type {
-  ChatbotMemberModel,
-  ChatbotModel,
-} from "@ahachat.ai/database/types"
+import { prisma } from "@aha.chat/database"
+import type { ChatbotMemberModel, ChatbotModel } from "@aha.chat/database/types"
 import { NotfoundException } from "./error"
 
 export const findChatbotOrFail = async (

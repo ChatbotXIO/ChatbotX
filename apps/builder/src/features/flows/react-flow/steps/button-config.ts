@@ -1,4 +1,4 @@
-import { ButtonType } from "@ahachat.ai/flow-config"
+import { ButtonType } from "@aha.chat/flow-config"
 import {
   LinkIcon,
   MessageCircleIcon,

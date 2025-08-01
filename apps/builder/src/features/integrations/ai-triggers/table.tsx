@@ -6,7 +6,7 @@ import type { listAITriggers } from "@/features/integrations/ai-triggers/actions
 import { AITriggersTableToolbarActions } from "@/features/integrations/ai-triggers/table-toolbar-actions"
 import { UpdateAITriggerDialog } from "@/features/integrations/ai-triggers/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AITriggerModel } from "@ahachat.ai/database/types"
+import type { AITriggerModel } from "@aha.chat/database/types"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"

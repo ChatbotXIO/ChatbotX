@@ -3,7 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
   SdkException,
-} from "@ahachat.ai/sdk"
+} from "@aha.chat/sdk"
 import { generateAuthUrl, getClient, getSheetsClient } from "./client"
 import { callbackHandler } from "./handlers/callback"
 import type {

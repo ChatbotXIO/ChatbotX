@@ -1,4 +1,4 @@
-import { ChatbotMemberRole } from "@ahachat.ai/database"
+import { ChatbotMemberRole } from "@aha.chat/database"
 import { z } from "zod"
 
 export const addChatbotMemberSchema = z.object({

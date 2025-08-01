@@ -1,7 +1,7 @@
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
-import { IntegrationType, prisma } from "@ahachat.ai/database"
-import type { BaseAuthValue, Oauth2AuthValue } from "@ahachat.ai/sdk"
+import { IntegrationType, prisma } from "@aha.chat/database"
+import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 

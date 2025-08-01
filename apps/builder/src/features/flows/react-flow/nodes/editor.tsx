@@ -34,7 +34,7 @@ import {
   StepType,
   type FlowNode,
   type NodeType,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
   const { updateNodeData } = useReactFlow()

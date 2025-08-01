@@ -4,7 +4,7 @@ import type {
   ExtendedColumnFilter,
   FilterOperator,
   FilterVariant,
-} from "@ahachat.ai/ui/types/data-table"
+} from "@aha.chat/ui/types/data-table"
 
 export function getCommonPinningStyles<TData>({
   column,

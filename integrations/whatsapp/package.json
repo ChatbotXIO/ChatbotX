@@ -1,12 +1,12 @@
 {
-  "name": "@ahachat.ai/integration-whatsapp",
+  "name": "@aha.chat/integration-whatsapp",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
-    "@ahachat.ai/flow-config": "workspace:*",
-    "@ahachat.ai/sdk": "workspace:*",
+    "@aha.chat/flow-config": "workspace:*",
+    "@aha.chat/sdk": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
@@ -16,7 +16,7 @@
     "zod": "^3.25.71"
   },
   "devDependencies": {
-    "@ahachat.ai/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.8.3"
   },
   "exports": {

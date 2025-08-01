@@ -19,7 +19,7 @@ import {
   generateCodeStepSchema,
   type GenerateCodeStepSchema,
   GenerateCodeType,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { ShuffleIcon } from "lucide-react"

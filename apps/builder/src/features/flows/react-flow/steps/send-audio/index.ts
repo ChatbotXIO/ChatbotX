@@ -3,7 +3,7 @@ import { SendAudioStepEditor } from "./editor"
 import {
   sendAudioStepSchema,
   sendAudioStepDefaultFn,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { SendAudioStepViewer } from "./viewer"
 
 export const sendAudioStep: StepDefinition = {

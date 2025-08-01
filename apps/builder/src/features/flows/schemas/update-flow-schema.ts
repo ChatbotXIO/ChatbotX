@@ -3,7 +3,7 @@ import {
   flowVersionSchema,
   sendMessageNodeSchema,
   addNotesNodeSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { z } from "zod"
 
 export const updateFlowSchema = z.object({

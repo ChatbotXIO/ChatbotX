@@ -1,4 +1,4 @@
-import type { ChatbotModel } from "@ahachat.ai/database/types"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import { getAllCountries, getAllTimezones } from "countries-and-timezones"
 
 export const UNKNOWN_COUNTRY = "unknown"

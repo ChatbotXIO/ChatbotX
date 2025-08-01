@@ -1,6 +1,6 @@
 "use client"
 
-import type { TagModel } from "@ahachat.ai/database/types"
+import type { TagModel } from "@aha.chat/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
 

@@ -6,7 +6,7 @@ import type { getAIAgents } from "@/features/integrations/ai-agents/actions/list
 import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
 import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
 import { useDataTable } from "@/hooks/use-data-table"
-import type { AIAgentModel } from "@ahachat.ai/database/types"
+import type { AIAgentModel } from "@aha.chat/database/types"
 import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useMemo, useState } from "react"

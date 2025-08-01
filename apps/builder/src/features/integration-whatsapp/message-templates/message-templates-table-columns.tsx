@@ -2,7 +2,7 @@
 
 import { DataTableColumnHeader } from "@/components/data-table-column-header"
 import type { DataTableRowAction } from "@/types/data-table"
-import type { WhatsappMessageTemplateModel } from "@ahachat.ai/database/types"
+import type { WhatsappMessageTemplateModel } from "@aha.chat/database/types"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Dispatch, SetStateAction } from "react"
 

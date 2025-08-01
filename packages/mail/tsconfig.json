@@ -1,4 +1,4 @@
 {
-  "extends": "@ahachat.ai/typescript-config/react-library.json",
+  "extends": "@aha.chat/typescript-config/react-library.json",
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/index.tsx"]
 }

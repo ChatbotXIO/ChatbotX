@@ -12,7 +12,7 @@ import {
   InboxType,
   MessageType,
   SenderType,
-} from "@ahachat.ai/database/types"
+} from "@aha.chat/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"

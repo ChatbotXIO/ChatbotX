@@ -1,4 +1,4 @@
-import type { UserModel } from "@ahachat.ai/database/types"
+import type { UserModel } from "@aha.chat/database/types"
 
 export type UserResource = UserModel
 

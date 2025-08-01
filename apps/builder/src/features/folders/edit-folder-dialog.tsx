@@ -12,7 +12,7 @@ import {
 import { Form } from "@/components/ui/form"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
 import { editFolderSchema } from "@/features/folders/schemas/edit-folder-schema"
-import type { FolderModel } from "@ahachat.ai/database/types"
+import type { FolderModel } from "@aha.chat/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"

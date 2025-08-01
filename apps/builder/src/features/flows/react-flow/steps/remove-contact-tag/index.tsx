@@ -1,7 +1,7 @@
 import {
   removeContactTagStepDefaultFn,
   removeContactTagStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { RemoveContactTagStepEditor } from "./editor"
 import { RemoveContactTagStepViewer } from "./viewer"

@@ -1,7 +1,7 @@
 import {
   getDataFromJsonStepDefaultFn,
   getDataFromJsonStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import GetdatafromJsonStepViewer from "./viewer"
 import GetDataFromJsonStepEditor from "./editor"

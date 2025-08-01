@@ -9,7 +9,7 @@ import {
   assignConversationSchema,
 } from "@/features/conversations/schemas/assign-conversation.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { returnValidationErrors } from "next-safe-action"
 import { revalidateTag } from "next/cache"
 

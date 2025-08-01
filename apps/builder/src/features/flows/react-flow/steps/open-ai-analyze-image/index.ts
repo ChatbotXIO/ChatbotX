@@ -3,7 +3,7 @@ import { OpenAIAnalyzeImageEditor } from "./editor"
 import {
   openAIAnalyzeImageDefaultFn,
   openAIAnalyzeImageSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { OpenAIAnalyzeImageViewer } from "./viewer"
 
 export const openAIAnalyzeImageStep: StepDefinition = {

@@ -2,7 +2,7 @@
 
 import type * as React from "react"
 
-import { cn } from "@ahachat.ai/ui/lib/utils"
+import { cn } from "@aha.chat/ui/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (

@@ -16,7 +16,7 @@ import {
   MessageType,
   prisma,
   SenderType,
-} from "@ahachat.ai/database"
+} from "@aha.chat/database"
 import type { SendCardStepSchema } from "@/features/flows/react-flow/steps/send-card/schema"
 import type { SendCarouselStepSchema } from "@/features/flows/react-flow/steps/send-carousel/schema"
 import type { SendVideoStepSchema } from "@/features/flows/react-flow/steps/send-video/schema"
@@ -35,8 +35,8 @@ import type { UserInputStepSchema } from "@/features/flows/react-flow/steps/user
 import type { OpenAISpeechToTextSchema } from "@/features/flows/react-flow/steps/open-ai-speech-to-text/schema"
 import type { OpenAITextToSpeechSchema } from "@/features/flows/react-flow/steps/open-ai-text-to-speech/schema"
 import { integrations } from "@/integration"
-import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
-import { uploader } from "@ahachat.ai/filesystem"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { uploader } from "@aha.chat/filesystem"
 import { getLogger } from "@/lib/log"
 import { StepType } from "../react-flow/steps/step-action"
 

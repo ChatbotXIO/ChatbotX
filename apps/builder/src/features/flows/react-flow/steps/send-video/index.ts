@@ -3,7 +3,7 @@ import { SendVideoStepEditor } from "./editor"
 import {
   sendVideoStepDefaultFn,
   sendVideoStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { SendVideoStepViewer } from "./viewer"
 
 export const sendVideoStep: StepDefinition = {

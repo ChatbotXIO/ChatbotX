@@ -3,7 +3,7 @@ import { StartFlowStepEditor } from "./editor"
 import {
   startFlowStepDefaultFn,
   startFlowStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { StartFlowStepViewer } from "./viewer"
 
 export const startFlowStep: StepDefinition = {

@@ -5,7 +5,7 @@ import {
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import {
   type UpdateDraftFlowVersionSchema,
   updateDraftFlowVersionSchema,

@@ -1,7 +1,7 @@
 import type {
   SendImageStepSchema,
   SendTextStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { BaseAuthValue } from "./auth"
 import type { Context, ConversationEntity, MessageEntity } from "./shared"
 

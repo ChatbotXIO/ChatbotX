@@ -5,7 +5,7 @@ import {
   ActionButtons,
   Body,
 } from "whatsapp-api-js/messages"
-import type { SendTextStepSchema } from "@ahachat.ai/flow-config"
+import type { SendTextStepSchema } from "@aha.chat/flow-config"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "./shared"
 

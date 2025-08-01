@@ -1,7 +1,7 @@
 import {
   generateCodeStepDefaultFn,
   generateCodeStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { GenerateCodeStepViewer } from "./viewer"
 import GenerateCodeStepEditor from "./editor"

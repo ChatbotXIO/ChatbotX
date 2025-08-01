@@ -1,5 +1,5 @@
-import { Prisma, prisma } from "@ahachat.ai/database"
-import type { InboxModel } from "@ahachat.ai/database/types"
+import { Prisma, prisma } from "@aha.chat/database"
+import type { InboxModel } from "@aha.chat/database/types"
 
 export async function getIntegrationAuth(inbox: InboxModel) {
   const inboxName = inbox.inboxType

@@ -5,7 +5,7 @@ import {
   type ChatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { FieldType, prisma } from "@ahachat.ai/database"
+import { FieldType, prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
   clearContactCustomFieldRequest,

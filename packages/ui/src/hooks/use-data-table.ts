@@ -29,9 +29,9 @@ import {
 } from "nuqs"
 import * as React from "react"
 
-import { useDebouncedCallback } from "@ahachat.ai/hooks/use-debounced-callback"
-import { getSortingStateParser } from "@ahachat.ai/ui/lib/parsers"
-import type { ExtendedColumnSort } from "@ahachat.ai/ui/types/data-table"
+import { useDebouncedCallback } from "@aha.chat/hooks/use-debounced-callback"
+import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import type { ExtendedColumnSort } from "@aha.chat/ui/types/data-table"
 
 const PAGE_KEY = "page"
 const PER_PAGE_KEY = "perPage"

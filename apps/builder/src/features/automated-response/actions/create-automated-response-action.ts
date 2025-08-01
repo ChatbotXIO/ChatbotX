@@ -7,7 +7,7 @@ import {
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
 import { ensureFolderIdExists } from "@/features/folders/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { FolderType, prisma } from "@ahachat.ai/database"
+import { FolderType, prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
   type CreateAutomatedResponseRequest,

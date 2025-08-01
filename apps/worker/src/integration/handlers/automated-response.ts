@@ -1,14 +1,14 @@
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { getLogger } from "../../lib/log"
 import {
   chatQueue,
   ChatJobAction,
   integrationQueue,
   IntegrationJobAction,
-} from "@ahachat.ai/worker-config"
-import type { OutgoingMessageEntity } from "@ahachat.ai/sdk"
+} from "@aha.chat/worker-config"
+import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
-import { StepType } from "@ahachat.ai/flow-config"
+import { StepType } from "@aha.chat/flow-config"
 
 enum ReplyType {
   MESSAGE = "MESSAGE",

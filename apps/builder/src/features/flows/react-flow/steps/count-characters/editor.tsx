@@ -16,7 +16,7 @@ import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import {
   countCharactersStepSchema,
   type CountCharactersStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { CalculatorIcon } from "lucide-react"

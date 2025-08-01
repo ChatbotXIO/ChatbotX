@@ -5,7 +5,7 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 
 export const disconnectWhatsappAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

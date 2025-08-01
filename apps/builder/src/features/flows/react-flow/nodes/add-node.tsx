@@ -14,7 +14,7 @@ import {
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { allNodesConfig } from "./node-config"
-import type { NodeType } from "@ahachat.ai/flow-config"
+import type { NodeType } from "@aha.chat/flow-config"
 
 export function AddNodeButton() {
   const [open, setOpen] = useState(false)

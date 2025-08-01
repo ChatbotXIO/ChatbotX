@@ -4,7 +4,7 @@ import {
   type LoginMagicLinkEmailProps,
 } from "./emails/login-magic-link"
 import { render } from "@react-email/components"
-import { env } from "@ahachat.ai/env"
+import { env } from "@aha.chat/env"
 
 const transporter = nodemailer.createTransport(env.SMTP_SERVER)
 

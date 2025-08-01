@@ -9,8 +9,8 @@ import {
   createFolderSchema,
 } from "@/features/folders/schemas/create-folder-schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
-import type { FolderModel } from "@ahachat.ai/database/types"
+import { prisma } from "@aha.chat/database"
+import type { FolderModel } from "@aha.chat/database/types"
 import { revalidateTag } from "next/cache"
 
 export const createFolderAction = chatbotActionClient

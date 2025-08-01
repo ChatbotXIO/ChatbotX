@@ -1,4 +1,4 @@
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import type { IntegrationGoogleSheetsResource } from "../schemas"
 
 export const getGoogleSheetsIntegration = async ({

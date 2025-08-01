@@ -11,7 +11,7 @@ import {
   BroadcastStatus,
   prisma,
   type Prisma,
-} from "@ahachat.ai/database"
+} from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
   type CreateBroadcastRequest,

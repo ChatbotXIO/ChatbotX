@@ -1,8 +1,4 @@
-import {
-  AuthType,
-  type HandleRequestProps,
-  SdkException,
-} from "@ahachat.ai/sdk"
+import { AuthType, type HandleRequestProps, SdkException } from "@aha.chat/sdk"
 import { getClient } from "../client"
 import type { GoogleSheetsAuthValue, GoogleSheetsConfig } from "../schemas"
 

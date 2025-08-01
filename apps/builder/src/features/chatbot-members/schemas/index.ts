@@ -1,7 +1,7 @@
 import type { ChatbotResource } from "@/features/chatbots/schemas"
 import type { UserResource } from "@/features/users/schemas"
 import { BaseException } from "@/lib/error"
-import type { ChatbotMemberModel } from "@ahachat.ai/database/types"
+import type { ChatbotMemberModel } from "@aha.chat/database/types"
 
 export type ChatbotMemberResource = ChatbotMemberModel & {
   chatbot?: ChatbotResource

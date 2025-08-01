@@ -5,25 +5,25 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { PanelLeftIcon } from "lucide-react"
 
-import { useIsMobile } from "@ahachat.ai/ui/hooks/use-mobile"
-import { cn } from "@ahachat.ai/ui/lib/utils"
-import { Button } from "@ahachat.ai/ui/components/ui/button"
-import { Input } from "@ahachat.ai/ui/components/ui/input"
-import { Separator } from "@ahachat.ai/ui/components/ui/separator"
+import { useIsMobile } from "@aha.chat/ui/hooks/use-mobile"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Input } from "@aha.chat/ui/components/ui/input"
+import { Separator } from "@aha.chat/ui/components/ui/separator"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@ahachat.ai/ui/components/ui/sheet"
-import { Skeleton } from "@ahachat.ai/ui/components/ui/skeleton"
+} from "@aha.chat/ui/components/ui/sheet"
+import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@ahachat.ai/ui/components/ui/tooltip"
+} from "@aha.chat/ui/components/ui/tooltip"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7

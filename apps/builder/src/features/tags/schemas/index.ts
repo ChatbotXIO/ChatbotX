@@ -1,4 +1,4 @@
-import type { TagModel } from "@ahachat.ai/database/types"
+import type { TagModel } from "@aha.chat/database/types"
 
 export type TagResource = TagModel
 

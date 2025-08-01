@@ -8,24 +8,24 @@ import {
 import { findConversation } from "@/features/conversations/queries/list-conversations.query"
 import { logger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import {
   ContentType,
   MessageType,
   SenderType,
   type UserModel,
-} from "@ahachat.ai/database/types"
-import { uploader } from "@ahachat.ai/filesystem"
+} from "@aha.chat/database/types"
+import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@ahachat.ai/party-config"
+} from "@aha.chat/party-config"
 import type {
   AttachmentEntity,
   ConversationEntity,
   ContentType as SdkContentType,
-} from "@ahachat.ai/sdk"
-import { ChatJobAction, chatQueue } from "@ahachat.ai/worker-config"
+} from "@aha.chat/sdk"
+import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
 import { revalidateTag } from "next/cache"

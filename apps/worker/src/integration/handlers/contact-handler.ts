@@ -1,4 +1,4 @@
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import type {
   AddContactTagStepSchema,
   AddNotesStepSchema,
@@ -9,7 +9,7 @@ import type {
   OptInEmailStepSchema,
   OptOutEmailStepSchema,
   SetCustomFieldStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { FlowStepProps } from "./step-handler"
 
 export async function setContactCustomField({

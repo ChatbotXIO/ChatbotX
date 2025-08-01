@@ -5,7 +5,7 @@ import { DynamicStepViewer } from "../steps"
 import { allNodesConfig } from "./node-config"
 import { FlowNodeToolbar } from "../toolbar/node-toolbar"
 import { PlayCircleIcon } from "lucide-react"
-import type { FlowNode } from "@ahachat.ai/flow-config"
+import type { FlowNode } from "@aha.chat/flow-config"
 
 export function NodeViewer({
   id,

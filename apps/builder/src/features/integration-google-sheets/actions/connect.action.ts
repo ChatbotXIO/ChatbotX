@@ -6,7 +6,7 @@ import {
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { authActionClient } from "@/lib/safe-action"
-import { HandleRequestType } from "@ahachat.ai/sdk"
+import { HandleRequestType } from "@aha.chat/sdk"
 import { redirect } from "next/navigation"
 import {
   type ConnectGoogleSheetsSchema,

@@ -8,9 +8,9 @@ import { integrations } from "@/integration"
 import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
-import { IntegrationType, type Prisma, prisma } from "@ahachat.ai/database"
-import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
-import { AuthType, IntegrationException } from "@ahachat.ai/sdk"
+import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { AuthType, IntegrationException } from "@aha.chat/sdk"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
 export const connectWhatsappAction = authActionClient

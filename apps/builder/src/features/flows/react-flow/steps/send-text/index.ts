@@ -1,7 +1,7 @@
 import {
   sendTextStepDefaultFn,
   sendTextStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import SendTextStepEditor from "./editor"
 import SendTextStepViewer from "./viewer"

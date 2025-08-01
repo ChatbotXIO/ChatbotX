@@ -3,7 +3,7 @@ import PerformActionStepEditor from "./editor"
 import {
   performActionStepDefaultFn,
   performActionStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import PerformActionStepViewer from "./viewer"
 
 const performActionStep: StepDefinition = {

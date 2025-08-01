@@ -5,14 +5,14 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
-import { IntegrationType, prisma } from "@ahachat.ai/database"
+import { IntegrationType, prisma } from "@aha.chat/database"
 import {
   AuthType,
   IntegrationException,
   type SecretTextAuthValue,
-} from "@ahachat.ai/sdk"
+} from "@aha.chat/sdk"
 import { type ConnectOpenAISchema, connectOpenAISchema } from "../schemas"
-import { OpenAIModel } from "@ahachat.ai/flow-config"
+import { OpenAIModel } from "@aha.chat/flow-config"
 
 export const connectOpenAIAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

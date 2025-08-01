@@ -3,17 +3,17 @@
 import type { Column } from "@tanstack/react-table"
 import { PlusCircle, XCircle } from "lucide-react"
 import * as React from "react"
-import { Button } from "@ahachat.ai/ui/components/ui/button"
-import { Input } from "@ahachat.ai/ui/components/ui/input"
-import { Label } from "@ahachat.ai/ui/components/ui/label"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Input } from "@aha.chat/ui/components/ui/input"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@ahachat.ai/ui/components/ui/popover"
-import { Separator } from "@ahachat.ai/ui/components/ui/separator"
-import { Slider } from "@ahachat.ai/ui/components/ui/slider"
-import { cn } from "@ahachat.ai/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/popover"
+import { Separator } from "@aha.chat/ui/components/ui/separator"
+import { Slider } from "@aha.chat/ui/components/ui/slider"
+import { cn } from "@aha.chat/ui/lib/utils"
 
 interface Range {
   min: number

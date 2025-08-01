@@ -1,4 +1,4 @@
-import { CustomFieldOperation } from "@ahachat.ai/database/types"
+import { CustomFieldOperation } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const addContactCustomFieldRequest = z.object({

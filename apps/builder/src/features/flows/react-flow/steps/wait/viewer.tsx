@@ -2,7 +2,7 @@
 
 import type { CustomFieldCollection } from "@/features/custom-fields/schemas"
 import { callAPI } from "@/lib/swr"
-import { DelayType, type WaitStepSchema } from "@ahachat.ai/flow-config"
+import { DelayType, type WaitStepSchema } from "@aha.chat/flow-config"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
 

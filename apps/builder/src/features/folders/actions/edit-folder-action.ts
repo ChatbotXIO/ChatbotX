@@ -9,7 +9,7 @@ import {
   editFolderSchema,
 } from "@/features/folders/schemas/edit-folder-schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 
 export const editFolderAction = chatbotActionClient

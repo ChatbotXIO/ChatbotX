@@ -4,7 +4,7 @@ import { DisableBotStepViewer } from "./viewer"
 import {
   disableBotStepDefaultFn,
   disableBotStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export const disableBotStep: StepDefinition = {
   editor: DisableBotStepEditor,

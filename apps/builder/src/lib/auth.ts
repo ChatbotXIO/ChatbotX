@@ -1,10 +1,10 @@
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { magicLink } from "better-auth/plugins"
 import { headers } from "next/headers"
 import { googleSignInConfig } from "./auth-config"
-import { sendMagicLinkMail } from "@ahachat.ai/mail"
+import { sendMagicLinkMail } from "@aha.chat/mail"
 
 export const getCurrentUserId = async (): Promise<string> => {
   const session = await auth.api.getSession({

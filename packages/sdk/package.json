@@ -1,14 +1,14 @@
 {
-  "name": "@ahachat.ai/sdk",
+  "name": "@aha.chat/sdk",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@ahachat.ai/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.8.3"
   },
   "dependencies": {
-    "@ahachat.ai/flow-config": "workspace:*",
+    "@aha.chat/flow-config": "workspace:*",
     "tslog": "^4.9.3",
     "zod": "^3.25.71"
   },

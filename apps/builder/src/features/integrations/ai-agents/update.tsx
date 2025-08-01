@@ -18,7 +18,7 @@ import {
   type MessageSchema,
   updateAIAgentRequest,
 } from "@/features/integrations/ai-agents/schemas/update.schema"
-import type { AIAgentModel } from "@ahachat.ai/database/types"
+import type { AIAgentModel } from "@aha.chat/database/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"

@@ -1,6 +1,6 @@
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { FieldType, type Prisma, prisma } from "@ahachat.ai/database"
+import { FieldType, type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import type { ListAccountFieldsSearchParams } from "../schemas/list-account-fields.schema"
 import type { AccountFieldCollection } from "../schemas/types"

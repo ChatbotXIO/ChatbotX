@@ -1,7 +1,7 @@
 import {
   setCustomFieldStepDefaultFn,
   setCustomFieldStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { SetCustomFieldStepEditor } from "./editor"
 import { SetCustomFieldStepViewer } from "./viewer"

@@ -1,4 +1,4 @@
-import type { FieldModel } from "@ahachat.ai/database/types"
+import type { FieldModel } from "@aha.chat/database/types"
 
 export type AccountFieldResource = FieldModel
 

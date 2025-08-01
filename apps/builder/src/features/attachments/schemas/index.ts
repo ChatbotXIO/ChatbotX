@@ -1,4 +1,4 @@
-import type { AttachmentModel } from "@ahachat.ai/database/types"
+import type { AttachmentModel } from "@aha.chat/database/types"
 
 export type AttachmentResource = AttachmentModel & {
   url: string

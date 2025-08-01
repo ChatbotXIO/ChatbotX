@@ -6,11 +6,8 @@ import type {
   ListConversationsRequest,
 } from "@/features/conversations/schemas/list-conversations.request"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, prisma } from "@ahachat.ai/database"
-import type {
-  ConversationModel,
-  MessageModel,
-} from "@ahachat.ai/database/types"
+import { type Prisma, prisma } from "@aha.chat/database"
+import type { ConversationModel, MessageModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import type { ConversationCollection, ConversationResource } from "../schemas"
 

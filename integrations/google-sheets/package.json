@@ -1,17 +1,17 @@
 {
-  "name": "@ahachat.ai/integration-google-sheets",
+  "name": "@aha.chat/integration-google-sheets",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
-    "@ahachat.ai/sdk": "workspace:*",
+    "@aha.chat/sdk": "workspace:*",
     "google-auth-library": "^10.1.0",
     "googleapis": "^150.0.1",
     "tslog": "^4.9.3"
   },
   "devDependencies": {
-    "@ahachat.ai/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.8.3"
   },
   "exports": {

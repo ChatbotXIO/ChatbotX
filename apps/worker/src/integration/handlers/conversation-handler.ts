@@ -1,4 +1,4 @@
-import { type Prisma, prisma } from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import {
   AutoAssignConversationRule,
   type ArchiveConversationStepSchema,
@@ -10,7 +10,7 @@ import {
   type UnarchiveConversationStepSchema,
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { FlowStepProps } from "./step-handler"
 import { subHours } from "date-fns"
 

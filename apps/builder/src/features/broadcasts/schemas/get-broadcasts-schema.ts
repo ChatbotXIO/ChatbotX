@@ -1,4 +1,4 @@
-import type { BroadcastModel, FlowModel } from "@ahachat.ai/database/types"
+import type { BroadcastModel, FlowModel } from "@aha.chat/database/types"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 
 export const getBroadcastsSearchParamsCache = createSearchParamsCache({

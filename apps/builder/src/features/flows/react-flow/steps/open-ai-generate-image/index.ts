@@ -3,7 +3,7 @@ import { OpenAIGenerateImageEditor } from "./editor"
 import {
   openAIGenerateImageDefaultFn,
   openAIGenerateImageSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { OpenAIGenerateImageViewer } from "./viewer"
 
 export const openAIGenerateImageStep: StepDefinition = {

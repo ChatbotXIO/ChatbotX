@@ -3,7 +3,7 @@ import { UnarchiveConversationStepEditor } from "./editor"
 import {
   unarchiveConversationStepDefaultFn,
   unarchiveConversationStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { UnarchiveConversationStepViewer } from "./viewer"
 
 export const unarchiveConversationStep: StepDefinition = {

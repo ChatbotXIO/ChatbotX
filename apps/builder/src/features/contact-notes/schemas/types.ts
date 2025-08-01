@@ -1,4 +1,4 @@
-import type { ContactNoteModel } from "@ahachat.ai/database/types"
+import type { ContactNoteModel } from "@aha.chat/database/types"
 
 export type ContactNoteResource = ContactNoteModel
 

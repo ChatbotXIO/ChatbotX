@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from "@ahachat.ai/database"
+import { prisma, type Prisma } from "@aha.chat/database"
 import {
   type ContentType,
   type ConversationModel,
@@ -6,22 +6,19 @@ import {
   type MessageModel,
   MessageType,
   SenderType,
-} from "@ahachat.ai/database/types"
-import { uploader } from "@ahachat.ai/filesystem"
+} from "@aha.chat/database/types"
+import { uploader } from "@aha.chat/filesystem"
 import {
   integration,
   type OnMessageArgs,
   type WhatsappAuthValue,
-} from "@ahachat.ai/integration-whatsapp"
+} from "@aha.chat/integration-whatsapp"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@ahachat.ai/party-config"
-import type { AttachmentEntity } from "@ahachat.ai/sdk"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@ahachat.ai/worker-config"
+} from "@aha.chat/party-config"
+import type { AttachmentEntity } from "@aha.chat/sdk"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { getLogger } from "../../lib/log"
 
 export const receiveMessage = async ({

@@ -7,13 +7,13 @@ import {
 import { integrations } from "@/integration"
 import { getLogger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma, type WhatsappFlowStatus } from "@ahachat.ai/database"
-import { uploader } from "@ahachat.ai/filesystem"
+import { prisma, type WhatsappFlowStatus } from "@aha.chat/database"
+import { uploader } from "@aha.chat/filesystem"
 import type {
   ListFlowsResponse,
   WhatsappAuthValue,
-} from "@ahachat.ai/integration-whatsapp"
-import type { Context } from "@ahachat.ai/sdk"
+} from "@aha.chat/integration-whatsapp"
+import type { Context } from "@aha.chat/sdk"
 import { revalidateTag } from "next/cache"
 
 export const syncWhatsappFlowAction = chatbotActionClient

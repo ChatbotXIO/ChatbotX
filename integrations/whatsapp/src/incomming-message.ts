@@ -6,7 +6,7 @@ import {
   FileType,
   type MessageEntity,
   SdkException,
-} from "@ahachat.ai/sdk"
+} from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import fetch from "cross-fetch"
 import imageSize from "image-size"

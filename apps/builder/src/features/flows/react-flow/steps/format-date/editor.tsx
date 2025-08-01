@@ -19,7 +19,7 @@ import {
   formatDateStepSchema,
   FormatTimezone,
   type FormatDateStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { ZapIcon } from "lucide-react"

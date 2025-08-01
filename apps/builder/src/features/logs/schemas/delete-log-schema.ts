@@ -1,5 +1,5 @@
 import { bulkUpdateIdsRequest } from "@/features/common/schemas"
-import { LogType } from "@ahachat.ai/database/types"
+import { LogType } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const deleteLogsRequest = bulkUpdateIdsRequest.extend({

@@ -2,8 +2,8 @@
 
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, prisma } from "@ahachat.ai/database"
-import type { MessageModel } from "@ahachat.ai/database/types"
+import { type Prisma, prisma } from "@aha.chat/database"
+import type { MessageModel } from "@aha.chat/database/types"
 import type { MessageCollection, MessageResource } from "../schemas"
 import type {
   FindMessageSchema,

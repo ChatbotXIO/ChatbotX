@@ -1,6 +1,6 @@
 "use client"
 
-import { type FieldModel, FieldType } from "@ahachat.ai/database/types"
+import { type FieldModel, FieldType } from "@aha.chat/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 

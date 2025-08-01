@@ -28,7 +28,7 @@ async function main() {
   // create user
   user = await prisma.user.create({
     data: {
-      email: "admin@ahachat.ai",
+      email: "admin@aha.chat",
       name: "AhaChat",
     },
   })

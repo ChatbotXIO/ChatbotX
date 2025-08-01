@@ -3,14 +3,14 @@ import {
   MessageType,
   prisma,
   SenderType,
-} from "@ahachat.ai/database"
-import { StepType } from "@ahachat.ai/flow-config"
+} from "@aha.chat/database"
+import { StepType } from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@ahachat.ai/party-config"
-import type { ConversationEntity } from "@ahachat.ai/sdk"
-import type { ChatJobSendFlowStep } from "@ahachat.ai/worker-config"
+} from "@aha.chat/party-config"
+import type { ConversationEntity } from "@aha.chat/sdk"
+import type { ChatJobSendFlowStep } from "@aha.chat/worker-config"
 import { sendFlowStepToExternal } from "./send-message"
 
 export async function sendFlowStep({

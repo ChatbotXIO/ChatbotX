@@ -1,4 +1,4 @@
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import type { IntegrationWhatsappResource } from "../schemas"
 
 export const getWhastappIntegration = async ({

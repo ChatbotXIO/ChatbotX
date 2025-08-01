@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { InboxTeamModel } from "@ahachat.ai/database/types"
+import type { InboxTeamModel } from "@aha.chat/database/types"
 import { T } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"

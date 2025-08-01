@@ -1,6 +1,6 @@
 import { errorResponse } from "@/lib/error-handling"
 import { safeJsonParse } from "@/lib/serialize"
-import { createPresignedUploadRequest, uploader } from "@ahachat.ai/filesystem"
+import { createPresignedUploadRequest, uploader } from "@aha.chat/filesystem"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function POST(req: NextRequest) {

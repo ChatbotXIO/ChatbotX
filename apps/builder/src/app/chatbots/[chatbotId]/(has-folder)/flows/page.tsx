@@ -4,7 +4,7 @@ import { getFlows } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
 import { getCurrentFolder } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
-import type { FolderModel } from "@ahachat.ai/database/types"
+import type { FolderModel } from "@aha.chat/database/types"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 

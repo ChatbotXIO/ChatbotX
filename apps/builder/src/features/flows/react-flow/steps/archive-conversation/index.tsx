@@ -1,7 +1,7 @@
 import {
   archiveConversationStepDefaultFn,
   archiveConversationStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { ArchiveConversationStepEditor } from "./editor"
 import { ArchiveConversationStepViewer } from "./viewer"

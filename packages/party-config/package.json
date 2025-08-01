@@ -1,10 +1,10 @@
 {
-  "name": "@ahachat.ai/party-config",
+  "name": "@aha.chat/party-config",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@ahachat.ai/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.8.3"
   },
   "dependencies": {

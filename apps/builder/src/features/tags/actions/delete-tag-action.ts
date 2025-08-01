@@ -1,7 +1,7 @@
 "use server"
 
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@ahachat.ai/database"
+import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
   bulkUpdateIdsRequest,

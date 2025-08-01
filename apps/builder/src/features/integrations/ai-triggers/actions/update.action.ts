@@ -10,8 +10,8 @@ import {
   updateAITriggerRequest,
 } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma, type Prisma } from "@ahachat.ai/database"
-import type { UserModel } from "@ahachat.ai/database/types"
+import { prisma, type Prisma } from "@aha.chat/database"
+import type { UserModel } from "@aha.chat/database/types"
 import { revalidateTag } from "next/cache"
 
 export const updateAITriggerAction = chatbotActionClient

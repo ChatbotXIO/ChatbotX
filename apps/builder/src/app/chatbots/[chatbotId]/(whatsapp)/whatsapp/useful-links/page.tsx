@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { getWhastappIntegration } from "@/features/integration-whatsapp/queries"
-import type { WhatsappAuthValue } from "@ahachat.ai/integration-whatsapp"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 

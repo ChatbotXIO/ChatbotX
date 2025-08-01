@@ -21,7 +21,7 @@ import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-versi
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
 import { AddNodeButton } from "./nodes/add-node"
 import { NodeViewer } from "./nodes/viewer"
-import { NodeType, type FlowNode } from "@ahachat.ai/flow-config"
+import { NodeType, type FlowNode } from "@aha.chat/flow-config"
 
 const nodeTypes = {
   [NodeType.SendMessage]: NodeViewer,

@@ -4,12 +4,12 @@ import {
   defaultWorkerOptions,
   getRedisConnection,
   type IntegrationJobData,
-} from "@ahachat.ai/worker-config"
+} from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/log"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { receiveMessage } from "./handlers/received-message"
-import type { OutgoingMessageEntity } from "@ahachat.ai/sdk"
+import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import { sendFlowNode } from "./handlers/send-flow-node"
 import { sendFlowPostback } from "./handlers/send-flow-postback"
 

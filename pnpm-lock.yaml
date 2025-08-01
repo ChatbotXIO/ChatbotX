@@ -32,31 +32,31 @@ importers:
 
   apps/builder:
     dependencies:
-      '@ahachat.ai/database':
+      '@aha.chat/database':
         specifier: workspace:*
         version: link:../../packages/database
-      '@ahachat.ai/filesystem':
+      '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
-      '@ahachat.ai/flow-config':
+      '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
-      '@ahachat.ai/integration-google-sheets':
+      '@aha.chat/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets
-      '@ahachat.ai/integration-whatsapp':
+      '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
-      '@ahachat.ai/mail':
+      '@aha.chat/mail':
         specifier: workspace:*
         version: link:../../packages/mail
-      '@ahachat.ai/party-config':
+      '@aha.chat/party-config':
         specifier: workspace:*
         version: link:../../packages/party-config
-      '@ahachat.ai/sdk':
+      '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@ahachat.ai/worker-config':
+      '@aha.chat/worker-config':
         specifier: workspace:*
         version: link:../../packages/worker-config
       '@dagrejs/graphlib':
@@ -312,7 +312,7 @@ importers:
         specifier: ^5.0.6
         version: 5.0.6(@types/react@19.1.0)(immer@10.1.1)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@aws-sdk/client-s3':
@@ -372,22 +372,22 @@ importers:
 
   apps/partysocket:
     dependencies:
-      '@ahachat.ai/database':
+      '@aha.chat/database':
         specifier: workspace:*
         version: link:../../packages/database
-      '@ahachat.ai/filesystem':
+      '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
-      '@ahachat.ai/integration-whatsapp':
+      '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
-      '@ahachat.ai/party-config':
+      '@aha.chat/party-config':
         specifier: workspace:*
         version: link:../../packages/party-config
-      '@ahachat.ai/sdk':
+      '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@ahachat.ai/worker-config':
+      '@aha.chat/worker-config':
         specifier: workspace:*
         version: link:../../packages/worker-config
       bullmq:
@@ -409,7 +409,7 @@ importers:
         specifier: ^4.9.3
         version: 4.9.3
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       dotenv-cli:
@@ -424,25 +424,25 @@ importers:
 
   apps/worker:
     dependencies:
-      '@ahachat.ai/database':
+      '@aha.chat/database':
         specifier: workspace:*
         version: link:../../packages/database
-      '@ahachat.ai/filesystem':
+      '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
-      '@ahachat.ai/flow-config':
+      '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
-      '@ahachat.ai/integration-whatsapp':
+      '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
-      '@ahachat.ai/party-config':
+      '@aha.chat/party-config':
         specifier: workspace:*
         version: link:../../packages/party-config
-      '@ahachat.ai/sdk':
+      '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@ahachat.ai/worker-config':
+      '@aha.chat/worker-config':
         specifier: workspace:*
         version: link:../../packages/worker-config
       '@faker-js/faker':
@@ -473,7 +473,7 @@ importers:
         specifier: ^4.9.3
         version: 4.9.3
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       concurrently:
@@ -488,7 +488,7 @@ importers:
 
   integrations/google-sheets:
     dependencies:
-      '@ahachat.ai/sdk':
+      '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       google-auth-library:
@@ -501,7 +501,7 @@ importers:
         specifier: ^4.9.3
         version: 4.9.3
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       typescript:
@@ -510,7 +510,7 @@ importers:
 
   integrations/openai:
     dependencies:
-      '@ahachat.ai/sdk':
+      '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       '@ai-sdk/openai':
@@ -523,7 +523,7 @@ importers:
         specifier: ^4.9.3
         version: 4.9.3
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       typescript:
@@ -532,10 +532,10 @@ importers:
 
   integrations/whatsapp:
     dependencies:
-      '@ahachat.ai/flow-config':
+      '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
-      '@ahachat.ai/sdk':
+      '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       '@paralleldrive/cuid2':
@@ -560,7 +560,7 @@ importers:
         specifier: ^3.25.71
         version: 3.25.71
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       typescript:
@@ -582,7 +582,7 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1(@prisma/client@6.11.1(prisma@6.11.1(typescript@5.8.3))(typescript@5.8.3))
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@faker-js/faker':
@@ -610,7 +610,7 @@ importers:
         specifier: ^3.25.71
         version: 3.25.71
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -638,7 +638,7 @@ importers:
         specifier: ^3.25.71
         version: 3.25.71
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -647,7 +647,7 @@ importers:
 
   packages/flow-config:
     dependencies:
-      '@ahachat.ai/database':
+      '@aha.chat/database':
         specifier: workspace:*
         version: link:../database
       '@paralleldrive/cuid2':
@@ -660,7 +660,7 @@ importers:
         specifier: ^3.25.71
         version: 3.25.71
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -669,7 +669,7 @@ importers:
 
   packages/mail:
     dependencies:
-      '@ahachat.ai/env':
+      '@aha.chat/env':
         specifier: workspace:*
         version: link:../env
       '@react-email/components':
@@ -685,7 +685,7 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@react-email/preview-server':
@@ -716,7 +716,7 @@ importers:
         specifier: ^1.8.1
         version: 1.8.1
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -725,7 +725,7 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@ahachat.ai/flow-config':
+      '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../flow-config
       tslog:
@@ -735,7 +735,7 @@ importers:
         specifier: ^3.25.71
         version: 3.25.71
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -912,7 +912,7 @@ importers:
         specifier: ^3.25.71
         version: 3.25.71
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@tailwindcss/postcss':
@@ -945,10 +945,10 @@ importers:
 
   packages/worker-config:
     dependencies:
-      '@ahachat.ai/flow-config':
+      '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../flow-config
-      '@ahachat.ai/sdk':
+      '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../sdk
       bullmq:
@@ -961,7 +961,7 @@ importers:
         specifier: ^4.9.3
         version: 4.9.3
     devDependencies:
-      '@ahachat.ai/typescript-config':
+      '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:

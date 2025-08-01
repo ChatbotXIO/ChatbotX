@@ -1,4 +1,4 @@
-import { CustomFieldType } from "@ahachat.ai/database/types"
+import { CustomFieldType } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const createCustomFieldSchema = z.object({

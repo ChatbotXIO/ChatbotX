@@ -4,7 +4,7 @@ import { BlockContactStepViewer } from "./viewer"
 import {
   blockContactStepDefaultFn,
   blockContactStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export const blockContactStep: StepDefinition = {
   editor: BlockContactStepEditor,

@@ -4,7 +4,7 @@ import type { InboxTeamResource } from "@/features/inbox-teams/schemas/types"
 import type { InboxResource } from "@/features/inboxes/schemas"
 import type { MessageResource } from "@/features/messages/schemas"
 import type { UserResource } from "@/features/users/schemas"
-import type { ConversationModel } from "@ahachat.ai/database/types"
+import type { ConversationModel } from "@aha.chat/database/types"
 
 export type ConversationResource = ConversationModel & {
   messages?: MessageResource[]

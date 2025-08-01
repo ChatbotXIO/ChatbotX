@@ -2,7 +2,7 @@
 
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { FolderType, prisma } from "@ahachat.ai/database"
+import { FolderType, prisma } from "@aha.chat/database"
 import { createId } from "@paralleldrive/cuid2"
 import { revalidateTag } from "next/cache"
 import {
@@ -13,7 +13,7 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { OMNICHANNEL } from "@ahachat.ai/database/types"
+import { OMNICHANNEL } from "@aha.chat/database/types"
 
 export const createFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

@@ -1,4 +1,4 @@
-import { StepType } from "@ahachat.ai/flow-config"
+import { StepType } from "@aha.chat/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 

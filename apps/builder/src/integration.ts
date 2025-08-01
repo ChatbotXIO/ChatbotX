@@ -1,7 +1,7 @@
-import { IntegrationType } from "@ahachat.ai/database"
-import { integration as integrationGoogleSheets } from "@ahachat.ai/integration-google-sheets"
-import type { GoogleSheetsConfig } from "@ahachat.ai/integration-google-sheets"
-import { integration as integrationWhatsapp } from "@ahachat.ai/integration-whatsapp"
+import { IntegrationType } from "@aha.chat/database"
+import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
+import type { GoogleSheetsConfig } from "@aha.chat/integration-google-sheets"
+import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 
 export const integrations = {
   [IntegrationType.WHATSAPP]: {

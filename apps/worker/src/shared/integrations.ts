@@ -1,5 +1,5 @@
-import { InboxType } from "@ahachat.ai/database"
-import { integration as integrationWhatsapp } from "@ahachat.ai/integration-whatsapp"
+import { InboxType } from "@aha.chat/database"
+import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 
 export const allIntegrations = {
   [InboxType.CHAT_WIDGET]: undefined,

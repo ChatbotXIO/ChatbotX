@@ -1,4 +1,4 @@
-import type { ConversationEntity, MessageEntity } from "@ahachat.ai/sdk"
+import type { ConversationEntity, MessageEntity } from "@aha.chat/sdk"
 import { Queue } from "bullmq"
 import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
 import { QueueName } from "../../lib/types"
@@ -9,7 +9,7 @@ import type {
   SendImageStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export enum ChatJobAction {
   SEND_MESSAGE = "SEND_MESSAGE",

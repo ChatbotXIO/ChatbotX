@@ -4,7 +4,7 @@ import { FollowConversationStepViewer } from "./viewer"
 import {
   followConversationStepDefaultFn,
   followConversationStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export const followConversationStep: StepDefinition = {
   editor: FollowConversationStepEditor,

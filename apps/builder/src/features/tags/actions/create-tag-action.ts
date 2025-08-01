@@ -3,8 +3,8 @@
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma } from "@ahachat.ai/database"
-import { FolderType, type UserModel } from "@ahachat.ai/database/types"
+import { prisma } from "@aha.chat/database"
+import { FolderType, type UserModel } from "@aha.chat/database/types"
 import { revalidateTag } from "next/cache"
 import {
   type CreateTagBindSchema,

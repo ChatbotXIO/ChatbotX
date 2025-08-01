@@ -1,7 +1,7 @@
 import {
   openWebsiteStepDefaultFn,
   openWebsiteStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { OpenWebsiteStepEditor } from "./editor"
 import { OpenWebsiteStepViewer } from "./viewer"

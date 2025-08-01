@@ -12,8 +12,8 @@ import {
   getDefaultClassNames,
 } from "react-day-picker"
 
-import { cn } from "@ahachat.ai/ui/lib/utils"
-import { Button, buttonVariants } from "@ahachat.ai/ui/components/ui/button"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { Button, buttonVariants } from "@aha.chat/ui/components/ui/button"
 
 function Calendar({
   className,

@@ -1,7 +1,7 @@
 import { SelectField } from "@/components/form/select-field"
 import { callAPI } from "@/lib/swr"
 import { useParams } from "next/navigation"
-import { OMNICHANNEL } from "@ahachat.ai/database/types"
+import { OMNICHANNEL } from "@aha.chat/database/types"
 import type { InboxCollection } from "./schemas"
 
 export function InboxSelect({ name }: { name: string }) {

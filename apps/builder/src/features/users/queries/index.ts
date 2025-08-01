@@ -1,7 +1,7 @@
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma, type Prisma } from "@ahachat.ai/database"
-import type { UserModel } from "@ahachat.ai/database/types"
+import { prisma, type Prisma } from "@aha.chat/database"
+import type { UserModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import type { GetUsersSchema } from "../schemas/get-users-schema"
 

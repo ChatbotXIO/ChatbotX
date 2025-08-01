@@ -3,7 +3,7 @@ import { OpenAIGenerateTextEditor } from "./editor"
 import {
   openAIGenerateTextSchema,
   openAIGenerateTextDefaultFn,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 import { OpenAIGenerateTextViewer } from "./viewer"
 
 export const openAIGenerateTextStep: StepDefinition = {

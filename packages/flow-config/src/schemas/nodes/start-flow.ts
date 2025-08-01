@@ -5,7 +5,7 @@ import {
   NodeType,
   startFlowStepDefaultFn,
   startFlowStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export const startFlowNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.StartFlow),

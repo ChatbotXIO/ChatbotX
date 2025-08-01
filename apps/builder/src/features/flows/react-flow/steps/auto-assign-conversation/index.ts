@@ -4,7 +4,7 @@ import { AutoAssignConversationStepViewer } from "./viewer"
 import {
   autoAssignConversationStepDefaultFn,
   autoAssignConversationStepSchema,
-} from "@ahachat.ai/flow-config"
+} from "@aha.chat/flow-config"
 
 export const autoAssignConversationStep: StepDefinition = {
   editor: AutoAssignConversationStepEditor,

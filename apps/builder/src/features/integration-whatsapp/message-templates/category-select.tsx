@@ -1,7 +1,7 @@
 "use client"
 
 import { SelectField } from "@/components/form/select-field"
-import { WhatsappTemplateCategory } from "@ahachat.ai/database/types"
+import { WhatsappTemplateCategory } from "@aha.chat/database/types"
 import { useTranslate } from "@tolgee/react"
 import { VolumeIcon } from "lucide-react"
 import { useMemo } from "react"

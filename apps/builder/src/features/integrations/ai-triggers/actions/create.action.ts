@@ -10,7 +10,7 @@ import {
 } from "@/features/integrations/ai-triggers/schemas/create.schema"
 import { AITriggerException } from "@/features/integrations/ai-triggers/schemas/errors.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { type Prisma, prisma } from "@ahachat.ai/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 
 export const createAITriggerAction = chatbotActionClient

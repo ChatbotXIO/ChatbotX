@@ -1,4 +1,4 @@
-import { Gender } from "@ahachat.ai/database/types"
+import { Gender } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const createContactSchema = z.object({

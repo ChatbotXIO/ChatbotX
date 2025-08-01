@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import type { ChatbotModel } from "@ahachat.ai/database/types"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
 export function ChatbotSwitcher({
