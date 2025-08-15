@@ -1,8 +1,12 @@
+import { findChatbot } from "@/features/chatbot/queries"
+import { findOrganization } from "@/features/organization/queries"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { IntegrationType, prisma } from "@aha.chat/database"
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
+import { env } from "@/env"
 import { z } from "zod"
 
 const stateValidationSchema = z.object({
@@ -34,13 +38,26 @@ export const handleCallback = async (integrationName: string, req: Request) => {
     return notFound()
   }
 
+  // find chatbot and organization config
+  const chatbot = await findChatbot({ id: stateParams.chatbotId })
+  const organization = await findOrganization({ id: chatbot.organizationId })
+  const organizationSettings =
+    organization?.settings as unknown as OrganizationSettings
+
   let authResult: BaseAuthValue
   let additionalIntegrationCreationData = {}
 
   switch (integrationName) {
     case IntegrationType.GOOGLE_SHEETS: {
       authResult = integrations.GOOGLE_SHEETS.integration.handleRequest?.({
-        config: integrations.GOOGLE_SHEETS.getIntegrationConfig(),
+        config: {
+          clientId: organizationSettings.googleClientId,
+          clientSecret: organizationSettings.googleClientSecret,
+          redirectUri: new URL(
+            "/integrations/google-sheets/callback",
+            env.NEXT_PUBLIC_BUILDER_URL,
+          ).toString(),
+        },
         req,
       }) as unknown as Oauth2AuthValue
 
@@ -68,21 +85,13 @@ export const handleCallback = async (integrationName: string, req: Request) => {
       .toUpperCase() as IntegrationType
 
     // create intergration
-    let integration = await tx.integration.findFirst({
-      where: {
+    await tx.integration.create({
+      data: {
         chatbotId: stateParams.chatbotId,
         integrationType,
+        ...additionalIntegrationCreationData,
       },
     })
-    if (!integration) {
-      integration = await tx.integration.create({
-        data: {
-          chatbotId: stateParams.chatbotId,
-          integrationType,
-          ...additionalIntegrationCreationData,
-        },
-      })
-    }
   })
 
   return redirect(stateParams.referer)

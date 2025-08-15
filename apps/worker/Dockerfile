@@ -18,7 +18,7 @@ COPY packages/sdk/package.json ./packages/sdk/
 COPY packages/flow-config/package.json ./packages/flow-config/
 COPY packages/filesystem/package.json ./packages/filesystem/
 COPY packages/integration-whatsapp/package.json ./packages/integration-whatsapp/
-COPY packages/party-config/package.json ./packages/party-config/
+COPY packages/partysocket-config/package.json ./packages/partysocket-config/
 
 RUN pnpm install --frozen-lockfile
 

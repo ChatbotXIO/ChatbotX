@@ -1,5 +1,5 @@
 import type * as Party from "partykit/server"
-import { getNextAuthSession } from "../utils/auth"
+import { getAuthSession } from "../lib/auth"
 
 export default class ChatbotParty implements Party.Server {
   constructor(readonly room: Party.Room) {}
@@ -37,7 +37,7 @@ export default class ChatbotParty implements Party.Server {
     // lobby: Party.Lobby,
     // ctx: Party.ExecutionContext
   ) {
-    const session = await getNextAuthSession(req)
+    const session = await getAuthSession(req)
     req.headers.set("X-User-ID", session.user.id)
 
     return req

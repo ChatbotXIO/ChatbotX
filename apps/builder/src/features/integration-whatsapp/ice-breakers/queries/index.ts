@@ -1,6 +1,5 @@
 import { getCurrentUserId } from "@/lib/auth"
 import { integrations } from "@/integration"
-import { getLogger } from "@/lib/log"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
@@ -25,7 +24,6 @@ export const getWhatsappIceBreakers = async (
       })
     const ctx = {
       auth: integrationWhatsapp.auth as WhatsappAuthValue,
-      logger: getLogger("whatsapp"),
       uploader,
     }
 

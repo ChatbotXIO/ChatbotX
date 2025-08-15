@@ -3,34 +3,44 @@ import type * as Party from "partykit/server"
 
 export type Session = {
   user: {
-    name?: string
-    email?: string
-    image?: string
+    name: string | null
+    email: string | null
     id: string
   }
-  expires?: string
+  session: {
+    expiresAt: string
+  }
 }
 
 /** Check that the user exists, and isn't expired */
 export const isSessionValid = (session?: Session | null): boolean => {
   return Boolean(
-    session && (!session.expires || session.expires > new Date().toISOString()),
+    session &&
+      (!session.session.expiresAt ||
+        session.session.expiresAt > new Date().toISOString()),
   )
 }
 
-export const getNextAuthSession = async (
+export const getAuthSession = async (
   proxiedRequest: Party.Request,
 ): Promise<Session> => {
+  const url = new URL(proxiedRequest.url)
+  const token = url.searchParams.get("token")
+  if (!token) {
+    throw new Error("No token provided")
+  }
+
   const headers = proxiedRequest.headers
-  const origin = headers.get("origin") ?? ""
-  const cookie = headers.get("cookie") ?? ""
-  const url = `${origin}/api/auth/session`
+  const origin = headers.get("origin") ?? "https://example.com"
+  const verificationUrl = new URL("/api/auth/one-time-token/verify", origin)
 
   const session: Session | null = await ky
-    .get(url, {
+    .post(verificationUrl, {
       headers: {
         Accept: "application/json",
-        Cookie: cookie,
+      },
+      json: {
+        token,
       },
     })
     .json()

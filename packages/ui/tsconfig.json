@@ -2,6 +2,7 @@
   "extends": "@aha.chat/typescript-config/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": ["esnext", "dom"],
     "plugins": [
       {
         "name": "next"

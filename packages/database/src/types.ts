@@ -8,3 +8,13 @@ export enum CustomFieldOperation {
   APPEND = "APPEND",
   PREPEND = "PREPEND",
 }
+
+export interface OrganizationSettings {
+  whatsappClientId: string
+  whatsappClientSecret: string
+  whatsappVerifyToken: string
+
+  googleClientId: string
+  googleClientSecret: string
+  googleVerifyToken: string
+}

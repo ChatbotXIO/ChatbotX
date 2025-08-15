@@ -8,7 +8,7 @@ import { StepType } from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@aha.chat/party-config"
+} from "@aha.chat/partysocket-config"
 import type { ConversationEntity } from "@aha.chat/sdk"
 import type { ChatJobSendFlowStep } from "@aha.chat/worker-config"
 import { sendFlowStepToExternal } from "./send-message"

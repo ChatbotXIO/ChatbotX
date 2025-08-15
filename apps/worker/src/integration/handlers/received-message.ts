@@ -16,10 +16,10 @@ import {
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@aha.chat/party-config"
+} from "@aha.chat/partysocket-config"
 import type { AttachmentEntity } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
-import { getLogger } from "../../lib/log"
+import { logger } from "../../lib/logger"
 
 export const receiveMessage = async ({
   integrationName,
@@ -31,8 +31,6 @@ export const receiveMessage = async ({
   message: MessageModel
   conversation: ConversationModel
 }> => {
-  const logger = getLogger(integrationName)
-
   const dbIntegrationWhatsapp =
     await prisma.integrationWhatsapp.findFirstOrThrow({
       where: {
@@ -52,7 +50,6 @@ export const receiveMessage = async ({
       ctx: {
         chatbot: dbIntegrationWhatsapp.chatbot,
         auth: dbIntegrationWhatsapp.auth as WhatsappAuthValue,
-        logger: getLogger(integrationName),
         uploader,
       },
       data: payload,

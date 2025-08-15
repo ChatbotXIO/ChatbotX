@@ -6,7 +6,7 @@ import {
   type ChatJobData,
 } from "@aha.chat/worker-config"
 import { Worker, type Job } from "bullmq"
-import { logger } from "../lib/log"
+import { logger } from "../lib/logger"
 import { sendMessageToExternal } from "./handlers/send-message"
 import { SdkException } from "@aha.chat/sdk"
 import { sendFlowStep } from "./handlers/send-flow-step"

@@ -2,8 +2,6 @@ packages:
   - apps/*
   - packages/*
   - integrations/*
-  # - enterprise/apps/*
-  # - enterprise/packages/*
 
 onlyBuiltDependencies:
   - '@prisma/client'

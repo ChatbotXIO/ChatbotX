@@ -25,6 +25,7 @@ import type {
   ServerVideoMessage,
 } from "whatsapp-api-js/types"
 import type { WhatsappAuthValue } from "./schemas"
+import { logger } from "./lib/logger"
 
 export const parseIncomingMessage = async (
   ctx: Context<WhatsappAuthValue>,
@@ -226,11 +227,11 @@ export const fetchMedia = async (
       }
     }
 
-    ctx.logger.error("Unable to fetch media:", { mediaId, mediaResponse })
+    logger.error("Unable to fetch media:", { mediaId, mediaResponse })
 
     throw new SdkException("Unable to download media")
   } catch (error) {
-    ctx.logger.error("Unable to fetch media info:", { error })
+    logger.error("Unable to fetch media info:", { error })
 
     throw new SdkException("Unable to fetch media info")
   }

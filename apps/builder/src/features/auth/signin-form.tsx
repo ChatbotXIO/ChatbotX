@@ -9,7 +9,7 @@ import { authClient } from "@/lib/auth-client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
-import GoogleButton from "react-google-button"
+import { redirect } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
@@ -42,6 +42,7 @@ export const SignInForm = ({
 
     if (data) {
       toast.success("We sent verification URL to your email")
+      redirect("/signin/magic-link-sent")
     } else {
       toast.error(error.message)
     }
@@ -57,7 +58,7 @@ export const SignInForm = ({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
-            <div className="flex flex-col space-y-4 items-center">
+            {/* <div className="flex flex-col space-y-4 items-center">
               <GoogleButton
                 className="w-full"
                 onClick={async () => {
@@ -71,7 +72,7 @@ export const SignInForm = ({
               <span className="relative z-10 bg-background px-2 text-muted-foreground">
                 <T keyName="signin.or" />
               </span>
-            </div>
+            </div> */}
 
             <Form {...magicLinkForm}>
               <form

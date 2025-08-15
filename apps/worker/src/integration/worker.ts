@@ -6,7 +6,7 @@ import {
   type IntegrationJobData,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
-import { logger } from "../lib/log"
+import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { receiveMessage } from "./handlers/received-message"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"

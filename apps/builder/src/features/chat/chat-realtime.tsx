@@ -6,17 +6,27 @@ import usePartySocket from "partysocket/react"
 import {
   RealtimeEventType,
   type RealtimeEventData,
-} from "@aha.chat/party-config"
+} from "@aha.chat/partysocket-config"
 import type { MessageResource } from "../messages/schemas"
+import { env } from "@/env"
+import { authClient } from "@/lib/auth-client"
 
 export function ChatRealtime() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const { handleNewMessage } = useChatStore((state) => state)
 
   usePartySocket({
-    host: process.env.NEXT_PUBLIC_PARTYSOCKET_URL,
+    host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
     room: chatbotId,
     party: "chatbots",
+
+    query: async () => {
+      const oneTimeToken = await authClient.oneTimeToken.generate()
+
+      return {
+        token: oneTimeToken.data?.token,
+      }
+    },
 
     onOpen() {
       console.log("connected")

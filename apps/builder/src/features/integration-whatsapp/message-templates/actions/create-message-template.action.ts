@@ -4,20 +4,19 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { integrations } from "@/integration"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
-import {
-  type CreateMessageTemplateRequest,
-  createMessageTemplateRequest,
-} from "../schemas/create-message-templates-schema"
-import { getLogger } from "@/lib/log"
 import { uploader } from "@aha.chat/filesystem"
 import type {
   CreateMessageTemplateProps,
   WhatsappAuthValue,
 } from "@aha.chat/integration-whatsapp"
-import { integrations } from "@/integration"
+import { revalidateTag } from "next/cache"
+import {
+  type CreateMessageTemplateRequest,
+  createMessageTemplateRequest,
+} from "../schemas/create-message-templates-schema"
 import { parseComponents, slugify } from "./utils"
 
 export const createMessageTemplateAction = chatbotActionClient
@@ -39,7 +38,6 @@ export const createMessageTemplateAction = chatbotActionClient
         })
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
-        logger: getLogger("whatsapp"),
         uploader,
       }
       const body: CreateMessageTemplateProps = {

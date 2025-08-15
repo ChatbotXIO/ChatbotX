@@ -1,5 +1,5 @@
 {
-  "name": "@aha.chat/party-config",
+  "name": "@aha.chat/logger",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
@@ -8,7 +8,7 @@
     "typescript": "5.8.3"
   },
   "dependencies": {
-    "ky": "^1.8.1"
+    "tslog": "^4.9.3"
   },
   "exports": {
     ".": "./src/index.ts"

@@ -5,7 +5,6 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
-import { getLogger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma, type WhatsappFlowStatus } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
@@ -32,7 +31,6 @@ export const syncWhatsappFlowAction = chatbotActionClient
         })
       const ctx: Context<WhatsappAuthValue> = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
-        logger: getLogger("whatsapp"),
         uploader,
       }
 

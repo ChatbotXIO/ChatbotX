@@ -4,8 +4,9 @@ import {
   type LoginMagicLinkEmailProps,
 } from "./emails/login-magic-link"
 import { render } from "@react-email/components"
-import { env } from "@aha.chat/env"
+import { keys } from "./keys"
 
+const env = keys()
 const transporter = nodemailer.createTransport(env.SMTP_SERVER)
 
 async function sendMail(email: string, subject: string, html: string) {

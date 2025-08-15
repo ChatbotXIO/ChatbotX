@@ -1,15 +1,16 @@
 import { PrismaClient } from "./generated/prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
+import { keys } from "./keys"
 
-const pool = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const env = keys()
+const pool = new PrismaPg({ connectionString: env.DATABASE_URL })
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
-const enableDebug = process.env.PRISMA_DEBUG === "true"
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter: pool,
-    log: enableDebug ? ["query"] : [],
+    log: env.PRISMA_DEBUG ? ["query"] : [],
   }).$extends({
     // query: enableDebug
     //   ? {
@@ -69,14 +70,14 @@ export const prisma =
         url: {
           needs: { originPath: true },
           compute(attachment) {
-            return new URL(attachment.originPath, process.env.ASSET_URL)
+            return new URL(attachment.originPath, env.NEXT_PUBLIC_ASSET_URL)
           },
         },
       },
     },
   })
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
 
 export * from "./generated/prisma/enums"
 export { Prisma } from "./generated/prisma/client"

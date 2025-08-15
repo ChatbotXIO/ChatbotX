@@ -19,7 +19,7 @@ import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@aha.chat/party-config"
+} from "@aha.chat/partysocket-config"
 import type {
   AttachmentEntity,
   ConversationEntity,

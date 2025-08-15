@@ -1,5 +1,5 @@
 import type { FieldPath, FieldValues, Path } from "react-hook-form"
-import { MultiSelect } from "../multi-select"
+import { MultiSelect } from "../ui/multi-select"
 import {
   Select,
   SelectContent,

@@ -68,5 +68,12 @@
   "navUser.billing": "Billing",
   "navUser.logout": "Log out",
   "navUser.notifications": "Notifications",
-  "navUser.upgrade_user": "Upgrade to Pro"
+  "navUser.upgrade_user": "Upgrade to Pro",
+  "folders.heading": "Folders",
+  "folders.description": "Folders are used to organize your flows. You can create as many folders as you want.",
+  "folders.createBtn": "Create folder",
+  "folders.create.title": "Create new folder",
+  "folders.name": "Name",
+  "folders.actions.create": "Create",
+  "folders.actions.edit": "Edit"
 }

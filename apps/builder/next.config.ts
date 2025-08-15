@@ -1,3 +1,4 @@
+import { env } from "@/env"
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
@@ -11,19 +12,7 @@ const nextConfig: NextConfig = {
     "@prisma/client",
   ],
   images: {
-    remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "localhost",
-        port: "9000",
-        // pathname: "ahachat.ai/**",
-      },
-      {
-        protocol: "https",
-        hostname: "supposedly-driven-cheetah.ngrok-free.app",
-        // pathname: "assets/**",
-      },
-    ],
+    remotePatterns: [new URL(env.NEXT_PUBLIC_ASSET_URL)],
   },
   experimental: {
     serverActions: {
@@ -35,8 +24,20 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/assets/:path*",
-        destination: "http://localhost:9000/ahachatai/:path*", // Proxy to Backend
+        destination: `${env.NEXT_PUBLIC_ASSET_URL}/:path*`, // Proxy to Backend
       },
+      ...(env.NEXT_PUBLIC_BILLING_URL
+        ? [
+            {
+              source: "/pricing",
+              destination: `${env.NEXT_PUBLIC_BILLING_URL}/pricing`,
+            },
+            {
+              source: "/billing-static/:path+",
+              destination: `${env.NEXT_PUBLIC_BILLING_URL}/billing-static/:path+`,
+            },
+          ]
+        : []),
     ]
   },
 }

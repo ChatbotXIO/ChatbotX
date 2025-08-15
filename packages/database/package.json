@@ -6,7 +6,9 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/adapter-pg": "^6.11.1",
     "@prisma/client": "^6.11.1",
-    "@prisma/extension-accelerate": "^2.0.1"
+    "@prisma/extension-accelerate": "^2.0.1",
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "zod": "^3.25.71"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
@@ -27,6 +29,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./keys": "./src/keys.ts"
   }
 }

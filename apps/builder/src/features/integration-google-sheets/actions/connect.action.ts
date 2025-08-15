@@ -7,6 +7,7 @@ import {
 import { integrations } from "@/integration"
 import { authActionClient } from "@/lib/safe-action"
 import { HandleRequestType } from "@aha.chat/sdk"
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import {
   type ConnectGoogleSheetsSchema,
@@ -24,6 +25,8 @@ export const connectGoogleSheets = authActionClient
       parsedInput: ConnectGoogleSheetsSchema
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
+      const headersList = await headers()
+
       const redirectUrl =
         (await integrations.GOOGLE_SHEETS.integration.handleRequest?.({
           config: integrations.GOOGLE_SHEETS.getIntegrationConfig({
@@ -31,7 +34,10 @@ export const connectGoogleSheets = authActionClient
             referer: parsedInput.referer,
           }),
           req: new Request(
-            `${process.env.BASE_URL}/${HandleRequestType.GENERATE_AUTH_URL}`,
+            new URL(
+              HandleRequestType.GENERATE_AUTH_URL,
+              headersList.get("x-url") ?? "",
+            ),
           ),
         })) as string
 

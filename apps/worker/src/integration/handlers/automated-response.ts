@@ -1,14 +1,14 @@
 import { prisma } from "@aha.chat/database"
-import { getLogger } from "../../lib/log"
-import {
-  chatQueue,
-  ChatJobAction,
-  integrationQueue,
-  IntegrationJobAction,
-} from "@aha.chat/worker-config"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
 import { StepType } from "@aha.chat/flow-config"
+import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import {
+  ChatJobAction,
+  chatQueue,
+  IntegrationJobAction,
+  integrationQueue,
+} from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
+import { logger } from "../../lib/logger"
 
 enum ReplyType {
   MESSAGE = "MESSAGE",
@@ -34,8 +34,6 @@ export type Reply = ReplyMessage | ReplyFlow
 export const listAllAutomatedResponses = async ({
   chatbotId,
 }: { chatbotId: string }) => {
-  const logger = getLogger("integration")
-
   try {
     return await prisma.automatedResponse.findMany({
       where: { chatbotId },

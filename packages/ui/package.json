@@ -4,24 +4,28 @@
   "type": "module",
   "private": true,
   "exports": {
+    ".": "./src/index.tsx",
     "./postcss.config": "./postcss.config.mjs",
     "./components/*": "./src/components/*.tsx",
     "./lib/*": "./src/lib/*.ts",
     "./styles/*": "./src/styles/*",
+    "./config/*": "./src/config/*",
     "./hooks/*": ["./src/hooks/*.ts", "./src/hooks/*.tsx"]
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component",
-    "check-types": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.11",
+    "@tolgee/react": "^6.2.6",
     "@turbo/gen": "^2.5.4",
     "@types/node": "^22.16.0",
-    "@types/react": "19.1.8",
-    "@types/react-dom": "19.1.6",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.0",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
@@ -75,6 +79,7 @@
     "react-day-picker": "^9.8.1",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.59.0",
+    "react-number-format": "^5.4.4",
     "react-resizable-panels": "^3.0.3",
     "recharts": "2.15.4",
     "sonner": "^2.0.6",

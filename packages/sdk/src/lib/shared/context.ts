@@ -1,5 +1,4 @@
 import type { Readable } from "node:stream"
-import type { ILogObj, Logger } from "tslog"
 import { z } from "zod"
 import type { BaseAuthValue } from "../auth"
 
@@ -25,7 +24,6 @@ export type Context<AO extends BaseAuthValue> = {
   chatbot?: ChatbotEntity
   uploader?: ContextUploader
   auth: AO
-  logger: Logger<ILogObj>
   queue?: ContextQueue
 }
 

@@ -1,7 +1,7 @@
 generator client {
   provider        = "prisma-client"
   output          = "../src/generated/prisma"
-  previewFeatures = ["driverAdapters", "queryCompiler", "nativeDistinct", "metrics"]
+  previewFeatures = ["driverAdapters", "queryCompiler", "nativeDistinct"]
 }
 
 datasource db {
@@ -27,7 +27,7 @@ model User {
   inboxTeamMembers         InboxTeamMember[]
   contactNotes             ContactNote[]
   assignedConversations    Conversation[]
-  members                  OrganizationMember[]
+  organizationMembers      OrganizationMember[]
   invitations              OrganizationInvitation[]
 }
 
@@ -73,18 +73,24 @@ model Verification {
 }
 
 model Organization {
-  id                      String                   @id @default(cuid(2))
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  name                    String
-  slug                    String?
-  logo                    String?
-  metadata                String?
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name         String
+  slug         String?
+  logo         String?
+  metadata     String?
+  domain       String?
+  supportEmail String?
+  settings     Json    @default("{}")
+
   organizationMembers     OrganizationMember[]
   organizationInvitations OrganizationInvitation[]
   chatbots                Chatbot[]
 
   @@unique([slug])
+  @@index([domain])
 }
 
 model OrganizationMember {

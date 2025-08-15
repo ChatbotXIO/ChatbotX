@@ -1,6 +1,6 @@
 import { prisma } from "@aha.chat/database"
 import type { ChatJobSendMessage } from "@aha.chat/worker-config"
-import { getLogger, logger } from "../../lib/log"
+import { logger } from "../../lib/logger"
 import { allIntegrations } from "../../shared/integrations"
 import { getIntegrationAuth } from "./integration.query"
 import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
@@ -34,7 +34,6 @@ export async function sendMessageToExternal(data: ChatJobSendMessage) {
       chatbot: inbox.chatbot,
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       auth: integrationAuth as any,
-      logger: getLogger(inbox.inboxType),
     },
     conversation,
     message,
@@ -76,7 +75,6 @@ export async function sendFlowStepToExternal({
       chatbot: inbox.chatbot,
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       auth: integrationAuth as any,
-      logger: getLogger(inbox.inboxType),
     },
     conversation,
     flowVersionId,

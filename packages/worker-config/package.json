@@ -10,11 +10,13 @@
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.13.8",
     "bullmq": "^5.56.1",
     "ioredis": "^5.6.1",
-    "tslog": "^4.9.3"
+    "zod": "^3.25.71"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./keys": "./src/keys.ts"
   }
 }

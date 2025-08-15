@@ -1,4 +1,5 @@
-import type { ILogObj, Logger } from "tslog"
+import type { ILogObj, Logger } from "@aha.chat/logger"
+import { chunkArray } from "@edenchazard/tiny-chunk-array"
 import {
   ActionButtons,
   type Button,
@@ -49,8 +50,10 @@ export function* generateOutgoingMessages(
           title: button.label,
         }),
       )
+      const [button, ...rest] = buttons
+
       yield new Interactive(
-        new ActionButtons(...buttons),
+        new ActionButtons(button, ...rest),
         generateBody(payload.title),
         payload.image ? new Header(new Image(payload.image.url)) : undefined,
         payload.subtitle ? generateFooter(payload.subtitle) : undefined,

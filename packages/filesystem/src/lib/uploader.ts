@@ -8,6 +8,9 @@ import {
   type PresignedPostOptions,
 } from "@aws-sdk/s3-presigned-post"
 import type { Readable } from "node:stream"
+import { keys } from "../keys"
+
+const env = keys()
 
 class Uploader {
   #client: S3Client
@@ -17,15 +20,18 @@ class Uploader {
 
   constructor() {
     this.#client = new S3Client({
-      endpoint: process.env.AWS_URL ?? "",
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
-      },
-      region: process.env.AWS_DEFAULT_REGION,
-      forcePathStyle: true,
+      endpoint: env.AWS_URL,
+      credentials:
+        env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY
+          ? {
+              accessKeyId: env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+            }
+          : undefined,
+      region: env.AWS_REGION,
+      forcePathStyle: !!env.AWS_URL,
     })
-    this.#bucketName = process.env.AWS_BUCKET ?? ""
+    this.#bucketName = env.AWS_BUCKET
   }
 
   public static getInstance(): Uploader {

@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
   const cookies = getSessionCookie(request)
-  if (!cookies && request.nextUrl.pathname !== "/signin") {
+  if (!cookies && !request.nextUrl.pathname.includes("/signin")) {
     return NextResponse.redirect(new URL("/signin", request.url))
   }
 
@@ -19,6 +19,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|integrations|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
+    "/((?!api|integrations|pricing|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
   ],
 }

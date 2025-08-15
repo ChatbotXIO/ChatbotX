@@ -1,14 +1,17 @@
 "use server"
 
+import { findChatbot } from "@/features/chatbot/queries"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { findOrganization } from "@/features/organization/queries"
 import { integrations } from "@/integration"
 import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { AuthType, IntegrationException } from "@aha.chat/sdk"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
@@ -29,16 +32,23 @@ export const connectWhatsappAction = authActionClient
           chatbotId,
         },
       })
-      if (integrationWhatsapp) {
+      if (!integrationWhatsapp) {
         throw new IntegrationException(
           "Whatsapp integration is already connected",
         )
       }
 
+      const chatbot = await findChatbot({ id: chatbotId })
+      const organization = await findOrganization({
+        id: chatbot.organizationId,
+      })
+      const organizationSettings =
+        organization?.settings as unknown as OrganizationSettings
+
       // Validate wabaId
       const auth: WhatsappAuthValue = {
-        clientId: process.env.INTEGRATION_WHATSAPP_ID ?? "",
-        clientSecret: process.env.INTEGRATION_WHATSAPP_SECRET ?? "",
+        clientId: organizationSettings.whatsappClientId,
+        clientSecret: organizationSettings.whatsappClientSecret,
         redirectUri: "",
         authType: AuthType.OAUTH2 as const,
         tokens: {
@@ -54,9 +64,6 @@ export const connectWhatsappAction = authActionClient
           await integrations.WHATSAPP.integration.actions?.verifyAccessToken({
             ctx: {
               auth,
-              logger: logger.getSubLogger({
-                name: "whatsapp",
-              }),
             },
           })
         if (whatsappPhoneNumber) {
@@ -82,11 +89,7 @@ export const connectWhatsappAction = authActionClient
           })
         })
       } catch (err: unknown) {
-        logger
-          .getSubLogger({
-            name: "whatsapp",
-          })
-          .error("Unable to verify whatsapp token: ", err)
+        logger.error("Unable to verify whatsapp token: ", err)
 
         throw new BaseException("Unable to verify Whatsapp token")
       }

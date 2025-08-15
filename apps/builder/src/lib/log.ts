@@ -1,7 +1,5 @@
-import { type ILogObj, Logger } from "tslog"
+import baseLogger from "@aha.chat/logger"
 
-export const logger = new Logger<ILogObj>({ name: "ahachat.ai" })
-
-export const getLogger = (name: string) => {
-  return logger.getSubLogger({ name })
-}
+export const logger = baseLogger.getSubLogger({
+  name: "builder",
+})

@@ -1,4 +1,4 @@
-import type { ILogObj, Logger } from "tslog"
+import type { ILogObj, Logger } from "@aha.chat/logger"
 import {
   type SendCardPayload,
   generateOutgoingMessages as generateSendCarouselOutgoingMessages,

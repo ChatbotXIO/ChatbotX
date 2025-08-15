@@ -6,12 +6,13 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
+    "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
+    "@edenchazard/tiny-chunk-array": "^1.0.1",
     "@paralleldrive/cuid2": "^2.2.2",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
     "remeda": "^2.23.3",
-    "tslog": "^4.9.3",
     "whatsapp-api-js": "^6.0.0",
     "zod": "^3.25.71"
   },

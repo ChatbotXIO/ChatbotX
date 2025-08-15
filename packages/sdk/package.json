@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
-    "tslog": "^4.9.3",
+    "@aha.chat/logger": "workspace:*",
     "zod": "^3.25.71"
   },
   "exports": {

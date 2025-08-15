@@ -12,15 +12,14 @@
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
-    "@aha.chat/party-config": "workspace:*",
+    "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
     "bullmq": "^5.56.1",
     "dot-prop": "^9.0.0",
     "ioredis": "^5.6.1",
     "ky": "^1.8.1",
-    "partysocket": "1.1.4",
-    "tslog": "^4.9.3"
+    "partysocket": "1.1.4"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

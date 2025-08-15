@@ -29,7 +29,7 @@ import {
 } from "nuqs"
 import * as React from "react"
 
-import { useDebouncedCallback } from "@aha.chat/hooks/use-debounced-callback"
+import { useDebouncedCallback } from "@aha.chat/ui/hooks/use-debounced-callback"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import type { ExtendedColumnSort } from "@aha.chat/ui/types/data-table"
 

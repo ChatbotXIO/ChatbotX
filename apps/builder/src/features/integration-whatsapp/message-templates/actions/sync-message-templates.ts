@@ -4,13 +4,12 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { integrations } from "@/integration"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
-import { getLogger } from "@/lib/log"
 import { uploader } from "@aha.chat/filesystem"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import { integrations } from "@/integration"
+import { revalidateTag } from "next/cache"
 
 export const syncMessageTemplateAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
@@ -28,7 +27,6 @@ export const syncMessageTemplateAction = chatbotActionClient
         })
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
-        logger: getLogger("whatsapp"),
         uploader,
       }
 

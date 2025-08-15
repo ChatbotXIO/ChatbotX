@@ -5,7 +5,6 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
-import { getLogger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
@@ -34,7 +33,6 @@ export const updateWhatsappIceBreakerAction = chatbotActionClient
         })
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
-        logger: getLogger("whatsapp"),
         uploader,
       }
 
