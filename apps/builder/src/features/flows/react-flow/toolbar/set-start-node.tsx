@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { useReactFlow } from "@xyflow/react"
 import { PlayIcon } from "lucide-react"
-import { useCallback, type MouseEvent } from "react"
+import { type MouseEvent, useCallback } from "react"
 
 export function SetStartNode() {
   const { setNodes, getNodes } = useReactFlow()
@@ -34,7 +34,7 @@ export function SetStartNode() {
   }
 
   return activeNode?.data.isStartNode ? null : (
-    <Button variant="ghost" size="icon" className="size-8" onClick={onClick}>
+    <Button className="size-8" onClick={onClick} size="icon" variant="ghost">
       <PlayIcon />
     </Button>
   )

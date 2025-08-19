@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server"
 import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,

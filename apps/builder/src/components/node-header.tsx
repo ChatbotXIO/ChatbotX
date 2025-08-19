@@ -1,15 +1,14 @@
-import { useCallback, type HTMLAttributes, type ReactNode } from "react"
-import { useNodeId, useReactFlow } from "@xyflow/react"
-import { EllipsisVertical, Trash } from "lucide-react"
-
-import { cn } from "@/components/lib/utils"
-import { Slot } from "@radix-ui/react-slot"
-import { Button, type ButtonProps } from "@/components/ui/button"
+import { Button, type ButtonProps } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenuTrigger,
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { Slot } from "@radix-ui/react-slot"
+import { useNodeId, useReactFlow } from "@xyflow/react"
+import { EllipsisVertical, Trash } from "lucide-react"
+import { type HTMLAttributes, type ReactNode, useCallback } from "react"
 
 /* NODE HEADER -------------------------------------------------------------- */
 
@@ -142,11 +141,11 @@ export const NodeHeaderAction = ({
 }) => {
   return (
     <Button
-      ref={ref}
-      variant="ghost"
       aria-label={label}
-      title={title ?? label}
       className={cn(className, "nodrag size-6 p-1")}
+      ref={ref}
+      title={title ?? label}
+      variant="ghost"
       {...props}
     />
   )
@@ -206,7 +205,7 @@ export const NodeHeaderDeleteAction = () => {
   }, [id, setNodes])
 
   return (
-    <NodeHeaderAction onClick={handleClick} variant="ghost" label="Delete node">
+    <NodeHeaderAction label="Delete node" onClick={handleClick} variant="ghost">
       <Trash />
     </NodeHeaderAction>
   )

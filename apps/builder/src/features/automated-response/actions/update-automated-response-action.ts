@@ -1,18 +1,18 @@
 "use server"
 
+import { prisma } from "@aha.chat/database"
+import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
+import { AutomatedResponseException } from "../schemas/types"
 import {
   type UpdateAutomatedResponseRequest,
   updateAutomatedResponseRequest,
 } from "../schemas/update-automated-responses-schema"
-import { AutomatedResponseException } from "../schemas/types"
 
 export const updateAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
@@ -36,7 +36,7 @@ export const updateAutomatedResponseAction = chatbotActionClient
       }
 
       // ensure all input flows are exists
-      const flowIds = []
+      const flowIds: string[] = []
       if (parsedInput.replies) {
         for (const reply of parsedInput.replies) {
           if ("flowId" in reply) {

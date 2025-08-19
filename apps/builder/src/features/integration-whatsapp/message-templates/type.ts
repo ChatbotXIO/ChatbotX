@@ -1,14 +1,16 @@
-export enum TemplateType {
-  Text = "Text",
-  Image = "Image",
-  Video = "Video",
-  Document = "Document",
-  CarouselImage = "CarouselImage",
-  CarouselVideo = "CarouselVideo",
-  Location = "Location",
-  ViewCatalog = "ViewCatalog",
-  ViewProduct = "ViewProduct",
-}
+export const TemplateType = {
+  Text: "Text",
+  Image: "Image",
+  Video: "Video",
+  Document: "Document",
+  CarouselImage: "CarouselImage",
+  CarouselVideo: "CarouselVideo",
+  Location: "Location",
+  ViewCatalog: "ViewCatalog",
+  ViewProduct: "ViewProduct",
+} as const
+
+export type TemplateType = (typeof TemplateType)[keyof typeof TemplateType]
 
 export const LanguageOptions = [
   { label: "Afrikaans", value: "af" },

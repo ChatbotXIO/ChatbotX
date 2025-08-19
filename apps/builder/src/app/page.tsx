@@ -1,9 +1,13 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
+import Link from "next/link"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth"
-import Link from "next/link"
 
 export default async function MainPage() {
   const userId = await getCurrentUserId()
@@ -21,14 +25,14 @@ export default async function MainPage() {
             <CardContent>
               <div className="grid gap-4">
                 {chatbots?.map((chatbot) => (
-                  <Button variant="secondary" key={chatbot.id} asChild>
+                  <Button asChild key={chatbot.id} variant="secondary">
                     <Link href={`/chatbots/${chatbot.id}/dashboard`}>
                       {chatbot.name}
                     </Link>
                   </Button>
                 ))}
                 {chatbots.length === 0 && (
-                  <Label className="text-center">no chatbots found</Label>
+                  <div className="text-center">No chatbots found</div>
                 )}
               </div>
             </CardContent>
@@ -44,11 +48,11 @@ export default async function MainPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
-                <div className="flex rounded w-full items-center">
+                <div className="flex w-full items-center rounded">
                   <div className="flex-1">Whatsapp</div>
                   <Button variant="secondary">Continue</Button>
                 </div>
-                <div className="flex rounded w-full items-center">
+                <div className="flex w-full items-center rounded">
                   <div className="flex-1">Chat Widget</div>
                   <Button variant="secondary">Continue</Button>
                 </div>

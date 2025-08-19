@@ -3,24 +3,24 @@
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 
-interface OpenAISpeechToTextEditorProps {
+type OpenAISpeechToTextEditorProps = {
   parentName: string
 }
 
-export const OpenAISpeechToTextEditor = ({
-  parentName,
-}: OpenAISpeechToTextEditorProps) => {
+export const OpenAISpeechToTextEditor = (
+  props: OpenAISpeechToTextEditorProps,
+) => {
   return (
     <OpenAIDialog name="Flows.OpenAI.Title.SpeechToText">
       <CustomFieldSelect
-        name={`${parentName}.audioCustomFieldId`}
         label="Audio"
+        name={`${props.parentName}.audioCustomFieldId`}
       />
 
       <CustomFieldSelect
-        name={`${parentName}.resultCustomFieldId`}
-        label="Save response to a custom field"
         allowCreate={true}
+        label="Save response to a custom field"
+        name={`${props.parentName}.resultCustomFieldId`}
       />
     </OpenAIDialog>
   )

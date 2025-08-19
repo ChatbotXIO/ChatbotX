@@ -1,13 +1,13 @@
 "use server"
 
-import {
-  bulkUpdateIdsRequest,
-  chatbotIdAndIdRequestParams,
-  type ChatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
+import {
+  bulkUpdateIdsRequest,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
 
 export const blockContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)

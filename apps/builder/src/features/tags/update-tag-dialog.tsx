@@ -1,13 +1,14 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { TagModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -15,9 +16,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import type { TagModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/form"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -76,7 +76,7 @@ export function UpdateTagDialog({
   }, [tag, setValue])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("tags.update.title")}</DialogTitle>
@@ -85,8 +85,8 @@ export function UpdateTagDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
               <FormField
                 control={form.control}
@@ -104,17 +104,17 @@ export function UpdateTagDialog({
 
               <div className="flex justify-end gap-4">
                 <Button
+                  onClick={() => onOpenChange(false)}
                   type="button"
                   variant="ghost"
-                  onClick={() => onOpenChange(false)}
                 >
                   {t("common.cancel-btn")}
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

@@ -1,15 +1,15 @@
 "use server"
 
-import {
-  chatbotIdAndIdRequestParams,
-  type ChatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
-  addInboxTeamMemberRequest,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import {
   type AddInboxTeamMemberRequest,
+  addInboxTeamMemberRequest,
 } from "../schemas/add-inbox-team-member.request"
 
 export const addInboxTeamMemberAction = chatbotActionClient

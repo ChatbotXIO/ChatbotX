@@ -1,8 +1,8 @@
 import {
+  addNotesNodeSchema,
   edgeSchema,
   flowVersionSchema,
   sendMessageNodeSchema,
-  addNotesNodeSchema,
 } from "@aha.chat/flow-config"
 import { z } from "zod"
 

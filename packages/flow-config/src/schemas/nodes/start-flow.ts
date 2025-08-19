@@ -1,11 +1,11 @@
-import { createId } from "@paralleldrive/cuid2"
-import { z } from "zod"
 import {
   baseNodeSchema,
   NodeType,
   startFlowStepDefaultFn,
   startFlowStepSchema,
 } from "@aha.chat/flow-config"
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
 
 export const startFlowNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.StartFlow),

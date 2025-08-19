@@ -1,19 +1,19 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { FolderModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action"
-import type { FolderModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action"
 
 export function DeleteFolderDialog({
   open,
@@ -42,7 +42,7 @@ export function DeleteFolderDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("folders.deleteAction.title")}</DialogTitle>
@@ -53,17 +53,17 @@ export function DeleteFolderDialog({
 
         <div className="flex justify-end gap-4">
           <Button
+            onClick={() => onOpenChange(false)}
             type="button"
             variant="ghost"
-            onClick={() => onOpenChange(false)}
           >
             {t("common.cancelBtn")}
           </Button>
           <Button
-            type="submit"
-            variant={"destructive"}
             disabled={isPending}
             onClick={() => execute({ ids: [folder?.id ?? ""] })}
+            type="submit"
+            variant={"destructive"}
           >
             {isPending && <Loader2Icon className="animate-spin" />}
             {t("common.deleteBtn")}

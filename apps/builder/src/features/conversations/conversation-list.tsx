@@ -1,18 +1,18 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@aha.chat/ui/components/ui/select"
+import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { FilterIcon, UserPlusIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Virtuoso } from "react-virtuoso"
+import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
 import ConversationItem from "./conversation-item"
@@ -33,7 +33,7 @@ export default function ConversationList() {
     conversations.length === 0 || nextCursorConversation !== null
 
   const [page, setPage] = useState(1)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     loadMoreConversations(chatbotId)
   }, [page])
@@ -46,10 +46,10 @@ export default function ConversationList() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-1 mb-2">
+    <div className="flex h-full flex-col">
+      <div className="mb-2 flex items-center gap-1">
         <Select defaultValue="2" name="liveChatEnabled">
-          <SelectTrigger className="w-[180px] h-8 text-xs">
+          <SelectTrigger className="h-8 w-[180px] text-xs">
             <SelectValue placeholder="" />
           </SelectTrigger>
           <SelectContent>
@@ -62,25 +62,24 @@ export default function ConversationList() {
         <CreateContactDialog
           chatbotId={chatbotId}
           trigger={
-            <Button variant="outline" size="sm" className="px-2">
+            <Button className="px-2" size="sm" variant="outline">
               <UserPlusIcon />
             </Button>
           }
         />
 
-        <Button variant="outline" size="sm" className="px-2">
+        <Button className="px-2" size="sm" variant="outline">
           <FilterIcon />
         </Button>
       </div>
 
       <div className="flex-1">
         <Virtuoso
-          data={conversations}
-          rangeChanged={({ endIndex }) => {
-            if (endIndex >= conversations.length - 5) {
-              loadMoreItems()
-            }
+          components={{
+            List: ConversationListList,
+            Footer: ConversationListFooter,
           }}
+          data={conversations}
           itemContent={(_, item) => (
             <ConversationItem
               conversation={item}
@@ -88,25 +87,10 @@ export default function ConversationList() {
               onSelect={() => setActiveConversationId(item.id)}
             />
           )}
-          components={{
-            List: ({ children, ...props }) => (
-              <div
-                {...props}
-                className="virtuoso-item-list flex flex-col gap-1"
-              >
-                {children}
-              </div>
-            ),
-            Footer: () =>
-              isLoadingConversation ? (
-                <div className="flex items-center space-x-2 px-3 py-2">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-4/5" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                </div>
-              ) : null,
+          rangeChanged={({ endIndex }) => {
+            if (endIndex >= conversations.length - 5) {
+              loadMoreItems()
+            }
           }}
         />
 
@@ -135,6 +119,31 @@ export default function ConversationList() {
           )}
         </InfiniteLoader> */}
       </div>
+    </div>
+  )
+}
+
+const ConversationListFooter: GridComponents["Footer"] = () => {
+  const { isLoadingConversation } = useChatStore((state) => state)
+
+  return isLoadingConversation ? (
+    <div className="flex items-center space-x-2 px-3 py-2">
+      <Skeleton className="h-12 w-12 rounded-full" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+    </div>
+  ) : null
+}
+
+const ConversationListList: GridComponents["List"] = ({
+  children,
+  ...props
+}) => {
+  return (
+    <div {...props} className="virtuoso-item-list flex flex-col gap-1">
+      {children}
     </div>
   )
 }

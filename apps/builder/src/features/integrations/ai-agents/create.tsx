@@ -1,7 +1,7 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,10 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/create.action"
-import { createAIAgentRequest } from "@/features/integrations/ai-agents/schemas/create.schema"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { DialogDescription } from "@radix-ui/react-dialog"
@@ -22,6 +20,8 @@ import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
+import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/create.action"
+import { createAIAgentRequest } from "@/features/integrations/ai-agents/schemas/create.schema"
 
 export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
   const [open, setOpen] = useState(false)
@@ -57,7 +57,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
     )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
@@ -72,10 +72,10 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
-              <InputField name="name" label={t("aiAgents.name")} />
+              <InputField label={t("aiAgents.name")} name="name" />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
@@ -84,10 +84,10 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
                   </Button>
                 </DialogClose>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

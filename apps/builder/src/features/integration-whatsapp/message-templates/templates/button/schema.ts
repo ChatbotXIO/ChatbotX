@@ -1,11 +1,11 @@
 import { z } from "zod"
 
-export enum ButtonActionType {
-  QuickReply = "QUICK_REPLY",
-  Url = "URL",
-  PhoneNumber = "PHONE_NUMBER",
-  Flow = "FLOW",
-}
+export const ButtonActionType = {
+  QuickReply: "QUICK_REPLY",
+  Url: "URL",
+  PhoneNumber: "PHONE_NUMBER",
+  Flow: "FLOW",
+} as const
 
 export const buttonStepSchema = z
   .object({

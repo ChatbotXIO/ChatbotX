@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,16 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useState, type ReactElement } from "react"
+import { useAction } from "next-safe-action/hooks"
+import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { deleteContactAction } from "../actions/delete-contact.action"
-import { useAction } from "next-safe-action/hooks"
 
-interface DeleteContactDialogProps {
+type DeleteContactDialogProps = {
   trigger: ReactElement
   ids: string[]
 }
@@ -45,7 +45,7 @@ export default function DeleteContactDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -61,10 +61,10 @@ export default function DeleteContactDialog({
           </DialogClose>
 
           <Button
-            type="button"
-            variant="destructive"
             disabled={isPending}
             onClick={() => execute({ ids })}
+            type="button"
+            variant="destructive"
           >
             {isExecuting && <Loader2Icon className="animate-spin" />}
             <T keyName={"common.saveBtn"} />

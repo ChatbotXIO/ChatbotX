@@ -1,10 +1,11 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
-import { TextareaField } from "@/components/form/textarea-field"
-import { Button } from "@/components/ui/button"
-import { DateTimePicker } from "@/components/ui/date-picker"
+import { CustomFieldType } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -12,24 +13,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import {
   Form,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+} from "@aha.chat/ui/components/ui/form"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { CustomFieldType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/select"
+import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -42,11 +42,13 @@ import { toast } from "sonner"
 import { createAccountFieldAction } from "./actions/create-account-field.action"
 import { createAccountFieldRequest } from "./schemas/create-account-field.schema"
 
+type CreateAccountFieldDialogProps = {
+  chatbotId: string
+}
+
 export function CreateAccountFieldDialog({
   chatbotId,
-}: {
-  chatbotId: string
-}) {
+}: CreateAccountFieldDialogProps) {
   const { t } = useTranslate()
 
   const [open, setOpen] = useState(false)
@@ -122,16 +124,16 @@ export function CreateAccountFieldDialog({
       case CustomFieldType.NUMBER:
         return (
           <Input
-            type="number"
             placeholder="Enter number"
+            type="number"
             {...register("value")}
           />
         )
       case CustomFieldType.BOOLEAN:
         return (
           <Controller
-            name="value"
             control={control}
+            name="value"
             render={({ field }) => (
               <Select onValueChange={field.onChange}>
                 <SelectTrigger>
@@ -148,12 +150,12 @@ export function CreateAccountFieldDialog({
       case CustomFieldType.DATE:
         return (
           <DateTimePicker
-            granularity="day"
             displayFormat={{ hour24: "yyyy-MM-dd" }}
-            value={new Date()}
+            granularity="day"
             onChange={(value) => {
               setValue("value", format(value ?? new Date(), "yyyy-MM-dd"))
             }}
+            value={new Date()}
           />
         )
 
@@ -161,10 +163,10 @@ export function CreateAccountFieldDialog({
         return (
           <DateTimePicker
             displayFormat={{ hour24: "yyyy-MM-dd hh:mm" }}
-            value={new Date()}
             onChange={(value) => {
               setValue("value", format(value ?? new Date(), "yyyy-MM-dd hh:mm"))
             }}
+            value={new Date()}
           />
         )
       case CustomFieldType.LONGTEXT:
@@ -175,7 +177,7 @@ export function CreateAccountFieldDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
@@ -188,12 +190,12 @@ export function CreateAccountFieldDialog({
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
-            <InputField name="name" label={t("accountField.name.label")} />
+          <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
+            <InputField label={t("accountField.name.label")} name="name" />
 
             <SelectField
-              name="customFieldType"
               label={t("customFieldType.label")}
+              name="customFieldType"
               options={customFieldTypeLabels}
             />
 
@@ -210,24 +212,24 @@ export function CreateAccountFieldDialog({
             />
 
             <TextareaField
-              name="description"
               isRequired={false}
               label={t("accountField.description.label")}
+              name="description"
             />
 
             <div className="flex justify-end space-x-2">
               <Button
+                onClick={() => setOpen(false)}
                 type="button"
                 variant="ghost"
-                onClick={() => setOpen(false)}
               >
                 {t("common.cancelBtn")}
               </Button>
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

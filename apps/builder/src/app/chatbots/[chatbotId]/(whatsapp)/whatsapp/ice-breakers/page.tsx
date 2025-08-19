@@ -1,5 +1,5 @@
-import { getWhatsappIceBreakers } from "@/features/integration-whatsapp/ice-breakers/queries"
 import { WhatsappIceBreakersList } from "@/features/integration-whatsapp/ice-breakers/ice-breaker-list"
+import { getWhatsappIceBreakers } from "@/features/integration-whatsapp/ice-breakers/queries"
 
 export default async function WhatsappMessageTemplatePage(props: {
   params: Promise<{ chatbotId: string }>
@@ -11,5 +11,5 @@ export default async function WhatsappMessageTemplatePage(props: {
     }),
   ])
 
-  return <WhatsappIceBreakersList promises={promises} chatbotId={chatbotId} />
+  return <WhatsappIceBreakersList chatbotId={chatbotId} promises={promises} />
 }

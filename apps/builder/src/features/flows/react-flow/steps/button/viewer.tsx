@@ -1,28 +1,40 @@
-import { Button } from "@/components/ui/button"
-import { Handle, Position } from "@xyflow/react"
 import type { ButtonStepSchema } from "@aha.chat/flow-config"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Handle, Position } from "@xyflow/react"
 
-export const ButtonStepViewer = ({ data }: { data: ButtonStepSchema }) => {
+type ButtonStepViewerProps = {
+  data: ButtonStepSchema
+}
+
+export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
+  const { data } = props
+
   return (
     <div className="relative">
-      <Button type="button" variant="secondary" className="w-full" disabled>
+      <Button className="w-full" disabled type="button" variant="secondary">
         {data.label}
       </Button>
       <Handle
-        id={data.id}
-        type="source"
-        position={Position.Right}
         className="right-3!"
+        id={data.id}
+        position={Position.Right}
+        type="source"
       />
     </div>
   )
 }
 
-export const ButtonGroupViewer = ({ data }: { data: ButtonStepSchema[] }) => {
+type ButtonGroupViewerProps = {
+  data: ButtonStepSchema[]
+}
+
+export const ButtonGroupViewer = (props: ButtonGroupViewerProps) => {
+  const { data } = props
+
   return (
-    <div className="flex flex-col gap-2 flex-1">
+    <div className="flex flex-1 flex-col gap-2">
       {data.map((button) => (
-        <ButtonStepViewer key={button.id} data={button} />
+        <ButtonStepViewer data={button} key={button.id} />
       ))}
     </div>
   )

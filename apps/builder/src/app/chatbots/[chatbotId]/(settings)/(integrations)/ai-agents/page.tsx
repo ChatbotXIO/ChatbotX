@@ -1,9 +1,9 @@
-import { CreateAIAgentDialog } from "@/features/integrations/ai-agents/create"
-import { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
-import { listAIAgentRequest } from "@/features/integrations/ai-agents/schemas/list.schema"
-import { AIAgentsTable } from "@/features/integrations/ai-agents/table"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
+import { CreateAIAgentDialog } from "@/features/integrations/ai-agents/create"
+import { listAIAgentRequest } from "@/features/integrations/ai-agents/schemas/list.schema"
+import { AIAgentsTable } from "@/features/integrations/ai-agents/table"
 
 export default async function AIAgentsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -18,12 +18,12 @@ export default async function AIAgentsPage(props: {
 
   return (
     <>
-      <div className="flex w-full justify-end mb-4">
+      <div className="mb-4 flex w-full justify-end">
         <CreateAIAgentDialog chatbotId={params.chatbotId} />
       </div>
 
       <Suspense>
-        <AIAgentsTable promises={promises} chatbotId={params.chatbotId} />
+        <AIAgentsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
     </>
   )

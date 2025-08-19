@@ -1,8 +1,9 @@
 "use client"
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
-import { TextareaField } from "@/components/form/textarea-field"
-import { Button } from "@/components/ui/button"
+import { CustomFieldType } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -10,9 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { CustomFieldType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -97,7 +97,7 @@ export function CreateCustomFieldDialog({
   ]
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         {triggerButton ? (
           triggerButton
@@ -116,39 +116,39 @@ export function CreateCustomFieldDialog({
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
+          <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
             <InputField
-              name="name"
               label={t("customField.name.label")}
+              name="name"
               placeholder={t("customField.name.placeholder")}
             />
 
             <SelectField
-              name="customFieldType"
               label={t("customFieldType.label")}
+              name="customFieldType"
               options={customFieldTypeOptions}
             />
 
             <TextareaField
-              name="description"
               isRequired={false}
               label={t("customField.description.label")}
+              name="description"
               placeholder={t("customField.description.placeholder")}
             />
 
             <div className="flex justify-end space-x-2">
               <Button
+                onClick={() => setOpen(false)}
                 type="button"
                 variant="ghost"
-                onClick={() => setOpen(false)}
               >
                 {t("Common.CancelBtn")}
               </Button>
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

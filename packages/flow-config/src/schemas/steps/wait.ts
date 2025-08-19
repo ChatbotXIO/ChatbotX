@@ -2,18 +2,18 @@ import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
-export enum DelayType {
-  Duration = "Duration",
-  SpecificDate = "SpecificDate",
-  DatetimeCustomField = "DatetimeCustomField",
-}
+export const DelayType = {
+  Duration: "Duration",
+  SpecificDate: "SpecificDate",
+  DatetimeCustomField: "DatetimeCustomField",
+} as const
 
-export enum DelayUnit {
-  Seconds = "Seconds",
-  Minutes = "Minutes",
-  Hours = "Hours",
-  Days = "Days",
-}
+export const DelayUnit = {
+  Seconds: "Seconds",
+  Minutes: "Minutes",
+  Hours: "Hours",
+  Days: "Days",
+} as const
 
 export const waitStepSchema = z
   .object({

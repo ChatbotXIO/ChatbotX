@@ -2,11 +2,11 @@ import { StepType } from "@aha.chat/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 
-export enum GenerateCodeType {
-  NUMERIC_LENGTH = "NUMERIC_LENGTH",
-  NUMERIC_VALUE = "NUMERIC_VALUE",
-  ALPHANUMERIC_LENGTH = "ALPHANUMERIC_LENGTH",
-}
+export const GenerateCodeType = {
+  NUMERIC_LENGTH: "NUMERIC_LENGTH",
+  NUMERIC_VALUE: "NUMERIC_VALUE",
+  ALPHANUMERIC_LENGTH: "ALPHANUMERIC_LENGTH",
+} as const
 
 export const generateCodeStepSchema = z
   .object({

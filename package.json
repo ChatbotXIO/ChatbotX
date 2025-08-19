@@ -4,8 +4,8 @@
   "scripts": {
     "build": "dotenv -e .env -- turbo build",
     "dev": "dotenv -e .env -- turbo dev",
-    "format": "biome format --fix",
-    "lint": "biome check . --write",
+    "format": "ultracite format --unsafe",
+    "lint": "ultracite lint",
     "locale:pull": "tolgee pull",
     "locale:push": "tolgee sync --continue-on-warning --remove-unused --patterns './apps/builder/src/**/*.ts?(x)' --backup './.tolgee/backup'",
     "format-and-lint": "biome check .",
@@ -13,17 +13,21 @@
     "clean": "pnpm store prune && pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf .turbo && pnpm -r exec rm -rf .next"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.2.0",
     "@tolgee/cli": "^2.13.0",
     "@types/node": "^22.16.0",
     "lefthook": "^1.11.16",
     "tsx": "^4.20.3",
-    "turbo": "^2.5.5",
-    "typescript": "5.8.3"
+    "turbo": "^2.5.6",
+    "typescript": "5.8.3",
+    "ultracite": "5.2.2"
   },
   "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
   "engines": {
     "node": ">=22"
   },
-  "workspaces": ["apps/*", "packages/*"]
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

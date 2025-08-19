@@ -1,9 +1,9 @@
-import { listContacts } from "@/features/contacts/queries/list-contacts.queries"
-import { ContactsTable } from "@/features/contacts/contacts-table"
-import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
-import { listContactsRequest } from "@/features/contacts/schemas/get-contacts-schema"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { ContactsTable } from "@/features/contacts/contacts-table"
+import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
+import { listContacts } from "@/features/contacts/queries/list-contacts.queries"
+import { listContactsRequest } from "@/features/contacts/schemas/get-contacts-schema"
 
 export default async function ContactsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -22,7 +22,7 @@ export default async function ContactsPage(props: {
 
   return (
     <div>
-      <div className="flex w-full justify-end mb-4">
+      <div className="mb-4 flex w-full justify-end">
         <CreateContactDialog chatbotId={params.chatbotId} />
       </div>
       <Suspense>

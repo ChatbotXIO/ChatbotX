@@ -1,5 +1,8 @@
 "use server"
 
+import { prisma } from "@aha.chat/database"
+import type { UserModel } from "@aha.chat/database/types"
+import { revalidateTag } from "next/cache"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -7,9 +10,6 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
-import { prisma } from "@aha.chat/database"
-import type { UserModel } from "@aha.chat/database/types"
-import { revalidateTag } from "next/cache"
 
 export const deleteAIAgentAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

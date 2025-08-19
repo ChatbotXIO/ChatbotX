@@ -1,6 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { AIAgentModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,19 +11,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { deleteAIAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
-import type { AIAgentModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
+import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
+import { deleteAIAgentAction } from "@/features/integrations/ai-agents/actions/delete.action"
 
-interface DeleteAIAgentsDialogProps
-  extends ComponentPropsWithoutRef<typeof Dialog> {
+type DeleteAIAgentsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
   agents: Row<AIAgentModel>["original"][]
   showTrigger?: boolean
@@ -59,8 +58,8 @@ export function DeleteAIAgentsDialog({
     <Dialog {...props}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Trash className="mr-2 size-4" aria-hidden="true" />
+          <Button size="sm" variant="outline">
+            <Trash aria-hidden="true" className="mr-2 size-4" />
             {t("common.deleteBtn")} ({agents.length})
           </Button>
         </DialogTrigger>
@@ -77,20 +76,20 @@ export function DeleteAIAgentsDialog({
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button onClick={() => onOpenChange(false)} variant="outline">
               {t("common.cancelBtn")}
             </Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
-            variant="destructive"
+            disabled={isExecuting}
             onClick={() =>
               execute({ ids: (agents ?? []).map((agent) => agent.id) })
             }
-            disabled={isExecuting}
+            variant="destructive"
           >
             {isExecuting && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
             {t("common.deleteBtn")}
           </Button>

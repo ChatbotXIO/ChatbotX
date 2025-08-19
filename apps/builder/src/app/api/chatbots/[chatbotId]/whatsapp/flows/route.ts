@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
+import { getWhatsappFlowsSearchParamsCache } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
-import { getWhatsappFlowsSearchParamsCache } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,

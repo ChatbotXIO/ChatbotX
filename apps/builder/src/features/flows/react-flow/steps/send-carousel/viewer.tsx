@@ -1,12 +1,12 @@
 "use client"
 
+import type { SendCarouselStepSchema } from "@aha.chat/flow-config"
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-} from "@/components/ui/carousel"
+} from "@aha.chat/ui/components/ui/carousel"
 import { SendCardStepViewer } from "@/features/flows/react-flow/steps/send-card/viewer"
-import type { SendCarouselStepSchema } from "@aha.chat/flow-config"
 
 export const SendCarouselStepViewer = ({
   data,

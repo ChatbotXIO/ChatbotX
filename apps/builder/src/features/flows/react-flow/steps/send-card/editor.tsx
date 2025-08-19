@@ -1,45 +1,49 @@
 "use client"
 
-import FileDropzone from "@/components/file-dropzone"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@aha.chat/ui/components/ui/card"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import { useFormContext } from "react-hook-form"
+import FileDropzone from "@/components/file-dropzone"
 
-export const SendCardStepEditor = ({
-  parentName,
-  // onEditButton,
-}: {
+type SendCardStepEditorProps = {
   parentName: string
-  // onEditButton: (name: string) => void
-}) => {
+}
+
+export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
+  const { parentName } = props
   const { register } = useFormContext()
 
   return (
-    <Card className="w-full shadow-lg rounded-lg border-2 hover:border-blue-500 hover:border-solid hover:cursor-pointer">
+    <Card className="w-full rounded-lg border-2 shadow-lg hover:cursor-pointer hover:border-blue-500 hover:border-solid">
       <CardHeader className="p-0">
         <FileDropzone
-          register={register}
-          parentName={parentName}
           configs={{
             uploadKeyName: "common.uploadImage",
             isCard: true,
           }}
+          parentName={parentName}
+          register={register}
         />
       </CardHeader>
-      <CardContent className="p-2 bg-gray-200">
+      <CardContent className="bg-gray-200 p-2">
         <Input
+          className="mb-2 border-0 focus-visible:border-none focus-visible:ring-0"
           placeholder="Title (Required)"
-          className="mb-2 border-0 focus-visible:ring-0 focus-visible:border-none"
           {...register(`${parentName}.title`)}
         />
 
         <Input
+          className="border-0 focus-visible:border-none focus-visible:ring-0"
           placeholder="Subtitle"
-          className="border-0 focus-visible:ring-0 focus-visible:border-none"
           {...register(`${parentName}.subtitle`)}
         />
       </CardContent>
-      <CardFooter className="p-2 bg-gray-200 flex-col">
+      <CardFooter className="flex-col bg-gray-200 p-2">
         {/* <ButtonGroupEditor
           parentName={`${parentName}.buttons`}
           onEditButton={(name: string) => onEditButton(name)}

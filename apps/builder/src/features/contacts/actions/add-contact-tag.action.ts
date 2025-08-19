@@ -1,15 +1,15 @@
 "use server"
 
-import {
-  chatbotIdRequestParams,
-  type ChatbotIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
-  addContactTagRequest,
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import {
   type AddContactTagRequest,
+  addContactTagRequest,
 } from "../schemas/add-contact-tag.request"
 
 export const addContactTagAction = chatbotActionClient
@@ -34,7 +34,9 @@ export const addContactTagAction = chatbotActionClient
           id: true,
         },
       })
-      if (contacts.length === 0) return
+      if (contacts.length === 0) {
+        return
+      }
 
       await prisma.$transaction(async (tx) => {
         const tags = await tx.tag.createManyAndReturn({

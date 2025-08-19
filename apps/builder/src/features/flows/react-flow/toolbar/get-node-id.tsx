@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { useNodes } from "@xyflow/react"
 import { FingerprintIcon } from "lucide-react"
 import type { MouseEvent } from "react"
@@ -22,7 +22,7 @@ export function GetNodeId() {
   }
 
   return (
-    <Button variant="ghost" size="icon" className="size-8" onClick={onClick}>
+    <Button className="size-8" onClick={onClick} size="icon" variant="ghost">
       <FingerprintIcon />
     </Button>
   )

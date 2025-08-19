@@ -1,8 +1,8 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
-import { Button } from "@/components/ui/button"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { WhatsappFlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslate } from "@tolgee/react"
 import { useMemo } from "react"
 import { useForm, useFormContext } from "react-hook-form"
+import { WhatsappFlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
 import {
   ButtonActionType,
-  buttonStepSchema,
   type ButtonStepSchema,
+  buttonStepSchema,
 } from "./schema"
 
 export function EditButtonDialog({
@@ -69,43 +69,43 @@ export function EditButtonDialog({
   })
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("common.edit")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex-1 space-y-4">
-            <InputField name="text" label={t("common.Button.label")} />
+          <form className="flex-1 space-y-4" onSubmit={onSubmit}>
+            <InputField label={t("common.Button.label")} name="text" />
             {changeType && (
               <SelectField
-                name="type"
                 label={t("common.Button.whenPressed")}
+                name="type"
                 options={buttonOptions}
               />
             )}
             {type === ButtonActionType.Url && (
-              <InputField name="url" label={t("common.link")} />
+              <InputField label={t("common.link")} name="url" />
             )}
             {type === ButtonActionType.PhoneNumber && (
               <InputField
-                name="phone_number"
                 label={t("flows.Button.phoneNumber")}
+                name="phone_number"
               />
             )}
             {type === ButtonActionType.Flow && (
-              <WhatsappFlowSelect name="flow_id" label={"WhatsApp Flow"} />
+              <WhatsappFlowSelect label={"WhatsApp Flow"} name="flow_id" />
             )}
             <DialogFooter>
               <Button
+                onClick={() => onOpenChange(false)}
                 type="button"
                 variant="secondary"
-                onClick={() => onOpenChange(false)}
               >
                 {t("common.cancelBtn")}
               </Button>
-              <Button type="submit" disabled={!formState.isValid}>
+              <Button disabled={!formState.isValid} type="submit">
                 {t("common.Btn")}
               </Button>
             </DialogFooter>

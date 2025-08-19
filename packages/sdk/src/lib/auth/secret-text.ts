@@ -1,6 +1,6 @@
 import type { AuthType, BaseAuthValue } from "./base"
 
 export type SecretTextAuthValue = BaseAuthValue & {
-  authType: AuthType.SECRET_TEXT
+  authType: typeof AuthType.SECRET_TEXT
   secretText: string
 }

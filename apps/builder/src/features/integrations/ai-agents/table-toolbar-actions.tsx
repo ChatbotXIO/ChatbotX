@@ -1,8 +1,8 @@
 "use client"
 
-import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
 import type { AIAgentModel } from "@aha.chat/database/types"
 import type { Table } from "@tanstack/react-table"
+import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
 
 type AIAgentsTableToolbarActionsProps = {
   table: Table<AIAgentModel>
@@ -22,9 +22,9 @@ export function AIAgentsTableToolbarActions({
           agents={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}
-          onSuccess={() => table.toggleAllRowsSelected(false)}
           chatbotId={chatbotId}
           onOpenChange={onOpenChange}
+          onSuccess={() => table.toggleAllRowsSelected(false)}
         />
       ) : null}
     </div>

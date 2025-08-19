@@ -1,5 +1,5 @@
-import { FormFieldWrapper } from "@/components/form/field-wrapper"
-import { Button } from "@/components/ui/button"
+import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -7,13 +7,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@aha.chat/ui/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+} from "@aha.chat/ui/components/ui/popover"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { useState } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"

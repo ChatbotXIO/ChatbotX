@@ -10,12 +10,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
+} from "@aha.chat/ui/components/ui/alert-dialog"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
 import { useRouter } from "next/navigation"
+import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectWhatsappAction } from "./actions/disconnect.action"
@@ -35,9 +35,9 @@ export function WhatsappDisconnectDialog({ chatbotId }: { chatbotId: string }) {
     })
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button size="sm" variant="destructive">
           <T keyName="Integration.DisconnectBtn" />
         </Button>
       </AlertDialogTrigger>
@@ -55,11 +55,11 @@ export function WhatsappDisconnectDialog({ chatbotId }: { chatbotId: string }) {
             <T keyName="Integration.CancelBtn" />
           </AlertDialogCancel>
           <AlertDialogAction
+            disabled={isPendingDisconnect}
             onClick={async (e) => {
               e.preventDefault()
               await onDisconnect()
             }}
-            disabled={isPendingDisconnect}
           >
             {isPendingDisconnect && <Loader2Icon className="animate-spin" />}
             <T keyName="Integration.DisconnectBtn" />

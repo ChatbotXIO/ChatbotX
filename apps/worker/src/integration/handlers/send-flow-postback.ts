@@ -1,10 +1,10 @@
 import { prisma } from "@aha.chat/database"
-import { ButtonType, StepType, type FlowNode } from "@aha.chat/flow-config"
+import { ButtonType, type FlowNode, StepType } from "@aha.chat/flow-config"
 import { SdkException } from "@aha.chat/sdk"
 import {
   IntegrationJobAction,
-  integrationQueue,
   type IntegrationJobSendFlowPostback,
+  integrationQueue,
 } from "@aha.chat/worker-config"
 
 export async function sendFlowPostback(

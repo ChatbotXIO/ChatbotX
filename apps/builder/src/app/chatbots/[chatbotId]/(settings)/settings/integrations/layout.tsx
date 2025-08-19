@@ -5,12 +5,12 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@aha.chat/ui/components/ui/accordion"
 import { T } from "@tolgee/react"
 import { BotIcon, TableIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
-interface SettingIntegrationLayoutProps {
+type SettingIntegrationLayoutProps = {
   openAI: ReactNode
   googleSheets: ReactNode
 }
@@ -33,14 +33,14 @@ export default function SettingIntegrationLayout({
   ]
 
   return (
-    <Accordion type="single" collapsible className="w-full">
+    <Accordion className="w-full" collapsible type="single">
       {integrationItems.map((integration) => (
         <AccordionItem
+          className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
           key={integration.keyName}
           value={integration.keyName}
-          className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
         >
-          <AccordionTrigger className="px-4 rounded-none transition-all data-[state=open]:bg-gray-200 hover:no-underline hover:bg-gray-200">
+          <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
             <div className="flex items-center gap-2">
               <integration.icon size={24} />
               <T keyName={integration.keyName} />

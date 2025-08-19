@@ -1,15 +1,15 @@
 "use client"
 
-import { useParams } from "next/navigation"
-import { useChatStore } from "./store/chat-store-provider"
-import usePartySocket from "partysocket/react"
 import {
-  RealtimeEventType,
   type RealtimeEventData,
+  RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { MessageResource } from "../messages/schemas"
+import { useParams } from "next/navigation"
+import usePartySocket from "partysocket/react"
 import { env } from "@/env"
 import { authClient } from "@/lib/auth-client"
+import type { MessageResource } from "../messages/schemas"
+import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -28,9 +28,7 @@ export function ChatRealtime() {
       }
     },
 
-    onOpen() {
-      console.log("connected")
-    },
+    // onOpen() {},
     onMessage(e) {
       try {
         const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
@@ -39,19 +37,16 @@ export function ChatRealtime() {
             handleNewMessage(data as MessageResource)
             break
           default:
-            console.debug("Unhandled event: ", e.data)
+            break
         }
-      } catch (e) {
-        console.error("Unable to parse realtime message", e)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: wip
+        console.error("Unable to parse realtime message", error)
       }
     },
-    onClose() {
-      console.log("closed")
-    },
-    onError() {
-      console.log("error")
-    },
+    // onClose() {},
+    // onError() {},
   })
 
-  return <></>
+  return <div />
 }

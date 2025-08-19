@@ -1,30 +1,30 @@
 "use client"
 
-import { InstagramIcon } from "@/components/icons/instagram"
-import { MessengerIcon } from "@/components/icons/messenger"
-import WhatsappIcon from "@/components/icons/whatsapp"
-import { Button } from "@/components/ui/button"
-import { Form } from "@/components/ui/form"
-import { Textarea } from "@/components/ui/textarea"
-import { authClient } from "@/lib/auth-client"
 import {
   ContentType,
   InboxType,
   MessageType,
   SenderType,
 } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"
 import { GlobeIcon, PaperclipIcon, SendHorizonalIcon } from "lucide-react"
 import {
+  type KeyboardEvent,
+  type ReactNode,
   useEffect,
   useRef,
   useState,
-  type KeyboardEvent,
-  type ReactNode,
 } from "react"
 import { Controller } from "react-hook-form"
+import { InstagramIcon } from "@/components/icons/instagram"
+import { MessengerIcon } from "@/components/icons/messenger"
+import WhatsappIcon from "@/components/icons/whatsapp"
+import { authClient } from "@/lib/auth-client"
 import type { ClientConversationResource } from "../../chat/store/chat-store"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
@@ -35,9 +35,12 @@ import { FileUploadPreview } from "./file-upload"
 export const MessageInput = () => {
   const session = authClient.useSession()
 
-  const inboxTypes: Record<InboxType, { icon: ReactNode; label: string }> = {
+  const inboxTypes: Record<
+    InboxType,
+    { icon: ReactNode; label: string } | undefined
+  > = {
     CHAT_WIDGET: {
-      icon: <GlobeIcon width={20} height={20} />,
+      icon: <GlobeIcon height={20} width={20} />,
       label: "Chat Widget",
     },
     INSTAGRAM: {
@@ -52,6 +55,7 @@ export const MessageInput = () => {
       icon: <WhatsappIcon />,
       label: "Whatsapp",
     },
+    OMNICHANNEL: undefined,
   }
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -62,7 +66,7 @@ export const MessageInput = () => {
   // Find active conversation
   const [conversation, setConversation] =
     useState<ClientConversationResource | null>(null)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     setConversation(
       conversations.find((c) => c.id === activeConversationId) ?? null,
@@ -127,7 +131,9 @@ export const MessageInput = () => {
 
   const onSelectEmoji = (emoji: string) => {
     const element = textareaRef.current
-    if (!element) return
+    if (!element) {
+      return
+    }
 
     const text = element.value
     const before = text.slice(0, element.selectionStart)
@@ -140,7 +146,7 @@ export const MessageInput = () => {
   const fileUploadRef = useRef(null)
   const onClickAttachment = () => {
     if (fileUploadRef.current) {
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: wip
       ;(fileUploadRef.current as any).openFileDialog() // Trigger the file dialog
     }
   }
@@ -153,20 +159,20 @@ export const MessageInput = () => {
   }
 
   return activeConversationId ? (
-    <div className="rounded-xl m-3 pt-2 border">
+    <div className="m-3 rounded-xl border pt-2">
       <Form {...form}>
         <form
+          className="flex w-full flex-col"
           onSubmit={handleSubmitWithAction}
-          className="w-full flex flex-col"
         >
-          <div className="w-full px-2.5 mb-1">
+          <div className="mb-1 w-full px-2.5">
             <Controller
               control={form.control}
               name="content"
               render={({ field }) => (
                 <Textarea
                   autoComplete="off"
-                  className="resize-none h-16 border-0 shadow-none focus:ring-0 focus-visible:ring-0 px-1.5 py-0"
+                  className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
                   placeholder="Message..."
                   {...field}
                   onKeyDown={onKeyDown}
@@ -175,44 +181,44 @@ export const MessageInput = () => {
               )}
             />
           </div>
-          <div className="px-2 5">
+          <div className="5 px-2">
             <FileUploadPreview ref={fileUploadRef} />
           </div>
           <div className="flex w-full items-center pl-2.5">
-            <div className="flex-1 flex gap-1 items-center">
+            <div className="flex flex-1 items-center gap-1">
               {
                 inboxTypes[
                   conversation?.inbox?.inboxType ?? InboxType.CHAT_WIDGET
-                ].icon
+                ]?.icon
               }
               <span className="text-sm">
                 {
                   inboxTypes[
                     conversation?.inbox?.inboxType ?? InboxType.CHAT_WIDGET
-                  ].label
+                  ]?.label
                 }
               </span>
             </div>
 
-            <div className="message-toolbar flex gap-2 items-center">
+            <div className="message-toolbar flex items-center gap-2">
               <Button
-                variant="ghost"
-                type="button"
-                className="[&_svg]:size-5 px-2 py-1.5"
+                className="px-2 py-1.5 [&_svg]:size-5"
                 onClick={onClickAttachment}
+                type="button"
+                variant="ghost"
               >
                 <PaperclipIcon />
               </Button>
               <EmojiPicker onSelectEmoji={onSelectEmoji} />
               <Button
-                variant="ghost"
-                type="submit"
-                className="[&_svg]:size-5 px-2 py-1.5"
+                className="px-2 py-1.5 [&_svg]:size-5"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
+                variant="ghost"
               >
-                <SendHorizonalIcon width="32px" height="32px" />
+                <SendHorizonalIcon height="32px" width="32px" />
               </Button>
             </div>
           </div>

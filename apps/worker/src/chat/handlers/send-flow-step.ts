@@ -22,7 +22,9 @@ export async function sendFlowStep({
     where: { id: conversationId },
     include: { contact: true },
   })
-  if (!conversation) return
+  if (!conversation) {
+    return
+  }
 
   const message = await prisma.message.create({
     data: {

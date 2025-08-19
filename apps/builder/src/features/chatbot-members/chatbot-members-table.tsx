@@ -1,17 +1,17 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import { Button } from "@/components/ui/button"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useDataTable } from "@/hooks/use-data-table"
-import type { DataTableRowAction } from "@/types/data-table"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
 import { use, useMemo, useState } from "react"
@@ -119,7 +119,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
                   <span className="sr-only">Open menu</span>
                 </Button>

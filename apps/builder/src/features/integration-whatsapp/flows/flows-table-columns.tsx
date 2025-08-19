@@ -1,13 +1,13 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import type { DataTableRowAction } from "@/types/data-table"
 import type { WhatsappFlowModel } from "@aha.chat/database/types"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TextIcon } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
 
-interface GetColumnsProps {
+type GetColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<WhatsappFlowModel> | null>
   >

@@ -1,15 +1,15 @@
 "use server"
 
-import {
-  chatbotIdRequestParams,
-  type ChatbotIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { FieldType, prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
-  clearContactCustomFieldRequest,
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import {
   type ClearContactCustomFieldRequest,
+  clearContactCustomFieldRequest,
 } from "../schemas/clear-contact-custom-field.request"
 
 export const clearContactCustomFieldAction = chatbotActionClient
@@ -42,7 +42,9 @@ export const clearContactCustomFieldAction = chatbotActionClient
           id: true,
         },
       })
-      if (contacts.length === 0) return
+      if (contacts.length === 0) {
+        return
+      }
 
       await prisma.$transaction(async (tx) => {
         await tx.contactCustomField.deleteMany({

@@ -1,5 +1,5 @@
-import { cn } from "@/components/lib/utils"
 import { FileType, MessageType } from "@aha.chat/database/types"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { format } from "date-fns"
 import { PaperclipIcon } from "lucide-react"
 import Image from "next/image"
@@ -7,7 +7,9 @@ import Link from "next/link"
 import type { MessageResource } from "../schemas"
 import { MessageBubble } from "./message-bubble"
 
-export const MessageItem = ({ message }: { message: MessageResource }) => {
+export const MessageItem = (props: { message: MessageResource }) => {
+  const { message } = props
+
   const variants: Record<MessageType, string> = {
     [MessageType.INCOMING]:
       "px-3 py-2 rounded-xl bg-secondary text-secondary-foreground",
@@ -17,10 +19,10 @@ export const MessageItem = ({ message }: { message: MessageResource }) => {
   }
   return (
     <MessageBubble
-      variant={message.messageType}
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
+      variant={message.messageType}
     >
-      <div className="flex flex-col gap-1 max-w-[70%] mx-3">
+      <div className="mx-3 flex max-w-[70%] flex-col gap-1">
         {message.content && message.content.length > 0 && (
           <div className={cn("text-sm", variants[message.messageType])}>
             <pre className="whitespace-normal break-all font-sans">
@@ -36,11 +38,9 @@ export const MessageItem = ({ message }: { message: MessageResource }) => {
   )
 }
 
-const renderAttachments = ({
-  message,
-}: {
-  message: MessageResource
-}) => {
+const renderAttachments = (props: { message: MessageResource }) => {
+  const { message } = props
+
   return (
     <div>
       {(message.attachments ?? []).map((attachment) => {
@@ -48,21 +48,21 @@ const renderAttachments = ({
           case FileType.IMAGE:
             return (
               <Image
+                alt={attachment.name || "Attachment"}
+                height={attachment.height || 0}
                 key={attachment.id}
                 src={attachment.url}
                 width={attachment.width || 0}
-                height={attachment.height || 0}
-                alt={attachment.name || "Attachment"}
               />
             )
           case FileType.VIDEO:
             return (
               <video
-                width="320"
-                height="240"
                 controls
-                preload="none"
+                height="240"
                 key={attachment.id}
+                preload="none"
+                width="320"
               >
                 <track default kind="captions" />
                 <source src={attachment.url} type={attachment.mimeType} />
@@ -70,7 +70,7 @@ const renderAttachments = ({
             )
           case FileType.AUDIO:
             return (
-              <audio controls preload="none" key={attachment.id}>
+              <audio controls key={attachment.id} preload="none">
                 <track default kind="captions" />
                 <source src={attachment.url} type={attachment.mimeType} />
               </audio>
@@ -78,7 +78,7 @@ const renderAttachments = ({
           default:
             return (
               <div
-                className="flex gap-2 px-3 py-2 rounded-xl bg-secondary items-center text-sm"
+                className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2 text-sm"
                 key={attachment.id}
               >
                 <PaperclipIcon size={16} />

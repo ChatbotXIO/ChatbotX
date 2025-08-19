@@ -1,9 +1,9 @@
+import type {
+  ContactCustomFieldModel,
+  ContactModel,
+} from "@aha.chat/database/types"
 import type { ConversationResource } from "@/features/conversations/schemas"
 import { BaseException } from "@/lib/error"
-import type {
-  ContactModel,
-  ContactCustomFieldModel,
-} from "@aha.chat/database/types"
 
 export class ContactException extends BaseException {}
 

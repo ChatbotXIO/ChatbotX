@@ -13,8 +13,8 @@ export type HandleRequestProps<IConfig extends BaseConfig> = {
   queue?: ContextQueue
 }
 
-export enum HandleRequestType {
-  CALLBACK = "callback",
-  WEBHOOK = "webhook",
-  GENERATE_AUTH_URL = "generate-auth-url",
-}
+export const HandleRequestType = {
+  CALLBACK: "callback",
+  WEBHOOK: "webhook",
+  GENERATE_AUTH_URL: "generate-auth-url",
+} as const

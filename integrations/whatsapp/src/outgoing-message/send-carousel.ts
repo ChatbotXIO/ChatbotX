@@ -1,7 +1,7 @@
 import type { ILogObj, Logger } from "@aha.chat/logger"
 import {
-  type SendCardPayload,
   generateOutgoingMessages as generateSendCarouselOutgoingMessages,
+  type SendCardPayload,
 } from "./send-card"
 
 export function* generateOutgoingMessages(

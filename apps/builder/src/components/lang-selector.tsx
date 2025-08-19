@@ -7,10 +7,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { setLanguage } from "@/tolgee/language"
+} from "@aha.chat/ui/components/ui/select"
 import { useTolgee } from "@tolgee/react"
 import type React from "react"
+import { setLanguage } from "@/tolgee/language"
 
 export const LangSelector: React.FC = () => {
   const tolgee = useTolgee(["language"])
@@ -20,7 +20,7 @@ export const LangSelector: React.FC = () => {
     setLanguage(value)
   }
   return (
-    <Select onValueChange={onSelectChange} defaultValue={locale}>
+    <Select defaultValue={locale} onValueChange={onSelectChange}>
       <SelectTrigger>
         <SelectValue placeholder="Select a language" />
       </SelectTrigger>

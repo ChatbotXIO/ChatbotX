@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server"
 import { getFlows } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,

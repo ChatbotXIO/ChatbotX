@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server"
 import { listConversations } from "@/features/conversations/queries/list-conversations.query"
 import { listConversationsRequest } from "@/features/conversations/schemas/list-conversations.request"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,

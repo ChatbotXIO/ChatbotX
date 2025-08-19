@@ -1,29 +1,31 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { sendCardStepDefaultFn } from "@aha.chat/flow-config"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Carousel,
   type CarouselApi,
   CarouselContent,
   CarouselItem,
-} from "@/components/ui/carousel"
+} from "@aha.chat/ui/components/ui/carousel"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { SendCardStepEditor } from "@/features/flows/react-flow/steps/send-card/editor"
-import { sendCardStepDefaultFn } from "@aha.chat/flow-config"
+} from "@aha.chat/ui/components/ui/tooltip"
 import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react"
 import { useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
+import { SendCardStepEditor } from "@/features/flows/react-flow/steps/send-card/editor"
 
-export const SendCarouselStepEditor = ({
-  parentName,
-}: {
+type SendCarouselStepEditorProps = {
   parentName: string
-}) => {
+}
+
+export const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
+  const { parentName } = props
+
   const [api, setApi] = useState<CarouselApi>()
   const [_current, setCurrent] = useState<number>()
 
@@ -62,7 +64,7 @@ export const SendCarouselStepEditor = ({
 
   return (
     <>
-      <Carousel setApi={setApi} opts={{ dragFree: false }}>
+      <Carousel opts={{ dragFree: false }} setApi={setApi}>
         <CarouselContent>
           {fields.map((field, index) => (
             <CarouselItem className="" key={field.id}>
@@ -79,11 +81,11 @@ export const SendCarouselStepEditor = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              className="absolute top-1/2 right-0 mt-[50px] size-8 shrink-0"
               onClick={addCard}
+              size="icon"
               type="button"
               variant="ghost"
-              size="icon"
-              className="absolute size-8 shrink-0 top-1/2 right-0 mt-[50px]"
             >
               <Plus size={25} />
             </Button>
@@ -100,11 +102,11 @@ export const SendCarouselStepEditor = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  className="absolute top-1/2 right-0 mt-[85px] size-8 shrink-0"
                   onClick={removeCard}
+                  size="icon"
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  className="absolute size-8 shrink-0 top-1/2 right-0 mt-[85px]"
                 >
                   <Minus size={25} />
                 </Button>
@@ -119,10 +121,10 @@ export const SendCarouselStepEditor = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  className="absolute top-3 right-0 size-8 shrink-0"
+                  onClick={onNext}
                   type="button"
                   variant="ghost"
-                  className="absolute size-8 shrink-0 top-3 right-0"
-                  onClick={onNext}
                 >
                   <ChevronRight size={25} />
                 </Button>
@@ -137,10 +139,10 @@ export const SendCarouselStepEditor = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  className="-left-3 absolute top-3 size-8 shrink-0"
+                  onClick={onPrev}
                   type="button"
                   variant="ghost"
-                  className="absolute size-8 shrink-0 top-3 -left-3"
-                  onClick={onPrev}
                 >
                   <ChevronLeft size={25} />
                 </Button>

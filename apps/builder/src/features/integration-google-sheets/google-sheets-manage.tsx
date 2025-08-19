@@ -1,6 +1,5 @@
 "use client"
 
-import { SettingRow } from "@/components/setting-row"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,14 +10,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
+} from "@aha.chat/ui/components/ui/alert-dialog"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
+import { SettingRow } from "@/components/setting-row"
 import { connectGoogleSheets } from "./actions/connect.action"
 import { disconnectGoogleSheets } from "./actions/disconnect.action"
 import type { getGoogleSheetsIntegration } from "./queries"
@@ -48,12 +48,12 @@ export function GoogleSheetsManage({
 
   return (
     <SettingRow
-      label={t("settings.integrations.GoogleSheets.Title")}
       description={t("settings.integrations.GoogleSheets.Descriptions")}
+      label={t("settings.integrations.GoogleSheets.Title")}
     >
       {integrationGoogleSheets ? (
         <div className="flex flex-col gap-2">
-          <Button variant="secondary" size="sm">
+          <Button size="sm" variant="secondary">
             <Link href="../google-sheets">
               <T keyName="settings.integrations.ManageBtn" />
             </Link>
@@ -61,7 +61,7 @@ export function GoogleSheetsManage({
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
+              <Button size="sm" variant="destructive">
                 {/* {isPendingDisconnect && (
                   <Loader2Icon className="animate-spin" />
                 )} */}
@@ -82,11 +82,11 @@ export function GoogleSheetsManage({
                   {t("Integration.CancelBtn")}
                 </AlertDialogCancel>
                 <AlertDialogAction
+                  disabled={isPendingDisconnect}
                   onClick={async (e) => {
                     e.preventDefault()
                     await onDisconnect()
                   }}
-                  disabled={isPendingDisconnect}
                 >
                   {isPendingDisconnect && (
                     <Loader2Icon className="animate-spin" />
@@ -99,13 +99,13 @@ export function GoogleSheetsManage({
         </div>
       ) : (
         <Button
-          size="sm"
-          variant="secondary"
+          disabled={isPendingConnect}
           onClick={async (e) => {
             e.preventDefault()
             await onConnect({ referer: window.location.href })
           }}
-          disabled={isPendingConnect}
+          size="sm"
+          variant="secondary"
         >
           {isPendingConnect && <Loader2Icon className="animate-spin" />}
           <T keyName="common.integrations.Connect" />

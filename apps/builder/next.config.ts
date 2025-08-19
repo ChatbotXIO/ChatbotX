@@ -1,5 +1,5 @@
-import { env } from "@/env"
 import type { NextConfig } from "next"
+import { env } from "@/env"
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   async rewrites() {
-    return [
+    return await [
       {
         source: "/assets/:path*",
         destination: `${env.NEXT_PUBLIC_ASSET_URL}/:path*`, // Proxy to Backend

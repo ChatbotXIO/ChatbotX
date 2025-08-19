@@ -1,4 +1,4 @@
-import { cn } from "@/components/lib/utils"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import type { HTMLAttributes } from "react"
@@ -7,7 +7,7 @@ const messageBubbleVariant = cva("flex gap-2", {
   variants: {
     variant: {
       INCOMING: "flex self-start",
-      OUTGOING: "flex self-end flex-row-reverse",
+      OUTGOING: "flex flex-row-reverse self-end",
       ACTIVITY: "w-full",
     },
   },
@@ -16,27 +16,23 @@ const messageBubbleVariant = cva("flex gap-2", {
   },
 })
 
-export interface MessageProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof messageBubbleVariant> {
-  asChild?: boolean
-}
+export type MessageProps = HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof messageBubbleVariant> & {
+    asChild?: boolean
+  }
 
-const MessageBubble = ({
-  ref,
-  className,
-  variant,
-  asChild = false,
-  ...props
-}: MessageProps & {
-  ref?: React.RefObject<HTMLDivElement>
-}) => {
+const MessageBubble = (
+  props: MessageProps & {
+    ref?: React.RefObject<HTMLDivElement>
+  },
+) => {
+  const { ref, className, variant, asChild = false, ...rest } = props
   const Comp = asChild ? Slot : "div"
   return (
     <Comp
       className={cn(messageBubbleVariant({ variant, className }))}
       ref={ref}
-      {...props}
+      {...rest}
     />
   )
 }

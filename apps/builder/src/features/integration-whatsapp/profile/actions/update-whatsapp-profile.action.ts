@@ -1,26 +1,14 @@
 "use server"
 
+import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  updateWhatsappProfileRequest,
-  type UpdateWhatsappProfileRequest,
-} from "../schemas/update-whatsapp-profile.request"
-import {
-  chatbotIdRequestParams,
-  type ChatbotIdRequestParams,
-} from "@/features/common/schemas"
+import { updateWhatsappProfileRequest } from "../schemas/update-whatsapp-profile.request"
 
 export const updateWhatsappProfileAction = chatbotActionClient
   .inputSchema(updateWhatsappProfileRequest)
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
-      parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: UpdateWhatsappProfileRequest
-    }) => {
-      console.log(chatbotId, parsedInput)
-    },
-  )
+  .action(async () => {
+    return await {
+      success: true,
+    }
+  })

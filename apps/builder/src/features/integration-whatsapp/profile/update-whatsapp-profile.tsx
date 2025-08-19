@@ -1,13 +1,13 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Form } from "@/components/ui/form"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { updateWhatsappProfileRequest } from "./schemas/update-whatsapp-profile.request"
-import { updateWhatsappProfileAction } from "./actions/update-whatsapp-profile.action"
-import { Button } from "@/components/ui/button"
 import { T } from "@tolgee/react"
+import { updateWhatsappProfileAction } from "./actions/update-whatsapp-profile.action"
+import { updateWhatsappProfileRequest } from "./schemas/update-whatsapp-profile.request"
 
 export function UpdateWhatsappProfile({ chatbotId }: { chatbotId: string }) {
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -22,12 +22,12 @@ export function UpdateWhatsappProfile({ chatbotId }: { chatbotId: string }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitWithAction} className="flex flex-col gap-2">
-        <InputField name="about" label="About" />
-        <InputField name="description" label="Description" />
-        <InputField name="address" label="Address" />
-        <InputField name="email" label="Email" />
-        <InputField name="websiteUrl" label="Website URL" />
+      <form className="flex flex-col gap-2" onSubmit={handleSubmitWithAction}>
+        <InputField label="About" name="about" />
+        <InputField label="Description" name="description" />
+        <InputField label="Address" name="address" />
+        <InputField label="Email" name="email" />
+        <InputField label="Website URL" name="websiteUrl" />
 
         <div className="flex w-full justify-center">
           <Button>

@@ -1,7 +1,7 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
-import { Button } from "@/components/ui/button"
+import { FormInput } from "@aha.chat/ui/components/form-input"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import type { SendMessageNodeSchema, StartFlowNodeSchema } from "@aha.chat/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslate } from "@tolgee/react"

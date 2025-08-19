@@ -1,6 +1,5 @@
 "use client"
 
-import { SettingRow } from "@/components/setting-row"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,15 +10,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
+} from "@aha.chat/ui/components/ui/alert-dialog"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
+import { SettingRow } from "@/components/setting-row"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
 import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
@@ -29,7 +29,9 @@ type OpenAIConnectProps = {
   promises: Promise<[Awaited<ReturnType<typeof findIntegrationOpenAI>>]>
 }
 
-export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
+export const OpenAIConnect = (props: OpenAIConnectProps) => {
+  const { chatbotId, promises } = props
+
   const [{ data: integrationOpenAI }] = use(promises)
   const router = useRouter()
   const { t } = useTranslate()
@@ -44,12 +46,12 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
   return (
     <>
       <SettingRow
-        label={t("settings.integrations.OpenAI.Title")}
         description={t("settings.integrations.OpenAI.Descriptions")}
+        label={t("settings.integrations.OpenAI.Title")}
       >
         {integrationOpenAI ? (
           <div className="flex flex-col gap-2">
-            <Button variant="secondary" size="sm">
+            <Button size="sm" variant="secondary">
               <Link href="../google-sheets">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
@@ -57,7 +59,7 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
+                <Button size="sm" variant="destructive">
                   <T keyName="settings.integrations.DisconnectBtn" />
                 </Button>
               </AlertDialogTrigger>
@@ -75,11 +77,11 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
                     <T keyName="Integration.CancelBtn" />
                   </AlertDialogCancel>
                   <AlertDialogAction
+                    disabled={isPendingDisconnect}
                     onClick={async (e) => {
                       e.preventDefault()
                       await onDisconnect()
                     }}
-                    disabled={isPendingDisconnect}
                   >
                     {isPendingDisconnect && (
                       <Loader2Icon className="animate-spin" />
@@ -96,24 +98,24 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
       </SettingRow>
 
       {integrationOpenAI && (
-        <div className="flex flex-col gap-4 mt-4">
+        <div className="mt-4 flex flex-col gap-4">
           <SettingRow
-            label={t("settings.integrations.AutomatedResponses.Title")}
             description={t(
               "settings.integrations.AutomatedResponses.Descriptions",
             )}
+            label={t("settings.integrations.AutomatedResponses.Title")}
           >
             <Switch
-              disabled={true}
               checked={integrationOpenAI.automatedResponse}
+              disabled={true}
             />
           </SettingRow>
 
           <SettingRow
-            label={t("settings.integrations.Agents.Title")}
             description={t("settings.integrations.Agents.Descriptions")}
+            label={t("settings.integrations.Agents.Title")}
           >
-            <Button variant="secondary" size="sm" asChild>
+            <Button asChild size="sm" variant="secondary">
               <Link href="../ai-agents">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>
@@ -121,10 +123,10 @@ export const OpenAIConnect = ({ chatbotId, promises }: OpenAIConnectProps) => {
           </SettingRow>
 
           <SettingRow
-            label={t("settings.integrations.AITriggers.Title")}
             description={t("settings.integrations.AITriggers.Descriptions")}
+            label={t("settings.integrations.AITriggers.Title")}
           >
-            <Button variant="secondary" size="sm">
+            <Button size="sm" variant="secondary">
               <Link href="../ai-triggers">
                 <T keyName="settings.integrations.ManageBtn" />
               </Link>

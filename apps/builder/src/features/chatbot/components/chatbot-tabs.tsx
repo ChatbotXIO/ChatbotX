@@ -1,6 +1,6 @@
 "use client"
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@aha.chat/ui/components/ui/tabs"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -17,7 +17,7 @@ export default function ChatbotTabs({ tabs }: { tabs: Tab[] }) {
     tabs.find((tab) => pathname.startsWith(tab.path))?.value || tabs[0]?.value
 
   return (
-    <Tabs value={activeTab} className="w-full">
+    <Tabs className="w-full" value={activeTab}>
       <TabsList>
         {tabs.map((tab) => (
           <Link href={tab.path} key={tab.value} passHref>

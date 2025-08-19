@@ -1,19 +1,26 @@
 "use client"
 
-import { UserSelect } from "@/features/users/user-select"
 import { T } from "@tolgee/react"
 import { MessageCirclePlusIcon } from "lucide-react"
+import { UserSelect } from "@/features/users/user-select"
 import { BaseStepEditor } from "../base/editor"
 
-const AssignConversationStepEditor = ({
-  parentName,
-}: { parentName: string }) => {
+type AssignConversationStepEditorProps = {
+  parentName: string
+}
+
+const AssignConversationStepEditor = (
+  props: AssignConversationStepEditorProps,
+) => {
   return (
     <BaseStepEditor
       icon={MessageCirclePlusIcon}
       title={<T keyName="flows.StepType.AssignConversation" />}
     >
-      <UserSelect name={`${parentName}.assignedId`} label="Choose agent" />
+      <UserSelect
+        label="Choose agent"
+        name={`${props.parentName}.assignedId`}
+      />
     </BaseStepEditor>
   )
 }

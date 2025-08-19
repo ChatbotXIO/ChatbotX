@@ -1,6 +1,6 @@
-import { StepType } from "./step-action"
-import { openAIDefaultFn, openAISchema } from "./open-ai"
 import { z } from "zod"
+import { openAIDefaultFn, openAISchema } from "./open-ai"
+import { StepType } from "./step-action"
 
 export const openAIGenerateTextAgentSchema = openAISchema.extend({
   stepType: z.literal(StepType.OPENAI_GENERATE_TEXT_AGENT),

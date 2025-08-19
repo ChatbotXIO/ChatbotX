@@ -1,14 +1,14 @@
 import type { Node } from "@xyflow/react"
 import { z } from "zod"
+import { addNotesNodeSchema } from "./add-notes"
 import { NodeType } from "./node-config"
 import {
-  sendMessageNodeSchema,
   type SendMessageNodeSchema,
+  sendMessageNodeSchema,
 } from "./send-message"
-import { addNotesNodeSchema } from "./add-notes"
 import { splitTrafficNodeSchema } from "./split-traffic"
-import { waitNodeSchema } from "./wait"
 import { startFlowNodeSchema } from "./start-flow"
+import { waitNodeSchema } from "./wait"
 
 export const nodeSchema = z
   .object({
@@ -82,10 +82,10 @@ export type NodeData = SendMessageNodeSchema["data"]
 
 export type FlowNode = Node<NodeData>
 
-export * from "./node-config"
-export * from "./split-traffic"
 export * from "./add-notes"
+export * from "./node-config"
+export * from "./send-message"
+export * from "./split-traffic"
 export * from "./split-traffic"
 export * from "./start-flow"
 export * from "./wait"
-export * from "./send-message"

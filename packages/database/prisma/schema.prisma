@@ -846,6 +846,7 @@ enum IntegrationType {
 }
 
 enum InboxType {
+  OMNICHANNEL
   CHAT_WIDGET
   INSTAGRAM
   MESSENGER

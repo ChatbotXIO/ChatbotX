@@ -1,9 +1,9 @@
 import { prisma } from "@aha.chat/database"
+import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
 import type { ChatJobSendMessage } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
 import { allIntegrations } from "../../shared/integrations"
 import { getIntegrationAuth } from "./integration.query"
-import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
 
 export async function sendMessageToExternal(data: ChatJobSendMessage) {
   const { conversation, message } = data.data
@@ -32,7 +32,7 @@ export async function sendMessageToExternal(data: ChatJobSendMessage) {
   await intergationDetail.runAction("sendMessage", {
     ctx: {
       chatbot: inbox.chatbot,
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: wip
       auth: integrationAuth as any,
     },
     conversation,
@@ -73,7 +73,7 @@ export async function sendFlowStepToExternal({
   await intergationDetail.runAction("sendFlowStep", {
     ctx: {
       chatbot: inbox.chatbot,
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: wip
       auth: integrationAuth as any,
     },
     conversation,

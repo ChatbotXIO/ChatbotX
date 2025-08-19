@@ -6,4 +6,5 @@ export const allIntegrations = {
   [InboxType.INSTAGRAM]: undefined,
   [InboxType.MESSENGER]: undefined,
   [InboxType.WHATSAPP]: integrationWhatsapp,
+  [InboxType.OMNICHANNEL]: undefined,
 }

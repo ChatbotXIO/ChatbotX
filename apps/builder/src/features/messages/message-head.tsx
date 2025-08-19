@@ -11,9 +11,9 @@ export default function MessageHead() {
 
   return (
     <div className="pb-3">
-      <div className="flex items-center gap-2 border-b pb-3 px-3">
+      <div className="flex items-center gap-2 border-b px-3 pb-3">
         <div className="flex-1">
-          <div className="font-medium text-semibold truncate">
+          <div className="truncate font-medium text-semibold">
             {activeConversation?.contact?.fullName}
           </div>
         </div>

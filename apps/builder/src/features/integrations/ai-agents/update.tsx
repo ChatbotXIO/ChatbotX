@@ -1,24 +1,17 @@
 "use client"
 
-import { FormInput } from "@/components/form-input"
-import { InputField } from "@/components/form/input-field"
-import { TextareaField } from "@/components/form/textarea-field"
-import { Button } from "@/components/ui/button"
+import type { AIAgentModel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
-import { updateAIAgentAction } from "@/features/integrations/ai-agents/actions/update.action"
-import {
-  type MessageSchema,
-  updateAIAgentRequest,
-} from "@/features/integrations/ai-agents/schemas/update.schema"
-import type { AIAgentModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -27,6 +20,12 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
+import { updateAIAgentAction } from "@/features/integrations/ai-agents/actions/update.action"
+import {
+  type MessageSchema,
+  updateAIAgentRequest,
+} from "@/features/integrations/ai-agents/schemas/update.schema"
 
 export function UpdateAIAgentDialog({
   chatbotId,
@@ -108,7 +107,7 @@ export function UpdateAIAgentDialog({
   }, [agent, reset])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>{t("aiAgents.update.title")}</DialogTitle>
@@ -118,37 +117,36 @@ export function UpdateAIAgentDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
-              <InputField name="name" label={t("aiAgent.name")} />
+              <InputField label={t("aiAgent.name")} name="name" />
 
-              <TextareaField name="prompt" label={t("aiAgent.prompt")} />
+              <TextareaField label={t("aiAgent.prompt")} name="prompt" />
 
-              <div className="flex flex-col space-y-2 overflow-auto max-h-[300px]">
+              <div className="flex max-h-[300px] flex-col space-y-2 overflow-auto">
                 {fields.map((item, index) => (
                   <div className="flex items-center space-x-2" key={item.id}>
                     <div className="w-[100px]">
-                      <FormInput name={`messages.${index}.role`} label="">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          className="w-[100px] capitalize"
-                          onClick={() => onChangeRole(index)}
-                        >
-                          {item.role}
-                        </Button>
-                      </FormInput>
+                      <InputField name={`messages.${index}.role`} />
+                      <Button
+                        className="w-[100px] capitalize"
+                        onClick={() => onChangeRole(index)}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {item.role}
+                      </Button>
                     </div>
                     <div className="w-[calc(100%-160px)]">
-                      <FormInput name={`messages.${index}.content`} label="" />
+                      <InputField name={`messages.${index}.content`} />
                     </div>
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
                       className="w-[60px]"
                       onClick={() => remove(index)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
                     >
                       <XIcon size={20} />
                     </Button>
@@ -157,24 +155,24 @@ export function UpdateAIAgentDialog({
               </div>
 
               <div>
-                <Button type="button" onClick={addOptions}>
+                <Button onClick={addOptions} type="button">
                   {t("common.add-more")}
                 </Button>
               </div>
 
               <div className="flex justify-end gap-4">
                 <Button
+                  onClick={() => onOpenChange(false)}
                   type="button"
                   variant="ghost"
-                  onClick={() => onOpenChange(false)}
                 >
                   {t("common.cancel-btn")}
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

@@ -1,15 +1,15 @@
 "use server"
 
-import {
-  chatbotIdRequestParams,
-  type ChatbotIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
-  removeContactTagRequest,
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+import {
   type RemoveContactTagRequest,
+  removeContactTagRequest,
 } from "../schemas/remove-contact-tag.request"
 
 export const removeContactTagAction = chatbotActionClient
@@ -34,7 +34,9 @@ export const removeContactTagAction = chatbotActionClient
           id: true,
         },
       })
-      if (contacts.length === 0) return
+      if (contacts.length === 0) {
+        return
+      }
 
       await prisma.$transaction(async (tx) => {
         for (const contact of contacts) {

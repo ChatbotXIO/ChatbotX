@@ -1,16 +1,16 @@
-import { getCurrentUserId } from "@/lib/auth"
-import { AppSidebar } from "@/components/app-sidebar"
-import { cn } from "@/components/lib/utils"
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@aha.chat/ui/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+} from "@aha.chat/ui/components/ui/sidebar"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { AppSidebar } from "@/components/app-sidebar"
+import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
+import { getCurrentUserId } from "@/lib/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export default async function ChatbotLayout({
   children,
@@ -19,7 +19,7 @@ export default async function ChatbotLayout({
 }: {
   children: React.ReactNode
   breadcrumb: React.ReactNode
-  params: Promise<{ chatbotId: string; all: string[] }>
+  params: Promise<{ chatbotId: string }>
 }) {
   const userId = await getCurrentUserId()
   const allParams = await params
@@ -46,14 +46,14 @@ export default async function ChatbotLayout({
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
-        chatbotId={chatbotId}
         allChatbotsPromise={allChatbotsPromise}
+        chatbotId={chatbotId}
       />
       <SidebarInset>
         {!isInboxPage && (
           <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Separator className="mr-2 h-4" orientation="vertical" />
             {breadcrumb}
           </header>
         )}

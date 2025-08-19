@@ -5,7 +5,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@aha.chat/ui/components/ui/breadcrumb"
 import { useParams } from "next/navigation"
 import { FlowEditToolbar } from "./flow-edit-toolbar"
 
@@ -21,8 +21,8 @@ export function FrameHeader() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              href={`/chatbots/${chatbotId}/flows`}
               className="capitalize"
+              href={`/chatbots/${chatbotId}/flows`}
             >
               Flows
             </BreadcrumbLink>

@@ -17,6 +17,10 @@
       "cache": false,
       "persistent": true
     },
+    "packages:dev": {
+      "cache": false,
+      "persistent": true
+    },
     "//#format-and-lint": {},
     "//#format-and-lint:fix": {
       "cache": false
@@ -27,9 +31,6 @@
     "db:migrate": {
       "cache": false,
       "persistent": true
-    },
-    "db:deploy": {
-      "cache": false
     },
     "db:reset": {
       "cache": false

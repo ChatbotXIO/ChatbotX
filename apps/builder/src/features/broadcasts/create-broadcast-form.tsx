@@ -1,29 +1,28 @@
 "use client"
 
-import { SelectField } from "@/components/form/select-field"
-import { MessengerIcon } from "@/components/icons/messenger"
-import WhatsappIcon from "@/components/icons/whatsapp"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { DateTimePicker } from "@/components/ui/date-picker"
-import { Form } from "@/components/ui/form"
-import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
-import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import {
   type BroadcastSchedulesType,
   BroadcastSubaction,
-  InboxType,
+  type InboxType,
 } from "@aha.chat/database/types"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { add } from "date-fns"
-import { AtomIcon, Loader2Icon } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import { use, useState } from "react"
 import { toast } from "sonner"
+import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
+import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import { FlowSelect } from "../flows/flow-select"
 import type { listInboxes } from "../inboxes/queries"
+import { InboxTypeSelect } from "./components/inbox-type-select"
 
 export function CreateBroadcastForm({
   chatbotId,
@@ -93,12 +92,12 @@ export function CreateBroadcastForm({
 
   return (
     <div className="flex justify-center">
-      <Card key={t.name} className="w-5/6">
+      <Card className="w-5/6" key={t.name}>
         <CardContent className="py-4">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
               {!hasInboxType && (
                 <InboxTypeSelect
@@ -110,47 +109,47 @@ export function CreateBroadcastForm({
               {hasInboxType && hasSubAction && (
                 <>
                   <FlowSelect
+                    isRequired={true}
                     label="Flow to send"
                     name="flowId"
-                    isRequired={true}
                   />
 
                   <SelectField
-                    name="schedulesType"
+                    defaultValue="Now"
                     label={t("broadcasts.scheduleSendMessage")}
-                    options={schedulesOptions}
+                    name="schedulesType"
                     // onValueChange={(value) =>
                     //   setSchedulesType(value as BroadcastSchedulesType)
                     // }
-                    defaultValue="Now"
+                    options={schedulesOptions}
                   />
 
                   {schedulesType === "FUTURE" && (
                     <DateTimePicker
-                      granularity="minute"
                       displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-                      value={add(new Date(), { minutes: 15 })}
+                      granularity="minute"
                       onChange={(value) => {
                         setValue(
                           "schedulesAt",
                           (value ?? new Date()).toISOString(),
                         )
                       }}
+                      value={add(new Date(), { minutes: 15 })}
                     />
                   )}
 
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" asChild>
+                    <Button asChild variant="outline">
                       <Link href={`/chatbots/${chatbotId}/broadcasts`}>
                         Cancel
                       </Link>
                     </Button>
 
                     <Button
-                      type="submit"
                       disabled={
                         !form.formState.isValid || form.formState.isSubmitting
                       }
+                      type="submit"
                     >
                       {form.formState.isSubmitting && (
                         <Loader2Icon className="animate-spin" />
@@ -165,61 +164,5 @@ export function CreateBroadcastForm({
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-const InboxTypeSelect = ({
-  inboxTypes,
-  onSelectInboxType,
-}: {
-  inboxTypes: string[]
-  onSelectInboxType: (inboxType: InboxType | null) => void
-}) => {
-  const allTypes = [
-    {
-      icon: <MessengerIcon />,
-      name: "Messenger",
-      value: InboxType.MESSENGER,
-      description: "",
-    },
-    {
-      icon: <WhatsappIcon />,
-      name: "Whatsapp",
-      value: InboxType.WHATSAPP,
-      description: "",
-    },
-  ]
-
-  const validTypes = []
-  for (const t of allTypes) {
-    if (inboxTypes.includes(t.value ?? "")) {
-      validTypes.push(t)
-    }
-  }
-  validTypes.push({
-    icon: <AtomIcon />,
-    name: "Omnichannel",
-    value: null,
-    description:
-      "Send a flow to all contacts. You can send messages or executes actions.",
-  })
-
-  return (
-    <>
-      {validTypes.map((t) => (
-        <div className="flex items-center w-full gap-2" key={t.value}>
-          <span className="flex-1 flex gap-2">
-            {t.icon}
-            {t.name}
-          </span>
-          <Button
-            variant="secondary"
-            onClick={() => onSelectInboxType(t.value)}
-          >
-            Continue
-          </Button>
-        </div>
-      ))}
-    </>
   )
 }

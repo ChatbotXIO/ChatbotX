@@ -1,9 +1,9 @@
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 import { CreateTagDialog } from "@/features/tags/create-tag-dialog"
 import { getTags } from "@/features/tags/queries"
 import { getTagsSearchParamsCache } from "@/features/tags/schemas/get-tags-schema"
 import { TagsTable } from "@/features/tags/tags-table"
-import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
 
 export default async function TagsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -22,14 +22,14 @@ export default async function TagsPage(props: {
 
   return (
     <div>
-      <div className="flex w-full justify-end mb-4">
+      <div className="mb-4 flex w-full justify-end">
         <CreateTagDialog
           chatbotId={params.chatbotId}
           folderId={search.folderId}
         />
       </div>
       <Suspense>
-        <TagsTable promises={promises} chatbotId={params.chatbotId} />
+        <TagsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
     </div>
   )

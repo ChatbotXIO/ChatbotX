@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,16 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { useParams } from "next/navigation"
-import { useState, type ReactElement } from "react"
-import { toast } from "sonner"
+} from "@aha.chat/ui/components/ui/dialog"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useParams } from "next/navigation"
 import { useAction } from "next-safe-action/hooks"
+import { type ReactElement, useState } from "react"
+import { toast } from "sonner"
 import { archiveConversationAction } from "../actions/archive-conversation.action"
 
-interface ArchiveConversationDialogProps {
+type ArchiveConversationDialogProps = {
   trigger: ReactElement
   ids: string[]
 }
@@ -45,7 +45,7 @@ export default function ArchiveConversationDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">

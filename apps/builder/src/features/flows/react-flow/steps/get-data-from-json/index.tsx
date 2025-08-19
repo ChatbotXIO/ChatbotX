@@ -3,8 +3,8 @@ import {
   getDataFromJsonStepSchema,
 } from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
-import GetdatafromJsonStepViewer from "./viewer"
 import GetDataFromJsonStepEditor from "./editor"
+import GetdatafromJsonStepViewer from "./viewer"
 
 export const getDataFromJsonStep: StepDefinition = {
   editor: GetDataFromJsonStepEditor,

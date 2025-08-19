@@ -1,17 +1,20 @@
-import { Controller, useFormContext, useWatch } from "react-hook-form"
-import { TemplateFooter } from "../components/footer"
-import { TemplateBody } from "../components/body"
-import { ButtonGroupPreview } from "../button/preview"
-import FileDropzone from "@/components/file-dropzone"
-import { CardContent } from "@/components/ui/card"
+import { CardContent } from "@aha.chat/ui/components/ui/card"
 import { memo, useCallback } from "react"
+import { Controller, useFormContext, useWatch } from "react-hook-form"
+import FileDropzone from "@/components/file-dropzone"
+import { ButtonGroupPreview } from "../button/preview"
+import { TemplateBody } from "../components/body"
+import { TemplateFooter } from "../components/footer"
 
-const TemplateDocumentPreviewComponent = ({
-  parentName = "content",
-  ...rest
-}: {
+type TemplateDocumentPreviewComponentProps = {
   parentName?: string
-}) => {
+}
+
+const TemplateDocumentPreviewComponent = (
+  props: TemplateDocumentPreviewComponentProps,
+) => {
+  const { parentName = "content", ...rest } = props
+
   const { register, unregister, control, setValue } = useFormContext()
   const showFooter = useWatch({
     control,
@@ -34,16 +37,13 @@ const TemplateDocumentPreviewComponent = ({
   )
 
   return (
-    <CardContent className="bg-white p-4 rounded">
-      <div className="w-full flex flex-col gap-4" {...rest}>
+    <CardContent className="rounded bg-white p-4">
+      <div className="flex w-full flex-col gap-4" {...rest}>
         <Controller
           control={control}
           name={`${parentName}.header.file`}
           render={() => (
             <FileDropzone
-              register={register}
-              unregister={unregister}
-              parentName={`${parentName}.header`}
               configs={{
                 uploadKeyName: "common.uploadDocument",
                 accept: {
@@ -51,8 +51,11 @@ const TemplateDocumentPreviewComponent = ({
                 },
                 isCard: true,
               }}
-              onRemove={handleRemove}
               onDrop={handleDrop}
+              onRemove={handleRemove}
+              parentName={`${parentName}.header`}
+              register={register}
+              unregister={unregister}
             />
           )}
         />

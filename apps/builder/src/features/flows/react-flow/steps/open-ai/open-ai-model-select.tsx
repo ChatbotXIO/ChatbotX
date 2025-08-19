@@ -1,17 +1,19 @@
-import { SelectField } from "@/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { openAIModelOptions } from "@/features/integration-openai/schemas"
 
 type OpenAIModelProps = {
   name: string
 }
 
-export const OpenAIModel = ({ name }: OpenAIModelProps) => {
+export const OpenAIModelSelect = (props: OpenAIModelProps) => {
+  const { name } = props
+
   return (
     <SelectField
-      name={name}
       label="Model"
-      placeholder="Select model Open AI"
+      name={name}
       options={openAIModelOptions}
+      placeholder="Select model Open AI"
     />
   )
 }

@@ -1,8 +1,7 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import WhatsappIcon from "@/components/icons/whatsapp"
-import { Button } from "@/components/ui/button"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -12,8 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -21,6 +20,7 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import { connectWhatsappAction } from "./actions/connect.action"
 import { connectWhatsappSchema } from "./schemas"
 
@@ -56,7 +56,7 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
     )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">{t("Integrations.ConnectBtn")}</Button>
       </DialogTrigger>
@@ -70,7 +70,7 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
+          <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
             <InputField
               label={t("Integrations.Whatsapp.WabaId")}
               name="wabaId"
@@ -83,19 +83,19 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
             <DialogFooter>
               <DialogClose asChild>
                 <Button
+                  onClick={resetFormAndAction}
                   type="button"
                   variant="secondary"
-                  onClick={resetFormAndAction}
                 >
                   {t("common.cancelBtn")}
                 </Button>
               </DialogClose>
 
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

@@ -1,21 +1,24 @@
 "use client"
 
 import type { SendImageStepSchema } from "@aha.chat/flow-config"
+import Image from "next/image"
 import { ButtonGroupViewer } from "../button/viewer"
 
-export const SendImageStepViewer = ({
-  data,
-}: {
+type SendImageStepViewerProps = {
   data: SendImageStepSchema
-}) => {
+}
+
+export const SendImageStepViewer = (props: SendImageStepViewerProps) => {
+  const { data } = props
+
   return (
-    <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary">
+    <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
       {data.url?.startsWith("http") && (
         <div className="h-[150px]">
-          <img
-            src={data.url}
+          <Image
             alt={data.id}
-            className="w-full h-full object-contain"
+            className="h-full w-full object-contain"
+            src={data.url}
           />
         </div>
       )}

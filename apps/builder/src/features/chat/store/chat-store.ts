@@ -1,3 +1,5 @@
+import ky from "ky"
+import { createStore } from "zustand/vanilla"
 import type {
   ConversationCollection,
   ConversationResource,
@@ -6,8 +8,6 @@ import type {
   MessageCollection,
   MessageResource,
 } from "@/features/messages/schemas"
-import ky from "ky"
-import { createStore } from "zustand/vanilla"
 
 export type ClientConversationResource = ConversationResource & {
   isActive: boolean
@@ -62,7 +62,9 @@ export const createChatStore = () => {
 
     loadMoreConversations: async (chatbotId: string) => {
       const { isLoadingConversation, hasNextConversationPage } = get()
-      if (isLoadingConversation || !hasNextConversationPage) return
+      if (isLoadingConversation || !hasNextConversationPage) {
+        return
+      }
 
       // fetch next conversation list
       const { conversations, nextCursorConversation, activeConversationId } =
@@ -117,7 +119,9 @@ export const createChatStore = () => {
 
     loadMoreMessages: async (chatbotId: string, perPage: number) => {
       const { isLoadMoreMessage, hasNextMessagePage } = get()
-      if (isLoadMoreMessage || !hasNextMessagePage) return
+      if (isLoadMoreMessage || !hasNextMessagePage) {
+        return
+      }
 
       const { nextCursorMessage, messages, activeConversationId } = get()
       set({ isLoadMoreMessage: true })

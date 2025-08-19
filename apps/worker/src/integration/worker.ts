@@ -1,15 +1,15 @@
+import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import {
-  IntegrationJobAction,
-  QueueName,
   defaultWorkerOptions,
   getRedisConnection,
+  IntegrationJobAction,
   type IntegrationJobData,
+  QueueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { receiveMessage } from "./handlers/received-message"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import { sendFlowNode } from "./handlers/send-flow-node"
 import { sendFlowPostback } from "./handlers/send-flow-postback"
 
@@ -36,7 +36,6 @@ const worker = new Worker(
         return
       }
       default:
-        console.log("Unhandled job:", job)
         return
     }
   },

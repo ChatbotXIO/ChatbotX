@@ -5,7 +5,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@aha.chat/ui/components/ui/breadcrumb"
 import { Fragment, type ReactElement } from "react"
 
 export default async function BreadcrumbSlot(props: {
@@ -31,7 +31,7 @@ export default async function BreadcrumbSlot(props: {
       breadcrumbItems.push(
         <Fragment key={href}>
           <BreadcrumbItem>
-            <BreadcrumbLink href={href} className="capitalize">
+            <BreadcrumbLink className="capitalize" href={href}>
               {route?.replaceAll("-", " ")}
             </BreadcrumbLink>
           </BreadcrumbItem>

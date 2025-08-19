@@ -1,9 +1,9 @@
+import { render } from "@react-email/components"
 import nodemailer from "nodemailer"
 import {
   LoginMagicLinkEmail,
   type LoginMagicLinkEmailProps,
 } from "./emails/login-magic-link"
-import { render } from "@react-email/components"
 import { keys } from "./keys"
 
 const env = keys()

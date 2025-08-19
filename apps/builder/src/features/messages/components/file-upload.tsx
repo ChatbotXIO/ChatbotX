@@ -1,6 +1,7 @@
-import { Button } from "@/components/ui/button"
 import type { FileWithPreview } from "@aha.chat/filesystem"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { XCircleIcon } from "lucide-react"
+import Image from "next/image"
 import { useImperativeHandle } from "react"
 import { useDropzone } from "react-dropzone"
 import { Controller, useFormContext } from "react-hook-form"
@@ -45,30 +46,30 @@ export const FileUploadPreview = ({
 
   const thumbs = getValues("files").map((file: FileWithPreview) => {
     return (
-      <div key={file.name} className="relative border rounded-md">
-        <div className="rounded-md overflow-hidden max-w-36">
+      <div className="relative rounded-md border" key={file.name}>
+        <div className="max-w-36 overflow-hidden rounded-md">
           {file.type.startsWith("image") ? (
-            <img
-              src={file.preview}
-              className="h-16"
+            <Image
               alt="file"
-              // Revoke data uri after image is loaded
+              className="h-16"
               onLoad={() => {
                 URL.revokeObjectURL(file.preview)
               }}
+              // Revoke data uri after image is loaded
+              src={file.preview}
             />
           ) : (
-            <div className="px-2 py-1 bg-white truncate text-sm">
+            <div className="truncate bg-white px-2 py-1 text-sm">
               {file.name}
             </div>
           )}
         </div>
 
         <Button
+          className="-top-2 -right-2 absolute h-auto rounded-full bg-white p-0 px-0"
+          onClick={() => onRemoveChooseFile(file.name)}
           type="button"
           variant="ghost"
-          className="absolute -top-2 -right-2 p-0 px-0 h-auto bg-white rounded-full"
-          onClick={() => onRemoveChooseFile(file.name)}
         >
           <XCircleIcon />
         </Button>
@@ -78,7 +79,7 @@ export const FileUploadPreview = ({
 
   // useEffect(() => {
   //   // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
-  //   // biome-ignore lint/complexity/noForEach: <explanation>
+  //   // biome-ignore lint/complexity/noForEach: wip
   //   return () => files.forEach((file) => URL.revokeObjectURL(file.preview))
   // }, [files])
 
@@ -99,7 +100,7 @@ export const FileUploadPreview = ({
           </div>
         )}
       />
-      <aside className="flex gap-2 items-center">{thumbs}</aside>
+      <aside className="flex items-center gap-2">{thumbs}</aside>
     </section>
   )
 }

@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server"
 import { getAgents } from "@/features/chatbot-members/queries"
 import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   request: NextRequest,

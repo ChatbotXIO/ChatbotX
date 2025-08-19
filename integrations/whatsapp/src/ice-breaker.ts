@@ -1,7 +1,7 @@
+import { SdkException } from "@aha.chat/sdk"
 import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client"
 import type { WhatsappAuthValue } from "./index"
-import { SdkException } from "@aha.chat/sdk"
 
 /**
  * Get list of ice breakers.

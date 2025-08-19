@@ -2,10 +2,10 @@ import { StepType } from "@aha.chat/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 
-export enum FormatTimezone {
-  CONTACT = "CONTACT",
-  ACCOUNT = "ACCOUNT",
-}
+export const FormatTimezone = {
+  CONTACT: "CONTACT",
+  ACCOUNT: "ACCOUNT",
+} as const
 
 export const formatDateStepSchema = z.object({
   id: z.string().cuid2(),

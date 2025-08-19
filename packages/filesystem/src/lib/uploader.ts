@@ -1,20 +1,20 @@
+import type { Readable } from "node:stream"
 import {
   PutObjectCommand,
-  S3Client,
   type PutObjectCommandInput,
+  S3Client,
 } from "@aws-sdk/client-s3"
 import {
   createPresignedPost,
   type PresignedPostOptions,
 } from "@aws-sdk/s3-presigned-post"
-import type { Readable } from "node:stream"
 import { keys } from "../keys"
 
 const env = keys()
 
 class Uploader {
-  #client: S3Client
-  #bucketName: string
+  readonly #client: S3Client
+  readonly #bucketName: string
 
   private static instance: Uploader
 
@@ -29,12 +29,12 @@ class Uploader {
             }
           : undefined,
       region: env.AWS_REGION,
-      forcePathStyle: !!env.AWS_URL,
+      forcePathStyle: Boolean(env.AWS_URL),
     })
     this.#bucketName = env.AWS_BUCKET
   }
 
-  public static getInstance(): Uploader {
+  static getInstance(): Uploader {
     if (!Uploader.instance) {
       Uploader.instance = new Uploader()
     }
@@ -63,7 +63,7 @@ class Uploader {
       Expires: 5 * 60, // 5 minutes
       Conditions: [
         // ['starts-with', '$Content-Type', 'image/'], // Only allow image files
-        ["content-length-range", 1024, 5242880], // 1KB to 5MB file size
+        ["content-length-range", 1024, 5_242_880], // 1KB to 5MB file size
       ],
       Fields: {
         "Content-Type": fileType, // MIME type of the file

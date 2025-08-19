@@ -1,9 +1,9 @@
+import {
+  sendCarouselStepDefaultFn,
+  sendCarouselStepSchema,
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { SendCarouselStepEditor } from "./editor"
-import {
-  sendCarouselStepSchema,
-  sendCarouselStepDefaultFn,
-} from "@aha.chat/flow-config"
 import { SendCarouselStepViewer } from "./viewer"
 
 export const sendCarouselStep: StepDefinition = {

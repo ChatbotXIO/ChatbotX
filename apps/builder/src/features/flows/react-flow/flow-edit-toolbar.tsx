@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import { useEdges, useNodes } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
@@ -32,7 +32,10 @@ import { updateFlowVersionSchema } from "../schemas/update-flow-schema"
 export function FlowEditToolbar({
   chatbotId,
   flowId,
-}: { chatbotId: string; flowId: string }) {
+}: {
+  chatbotId: string
+  flowId: string
+}) {
   const [isValidating, setIsValidating] = useState<boolean>(false)
   const nodes = useNodes()
   const edges = useEdges()
@@ -50,15 +53,14 @@ export function FlowEditToolbar({
     setIsValidating(true)
 
     // validate nodes & edges
-    const { success, error } = updateFlowVersionSchema.safeParse({
+    const { success } = updateFlowVersionSchema.safeParse({
       nodes,
       edges,
     })
-    if (!success) {
-      console.error(error)
-      toast.error("Some configurations are incomplete")
-    } else {
+    if (success) {
       executePublish()
+    } else {
+      toast.error("Some configurations are incomplete")
     }
     setIsValidating(false)
   }
@@ -66,18 +68,18 @@ export function FlowEditToolbar({
   return (
     <div className="flex gap-2">
       {/* <div>{isValidating}</div> */}
-      <Button variant="ghost" size="sm" className="px-1.5">
+      <Button className="px-1.5" size="sm" variant="ghost">
         <RotateCcwIcon />
       </Button>
-      <Button variant="ghost" size="sm" className="px-1.5">
+      <Button className="px-1.5" size="sm" variant="ghost">
         <RotateCwIcon />
       </Button>
       <Button
-        variant="default"
-        size="sm"
         className="ml-5"
-        onClick={onClickPublish}
         disabled={isValidating || isPendingPublish}
+        onClick={onClickPublish}
+        size="sm"
+        variant="default"
       >
         {(isValidating || isPendingPublish) && (
           <Loader2Icon className="animate-spin" />
@@ -86,7 +88,7 @@ export function FlowEditToolbar({
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="px-1.5">
+          <Button className="px-1.5" size="sm" variant="outline">
             <EllipsisIcon />
           </Button>
         </DropdownMenuTrigger>

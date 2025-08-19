@@ -1,18 +1,18 @@
 "use server"
 
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
-import { authActionClient } from "@/lib/safe-action"
 import { IntegrationType, prisma } from "@aha.chat/database"
+import { OpenAIModel } from "@aha.chat/flow-config"
 import {
   AuthType,
   IntegrationException,
   type SecretTextAuthValue,
 } from "@aha.chat/sdk"
+import {
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { authActionClient } from "@/lib/safe-action"
 import { type ConnectOpenAISchema, connectOpenAISchema } from "../schemas"
-import { OpenAIModel } from "@aha.chat/flow-config"
 
 export const connectOpenAIAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
@@ -37,17 +37,6 @@ export const connectOpenAIAction = authActionClient
       }
 
       await prisma.$transaction(async (tx) => {
-        const integrationOpenAI = await tx.integrationOpenAI.findFirst({
-          where: {
-            chatbotId,
-          },
-        })
-        if (integrationOpenAI) {
-          throw new IntegrationException(
-            "OpenAI integration is already connected",
-          )
-        }
-
         await tx.integration.create({
           data: {
             chatbotId,

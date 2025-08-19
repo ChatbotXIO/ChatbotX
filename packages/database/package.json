@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@aha.chat/logger": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/adapter-pg": "^6.11.1",
     "@prisma/client": "^6.11.1",

@@ -1,13 +1,12 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
-
 import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@aha.chat/ui/components/ui/sidebar"
+import type { LucideIcon } from "lucide-react"
 
 export function NavMain({
   items,
@@ -29,9 +28,9 @@ export function NavMain({
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton
-              tooltip={item.title}
-              isActive={item.isActive}
               asChild
+              isActive={item.isActive}
+              tooltip={item.title}
             >
               <a href={item.url}>
                 {item.icon && <item.icon />}

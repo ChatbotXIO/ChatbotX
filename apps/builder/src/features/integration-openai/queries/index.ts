@@ -3,7 +3,9 @@ import type { IntegrationOpenAIResource } from "../schemas"
 
 export const findIntegrationOpenAI = async ({
   chatbotId,
-}: { chatbotId: string }): Promise<{
+}: {
+  chatbotId: string
+}): Promise<{
   data: IntegrationOpenAIResource | null
 }> => {
   const data = await prisma.integrationOpenAI.findFirst({

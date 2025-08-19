@@ -1,20 +1,21 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   FileUpload,
   FileUploadDropzone,
   FileUploadTrigger,
-} from "@/components/ui/file-upload"
+} from "@aha.chat/ui/components/ui/file-upload"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import ky from "ky"
 import { ImageIcon, Upload } from "lucide-react"
+import Image from "next/image"
 import { useParams } from "next/navigation"
 import { useCallback } from "react"
 import { useFormContext } from "react-hook-form"
 import { toast } from "sonner"
-import { FormFieldWrapper } from "./form/field-wrapper"
-import { InputField } from "./form/input-field"
-import { Input } from "./ui/input"
 
 export function DirectUpload({ parentName }: { parentName: string }) {
   const params = useParams<{ chatbotId: string; flowId: string }>()
@@ -76,7 +77,9 @@ export function DirectUpload({ parentName }: { parentName: string }) {
 
             const formData = new FormData()
             for (const field in presignedPost[0].fields) {
-              formData.append(field, String(presignedPost[0].fields[field]))
+              if (Object.hasOwn(presignedPost[0].fields, field)) {
+                formData.append(field, String(presignedPost[0].fields[field]))
+              }
             }
             formData.append("file", file)
 
@@ -98,8 +101,8 @@ export function DirectUpload({ parentName }: { parentName: string }) {
         // Wait for all uploads to complete
         await Promise.all(uploadPromises)
       } catch (error) {
-        // This handles any error that might occur outside the individual upload processes
-        console.error("Unexpected error during upload:", error)
+        // biome-ignore lint/suspicious/noConsole: wip
+        console.error(error)
       }
     },
     [parentName, stepId, params, setValue],
@@ -120,16 +123,16 @@ export function DirectUpload({ parentName }: { parentName: string }) {
         <FormFieldWrapper name={`${parentName}.url`}>
           {(field) => (
             <FileUpload
-              value={field.value}
-              onValueChange={field.onChange}
-              onUpload={onUpload}
-              onFileReject={onFileReject}
-              maxFiles={1}
               accept="image/*"
+              maxFiles={1}
+              onFileReject={onFileReject}
+              onUpload={onUpload}
+              onValueChange={field.onChange}
+              value={field.value}
             >
               <FileUploadDropzone className="rounded-b-none border-b-0">
                 {publicUrl ? (
-                  <img src={publicUrl} alt={stepId} />
+                  <Image alt={stepId} src={publicUrl} />
                 ) : (
                   <>
                     <div className="flex flex-col items-center gap-1">
@@ -140,22 +143,22 @@ export function DirectUpload({ parentName }: { parentName: string }) {
                     <div className="flex w-full items-center gap-1">
                       <FileUploadTrigger asChild>
                         <Button
-                          variant="ghost"
-                          size="sm"
                           className="w-fit underline"
+                          size="sm"
+                          variant="ghost"
                         >
                           Upload image
                         </Button>
                       </FileUploadTrigger>
                       <div className="w-4">or</div>
                       <Button
-                        variant="ghost"
-                        size="sm"
                         className="w-fit underline"
                         onClick={(e) => {
                           e.preventDefault()
                           setValue(`${parentName}.imageMode`, "link")
                         }}
+                        size="sm"
+                        variant="ghost"
                       >
                         Insert Link
                       </Button>
@@ -167,11 +170,11 @@ export function DirectUpload({ parentName }: { parentName: string }) {
           )}
         </FormFieldWrapper>
       ) : (
-        <div className="flex w-full gap-2 p-2 items-center border-2 border-dashed border-b-0 rounded-t-lg">
+        <div className="flex w-full items-center gap-2 rounded-t-lg border-2 border-b-0 border-dashed p-2">
           <ImageIcon />
           <InputField
-            name={`${parentName}.url`}
             className="flex-1"
+            name={`${parentName}.url`}
             placeholder="Enter image URL"
           />
         </div>

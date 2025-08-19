@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { useTranslate } from "@tolgee/react"
 import { PlusIcon, XIcon } from "lucide-react"
+import { memo, useCallback, useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
-import { buttonStepDefaultFn } from "./schema"
-import { useState, useCallback, memo } from "react"
 import { EditButtonDialog } from "./edit-button-dialog"
+import { buttonStepDefaultFn } from "./schema"
 
-interface ButtonField {
+type ButtonField = {
   id: string
   text: string
 }
@@ -29,18 +29,18 @@ const ButtonItem = memo(
     const buttonText = getValues(`${parentName}.${index}.text`)
 
     return (
-      <div className="w-full flex-1 relative">
+      <div className="relative w-full flex-1">
         <Button
+          className="my-1 w-full hover:text-blue-500"
+          onClick={() => onEdit(`${parentName}.${index}`)}
           type="button"
           variant="secondary"
-          className="w-full hover:text-blue-500 my-1"
-          onClick={() => onEdit(`${parentName}.${index}`)}
         >
           {buttonText}
         </Button>
         {index >= min && (
           <XIcon
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 cursor-pointer hover:text-red-500"
+            className="-translate-y-1/2 absolute top-1/2 right-2 h-4 w-4 cursor-pointer hover:text-red-500"
             onClick={() => onRemove(index)}
           />
         )}
@@ -49,17 +49,17 @@ const ButtonItem = memo(
   },
 )
 
-const ButtonGroupPreviewComponent = ({
-  parentName,
-  changeType = true,
-  min = 0,
-  max = 3,
-}: {
+type ButtonGroupPreviewComponentProps = {
   parentName: string
   changeType?: boolean
   min?: number
   max?: number
-}) => {
+}
+
+const ButtonGroupPreviewComponent = (
+  props: ButtonGroupPreviewComponentProps,
+) => {
+  const { parentName, changeType = true, min = 0, max = 3 } = props
   const { t } = useTranslate()
   const [openModal, setOpenModal] = useState(false)
   const [openBtnName, setOpenBtnName] = useState("")
@@ -99,21 +99,21 @@ const ButtonGroupPreviewComponent = ({
     <div className="flex flex-col gap-3">
       {fields.map((field: ButtonField, index) => (
         <ButtonItem
-          key={field.id}
           index={index}
-          parentName={parentName}
+          key={field.id}
+          min={min}
           onEdit={handleEdit}
           onRemove={handleRemove}
-          min={min}
+          parentName={parentName}
         />
       ))}
 
       {fields.length < max && (
         <Button
+          className="my-1.5 w-full"
+          onClick={addButton}
           type="button"
           variant="secondary"
-          className="w-full my-1.5"
-          onClick={addButton}
         >
           <PlusIcon />
           {t("flows.addBtn")}
@@ -121,10 +121,10 @@ const ButtonGroupPreviewComponent = ({
       )}
       {openModal && (
         <EditButtonDialog
-          parentName={openBtnName}
-          open={openModal}
-          onOpenChange={handleOpenChange}
           changeType={changeType}
+          onOpenChange={handleOpenChange}
+          open={openModal}
+          parentName={openBtnName}
         />
       )}
     </div>

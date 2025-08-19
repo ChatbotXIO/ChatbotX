@@ -1,6 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,17 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useParams } from "next/navigation"
-import { useState, type ReactElement } from "react"
-import { assignConversationAction } from "../actions/assign-conversation.action"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { assignConversationSchema } from "../schemas/assign-conversation.schema"
-import { toast } from "sonner"
-import { T } from "@tolgee/react"
-import { Form } from "@/components/ui/form"
-import { FormFieldWrapper } from "@/components/form/field-wrapper"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import {
   Select,
   SelectContent,
@@ -29,14 +21,22 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@aha.chat/ui/components/ui/select"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { T } from "@tolgee/react"
+import { Loader2Icon } from "lucide-react"
+import { useParams } from "next/navigation"
+import { type ReactElement, useState } from "react"
 import type { FieldValues } from "react-hook-form"
-import { callAPI } from "@/lib/swr"
+import { toast } from "sonner"
 import type { ChatbotMemberCollection } from "@/features/chatbot-members/schemas"
 import type { InboxTeamCollection } from "@/features/inbox-teams/schemas/types"
-import { Loader2Icon } from "lucide-react"
+import { callAPI } from "@/lib/swr"
+import { assignConversationAction } from "../actions/assign-conversation.action"
+import { assignConversationSchema } from "../schemas/assign-conversation.schema"
 
-interface AssignConversationDialogProps {
+type AssignConversationDialogProps = {
   trigger: ReactElement
   contactIds: string[]
 }
@@ -96,7 +96,7 @@ export default function AssignConversationDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -107,18 +107,18 @@ export default function AssignConversationDialog({
 
         <Form {...form}>
           <form
-            onSubmit={handleSubmitWithAction}
             className="flex flex-col gap-2"
+            onSubmit={handleSubmitWithAction}
           >
             <FormFieldWrapper<FieldValues>
-              name="assignedId"
-              label="Assign To"
               isRequired={true}
+              label="Assign To"
+              name="assignedId"
             >
               {(field) => (
                 <Select
-                  onValueChange={field.onChange}
                   defaultValue={field.value}
+                  onValueChange={field.onChange}
                   {...field}
                 >
                   <SelectTrigger
@@ -130,12 +130,12 @@ export default function AssignConversationDialog({
                   <SelectContent>
                     <Button
                       className="w-full px-2"
-                      variant="secondary"
-                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation()
                         setValue("assignedId", "")
                       }}
+                      size="sm"
+                      variant="secondary"
                     >
                       Clear selection
                     </Button>
@@ -143,7 +143,7 @@ export default function AssignConversationDialog({
                     <SelectGroup>
                       <SelectLabel>Agent</SelectLabel>
                       {agentOptions.map((i) => (
-                        <SelectItem value={i.value} key={i.value}>
+                        <SelectItem key={i.value} value={i.value}>
                           {i.label}
                         </SelectItem>
                       ))}
@@ -152,7 +152,7 @@ export default function AssignConversationDialog({
                     <SelectGroup>
                       <SelectLabel>Inbox Team</SelectLabel>
                       {inboxTeamOptions.map((i) => (
-                        <SelectItem value={i.value} key={i.value}>
+                        <SelectItem key={i.value} value={i.value}>
                           {i.label}
                         </SelectItem>
                       ))}
@@ -168,10 +168,10 @@ export default function AssignConversationDialog({
               </DialogClose>
 
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

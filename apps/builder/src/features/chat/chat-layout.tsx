@@ -4,32 +4,34 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable"
+} from "@aha.chat/ui/components/ui/resizable"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
 import { MessageInput } from "../messages/components/message-input"
-import { MessageList } from "../messages/message-list"
-import { ChatStoreProvider } from "./store/chat-store-provider"
-import { ChatRealtime } from "./chat-realtime"
 import MessageHead from "../messages/message-head"
+import { MessageList } from "../messages/message-list"
+import { ChatRealtime } from "./chat-realtime"
+import { ChatStoreProvider } from "./store/chat-store-provider"
 
-export const ChatLayout = ({
-  layout = [25, 50, 25],
-}: {
-  layout: number[]
-}) => {
+type ChatLayoutProps = {
+  layout?: [number, number, number]
+}
+
+export const ChatLayout = (props: ChatLayoutProps) => {
+  const { layout = [25, 50, 25] } = props
+
   return (
     <ChatStoreProvider>
       <ResizablePanelGroup
-        direction="horizontal"
         className="h-full items-stretch"
+        direction="horizontal"
       >
         {/* CONVERSATION LIST */}
         <ResizablePanel
-          defaultSize={layout[0] ?? 25}
-          minSize={20}
-          maxSize={30}
           className="p-3"
+          defaultSize={layout[0] ?? 25}
+          maxSize={30}
+          minSize={20}
         >
           <ConversationList />
         </ResizablePanel>
@@ -37,8 +39,8 @@ export const ChatLayout = ({
         <ResizableHandle withHandle />
 
         {/* MESSAGE LIST */}
-        <ResizablePanel defaultSize={layout[1] ?? 50} className="pt-3">
-          <div className="flex flex-col w-full h-full">
+        <ResizablePanel className="pt-3" defaultSize={layout[1] ?? 50}>
+          <div className="flex h-full w-full flex-col">
             <MessageHead />
             <MessageList />
             <MessageInput />
@@ -51,10 +53,10 @@ export const ChatLayout = ({
 
         {/* CONTACT DETAIL */}
         <ResizablePanel
-          defaultSize={layout[2] ?? 25}
-          minSize={20}
-          maxSize={30}
           className="px-4 py-3"
+          defaultSize={layout[2] ?? 25}
+          maxSize={30}
+          minSize={20}
         >
           <ContactInboxPanel />
         </ResizablePanel>

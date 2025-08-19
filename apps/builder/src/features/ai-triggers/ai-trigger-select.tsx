@@ -1,12 +1,13 @@
-import { MultiSelectField } from "@/components/form/select-field"
+import { MultiSelectField } from "@aha.chat/ui/components/form/select-field"
 
-export const AITriggersMultipleSelect = ({
-  name,
-  isRequired = true,
-}: {
+type AITriggersMultipleSelectProps = {
   name: string
   isRequired?: boolean
-}) => {
+}
+
+export const AITriggersMultipleSelect = (
+  props: AITriggersMultipleSelectProps,
+) => {
   const frameworksList = [
     { value: "react", label: "React" },
     { value: "angular", label: "Angular" },
@@ -16,11 +17,6 @@ export const AITriggersMultipleSelect = ({
   ]
 
   return (
-    <MultiSelectField
-      label="AI Triggers"
-      name={name}
-      isRequired={isRequired}
-      options={frameworksList}
-    />
+    <MultiSelectField label="AI Triggers" options={frameworksList} {...props} />
   )
 }

@@ -1,5 +1,10 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { CheckCircleIcon, MailIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -11,11 +16,11 @@ export default function MagicLinkSentPage() {
         <h1 className="flex items-center gap-2 self-center font-medium text-3xl">
           <div className="flex items-center justify-center text-primary-foreground">
             <Image
+              alt="AhaChat AI"
+              height={48}
+              priority={true}
               src="/brand/logo.svg"
               width={48}
-              height={48}
-              alt="AhaChat AI"
-              priority={true}
             />
           </div>
           AhaChat AI
@@ -34,10 +39,10 @@ export default function MagicLinkSentPage() {
                 <MailIcon className="h-6 w-6 text-blue-600" />
               </div>
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   We've sent you a magic link to sign in to your account.
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Click the link in your email to continue.
                 </p>
               </div>
@@ -48,7 +53,7 @@ export default function MagicLinkSentPage() {
                 <Link href="/signin">Back to sign in</Link>
               </Button>
 
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 <p>Didn't receive the email? Check your spam folder.</p>
                 <p>You can also try signing in again with a different email.</p>
               </div>

@@ -1,17 +1,17 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import type { TagModel } from "@aha.chat/database/types"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import type { DataTableRowAction } from "@/types/data-table"
-import type { TagModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
@@ -22,7 +22,7 @@ type TagWithContacts = TagModel & {
   }
 }
 
-interface GetColumnsProps {
+type GetColumnsProps = {
   setRowAction: Dispatch<SetStateAction<DataTableRowAction<TagModel> | null>>
   handleCopy: (id: string) => void
 }
@@ -36,21 +36,23 @@ export function getTagColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
+          aria-label="Select all"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
           }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
           className="translate-y-0.5"
+          onCheckedChange={(value) =>
+            table.toggleAllPageRowsSelected(Boolean(value))
+          }
         />
       ),
       cell: ({ row }) => (
         <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
+          checked={row.getIsSelected()}
           className="translate-y-0.5"
+          onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
         />
       ),
       size: 50,
@@ -86,10 +88,10 @@ export function getTagColumns({
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label="Open menu"
-                variant="ghost"
                 className="flex size-8 p-0 data-[state=open]:bg-muted"
+                variant="ghost"
               >
-                <EllipsisVerticalIcon className="size-4" aria-hidden="true" />
+                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">

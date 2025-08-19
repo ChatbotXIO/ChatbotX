@@ -1,5 +1,5 @@
-import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
 import { z } from "zod"
+import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
 
 export const messageSchema = z.object({
   role: z.nativeEnum(OpenAIMessageRole).optional(),

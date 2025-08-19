@@ -1,14 +1,14 @@
 "use server"
 
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
 import {
-  bulkUpdateIdsRequest,
-  chatbotIdRequestParams,
   type BulkUpdateIdsRequest,
+  bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteTagAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

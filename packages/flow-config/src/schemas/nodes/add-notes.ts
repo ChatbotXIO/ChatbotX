@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { baseNodeSchema, NodeType, type NewNodeProps } from "./node-config"
+import { baseNodeSchema, type NewNodeProps, NodeType } from "./node-config"
 
 export const addNotesNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.AddNotes),

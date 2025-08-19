@@ -1,26 +1,26 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import { Button } from "@/components/ui/button"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import type { listBroadcasts } from "@/features/broadcasts/queries"
-import { useDataTable } from "@/hooks/use-data-table"
-import { formatDate } from "@/lib/format"
-import type { DataTableRowAction } from "@/types/data-table"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import { formatDate } from "@aha.chat/ui/lib/format"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon } from "lucide-react"
 import React, { useMemo, useState } from "react"
+import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import type { BroadcastResource } from "./schemas/get-broadcasts-schema"
 
-interface BroadcastsTableProps {
+type BroadcastsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listBroadcasts>>]>
 }
 
@@ -81,7 +81,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
                   <span className="sr-only">Open menu</span>
                 </Button>
@@ -129,9 +129,9 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       </DataTable>
 
       <RenameBroadcastDialog
-        open={rowAction?.variant === "rename"}
-        onOpenChange={() => setRowAction(null)}
         broadcast={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "rename"}
       />
     </>
   )

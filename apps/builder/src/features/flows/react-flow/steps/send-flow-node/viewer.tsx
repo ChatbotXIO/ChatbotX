@@ -2,13 +2,15 @@
 
 import type { SendFlowNodeStepSchema } from "@aha.chat/flow-config"
 
-const SendFlowNodeStepViewer = ({
-  data,
-}: {
+type SendFlowNodeStepViewerProps = {
   data: SendFlowNodeStepSchema
-}) => {
+}
+
+const SendFlowNodeStepViewer = (props: SendFlowNodeStepViewerProps) => {
+  const { data } = props
+
   return (
-    <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary">
+    <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
       <p className="px-4 py-2">{data.nodeId}</p>
     </div>
   )

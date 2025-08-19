@@ -1,9 +1,15 @@
-import { ButtonGroupEditor } from "../button/editor"
 import { DirectUpload } from "@/components/direct-upload"
+import { ButtonGroupEditor } from "../button/editor"
 
-const SendImageStepEditor = ({ parentName }: { parentName: string }) => {
+type SendImageStepEditorProps = {
+  parentName: string
+}
+
+const SendImageStepEditor = (props: SendImageStepEditorProps) => {
+  const { parentName } = props
+
   return (
-    <div className="items-center rounded-lg overflow-hidden justify-center">
+    <div className="items-center justify-center overflow-hidden rounded-lg">
       <DirectUpload parentName={parentName} />
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />

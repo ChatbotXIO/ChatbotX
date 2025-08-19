@@ -1,3 +1,4 @@
+import { StepType } from "@aha.chat/flow-config"
 import {
   ContentType,
   type Context,
@@ -13,11 +14,10 @@ import type {
   ServerSentMessageResponse,
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../client"
-import type { WhatsappAuthValue } from "../schemas"
-import { StepType } from "@aha.chat/flow-config"
-import { convertFlowStepText } from "./send-text"
-import { convertFlowStepImage } from "./send-image"
 import { logger } from "../lib/logger"
+import type { WhatsappAuthValue } from "../schemas"
+import { convertFlowStepImage } from "./send-image"
+import { convertFlowStepText } from "./send-text"
 
 export function* convertMessageToWhatsappMessage(
   message: MessageEntity,

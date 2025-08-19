@@ -1,11 +1,11 @@
+import type { StepType } from "@aha.chat/flow-config"
 import {
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu"
-import type { StepType } from "@aha.chat/flow-config"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import type { MenuItem } from "../nodes/types"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
@@ -35,8 +35,8 @@ export default function RecursiveDropdownMenu({
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <RecursiveDropdownMenu
-                  key={menuItem.stepType ?? index}
                   data={menuItem.children}
+                  key={menuItem.stepType ?? index}
                   onClick={onClick}
                 />
               </DropdownMenuSubContent>

@@ -1,19 +1,23 @@
 "use client"
 
-import { InstagramIcon } from "@/components/icons/instagram"
-import { MessengerIcon } from "@/components/icons/messenger"
-import WhatsappIcon from "@/components/icons/whatsapp"
-import { cn } from "@/components/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@aha.chat/ui/components/ui/avatar"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
+import { InstagramIcon } from "@/components/icons/instagram"
+import { MessengerIcon } from "@/components/icons/messenger"
+import WhatsappIcon from "@/components/icons/whatsapp"
 import type { ContactResource } from "../contacts/schemas"
-import type { ConversationResource } from "./schemas"
 import type { MessageResource } from "../messages/schemas"
+import type { ConversationResource } from "./schemas"
 
-interface ConversationItemProps {
+type ConversationItemProps = {
   conversation: ConversationResource
   isActive: boolean
   onSelect: () => void
@@ -22,7 +26,7 @@ interface ConversationItemProps {
 const assignedIcon = (conversation: ConversationResource) => {
   if (conversation.assignedUserId) {
     return (
-      <Avatar className="w-4 h-4">
+      <Avatar className="h-4 w-4">
         <AvatarImage src={conversation.assignedUser?.image ?? ""} />
         <AvatarFallback>
           {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
@@ -32,12 +36,12 @@ const assignedIcon = (conversation: ConversationResource) => {
   }
   if (conversation.assignedInboxTeamId) {
     return (
-      <div className="rounded-full border border-zinc-600 bg-secondary overflow-hidden">
+      <div className="overflow-hidden rounded-full border border-zinc-600 bg-secondary">
         <UsersRoundIcon size={16} strokeWidth={1} />
       </div>
     )
   }
-  return <></>
+  return
 }
 
 const sourceIcon = (contact: ContactResource) => {
@@ -50,7 +54,7 @@ const sourceIcon = (contact: ContactResource) => {
       return <MessengerIcon />
     default:
       return (
-        <div className="bg-white rounded-full">
+        <div className="rounded-full bg-white">
           <GlobeIcon />
         </div>
       )
@@ -76,10 +80,10 @@ export default function ConversationItem({
 
   const contactAvatar = useMemo(() => {
     return (
-      <Avatar className="w-12 h-12 ">
+      <Avatar className="h-12 w-12">
         <AvatarImage
-          src={conversation.contact?.avatar ?? ""}
           alt={conversation.contact?.fullName}
+          src={conversation.contact?.avatar ?? ""}
         />
         <AvatarFallback className="bg-zinc-500">
           {conversation.contact?.fullName.charAt(0)}
@@ -89,31 +93,32 @@ export default function ConversationItem({
   }, [conversation.contact])
 
   return (
-    <div className="w-full" onClick={() => onSelect()} onKeyUp={() => {}}>
+    <div className="w-full">
       <Button
+        className="h-auto w-full justify-center px-3 py-2 font-normal"
+        onClick={() => onSelect()}
         variant={isActive ? "secondary" : "ghost"}
-        className="h-auto w-full justify-center font-normal px-3 py-2"
       >
         <div className="relative">
           {contactAvatar}
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
+          <div className="-translate-x-1/2 absolute bottom-0 left-1/2 translate-y-1/2 transform">
             {assignedIcon(conversation)}
           </div>
-          <div className="absolute bottom-0 right-0 transform">
-            {/* biome-ignore lint/style/noNonNullAssertion: <explanation> */}
+          <div className="absolute right-0 bottom-0 transform">
+            {/* biome-ignore lint/style/noNonNullAssertion: wip */}
             {sourceIcon(conversation.contact!)}
           </div>
         </div>
 
         <div className="flex-1 overflow-hidden">
           <div className="flex justify-between">
-            <span className="text-left font-semibold truncate">
+            <span className="truncate text-left font-semibold">
               {contactFullName}
             </span>
           </div>
           <p
             className={cn(
-              "text-sm text-gray-600 w-full text-left truncate",
+              "w-full truncate text-left text-gray-600 text-sm",
               isSeen ? "font-semibold" : "",
             )}
           >

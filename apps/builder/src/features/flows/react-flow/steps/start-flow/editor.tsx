@@ -1,16 +1,12 @@
 "use client"
 
-import { FlowSelect } from "@/features/flows/flow-select"
 import { T } from "@tolgee/react"
 import { ExternalLink } from "lucide-react"
 import { useFormContext } from "react-hook-form"
+import { FlowSelect } from "@/features/flows/flow-select"
 import { BaseStepEditor } from "../base/editor"
 
-export const StartFlowStepEditor = ({
-  parentName,
-}: {
-  parentName: string
-}) => {
+export const StartFlowStepEditor = ({ parentName }: { parentName: string }) => {
   const { register } = useFormContext()
   const { name } = register(`${parentName}.flowId`)
 
@@ -19,7 +15,7 @@ export const StartFlowStepEditor = ({
       icon={ExternalLink}
       title={<T keyName="flows.StepType.StartFlow" />}
     >
-      <FlowSelect name={name} label="" isRequired={true} />
+      <FlowSelect isRequired={true} label="" name={name} />
     </BaseStepEditor>
   )
 }

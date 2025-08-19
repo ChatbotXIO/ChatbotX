@@ -1,9 +1,9 @@
-import type { StepDefinition } from ".."
-import PerformActionStepEditor from "./editor"
 import {
   performActionStepDefaultFn,
   performActionStepSchema,
 } from "@aha.chat/flow-config"
+import type { StepDefinition } from ".."
+import PerformActionStepEditor from "./editor"
 import PerformActionStepViewer from "./viewer"
 
 const performActionStep: StepDefinition = {

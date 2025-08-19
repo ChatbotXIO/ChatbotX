@@ -1,7 +1,7 @@
-import WhatsappIcon from "@/components/icons/whatsapp"
 import { BroadcastSubaction, InboxType } from "@aha.chat/database/types"
 import { AtomIcon } from "lucide-react"
-import { useMemo, type ReactNode } from "react"
+import { type ReactNode, useMemo } from "react"
+import WhatsappIcon from "@/components/icons/whatsapp"
 
 export function CreateBroadcastHeader(
   inboxType: InboxType | null,

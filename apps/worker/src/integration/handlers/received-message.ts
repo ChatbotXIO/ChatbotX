@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from "@aha.chat/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import {
   type ContentType,
   type ConversationModel,

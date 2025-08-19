@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -16,9 +16,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
+} from "@aha.chat/ui/components/ui/form"
+import { Input } from "@aha.chat/ui/components/ui/input"
+import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -32,7 +32,10 @@ import { createTagSchema } from "./schemas/create-tag-schema"
 export function CreateTagDialog({
   chatbotId,
   folderId,
-}: { chatbotId: string; folderId: string | null }) {
+}: {
+  chatbotId: string
+  folderId: string | null
+}) {
   const { t } = useTranslate()
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -66,7 +69,7 @@ export function CreateTagDialog({
     )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
@@ -81,8 +84,8 @@ export function CreateTagDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
               <FormField
                 control={form.control}
@@ -106,8 +109,8 @@ export function CreateTagDialog({
                     <FormLabel>{t("tags.syncToMessenger")}</FormLabel>
                     <FormControl>
                       <Switch
-                        className="mt-0!"
                         checked={field.value}
+                        className="mt-0!"
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
@@ -118,17 +121,17 @@ export function CreateTagDialog({
 
               <div className="flex justify-end gap-4">
                 <Button
+                  onClick={() => setOpen(false)}
                   type="button"
                   variant="ghost"
-                  onClick={() => setOpen(false)}
                 >
                   {t("common.cancel-btn")}
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

@@ -1,13 +1,13 @@
-import {
-  Button,
-  Interactive,
-  ActionButtons,
-  Body,
-  Image,
-  Header,
-} from "whatsapp-api-js/messages"
 import type { SendImageStepSchema } from "@aha.chat/flow-config"
 import { chunk } from "remeda"
+import {
+  ActionButtons,
+  Body,
+  Button,
+  Header,
+  Image,
+  Interactive,
+} from "whatsapp-api-js/messages"
 import { MAX_BUTTONS } from "./shared"
 
 export function* convertFlowStepImage(
@@ -19,8 +19,8 @@ export function* convertFlowStepImage(
   } else {
     const chunks = chunk(payload.buttons, MAX_BUTTONS)
 
-    for (const chunk of chunks) {
-      const buttons = chunk.map(
+    for (const c1 of chunks) {
+      const buttons = c1.map(
         (button) => new Button(`${flowVersionId}_${button.id}`, button.label),
       )
 

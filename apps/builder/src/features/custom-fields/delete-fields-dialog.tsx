@@ -1,6 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { FieldType } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,8 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import type { FieldType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -21,13 +21,12 @@ import { toast } from "sonner"
 import { deleteFieldsAction } from "./actions/delete-custom-field.action"
 import type { CustomFieldResource } from "./schemas"
 
-interface DeleteFieldsDialogProps
-  extends ComponentPropsWithoutRef<typeof Dialog> {
+type DeleteFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
   records: Row<CustomFieldResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
-  onOpenChange: (val: boolean) => void
+  onOpenChange?: (val: boolean) => void
   fieldType: FieldType
 }
 
@@ -47,7 +46,7 @@ export function DeleteFieldsDialog({
     {
       onSuccess: () => {
         toast.success(t("field.deleted"))
-        onOpenChange(false)
+        onOpenChange?.(false)
       },
       onError: ({ error }) => {
         error.serverError && toast.error(error.serverError)
@@ -59,8 +58,8 @@ export function DeleteFieldsDialog({
     <Dialog {...props}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Trash className="mr-2 size-4" aria-hidden="true" />
+          <Button size="sm" variant="outline">
+            <Trash aria-hidden="true" className="mr-2 size-4" />
             {t("common.deleteBtn")} ({records.length})
           </Button>
         </DialogTrigger>
@@ -78,12 +77,12 @@ export function DeleteFieldsDialog({
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
-            variant="destructive"
-            onClick={() => execute({ ids: records.map((r) => r.id) })}
             disabled={isPending}
+            onClick={() => execute({ ids: records.map((r) => r.id) })}
+            variant="destructive"
           >
             {isPending && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
             {t("common.deleteBtn")}
           </Button>

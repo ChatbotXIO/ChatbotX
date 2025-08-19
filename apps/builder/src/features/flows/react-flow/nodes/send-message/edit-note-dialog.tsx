@@ -1,20 +1,20 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+} from "@aha.chat/ui/components/ui/hover-card"
+import { Label } from "@aha.chat/ui/components/ui/label"
+import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { useTranslate } from "@tolgee/react"
 import { CodeIcon } from "lucide-react"
 import { useState } from "react"
@@ -42,14 +42,14 @@ export function EditNoteDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("flows.StepType.AddNote")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div>
-          <HoverCard openDelay={0} closeDelay={0}>
+          <HoverCard closeDelay={0} openDelay={0}>
             <Label className="font-bold">Input Text</Label>
             <HoverCardTrigger asChild>
               <Textarea
@@ -59,11 +59,11 @@ export function EditNoteDialog({
               />
             </HoverCardTrigger>
             <HoverCardContent
-              className="flex gap-2 p-2 w-auto -mt-3 rounded-tr-none rounded-tl-none"
-              side="bottom"
               align="end"
+              className="-mt-3 flex w-auto gap-2 rounded-tl-none rounded-tr-none p-2"
+              side="bottom"
             >
-              <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCard closeDelay={0} openDelay={0}>
                 <HoverCardTrigger asChild>
                   <CodeIcon size={16} />
                 </HoverCardTrigger>
@@ -78,15 +78,15 @@ export function EditNoteDialog({
             </HoverCardContent>
           </HoverCard>
 
-          <div className="flex justify-end gap-4 mt-4">
+          <div className="mt-4 flex justify-end gap-4">
             <Button
+              onClick={() => onOpenChange(false)}
               type="button"
               variant="ghost"
-              onClick={() => onOpenChange(false)}
             >
               {t("common.cancel-btn")}
             </Button>
-            <Button type="submit" onClick={editNote}>
+            <Button onClick={editNote} type="submit">
               {t("common.confirm-btn")}
             </Button>
           </div>

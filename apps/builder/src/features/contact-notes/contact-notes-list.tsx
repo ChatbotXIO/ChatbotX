@@ -1,7 +1,8 @@
 // import { use } from "react";
 // import type { listContactNotes } from "./queries/list-contact-notes.query";
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
+
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
 import type { ContactNoteCollection } from "./schemas/types"
 
@@ -14,25 +15,25 @@ export function ContactNotesList() {
   const listContactNotes: ContactNoteCollection = { data: [] }
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex w-full flex-col">
       <div className="flex w-full">
         <Label className="flex-1 text-medium">
           Notes ({listContactNotes.data.length})
         </Label>
-        <Button variant="ghost" size="icon">
+        <Button size="icon" variant="ghost">
           <PlusIcon />
         </Button>
       </div>
-      <div className="flex flex-col w-full">
+      <div className="flex w-full flex-col">
         {listContactNotes.data.map((contactNote) => {
           return (
-            <div className="flex flex-col w-full" key={contactNote.id}>
+            <div className="flex w-full flex-col" key={contactNote.id}>
               <div className="flex w-full">
                 <div className="flex-1">{contactNote.createdById}</div>
-                <Button variant="ghost" size="icon">
+                <Button size="icon" variant="ghost">
                   <PencilIcon />
                 </Button>
-                <Button variant="ghost" size="icon">
+                <Button size="icon" variant="ghost">
                   <TrashIcon />
                 </Button>
               </div>

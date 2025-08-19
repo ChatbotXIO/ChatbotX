@@ -1,6 +1,6 @@
+import { redirect } from "next/navigation"
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { redirect } from "next/navigation"
 
 export default async function ChatbotNoSidebarLayout({
   params,

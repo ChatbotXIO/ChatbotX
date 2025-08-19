@@ -1,14 +1,16 @@
 "use client"
 
-import { Card, CardFooter, CardHeader } from "@/components/ui/card"
-import { ButtonGroupViewer } from "@/features/flows/react-flow/steps/button/viewer"
 import type { SendAudioStepSchema } from "@aha.chat/flow-config"
-
+import { Card, CardFooter, CardHeader } from "@aha.chat/ui/components/ui/card"
 import { Volume2 } from "lucide-react"
+import { ButtonGroupViewer } from "@/features/flows/react-flow/steps/button/viewer"
 
-export const SendAudioStepViewer = ({
-  data,
-}: { data: SendAudioStepSchema }) => {
+type SendAudioStepViewerProps = {
+  data: SendAudioStepSchema
+}
+
+export const SendAudioStepViewer = (props: SendAudioStepViewerProps) => {
+  const { data } = props
   const getFileNameFromUrl = () => {
     const urlObject = new URL(data.url as string)
     const path = urlObject.pathname
@@ -18,7 +20,7 @@ export const SendAudioStepViewer = ({
   return (
     <Card className="mb-2">
       <CardHeader className="flex flex-col items-center">
-        <Volume2 size={30} color="gray" />
+        <Volume2 color="gray" size={30} />
         <p>{getFileNameFromUrl()}</p>
       </CardHeader>
       {data.buttons.length > 0 && (

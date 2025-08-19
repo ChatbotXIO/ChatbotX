@@ -1,21 +1,21 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SettingRow } from "@/components/setting-row"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Form } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import type { ChatbotResource } from "@/features/chatbots/schemas"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { CopyIcon, Loader2Icon } from "lucide-react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { SettingRow } from "@/components/setting-row"
+import type { ChatbotResource } from "@/features/chatbots/schemas"
+import { authClient } from "@/lib/auth-client"
 import { updateChatbotBasicAction } from "./actions/update-chatbox-action"
 import { updateChatbotBasicRequest } from "./schemas/update-chatbot-schema"
-import { authClient } from "@/lib/auth-client"
 
 export function UpdateChatbotBasicForm({
   chatbot,
@@ -60,44 +60,44 @@ export function UpdateChatbotBasicForm({
       <CardContent>
         <Form {...form}>
           <form
-            onSubmit={handleSubmitWithAction}
             className="flex flex-col gap-y-4"
+            onSubmit={handleSubmitWithAction}
           >
-            <SettingRow label={"Chatbot ID"} description={""}>
+            <SettingRow description={""} label={"Chatbot ID"}>
               <div className="flex gap-x-2">
-                <Input defaultValue={chatbot.id} disabled className="flex-1" />
-                <Button size={"icon"} onClick={() => onCopy(chatbot.id)}>
+                <Input className="flex-1" defaultValue={chatbot.id} disabled />
+                <Button onClick={() => onCopy(chatbot.id)} size={"icon"}>
                   <CopyIcon />
                 </Button>
               </div>
             </SettingRow>
 
-            <SettingRow label={"User ID"} description={""}>
+            <SettingRow description={""} label={"User ID"}>
               <div className="flex gap-x-2">
                 <Input
+                  className="flex-1"
                   defaultValue={session?.data?.user.id}
                   disabled
-                  className="flex-1"
                 />
                 <Button
-                  size={"icon"}
                   onClick={() => onCopy(session?.data?.user.id ?? "")}
+                  size={"icon"}
                 >
                   <CopyIcon />
                 </Button>
               </div>
             </SettingRow>
 
-            <SettingRow label={t("name.label")} description={""}>
+            <SettingRow description={""} label={t("name.label")}>
               <InputField name="name" />
             </SettingRow>
 
             <div className="mt-4 text-center">
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

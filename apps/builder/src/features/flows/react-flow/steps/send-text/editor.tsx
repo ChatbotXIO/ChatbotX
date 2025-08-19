@@ -3,9 +3,15 @@
 import { InputWithEmoji } from "@/components/input-with-emoji"
 import { ButtonGroupEditor } from "../button/editor"
 
-const SendTextStepEditor = ({ parentName }: { parentName: string }) => {
+type SendTextStepEditorProps = {
+  parentName: string
+}
+
+const SendTextStepEditor = (props: SendTextStepEditorProps) => {
+  const { parentName } = props
+
   return (
-    <div className="items-center rounded-lg overflow-hidden justify-center">
+    <div className="items-center justify-center overflow-hidden rounded-lg">
       <InputWithEmoji name={`${parentName}.message`} />
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />

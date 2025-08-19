@@ -1,12 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
+import { Suspense } from "react"
 import { ListInboxTeams } from "@/features/inbox-teams/list-inbox-teams"
 import { getInboxTeams } from "@/features/inbox-teams/queries"
 import { getUsers } from "@/features/users/queries"
-import type { SearchParams } from "nuqs"
-import { Suspense } from "react"
+
 export default async function InboxTeamsPage(props: {
   params: Promise<{ chatbotId: string }>
-  searchParams: Promise<SearchParams>
 }) {
   const params = await props.params
 

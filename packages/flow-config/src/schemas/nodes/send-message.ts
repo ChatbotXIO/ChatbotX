@@ -37,7 +37,7 @@ import {
   unassignConversationStepSchema,
   unfollowConversationStepSchema,
 } from "../steps"
-import { baseNodeSchema, NodeType, type NewNodeProps } from "./node-config"
+import { baseNodeSchema, type NewNodeProps, NodeType } from "./node-config"
 
 export const actionsStepSchema = [
   // Open AI

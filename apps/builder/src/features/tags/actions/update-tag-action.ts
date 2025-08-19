@@ -1,10 +1,10 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@aha.chat/database"
 import type { UserModel } from "@aha.chat/database/types"
 import { revalidateTag } from "next/cache"
+import { authActionClient } from "@/lib/safe-action"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import { TagException } from "../schemas/error"
 import {
   type UpdateTagBindSchema,

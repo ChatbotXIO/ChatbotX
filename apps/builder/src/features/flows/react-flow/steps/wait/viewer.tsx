@@ -1,18 +1,18 @@
 "use client"
 
-import type { CustomFieldCollection } from "@/features/custom-fields/schemas"
-import { callAPI } from "@/lib/swr"
 import { DelayType, type WaitStepSchema } from "@aha.chat/flow-config"
 import { T, useTranslate } from "@tolgee/react"
 import { useParams } from "next/navigation"
+import type { CustomFieldCollection } from "@/features/custom-fields/schemas"
+import { callAPI } from "@/lib/swr"
 
-export const WaitStepViewer = ({
-  data,
-  // id,
-}: {
+type WaitStepViewerProps = {
   data: WaitStepSchema
-  // id: string
-}) => {
+}
+
+export const WaitStepViewer = (props: WaitStepViewerProps) => {
+  const { data } = props
+
   const { t } = useTranslate()
   const params = useParams<{ chatbotId: string }>()
   const url = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
@@ -25,11 +25,14 @@ export const WaitStepViewer = ({
   )
 
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 text-center break-all">
+    <div className="flex w-full items-center justify-center gap-2 break-all py-4 text-center">
       {data.delayType === DelayType.Duration && (
         <T
           keyName="flows.DelayType.Duration"
-          params={{ duration: data.duration, unit: t(`common.${data.unit}`) }}
+          params={{
+            duration: data.duration,
+            unit: t(`common.${data.unit}`),
+          }}
         />
       )}
       {data.delayType === DelayType.SpecificDate && (

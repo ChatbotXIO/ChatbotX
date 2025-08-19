@@ -2,18 +2,24 @@
 
 import { T } from "@tolgee/react"
 import { SaveOffIcon } from "lucide-react"
-import { BaseStepEditor } from "../base/editor"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { BaseStepEditor } from "../base/editor"
 
-export const ClearCustomFieldStepEditor = ({
-  parentName,
-}: { parentName: string }) => {
+type ClearCustomFieldStepEditorProps = {
+  parentName: string
+}
+
+export const ClearCustomFieldStepEditor = (
+  props: ClearCustomFieldStepEditorProps,
+) => {
+  const { parentName } = props
+
   return (
     <BaseStepEditor
       icon={SaveOffIcon}
       title={<T keyName="flows.StepType.ClearCustomField" />}
     >
-      <CustomFieldSelect name={`${parentName}.customFieldId`} label="" />
+      <CustomFieldSelect label="" name={`${parentName}.customFieldId`} />
     </BaseStepEditor>
   )
 }

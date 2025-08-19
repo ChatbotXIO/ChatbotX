@@ -1,11 +1,11 @@
+import { type FolderModel, FolderType } from "@aha.chat/database/types"
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
 import { T } from "@/tolgee/server"
-import { type FolderModel, FolderType } from "@aha.chat/database/types"
-import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
 
 export default async function FoldersPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -26,15 +26,15 @@ export default async function FoldersPage(props: {
       : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     getFolders({
       chatbotId: params.chatbotId,
-      folderType: folderType,
-      folderId: folderId,
+      folderType,
+      folderId,
     }),
   ])
 
   return (
     <>
       <div className="flex">
-        <h3 className="font-bold flex-1">
+        <h3 className="flex-1 font-bold">
           <T keyName="tags.header" />
         </h3>
         <CreateFolderDialog

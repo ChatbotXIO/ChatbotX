@@ -3,11 +3,13 @@ import { getWhatsappIceBreakers } from "@/features/integration-whatsapp/ice-brea
 
 export default async function CreateMessageTemplatePage({
   params,
-}: { params: Promise<{ chatbotId: string }> }) {
+}: {
+  params: Promise<{ chatbotId: string }>
+}) {
   const { chatbotId } = await params
   const promises = Promise.all([
     getWhatsappIceBreakers({
-      chatbotId: chatbotId,
+      chatbotId,
     }),
   ])
 

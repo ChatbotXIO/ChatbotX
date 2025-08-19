@@ -1,5 +1,9 @@
 "use server"
 
+import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
+import type { OrganizationSettings } from "@aha.chat/database/types"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { AuthType, IntegrationException } from "@aha.chat/sdk"
 import { findChatbot } from "@/features/chatbot/queries"
 import {
   type ChatbotIdRequestParams,
@@ -10,10 +14,6 @@ import { integrations } from "@/integration"
 import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
-import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
-import type { OrganizationSettings } from "@aha.chat/database/types"
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import { AuthType, IntegrationException } from "@aha.chat/sdk"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
 export const connectWhatsappAction = authActionClient
@@ -50,7 +50,7 @@ export const connectWhatsappAction = authActionClient
         clientId: organizationSettings.whatsappClientId,
         clientSecret: organizationSettings.whatsappClientSecret,
         redirectUri: "",
-        authType: AuthType.OAUTH2 as const,
+        authType: AuthType.OAUTH2,
         tokens: {
           accessToken: parsedInput.accessToken,
         },

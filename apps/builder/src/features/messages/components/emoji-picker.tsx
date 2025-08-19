@@ -1,34 +1,33 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@aha.chat/ui/components/ui/popover"
+import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { SmileIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 
 const BaseEmojiPicker = dynamic(() => import("emoji-picker-react"), {
   ssr: false,
   loading: () => (
-    <Skeleton className="bg-default-300 size-[300px] rounded-xl" />
+    <Skeleton className="size-[300px] rounded-xl bg-default-300" />
   ),
 })
 
-const EmojiPicker = ({
-  size = 300,
-  onSelectEmoji,
-}: {
+const EmojiPicker = (props: {
   size?: number
   onSelectEmoji: (v: string) => void
 }) => {
+  const { size = 300, onSelectEmoji } = props
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
+          className="px-2 py-1.5 [&_svg]:size-5"
           size="sm"
-          className="[&_svg]:size-5 px-2 py-1.5"
+          variant="ghost"
         >
           <SmileIcon size={20} />
         </Button>
@@ -36,11 +35,11 @@ const EmojiPicker = ({
       <PopoverContent>
         <BaseEmojiPicker
           autoFocusSearch
+          emojiVersion="0.6"
+          height={size + 50}
           lazyLoadEmojis
           onEmojiClick={(v) => onSelectEmoji(v.emoji)}
-          emojiVersion="0.6"
           searchDisabled
-          height={size + 50}
           width={size}
         />
       </PopoverContent>

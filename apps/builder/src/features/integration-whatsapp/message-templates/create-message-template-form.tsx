@@ -1,23 +1,23 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Form } from "@/components/ui/form"
+import { WhatsappTemplateCategory } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useTranslate } from "@tolgee/react"
+import { ArrowLeftIcon, Loader2Icon } from "lucide-react"
+import Link from "next/link"
+import { type JSX, type MemoExoticComponent, useState } from "react"
+import { toast } from "sonner"
 import { createMessageTemplateAction } from "@/features/integration-whatsapp/message-templates/actions/create-message-template.action"
 import { WhatsappMessageTemplateCategorySelect } from "@/features/integration-whatsapp/message-templates/category-select"
 import { WhatsappMessageTemplateLanguageSelect } from "@/features/integration-whatsapp/message-templates/language-select"
 import { createMessageTemplateRequest } from "@/features/integration-whatsapp/message-templates/schemas/create-message-templates-schema"
 import { WhatsappMessageTemplateTypeSelect } from "@/features/integration-whatsapp/message-templates/template-type-select"
 import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
-import { WhatsappTemplateCategory } from "@aha.chat/database/types"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
-import { ArrowLeftIcon, Loader2Icon } from "lucide-react"
-import Link from "next/link"
-import { type JSX, useState } from "react"
-import { toast } from "sonner"
 import { TemplateCarouselImagePartial } from "./templates/carousel-image/partial"
 import { TemplateCarouselImagePreview } from "./templates/carousel-image/preview"
 import { templateCarouselImageDefaultValue } from "./templates/carousel-image/schema"
@@ -36,6 +36,7 @@ import { templateImageDefaultValue } from "./templates/image/schema"
 import { TemplateProductPartial } from "./templates/product/partial"
 import { TemplateProductPreview } from "./templates/product/preview"
 import { templateProductDefaultValue } from "./templates/product/schema"
+import type { BaseTemplateProps } from "./templates/shared/schemas"
 import { TemplateTextPartial } from "./templates/text/partial"
 import { TemplateTextPreview } from "./templates/text/preview"
 import { templateTextDefaultValue } from "./templates/text/schema"
@@ -43,27 +44,33 @@ import { TemplateVideoPartial } from "./templates/video/partial"
 import { TemplateVideoPreview } from "./templates/video/preview"
 import { templateVideoDefaultValue } from "./templates/video/schema"
 
-const previews: { [key in TemplateType]: JSX.Element | undefined } = {
-  [TemplateType.Text]: <TemplateTextPreview />,
-  [TemplateType.Image]: <TemplateImagePreview />,
-  [TemplateType.Video]: <TemplateVideoPreview />,
-  [TemplateType.Document]: <TemplateDocumentPreview />,
-  [TemplateType.CarouselImage]: <TemplateCarouselImagePreview />,
-  [TemplateType.CarouselVideo]: <TemplateCarouselVideoPreview />,
-  [TemplateType.ViewCatalog]: <TemplateCatalogPreview />,
-  [TemplateType.ViewProduct]: <TemplateProductPreview />,
+const previews: Record<
+  TemplateType,
+  MemoExoticComponent<(props: BaseTemplateProps) => JSX.Element> | undefined
+> = {
+  [TemplateType.Text]: TemplateTextPreview,
+  [TemplateType.Image]: TemplateImagePreview,
+  [TemplateType.Video]: TemplateVideoPreview,
+  [TemplateType.Document]: TemplateDocumentPreview,
+  [TemplateType.CarouselImage]: TemplateCarouselImagePreview,
+  [TemplateType.CarouselVideo]: TemplateCarouselVideoPreview,
+  [TemplateType.ViewCatalog]: TemplateCatalogPreview,
+  [TemplateType.ViewProduct]: TemplateProductPreview,
   [TemplateType.Location]: undefined,
 }
 
-const contentVariables: { [key in TemplateType]: JSX.Element | undefined } = {
-  [TemplateType.Text]: <TemplateTextPartial />,
-  [TemplateType.Image]: <TemplateImagePartial />,
-  [TemplateType.Video]: <TemplateVideoPartial />,
-  [TemplateType.Document]: <TemplateDocumentPartial />,
-  [TemplateType.CarouselImage]: <TemplateCarouselImagePartial />,
-  [TemplateType.CarouselVideo]: <TemplateCarouselVideoPartial />,
-  [TemplateType.ViewCatalog]: <TemplateCatalogPartial />,
-  [TemplateType.ViewProduct]: <TemplateProductPartial />,
+const contentVariables: Record<
+  TemplateType,
+  MemoExoticComponent<(props: BaseTemplateProps) => JSX.Element> | undefined
+> = {
+  [TemplateType.Text]: TemplateTextPartial,
+  [TemplateType.Image]: TemplateImagePartial,
+  [TemplateType.Video]: TemplateVideoPartial,
+  [TemplateType.Document]: TemplateDocumentPartial,
+  [TemplateType.CarouselImage]: TemplateCarouselImagePartial,
+  [TemplateType.CarouselVideo]: TemplateCarouselVideoPartial,
+  [TemplateType.ViewCatalog]: TemplateCatalogPartial,
+  [TemplateType.ViewProduct]: TemplateProductPartial,
   [TemplateType.Location]: undefined,
 }
 
@@ -120,10 +127,11 @@ export function CreateMessageTemplateForm({
 
   const onSelectTemplateType = (type: TemplateType) => {
     setTemplateType(type)
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: wip
     setValue("templateType", type as any)
     setValue("name", "")
     setValue("category", WhatsappTemplateCategory.MARKETING)
+
     switch (type) {
       case TemplateType.Text:
         setValue("content", templateTextDefaultValue())
@@ -149,19 +157,21 @@ export function CreateMessageTemplateForm({
       case TemplateType.ViewProduct:
         setValue("content", templateProductDefaultValue())
         break
+      default:
+        break
     }
   }
 
   return (
     <div className="flex flex-col items-center">
-      <div className="text-xl my-6">{t("whatsapp.messageTemplate")}</div>
+      <div className="my-6 text-xl">{t("whatsapp.messageTemplate")}</div>
       <Form {...form}>
         <form
+          className="w-full flex-1 space-y-4"
           onSubmit={handleSubmitWithAction}
-          className="flex-1 space-y-4 w-full"
         >
           {!templateType && (
-            <Card className="w-5/6 mx-auto">
+            <Card className="mx-auto w-5/6">
               <CardContent className="py-4">
                 <WhatsappMessageTemplateTypeSelect
                   onSelectTemplateType={(type) => onSelectTemplateType(type)}
@@ -172,39 +182,41 @@ export function CreateMessageTemplateForm({
           {templateType && (
             <div>
               <Button
-                variant="ghost"
-                onClick={() => setTemplateType(null)}
                 className="mx-10"
+                onClick={() => setTemplateType(null)}
+                variant="ghost"
               >
                 <ArrowLeftIcon />
               </Button>
-              <div className="grid grid-cols-2 gap-4 mx-10">
+              <div className="mx-10 grid grid-cols-2 gap-4">
                 <Card>
                   <CardContent className="flex flex-col gap-4 py-4">
                     <InputField
-                      name="name"
                       label="Name"
+                      name="name"
                       placeholder="order_shipping_update"
                     />
                     <WhatsappMessageTemplateLanguageSelect
-                      name="language"
                       label="Language"
+                      name="language"
                     />
                     <WhatsappMessageTemplateCategorySelect
-                      name="category"
                       label="Category"
+                      name="category"
                     />
-                    {contentVariables[templateType]}
+                    {contentVariables[templateType]?.({
+                      parentName: "content",
+                    })}
                   </CardContent>
                 </Card>
                 <div className="flex justify-center">
-                  <Card className="min-w-[370px] max-w-[400px] bg-orange-100 p-6 rounded">
-                    {previews[templateType]}
+                  <Card className="min-w-[370px] max-w-[400px] rounded bg-orange-100 p-6">
+                    {previews[templateType]?.({ parentName: "content" })}
                   </Card>
                 </div>
               </div>
-              <div className="flex justify-center gap-2 mt-6">
-                <Button variant="outline" asChild>
+              <div className="mt-6 flex justify-center gap-2">
+                <Button asChild variant="outline">
                   <Link
                     href={`/chatbots/${chatbotId}/whatsapp/message-templates`}
                   >
@@ -212,10 +224,10 @@ export function CreateMessageTemplateForm({
                   </Link>
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

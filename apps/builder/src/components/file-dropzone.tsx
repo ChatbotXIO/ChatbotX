@@ -1,30 +1,30 @@
 "use client"
 
-import { cn } from "@/components/lib/utils"
-import { T } from "@tolgee/react"
-import {
-  File,
-  Image,
-  ImagePlay,
-  Undo2,
-  Video,
-  Volume2,
-  X,
-  type LucideIcon,
-} from "lucide-react"
-import { useState, type SVGProps } from "react"
-import Dropzone from "react-dropzone"
-import { toast } from "sonner"
-
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { FileType } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { FileType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/tooltip"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { T } from "@tolgee/react"
+import {
+  File,
+  ImageIcon,
+  ImagePlay,
+  type LucideIcon,
+  Undo2,
+  Video,
+  Volume2,
+  X,
+} from "lucide-react"
+import Image from "next/image"
+import { type SVGProps, useState } from "react"
+import Dropzone from "react-dropzone"
+import { toast } from "sonner"
 
 type FileDropzoneConfigs = {
   uploadKeyName: string
@@ -34,7 +34,7 @@ type FileDropzoneConfigs = {
   isCard: boolean
 }
 
-interface FileDropzoneProps {
+type FileDropzoneProps = {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   register: any
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -66,7 +66,7 @@ function UploadIcon({
       icon: ImagePlay,
     },
     [FileType.IMAGE]: {
-      icon: Image,
+      icon: ImageIcon,
     },
   }
   const dyanmicIcon = uploadIcons[type ?? FileType.IMAGE]
@@ -173,16 +173,16 @@ export default function FileDropzone({
   const _noFile = () => {
     return (
       <div className="flex flex-col items-center">
-        <UploadIcon type={type} size={30} className="text-gray-500" />
+        <UploadIcon className="text-gray-500" size={30} type={type} />
         <div>
           <T keyName={uploadKeyName} />
           {!isCard && (
             <>
               {"\u00A0"}
               <Button
-                variant="link"
-                onClick={_onMode}
                 className="p-0 text-destructive"
+                onClick={_onMode}
+                variant="link"
               >
                 <T keyName={linkKeyName} />
               </Button>
@@ -196,17 +196,17 @@ export default function FileDropzone({
   const _hasFile = () => {
     return (
       <>
-        <img
-          src={preview}
-          className="w-full h-full object-cover"
+        <Image
           alt="Thumbnail"
+          className="h-full w-full object-cover"
+          src={preview}
         />
         <div className="absolute top-1 right-1 z-10">
           <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full size-5"
+            className="size-5 rounded-full"
             onClick={_onRemove}
+            size="icon"
+            variant="outline"
           >
             <X size={10} />
           </Button>
@@ -217,18 +217,18 @@ export default function FileDropzone({
 
   const dropZone = () => {
     return (
-      <Dropzone maxFiles={1} accept={accept} onDrop={_onDrop}>
+      <Dropzone accept={accept} maxFiles={1} onDrop={_onDrop}>
         {({ getRootProps, getInputProps }) => (
           <section>
             <div {...getRootProps()}>
               <Input {...getInputProps()} />
               <div
                 className={cn(
-                  "relative flex flex-col items-center h-36 overflow-hidden justify-center hover:cursor-pointer",
+                  "relative flex h-36 flex-col items-center justify-center overflow-hidden hover:cursor-pointer",
                   preview ? "border-solid" : "border-dashed",
                   isCard
                     ? ""
-                    : "border-2 rounded-lg hover:border-solid hover:border-blue-500",
+                    : "rounded-lg border-2 hover:border-blue-500 hover:border-solid",
                 )}
               >
                 {preview ? _hasFile() : _noFile()}
@@ -243,14 +243,14 @@ export default function FileDropzone({
   const inputLink = () => {
     return (
       <div className="flex flex-col">
-        <div className="flex items-center justify-center gap-2 mb-2 relative">
+        <div className="relative mb-2 flex items-center justify-center gap-2">
           <UploadIcon size={25} />
           <span className="capitalize">{type}</span>
           <div className="absolute right-0">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="link" onClick={_onMode}>
+                  <Button onClick={_onMode} variant="link">
                     <Undo2 size={20} />
                   </Button>
                 </TooltipTrigger>

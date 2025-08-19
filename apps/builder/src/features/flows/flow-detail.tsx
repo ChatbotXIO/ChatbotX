@@ -5,7 +5,7 @@ import { ReactFlowFrame } from "./react-flow/frame"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
 import type { FlowVersionResource } from "./schemas/get-flows-schema"
 
-interface FlowDetailProps {
+type FlowDetailProps = {
   flowVersion: FlowVersionResource
 }
 

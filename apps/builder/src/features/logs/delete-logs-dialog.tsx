@@ -1,6 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { LogModel, LogType } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,17 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import type { LogModel, LogType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
+import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteLogAction } from "./actions/delete-log-action"
 
-interface DeleteLogsDialogProps
-  extends React.ComponentPropsWithoutRef<typeof Dialog> {
+type DeleteLogsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
   logs: Row<LogModel>["original"][]
   logType: string
@@ -55,8 +55,8 @@ export function DeleteLogsDialog({
     <Dialog {...props}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Trash className="mr-2 size-4" aria-hidden="true" />
+          <Button size="sm" variant="outline">
+            <Trash aria-hidden="true" className="mr-2 size-4" />
             {t("common.deleteBtn")} ({logs.length})
           </Button>
         </DialogTrigger>
@@ -77,17 +77,17 @@ export function DeleteLogsDialog({
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
-            variant="destructive"
+            disabled={isPending}
             onClick={() =>
               execute({
                 ids: (logs ?? []).map((log) => log.id),
                 logType: logType as LogType,
               })
             }
-            disabled={isPending}
+            variant="destructive"
           >
             {isPending && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
             {t("common.deleteBtn")}
           </Button>

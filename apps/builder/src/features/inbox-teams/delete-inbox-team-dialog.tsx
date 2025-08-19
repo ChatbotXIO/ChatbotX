@@ -1,14 +1,14 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { InboxTeamModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import type { InboxTeamModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
 import { T } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
@@ -40,7 +40,7 @@ export function DeleteInboxTeamDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -52,16 +52,16 @@ export function DeleteInboxTeamDialog({
         </DialogHeader>
         <div className="flex justify-end gap-4">
           <Button
+            onClick={() => onOpenChange(false)}
             type="button"
             variant="ghost"
-            onClick={() => onOpenChange(false)}
           >
             <T keyName="common.cancelBtn" />
           </Button>
           <Button
-            type="submit"
             disabled={isPending}
             onClick={() => execute({ ids: [inboxTeam?.id ?? ""] })}
+            type="submit"
           >
             {isPending && <Loader2 className="animate-spin" />}
             <T keyName="common.deleteBtn" />

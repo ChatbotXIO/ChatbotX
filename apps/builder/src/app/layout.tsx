@@ -1,11 +1,10 @@
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
+import type { Metadata } from "next"
+import type { ReactNode } from "react"
 import { TolgeeNextProvider } from "@/tolgee/client"
 import { getLanguage } from "@/tolgee/language"
 import { getStaticData } from "@/tolgee/shared"
-import type { Metadata } from "next"
-import type { ReactNode } from "react"
 import "./globals.css"
+import { UiProvider } from "@aha.chat/ui"
 
 export const metadata: Metadata = {
   title: "AhaChat AI",
@@ -32,17 +31,11 @@ export default async function RootLayout({ children }: Props) {
         />
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <UiProvider>
           <TolgeeNextProvider language={locale} staticData={staticData}>
             {children}
-            <Toaster richColors position="top-right" duration={800} />
           </TolgeeNextProvider>
-        </ThemeProvider>
+        </UiProvider>
       </body>
     </html>
   )

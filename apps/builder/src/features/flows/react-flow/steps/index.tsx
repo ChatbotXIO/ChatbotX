@@ -1,51 +1,51 @@
 import { StepType } from "@aha.chat/flow-config"
 import type { JSX } from "react"
 import type { ZodTypeAny } from "zod"
-import sendTextStep from "./send-text"
-import sendImageStep from "./send-image"
-import { openWebsiteStep } from "./open-website"
-import { setCustomFieldStep } from "./set-custom-field"
-import { clearCustomFieldStep } from "./clear-custom-field"
+import { addContactTagStep } from "./add-contact-tag"
 import { addNotesStep } from "./add-notes"
 import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
 import { blockContactStep } from "./block-contact"
-import { followConversationStep } from "./follow-conversation"
-import { unarchiveConversationStep } from "./unarchive-conversation"
-import { sendCardStep } from "./send-card"
-import { sendVideoStep } from "./send-video"
-import { sendAudioStep } from "./send-audio"
+import { clearCustomFieldStep } from "./clear-custom-field"
+import { countCharactersStep } from "./count-characters"
+import { deleteContactStep } from "./delete-contact"
 import { disableBotStep } from "./disable-bot"
 import { enableBotStep } from "./enable-bot"
-import { unassignConversationStep } from "./unassign-conversation"
-import { unfollowConversationStep } from "./unfollow-conversation"
-import { optInEmailStep } from "./opt-in-email"
-import { optOutEmailStep } from "./opt-out-email"
-import { markEmailVerifiedStep } from "./mark-email-verified"
-import { countCharactersStep } from "./count-characters"
+import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
-import { addContactTagStep } from "./add-contact-tag"
+import { markEmailVerifiedStep } from "./mark-email-verified"
+import { openWebsiteStep } from "./open-website"
+import { optInEmailStep } from "./opt-in-email"
+import { optOutEmailStep } from "./opt-out-email"
 import { removeContactTagStep } from "./remove-contact-tag"
-import { deleteContactStep } from "./delete-contact"
+import { sendAudioStep } from "./send-audio"
+import { sendCardStep } from "./send-card"
+import sendImageStep from "./send-image"
+import sendTextStep from "./send-text"
+import { sendVideoStep } from "./send-video"
+import { setCustomFieldStep } from "./set-custom-field"
+import { unarchiveConversationStep } from "./unarchive-conversation"
+import { unassignConversationStep } from "./unassign-conversation"
+import { unfollowConversationStep } from "./unfollow-conversation"
 
-interface StepEditorProps {
+type StepEditorProps = {
   parentName: string
 }
 
-export interface DefaultFnProps {
+export type DefaultFnProps = {
   labelVersion: string
   position?: { x: number; y: number }
 }
 
-export interface StepDefinition {
+export type StepDefinition = {
   editor: (props: StepEditorProps) => JSX.Element
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   viewer: (props: any) => JSX.Element
   validator: ZodTypeAny
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   defaultFn: () => any
 }
 
@@ -138,7 +138,7 @@ export function DynamicStepViewer({
   ...props
 }: {
   type: StepType
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   data: any
 }) {
   const Element = allSteps[type]?.viewer

@@ -1,5 +1,7 @@
 "use server"
 
+import { prisma } from "@aha.chat/database"
+import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -10,8 +12,6 @@ import {
   updateAIAgentRequest,
 } from "@/features/integrations/ai-agents/schemas/update.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 
 export const updateAIAgentAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)

@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button"
-import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { PlusCircleIcon } from "lucide-react"
+import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
 
-interface ContactCustomFieldManageProps {
+type ContactCustomFieldManageProps = {
   chatbotId: string
 }
 
@@ -10,22 +10,20 @@ export function ContactCustomFieldManage({
   chatbotId,
 }: ContactCustomFieldManageProps) {
   return (
-    <>
-      <CreateCustomFieldDialog
-        chatbotId={chatbotId}
-        triggerButton={
-          <Button
-            variant="link"
-            className="flex justify-start px-0! cursor-pointer"
-          >
-            <PlusCircleIcon />
-            Add new field
-          </Button>
-        }
-        onSuccess={() => {
-          // mutate(customFieldsUrl)
-        }}
-      />
-    </>
+    <CreateCustomFieldDialog
+      chatbotId={chatbotId}
+      onSuccess={() => {
+        // mutate(customFieldsUrl)
+      }}
+      triggerButton={
+        <Button
+          className="flex cursor-pointer justify-start px-0!"
+          variant="link"
+        >
+          <PlusCircleIcon />
+          Add new field
+        </Button>
+      }
+    />
   )
 }

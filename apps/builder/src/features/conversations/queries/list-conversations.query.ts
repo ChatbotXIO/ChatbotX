@@ -1,14 +1,14 @@
 "use server"
 
-import { getCurrentUserId } from "@/lib/auth"
+import { type Prisma, prisma } from "@aha.chat/database"
+import type { ConversationModel, MessageModel } from "@aha.chat/database/types"
+import { unstable_cache } from "next/cache"
 import type {
   FindConversationSchema,
   ListConversationsRequest,
 } from "@/features/conversations/schemas/list-conversations.request"
+import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, prisma } from "@aha.chat/database"
-import type { ConversationModel, MessageModel } from "@aha.chat/database/types"
-import { unstable_cache } from "next/cache"
 import type { ConversationCollection, ConversationResource } from "../schemas"
 
 export const listConversations = async (
@@ -85,9 +85,7 @@ export const listConversations = async (
   let nextCursor: string | null = null
   const prevCursor: string | null = null
   if (conversations.length === perPage) {
-    const lastConversation = conversations[
-      conversations.length - 1
-    ] as ConversationModel
+    const lastConversation = conversations.at(-1) as ConversationModel
     nextCursor = lastConversation.id
 
     conversations = conversations.slice(0, conversations.length - 1)

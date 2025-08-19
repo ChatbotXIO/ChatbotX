@@ -2,21 +2,21 @@ import type { Readable } from "node:stream"
 import { z } from "zod"
 import type { BaseAuthValue } from "../auth"
 
-export interface ContextUploader {
+export type ContextUploader = {
   putObject(
     newPath: string,
     body: string | Readable | Buffer<ArrayBufferLike>,
     options?: unknown,
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: wip
   ): Promise<any>
 }
 
-export interface ContextQueue {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type ContextQueue = {
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   add(name: string, payload: any, opts?: any): Promise<any>
 }
 
-export interface ChatbotEntity {
+export type ChatbotEntity = {
   id: string
 }
 

@@ -1,9 +1,9 @@
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import type { InboxTeamCollection } from "../schemas/types"
+import { getCurrentUserId } from "@/lib/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { ListInboxTeamsRequest } from "../schemas/list-inbox-teams.request"
+import type { InboxTeamCollection } from "../schemas/types"
 
 export async function getInboxTeams(
   input: ListInboxTeamsRequest,

@@ -10,7 +10,7 @@ export const ChatStoreContext = createContext<ChatStoreApi | undefined>(
   undefined,
 )
 
-export interface ChatStoreProviderProps {
+export type ChatStoreProviderProps = {
   children: ReactNode
 }
 

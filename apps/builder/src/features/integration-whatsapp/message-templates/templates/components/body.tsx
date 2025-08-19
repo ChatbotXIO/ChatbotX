@@ -1,14 +1,11 @@
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { useTranslate } from "@tolgee/react"
-import { useState, useEffect, useCallback, memo, useMemo } from "react"
+import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
-const TemplateBodyComponent = ({
-  parentName,
-}: {
-  parentName: string
-}) => {
+const TemplateBodyComponent = ({ parentName }: { parentName: string }) => {
   const { t } = useTranslate()
   const { getValues, setValue } = useFormContext()
 
@@ -41,7 +38,7 @@ const TemplateBodyComponent = ({
       return
     }
 
-    const newValues = []
+    const newValues: string[] = []
 
     let index = 1
     for (const match of variableMatches) {
@@ -79,31 +76,27 @@ const TemplateBodyComponent = ({
 
   return (
     <>
-      {!showForm ? (
-        <pre
-          className="cursor-pointer"
-          onClick={handleStartEditing}
-          onKeyUp={() => {}}
-        >
-          {displayText}
-        </pre>
-      ) : (
+      {showForm ? (
         <div className="flex flex-col gap-2">
           <Textarea
             autoFocus
-            placeholder="Enter text"
-            value={localBody}
             maxLength={1024}
             onChange={(e) => onChangeValue(e.target.value)}
+            placeholder="Enter text"
+            value={localBody}
           />
-          <div
-            className="flex justify-end hover:underline cursor-pointer text-xs"
-            onClick={addParam}
-            onKeyUp={() => {}}
-          >
+          <Button onClick={addParam} variant="link">
             {t("common.addVariable")}
-          </div>
+          </Button>
         </div>
+      ) : (
+        <Button
+          className="cursor-pointer"
+          onClick={handleStartEditing}
+          variant="link"
+        >
+          {displayText}
+        </Button>
       )}
     </>
   )

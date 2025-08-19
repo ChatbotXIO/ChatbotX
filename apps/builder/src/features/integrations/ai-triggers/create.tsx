@@ -1,8 +1,8 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { TextareaField } from "@/components/form/textarea-field"
-import { Button } from "@/components/ui/button"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -12,12 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form, FormLabel } from "@/components/ui/form"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { FlowSelect } from "@/features/flows/flow-select"
-import { createAITriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
-import { createAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/create.schema"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form, FormLabel } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -26,6 +22,10 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { FlowSelect } from "@/features/flows/flow-select"
+import { createAITriggerAction } from "@/features/integrations/ai-triggers/actions/create.action"
+import { createAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/create.schema"
 
 type CreateAITriggerDialogProps = {
   chatbotId: string
@@ -85,7 +85,7 @@ export function CreateAITriggerDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
@@ -100,41 +100,41 @@ export function CreateAITriggerDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
-              <InputField name="name" label={t("aiTriggers.name")} />
+              <InputField label={t("aiTriggers.name")} name="name" />
 
               <TextareaField
-                name="description"
-                label={t("aiTriggers.description")}
                 isRequired={false}
+                label={t("aiTriggers.description")}
+                name="description"
               />
 
               <div className="flex flex-col space-y-2">
                 <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
                 {fields.map((field, i) => (
-                  <div className="flex items-top" key={field.id}>
+                  <div className="items-top flex" key={field.id}>
                     <div className="basis-5/12">
                       <InputField name={`questions.${i}.name`} />
                     </div>
-                    <div className="basis-1/12 flex justify-center">
+                    <div className="flex basis-1/12 justify-center">
                       <ArrowRightIcon className="mt-2" />
                     </div>
 
                     <div className="basis-5/12">
                       <CustomFieldSelect
-                        name={`questions.${i}.fieldId`}
                         label=""
+                        name={`questions.${i}.fieldId`}
                       />
                     </div>
 
                     <div className="basis-1/12">
                       <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
                         onClick={() => remove(i)}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
                       >
                         <XIcon />
                       </Button>
@@ -142,24 +142,24 @@ export function CreateAITriggerDialog({
                   </div>
                 ))}
                 <Button
+                  onClick={onAddDataCollection}
                   type="button"
                   variant="secondary"
-                  onClick={onAddDataCollection}
                 >
                   {t("aiTriggers.dataCollect.addBtn")}
                 </Button>
               </div>
 
               <FlowSelect
-                name="flowId"
-                label={t("aiTriggers.flowId")}
                 isRequired={false}
+                label={t("aiTriggers.flowId")}
+                name="flowId"
               />
 
               <TextareaField
-                name="finalMessage"
-                label={t("aiTriggers.finalMessage")}
                 isRequired={false}
+                label={t("aiTriggers.finalMessage")}
+                name="finalMessage"
               />
 
               <DialogFooter className="justify-end">
@@ -169,10 +169,10 @@ export function CreateAITriggerDialog({
                   </Button>
                 </DialogClose>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

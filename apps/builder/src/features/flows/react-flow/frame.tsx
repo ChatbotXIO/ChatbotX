@@ -3,12 +3,12 @@
 import "@xyflow/react/dist/style.css"
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
 import { ButtonEditorDialog } from "./button-editor-dialog"
-import { NodeDetailSheet } from "./nodes/node-detail-sheet"
-import { useStepStore } from "./stores/step-store-provider"
 import { FrameHeader } from "./frame-header"
+import { NodeDetailSheet } from "./nodes/node-detail-sheet"
 import { ReactFlowWrapper } from "./react-flow-wrapper"
+import { useStepStore } from "./stores/step-store-provider"
 
-interface ReactFlowFrameProps {
+type ReactFlowFrameProps = {
   flowVersion: FlowVersionResource
 }
 
@@ -22,13 +22,13 @@ export function ReactFlowFrame({ flowVersion }: ReactFlowFrameProps) {
       <FrameHeader />
 
       <ReactFlowWrapper
-        setOpenNodeDetailSheet={setOpenNodeDetailSheet}
         flowVersion={flowVersion}
+        setOpenNodeDetailSheet={setOpenNodeDetailSheet}
       />
 
       <NodeDetailSheet
-        open={openNodeDetailSheet}
         onOpenChange={setOpenNodeDetailSheet}
+        open={openNodeDetailSheet}
       />
 
       <ButtonEditorDialog />

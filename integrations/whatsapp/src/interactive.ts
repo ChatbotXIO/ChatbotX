@@ -1,4 +1,4 @@
-import { Button, Body, Footer } from "whatsapp-api-js/messages"
+import { Body, Button, Footer } from "whatsapp-api-js/messages"
 
 const ID_MAX_LENGTH = 256
 const TITLE_MAX_LENGTH = 20

@@ -10,8 +10,8 @@ export const BaseStepViewer = (props: {
 }) => {
   return (
     <div className="w-full text-sm">
-      <div className="flex items-center gap-1 font-medium break-all">
-        <props.icon size={16} className="text-yellow-500" />
+      <div className="flex items-center gap-1 break-all font-medium">
+        <props.icon className="text-yellow-500" size={16} />
         {props.title}
         {props.children}
       </div>

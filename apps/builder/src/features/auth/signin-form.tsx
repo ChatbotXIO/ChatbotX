@@ -1,11 +1,14 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { cn } from "@/components/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form } from "@/components/ui/form"
-import { authClient } from "@/lib/auth-client"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
@@ -13,6 +16,7 @@ import { redirect } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
+import { authClient } from "@/lib/auth-client"
 
 const magicLinkRequest = z.object({
   email: z.string().email(),
@@ -20,11 +24,9 @@ const magicLinkRequest = z.object({
 type MagicLinkRequest = z.infer<typeof magicLinkRequest>
 
 export const SignInForm = ({
-  className,
   callbackUrl,
   ...props
 }: {
-  className?: string
   callbackUrl?: string
 }) => {
   const magicLinkForm = useForm<MagicLinkRequest>({
@@ -49,7 +51,7 @@ export const SignInForm = ({
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className="flex flex-col gap-6" {...props}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">
@@ -76,18 +78,18 @@ export const SignInForm = ({
 
             <Form {...magicLinkForm}>
               <form
+                className="flex w-full flex-col gap-4"
                 onSubmit={magicLinkForm.handleSubmit(onSubmitMagicLinkForm)}
-                className="flex flex-col w-full gap-4"
               >
-                <InputField name="email" label="Email" isRequired />
+                <InputField isRequired label="Email" name="email" />
 
                 <Button
-                  type="submit"
                   className="w-full"
                   disabled={
                     !magicLinkForm.formState.isValid ||
                     magicLinkForm.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {magicLinkForm.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
@@ -100,7 +102,7 @@ export const SignInForm = ({
         </CardContent>
       </Card>
 
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
+      <div className="text-balance text-center text-muted-foreground text-xs [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
         By clicking continue, you agree to our <span>Terms of Service</span> and{" "}
         <span>Privacy Policy</span>.
       </div>

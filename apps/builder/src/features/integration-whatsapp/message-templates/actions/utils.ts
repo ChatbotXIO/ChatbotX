@@ -1,12 +1,12 @@
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import type { Context } from "@aha.chat/sdk"
 import { integrations } from "@/integration"
 import type { CreateMessageTemplateRequest } from "../schemas/create-message-templates-schema"
-import { TemplateType } from "../type"
-import type { Context } from "@aha.chat/sdk"
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import type { TemplateImageSchema } from "../templates/image/schema"
-import type { TemplateVideoSchema } from "../templates/video/schema"
 import type { TemplateDocumentSchema } from "../templates/document/schema"
+import type { TemplateImageSchema } from "../templates/image/schema"
 import type { TemplateTextSchema } from "../templates/text/schema"
+import type { TemplateVideoSchema } from "../templates/video/schema"
+import { TemplateType } from "../type"
 
 export type HeaderMediaFormat = "IMAGE" | "VIDEO" | "DOCUMENT"
 
@@ -15,13 +15,13 @@ export const parseComponents = async (
   templateType: TemplateType,
   content: CreateMessageTemplateRequest["content"],
 ) => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   let components: any[] = []
 
   switch (templateType) {
     case TemplateType.CarouselImage: {
       components = parseBody(components, content)
-      const cards = []
+      const cards: Record<string, unknown>[] = []
       if ("cards" in content) {
         for (const card of content.cards) {
           const cardComponents = await parseComponents(
@@ -42,7 +42,7 @@ export const parseComponents = async (
 
     case TemplateType.CarouselVideo: {
       components = parseBody(components, content)
-      const cards = []
+      const cards: Record<string, unknown>[] = []
       if ("cards" in content) {
         for (const card of content.cards) {
           const cardComponents = await parseComponents(
@@ -76,14 +76,18 @@ export const parseComponents = async (
 }
 
 export const parseHeader = async (
-  components: Array<Record<string, unknown>>,
+  components: Record<string, unknown>[],
   templateType: TemplateType,
   content: CreateMessageTemplateRequest["content"],
   ctx: Context<WhatsappAuthValue>,
 ) => {
   if (
-    !("showHeader" in content && content.showHeader) ||
-    !("header" in content && content.header)
+    !(
+      "showHeader" in content &&
+      content.showHeader &&
+      "header" in content &&
+      content.header
+    )
   ) {
     return components
   }
@@ -122,7 +126,7 @@ export const parseHeader = async (
       return components
 
     default: {
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: wip
       let header: any = {
         type: "HEADER",
         format: "TEXT",
@@ -170,10 +174,10 @@ export const parseHeaderMedia = async (
 }
 
 export const parseBody = (
-  components: Array<Record<string, unknown>>,
+  components: Record<string, unknown>[],
   content: CreateMessageTemplateRequest["content"],
 ) => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   let body: any = {
     type: "BODY",
     text: content.body.text,
@@ -194,7 +198,7 @@ export const parseBody = (
 }
 
 export const parseFooter = (
-  components: Array<Record<string, unknown>>,
+  components: Record<string, unknown>[],
   content: CreateMessageTemplateRequest["content"],
 ) => {
   if ("showFooter" in content && content.showFooter) {
@@ -205,15 +209,4 @@ export const parseFooter = (
   }
 
   return components
-}
-
-export const slugify = (text: string) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[^\w-]+/g, "")
-    .replace(/__+/g, "_")
-    .replace(/^_+/, "")
-    .replace(/_+$/, "")
 }

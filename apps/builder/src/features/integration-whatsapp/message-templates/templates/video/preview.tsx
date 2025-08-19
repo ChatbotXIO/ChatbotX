@@ -1,21 +1,27 @@
-import { Controller, useFormContext, useWatch } from "react-hook-form"
-import { TemplateFooter } from "../components/footer"
-import { TemplateBody } from "../components/body"
-import { ButtonGroupPreview } from "../button/preview"
-import FileDropzone from "@/components/file-dropzone"
-import { CardContent } from "@/components/ui/card"
+import { CardContent } from "@aha.chat/ui/components/ui/card"
 import { memo, useCallback } from "react"
+import { Controller, useFormContext, useWatch } from "react-hook-form"
+import FileDropzone from "@/components/file-dropzone"
+import { ButtonGroupPreview } from "../button/preview"
+import { TemplateBody } from "../components/body"
+import { TemplateFooter } from "../components/footer"
 
-const TemplateVideoPreviewComponent = ({
-  parentName = "content",
-  minButtons = 0,
-  maxButtons = 3,
-  ...rest
-}: {
+type TemplateVideoPreviewComponentProps = {
   parentName?: string
   minButtons?: number
   maxButtons?: number
-}) => {
+}
+
+const TemplateVideoPreviewComponent = (
+  props: TemplateVideoPreviewComponentProps,
+) => {
+  const {
+    parentName = "content",
+    minButtons = 0,
+    maxButtons = 3,
+    ...rest
+  } = props
+
   const { register, unregister, control, setValue } = useFormContext()
   const showFooter = useWatch({
     control,
@@ -38,16 +44,13 @@ const TemplateVideoPreviewComponent = ({
   )
 
   return (
-    <CardContent className="bg-white p-4 rounded">
-      <div className="w-full flex flex-col gap-4" {...rest}>
+    <CardContent className="rounded bg-white p-4">
+      <div className="flex w-full flex-col gap-4" {...rest}>
         <Controller
           control={control}
           name={`${parentName}.header.file`}
           render={() => (
             <FileDropzone
-              register={register}
-              unregister={unregister}
-              parentName={`${parentName}.header`}
               configs={{
                 uploadKeyName: "common.uploadVideo",
                 accept: {
@@ -55,8 +58,11 @@ const TemplateVideoPreviewComponent = ({
                 },
                 isCard: true,
               }}
-              onRemove={handleRemove}
               onDrop={handleDrop}
+              onRemove={handleRemove}
+              parentName={`${parentName}.header`}
+              register={register}
+              unregister={unregister}
             />
           )}
         />
@@ -64,9 +70,9 @@ const TemplateVideoPreviewComponent = ({
         {showFooter && <TemplateFooter parentName={parentName} />}
         <hr />
         <ButtonGroupPreview
-          parentName={`${parentName}.buttons`}
-          min={minButtons}
           max={maxButtons}
+          min={minButtons}
+          parentName={`${parentName}.buttons`}
         />
       </div>
     </CardContent>

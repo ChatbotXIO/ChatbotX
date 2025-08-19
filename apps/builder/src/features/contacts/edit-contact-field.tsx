@@ -1,5 +1,5 @@
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -7,8 +7,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
@@ -17,7 +17,7 @@ import { updateContactAction } from "./actions/update-contact.action"
 import type { ContactResource } from "./schemas"
 import { updateContactRequest } from "./schemas/update-contact.request"
 
-interface EditContactField {
+type EditContactField = {
   chatbotId: string
   id: string
   open: boolean
@@ -60,7 +60,7 @@ export function EditContactField({
     )
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -71,19 +71,19 @@ export function EditContactField({
         <Form {...form}>
           <form onSubmit={handleSubmitWithAction}>
             <InputField
-              name={selectedField || ""}
               label={`contact.fields.${selectedField || ""}`}
+              name={selectedField || ""}
             />
 
             <DialogFooter className="mt-4">
               <Button
-                variant="outline"
                 onClick={() => onOpenChange(false)}
                 size="sm"
+                variant="outline"
               >
                 <T keyName="common.cancelBtn" />
               </Button>
-              <Button type="submit" size="sm">
+              <Button size="sm" type="submit">
                 <T keyName="common.saveBtn" />
               </Button>
             </DialogFooter>

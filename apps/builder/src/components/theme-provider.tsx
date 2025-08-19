@@ -1,12 +1,11 @@
 "use client"
 
+import { TooltipProvider } from "@aha.chat/ui/components/ui/tooltip"
 import {
   ThemeProvider as NextThemesProvider,
   type ThemeProviderProps,
 } from "next-themes"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
-
-import { TooltipProvider } from "@/components/ui/tooltip"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (

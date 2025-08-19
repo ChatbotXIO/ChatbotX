@@ -1,9 +1,9 @@
-import { getCurrentUserId } from "@/lib/auth"
-import type { ListAIAgentsRequest } from "@/features/integrations/ai-agents/schemas/list.schema"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { AIAgentModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
+import type { ListAIAgentsRequest } from "@/features/integrations/ai-agents/schemas/list.schema"
+import { getCurrentUserId } from "@/lib/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function getAIAgents(
   input: ListAIAgentsRequest,

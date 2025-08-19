@@ -4,7 +4,7 @@ import type { BaseConfig, HandleRequestProps, Handler } from "./shared"
 export type IntegrationDefinition<
   IConfig extends BaseConfig,
   IAuth extends BaseAuthValue,
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   IActions extends Record<string, Handler<any, any>>,
 > = {
   name: string
@@ -17,9 +17,10 @@ export type IntegrationDefinition<
 }
 
 export class Integration<
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   T extends IntegrationDefinition<any, any, any>,
 > {
+  // biome-ignore lint/style/noParameterProperties: wip
   constructor(private readonly props: T) {
     // this.validateProps(props);
   }

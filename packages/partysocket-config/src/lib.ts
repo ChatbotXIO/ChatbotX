@@ -1,6 +1,6 @@
 import ky from "ky"
-import type { RealtimeEventData } from "./schemas"
 import { keys } from "./keys"
+import type { RealtimeEventData } from "./schemas"
 
 const env = keys()
 

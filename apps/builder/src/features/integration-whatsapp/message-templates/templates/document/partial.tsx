@@ -1,27 +1,20 @@
 "use client"
 
-import { useFormContext, useWatch } from "react-hook-form"
-import { FormInput } from "@/components/form-input"
-import { Checkbox } from "@/components/ui/checkbox"
+import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { useTranslate } from "@tolgee/react"
-import { Button } from "@/components/ui/button"
 import { memo, useCallback } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 
 const VariableInput = memo(
-  ({
-    index,
-    parentName,
-  }: {
-    index: number
-    parentName: string
-  }) => {
+  ({ index, parentName }: { index: number; parentName: string }) => {
     return (
-      <div className="flex gap-2 mt-2 w-full">
+      <div className="mt-2 flex w-full gap-2">
         <Button variant="secondary">{`{{${index + 1}}}`}</Button>
         <div className="flex-1">
-          <FormInput
+          <InputField
             name={`${parentName}.body.variables.${index}`}
-            label=""
             placeholder="Type a message"
           />
         </div>
@@ -30,21 +23,18 @@ const VariableInput = memo(
   },
 )
 
-const TemplateDocumentPartialComponent = ({
-  parentName = "content",
-  ...rest
-}: {
-  parentName?: string
-}) => {
+const TemplateDocumentPartialComponent = (props: { parentName?: string }) => {
+  const { parentName = "content", ...rest } = props
+
   const { t } = useTranslate()
   const { control, setValue } = useFormContext()
 
-  const [showFooter, bodyVariables] = useWatch({
+  const [_showFooter, bodyVariables] = useWatch({
     control,
     name: [`${parentName}.showFooter`, `${parentName}.body.variables`],
   })
 
-  const handleFooterChange = useCallback(
+  const _handleFooterChange = useCallback(
     (value: boolean) => {
       setValue(`${parentName}.showFooter`, value, {
         shouldValidate: true,
@@ -56,26 +46,24 @@ const TemplateDocumentPartialComponent = ({
   return (
     <div className="w-full flex-1" {...rest}>
       <div className="flex gap-4">
-        <FormInput
+        <CheckboxGroupField
           name={`${parentName}.showFooter`}
-          label={t("whatapp.templateFooter")}
-        >
-          <Checkbox
-            id="templateHeader"
-            className="flex gap-2"
-            defaultChecked={showFooter}
-            onCheckedChange={handleFooterChange}
-          />
-        </FormInput>
+          options={[
+            {
+              label: "Show footer",
+              value: "showFooter",
+            },
+          ]}
+        />
       </div>
       {bodyVariables.length > 0 && (
         <>
           <div className="mt-6">{t("common.sampleBodyContent")}</div>
           {bodyVariables.map((_variable: string, index: number) => (
             <VariableInput
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              key={`${parentName}-variable-${index}`}
               index={index}
+              // biome-ignore lint/suspicious/noArrayIndexKey: wip
+              key={`${parentName}-variable-${index}`}
               parentName={parentName}
             />
           ))}

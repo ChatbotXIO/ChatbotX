@@ -1,12 +1,12 @@
+import type { FolderModel } from "@aha.chat/database/types"
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 import { CreateFlowDialog } from "@/features/flows/create-flow-dialog"
 import { FlowsTable } from "@/features/flows/flows-table"
 import { getFlows } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
 import { getCurrentFolder } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
-import type { FolderModel } from "@aha.chat/database/types"
-import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
 
 export default async function FlowsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -33,14 +33,14 @@ export default async function FlowsPage(props: {
 
   return (
     <div>
-      <div className="flex w-full justify-end mb-4">
+      <div className="mb-4 flex w-full justify-end">
         <CreateFlowDialog
           chatbotId={params.chatbotId}
           folderId={search.folderId}
         />
       </div>
       <Suspense>
-        <FlowsTable promises={promises} chatbotId={params.chatbotId} />
+        <FlowsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
     </div>
   )

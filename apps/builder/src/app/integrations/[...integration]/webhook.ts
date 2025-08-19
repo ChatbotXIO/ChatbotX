@@ -1,10 +1,10 @@
-import { type IntegrationKey, integrations } from "@/integration"
-import { integrationQueue } from "@aha.chat/worker-config"
-import { notFound } from "next/navigation"
-import { headers } from "next/headers"
-import { findOrganization } from "@/features/organization/queries"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
+import { integrationQueue } from "@aha.chat/worker-config"
+import { headers } from "next/headers"
+import { notFound } from "next/navigation"
+import { findOrganization } from "@/features/organization/queries"
+import { type IntegrationKey, integrations } from "@/integration"
 
 export const handleWebhook = async (integrationName: string, req: Request) => {
   const headersList = await headers()
@@ -18,7 +18,7 @@ export const handleWebhook = async (integrationName: string, req: Request) => {
 
   const integration =
     integrations[integrationName as IntegrationKey].integration
-  if (!integration || !integration?.handleRequest) {
+  if (!integration?.handleRequest) {
     return new Response(
       JSON.stringify({ message: "Method is not implemented" }),
       {

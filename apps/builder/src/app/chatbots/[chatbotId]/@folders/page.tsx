@@ -1,12 +1,13 @@
-import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
-import { ListFolders } from "@/features/folders/list-folders"
-import { getCurrentFolder, getFolders } from "@/features/folders/queries"
-import { T } from "@/tolgee/server"
-import { type FolderModel, FolderType } from "@aha.chat/database/types"
+import type { FolderModel } from "@aha.chat/database/types"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
+import { ListFolders } from "@/features/folders/list-folders"
+import { getCurrentFolder, getFolders } from "@/features/folders/queries"
+import { T } from "@/tolgee/server"
+import { getFolderTypeFromFeature } from "./_lib"
 
 const folderSearchParams = {
   folderId: parseAsString.withDefault(""),
@@ -21,27 +22,7 @@ export default async function FoldersDetault(props: {
   const url = new URL(headersList.get("x-url") as string)
   const featureName = url.pathname.split("/").pop()
 
-  let folderType: FolderType | null = null
-  switch (featureName) {
-    case "automated-responses":
-      folderType = FolderType.AUTOMATED_RESPONSE
-      break
-    case "flows":
-      folderType = FolderType.FLOW
-      break
-    case "account-fields":
-    case "custom-fields":
-      folderType = FolderType.CUSTOM_FIELD
-      break
-    case "email-campaigns":
-      folderType = FolderType.EMAIL_CAMPAIGN
-      break
-    case "tags":
-      folderType = FolderType.TAG
-      break
-    default:
-      break
-  }
+  const folderType = getFolderTypeFromFeature(featureName)
   if (!folderType) {
     return notFound()
   }
@@ -59,7 +40,7 @@ export default async function FoldersDetault(props: {
       : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     getFolders({
       chatbotId: params.chatbotId,
-      folderType: folderType,
+      folderType,
       folderId,
     }),
   ])
@@ -67,7 +48,7 @@ export default async function FoldersDetault(props: {
   return (
     <>
       <div className="flex">
-        <h3 className="font-bold flex-1 text-xl">
+        <h3 className="flex-1 font-bold text-xl">
           <T keyName="folders.heading" />
         </h3>
         <CreateFolderDialog

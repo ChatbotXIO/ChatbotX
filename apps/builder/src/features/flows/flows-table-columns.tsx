@@ -1,26 +1,26 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
-import { formatDate } from "@/lib/format"
-import type { DataTableRowAction } from "@/types/data-table"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { Switch } from "@aha.chat/ui/components/ui/switch"
+import { formatDate } from "@aha.chat/ui/lib/format"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
+import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
 import { updateFlowAction } from "./actions/update-flow-action"
 import type { FlowResource } from "./schemas/get-flows-schema"
 
-interface GetColumnsProps {
+type GetColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<FlowResource> | null>
   >
@@ -34,21 +34,23 @@ export function getFlowColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
+          aria-label="Select all"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
           }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
           className="translate-y-0.5"
+          onCheckedChange={(value) =>
+            table.toggleAllPageRowsSelected(Boolean(value))
+          }
         />
       ),
       cell: ({ row }) => (
         <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
+          checked={row.getIsSelected()}
           className="translate-y-0.5"
+          onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
         />
       ),
       size: 50,
@@ -87,8 +89,8 @@ export function getFlowColumns({
         )
         return (
           <Switch
-            disabled={isPending}
             checked={row.original.active}
+            disabled={isPending}
             onCheckedChange={(value) => {
               execute({ active: value })
             }}
@@ -116,8 +118,8 @@ export function getFlowColumns({
 
         return (
           <Switch
-            disabled={isPending}
             checked={row.original.enableInInbox}
+            disabled={isPending}
             onCheckedChange={(value) => {
               execute({ enableInInbox: value })
             }}
@@ -147,10 +149,10 @@ export function getFlowColumns({
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label="Open menu"
-                variant="ghost"
                 className="flex size-8 p-0 data-[state=open]:bg-muted"
+                variant="ghost"
               >
-                <EllipsisVerticalIcon className="size-4" aria-hidden="true" />
+                <EllipsisVerticalIcon aria-hidden="true" className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">

@@ -1,18 +1,18 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useDataTable } from "@/hooks/use-data-table"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 import { use, useMemo } from "react"
+import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ContactResource } from "./schemas"
-import { ContactListAction } from "./contacts-list-action"
 
-interface ContactsTableProps {
+type ContactsTableProps = {
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
 }
@@ -24,23 +24,23 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
     () => [
       {
         id: "select",
-        header: ({ table }) => (
+        header: ({ table: innerTable }) => (
           <Checkbox
+            aria-label="Select all"
             checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
+              innerTable.getIsAllPageRowsSelected() ||
+              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
             }
             onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
+              innerTable.toggleAllPageRowsSelected(Boolean(value))
             }
-            aria-label="Select all"
           />
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
             aria-label="Select row"
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
         ),
         size: 32,
@@ -132,12 +132,10 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
   })
 
   return (
-    <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table} className="flex gap-1.5">
-          <ContactListAction chatbotId={chatbotId} table={table} />
-        </DataTableToolbar>
-      </DataTable>
-    </>
+    <DataTable table={table}>
+      <DataTableToolbar className="flex gap-1.5" table={table}>
+        <ContactListAction chatbotId={chatbotId} table={table} />
+      </DataTableToolbar>
+    </DataTable>
   )
 }

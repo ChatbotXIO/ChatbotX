@@ -1,60 +1,63 @@
 "use client"
 
-import { CheckboxGroupField } from "@/components/form/checkbox-field"
-import { InputField } from "@/components/form/input-field"
-import { InputNumberField } from "@/components/form/input-number-field"
-import { TextareaField } from "@/components/form/textarea-field"
+import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
-import { OpenAIModel } from "../open-ai/open-ai-model-select"
+import { OpenAIModelSelect } from "../open-ai/open-ai-model-select"
 
-interface OpenAIGenerateTextAdvancedEditorProps {
+type OpenAIGenerateTextAdvancedEditorProps = {
   parentName: string
 }
 
-export const OpenAIGenerateTextAdvancedEditor = ({
-  parentName,
-}: OpenAIGenerateTextAdvancedEditorProps) => {
+export const OpenAIGenerateTextAdvancedEditor = (
+  props: OpenAIGenerateTextAdvancedEditorProps,
+) => {
   return (
     <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAdvanced">
-      <OpenAIModel name={`${parentName}.model`} />
+      <OpenAIModelSelect name={`${props.parentName}.model`} />
 
       <TextareaField
-        name={`${parentName}.prompt`}
-        label="Prompt"
         isRequired={false}
+        label="Prompt"
+        name={`${props.parentName}.prompt`}
       />
 
-      <InputField name={`${parentName}.userMessage`} label="User Message" />
+      <InputField
+        label="User Message"
+        name={`${props.parentName}.userMessage`}
+      />
 
       <CustomFieldSelect
-        name={`${parentName}.resultCustomFieldId`}
-        label="Save response to a custom field"
         allowCreate={true}
+        label="Save response to a custom field"
+        name={`${props.parentName}.resultCustomFieldId`}
       />
 
       <AITriggersMultipleSelect
-        name={`${parentName}.aiTriggerIds`}
         isRequired={false}
+        name={`${props.parentName}.aiTriggerIds`}
       />
 
       <CheckboxGroupField
-        name={`${parentName}.rememberConversation`}
+        name={`${props.parentName}.rememberConversation`}
         options={[{ value: "1", label: "Remember Conversation" }]}
       />
 
       <InputNumberField
-        name={`${parentName}.temperature`}
-        label="Temperature"
         defaultValue={0.4}
+        label="Temperature"
+        name={`${props.parentName}.temperature`}
       />
 
       <InputNumberField
-        name={`${parentName}.maxTokens`}
-        label="Maximum number of output tokens"
-        isRequired={false}
         defaultValue={250}
+        isRequired={false}
+        label="Maximum number of output tokens"
+        name={`${props.parentName}.maxTokens`}
       />
     </OpenAIDialog>
   )

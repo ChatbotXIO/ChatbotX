@@ -1,7 +1,7 @@
 "use client"
 
-import { SelectField } from "@/components/form/select-field"
-import { Button } from "@/components/ui/button"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -11,21 +11,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import type { TagCollection } from "@/features/tags/schemas"
-import { callAPI } from "@/lib/swr"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useState, type ReactElement } from "react"
+import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
+import type { TagCollection } from "@/features/tags/schemas"
+import { callAPI } from "@/lib/swr"
 import { removeContactTagAction } from "../actions/remove-contact-tag.action"
 import { removeContactTagRequest } from "../schemas/remove-contact-tag.request"
 
-interface RemoveContactTagDialogProps {
+type RemoveContactTagDialogProps = {
   trigger: ReactElement
   ids: string[]
 }
@@ -72,7 +72,7 @@ export default function RemoveContactTagDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -83,10 +83,10 @@ export default function RemoveContactTagDialog({
 
         <Form {...form}>
           <form
-            onSubmit={handleSubmitWithAction}
             className="flex flex-col gap-2"
+            onSubmit={handleSubmitWithAction}
           >
-            <SelectField name="tagId" label="Tag" options={tagOptions} />
+            <SelectField label="Tag" name="tagId" options={tagOptions} />
 
             <DialogFooter>
               <DialogClose asChild>
@@ -94,10 +94,10 @@ export default function RemoveContactTagDialog({
               </DialogClose>
 
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

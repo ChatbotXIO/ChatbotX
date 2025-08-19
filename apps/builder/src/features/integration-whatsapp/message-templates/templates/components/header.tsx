@@ -1,14 +1,11 @@
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { useTranslate } from "@tolgee/react"
-import { useState, useEffect, useCallback, memo, useMemo } from "react"
+import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
-const TemplateHeaderComponent = ({
-  parentName,
-}: {
-  parentName: string
-}) => {
+const TemplateHeaderComponent = ({ parentName }: { parentName: string }) => {
   const { t } = useTranslate()
   const { getValues, setValue } = useFormContext()
 
@@ -71,31 +68,31 @@ const TemplateHeaderComponent = ({
 
   return (
     <>
-      {!showForm ? (
-        <pre
-          className="cursor-pointer font-bold"
-          onClick={handleStartEditing}
-          onKeyUp={() => {}}
-        >
-          {displayText}
-        </pre>
-      ) : (
+      {showForm ? (
         <div className="flex flex-col gap-2">
           <Textarea
             autoFocus
-            placeholder="Enter text"
-            value={localHeader}
             maxLength={1024}
             onChange={(e) => onChangeValue(e.target.value)}
+            placeholder="Enter text"
+            value={localHeader}
           />
-          <div
-            className="flex justify-end hover:underline cursor-pointer text-xs"
+          <Button
+            className="flex cursor-pointer justify-end text-xs hover:underline"
             onClick={addParam}
-            onKeyUp={() => {}}
+            variant="link"
           >
             {t("common.addVariable")}
-          </div>
+          </Button>
         </div>
+      ) : (
+        <Button
+          className="cursor-pointer font-bold"
+          onClick={handleStartEditing}
+          variant="link"
+        >
+          {displayText}
+        </Button>
       )}
     </>
   )

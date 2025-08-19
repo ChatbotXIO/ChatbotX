@@ -1,19 +1,17 @@
-import { useFieldArray, useFormContext } from "react-hook-form"
-import { TemplateBody } from "../components/body"
-import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   Carousel,
   type CarouselApi,
   CarouselContent,
   CarouselItem,
-} from "@/components/ui/carousel"
+} from "@aha.chat/ui/components/ui/carousel"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { Button } from "@/components/ui/button"
+} from "@aha.chat/ui/components/ui/tooltip"
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,15 +20,20 @@ import {
   Minus,
   Plus,
 } from "lucide-react"
-import { templateImageDefaultValue } from "../image/schema"
-import { useState } from "react"
+import { memo, useState } from "react"
+import { useFieldArray, useFormContext } from "react-hook-form"
+import { TemplateBody } from "../components/body"
 import { TemplateImagePreview } from "../image/preview"
+import { templateImageDefaultValue } from "../image/schema"
 
-export const TemplateCarouselImagePreview = ({
-  parentName = "content",
-}: {
+type TemplateCarouselImagePreviewProps = {
   parentName?: string
-}) => {
+}
+
+const TemplateCarouselImagePreviewComponent = (
+  props: TemplateCarouselImagePreviewProps,
+) => {
+  const { parentName = "content" } = props
   const { control } = useFormContext()
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState<number>()
@@ -69,31 +72,31 @@ export const TemplateCarouselImagePreview = ({
 
   return (
     <>
-      <CardContent className="bg-white p-4 rounded">
+      <CardContent className="rounded bg-white p-4">
         <TemplateBody parentName={`${parentName}.body`} />
       </CardContent>
-      <CardContent className="bg-white py-4 px-8 rounded mt-4 relative">
-        <Carousel setApi={setApi} opts={{ dragFree: false }}>
+      <CardContent className="relative mt-4 rounded bg-white px-8 py-4">
+        <Carousel opts={{ dragFree: false }} setApi={setApi}>
           <CarouselContent>
             {fields.map((field, index) => (
               <CarouselItem className="" key={field.id}>
                 <Card className="p-1">
                   <TemplateImagePreview
-                    parentName={`${parentName}.cards.${index}`}
-                    minButtons={1}
                     maxButtons={2}
+                    minButtons={1}
+                    parentName={`${parentName}.cards.${index}`}
                   />
                 </Card>
-                <div className="flex justify-center items-center mt-2">
+                <div className="mt-2 flex items-center justify-center">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          disabled={fields.length <= 2}
                           onClick={removeCard}
+                          size="icon"
                           type="button"
                           variant="ghost"
-                          size="icon"
-                          disabled={fields.length <= 2}
                         >
                           <Minus size={25} />
                         </Button>
@@ -107,10 +110,10 @@ export const TemplateCarouselImagePreview = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          disabled={index === 0}
+                          onClick={() => swap(index, index - 1)}
                           type="button"
                           variant="ghost"
-                          onClick={() => swap(index, index - 1)}
-                          disabled={index === 0}
                         >
                           <ArrowLeft size={25} />
                         </Button>
@@ -125,10 +128,10 @@ export const TemplateCarouselImagePreview = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          disabled={index === fields.length - 1}
+                          onClick={() => swap(index, index + 1)}
                           type="button"
                           variant="ghost"
-                          onClick={() => swap(index, index + 1)}
-                          disabled={index === fields.length - 1}
                         >
                           <ArrowRight size={25} />
                         </Button>
@@ -141,7 +144,7 @@ export const TemplateCarouselImagePreview = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" onClick={addCard}>
+                        <Button onClick={addCard} type="button" variant="ghost">
                           <Plus size={25} />
                         </Button>
                       </TooltipTrigger>
@@ -162,11 +165,11 @@ export const TemplateCarouselImagePreview = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    type="button"
-                    variant="ghost"
-                    className="absolute size-8 shrink-0 top-1/2 right-0 -translate-y-1/2"
+                    className="-translate-y-1/2 absolute top-1/2 right-0 size-8 shrink-0"
                     disabled={current === fields.length - 1}
                     onClick={onNext}
+                    type="button"
+                    variant="ghost"
                   >
                     <ChevronRight size={25} />
                   </Button>
@@ -181,11 +184,11 @@ export const TemplateCarouselImagePreview = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    type="button"
-                    variant="ghost"
-                    className="absolute size-8 shrink-0 top-1/2 -left-0 -translate-y-1/2"
+                    className="-left-0 -translate-y-1/2 absolute top-1/2 size-8 shrink-0"
                     disabled={current === 0}
                     onClick={onPrev}
+                    type="button"
+                    variant="ghost"
                   >
                     <ChevronLeft size={25} />
                   </Button>
@@ -201,3 +204,7 @@ export const TemplateCarouselImagePreview = ({
     </>
   )
 }
+
+export const TemplateCarouselImagePreview = memo(
+  TemplateCarouselImagePreviewComponent,
+)

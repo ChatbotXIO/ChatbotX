@@ -1,5 +1,5 @@
-import { PrismaClient } from "./generated/prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
+import { PrismaClient } from "./generated/prisma/client"
 import { keys } from "./keys"
 
 const env = keys()
@@ -39,7 +39,7 @@ export const prisma =
           compute(contact) {
             if (contact.firstName || contact.lastName) {
               return [contact.firstName, contact.lastName]
-                .filter((v) => !!v)
+                .filter((v) => Boolean(v))
                 .join(" ")
             }
 
@@ -77,7 +77,9 @@ export const prisma =
     },
   })
 
-if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+if (env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma
+}
 
-export * from "./generated/prisma/enums"
 export { Prisma } from "./generated/prisma/client"
+export * from "./generated/prisma/enums"

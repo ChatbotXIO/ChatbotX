@@ -1,12 +1,12 @@
 import { z } from "zod"
 
-export interface ContactEntity {
+export type ContactEntity = {
   sourceId: string
   phoneNumber?: string
   name?: string
 }
 
-export interface ConversationEntity {
+export type ConversationEntity = {
   sourceId: string
   inboxId?: string
   conversationAttributes: Record<string, unknown>
@@ -17,7 +17,7 @@ export const conversationEntitySchema = z.custom<ConversationEntity>((data) => {
   return typeof data === "object"
 })
 
-export interface OutgoingMessageEntity {
+export type OutgoingMessageEntity = {
   chatbotId: string
   conversationId: string
   contentType: ContentType
@@ -25,7 +25,7 @@ export interface OutgoingMessageEntity {
   attachments?: AttachmentEntity[]
 }
 
-export interface MessageEntity {
+export type MessageEntity = {
   sourceId: string
   contentType: ContentType
   content?: string
@@ -38,7 +38,7 @@ export const MessageEntitySchema = z.custom<MessageEntity>((data) => {
   return typeof data === "object"
 })
 
-export interface AttachmentEntity {
+export type AttachmentEntity = {
   sourceId: string
   fileType: FileType
   mimeType: string
@@ -50,7 +50,7 @@ export interface AttachmentEntity {
   name?: string
 }
 
-export interface ExternalMediaResult {
+export type ExternalMediaResult = {
   originPath: string
   size: number
   width?: number
@@ -58,19 +58,23 @@ export interface ExternalMediaResult {
   name?: string
 }
 
-export interface MessageLocationEntity {
+export type MessageLocationEntity = {
   latitude: string
   longitude: string
 }
 
-export enum ContentType {
-  TEXT = "TEXT",
-  LOCATION = "LOCATION",
-}
+export const ContentType = {
+  TEXT: "TEXT",
+  LOCATION: "LOCATION",
+} as const
 
-export enum FileType {
-  IMAGE = "IMAGE",
-  AUDIO = "AUDIO",
-  VIDEO = "VIDEO",
-  DOCUMENT = "DOCUMENT",
-}
+export type ContentType = (typeof ContentType)[keyof typeof ContentType]
+
+export const FileType = {
+  IMAGE: "IMAGE",
+  AUDIO: "AUDIO",
+  VIDEO: "VIDEO",
+  DOCUMENT: "DOCUMENT",
+} as const
+
+export type FileType = (typeof FileType)[keyof typeof FileType]

@@ -1,16 +1,18 @@
 import { z } from "zod"
 
-export enum NodeType {
-  SendMessage = "SendMessage",
-  StartFlow = "StartFlow",
-  Actions = "Actions",
-  Condition = "Condition",
-  SendMail = "SendMail",
-  SplitTraffic = "SplitTraffic",
-  Wait = "Wait",
-  LandingPage = "LandingPage",
-  AddNotes = "AddNotes",
-}
+export const NodeType = {
+  SendMessage: "SendMessage",
+  StartFlow: "StartFlow",
+  Actions: "Actions",
+  Condition: "Condition",
+  SendMail: "SendMail",
+  SplitTraffic: "SplitTraffic",
+  Wait: "Wait",
+  LandingPage: "LandingPage",
+  AddNotes: "AddNotes",
+} as const
+
+export type NodeType = (typeof NodeType)[keyof typeof NodeType]
 
 export type NewNodeProps = {
   id?: string

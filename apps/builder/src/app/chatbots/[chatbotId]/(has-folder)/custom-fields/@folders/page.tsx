@@ -1,5 +1,5 @@
-import SharedFolderSlot from "@/features/folders/shared-folder-slot"
 import type { SearchParams } from "nuqs/server"
+import SharedFolderSlot from "@/features/folders/shared-folder-slot"
 
 export default async function FolderPage(props: {
   params: Promise<{ chatbotId: string }>

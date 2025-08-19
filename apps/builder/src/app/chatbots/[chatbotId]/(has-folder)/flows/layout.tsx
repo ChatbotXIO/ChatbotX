@@ -1,4 +1,4 @@
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@aha.chat/ui/components/ui/separator"
 import type { ReactNode } from "react"
 
 export default function FolderableLayout({

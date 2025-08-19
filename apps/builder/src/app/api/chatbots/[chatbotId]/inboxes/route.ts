@@ -1,9 +1,9 @@
+import { type NextRequest, NextResponse } from "next/server"
 import { listInboxes } from "@/features/inboxes/queries"
 import { listInboxesNuqs } from "@/features/inboxes/schemas/list-inboxes.schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,

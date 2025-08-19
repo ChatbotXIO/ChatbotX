@@ -1,30 +1,30 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { type FieldModel, FieldType } from "@aha.chat/database/types"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
-import { useDataTable } from "@/hooks/use-data-table"
-import type { DataTableRowAction } from "@/types/data-table"
-import { type FieldModel, FieldType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { Switch } from "@aha.chat/ui/components/ui/switch"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon } from "lucide-react"
 import { use, useMemo, useState } from "react"
+import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 import type { listCustomFields } from "./queries"
 import type { CustomFieldResource } from "./schemas"
 import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
-import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 
-interface FieldsTableProps {
+type FieldsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listCustomFields>>]>
   chatbotId: string
 }
@@ -49,23 +49,23 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
     () => [
       {
         id: "select",
-        header: ({ table }) => (
+        header: ({ table: innerTable }) => (
           <Checkbox
+            aria-label="Select all"
             checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
+              innerTable.getIsAllPageRowsSelected() ||
+              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
             }
             onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
+              innerTable.toggleAllPageRowsSelected(Boolean(value))
             }
-            aria-label="Select all"
           />
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
             aria-label="Select row"
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
         ),
         size: 32,
@@ -111,7 +111,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
                   <span className="sr-only">Open menu</span>
                 </Button>
@@ -158,28 +158,28 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <CustomFieldsTableToolbarActions
-            table={table}
             chatbotId={chatbotId}
+            table={table}
             // setRowAction={setRowAction}
           />
         </DataTableToolbar>
       </DataTable>
 
       <DeleteFieldsDialog
-        open={rowAction?.variant === "delete"}
-        onOpenChange={() => setRowAction(null)}
-        records={rowAction?.row.original ? [rowAction?.row.original] : []}
-        showTrigger={false}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
         fieldType={FieldType.CUSTOM_FIELD}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        records={rowAction?.row.original ? [rowAction?.row.original] : []}
+        showTrigger={false}
       />
 
       <UpdateCustomFieldDialog
-        open={rowAction?.variant === "update"}
-        onOpenChange={() => setRowAction(null)}
         chatbotId={chatbotId}
         customField={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
       />
     </>
   )

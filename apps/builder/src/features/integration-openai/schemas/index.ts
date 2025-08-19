@@ -1,6 +1,6 @@
 import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
-import { z } from "zod"
 import { OpenAIModel } from "@aha.chat/flow-config"
+import { z } from "zod"
 
 export type IntegrationOpenAIResource = IntegrationOpenAIModel
 
@@ -11,11 +11,11 @@ export const connectOpenAISchema = z.object({
 })
 export type ConnectOpenAISchema = z.infer<typeof connectOpenAISchema>
 
-export enum OpenAIMessageRole {
-  Assistant = "assistant",
-  Developer = "developer",
-  User = "user",
-}
+export const OpenAIMessageRole = {
+  Assistant: "assistant",
+  Developer: "developer",
+  User: "user",
+} as const
 
 export const openAIModelOptions: { value: string; label: string }[] = [
   {

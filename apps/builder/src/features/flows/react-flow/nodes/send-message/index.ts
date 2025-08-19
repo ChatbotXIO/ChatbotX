@@ -1,11 +1,11 @@
-import { MessageCircleMoreIcon } from "lucide-react"
-import type { NodeConfigProps } from "../node-config"
-import { sendMessageEditorMenus } from "./menu"
 import {
   NodeType,
   sendMessageNodeDefaultFn,
   sendMessageNodeSchema,
 } from "@aha.chat/flow-config"
+import { MessageCircleMoreIcon } from "lucide-react"
+import type { NodeConfigProps } from "../node-config"
+import { sendMessageEditorMenus } from "./menu"
 
 const sendMessageNodeConfig: NodeConfigProps = {
   defaultFn: sendMessageNodeDefaultFn,

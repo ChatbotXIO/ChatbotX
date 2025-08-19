@@ -1,9 +1,9 @@
 import type { ReactNode } from "react"
 
-export default async function FlowDetailLayout({
-  children,
-}: {
+type FlowDetailLayoutProps = {
   children: ReactNode
-}) {
-  return <div className="w-screen h-screen flex flex-col">{children}</div>
+}
+
+export default function FlowDetailLayout({ children }: FlowDetailLayoutProps) {
+  return <div className="flex h-screen w-screen flex-col">{children}</div>
 }

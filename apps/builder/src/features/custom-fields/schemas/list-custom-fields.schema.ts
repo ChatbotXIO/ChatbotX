@@ -1,4 +1,4 @@
-import { getSortingStateParser } from "@/lib/parsers"
+import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,

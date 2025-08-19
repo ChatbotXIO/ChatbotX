@@ -1,14 +1,14 @@
 "use server"
 
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-  type BulkUpdateIdsRequest,
-  bulkUpdateIdsRequest,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
+import {
+  type BulkUpdateIdsRequest,
+  bulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

@@ -1,5 +1,7 @@
 "use server"
 
+import { prisma } from "@aha.chat/database"
+import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -10,8 +12,6 @@ import {
 } from "@/features/integrations/ai-agents/schemas/create.schema"
 import { AIAgentException } from "@/features/integrations/ai-agents/schemas/errors.schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 
 export const createAIAgentAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

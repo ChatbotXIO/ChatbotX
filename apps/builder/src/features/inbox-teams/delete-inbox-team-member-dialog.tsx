@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -9,16 +9,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import { T } from "@tolgee/react"
 import { Loader } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
+import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteTeamMembersAction } from "./actions/delete-inbox-team-member.action"
 import type { InboxTeamMemberResource } from "./schemas/types"
 
-interface DeleteMembersDialogProps
-  extends React.ComponentPropsWithoutRef<typeof Dialog> {
+type DeleteMembersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
   chatbotId: string
@@ -68,12 +68,12 @@ export function DeleteInboxTeamMembersDialog({
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
-            variant="destructive"
-            onClick={() => execute({ ids: [teamMember?.id ?? ""] })}
             disabled={isPending}
+            onClick={() => execute({ ids: [teamMember?.id ?? ""] })}
+            variant="destructive"
           >
             {isPending && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
             <T keyName="common.deleteBtn" />
           </Button>

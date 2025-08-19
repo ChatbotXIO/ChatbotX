@@ -3,7 +3,13 @@
 import { useNodes } from "@xyflow/react"
 import { useFormContext } from "react-hook-form"
 
-const SendFlowNodeStepEditor = ({ parentName }: { parentName: string }) => {
+type SendFlowNodeStepEditorProps = {
+  parentName: string
+}
+
+const SendFlowNodeStepEditor = (props: SendFlowNodeStepEditorProps) => {
+  const { parentName } = props
+
   const nodes = useNodes()
 
   // trying to get target node ID
@@ -12,7 +18,7 @@ const SendFlowNodeStepEditor = ({ parentName }: { parentName: string }) => {
   const targetNode = nodes.find((n) => n.id === targetNodeId)
 
   return (
-    <div className="items-center rounded-lg overflow-hidden justify-center">
+    <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-slate-200 px-3 py-2">
         <div>{(targetNode?.data?.name as string) ?? ""}</div>
       </div>

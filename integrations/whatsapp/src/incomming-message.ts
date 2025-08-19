@@ -24,8 +24,8 @@ import type {
   ServerTextMessage,
   ServerVideoMessage,
 } from "whatsapp-api-js/types"
-import type { WhatsappAuthValue } from "./schemas"
 import { logger } from "./lib/logger"
+import type { WhatsappAuthValue } from "./schemas"
 
 export const parseIncomingMessage = async (
   ctx: Context<WhatsappAuthValue>,
@@ -46,7 +46,7 @@ export const parseIncomingMessage = async (
       name: props.name,
     },
   }
-  let postbackAction = undefined
+  let postbackAction: { flowVersionId: string; buttonId: string } | null = null
 
   switch (props.message.type) {
     case "text":
@@ -130,8 +130,9 @@ export const parseIncomingMessage = async (
       const attached = (props.message as ServerLocationMessage).location
       // message.contentType = ContentType.LOCATION
       message.content =
-        [attached.name, attached.address].filter((v) => !!v).join(": ") ??
-        "Received location"
+        [attached.name, attached.address]
+          .filter((v) => Boolean(v))
+          .join(": ") ?? "Received location"
       message.contentAttributes = attached
       break
     }
@@ -203,7 +204,10 @@ export const fetchMedia = async (
       if (response.ok && response.body) {
         const result: ExternalMediaResult = {
           originPath: `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`,
-          size: Number.parseInt(response.headers.get("content-length") ?? "0"),
+          size: Number.parseInt(
+            response.headers.get("content-length") ?? "0",
+            10,
+          ),
         }
 
         const bytes = await response.arrayBuffer()

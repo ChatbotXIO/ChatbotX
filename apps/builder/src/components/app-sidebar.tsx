@@ -1,16 +1,12 @@
 "use client"
 
-import { ChatbotSwitcher } from "@/components/chatbot-switcher"
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import type { ChatbotResource } from "@/features/chatbots/schemas"
+} from "@aha.chat/ui/components/ui/sidebar"
 import { useTranslate } from "@tolgee/react"
 import {
   Atom,
@@ -23,6 +19,10 @@ import {
   Wrench,
 } from "lucide-react"
 import { type ComponentProps, use } from "react"
+import { ChatbotSwitcher } from "@/components/chatbot-switcher"
+import { NavMain } from "@/components/nav-main"
+import { NavUser } from "@/components/nav-user"
+import type { ChatbotResource } from "@/features/chatbots/schemas"
 
 export function AppSidebar({
   chatbotId,

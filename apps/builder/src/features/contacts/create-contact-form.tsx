@@ -1,10 +1,10 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
-import { Button } from "@/components/ui/button"
-import { Form } from "@/components/ui/form"
 import { Gender } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -70,49 +70,49 @@ export function CreateContactForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
+      <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
         <InputField
-          name="phoneNumber"
           label={t("contacts.phoneNumber")}
+          name="phoneNumber"
           placeholder="090xxxxxxx"
         />
 
         <InputField
-          name="email"
+          isRequired={false}
           label={t("contacts.email")}
+          name="email"
           placeholder="email@aha.chat"
-          isRequired={false}
         />
 
         <InputField
-          name="firstName"
+          isRequired={false}
           label={t("contacts.firstName")}
+          name="firstName"
           placeholder={t("contacts.firstName.placeholder")}
-          isRequired={false}
         />
 
         <InputField
-          name="lastName"
-          label={t("contacts.lastName")}
-          placeholder={t("contacts.lastName.placeholder")}
           isRequired={false}
+          label={t("contacts.lastName")}
+          name="lastName"
+          placeholder={t("contacts.lastName.placeholder")}
         />
 
         <SelectField
-          name="gender"
-          label={t("contacts.gender")}
-          isRequired={false}
           defaultValue={Gender.UNKNOWN}
+          isRequired={false}
+          label={t("contacts.gender")}
+          name="gender"
           options={genderLabels}
         />
 
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="ghost" onClick={onCancelled}>
+          <Button onClick={onCancelled} type="button" variant="ghost">
             {t("common.cancel-btn")}
           </Button>
           <Button
-            type="submit"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
+            type="submit"
           >
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />

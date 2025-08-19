@@ -1,8 +1,8 @@
+import { type NextRequest, NextResponse } from "next/server"
 import { findMessage } from "@/features/messages/queries/list-messages.query"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   _req: NextRequest,

@@ -3,7 +3,9 @@ import { listInboxes } from "@/features/inboxes/queries"
 
 export default async function CreateBroadcastPage({
   params,
-}: { params: Promise<{ chatbotId: string }> }) {
+}: {
+  params: Promise<{ chatbotId: string }>
+}) {
   const { chatbotId } = await params
   const inboxesPromise = listInboxes({ chatbotId, perPage: 9999 })
 

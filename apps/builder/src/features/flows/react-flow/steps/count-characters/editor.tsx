@@ -1,6 +1,10 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import {
+  type CountCharactersStepSchema,
+  countCharactersStepSchema,
+} from "@aha.chat/flow-config"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,23 +14,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import {
-  countCharactersStepSchema,
-  type CountCharactersStepSchema,
-} from "@aha.chat/flow-config"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { CalculatorIcon } from "lucide-react"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
 export default function CountCharactersStepEditor({
   parentName,
-}: { parentName: string }) {
+}: {
+  parentName: string
+}) {
   return (
     <BaseStepEditor
       icon={CalculatorIcon}
@@ -56,10 +58,10 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="flex justify-center">
-          <Button variant="outline" size="sm">
+          <Button size="sm" variant="outline">
             Edit
           </Button>
         </div>
@@ -72,20 +74,20 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
 
         <Form {...form}>
           <form
+            className="flex w-full flex-col gap-4"
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col w-full gap-4"
           >
             <CustomFieldSelect
-              name="inputCustomFieldId"
-              label="Custom field"
               isRequired
+              label="Custom field"
+              name="inputCustomFieldId"
             />
 
             <CustomFieldSelect
-              name="outputCustomFieldId"
-              label="Save to custom field"
-              isRequired
               allowCreate={true}
+              isRequired
+              label="Save to custom field"
+              name="outputCustomFieldId"
             />
 
             <DialogFooter>
@@ -94,10 +96,10 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
               </DialogClose>
 
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 Save changes
               </Button>

@@ -1,7 +1,13 @@
-import { SelectField } from "@/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 
-export const TimeSelect = ({ name }: { name: string }) => {
-  const times = []
+type TimeSelectProps = {
+  name: string
+}
+
+export const TimeSelect = (props: TimeSelectProps) => {
+  const { name } = props
+
+  const times: { value: string; label: string }[] = []
   for (let hour = 0; hour < 24; hour++) {
     const formattedHour = hour.toString().padStart(2, "0")
     times.push({
@@ -10,5 +16,5 @@ export const TimeSelect = ({ name }: { name: string }) => {
     })
   }
 
-  return <SelectField name={name} placeholder="Select a time" options={times} />
+  return <SelectField name={name} options={times} placeholder="Select a time" />
 }

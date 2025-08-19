@@ -1,67 +1,69 @@
 "use client"
 
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { useTranslate } from "@tolgee/react"
-import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
-import { Button } from "@/components/ui/button"
 import {
-  TypeIcon,
-  ImageIcon,
-  VideoIcon,
-  FileIcon,
   CopyIcon,
+  FileIcon,
+  ImageIcon,
   MapIcon,
   StoreIcon,
+  TypeIcon,
+  VideoIcon,
 } from "lucide-react"
+import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
 
-export function WhatsappMessageTemplateTypeSelect({
-  onSelectTemplateType,
-}: {
+type WhatsappMessageTemplateTypeSelectProps = {
   onSelectTemplateType: (templateType: TemplateType) => void
-}) {
+}
+
+export function WhatsappMessageTemplateTypeSelect(
+  props: WhatsappMessageTemplateTypeSelectProps,
+) {
   const { t } = useTranslate()
   const validTypes = [
     {
-      icon: <TypeIcon size={24} className="!h-6 !w-auto" />,
+      icon: TypeIcon,
       name: t("whatsapp.messageTemplates.Text"),
       value: TemplateType.Text,
     },
     {
-      icon: <ImageIcon size={24} className="!h-6 !w-auto" />,
+      icon: ImageIcon,
       name: t("whatsapp.messageTemplates.Image"),
       value: TemplateType.Image,
     },
     {
-      icon: <VideoIcon size={24} className="!h-6 !w-auto" />,
+      icon: VideoIcon,
       name: t("whatsapp.messageTemplates.Video"),
       value: TemplateType.Video,
     },
     {
-      icon: <FileIcon size={24} className="!h-6 !w-auto" />,
+      icon: FileIcon,
       name: t("whatsapp.messageTemplates.File"),
       value: TemplateType.Document,
     },
     {
-      icon: <CopyIcon size={24} className="!h-6 !w-auto" />,
+      icon: CopyIcon,
       name: t("whatsapp.messageTemplates.CarouselImage"),
       value: TemplateType.CarouselImage,
     },
     {
-      icon: <CopyIcon size={24} className="!h-6 !w-auto" />,
+      icon: CopyIcon,
       name: t("whatsapp.messageTemplates.CarouselVideo"),
       value: TemplateType.CarouselVideo,
     },
     {
-      icon: <MapIcon size={24} className="!h-6 !w-auto" />,
+      icon: MapIcon,
       name: t("whatsapp.messageTemplates.Location"),
       value: TemplateType.Location,
     },
     {
-      icon: <StoreIcon size={24} className="!h-6 !w-auto" />,
+      icon: StoreIcon,
       name: t("whatsapp.messageTemplates.ViewCatalog"),
       value: TemplateType.ViewCatalog,
     },
     {
-      icon: <StoreIcon size={24} className="!h-6 !w-auto" />,
+      icon: StoreIcon,
       name: t("whatsapp.messageTemplates.ViewProduct"),
       value: TemplateType.ViewProduct,
     },
@@ -69,16 +71,16 @@ export function WhatsappMessageTemplateTypeSelect({
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      {validTypes.map((t) => (
+      {validTypes.map((validType) => (
         <Button
-          key={t.value}
-          className="flex justify-start items-center w-full gap-4 p-6 !h-auto text-xl truncate"
+          className="!h-auto flex w-full items-center justify-start gap-4 truncate p-6 text-xl"
+          disabled={validType.value === TemplateType.Location}
+          key={validType.value}
+          onClick={() => props.onSelectTemplateType(validType.value)}
           variant="secondary"
-          disabled={t.value === TemplateType.Location}
-          onClick={() => onSelectTemplateType(t.value)}
         >
-          {t.icon}
-          {t.name}
+          <validType.icon className="!h-6 !w-auto" size={24} />
+          {validType.name}
         </Button>
       ))}
     </div>

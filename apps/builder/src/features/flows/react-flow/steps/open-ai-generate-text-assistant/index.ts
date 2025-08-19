@@ -1,9 +1,9 @@
+import {
+  openAIGenerateTextAssistantDefaultFn,
+  openAIGenerateTextAssistantSchema,
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { OpenAIGenerateTextAssistantEditor } from "./editor"
-import {
-  openAIGenerateTextAssistantSchema,
-  openAIGenerateTextAssistantDefaultFn,
-} from "@aha.chat/flow-config"
 import { OpenAIGenerateTextAssistantViewer } from "./viewer"
 
 export const openAIGenerateTextAssistantStep: StepDefinition = {

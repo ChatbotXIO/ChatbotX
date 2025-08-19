@@ -1,10 +1,10 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { useTranslate } from "@tolgee/react"
-import { useFormContext, useWatch } from "react-hook-form"
 import { memo } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 
 const VariableInput = memo(
   ({
@@ -16,7 +16,7 @@ const VariableInput = memo(
     index: number
     placeholder?: string
   }) => (
-    <div className="flex gap-2 mt-2 w-full">
+    <div className="mt-2 flex w-full gap-2">
       <Button variant="secondary">{`{{${index + 1}}}`}</Button>
       <div className="flex-1">
         <InputField
@@ -47,10 +47,10 @@ const CardVariables = memo(
         </div>
         {variables.map((_variable: string, index: number) => (
           <VariableInput
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+            index={index}
+            // biome-ignore lint/suspicious/noArrayIndexKey: wip
             key={`${parentName}-card-${cardIndex}-var-${index}`}
             parentName={`${parentName}.cards.${cardIndex}.body`}
-            index={index}
           />
         ))}
       </div>
@@ -58,12 +58,14 @@ const CardVariables = memo(
   },
 )
 
-const TemplateCarouselImagePartialComponent = ({
-  parentName = "content",
-  ...rest
-}: {
+type TemplateCarouselImagePartialComponentProps = {
   parentName?: string
-}) => {
+}
+
+const TemplateCarouselImagePartialComponent = (
+  props: TemplateCarouselImagePartialComponentProps,
+) => {
+  const { parentName = "content", ...rest } = props
   const { t } = useTranslate()
   const { control } = useFormContext()
 
@@ -79,10 +81,10 @@ const TemplateCarouselImagePartialComponent = ({
           <div className="mt-6">{t("common.sampleBodyContent")}</div>
           {bodyVariables.map((_variable: string, index: number) => (
             <VariableInput
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              index={index}
+              // biome-ignore lint/suspicious/noArrayIndexKey: wip
               key={`${parentName}-var-${index}`}
               parentName={`${parentName}.body`}
-              index={index}
             />
           ))}
         </>
@@ -90,10 +92,10 @@ const TemplateCarouselImagePartialComponent = ({
       {cards?.map(
         (card: { body: { variables: string[] } }, indexCard: number) => (
           <CardVariables
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+            cardIndex={indexCard}
+            // biome-ignore lint/suspicious/noArrayIndexKey: wip
             key={`${parentName}-card-${indexCard}`}
             parentName={parentName}
-            cardIndex={indexCard}
             variables={card.body.variables}
           />
         ),

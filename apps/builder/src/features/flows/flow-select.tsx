@@ -1,19 +1,18 @@
-import { SelectField } from "@/components/form/select-field"
-import { callAPI } from "@/lib/swr"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
+import { callAPI } from "@/lib/swr"
 import type { FlowCollection } from "./schemas/get-flows-schema"
 
-export const FlowSelect = ({
-  name,
-  label,
-  isRequired = false,
-  className,
-}: {
+type FlowSelectProps = {
   name: string
   label?: string
   isRequired?: boolean
   className?: string
-}) => {
+}
+
+export const FlowSelect = (props: FlowSelectProps) => {
+  const { name, label, isRequired = false, className } = props
+
   const params = useParams<{ chatbotId: string }>()
 
   const flowUrl = `/api/chatbots/${params.chatbotId}/flows?perPage=9999`
@@ -25,12 +24,12 @@ export const FlowSelect = ({
 
   return (
     <SelectField
-      name={name}
-      label={label}
-      isRequired={isRequired}
-      placeholder="Please select flow"
-      options={flowOptions}
       className={className}
+      isRequired={isRequired}
+      label={label}
+      name={name}
+      options={flowOptions}
+      placeholder="Please select flow"
     />
   )
 }

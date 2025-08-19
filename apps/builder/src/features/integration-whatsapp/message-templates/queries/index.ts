@@ -1,9 +1,9 @@
-import { getCurrentUserId } from "@/lib/auth"
-import type { GetMessageTemplatesSchema } from "@/features/integration-whatsapp/message-templates/schemas/get-message-templates-schema"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { WhatsappMessageTemplateModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
+import type { GetMessageTemplatesSchema } from "@/features/integration-whatsapp/message-templates/schemas/get-message-templates-schema"
+import { getCurrentUserId } from "@/lib/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export const getMessageTemplates = async (
   input: GetMessageTemplatesSchema,

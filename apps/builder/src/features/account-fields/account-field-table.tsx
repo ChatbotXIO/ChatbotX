@@ -1,19 +1,21 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useDataTable } from "@/hooks/use-data-table"
-import type { DataTableRowAction } from "@/types/data-table"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { Separator } from "@aha.chat/ui/components/ui/separator"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
+import { useTranslate } from "@tolgee/react"
 import {
   FingerprintIcon,
   MoreHorizontalIcon,
@@ -22,16 +24,14 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import { use, useMemo, useState } from "react"
+import { useCopyToClipboard } from "usehooks-ts"
+import { AccountFieldToolbarActions } from "./account-field-table-toolbar"
 import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
 import type { listAccountFields } from "./queries/list-account-fields.query"
 import type { AccountFieldResource } from "./schemas/types"
 import { UpdateAccountFieldDialog } from "./update-account-field-dialog"
-import { AccountFieldToolbarActions } from "./account-field-table-toolbar"
-import { useCopyToClipboard } from "usehooks-ts"
-import { Separator } from "@/components/ui/separator"
-import { useTranslate } from "@tolgee/react"
 
-interface FieldsTableProps {
+type FieldsTableProps = {
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof listAccountFields>>]>
 }
@@ -44,28 +44,28 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
   const [_, copyToClipboard] = useCopyToClipboard()
   const { t } = useTranslate()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   const columns = useMemo<ColumnDef<AccountFieldResource>[]>(
     () => [
       {
         id: "select",
-        header: ({ table }) => (
+        header: ({ table: innerTable }) => (
           <Checkbox
+            aria-label="Select all"
             checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
+              innerTable.getIsAllPageRowsSelected() ||
+              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
             }
             onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
+              innerTable.toggleAllPageRowsSelected(Boolean(value))
             }
-            aria-label="Select all"
           />
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
             aria-label="Select row"
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
         ),
         size: 32,
@@ -119,7 +119,7 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
                   <span className="sr-only">Open menu</span>
                 </Button>
@@ -180,19 +180,19 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
       </DataTable>
 
       <DeleteAccountFieldsDialog
-        open={rowAction?.variant === "delete"}
+        chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
         records={rowAction?.row.original ? [rowAction?.row.original] : []}
         showTrigger={false}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
-        chatbotId={chatbotId}
       />
 
       <UpdateAccountFieldDialog
-        open={rowAction?.variant === "update"}
-        onOpenChange={() => setRowAction(null)}
-        chatbotId={chatbotId}
         accountField={rowAction?.row.original || null}
+        chatbotId={chatbotId}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
       />
     </>
   )

@@ -1,5 +1,5 @@
-export enum QueueName {
-  INTEGRATION = "INTEGRATION",
-  CHAT = "CHAT",
-  FLOW = "FLOW",
-}
+export const QueueName = {
+  INTEGRATION: "INTEGRATION",
+  CHAT: "CHAT",
+  FLOW: "FLOW",
+} as const

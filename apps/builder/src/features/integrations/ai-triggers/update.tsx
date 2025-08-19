@@ -1,21 +1,17 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { TextareaField } from "@/components/form/textarea-field"
-import { Button } from "@/components/ui/button"
+import type { AITriggerModel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form, FormLabel } from "@/components/ui/form"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { FlowSelect } from "@/features/flows/flow-select"
-import { updateAITriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
-import { updateAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/update.schema"
-import type { AITriggerModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form, FormLabel } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -24,6 +20,10 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { FlowSelect } from "@/features/flows/flow-select"
+import { updateAITriggerAction } from "@/features/integrations/ai-triggers/actions/update.action"
+import { updateAITriggerRequest } from "@/features/integrations/ai-triggers/schemas/update.schema"
 import type { CreateAITriggerRequest } from "./schemas/create.schema"
 
 type UpdateAITriggerDialogProps = {
@@ -96,7 +96,7 @@ export function UpdateAITriggerDialog({
   }, [trigger, reset])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("aiTriggers.update.title")}</DialogTitle>
@@ -105,14 +105,14 @@ export function UpdateAITriggerDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
-              <InputField name="name" label={t("aiTriggers.name")} />
+              <InputField label={t("aiTriggers.name")} name="name" />
 
               <TextareaField
-                name="description"
                 label={t("aiTriggers.description")}
+                name="description"
               />
 
               <div className="flex flex-col space-y-2">
@@ -123,24 +123,24 @@ export function UpdateAITriggerDialog({
                       <InputField name={`questions.${i}.name`} />
                     </div>
 
-                    <div className="basis-1/12 flex justify-center">
+                    <div className="flex basis-1/12 justify-center">
                       <ArrowRightIcon className="mt-2" />
                     </div>
 
                     <div className="basis-5/12">
                       <CustomFieldSelect
+                        isRequired={false}
                         label=""
                         name={`questions.${i}.fieldId`}
-                        isRequired={false}
                       />
                     </div>
 
                     <div className="basis-1/12">
                       <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
                         onClick={() => remove(i)}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
                       >
                         <XIcon />
                       </Button>
@@ -148,34 +148,34 @@ export function UpdateAITriggerDialog({
                   </div>
                 ))}
                 <Button
+                  onClick={onAddDataCollection}
                   type="button"
                   variant="secondary"
-                  onClick={onAddDataCollection}
                 >
                   {t("aiTriggers.dataCollect.addBtn")}
                 </Button>
               </div>
 
-              <FlowSelect name="flowId" label={t("aiTriggers.flowId")} />
+              <FlowSelect label={t("aiTriggers.flowId")} name="flowId" />
 
               <TextareaField
-                name="finalMessage"
                 label={t("aiTriggers.finalMessage")}
+                name="finalMessage"
               />
 
               <div className="flex justify-end gap-4">
                 <Button
+                  onClick={() => onOpenChange(false)}
                   type="button"
                   variant="ghost"
-                  onClick={() => onOpenChange(false)}
                 >
                   {t("common.cancel-btn")}
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

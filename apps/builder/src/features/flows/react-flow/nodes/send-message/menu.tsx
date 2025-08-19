@@ -1,34 +1,34 @@
+import { StepType } from "@aha.chat/flow-config"
 import { T } from "@tolgee/react"
 import {
   ArchiveIcon,
+  BellOffIcon,
+  BellRingIcon,
+  BotIcon,
+  CalculatorIcon,
+  CircleCheckIcon,
+  CodeIcon,
+  CogIcon,
   ImageIcon,
+  MailIcon,
   MessageCircleMoreIcon,
+  MessageCirclePlusIcon,
+  MessageCircleXIcon,
   MessagesSquareIcon,
+  OctagonXIcon,
+  PackageOpenIcon,
   SaveIcon,
   SaveOffIcon,
-  TextIcon,
-  ZapIcon,
-  MessageCirclePlusIcon,
-  UserRoundXIcon,
-  UserIcon,
-  BotIcon,
-  StarIcon,
-  MailIcon,
-  CircleCheckIcon,
-  BellRingIcon,
-  BellOffIcon,
-  PackageOpenIcon,
-  MessageCircleXIcon,
-  StarOffIcon,
-  CogIcon,
-  CalculatorIcon,
   ShuffleIcon,
-  CodeIcon,
+  StarIcon,
+  StarOffIcon,
   TagIcon,
-  OctagonXIcon,
+  TextIcon,
+  UserIcon,
+  UserRoundXIcon,
+  ZapIcon,
 } from "lucide-react"
 import type { MenuItem } from "../types"
-import { StepType } from "@aha.chat/flow-config"
 
 export const sendMessageEditorMenus: MenuItem[] = [
   {

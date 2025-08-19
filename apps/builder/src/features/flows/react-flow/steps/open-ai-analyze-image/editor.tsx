@@ -1,20 +1,22 @@
 "use client"
 
-import { TextareaField } from "@/components/form/textarea-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
-import { OpenAIModel } from "../open-ai/open-ai-model-select"
+import { OpenAIModelSelect } from "../open-ai/open-ai-model-select"
 
-interface OpenAIAnalyzeImageEditorProps {
+type OpenAIAnalyzeImageEditorProps = {
   parentName: string
 }
 
-export const OpenAIAnalyzeImageEditor = ({
-  parentName,
-}: OpenAIAnalyzeImageEditorProps) => {
+export const OpenAIAnalyzeImageEditor = (
+  props: OpenAIAnalyzeImageEditorProps,
+) => {
+  const { parentName } = props
+
   return (
     <OpenAIDialog name="Flows.OpenAI.Title.AnalyzeImage">
-      <OpenAIModel name={`${parentName}.model`} />
+      <OpenAIModelSelect name={`${parentName}.model`} />
 
       <CustomFieldSelect
         label="Image"
@@ -24,9 +26,9 @@ export const OpenAIAnalyzeImageEditor = ({
       <TextareaField label="Prompt" name={`${parentName}.prompt`} />
 
       <CustomFieldSelect
-        name={`${parentName}.resultCustomFieldId`}
-        label="Save response to a custom field"
         allowCreate={true}
+        label="Save response to a custom field"
+        name={`${parentName}.resultCustomFieldId`}
       />
     </OpenAIDialog>
   )

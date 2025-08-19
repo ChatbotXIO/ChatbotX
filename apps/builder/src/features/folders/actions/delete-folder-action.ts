@@ -1,14 +1,14 @@
 "use server"
 
-import {
-  bulkUpdateIdsRequest,
-  chatbotIdRequestParams,
-  type BulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { revalidateTag } from "next/cache"
+import {
+  type BulkUpdateIdsRequest,
+  bulkUpdateIdsRequest,
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteFolderAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
@@ -22,14 +22,16 @@ export const deleteFolderAction = chatbotActionClient
       parsedInput: BulkUpdateIdsRequest
     }) => {
       await prisma.$transaction(async (tx) => {
-        for (const id in parsedInput.ids) {
+        for (const id of parsedInput.ids) {
           const folder = await tx.folder.findFirst({
             where: {
               chatbotId,
               id,
             },
           })
-          if (!folder) continue
+          if (!folder) {
+            continue
+          }
 
           await tx.folder.deleteMany({
             where: {

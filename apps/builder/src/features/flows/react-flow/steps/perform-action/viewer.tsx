@@ -1,15 +1,8 @@
 "use client"
 
-import type { PerformActionStepSchema } from "@aha.chat/flow-config"
-
-const PerformActionStepViewer = ({
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  data,
-}: {
-  data: PerformActionStepSchema
-}) => {
+export const PerformActionStepViewer = () => {
   return (
-    <div className="items-center rounded-lg overflow-hidden justify-center bg-secondary">
+    <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
       <p className="px-4 py-2">Additional Actions</p>
     </div>
   )

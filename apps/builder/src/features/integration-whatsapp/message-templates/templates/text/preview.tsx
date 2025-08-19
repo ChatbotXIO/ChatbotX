@@ -1,17 +1,20 @@
+import { CardContent } from "@aha.chat/ui/components/ui/card"
+import { memo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
+import { ButtonGroupPreview } from "../button/preview"
+import { TemplateBody } from "../components/body"
 import { TemplateFooter } from "../components/footer"
 import { TemplateHeader } from "../components/header"
-import { TemplateBody } from "../components/body"
-import { ButtonGroupPreview } from "../button/preview"
-import { CardContent } from "@/components/ui/card"
-import { memo } from "react"
 
-const TemplateTextPreviewComponent = ({
-  parentName = "content",
-  ...rest
-}: {
+type TemplateTextPreviewComponentProps = {
   parentName?: string
-}) => {
+}
+
+const TemplateTextPreviewComponent = (
+  props: TemplateTextPreviewComponentProps,
+) => {
+  const { parentName = "content", ...rest } = props
+
   const { control } = useFormContext()
   const showHeader = useWatch({
     control,
@@ -23,8 +26,8 @@ const TemplateTextPreviewComponent = ({
   })
 
   return (
-    <CardContent className="bg-white p-4 rounded">
-      <div className="w-full flex flex-col gap-4" {...rest}>
+    <CardContent className="rounded bg-white p-4">
+      <div className="flex w-full flex-col gap-4" {...rest}>
         {showHeader && <TemplateHeader parentName={`${parentName}.header`} />}
         <TemplateBody parentName={`${parentName}.body`} />
         {showFooter && <TemplateFooter parentName={parentName} />}

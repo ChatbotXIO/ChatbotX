@@ -1,9 +1,10 @@
-import { Button } from "@/components/ui/button"
+import type { NodeType } from "@aha.chat/flow-config"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@aha.chat/ui/components/ui/popover"
 import { createId } from "@paralleldrive/cuid2"
 import { T } from "@tolgee/react"
 import {
@@ -14,7 +15,6 @@ import {
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { allNodesConfig } from "./node-config"
-import type { NodeType } from "@aha.chat/flow-config"
 
 export function AddNodeButton() {
   const [open, setOpen] = useState(false)
@@ -26,7 +26,7 @@ export function AddNodeButton() {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <ControlButton>
           <Plus />
@@ -37,10 +37,10 @@ export function AddNodeButton() {
           {Object.values(allNodesConfig).map((item) => {
             return item ? (
               <Button
-                key={item.type}
-                variant="ghost"
                 className="w-full justify-start"
+                key={item.type}
                 onClick={() => onClickAction(item.type)}
+                variant="ghost"
               >
                 <item.icon />
                 <T keyName={item.label} />

@@ -1,16 +1,16 @@
 "use client"
 
+import type { FlowNode } from "@aha.chat/flow-config"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetTitle,
-} from "@/components/ui/sheet"
+} from "@aha.chat/ui/components/ui/sheet"
 import { useStore } from "@xyflow/react"
 import { NodeEditor } from "./editor"
-import type { FlowNode } from "@aha.chat/flow-config"
 
-interface NodeDetailSheetProps {
+type NodeDetailSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -21,11 +21,11 @@ export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
   ) as FlowNode
 
   return activeNode ? (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="flex flex-col">
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent className="flex flex-col" side="left">
         <SheetTitle />
         <SheetDescription />
-        <div className="flex flex-col flex-1 gap-4 overflow-hidden p-5">
+        <div className="flex flex-1 flex-col gap-4 overflow-hidden p-5">
           <NodeEditor activeNode={activeNode} />
         </div>
       </SheetContent>

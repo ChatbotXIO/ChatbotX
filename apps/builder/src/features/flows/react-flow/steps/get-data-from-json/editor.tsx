@@ -1,7 +1,11 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
+import {
+  type GetDataFromJsonStepSchema,
+  getDataFromJsonStepSchema,
+} from "@aha.chat/flow-config"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -11,24 +15,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { Label } from "@/components/ui/label"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import {
-  getDataFromJsonStepSchema,
-  type GetDataFromJsonStepSchema,
-} from "@aha.chat/flow-config"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { ArrowRight, CodeIcon } from "lucide-react"
 import { useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
 export default function GetDataFromJsonStepEditor({
   parentName,
-}: { parentName: string }) {
+}: {
+  parentName: string
+}) {
   return (
     <BaseStepEditor
       icon={CodeIcon}
@@ -63,10 +65,10 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="flex justify-center">
-          <Button variant="outline" size="sm">
+          <Button size="sm" variant="outline">
             Edit
           </Button>
         </div>
@@ -79,32 +81,32 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
 
         <Form {...form}>
           <form
+            className="flex w-full flex-col gap-4"
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col w-full gap-4"
           >
             <CustomFieldSelect
-              name="inputCustomFieldId"
-              label="Date & Time Custom field"
               isRequired
+              label="Date & Time Custom field"
+              name="inputCustomFieldId"
             />
 
             <div>
               <div className="flex w-full justify-between">
                 <Label>Save response to a custom field</Label>
                 <Button
-                  size="sm"
-                  variant="link"
-                  className="text-sm text-destructive"
+                  className="text-destructive text-sm"
                   onClick={() =>
                     append({ jsonPath: "", outputCustomFieldId: "" })
                   }
+                  size="sm"
+                  variant="link"
                 >
                   Add new
                 </Button>
               </div>
-              <div className="flex flex-col w-full gap-y-4">
+              <div className="flex w-full flex-col gap-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex w-full gap-x-2">
+                  <div className="flex w-full gap-x-2" key={field.id}>
                     <div className="w-[45%]">
                       <InputField name={`mapping.${index}.jsonPath`} />
                     </div>
@@ -113,8 +115,8 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
                     </div>
                     <div className="w-[45%]">
                       <CustomFieldSelect
-                        name={`mapping.${index}.outputCustomFieldId`}
                         label=""
+                        name={`mapping.${index}.outputCustomFieldId`}
                       />
                     </div>
                   </div>
@@ -128,10 +130,10 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
               </DialogClose>
 
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 Save changes
               </Button>

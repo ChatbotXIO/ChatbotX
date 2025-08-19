@@ -1,9 +1,9 @@
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { FieldType, type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import type { ListCustomFieldsSearchParams } from "../schemas/list-custom-fields.schema"
+import { getCurrentUserId } from "@/lib/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { CustomFieldCollection } from "../schemas"
+import type { ListCustomFieldsSearchParams } from "../schemas/list-custom-fields.schema"
 
 export async function listCustomFields(
   input: ListCustomFieldsSearchParams,

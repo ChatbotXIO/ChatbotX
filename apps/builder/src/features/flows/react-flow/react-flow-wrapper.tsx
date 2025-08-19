@@ -1,27 +1,27 @@
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback"
+import { type FlowNode, NodeType } from "@aha.chat/flow-config"
+import { useDebouncedCallback } from "@aha.chat/ui/hooks/use-debounced-callback"
 import {
   addEdge,
   Background,
+  type Connection,
   Controls,
+  type Edge,
   getConnectedEdges,
   getIncomers,
   getOutgoers,
   MiniMap,
+  type Node,
   Panel,
   ReactFlow,
   useEdgesState,
   useNodesState,
-  type Connection,
-  type Edge,
-  type Node,
 } from "@xyflow/react"
 import { useOptimisticAction } from "next-safe-action/hooks"
-import { useCallback, useEffect, type MouseEvent } from "react"
+import { type MouseEvent, useCallback, useEffect } from "react"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
 import { AddNodeButton } from "./nodes/add-node"
 import { NodeViewer } from "./nodes/viewer"
-import { NodeType, type FlowNode } from "@aha.chat/flow-config"
 
 const nodeTypes = {
   [NodeType.SendMessage]: NodeViewer,
@@ -30,7 +30,7 @@ const nodeTypes = {
   [NodeType.StartFlow]: NodeViewer,
 }
 
-interface ReactFlowFrameProps {
+type ReactFlowFrameProps = {
   flowVersion: FlowVersionResource
   setOpenNodeDetailSheet: (open: boolean) => void
 }
@@ -65,10 +65,13 @@ export function ReactFlowWrapper({
     },
   )
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const handleChanges = useDebouncedCallback((nodes: any[], edges: any[]) => {
-    savingDraft({ nodes, edges })
-  }, 1000)
+  const handleChanges = useDebouncedCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: wip
+    (changedNodes: any[], changedEdges: any[]) => {
+      savingDraft({ nodes: changedNodes, edges: changedEdges })
+    },
+    1000,
+  )
 
   useEffect(() => {
     handleChanges(nodes, edges)
@@ -141,18 +144,18 @@ export function ReactFlowWrapper({
 
   return (
     <ReactFlow
-      nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodesDelete={onNodesDelete}
+      nodes={nodes}
+      nodeTypes={nodeTypes}
       onConnect={onConnect}
+      onEdgesChange={onEdgesChange}
+      onNodeClick={handleNodeClick}
       onNodeMouseEnter={onNodeMouseEnter}
       onNodeMouseLeave={onNodeMouseLeave}
-      nodeTypes={nodeTypes}
-      proOptions={{ hideAttribution: true }}
-      onNodeClick={handleNodeClick}
+      onNodesChange={onNodesChange}
+      onNodesDelete={onNodesDelete}
       onPaneClick={handlePaneClick}
+      proOptions={{ hideAttribution: true }}
     >
       <MiniMap />
       <Background />

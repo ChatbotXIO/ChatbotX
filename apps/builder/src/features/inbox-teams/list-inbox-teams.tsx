@@ -1,36 +1,36 @@
 "use client"
 
-// import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+// import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@aha.chat/ui/components/ui/accordion"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Button } from "@/components/ui/button"
+} from "@aha.chat/ui/components/ui/accordion"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
 import { T } from "@tolgee/react"
 import { MoreHorizontalIcon, Trash2Icon } from "lucide-react"
 import { use, useState } from "react"
 import type { getUsers } from "../users/queries"
 import type { UserResource } from "../users/schemas"
+import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
+import { DeleteInboxTeamDialog } from "./delete-inbox-team-dialog"
+import { DeleteInboxTeamMembersDialog } from "./delete-inbox-team-member-dialog"
 import type { getInboxTeams } from "./queries"
+import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
 import type {
   InboxTeamMemberResource,
   InboxTeamResource,
 } from "./schemas/types"
-import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
-import { DeleteInboxTeamMembersDialog } from "./delete-inbox-team-member-dialog"
-import { DeleteInboxTeamDialog } from "./delete-inbox-team-dialog"
-import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 
-interface ListInboxTeamsProps {
+type ListInboxTeamsProps = {
   chatbotId: string
   promises: Promise<
     [
@@ -60,22 +60,22 @@ function ListInboxTeamsDetail({
 
   return (
     <>
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion className="w-full" collapsible type="single">
         {allInboxTeams.map((team) => {
           return (
             <AccordionItem key={team.id} value={team.id}>
               <div className="flex w-full items-center">
-                <AccordionTrigger className="flex-1 text-left gap-2">
+                <AccordionTrigger className="flex-1 gap-2 text-left">
                   <span className="flex-1 text-left">{team.name}</span>
                 </AccordionTrigger>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button size="icon" variant="ghost">
                       <MoreHorizontalIcon className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="p-3 flex flex-col gap-2">
+                  <DropdownMenuContent className="flex flex-col gap-2 p-3">
                     <DropdownMenuItem
                       className="cursor-pointer text-sm"
                       onClick={() => setRenameInboxTeam(team)}
@@ -91,7 +91,7 @@ function ListInboxTeamsDetail({
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                      className="cursor-pointer text-sm text-destructive"
+                      className="cursor-pointer text-destructive text-sm"
                       onClick={() => setDeleteInboxTeam(team)}
                     >
                       <T keyName="common.deleteBtn" />
@@ -103,15 +103,15 @@ function ListInboxTeamsDetail({
                 {(team.inboxTeamMembers || []).map((member) => {
                   return (
                     <div
-                      key={`${team.id}-${member.id}`}
                       className="flex w-full items-center"
+                      key={`${team.id}-${member.id}`}
                     >
                       <span className="flex-1 gap-1">{member.user?.name}</span>
                       <Button
-                        variant="ghost"
-                        size="icon"
                         className="size-6"
                         onClick={() => setDeleteInboxTeamMember(member)}
+                        size="icon"
+                        variant="ghost"
                       >
                         <Trash2Icon className="text-destructive" />
                       </Button>
@@ -125,28 +125,28 @@ function ListInboxTeamsDetail({
       </Accordion>
 
       <RenameInboxTeamDialog
-        open={!!renameInboxTeam}
-        onOpenChange={() => setRenameInboxTeam(null)}
         chatbotId={chatbotId}
         inboxTeam={renameInboxTeam}
+        onOpenChange={() => setRenameInboxTeam(null)}
+        open={Boolean(renameInboxTeam)}
       />
       <AddInboxTeamMemberDialog
-        open={!!addInboxTeamMember}
-        onOpenChange={() => setAddInboxTeamMember(null)}
         chatbotId={chatbotId}
-        listUsers={allUsers}
         inboxTeam={addInboxTeamMember}
+        listUsers={allUsers}
+        onOpenChange={() => setAddInboxTeamMember(null)}
+        open={Boolean(addInboxTeamMember)}
       />
       <DeleteInboxTeamDialog
-        open={!!deleteInboxTeam}
-        onOpenChange={() => setDeleteInboxTeam(null)}
         chatbotId={chatbotId}
         inboxTeam={deleteInboxTeam}
+        onOpenChange={() => setDeleteInboxTeam(null)}
+        open={Boolean(deleteInboxTeam)}
       />
       <DeleteInboxTeamMembersDialog
-        open={!!deleteInboxTeamMember}
-        onOpenChange={() => setDeleteInboxTeamMember(null)}
         chatbotId={chatbotId}
+        onOpenChange={() => setDeleteInboxTeamMember(null)}
+        open={Boolean(deleteInboxTeamMember)}
         teamMember={deleteInboxTeamMember}
       />
     </>
@@ -160,9 +160,9 @@ export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
     <>
       <CreateInboxTeamDialog chatbotId={chatbotId} users={allUsers} />
       <ListInboxTeamsDetail
-        chatbotId={chatbotId}
         allInboxTeams={allInboxTeams || []}
         allUsers={allUsers || []}
+        chatbotId={chatbotId}
       />
     </>
   )

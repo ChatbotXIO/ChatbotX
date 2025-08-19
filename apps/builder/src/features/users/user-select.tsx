@@ -1,19 +1,21 @@
-import { MultiSelectField, SelectField } from "@/components/form/select-field"
-import { callAPI } from "@/lib/swr"
+import {
+  MultiSelectField,
+  SelectField,
+} from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
+import { callAPI } from "@/lib/swr"
 import type { ChatbotMemberCollection } from "../chatbot-members/schemas"
 
-export const UserSelect = ({
-  name,
-  label,
-  isRequired = false,
-  className,
-}: {
+type UserSelectProps = {
   name: string
   label?: string
   isRequired?: boolean
   className?: string
-}) => {
+}
+
+export const UserSelect = (props: UserSelectProps) => {
+  const { name, label, isRequired = false, className } = props
+
   const params = useParams<{ chatbotId: string }>()
 
   const usersUrl = `/api/chatbots/${params.chatbotId}/agents?perPage=9999`
@@ -25,27 +27,19 @@ export const UserSelect = ({
 
   return (
     <SelectField
-      name={name}
-      label={label}
-      isRequired={isRequired}
-      placeholder="Please select agent"
-      options={userOptions}
       className={className}
+      isRequired={isRequired}
+      label={label}
+      name={name}
+      options={userOptions}
+      placeholder="Please select agent"
     />
   )
 }
 
-export const UserMultipleSelect = ({
-  name,
-  label,
-  isRequired = false,
-  className,
-}: {
-  name: string
-  label?: string
-  isRequired?: boolean
-  className?: string
-}) => {
+export const UserMultipleSelect = (props: UserSelectProps) => {
+  const { name, label, isRequired = false, className } = props
+
   const params = useParams<{ chatbotId: string }>()
 
   const usersUrl = `/api/chatbots/${params.chatbotId}/agents?perPage=9999`
@@ -57,12 +51,12 @@ export const UserMultipleSelect = ({
 
   return (
     <MultiSelectField
-      name={name}
-      label={label}
-      isRequired={isRequired}
-      placeholder="Please select agents"
-      options={userOptions}
       className={className}
+      isRequired={isRequired}
+      label={label}
+      name={name}
+      options={userOptions}
+      placeholder="Please select agents"
     />
   )
 }

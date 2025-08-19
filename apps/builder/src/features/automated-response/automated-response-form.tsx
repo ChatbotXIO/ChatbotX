@@ -1,10 +1,10 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
-import { Form, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
+import { Input } from "@aha.chat/ui/components/ui/input"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -75,39 +75,39 @@ export function CreateAutomatedResponseForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmitWithAction} className="flex-1 space-y-4">
+      <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
         <Controller
-          name="userMessages"
           control={control}
+          name="userMessages"
           render={({ field }) => (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="userMessages" className="flex-1">
+              <Label className="flex-1" htmlFor="userMessages">
                 User message
               </Label>
               {/* Render existing inputs */}
               {field.value.map((m, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                <div key={index} className="flex gap-2">
+                // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                <div className="flex gap-2" key={index}>
                   <Input
                     className="flex-1"
-                    value={m}
                     onChange={(e) => {
                       const userMessages = [...field.value]
                       userMessages[index] = e.target.value
                       field.onChange(userMessages)
                     }}
+                    value={m}
                   />
                   {index === 0 ? (
                     <div className="w-12">&nbsp;</div>
                   ) : (
                     <Button
-                      variant="ghost"
                       onClick={() => {
                         const newTags = field.value.filter(
                           (_, i) => i !== index,
                         ) // Remove the input
                         field.onChange(newTags)
                       }}
+                      variant="ghost"
                     >
                       <XIcon />
                     </Button>
@@ -117,10 +117,10 @@ export function CreateAutomatedResponseForm({
               <FormMessage />
               <div>
                 <Button
-                  variant="ghost"
                   onClick={() => {
                     field.onChange([...field.value, ""])
                   }}
+                  variant="ghost"
                 >
                   <PlusCircleIcon /> Add more
                 </Button>
@@ -131,42 +131,42 @@ export function CreateAutomatedResponseForm({
 
         {/* Bot response block */}
         <div className="mt-4">
-          <Label htmlFor="replies.0" className="font-bold mt-5">
+          <Label className="mt-5 font-bold" htmlFor="replies.0">
             Bot response
           </Label>
         </div>
 
         {replies.map((reply, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-          <div key={index} className="flex gap-2 w-full">
-            <div className="flex flex-1 gap-2 items-center">
+          // biome-ignore lint/suspicious/noArrayIndexKey: wip
+          <div className="flex w-full gap-2" key={index}>
+            <div className="flex flex-1 items-center gap-2">
               {reply.type === ReplyType.MESSAGE ? (
                 <>
                   <MessageSquareMoreIcon />
                   <InputField
-                    name={`replies.${index}.message`}
-                    label=""
-                    placeholder="Type a message"
-                    isRequired={false}
                     className="flex-1"
+                    isRequired={false}
+                    label=""
+                    name={`replies.${index}.message`}
+                    placeholder="Type a message"
                   />
                 </>
               ) : (
                 <>
                   <ZapIcon />
                   <FlowSelect
-                    name={`replies.${index}.flowId`}
-                    label=""
                     className="flex-1"
+                    label=""
+                    name={`replies.${index}.flowId`}
                   />
                 </>
               )}
             </div>
             <Button
-              variant="ghost"
               onClick={() => {
                 removeReplies(index)
               }}
+              variant="ghost"
             >
               <XIcon />
             </Button>
@@ -174,8 +174,6 @@ export function CreateAutomatedResponseForm({
         ))}
         <div className="flex gap-2">
           <Button
-            variant="ghost"
-            type="button"
             onClick={(e) => {
               e.preventDefault()
               appendReplies({
@@ -184,13 +182,13 @@ export function CreateAutomatedResponseForm({
                 buttons: [],
               })
             }}
+            type="button"
+            variant="ghost"
           >
             <PlusCircleIcon /> Add text reply
           </Button>
 
           <Button
-            variant="ghost"
-            type="button"
             onClick={(e) => {
               e.preventDefault()
               appendReplies({
@@ -198,6 +196,8 @@ export function CreateAutomatedResponseForm({
                 flowId: "",
               })
             }}
+            type="button"
+            variant="ghost"
           >
             <PlusCircleIcon /> Add flow reply
           </Button>
@@ -205,17 +205,17 @@ export function CreateAutomatedResponseForm({
 
         <div className="flex justify-end gap-4">
           <Button
-            type="button"
-            variant="ghost"
             onClick={() =>
               router.push(`/chatbots/${chatbotId}/automated-responses`)
             }
+            type="button"
+            variant="ghost"
           >
             {t("common.cancel-btn")}
           </Button>
           <Button
-            type="submit"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
+            type="submit"
           >
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />

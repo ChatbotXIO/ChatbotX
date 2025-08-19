@@ -3,8 +3,8 @@ import {
   generateCodeStepSchema,
 } from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
-import { GenerateCodeStepViewer } from "./viewer"
 import GenerateCodeStepEditor from "./editor"
+import { GenerateCodeStepViewer } from "./viewer"
 
 export const generateCodeStep: StepDefinition = {
   editor: GenerateCodeStepEditor,

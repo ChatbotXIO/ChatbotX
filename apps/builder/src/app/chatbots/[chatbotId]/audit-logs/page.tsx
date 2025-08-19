@@ -1,9 +1,9 @@
-import { AuditLogsTable } from "@/features/logs/audit-logs-table"
-import { getLogs } from "@/features/logs/queries"
-import { getLogsSearchParamsCache } from "@/features/logs/schemas/get-logs-schema"
 import { LogType } from "@aha.chat/database"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { AuditLogsTable } from "@/features/logs/audit-logs-table"
+import { getLogs } from "@/features/logs/queries"
+import { getLogsSearchParamsCache } from "@/features/logs/schemas/get-logs-schema"
 
 export default async function AuditLogsPage(props: {
   params: Promise<{ chatbotId: string }>

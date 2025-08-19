@@ -1,5 +1,5 @@
-import { Suspense } from "react"
 import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 import { WhatsappFlowsTable } from "@/features/integration-whatsapp/flows/flows-table"
 import { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
 import { getWhatsappFlowsSearchParamsCache } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
@@ -22,7 +22,7 @@ export default async function WhatsappMessageTemplatePage(props: {
   return (
     <div>
       <Suspense>
-        <WhatsappFlowsTable promises={promises} chatbotId={chatbotId} />
+        <WhatsappFlowsTable chatbotId={chatbotId} promises={promises} />
       </Suspense>
     </div>
   )

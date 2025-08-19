@@ -1,16 +1,19 @@
-import { useFormContext, useWatch } from "react-hook-form"
-import { TemplateFooter } from "../components/footer"
-import { TemplateBody } from "../components/body"
-import { ButtonGroupPreview } from "../button/preview"
-import { CardContent } from "@/components/ui/card"
+import { CardContent } from "@aha.chat/ui/components/ui/card"
 import { memo } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
+import { ButtonGroupPreview } from "../button/preview"
+import { TemplateBody } from "../components/body"
+import { TemplateFooter } from "../components/footer"
 
-const TemplateCatalogPreviewComponent = ({
-  parentName = "content",
-  ...rest
-}: {
-  parentName?: string
-}) => {
+type TemplateCatalogPreviewComponentProps = {
+  parentName: string
+}
+
+const TemplateCatalogPreviewComponent = (
+  props: TemplateCatalogPreviewComponentProps,
+) => {
+  const { parentName = "content", ...rest } = props
+
   const { control } = useFormContext()
   const showFooter = useWatch({
     control,
@@ -18,16 +21,16 @@ const TemplateCatalogPreviewComponent = ({
   })
 
   return (
-    <CardContent className="bg-white p-4 rounded">
-      <div className="w-full flex flex-col gap-4" {...rest}>
+    <CardContent className="rounded bg-white p-4">
+      <div className="flex w-full flex-col gap-4" {...rest}>
         <TemplateBody parentName={`${parentName}.body`} />
         {showFooter && <TemplateFooter parentName={parentName} />}
         <hr />
         <ButtonGroupPreview
-          parentName={`${parentName}.buttons`}
           changeType={false}
-          min={1}
           max={1}
+          min={1}
+          parentName={`${parentName}.buttons`}
         />
       </div>
     </CardContent>

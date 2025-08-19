@@ -1,6 +1,6 @@
 "use client"
 
-import { SelectField } from "@/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { LanguageOptions } from "@/features/integration-whatsapp/message-templates/type"
 
 export function WhatsappMessageTemplateLanguageSelect({
@@ -14,11 +14,11 @@ export function WhatsappMessageTemplateLanguageSelect({
 }) {
   return (
     <SelectField
-      name={name}
-      label={label}
       isRequired={isRequired}
-      placeholder="Please select"
+      label={label}
+      name={name}
       options={LanguageOptions}
+      placeholder="Please select"
     />
   )
 }

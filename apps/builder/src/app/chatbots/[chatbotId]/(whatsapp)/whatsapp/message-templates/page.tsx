@@ -1,11 +1,11 @@
-import { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
-import { T } from "@/tolgee/server"
+import Link from "next/link"
+import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { WhatsappMessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
-import type { SearchParams } from "nuqs/server"
+import { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
+import { T } from "@/tolgee/server"
 
 export default async function WhatsappMessageTemplatePage(props: {
   params: Promise<{ chatbotId: string }>
@@ -22,9 +22,9 @@ export default async function WhatsappMessageTemplatePage(props: {
 
   return (
     <div>
-      <div className="flex w-full justify-end mb-4">
-        <div className="flex w-full justify-end mb-4">
-          <Button size="sm" asChild>
+      <div className="mb-4 flex w-full justify-end">
+        <div className="mb-4 flex w-full justify-end">
+          <Button asChild size="sm">
             <Link
               href={`/chatbots/${chatbotId}/whatsapp/message-templates/create`}
             >
@@ -36,8 +36,8 @@ export default async function WhatsappMessageTemplatePage(props: {
       </div>
       <Suspense>
         <WhatsappMessageTemplatesTable
-          promises={promises}
           chatbotId={chatbotId}
+          promises={promises}
         />
       </Suspense>
     </div>

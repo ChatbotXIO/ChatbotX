@@ -1,5 +1,5 @@
-import { ChatLayout } from "@/features/chat/chat-layout"
 import { cookies } from "next/headers"
+import { ChatLayout } from "@/features/chat/chat-layout"
 
 export default async function InboxPage() {
   const layout = (await cookies()).get("ahachatai:layout:inbox")

@@ -1,9 +1,9 @@
 import { z } from "zod"
 
-export enum ReplyType {
-  MESSAGE = "MESSAGE",
-  FLOW = "FLOW",
-}
+export const ReplyType = {
+  MESSAGE: "MESSAGE",
+  FLOW: "FLOW",
+} as const
 
 export const createAutomatedResponseRequest = z.object({
   folderId: z.string().cuid2().nullish(),

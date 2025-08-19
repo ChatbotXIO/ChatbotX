@@ -1,9 +1,9 @@
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { T } from "@tolgee/react"
 import { ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useState, type MouseEvent } from "react"
+import { type MouseEvent, useEffect, useState } from "react"
 import Dropzone from "react-dropzone"
-import { Button } from "./ui/button"
 
 function AttachedImage({
   image,
@@ -18,17 +18,17 @@ function AttachedImage({
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative h-full w-full">
       <Image
-        src={image}
         alt="Uploaded Image"
-        fill={true}
         className="object-contain"
+        fill={true}
+        src={image}
       />
       <Button
+        className="absolute top-0 right-0 hover:bg-transparent"
         onClick={onClick}
         variant="ghost"
-        className="absolute top-0 right-0 hover:bg-transparent"
       >
         <XIcon />
       </Button>
@@ -55,9 +55,9 @@ function NeedAttachedImage({
         <T keyName="common.uploadImageOr" />
         {"\u00A0"}
         <Button
-          variant="link"
-          onClick={switchToImageLinkMode}
           className="p-0 text-destructive"
+          onClick={switchToImageLinkMode}
+          variant="link"
         >
           <T keyName="common.insertLink" />
         </Button>
@@ -101,15 +101,15 @@ export default function ImageDropzone({
 
   return (
     <Dropzone
-      maxFiles={1}
       accept={{ "image/*": [] }}
+      maxFiles={1}
       onDrop={(acceptedFiles) => handleFileChange(acceptedFiles[0] ?? null)}
     >
       {({ getRootProps, getInputProps }) => (
         <section>
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center rounded-lg border-dashed border-2 h-36 overflow-hidden justify-center hover:cursor-pointer hover:border-solid hover:border-blue-500">
+            <div className="flex h-36 flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed hover:cursor-pointer hover:border-blue-500 hover:border-solid">
               {image ? (
                 <AttachedImage image={image} onRemove={handleRemove} />
               ) : (

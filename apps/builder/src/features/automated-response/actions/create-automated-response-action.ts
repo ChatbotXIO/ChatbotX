@@ -1,5 +1,7 @@
 "use server"
 
+import { FolderType, prisma } from "@aha.chat/database"
+import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -7,8 +9,6 @@ import {
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
 import { ensureFolderIdExists } from "@/features/folders/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { FolderType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type CreateAutomatedResponseRequest,
   createAutomatedResponseRequest,
@@ -34,7 +34,7 @@ export const createAutomatedResponseAction = chatbotActionClient
       }
 
       // validate all flow ids
-      const flowIds = []
+      const flowIds: string[] = []
       for (const reply of parsedInput.replies) {
         if ("flowId" in reply) {
           flowIds.push(reply.flowId)

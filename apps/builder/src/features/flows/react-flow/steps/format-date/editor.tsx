@@ -1,8 +1,13 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
-import { Button } from "@/components/ui/button"
+import {
+  type FormatDateStepSchema,
+  FormatTimezone,
+  formatDateStepSchema,
+} from "@aha.chat/flow-config"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -12,24 +17,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import {
-  formatDateStepSchema,
-  FormatTimezone,
-  type FormatDateStepSchema,
-} from "@aha.chat/flow-config"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { ZapIcon } from "lucide-react"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
 export default function FormatDateStepEditor({
   parentName,
-}: { parentName: string }) {
+}: {
+  parentName: string
+}) {
   return (
     <BaseStepEditor
       icon={ZapIcon}
@@ -61,10 +63,10 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="flex justify-center">
-          <Button variant="outline" size="sm">
+          <Button size="sm" variant="outline">
             Edit
           </Button>
         </div>
@@ -77,32 +79,32 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
 
         <Form {...form}>
           <form
+            className="flex w-full flex-col gap-4"
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col w-full gap-4"
           >
             <CustomFieldSelect
-              name="inputCustomFieldId"
-              label="Date & Time Custom field"
               isRequired
+              label="Date & Time Custom field"
+              name="inputCustomFieldId"
             />
 
-            <InputField name="format" label="Format" isRequired />
+            <InputField isRequired label="Format" name="format" />
 
             <CustomFieldSelect
-              name="outputCustomFieldId"
-              label="Save to custom field"
-              isRequired
               allowCreate={true}
+              isRequired
+              label="Save to custom field"
+              name="outputCustomFieldId"
             />
 
             <SelectField
-              name="timezone"
+              isRequired
               label="Timezone"
+              name="timezone"
               options={[
                 { label: "Contact Timezone", value: FormatTimezone.CONTACT },
                 { label: "Account Timezone", value: FormatTimezone.ACCOUNT },
               ]}
-              isRequired
             />
 
             <DialogFooter>
@@ -111,10 +113,10 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
               </DialogClose>
 
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 Save changes
               </Button>

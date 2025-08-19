@@ -1,22 +1,22 @@
 "use client"
 
-import { duplicateAIAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
-import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
-import type { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
-import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
-import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
-import { useDataTable } from "@/hooks/use-data-table"
 import type { AIAgentModel } from "@aha.chat/database/types"
-import { useAction } from "next-safe-action/hooks"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { useRouter } from "next/navigation"
+import { useAction } from "next-safe-action/hooks"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { duplicateAIAgentAction } from "@/features/integrations/ai-agents/actions/duplicate.action"
+import type { getAIAgents } from "@/features/integrations/ai-agents/actions/list.action"
+import { DeleteAIAgentsDialog } from "@/features/integrations/ai-agents/delete"
+import { AIAgentsTableToolbarActions } from "@/features/integrations/ai-agents/table-toolbar-actions"
+import { UpdateAIAgentDialog } from "@/features/integrations/ai-agents/update"
 import { GetAIAgentsColumns } from "./table-columns"
-import type { DataTableRowAction } from "@/types/data-table"
-import { DataTable } from "@/components/data-table"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
 
-interface AIAgentsTableProps {
+type AIAgentsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getAIAgents>>]>
   chatbotId: string
 }
@@ -44,7 +44,7 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
     }
   }, [rowAction, execute, router])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   const columns = useMemo(
     () => GetAIAgentsColumns({ setRowAction }),
     [setRowAction],
@@ -68,27 +68,27 @@ export function AIAgentsTable({ promises, chatbotId }: AIAgentsTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <AIAgentsTableToolbarActions
-            table={table}
             chatbotId={chatbotId}
             onOpenChange={() => setRowAction(null)}
+            table={table}
           />
         </DataTableToolbar>
       </DataTable>
 
       <DeleteAIAgentsDialog
-        open={rowAction?.variant === "delete"}
-        onOpenChange={() => setRowAction(null)}
         agents={rowAction?.row.original ? [rowAction?.row.original] : []}
-        showTrigger={false}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
       />
 
       <UpdateAIAgentDialog
-        open={rowAction?.variant === "update"}
-        onOpenChange={() => setRowAction(null)}
-        chatbotId={chatbotId}
         agent={rowAction?.row.original || null}
+        chatbotId={chatbotId}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
       />
     </>
   )

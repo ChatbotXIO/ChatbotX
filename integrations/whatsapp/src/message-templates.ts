@@ -3,14 +3,14 @@ import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "./client"
 import type { WhatsappAuthValue } from "./index"
 
-export interface ListMessageTemplatesReponse {
+export type ListMessageTemplatesReponse = {
   data: MessageTemplateEntity[]
   paging: {
     next: string
   }
 }
 
-export interface MessageTemplateEntity {
+export type MessageTemplateEntity = {
   id: string
   name: string
   status: "APPROVED" | "PENDING" | "REJECTED"
@@ -18,11 +18,11 @@ export interface MessageTemplateEntity {
   category: "AUTHENTICATION" | "MARKETING" | "UTILITY"
 }
 
-export interface CreateMessageTemplateProps {
+export type CreateMessageTemplateProps = {
   name: string
   category: "AUTHENTICATION" | "MARKETING" | "UTILITY"
   language: string
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   components: any[]
 }
 

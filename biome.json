@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -7,20 +7,28 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": [
-      ".next",
-      ".tolgee",
-      ".turbo",
-      "packages/database/src/generated/prisma",
-      "dist"
+    "includes": [
+      "**",
+      "!**/.next",
+      "!**/.tolgee",
+      "!**/.turbo",
+      "!**/packages/database/src/generated/prisma",
+      "!**/packages/ui",
+      "!**/apps/builder/src/components/node-header.tsx",
+      "!**/apps/builder/src/components/file-dropzone.tsx",
+      "!**/dist"
     ]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
   },
-  "organizeImports": {
-    "enabled": false
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "linter": {
     "enabled": true,
@@ -31,18 +39,40 @@
           "level": "error",
           "fix": "safe"
         },
-        "noUnusedVariables": "error",
+        "noUnusedVariables": {
+          "level": "error",
+          "options": {
+            "ignoreRestSiblings": true
+          }
+        },
         "noUnknownProperty": "error"
       },
       "style": {
-        "useNodejsImportProtocol": "off"
+        "useNodejsImportProtocol": "off",
+        "noMagicNumbers": "off"
+      },
+      "suspicious": {
+        "noUnknownAtRules": "off",
+        "noDuplicateCustomProperties": "off"
+      },
+      "complexity": {
+        "noExcessiveLinesPerFunction": "off",
+        "noExcessiveCognitiveComplexity": "off"
+      },
+      "nursery": {
+        "useImageSize": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off"
       }
     }
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
-      "semicolons": "asNeeded"
+      "semicolons": "asNeeded",
+      "trailingCommas": "all"
     }
-  }
+  },
+  "extends": ["ultracite"]
 }

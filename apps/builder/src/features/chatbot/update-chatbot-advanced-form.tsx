@@ -1,26 +1,26 @@
 "use client"
 
-import { ComboboxField } from "@/components/form/combobox-field"
-import { SelectField } from "@/components/form/select-field"
-import { SwitchField } from "@/components/form/switch-field"
-import { SettingRow } from "@/components/setting-row"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { ColorPicker } from "@/components/ui/color-picker"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { ColorPicker } from "@aha.chat/ui/components/ui/color-picker"
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form"
-import type { ChatbotResource } from "@/features/chatbots/schemas"
-import { FlowSelect } from "@/features/flows/flow-select"
+} from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { toast } from "sonner"
+import { SettingRow } from "@/components/setting-row"
+import type { ChatbotResource } from "@/features/chatbots/schemas"
+import { FlowSelect } from "@/features/flows/flow-select"
 import { updateChatbotAdvancedAction } from "./actions/update-chatbox-action"
 import {
   allCountryOptions,
@@ -68,26 +68,26 @@ export function UpdateChatbotAdvancedForm({
       <CardContent>
         <Form {...form}>
           <form
-            onSubmit={handleSubmitWithAction}
             className="flex flex-col gap-y-4"
+            onSubmit={handleSubmitWithAction}
           >
             <SettingRow
-              label={t("defaultReply.label")}
               description={t("defaultReply.label.description")}
+              label={t("defaultReply.label")}
             >
               <FlowSelect name="defaultReply" />
             </SettingRow>
 
             <SettingRow
-              label={t("targetCountry.label")}
               description={t("targetCountry.label.description")}
+              label={t("targetCountry.label")}
             >
               <ComboboxField name="targetCountry" options={allCountryOptions} />
             </SettingRow>
 
             <SettingRow
-              label={t("defaultLanguage.label")}
               description={t("defaultLanguage.label.description")}
+              label={t("defaultLanguage.label")}
             >
               <SelectField
                 name="defaultLanguage"
@@ -99,8 +99,8 @@ export function UpdateChatbotAdvancedForm({
             </SettingRow>
 
             <SettingRow
-              label={t("accountTimezone.label")}
               description={t("accountTimezone.label.description")}
+              label={t("accountTimezone.label")}
             >
               <ComboboxField
                 name="accountTimezone"
@@ -109,8 +109,8 @@ export function UpdateChatbotAdvancedForm({
             </SettingRow>
 
             <SettingRow
-              label={t("brandColor.label")}
               description={t("brandColor.label.description")}
+              label={t("brandColor.label")}
             >
               <FormField
                 control={form.control}
@@ -127,18 +127,18 @@ export function UpdateChatbotAdvancedForm({
             </SettingRow>
 
             <SettingRow
-              label={t("developmentMode.label")}
               description={t("developmentMode.label.description")}
+              label={t("developmentMode.label")}
             >
-              <SwitchField name="developmentMode" className="mt-1.5" />
+              <SwitchField className="mt-1.5" name="developmentMode" />
             </SettingRow>
 
             <div className="mt-4 text-center">
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

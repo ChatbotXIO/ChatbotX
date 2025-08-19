@@ -12,7 +12,9 @@ export const templateCarouselImageSchema = z.object({
     .max(10)
     .refine(
       (cards) => {
-        if (cards.length <= 1) return true
+        if (cards.length <= 1) {
+          return true
+        }
 
         const firstCardButtonCount = cards[0].buttons?.length || 0
 

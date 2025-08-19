@@ -1,14 +1,14 @@
 import { ButtonType } from "@aha.chat/flow-config"
 import {
   LinkIcon,
+  type LucideIcon,
   MessageCircleIcon,
   SkipForwardIcon,
   SquareArrowOutUpRightIcon,
   ZapIcon,
-  type LucideIcon,
 } from "lucide-react"
 
-export interface IButtonConfig {
+export type IButtonConfig = {
   icon: LucideIcon
   label: string
   buttonType: ButtonType

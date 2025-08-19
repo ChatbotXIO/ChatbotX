@@ -24,10 +24,10 @@ export function CheckboxGroupField<T extends FieldValues>({
 }: CheckboxGroupFieldProps<T>) {
   return (
     <FormFieldWrapper
-      name={name}
-      label={label}
-      isRequired={isRequired}
       description={description}
+      isRequired={isRequired}
+      label={label}
+      name={name}
     >
       {() => (
         <Controller
@@ -41,13 +41,13 @@ export function CheckboxGroupField<T extends FieldValues>({
               <div className="space-y-2">
                 {options.map((option) => (
                   <div
-                    key={option.value}
                     className="flex items-center space-x-2 pb-2"
+                    key={option.value}
                   >
                     <Checkbox
-                      id={option.value}
                       checked={valueArray.includes(option.value)}
-                      className="bg-white h-[36px] w-[36px]"
+                      className="h-[36px] w-[36px] bg-white"
+                      id={option.value}
                       onCheckedChange={(checked) =>
                         checked
                           ? field.onChange([...valueArray, option.value])
@@ -56,7 +56,7 @@ export function CheckboxGroupField<T extends FieldValues>({
                             )
                       }
                     />
-                    <Label htmlFor={option.value} className="text-[18px] ml-2">
+                    <Label className="ml-2 text-[18px]" htmlFor={option.value}>
                       {option.label}
                     </Label>
                   </div>

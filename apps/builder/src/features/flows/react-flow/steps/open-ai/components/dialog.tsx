@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,26 +10,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import { T } from "@tolgee/react"
 import { BotMessageSquareIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
-interface OpenAIDialogProps {
+type OpenAIDialogProps = {
   name: string
   children?: ReactNode
 }
 
-export const OpenAIDialog = ({ name, children }: OpenAIDialogProps) => {
+export const OpenAIDialog = (props: OpenAIDialogProps) => {
+  const { name, children } = props
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div className="flex flex-col items-center rounded-md bg-slate-200 p-2 border-2 border-transparent transition-all ease-in hover:border-blue-500 hover:cursor-pointer hover:shadow-xl">
+        <div className="flex flex-col items-center rounded-md border-2 border-transparent bg-slate-200 p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
           <div className="flex items-center justify-center gap-2">
-            <BotMessageSquareIcon size={20} className="text-gray-500" />
+            <BotMessageSquareIcon className="text-gray-500" size={20} />
             <p className="font-medium text-sm">OpenAI</p>
           </div>
-          <div className="text-gray-500 text-xs mt-2">
+          <div className="mt-2 text-gray-500 text-xs">
             <T keyName={name} />
           </div>
         </div>
@@ -39,16 +41,17 @@ export const OpenAIDialog = ({ name, children }: OpenAIDialogProps) => {
           <DialogTitle className="capitalize">Open AI - {name}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
+
         {children}
 
         <DialogFooter className="flex items-end">
           <DialogClose asChild>
-            <Button type="button" variant="secondary" size="sm">
+            <Button size="sm" type="button" variant="secondary">
               <T keyName="common.cancelBtn" />
             </Button>
           </DialogClose>
 
-          <Button type="button" size="sm">
+          <Button size="sm" type="button">
             <T keyName="common.continueBtn" />
           </Button>
         </DialogFooter>

@@ -5,7 +5,9 @@ let connection: IORedis | null = null
 const env = keys()
 
 export function getRedisConnection() {
-  if (connection) return connection
+  if (connection) {
+    return connection
+  }
 
   connection = new IORedis(env.REDIS_URL, {
     maxRetriesPerRequest: null,

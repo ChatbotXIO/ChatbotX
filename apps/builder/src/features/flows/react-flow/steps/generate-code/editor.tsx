@@ -1,8 +1,13 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
-import { Button } from "@/components/ui/button"
+import {
+  type GenerateCodeStepSchema,
+  GenerateCodeType,
+  generateCodeStepSchema,
+} from "@aha.chat/flow-config"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -12,24 +17,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import {
-  generateCodeStepSchema,
-  type GenerateCodeStepSchema,
-  GenerateCodeType,
-} from "@aha.chat/flow-config"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T } from "@tolgee/react"
 import { ShuffleIcon } from "lucide-react"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
 export default function GenerateCodeStepEditor({
   parentName,
-}: { parentName: string }) {
+}: {
+  parentName: string
+}) {
   return (
     <BaseStepEditor
       icon={ShuffleIcon}
@@ -61,10 +63,10 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="flex justify-center">
-          <Button variant="outline" size="sm">
+          <Button size="sm" variant="outline">
             Edit
           </Button>
         </div>
@@ -77,12 +79,13 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
 
         <Form {...form}>
           <form
+            className="flex w-full flex-col gap-4"
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col w-full gap-4"
           >
             <SelectField
-              name="type"
+              isRequired
               label="Type"
+              name="type"
               options={[
                 {
                   label: "Numeric (Minimum/Maximum length)",
@@ -97,18 +100,17 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
                   value: GenerateCodeType.ALPHANUMERIC_LENGTH,
                 },
               ]}
-              isRequired
             />
 
-            <InputField name="min" label="Min" isRequired />
+            <InputField isRequired label="Min" name="min" />
 
-            <InputField name="max" label="Max" isRequired />
+            <InputField isRequired label="Max" name="max" />
 
             <CustomFieldSelect
-              name="outputCustomFieldId"
-              label="Save to custom field"
-              isRequired
               allowCreate={true}
+              isRequired
+              label="Save to custom field"
+              name="outputCustomFieldId"
             />
 
             <DialogFooter>
@@ -117,10 +119,10 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
               </DialogClose>
 
               <Button
-                type="submit"
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 Save changes
               </Button>

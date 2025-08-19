@@ -24,17 +24,7 @@ export function* generateOutgoingMessages(
   payload: SendCardPayload,
   logger: Logger<ILogObj>,
 ) {
-  if (!payload.buttons?.length) {
-    if (payload.image?.url) {
-      yield new Image(payload.image.url)
-    }
-    if (payload.title) {
-      yield new Text(payload.title)
-    }
-    if (payload.subtitle) {
-      yield new Text(payload.subtitle)
-    }
-  } else {
+  if (payload.buttons?.length) {
     const chunks = chunkArray(payload.buttons, INTERACTIVE_MAX_BUTTONS_COUNT)
 
     if (payload.buttons.length > INTERACTIVE_MAX_BUTTONS_COUNT) {
@@ -50,14 +40,24 @@ export function* generateOutgoingMessages(
           title: button.label,
         }),
       )
-      const [button, ...rest] = buttons
+      const [b1, ...rest] = buttons
 
       yield new Interactive(
-        new ActionButtons(button, ...rest),
+        new ActionButtons(b1, ...rest),
         generateBody(payload.title),
         payload.image ? new Header(new Image(payload.image.url)) : undefined,
         payload.subtitle ? generateFooter(payload.subtitle) : undefined,
       )
+    }
+  } else {
+    if (payload.image?.url) {
+      yield new Image(payload.image.url)
+    }
+    if (payload.title) {
+      yield new Text(payload.title)
+    }
+    if (payload.subtitle) {
+      yield new Text(payload.subtitle)
     }
   }
 }

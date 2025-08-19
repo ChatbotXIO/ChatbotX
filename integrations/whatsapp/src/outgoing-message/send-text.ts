@@ -1,12 +1,12 @@
-import {
-  Button,
-  Text,
-  Interactive,
-  ActionButtons,
-  Body,
-} from "whatsapp-api-js/messages"
 import type { SendTextStepSchema } from "@aha.chat/flow-config"
 import { chunk } from "remeda"
+import {
+  ActionButtons,
+  Body,
+  Button,
+  Interactive,
+  Text,
+} from "whatsapp-api-js/messages"
 import { MAX_BUTTONS } from "./shared"
 
 export function* convertFlowStepText(
@@ -18,8 +18,8 @@ export function* convertFlowStepText(
   } else {
     const chunks = chunk(payload.buttons, MAX_BUTTONS)
 
-    for (const chunk of chunks) {
-      const buttons = chunk.map(
+    for (const c1 of chunks) {
+      const buttons = c1.map(
         (button) => new Button(`${flowVersionId}_${button.id}`, button.label),
       )
 

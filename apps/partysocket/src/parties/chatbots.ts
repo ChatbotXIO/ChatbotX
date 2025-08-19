@@ -2,14 +2,17 @@ import type * as Party from "partykit/server"
 import { getAuthSession } from "../lib/auth"
 
 export default class ChatbotParty implements Party.Server {
+  // biome-ignore lint/style/noParameterProperties: wip
   constructor(readonly room: Party.Room) {}
 
-  async onConnect(
+  onConnect(
     connection: Party.Connection,
     { request }: Party.ConnectionContext,
   ) {
     const userId = request.headers.get("X-User-ID")
-    if (!userId) return connection.close(1008, "Unauthorized")
+    if (!userId) {
+      return connection.close(1008, "Unauthorized")
+    }
   }
 
   async onRequest(req: Party.Request) {
@@ -19,9 +22,7 @@ export default class ChatbotParty implements Party.Server {
     return new Response("ok", { status: 200 })
   }
 
-  async onAlarm() {}
-
-  static async onBeforeRequest(
+  static onBeforeRequest(
     req: Party.Request,
     lobby: Party.Lobby,
     // ctx: Party.ExecutionContext

@@ -1,23 +1,24 @@
 "use server"
 
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
-import { integrations } from "@/integration"
-import { chatbotActionClient } from "@/lib/safe-action"
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
 import type {
   CreateMessageTemplateProps,
   WhatsappAuthValue,
 } from "@aha.chat/integration-whatsapp"
+import slugify from "@sindresorhus/slugify"
 import { revalidateTag } from "next/cache"
+import {
+  type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
+} from "@/features/common/schemas"
+import { integrations } from "@/integration"
+import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageTemplateRequest,
   createMessageTemplateRequest,
 } from "../schemas/create-message-templates-schema"
-import { parseComponents, slugify } from "./utils"
+import { parseComponents } from "./utils"
 
 export const createMessageTemplateAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

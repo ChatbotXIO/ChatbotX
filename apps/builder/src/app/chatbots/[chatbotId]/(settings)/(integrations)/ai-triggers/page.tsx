@@ -1,9 +1,9 @@
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 import { listAITriggers } from "@/features/integrations/ai-triggers/actions/list.action"
 import { CreateAITriggerDialog } from "@/features/integrations/ai-triggers/create"
 import { listAITriggersRequest } from "@/features/integrations/ai-triggers/schemas/get.schema"
 import { AITriggersTable } from "@/features/integrations/ai-triggers/table"
-import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
 
 export default async function AITriggersPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -18,12 +18,12 @@ export default async function AITriggersPage(props: {
 
   return (
     <>
-      <div className="flex w-full justify-end mb-4">
+      <div className="mb-4 flex w-full justify-end">
         <CreateAITriggerDialog chatbotId={params.chatbotId} />
       </div>
 
       <Suspense>
-        <AITriggersTable promises={promises} chatbotId={params.chatbotId} />
+        <AITriggersTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
     </>
   )

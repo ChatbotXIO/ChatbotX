@@ -1,17 +1,17 @@
+import { WhatsappTemplateCategory } from "@aha.chat/database/types"
 import { z } from "zod"
 import {
   LanguageOptions,
   TemplateType,
 } from "@/features/integration-whatsapp/message-templates/type"
-import { WhatsappTemplateCategory } from "@aha.chat/database/types"
-import { templateTextSchema } from "../templates/text/schema"
-import { templateCatalogSchema } from "../templates/catalog/schema"
-import { templateProductSchema } from "../templates/product/schema"
-import { templateImageSchema } from "../templates/image/schema"
-import { templateVideoSchema } from "../templates/video/schema"
-import { templateDocumentSchema } from "../templates/document/schema"
 import { templateCarouselImageSchema } from "../templates/carousel-image/schema"
 import { templateCarouselVideoSchema } from "../templates/carousel-video/schema"
+import { templateCatalogSchema } from "../templates/catalog/schema"
+import { templateDocumentSchema } from "../templates/document/schema"
+import { templateImageSchema } from "../templates/image/schema"
+import { templateProductSchema } from "../templates/product/schema"
+import { templateTextSchema } from "../templates/text/schema"
+import { templateVideoSchema } from "../templates/video/schema"
 
 export const createMessageTemplateRequest = z
   .object({

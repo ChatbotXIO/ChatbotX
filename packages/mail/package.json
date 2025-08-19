@@ -27,6 +27,6 @@
     "./keys": "./src/keys.ts"
   },
   "scripts": {
-    "dev": "email dev -d src/emails -p 3201"
+    "packages:dev": "email dev -d src/emails -p 3201"
   }
 }

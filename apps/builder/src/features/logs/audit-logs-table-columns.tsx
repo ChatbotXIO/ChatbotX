@@ -1,7 +1,11 @@
 "use client"
 
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@aha.chat/ui/components/ui/avatar"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import type { LogResource } from "./schemas"
@@ -19,8 +23,8 @@ export function getAuditColumns(): ColumnDef<LogResource>[] {
             <div className="flex items-center gap-2">
               <Avatar className="h-5 w-5">
                 <AvatarImage
-                  src={row.original.user.image || undefined}
                   alt="userImage"
+                  src={row.original.user.image || undefined}
                 />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>

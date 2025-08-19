@@ -1,14 +1,11 @@
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { useTranslate } from "@tolgee/react"
-import { useState, useEffect, useCallback, memo, useMemo } from "react"
+import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
-const TemplateFooterComponent = ({
-  parentName,
-}: {
-  parentName: string
-}) => {
+const TemplateFooterComponent = ({ parentName }: { parentName: string }) => {
   const { t } = useTranslate()
   const { getValues, setValue } = useFormContext()
 
@@ -46,24 +43,24 @@ const TemplateFooterComponent = ({
 
   return (
     <>
-      {!showForm ? (
-        <pre
-          className="cursor-pointer text-gray-300"
-          onClick={handleStartEditing}
-          onKeyUp={() => {}}
-        >
-          {displayText}
-        </pre>
-      ) : (
+      {showForm ? (
         <div className="flex flex-col gap-2">
           <Textarea
             autoFocus
-            placeholder="Enter text"
-            value={localFooter}
             maxLength={60}
             onChange={handleTextChange}
+            placeholder="Enter text"
+            value={localFooter}
           />
         </div>
+      ) : (
+        <Button
+          className="cursor-pointer text-gray-300"
+          onClick={handleStartEditing}
+          variant="link"
+        >
+          {displayText}
+        </Button>
       )}
     </>
   )

@@ -1,12 +1,11 @@
-import { SelectField } from "@/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 
-export const AIAsistantSelect = ({
-  name,
-  isRequired = true,
-}: {
+type AIAsistantSelectProps = {
   name: string
   isRequired?: boolean
-}) => {
+}
+
+export const AIAsistantSelect = (props: AIAsistantSelectProps) => {
   const frameworksList = [
     { value: "react", label: "React" },
     { value: "angular", label: "Angular" },
@@ -15,12 +14,5 @@ export const AIAsistantSelect = ({
     { value: "ember", label: "Ember" },
   ]
 
-  return (
-    <SelectField
-      label="Assistants"
-      name={name}
-      isRequired={isRequired}
-      options={frameworksList}
-    />
-  )
+  return <SelectField label="Assistants" options={frameworksList} {...props} />
 }

@@ -9,8 +9,8 @@ export const BaseStepEditor = (props: {
   children?: ReactElement
 }) => {
   return (
-    <div className="rounded-lg border-2 border-dashed p-4 text-sm flex flex-col gap-1.5">
-      <div className="flex w-full gap-1 items-center">
+    <div className="flex flex-col gap-1.5 rounded-lg border-2 border-dashed p-4 text-sm">
+      <div className="flex w-full items-center gap-1">
         <props.icon size={18} />
         {props.title}
       </div>

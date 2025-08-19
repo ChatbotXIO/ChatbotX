@@ -1,9 +1,9 @@
-import { ErrorLogsTable } from "@/features/logs/error-logs-table"
-import { getLogs } from "@/features/logs/queries"
-import { getLogsSearchParamsCache } from "@/features/logs/schemas/get-logs-schema"
 import { LogType } from "@aha.chat/database"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { ErrorLogsTable } from "@/features/logs/error-logs-table"
+import { getLogs } from "@/features/logs/queries"
+import { getLogsSearchParamsCache } from "@/features/logs/schemas/get-logs-schema"
 
 export default async function ErrorLogsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -24,7 +24,7 @@ export default async function ErrorLogsPage(props: {
   return (
     <div>
       <Suspense>
-        <ErrorLogsTable promises={promises} chatbotId={params.chatbotId} />
+        <ErrorLogsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
     </div>
   )

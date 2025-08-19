@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { buttonStepSchema, buttonStepDefaultFn } from "../button/schema"
+import { buttonStepDefaultFn, buttonStepSchema } from "../button/schema"
 
 export const templateImageSchema = z
   .object({

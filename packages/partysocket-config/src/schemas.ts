@@ -1,9 +1,9 @@
-export enum RealtimeEventType {
-  CREATE_MESSAGE = "CREATE_MESSAGE",
-}
+export const RealtimeEventType = {
+  CREATE_MESSAGE: "CREATE_MESSAGE",
+} as const
 
 export type RealtimeEventCreateMessage = {
-  eventType: RealtimeEventType.CREATE_MESSAGE
+  eventType: typeof RealtimeEventType.CREATE_MESSAGE
   data: unknown
 }
 

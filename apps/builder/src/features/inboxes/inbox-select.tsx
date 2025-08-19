@@ -1,7 +1,7 @@
-import { SelectField } from "@/components/form/select-field"
-import { callAPI } from "@/lib/swr"
-import { useParams } from "next/navigation"
 import { OMNICHANNEL } from "@aha.chat/database/types"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { useParams } from "next/navigation"
+import { callAPI } from "@/lib/swr"
 import type { InboxCollection } from "./schemas"
 
 export function InboxSelect({ name }: { name: string }) {
@@ -20,10 +20,10 @@ export function InboxSelect({ name }: { name: string }) {
 
   return (
     <SelectField
-      name={name}
       label="Message Type"
-      placeholder="Please select"
+      name={name}
       options={inboxes}
+      placeholder="Please select"
     />
   )
 }

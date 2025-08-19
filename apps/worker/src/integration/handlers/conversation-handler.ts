@@ -1,8 +1,8 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import {
-  AutoAssignConversationRule,
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
+  AutoAssignConversationRule,
   type AutoAssignConversationStepSchema,
   type DisableBotStepSchema,
   type EnableBotStepSchema,
@@ -11,8 +11,8 @@ import {
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@aha.chat/flow-config"
-import type { FlowStepProps } from "./step-handler"
 import { subHours } from "date-fns"
+import type { FlowStepProps } from "./step-handler"
 
 export async function archiveConversation({
   conversation,
@@ -71,10 +71,12 @@ export async function autoAssignConversation({
   conversation,
   step,
 }: FlowStepProps<AutoAssignConversationStepSchema>) {
-  if (step.assignedIds.length === 0) return
+  if (step.assignedIds.length === 0) {
+    return
+  }
 
-  const userIds = []
-  const inboxTeamIds = []
+  const userIds: string[] = []
+  const inboxTeamIds: string[] = []
   for (const id of step.assignedIds) {
     if (id.startsWith("u_")) {
       userIds.push(id.substring(2))
@@ -103,6 +105,8 @@ export async function autoAssignConversation({
       }
       break
     }
+    default:
+      break
   }
 
   // Init assignee map
@@ -159,7 +163,9 @@ export async function autoAssignConversation({
     }
   }
 
-  if (Object.keys(allocation).length === 0) return
+  if (Object.keys(allocation).length === 0) {
+    return
+  }
 
   // Count conversations of assignee during time
   const conversationCount = await prisma.conversation.groupBy({

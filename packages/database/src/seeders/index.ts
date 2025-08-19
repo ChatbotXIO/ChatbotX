@@ -1,4 +1,6 @@
+import baseLogger from "@aha.chat/logger"
 import { faker } from "@faker-js/faker"
+import { prisma } from ".."
 import {
   type Chatbot,
   ChatbotMemberRole,
@@ -6,7 +8,6 @@ import {
   type Folder,
   FolderType,
 } from "../generated/prisma/client"
-import { prisma } from ".."
 
 async function main() {
   let organization = await prisma.organization.findFirst()
@@ -113,8 +114,8 @@ main()
   .then(() => {
     return true
   })
-  .catch((error) => {
-    console.error(error)
+  .catch((_error) => {
+    baseLogger.error(_error)
   })
   .finally(async () => {
     await prisma.$disconnect()

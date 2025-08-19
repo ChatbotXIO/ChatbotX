@@ -1,7 +1,11 @@
 "use client"
 
-import { ChevronsUpDown, Plus } from "lucide-react"
-import { useState } from "react"
+import type { ChatbotModel } from "@aha.chat/database/types"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@aha.chat/ui/components/ui/avatar"
 
 import {
   DropdownMenu,
@@ -10,21 +14,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import type { ChatbotModel } from "@aha.chat/database/types"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+} from "@aha.chat/ui/components/ui/sidebar"
+import { ChevronsUpDown, Plus } from "lucide-react"
+import { useState } from "react"
 
-export function ChatbotSwitcher({
-  chatbots,
-}: {
-  chatbots: ChatbotModel[]
-}) {
+export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
   const { isMobile } = useSidebar()
   const [activeChatbot, setActiveChatbot] = useState<ChatbotModel | undefined>(
     chatbots[0],
@@ -36,13 +36,13 @@ export function ChatbotSwitcher({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="lg"
             >
               <Avatar className="rounded-lg border">
                 <AvatarImage
-                  src={activeChatbot?.logo ?? ""}
                   alt={activeChatbot?.name}
+                  src={activeChatbot?.logo ?? ""}
                 />
                 <AvatarFallback className="rounded">
                   {activeChatbot?.name?.slice(0, 2) || "  "}
@@ -58,24 +58,24 @@ export function ChatbotSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <DropdownMenuLabel className="text-muted-foreground text-xs">
               Chatbots
             </DropdownMenuLabel>
             {chatbots.map((chatbot) => (
               <DropdownMenuItem
+                className="gap-2 p-2"
                 key={chatbot.name}
                 onClick={() => setActiveChatbot(chatbot)}
-                className="gap-2 p-2"
               >
                 <Avatar className="rounded-lg border">
                   <AvatarImage
-                    src={activeChatbot?.logo ?? ""}
                     alt={activeChatbot?.name}
+                    src={activeChatbot?.logo ?? ""}
                   />
                   <AvatarFallback className="rounded">
                     {activeChatbot?.name?.charAt(0)}

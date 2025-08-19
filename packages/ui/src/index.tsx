@@ -1,4 +1,3 @@
-import type { CachePublicRecord, TolgeeStaticData } from "@tolgee/react"
 import type { ThemeProviderProps } from "next-themes"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 import { Toaster } from "./components/ui/sonner"
@@ -9,8 +8,6 @@ type UiProviderProperties = ThemeProviderProps & {
   privacyUrl?: string
   termsUrl?: string
   helpUrl?: string
-  language: string
-  staticData: TolgeeStaticData | CachePublicRecord[]
 }
 
 export const UiProvider = ({
@@ -18,8 +15,6 @@ export const UiProvider = ({
   privacyUrl,
   termsUrl,
   helpUrl,
-  language,
-  staticData,
   ...properties
 }: UiProviderProperties) => {
   return (
@@ -28,7 +23,7 @@ export const UiProvider = ({
         {/* <AuthProvider privacyUrl={privacyUrl} termsUrl={termsUrl} helpUrl={helpUrl}>
       <AnalyticsProvider> */}
         <TooltipProvider>{children}</TooltipProvider>
-        <Toaster richColors position="top-right" duration={800} />
+        <Toaster duration={800} position="top-right" richColors />
         {/* </AnalyticsProvider>
     </AuthProvider> */}
       </ThemeProvider>

@@ -1,6 +1,8 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { InboxTeamModel } from "@aha.chat/database/types"
+import { MultiSelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -8,8 +10,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T } from "@tolgee/react"
@@ -18,8 +20,6 @@ import { toast } from "sonner"
 import type { UserResource } from "../users/schemas"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
 import { addInboxTeamMemberRequest } from "./schemas/add-inbox-team-member.request"
-import { MultiSelectField } from "@/components/form/select-field"
-import type { InboxTeamModel } from "@aha.chat/database/types"
 
 export function AddInboxTeamMemberDialog({
   open,
@@ -63,7 +63,7 @@ export function AddInboxTeamMemberDialog({
   }))
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -74,12 +74,12 @@ export function AddInboxTeamMemberDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
               <MultiSelectField
-                name="userIds"
                 label="Select users"
+                name="userIds"
                 options={userOptions}
               />
 
@@ -91,10 +91,10 @@ export function AddInboxTeamMemberDialog({
                 </DialogClose>
 
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2 className="animate-spin" />

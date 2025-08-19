@@ -1,8 +1,12 @@
-import { SelectField } from "@/components/form/select-field"
 import { DelayUnit } from "@aha.chat/flow-config"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useTranslate } from "@tolgee/react"
 
-export const DelayUnitSelect = ({ name }: { name: string }) => {
+type DelayUnitSelectProps = {
+  name: string
+}
+
+export const DelayUnitSelect = (props: DelayUnitSelectProps) => {
   const { t } = useTranslate()
 
   const delayUnits = [
@@ -13,6 +17,10 @@ export const DelayUnitSelect = ({ name }: { name: string }) => {
   ]
 
   return (
-    <SelectField name={name} placeholder="Select a unit" options={delayUnits} />
+    <SelectField
+      name={props.name}
+      options={delayUnits}
+      placeholder="Select a unit"
+    />
   )
 }

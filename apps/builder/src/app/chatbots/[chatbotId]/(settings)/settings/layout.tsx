@@ -1,11 +1,11 @@
 import type { ReactNode } from "react"
 import { SettingsTab } from "./tab"
 
-interface LayoutSettingProps {
+type LayoutSettingProps = {
   children: ReactNode
 }
 
-export default async function SettingLayout({ children }: LayoutSettingProps) {
+export default function SettingLayout({ children }: LayoutSettingProps) {
   return (
     <>
       <SettingsTab />

@@ -1,21 +1,22 @@
-import { Button } from "@/components/ui/button"
+import { buttonStepDefaultFn } from "@aha.chat/flow-config"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Sortable,
-  SortableItemHandle,
   SortableItem,
-} from "@/components/ui/sortable"
+  SortableItemHandle,
+} from "@aha.chat/ui/components/ui/sortable"
 import { T } from "@tolgee/react"
 import { GripVerticalIcon, PlusIcon } from "lucide-react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { useStepStore } from "../../stores/step-store-provider"
-import { buttonStepDefaultFn } from "@aha.chat/flow-config"
 
-export const ButtonStepEditor = ({
-  parentName,
-  ...rest
-}: {
+type ButtonStepEditorProps = {
   parentName: string
-}) => {
+}
+
+export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
+  const { parentName, ...rest } = props
+
   const { getValues } = useFormContext()
   const { setButtonPath } = useStepStore((state) => state)
 
@@ -24,12 +25,12 @@ export const ButtonStepEditor = ({
   return (
     <div className="w-full flex-1" {...rest}>
       <Button
-        type="button"
-        variant="secondary"
         className="w-full hover:text-blue-500"
         onClick={() => {
           setButtonPath(`data.${parentName}`.replace(/\.(\d+)/g, "[$1]"))
         }}
+        type="button"
+        variant="secondary"
       >
         {buttonData.label}
       </Button>
@@ -37,7 +38,13 @@ export const ButtonStepEditor = ({
   )
 }
 
-export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
+type ButtonGroupEditorProps = {
+  parentName: string
+}
+
+export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
+  const { parentName } = props
+
   const { control } = useFormContext()
   const { fields, append, move } = useFieldArray({
     control,
@@ -51,17 +58,17 @@ export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
   return (
     <>
       <Sortable
-        value={fields}
-        onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
         getItemValue={(item) => item.id}
+        onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
+        value={fields}
       >
         <div className="flex w-full flex-col gap-2">
           {fields.map((field, index) => (
-            <SortableItem key={field.id} value={field.id} asChild>
-              <div className="w-full flex items-center gap-1">
+            <SortableItem asChild key={field.id} value={field.id}>
+              <div className="flex w-full items-center gap-1">
                 <ButtonStepEditor parentName={`${parentName}.${index}`} />
                 <SortableItemHandle asChild>
-                  <Button variant="ghost" size="icon" className="size-8">
+                  <Button className="size-8" size="icon" variant="ghost">
                     <GripVerticalIcon className="h-4 w-4" />
                   </Button>
                 </SortableItemHandle>
@@ -72,10 +79,10 @@ export const ButtonGroupEditor = ({ parentName }: { parentName: string }) => {
       </Sortable>
 
       <Button
+        className="my-1.5 w-full"
+        onClick={addButton}
         type="button"
         variant="secondary"
-        className="w-full my-1.5"
-        onClick={addButton}
       >
         <PlusIcon />
         <T keyName="flows.addBtn" />

@@ -22,7 +22,9 @@ export async function browserUpload(
   formData.append("file", file)
   formData.append("name", file.name)
   for (const key in formJSON.fields) {
-    formData.append(key, formJSON.fields[key] as string)
+    if (Object.hasOwn(formJSON.fields, key)) {
+      formData.append(key, formJSON.fields[key] as string)
+    }
   }
 
   await ky.post(formJSON.url, {

@@ -1,7 +1,3 @@
-import type { ConversationEntity, MessageEntity } from "@aha.chat/sdk"
-import { Queue } from "bullmq"
-import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
-import { QueueName } from "../../lib/types"
 import type {
   SendAudioStepSchema,
   SendCardStepSchema,
@@ -10,14 +6,18 @@ import type {
   SendTextStepSchema,
   SendVideoStepSchema,
 } from "@aha.chat/flow-config"
+import type { ConversationEntity, MessageEntity } from "@aha.chat/sdk"
+import { Queue } from "bullmq"
+import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
+import { QueueName } from "../../lib/types"
 
-export enum ChatJobAction {
-  SEND_MESSAGE = "SEND_MESSAGE",
-  SEND_FLOW_STEP = "SEND_FLOW_STEP",
-}
+export const ChatJobAction = {
+  SEND_MESSAGE: "SEND_MESSAGE",
+  SEND_FLOW_STEP: "SEND_FLOW_STEP",
+} as const
 
 export type ChatJobSendMessage = {
-  type: ChatJobAction.SEND_MESSAGE
+  type: typeof ChatJobAction.SEND_MESSAGE
   data: {
     conversation: ConversationEntity
     message: MessageEntity
@@ -25,7 +25,7 @@ export type ChatJobSendMessage = {
 }
 
 export type ChatJobSendFlowStep = {
-  type: ChatJobAction.SEND_FLOW_STEP
+  type: typeof ChatJobAction.SEND_FLOW_STEP
   data: {
     conversationId: string
     flowVersionId: string

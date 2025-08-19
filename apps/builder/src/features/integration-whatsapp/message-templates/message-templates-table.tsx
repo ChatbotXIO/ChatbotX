@@ -1,16 +1,16 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import type { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
-import { useDataTable } from "@/hooks/use-data-table"
-import type { DataTableRowAction } from "@/types/data-table"
 import type { WhatsappMessageTemplateModel } from "@aha.chat/database/types"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import React, { useMemo, useState } from "react"
+import type { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
 import { getColumns } from "./message-templates-table-columns"
 import { WhatsappMessageTemplatesTableToolbarActions } from "./message-templates-table-toolbar-actions"
 
-interface WhatsappMessageTemplatesTableProps {
+type WhatsappMessageTemplatesTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getMessageTemplates>>]>
   chatbotId: string
 }
@@ -39,12 +39,10 @@ export function WhatsappMessageTemplatesTable({
   })
 
   return (
-    <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <WhatsappMessageTemplatesTableToolbarActions chatbotId={chatbotId} />
-        </DataTableToolbar>
-      </DataTable>
-    </>
+    <DataTable table={table}>
+      <DataTableToolbar table={table}>
+        <WhatsappMessageTemplatesTableToolbarActions chatbotId={chatbotId} />
+      </DataTableToolbar>
+    </DataTable>
   )
 }

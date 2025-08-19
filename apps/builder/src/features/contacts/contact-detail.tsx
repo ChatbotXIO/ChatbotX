@@ -1,11 +1,15 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { callAPI } from "@/lib/swr"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@aha.chat/ui/components/ui/avatar"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { callAPI } from "@/lib/swr"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import type { CustomFieldCollection } from "../custom-fields/schemas"
@@ -19,11 +23,11 @@ export const ContactDetail = () => {
   const [contact, setContact] = useState<ContactResource | null>(null)
   const [selectedField, setSelectedField] = useState<string | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     if (activeConversationId) {
       const conversation = conversations.find(
-        (conversation) => conversation.id === activeConversationId,
+        (item) => item.id === activeConversationId,
       )
       setContact(conversation?.contact ?? null)
     } else {
@@ -79,29 +83,29 @@ export const ContactDetail = () => {
 
   return contact ? (
     <div className="flex flex-col">
-      <div className="flex justify-center my-5">
+      <div className="my-5 flex justify-center">
         <Avatar className="size-24">
           <AvatarImage
-            src={contact.avatar ?? ""}
             alt={contact.firstName ?? ""}
+            src={contact.avatar ?? ""}
           />
           <AvatarFallback>NA</AvatarFallback>
         </Avatar>
       </div>
-      <div className="flex flex-col gap-1 text-gray-600 text-[12px] font-medium">
+      <div className="flex flex-col gap-1 font-medium text-[12px] text-gray-600">
         {editableData.map((editable) => {
           return (
             <div className="flex w-full items-center gap-1" key={editable.key}>
-              <div className="flex flex-wrap items-center basis-1/3 truncate gap-1">
+              <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
                 <editable.icon className="size-4" />
                 <div className="flex-1 truncate">{editable.label}</div>
               </div>
 
               <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 truncate text-[12px] justify-start"
+                className="flex-1 justify-start truncate text-[12px]"
                 onClick={() => setSelectedField(editable.key)}
+                size="sm"
+                variant="ghost"
               >
                 {editable.value ?? "-- Click to edit --"}
               </Button>
@@ -114,10 +118,10 @@ export const ContactDetail = () => {
 
       <EditContactField
         chatbotId={chatbotId}
-        id={contact.id}
-        open={!!selectedField}
-        onOpenChange={() => setSelectedField(null)}
         contact={contact}
+        id={contact.id}
+        onOpenChange={() => setSelectedField(null)}
+        open={Boolean(selectedField)}
         selectedField={selectedField}
       />
     </div>

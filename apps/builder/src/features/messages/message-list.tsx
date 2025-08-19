@@ -1,9 +1,9 @@
 "use client"
 
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Virtuoso } from "react-virtuoso"
+import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { MessageItem } from "./components/message-item"
 
@@ -23,7 +23,7 @@ export function MessageList() {
   const hasNextPage = messages.length === 0 || nextCursorMessage !== null
 
   const [page, setPage] = useState(1)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     setPage(1)
     if (activeConversationId) {
@@ -39,36 +39,45 @@ export function MessageList() {
   }
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-1 flex-col">
       <Virtuoso
+        components={{
+          List: MessageComponentList,
+          Header: MessageComponentHeader,
+        }}
         data={messages}
         followOutput
         initialTopMostItemIndex={messages.length - 1}
+        itemContent={(_, message) => (
+          <MessageItem key={message.id} message={message} />
+        )}
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {
             loadMoreItems()
           }
         }}
-        itemContent={(_, message) => (
-          <MessageItem message={message} key={message.id} />
-        )}
-        components={{
-          List: ({ children, ...props }) => (
-            <div
-              {...props}
-              className="virtuoso-item-list flex flex-col gap-1.5"
-            >
-              {children}
-            </div>
-          ),
-          Header: () =>
-            isLoadMoreMessage ? (
-              <div className="flex items-center space-x-2 px-3 py-2">
-                <Skeleton className="h-8 w-3/5 rounded-xl" />
-              </div>
-            ) : null,
-        }}
       />
+    </div>
+  )
+}
+
+const MessageComponentHeader: GridComponents["Header"] = () => {
+  const { isLoadMoreMessage } = useChatStore((state) => state)
+
+  return isLoadMoreMessage ? (
+    <div className="flex items-center space-x-2 px-3 py-2">
+      <Skeleton className="h-8 w-3/5 rounded-xl" />
+    </div>
+  ) : null
+}
+
+const MessageComponentList: GridComponents["List"] = ({
+  children,
+  ...props
+}) => {
+  return (
+    <div {...props} className="virtuoso-item-list flex flex-col gap-1.5">
+      {children}
     </div>
   )
 }

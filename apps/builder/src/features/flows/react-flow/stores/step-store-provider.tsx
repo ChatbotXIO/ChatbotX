@@ -1,8 +1,8 @@
 "use client"
 
-import { type ReactNode, createContext, useContext, useRef } from "react"
+import { createContext, type ReactNode, useContext, useRef } from "react"
 import { useStore } from "zustand"
-import { type StepStore, createStepStore } from "./step-store"
+import { createStepStore, type StepStore } from "./step-store"
 
 export type StepStoreApi = ReturnType<typeof createStepStore>
 
@@ -10,7 +10,7 @@ export const StepStoreContext = createContext<StepStoreApi | undefined>(
   undefined,
 )
 
-export interface StepStoreProviderProps {
+export type StepStoreProviderProps = {
   children: ReactNode
 }
 

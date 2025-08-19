@@ -1,8 +1,8 @@
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
-import { prisma, type Prisma } from "@aha.chat/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import type { BroadcastModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
+import { getCurrentUserId } from "@/lib/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { GetBroadcastsSchema } from "../schemas/get-broadcasts-schema"
 
 export async function listBroadcasts(

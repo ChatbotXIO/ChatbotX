@@ -5,8 +5,8 @@ import { BotIcon } from "lucide-react"
 
 export const OpenAISpeechToTextViewer = () => {
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 font-bold text-center">
-      <BotIcon size={18} className="text-yellow-500" />
+    <div className="flex w-full items-center justify-center gap-2 py-4 text-center font-bold">
+      <BotIcon className="text-yellow-500" size={18} />
       <T keyName="flows.StepType.OpenAIGenerateTextAssistantViewer" />
     </div>
   )

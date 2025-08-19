@@ -1,10 +1,10 @@
+import { createId } from "@paralleldrive/cuid2"
+import { z } from "zod"
 import {
   type SendCardStepSchema,
   sendCardStepDefaultFn,
   sendCardStepSchema,
 } from "./send-card"
-import { createId } from "@paralleldrive/cuid2"
-import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const sendCarouselStepSchema = z.object({

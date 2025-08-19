@@ -10,14 +10,14 @@ import {
 import { createId } from "@paralleldrive/cuid2"
 import { logger } from "../../lib/logger"
 
-enum ReplyType {
-  MESSAGE = "MESSAGE",
-  FLOW = "FLOW",
-}
+const ReplyType = {
+  MESSAGE: "MESSAGE",
+  FLOW: "FLOW",
+} as const
 
 export type ReplyMessage = {
   message: string
-  type: ReplyType.MESSAGE
+  type: typeof ReplyType.MESSAGE
   buttons: {
     url: string
     label: string
@@ -25,7 +25,7 @@ export type ReplyMessage = {
 }
 
 export type ReplyFlow = {
-  type: ReplyType.FLOW
+  type: typeof ReplyType.FLOW
   flowId: string
 }
 
@@ -33,7 +33,9 @@ export type Reply = ReplyMessage | ReplyFlow
 
 export const listAllAutomatedResponses = async ({
   chatbotId,
-}: { chatbotId: string }) => {
+}: {
+  chatbotId: string
+}) => {
   try {
     return await prisma.automatedResponse.findMany({
       where: { chatbotId },
@@ -49,7 +51,9 @@ export async function triggerAutomatedResponse({
 }: {
   message: OutgoingMessageEntity
 }) {
-  if (!message.content) return
+  if (!message.content) {
+    return
+  }
 
   const allAutomatedResponses = await listAllAutomatedResponses({
     chatbotId: message.chatbotId,

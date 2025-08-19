@@ -1,6 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import type { TagModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,22 +11,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import type { TagModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
+import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteTagAction } from "./actions/delete-tag-action"
 
-interface DeleteTagsDialogProps
-  extends React.ComponentPropsWithoutRef<typeof Dialog> {
+type DeleteTagsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
   tags: Row<TagModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
-  onOpenChange: (val: boolean) => void
+  onOpenChange?: (val: boolean) => void
 }
 
 export function DeleteTagsDialog({
@@ -43,7 +43,7 @@ export function DeleteTagsDialog({
     {
       onSuccess: () => {
         toast.success(t("tags.deleted"))
-        onOpenChange(false)
+        onOpenChange?.(false)
       },
       onError: ({ error }) => {
         error.serverError && toast.error(result.serverError)
@@ -55,8 +55,8 @@ export function DeleteTagsDialog({
     <Dialog {...props}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Trash className="mr-2 size-4" aria-hidden="true" />
+          <Button size="sm" variant="outline">
+            <Trash aria-hidden="true" className="mr-2 size-4" />
             {t("common.deleteBtn")} ({tags.length})
           </Button>
         </DialogTrigger>
@@ -77,16 +77,16 @@ export function DeleteTagsDialog({
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
-            variant="destructive"
+            disabled={isPending}
             onClick={() =>
               execute({
                 ids: (tags ?? []).map((tag) => tag.id),
               })
             }
-            disabled={isPending}
+            variant="destructive"
           >
             {isPending && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
             {t("common.deleteBtn")}
           </Button>

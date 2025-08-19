@@ -1,8 +1,9 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Form, FormControl } from "@/components/ui/form"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -16,13 +17,11 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { use } from "react"
+import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { updateWhatsappIceBreakerAction } from "./actions/update-ice-breakers"
 import type { getWhatsappIceBreakers } from "./queries"
 import { updateWhatsappIceBreakerSchema } from "./schemas/update-ice-breaker-schema"
-import { FormInput } from "@/components/form-input"
-import { Input } from "@/components/ui/input"
-import { useFieldArray } from "react-hook-form"
 
 export function WhatsappIceBreakerForm({
   chatbotId,
@@ -38,7 +37,7 @@ export function WhatsappIceBreakerForm({
   const {
     form,
     handleSubmitWithAction,
-    form: { control, register },
+    form: { control },
   } = useHookFormAction(
     updateWhatsappIceBreakerAction.bind(null, chatbotId),
     zodResolver(updateWhatsappIceBreakerSchema),
@@ -71,73 +70,68 @@ export function WhatsappIceBreakerForm({
 
   return (
     <div className="flex flex-col items-center">
-      <div className="text-xl my-6">{t("whatsapp.messageTemplate")}</div>
+      <div className="my-6 text-xl">{t("whatsapp.messageTemplate")}</div>
       <Form {...form}>
         <form
+          className="w-full flex-1 space-y-4"
           onSubmit={handleSubmitWithAction}
-          className="flex-1 space-y-4 w-full"
         >
-          <Card className="w-4/6 mx-auto">
+          <Card className="mx-auto w-4/6">
             <CardContent className="flex flex-col gap-6 px-6 py-8">
               {fields.map((_field, index) => (
-                <FormInput
-                  key={`${index + 1}`}
-                  name={`prompts.${index}.value`}
-                  label={t("common.question")}
-                >
-                  <div className="flex justify-center items-center gap-4">
-                    <FormControl>
-                      <Input {...register(`prompts.${index}.value`)} />
-                    </FormControl>
-                    <div className="flex gap-1 items-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => swap(index, index + 1)}
-                        disabled={index === fields.length - 1}
-                      >
-                        <ArrowDownIcon size={25} />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => swap(index, index - 1)}
-                        disabled={index === 0}
-                      >
-                        <ArrowUpIcon size={25} />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={fields.length === 1}
-                        className="text-destructive"
-                        onClick={() => remove(index)}
-                      >
-                        <TrashIcon size={25} />
-                      </Button>
-                    </div>
+                <div key={`${index + 1}`}>
+                  <InputField
+                    label={t("common.question")}
+                    name={`prompts.${index}.value`}
+                  />
+                  <div className="flex items-center gap-1">
+                    <Button
+                      disabled={index === fields.length - 1}
+                      onClick={() => swap(index, index + 1)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ArrowDownIcon size={25} />
+                    </Button>
+                    <Button
+                      disabled={index === 0}
+                      onClick={() => swap(index, index - 1)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ArrowUpIcon size={25} />
+                    </Button>
+                    <Button
+                      className="text-destructive"
+                      disabled={fields.length === 1}
+                      onClick={() => remove(index)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <TrashIcon size={25} />
+                    </Button>
                   </div>
-                </FormInput>
+                </div>
               ))}
               {fields.length < 4 && (
                 <div>
-                  <Button variant="ghost" onClick={() => append({ value: "" })}>
+                  <Button onClick={() => append({ value: "" })} variant="ghost">
                     <PlusCircleIcon /> {t("common.addMore")}
                   </Button>
                 </div>
               )}
-              <div className="flex justify-center gap-2 mt-6">
-                <Button variant="outline" asChild>
+              <div className="mt-6 flex justify-center gap-2">
+                <Button asChild variant="outline">
                   <Link href={`/chatbots/${chatbotId}/whatsapp/ice-breakers`}>
                     {t("common.cancelBtn")}
                   </Link>
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

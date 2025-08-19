@@ -1,5 +1,5 @@
-import { getCurrentUserId } from "@/lib/auth"
 import { UpdateChatbotForm } from "@/features/chatbot/update-chatbot-form"
+import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export default async function GeneralPage(props: {

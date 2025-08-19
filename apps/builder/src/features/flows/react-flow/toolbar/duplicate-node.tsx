@@ -1,13 +1,12 @@
-import { Button } from "@/components/ui/button"
-import { useNodes, type Node } from "@xyflow/react"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { type Node, useNodes } from "@xyflow/react"
 import { CopyIcon } from "lucide-react"
-import { useCallback, type MouseEvent } from "react"
+import { type MouseEvent, useCallback } from "react"
 
 export function DuplicateNode() {
   const nodes = useNodes()
 
-  const duplicateNode = useCallback((node: Node) => {
-    console.log("duplicate node ID", node.id)
+  const duplicateNode = useCallback((_node: Node) => {
     // toast.success("Copied Node ID")
   }, [])
 
@@ -22,7 +21,7 @@ export function DuplicateNode() {
   }
 
   return (
-    <Button variant="ghost" size="icon" className="size-8" onClick={onClick}>
+    <Button className="size-8" onClick={onClick} size="icon" variant="ghost">
       <CopyIcon />
     </Button>
   )

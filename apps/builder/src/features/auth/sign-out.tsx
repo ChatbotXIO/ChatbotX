@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -8,11 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { authClient } from "@/lib/auth-client"
+} from "@aha.chat/ui/components/ui/dialog"
 import { Loader2Icon, LogOutIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { authClient } from "@/lib/auth-client"
 
 export function SignOut() {
   const [isLoading, setIsLoading] = useState(false)
@@ -33,7 +33,6 @@ export function SignOut() {
         <div className="flex justify-end">
           <Button
             disabled={isLoading}
-            variant="default"
             onClick={async () => {
               setIsLoading(true)
 
@@ -45,6 +44,7 @@ export function SignOut() {
                 },
               })
             }}
+            variant="default"
           >
             {isLoading && <Loader2Icon className="animate-spin" />}
             Sign Out

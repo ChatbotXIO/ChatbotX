@@ -1,5 +1,14 @@
 "use client"
-import { Button } from "@/components/ui/button"
+import type { FlowNode } from "@aha.chat/flow-config"
+import {
+  type ButtonStepSchema,
+  ButtonType,
+  buttonStepSchema,
+  sendFlowNodeStepDefaultFn,
+  sendMessageNodeDefaultFn,
+} from "@aha.chat/flow-config"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -7,28 +16,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { T, useTranslate } from "@tolgee/react"
 import { useNodes, useReactFlow } from "@xyflow/react"
-import { getProperty, setProperty, deleteProperty } from "dot-prop"
+import { deleteProperty, getProperty, setProperty } from "dot-prop"
 import { XIcon } from "lucide-react"
+import { openWebsiteStepDefaultFn } from "node_modules/@aha.chat/flow-config/src/schemas/steps/open-website"
 import { useEffect, useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
-import {
-  buttonStepSchema,
-  type ButtonStepSchema,
-  ButtonType,
-  sendFlowNodeStepDefaultFn,
-  sendMessageNodeDefaultFn,
-} from "@aha.chat/flow-config"
-import { useStepStore } from "./stores/step-store-provider"
-import type { FlowNode } from "@aha.chat/flow-config"
-import { InputField } from "@/components/form/input-field"
-import { allButtonsConfig } from "./steps/button-config"
-import { openWebsiteStepDefaultFn } from "node_modules/@aha.chat/flow-config/src/schemas/steps/open-website"
 import { DynamicStepEditor } from "./steps"
+import { allButtonsConfig } from "./steps/button-config"
+import { useStepStore } from "./stores/step-store-provider"
 
 function AllButtonOptions({
   onChooseButton,
@@ -39,11 +39,11 @@ function AllButtonOptions({
     <div className="flex flex-col gap-1.5">
       {allButtonsConfig.map((buttonConfig) => (
         <Button
+          className="flex w-full justify-start gap-2"
           key={buttonConfig.buttonType}
+          onClick={() => onChooseButton(buttonConfig.buttonType)}
           type="button"
           variant="outline"
-          className="flex gap-2 w-full justify-start"
-          onClick={() => onChooseButton(buttonConfig.buttonType)}
         >
           <buttonConfig.icon />
           <span className="text-center">{buttonConfig.label}</span>
@@ -63,16 +63,18 @@ function ActiveButton({
   const activeButton = allButtonsConfig.find(
     (button) => button.buttonType === buttonType,
   )
-  if (!activeButton) return null
+  if (!activeButton) {
+    return null
+  }
 
   return (
-    <div className="flex gap-1 pl-4 items-center text-sm border border-dashed rounded">
+    <div className="flex items-center gap-1 rounded border border-dashed pl-4 text-sm">
       <activeButton.icon className="size-4" />
-      <span className="text-center flex-1">{activeButton.label}</span>
+      <span className="flex-1 text-center">{activeButton.label}</span>
       <Button
-        variant="ghost"
         className="hover:bg-red hover:text-destructive"
         onClick={() => onChooseButton(null)}
+        variant="ghost"
       >
         <XIcon />
       </Button>
@@ -88,14 +90,14 @@ function ButtonSteps() {
   })
 
   return (
-    <div className="flex flex-col gap-2 mt-2">
-      <div className="text-sm font-medium">Additional steps</div>
+    <div className="mt-2 flex flex-col gap-2">
+      <div className="font-medium text-sm">Additional steps</div>
       {fields.map((field, index) => (
         <DynamicStepEditor
-          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-          type={(field as any).stepType}
           key={field.id}
           parentName={`steps.${index}`}
+          // biome-ignore lint/suspicious/noExplicitAny: wip
+          type={(field as any).stepType}
         />
       ))}
     </div>
@@ -116,13 +118,13 @@ export function ButtonEditorDialog() {
     (state) => state,
   )
 
-  const onOpenChange = (open: boolean) => {
-    if (!open) {
+  const onOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
       setButtonPath(null)
     }
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     if (buttonPath) {
       const foundNode = nodes.find((node) => node.selected) as FlowNode
@@ -158,10 +160,10 @@ export function ButtonEditorDialog() {
   }, [data, form])
 
   // const activeButtonType = watch("buttonType")
-  const onChooseButton = (buttonType: ButtonType | null) => {
-    setValue("buttonType", buttonType)
+  const onChooseButton = (selectedButtonType: ButtonType | null) => {
+    setValue("buttonType", selectedButtonType)
 
-    switch (buttonType) {
+    switch (selectedButtonType) {
       case ButtonType.SendMessage: {
         // create new node
         const newNode = sendMessageNodeDefaultFn({
@@ -213,14 +215,13 @@ export function ButtonEditorDialog() {
   }
 
   const onDelete = () => {
-    if (!activeNode || !buttonPath) return
+    if (!(activeNode && buttonPath)) {
+      return
+    }
 
     const deleted = deleteProperty(activeNode, buttonPath)
     if (deleted) {
-      console.log("activeNode", activeNode)
-      console.log("buttonPath", buttonPath)
       // updateNodeData(activeNode.id, updatedCurrentNodeData.data)
-
       // onSave()
     }
     updateNodeData(activeNode.id, activeNode.data)
@@ -256,7 +257,7 @@ export function ButtonEditorDialog() {
   }
 
   return data ? (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
           <DialogTitle>
@@ -267,10 +268,10 @@ export function ButtonEditorDialog() {
 
         <div className="flex items-center space-x-2">
           <Form {...form}>
-            <form className="flex flex-col gap-3 w-full">
-              <InputField name="label" label={t("flows.Button.label")} />
+            <form className="flex w-full flex-col gap-3">
+              <InputField label={t("flows.Button.label")} name="label" />
 
-              <div className="mt-2 text-sm font-medium">
+              <div className="mt-2 font-medium text-sm">
                 When this button is pressed
               </div>
 
@@ -289,10 +290,10 @@ export function ButtonEditorDialog() {
           </Form>
         </div>
         <DialogFooter>
-          <Button size="sm" variant="destructive" onClick={onDelete}>
+          <Button onClick={onDelete} size="sm" variant="destructive">
             <T keyName="common.delete" />
           </Button>
-          <Button size="sm" onClick={onSave} disabled={!formState.isValid}>
+          <Button disabled={!formState.isValid} onClick={onSave} size="sm">
             <T keyName="common.save" />
           </Button>
         </DialogFooter>

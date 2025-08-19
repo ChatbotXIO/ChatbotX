@@ -1,37 +1,37 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableColumnHeader } from "@/components/data-table-column-header"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
-import { useDataTable } from "@/hooks/use-data-table"
-import type { DataTableRowAction } from "@/types/data-table"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { Switch } from "@aha.chat/ui/components/ui/switch"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { T } from "@tolgee/react"
 import { format } from "date-fns"
 import { MoreHorizontalIcon } from "lucide-react"
-import { useAction } from "next-safe-action/hooks"
 import Link from "next/link"
-import React, { useMemo, useState } from "react"
+import { useAction } from "next-safe-action/hooks"
+import React, { useMemo } from "react"
 import { toast } from "sonner"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
 import {
-  ReplyType,
   type CreateAutomatedResponseRequest,
+  ReplyType,
 } from "./schemas/create-automated-responses-schema"
 import type { AutomatedResponseResource } from "./schemas/types"
 
-interface AutomatedResponseTableProps {
+type AutomatedResponseTableProps = {
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof getAutomatedResponses>>]>
 }
@@ -50,23 +50,23 @@ export function AutomatedResponsesTable({
       {
         id: "select",
         size: 32,
-        header: ({ table }) => (
+        header: ({ table: innerTable }) => (
           <Checkbox
+            aria-label="Select all"
             checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
+              innerTable.getIsAllPageRowsSelected() ||
+              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
             }
             onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
+              innerTable.toggleAllPageRowsSelected(Boolean(value))
             }
-            aria-label="Select all"
           />
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
             aria-label="Select row"
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
         ),
         enableSorting: false,
@@ -79,7 +79,7 @@ export function AutomatedResponsesTable({
           <DataTableColumnHeader column={column} title="User Message" />
         ),
         cell: ({ row }) => {
-          const { id, chatbotId, userMessages } = row.original
+          const { id, userMessages } = row.original
           return (
             <Link href={`/chatbots/${chatbotId}/automated-responses/${id}`}>
               {userMessages.join(",")}
@@ -99,7 +99,7 @@ export function AutomatedResponsesTable({
           >() as CreateAutomatedResponseRequest["replies"]
           const displayData = replies.map((reply, idx) => {
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              // biome-ignore lint/suspicious/noArrayIndexKey: wip
               <li key={idx}>
                 {reply.type === ReplyType.MESSAGE
                   ? `Message: ${reply.message}`
@@ -119,31 +119,11 @@ export function AutomatedResponsesTable({
           <DataTableColumnHeader column={column} title="Status" />
         ),
         cell: ({ cell, row }) => {
-          const [checked, setChecked] = useState(
-            cell.getValue<AutomatedResponseResource["status"]>(),
-          )
-          const { execute, isPending } = useAction(
-            updateAutomatedResponseAction.bind(
-              null,
-              row.original.chatbotId,
-              row.original.id,
-            ),
-            {
-              onError: ({ error }) => {
-                error.serverError && toast.error(error.serverError)
-                setChecked(!checked)
-              },
-            },
-          )
-
           return (
-            <Switch
-              checked={checked}
-              disabled={isPending}
-              onCheckedChange={(value) => {
-                setChecked(value)
-                execute({ status: value })
-              }}
+            <AutomatedResponseStatusCell
+              chatbotId={chatbotId}
+              checked={cell.getValue<AutomatedResponseResource["status"]>()}
+              id={row.original.id}
             />
           )
         },
@@ -169,22 +149,22 @@ export function AutomatedResponsesTable({
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  variant="destructive"
                   onClick={() => setRowAction({ row, variant: "update" })}
+                  variant="destructive"
                 >
                   <T keyName="common.updateBtn" />
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  variant="destructive"
                   onClick={() => setRowAction({ row, variant: "delete" })}
+                  variant="destructive"
                 >
                   <T keyName="common.deleteBtn" />
                 </DropdownMenuItem>
@@ -196,7 +176,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [],
+    [chatbotId],
   )
 
   const { table } = useDataTable({
@@ -219,15 +199,40 @@ export function AutomatedResponsesTable({
       </DataTable>
 
       <DeleteAutomatedResponsesDialog
-        open={rowAction?.variant === "delete"}
-        onOpenChange={() => setRowAction(null)}
-        chatbotId={chatbotId}
         automatedResponses={
           rowAction?.row.original ? [rowAction?.row.original] : []
         }
-        showTrigger={false}
+        chatbotId={chatbotId}
+        onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
       />
     </>
+  )
+}
+
+const AutomatedResponseStatusCell = (props: {
+  id: string
+  chatbotId: string
+  checked: boolean
+}) => {
+  const { execute, isPending } = useAction(
+    updateAutomatedResponseAction.bind(null, props.chatbotId, props.id),
+    {
+      onError: ({ error }) => {
+        error.serverError && toast.error(error.serverError)
+      },
+    },
+  )
+
+  return (
+    <Switch
+      checked={props.checked}
+      disabled={isPending}
+      onCheckedChange={(value) => {
+        execute({ status: value })
+      }}
+    />
   )
 }

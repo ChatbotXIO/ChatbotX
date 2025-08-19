@@ -1,8 +1,8 @@
 "use client"
 
 import { T } from "@tolgee/react"
-import { BaseStepEditor } from "../base/editor"
 import { PackageOpenIcon } from "lucide-react"
+import { BaseStepEditor } from "../base/editor"
 
 const UnarchiveConversationStepEditor = () => {
   return (

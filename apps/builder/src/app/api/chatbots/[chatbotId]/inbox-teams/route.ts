@@ -1,8 +1,8 @@
+import { type NextRequest, NextResponse } from "next/server"
 import { getInboxTeams } from "@/features/inbox-teams/queries"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   _request: NextRequest,

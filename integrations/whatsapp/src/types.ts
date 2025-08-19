@@ -1,4 +1,4 @@
-export interface WhatsappPhoneNumber {
+export type WhatsappPhoneNumber = {
   verified_name: string
   code_verification_status: string
   display_phone_number: string
@@ -7,17 +7,17 @@ export interface WhatsappPhoneNumber {
   id: string
 }
 
-export interface WhatsappPhoneNumberResponse {
+export type WhatsappPhoneNumberResponse = {
   data: WhatsappPhoneNumber[]
 }
 
-export interface FlowEntity {
+export type FlowEntity = {
   id: string
   name: string
   status: string
   category: string[]
 }
 
-export interface ListFlowsResponse {
+export type ListFlowsResponse = {
   data: FlowEntity[]
 }

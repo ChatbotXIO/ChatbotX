@@ -1,13 +1,13 @@
-import { FormFieldWrapper } from "@/components/form/field-wrapper"
-import { callAPI } from "@/lib/swr"
+import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
 import { createId } from "@paralleldrive/cuid2"
-import { TagInput, type Tag } from "emblor"
+import { type Tag, TagInput } from "emblor"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { useFormContext, type FieldValues } from "react-hook-form"
+import { type FieldValues, useFormContext } from "react-hook-form"
+import { callAPI } from "@/lib/swr"
 import type { TagCollection } from "../schemas"
 
-interface TagMultiSelectProps {
+type TagMultiSelectProps = {
   name: string
   label: string
   isRequired: boolean
@@ -45,18 +45,19 @@ export function TagMultiSelect({
 
   return (
     <FormFieldWrapper<FieldValues>
-      name={name}
-      label={label}
       isRequired={isRequired}
+      label={label}
+      name={name}
     >
       {(field) => (
         <TagInput
           {...field}
-          enableAutocomplete={true}
+          activeTagIndex={activeTagIndex}
           autocompleteOptions={tagOptions}
           // placeholder="Enter a topic"
-          tags={tags}
           className="sm:min-w-[450px]"
+          enableAutocomplete={true}
+          setActiveTagIndex={setActiveTagIndex}
           setTags={(newTags) => {
             setTags(newTags)
             setValue(
@@ -65,8 +66,7 @@ export function TagMultiSelect({
               { shouldValidate: true },
             )
           }}
-          activeTagIndex={activeTagIndex}
-          setActiveTagIndex={setActiveTagIndex}
+          tags={tags}
         />
       )}
     </FormFieldWrapper>

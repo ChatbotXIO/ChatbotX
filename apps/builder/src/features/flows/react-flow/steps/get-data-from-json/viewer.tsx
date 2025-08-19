@@ -1,8 +1,8 @@
 "use client"
 
 import { T } from "@tolgee/react"
-import { BaseStepViewer } from "../base/viewer"
 import { CodeIcon } from "lucide-react"
+import { BaseStepViewer } from "../base/viewer"
 
 export default function GetDataFromJsonViewer() {
   return (

@@ -1,7 +1,8 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
+import type { FolderType } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,17 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { createFolderAction } from "@/features/folders/actions/create-folder-action"
-import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema"
-import type { FolderType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { createFolderAction } from "@/features/folders/actions/create-folder-action"
+import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema"
 
 export function CreateFolderDialog({
   chatbotId,
@@ -61,7 +61,7 @@ export function CreateFolderDialog({
     )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
@@ -76,24 +76,24 @@ export function CreateFolderDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
-              <InputField name="name" label={t("folders.name.label")} />
+              <InputField label={t("folders.name.label")} name="name" />
 
               <div className="flex justify-end gap-4">
                 <Button
+                  onClick={() => setOpen(false)}
                   type="button"
                   variant="ghost"
-                  onClick={() => setOpen(false)}
                 >
                   {t("common.cancelBtn")}
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

@@ -1,17 +1,17 @@
 "use server"
 
+import { prisma } from "@aha.chat/database"
+import type { FolderModel } from "@aha.chat/database/types"
+import { revalidateTag } from "next/cache"
 import {
-  chatbotIdRequestParams,
   type ChatbotIdRequestParams,
+  chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import {
   type CreateFolderSchema,
   createFolderSchema,
 } from "@/features/folders/schemas/create-folder-schema"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { prisma } from "@aha.chat/database"
-import type { FolderModel } from "@aha.chat/database/types"
-import { revalidateTag } from "next/cache"
 
 export const createFolderAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

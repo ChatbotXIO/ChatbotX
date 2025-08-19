@@ -1,6 +1,6 @@
 import { createServerInstance } from "@tolgee/react/server"
 import { getLanguage } from "./language"
-import { ALL_LANGUAGES, TolgeeBase, getStaticData } from "./shared"
+import { ALL_LANGUAGES, getStaticData, TolgeeBase } from "./shared"
 
 export const { getTolgee, getTranslate, T } = createServerInstance({
   getLocale: getLanguage,

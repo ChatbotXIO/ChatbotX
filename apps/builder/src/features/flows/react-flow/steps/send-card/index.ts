@@ -1,9 +1,9 @@
+import {
+  sendCardStepDefaultFn,
+  sendCardStepSchema,
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { SendCardStepEditor } from "./editor"
-import {
-  sendCardStepSchema,
-  sendCardStepDefaultFn,
-} from "@aha.chat/flow-config"
 import { SendCardStepViewer } from "./viewer"
 
 export const sendCardStep: StepDefinition = {

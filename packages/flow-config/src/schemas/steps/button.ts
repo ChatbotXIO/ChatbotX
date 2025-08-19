@@ -1,24 +1,25 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { performActionStepSchema } from "./perform-action"
 import { openWebsiteStepSchema } from "./open-website"
+import { performActionStepSchema } from "./perform-action"
 import { sendFlowNodeStepSchema } from "./send-flow-node"
 
-export enum ButtonType {
-  SendMessage = "SendMessage",
-  OPEN_WEBSITE = "OPEN_WEBSITE",
-  // CallPhoneNumber = "CallPhoneNumber",
-  PerformAction = "PerformAction",
-  StartAnotherFlow = "StartAnotherFlow",
-  StartAnotherStep = "StartAnotherStep",
-  StartExternalStep = "StartExternalStep",
-}
+export const ButtonType = {
+  SendMessage: "SendMessage",
+  OPEN_WEBSITE: "OPEN_WEBSITE",
+  PerformAction: "PerformAction",
+  StartAnotherFlow: "StartAnotherFlow",
+  StartAnotherStep: "StartAnotherStep",
+  StartExternalStep: "StartExternalStep",
+} as const
 
-export enum BrowserSize {
-  Full = "100",
-  Large = "70",
-  Medium = "40",
-}
+export type ButtonType = (typeof ButtonType)[keyof typeof ButtonType]
+
+export const BrowserSize = {
+  Full: "100",
+  Large: "70",
+  Medium: "40",
+} as const
 
 export const buttonStepSchema = z
   .object({

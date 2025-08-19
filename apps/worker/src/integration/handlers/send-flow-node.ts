@@ -1,6 +1,9 @@
 import { prisma } from "@aha.chat/database"
-import type { ConversationModel } from "@aha.chat/database/types"
-import { StepType, type FlowNode } from "@aha.chat/flow-config"
+import type {
+  ConversationModel,
+  FlowVersionModel,
+} from "@aha.chat/database/types"
+import { type FlowNode, StepType } from "@aha.chat/flow-config"
 import { SdkException } from "@aha.chat/sdk"
 import type { IntegrationJobSendFlow } from "@aha.chat/worker-config"
 import {
@@ -36,8 +39,8 @@ import {
 
 const flowStepHandlers: Record<
   StepType,
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  ((props: FlowStepProps<any>) => void) | undefined
+  // biome-ignore lint/suspicious/noExplicitAny: wip
+  ((props: FlowStepProps<any>) => Promise<void>) | undefined
 > = {
   [StepType.ADD_CONTACT_NOTES]: addContactNotes,
   [StepType.ADD_CONTACT_TAG]: addContactTag,
@@ -109,7 +112,7 @@ const flowStepHandlers: Record<
 }
 
 export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
-  if (!props.data.flowId && !props.data.flowVersionId) {
+  if (!(props.data.flowId || props.data.flowVersionId)) {
     throw new SdkException("Expect flowId or flowVersionId to sendFlowNode")
   }
 
@@ -123,7 +126,7 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
   }
 
   // Try to find corresponding flowVersion
-  let flowVersion = null
+  let flowVersion: FlowVersionModel | null = null
   if (props.data.flowVersionId) {
     flowVersion = await prisma.flowVersion.findFirst({
       where: {
@@ -139,7 +142,7 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
         active: true,
       },
     })
-    if (!flow || !flow.currentVersionId) {
+    if (!flow?.currentVersionId) {
       throw new SdkException("Flow not valid")
     }
 
@@ -161,16 +164,15 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     throw new SdkException("FlowVersion does not contain start node")
   }
 
-  for await (const stepResponse of runFlowNode(
-    conversation,
-    flowVersion.id,
-    startNode,
-  )) {
-    console.log(`Handled: ${stepResponse}`)
+  const gen = runFlowNode(conversation, flowVersion.id, startNode)
+  let result = await gen.next()
+
+  while (!result.done) {
+    result = await gen.next()
   }
 }
 
-async function* runFlowNode(
+function* runFlowNode(
   conversation: ConversationModel,
   flowVersionId: string,
   node: FlowNode,

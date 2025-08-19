@@ -1,18 +1,18 @@
+import {
+  type FlowNode,
+  type NewNodeProps,
+  NodeType,
+} from "@aha.chat/flow-config"
+import type { LucideIcon } from "lucide-react"
 import sendMessageNodeConfig from "./send-message"
 import type { MenuItem } from "./types"
-import type { LucideIcon } from "lucide-react"
-import {
-  NodeType,
-  type NewNodeProps,
-  type FlowNode,
-} from "@aha.chat/flow-config"
 
-export interface NodeConfigProps {
+export type NodeConfigProps = {
   type: NodeType
   icon: LucideIcon
   label: string
   defaultFn: ((config: NewNodeProps) => FlowNode) | undefined
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: wip
   validator: any
   menus: MenuItem[]
 }

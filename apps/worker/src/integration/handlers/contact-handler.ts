@@ -135,7 +135,9 @@ export async function removeContactTag({
       id: true,
     },
   })
-  if (tags.length === 0) return
+  if (tags.length === 0) {
+    return
+  }
 
   await prisma.contact.update({
     data: {

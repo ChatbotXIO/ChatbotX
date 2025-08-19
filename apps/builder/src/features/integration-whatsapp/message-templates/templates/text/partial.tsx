@@ -1,12 +1,11 @@
 "use client"
 
-import { useFormContext, useWatch } from "react-hook-form"
-import { FormInput } from "@/components/form-input"
-import { Checkbox } from "@/components/ui/checkbox"
+import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { useTranslate } from "@tolgee/react"
-import { Button } from "@/components/ui/button"
-import { InputField } from "@/components/form/input-field"
 import { memo, useCallback } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 
 const VariableInput = memo(
   ({
@@ -19,33 +18,28 @@ const VariableInput = memo(
     type: "header" | "body"
   }) => {
     return (
-      <div className="flex gap-2 mt-2 w-full">
+      <div className="mt-2 flex w-full gap-2">
         <Button variant="secondary">{`{{${index + 1}}}`}</Button>
         <div className="flex-1">
-          {type === "header" ? (
-            <InputField
-              name={`${parentName}.header.variables.${index}`}
-              placeholder="Type a message"
-            />
-          ) : (
-            <FormInput
-              name={`${parentName}.body.variables.${index}`}
-              label=""
-              placeholder="Type a message"
-            />
-          )}
+          <InputField
+            name={`${parentName}.${type}.variables.${index}`}
+            placeholder="Type a message"
+          />
         </div>
       </div>
     )
   },
 )
 
-const TemplateTextPartialComponent = ({
-  parentName = "content",
-  ...rest
-}: {
+type TemplateTextPartialComponentProps = {
   parentName?: string
-}) => {
+}
+
+const TemplateTextPartialComponent = (
+  props: TemplateTextPartialComponentProps,
+) => {
+  const { parentName = "content", ...rest } = props
+
   const { t } = useTranslate()
   const { control, setValue } = useFormContext()
 
@@ -57,16 +51,16 @@ const TemplateTextPartialComponent = ({
     control,
     name: `${parentName}.body.variables`,
   })
-  const showHeader = useWatch({
+  const _showHeader = useWatch({
     control,
     name: `${parentName}.showHeader`,
   })
-  const showFooter = useWatch({
+  const _showFooter = useWatch({
     control,
     name: `${parentName}.showFooter`,
   })
 
-  const handleHeaderChange = useCallback(
+  const _handleHeaderChange = useCallback(
     (value: boolean) => {
       setValue(`${parentName}.showHeader`, value, {
         shouldValidate: true,
@@ -75,7 +69,7 @@ const TemplateTextPartialComponent = ({
     [parentName, setValue],
   )
 
-  const handleFooterChange = useCallback(
+  const _handleFooterChange = useCallback(
     (value: boolean) => {
       setValue(`${parentName}.showFooter`, value, {
         shouldValidate: true,
@@ -87,39 +81,37 @@ const TemplateTextPartialComponent = ({
   return (
     <div className="w-full flex-1" {...rest}>
       <div className="flex gap-4">
-        <FormInput
-          name={`${parentName}.showHeader`}
+        <CheckboxGroupField
           label={t("whatapp.templateHeader")}
-        >
-          <Checkbox
-            id="templateHeader"
-            className="flex gap-2"
-            defaultChecked={showHeader}
-            onCheckedChange={handleHeaderChange}
-          />
-        </FormInput>
+          name={`${parentName}.showHeader`}
+          options={[
+            {
+              label: "Show header",
+              value: "showHeader",
+            },
+          ]}
+        />
 
-        <FormInput
-          name={`${parentName}.showFooter`}
+        <CheckboxGroupField
           label={t("whatapp.templateFooter")}
-        >
-          <Checkbox
-            id="templateHeader"
-            className="flex gap-2"
-            defaultChecked={showFooter}
-            onCheckedChange={handleFooterChange}
-          />
-        </FormInput>
+          name={`${parentName}.showFooter`}
+          options={[
+            {
+              label: "Show footer",
+              value: "showFooter",
+            },
+          ]}
+        />
       </div>
       {headerVariables?.length > 0 && (
         <>
           <div className="mt-6">{t("common.sampleHeaderContent")}</div>
           {headerVariables.map((_variable: string, index: number) => (
             <VariableInput
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              index={index}
+              // biome-ignore lint/suspicious/noArrayIndexKey: wip
               key={`header-${index}`}
               parentName={parentName}
-              index={index}
               type="header"
             />
           ))}
@@ -130,10 +122,10 @@ const TemplateTextPartialComponent = ({
           <div className="mt-6">{t("common.sampleBodyContent")}</div>
           {bodyVariables.map((_variable: string, index: number) => (
             <VariableInput
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              index={index}
+              // biome-ignore lint/suspicious/noArrayIndexKey: wip
               key={`body-${index}`}
               parentName={parentName}
-              index={index}
               type="body"
             />
           ))}

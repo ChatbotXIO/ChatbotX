@@ -1,10 +1,10 @@
 import { prisma } from "@aha.chat/database"
 import { FieldType } from "@aha.chat/database/types"
 import {
-  GenerateCodeType,
   type CountCharactersStepSchema,
   type FormatDateStepSchema,
   type GenerateCodeStepSchema,
+  GenerateCodeType,
   type GetDataFromJsonStepSchema,
 } from "@aha.chat/flow-config"
 import { faker } from "@faker-js/faker"
@@ -25,7 +25,9 @@ export async function countCharacters({
       },
     },
   })
-  if (customFieldsCount !== 2) return
+  if (customFieldsCount !== 2) {
+    return
+  }
 
   // Find target contact custom field
   const targetContactCustomField = await prisma.contactCustomField.findFirst({
@@ -33,7 +35,9 @@ export async function countCharacters({
       customFieldId: step.inputCustomFieldId,
     },
   })
-  if (!targetContactCustomField) return
+  if (!targetContactCustomField) {
+    return
+  }
 
   const value = `${`${targetContactCustomField.value}`.length}`
 
@@ -65,7 +69,9 @@ export async function formatDate({
       contactId: conversation.contactId,
     },
   })
-  if (!inputContactCustomField) return
+  if (!inputContactCustomField) {
+    return
+  }
 
   const newValue = format(new Date(inputContactCustomField.value), step.format)
 
@@ -107,6 +113,8 @@ export async function generateCode({
       value = faker.string.alpha({ length: { min: step.min, max: step.max } })
       break
     }
+    default:
+      break
   }
 
   if (value) {
@@ -139,7 +147,9 @@ export async function getDataFromJSON({
       customFieldId: step.inputCustomFieldId,
     },
   })
-  if (!inputValue) return
+  if (!inputValue) {
+    return
+  }
 
   const dataJSON = JSON.parse(inputValue.value)
   const mapping = step.mapping as {

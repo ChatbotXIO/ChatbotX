@@ -1,8 +1,8 @@
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import { prisma } from "@aha.chat/database"
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
+import { getCurrentUserId } from "@/lib/auth"
+import { findChatbotOrFail } from "@/lib/user-permissions"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
@@ -78,7 +78,9 @@ export const getCurrentFolder = async (
         }
 
         // Remove null value
-        parents = Object.values(orderedPaths).filter((v) => !!v)
+        parents = Object.values(orderedPaths).filter(
+          (v) => v?.id,
+        ) as FolderModel[]
       }
 
       return { folder, parents }

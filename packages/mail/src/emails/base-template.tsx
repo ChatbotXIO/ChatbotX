@@ -1,10 +1,10 @@
 import {
-  Tailwind,
-  pixelBasedPreset,
   Body,
   Container,
   Head,
   Html,
+  pixelBasedPreset,
+  Tailwind,
 } from "@react-email/components"
 import type { ReactNode } from "react"
 

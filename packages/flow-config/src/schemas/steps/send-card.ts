@@ -1,13 +1,13 @@
-import { buttonStepSchema } from "./button"
-import { sendImageStepSchema } from "./send-image"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { buttonStepSchema } from "./button"
+import { sendImageStepSchema } from "./send-image"
 import { StepType } from "./step-action"
 
-export enum CardLayout {
-  Vertical = "Vertical",
-  Horizontal = "Horizontal",
-}
+export const CardLayout = {
+  Vertical: "Vertical",
+  Horizontal: "Horizontal",
+} as const
 
 export const sendCardStepSchema = z.object({
   id: z.string(),

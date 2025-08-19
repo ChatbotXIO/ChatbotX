@@ -1,7 +1,7 @@
 "use client"
 
-import { SelectField } from "@/components/form/select-field"
 import { WhatsappTemplateCategory } from "@aha.chat/database/types"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useTranslate } from "@tolgee/react"
 import { VolumeIcon } from "lucide-react"
 import { useMemo } from "react"
@@ -52,15 +52,15 @@ export function WhatsappMessageTemplateCategorySelect({
   return (
     <>
       <SelectField
-        name={name}
-        label={label}
         isRequired={isRequired}
-        placeholder="Please select"
+        label={label}
+        name={name}
         options={options}
+        placeholder="Please select"
       />
       {category === WhatsappTemplateCategory.MARKETING && (
-        <div className="grid grid-flow-col auto-cols-min gap-x-4 items-center bg-slate-200 p-6 rounded">
-          <VolumeIcon size={36} className="row-span-2" />
+        <div className="grid auto-cols-min grid-flow-col items-center gap-x-4 rounded bg-slate-200 p-6">
+          <VolumeIcon className="row-span-2" size={36} />
           <span className="font-bold">Marketing</span>
           <span className="text-gray-400">
             {t("whatsapp.category.MarketingDesc")}
@@ -68,8 +68,8 @@ export function WhatsappMessageTemplateCategorySelect({
         </div>
       )}
       {category === WhatsappTemplateCategory.UTILITY && (
-        <div className="grid grid-flow-col auto-cols-min items-center bg-slate-200 p-6 rounded">
-          <VolumeIcon size={36} className="row-span-2" />
+        <div className="grid auto-cols-min grid-flow-col items-center rounded bg-slate-200 p-6">
+          <VolumeIcon className="row-span-2" size={36} />
           <span className="font-bold">Utility</span>
           <span>{t("whatsapp.category.UtilityDesc")}</span>
         </div>

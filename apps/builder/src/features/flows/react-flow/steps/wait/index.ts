@@ -1,6 +1,6 @@
+import { waitStepDefaultFn, waitStepSchema } from "@aha.chat/flow-config"
 import type { StepDefinition } from ".."
 import { WaitStepEditor } from "./editor"
-import { waitStepDefaultFn, waitStepSchema } from "@aha.chat/flow-config"
 import { WaitStepViewer } from "./viewer"
 
 export const waitStep: StepDefinition = {

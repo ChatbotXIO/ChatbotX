@@ -1,24 +1,24 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { Button } from "@/components/ui/button"
+import type { FolderModel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
-import { editFolderSchema } from "@/features/folders/schemas/edit-folder-schema"
-import type { FolderModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
+import { editFolderSchema } from "@/features/folders/schemas/edit-folder-schema"
 
 export function EditFolderDialog({
   open,
@@ -63,7 +63,7 @@ export function EditFolderDialog({
   }, [folder, form.reset])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("folders.editForm.title")}</DialogTitle>
@@ -72,24 +72,24 @@ export function EditFolderDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
-              <InputField name="name" label={t("folders.name.label")} />
+              <InputField label={t("folders.name.label")} name="name" />
 
               <div className="flex justify-end gap-4">
                 <Button
+                  onClick={() => onOpenChange(false)}
                   type="button"
                   variant="ghost"
-                  onClick={() => onOpenChange(false)}
                 >
                   {t("common.cancelBtn")}
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

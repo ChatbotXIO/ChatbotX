@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
@@ -20,8 +20,9 @@ import { toast } from "sonner"
 import { deleteAccountFieldsAction } from "./actions/delete-account-field.action"
 import type { AccountFieldResource } from "./schemas/types"
 
-interface DeleteAccountFieldsDialogProps
-  extends ComponentPropsWithoutRef<typeof Dialog> {
+type DeleteAccountFieldsDialogProps = ComponentPropsWithoutRef<
+  typeof Dialog
+> & {
   chatbotId: string
   records: Row<AccountFieldResource>["original"][]
   showTrigger?: boolean
@@ -55,8 +56,8 @@ export function DeleteAccountFieldsDialog({
     <Dialog {...props}>
       {showTrigger ? (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Trash className="mr-2 size-4" aria-hidden="true" />
+          <Button size="sm" variant="outline">
+            <Trash aria-hidden="true" className="mr-2 size-4" />
             {t("common.deleteBtn")} ({records.length})
           </Button>
         </DialogTrigger>
@@ -74,12 +75,12 @@ export function DeleteAccountFieldsDialog({
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
-            variant="destructive"
-            onClick={() => execute({ ids: records.map((f) => f.id) })}
             disabled={isPending}
+            onClick={() => execute({ ids: records.map((f) => f.id) })}
+            variant="destructive"
           >
             {isPending && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
+              <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
             {t("common.deleteBtn")}
           </Button>

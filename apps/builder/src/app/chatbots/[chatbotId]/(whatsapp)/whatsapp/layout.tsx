@@ -1,11 +1,11 @@
 import type { ReactNode } from "react"
 import { SettingsTab } from "./tab"
 
-interface LayoutProps {
+type LayoutProps = {
   children: ReactNode
 }
 
-export default async function WhatsappLayout({ children }: LayoutProps) {
+export default function WhatsappLayout({ children }: LayoutProps) {
   return (
     <>
       <SettingsTab />

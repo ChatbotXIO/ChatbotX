@@ -1,6 +1,6 @@
-import type { ColumnSort, Row, RowData } from "@tanstack/react-table"
 import type { DataTableConfig } from "@aha.chat/ui/config/data-table"
 import type { FilterItemSchema } from "@aha.chat/ui/lib/parsers"
+import type { ColumnSort, Row, RowData } from "@tanstack/react-table"
 
 declare module "@tanstack/react-table" {
   // biome-ignore lint/correctness/noUnusedVariables: TValue is used in the ColumnMeta interface
@@ -36,5 +36,5 @@ export interface ExtendedColumnFilter<TData> extends FilterItemSchema {
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  variant: "update" | "delete"
+  variant: "update" | "delete" | "duplicate" | "rename" | "resend"
 }

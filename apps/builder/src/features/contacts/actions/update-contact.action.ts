@@ -1,16 +1,16 @@
 "use server"
 
+import { prisma } from "@aha.chat/database"
 import {
-  chatbotIdAndIdRequestParams,
   type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
+import { ContactException } from "../schemas"
 import {
   updateContactRequest,
-  type UpdateContactRequest,
+  // type UpdateContactRequest,
 } from "../schemas/update-contact.request"
-import { prisma } from "@aha.chat/database"
-import { ContactException } from "../schemas"
 
 export const updateContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
@@ -18,10 +18,10 @@ export const updateContactAction = chatbotActionClient
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],
-      parsedInput,
+      // parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateContactRequest
+      // parsedInput: UpdateContactRequest
     }) => {
       const contact = await prisma.contact.findFirst({
         where: {
@@ -32,7 +32,5 @@ export const updateContactAction = chatbotActionClient
       if (!contact) {
         throw new ContactException("Contact was not found")
       }
-
-      console.log("parsedInput", parsedInput)
     },
   )

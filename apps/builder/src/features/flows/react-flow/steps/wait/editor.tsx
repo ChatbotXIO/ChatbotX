@@ -1,29 +1,31 @@
 "use client"
 
-import { InputNumberField } from "@/components/form/input-number-field"
-import { Checkbox } from "@/components/ui/checkbox"
-import { DateTimePicker } from "@/components/ui/date-picker"
+import { CustomFieldType } from "@aha.chat/database/types"
+import { DelayType } from "@aha.chat/flow-config"
+import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { DelayTypeSelect } from "@/features/flows/react-flow/steps/wait/delay-type-select"
-import { DelayUnitSelect } from "@/features/flows/react-flow/steps/wait/delay-unit-select"
-import { TimeSelect } from "@/features/flows/react-flow/steps/wait/time-select"
-import { CustomFieldType } from "@aha.chat/database/types"
-import { DelayType } from "@aha.chat/flow-config"
+} from "@aha.chat/ui/components/ui/tooltip"
 import { T, useTranslate } from "@tolgee/react"
 import { parseISO } from "date-fns"
 import { InfoIcon } from "lucide-react"
 import { useFormContext } from "react-hook-form"
+import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { DelayTypeSelect } from "@/features/flows/react-flow/steps/wait/delay-type-select"
+import { DelayUnitSelect } from "@/features/flows/react-flow/steps/wait/delay-unit-select"
+import { TimeSelect } from "@/features/flows/react-flow/steps/wait/time-select"
 
-export const WaitStepEditor = ({
-  parentName,
-}: {
+type WaitStepEditorProps = {
   parentName: string
-}) => {
+}
+
+export const WaitStepEditor = (props: WaitStepEditorProps) => {
+  const { parentName } = props
+
   const { t } = useTranslate()
   const { register, watch, setValue } = useFormContext()
 
@@ -40,8 +42,8 @@ export const WaitStepEditor = ({
         <>
           <div className="flex justify-between gap-2">
             <InputNumberField
-              name={`${parentName}.duration`}
               className="min-w-[50px] px-1"
+              name={`${parentName}.duration`}
             />
             <DelayUnitSelect name={`${parentName}.unit`} />
           </div>
@@ -49,20 +51,20 @@ export const WaitStepEditor = ({
             <Checkbox
               id={`${parentName}.repeat`}
               {...register(`${parentName}.repeat`)}
+              defaultChecked={repeat}
               onCheckedChange={(checked) =>
                 setValue(`${parentName}.repeat`, checked)
               }
-              defaultChecked={repeat}
             />
             <label
+              className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               htmlFor={`${parentName}.repeat`}
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               {t("flows.Wait.setInterval")}
             </label>
           </div>
           {repeat && (
-            <div className="flex justify-between gap-2 items-center">
+            <div className="flex items-center justify-between gap-2">
               <TimeSelect name={`${parentName}.startTime`} />
               ~
               <TimeSelect name={`${parentName}.endTime`} />
@@ -84,21 +86,22 @@ export const WaitStepEditor = ({
             </Tooltip>
           </div>
           <DateTimePicker
-            granularity="minute"
             displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
+            granularity="minute"
+            onChange={(value) => {
+              setValue(`${parentName}.datetime`, value)
+            }}
             value={
               typeof datetime === "string"
                 ? parseISO(datetime)
                 : (datetime ?? new Date())
             }
-            onChange={(value) => {
-              setValue(`${parentName}.datetime`, value)
-            }}
           />
         </>
       )}
       {delayType === DelayType.DatetimeCustomField && (
         <CustomFieldSelect
+          customFieldType={CustomFieldType.DATETIME}
           label={
             <>
               <T keyName="flows.Wait.DateTimeCustomField" />
@@ -113,7 +116,6 @@ export const WaitStepEditor = ({
             </>
           }
           name={`${parentName}.customFieldId`}
-          customFieldType={CustomFieldType.DATETIME}
         />
       )}
     </div>

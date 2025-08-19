@@ -1,26 +1,28 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { SelectField } from "@/components/form/select-field"
+import { openAIGenerateImageSizes } from "@aha.chat/flow-config"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
-import { openAIGenerateImageSizes } from "@aha.chat/flow-config"
 
-interface OpenAIGenerateImageEditorProps {
+type OpenAIGenerateImageEditorProps = {
   parentName: string
 }
 
-export const OpenAIGenerateImageEditor = ({
-  parentName,
-}: OpenAIGenerateImageEditorProps) => {
+export const OpenAIGenerateImageEditor = (
+  props: OpenAIGenerateImageEditorProps,
+) => {
+  const { parentName } = props
+
   return (
     <OpenAIDialog name="Flows.OpenAI.Title.GenerateImage">
       <InputField label="User Message" name={`${parentName}.userMessage`} />
 
       <SelectField
+        defaultValue="dall-e-2::1024x1024"
         label="Size"
         name={`${parentName}.size`}
-        defaultValue="dall-e-2::1024x1024"
         options={Object.keys(openAIGenerateImageSizes).map((k: string) => ({
           value: k,
           label: openAIGenerateImageSizes[k] as string,
@@ -28,9 +30,9 @@ export const OpenAIGenerateImageEditor = ({
       />
 
       <CustomFieldSelect
+        allowCreate={true}
         label="Save response to a custom field"
         name={`${parentName}.resultCustomFieldId`}
-        allowCreate={true}
       />
     </OpenAIDialog>
   )

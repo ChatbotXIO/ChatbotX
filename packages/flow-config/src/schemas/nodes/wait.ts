@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { baseNodeSchema, NodeType, type NewNodeProps } from "./node-config"
 import { waitStepDefaultFn, waitStepSchema } from "../steps/wait"
+import { baseNodeSchema, type NewNodeProps, NodeType } from "./node-config"
 
 export const waitNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.Wait),

@@ -1,7 +1,6 @@
 "use client"
 
-import { DataTableActionBarSelection } from "@/components/data-table/data-table-action-bar"
-import { Button } from "@/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +10,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import type { Table } from "@tanstack/react-table"
 import { T } from "@tolgee/react"
 import {
@@ -38,7 +37,7 @@ import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
 import type { ContactResource } from "./schemas"
 
-interface ContactListActionProps {
+type ContactListActionProps = {
   chatbotId: string
   table: Table<ContactResource>
 }
@@ -47,148 +46,144 @@ export function ContactListAction({ table }: ContactListActionProps) {
   const rows = table.getFilteredSelectedRowModel().rows
 
   return (
-    <>
-      {rows.length > 0 && <DataTableActionBarSelection table={table} />}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">
+          <ListIcon />
+          Actions
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <AssignConversationDialog
+          contactIds={rows.map((r) => r.id)}
+          trigger={
+            <DropdownMenuItem
+              disabled={rows.length === 0}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <MessageCirclePlusIcon />
+              <T keyName={"contacts.actions.assign"} />
+            </DropdownMenuItem>
+          }
+        />
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            <ListIcon />
-            Actions
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
-          <AssignConversationDialog
-            contactIds={rows.map((r) => r.id)}
-            trigger={
-              <DropdownMenuItem
-                disabled={rows.length === 0}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <MessageCirclePlusIcon />
-                <T keyName={"contacts.actions.assign"} />
-              </DropdownMenuItem>
-            }
-          />
+        <AddContactTagDialog
+          ids={rows.map((r) => r.id)}
+          trigger={
+            <DropdownMenuItem
+              disabled={rows.length === 0}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <TagIcon />
+              <T keyName={"contacts.actions.addTag"} />
+            </DropdownMenuItem>
+          }
+        />
 
-          <AddContactTagDialog
-            ids={rows.map((r) => r.id)}
-            trigger={
-              <DropdownMenuItem
-                disabled={rows.length === 0}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <TagIcon />
-                <T keyName={"contacts.actions.addTag"} />
-              </DropdownMenuItem>
-            }
-          />
+        <DropdownMenuItem disabled={rows.length === 0}>
+          <SaveIcon />
+          <T keyName={"contacts.actions.setCustomField"} />
+        </DropdownMenuItem>
 
-          <DropdownMenuItem disabled={rows.length === 0}>
-            <SaveIcon />
-            <T keyName={"contacts.actions.setCustomField"} />
-          </DropdownMenuItem>
+        <DeleteContactDialog
+          ids={rows.map((r) => r.id)}
+          trigger={
+            <DropdownMenuItem
+              disabled={rows.length === 0}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <UserRoundXIcon className="text-destructive" />
+              <T keyName={"contacts.actions.delete"} />
+            </DropdownMenuItem>
+          }
+        />
 
-          <DeleteContactDialog
-            ids={rows.map((r) => r.id)}
-            trigger={
-              <DropdownMenuItem
-                disabled={rows.length === 0}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <UserRoundXIcon className="text-destructive" />
-                <T keyName={"contacts.actions.delete"} />
-              </DropdownMenuItem>
-            }
-          />
+        <DropdownMenuItem disabled={true}>
+          <CloudDownloadIcon />
+          <T keyName={"contacts.actions.export"} />
+        </DropdownMenuItem>
 
-          <DropdownMenuItem disabled={true}>
-            <CloudDownloadIcon />
-            <T keyName={"contacts.actions.export"} />
-          </DropdownMenuItem>
+        <DropdownMenuItem disabled={true}>
+          <CloudUploadIcon />
+          <T keyName={"contacts.actions.import"} />
+        </DropdownMenuItem>
 
-          <DropdownMenuItem disabled={true}>
-            <CloudUploadIcon />
-            <T keyName={"contacts.actions.import"} />
-          </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <ListIcon size={16} />
+            <T keyName={"contacts.actions.more"} />
+          </DropdownMenuSubTrigger>
 
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <ListIcon size={16} />
-              <T keyName={"contacts.actions.more"} />
-            </DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <RemoveContactTagDialog
+                ids={rows.map((r) => r.id)}
+                trigger={
+                  <DropdownMenuItem
+                    disabled={rows.length === 0}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <OctagonXIcon />
+                    <T keyName={"contacts.actions.removeTag"} />
+                  </DropdownMenuItem>
+                }
+              />
 
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <RemoveContactTagDialog
-                  ids={rows.map((r) => r.id)}
-                  trigger={
-                    <DropdownMenuItem
-                      disabled={rows.length === 0}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <OctagonXIcon />
-                      <T keyName={"contacts.actions.removeTag"} />
-                    </DropdownMenuItem>
-                  }
-                />
+              <ClearContactCustomFieldDialog
+                ids={rows.map((r) => r.id)}
+                trigger={
+                  <DropdownMenuItem
+                    disabled={rows.length === 0}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <SaveOffIcon />
+                    <T keyName={"contacts.actions.clearCustomField"} />
+                  </DropdownMenuItem>
+                }
+              />
 
-                <ClearContactCustomFieldDialog
-                  ids={rows.map((r) => r.id)}
-                  trigger={
-                    <DropdownMenuItem
-                      disabled={rows.length === 0}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <SaveOffIcon />
-                      <T keyName={"contacts.actions.clearCustomField"} />
-                    </DropdownMenuItem>
-                  }
-                />
+              <DisableBotDialog
+                ids={rows.map((r) => r.id)}
+                trigger={
+                  <DropdownMenuItem
+                    disabled={rows.length === 0}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <UserIcon />
+                    <T keyName={"contacts.actions.disableBot"} />
+                  </DropdownMenuItem>
+                }
+              />
 
-                <DisableBotDialog
-                  ids={rows.map((r) => r.id)}
-                  trigger={
-                    <DropdownMenuItem
-                      disabled={rows.length === 0}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <UserIcon />
-                      <T keyName={"contacts.actions.disableBot"} />
-                    </DropdownMenuItem>
-                  }
-                />
+              <EnableBotDialog
+                ids={rows.map((r) => r.id)}
+                trigger={
+                  <DropdownMenuItem
+                    disabled={rows.length === 0}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <BotIcon />
+                    <T keyName={"contacts.actions.enableBot"} />
+                  </DropdownMenuItem>
+                }
+              />
 
-                <EnableBotDialog
-                  ids={rows.map((r) => r.id)}
-                  trigger={
-                    <DropdownMenuItem
-                      disabled={rows.length === 0}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <BotIcon />
-                      <T keyName={"contacts.actions.enableBot"} />
-                    </DropdownMenuItem>
-                  }
-                />
-
-                <ArchiveConversationDialog
-                  ids={rows.map((r) => r.id)}
-                  trigger={
-                    <DropdownMenuItem
-                      disabled={rows.length === 0}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <ArchiveIcon />
-                      <T keyName={"contacts.actions.archiveConversation"} />
-                    </DropdownMenuItem>
-                  }
-                />
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+              <ArchiveConversationDialog
+                ids={rows.map((r) => r.id)}
+                trigger={
+                  <DropdownMenuItem
+                    disabled={rows.length === 0}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <ArchiveIcon />
+                    <T keyName={"contacts.actions.archiveConversation"} />
+                  </DropdownMenuItem>
+                }
+              />
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

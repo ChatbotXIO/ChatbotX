@@ -1,17 +1,17 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { FormItem, FormLabel } from "@/components/ui/form"
-import { callAPI } from "@/lib/swr"
 import type { CustomFieldType } from "@aha.chat/database/types"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
 import { useParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { mutate } from "swr"
+import { callAPI } from "@/lib/swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
 import type { CustomFieldCollection } from "./schemas"
-import { SelectField } from "@/components/form/select-field"
 
-interface ICustomFieldSelectProps {
+type CustomFieldSelectProps = {
   name: string
   label: ReactNode | string
   isRequired?: boolean
@@ -19,13 +19,15 @@ interface ICustomFieldSelectProps {
   customFieldType?: CustomFieldType
 }
 
-export const CustomFieldSelect = ({
-  name,
-  label = "Select Custom Field",
-  isRequired = true,
-  allowCreate = false,
-  customFieldType,
-}: ICustomFieldSelectProps) => {
+export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
+  const {
+    name,
+    label = "Select Custom Field",
+    isRequired,
+    allowCreate,
+    customFieldType,
+  } = props
+
   const params = useParams<{ chatbotId: string }>()
 
   const customFieldsUrl = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
@@ -46,10 +48,10 @@ export const CustomFieldSelect = ({
     <FormItem>
       {label && label !== "" && (
         <div className="flex items-center">
-          <FormLabel className="flex flex-1 gap-1 items-center">
+          <FormLabel className="flex flex-1 items-center gap-1">
             {label}
             {!isRequired && (
-              <span className="text-xxs self-start font-normal">
+              <span className="self-start font-normal text-xxs">
                 (optional)
               </span>
             )}
@@ -58,25 +60,25 @@ export const CustomFieldSelect = ({
             <CreateCustomFieldDialog
               chatbotId={params.chatbotId}
               folderId={null}
+              onSuccess={() => {
+                mutate(customFieldsUrl)
+              }}
               triggerButton={
                 <Button
+                  className="h-auto cursor-pointer p-0 text-[12px] text-destructive"
                   variant="link"
-                  className="cursor-pointer text-[12px] text-destructive p-0 h-auto"
                 >
                   Add new
                 </Button>
               }
-              onSuccess={() => {
-                mutate(customFieldsUrl)
-              }}
             />
           )}
         </div>
       )}
       <SelectField
         name={name}
-        placeholder="Please select"
         options={customFields}
+        placeholder="Please select"
       />
     </FormItem>
   )

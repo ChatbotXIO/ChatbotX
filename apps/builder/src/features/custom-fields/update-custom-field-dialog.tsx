@@ -1,17 +1,17 @@
 "use client"
 
-import { InputField } from "@/components/form/input-field"
-import { TextareaField } from "@/components/form/textarea-field"
-import { Button } from "@/components/ui/button"
+import type { FieldModel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import type { FieldModel } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslate } from "@tolgee/react"
@@ -72,7 +72,7 @@ export function UpdateCustomFieldDialog({
   }, [customField, setValue])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -83,35 +83,35 @@ export function UpdateCustomFieldDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              onSubmit={handleSubmitWithAction}
               className="flex-1 space-y-4"
+              onSubmit={handleSubmitWithAction}
             >
               <InputField
-                name="name"
                 label={t("customField.name.label")}
+                name="name"
                 placeholder={t("customField.name.placeholder")}
               />
 
               <TextareaField
-                name="description"
-                label={t("customField.description.label")}
-                placeholder={t("customField.description.placeholder")}
                 isRequired={false}
+                label={t("customField.description.label")}
+                name="description"
+                placeholder={t("customField.description.placeholder")}
               />
 
               <div className="flex justify-end gap-4">
                 <Button
+                  onClick={() => onOpenChange(false)}
                   type="button"
                   variant="ghost"
-                  onClick={() => onOpenChange(false)}
                 >
                   {t("common.cancel-btn")}
                 </Button>
                 <Button
-                  type="submit"
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

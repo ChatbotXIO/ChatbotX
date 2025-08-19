@@ -1,17 +1,17 @@
 "use client"
 
-import { DataTable } from "@/components/data-table"
-import { DataTableToolbar } from "@/components/data-table-toolbar"
-import { useDataTable } from "@/hooks/use-data-table"
-import type { DataTableRowAction } from "@/types/data-table"
 import { type LogModel, LogType } from "@aha.chat/database/types"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { use, useMemo, useState } from "react"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 import { getColumns } from "./error-logs-table-columns"
 import { LogsTableToolbarActions } from "./logs-table-toolbar-actions"
 import type { getLogs } from "./queries"
 
-interface LogsTableProps {
+type LogsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getLogs>>]>
   chatbotId: string
 }
@@ -41,21 +41,21 @@ export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <LogsTableToolbarActions
-            table={table}
             chatbotId={chatbotId}
             logType={LogType.Error}
+            table={table}
           />
         </DataTableToolbar>
       </DataTable>
 
       <DeleteLogsDialog
-        open={rowAction?.variant === "delete"}
-        onOpenChange={() => setRowAction(null)}
-        logs={rowAction?.row.original ? [rowAction?.row.original] : []}
-        showTrigger={false}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
         chatbotId={chatbotId}
+        logs={rowAction?.row.original ? [rowAction?.row.original] : []}
         logType={LogType.Error}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
       />
     </>
   )

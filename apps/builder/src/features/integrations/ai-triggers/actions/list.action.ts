@@ -1,11 +1,11 @@
-import { getCurrentUserId } from "@/lib/auth"
+import { type Prisma, prisma } from "@aha.chat/database"
+import { unstable_cache } from "next/cache"
 import type {
   AITriggerCollection,
   ListAITriggersRequest,
 } from "@/features/integrations/ai-triggers/schemas/get.schema"
+import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type Prisma, prisma } from "@aha.chat/database"
-import { unstable_cache } from "next/cache"
 
 export const listAITriggers = async (
   input: ListAITriggersRequest,

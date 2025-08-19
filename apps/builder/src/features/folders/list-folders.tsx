@@ -1,17 +1,17 @@
 "use client"
 
+import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import type { FolderModel, FolderType } from "@aha.chat/database/types"
+} from "@aha.chat/ui/components/ui/breadcrumb"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
+import { parseAsString, useQueryState } from "@aha.chat/ui/lib/nuqs"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
-import { parseAsString, useQueryState } from "nuqs"
 import { Fragment, use, useState } from "react"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { EditFolderDialog } from "./edit-folder-dialog"
@@ -28,7 +28,9 @@ type ListFoldersProps = {
   >
 }
 
-const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
+const ListFolders = (props: ListFoldersProps) => {
+  const { chatbotId, promises } = props
+
   const [{ folder, parents }, { data: folders }] = use(promises)
   const [, setFolderId] = useQueryState(
     "folderId",
@@ -41,14 +43,14 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
   const [targetFolder, setTargetFolder] = useState<FolderModel | null>(null)
 
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false)
-  const onEdit = (folder: FolderModel) => {
-    setTargetFolder(folder)
+  const onEdit = (selectedFolder: FolderModel) => {
+    setTargetFolder(selectedFolder)
     setOpenEditDialog(true)
   }
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false)
-  const onDelete = (folder: FolderModel) => {
-    setTargetFolder(folder)
+  const onDelete = (selectedFolder: FolderModel) => {
+    setTargetFolder(selectedFolder)
     setOpenDeleteDialog(true)
   }
 
@@ -60,9 +62,9 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Button
-                variant="ghost"
                 className="p-0 hover:bg-transparent"
                 onClick={() => setFolderId(null)}
+                variant="ghost"
               >
                 Root
               </Button>
@@ -75,9 +77,9 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
                     <Button
-                      variant="ghost"
                       className="p-0 hover:bg-transparent"
                       onClick={() => setFolderId(parentFolder.id)}
+                      variant="ghost"
                     >
                       {parentFolder.name}
                     </Button>
@@ -92,9 +94,9 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <Button
-                    variant="ghost"
-                    disabled
                     className="p-0 hover:bg-transparent"
+                    disabled
+                    variant="ghost"
                   >
                     {folder?.name ?? "N/A"}
                   </Button>
@@ -107,37 +109,37 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
 
       {/* Folders list */}
       <ScrollArea className="max-h-44" type="auto">
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 lg:grid-cols-5">
-          {folders.map((folder: FolderModel) => {
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {folders.map((folderItem: FolderModel) => {
             return (
-              <div className="overflow-hidden" key={folder.id}>
-                <div className="group flex items-center border rounded-lg gap-2 hover:border-primary pr-3">
+              <div className="overflow-hidden" key={folderItem.id}>
+                <div className="group flex items-center gap-2 rounded-lg border pr-3 hover:border-primary">
                   <Button
-                    variant="ghost"
+                    className="flex flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-0 pl-4 hover:bg-transparent"
+                    onClick={() => setFolderId(folderItem.id)}
                     size="lg"
-                    className="flex flex-1 pl-4 pr-0 overflow-hidden whitespace-nowrap text-ellipsis hover:bg-transparent"
-                    onClick={() => setFolderId(folder.id)}
+                    variant="ghost"
                   >
                     <FolderIcon />
-                    <div className="overflow-hidden whitespace-nowrap text-ellipsis flex-1 text-left">
-                      {folder.name}
+                    <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-left">
+                      {folderItem.name}
                     </div>
                   </Button>
-                  {!folder.isTrash && (
+                  {!folderItem.isTrash && (
                     <>
                       <Button
+                        className="px-1 lg:hidden lg:group-hover:inline-flex"
+                        onClick={() => onEdit(folderItem)}
                         size="sm"
                         variant="ghost"
-                        className="px-1 lg:hidden lg:group-hover:inline-flex"
-                        onClick={() => onEdit(folder)}
                       >
                         <PencilIcon />
                       </Button>
                       <Button
+                        className="px-1 lg:hidden lg:group-hover:inline-flex"
+                        onClick={() => onDelete(folderItem)}
                         size="sm"
                         variant="ghost"
-                        className="px-1 lg:hidden lg:group-hover:inline-flex"
-                        onClick={() => onDelete(folder)}
                       >
                         <TrashIcon />
                       </Button>
@@ -151,17 +153,17 @@ const ListFolders = ({ chatbotId, promises }: ListFoldersProps) => {
       </ScrollArea>
 
       <EditFolderDialog
-        open={openEditDialog}
-        onOpenChange={setOpenEditDialog}
         chatbotId={chatbotId}
         folder={targetFolder}
+        onOpenChange={setOpenEditDialog}
+        open={openEditDialog}
       />
 
       <DeleteFolderDialog
-        open={openDeleteDialog}
-        onOpenChange={setOpenDeleteDialog}
         chatbotId={chatbotId}
         folder={targetFolder}
+        onOpenChange={setOpenDeleteDialog}
+        open={openDeleteDialog}
       />
     </>
   )

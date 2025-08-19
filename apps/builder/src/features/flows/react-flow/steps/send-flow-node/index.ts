@@ -1,8 +1,8 @@
-import type { StepDefinition } from ".."
 import {
-  sendFlowNodeStepSchema,
   sendFlowNodeStepDefaultFn,
+  sendFlowNodeStepSchema,
 } from "@aha.chat/flow-config"
+import type { StepDefinition } from ".."
 import SendFlowNodeStepEditor from "./editor"
 import SendFlowNodeStepViewer from "./viewer"
 

@@ -1,6 +1,6 @@
-import { StepType } from "./step-action"
-import { openAIDefaultFn, openAISchema } from "./open-ai"
 import { z } from "zod"
+import { openAIDefaultFn, openAISchema } from "./open-ai"
+import { StepType } from "./step-action"
 
 export const openAIGenerateImageSizes: Record<string, string> = {
   "dall-e-2::256x256": "256x256 (DALL·E 2)",
@@ -15,7 +15,7 @@ const [firstSize, ...otherSizes] = Object.keys(openAIGenerateImageSizes)
 
 export const openAIGenerateImageSchema = openAISchema.extend({
   stepType: z.literal(StepType.OPENAI_GENERATE_IMAGE),
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
+  // biome-ignore lint/style/noNonNullAssertion: wip
   size: z.enum([firstSize!, ...otherSizes]),
   resultCustomFieldId: z.string().cuid2(),
 })
