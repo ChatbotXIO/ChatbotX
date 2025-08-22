@@ -13,8 +13,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
@@ -31,7 +31,7 @@ export function EditFolderDialog({
   chatbotId: string
   folder: FolderModel | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -40,7 +40,11 @@ export function EditFolderDialog({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success(t("folders.editAction.successMessage"))
+            toast.success(
+              t("messages.updatedSuccessfully", {
+                feature: t("fields.folder.label"),
+              }),
+            )
             resetFormAndAction()
             onOpenChange(false)
           },
@@ -66,7 +70,9 @@ export function EditFolderDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("folders.editForm.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.updateTitle", { feature: t("fields.folder.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -75,7 +81,7 @@ export function EditFolderDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("folders.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" />
 
               <div className="flex justify-end gap-4">
                 <Button
@@ -83,7 +89,7 @@ export function EditFolderDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancelBtn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -94,7 +100,7 @@ export function EditFolderDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.editBtn")}
+                  {t("actions.update")}
                 </Button>
               </div>
             </form>

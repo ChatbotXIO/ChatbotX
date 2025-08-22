@@ -5,11 +5,13 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { updateWhatsappProfileAction } from "./actions/update-whatsapp-profile.action"
 import { updateWhatsappProfileRequest } from "./schemas/update-whatsapp-profile.request"
 
 export function UpdateWhatsappProfile({ chatbotId }: { chatbotId: string }) {
+  const t = useTranslations()
+
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateWhatsappProfileAction.bind(null, chatbotId),
     zodResolver(updateWhatsappProfileRequest),
@@ -30,9 +32,7 @@ export function UpdateWhatsappProfile({ chatbotId }: { chatbotId: string }) {
         <InputField label="Website URL" name="websiteUrl" />
 
         <div className="flex w-full justify-center">
-          <Button>
-            <T keyName="common.confirmBtn" />
-          </Button>
+          <Button>{t("actions.confirm")}</Button>
         </div>
       </form>
     </Form>

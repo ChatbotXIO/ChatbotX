@@ -23,7 +23,7 @@ export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
       <CardHeader className="p-0">
         <FileDropzone
           configs={{
-            uploadKeyName: "common.uploadImage",
+            uploadKeyName: "texts.or",
             isCard: true,
           }}
           parentName={parentName}

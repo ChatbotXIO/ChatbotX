@@ -11,9 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
@@ -28,6 +28,7 @@ export default function DeleteContactDialog({
   trigger,
   ids,
 }: DeleteContactDialogProps) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
@@ -35,7 +36,11 @@ export default function DeleteContactDialog({
     deleteContactAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(<T keyName="common.updateForm.successMessage" />)
+        toast.success(
+          t("messages.updatedSuccessfully", {
+            feature: t("fields.contact.label"),
+          }),
+        )
         setOpen(false)
       },
       onError: ({ error }) => {
@@ -50,14 +55,15 @@ export default function DeleteContactDialog({
 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Tag</DialogTitle>
-          <DialogDescription />
+          <DialogTitle>{t("dialog.deleteContact.title")}</DialogTitle>
+          <DialogDescription>
+            <div>{t("dialog.deleteContact.description")}</div>
+            <div>{t("dialog.deleteContact.warning")}</div>
+          </DialogDescription>
         </DialogHeader>
-        <div>Are you sure to delete those contacts?</div>
-        <div>This action can not be reverted.</div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="ghost">{t("actions.cancel")}</Button>
           </DialogClose>
 
           <Button
@@ -67,7 +73,7 @@ export default function DeleteContactDialog({
             variant="destructive"
           >
             {isExecuting && <Loader2Icon className="animate-spin" />}
-            <T keyName={"common.saveBtn"} />
+            {t("actions.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

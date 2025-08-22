@@ -14,8 +14,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createFolderAction } from "@/features/folders/actions/create-folder-action"
@@ -30,7 +30,7 @@ export function CreateFolderDialog({
   folderType: FolderType
   parentId: string | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -40,7 +40,11 @@ export function CreateFolderDialog({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success(t("folders.created"))
+            toast.success(
+              t("messages.createdSuccessfully", {
+                feature: t("fields.folder.label"),
+              }),
+            )
             resetFormAndAction()
             setOpen(false)
           },
@@ -65,12 +69,16 @@ export function CreateFolderDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          <T keyName="common.createBtn" />
+          {t("actions.create")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("folders.createAction.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.createTitle", {
+              feature: t("fields.folder.label"),
+            })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -79,7 +87,7 @@ export function CreateFolderDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("folders.name.label")} name="name" />
+              <InputField label={t("fields.folder.label")} name="name" />
 
               <div className="flex justify-end gap-4">
                 <Button
@@ -87,7 +95,7 @@ export function CreateFolderDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancelBtn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -98,7 +106,7 @@ export function CreateFolderDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.createBtn")}
+                  {t("actions.create")}
                 </Button>
               </div>
             </form>

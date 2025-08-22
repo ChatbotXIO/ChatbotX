@@ -12,8 +12,8 @@ export function SendVideoStepEditor({ parentName }: { parentName: string }) {
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <FileDropzone
         configs={{
-          uploadKeyName: "common.uploadVideoOr",
-          linkKeyName: "common.insertLink",
+          uploadKeyName: "texts.or",
+          linkKeyName: "actions.insertLink",
           accept: { "video/*": [] },
         }}
         mode="link"

@@ -1,8 +1,0 @@
-{
-  "$schema": "https://tolgee.io/cli-schema.json",
-  "projectId": 12104,
-  "pull": {
-    "path": "./apps/builder/src/i18n",
-    "delimiter": null
-  }
-}

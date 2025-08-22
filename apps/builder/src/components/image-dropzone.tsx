@@ -1,7 +1,7 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { T } from "@tolgee/react"
 import { ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import { type MouseEvent, useEffect, useState } from "react"
 import Dropzone from "react-dropzone"
 
@@ -41,6 +41,8 @@ function NeedAttachedImage({
 }: {
   onSwitchToImageLink: () => void
 }) {
+  const t = useTranslations()
+
   const switchToImageLinkMode = (e: MouseEvent) => {
     e.stopPropagation()
     onSwitchToImageLink()
@@ -52,14 +54,14 @@ function NeedAttachedImage({
         <ImageIcon />
       </div>
       <div>
-        <T keyName="common.uploadImageOr" />
+        {t("texts.or")}
         {"\u00A0"}
         <Button
           className="p-0 text-destructive"
           onClick={switchToImageLinkMode}
           variant="link"
         >
-          <T keyName="common.insertLink" />
+          {t("actions.insertLink")}
         </Button>
       </div>
     </>

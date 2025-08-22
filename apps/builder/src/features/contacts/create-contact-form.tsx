@@ -7,8 +7,8 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { createContactAction } from "./actions/create-contact.action"
 import { createContactSchema } from "./schemas/create-contact-schema"
@@ -22,7 +22,7 @@ export function CreateContactForm({
   onSubmmited?: () => void
   onCancelled?: () => void
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -32,7 +32,11 @@ export function CreateContactForm({
         actionProps: {
           onSuccess: () => {
             resetFormAndAction()
-            toast.success("Contact created successfully")
+            toast.success(
+              t("messages.createdSuccessfully", {
+                feature: t("fields.contact.label"),
+              }),
+            )
             onSubmmited?.()
           },
           onError: ({ error }) => {
@@ -56,15 +60,15 @@ export function CreateContactForm({
   const genderLabels = [
     {
       value: Gender.MALE,
-      label: t("contacts.gender.male"),
+      label: t("fields.gender.male"),
     },
     {
       value: Gender.FEMALE,
-      label: t("contacts.gender.female"),
+      label: t("fields.gender.female"),
     },
     {
       value: Gender.UNKNOWN,
-      label: t("contacts.gender.unknown"),
+      label: t("fields.gender.unknown"),
     },
   ]
 
@@ -72,43 +76,43 @@ export function CreateContactForm({
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
         <InputField
-          label={t("contacts.phoneNumber")}
+          label={t("fields.phoneNumber.label")}
           name="phoneNumber"
           placeholder="090xxxxxxx"
         />
 
         <InputField
           isRequired={false}
-          label={t("contacts.email")}
+          label={t("fields.email.label")}
           name="email"
           placeholder="email@aha.chat"
         />
 
         <InputField
           isRequired={false}
-          label={t("contacts.firstName")}
+          label={t("fields.firstName.label")}
           name="firstName"
-          placeholder={t("contacts.firstName.placeholder")}
+          placeholder={t("fields.firstName.placeholder")}
         />
 
         <InputField
           isRequired={false}
-          label={t("contacts.lastName")}
+          label={t("fields.lastName.label")}
           name="lastName"
-          placeholder={t("contacts.lastName.placeholder")}
+          placeholder={t("fields.lastName.placeholder")}
         />
 
         <SelectField
           defaultValue={Gender.UNKNOWN}
           isRequired={false}
-          label={t("contacts.gender")}
+          label={t("fields.gender.label")}
           name="gender"
           options={genderLabels}
         />
 
         <div className="flex justify-end gap-4">
           <Button onClick={onCancelled} type="button" variant="ghost">
-            {t("common.cancel-btn")}
+            {t("actions.cancel")}
           </Button>
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
@@ -117,7 +121,7 @@ export function CreateContactForm({
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />
             )}
-            {t("common.confirm-btn")}
+            {t("actions.confirm")}
           </Button>
         </div>
       </form>

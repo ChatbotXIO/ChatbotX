@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { MessageCircleXIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
 const UnassignConversationStepEditor = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepEditor
       icon={MessageCircleXIcon}
-      title={<T keyName="flows.StepType.UnassignConversation" />}
+      title={t("flows.stepType.unassignConversation")}
     />
   )
 }

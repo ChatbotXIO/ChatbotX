@@ -15,9 +15,9 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { DialogDescription } from "@radix-ui/react-dialog"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/integrations/ai-agents/actions/create.action"
@@ -27,7 +27,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
   const [open, setOpen] = useState(false)
 
   const router = useRouter()
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -36,7 +36,11 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
       {
         actionProps: {
           onSuccess: () => {
-            toast.success(t("aiAgents.createForm.successMessage"))
+            toast.success(
+              t("messages.createdSuccessfully", {
+                feature: t("fields.aiAgent.label"),
+              }),
+            )
 
             setOpen(false)
             resetFormAndAction()
@@ -61,12 +65,14 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("common.addBtn")}
+          {t("actions.create")}
         </Button>
       </DialogTrigger>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>{t("aiAgents.createForm.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.createTitle", { feature: t("fields.aiAgent.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -75,12 +81,12 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("aiAgents.name")} name="name" />
+              <InputField label={t("fields.aiAgent.label")} name="name" />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
                   <Button type="button" variant="secondary">
-                    {t("common.closeBtn")}
+                    {t("actions.cancel")}
                   </Button>
                 </DialogClose>
                 <Button
@@ -92,7 +98,7 @@ export function CreateAIAgentDialog({ chatbotId }: { chatbotId: string }) {
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.createBtn")}
+                  {t("actions.create")}
                 </Button>
               </DialogFooter>
             </form>

@@ -1,8 +1,8 @@
 "use client"
 
 import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { T } from "@tolgee/react"
 import { LinkIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
 type OpenWebsiteStepEditorProps = {
@@ -10,11 +10,10 @@ type OpenWebsiteStepEditorProps = {
 }
 
 const OpenWebsiteStepEditor = (props: OpenWebsiteStepEditorProps) => {
+  const t = useTranslations()
+
   return (
-    <BaseStepEditor
-      icon={LinkIcon}
-      title={<T keyName="flows.StepType.OpenWebsite" />}
-    >
+    <BaseStepEditor icon={LinkIcon} title={t("flows.stepType.openWebsite")}>
       <InputField label="Link" name={`${props.parentName}.url`} />
     </BaseStepEditor>
   )

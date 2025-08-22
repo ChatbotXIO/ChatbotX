@@ -13,8 +13,8 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
-import { T } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
@@ -38,11 +38,17 @@ export function DeleteAutomatedResponsesDialog({
   onOpenChange,
   ...props
 }: DeleteAutomatedResponsesDialogProps) {
+  const t = useTranslations()
+
   const { execute, isPending } = useAction(
     deleteAutomatedResponseAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(<T keyName="automatedResponses.deleted" />)
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.automatedResponse.label"),
+          }),
+        )
         onOpenChange(false)
       },
       onError: ({ error }) => {
@@ -57,23 +63,27 @@ export function DeleteAutomatedResponsesDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            <T keyName="common.deleteBtn" /> ({automatedResponses.length})
+            {t("actions.delete")} ({automatedResponses.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="automatedResponses.deleteAction.title" />
+            {t("dialog.deleteTitle", {
+              feature: t("fields.automatedResponse.label"),
+            })}
           </DialogTitle>
           <DialogDescription>
-            <T keyName="automatedResponses.deleteAction.description" />
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.automatedResponse.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
             <Button onClick={() => onOpenChange(false)} variant="outline">
-              <T keyName="common.cancelBtn" />
+              {t("actions.cancel")}
             </Button>
           </DialogClose>
           <Button
@@ -87,7 +97,7 @@ export function DeleteAutomatedResponsesDialog({
             {isPending && (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
-            <T keyName="common.deleteBtn" />
+            {t("actions.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

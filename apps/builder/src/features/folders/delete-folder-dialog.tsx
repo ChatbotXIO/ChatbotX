@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action"
@@ -26,13 +26,17 @@ export function DeleteFolderDialog({
   chatbotId: string
   folder: FolderModel | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { execute, isPending } = useAction(
     deleteFolderAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(t("folders.deleteAction.successMessage"))
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.folder.label"),
+          }),
+        )
         onOpenChange(false)
       },
       onError: ({ error }) => {
@@ -45,11 +49,17 @@ export function DeleteFolderDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("folders.deleteAction.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.deleteTitle", { feature: t("fields.folder.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
-        <div>{t("folders.deleteAction.content")}</div>
+        <div>
+          {t("dialog.deleteConfirmation", {
+            feature: t("fields.folder.label"),
+          })}
+        </div>
 
         <div className="flex justify-end gap-4">
           <Button
@@ -57,7 +67,7 @@ export function DeleteFolderDialog({
             type="button"
             variant="ghost"
           >
-            {t("common.cancelBtn")}
+            {t("actions.cancel")}
           </Button>
           <Button
             disabled={isPending}
@@ -66,7 +76,7 @@ export function DeleteFolderDialog({
             variant={"destructive"}
           >
             {isPending && <Loader2Icon className="animate-spin" />}
-            {t("common.deleteBtn")}
+            {t("actions.delete")}
           </Button>
         </div>
       </DialogContent>

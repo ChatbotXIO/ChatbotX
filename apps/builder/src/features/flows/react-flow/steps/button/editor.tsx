@@ -5,8 +5,8 @@ import {
   SortableItem,
   SortableItemHandle,
 } from "@aha.chat/ui/components/ui/sortable"
-import { T } from "@tolgee/react"
 import { GripVerticalIcon, PlusIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { useStepStore } from "../../stores/step-store-provider"
 
@@ -44,7 +44,7 @@ type ButtonGroupEditorProps = {
 
 export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
   const { parentName } = props
-
+  const t = useTranslations()
   const { control } = useFormContext()
   const { fields, append, move } = useFieldArray({
     control,
@@ -85,7 +85,7 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
         variant="secondary"
       >
         <PlusIcon />
-        <T keyName="flows.addBtn" />
+        {t("actions.add")}
       </Button>
     </>
   )

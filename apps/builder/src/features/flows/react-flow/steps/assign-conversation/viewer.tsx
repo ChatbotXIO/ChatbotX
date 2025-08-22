@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { MessageCirclePlus } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const AssignConversationStepViewer = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={MessageCirclePlus}
-      title={<T keyName="flows.StepType.AssignConversation" />}
+      title={t("flows.stepType.assignConversation")}
     />
   )
 }

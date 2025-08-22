@@ -3,7 +3,7 @@
 import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useTranslate } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { memo, useCallback } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 
@@ -25,7 +25,7 @@ const VariableInput = memo(
 
 const TemplateCatalogPartialComponent = (props: { parentName?: string }) => {
   const { parentName = "content", ...rest } = props
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { control, setValue } = useFormContext()
 
   const [bodyVariables, _showFooter] = useWatch({
@@ -49,7 +49,7 @@ const TemplateCatalogPartialComponent = (props: { parentName?: string }) => {
           name={`${parentName}.showFooter`}
           options={[
             {
-              label: "Show footer",
+              label: t("whatsapp.showFooter.label"),
               value: "showFooter",
             },
           ]}
@@ -57,7 +57,9 @@ const TemplateCatalogPartialComponent = (props: { parentName?: string }) => {
       </div>
       {bodyVariables.length > 0 && (
         <>
-          <div className="mt-6">{t("common.sampleBodyContent")}</div>
+          <div className="mt-6">
+            {t("whatsapp.sampleBodyCardContent.label")}
+          </div>
           {bodyVariables.map((_variable: string, index: number) => (
             <VariableInput
               index={index}

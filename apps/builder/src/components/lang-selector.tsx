@@ -3,32 +3,36 @@
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@aha.chat/ui/components/ui/select"
-import { useTolgee } from "@tolgee/react"
+import { useLocale, useTranslations } from "next-intl"
 import type React from "react"
-import { setLanguage } from "@/tolgee/language"
+import { useTransition } from "react"
+import type { Locale } from "@/i18n/config"
+import { setUserLocale } from "@/lib/locale"
 
 export const LangSelector: React.FC = () => {
-  const tolgee = useTolgee(["language"])
-  const locale = tolgee.getLanguage()
+  const locale = useLocale()
+  const [, startTransition] = useTransition()
+  const t = useTranslations()
 
-  function onSelectChange(value: string) {
-    setLanguage(value)
+  function onChangeLocale(value: string) {
+    const newLocale = value as Locale
+    startTransition(() => {
+      setUserLocale(newLocale)
+    })
   }
+
   return (
-    <Select defaultValue={locale} onValueChange={onSelectChange}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select a language" />
+    <Select defaultValue={locale} onValueChange={onChangeLocale}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder={t("fields.language.placeholder")} />
       </SelectTrigger>
       <SelectContent>
-        <SelectGroup>
-          <SelectItem value="en">English</SelectItem>
-          <SelectItem value="vi">Tiếng Việt</SelectItem>
-        </SelectGroup>
+        <SelectItem value="en">{t("fields.language.english")}</SelectItem>
+        <SelectItem value="vi">{t("fields.language.vietnamese")}</SelectItem>
       </SelectContent>
     </Select>
   )

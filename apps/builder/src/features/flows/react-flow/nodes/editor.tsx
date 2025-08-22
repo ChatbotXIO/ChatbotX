@@ -23,9 +23,9 @@ import {
 import { cn } from "@aha.chat/ui/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createId } from "@paralleldrive/cuid2"
-import { T } from "@tolgee/react"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon, MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { funnel } from "remeda"
@@ -37,6 +37,7 @@ import { ErrorAlert } from "../steps/error-alert"
 import { allNodesConfig } from "./node-config"
 
 export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
+  const t = useTranslations()
   const { updateNodeData } = useReactFlow()
   const nodeConfig = activeNode.type
     ? allNodesConfig[activeNode.type as NodeType]
@@ -108,7 +109,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
   return (
     <Form {...form}>
-      <InputField label="Node Name" name="name" />
+      <InputField label={t("fields.name.label")} name="name" />
 
       <Separator />
 
@@ -211,7 +212,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
         <DropdownMenuTrigger asChild>
           <Button variant="outline">
             <PlusIcon />
-            <T keyName="flows.addStep" />
+            {t("actions.create")}
           </Button>
         </DropdownMenuTrigger>
 

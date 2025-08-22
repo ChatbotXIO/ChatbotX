@@ -13,9 +13,9 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
-import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
@@ -37,14 +37,18 @@ export function DeleteFlowsDialog({
   onOpenChange,
   ...props
 }: DeleteFlowsDialogProps) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteFlowAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(t("flows.deleted"))
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.flow.label"),
+          }),
+        )
         onOpenChange(false)
         router.refresh()
       },
@@ -60,24 +64,25 @@ export function DeleteFlowsDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("common.deleteBtn")} ({flows.length})
+            {t("actions.delete")} ({flows.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("flows.delete.dialog_title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.deleteTitle", { feature: t("fields.flow.label") })}
+          </DialogTitle>
           <DialogDescription>
-            {t("flows.confirmDeleteDesc")}{" "}
-            <span className="font-medium">{flows.length}</span>
-            {flows.length === 1 ? " flow " : " flows "}
-            {t("flows.confirmDeleteDesc")}
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.flow.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
             <Button onClick={() => onOpenChange(false)} variant="outline">
-              {t("common.cancelBtn")}
+              {t("actions.cancel")}
             </Button>
           </DialogClose>
           <Button
@@ -89,7 +94,7 @@ export function DeleteFlowsDialog({
             {isPending && (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
-            {t("common.deleteBtn")}
+            {t("actions.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

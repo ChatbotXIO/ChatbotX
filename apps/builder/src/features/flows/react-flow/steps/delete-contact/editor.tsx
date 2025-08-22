@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { UserRoundXIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
 export const DeleteContactStepEditor = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepEditor
       icon={UserRoundXIcon}
-      title={<T keyName="flows.StepType.DeleteContact" />}
+      title={t("flows.stepType.deleteContact")}
     />
   )
 }

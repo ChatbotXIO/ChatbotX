@@ -2,8 +2,8 @@
 
 import { WhatsappTemplateCategory } from "@aha.chat/database/types"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { useTranslate } from "@tolgee/react"
 import { VolumeIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext } from "react-hook-form"
 import { TemplateType } from "./type"
@@ -17,7 +17,7 @@ export function WhatsappMessageTemplateCategorySelect({
   label: string
   isRequired?: boolean
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { watch } = useFormContext()
   const category = watch(name)
   const templateType = watch("templateType")
@@ -61,17 +61,21 @@ export function WhatsappMessageTemplateCategorySelect({
       {category === WhatsappTemplateCategory.MARKETING && (
         <div className="grid auto-cols-min grid-flow-col items-center gap-x-4 rounded bg-slate-200 p-6">
           <VolumeIcon className="row-span-2" size={36} />
-          <span className="font-bold">Marketing</span>
+          <span className="font-bold">
+            {t("whatsapp.category.makerting.label")}
+          </span>
           <span className="text-gray-400">
-            {t("whatsapp.category.MarketingDesc")}
+            {t("whatsapp.category.makerting.description")}
           </span>
         </div>
       )}
       {category === WhatsappTemplateCategory.UTILITY && (
         <div className="grid auto-cols-min grid-flow-col items-center rounded bg-slate-200 p-6">
           <VolumeIcon className="row-span-2" size={36} />
-          <span className="font-bold">Utility</span>
-          <span>{t("whatsapp.category.UtilityDesc")}</span>
+          <span className="font-bold">
+            {t("whatsapp.category.utility.label")}
+          </span>
+          <span>{t("whatsapp.category.utility.description")}</span>
         </div>
       )}
     </>

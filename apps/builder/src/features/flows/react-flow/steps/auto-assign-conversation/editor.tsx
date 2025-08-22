@@ -2,35 +2,33 @@
 
 import { AutoAssignConversationRule } from "@aha.chat/flow-config"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { T } from "@tolgee/react"
 import { MessageCirclePlusIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { UserMultipleSelect } from "@/features/users/user-select"
 import { BaseStepEditor } from "../base/editor"
 
-type AutoAssignConversationStepEditorProps = {
+export const AutoAssignConversationStepEditor = ({
+  parentName,
+}: {
   parentName: string
-}
-
-const AutoAssignConversationStepEditor = (
-  props: AutoAssignConversationStepEditorProps,
-) => {
-  const { parentName } = props
+}) => {
+  const t = useTranslations()
 
   const ruleOptions = [
     {
-      label: "Equal conversation distribution (All time)",
+      label: t("autoAssignConversation.rule.allTime"),
       value: AutoAssignConversationRule.ALL_TIME,
     },
     {
-      label: "Equal conversation distribution (Last Hour)",
+      label: t("autoAssignConversation.rule.lastHour"),
       value: AutoAssignConversationRule.LAST_HOUR,
     },
     {
-      label: "Equal conversation distribution (Last 8 hours)",
+      label: t("autoAssignConversation.rule.last8Hours"),
       value: AutoAssignConversationRule.LAST_8HOURS,
     },
     {
-      label: "Equal conversation distribution (Last 24 hours)",
+      label: t("autoAssignConversation.rule.last24Hours"),
       value: AutoAssignConversationRule.LAST_24HOURS,
     },
   ]
@@ -38,14 +36,19 @@ const AutoAssignConversationStepEditor = (
   return (
     <BaseStepEditor
       icon={MessageCirclePlusIcon}
-      title={<T keyName="flows.StepType.AutoAssignConversation" />}
+      title={t("flows.stepType.autoAssignConversation")}
     >
       <div className="flex w-[243px] flex-wrap gap-1.5 overflow-hidden">
-        <UserMultipleSelect name={`${parentName}.userIds`} />
-        <SelectField name={`${parentName}.rule`} options={ruleOptions} />
+        <SelectField
+          label={t("autoAssignConversation.rule.label")}
+          name={`${parentName}.rule`}
+          options={ruleOptions}
+        />
+        <UserMultipleSelect
+          label={t("autoAssignConversation.users.label")}
+          name={`${parentName}.userIds`}
+        />
       </div>
     </BaseStepEditor>
   )
 }
-
-export { AutoAssignConversationStepEditor }

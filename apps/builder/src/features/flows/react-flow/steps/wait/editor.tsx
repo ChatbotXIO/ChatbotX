@@ -10,9 +10,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@aha.chat/ui/components/ui/tooltip"
-import { T, useTranslate } from "@tolgee/react"
 import { parseISO } from "date-fns"
 import { InfoIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { DelayTypeSelect } from "@/features/flows/react-flow/steps/wait/delay-type-select"
@@ -26,7 +26,7 @@ type WaitStepEditorProps = {
 export const WaitStepEditor = (props: WaitStepEditorProps) => {
   const { parentName } = props
 
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { register, watch, setValue } = useFormContext()
 
   const [delayType, repeat, datetime] = watch([
@@ -60,7 +60,7 @@ export const WaitStepEditor = (props: WaitStepEditorProps) => {
               className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               htmlFor={`${parentName}.repeat`}
             >
-              {t("flows.Wait.setInterval")}
+              {t("flows.wait.setInterval")}
             </label>
           </div>
           {repeat && (
@@ -75,13 +75,12 @@ export const WaitStepEditor = (props: WaitStepEditorProps) => {
       {delayType === DelayType.SpecificDate && (
         <>
           <div className="flex items-center gap-2">
-            {t("common.selectDate")}
             <Tooltip>
               <TooltipTrigger asChild>
                 <InfoIcon size={18} />
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t("flows.Wait.Datetime.tooltip")}</p>
+                <p>{t("flows.wait.datetime.tooltip")}</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -104,13 +103,13 @@ export const WaitStepEditor = (props: WaitStepEditorProps) => {
           customFieldType={CustomFieldType.DATETIME}
           label={
             <>
-              <T keyName="flows.Wait.DateTimeCustomField" />
+              {t("flows.wait.datetimeCustomField")}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <InfoIcon size={18} />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{t("flows.Wait.Datetime.tooltip")}</p>
+                  <p>{t("flows.wait.datetime.tooltip")}</p>
                 </TooltipContent>
               </Tooltip>
             </>

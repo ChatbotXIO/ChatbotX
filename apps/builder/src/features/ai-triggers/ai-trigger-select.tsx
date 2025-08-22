@@ -1,22 +1,27 @@
 import { MultiSelectField } from "@aha.chat/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 
-type AITriggersMultipleSelectProps = {
+type AITriggerSelectProps = {
   name: string
   isRequired?: boolean
 }
 
-export const AITriggersMultipleSelect = (
-  props: AITriggersMultipleSelectProps,
-) => {
+export default function AITriggerSelect(props: AITriggerSelectProps) {
+  const t = useTranslations()
+
   const frameworksList = [
-    { value: "react", label: "React" },
-    { value: "angular", label: "Angular" },
-    { value: "vue", label: "Vue" },
-    { value: "svelte", label: "Svelte" },
-    { value: "ember", label: "Ember" },
+    { value: "react", label: t("fields.framework.react") },
+    { value: "angular", label: t("fields.framework.angular") },
+    { value: "vue", label: t("fields.framework.vue") },
+    { value: "svelte", label: t("fields.framework.svelte") },
+    { value: "ember", label: t("fields.framework.ember") },
   ]
 
   return (
-    <MultiSelectField label="AI Triggers" options={frameworksList} {...props} />
+    <MultiSelectField
+      label={t("fields.aiTrigger.label")}
+      options={frameworksList}
+      {...props}
+    />
   )
 }

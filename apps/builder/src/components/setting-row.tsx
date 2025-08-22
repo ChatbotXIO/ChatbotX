@@ -1,5 +1,5 @@
-import { T } from "@tolgee/react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import type { ReactElement } from "react"
 
 type SettingRowProps = {
@@ -11,6 +11,7 @@ type SettingRowProps = {
 
 export const SettingRow = (props: SettingRowProps) => {
   const { label, description, readMoreUrl, children } = props
+  const t = useTranslations()
 
   return (
     <div className="flex flex-wrap">
@@ -20,11 +21,7 @@ export const SettingRow = (props: SettingRowProps) => {
       <div className="w-2/3 px-2 lg:w-4/12">{children}</div>
       <div className="w-full px-2 pt-1.5 lg:w-5/12">
         {description}
-        {readMoreUrl && (
-          <Link href={readMoreUrl}>
-            <T keyName="common.readMore" />
-          </Link>
-        )}
+        {readMoreUrl && <Link href={readMoreUrl}>{t("actions.readMore")}</Link>}
       </div>
     </div>
   )

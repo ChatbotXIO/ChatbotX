@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { BellRingIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
 const OptInEmailStepEditor = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepEditor
       icon={BellRingIcon}
-      title={<T keyName="flows.StepType.OptInEmail" />}
+      title={t("flows.stepType.optInEmail")}
     />
   )
 }

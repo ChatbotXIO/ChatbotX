@@ -52,7 +52,7 @@ const TemplateImagePreviewComponent = (
           render={() => (
             <FileDropzone
               configs={{
-                uploadKeyName: "common.uploadImage",
+                uploadKeyName: "actions.uploadImage",
                 accept: {
                   "image/png": [".png"],
                   "image/jpg": [".jpg"],

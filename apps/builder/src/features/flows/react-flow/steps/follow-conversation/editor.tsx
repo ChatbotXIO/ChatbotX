@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { StarIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
 const FollowConversationStepEditor = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepEditor
       icon={StarIcon}
-      title={<T keyName="flows.StepType.FollowConversation" />}
+      title={t("flows.stepType.followConversation")}
     />
   )
 }

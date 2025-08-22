@@ -15,9 +15,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import type { TagCollection } from "@/features/tags/schemas"
@@ -34,6 +34,7 @@ export default function RemoveContactTagDialog({
   trigger,
   ids,
 }: RemoveContactTagDialogProps) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -53,7 +54,11 @@ export default function RemoveContactTagDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(<T keyName="common.updateForm.successMessage" />)
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.contact.label"),
+            }),
+          )
           setOpen(false)
         },
         onError: ({ error }) => {
@@ -86,11 +91,15 @@ export default function RemoveContactTagDialog({
             className="flex flex-col gap-2"
             onSubmit={handleSubmitWithAction}
           >
-            <SelectField label="Tag" name="tagId" options={tagOptions} />
+            <SelectField
+              label={t("fields.tag.label")}
+              name="tagId"
+              options={tagOptions}
+            />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">Cancel</Button>
+                <Button variant="ghost">{t("actions.cancel")}</Button>
               </DialogClose>
 
               <Button
@@ -102,7 +111,7 @@ export default function RemoveContactTagDialog({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                <T keyName={"common.saveBtn"} />
+                {t("actions.confirm")}
               </Button>
             </DialogFooter>
           </form>

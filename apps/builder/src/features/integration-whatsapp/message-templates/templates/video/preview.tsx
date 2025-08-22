@@ -52,7 +52,7 @@ const TemplateVideoPreviewComponent = (
           render={() => (
             <FileDropzone
               configs={{
-                uploadKeyName: "common.uploadVideo",
+                uploadKeyName: "actions.uploadVideo",
                 accept: {
                   "video/mp4": [".mp4"],
                 },

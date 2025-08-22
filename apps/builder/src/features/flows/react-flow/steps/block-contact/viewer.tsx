@@ -1,14 +1,15 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { UserRoundXIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const BlockContactStepViewer = () => {
+  const t = useTranslations()
   return (
     <BaseStepViewer
       icon={UserRoundXIcon}
-      title={<T keyName="flows.StepType.BlockContact" />}
+      title={t("flows.stepType.blockContact")}
     />
   )
 }

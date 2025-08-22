@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { StarOffIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const UnfollowConversationStepViewer = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={StarOffIcon}
-      title={<T keyName="flows.StepType.UnfollowConversation" />}
+      title={t("flows.stepType.unfollowConversation")}
     />
   )
 }

@@ -14,21 +14,22 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { T } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { setCustomFieldStep } from "."
 
 const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
+  const t = useTranslations()
   const { setValue, getValues } = useFormContext()
   const defaultValue: SetCustomFieldStepSchema = getValues(parentName)
 
   const [open, setOpen] = useState<boolean>(false)
   const operations = [
-    { label: "Set to", value: "set" },
-    { label: "Append to the end", value: "append" },
-    { label: "Prepend to the start", value: "prepend" },
+    { label: t("actions.setTo"), value: "set" },
+    { label: t("actions.appendToEnd"), value: "append" },
+    { label: t("actions.prependToStart"), value: "prepend" },
   ]
 
   const customFieldForm = useForm<SetCustomFieldStepSchema>({
@@ -48,12 +49,12 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="rounded-lg border-2 border-dashed p-4 text-sm">
-          <T keyName="flows.StepType.SetCustomField" />
+          {t("flows.stepType.setCustomField")}
         </div>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Custom Field</DialogTitle>
+          <DialogTitle>{t("flows.stepType.setCustomField")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...customFieldForm}>
@@ -63,16 +64,16 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
           >
             <CustomFieldSelect
               allowCreate={true}
-              label="Custom Field"
+              label={t("fields.customField.label")}
               name="customFieldId"
             />
             <SelectField
               isRequired={true}
-              label="Operation"
+              label={t("fields.operation.label")}
               name="operation"
               options={operations}
             />
-            <InputField label="Value" name="value" />
+            <InputField label={t("fields.value.label")} name="value" />
 
             <div className="flex w-full items-center justify-center gap-2">
               <Button
@@ -81,7 +82,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
                 type="button"
                 variant={"link"}
               >
-                <T keyName={"common.cancelBtn"} />
+                {t("actions.cancel")}
               </Button>
               <Button
                 disabled={
@@ -90,7 +91,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
                 }
                 size={"sm"}
               >
-                <T keyName={"common.confirmBtn"} />
+                {t("actions.save")}
               </Button>
             </div>
           </form>
@@ -99,5 +100,4 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
     </Dialog>
   )
 }
-
 export { SetCustomFieldStepEditor }

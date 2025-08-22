@@ -3,6 +3,7 @@ import {
   SelectField,
 } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { callAPI } from "@/lib/swr"
 import type { ChatbotMemberCollection } from "../chatbot-members/schemas"
 
@@ -13,7 +14,8 @@ type UserSelectProps = {
   className?: string
 }
 
-export const UserSelect = (props: UserSelectProps) => {
+export default function UserSelect(props: UserSelectProps) {
+  const t = useTranslations()
   const { name, label, isRequired = false, className } = props
 
   const params = useParams<{ chatbotId: string }>()
@@ -32,12 +34,13 @@ export const UserSelect = (props: UserSelectProps) => {
       label={label}
       name={name}
       options={userOptions}
-      placeholder="Please select agent"
+      placeholder={t("fields.user.selectAgent")}
     />
   )
 }
 
 export const UserMultipleSelect = (props: UserSelectProps) => {
+  const t = useTranslations()
   const { name, label, isRequired = false, className } = props
 
   const params = useParams<{ chatbotId: string }>()
@@ -56,7 +59,7 @@ export const UserMultipleSelect = (props: UserSelectProps) => {
       label={label}
       name={name}
       options={userOptions}
-      placeholder="Please select agents"
+      placeholder={t("fields.user.selectAgents")}
     />
   )
 }

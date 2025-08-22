@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
-import { T } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteInboxTeamAction } from "./actions/delete-inbox-team.action"
@@ -26,11 +26,17 @@ export function DeleteInboxTeamDialog({
   chatbotId: string
   inboxTeam: InboxTeamModel | null
 }) {
+  const t = useTranslations()
+
   const { execute, isPending } = useAction(
     deleteInboxTeamAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success("Team deleted successfully")
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.inboxTeam.label"),
+          }),
+        )
         onOpenChange(false)
       },
       onError: ({ error }) => {
@@ -44,10 +50,12 @@ export function DeleteInboxTeamDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="inboxTeams.deleteAction.heading" />
+            {t("dialog.deleteTitle", { feature: t("fields.inboxTeam.label") })}
           </DialogTitle>
           <DialogDescription>
-            <T keyName="inboxTeams.deleteAction.description" />
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.inboxTeam.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-4">
@@ -56,7 +64,7 @@ export function DeleteInboxTeamDialog({
             type="button"
             variant="ghost"
           >
-            <T keyName="common.cancelBtn" />
+            {t("actions.cancel")}
           </Button>
           <Button
             disabled={isPending}
@@ -64,7 +72,7 @@ export function DeleteInboxTeamDialog({
             type="submit"
           >
             {isPending && <Loader2 className="animate-spin" />}
-            <T keyName="common.deleteBtn" />
+            {t("actions.delete")}
           </Button>
         </div>
       </DialogContent>

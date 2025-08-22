@@ -1,14 +1,13 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { ZapIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const FormatDateStepViewer = () => {
+  const t = useTranslations()
+
   return (
-    <BaseStepViewer
-      icon={ZapIcon}
-      title={<T keyName="flows.StepType.FormatDate" />}
-    />
+    <BaseStepViewer icon={ZapIcon} title={t("flows.stepType.formatDate")} />
   )
 }

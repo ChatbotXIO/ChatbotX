@@ -19,10 +19,10 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { T, useTranslate } from "@tolgee/react"
 import { useNodes, useReactFlow } from "@xyflow/react"
 import { deleteProperty, getProperty, setProperty } from "dot-prop"
 import { XIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { openWebsiteStepDefaultFn } from "node_modules/@aha.chat/flow-config/src/schemas/steps/open-website"
 import { useEffect, useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
@@ -110,7 +110,7 @@ export function ButtonEditorDialog() {
   const [activeNode, setActiveNode] = useState<FlowNode | null>(null)
 
   const nodes = useNodes() as FlowNode[]
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { addNodes, screenToFlowPosition, addEdges, updateNodeData } =
     useReactFlow()
@@ -261,7 +261,7 @@ export function ButtonEditorDialog() {
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
           <DialogTitle>
-            <T keyName="flows.Button.edit" />
+            {t("dialog.updateTitle", { feature: t("fields.flow.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -269,10 +269,10 @@ export function ButtonEditorDialog() {
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form className="flex w-full flex-col gap-3">
-              <InputField label={t("flows.Button.label")} name="label" />
+              <InputField label={t("fields.name.label")} name="label" />
 
               <div className="mt-2 font-medium text-sm">
-                When this button is pressed
+                {t("messages.whenThisButtonIsPressed")}
               </div>
 
               {buttonType ? (
@@ -291,10 +291,10 @@ export function ButtonEditorDialog() {
         </div>
         <DialogFooter>
           <Button onClick={onDelete} size="sm" variant="destructive">
-            <T keyName="common.delete" />
+            {t("actions.delete")}
           </Button>
           <Button disabled={!formState.isValid} onClick={onSave} size="sm">
-            <T keyName="common.save" />
+            {t("actions.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

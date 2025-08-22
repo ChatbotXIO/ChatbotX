@@ -14,8 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
-import { T } from "@tolgee/react"
 import { MoreHorizontalIcon, Trash2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { use, useState } from "react"
 import type { getUsers } from "../users/queries"
 import type { UserResource } from "../users/schemas"
@@ -49,6 +49,8 @@ function ListInboxTeamsDetail({
   allInboxTeams: InboxTeamResource[]
   allUsers: UserResource[]
 }) {
+  const t = useTranslations()
+
   const [renameInboxTeam, setRenameInboxTeam] =
     useState<InboxTeamResource | null>(null)
   const [deleteInboxTeam, setDeleteInboxTeam] =
@@ -80,21 +82,21 @@ function ListInboxTeamsDetail({
                       className="cursor-pointer text-sm"
                       onClick={() => setRenameInboxTeam(team)}
                     >
-                      <T keyName="common.renameBtn" />
+                      {t("actions.rename")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       className="cursor-pointer text-sm"
                       onClick={() => setAddInboxTeamMember(team)}
                     >
-                      <T keyName="inboxTeams.addMemberBtn" />
+                      {t("actions.addMember")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       className="cursor-pointer text-destructive text-sm"
                       onClick={() => setDeleteInboxTeam(team)}
                     >
-                      <T keyName="common.deleteBtn" />
+                      {t("actions.delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

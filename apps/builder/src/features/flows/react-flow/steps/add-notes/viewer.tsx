@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { MessageCircleMore } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const AddNotesStepViewer = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={MessageCircleMore}
-      title={<T keyName="flows.StepType.AddContactNotes" />}
+      title={t("flows.stepType.addNotes")}
     />
   )
 }

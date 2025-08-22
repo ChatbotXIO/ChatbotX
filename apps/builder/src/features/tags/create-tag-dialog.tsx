@@ -21,9 +21,9 @@ import { Input } from "@aha.chat/ui/components/ui/input"
 import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createTagAction } from "./actions/create-tag-action"
@@ -36,7 +36,7 @@ export function CreateTagDialog({
   chatbotId: string
   folderId: string | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
@@ -47,7 +47,11 @@ export function CreateTagDialog({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success("Tag created successfully")
+            toast.success(
+              t("messages.createdSuccessfully", {
+                feature: t("fields.tag.label"),
+              }),
+            )
 
             setOpen(false)
             resetFormAndAction()
@@ -73,12 +77,14 @@ export function CreateTagDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          <T keyName="tags.addBtn" />
+          {t("actions.add")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("tags.create.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.createTitle", { feature: t("fields.tag.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -92,9 +98,9 @@ export function CreateTagDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("tags.name")}</FormLabel>
+                    <FormLabel>{t("fields.name.label")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("tags.name")} {...field} />
+                      <Input placeholder={t("fields.name.label")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -106,7 +112,7 @@ export function CreateTagDialog({
                 name="syncToMessenger"
                 render={({ field }) => (
                   <FormItem className="flex items-center gap-2">
-                    <FormLabel>{t("tags.syncToMessenger")}</FormLabel>
+                    <FormLabel>{t("fields.syncToMessenger.label")}</FormLabel>
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -125,7 +131,7 @@ export function CreateTagDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancel-btn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -136,7 +142,7 @@ export function CreateTagDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

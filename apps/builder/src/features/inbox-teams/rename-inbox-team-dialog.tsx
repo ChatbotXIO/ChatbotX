@@ -14,8 +14,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import "react-day-picker/style.css"
 import { toast } from "sonner"
@@ -34,6 +34,7 @@ export function RenameInboxTeamDialog({
   chatbotId: string
   inboxTeam: InboxTeamResource | null
 }) {
+  const t = useTranslations()
   const {
     form,
     handleSubmitWithAction,
@@ -44,7 +45,11 @@ export function RenameInboxTeamDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Team update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.inboxTeam.label"),
+            }),
+          )
 
           onOpenChange(false)
         },
@@ -75,7 +80,9 @@ export function RenameInboxTeamDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="inboxTeam.updateAction.heading" />
+            {t("dialog.updateTitle", {
+              feature: t("fields.inboxTeam.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -90,7 +97,7 @@ export function RenameInboxTeamDialog({
               <DialogFooter className="sm:justify-start">
                 <DialogClose asChild>
                   <Button type="button" variant="secondary">
-                    Close
+                    {t("actions.cancel")}
                   </Button>
                 </DialogClose>
                 <Button
@@ -102,7 +109,7 @@ export function RenameInboxTeamDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  <T keyName="common.updateBtn" />
+                  {t("actions.update")}
                 </Button>
               </DialogFooter>
             </form>

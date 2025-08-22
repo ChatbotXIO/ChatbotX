@@ -13,8 +13,8 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
-import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
@@ -36,13 +36,17 @@ export function DeleteTagsDialog({
   onOpenChange,
   ...props
 }: DeleteTagsDialogProps) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { execute, result, isPending } = useAction(
     deleteTagAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(t("tags.deleted"))
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.tag.label"),
+          }),
+        )
         onOpenChange?.(false)
       },
       onError: ({ error }) => {
@@ -57,23 +61,27 @@ export function DeleteTagsDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("common.deleteBtn")} ({tags.length})
+            {t("actions.delete")} ({tags.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("tags.delete.dialog_title")}</DialogTitle>
-          <DialogDescription>
-            {t("tags.confirmDeleteDesc")}{" "}
-            <span className="font-medium">{tags.length}</span>
-            {tags.length === 1 ? " log " : " tags "}
-            {t("tags.confirmDeleteDesc")}
-          </DialogDescription>
+          <DialogTitle>
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.tag.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription />
         </DialogHeader>
+        <DialogContent>
+          {t("dialog.deleteConfirmation", {
+            feature: t("fields.tag.label"),
+          })}{" "}
+        </DialogContent>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t("common.cancelBtn")}</Button>
+            <Button variant="outline">{t("actions.cancel")}</Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
@@ -88,7 +96,7 @@ export function DeleteTagsDialog({
             {isPending && (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
-            {t("common.deleteBtn")}
+            {t("actions.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

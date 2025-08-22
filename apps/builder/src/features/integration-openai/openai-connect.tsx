@@ -13,10 +13,10 @@ import {
 } from "@aha.chat/ui/components/ui/alert-dialog"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Switch } from "@aha.chat/ui/components/ui/switch"
-import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
@@ -34,7 +34,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
 
   const [{ data: integrationOpenAI }] = use(promises)
   const router = useRouter()
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
     useAction(disconnectOpenAIAction.bind(null, chatbotId), {
@@ -46,36 +46,30 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
   return (
     <>
       <SettingRow
-        description={t("settings.integrations.OpenAI.Descriptions")}
-        label={t("settings.integrations.OpenAI.Title")}
+        description={t("openAI.setting.description")}
+        label={t("openAI.setting.label")}
       >
         {integrationOpenAI ? (
           <div className="flex flex-col gap-2">
             <Button size="sm" variant="secondary">
-              <Link href="../google-sheets">
-                <T keyName="settings.integrations.ManageBtn" />
-              </Link>
+              <Link href="../google-sheets">{t("actions.manage")}</Link>
             </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="destructive">
-                  <T keyName="settings.integrations.DisconnectBtn" />
+                  {t("actions.disconnect")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    <T keyName="Integration.Disconnect.Confirm" />
-                  </AlertDialogTitle>
+                  <AlertDialogTitle>{t("actions.disconnect")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    <T keyName="Integration.Disconnect.Description" />
+                    {t("googleSheets.disconnectDescription")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>
-                    <T keyName="Integration.CancelBtn" />
-                  </AlertDialogCancel>
+                  <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     disabled={isPendingDisconnect}
                     onClick={async (e) => {
@@ -86,7 +80,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
                     {isPendingDisconnect && (
                       <Loader2Icon className="animate-spin" />
                     )}
-                    <T keyName="settings.integrations.DisconnectBtn" />
+                    {t("actions.disconnect")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -100,10 +94,8 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
       {integrationOpenAI && (
         <div className="mt-4 flex flex-col gap-4">
           <SettingRow
-            description={t(
-              "settings.integrations.AutomatedResponses.Descriptions",
-            )}
-            label={t("settings.integrations.AutomatedResponses.Title")}
+            description={t("automatedResponse.setting.description")}
+            label={t("automatedResponse.setting.label")}
           >
             <Switch
               checked={integrationOpenAI.automatedResponse}
@@ -112,24 +104,20 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
           </SettingRow>
 
           <SettingRow
-            description={t("settings.integrations.Agents.Descriptions")}
-            label={t("settings.integrations.Agents.Title")}
+            description={t("aiAgent.setting.description")}
+            label={t("aiAgent.setting.label")}
           >
             <Button asChild size="sm" variant="secondary">
-              <Link href="../ai-agents">
-                <T keyName="settings.integrations.ManageBtn" />
-              </Link>
+              <Link href="../ai-agents">{t("actions.manage")}</Link>
             </Button>
           </SettingRow>
 
           <SettingRow
-            description={t("settings.integrations.AITriggers.Descriptions")}
-            label={t("settings.integrations.AITriggers.Title")}
+            description={t("aiTrigger.setting.description")}
+            label={t("aiTrigger.setting.label")}
           >
             <Button size="sm" variant="secondary">
-              <Link href="../ai-triggers">
-                <T keyName="settings.integrations.ManageBtn" />
-              </Link>
+              <Link href="../ai-triggers">{t("actions.manage")}</Link>
             </Button>
           </SettingRow>
         </div>

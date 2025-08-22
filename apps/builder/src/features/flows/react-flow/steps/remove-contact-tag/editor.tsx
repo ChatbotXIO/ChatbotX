@@ -1,7 +1,7 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { OctagonXIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { TagMultiSelect } from "@/features/tags/components/tag-multi-select"
 import { BaseStepEditor } from "../base/editor"
 
@@ -12,16 +12,17 @@ type RemoveContactTagStepEditorProps = {
 export const RemoveContactTagStepEditor = (
   props: RemoveContactTagStepEditorProps,
 ) => {
+  const t = useTranslations()
   const { parentName } = props
 
   return (
     <BaseStepEditor
       icon={OctagonXIcon}
-      title={<T keyName="flows.StepType.RemoveContactTag" />}
+      title={t("flows.stepType.removeContactTag")}
     >
       <TagMultiSelect
         isRequired
-        label="Choose Tags"
+        label={t("fields.tag.label")}
         name={`${parentName}.tags`}
       />
     </BaseStepEditor>

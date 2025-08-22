@@ -1,12 +1,12 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
-import { useTranslate } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
 const TemplateFooterComponent = ({ parentName }: { parentName: string }) => {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { getValues, setValue } = useFormContext()
 
   const [localFooter, setLocalFooter] = useState(
@@ -38,7 +38,9 @@ const TemplateFooterComponent = ({ parentName }: { parentName: string }) => {
   )
 
   const displayText = useMemo(() => {
-    return getValues(`${parentName}.footer`) || `---- ${t("common.edit")} ----`
+    return (
+      getValues(`${parentName}.footer`) || `---- ${t("actions.update")} ----`
+    )
   }, [getValues, parentName, t])
 
   return (

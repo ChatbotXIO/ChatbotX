@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { CalculatorIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export default function CountCharactersStepViewer() {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={CalculatorIcon}
-      title={<T keyName="flows.StepType.CountCharacters" />}
+      title={t("flows.stepType.countCharacters")}
     />
   )
 }

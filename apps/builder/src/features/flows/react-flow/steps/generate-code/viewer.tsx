@@ -1,14 +1,15 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { ShuffleIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const GenerateCodeStepViewer = () => {
+  const t = useTranslations()
   return (
     <BaseStepViewer
       icon={ShuffleIcon}
-      title={<T keyName="flows.StepType.GenerateCode" />}
+      title={t("flows.stepType.generateCode")}
     />
   )
 }

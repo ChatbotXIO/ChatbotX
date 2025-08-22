@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { OctagonXIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const RemoveContactTagStepViewer = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={OctagonXIcon}
-      title={<T keyName="flows.StepType.RemoveContactTag" />}
+      title={t("flows.stepType.removeContactTag")}
     />
   )
 }

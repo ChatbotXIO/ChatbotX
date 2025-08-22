@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { syncMessageTemplateAction } from "./actions/sync-message-templates"
@@ -12,13 +12,13 @@ export function WhatsappMessageTemplatesTableToolbarActions({
 }: {
   chatbotId: string
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { execute, isPending } = useAction(
     syncMessageTemplateAction.bind(null, chatbotId),
     {
       onSuccess() {
-        toast.success(t("common.synced"))
+        toast.success(t("messages.syncedSuccessfully"))
       },
       onError({ error }) {
         error.serverError && toast.error(error.serverError)
@@ -40,7 +40,7 @@ export function WhatsappMessageTemplatesTableToolbarActions({
             className="mr-2 size-4 animate-spin"
           />
         )}
-        {t("common.Synchronize")}
+        {t("actions.synchronize")}
       </Button>
     </div>
   )

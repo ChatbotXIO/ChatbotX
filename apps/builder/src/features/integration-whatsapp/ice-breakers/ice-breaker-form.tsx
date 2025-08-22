@@ -6,7 +6,6 @@ import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { use } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
@@ -31,7 +31,7 @@ export function WhatsappIceBreakerForm({
   promises: Promise<[Awaited<ReturnType<typeof getWhatsappIceBreakers>>]>
 }) {
   const [{ data: allPrompts }] = use(promises)
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const {
@@ -44,7 +44,11 @@ export function WhatsappIceBreakerForm({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Update conversation starters successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.iceBreaker.label"),
+            }),
+          )
           router.push(`/chatbots/${chatbotId}/whatsapp/ice-breakers`)
         },
         onError: ({ error }) => {
@@ -70,7 +74,7 @@ export function WhatsappIceBreakerForm({
 
   return (
     <div className="flex flex-col items-center">
-      <div className="my-6 text-xl">{t("whatsapp.messageTemplate")}</div>
+      <div className="my-6 text-xl">{t("fields.iceBreaker.label")}</div>
       <Form {...form}>
         <form
           className="w-full flex-1 space-y-4"
@@ -81,7 +85,7 @@ export function WhatsappIceBreakerForm({
               {fields.map((_field, index) => (
                 <div key={`${index + 1}`}>
                   <InputField
-                    label={t("common.question")}
+                    label={t("fields.question.label")}
                     name={`prompts.${index}.value`}
                   />
                   <div className="flex items-center gap-1">
@@ -117,14 +121,14 @@ export function WhatsappIceBreakerForm({
               {fields.length < 4 && (
                 <div>
                   <Button onClick={() => append({ value: "" })} variant="ghost">
-                    <PlusCircleIcon /> {t("common.addMore")}
+                    <PlusCircleIcon /> {t("actions.add")}
                   </Button>
                 </div>
               )}
               <div className="mt-6 flex justify-center gap-2">
                 <Button asChild variant="outline">
                   <Link href={`/chatbots/${chatbotId}/whatsapp/ice-breakers`}>
-                    {t("common.cancelBtn")}
+                    {t("actions.cancel")}
                   </Link>
                 </Button>
                 <Button
@@ -136,7 +140,7 @@ export function WhatsappIceBreakerForm({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirmBtn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </CardContent>

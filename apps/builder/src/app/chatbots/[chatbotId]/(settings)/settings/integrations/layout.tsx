@@ -6,8 +6,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
-import { T } from "@tolgee/react"
 import { BotIcon, TableIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 
 type SettingIntegrationLayoutProps = {
@@ -19,6 +19,8 @@ export default function SettingIntegrationLayout({
   openAI,
   googleSheets,
 }: SettingIntegrationLayoutProps) {
+  const t = useTranslations()
+
   const integrationItems = [
     {
       keyName: "Settings.Integrations.OpenAI",
@@ -43,7 +45,7 @@ export default function SettingIntegrationLayout({
           <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
             <div className="flex items-center gap-2">
               <integration.icon size={24} />
-              <T keyName={integration.keyName} />
+              {t(integration.keyName as keyof typeof t)}
             </div>
           </AccordionTrigger>
           <AccordionContent className="p-4">

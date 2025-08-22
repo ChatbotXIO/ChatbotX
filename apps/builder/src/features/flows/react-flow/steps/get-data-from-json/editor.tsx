@@ -19,8 +19,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { T } from "@tolgee/react"
 import { ArrowRight, CodeIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
@@ -31,17 +31,16 @@ export default function GetDataFromJsonStepEditor({
 }: {
   parentName: string
 }) {
+  const t = useTranslations()
   return (
-    <BaseStepEditor
-      icon={CodeIcon}
-      title={<T keyName="flows.StepType.GetDataFromJson" />}
-    >
+    <BaseStepEditor icon={CodeIcon} title={t("flows.stepType.getDataFromJson")}>
       <GetDataFromJsonDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
 function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
@@ -69,7 +68,7 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
       <DialogTrigger asChild>
         <div className="flex justify-center">
           <Button size="sm" variant="outline">
-            Edit
+            {t("actions.update")}
           </Button>
         </div>
       </DialogTrigger>
@@ -86,13 +85,13 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
           >
             <CustomFieldSelect
               isRequired
-              label="Date & Time Custom field"
+              label={t("fields.inputCustomField.label")}
               name="inputCustomFieldId"
             />
 
             <div>
               <div className="flex w-full justify-between">
-                <Label>Save response to a custom field</Label>
+                <Label>{t("fields.outputCustomField.label")}</Label>
                 <Button
                   className="text-destructive text-sm"
                   onClick={() =>
@@ -101,7 +100,7 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
                   size="sm"
                   variant="link"
                 >
-                  Add new
+                  {t("actions.add")}
                 </Button>
               </div>
               <div className="flex w-full flex-col gap-y-4">
@@ -126,7 +125,7 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">Cancel</Button>
+                <Button variant="ghost">{t("actions.cancel")}</Button>
               </DialogClose>
 
               <Button
@@ -135,7 +134,7 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
                 }
                 type="submit"
               >
-                Save changes
+                {t("actions.save")}
               </Button>
             </DialogFooter>
           </form>

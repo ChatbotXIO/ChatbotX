@@ -45,7 +45,7 @@ const TemplateDocumentPreviewComponent = (
           render={() => (
             <FileDropzone
               configs={{
-                uploadKeyName: "common.uploadDocument",
+                uploadKeyName: "actions.uploadDocument",
                 accept: {
                   "application/pdf": [".pdf"],
                 },

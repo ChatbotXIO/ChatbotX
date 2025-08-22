@@ -7,9 +7,9 @@ import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { type JSX, type MemoExoticComponent, useState } from "react"
 import { toast } from "sonner"
 import { createMessageTemplateAction } from "@/features/integration-whatsapp/message-templates/actions/create-message-template.action"
@@ -79,7 +79,7 @@ export function CreateMessageTemplateForm({
 }: {
   chatbotId: string
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const [templateType, setTemplateType] = useState<TemplateType | null>(null)
 
   const {
@@ -92,7 +92,11 @@ export function CreateMessageTemplateForm({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Message template created successfully")
+          toast.success(
+            t("messages.createdSuccessfully", {
+              feature: t("whatsapp.messageTemplate.label"),
+            }),
+          )
 
           setTemplateType(null)
         },
@@ -164,7 +168,7 @@ export function CreateMessageTemplateForm({
 
   return (
     <div className="flex flex-col items-center">
-      <div className="my-6 text-xl">{t("whatsapp.messageTemplate")}</div>
+      <div className="my-6 text-xl">{t("whatsapp.messageTemplate.label")}</div>
       <Form {...form}>
         <form
           className="w-full flex-1 space-y-4"
@@ -220,7 +224,7 @@ export function CreateMessageTemplateForm({
                   <Link
                     href={`/chatbots/${chatbotId}/whatsapp/message-templates`}
                   >
-                    {t("common.cancelBtn")}
+                    {t("actions.cancel")}
                   </Link>
                 </Button>
                 <Button
@@ -232,7 +236,7 @@ export function CreateMessageTemplateForm({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirmBtn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </div>

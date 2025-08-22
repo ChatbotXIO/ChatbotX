@@ -7,8 +7,8 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { Input } from "@aha.chat/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { CopyIcon, Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { SettingRow } from "@/components/setting-row"
@@ -22,14 +22,14 @@ export function UpdateChatbotBasicForm({
 }: {
   chatbot: ChatbotResource
 }) {
-  const { t } = useTranslate(["chatbot", "updateChatbotForm"])
+  const t = useTranslations()
 
   const session = authClient.useSession()
 
   const [_, copyToClipboard] = useCopyToClipboard()
   const onCopy = (value: string) => {
     copyToClipboard(value).then(() => {
-      toast.success(t("copiedToClipboard"))
+      toast.success(t("messages.copiedToClipboard"))
     })
   }
 
@@ -39,7 +39,11 @@ export function UpdateChatbotBasicForm({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(t("updatedSuccessfully"))
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.chatbot.label"),
+            }),
+          )
         },
         onError: ({ error }) => {
           error.serverError && toast.error(error.serverError)
@@ -63,7 +67,10 @@ export function UpdateChatbotBasicForm({
             className="flex flex-col gap-y-4"
             onSubmit={handleSubmitWithAction}
           >
-            <SettingRow description={""} label={"Chatbot ID"}>
+            <SettingRow
+              description={t("fields.chatbotId.description")}
+              label={t("fields.chatbotId.label")}
+            >
               <div className="flex gap-x-2">
                 <Input className="flex-1" defaultValue={chatbot.id} disabled />
                 <Button onClick={() => onCopy(chatbot.id)} size={"icon"}>
@@ -72,7 +79,7 @@ export function UpdateChatbotBasicForm({
               </div>
             </SettingRow>
 
-            <SettingRow description={""} label={"User ID"}>
+            <SettingRow description={""} label={t("fields.userId.label")}>
               <div className="flex gap-x-2">
                 <Input
                   className="flex-1"
@@ -88,7 +95,7 @@ export function UpdateChatbotBasicForm({
               </div>
             </SettingRow>
 
-            <SettingRow description={""} label={t("name.label")}>
+            <SettingRow description={""} label={t("fields.name.label")}>
               <InputField name="name" />
             </SettingRow>
 
@@ -102,7 +109,7 @@ export function UpdateChatbotBasicForm({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("common.saveBtn")}
+                {t("actions.confirm")}
               </Button>
             </div>
           </form>

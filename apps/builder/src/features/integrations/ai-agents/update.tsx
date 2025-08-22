@@ -14,9 +14,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
@@ -38,7 +38,7 @@ export function UpdateAIAgentDialog({
   chatbotId: string
   agent: AIAgentModel | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const {
@@ -51,7 +51,11 @@ export function UpdateAIAgentDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("AI Agent update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.aiAgent.label"),
+            }),
+          )
 
           onOpenChange(false)
           router.refresh()
@@ -110,7 +114,9 @@ export function UpdateAIAgentDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>{t("aiAgents.update.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.updateTitle", { feature: t("fields.aiAgent.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -120,9 +126,9 @@ export function UpdateAIAgentDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("aiAgent.name")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" />
 
-              <TextareaField label={t("aiAgent.prompt")} name="prompt" />
+              <TextareaField label={t("fields.prompt.label")} name="prompt" />
 
               <div className="flex max-h-[300px] flex-col space-y-2 overflow-auto">
                 {fields.map((item, index) => (
@@ -156,7 +162,7 @@ export function UpdateAIAgentDialog({
 
               <div>
                 <Button onClick={addOptions} type="button">
-                  {t("common.add-more")}
+                  {t("actions.add")}
                 </Button>
               </div>
 
@@ -166,7 +172,7 @@ export function UpdateAIAgentDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancel-btn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -177,7 +183,7 @@ export function UpdateAIAgentDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

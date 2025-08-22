@@ -15,9 +15,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
@@ -34,7 +34,7 @@ export function CreateCustomFieldDialog({
   triggerButton?: ReactNode
   onSuccess?: () => void
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -46,7 +46,11 @@ export function CreateCustomFieldDialog({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success("Field created successfully")
+            toast.success(
+              t("messages.createdSuccessfully", {
+                feature: t("fields.customField.label"),
+              }),
+            )
 
             setOpen(false)
             resetFormAndAction()
@@ -72,27 +76,27 @@ export function CreateCustomFieldDialog({
   const customFieldTypeOptions = [
     {
       value: CustomFieldType.SHORTTEXT,
-      label: t("customFieldType.ShortText"),
+      label: t("customField.types.shortText"),
     },
     {
       value: CustomFieldType.NUMBER,
-      label: t("customFieldType.Number"),
+      label: t("customField.types.number"),
     },
     {
       value: CustomFieldType.DATE,
-      label: t("customFieldType.Date"),
+      label: t("customField.types.date"),
     },
     {
       value: CustomFieldType.DATETIME,
-      label: t("customFieldType.DateTime"),
+      label: t("customField.types.dateTime"),
     },
     {
       value: CustomFieldType.BOOLEAN,
-      label: t("customFieldType.Boolean"),
+      label: t("customField.types.boolean"),
     },
     {
       value: CustomFieldType.LONGTEXT,
-      label: t("customFieldType.LongText"),
+      label: t("customField.types.longText"),
     },
   ]
 
@@ -104,36 +108,38 @@ export function CreateCustomFieldDialog({
         ) : (
           <Button size="sm">
             <PlusIcon />
-            <T keyName="customField.createBtn" />
+            {t("actions.create")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="customField.create.header" />
+            {t("dialog.createTitle", {
+              feature: t("fields.customField.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
             <InputField
-              label={t("customField.name.label")}
+              label={t("fields.name.label")}
               name="name"
-              placeholder={t("customField.name.placeholder")}
+              placeholder={t("fields.name.placeholder")}
             />
 
             <SelectField
-              label={t("customFieldType.label")}
+              label={t("fields.type.label")}
               name="customFieldType"
               options={customFieldTypeOptions}
             />
 
             <TextareaField
               isRequired={false}
-              label={t("customField.description.label")}
+              label={t("fields.description.label")}
               name="description"
-              placeholder={t("customField.description.placeholder")}
+              placeholder={t("fields.description.placeholder")}
             />
 
             <div className="flex justify-end space-x-2">
@@ -142,7 +148,7 @@ export function CreateCustomFieldDialog({
                 type="button"
                 variant="ghost"
               >
-                {t("Common.CancelBtn")}
+                {t("actions.cancel")}
               </Button>
               <Button
                 disabled={
@@ -153,7 +159,7 @@ export function CreateCustomFieldDialog({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("common.confirmBtn")}
+                {t("actions.confirm")}
               </Button>
             </div>
           </form>

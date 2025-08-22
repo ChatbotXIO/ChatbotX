@@ -13,8 +13,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateAccountFieldAction } from "./actions/update-account-field.action"
@@ -32,7 +32,7 @@ export function UpdateAccountFieldDialog({
   chatbotId: string
   accountField: AccountFieldResource | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const {
     form,
@@ -45,7 +45,11 @@ export function UpdateAccountFieldDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Account Field update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.accountField.label"),
+            }),
+          )
           onOpenChange(false)
           resetFormAndAction()
         },
@@ -81,11 +85,11 @@ export function UpdateAccountFieldDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("accountField.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" />
 
               <TextareaField
                 isRequired={false}
-                label={t("accountField.description.label")}
+                label={t("fields.description.label")}
                 name="description"
               />
 
@@ -101,7 +105,7 @@ export function UpdateAccountFieldDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancel-btn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -112,7 +116,7 @@ export function UpdateAccountFieldDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

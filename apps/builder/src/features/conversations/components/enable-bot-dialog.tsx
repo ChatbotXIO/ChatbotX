@@ -11,9 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
@@ -30,12 +30,16 @@ export default function EnableBotDialog({
 }: EnableBotDialogProps) {
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
-
+  const t = useTranslations()
   const { execute, isPending } = useAction(
     enableBotAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(<T keyName="common.updateForm.successMessage" />)
+        toast.success(
+          t("messages.updatedSuccessfully", {
+            feature: t("fields.chatbot.label"),
+          }),
+        )
         setOpen(false)
       },
       onError: ({ error }) => {
@@ -50,20 +54,28 @@ export default function EnableBotDialog({
 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Enable Bot</DialogTitle>
+          <DialogTitle>
+            {t("dialog.enable.title", {
+              feature: t("fields.bot.label"),
+            })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
-        <div>Are you sure to enable bot?</div>
+        <div>
+          {t("dialog.enable.description", {
+            feature: t("fields.bot.label"),
+          })}
+        </div>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="ghost">{t("actions.cancel")}</Button>
           </DialogClose>
 
           <Button disabled={isPending} onClick={() => execute({ ids })}>
             {isPending && <Loader2Icon className="animate-spin" />}
-            <T keyName={"common.saveBtn"} />
+            {t("actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

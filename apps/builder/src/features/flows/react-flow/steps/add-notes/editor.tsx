@@ -1,8 +1,8 @@
 "use client"
 
 import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { T } from "@tolgee/react"
 import { TextIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
 type AddNotesStepEditorProps = {
@@ -11,13 +11,14 @@ type AddNotesStepEditorProps = {
 
 export const AddNotesStepEditor = (props: AddNotesStepEditorProps) => {
   const { parentName } = props
+  const t = useTranslations()
 
   return (
-    <BaseStepEditor
-      icon={TextIcon}
-      title={<T keyName="flows.StepType.AddContactNotes" />}
-    >
-      <InputField label="Add Notes" name={`${parentName}.content`} />
+    <BaseStepEditor icon={TextIcon} title={t("flows.stepType.addContactNotes")}>
+      <InputField
+        label={t("fields.notes.label")}
+        name={`${parentName}.content`}
+      />
     </BaseStepEditor>
   )
 }

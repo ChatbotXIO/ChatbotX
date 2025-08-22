@@ -6,10 +6,12 @@ import {
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth"
 
 export default async function MainPage() {
+  const t = useTranslations()
   const userId = await getCurrentUserId()
 
   const { chatbots } = await getAllChatbotMembers(userId)
@@ -32,7 +34,9 @@ export default async function MainPage() {
                   </Button>
                 ))}
                 {chatbots.length === 0 && (
-                  <div className="text-center">No chatbots found</div>
+                  <div className="text-center">
+                    {t("messages.noChatbotsFound")}
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -44,7 +48,9 @@ export default async function MainPage() {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Create new Chatbot</CardTitle>
+              <CardTitle className="text-2xl">
+                {t("actions.createNewChatbot")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">

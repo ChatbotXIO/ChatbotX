@@ -20,8 +20,8 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { T } from "@tolgee/react"
 import { ShuffleIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
@@ -32,17 +32,17 @@ export default function GenerateCodeStepEditor({
 }: {
   parentName: string
 }) {
+  const t = useTranslations()
+
   return (
-    <BaseStepEditor
-      icon={ShuffleIcon}
-      title={<T keyName="flows.StepType.GenerateCode" />}
-    >
+    <BaseStepEditor icon={ShuffleIcon} title={t("flows.stepType.generateCode")}>
       <GenerateCodeDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
 function GenerateCodeDialog({ parentName }: { parentName: string }) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
@@ -67,13 +67,13 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
       <DialogTrigger asChild>
         <div className="flex justify-center">
           <Button size="sm" variant="outline">
-            Edit
+            {t("actions.update")}
           </Button>
         </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Generate code</DialogTitle>
+          <DialogTitle>{t("flows.stepType.generateCode")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -84,38 +84,38 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
           >
             <SelectField
               isRequired
-              label="Type"
+              label={t("fields.type.label")}
               name="type"
               options={[
                 {
-                  label: "Numeric (Minimum/Maximum length)",
+                  label: t("fields.numericLength.label"),
                   value: GenerateCodeType.NUMERIC_LENGTH,
                 },
                 {
-                  label: "Numeric (Minimum/Maximum number)",
+                  label: t("fields.numericValue.label"),
                   value: GenerateCodeType.NUMERIC_VALUE,
                 },
                 {
-                  label: "Alphanumeric (Minimum/Maximum length)",
+                  label: t("fields.alphanumericLength.label"),
                   value: GenerateCodeType.ALPHANUMERIC_LENGTH,
                 },
               ]}
             />
 
-            <InputField isRequired label="Min" name="min" />
+            <InputField isRequired label={t("fields.min.label")} name="min" />
 
-            <InputField isRequired label="Max" name="max" />
+            <InputField isRequired label={t("fields.max.label")} name="max" />
 
             <CustomFieldSelect
               allowCreate={true}
               isRequired
-              label="Save to custom field"
+              label={t("fields.customField.label")}
               name="outputCustomFieldId"
             />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline">{t("actions.cancel")}</Button>
               </DialogClose>
 
               <Button
@@ -124,7 +124,7 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
                 }
                 type="submit"
               >
-                Save changes
+                {t("actions.save")}
               </Button>
             </DialogFooter>
           </form>

@@ -17,8 +17,8 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { T } from "@tolgee/react"
 import { CalculatorIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
@@ -29,10 +29,12 @@ export default function CountCharactersStepEditor({
 }: {
   parentName: string
 }) {
+  const t = useTranslations()
+
   return (
     <BaseStepEditor
       icon={CalculatorIcon}
-      title={<T keyName="flows.StepType.CountCharacters" />}
+      title={t("flows.stepType.countCharacters")}
     >
       <CountCharactersDialog parentName={parentName} />
     </BaseStepEditor>
@@ -40,6 +42,7 @@ export default function CountCharactersStepEditor({
 }
 
 function CountCharactersDialog({ parentName }: { parentName: string }) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
@@ -62,13 +65,13 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
       <DialogTrigger asChild>
         <div className="flex justify-center">
           <Button size="sm" variant="outline">
-            Edit
+            {t("actions.update")}
           </Button>
         </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Count Characters</DialogTitle>
+          <DialogTitle>{t("flows.stepType.countCharacters")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -79,20 +82,20 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
           >
             <CustomFieldSelect
               isRequired
-              label="Custom field"
+              label={t("fields.customField.label")}
               name="inputCustomFieldId"
             />
 
             <CustomFieldSelect
               allowCreate={true}
               isRequired
-              label="Save to custom field"
+              label={t("fields.customField.label")}
               name="outputCustomFieldId"
             />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline">{t("actions.cancel")}</Button>
               </DialogClose>
 
               <Button
@@ -101,7 +104,7 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
                 }
                 type="submit"
               >
-                Save changes
+                {t("actions.save")}
               </Button>
             </DialogFooter>
           </form>

@@ -10,8 +10,8 @@ export function SendAudioStepEditor({ parentName }: { parentName: string }) {
   return (
     <FileDropzone
       configs={{
-        uploadKeyName: "common.uploadAudioOr",
-        linkKeyName: "common.insertLink",
+        uploadKeyName: "texts.or",
+        linkKeyName: "actions.insertLink",
         accept: { "audio/*": [] },
       }}
       mode="link"

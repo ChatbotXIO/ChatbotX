@@ -10,7 +10,6 @@
     "includes": [
       "**",
       "!**/.next",
-      "!**/.tolgee",
       "!**/.turbo",
       "!**/packages/database/src/generated/prisma",
       "!**/packages/ui",

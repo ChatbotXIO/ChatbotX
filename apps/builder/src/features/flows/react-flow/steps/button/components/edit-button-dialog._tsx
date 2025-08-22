@@ -13,7 +13,6 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import type { SendMessageNodeSchema, StartFlowNodeSchema } from "@aha.chat/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslate } from "@tolgee/react"
 import { type Edge, type Node, addEdge, useReactFlow } from "@xyflow/react"
 import { MessageCircleIcon, PencilIcon, XIcon } from "lucide-react"
 import { useMemo } from "react"
@@ -32,7 +31,7 @@ export function EditButtonDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const {
     watch: watchOriginEditor,
@@ -196,7 +195,7 @@ export function EditButtonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("common.edit")}</DialogTitle>
+          <DialogTitle>{t("dialogs.uploadTitle")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -292,14 +291,14 @@ export function EditButtonDialog({
             variant="destructive"
             onClick={onDelete}
           >
-            {t("common.delete")}
+            {t("actions.delete")}
           </Button>
           <Button
             aria-label="Save button"
             onClick={onSave}
             disabled={!formState.isValid}
           >
-            {t("common.save")}
+            {t("actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

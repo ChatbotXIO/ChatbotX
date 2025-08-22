@@ -12,10 +12,10 @@ import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { add } from "date-fns"
 import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { use, useState } from "react"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
@@ -31,7 +31,7 @@ export function CreateBroadcastForm({
   chatbotId: string
   promises: Promise<Awaited<ReturnType<typeof listInboxes>>>
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const [hasInboxType, setHasInboxType] = useState(false)
   const [hasSubAction, setHasSubAction] = useState(false)
@@ -62,7 +62,11 @@ export function CreateBroadcastForm({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Broadcast created successfully")
+          toast.success(
+            t("messages.createdSuccessfully", {
+              feature: t("fields.broadcast.label"),
+            }),
+          )
           resetFormAndAction()
         },
         onError: ({ error }) => {
@@ -110,7 +114,7 @@ export function CreateBroadcastForm({
                 <>
                   <FlowSelect
                     isRequired={true}
-                    label="Flow to send"
+                    label={t("fields.flowToSend.label")}
                     name="flowId"
                   />
 
@@ -141,7 +145,7 @@ export function CreateBroadcastForm({
                   <div className="flex justify-end gap-2">
                     <Button asChild variant="outline">
                       <Link href={`/chatbots/${chatbotId}/broadcasts`}>
-                        Cancel
+                        {t("actions.cancel")}
                       </Link>
                     </Button>
 
@@ -154,7 +158,7 @@ export function CreateBroadcastForm({
                       {form.formState.isSubmitting && (
                         <Loader2Icon className="animate-spin" />
                       )}
-                      {t("common.confirm-btn")}
+                      {t("actions.confirm")}
                     </Button>
                   </div>
                 </>

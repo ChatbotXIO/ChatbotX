@@ -1,0 +1,697 @@
+{
+  "fields": {
+    "name": {
+      "label": "Name",
+      "placeholder": "Enter name"
+    },
+    "description": {
+      "label": "Description",
+      "placeholder": "Enter description"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "Enter email"
+    },
+    "firstName": {
+      "label": "First name",
+      "placeholder": "Enter first name"
+    },
+    "lastName": {
+      "label": "Last name",
+      "placeholder": "Enter last name"
+    },
+    "phoneNumber": {
+      "label": "Phone number",
+      "placeholder": "Enter phone number"
+    },
+    "gender": {
+      "label": "Gender",
+      "female": "Female",
+      "male": "Male",
+      "unknown": "Unknown"
+    },
+    "language": {
+      "label": "Language",
+      "placeholder": "Select language",
+      "description": "Contacts are assigned the default language when the contact language is unknown.",
+      "english": "English",
+      "vietnamese": "Tiếng Việt"
+    },
+    "timezone": {
+      "label": "Time Zone",
+      "placeholder": "Select timezone",
+      "description": "Contacts are assigned this timezone when the contact timezone is unknown."
+    },
+    "country": {
+      "label": "Country",
+      "placeholder": "Search country",
+      "description": "The country where most of your contacts live."
+    },
+    "color": {
+      "label": "Color",
+      "placeholder": "Select color"
+    },
+    "brandColor": {
+      "label": "Brand Color",
+      "description": "This color is used on buttons to match your branding on the landing page, emails and webchat."
+    },
+    "type": {
+      "label": "Type",
+      "placeholder": "Select type"
+    },
+    "value": {
+      "label": "Value",
+      "placeholder": "Enter value"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Enter API key"
+    },
+    "temperature": {
+      "label": "Temperature",
+      "placeholder": "Enter temperature"
+    },
+    "maxTokens": {
+      "label": "Max Tokens",
+      "placeholder": "Enter max tokens"
+    },
+    "developmentMode": {
+      "label": "Development Mode",
+      "description": "Your bot will work only for bot admins. Enable this option if you are building your bot and don't want non admins to use the bot."
+    },
+    "defaultReply": {
+      "label": "Default Reply",
+      "description": "It is the default response that your chatbot will send to users when the chatbot doesn't know how to respond to the user message."
+    },
+    "targetCountry": {
+      "label": "Target Country",
+      "description": "The country where most of your contacts live."
+    },
+    "defaultLanguage": {
+      "label": "Default Language",
+      "description": "The language of your chatbot."
+    },
+    "accountTimezone": {
+      "label": "Account Timezone",
+      "description": "The timezone of your chatbot."
+    },
+    "chatbotId": {
+      "label": "Chatbot ID",
+      "description": "Unique identifier for your chatbot."
+    },
+    "userId": {
+      "label": "User ID",
+      "description": "Unique identifier for the user."
+    },
+    "notes": {
+      "label": "Notes"
+    },
+    "customField": {
+      "label": "Custom Field"
+    },
+    "aiAgent": {
+      "label": "AI Agent"
+    },
+    "aiTrigger": {
+      "label": "AI Trigger",
+      "description": "Describe how this trigger works"
+    },
+    "dataCollect": {
+      "label": "Data Collection"
+    },
+    "flowId": {
+      "label": "Flow ID"
+    },
+    "finalMessage": {
+      "label": "Final Message"
+    },
+    "url": {
+      "label": "URL"
+    },
+    "flow": {
+      "label": "Flow"
+    },
+    "quickReply": {
+      "label": "Quick Reply"
+    },
+    "inboxTeam": {
+      "label": "Inbox Team"
+    },
+    "agent": {
+      "label": "Agent"
+    },
+    "inputCustomField": {
+      "label": "Input Custom Field"
+    },
+    "outputCustomField": {
+      "label": "Output Custom Field"
+    },
+    "iceBreaker": {
+      "label": "Ice Breaker"
+    },
+    "question": {
+      "label": "Question"
+    },
+    "inboxTeamMember": {
+      "label": "Inbox Team Member"
+    },
+    "bot": {
+      "label": "Bot"
+    },
+    "accountField": {
+      "label": "Account Field"
+    },
+    "analytics": {
+      "label": "Analytics"
+    },
+    "flows": {
+      "label": "Flows"
+    },
+    "contacts": {
+      "label": "Contacts"
+    },
+    "automatedResponses": {
+      "label": "Automated Responses"
+    },
+    "broadcasts": {
+      "label": "Broadcasts"
+    },
+    "tools": {
+      "label": "Tools"
+    },
+    "settings": {
+      "label": "Settings"
+    },
+    "automatedResponse": {
+      "label": "Automated Response"
+    },
+    "broadcast": {
+      "label": "Broadcast"
+    },
+    "chatbot": {
+      "label": "Chatbot"
+    },
+    "contact": {
+      "label": "Contact"
+    },
+    "conversation": {
+      "label": "Conversation"
+    },
+    "folder": {
+      "label": "Folder"
+    },
+    "inbox": {
+      "label": "Inbox"
+    },
+    "integration": {
+      "label": "Integration"
+    },
+    "log": {
+      "label": "Log"
+    },
+    "message": {
+      "label": "Message"
+    },
+    "tag": {
+      "label": "Tag"
+    },
+    "team": {
+      "label": "Team"
+    },
+    "user": {
+      "label": "User",
+      "selectAgent": "Please select agent",
+      "selectAgents": "Please select agents"
+    },
+    "whatsapp": {
+      "label": "WhatsApp"
+    },
+    "flowNode": {
+      "label": "Flow Node"
+    },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "text": {
+      "label": "Text"
+    },
+    "delayType": {
+      "label": "Delay Type",
+      "placeholder": "Delay Type"
+    },
+    "delayUnit": {
+      "label": "Delay Unit"
+    },
+    "wabaId": {
+      "label": "WABA ID"
+    },
+    "accessToken": {
+      "label": "Access Token"
+    },
+    "file": {
+      "insertLink": "Insert link"
+    },
+    "userMessage": {
+      "label": "User Message"
+    },
+    "botResponse": {
+      "label": "Bot Response"
+    },
+    "flowToSend": {
+      "label": "Flow to send"
+    },
+    "framework": {
+      "react": "React",
+      "angular": "Angular",
+      "vue": "Vue",
+      "svelte": "Svelte",
+      "ember": "Ember"
+    }
+  },
+
+  "validation": {
+    "maxSize": "File size exceeds maximum limit"
+  },
+
+  "actions": {
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "save": "Save",
+    "delete": "Delete",
+    "enable": "Enable",
+    "disable": "Disable",
+    "archive": "Archive",
+    "assign": "Assign",
+    "export": "Export",
+    "import": "Import",
+    "synchronize": "Synchronize",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "manage": "Manage",
+    "more": "More",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "getID": "Get ID",
+    "insertLink": "Insert link",
+    "readMore": "Read more",
+    "addTag": "Add Tag",
+    "setCustomField": "Set Custom Field",
+    "removeTag": "Remove Tag",
+    "clearCustomField": "Clear Custom Field",
+    "disableBot": "Disable Bot",
+    "enableBot": "Enable Bot",
+    "archiveConversation": "Archive Conversation",
+    "setTo": "Set to",
+    "appendToEnd": "Append to the end",
+    "prependToStart": "Prepend to the start",
+    "toggle": "Toggle",
+    "moreOptions": "More options",
+    "addMore": "Add more",
+    "addTextReply": "Add text reply",
+    "addFlowReply": "Add flow reply",
+    "viewProject": "View Project",
+    "shareProject": "Share Project",
+    "deleteProject": "Delete Project",
+    "upgradeToPro": "Upgrade to Pro",
+    "createNewChatbot": "Create new Chatbot"
+  },
+
+  "dialog": {
+    "createTitle": "Create {feature}",
+    "updateTitle": "Update {feature}",
+    "deleteTitle": "Delete {feature}",
+    "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone. This will permanently delete your {feature} from our servers",
+    "clearCustomField": "Clear Custom Field",
+    "enable": {
+      "title": "Enable {feature}",
+      "description": "Are you sure to enable {feature}?"
+    },
+    "disconnect": {
+      "title": "Disconnect {feature}",
+      "description": "Are you sure to disconnect {feature}?"
+    },
+    "disableBot": {
+      "title": "Disable Bot",
+      "description": "Are you sure to disable bot?"
+    },
+    "archiveConversation": {
+      "title": "Archive Conversation",
+      "description": "Are you sure to archive those conversations?"
+    },
+    "deleteContact": {
+      "title": "Delete Contact",
+      "description": "Are you sure to delete those contacts?",
+      "warning": "This action can not be reverted."
+    },
+    "addTag": {
+      "title": "Add Tag"
+    }
+  },
+
+  "texts": {
+    "or": "or"
+  },
+
+  "messages": {
+    "copiedToClipboard": "Copied to clipboard",
+    "updatedSuccessfully": "{feature} updated successfully",
+    "createdSuccessfully": "{feature} created successfully",
+    "deletedSuccessfully": "{feature} deleted successfully",
+    "connectedSuccessfully": "{feature} connected successfully",
+    "noChatbotsFound": "No chatbots found"
+  },
+
+  "signin": {
+    "title": "Sign in to your account",
+    "or": "Or",
+    "continue": "Continue",
+    "acceptTermsAndPolicy": "By clicking continue, you agree to our {termsOfService} and {privacyPolicy}",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy"
+  },
+
+  "folders": {
+    "heading": {
+      "title": "Folders"
+    }
+  },
+
+  "flows": {
+    "clickToSelectFlow": "Click to select a flow",
+    "create": {
+      "title": "Create new flow"
+    },
+    "name": {
+      "label": "Flow name"
+    },
+    "stepType": {
+      "optInEmail": "Opt-in Email",
+      "sendFlow": "Send Flow",
+      "startFlow": "Start Flow"
+    },
+    "button": {
+      "label": "Button Label"
+    },
+    "delayUnit": {
+      "placeholder": "Select a unit",
+      "seconds": "Seconds",
+      "minutes": "Minutes",
+      "hours": "Hours",
+      "days": "Days"
+    },
+    "delayType": {
+      "placeholder": "Select a type",
+      "duration": "Duration",
+      "durationValue": "{duration}",
+      "specificDate": "Specific Date",
+      "specificDateValue": "{date}",
+      "datetimeCustomField": "Datetime Custom Field",
+      "datetimeCustomFieldValue": "{customField}"
+    },
+    "wait": {
+      "datetime": {
+        "tooltip": "The date and time when the flow will be triggered."
+      },
+      "setInterval": "Set Interval",
+      "datetimeCustomField": "Datetime Custom Field"
+    }
+  },
+
+  "autoAssignConversation": {
+    "rule": {
+      "label": "Assignment Rule",
+      "allTime": "Equal conversation distribution (All time)",
+      "lastHour": "Equal conversation distribution (Last Hour)",
+      "last8Hours": "Equal conversation distribution (Last 8 hours)",
+      "last24Hours": "Equal conversation distribution (Last 24 hours)"
+    },
+    "users": {
+      "label": "Users"
+    }
+  },
+
+  "aiAgent": {
+    "setting": {
+      "label": "AI Agents",
+      "description": "AI Agents description"
+    }
+  },
+
+  "aiTrigger": {
+    "setting": {
+      "label": "AI Triggers",
+      "description": "AI Triggers description"
+    }
+  },
+
+  "accountField": {
+    "title": "Account Fields",
+    "createDialog": {
+      "title": "Create Account Field"
+    },
+    "updateForm": {
+      "title": "Update Account Field"
+    }
+  },
+
+  "googleSheets": {
+    "setting": {
+      "label": "Google Sheets",
+      "description": "Google Sheets description"
+    },
+    "disconnectDescription": "This action cannot be undone."
+  },
+
+  "customField": {
+    "heading": {
+      "title": "Custom Fields"
+    },
+    "types": {
+      "shortText": "Short Text",
+      "number": "Number",
+      "date": "Date",
+      "dateTime": "Date & Time",
+      "boolean": "Boolean",
+      "longText": "Long Text"
+    },
+    "placeholders": {
+      "enterNumber": "Enter number",
+      "selectTrueFalse": "Select true/false",
+      "enterText": "Enter text"
+    },
+    "values": {
+      "true": "True",
+      "false": "False"
+    }
+  },
+
+  "automatedResponse": {
+    "heading": {
+      "title": "Automated Responses"
+    },
+    "setting": {
+      "label": "Automated Responses",
+      "description": "Automated responses description"
+    }
+  },
+
+  "tags": {
+    "heading": {
+      "title": "Tags"
+    }
+  },
+
+  "broadcasts": {
+    "scheduleSendMessage": "Schedule send message",
+    "update": {
+      "title": "Update Broadcast"
+    }
+  },
+
+  "inboxTeam": {
+    "updateAction": {
+      "heading": {
+        "label": "Rename Inbox Team"
+      }
+    }
+  },
+
+  "teams": {
+    "create": {
+      "title": "Create Inbox Team"
+    }
+  },
+
+  "settings": {
+    "openAI": {
+      "description": "OpenAI integration description",
+      "title": "OpenAI Integration"
+    },
+    "automatedResponses": {
+      "title": "Automated Responses"
+    },
+    "agents": {
+      "description": "AI Agents description",
+      "title": "AI Agents"
+    },
+    "aiTriggers": {
+      "description": "AI Triggers description",
+      "title": "AI Triggers"
+    }
+  },
+
+  "integration": {
+    "disconnectConfirm": "Are you sure you want to disconnect?",
+    "disconnectDescription": "This action cannot be undone."
+  },
+
+  "integrations": {
+    "openAI": {
+      "apiKey": "OpenAI API Key",
+      "temperature": "Temperature",
+      "maxTokens": "Max Tokens",
+      "button": {
+        "connect": "Connect"
+      }
+    }
+  },
+
+  "accountFields": {
+    "create": {
+      "successMessage": "Account field created successfully"
+    },
+    "delete": {
+      "successMessage": "Account field deleted successfully"
+    }
+  },
+
+  "whatsapp": {
+    "setting": {
+      "title": "Whatsapp",
+      "description": "Whatsapp description"
+    },
+    "category": {
+      "makerting": {
+        "label": "Marketing",
+        "description": "Marketing category description"
+      },
+      "utility": {
+        "label": "Utility",
+        "description": "Utility category description"
+      }
+    },
+    "templateHeader": {
+      "label": "Template Header"
+    },
+    "templateFooter": {
+      "label": "Template Footer"
+    },
+    "messageTemplate": {
+      "label": "Message Template",
+      "image": {
+        "label": "Image"
+      },
+      "video": {
+        "label": "Video"
+      },
+      "document": {
+        "label": "Document"
+      },
+      "text": {
+        "label": "Text"
+      },
+      "carouselImage": {
+        "label": "Carousel Image"
+      },
+      "carouselVideo": {
+        "label": "Carousel Video"
+      },
+      "product": {
+        "label": "Product"
+      },
+      "location": {
+        "label": "Location"
+      },
+      "viewCatalog": {
+        "label": "View Catalog"
+      },
+      "viewProduct": {
+        "label": "View Product"
+      }
+    },
+    "sampleBodyContent": {
+      "label": "Sample body content"
+    },
+    "sampleHeaderContent": {
+      "label": "Sample header content"
+    },
+    "sampleBodyCardContent": {
+      "label": "Sample body card content"
+    },
+    "showFooter": {
+      "label": "Show footer"
+    },
+    "showHeader": {
+      "label": "Show header"
+    },
+    "conversationStarters": {
+      "label": "Conversation Starters",
+      "description1": "Conversation starters are used to start a conversation with a user.",
+      "description2": "Conversation starters are used to start a conversation with a user."
+    },
+    "iceBreaker": {
+      "label": "Ice Breaker"
+    }
+  },
+
+  "aiTriggers": {
+    "create": {
+      "title": "Create AI Trigger"
+    },
+    "update": {
+      "title": "Update AI Trigger"
+    },
+    "delete": {
+      "title": "Delete AI Trigger",
+      "successMessage": "AI Trigger deleted successfully",
+      "confirmDescription": "Are you sure you want to delete this AI Trigger?"
+    },
+    "name": {
+      "label": "AI Trigger name"
+    },
+    "description": {
+      "label": "AI Trigger description"
+    },
+    "dataCollect": "Data Collection",
+    "flowId": "Flow ID",
+    "finalMessage": "Final Message",
+    "dataCollectAddBtn": "Add Data Collection"
+  },
+
+  "openAI": {
+    "setting": {
+      "label": "OpenAI Integration",
+      "description": "OpenAI integration description"
+    }
+  },
+
+  "aiAgents": {
+    "delete": {
+      "title": "Delete AI Agent",
+      "successMessage": "AI Agent deleted successfully",
+      "confirmDescription": "Are you sure you want to delete this AI Agent?"
+    }
+  },
+
+  "contact": {
+    "update": {
+      "title": "Update Contact",
+      "successMessage": "Contact updated successfully"
+    }
+  },
+
+  "question": "Question",
+  "addMore": "Add more"
+}

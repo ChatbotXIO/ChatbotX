@@ -11,7 +11,7 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { updateContactAction } from "./actions/update-contact.action"
 import type { ContactResource } from "./schemas"
@@ -34,7 +34,7 @@ export function EditContactField({
   // contact,
   selectedField,
 }: EditContactField) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -43,7 +43,11 @@ export function EditContactField({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success(t("contact.updated"))
+            toast.success(
+              t("messages.updatedSuccessfully", {
+                feature: t("fields.contact.label"),
+              }),
+            )
             onOpenChange(false)
             resetFormAndAction()
           },
@@ -64,7 +68,7 @@ export function EditContactField({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="contact.updateAction.title" />
+            {t("dialog.updateTitle", { feature: t("fields.contact.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -81,10 +85,10 @@ export function EditContactField({
                 size="sm"
                 variant="outline"
               >
-                <T keyName="common.cancelBtn" />
+                {t("actions.cancel")}
               </Button>
               <Button size="sm" type="submit">
-                <T keyName="common.saveBtn" />
+                {t("actions.confirm")}
               </Button>
             </DialogFooter>
           </form>

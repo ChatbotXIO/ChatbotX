@@ -1,7 +1,7 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { TagIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { TagMultiSelect } from "@/features/tags/components/tag-multi-select"
 import { BaseStepEditor } from "../base/editor"
 
@@ -10,14 +10,13 @@ export const addContactTagStepEditor = ({
 }: {
   parentName: string
 }) => {
+  const t = useTranslations()
+
   return (
-    <BaseStepEditor
-      icon={TagIcon}
-      title={<T keyName="flows.StepType.AddContactTag" />}
-    >
+    <BaseStepEditor icon={TagIcon} title={t("flows.stepType.addContactTag")}>
       <TagMultiSelect
         isRequired
-        label="Choose Tags"
+        label={t("fields.tag.label")}
         name={`${parentName}.tags`}
       />
     </BaseStepEditor>

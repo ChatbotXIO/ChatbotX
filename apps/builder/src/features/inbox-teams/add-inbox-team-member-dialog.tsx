@@ -14,8 +14,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import type { UserResource } from "../users/schemas"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
@@ -34,13 +34,19 @@ export function AddInboxTeamMemberDialog({
   inboxTeam: InboxTeamModel | null
   listUsers: UserResource[]
 }) {
+  const t = useTranslations()
+
   const { form, handleSubmitWithAction } = useHookFormAction(
     addInboxTeamMemberAction.bind(null, chatbotId, inboxTeam?.id ?? ""),
     zodResolver(addInboxTeamMemberRequest),
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Member created successfully")
+          toast.success(
+            t("messages.createdSuccessfully", {
+              feature: t("fields.inboxTeamMember.label"),
+            }),
+          )
           onOpenChange(false)
         },
         onError: ({ error }) => {
@@ -67,7 +73,9 @@ export function AddInboxTeamMemberDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="inboxTeams.addInboxTeamMemberAction.heading" />
+            {t("dialog.createTitle", {
+              feature: t("fields.inboxTeamMember.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -85,9 +93,7 @@ export function AddInboxTeamMemberDialog({
 
               <div className="flex justify-end gap-4">
                 <DialogClose asChild>
-                  <Button variant="outline">
-                    <T keyName="common.cancelBtn" />
-                  </Button>
+                  <Button variant="outline">{t("actions.cancel")}</Button>
                 </DialogClose>
 
                 <Button
@@ -99,7 +105,7 @@ export function AddInboxTeamMemberDialog({
                   {form.formState.isSubmitting && (
                     <Loader2 className="animate-spin" />
                   )}
-                  <T keyName="common.confirm-btn" />
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

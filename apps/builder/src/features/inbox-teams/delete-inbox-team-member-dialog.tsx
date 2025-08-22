@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
-import { T } from "@tolgee/react"
 import { Loader } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
@@ -32,6 +32,8 @@ export function DeleteInboxTeamMembersDialog({
   teamMember,
   ...props
 }: DeleteMembersDialogProps) {
+  const t = useTranslations()
+
   const { execute, isPending } = useAction(
     deleteTeamMembersAction.bind(
       null,
@@ -40,7 +42,11 @@ export function DeleteInboxTeamMembersDialog({
     ),
     {
       onSuccess: () => {
-        toast.success("Delete Member Success")
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.inboxTeamMember.label"),
+          }),
+        )
         onOpenChange(false)
       },
       onError: ({ error }) => {
@@ -54,17 +60,19 @@ export function DeleteInboxTeamMembersDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="inboxTeams.deleteMemberAction.heading" />
+            {t("dialog.deleteTitle", {
+              feature: t("fields.inboxTeamMember.label"),
+            })}
           </DialogTitle>
           <DialogDescription>
-            <T keyName="inboxTeams.deleteMemberAction.description" />
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.inboxTeamMember.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">
-              <T keyName="common.cancelBtn" />
-            </Button>
+            <Button variant="outline">{t("actions.cancel")}</Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
@@ -75,7 +83,7 @@ export function DeleteInboxTeamMembersDialog({
             {isPending && (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
-            <T keyName="common.deleteBtn" />
+            {t("actions.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

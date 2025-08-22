@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { CircleCheckIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const MarkEmailVerifiedStepViewer = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={CircleCheckIcon}
-      title={<T keyName="flows.StepType.MarkEmailVerified" />}
+      title={t("flows.stepType.markEmailVerified")}
     />
   )
 }

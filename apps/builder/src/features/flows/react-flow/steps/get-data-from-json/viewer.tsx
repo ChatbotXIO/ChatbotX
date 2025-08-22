@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { CodeIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export default function GetDataFromJsonViewer() {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={CodeIcon}
-      title={<T keyName="flows.StepType.FormatDate" />}
+      title={t("flows.stepType.getDataFromJson")}
     />
   )
 }

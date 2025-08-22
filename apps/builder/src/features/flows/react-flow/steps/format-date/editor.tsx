@@ -20,8 +20,8 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { T } from "@tolgee/react"
 import { ZapIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
@@ -32,17 +32,17 @@ export default function FormatDateStepEditor({
 }: {
   parentName: string
 }) {
+  const t = useTranslations()
+
   return (
-    <BaseStepEditor
-      icon={ZapIcon}
-      title={<T keyName="flows.StepType.FormatDate" />}
-    >
+    <BaseStepEditor icon={ZapIcon} title={t("flows.stepType.formatDate")}>
       <FormatDateDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
 function FormatDateDialog({ parentName }: { parentName: string }) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
@@ -67,13 +67,13 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
       <DialogTrigger asChild>
         <div className="flex justify-center">
           <Button size="sm" variant="outline">
-            Edit
+            {t("actions.update")}
           </Button>
         </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Format date</DialogTitle>
+          <DialogTitle>{t("flows.stepType.formatDate")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -84,7 +84,7 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
           >
             <CustomFieldSelect
               isRequired
-              label="Date & Time Custom field"
+              label={t("fields.inputCustomField.label")}
               name="inputCustomFieldId"
             />
 
@@ -93,23 +93,29 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
             <CustomFieldSelect
               allowCreate={true}
               isRequired
-              label="Save to custom field"
+              label={t("fields.outputCustomField.label")}
               name="outputCustomFieldId"
             />
 
             <SelectField
               isRequired
-              label="Timezone"
+              label={t("fields.timezone.label")}
               name="timezone"
               options={[
-                { label: "Contact Timezone", value: FormatTimezone.CONTACT },
-                { label: "Account Timezone", value: FormatTimezone.ACCOUNT },
+                {
+                  label: t("flows.formatTimezone.contactTimezone"),
+                  value: FormatTimezone.CONTACT,
+                },
+                {
+                  label: t("flows.formatTimezone.accountTimezone"),
+                  value: FormatTimezone.ACCOUNT,
+                },
               ]}
             />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline">{t("actions.cancel")}</Button>
               </DialogClose>
 
               <Button
@@ -118,7 +124,7 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
                 }
                 type="submit"
               >
-                Save changes
+                {t("actions.save")}
               </Button>
             </DialogFooter>
           </form>

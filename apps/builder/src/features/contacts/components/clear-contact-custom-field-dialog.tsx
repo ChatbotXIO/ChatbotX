@@ -14,9 +14,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
@@ -32,6 +32,7 @@ export default function ClearContactCustomFieldDialog({
   trigger,
   ids,
 }: ClearContactCustomFieldDialogProps) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -42,7 +43,11 @@ export default function ClearContactCustomFieldDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(<T keyName="common.updateForm.successMessage" />)
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.customField.label"),
+            }),
+          )
           setOpen(false)
         },
         onError: ({ error }) => {
@@ -66,7 +71,7 @@ export default function ClearContactCustomFieldDialog({
 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Tag</DialogTitle>
+          <DialogTitle>{t("dialog.clearCustomField")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -75,11 +80,14 @@ export default function ClearContactCustomFieldDialog({
             className="flex flex-col gap-2"
             onSubmit={handleSubmitWithAction}
           >
-            <CustomFieldSelect label="CustomField" name="customFieldId" />
+            <CustomFieldSelect
+              label={t("fields.customField.label")}
+              name="customFieldId"
+            />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">Cancel</Button>
+                <Button variant="ghost">{t("actions.cancel")}</Button>
               </DialogClose>
 
               <Button
@@ -91,7 +99,7 @@ export default function ClearContactCustomFieldDialog({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                <T keyName={"common.saveBtn"} />
+                {t("actions.confirm")}
               </Button>
             </DialogFooter>
           </form>

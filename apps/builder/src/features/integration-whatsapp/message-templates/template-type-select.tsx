@@ -1,7 +1,6 @@
 "use client"
 
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useTranslate } from "@tolgee/react"
 import {
   CopyIcon,
   FileIcon,
@@ -11,6 +10,7 @@ import {
   TypeIcon,
   VideoIcon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
 
 type WhatsappMessageTemplateTypeSelectProps = {
@@ -20,51 +20,52 @@ type WhatsappMessageTemplateTypeSelectProps = {
 export function WhatsappMessageTemplateTypeSelect(
   props: WhatsappMessageTemplateTypeSelectProps,
 ) {
-  const { t } = useTranslate()
+  const t = useTranslations()
+
   const validTypes = [
     {
       icon: TypeIcon,
-      name: t("whatsapp.messageTemplates.Text"),
+      name: t("whatsapp.messageTemplate.text.label"),
       value: TemplateType.Text,
     },
     {
       icon: ImageIcon,
-      name: t("whatsapp.messageTemplates.Image"),
+      name: t("whatsapp.messageTemplate.image.label"),
       value: TemplateType.Image,
     },
     {
       icon: VideoIcon,
-      name: t("whatsapp.messageTemplates.Video"),
+      name: t("whatsapp.messageTemplate.video.label"),
       value: TemplateType.Video,
     },
     {
       icon: FileIcon,
-      name: t("whatsapp.messageTemplates.File"),
+      name: t("whatsapp.messageTemplate.document.label"),
       value: TemplateType.Document,
     },
     {
       icon: CopyIcon,
-      name: t("whatsapp.messageTemplates.CarouselImage"),
+      name: t("whatsapp.messageTemplate.carouselImage.label"),
       value: TemplateType.CarouselImage,
     },
     {
       icon: CopyIcon,
-      name: t("whatsapp.messageTemplates.CarouselVideo"),
+      name: t("whatsapp.messageTemplate.carouselVideo.label"),
       value: TemplateType.CarouselVideo,
     },
     {
       icon: MapIcon,
-      name: t("whatsapp.messageTemplates.Location"),
+      name: t("whatsapp.messageTemplate.location.label"),
       value: TemplateType.Location,
     },
     {
       icon: StoreIcon,
-      name: t("whatsapp.messageTemplates.ViewCatalog"),
+      name: t("whatsapp.messageTemplate.viewCatalog.label"),
       value: TemplateType.ViewCatalog,
     },
     {
       icon: StoreIcon,
-      name: t("whatsapp.messageTemplates.ViewProduct"),
+      name: t("whatsapp.messageTemplate.viewProduct.label"),
       value: TemplateType.ViewProduct,
     },
   ]

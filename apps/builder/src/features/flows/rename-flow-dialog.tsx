@@ -15,9 +15,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateFlowAction } from "./actions/update-flow-action"
@@ -32,7 +32,7 @@ export function RenameFlowDialog({
   onOpenChange: (val: boolean) => void
   flow: FlowModel | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const {
@@ -46,7 +46,11 @@ export function RenameFlowDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Flow update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.flow.label"),
+            }),
+          )
           resetFormAndAction()
           onOpenChange(false)
           router.refresh()
@@ -72,7 +76,9 @@ export function RenameFlowDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("flows.update.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.updateTitle", { feature: t("fields.flow.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -81,12 +87,12 @@ export function RenameFlowDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("flows.name")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
                   <Button size="sm" type="button" variant="secondary">
-                    Close
+                    {t("actions.cancel")}
                   </Button>
                 </DialogClose>
                 <Button
@@ -98,7 +104,7 @@ export function RenameFlowDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </DialogFooter>
             </form>

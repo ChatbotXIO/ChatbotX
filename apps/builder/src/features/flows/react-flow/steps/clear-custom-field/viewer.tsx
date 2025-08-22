@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { SaveOffIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const ClearCustomFieldStepViewer = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={SaveOffIcon}
-      title={<T keyName="flows.StepType.ClearCustomField" />}
+      title={t("flows.stepType.clearCustomField")}
     />
   )
 }

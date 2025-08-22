@@ -1,9 +1,9 @@
 "use client"
 
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { syncWhatsappFlowAction } from "./actions/sync-flows"
@@ -13,13 +13,13 @@ export function WhatsappFlowsTableToolbarActions({
 }: {
   chatbotId: string
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { execute, isPending } = useAction(
     syncWhatsappFlowAction.bind(null, chatbotId),
     {
       onSuccess() {
-        toast.success(t("common.synced"))
+        toast.success(t("messages.syncedSuccessfully"))
       },
       onError({ error }) {
         error.serverError && toast.error(error.serverError)
@@ -30,7 +30,7 @@ export function WhatsappFlowsTableToolbarActions({
   return (
     <div className="flex items-center gap-2">
       <Button asChild size="sm">
-        <Link href="#">{t("common.manage")}</Link>
+        <Link href="#">{t("actions.manage")}</Link>
       </Button>
       <Button
         disabled={isPending}
@@ -44,7 +44,7 @@ export function WhatsappFlowsTableToolbarActions({
             className="mr-2 size-4 animate-spin"
           />
         )}
-        {t("common.Synchronize")}
+        {t("actions.synchronize")}
       </Button>
     </div>
   )

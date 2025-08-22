@@ -7,7 +7,6 @@ import { Input } from "@aha.chat/ui/components/ui/input"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import {
   Loader2Icon,
   MessageSquareMoreIcon,
@@ -16,6 +15,7 @@ import {
   ZapIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Controller, useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { FlowSelect } from "../flows/flow-select"
@@ -32,7 +32,7 @@ export function CreateAutomatedResponseForm({
   chatbotId: string
   folderId: string | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const {
@@ -82,7 +82,7 @@ export function CreateAutomatedResponseForm({
           render={({ field }) => (
             <div className="flex flex-col gap-2">
               <Label className="flex-1" htmlFor="userMessages">
-                User message
+                {t("fields.userMessage.label")}
               </Label>
               {/* Render existing inputs */}
               {field.value.map((m, index) => (
@@ -122,7 +122,7 @@ export function CreateAutomatedResponseForm({
                   }}
                   variant="ghost"
                 >
-                  <PlusCircleIcon /> Add more
+                  <PlusCircleIcon /> {t("actions.addMore")}
                 </Button>
               </div>
             </div>
@@ -132,7 +132,7 @@ export function CreateAutomatedResponseForm({
         {/* Bot response block */}
         <div className="mt-4">
           <Label className="mt-5 font-bold" htmlFor="replies.0">
-            Bot response
+            {t("fields.botResponse.label")}
           </Label>
         </div>
 
@@ -185,7 +185,7 @@ export function CreateAutomatedResponseForm({
             type="button"
             variant="ghost"
           >
-            <PlusCircleIcon /> Add text reply
+            <PlusCircleIcon /> {t("actions.addTextReply")}
           </Button>
 
           <Button
@@ -199,7 +199,7 @@ export function CreateAutomatedResponseForm({
             type="button"
             variant="ghost"
           >
-            <PlusCircleIcon /> Add flow reply
+            <PlusCircleIcon /> {t("actions.addFlowReply")}
           </Button>
         </div>
 
@@ -211,7 +211,7 @@ export function CreateAutomatedResponseForm({
             type="button"
             variant="ghost"
           >
-            {t("common.cancel-btn")}
+            {t("actions.cancel")}
           </Button>
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
@@ -220,7 +220,7 @@ export function CreateAutomatedResponseForm({
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />
             )}
-            {t("common.confirm-btn")}
+            {t("actions.confirm")}
           </Button>
         </div>
       </form>

@@ -15,9 +15,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import WhatsappIcon from "@/components/icons/whatsapp"
@@ -27,7 +27,7 @@ import { connectWhatsappSchema } from "./schemas"
 export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -36,7 +36,11 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
       {
         actionProps: {
           onSuccess: () => {
-            toast.success("Connected Whatsapp successfully")
+            toast.success(
+              t("messages.connectedSuccessfully", {
+                feature: t("fields.whatsapp.label"),
+              }),
+            )
             resetFormAndAction()
             setOpen(false)
             router.refresh()
@@ -58,25 +62,22 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button size="sm">{t("Integrations.ConnectBtn")}</Button>
+        <Button size="sm">{t("actions.connect")}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <WhatsappIcon />
-            <span>Whatsapp</span>
+            <span>{t("fields.whatsapp.label")}</span>
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
+            <InputField label={t("fields.wabaId.label")} name="wabaId" />
             <InputField
-              label={t("Integrations.Whatsapp.WabaId")}
-              name="wabaId"
-            />
-            <InputField
-              label={t("Integrations.Whatsapp.AccessToken")}
+              label={t("fields.accessToken.label")}
               name="accessToken"
             />
 
@@ -87,7 +88,7 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
                   type="button"
                   variant="secondary"
                 >
-                  {t("common.cancelBtn")}
+                  {t("actions.cancel")}
                 </Button>
               </DialogClose>
 
@@ -100,7 +101,7 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("common.confirmBtn")}
+                {t("actions.confirm")}
               </Button>
             </DialogFooter>
           </form>

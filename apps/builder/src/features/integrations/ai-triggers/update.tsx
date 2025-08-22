@@ -14,9 +14,9 @@ import {
 import { Form, FormLabel } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { ArrowRightIcon, Loader2Icon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
@@ -38,7 +38,7 @@ export function UpdateAITriggerDialog({
   open,
   onOpenChange,
 }: UpdateAITriggerDialogProps) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const {
@@ -56,7 +56,11 @@ export function UpdateAITriggerDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("AI Trigger update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.aiTrigger.label"),
+            }),
+          )
 
           resetFormAndAction()
           onOpenChange(false)
@@ -99,7 +103,9 @@ export function UpdateAITriggerDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("aiTriggers.update.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.updateTitle", { feature: t("fields.aiTrigger.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -108,15 +114,15 @@ export function UpdateAITriggerDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("aiTriggers.name")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" />
 
               <TextareaField
-                label={t("aiTriggers.description")}
+                label={t("fields.description.label")}
                 name="description"
               />
 
               <div className="flex flex-col space-y-2">
-                <FormLabel>{t("aiTriggers.dataCollect")}</FormLabel>
+                <FormLabel>{t("fields.dataCollect.label")}</FormLabel>
                 {fields.map((field, i) => (
                   <div className="flex items-center space-x-2" key={field.id}>
                     <div className="basis-5/12">
@@ -152,14 +158,14 @@ export function UpdateAITriggerDialog({
                   type="button"
                   variant="secondary"
                 >
-                  {t("aiTriggers.dataCollect.addBtn")}
+                  {t("actions.add")}
                 </Button>
               </div>
 
-              <FlowSelect label={t("aiTriggers.flowId")} name="flowId" />
+              <FlowSelect label={t("fields.flowId.label")} name="flowId" />
 
               <TextareaField
-                label={t("aiTriggers.finalMessage")}
+                label={t("fields.finalMessage.label")}
                 name="finalMessage"
               />
 
@@ -169,7 +175,7 @@ export function UpdateAITriggerDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancel-btn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -180,7 +186,7 @@ export function UpdateAITriggerDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

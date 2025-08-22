@@ -15,10 +15,10 @@ import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { T } from "@tolgee/react"
 import { format } from "date-fns"
 import { MoreHorizontalIcon } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import React, { useMemo } from "react"
 import { toast } from "sonner"
@@ -40,6 +40,7 @@ export function AutomatedResponsesTable({
   chatbotId,
   promises,
 }: AutomatedResponseTableProps) {
+  const t = useTranslations()
   const [{ data, pageCount }] = React.use(promises)
 
   const [rowAction, setRowAction] =
@@ -76,7 +77,10 @@ export function AutomatedResponsesTable({
         id: "userMessages",
         size: 100,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="User Message" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.userMessage.label")}
+          />
         ),
         cell: ({ row }) => {
           const { id, userMessages } = row.original
@@ -91,7 +95,10 @@ export function AutomatedResponsesTable({
         id: "replies",
         accessorKey: "replies",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Bot Response" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.botResponse.label")}
+          />
         ),
         cell: ({ cell }) => {
           const replies = cell.getValue<
@@ -159,14 +166,14 @@ export function AutomatedResponsesTable({
                   onClick={() => setRowAction({ row, variant: "update" })}
                   variant="destructive"
                 >
-                  <T keyName="common.updateBtn" />
+                  {t("actions.update")}
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
                   onClick={() => setRowAction({ row, variant: "delete" })}
                   variant="destructive"
                 >
-                  <T keyName="common.deleteBtn" />
+                  {t("actions.delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -176,7 +183,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [chatbotId],
+    [chatbotId, t],
   )
 
   const { table } = useDataTable({

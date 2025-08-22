@@ -15,8 +15,8 @@ import {
 } from "@aha.chat/ui/components/ui/hover-card"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
-import { useTranslate } from "@tolgee/react"
 import { CodeIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFormContext } from "react-hook-form"
 
@@ -29,7 +29,7 @@ export function EditNoteDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { watch, setValue } = useFormContext()
   const text = watch(`${parentName}.message`)
   const [note, setNote] = useState(text)
@@ -45,12 +45,14 @@ export function EditNoteDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("flows.StepType.AddNote")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.createTitle", { feature: t("fields.flowNode.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div>
           <HoverCard closeDelay={0} openDelay={0}>
-            <Label className="font-bold">Input Text</Label>
+            <Label className="font-bold">{t("fields.notes.label")}</Label>
             <HoverCardTrigger asChild>
               <Textarea
                 defaultValue={note}
@@ -84,10 +86,10 @@ export function EditNoteDialog({
               type="button"
               variant="ghost"
             >
-              {t("common.cancel-btn")}
+              {t("actions.cancel")}
             </Button>
             <Button onClick={editNote} type="submit">
-              {t("common.confirm-btn")}
+              {t("actions.confirm")}
             </Button>
           </div>
         </div>

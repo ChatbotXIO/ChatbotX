@@ -15,8 +15,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
 import { Loader2, PlusIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import type { UserResource } from "../users/schemas"
@@ -30,6 +30,8 @@ export function CreateInboxTeamDialog({
   chatbotId: string
   users: UserResource[]
 }) {
+  const t = useTranslations()
+
   const [open, setOpen] = useState(false)
   // const router = useRouter()
 
@@ -67,13 +69,13 @@ export function CreateInboxTeamDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          <T keyName="teams.addBtn" />
+          {t("actions.create")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <T keyName="teams.create.title" />
+            {t("dialog.createTitle", { feature: t("fields.inboxTeam.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -93,9 +95,7 @@ export function CreateInboxTeamDialog({
 
               <div className="flex justify-end gap-4">
                 <DialogClose asChild>
-                  <Button variant="outline">
-                    <T keyName="common.cancelBtn" />
-                  </Button>
+                  <Button variant="outline">{t("actions.cancel")}</Button>
                 </DialogClose>
 
                 <Button
@@ -107,7 +107,7 @@ export function CreateInboxTeamDialog({
                   {form.formState.isSubmitting && (
                     <Loader2 className="animate-spin" />
                   )}
-                  <T keyName="common.confirm-btn" />
+                  {t("actions.create")}
                 </Button>
               </div>
             </form>

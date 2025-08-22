@@ -32,10 +32,10 @@ import {
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { Controller } from "react-hook-form"
 import { toast } from "sonner"
@@ -49,7 +49,7 @@ type CreateAccountFieldDialogProps = {
 export function CreateAccountFieldDialog({
   chatbotId,
 }: CreateAccountFieldDialogProps) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const [open, setOpen] = useState(false)
   const searchParams = useSearchParams()
@@ -57,27 +57,27 @@ export function CreateAccountFieldDialog({
   const customFieldTypeLabels = [
     {
       value: CustomFieldType.SHORTTEXT,
-      label: t("customFieldType.ShortText"),
+      label: t("customField.types.shortText"),
     },
     {
       value: CustomFieldType.NUMBER,
-      label: t("customFieldType.Number"),
+      label: t("customField.types.number"),
     },
     {
       value: CustomFieldType.DATE,
-      label: t("customFieldType.Date"),
+      label: t("customField.types.date"),
     },
     {
       value: CustomFieldType.DATETIME,
-      label: t("customFieldType.DateTime"),
+      label: t("customField.types.dateTime"),
     },
     {
       value: CustomFieldType.BOOLEAN,
-      label: t("customFieldType.Boolean"),
+      label: t("customField.types.boolean"),
     },
     {
       value: CustomFieldType.LONGTEXT,
-      label: t("customFieldType.LongText"),
+      label: t("customField.types.longText"),
     },
   ]
 
@@ -92,7 +92,7 @@ export function CreateAccountFieldDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(t("accountFields.created"))
+          toast.success(t("accountFields.create.successMessage"))
           setOpen(false)
           resetFormAndAction()
         },
@@ -124,7 +124,7 @@ export function CreateAccountFieldDialog({
       case CustomFieldType.NUMBER:
         return (
           <Input
-            placeholder="Enter number"
+            placeholder={t("customField.placeholders.enterNumber")}
             type="number"
             {...register("value")}
           />
@@ -137,11 +137,17 @@ export function CreateAccountFieldDialog({
             render={({ field }) => (
               <Select onValueChange={field.onChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select true/false" />
+                  <SelectValue
+                    placeholder={t("customField.placeholders.selectTrueFalse")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="true">True</SelectItem>
-                  <SelectItem value="false">False</SelectItem>
+                  <SelectItem value="true">
+                    {t("customField.values.true")}
+                  </SelectItem>
+                  <SelectItem value="false">
+                    {t("customField.values.false")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -170,9 +176,19 @@ export function CreateAccountFieldDialog({
           />
         )
       case CustomFieldType.LONGTEXT:
-        return <Textarea placeholder="Enter text" {...register("value")} />
+        return (
+          <Textarea
+            placeholder={t("customField.placeholders.enterText")}
+            {...register("value")}
+          />
+        )
       default:
-        return <Input placeholder="Enter text" {...register("value")} />
+        return (
+          <Input
+            placeholder={t("customField.placeholders.enterText")}
+            {...register("value")}
+          />
+        )
     }
   }
 
@@ -181,7 +197,7 @@ export function CreateAccountFieldDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("common.createBtn")}
+          {t("actions.create")}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -191,10 +207,10 @@ export function CreateAccountFieldDialog({
         </DialogHeader>
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("accountField.name.label")} name="name" />
+            <InputField label={t("fields.name.label")} name="name" />
 
             <SelectField
-              label={t("customFieldType.label")}
+              label={t("fields.type.label")}
               name="customFieldType"
               options={customFieldTypeLabels}
             />
@@ -204,7 +220,7 @@ export function CreateAccountFieldDialog({
               name="value"
               render={() => (
                 <FormItem>
-                  <FormLabel>Value</FormLabel>
+                  <FormLabel>{t("fields.value.label")}</FormLabel>
                   {renderValueInput()}
                   <FormMessage />
                 </FormItem>
@@ -213,7 +229,7 @@ export function CreateAccountFieldDialog({
 
             <TextareaField
               isRequired={false}
-              label={t("accountField.description.label")}
+              label={t("fields.description.label")}
               name="description"
             />
 
@@ -223,7 +239,7 @@ export function CreateAccountFieldDialog({
                 type="button"
                 variant="ghost"
               >
-                {t("common.cancelBtn")}
+                {t("actions.cancel")}
               </Button>
               <Button
                 disabled={
@@ -234,7 +250,7 @@ export function CreateAccountFieldDialog({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("common.confirmBtn")}
+                {t("actions.confirm")}
               </Button>
             </div>
           </form>

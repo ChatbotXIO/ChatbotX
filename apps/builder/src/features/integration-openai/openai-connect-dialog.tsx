@@ -21,9 +21,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
 import { ChevronsUpDown } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { connectOpenAIAction } from "./actions/connect.action"
@@ -33,7 +33,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
   const [open, setOpen] = useState(false)
   const [isOpenOptions, setIsOpenOptions] = useState<boolean>(false)
 
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -64,7 +64,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm" variant="secondary">
-          <T keyName="settings.integrations.OpenAI.button.connect" />
+          {t("actions.connect")}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -74,25 +74,25 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
         </DialogHeader>
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("Integrations.OpenAI.APIKey")} name="apiKey" />
+            <InputField label={t("fields.apiKey.label")} name="apiKey" />
 
             <Collapsible onOpenChange={setIsOpenOptions} open={isOpenOptions}>
               <div className="flex items-center justify-between space-x-4">
                 <CollapsibleTrigger asChild>
                   <div className="flex w-full items-center">
                     <div className="flex-1 font-semibold text-sm">
-                      More options
+                      {t("actions.moreOptions")}
                     </div>
                     <Button className="w-9 p-0" size="sm" variant="ghost">
                       <ChevronsUpDown className="h-4 w-4" />
-                      <span className="sr-only">Toggle</span>
+                      <span className="sr-only">{t("actions.toggle")}</span>
                     </Button>
                   </div>
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent className="space-y-2">
                 <InputNumberField
-                  label={t("Integrations.OpenAI.Temperature")}
+                  label={t("fields.temperature.label")}
                   max={2}
                   min={0}
                   name="temperature"
@@ -100,7 +100,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
                 />
 
                 <InputNumberField
-                  label={t("Integrations.OpenAI.MaxTokens")}
+                  label={t("fields.maxTokens.label")}
                   max={8192}
                   min={1}
                   name="maxTokens"
@@ -112,13 +112,11 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="secondary">
-                  <T keyName="common.cancelBtn" />
+                  {t("actions.cancel")}
                 </Button>
               </DialogClose>
 
-              <Button type="submit">
-                <T keyName="common.confirmBtn" />
-              </Button>
+              <Button type="submit">{t("actions.confirm")}</Button>
             </DialogFooter>
           </form>
         </Form>

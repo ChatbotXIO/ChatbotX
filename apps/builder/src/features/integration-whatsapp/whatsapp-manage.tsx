@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { T, useTranslate } from "@tolgee/react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
 import type { getWhastappIntegration } from "./queries"
@@ -16,18 +16,18 @@ type WhatsappManageProps = {
 
 export function WhatsappManage({ chatbotId, promises }: WhatsappManageProps) {
   const [integrationWhatsapp] = use(promises)
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   return (
     <SettingRow
-      description={t("Integration.Whatsapp.Descriptions")}
-      label={t("Integration.Whatsapp.Title")}
+      description={t("whatsapp.setting.description")}
+      label={t("whatsapp.setting.title")}
     >
       {integrationWhatsapp ? (
         <div className="flex flex-col gap-2">
           <Button size="sm" variant="secondary">
             <Link href={`/chatbots/${chatbotId}/whatsapp/useful-links`}>
-              <T keyName="Integration.ManageBtn" />
+              {t("actions.manage")}
             </Link>
           </Button>
           <WhatsappDisconnectDialog chatbotId={chatbotId} />

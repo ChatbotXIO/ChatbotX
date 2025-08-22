@@ -11,8 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import { T } from "@tolgee/react"
 import { BotMessageSquareIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 
 type OpenAIDialogProps = {
@@ -22,6 +22,7 @@ type OpenAIDialogProps = {
 
 export const OpenAIDialog = (props: OpenAIDialogProps) => {
   const { name, children } = props
+  const t = useTranslations()
 
   return (
     <Dialog>
@@ -32,7 +33,7 @@ export const OpenAIDialog = (props: OpenAIDialogProps) => {
             <p className="font-medium text-sm">OpenAI</p>
           </div>
           <div className="mt-2 text-gray-500 text-xs">
-            <T keyName={name} />
+            {t(`flows.stepType.${name}` as keyof typeof t)}
           </div>
         </div>
       </DialogTrigger>
@@ -47,12 +48,12 @@ export const OpenAIDialog = (props: OpenAIDialogProps) => {
         <DialogFooter className="flex items-end">
           <DialogClose asChild>
             <Button size="sm" type="button" variant="secondary">
-              <T keyName="common.cancelBtn" />
+              {t("actions.cancel")}
             </Button>
           </DialogClose>
 
           <Button size="sm" type="button">
-            <T keyName="common.continueBtn" />
+            {t("actions.continue")}
           </Button>
         </DialogFooter>
       </DialogContent>

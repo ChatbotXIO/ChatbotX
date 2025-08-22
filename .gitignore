@@ -42,6 +42,5 @@ yarn-error.log*
 *.pem
 .idea/
 
-.tolgee
 .partykit
 test.rest

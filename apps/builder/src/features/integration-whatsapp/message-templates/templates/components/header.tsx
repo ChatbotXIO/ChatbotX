@@ -1,12 +1,12 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
-import { useTranslate } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useDebouncedCallback } from "use-debounce"
 
 const TemplateHeaderComponent = ({ parentName }: { parentName: string }) => {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { getValues, setValue } = useFormContext()
 
   const [localHeader, setLocalHeader] = useState(
@@ -63,7 +63,7 @@ const TemplateHeaderComponent = ({ parentName }: { parentName: string }) => {
   }, [getValues, handleChange, localHeader, parentName, setValue])
 
   const displayText = useMemo(() => {
-    return getValues(`${parentName}.text`) || `---- ${t("common.edit")} ----`
+    return getValues(`${parentName}.text`) || `---- ${t("actions.update")} ----`
   }, [getValues, parentName, t])
 
   return (
@@ -82,7 +82,7 @@ const TemplateHeaderComponent = ({ parentName }: { parentName: string }) => {
             onClick={addParam}
             variant="link"
           >
-            {t("common.addVariable")}
+            {t("actions.addVariable")}
           </Button>
         </div>
       ) : (

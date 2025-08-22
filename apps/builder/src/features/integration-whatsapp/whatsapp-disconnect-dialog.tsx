@@ -12,15 +12,16 @@ import {
   AlertDialogTrigger,
 } from "@aha.chat/ui/components/ui/alert-dialog"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectWhatsappAction } from "./actions/disconnect.action"
 
 export function WhatsappDisconnectDialog({ chatbotId }: { chatbotId: string }) {
+  const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState<boolean>(false)
 
@@ -38,22 +39,24 @@ export function WhatsappDisconnectDialog({ chatbotId }: { chatbotId: string }) {
     <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
         <Button size="sm" variant="destructive">
-          <T keyName="Integration.DisconnectBtn" />
+          {t("actions.disconnect")}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            <T keyName="Integration.DisconnectDialog.Confirm" />
+            {t("dialog.disconnect.title", {
+              feature: t("fields.whatsapp.label"),
+            })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <T keyName="Integration.DisconnectDialog.Description" />
+            {t("dialog.disconnect.description", {
+              feature: t("fields.whatsapp.label"),
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>
-            <T keyName="Integration.CancelBtn" />
-          </AlertDialogCancel>
+          <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={isPendingDisconnect}
             onClick={async (e) => {
@@ -62,7 +65,7 @@ export function WhatsappDisconnectDialog({ chatbotId }: { chatbotId: string }) {
             }}
           >
             {isPendingDisconnect && <Loader2Icon className="animate-spin" />}
-            <T keyName="Integration.DisconnectBtn" />
+            {t("actions.disconnect")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -10,9 +10,10 @@ import {
 } from "@aha.chat/ui/components/ui/card"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import Link from "next/link"
 import { redirect } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
@@ -29,6 +30,7 @@ export const SignInForm = ({
 }: {
   callbackUrl?: string
 }) => {
+  const t = useTranslations()
   const magicLinkForm = useForm<MagicLinkRequest>({
     resolver: zodResolver(magicLinkRequest),
     defaultValues: {
@@ -54,9 +56,7 @@ export const SignInForm = ({
     <div className="flex flex-col gap-6" {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">
-            <T keyName="signin.title" />
-          </CardTitle>
+          <CardTitle className="text-xl">{t("signin.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
@@ -72,7 +72,7 @@ export const SignInForm = ({
             </div>
             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
               <span className="relative z-10 bg-background px-2 text-muted-foreground">
-                <T keyName="signin.or" />
+                {t("signin.or")}
               </span>
             </div> */}
 
@@ -94,7 +94,7 @@ export const SignInForm = ({
                   {magicLinkForm.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  <T keyName="signin.continue" />
+                  {t("actions.continue")}
                 </Button>
               </form>
             </Form>
@@ -103,8 +103,14 @@ export const SignInForm = ({
       </Card>
 
       <div className="text-balance text-center text-muted-foreground text-xs [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-        By clicking continue, you agree to our <span>Terms of Service</span> and{" "}
-        <span>Privacy Policy</span>.
+        {t("signin.acceptTermsAndPolicy", {
+          termsOfService: (
+            <Link href="/terms-of-service">{t("signin.termsOfService")}</Link>
+          ),
+          privacyPolicy: (
+            <Link href="/privacy-policy">{t("signin.privacyPolicy")}</Link>
+          ),
+        })}
       </div>
     </div>
   )

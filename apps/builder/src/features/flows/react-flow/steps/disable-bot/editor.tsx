@@ -1,15 +1,14 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { UserIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
 const DisableBotStepEditor = () => {
+  const t = useTranslations()
+
   return (
-    <BaseStepEditor
-      icon={UserIcon}
-      title={<T keyName="flows.StepType.DisableBot" />}
-    />
+    <BaseStepEditor icon={UserIcon} title={t("flows.stepType.disableBot")} />
   )
 }
 

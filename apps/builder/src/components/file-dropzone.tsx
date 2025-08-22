@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@aha.chat/ui/components/ui/tooltip"
 import { cn } from "@aha.chat/ui/lib/utils"
-import { T } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import {
   File,
   ImageIcon,
@@ -81,8 +81,8 @@ export default function FileDropzone({
   type = FileType.IMAGE,
   mode = "file",
   configs: {
-    uploadKeyName = "common.uploadImageOr",
-    linkKeyName = "common.insertLink",
+    uploadKeyName = "texts.or",
+    linkKeyName = "actions.insertLink",
     accept = { "image/*": [] },
     maxSize = 10,
     isCard = false,
@@ -93,6 +93,7 @@ export default function FileDropzone({
 }: FileDropzoneProps) {
   const [preview, setPreview] = useState("")
   const [fileMode, setFileMode] = useState<"file" | "link">(mode)
+  const t = useTranslations()
 
   const _validateSize = (file: File) => file.size > maxSize * 1024 * 1024
 
@@ -138,7 +139,7 @@ export default function FileDropzone({
   const _onDrop = ([file]: File[]) => {
     if (file) {
       if (_validateSize(file)) {
-        return toast("common.upload.fileMaxSize")
+        return toast(t("validation.maxSize"))
       }
 
       if (file.type.startsWith("image/")) {
@@ -175,7 +176,7 @@ export default function FileDropzone({
       <div className="flex flex-col items-center">
         <UploadIcon className="text-gray-500" size={30} type={type} />
         <div>
-          <T keyName={uploadKeyName} />
+          {t("texts.or")}
           {!isCard && (
             <>
               {"\u00A0"}
@@ -184,7 +185,7 @@ export default function FileDropzone({
                 onClick={_onMode}
                 variant="link"
               >
-                <T keyName={linkKeyName} />
+                {t("actions.insertLink")}
               </Button>
             </>
           )}
@@ -263,7 +264,7 @@ export default function FileDropzone({
         </div>
         <Input
           className="rounded-full"
-          placeholder="Insert link"
+          placeholder={t("fields.file.insertLink")}
           {...register(`${parentName}.url`)}
         />
       </div>

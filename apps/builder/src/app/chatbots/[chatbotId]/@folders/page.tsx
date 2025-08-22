@@ -1,12 +1,12 @@
 import type { FolderModel } from "@aha.chat/database/types"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
-import { T } from "@/tolgee/server"
 import { getFolderTypeFromFeature } from "./_lib"
 
 const folderSearchParams = {
@@ -30,6 +30,7 @@ export default async function FoldersDetault(props: {
   const params = await props.params
   const searchParams = await props.searchParams
   const { folderId } = await loadSearchParams(searchParams)
+  const t = await getTranslations()
 
   const promises = Promise.all([
     folderId
@@ -49,7 +50,7 @@ export default async function FoldersDetault(props: {
     <>
       <div className="flex">
         <h3 className="flex-1 font-bold text-xl">
-          <T keyName="folders.heading" />
+          {t("folders.heading.title")}
         </h3>
         <CreateFolderDialog
           chatbotId={params.chatbotId}

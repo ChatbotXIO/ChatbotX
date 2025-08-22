@@ -24,9 +24,9 @@ import {
 } from "@aha.chat/ui/components/ui/select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import type { FieldValues } from "react-hook-form"
 import { toast } from "sonner"
@@ -45,6 +45,7 @@ export default function AssignConversationDialog({
   trigger,
   contactIds,
 }: AssignConversationDialogProps) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -77,7 +78,11 @@ export default function AssignConversationDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(<T keyName="common.updateForm.successMessage" />)
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.conversation.label"),
+            }),
+          )
           setOpen(false)
         },
         onError: ({ error }) => {
@@ -164,7 +169,7 @@ export default function AssignConversationDialog({
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">Cancel</Button>
+                <Button variant="ghost">{t("actions.cancel")}</Button>
               </DialogClose>
 
               <Button
@@ -176,7 +181,7 @@ export default function AssignConversationDialog({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                <T keyName={"common.saveBtn"} />
+                {t("actions.confirm")}
               </Button>
             </DialogFooter>
           </form>

@@ -20,9 +20,9 @@ import {
 import { Input } from "@aha.chat/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateTagAction } from "./actions/update-tag-action"
@@ -39,7 +39,7 @@ export function UpdateTagDialog({
   chatbotId: string
   tag: TagModel | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const {
@@ -53,7 +53,11 @@ export function UpdateTagDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Tag update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.tag.label"),
+            }),
+          )
           resetFormAndAction()
           onOpenChange(false)
           router.refresh()
@@ -79,7 +83,9 @@ export function UpdateTagDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("tags.update.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.updateTitle", { feature: t("fields.tag.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -93,9 +99,9 @@ export function UpdateTagDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("tags.name")}</FormLabel>
+                    <FormLabel>{t("fields.name.label")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("tags.name")} {...field} />
+                      <Input placeholder={t("fields.name.label")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -108,7 +114,7 @@ export function UpdateTagDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancel-btn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -119,7 +125,7 @@ export function UpdateTagDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

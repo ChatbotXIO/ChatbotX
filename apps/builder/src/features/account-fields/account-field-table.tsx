@@ -15,7 +15,6 @@ import { Separator } from "@aha.chat/ui/components/ui/separator"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { useTranslate } from "@tolgee/react"
 import {
   FingerprintIcon,
   MoreHorizontalIcon,
@@ -23,6 +22,7 @@ import {
   TextIcon,
   Trash2Icon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { useCopyToClipboard } from "usehooks-ts"
 import { AccountFieldToolbarActions } from "./account-field-table-toolbar"
@@ -42,7 +42,7 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AccountFieldResource> | null>(null)
   const [_, copyToClipboard] = useCopyToClipboard()
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   const columns = useMemo<ColumnDef<AccountFieldResource>[]>(
@@ -129,14 +129,14 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
                   onClick={() => setRowAction({ row, variant: "update" })}
                 >
                   <PencilIcon />
-                  {t("common.updateBtn")}
+                  {t("actions.update")}
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem onClick={() => setRowAction({ row, variant: "move" })}>Change folder</DropdownMenuItem> */}
                 <DropdownMenuItem
                   onClick={() => copyToClipboard(row.original.id)}
                 >
                   <FingerprintIcon />
-                  {t("common.getIdBtn")}
+                  {t("actions.getID")}
                 </DropdownMenuItem>
                 <Separator className="my-1" />
                 <DropdownMenuItem
@@ -144,7 +144,7 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
                   variant="destructive"
                 >
                   <Trash2Icon />
-                  {t("common.deleteBtn")}
+                  {t("actions.delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

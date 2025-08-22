@@ -3,6 +3,7 @@
 import { openAIGenerateImageSizes } from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 
@@ -14,10 +15,14 @@ export const OpenAIGenerateImageEditor = (
   props: OpenAIGenerateImageEditorProps,
 ) => {
   const { parentName } = props
+  const t = useTranslations()
 
   return (
     <OpenAIDialog name="Flows.OpenAI.Title.GenerateImage">
-      <InputField label="User Message" name={`${parentName}.userMessage`} />
+      <InputField
+        label={t("fields.userMessage.label")}
+        name={`${parentName}.userMessage`}
+      />
 
       <SelectField
         defaultValue="dall-e-2::1024x1024"

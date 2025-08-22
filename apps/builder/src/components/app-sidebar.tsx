@@ -5,9 +5,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from "@aha.chat/ui/components/ui/sidebar"
-import { useTranslate } from "@tolgee/react"
 import {
   Atom,
   ChartPie,
@@ -18,6 +16,7 @@ import {
   Workflow,
   Wrench,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { type ComponentProps, use } from "react"
 import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
@@ -32,8 +31,7 @@ export function AppSidebar({
   chatbotId: string
   allChatbotsPromise: Promise<{ chatbots: ChatbotResource[] }>
 }) {
-  const { t } = useTranslate()
-
+  const t = useTranslations()
   const { chatbots } = use(allChatbotsPromise)
 
   const data = {
@@ -44,43 +42,43 @@ export function AppSidebar({
     },
     navMain: [
       {
-        title: t("common.analytics"),
+        title: t("fields.analytics.label"),
         url: `/chatbots/${chatbotId}/dashboard`,
         icon: ChartPie,
         isActive: true,
       },
       {
-        title: t("common.inbox"),
+        title: t("fields.inbox.label"),
         url: `/chatbots/${chatbotId}/inbox`,
         icon: MessageCircleMore,
       },
       {
-        title: t("common.flows"),
+        title: t("fields.flows.label"),
         url: `/chatbots/${chatbotId}/flows`,
         icon: Workflow,
       },
       {
-        title: t("common.contacts"),
+        title: t("fields.contacts.label"),
         url: `/chatbots/${chatbotId}/contacts`,
         icon: Users,
       },
       {
-        title: t("common.automated_responses"),
+        title: t("fields.automatedResponses.label"),
         url: `/chatbots/${chatbotId}/automated-responses`,
         icon: Atom,
       },
       {
-        title: t("common.broadcasts"),
+        title: t("fields.broadcasts.label"),
         url: `/chatbots/${chatbotId}/broadcasts`,
         icon: Radio,
       },
       {
-        title: t("common.tools"),
+        title: t("fields.tools.label"),
         url: `/chatbots/${chatbotId}/tools`,
         icon: Wrench,
       },
       {
-        title: t("common.settings"),
+        title: t("fields.settings.label"),
         url: `/chatbots/${chatbotId}/settings/general`,
         icon: SlidersHorizontal,
       },
@@ -98,7 +96,6 @@ export function AppSidebar({
       <SidebarFooter>
         <NavUser user={data.user} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }

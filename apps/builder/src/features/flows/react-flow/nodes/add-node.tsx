@@ -6,17 +6,18 @@ import {
   PopoverTrigger,
 } from "@aha.chat/ui/components/ui/popover"
 import { createId } from "@paralleldrive/cuid2"
-import { T } from "@tolgee/react"
 import {
   ControlButton,
   type ReactFlowInstance,
   useReactFlow,
 } from "@xyflow/react"
 import { Plus } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { allNodesConfig } from "./node-config"
 
 export function AddNodeButton() {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const reactFlow = useReactFlow()
 
@@ -43,7 +44,7 @@ export function AddNodeButton() {
                 variant="ghost"
               >
                 <item.icon />
-                <T keyName={item.label} />
+                {t(item.label as keyof typeof t)}
               </Button>
             ) : null
           })}

@@ -15,8 +15,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateBroadcastAction } from "./actions/update-broadcast.action"
@@ -31,7 +31,7 @@ export function RenameBroadcastDialog({
   onOpenChange: (val: boolean) => void
   broadcast: BroadcastModel | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const {
     form,
@@ -48,7 +48,11 @@ export function RenameBroadcastDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("BroadcastModel update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.broadcast.label"),
+            }),
+          )
           resetFormAndAction()
           onOpenChange(false)
         },
@@ -82,12 +86,12 @@ export function RenameBroadcastDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("broadcasts.name")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
                   <Button size="sm" type="button" variant="secondary">
-                    Close
+                    {t("actions.cancel")}
                   </Button>
                 </DialogClose>
                 <Button
@@ -99,7 +103,7 @@ export function RenameBroadcastDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </DialogFooter>
             </form>

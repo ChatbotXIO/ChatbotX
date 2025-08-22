@@ -1,6 +1,6 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useTranslate } from "@tolgee/react"
 import { PlusIcon, XIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { memo, useCallback, useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { EditButtonDialog } from "./edit-button-dialog"
@@ -60,7 +60,7 @@ const ButtonGroupPreviewComponent = (
   props: ButtonGroupPreviewComponentProps,
 ) => {
   const { parentName, changeType = true, min = 0, max = 3 } = props
-  const { t } = useTranslate()
+  const t = useTranslations()
   const [openModal, setOpenModal] = useState(false)
   const [openBtnName, setOpenBtnName] = useState("")
 
@@ -116,7 +116,7 @@ const ButtonGroupPreviewComponent = (
           variant="secondary"
         >
           <PlusIcon />
-          {t("flows.addBtn")}
+          {t("actions.create")}
         </Button>
       )}
       {openModal && (

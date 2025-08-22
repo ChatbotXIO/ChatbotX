@@ -3,7 +3,7 @@
 import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useTranslate } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { memo, useCallback } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 
@@ -26,7 +26,7 @@ const VariableInput = memo(
 const TemplateVideoPartialComponent = (props: { parentName?: string }) => {
   const { parentName = "content", ...rest } = props
 
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { control, setValue } = useFormContext()
 
   const [_showFooter, bodyVariables] = useWatch({
@@ -47,7 +47,7 @@ const TemplateVideoPartialComponent = (props: { parentName?: string }) => {
     <div className="w-full flex-1" {...rest}>
       <div className="flex gap-4">
         <CheckboxGroupField
-          label={t("whatapp.templateFooter")}
+          label={t("whatsapp.templateFooter.label")}
           name={`${parentName}.showFooter`}
           options={[
             {
@@ -59,7 +59,7 @@ const TemplateVideoPartialComponent = (props: { parentName?: string }) => {
       </div>
       {bodyVariables.length > 0 && (
         <>
-          <div className="mt-6">{t("common.sampleBodyContent")}</div>
+          <div className="mt-6">{t("whatsapp.sampleBodyContent.label")}</div>
           {bodyVariables.map((_variable: string, index: number) => (
             <VariableInput
               index={index}

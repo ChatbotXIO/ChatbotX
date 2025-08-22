@@ -13,8 +13,8 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
-import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
@@ -36,13 +36,17 @@ export function DeleteAITriggerDialog({
   onOpenChange,
   ...props
 }: DeleteAITriggerDialogProps) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { execute, isPending } = useAction(
     deleteAITriggerAction.bind(null, chatbotId),
     {
       onSuccess() {
-        toast.success(t("aiTriggers.deleted"))
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.aiTrigger.label"),
+          }),
+        )
       },
       onError({ error }) {
         error.serverError && toast.error(error.serverError)
@@ -56,24 +60,25 @@ export function DeleteAITriggerDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("common.deleteBtn")} ({trigger.length})
+            {t("actions.delete")} ({trigger.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("aiTriggers.delete.dialog_title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.deleteTitle", { feature: t("fields.aiTrigger.label") })}
+          </DialogTitle>
           <DialogDescription>
-            {t("aiTriggers.confirmDeleteDesc")}{" "}
-            <span className="font-medium">{trigger.length}</span>
-            {trigger.length === 1 ? " log " : " assistant "}
-            {t("aiTriggers.confirmDeleteDesc")}
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.aiTrigger.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
             <Button onClick={() => onOpenChange(false)} variant="outline">
-              {t("common.cancelBtn")}
+              {t("actions.cancel")}
             </Button>
           </DialogClose>
           <Button
@@ -89,7 +94,7 @@ export function DeleteAITriggerDialog({
             {isPending && (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
-            {t("common.deleteBtn")}
+            {t("actions.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

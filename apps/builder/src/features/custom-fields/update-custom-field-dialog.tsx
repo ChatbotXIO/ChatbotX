@@ -14,9 +14,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
@@ -33,7 +33,7 @@ export function UpdateCustomFieldDialog({
   chatbotId: string
   customField: FieldModel | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const router = useRouter()
 
   const {
@@ -47,7 +47,11 @@ export function UpdateCustomFieldDialog({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Custom Field update successfully")
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.customField.label"),
+            }),
+          )
 
           onOpenChange(false)
           resetFormAndAction()
@@ -76,7 +80,9 @@ export function UpdateCustomFieldDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {t("customField.update.title")}: {customField?.name}
+            {t("dialog.updateTitle", {
+              feature: t("fields.customField.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -87,16 +93,16 @@ export function UpdateCustomFieldDialog({
               onSubmit={handleSubmitWithAction}
             >
               <InputField
-                label={t("customField.name.label")}
+                label={t("fields.name.label")}
                 name="name"
-                placeholder={t("customField.name.placeholder")}
+                placeholder={t("fields.name.placeholder")}
               />
 
               <TextareaField
                 isRequired={false}
-                label={t("customField.description.label")}
+                label={t("fields.description.label")}
                 name="description"
-                placeholder={t("customField.description.placeholder")}
+                placeholder={t("fields.description.placeholder")}
               />
 
               <div className="flex justify-end gap-4">
@@ -105,7 +111,7 @@ export function UpdateCustomFieldDialog({
                   type="button"
                   variant="ghost"
                 >
-                  {t("common.cancel-btn")}
+                  {t("actions.cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -116,7 +122,7 @@ export function UpdateCustomFieldDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

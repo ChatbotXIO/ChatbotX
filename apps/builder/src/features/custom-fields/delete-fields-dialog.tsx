@@ -13,8 +13,8 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
-import { useTranslate } from "@tolgee/react"
 import { Loader, Trash } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
@@ -39,13 +39,17 @@ export function DeleteFieldsDialog({
   onOpenChange,
   ...props
 }: DeleteFieldsDialogProps) {
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const { execute, isPending } = useAction(
     deleteFieldsAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(t("field.deleted"))
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.customField.label"),
+          }),
+        )
         onOpenChange?.(false)
       },
       onError: ({ error }) => {
@@ -60,20 +64,27 @@ export function DeleteFieldsDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("common.deleteBtn")} ({records.length})
+            {t("actions.delete")} ({records.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("field.deleteDialogTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("field.delete.confirmationText")}
-          </DialogDescription>
+          <DialogTitle>
+            {t("dialog.deleteTitle", {
+              feature: t("fields.customField.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription />
         </DialogHeader>
+        <DialogContent>
+          {t("dialog.deleteConfirmation", {
+            feature: t("fields.customField.label"),
+          })}
+        </DialogContent>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t("common.cancelBtn")}</Button>
+            <Button variant="outline">{t("actions.cancel")}</Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
@@ -84,7 +95,7 @@ export function DeleteFieldsDialog({
             {isPending && (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
-            {t("common.deleteBtn")}
+            {t("actions.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

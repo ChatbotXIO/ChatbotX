@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import type { Table } from "@tanstack/react-table"
-import { T } from "@tolgee/react"
 import {
   ArchiveIcon,
   BotIcon,
@@ -27,6 +26,7 @@ import {
   UserIcon,
   UserRoundXIcon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
 import DisableBotDialog from "../conversations/components/disable-bot-dialog"
@@ -43,6 +43,7 @@ type ContactListActionProps = {
 }
 
 export function ContactListAction({ table }: ContactListActionProps) {
+  const t = useTranslations()
   const rows = table.getFilteredSelectedRowModel().rows
 
   return (
@@ -62,7 +63,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
               onSelect={(e) => e.preventDefault()}
             >
               <MessageCirclePlusIcon />
-              <T keyName={"contacts.actions.assign"} />
+              {t("actions.assign")}
             </DropdownMenuItem>
           }
         />
@@ -75,14 +76,14 @@ export function ContactListAction({ table }: ContactListActionProps) {
               onSelect={(e) => e.preventDefault()}
             >
               <TagIcon />
-              <T keyName={"contacts.actions.addTag"} />
+              {t("actions.addTag")}
             </DropdownMenuItem>
           }
         />
 
         <DropdownMenuItem disabled={rows.length === 0}>
           <SaveIcon />
-          <T keyName={"contacts.actions.setCustomField"} />
+          {t("actions.setCustomField")}
         </DropdownMenuItem>
 
         <DeleteContactDialog
@@ -93,25 +94,25 @@ export function ContactListAction({ table }: ContactListActionProps) {
               onSelect={(e) => e.preventDefault()}
             >
               <UserRoundXIcon className="text-destructive" />
-              <T keyName={"contacts.actions.delete"} />
+              {t("actions.delete")}
             </DropdownMenuItem>
           }
         />
 
         <DropdownMenuItem disabled={true}>
           <CloudDownloadIcon />
-          <T keyName={"contacts.actions.export"} />
+          {t("actions.export")}
         </DropdownMenuItem>
 
         <DropdownMenuItem disabled={true}>
           <CloudUploadIcon />
-          <T keyName={"contacts.actions.import"} />
+          {t("actions.import")}
         </DropdownMenuItem>
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <ListIcon size={16} />
-            <T keyName={"contacts.actions.more"} />
+            {t("actions.more")}
           </DropdownMenuSubTrigger>
 
           <DropdownMenuPortal>
@@ -124,7 +125,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
                     onSelect={(e) => e.preventDefault()}
                   >
                     <OctagonXIcon />
-                    <T keyName={"contacts.actions.removeTag"} />
+                    {t("actions.removeTag")}
                   </DropdownMenuItem>
                 }
               />
@@ -137,7 +138,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
                     onSelect={(e) => e.preventDefault()}
                   >
                     <SaveOffIcon />
-                    <T keyName={"contacts.actions.clearCustomField"} />
+                    {t("actions.clearCustomField")}
                   </DropdownMenuItem>
                 }
               />
@@ -150,7 +151,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
                     onSelect={(e) => e.preventDefault()}
                   >
                     <UserIcon />
-                    <T keyName={"contacts.actions.disableBot"} />
+                    {t("actions.disableBot")}
                   </DropdownMenuItem>
                 }
               />
@@ -163,7 +164,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
                     onSelect={(e) => e.preventDefault()}
                   >
                     <BotIcon />
-                    <T keyName={"contacts.actions.enableBot"} />
+                    {t("actions.enableBot")}
                   </DropdownMenuItem>
                 }
               />
@@ -176,7 +177,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
                     onSelect={(e) => e.preventDefault()}
                   >
                     <ArchiveIcon />
-                    <T keyName={"contacts.actions.archiveConversation"} />
+                    {t("actions.archiveConversation")}
                   </DropdownMenuItem>
                 }
               />

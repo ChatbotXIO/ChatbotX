@@ -1,12 +1,12 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
 import { listBroadcasts } from "@/features/broadcasts/queries"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schemas/get-broadcasts-schema"
-import { T } from "@/tolgee/server"
 
 export default async function BroadcastsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -15,6 +15,7 @@ export default async function BroadcastsPage(props: {
   const { chatbotId } = await props.params
   const searchParams = await props.searchParams
   const search = getBroadcastsSearchParamsCache.parse(searchParams)
+  const t = await getTranslations()
 
   const promises = Promise.all([
     listBroadcasts({
@@ -30,7 +31,7 @@ export default async function BroadcastsPage(props: {
           <Button asChild size="sm">
             <Link href={`/chatbots/${chatbotId}/broadcasts/create`}>
               <PlusIcon />
-              <T keyName="broadcasts.addBtn" />
+              {t("actions.add")}
             </Link>
           </Button>
         </div>

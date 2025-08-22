@@ -15,19 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import {
-  SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@aha.chat/ui/components/ui/sidebar"
-import { useTranslate } from "@tolgee/react"
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  Sparkles,
-} from "lucide-react"
+import { BadgeCheck, Bell, ChevronsUpDown, Crown } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { SignOut } from "@/features/auth/sign-out"
 import { LangSelector } from "./lang-selector"
 import { ThemeSwitcher } from "./theme-switcher"
@@ -42,10 +36,10 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   return (
-    <SidebarMenu>
+    <SidebarMenuAction>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -85,21 +79,21 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
+                <Crown className="mr-2 h-4 w-4" />
+                {t("actions.upgradeToPro")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                {t("common.language")}
+                Language
                 <LangSelector />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                {t("common.theme")}
+                Theme
                 <ThemeSwitcher />
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -108,10 +102,6 @@ export function NavUser({
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
@@ -125,6 +115,6 @@ export function NavUser({
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
-    </SidebarMenu>
+    </SidebarMenuAction>
   )
 }

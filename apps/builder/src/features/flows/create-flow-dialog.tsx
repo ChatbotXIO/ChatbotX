@@ -15,8 +15,8 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { T, useTranslate } from "@tolgee/react"
 import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createFlowAction } from "./actions/create-flow-action"
@@ -29,7 +29,7 @@ export function CreateFlowDialog({
   chatbotId: string
   folderId: string | null
 }) {
-  const { t } = useTranslate()
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -39,7 +39,11 @@ export function CreateFlowDialog({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success("Flow created successfully")
+            toast.success(
+              t("messages.createdSuccessfully", {
+                feature: t("fields.flow.label"),
+              }),
+            )
 
             setOpen(false)
             resetFormAndAction()
@@ -64,12 +68,14 @@ export function CreateFlowDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          <T keyName="flows.addBtn" />
+          {t("actions.create")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("flows.create.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.createTitle", { feature: t("fields.flow.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -78,12 +84,12 @@ export function CreateFlowDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("flows.name")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
                   <Button type="button" variant="secondary">
-                    Close
+                    {t("actions.cancel")}
                   </Button>
                 </DialogClose>
                 <Button
@@ -95,7 +101,7 @@ export function CreateFlowDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("common.confirm-btn")}
+                  {t("actions.confirm")}
                 </Button>
               </DialogFooter>
             </form>

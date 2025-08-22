@@ -1,18 +1,27 @@
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { useTranslations } from "next-intl"
 
 type AIAgentSelectProps = {
   name: string
   isRequired?: boolean
 }
 
-export const AIAgentSelect = (props: AIAgentSelectProps) => {
+export default function AIAgentSelect(props: AIAgentSelectProps) {
+  const t = useTranslations()
+
   const frameworksList = [
-    { value: "react", label: "React" },
-    { value: "angular", label: "Angular" },
-    { value: "vue", label: "Vue" },
-    { value: "svelte", label: "Svelte" },
-    { value: "ember", label: "Ember" },
+    { value: "react", label: t("fields.framework.react") },
+    { value: "angular", label: t("fields.framework.angular") },
+    { value: "vue", label: t("fields.framework.vue") },
+    { value: "svelte", label: t("fields.framework.svelte") },
+    { value: "ember", label: t("fields.framework.ember") },
   ]
 
-  return <SelectField label="Agents" options={frameworksList} {...props} />
+  return (
+    <SelectField
+      label={t("fields.aiAgent.label")}
+      options={frameworksList}
+      {...props}
+    />
+  )
 }

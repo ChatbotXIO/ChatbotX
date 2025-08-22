@@ -1,14 +1,16 @@
 "use client"
 
-import { T } from "@tolgee/react"
 import { ArchiveIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
 export const ArchiveConversationStepViewer = () => {
+  const t = useTranslations()
+
   return (
     <BaseStepViewer
       icon={ArchiveIcon}
-      title={<T keyName="flows.StepType.ArchiveConversation" />}
+      title={t("flows.stepType.archiveConversation")}
     />
   )
 }

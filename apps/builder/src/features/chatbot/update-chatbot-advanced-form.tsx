@@ -15,8 +15,8 @@ import {
 } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useTranslate } from "@tolgee/react"
 import { Loader2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
@@ -34,7 +34,7 @@ export function UpdateChatbotAdvancedForm({
 }: {
   chatbot: ChatbotResource
 }) {
-  const { t } = useTranslate(["chatbot", "updateChatbotForm"])
+  const t = useTranslations()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateChatbotAdvancedAction.bind(null, chatbot.id),
@@ -42,7 +42,11 @@ export function UpdateChatbotAdvancedForm({
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(t("updatedSuccessfully"))
+          toast.success(
+            t("messages.updatedSuccessfully", {
+              feature: t("fields.chatbot.label"),
+            }),
+          )
         },
         onError: ({ error }) => {
           error.serverError && toast.error(error.serverError)
@@ -72,35 +76,35 @@ export function UpdateChatbotAdvancedForm({
             onSubmit={handleSubmitWithAction}
           >
             <SettingRow
-              description={t("defaultReply.label.description")}
-              label={t("defaultReply.label")}
+              description={t("fields.defaultReply.description")}
+              label={t("fields.defaultReply.label")}
             >
               <FlowSelect name="defaultReply" />
             </SettingRow>
 
             <SettingRow
-              description={t("targetCountry.label.description")}
-              label={t("targetCountry.label")}
+              description={t("fields.targetCountry.description")}
+              label={t("fields.targetCountry.label")}
             >
               <ComboboxField name="targetCountry" options={allCountryOptions} />
             </SettingRow>
 
             <SettingRow
-              description={t("defaultLanguage.label.description")}
-              label={t("defaultLanguage.label")}
+              description={t("fields.defaultLanguage.description")}
+              label={t("fields.defaultLanguage.label")}
             >
               <SelectField
                 name="defaultLanguage"
                 options={[
-                  { value: "en", label: "English" },
-                  { value: "vi", label: "Tiếng Việt" },
+                  { value: "en", label: t("fields.language.english") },
+                  { value: "vi", label: t("fields.language.vietnamese") },
                 ]}
               />
             </SettingRow>
 
             <SettingRow
-              description={t("accountTimezone.label.description")}
-              label={t("accountTimezone.label")}
+              description={t("fields.accountTimezone.description")}
+              label={t("fields.accountTimezone.label")}
             >
               <ComboboxField
                 name="accountTimezone"
@@ -109,8 +113,8 @@ export function UpdateChatbotAdvancedForm({
             </SettingRow>
 
             <SettingRow
-              description={t("brandColor.label.description")}
-              label={t("brandColor.label")}
+              description={t("fields.brandColor.description")}
+              label={t("fields.brandColor.label")}
             >
               <FormField
                 control={form.control}
@@ -127,8 +131,8 @@ export function UpdateChatbotAdvancedForm({
             </SettingRow>
 
             <SettingRow
-              description={t("developmentMode.label.description")}
-              label={t("developmentMode.label")}
+              description={t("fields.developmentMode.description")}
+              label={t("fields.developmentMode.label")}
             >
               <SwitchField className="mt-1.5" name="developmentMode" />
             </SettingRow>
@@ -143,7 +147,7 @@ export function UpdateChatbotAdvancedForm({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("common.saveBtn")}
+                {t("actions.confirm")}
               </Button>
             </div>
           </form>

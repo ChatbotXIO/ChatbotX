@@ -1,20 +1,24 @@
 import { type FolderModel, FolderType } from "@aha.chat/database/types"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
-import { T } from "@/tolgee/server"
 
 export default async function SharedFolderSlot(props: {
   chatbotId: string
   searchParams: Promise<SearchParams>
 }) {
+  const t = await getTranslations()
+
   const headersList = await headers()
-  const url = new URL(headersList.get("x-url") as string)
+  const url = new URL(
+    (headersList.get("x-url") ?? "https://google.com") as string,
+  )
   const featureName = url.pathname.split("/").pop()
 
   let folderType: FolderType | null = null
@@ -63,7 +67,7 @@ export default async function SharedFolderSlot(props: {
     <>
       <div className="flex">
         <h3 className="flex-1 font-bold text-xl">
-          <T keyName="folders.heading" />
+          {t("folders.heading.title")}
         </h3>
         <CreateFolderDialog
           chatbotId={props.chatbotId}

@@ -9,8 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import { useTranslate } from "@tolgee/react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { type ReactNode, useState } from "react"
 import { CreateContactForm } from "./create-contact-form"
 
@@ -22,7 +22,7 @@ export function CreateContactDialog({
   trigger?: ReactNode
 }) {
   const router = useRouter()
-  const { t } = useTranslate()
+  const t = useTranslations()
 
   const [open, setOpen] = useState(false)
   const onSubmmited = () => {
@@ -36,12 +36,14 @@ export function CreateContactDialog({
         {trigger ? (
           trigger
         ) : (
-          <Button variant="default">{t("common.createBtn")}</Button>
+          <Button variant="default">{t("actions.create")}</Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("contacts.create.title")}</DialogTitle>
+          <DialogTitle>
+            {t("dialog.createTitle", { feature: t("fields.contact.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">

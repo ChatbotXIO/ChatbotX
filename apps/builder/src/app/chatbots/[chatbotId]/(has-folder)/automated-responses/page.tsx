@@ -1,11 +1,11 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { AutomatedResponsesTable } from "@/features/automated-response/automated-response-table"
 import { getAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schemas/get-automated-responses-schema"
-import { T } from "@/tolgee/server"
 
 export default async function AutomatedResponesPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -14,6 +14,7 @@ export default async function AutomatedResponesPage(props: {
   const { chatbotId } = await props.params
   const searchParams = await props.searchParams
   const search = listAutomatedResponsesSearchParams.parse(searchParams)
+  const t = await getTranslations()
 
   const promises = Promise.all([
     getAutomatedResponses({
@@ -26,12 +27,12 @@ export default async function AutomatedResponesPage(props: {
     <>
       <div className="flex items-center">
         <h4 className="flex-1 font-bold">
-          <T keyName="automatedResponse.heading" />
+          {t("automatedResponse.heading.title")}
         </h4>
         <Button asChild size={"sm"}>
           <Link href={`/chatbots/${chatbotId}/automated-responses/create`}>
             <PlusIcon />
-            <T keyName="common.createBtn" />
+            {t("actions.create")}
           </Link>
         </Button>
       </div>

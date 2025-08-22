@@ -2,7 +2,7 @@
 
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useTranslate } from "@tolgee/react"
+import { useTranslations } from "next-intl"
 import { memo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 
@@ -38,12 +38,12 @@ const CardVariables = memo(
     cardIndex: number
     variables: string[]
   }) => {
-    const { t } = useTranslate()
+    const t = useTranslations()
 
     return (
       <div>
         <div className="mt-6">
-          {t("common.sampleBodyCardContent")} ({cardIndex + 1})
+          {t("whatsapp.sampleBodyCardContent.label")} ({cardIndex + 1})
         </div>
         {variables.map((_variable: string, index: number) => (
           <VariableInput
@@ -62,7 +62,7 @@ const TemplateCarouselVideoPartialComponent = (props: {
   parentName?: string
 }) => {
   const { parentName = "content", ...rest } = props
-  const { t } = useTranslate()
+  const t = useTranslations()
   const { control } = useFormContext()
 
   const [bodyVariables, cards] = useWatch({
@@ -74,7 +74,7 @@ const TemplateCarouselVideoPartialComponent = (props: {
     <div className="w-full flex-1" {...rest}>
       {bodyVariables.length > 0 && (
         <>
-          <div className="mt-6">{t("common.sampleBodyContent")}</div>
+          <div className="mt-6">{t("whatsapp.sampleBodyContent.label")}</div>
           {bodyVariables.map((_variable: string, index: number) => (
             <VariableInput
               index={index}
