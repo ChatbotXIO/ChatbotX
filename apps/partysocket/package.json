@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e ../../.env -- partykit dev"
+    "dev": "dotenv -e ../../.env -- partykit dev",
+    "build": "tsup",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
