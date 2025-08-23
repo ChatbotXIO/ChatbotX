@@ -17,8 +17,26 @@ const baseEnv = {
   },
 }
 
+const googleAuthEnv = {
+  server: {
+    GOOGLE_CLIENT_ID: z.string(),
+    GOOGLE_CLIENT_SECRET: z.string(),
+  },
+}
+
+const authEnv = {
+  server: {
+    BETTER_AUTH_SECRET: z.string(),
+    BETTER_AUTH_URL: z.string().url(),
+  },
+}
+
 export const env = createEnv({
   extends: [partysocket(), database(), mail()],
+  server: {
+    ...googleAuthEnv.server,
+    ...authEnv.server,
+  },
   client: {
     ...baseEnv.client,
   },

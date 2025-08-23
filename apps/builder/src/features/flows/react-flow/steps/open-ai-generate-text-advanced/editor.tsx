@@ -4,7 +4,7 @@ import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
-import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
+import { AITriggerMultiSelect } from "@/features/ai-triggers/ai-trigger-select"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 import { OpenAIModelSelect } from "../open-ai/open-ai-model-select"
@@ -37,7 +37,7 @@ export const OpenAIGenerateTextAdvancedEditor = (
         name={`${props.parentName}.resultCustomFieldId`}
       />
 
-      <AITriggersMultipleSelect
+      <AITriggerMultiSelect
         isRequired={false}
         name={`${props.parentName}.aiTriggerIds`}
       />

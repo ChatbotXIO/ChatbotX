@@ -21,6 +21,9 @@ export const auth = betterAuth({
   socialProviders: {
     google: googleSignInConfig,
   },
+  emailAndPassword: {
+    enabled: true,
+  },
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {

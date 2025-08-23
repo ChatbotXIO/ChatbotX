@@ -17,7 +17,6 @@
     ]
   },
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "clean": "git clean -xdf .cache .turbo dist node_modules"
@@ -25,7 +24,6 @@
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.11",
-    "@turbo/gen": "^2.5.4",
     "@types/node": "^22.16.0",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.0",

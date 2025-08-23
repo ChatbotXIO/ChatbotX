@@ -11,9 +11,9 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
 import { MoreHorizontalIcon, Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useState } from "react"

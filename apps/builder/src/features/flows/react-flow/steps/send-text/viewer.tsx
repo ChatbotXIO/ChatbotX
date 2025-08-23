@@ -7,7 +7,7 @@ type SendTextStepViewerProps = {
   data: SendTextStepSchema
 }
 
-export const SendTextStepViewer = (props: SendTextStepViewerProps) => {
+const SendTextStepViewer = (props: SendTextStepViewerProps) => {
   const { data } = props
 
   return (

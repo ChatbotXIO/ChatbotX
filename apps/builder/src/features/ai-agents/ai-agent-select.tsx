@@ -1,3 +1,5 @@
+"use client"
+
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 
@@ -6,7 +8,7 @@ type AIAgentSelectProps = {
   isRequired?: boolean
 }
 
-export default function AIAgentSelect(props: AIAgentSelectProps) {
+export function AIAgentSelect(props: AIAgentSelectProps) {
   const t = useTranslations()
 
   const frameworksList = [

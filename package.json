@@ -6,11 +6,13 @@
     "dev": "dotenv -e .env -- turbo dev",
     "format": "ultracite format --unsafe",
     "lint": "ultracite lint",
-    "clean": "pnpm store prune && pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf .turbo && pnpm -r exec rm -rf .next"
+    "clean": "pnpm store prune && pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf .turbo && pnpm -r exec rm -rf .next",
+    "knip": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",
     "@types/node": "^22.16.0",
+    "knip": "^5.63.0",
     "lefthook": "^1.11.16",
     "tsx": "^4.20.3",
     "turbo": "^2.5.6",

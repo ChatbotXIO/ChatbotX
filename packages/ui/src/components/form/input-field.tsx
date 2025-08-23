@@ -2,7 +2,7 @@ import type { FieldPath, FieldValues } from "react-hook-form"
 import { Input } from "../ui/input"
 import { FormFieldWrapper } from "./field-wrapper"
 
-interface InputFieldProps<T extends FieldValues> {
+type InputFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   isRequired?: boolean
@@ -11,6 +11,7 @@ interface InputFieldProps<T extends FieldValues> {
   defaultValue?: string
   disabled?: boolean
   className?: string
+  type?: "text" | "password" | "email" | "number" | "tel" | "url" | "search"
 }
 
 export function InputField<T extends FieldValues>({
@@ -19,17 +20,18 @@ export function InputField<T extends FieldValues>({
   isRequired = true,
   placeholder,
   description,
+  type = "text",
   ...props
 }: InputFieldProps<T>) {
   return (
     <FormFieldWrapper
-      name={name}
-      label={label}
-      isRequired={isRequired}
       description={description}
+      isRequired={isRequired}
+      label={label}
+      name={name}
     >
       {(field) => (
-        <Input type={"text"} placeholder={placeholder} {...props} {...field} />
+        <Input placeholder={placeholder} type={type} {...props} {...field} />
       )}
     </FormFieldWrapper>
   )

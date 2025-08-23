@@ -4,7 +4,7 @@ import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
 import { AIAgentSelect } from "@/features/ai-agents/ai-agent-select"
-import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
+import { AITriggerMultiSelect } from "@/features/ai-triggers/ai-trigger-select"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 import { OpenAIModelSelect } from "../open-ai/open-ai-model-select"
@@ -31,7 +31,7 @@ export const OpenAIGenerateTextAgentEditor = (
         name={`${parentName}.resultCustomFieldid`}
       />
 
-      <AITriggersMultipleSelect name={`${parentName}.aiTriggerIds`} />
+      <AITriggerMultiSelect name={`${parentName}.aiTriggerIds`} />
 
       <CheckboxGroupField
         name={`${parentName}.rememberConversation`}

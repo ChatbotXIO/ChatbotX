@@ -1,3 +1,5 @@
+"use client"
+
 import { MultiSelectField } from "@aha.chat/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 
@@ -6,7 +8,7 @@ type AITriggerSelectProps = {
   isRequired?: boolean
 }
 
-export default function AITriggerSelect(props: AITriggerSelectProps) {
+export function AITriggerMultiSelect(props: AITriggerSelectProps) {
   const t = useTranslations()
 
   const frameworksList = [

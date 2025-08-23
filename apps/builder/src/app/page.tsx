@@ -6,12 +6,12 @@ import {
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { getTranslations } from "next-intl/server"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth"
 
 export default async function MainPage() {
-  const t = useTranslations()
+  const t = await getTranslations()
   const userId = await getCurrentUserId()
 
   const { chatbots } = await getAllChatbotMembers(userId)

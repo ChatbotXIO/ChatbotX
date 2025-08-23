@@ -4,6 +4,7 @@ import {
   type ButtonStepSchema,
   ButtonType,
   buttonStepSchema,
+  openWebsiteStepDefaultFn,
   sendFlowNodeStepDefaultFn,
   sendMessageNodeDefaultFn,
 } from "@aha.chat/flow-config"
@@ -23,7 +24,6 @@ import { useNodes, useReactFlow } from "@xyflow/react"
 import { deleteProperty, getProperty, setProperty } from "dot-prop"
 import { XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { openWebsiteStepDefaultFn } from "node_modules/@aha.chat/flow-config/src/schemas/steps/open-website"
 import { useEffect, useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import { DynamicStepEditor } from "./steps"

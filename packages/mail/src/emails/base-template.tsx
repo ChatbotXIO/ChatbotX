@@ -8,7 +8,7 @@ import {
 } from "@react-email/components"
 import type { ReactNode } from "react"
 
-export function BaseTempate({ children }: { children: ReactNode }) {
+function BaseTempate({ children }: { children: ReactNode }) {
   return (
     <Html>
       <Head />

@@ -315,7 +315,8 @@
     "shareProject": "Chia sẻ dự án",
     "deleteProject": "Xóa dự án",
     "upgradeToPro": "Nâng cấp lên Pro",
-    "createNewChatbot": "Tạo chatbot mới"
+    "createNewChatbot": "Tạo chatbot mới",
+    "loginWithMagicLink": "Đăng nhập bằng Magic Link"
   },
 
   "dialog": {
@@ -364,12 +365,15 @@
   },
 
   "signin": {
-    "title": "Đăng nhập vào tài khoản của bạn",
+    "title": "Đăng nhập vào {name}",
     "or": "Hoặc",
+    "and": "và",
     "continue": "Tiếp tục",
-    "acceptTermsAndPolicy": "Bằng cách nhấn tiếp tục, bạn đồng ý với {termsOfService} và {privacyPolicy}",
+    "acceptTermsAndPolicy": "Bằng cách nhấn tiếp tục, bạn đồng ý với",
     "termsOfService": "Điều khoản dịch vụ",
-    "privacyPolicy": "Chính sách bảo mật"
+    "privacyPolicy": "Chính sách bảo mật",
+    "email": "Email",
+    "password": "Mật khẩu"
   },
 
   "folders": {
@@ -678,6 +682,10 @@
   },
 
   "aiAgents": {
+    "setting": {
+      "label": "AI Agents",
+      "description": "Mô tả AI Agents"
+    },
     "delete": {
       "title": "Xóa AI Agent",
       "successMessage": "Đã xóa AI Agent thành công",

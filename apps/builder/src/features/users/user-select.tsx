@@ -1,3 +1,5 @@
+"use client"
+
 import {
   MultiSelectField,
   SelectField,
@@ -14,7 +16,7 @@ type UserSelectProps = {
   className?: string
 }
 
-export default function UserSelect(props: UserSelectProps) {
+export function UserSelect(props: UserSelectProps) {
   const t = useTranslations()
   const { name, label, isRequired = false, className } = props
 

@@ -315,7 +315,8 @@
     "shareProject": "Share Project",
     "deleteProject": "Delete Project",
     "upgradeToPro": "Upgrade to Pro",
-    "createNewChatbot": "Create new Chatbot"
+    "createNewChatbot": "Create new Chatbot",
+    "loginWithMagicLink": "Login with Magic Link"
   },
 
   "dialog": {
@@ -364,12 +365,14 @@
   },
 
   "signin": {
-    "title": "Sign in to your account",
-    "or": "Or",
-    "continue": "Continue",
-    "acceptTermsAndPolicy": "By clicking continue, you agree to our {termsOfService} and {privacyPolicy}",
+    "title": "Sign in to {name}",
+    "or": "OR",
+    "and": "and",
+    "acceptTermsAndPolicy": "By clicking continue, you agree to our",
     "termsOfService": "Terms of Service",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "email": "Email",
+    "password": "Password"
   },
 
   "folders": {

@@ -3,7 +3,7 @@
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { useTranslations } from "next-intl"
-import { AITriggersMultipleSelect } from "@/features/ai-triggers/ai-trigger-select"
+import { AITriggerMultiSelect } from "@/features/ai-triggers/ai-trigger-select"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
 import { OpenAIModelSelect } from "../open-ai/open-ai-model-select"
@@ -39,7 +39,7 @@ export const OpenAIGenerateTextEditor = (
         name={`${parentName}.resultCustomFieldId`}
       />
 
-      <AITriggersMultipleSelect
+      <AITriggerMultiSelect
         isRequired={false}
         name={`${parentName}.aiTriggerIds`}
       />

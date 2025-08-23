@@ -29,8 +29,19 @@ async function main() {
   // create user
   user = await prisma.user.create({
     data: {
-      email: "admin@aha.chat",
-      name: "AhaChat",
+      email: "demo@aha.chat",
+      name: "Demo AhaChat",
+    },
+  })
+
+  await prisma.account.create({
+    data: {
+      accountId: user.id,
+      providerId: "credential",
+      // NOTES: password is "Ahachat@1234" hashed with scrypt
+      password:
+        "feffc83af6cb10b0475fdb825b68ece4:f109f93cf72748525e47b9ecd424d63f62f8cf27a3fff969ff1e1d26bd5636f5eb989775f6a2a8f68e3717f7a7cd42ed67dcf5cfb8c262ddc9a5c6045bc5c128",
+      userId: user.id,
     },
   })
 
