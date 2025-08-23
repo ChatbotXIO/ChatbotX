@@ -1,15 +1,21 @@
-name: ahachatai
+name: ahachat
 services:
   postgres:
     image: postgres:16
     ports:
       - '5432:5432'
     volumes:
-      - ahachatai_db:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-ahachatai}
-      - POSTGRES_USER=${POSTGRES_USER:-ahachatai}
+      - POSTGRES_DB=${POSTGRES_DB:-ahachat}
+      - POSTGRES_USER=${POSTGRES_USER:-ahachat}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
   pgadmin:
     image: dpage/pgadmin4:latest
     ports:
@@ -29,10 +35,16 @@ services:
       - '9000:9000'
       - '9001:9001'
     environment:
-      MINIO_ROOT_USER: ahachatai
+      MINIO_ROOT_USER: ahachat
       MINIO_ROOT_PASSWORD: nr541Kv59xB4f48bhZOy5wBz
     volumes:
-      - ahachatai_s3:/data
+      - s3-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 5s
   createbuckets:
     image: minio/mc
     depends_on:
@@ -40,9 +52,9 @@ services:
     entrypoint: >
       /bin/sh -c "
       sleep 10;
-      /usr/bin/mc config host add minio http://minio:9000 ahachatai nr541Kv59xB4f48bhZOy5wBz;
-      /usr/bin/mc mb minio/ahachatai;
-      /usr/bin/mc anonymous set public minio/ahachatai/public;
+      /usr/bin/mc config host add minio http://minio:9000 ahachat nr541Kv59xB4f48bhZOy5wBz;
+      /usr/bin/mc mb minio/ahachat;
+      /usr/bin/mc anonymous set public minio/ahachat/public;
       exit 0;
       "
   redis:
@@ -50,7 +62,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ahachatai_cache:/data
+      - cache-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -58,6 +70,6 @@ services:
       retries: 5
 
 volumes:
-  ahachatai_db:
-  ahachatai_s3:
-  ahachatai_cache:
+  db-data:
+  s3-data:
+  cache-data:

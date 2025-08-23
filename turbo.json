@@ -28,6 +28,9 @@
       "cache": false,
       "persistent": true
     },
+    "db:setup": {
+      "cache": false
+    },
     "db:reset": {
       "cache": false
     },

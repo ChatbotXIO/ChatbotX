@@ -491,6 +491,9 @@ importers:
       '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: ^22.16.0
+        version: 22.16.0
       concurrently:
         specifier: ^9.2.0
         version: 9.2.0

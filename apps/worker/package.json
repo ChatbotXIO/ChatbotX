@@ -1,7 +1,6 @@
 {
   "name": "worker",
   "version": "0.1.0",
-  "type": "module",
   "scripts": {
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
@@ -32,6 +31,7 @@
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^22.16.0",
     "concurrently": "^9.2.0",
     "dotenv-cli": "^8.0.0",
     "tsup": "^8.5.0"

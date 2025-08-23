@@ -22,7 +22,7 @@ docker compose up -d
 # install latest corepack
 npm install -g corepack@latest
 
-# make sure corepack is enabled
+# use pnpm as package manager
 corepack enable pnpm
 
 # install dependencies
@@ -38,7 +38,7 @@ pnpm turbo db:migrate && turbo db:seed
 pnpm turbo dev
 ```
 
-The seeder mad default user `admin@aha.chat` with email provider
+The seeder makes default user `demo@aha.chat | Ahachat@1234`
 
 ### Folder structure
 

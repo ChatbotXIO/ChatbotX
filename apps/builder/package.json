@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "dotenv -e ../../.env -- next build",
+    "build": "dotenv -e .env -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123",
+    "dev": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123",
     "lint": "biome check .",
     "start": "next start"
   },
