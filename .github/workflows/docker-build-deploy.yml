@@ -1,0 +1,208 @@
+name: Build and Deploy Docker Images
+
+# on:
+  # push:
+  #   branches: [main, develop]
+  #   paths:
+  #     - 'apps/builder/**'
+  #     - 'apps/worker/**'
+  #     - 'apps/partysocket/**'
+  #     - 'packages/**'
+  #     - 'docker-compose.yml'
+  #     - 'package.json'
+  #     - 'pnpm-lock.yaml'
+  # pull_request:
+  #   branches: [main, develop]
+  #   paths:
+  #     - 'apps/builder/**'
+  #     - 'apps/worker/**'
+  #     - 'apps/partysocket/**'
+  #     - 'packages/**'
+  #     - 'docker-compose.yml'
+  #     - 'package.json'
+  #     - 'pnpm-lock.yaml'
+  # workflow_dispatch:
+  #   inputs:
+  #     version:
+  #       description: 'Version tag to deploy'
+  #       required: false
+  #       default: 'latest'
+  #     force_rebuild:
+  #       description: 'Force rebuild all images'
+  #       required: false
+  #       default: false
+
+# env:
+#   REGISTRY: docker.io
+#   BUILDER_IMAGE: ahachat/builder
+#   WORKER_IMAGE: ahachat/worker
+#   PARTYSOCKET_IMAGE: ahachat/partysocket
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    # permissions:
+    #   contents: read
+    #   packages: write
+    #   id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Builder image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/builder/docker/Dockerfile
+          tags: ahachat/builder:0.0.1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      # - name: Build and push Worker image
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     file: ./apps/worker/docker/Dockerfile
+      #     push: ${{ github.event_name != 'pull_request' }}
+      #     tags: ${{ steps.meta.outputs.tags }}
+      #     labels: ${{ steps.meta.outputs.labels }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      #     platforms: linux/amd64,linux/arm64
+      #     build-args: |
+      #       BUILDKIT_INLINE_CACHE=1
+
+      # - name: Build and push Partysocket image
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./apps/partysocket
+      #     file: ./apps/partysocket/Dockerfile
+      #     push: ${{ github.event_name != 'pull_request' }}
+      #     tags: ${{ steps.meta.outputs.tags }}
+      #     labels: ${{ steps.meta.outputs.labels }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      #     platforms: linux/amd64,linux/arm64
+      #     build-args: |
+      #       BUILDKIT_INLINE_CACHE=1
+
+  # test-images:
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name != 'pull_request'
+    
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+
+  #     - name: Log in to Docker Hub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ${{ env.RDOCKER_EGISTRY }}
+  #         username: ${{ secrets.DOCKERHUB_USERNA}}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  #     - name: Test Builder image
+  #       run: |
+  #         echo "Testing Builder image..."
+  #         docker run --rm ${{ env.REGISTRY }}/${{ env.BUILDER_IMAGE }}:latest node --version || echo "Builder image test completed"
+
+  #     - name: Test Worker image
+  #       run: |
+  #         echo "Testing Worker image..."
+  #         docker run --rm ${{ env.REGISTRY }}/${{ env.WORKER_IMAGE }}:latest node --version || echo "Worker image test completed"
+
+  #     - name: Test Partysocket image
+  #       run: |
+  #         echo "Testing Partysocket image..."
+  #         docker run --rm ${{ env.REGISTRY }}/${{ env.PARTYSOCKET_IMAGE }}:latest node --version || echo "Partysocket image test completed"
+
+  # update-docker-compose:
+  #   needs: [build-and-push, test-images]
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Log in to Docker Hub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ${{ env.RDOCKER_EGISTRY }}
+  #         username: ${{ secrets.DOCKERHUB_USERNA}}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  #     - name: Get latest image tags
+  #       id: tags
+  #       run: |
+  #         # Get the latest tags from Docker Hub
+  #         BUILDER_TAG=$(curl -s "https://registry.hub.docker.com/v2/repositories/${{ env.BUILDER_IMAGE }}/tags/?page_size=1&ordering=last_updated" | jq -r '.results[0].name')
+  #         WORKER_TAG=$(curl -s "https://registry.hub.docker.com/v2/repositories/${{ env.WORKER_IMAGE }}/tags/?page_size=1&ordering=last_updated" | jq -r '.results[0].name')
+  #         PARTYSOCKET_TAG=$(curl -s "https://registry.hub.docker.com/v2/repositories/${{ env.PARTYSOCKET_IMAGE }}/tags/?page_size=1&ordering=last_updated" | jq -r '.results[0].name')
+          
+  #         echo "Latest tags: Builder=$BUILDER_TAG, Worker=$WORKER_TAG, Partysocket=$PARTYSOCKET_TAG"
+          
+  #         # Set output variables for next steps
+  #         echo "builder_tag=$BUILDER_TAG" >> $GITHUB_OUTPUT
+  #         echo "worker_tag=$WORKER_TAG" >> $GITHUB_OUTPUT
+  #         echo "partysocket_tag=$PARTYSOCKET_TAG" >> $GITHUB_OUTPUT
+
+  #     - name: Update Docker Compose file
+  #       run: |
+  #         # Create a backup of the original docker-compose.yml
+  #         cp docker-compose.yml docker-compose.yml.backup
+          
+  #         # Update the docker-compose.yml with the new image tags
+  #         sed -i "s|image: ${{ env.BUILDER_IMAGE }}:.*|image: ${{ env.BUILDER_IMAGE }}:${{ steps.tags.outputs.builder_tag }}|g" docker-compose.yml
+  #         sed -i "s|image: ${{ env.WORKER_IMAGE }}:.*|image: ${{ env.WORKER_IMAGE }}:${{ steps.tags.outputs.worker_tag }}|g" docker-compose.yml
+  #         sed -i "s|image: ${{ env.PARTYSOCKET_IMAGE }}:.*|image: ${{ env.PARTYSOCKET_IMAGE }}:${{ steps.tags.outputs.partysocket_tag }}|g" docker-compose.yml
+          
+  #         # Show the changes
+  #         echo "Updated docker-compose.yml:"
+  #         diff docker-compose.yml.backup docker-compose.yml || true
+
+  #     - name: Commit and push changes
+  #       run: |
+  #         git config --local user.email "action@github.com"
+  #         git config --local user.name "GitHub Action"
+  #         git add docker-compose.yml
+  #         git commit -m "Update Docker images to latest tags [skip ci]" || echo "No changes to commit"
+  #         git push origin main
+
+  #     - name: Create Release
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: v${{ github.run_number }}
+  #         release_name: Release v${{ github.run_number }}
+  #         body: |
+  #           Docker images have been built and pushed to Docker Hub:
+            
+  #           - Builder: ${{ env.REGISTRY }}/${{ env.BUILDER_IMAGE }}:${{ steps.tags.outputs.builder_tag }}
+  #           - Worker: ${{ env.REGISTRY }}/${{ env.WORKER_IMAGE }}:${{ steps.tags.outputs.worker_tag }}
+  #           - Partysocket: ${{ env.REGISTRY }}/${{ env.PARTYSOCKET_IMAGE }}:${{ steps.tags.outputs.partysocket_tag }}
+            
+  #           Build triggered by: ${{ github.event.head_commit.message }}
+            
+  #           Docker Compose file has been updated with the latest image tags.
+  #         draft: false
+  #         prerelease: false
