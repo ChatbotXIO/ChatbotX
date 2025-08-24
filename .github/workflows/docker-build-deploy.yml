@@ -1,8 +1,6 @@
 name: Build and Deploy Docker Images
 
-# on:
-  # push:
-  #   branches: [main, develop]
+on: push
   #   paths:
   #     - 'apps/builder/**'
   #     - 'apps/worker/**'
