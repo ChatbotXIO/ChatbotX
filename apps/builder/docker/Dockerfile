@@ -15,7 +15,7 @@ FROM base AS deps
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-RUN apk add --upgrade --no-cache libc6-compat
+RUN apk add --upgrade --no-cache libc6-compat redis
 
 WORKDIR /app
 RUN npm install -g pnpm@^10
