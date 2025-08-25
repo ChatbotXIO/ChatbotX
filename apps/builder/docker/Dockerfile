@@ -15,8 +15,7 @@ FROM base AS deps
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-RUN apk update
-RUN apk add --no-cache libc6-compat
+RUN apk add --upgrade --no-cache libc6-compat
 
 WORKDIR /app
 RUN npm install -g pnpm@^10
@@ -31,6 +30,8 @@ RUN pnpm turbo run db:client
 RUN pnpm turbo run build --filter=builder
 
 FROM base AS builder
+
+RUN apk add --upgrade --no-cache libc6-compat
 
 COPY apps/builder/docker/rootfs/ /
 WORKDIR /app
