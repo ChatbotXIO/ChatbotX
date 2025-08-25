@@ -31,17 +31,9 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Create .env file from secrets
-        run: |
-          # Iterate over all secrets and write them to .env
-          # Note: This will expose secrets within the workflow's environment,
-          # but the output to logs will be masked.
-          for secret_name in ${{ toJSON(secrets) | fromJson | keys }}; do
-            echo "${secret_name}=${{ secrets[secret_name] }}" >> .env
-          done
-        env:
-          # This ensures all secrets are available as environment variables for the shell script
-          # However, they are still masked in logs if printed directly.
-          ${{ secrets }}
+        uses: 0ndt/envfile@v2
+        with:
+          secrets: ${{ toJSON(secrets) }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
