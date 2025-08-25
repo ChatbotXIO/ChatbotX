@@ -1,12 +1,8 @@
-import baseLogger from "@aha.chat/logger"
-import { faker } from "@faker-js/faker"
 import { prisma } from ".."
 import {
   type Chatbot,
   ChatbotMemberRole,
   ChatbotPlan,
-  type Folder,
-  FolderType,
 } from "../generated/prisma/client"
 
 async function main() {
@@ -90,33 +86,23 @@ async function main() {
     })
   }
 
-  const chatbots = await prisma.chatbot.findMany({
-    where: {
-      chatbotMembers: {
-        some: {
-          userId: user.id,
-        },
-      },
-    },
-  })
-
   // create folders
-  const data: Pick<Folder, "name" | "folderType" | "chatbotId">[] = []
-  const folderTypes = Object.values(FolderType)
+  // const data: Pick<Folder, "name" | "folderType" | "chatbotId">[] = []
+  // const folderTypes = Object.values(FolderType)
 
-  for (const chatbot of chatbots) {
-    const foldersCount = faker.number.int({ min: 3, max: 12 })
-    for (let i = 0; i < foldersCount; i++) {
-      for (const folderType of folderTypes) {
-        data.push({
-          name: `${folderType} ${faker.string.alpha(10)}`,
-          folderType,
-          chatbotId: chatbot.id,
-        })
-      }
-    }
-  }
-  await prisma.folder.createMany({ data })
+  // for (const chatbot of chatbots) {
+  //   const foldersCount = faker.number.int({ min: 3, max: 12 })
+  //   for (let i = 0; i < foldersCount; i++) {
+  //     for (const folderType of folderTypes) {
+  //       data.push({
+  //         name: `${folderType} ${faker.string.alpha(10)}`,
+  //         folderType,
+  //         chatbotId: chatbot.id,
+  //       })
+  //     }
+  //   }
+  // }
+  // await prisma.folder.createMany({ data })
 
   return true
 }
@@ -126,7 +112,8 @@ main()
     return true
   })
   .catch((_error) => {
-    baseLogger.error(_error)
+    // biome-ignore lint/suspicious/noConsole: wip
+    console.log(_error)
   })
   .finally(async () => {
     await prisma.$disconnect()
