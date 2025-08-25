@@ -25,7 +25,6 @@ COPY --from=pre /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
-COPY --from=pre /app/.env .env
 
 RUN pnpm turbo run db:client
 RUN pnpm turbo run build --filter=builder
