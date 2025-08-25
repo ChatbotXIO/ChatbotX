@@ -5,12 +5,10 @@ include:
 
 services:
   builder:
-    build:
-      context: .
-      dockerfile: apps/builder/docker/Dockerfile
+    image: realcodesiman/ahachat-builder:latest
     restart: unless-stopped
     env_file:
-      - ./.env.build
+      - ./.env
     ports:
       - "3000:3123"
     depends_on:
@@ -28,12 +26,10 @@ services:
 
   # BullMQ Worker
   worker:
-    build:
-      context: .
-      dockerfile: apps/worker/docker/Dockerfile
+    image: realcodesiman/ahachat-worker:latest
     restart: unless-stopped
     env_file:
-      - ./.env.build
+      - ./.env
     depends_on:
       postgres:
         condition: service_healthy

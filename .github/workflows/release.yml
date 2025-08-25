@@ -35,16 +35,6 @@ jobs:
         with:
           secrets: ${{ toJSON(secrets) }}
 
-      - name: Print .env file contents
-        run: |
-          echo "=== .env file contents ==="
-          if [ -f .env ]; then
-            cat .env
-          else
-            echo "No .env file found"
-          fi
-          echo "=========================="
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
