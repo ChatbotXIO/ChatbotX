@@ -24,7 +24,7 @@ jobs:
       contents: read
       packages: write
 
-    environment: "dev"
+    environment: ${{ github.event.inputs.environment || 'dev' }}
 
     steps:
       - name: Checkout repository
@@ -51,7 +51,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
+          registry: ${{ vars.DOCKER_REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
@@ -60,8 +60,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/builder
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/worker
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/builder
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/worker
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -76,8 +76,8 @@ jobs:
           file: ./apps/builder/docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/builder:${{ steps.meta.outputs.version }}
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/builder:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/builder:${{ steps.meta.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/builder:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -90,8 +90,8 @@ jobs:
           file: ./apps/worker/docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/worker:${{ steps.meta.outputs.version }}
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/worker:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/worker:${{ steps.meta.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/worker:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -100,5 +100,5 @@ jobs:
       - name: Output image URLs
         if: github.event_name != 'pull_request'
         run: |
-          echo "Builder image: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/builder:${{ steps.meta.outputs.version }}"
-          echo "Worker image: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_PREFIX }}/worker:${{ steps.meta.outputs.version }}"
+          echo "Builder image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/builder:${{ steps.meta.outputs.version }}"
+          echo "Worker image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/worker:${{ steps.meta.outputs.version }}"
