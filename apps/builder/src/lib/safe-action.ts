@@ -1,15 +1,13 @@
 import { Prisma, prisma } from "@aha.chat/database"
-import { SdkException } from "@aha.chat/sdk"
-import {
-  createSafeActionClient,
-  DEFAULT_SERVER_ERROR_MESSAGE,
-} from "next-safe-action"
+import { createSafeActionClient } from "next-safe-action"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth"
-import { BaseException } from "./error"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
+    // biome-ignore lint/suspicious/noConsole: <explanation>
+    console.log("Error ->", error)
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         return `Unique constraint failed on ${error.meta?.target ?? ""}`
@@ -21,11 +19,11 @@ export const actionClient = createSafeActionClient({
       return error.message
     }
 
-    if (error instanceof BaseException || error instanceof SdkException) {
-      return error.message
-    }
+    // if (error instanceof BaseException || error instanceof SdkException) {
+    //   return error.message
+    // }
 
-    return DEFAULT_SERVER_ERROR_MESSAGE
+    return error.message
   },
 })
 // .use(async ({ next, clientInput, metadata }) => {
