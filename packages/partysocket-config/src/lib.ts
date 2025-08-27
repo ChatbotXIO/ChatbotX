@@ -18,3 +18,18 @@ export async function broadcastToChatbotParty(
     },
   )
 }
+
+export async function broadcastToGuestParty(
+  guestConversationId: string,
+  json: RealtimeEventData,
+) {
+  return await ky.post(
+    `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/guests/${guestConversationId}`,
+    {
+      headers: {
+        "X-API-KEY": env.PARTYSOCKET_API_KEY,
+      },
+      json,
+    },
+  )
+}

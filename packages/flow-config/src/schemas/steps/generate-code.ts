@@ -1,6 +1,6 @@
-import { StepType } from "@aha.chat/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { StepType } from "./step-action"
 
 export const GenerateCodeType = {
   NUMERIC_LENGTH: "NUMERIC_LENGTH",

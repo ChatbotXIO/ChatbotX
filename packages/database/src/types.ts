@@ -3,6 +3,8 @@ export * from "./generated/prisma/models"
 
 export const OMNICHANNEL = "OMNICHANNEL"
 
+export const CHAT_WIDGET_SOURCE_PREFIX = "cw:"
+
 export const CustomFieldOperation = {
   SET: "SET",
   APPEND: "APPEND",

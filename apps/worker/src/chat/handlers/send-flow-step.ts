@@ -4,9 +4,11 @@ import {
   prisma,
   SenderType,
 } from "@aha.chat/database"
+import { CHAT_WIDGET_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { StepType } from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
+  broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
 import type { ConversationEntity } from "@aha.chat/sdk"
@@ -39,15 +41,28 @@ export async function sendFlowStep({
     },
   })
 
-  await Promise.all([
+  const promises: Promise<unknown>[] = [
     broadcastToChatbotParty(conversation.chatbotId, {
       eventType: RealtimeEventType.CREATE_MESSAGE,
       data: message,
     }),
-    sendFlowStepToExternal({
-      conversation: conversation as ConversationEntity,
-      flowVersionId,
-      step,
-    }),
-  ])
+  ]
+  if (conversation.sourceId?.startsWith(CHAT_WIDGET_SOURCE_PREFIX)) {
+    promises.push(
+      broadcastToGuestParty(conversation.sourceId, {
+        eventType: RealtimeEventType.CREATE_MESSAGE,
+        data: message,
+      }),
+    )
+  } else {
+    promises.push(
+      sendFlowStepToExternal({
+        conversation: conversation as ConversationEntity,
+        flowVersionId,
+        step,
+      }),
+    )
+  }
+
+  await Promise.all(promises)
 }

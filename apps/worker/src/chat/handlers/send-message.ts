@@ -25,7 +25,7 @@ export async function sendMessageToExternal(data: ChatJobSendMessage) {
   // Find integration detail
   const intergationDetail = allIntegrations[inbox.inboxType]
   if (!intergationDetail) {
-    logger.error("Unable to find integration detail:", inbox.inboxType)
+    logger.info("Does not support this integration:", inbox.inboxType)
     return
   }
 

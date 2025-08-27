@@ -16,9 +16,9 @@ export async function GET(
     await findChatbotOrFail(userId, chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-    const { data } = listMessagesRequest.safeParse(searchParams)
+    const data = listMessagesRequest.parse(searchParams)
 
-    const result = await listMessages(chatbotId, data ?? {})
+    const result = await listMessages(chatbotId, data)
 
     return NextResponse.json(result)
   } catch (e) {

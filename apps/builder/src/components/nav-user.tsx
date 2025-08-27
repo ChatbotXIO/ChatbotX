@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import {
-  SidebarMenuAction,
+  SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -39,7 +39,7 @@ export function NavUser({
   const t = useTranslations()
 
   return (
-    <SidebarMenuAction>
+    <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -115,6 +115,6 @@ export function NavUser({
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
-    </SidebarMenuAction>
+    </SidebarMenu>
   )
 }

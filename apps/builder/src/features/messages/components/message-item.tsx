@@ -7,24 +7,41 @@ import Link from "next/link"
 import type { MessageResource } from "../schemas"
 import { MessageBubble } from "./message-bubble"
 
-export const MessageItem = (props: { message: MessageResource }) => {
-  const { message } = props
+type MessageItemProps = {
+  message: MessageResource
+  guestDisplay?: boolean
+}
 
-  const variants: Record<MessageType, string> = {
-    [MessageType.INCOMING]:
-      "px-3 py-2 rounded-xl bg-secondary text-secondary-foreground",
-    [MessageType.OUTGOING]:
-      "px-3 py-2 rounded-xl bg-primary text-primary-foreground",
-    [MessageType.ACTIVITY]: "text-center w-full text-muted-foreground",
+export const MessageItem = (props: MessageItemProps) => {
+  const { message, guestDisplay = false } = props
+
+  const variants: Record<"left" | "right" | "full", string> = {
+    left: "px-3 py-2 rounded-xl bg-secondary text-secondary-foreground",
+    right: "px-3 py-2 rounded-xl bg-primary text-primary-foreground",
+    full: "text-center w-full text-muted-foreground",
   }
+
+  let variant: "left" | "right" | "full" = "full"
+  switch (message.messageType) {
+    case MessageType.INCOMING:
+      variant = guestDisplay ? "right" : "left"
+      break
+    case MessageType.OUTGOING:
+      variant = guestDisplay ? "left" : "right"
+      break
+    default:
+      variant = "full"
+      break
+  }
+
   return (
     <MessageBubble
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
-      variant={message.messageType}
+      variant={variant}
     >
       <div className="mx-3 flex max-w-[70%] flex-col gap-1">
         {message.content && message.content.length > 0 && (
-          <div className={cn("text-sm", variants[message.messageType])}>
+          <div className={cn("text-sm", variants[variant])}>
             <pre className="whitespace-normal break-all font-sans">
               {message.content}
             </pre>

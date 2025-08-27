@@ -1,63 +1,103 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { Gender, InboxType, prisma } from "@aha.chat/database"
 import {
-  CHAT_WIDGET_SOURCE_PREFIX,
   ContentType,
+  type ConversationModel,
   MessageType,
   SenderType,
-  type UserModel,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
-  broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
-import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
+import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
 import { revalidateTag } from "next/cache"
+import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { findConversation } from "@/features/conversations/queries/list-conversations.query"
+import { triggerAutomatedResponse } from "@/features/automated-response/lib"
+import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { actionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
-  type CreateMessageRequest,
-  createMessageRequest,
+  type CreateWebchatMessageRequest,
+  createWebchatMessageRequest,
   guessFileTypeFromMimeType,
 } from "../schemas/create-message.schema"
 
-export const createMessageAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
-  .inputSchema(createMessageRequest)
+export const createWebchatMessageAction = actionClient
+  .inputSchema(createWebchatMessageRequest)
   .action(
-    async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId, conversationId],
-      parsedInput,
-    }: {
-      ctx: { user: UserModel }
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: CreateMessageRequest
-    }) => {
-      const { data: conversation } = await findConversation({
-        id: conversationId,
-        chatbotId,
+    async ({ parsedInput }: { parsedInput: CreateWebchatMessageRequest }) => {
+      // Create conversation if it does not exist
+      let conversation: ConversationModel | null = null
+
+      const inbox = await prisma.inbox.findFirst({
+        where: {
+          chatbotId: parsedInput.chatbotId,
+          inboxType: InboxType.CHAT_WIDGET,
+        },
       })
+      if (!inbox) {
+        throw new BaseException("Inbox not found")
+      }
+
+      const sourceId = parsedInput.guestConversationId
+      conversation = await prisma.conversation.findFirst({
+        where: {
+          chatbotId: parsedInput.chatbotId,
+          sourceId,
+          inboxId: inbox.id,
+        },
+      })
+
+      if (!conversation) {
+        // find or create contact
+        let contact = await prisma.contact.findFirst({
+          where: {
+            chatbotId: parsedInput.chatbotId,
+            sourceId,
+          },
+        })
+
+        if (!contact) {
+          contact = await prisma.contact.create({
+            data: {
+              chatbotId: parsedInput.chatbotId,
+              sourceId,
+              email: parsedInput.guestConversationId,
+              source: "CHAT_WIDGET",
+              gender: Gender.UNKNOWN,
+              firstName: "Guest",
+              lastName: randomString(10),
+            },
+          })
+        }
+
+        conversation = await prisma.conversation.create({
+          data: {
+            chatbotId: parsedInput.chatbotId,
+            sourceId,
+            inboxId: inbox.id,
+            contactId: contact.id,
+          },
+        })
+      }
+
+      if (!conversation) {
+        throw new BaseException("Conversation not found")
+      }
 
       // upload file if exists
       let path: string | null = null
       let imageDimensions: { width: number; height: number } | null = null
       if ("files" in parsedInput && parsedInput.files.length > 0) {
         const file = parsedInput.files[0] as File
-        path = `public/conversations/${conversationId}/${createId()}`
+        path = `public/conversations/${conversation.id}/${createId()}`
 
         const buffer = (await file.arrayBuffer()) as unknown as Buffer
         await uploader.putObject(path, buffer, {
@@ -81,11 +121,11 @@ export const createMessageAction = chatbotActionClient
         const newMessage: MessageResource = await tx.message.create({
           data: {
             content: "content" in parsedInput ? parsedInput.content : null,
-            messageType: MessageType.OUTGOING,
+            messageType: MessageType.INCOMING,
             chatbotId: conversation.chatbotId,
-            conversationId,
+            conversationId: conversation.id,
             senderType: SenderType.USER,
-            senderId: ctx.user.id,
+            senderId: conversation.contactId,
             inboxId: conversation.inboxId,
             contentType: ContentType.TEXT,
           },
@@ -114,7 +154,7 @@ export const createMessageAction = chatbotActionClient
 
         await tx.conversation.update({
           where: {
-            id: conversationId,
+            id: conversation.id,
           },
           data: {
             agentLastSeenAt: new Date(),
@@ -134,31 +174,10 @@ export const createMessageAction = chatbotActionClient
           },
         }),
       ]
-      if (conversation.sourceId?.startsWith(CHAT_WIDGET_SOURCE_PREFIX)) {
+      if (message.content) {
         promises.push(
-          broadcastToGuestParty(conversation.sourceId, {
-            eventType: RealtimeEventType.CREATE_MESSAGE,
-            data: {
-              ...message,
-              clientId: parsedInput.clientId,
-            },
-          }),
-        )
-      } else {
-        promises.push(
-          chatQueue.add(ChatJobAction.SEND_MESSAGE, {
-            type: ChatJobAction.SEND_MESSAGE,
-            data: {
-              conversation: conversation as ConversationEntity,
-              message: {
-                ...message,
-                clientId: parsedInput.clientId,
-                sourceId: message.sourceId || "",
-                contentType: message.contentType as unknown as ContentType,
-                content: message.content ?? "",
-                attachments: message.attachments as AttachmentEntity[],
-              },
-            },
+          triggerAutomatedResponse({
+            message: message as OutgoingMessageEntity,
           }),
         )
       }
@@ -166,6 +185,6 @@ export const createMessageAction = chatbotActionClient
       // Broadcast and send
       await Promise.all(promises)
 
-      revalidateTag(`chatbots:${chatbotId}:conversations`)
+      revalidateTag(`chatbots:${conversation.chatbotId}:conversations`)
     },
   )

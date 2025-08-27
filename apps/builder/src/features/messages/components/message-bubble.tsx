@@ -6,13 +6,13 @@ import type { HTMLAttributes } from "react"
 const messageBubbleVariant = cva("flex gap-2", {
   variants: {
     variant: {
-      INCOMING: "flex self-start",
-      OUTGOING: "flex flex-row-reverse self-end",
-      ACTIVITY: "w-full",
+      left: "flex self-start",
+      right: "flex flex-row-reverse self-end",
+      full: "w-full",
     },
   },
   defaultVariants: {
-    variant: "INCOMING",
+    variant: "left",
   },
 })
 
