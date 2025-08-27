@@ -11,6 +11,27 @@ export const CustomFieldOperation = {
   PREPEND: "PREPEND",
 } as const
 
+export const ReplyType = {
+  MESSAGE: "MESSAGE",
+  FLOW: "FLOW",
+} as const
+
+export type ReplyMessage = {
+  message: string
+  type: typeof ReplyType.MESSAGE
+  buttons: {
+    url: string
+    label: string
+  }[]
+}
+
+export type ReplyFlow = {
+  type: typeof ReplyType.FLOW
+  flowId: string
+}
+
+export type AutomatedResponseReply = ReplyMessage | ReplyFlow
+
 export type OrganizationSettings = {
   whatsappClientId: string
   whatsappClientSecret: string

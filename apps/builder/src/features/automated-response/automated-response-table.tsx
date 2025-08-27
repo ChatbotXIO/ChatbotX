@@ -1,5 +1,6 @@
 "use client"
 
+import { ReplyType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -25,10 +26,7 @@ import { toast } from "sonner"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
-import {
-  type CreateAutomatedResponseRequest,
-  ReplyType,
-} from "./schemas/create-automated-responses-schema"
+import type { CreateAutomatedResponseRequest } from "./schemas/create-automated-responses-schema"
 import type { AutomatedResponseResource } from "./schemas/types"
 
 type AutomatedResponseTableProps = {

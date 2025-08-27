@@ -1,5 +1,6 @@
 "use client"
 
+import { ReplyType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
@@ -20,10 +21,7 @@ import { Controller, useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { FlowSelect } from "../flows/flow-select"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
-import {
-  createAutomatedResponseRequest,
-  ReplyType,
-} from "./schemas/create-automated-responses-schema"
+import { createAutomatedResponseRequest } from "./schemas/create-automated-responses-schema"
 
 export function CreateAutomatedResponseForm({
   chatbotId,

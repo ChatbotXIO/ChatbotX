@@ -15,7 +15,7 @@ const worker = new Worker(
   QueueName.CHAT,
   async (job: Job<ChatJobData>) => {
     switch (job.data.type) {
-      case ChatJobAction.SEND_MESSAGE:
+      case ChatJobAction.SEND_EXTERNAL_MESSAGE:
         await sendMessageToExternal(job.data)
         return
       case ChatJobAction.SEND_FLOW_STEP:

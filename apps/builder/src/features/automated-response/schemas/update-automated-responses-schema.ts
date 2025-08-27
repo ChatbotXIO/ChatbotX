@@ -1,5 +1,5 @@
+import { ReplyType } from "@aha.chat/database/types"
 import { z } from "zod"
-import { ReplyType } from "./create-automated-responses-schema"
 
 export const updateAutomatedResponseRequest = z.object({
   folderId: z.string().cuid2().nullable().optional(),

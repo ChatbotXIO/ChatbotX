@@ -146,8 +146,8 @@ export const createMessageAction = chatbotActionClient
         )
       } else {
         promises.push(
-          chatQueue.add(ChatJobAction.SEND_MESSAGE, {
-            type: ChatJobAction.SEND_MESSAGE,
+          chatQueue.add(ChatJobAction.SEND_EXTERNAL_MESSAGE, {
+            type: ChatJobAction.SEND_EXTERNAL_MESSAGE,
             data: {
               conversation: conversation as ConversationEntity,
               message: {

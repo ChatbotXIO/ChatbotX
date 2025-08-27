@@ -1,4 +1,8 @@
 import { prisma } from "@aha.chat/database"
+import {
+  type AutomatedResponseReply,
+  ReplyType,
+} from "@aha.chat/database/types"
 import { StepType } from "@aha.chat/flow-config"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import {
@@ -8,23 +12,6 @@ import {
   integrationQueue,
 } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
-import { ReplyType } from "../schemas/create-automated-responses-schema"
-
-type ReplyMessage = {
-  message: string
-  type: typeof ReplyType.MESSAGE
-  buttons: {
-    url: string
-    label: string
-  }[]
-}
-
-type ReplyFlow = {
-  type: typeof ReplyType.FLOW
-  flowId: string
-}
-
-export type Reply = ReplyMessage | ReplyFlow
 
 export async function triggerAutomatedResponse({
   message,
@@ -46,7 +33,7 @@ export async function triggerAutomatedResponse({
       (message.content ?? "").includes(v),
     )
     if (matched) {
-      for (const reply of automatedResponse.replies as Reply[]) {
+      for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
           case ReplyType.MESSAGE:
             await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {

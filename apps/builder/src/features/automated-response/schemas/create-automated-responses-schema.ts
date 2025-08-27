@@ -1,9 +1,5 @@
+import { ReplyType } from "@aha.chat/database/types"
 import { z } from "zod"
-
-export const ReplyType = {
-  MESSAGE: "MESSAGE",
-  FLOW: "FLOW",
-} as const
 
 export const createAutomatedResponseRequest = z.object({
   folderId: z.string().cuid2().nullish(),

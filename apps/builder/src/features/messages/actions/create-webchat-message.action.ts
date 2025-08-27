@@ -13,12 +13,12 @@ import {
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
 import { revalidateTag } from "next/cache"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import { triggerAutomatedResponse } from "@/features/automated-response/lib"
 import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
@@ -176,9 +176,15 @@ export const createWebchatMessageAction = actionClient
       ]
       if (message.content) {
         promises.push(
-          triggerAutomatedResponse({
-            message: message as OutgoingMessageEntity,
-          }),
+          integrationQueue.add(
+            IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
+            {
+              type: IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
+              data: {
+                message: message as OutgoingMessageEntity,
+              },
+            },
+          ),
         )
       }
 

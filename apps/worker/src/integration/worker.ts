@@ -4,6 +4,7 @@ import {
   getRedisConnection,
   IntegrationJobAction,
   type IntegrationJobData,
+  integrationQueue,
   QueueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
@@ -21,9 +22,15 @@ const worker = new Worker(
         const { message } = await receiveMessage(job.data.data)
 
         if (message.content) {
-          await triggerAutomatedResponse({
-            message: message as OutgoingMessageEntity,
-          })
+          await integrationQueue.add(
+            IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
+            {
+              type: IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
+              data: {
+                message: message as OutgoingMessageEntity,
+              },
+            },
+          )
         }
         return
       }
@@ -33,6 +40,11 @@ const worker = new Worker(
       }
       case IntegrationJobAction.SEND_FLOW_POSTBACK: {
         await sendFlowPostback(job.data.data)
+        return
+      }
+
+      case IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE: {
+        await triggerAutomatedResponse(job.data.data)
         return
       }
       default:
