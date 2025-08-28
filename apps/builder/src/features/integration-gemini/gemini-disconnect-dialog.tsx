@@ -35,22 +35,6 @@ export const GeminiDisconnectDialog = () => {
     },
   )
 
-  // const { execute, isPending } = useAction(
-
-  //   disconnectGeminiAction.bind(null, chatbotId),
-  //   {
-  //     actionProps: {
-  //       onSuccess: () => {
-  //         setOpen(false)
-  //         router.refresh()
-  //       },
-  //       onError: ({ error }) => {
-  //         error.serverError && toast.error(error.serverError)
-  //       },
-  //     },
-  //   },
-  // )
-
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>

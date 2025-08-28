@@ -25,16 +25,6 @@ export const createAIAgentRequest = z.object({
   ),
   temperature: z.number().min(0).max(2),
   maxTokens: z.number().min(1).max(32_768),
-  // z.object({
-  //   provider: z.literal("openAI"),
-  //   model: z.enum(
-  //     Object.keys(OPENAI_MODELS) as [
-  //       keyof typeof OPENAI_MODELS,
-  //       ...Array<keyof typeof OPENAI_MODELS>,
-  //     ],
-  //   ),
-  // }),
-
   tools: z.array(z.string()),
   isDefault: z.boolean(),
 })

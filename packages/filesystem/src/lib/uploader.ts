@@ -75,37 +75,6 @@ class Uploader {
         },
       )
     ).url.toString()
-    // return await getSignedUrl(
-    //   this.#client,
-    //   new PutObjectCommand({
-    //     Bucket: this.#bucketName,
-    //     Key: filePath,
-    //     ACL: "public-read",
-    //     ContentType: contentType,
-    //     ContentLength: maxSize,
-    //     Metadata: {
-    //       name: fileName,
-    //     },
-    //   }),
-    //   {
-    //     expiresIn: 5 * 60,
-    //   },
-    // )
-    // const command: PresignedPostOptions = {
-    //   Bucket: this.#bucketName,
-    //   Key: filePath,
-    //   Expires: 5 * 60, // 5 minutes
-    //   Conditions: [
-    //     // ['starts-with', '$Content-Type', 'image/'], // Only allow image files
-    //     ["content-length-range", 1024, maxSize], // 1KB to 5MB file size
-    //   ],
-    //   Fields: {
-    //     "Content-Type": contentType, // MIME type of the file
-    //     "x-amz-meta-uploaded-by": "web-app",
-    //     "x-amz-meta-original-filename": fileName,
-    //   },
-    // }
-    // return await generatePresign(this.#client, command)
   }
 
   async headObject(path: string) {

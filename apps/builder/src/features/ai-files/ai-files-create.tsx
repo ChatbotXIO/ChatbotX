@@ -47,8 +47,6 @@ export function AIFilesCreate() {
           mimeType: file.type,
           size: file.size,
         })
-        // Refresh the table to show the new file
-        // This would typically trigger a refetch of the data
       }}
       uploadPath={`public/chatbots/${chatbotId}/ai-files`}
     />

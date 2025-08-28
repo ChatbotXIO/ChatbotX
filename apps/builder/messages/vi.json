@@ -67,14 +67,6 @@
       "label": "Khóa API",
       "placeholder": "Nhập khóa API"
     },
-    "temperature": {
-      "label": "Nhiệt độ",
-      "placeholder": "Nhập nhiệt độ"
-    },
-    "maxTokens": {
-      "label": "Token tối đa",
-      "placeholder": "Nhập token tối đa"
-    },
     "developmentMode": {
       "label": "Chế độ phát triển",
       "description": "Bot của bạn sẽ chỉ hoạt động cho quản trị viên bot. Bật tùy chọn này nếu bạn đang xây dựng bot và không muốn người không phải quản trị viên sử dụng bot."
@@ -109,6 +101,12 @@
     "customField": {
       "label": "Trường tùy chỉnh"
     },
+    "file": {
+      "label": "Tệp"
+    },
+    "aiAgent": {
+      "label": "AI Agent"
+    },
     "aiAgents": {
       "label": "AI Agents"
     },
@@ -136,9 +134,6 @@
     "aiTrigger": {
       "label": "AI Trigger",
       "description": "Mô tả cách hoạt động của trigger này"
-    },
-    "dataCollect": {
-      "label": "Thu thập dữ liệu"
     },
     "flowId": {
       "label": "ID Luồng"
@@ -186,7 +181,10 @@
       "label": "Phân tích"
     },
     "flows": {
-      "label": "Luồng"
+      "label": "Luồng",
+      "sendMessage": {
+        "label": "Gửi tin nhắn"
+      }
     },
     "contacts": {
       "label": "Liên hệ"
@@ -269,8 +267,8 @@
     "accessToken": {
       "label": "Token truy cập"
     },
-    "file": {
-      "insertLink": "Chèn liên kết"
+    "insertLink": {
+      "label": "Chèn liên kết"
     },
     "size": {
       "label": "Kích thước"
@@ -296,6 +294,100 @@
       "vue": "Vue",
       "svelte": "Svelte",
       "ember": "Ember"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "prompt": {
+      "label": "Prompt"
+    },
+    "aiFile": {
+      "label": "AI File"
+    },
+    "auth": {
+      "label": "Xác thực"
+    },
+    "aiMcpServer": {
+      "label": "AI MCP Server",
+      "auth": {
+        "type": {
+          "none": "Không có",
+          "token": "Token",
+          "headers": "Header tùy chỉnh"
+        },
+        "token": {
+          "label": "Token"
+        },
+        "headers": {
+          "label": "Header tùy chỉnh"
+        }
+      }
+    },
+    "purpose": {
+      "label": "Mục đích",
+      "placeholder": "Chức năng này làm gì?"
+    },
+    "outputMessage": {
+      "label": "Tin nhắn đầu ra",
+      "placeholder": "Tin nhắn đầu ra là gì?"
+    },
+    "triggerFlowId": {
+      "label": "ID Luồng kích hoạt",
+      "placeholder": "Luồng nào được kích hoạt?"
+    },
+    "dataCollect": {
+      "label": "Thu thập dữ liệu",
+      "placeholder": "Dữ liệu nào được thu thập?"
+    },
+    "promptMessages": {
+      "label": "Tin nhắn prompt",
+      "role": {
+        "user": "Người dùng",
+        "assistant": "Trợ lý"
+      }
+    },
+    "isDefault": {
+      "label": "Đánh dấu làm mặc định"
+    },
+    "function": {
+      "label": "Chức năng"
+    },
+    "temperature": {
+      "label": "Nhiệt độ"
+    },
+    "maxTokens": {
+      "label": "Token tối đa"
+    },
+    "format": {
+      "label": "Định dạng"
+    },
+    "min": {
+      "label": "Tối thiểu"
+    },
+    "max": {
+      "label": "Tối đa"
+    },
+    "numericLength": {
+      "label": "Độ dài số"
+    },
+    "numericValue": {
+      "label": "Giá trị số"
+    },
+    "alphanumericLength": {
+      "label": "Độ dài chữ số"
+    },
+    "geminiModel": {
+      "label": "Mô hình Gemini"
+    },
+    "whatsappFlow": {
+      "label": "Luồng WhatsApp"
+    },
+    "button": {
+      "label": "Nút",
+      "whenPressed": "Khi nút này được nhấn"
     }
   },
 
@@ -346,7 +438,18 @@
     "deleteProject": "Xóa dự án",
     "upgradeToPro": "Nâng cấp lên Pro",
     "createNewChatbot": "Tạo chatbot mới",
-    "loginWithMagicLink": "Đăng nhập bằng Magic Link"
+    "loginWithMagicLink": "Đăng nhập bằng Magic Link",
+    "uploadFile": "Tải lên tệp",
+    "getTools": "Lấy công cụ",
+    "moreSettings": "Thêm cài đặt",
+    "view": "Xem",
+    "download": "Tải xuống",
+    "actions": "Hành động",
+    "openMenu": "Mở menu",
+    "toggleTheme": "Chuyển đổi giao diện",
+    "selectAll": "Chọn tất cả",
+    "selectRow": "Chọn hàng",
+    "deleteSelectedRows": "Xóa các hàng đã chọn"
   },
 
   "dialog": {
@@ -358,6 +461,9 @@
     "enable": {
       "title": "Bật {feature}",
       "description": "Bạn có chắc chắn muốn bật {feature}?"
+    },
+    "connect": {
+      "title": "Kết nối {feature}"
     },
     "disconnect": {
       "title": "Ngắt kết nối {feature}",
@@ -389,16 +495,29 @@
     "copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
     "updatedSuccessfully": "{feature} đã được cập nhật thành công",
     "createdSuccessfully": "{feature} đã được tạo thành công",
+    "createdFailed": "Tạo {feature} thất bại",
     "deletedSuccessfully": "{feature} đã được xóa thành công",
     "connectedSuccessfully": "{feature} đã được kết nối thành công",
-    "noChatbotsFound": "Không tìm thấy chatbot nào"
+    "noChatbotsFound": "Không tìm thấy chatbot nào",
+    "whenThisButtonIsPressed": "Khi nút này được nhấn",
+    "updateFileComingSoon": "Chức năng cập nhật tệp sẽ sớm có",
+    "deleteFileComingSoon": "Chức năng xóa tệp sẽ sớm có",
+    "viewFileComingSoon": "Chức năng xem tệp sẽ sớm có",
+    "downloadComingSoon": "Chức năng tải xuống sẽ sớm có",
+    "deleteComingSoon": "Chức năng xóa sẽ sớm có",
+    "inboxTeamCreated": "Đã tạo nhóm hộp thư thành công",
+    "magicLinkSent": "Chúng tôi đã gửi URL xác minh đến email của bạn",
+    "signedInSuccessfully": "Đăng nhập thành công",
+    "videoError": "Lỗi video",
+    "failedToPreviewImage": "Không thể xem trước hình ảnh",
+    "uploadFailed": "Tải lên thất bại",
+    "unknownError": "Lỗi không xác định"
   },
 
   "signin": {
     "title": "Đăng nhập vào {name}",
     "or": "Hoặc",
     "and": "và",
-    "continue": "Tiếp tục",
     "acceptTermsAndPolicy": "Bằng cách nhấn tiếp tục, bạn đồng ý với",
     "termsOfService": "Điều khoản dịch vụ",
     "privacyPolicy": "Chính sách bảo mật",
@@ -423,7 +542,14 @@
     "stepType": {
       "optInEmail": "Đăng ký email",
       "sendFlow": "Gửi luồng",
-      "startFlow": "Bắt đầu luồng"
+      "startFlow": "Bắt đầu luồng",
+      "getDataFromJson": "Lấy dữ liệu từ JSON",
+      "generateCode": "Tạo mã",
+      "formatDate": "Định dạng ngày",
+      "countCharacters": "Đếm ký tự",
+      "openAIGenerateImage": "OpenAI tạo hình ảnh",
+      "openAIGenerateTextAgent": "OpenAI tạo văn bản agent",
+      "openAIDeleteMessageHistory": "OpenAI xóa lịch sử tin nhắn"
     },
     "button": {
       "label": "Nhãn nút"
@@ -450,6 +576,10 @@
       },
       "setInterval": "Thiết lập khoảng thời gian",
       "datetimeCustomField": "Trường tùy chỉnh ngày giờ"
+    },
+    "formatTimezone": {
+      "contactTimezone": "Múi giờ liên hệ",
+      "accountTimezone": "Múi giờ tài khoản"
     }
   },
 
@@ -471,12 +601,13 @@
       "label": "AI Agents",
       "description": "Mô tả AI Agents"
     },
-    "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
-    "title": "AI"
+    "subtitle": "Quản lý AI agents và công cụ để nâng cao khả năng chatbot của bạn.",
+    "title": "AI Agents",
+    "description": "Quản lý và cấu hình AI Agents để nâng cao khả năng chatbot của bạn với tự động hóa và phản hồi thông minh."
   },
 
   "aiTool": {
-    "subtitle": "Manage your AI tools to enhance your chatbot capabilities.",
+    "subtitle": "Quản lý AI tools để nâng cao khả năng chatbot của bạn.",
     "title": "AI Tools"
   },
 
@@ -502,8 +633,7 @@
       "label": "Google Sheets",
       "description": "Mô tả Google Sheets"
     },
-    "title": "Tích hợp Google Sheets",
-    "disconnectDescription": "Hành động này không thể hoàn tác."
+    "title": "Google Sheets"
   },
 
   "customField": {
@@ -590,6 +720,7 @@
   },
 
   "integrations": {
+    "title": "Tích hợp",
     "openAI": {
       "apiKey": "Khóa API OpenAI",
       "temperature": "Nhiệt độ",
@@ -720,53 +851,59 @@
     },
     "description": {
       "label": "Mô tả AI Trigger"
-    },
-    "dataCollect": "Thu thập dữ liệu",
-    "flowId": "ID luồng",
-    "finalMessage": "Tin nhắn cuối",
-    "dataCollectAddBtn": "Thêm thu thập dữ liệu"
+    }
   },
 
   "openAI": {
+    "title": "OpenAI",
     "setting": {
       "label": "Tích hợp OpenAI",
       "description": "Mô tả tích hợp OpenAI"
     },
-    "title": "Tích hợp OpenAI"
-  },
-
-  "gemini": {
-    "setting": {
-      "label": "Tích hợp Gemini",
-      "description": "Mô tả tích hợp Gemini"
-    },
-    "title": "Tích hợp Gemini"
-  },
-
-  "aiAgents": {
-    "setting": {
-      "label": "AI Agents",
-      "description": "Mô tả AI Agents"
-    },
-    "delete": {
-      "title": "Xóa AI Agent",
-      "successMessage": "Đã xóa AI Agent thành công",
-      "confirmDescription": "Bạn có chắc chắn muốn xóa AI Agent này?"
+    "connect": {
+      "title": "OpenAI",
+      "description": "Trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn."
     }
   },
-
+  "gemini": {
+    "title": "Google Gemini",
+    "connect": {
+      "label": "Google Gemini",
+      "description": "Trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn."
+    },
+    "aiAutoReply": {
+      "label": "AI tự động trả lời",
+      "description": "Bật AI tự động trả lời để trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn."
+    }
+  },
+  "aiFiles": {
+    "title": "AI Files",
+    "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa"
+  },
   "aiFunctions": {
     "title": "AI Functions",
     "description": "Cấu hình các chức năng LLM để làm cho AI agent thông minh hơn"
   },
-
-  "contact": {
-    "update": {
-      "title": "Cập nhật liên hệ",
-      "successMessage": "Đã cập nhật liên hệ thành công"
+  "aiMcpServers": {
+    "title": "AI MCP Servers",
+    "description": "Kết nối AI với các hệ thống bên ngoài qua MCP",
+    "tools": {
+      "label": "Công cụ có sẵn"
     }
   },
-
-  "question": "Câu hỏi",
-  "addMore": "Thêm nữa"
+  "general": {
+    "title": "Chung"
+  },
+  "channels": {
+    "title": "Kênh"
+  },
+  "billing": {
+    "title": "Thanh toán"
+  },
+  "admins": {
+    "title": "Quản trị viên"
+  },
+  "analytics": {
+    "title": "Phân tích"
+  }
 }

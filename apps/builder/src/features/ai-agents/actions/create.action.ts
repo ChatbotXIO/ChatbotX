@@ -42,10 +42,8 @@ export const createAIAgentAction = chatbotActionClient
 
       await prisma.aIAgent.create({
         data: {
-          ...parsedInput,
           chatbotId,
-          prompt: "You are a helpful assistant.",
-          messages: [],
+          ...parsedInput,
         },
       })
 

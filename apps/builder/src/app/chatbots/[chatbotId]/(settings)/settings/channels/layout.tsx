@@ -6,7 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
-import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import WhatsappIcon from "@/components/icons/whatsapp"
 
@@ -15,8 +14,6 @@ export default function SettingsChannelsPage({
 }: {
   whatsapp: ReactNode
 }) {
-  const _t = useTranslations()
-
   const integrationItems = [
     {
       keyName: "Settings.Integrations.Whatsapp",

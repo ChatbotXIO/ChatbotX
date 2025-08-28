@@ -23,7 +23,7 @@ export const UiProvider = ({
         {/* <AuthProvider privacyUrl={privacyUrl} termsUrl={termsUrl} helpUrl={helpUrl}>
       <AnalyticsProvider> */}
         <TooltipProvider>{children}</TooltipProvider>
-        <Toaster position="top-right" richColors />
+        <Toaster duration={800} position="top-right" richColors />
         {/* </AnalyticsProvider>
     </AuthProvider> */}
       </ThemeProvider>
