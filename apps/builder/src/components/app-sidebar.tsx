@@ -7,14 +7,15 @@ import {
   SidebarHeader,
 } from "@aha.chat/ui/components/ui/sidebar"
 import {
-  Atom,
-  ChartPie,
-  MessageCircleMore,
-  Radio,
-  SlidersHorizontal,
-  Users,
-  Workflow,
-  Wrench,
+  AtomIcon,
+  BrainIcon,
+  ChartPieIcon,
+  MessageCircleMoreIcon,
+  RadioIcon,
+  SlidersHorizontalIcon,
+  UsersIcon,
+  WorkflowIcon,
+  WrenchIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type ComponentProps, use } from "react"
@@ -22,6 +23,7 @@ import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
+import { authClient } from "@/lib/auth-client"
 
 export function AppSidebar({
   chatbotId,
@@ -33,61 +35,67 @@ export function AppSidebar({
 }) {
   const t = useTranslations()
   const { chatbots } = use(allChatbotsPromise)
+  const { data: session } = authClient.useSession()
 
   const data = {
     user: {
-      name: "shadcn",
-      email: "m@example.com",
-      avatar: "/avatars/shadcn.jpg",
+      name: session?.user.name ?? "",
+      email: session?.user.email ?? "",
+      avatar: session?.user.image ?? "",
     },
     navMain: [
       {
         title: t("fields.analytics.label"),
         url: `/chatbots/${chatbotId}/dashboard`,
-        icon: ChartPie,
+        icon: ChartPieIcon,
         isActive: true,
       },
       {
         title: t("fields.inbox.label"),
         url: `/chatbots/${chatbotId}/inbox`,
-        icon: MessageCircleMore,
+        icon: MessageCircleMoreIcon,
       },
       {
         title: t("fields.flows.label"),
         url: `/chatbots/${chatbotId}/flows`,
-        icon: Workflow,
+        icon: WorkflowIcon,
       },
       {
         title: t("fields.contacts.label"),
         url: `/chatbots/${chatbotId}/contacts`,
-        icon: Users,
+        icon: UsersIcon,
+      },
+      {
+        title: t("fields.aiAgent.label"),
+        url: `/chatbots/${chatbotId}/ai-agents`,
+        icon: BrainIcon,
       },
       {
         title: t("fields.automatedResponses.label"),
         url: `/chatbots/${chatbotId}/automated-responses`,
-        icon: Atom,
+        icon: AtomIcon,
       },
       {
         title: t("fields.broadcasts.label"),
         url: `/chatbots/${chatbotId}/broadcasts`,
-        icon: Radio,
+        icon: RadioIcon,
       },
       {
         title: t("fields.tools.label"),
         url: `/chatbots/${chatbotId}/tools`,
-        icon: Wrench,
+        icon: WrenchIcon,
       },
       {
         title: t("fields.settings.label"),
         url: `/chatbots/${chatbotId}/settings/general`,
-        icon: SlidersHorizontal,
+        icon: SlidersHorizontalIcon,
       },
     ],
   }
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="px-2">
         <ChatbotSwitcher chatbots={chatbots} />
       </SidebarHeader>
       <SidebarContent>

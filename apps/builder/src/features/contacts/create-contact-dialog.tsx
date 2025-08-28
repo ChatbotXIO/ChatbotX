@@ -39,7 +39,9 @@ export function CreateContactDialog({
           <Button variant="default">{t("actions.create")}</Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", { feature: t("fields.contact.label") })}

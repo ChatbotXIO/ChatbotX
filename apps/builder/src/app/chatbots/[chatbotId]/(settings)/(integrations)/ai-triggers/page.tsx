@@ -1,9 +1,9 @@
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { listAITriggers } from "@/features/integrations/ai-triggers/actions/list.action"
-import { CreateAITriggerDialog } from "@/features/integrations/ai-triggers/create"
-import { listAITriggersRequest } from "@/features/integrations/ai-triggers/schemas/get.schema"
-import { AITriggersTable } from "@/features/integrations/ai-triggers/table"
+import { listAITriggers } from "@/features/ai-triggers/actions/list.action"
+import { CreateAITriggerDialog } from "@/features/ai-triggers/create"
+import { listAITriggersRequest } from "@/features/ai-triggers/schemas/get.schema"
+import { AITriggersTable } from "@/features/ai-triggers/table"
 
 export default async function AITriggersPage(props: {
   params: Promise<{ chatbotId: string }>

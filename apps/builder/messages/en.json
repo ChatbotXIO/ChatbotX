@@ -67,14 +67,7 @@
       "label": "API Key",
       "placeholder": "Enter API key"
     },
-    "temperature": {
-      "label": "Temperature",
-      "placeholder": "Enter temperature"
-    },
-    "maxTokens": {
-      "label": "Max Tokens",
-      "placeholder": "Enter max tokens"
-    },
+
     "developmentMode": {
       "label": "Development Mode",
       "description": "Your bot will work only for bot admins. Enable this option if you are building your bot and don't want non admins to use the bot."
@@ -109,15 +102,33 @@
     "customField": {
       "label": "Custom Field"
     },
+    "file": {
+      "label": "File"
+    },
     "aiAgent": {
       "label": "AI Agent"
+    },
+    "aiFunction": {
+      "label": "AI Function",
+      "purpose": {
+        "label": "Purpose",
+        "placeholder": "Describe the purpose of this function"
+      },
+      "outputMessage": {
+        "label": "Output Message",
+        "placeholder": "Enter the output message format"
+      },
+      "triggerFlowId": {
+        "label": "Trigger Flow ID",
+        "placeholder": "Enter the flow ID to trigger"
+      }
+    },
+    "mcpServer": {
+      "label": "MCP Server"
     },
     "aiTrigger": {
       "label": "AI Trigger",
       "description": "Describe how this trigger works"
-    },
-    "dataCollect": {
-      "label": "Data Collection"
     },
     "flowId": {
       "label": "Flow ID"
@@ -165,7 +176,10 @@
       "label": "Analytics"
     },
     "flows": {
-      "label": "Flows"
+      "label": "Flows",
+      "sendMessage": {
+        "label": "Send Message"
+      }
     },
     "contacts": {
       "label": "Contacts"
@@ -248,8 +262,17 @@
     "accessToken": {
       "label": "Access Token"
     },
-    "file": {
-      "insertLink": "Insert link"
+    "insertLink": {
+      "label": "Insert link"
+    },
+    "size": {
+      "label": "Size"
+    },
+    "createdAt": {
+      "label": "Created At"
+    },
+    "openAIModel": {
+      "label": "OpenAI Model"
     },
     "userMessage": {
       "label": "User Message"
@@ -266,6 +289,72 @@
       "vue": "Vue",
       "svelte": "Svelte",
       "ember": "Ember"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "prompt": {
+      "label": "Prompt"
+    },
+    "aiFile": {
+      "label": "AI File"
+    },
+    "auth": {
+      "label": "Auth"
+    },
+    "aiMcpServer": {
+      "label": "AI MCP Server",
+      "auth": {
+        "type": {
+          "none": "None",
+          "token": "Token",
+          "headers": "Custom Header"
+        },
+        "token": {
+          "label": "Token"
+        },
+        "headers": {
+          "label": "Custom Header"
+        }
+      }
+    },
+    "purpose": {
+      "label": "Purpose",
+      "placeholder": "What does this Function do?"
+    },
+    "outputMessage": {
+      "label": "Output Message",
+      "placeholder": "What is the output message?"
+    },
+    "triggerFlowId": {
+      "label": "Trigger Flow ID",
+      "placeholder": "What flow is triggered?"
+    },
+    "dataCollect": {
+      "label": "Data Collect",
+      "placeholder": "What data is collected?"
+    },
+    "promptMessages": {
+      "label": "Prompt Messages",
+      "role": {
+        "user": "User",
+        "assistant": "Assistant"
+      }
+    },
+    "isDefault": {
+      "label": "Mark as default"
+    },
+    "function": {
+      "label": "Function"
+    },
+    "temperature": {
+      "label": "Temperature"
+    },
+    "maxTokens": {
+      "label": "Max Tokens"
     }
   },
 
@@ -316,7 +405,12 @@
     "deleteProject": "Delete Project",
     "upgradeToPro": "Upgrade to Pro",
     "createNewChatbot": "Create new Chatbot",
-    "loginWithMagicLink": "Login with Magic Link"
+    "loginWithMagicLink": "Login with Magic Link",
+    "uploadFile": "Upload File",
+    "getTools": "Get Tools",
+    "moreSettings": "More settings",
+    "view": "View",
+    "download": "Download"
   },
 
   "dialog": {
@@ -328,6 +422,9 @@
     "enable": {
       "title": "Enable {feature}",
       "description": "Are you sure to enable {feature}?"
+    },
+    "connect": {
+      "title": "Connect {feature}"
     },
     "disconnect": {
       "title": "Disconnect {feature}",
@@ -359,9 +456,11 @@
     "copiedToClipboard": "Copied to clipboard",
     "updatedSuccessfully": "{feature} updated successfully",
     "createdSuccessfully": "{feature} created successfully",
+    "createdFailed": "{feature} creation failed",
     "deletedSuccessfully": "{feature} deleted successfully",
     "connectedSuccessfully": "{feature} connected successfully",
-    "noChatbotsFound": "No chatbots found"
+    "noChatbotsFound": "No chatbots found",
+    "whenThisButtonIsPressed": "When this button is pressed"
   },
 
   "signin": {
@@ -439,7 +538,15 @@
     "setting": {
       "label": "AI Agents",
       "description": "AI Agents description"
-    }
+    },
+    "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
+    "title": "AI Agents",
+    "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses."
+  },
+
+  "aiTool": {
+    "subtitle": "Manage your AI tools to enhance your chatbot capabilities.",
+    "title": "AI Tools"
   },
 
   "aiTrigger": {
@@ -464,7 +571,7 @@
       "label": "Google Sheets",
       "description": "Google Sheets description"
     },
-    "disconnectDescription": "This action cannot be undone."
+    "title": "Google Sheets"
   },
 
   "customField": {
@@ -551,10 +658,22 @@
   },
 
   "integrations": {
+    "title": "Integrations",
     "openAI": {
       "apiKey": "OpenAI API Key",
       "temperature": "Temperature",
       "maxTokens": "Max Tokens",
+      "button": {
+        "connect": "Connect"
+      }
+    },
+    "gemini": {
+      "apiKey": "Gemini API Key",
+      "button": {
+        "connect": "Connect"
+      }
+    },
+    "googleSheets": {
       "button": {
         "connect": "Connect"
       }
@@ -650,6 +769,10 @@
   },
 
   "aiTriggers": {
+    "setting": {
+      "label": "AI Triggers",
+      "description": "AI Triggers description"
+    },
     "create": {
       "title": "Create AI Trigger"
     },
@@ -666,35 +789,67 @@
     },
     "description": {
       "label": "AI Trigger description"
-    },
-    "dataCollect": "Data Collection",
-    "flowId": "Flow ID",
-    "finalMessage": "Final Message",
-    "dataCollectAddBtn": "Add Data Collection"
+    }
   },
 
   "openAI": {
+    "title": "OpenAI",
     "setting": {
       "label": "OpenAI Integration",
       "description": "OpenAI integration description"
+    },
+    "connect": {
+      "title": "OpenAI",
+      "description": "Respond to users naturally with AI powered by your business data."
     }
   },
-
-  "aiAgents": {
-    "delete": {
-      "title": "Delete AI Agent",
-      "successMessage": "AI Agent deleted successfully",
-      "confirmDescription": "Are you sure you want to delete this AI Agent?"
+  "gemini": {
+    "title": "Google Gemini",
+    "connect": {
+      "label": "Google Gemini",
+      "description": "Respond to users naturally with AI powered by your business data."
+    },
+    "aiAutoReply": {
+      "label": "AI Auto Reply",
+      "description": "Enable AI auto reply to respond to users naturally with AI powered by your business data."
     }
   },
-
+  "aiFiles": {
+    "title": "AI Files",
+    "description": "Give Your Agents Access to PDFs, Docs, and More"
+  },
+  "aiFunctions": {
+    "title": "AI Functions",
+    "description": "Configure LLM functions to make your AI agent more intelligent"
+  },
+  "aiMcpServers": {
+    "title": "AI MCP Servers",
+    "description": "Connect AI to External Systems via MCP",
+    "tools": {
+      "label": "Available Tools"
+    }
+  },
   "contact": {
     "update": {
       "title": "Update Contact",
       "successMessage": "Contact updated successfully"
     }
   },
-
+  "general": {
+    "title": "General"
+  },
+  "channels": {
+    "title": "Channels"
+  },
+  "billing": {
+    "title": "Billing"
+  },
+  "admins": {
+    "title": "Admins"
+  },
+  "analytics": {
+    "title": "Analytics"
+  },
   "question": "Question",
   "addMore": "Add more"
 }

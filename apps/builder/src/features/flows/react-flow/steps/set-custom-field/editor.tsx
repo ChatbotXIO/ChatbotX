@@ -20,7 +20,11 @@ import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { setCustomFieldStep } from "."
 
-const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
+export const SetCustomFieldStepEditor = ({
+  parentName,
+}: {
+  parentName: string
+}) => {
   const t = useTranslations()
   const { setValue, getValues } = useFormContext()
   const defaultValue: SetCustomFieldStepSchema = getValues(parentName)
@@ -52,7 +56,9 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
           {t("flows.stepType.setCustomField")}
         </div>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>{t("flows.stepType.setCustomField")}</DialogTitle>
           <DialogDescription />
@@ -100,4 +106,3 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
     </Dialog>
   )
 }
-export { SetCustomFieldStepEditor }

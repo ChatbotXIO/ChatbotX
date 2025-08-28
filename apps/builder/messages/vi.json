@@ -109,8 +109,29 @@
     "customField": {
       "label": "Trường tùy chỉnh"
     },
-    "aiAgent": {
-      "label": "AI Agent"
+    "aiAgents": {
+      "label": "AI Agents"
+    },
+    "aiTools": {
+      "label": "AI Tools"
+    },
+    "aiFunction": {
+      "label": "AI Function",
+      "purpose": {
+        "label": "Mục đích",
+        "placeholder": "Mô tả mục đích của chức năng này"
+      },
+      "outputMessage": {
+        "label": "Tin nhắn đầu ra",
+        "placeholder": "Nhập định dạng tin nhắn đầu ra"
+      },
+      "triggerFlowId": {
+        "label": "ID Luồng kích hoạt",
+        "placeholder": "Nhập ID luồng để kích hoạt"
+      }
+    },
+    "mcpServer": {
+      "label": "MCP Server"
     },
     "aiTrigger": {
       "label": "AI Trigger",
@@ -250,6 +271,15 @@
     },
     "file": {
       "insertLink": "Chèn liên kết"
+    },
+    "size": {
+      "label": "Kích thước"
+    },
+    "createdAt": {
+      "label": "Tạo lúc"
+    },
+    "openAIModel": {
+      "label": "Mô hình OpenAI"
     },
     "userMessage": {
       "label": "Tin nhắn người dùng"
@@ -440,7 +470,14 @@
     "setting": {
       "label": "AI Agents",
       "description": "Mô tả AI Agents"
-    }
+    },
+    "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
+    "title": "AI"
+  },
+
+  "aiTool": {
+    "subtitle": "Manage your AI tools to enhance your chatbot capabilities.",
+    "title": "AI Tools"
   },
 
   "aiTrigger": {
@@ -465,6 +502,7 @@
       "label": "Google Sheets",
       "description": "Mô tả Google Sheets"
     },
+    "title": "Tích hợp Google Sheets",
     "disconnectDescription": "Hành động này không thể hoàn tác."
   },
 
@@ -556,6 +594,17 @@
       "apiKey": "Khóa API OpenAI",
       "temperature": "Nhiệt độ",
       "maxTokens": "Token tối đa",
+      "button": {
+        "connect": "Kết nối"
+      }
+    },
+    "gemini": {
+      "apiKey": "Khóa API Gemini",
+      "button": {
+        "connect": "Kết nối"
+      }
+    },
+    "googleSheets": {
       "button": {
         "connect": "Kết nối"
       }
@@ -651,6 +700,10 @@
   },
 
   "aiTriggers": {
+    "setting": {
+      "label": "AI Triggers",
+      "description": "Mô tả AI Triggers"
+    },
     "create": {
       "title": "Tạo AI Trigger"
     },
@@ -678,7 +731,16 @@
     "setting": {
       "label": "Tích hợp OpenAI",
       "description": "Mô tả tích hợp OpenAI"
-    }
+    },
+    "title": "Tích hợp OpenAI"
+  },
+
+  "gemini": {
+    "setting": {
+      "label": "Tích hợp Gemini",
+      "description": "Mô tả tích hợp Gemini"
+    },
+    "title": "Tích hợp Gemini"
   },
 
   "aiAgents": {
@@ -691,6 +753,11 @@
       "successMessage": "Đã xóa AI Agent thành công",
       "confirmDescription": "Bạn có chắc chắn muốn xóa AI Agent này?"
     }
+  },
+
+  "aiFunctions": {
+    "title": "AI Functions",
+    "description": "Cấu hình các chức năng LLM để làm cho AI agent thông minh hơn"
   },
 
   "contact": {

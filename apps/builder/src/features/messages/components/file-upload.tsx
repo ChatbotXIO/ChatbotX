@@ -51,11 +51,11 @@ export const FileUploadPreview = ({
           {file.type.startsWith("image") ? (
             <Image
               alt="file"
-              className="h-16"
+              className="h-16 w-auto"
+              height={64}
               onLoad={() => {
                 URL.revokeObjectURL(file.preview)
               }}
-              // Revoke data uri after image is loaded
               src={file.preview}
             />
           ) : (

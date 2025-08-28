@@ -63,29 +63,28 @@ export function DirectUpload({ parentName }: { parentName: string }) {
               >("/api/presigned-upload", {
                 json: [
                   {
-                    fileType: file.type,
-                    fileName: file.name,
-                    filePathProps: {
-                      chatbotId: params.chatbotId,
-                      flowId: params.flowId,
-                      stepId,
-                    },
+                    path: `public/chatbots/${params.chatbotId}/flows/${params.flowId}/steps/${stepId}`,
+                    name: file.name,
+                    mimeType: file.type,
                   },
                 ],
               })
               .json()
 
-            const formData = new FormData()
-            for (const field in presignedPost[0].fields) {
-              if (Object.hasOwn(presignedPost[0].fields, field)) {
-                formData.append(field, String(presignedPost[0].fields[field]))
-              }
-            }
-            formData.append("file", file)
+            const _formData = new FormData()
+            // for (const field in presignedPost[0].fields) {
+            //   if (Object.hasOwn(presignedPost[0].fields, field)) {
+            //     formData.append(field, String(presignedPost[0].fields[field]))
+            //   }
+            // }
+            // formData.append("file", file)
 
             await fetch(presignedPost[0].url, {
-              method: "POST",
-              body: formData,
+              method: "PUT",
+              body: file,
+              headers: {
+                "Content-type": file.type,
+              },
             })
 
             setValue(`${parentName}.url`, presignedPost[0].publicUrl)

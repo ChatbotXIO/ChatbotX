@@ -37,7 +37,9 @@ export const OpenAIDialog = (props: OpenAIDialogProps) => {
           </div>
         </div>
       </DialogTrigger>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle className="capitalize">Open AI - {name}</DialogTitle>
           <DialogDescription />

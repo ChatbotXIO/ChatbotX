@@ -10,17 +10,14 @@ export async function POST(req: NextRequest) {
 
     const result = await Promise.all(
       data.map(async (d) => {
-        const path = `public/chatbots/${d.filePathProps.chatbotId}/flows/${d.filePathProps.flowId}/steps/${d.filePathProps.stepId}`
-
-        const presignedPost = await uploader.getPresignedUpload(
-          path,
-          d.fileName,
-          d.fileType,
+        const presignedPostUrl = await uploader.getPresignedUpload(
+          d.path,
+          // d.name,
+          // d.mimeType,
         )
 
         return {
-          ...presignedPost,
-          publicUrl: `${presignedPost.url}/${presignedPost.fields.key}`,
+          presignedPostUrl,
         }
       }),
     )

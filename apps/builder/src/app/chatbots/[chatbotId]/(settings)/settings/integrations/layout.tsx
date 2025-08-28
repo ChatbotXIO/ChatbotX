@@ -12,23 +12,30 @@ import type { ReactNode } from "react"
 
 type SettingIntegrationLayoutProps = {
   openAI: ReactNode
+  gemini: ReactNode
   googleSheets: ReactNode
 }
 
 export default function SettingIntegrationLayout({
   openAI,
+  gemini,
   googleSheets,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
 
   const integrationItems = [
     {
-      keyName: "Settings.Integrations.OpenAI",
+      keyName: t("openAI.title"),
       icon: BotIcon,
       content: openAI,
     },
     {
-      keyName: "Settings.Integrations.GoogleSheets",
+      keyName: t("gemini.title"),
+      icon: BotIcon,
+      content: gemini,
+    },
+    {
+      keyName: t("googleSheets.title"),
       icon: TableIcon,
       content: googleSheets,
     },
@@ -45,7 +52,7 @@ export default function SettingIntegrationLayout({
           <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
             <div className="flex items-center gap-2">
               <integration.icon size={24} />
-              {t(integration.keyName as keyof typeof t)}
+              {integration.keyName}
             </div>
           </AccordionTrigger>
           <AccordionContent className="p-4">

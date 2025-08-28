@@ -1,0 +1,235 @@
+"use client"
+
+import type { AIFileModel } from "@aha.chat/database/types"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { Badge } from "@aha.chat/ui/components/ui/badge"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@aha.chat/ui/components/ui/dropdown-menu"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { ColumnDef } from "@tanstack/react-table"
+import { format } from "date-fns"
+import {
+  DownloadIcon,
+  EyeIcon,
+  FileIcon,
+  MoreHorizontalIcon,
+  SheetIcon,
+  TextIcon,
+  Trash2Icon,
+} from "lucide-react"
+import { useTranslations } from "next-intl"
+import prettyBytes from "pretty-bytes"
+import { use, useCallback, useMemo } from "react"
+import { toast } from "sonner"
+import { AIFilesCreate } from "./ai-files-create"
+import type { getAIFiles } from "./queries"
+
+type AIFilesTableProps = {
+  promises: Promise<[Awaited<ReturnType<typeof getAIFiles>>]>
+}
+
+export default function AIFilesTable({ promises }: AIFilesTableProps) {
+  const [{ data }] = use(promises)
+
+  const t = useTranslations()
+  // const [rowAction, setRowAction] =
+  //   useState<DataTableRowAction<AIFileModel> | null>(null)
+
+  const getFileIcon = useCallback((fileType: string) => {
+    const extension = fileType.split("/").at(-1)
+    switch (extension) {
+      case "md":
+      case "doc":
+      case "docx":
+      case "txt":
+      case "csv":
+      case "xls":
+      case "pdf":
+        return <TextIcon className="h-4 w-4" />
+      case "xlsx":
+        return <SheetIcon className="h-4 w-4" />
+      default:
+        return <FileIcon className="h-4 w-4" />
+    }
+  }, [])
+
+  const columns = useMemo<ColumnDef<AIFileModel>[]>(
+    () => [
+      {
+        id: "select",
+        header: ({ table: innerTable }) => (
+          <Checkbox
+            aria-label="Select all"
+            checked={
+              innerTable.getIsAllPageRowsSelected() ||
+              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              innerTable.toggleAllPageRowsSelected(Boolean(value))
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label="Select row"
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          />
+        ),
+        size: 32,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "name",
+        accessorKey: "name",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.name.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            {getFileIcon(row.original.mimeType)}
+            <span className="font-medium">{row.original.name}</span>
+          </div>
+        ),
+        enableSorting: true,
+        enableHiding: false,
+      },
+      {
+        id: "fileType",
+        accessorKey: "fileType",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.type.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <Badge variant="secondary">{row.original.mimeType}</Badge>
+        ),
+        enableSorting: true,
+        enableHiding: true,
+      },
+      {
+        id: "size",
+        accessorKey: "size",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.size.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {prettyBytes(row.original.size)}
+          </span>
+        ),
+        enableSorting: true,
+        enableHiding: true,
+      },
+      {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.createdAt.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {format(row.original.createdAt, "MMM dd, yyyy")}
+          </span>
+        ),
+        enableSorting: true,
+        enableHiding: true,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: () => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  toast.info("View file functionality coming soon")
+                }}
+              >
+                <EyeIcon className="mr-2 h-4 w-4" />
+                {t("actions.view")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  toast.info("Download functionality coming soon")
+                }}
+              >
+                <DownloadIcon className="mr-2 h-4 w-4" />
+                {t("actions.download")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => {
+                  toast.info("Delete functionality coming soon")
+                }}
+              >
+                <Trash2Icon className="mr-2 h-4 w-4" />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+        size: 50,
+        enableSorting: false,
+        enableHiding: false,
+      },
+    ],
+    [t, getFileIcon],
+  )
+
+  const { table } = useDataTable({
+    data,
+    columns,
+    pageCount: 1,
+    initialState: {
+      sorting: [{ id: "createdAt", desc: true }],
+      columnPinning: { right: ["actions"] },
+    },
+    getRowId: (originalRow) => originalRow.id,
+    shallow: false,
+    clearOnDefault: true,
+  })
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-lg">{t("aiFiles.title")}</h3>
+          <p className="text-muted-foreground text-sm">
+            {t("aiFiles.description")}
+          </p>
+        </div>
+        <AIFilesCreate />
+      </div>
+
+      <DataTable table={table}>
+        {/* <DataTableToolbar table={table} /> */}
+      </DataTable>
+    </div>
+  )
+}

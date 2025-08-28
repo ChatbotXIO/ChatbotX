@@ -1,8 +1,8 @@
 import type { ReactNode } from "react"
 import {
-  useFormContext,
   type FieldPath,
   type FieldValues,
+  useFormContext,
 } from "react-hook-form"
 import {
   FormControl,
@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "../ui/form"
 
-interface FormFieldWrapperProps<T extends FieldValues> {
+type FormFieldWrapperProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   placeholder?: string
@@ -48,7 +48,7 @@ export function FormFieldWrapper<T extends FieldValues>({
             <FormLabel className="flex gap-1">
               {label}
               {!isRequired && (
-                <span className="text-xxs self-start font-normal">
+                <span className="self-start font-normal text-xxs">
                   (optional)
                 </span>
               )}

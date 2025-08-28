@@ -193,7 +193,7 @@ export function EditButtonDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={"lg:max-w-screen-lg overflow-y-scroll max-h-screen"}>
         <DialogHeader>
           <DialogTitle>{t("dialogs.uploadTitle")}</DialogTitle>
           <DialogDescription />

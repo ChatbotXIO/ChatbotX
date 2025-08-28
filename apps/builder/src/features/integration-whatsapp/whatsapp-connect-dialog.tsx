@@ -64,7 +64,9 @@ export function WhatsappConnectDialog({ chatbotId }: { chatbotId: string }) {
       <DialogTrigger asChild>
         <Button size="sm">{t("actions.connect")}</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <WhatsappIcon />

@@ -65,7 +65,9 @@ export function DeleteTagsDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.deleteConfirmation", {
@@ -74,7 +76,9 @@ export function DeleteTagsDialog({
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
-        <DialogContent>
+        <DialogContent
+          className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+        >
           {t("dialog.deleteConfirmation", {
             feature: t("fields.tag.label"),
           })}{" "}

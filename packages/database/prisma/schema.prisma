@@ -17,6 +17,7 @@ model User {
   email         String   @unique
   emailVerified Boolean  @default(false)
   image         String?
+  isAnonymous   Boolean  @default(false)
 
   accounts                 Account[]
   activityLogs             ActivityLog[]
@@ -166,6 +167,10 @@ model Chatbot {
   tags                     Tag[]
   automatedResponses       AutomatedResponse[]
   flowRuns                 FlowRun[]
+  aiFiles                  AIFile[]
+  aiFunctions              AIFunction[]
+  aiMCPServers             AIMCPServer[]
+  integrationGemini        IntegrationGemini?
 }
 
 model ChatbotMember {
@@ -522,9 +527,15 @@ model AIAgent {
   chatbotId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  name      String
-  prompt    String?
-  messages  Json[]
+
+  name        String
+  prompt      String?
+  messages    Json[]
+  isDefault   Boolean  @default(false)
+  tools       String[]
+  models      Json[]
+  temperature Float
+  maxTokens   Int
 
   chatbot            Chatbot             @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   integrationOpenAIs IntegrationOpenAI[]
@@ -585,6 +596,52 @@ model IntegrationOpenAI {
   aiAgent     AIAgent?     @relation(fields: [aiAgentId], references: [id])
 }
 
+model AIFile {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name     String
+  path     String
+  size     Int
+  mimeType String
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+model AIFunction {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name          String
+  purpose       String?
+  dataCollect   Json?
+  outputMessage String?
+
+  triggerFlowId String?
+  triggerFlow   Flow?   @relation(fields: [triggerFlowId], references: [id])
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+model AIMCPServer {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name           String
+  url            String
+  auth           Json
+  availableTools Json
+  selectedTools  String[]
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
 model IntegrationGoogleSheets {
   id            String   @id @default(cuid(2))
   createdAt     DateTime @default(now())
@@ -598,17 +655,30 @@ model IntegrationGoogleSheets {
 }
 
 model IntegrationWhatsapp {
-  id        String   @id @default(cuid(2))
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  chatbotId String
-  inboxId   String   @unique
-  auth      Json
+  id          String   @id @default(cuid(2))
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  chatbotId   String
+  inboxId     String   @unique
+  auth        Json
+  phoneNumber String
 
   chatbot          Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   inbox            Inbox                     @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   messageTemplates WhatsappMessageTemplate[]
-  flows            WhatsappFlow[]
+  whatsappFlows    WhatsappFlow[]
+}
+
+model IntegrationGemini {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auth        Json?
+  aiAutoReply Boolean @default(false)
+
+  chatbotId String  @unique
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
 model WhatsappMessageTemplate {
@@ -679,6 +749,8 @@ model Flow {
   flowVersions FlowVersion[]
   broadcasts   Broadcast[]
   flowRuns     FlowRun[]
+
+  aiFunctions AIFunction[]
 }
 
 model FlowVersion {
@@ -842,6 +914,7 @@ enum IntegrationType {
   INSTAGRAM
   MESSENGER
   OPENAI
+  GEMINI
   WHATSAPP
 }
 

@@ -1,9 +1,7 @@
 "use client"
 
-import {
-  MultiSelectField,
-  SelectField,
-} from "@aha.chat/ui/components/form/select-field"
+import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { callAPI } from "@/lib/swr"
@@ -57,11 +55,11 @@ export const UserMultipleSelect = (props: UserSelectProps) => {
   return (
     <MultiSelectField
       className={className}
-      isRequired={isRequired}
       label={label}
       name={name}
       options={userOptions}
       placeholder={t("fields.user.selectAgents")}
+      required={isRequired}
     />
   )
 }

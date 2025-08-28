@@ -1,0 +1,98 @@
+"use client"
+
+import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@aha.chat/ui/components/ui/dialog"
+import { Loader2Icon } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
+import { useState } from "react"
+import { disconnectGeminiAction } from "./actions/disconnect.action"
+
+export const GeminiDisconnectDialog = () => {
+  const [open, setOpen] = useState(false)
+  const { chatbotId } = useParams<{ chatbotId: string }>()
+
+  const t = useTranslations()
+  const router = useRouter()
+
+  const { execute, isPending } = useAction(
+    disconnectGeminiAction.bind(null, chatbotId),
+    {
+      onSuccess: () => {
+        setOpen(false)
+        router.refresh()
+      },
+    },
+  )
+
+  // const { execute, isPending } = useAction(
+
+  //   disconnectGeminiAction.bind(null, chatbotId),
+  //   {
+  //     actionProps: {
+  //       onSuccess: () => {
+  //         setOpen(false)
+  //         router.refresh()
+  //       },
+  //       onError: ({ error }) => {
+  //         error.serverError && toast.error(error.serverError)
+  //       },
+  //     },
+  //   },
+  // )
+
+  return (
+    <Dialog onOpenChange={setOpen} open={open}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="destructive">
+          {t("actions.disconnect")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
+        <DialogHeader>
+          <DialogTitle>
+            {t("dialog.disconnect.title", {
+              feature: t("fields.gemini.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription />
+        </DialogHeader>
+
+        {t("dialog.disconnect.description", {
+          feature: t("fields.gemini.label"),
+        })}
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">
+              {t("actions.cancel")}
+            </Button>
+          </DialogClose>
+
+          <Button
+            disabled={isPending}
+            onClick={() => {
+              execute()
+            }}
+            variant="destructive"
+          >
+            {isPending && <Loader2Icon className="animate-spin" />}
+            {t("actions.confirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

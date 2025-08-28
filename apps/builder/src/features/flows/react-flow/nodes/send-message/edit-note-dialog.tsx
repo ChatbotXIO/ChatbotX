@@ -43,7 +43,9 @@ export function EditNoteDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", { feature: t("fields.flowNode.label") })}

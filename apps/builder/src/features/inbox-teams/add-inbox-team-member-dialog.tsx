@@ -1,7 +1,7 @@
 "use client"
 
 import type { InboxTeamModel } from "@aha.chat/database/types"
-import { MultiSelectField } from "@aha.chat/ui/components/form/select-field"
+import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -70,7 +70,9 @@ export function AddInboxTeamMemberDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", {

@@ -71,7 +71,9 @@ export function CreateFlowDialog({
           {t("actions.create")}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", { feature: t("fields.flow.label") })}

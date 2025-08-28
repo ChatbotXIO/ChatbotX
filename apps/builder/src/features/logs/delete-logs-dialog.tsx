@@ -65,7 +65,9 @@ export function DeleteLogsDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.deleteTitle", { feature: t("fields.log.label") })}

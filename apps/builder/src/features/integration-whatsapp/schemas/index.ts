@@ -8,3 +8,9 @@ export const connectWhatsappSchema = z.object({
   accessToken: z.string(),
 })
 export type ConnectWhatsappSchema = z.infer<typeof connectWhatsappSchema>
+
+export const listPhoneNumbersRequest = z.object({
+  wabaId: z.string(),
+  accessToken: z.string(),
+})
+export type ListPhoneNumbersRequest = z.infer<typeof listPhoneNumbersRequest>

@@ -15,7 +15,7 @@ export default function SettingsChannelsPage({
 }: {
   whatsapp: ReactNode
 }) {
-  const t = useTranslations()
+  const _t = useTranslations()
 
   const integrationItems = [
     {
@@ -36,7 +36,7 @@ export default function SettingsChannelsPage({
           <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
             <div className="flex items-center gap-2">
               <integration.icon />
-              {t(integration.keyName as keyof typeof t)}
+              {integration.keyName}
             </div>
           </AccordionTrigger>
           <AccordionContent className="p-4">

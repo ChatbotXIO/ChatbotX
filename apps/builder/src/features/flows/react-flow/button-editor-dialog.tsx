@@ -258,7 +258,9 @@ export function ButtonEditorDialog() {
 
   return data ? (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.updateTitle", { feature: t("fields.flow.label") })}

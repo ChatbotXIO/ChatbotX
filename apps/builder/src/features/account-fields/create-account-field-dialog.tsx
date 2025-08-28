@@ -200,7 +200,9 @@ export function CreateAccountFieldDialog({
           {t("actions.create")}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>{t("accountField.createDialog.title")}</DialogTitle>
           <DialogDescription />

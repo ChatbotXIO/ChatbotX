@@ -67,7 +67,9 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
           {t("actions.connect")}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>OpenAI Connect</DialogTitle>
           <DialogDescription />

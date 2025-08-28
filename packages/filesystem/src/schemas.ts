@@ -2,13 +2,9 @@ import { z } from "zod"
 
 export const createPresignedUploadRequest = z.array(
   z.object({
-    filePathProps: z.object({
-      chatbotId: z.string().trim(),
-      flowId: z.string().trim(),
-      stepId: z.string().trim(),
-    }),
-    fileName: z.string().trim(),
-    fileType: z.string().trim(),
+    path: z.string().trim().min(1),
+    name: z.string().trim().min(1),
+    mimeType: z.string().trim().min(1),
   }),
 )
 export type CreatePresignedUploadRequest = z.infer<

@@ -44,7 +44,7 @@ export function AddNodeButton() {
                 variant="ghost"
               >
                 <item.icon />
-                {t(item.label as keyof typeof t)}
+                {t(item.label)}
               </Button>
             ) : null
           })}

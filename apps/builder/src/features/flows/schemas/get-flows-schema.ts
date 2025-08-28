@@ -9,10 +9,8 @@ import {
 export const listFlowsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
-  sort: getSortingStateParser<FlowModel>().withDefault([
-    { id: "updatedAt", desc: true },
-  ]),
-  name: parseAsString.withDefault(""),
+  sort: getSortingStateParser<FlowModel>(),
+  name: parseAsString,
   folderId: parseAsString,
 })
 

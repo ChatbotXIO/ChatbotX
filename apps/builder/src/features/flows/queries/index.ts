@@ -43,9 +43,11 @@ export async function getFlows(
         ]
       }
 
-      const orderBy = input.sort.map((sortItem) => ({
-        [sortItem.id]: sortItem.desc ? "desc" : "asc",
-      }))
+      const orderBy = input.sort
+        ? input.sort.map((sortItem) => ({
+            [sortItem.id]: sortItem.desc ? "desc" : "asc",
+          }))
+        : [{ updatedAt: "desc" }]
 
       const [data, total] = await prisma.$transaction([
         prisma.flow.findMany({

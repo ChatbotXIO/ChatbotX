@@ -3,7 +3,7 @@
 import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import { AuthType, IntegrationException } from "@aha.chat/sdk"
+import { AuthType } from "@aha.chat/sdk"
 import { findChatbot } from "@/features/chatbot/queries"
 import {
   type ChatbotIdRequestParams,
@@ -27,17 +27,6 @@ export const connectWhatsappAction = authActionClient
       parsedInput: ConnectWhatsappSchema
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationWhatsapp = await prisma.integrationWhatsapp.findFirst({
-        where: {
-          chatbotId,
-        },
-      })
-      if (!integrationWhatsapp) {
-        throw new IntegrationException(
-          "Whatsapp integration is already connected",
-        )
-      }
-
       const chatbot = await findChatbot({ id: chatbotId })
       const organization = await findOrganization({
         id: chatbot.organizationId,
@@ -83,6 +72,7 @@ export const connectWhatsappAction = authActionClient
                 create: {
                   chatbotId,
                   auth: auth as Prisma.InputJsonValue,
+                  phoneNumber: whatsappPhoneNumber.display_phone_number,
                 },
               },
             },

@@ -32,6 +32,10 @@ export type ReplyFlow = {
 
 export type AutomatedResponseReply = ReplyMessage | ReplyFlow
 
+export type AIMcpServerAuthType = "NONE" | "TOKEN" | "HEADERS"
+
+export type AIMessageRole = "user" | "assistant" | "system"
+
 export type OrganizationSettings = {
   whatsappClientId: string
   whatsappClientSecret: string

@@ -10,7 +10,7 @@ import { sendMessageEditorMenus } from "./menu"
 const sendMessageNodeConfig: NodeConfigProps = {
   defaultFn: sendMessageNodeDefaultFn,
   icon: MessageCircleMoreIcon,
-  label: "flows.sendMessageBtn",
+  label: "flows.sendMessage.label",
   menus: sendMessageEditorMenus,
   type: NodeType.SendMessage,
   validator: sendMessageNodeSchema,

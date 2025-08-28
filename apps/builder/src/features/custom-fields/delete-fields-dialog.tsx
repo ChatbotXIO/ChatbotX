@@ -68,7 +68,9 @@ export function DeleteFieldsDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.deleteTitle", {
@@ -77,7 +79,9 @@ export function DeleteFieldsDialog({
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
-        <DialogContent>
+        <DialogContent
+          className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+        >
           {t("dialog.deleteConfirmation", {
             feature: t("fields.customField.label"),
           })}

@@ -1,10 +1,10 @@
 import type { FieldPath, FieldValues } from "react-hook-form"
 import { Controller } from "react-hook-form"
-import { Label } from "../ui/label"
 import { Checkbox } from "../ui/checkbox"
+import { Label } from "../ui/label"
 import { FormFieldWrapper } from "./field-wrapper"
 
-interface CheckboxGroupFieldProps<T extends FieldValues> {
+type CheckboxGroupFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   isRequired?: boolean
@@ -46,7 +46,7 @@ export function CheckboxGroupField<T extends FieldValues>({
                   >
                     <Checkbox
                       checked={valueArray.includes(option.value)}
-                      className="h-[36px] w-[36px] bg-white"
+                      // className="h-[36px] w-[36px] bg-white"
                       id={option.value}
                       onCheckedChange={(checked) =>
                         checked
@@ -56,7 +56,7 @@ export function CheckboxGroupField<T extends FieldValues>({
                             )
                       }
                     />
-                    <Label className="ml-2 text-[18px]" htmlFor={option.value}>
+                    <Label className="font-normal" htmlFor={option.value}>
                       {option.label}
                     </Label>
                   </div>

@@ -264,7 +264,7 @@ export default function FileDropzone({
         </div>
         <Input
           className="rounded-full"
-          placeholder={t("fields.file.insertLink")}
+          placeholder={t("fields.insertLink.label")}
           {...register(`${parentName}.url`)}
         />
       </div>

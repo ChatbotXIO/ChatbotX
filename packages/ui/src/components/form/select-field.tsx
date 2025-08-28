@@ -1,5 +1,4 @@
-import type { FieldPath, FieldValues, Path } from "react-hook-form"
-import { MultiSelect } from "../ui/multi-select"
+import type { FieldPath, FieldValues } from "react-hook-form"
 import {
   Select,
   SelectContent,
@@ -9,7 +8,7 @@ import {
 } from "../ui/select"
 import { FormFieldWrapper } from "./field-wrapper"
 
-interface SelectFieldProps<T extends FieldValues> {
+type SelectFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   isRequired?: boolean
@@ -18,6 +17,21 @@ interface SelectFieldProps<T extends FieldValues> {
   defaultValue?: string
   options: { value: string; label: string }[]
   className?: string
+} & React.ComponentProps<typeof Select>
+
+function SelectClear({
+  className,
+  children,
+  value = null as unknown as string,
+  ...props
+}: Omit<React.ComponentProps<typeof SelectItem>, "value"> & {
+  value?: string
+}) {
+  return (
+    <SelectItem className="opacity-50" key={"reset"} value={value} {...props}>
+      {children ?? "Reset"}
+    </SelectItem>
+  )
 }
 
 export function SelectField<T extends FieldValues>({
@@ -31,15 +45,15 @@ export function SelectField<T extends FieldValues>({
 }: SelectFieldProps<T>) {
   return (
     <FormFieldWrapper<T>
-      name={name}
-      label={label}
-      isRequired={isRequired}
       description={description}
+      isRequired={isRequired}
+      label={label}
+      name={name}
     >
       {(field) => (
         <Select
-          onValueChange={field.onChange}
           defaultValue={field.value}
+          onValueChange={field.onChange}
           {...props}
           {...field}
         >
@@ -47,6 +61,7 @@ export function SelectField<T extends FieldValues>({
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
+            <SelectClear />
             {options.map((option) => (
               <SelectItem key={option.value} value={String(option.value)}>
                 {option.label}
@@ -54,35 +69,6 @@ export function SelectField<T extends FieldValues>({
             ))}
           </SelectContent>
         </Select>
-      )}
-    </FormFieldWrapper>
-  )
-}
-
-export function MultiSelectField<T extends FieldValues>({
-  name,
-  label,
-  isRequired,
-  placeholder,
-  description,
-  options,
-  ...props
-}: SelectFieldProps<T> & { defaultValue?: string[] }) {
-  return (
-    <FormFieldWrapper<T>
-      name={name}
-      label={label}
-      isRequired={isRequired}
-      description={description}
-    >
-      {(field) => (
-        <MultiSelect
-          options={options}
-          defaultValue={field.value}
-          onValueChange={(value) => field.onChange(value as T[Path<T>])}
-          {...props}
-          {...field}
-        />
       )}
     </FormFieldWrapper>
   )

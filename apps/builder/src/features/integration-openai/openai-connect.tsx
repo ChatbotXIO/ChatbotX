@@ -46,8 +46,8 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
   return (
     <>
       <SettingRow
-        description={t("openAI.setting.description")}
-        label={t("openAI.setting.label")}
+        description={t("openAI.connect.description")}
+        label={t("openAI.connect.title")}
       >
         {integrationOpenAI ? (
           <div className="flex flex-col gap-2">
@@ -63,9 +63,15 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t("actions.disconnect")}</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t("dialog.disconnect.title", {
+                      feature: t("fields.openai.label"),
+                    })}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {t("googleSheets.disconnectDescription")}
+                    {t("dialog.disconnect.description", {
+                      feature: t("fields.openai.label"),
+                    })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

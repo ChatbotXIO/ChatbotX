@@ -57,7 +57,9 @@ export function DeleteInboxTeamMembersDialog({
 
   return (
     <Dialog {...props}>
-      <DialogContent>
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("dialog.deleteTitle", {

@@ -15,11 +15,11 @@ export const SettingRow = (props: SettingRowProps) => {
 
   return (
     <div className="flex flex-wrap">
-      <h4 className="w-1/3 truncate px-2 pt-1.5 font-medium lg:w-3/12">
+      <h4 className="w-1/3 truncate px-2 pt-1.5 font-medium text-sm lg:w-3/12">
         {label}
       </h4>
       <div className="w-2/3 px-2 lg:w-4/12">{children}</div>
-      <div className="w-full px-2 pt-1.5 lg:w-5/12">
+      <div className="w-full px-2 pt-1.5 text-sm lg:w-5/12">
         {description}
         {readMoreUrl && <Link href={readMoreUrl}>{t("actions.readMore")}</Link>}
       </div>
