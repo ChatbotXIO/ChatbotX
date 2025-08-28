@@ -76,7 +76,7 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
         className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
       >
         <DialogHeader>
-          <DialogTitle>Get data from JSON</DialogTitle>
+          <DialogTitle>{t("flows.stepType.getDataFromJson")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 

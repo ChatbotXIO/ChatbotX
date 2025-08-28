@@ -90,7 +90,11 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
               name="inputCustomFieldId"
             />
 
-            <InputField isRequired label="Format" name="format" />
+            <InputField
+              isRequired
+              label={t("fields.format.label")}
+              name="format"
+            />
 
             <CustomFieldSelect
               allowCreate={true}

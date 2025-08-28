@@ -103,7 +103,9 @@ export function AIMcpServersCreate() {
       setAllTools([])
       form.setValue("availableTools", {})
       form.setValue("selectedTools", [])
-      toast.error(error instanceof Error ? error.message : "Unknown error")
+      toast.error(
+        error instanceof Error ? error.message : t("messages.unknownError"),
+      )
     } finally {
       setIsMcpServerValidating(false)
     }

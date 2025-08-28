@@ -246,14 +246,14 @@ export function CreateAIAgentDialog({
                   <div className="mt-4" />
                   <SelectField
                     isRequired
-                    label="Gemini Model"
+                    label={t("fields.geminiModel.label")}
                     name="models.0.model"
                     options={GEMINI_MODEL_OPTIONS}
                   />
 
                   <SelectField
                     isRequired
-                    label="OpenAI Model"
+                    label={t("fields.openAIModel.label")}
                     name="models.1.model"
                     options={OPENAI_MODEL_OPTIONS}
                   />

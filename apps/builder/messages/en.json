@@ -355,6 +355,34 @@
     },
     "maxTokens": {
       "label": "Max Tokens"
+    },
+    "format": {
+      "label": "Format"
+    },
+    "min": {
+      "label": "Minimum"
+    },
+    "max": {
+      "label": "Maximum"
+    },
+    "numericLength": {
+      "label": "Numeric Length"
+    },
+    "numericValue": {
+      "label": "Numeric Value"
+    },
+    "alphanumericLength": {
+      "label": "Alphanumeric Length"
+    },
+    "geminiModel": {
+      "label": "Gemini Model"
+    },
+    "whatsappFlow": {
+      "label": "WhatsApp Flow"
+    },
+    "button": {
+      "label": "Button",
+      "whenPressed": "When this button is pressed"
     }
   },
 
@@ -410,7 +438,8 @@
     "getTools": "Get Tools",
     "moreSettings": "More settings",
     "view": "View",
-    "download": "Download"
+    "download": "Download",
+    "actions": "Actions"
   },
 
   "dialog": {
@@ -491,7 +520,14 @@
     "stepType": {
       "optInEmail": "Opt-in Email",
       "sendFlow": "Send Flow",
-      "startFlow": "Start Flow"
+      "startFlow": "Start Flow",
+      "getDataFromJson": "Get Data from JSON",
+      "generateCode": "Generate Code",
+      "formatDate": "Format Date",
+      "countCharacters": "Count Characters",
+      "openAIGenerateImage": "OpenAI Generate Image",
+      "openAIGenerateTextAgent": "OpenAI Generate Text Agent",
+      "openAIDeleteMessageHistory": "OpenAI Delete Message History"
     },
     "button": {
       "label": "Button Label"
@@ -518,6 +554,10 @@
       },
       "setInterval": "Set Interval",
       "datetimeCustomField": "Datetime Custom Field"
+    },
+    "formatTimezone": {
+      "contactTimezone": "Contact Timezone",
+      "accountTimezone": "Account Timezone"
     }
   },
 
@@ -851,5 +891,43 @@
     "title": "Analytics"
   },
   "question": "Question",
-  "addMore": "Add more"
+  "addMore": "Add more",
+  "notifications": {
+    "updateFileComingSoon": "Update file functionality coming soon",
+    "deleteFileComingSoon": "Delete file functionality coming soon",
+    "viewFileComingSoon": "View file functionality coming soon",
+    "downloadComingSoon": "Download functionality coming soon",
+    "deleteComingSoon": "Delete functionality coming soon",
+    "inboxTeamCreated": "Inbox team created successfully",
+    "magicLinkSent": "We sent verification URL to your email",
+    "signedInSuccessfully": "Signed in successfully",
+    "videoError": "Video error",
+    "failedToPreviewImage": "Failed to preview image",
+    "uploadFailed": "Upload failed",
+    "unknownError": "Unknown error"
+  },
+  "accessibility": {
+    "openMenu": "Open menu",
+    "toggleTheme": "Toggle theme",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "deleteSelectedRows": "Delete selected rows"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "labels": {
+    "selectUsers": "Select users",
+    "assignTo": "Assign To",
+    "saveResponseToCustomField": "Save response to a custom field",
+    "userMessage": "User Message",
+    "rememberConversation": "Remember Conversation",
+    "maximumOutputTokens": "Maximum number of output tokens",
+    "enterImageUrl": "Enter image URL",
+    "chatWidget": "Chat Widget",
+    "facebookMessenger": "Facebook Messenger",
+    "deleteNode": "Delete node"
+  }
 }

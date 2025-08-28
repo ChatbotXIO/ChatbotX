@@ -156,19 +156,19 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
       },
       {
         id: "actions",
-        header: "Actions",
+        header: t("actions.actions"),
         cell: () => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
                 <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{t("actions.openMenu")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
-                  toast.info("View file functionality coming soon")
+                  toast.info(t("messages.viewFileComingSoon"))
                 }}
               >
                 <EyeIcon className="mr-2 h-4 w-4" />
@@ -176,7 +176,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  toast.info("Download functionality coming soon")
+                  toast.info(t("messages.downloadComingSoon"))
                 }}
               >
                 <DownloadIcon className="mr-2 h-4 w-4" />
@@ -185,7 +185,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => {
-                  toast.info("Delete functionality coming soon")
+                  toast.info(t("messages.deleteComingSoon"))
                 }}
               >
                 <Trash2Icon className="mr-2 h-4 w-4" />

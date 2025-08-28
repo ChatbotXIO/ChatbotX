@@ -39,7 +39,7 @@ export default function AIMcpServersTable({
         id: "select",
         header: ({ table: innerTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label={t("actions.selectAll")}
             checked={
               innerTable.getIsAllPageRowsSelected() ||
               (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -51,7 +51,7 @@ export default function AIMcpServersTable({
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label={t("actions.selectRow")}
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
@@ -96,19 +96,19 @@ export default function AIMcpServersTable({
       },
       {
         id: "actions",
-        header: "Actions",
+        header: t("actions.actions"),
         cell: () => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
                 <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{t("actions.openMenu")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
-                  toast.info("Update file functionality coming soon")
+                  toast.info(t("messages.updateFileComingSoon"))
                 }}
               >
                 <EyeIcon className="mr-2 h-4 w-4" />
@@ -117,7 +117,7 @@ export default function AIMcpServersTable({
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => {
-                  toast.info("Delete file functionality coming soon")
+                  toast.info(t("messages.deleteFileComingSoon"))
                 }}
               >
                 <Trash2Icon className="mr-2 h-4 w-4" />

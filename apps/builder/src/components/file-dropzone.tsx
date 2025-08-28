@@ -120,7 +120,7 @@ export default function FileDropzone({
     })
 
     video.addEventListener("error", () => {
-      toast("Video error")
+      toast(t("messages.videoError"))
       URL.revokeObjectURL(fileURL)
     })
   }
@@ -131,7 +131,7 @@ export default function FileDropzone({
       setPreview(reader.result as string)
     }
     reader.onerror = () => {
-      toast.error("Failed to preview image")
+      toast.error(t("messages.failedToPreviewImage"))
     }
     reader.readAsDataURL(file)
   }
