@@ -1,34 +1,35 @@
+import type { ComponentProps } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import { Textarea } from "../ui/textarea"
 import { FormFieldWrapper } from "./field-wrapper"
 
-type TextareaFieldProps<T extends FieldValues> = {
+type TextareaFieldProps<T extends FieldValues> = ComponentProps<"textarea"> & {
   name: FieldPath<T>
   label?: string
-  isRequired?: boolean
-  placeholder?: string
   description?: string
-  type?: string
-  className?: string
 }
 
-export function TextareaField<T extends FieldValues>({
-  name,
-  label,
-  isRequired,
-  placeholder,
-  description,
-  type = "text",
-  ...props
-}: TextareaFieldProps<T>) {
+export function TextareaField<T extends FieldValues>(
+  props: TextareaFieldProps<T>,
+) {
+  const {
+    name,
+    label,
+    required,
+    placeholder,
+    description,
+    className,
+    ...rest
+  } = props
+
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={isRequired}
+      isRequired={required}
       label={label}
       name={name}
     >
-      {(field) => <Textarea placeholder={placeholder} {...props} {...field} />}
+      {(field) => <Textarea placeholder={placeholder} {...rest} {...field} />}
     </FormFieldWrapper>
   )
 }

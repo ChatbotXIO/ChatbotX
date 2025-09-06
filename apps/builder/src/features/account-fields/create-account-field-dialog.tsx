@@ -230,7 +230,6 @@ export function CreateAccountFieldDialog({
             />
 
             <TextareaField
-              isRequired={false}
               label={t("fields.description.label")}
               name="description"
             />

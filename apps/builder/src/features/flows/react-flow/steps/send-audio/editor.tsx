@@ -1,24 +1,27 @@
-"use client"
-
 import { FileType } from "@aha.chat/database/types"
-import { useFormContext } from "react-hook-form"
-import FileDropzone from "@/components/file-dropzone"
+import { DirectUploadOrInsertLink } from "@/components/direct-upload"
+import { ButtonGroupEditor } from "../button/editor"
 
-export function SendAudioStepEditor({ parentName }: { parentName: string }) {
-  const { register, unregister } = useFormContext()
+type SendAudioStepEditorProps = {
+  parentName: string
+}
+
+const SendAudioStepEditor = (props: SendAudioStepEditorProps) => {
+  const { parentName } = props
 
   return (
-    <FileDropzone
-      configs={{
-        uploadKeyName: "texts.or",
-        linkKeyName: "actions.insertLink",
-        accept: { "audio/*": [] },
-      }}
-      mode="link"
-      parentName={parentName}
-      register={register}
-      type={FileType.AUDIO}
-      unregister={unregister}
-    />
+    <div className="items-center justify-center overflow-hidden rounded-lg">
+      <div className="bg-secondary px-4 py-2 pt-3">
+        <DirectUploadOrInsertLink
+          fileType={FileType.AUDIO}
+          parentName={parentName}
+        />
+      </div>
+      <div className="bg-slate-200 px-3 py-2">
+        <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+      </div>
+    </div>
   )
 }
+
+export { SendAudioStepEditor }

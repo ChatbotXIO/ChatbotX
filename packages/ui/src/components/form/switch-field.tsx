@@ -1,37 +1,32 @@
+import type * as SwitchPrimitive from "@radix-ui/react-switch"
 import type { FieldPath, FieldValues } from "react-hook-form"
-import { FormFieldWrapper } from "./field-wrapper"
 import { Switch } from "../ui/switch"
+import { FormFieldWrapper } from "./field-wrapper"
 
-interface SwitchFieldProps<T extends FieldValues> {
+type SwitchFieldProps<T extends FieldValues> = React.ComponentProps<
+  typeof SwitchPrimitive.Root
+> & {
   name: FieldPath<T>
   label?: string
-  isRequired?: boolean
-  placeholder?: string
+  required?: boolean
   description?: string
-  defaultValue?: string
-  className?: string
 }
 
-export function SwitchField<T extends FieldValues>({
-  name,
-  label,
-  isRequired = true,
-  placeholder,
-  description,
-  ...props
-}: SwitchFieldProps<T>) {
+export function SwitchField<T extends FieldValues>(props: SwitchFieldProps<T>) {
+  const { name, label, description, required, ...rest } = props
+
   return (
     <FormFieldWrapper
-      name={name}
-      label={label}
-      isRequired={isRequired}
       description={description}
+      isRequired={required}
+      label={label}
+      name={name}
     >
       {(field) => (
         <Switch
           checked={field.value}
           onCheckedChange={field.onChange}
-          {...props}
+          {...rest}
           {...field}
         />
       )}

@@ -65,11 +65,12 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
   const { fields, append, move, remove, insert } = useFieldArray({
     control,
-    name: "steps",
+  name: "steps",
   })
 
   const onAddStep = (name: StepType) => {
     const newStep = allSteps[name]?.defaultFn()
+    console.log("newStep", newStep)
     if (newStep) {
       append(newStep)
     }
@@ -218,7 +219,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
         <DropdownMenuContent className="w-full">
           <RecursiveDropdownMenu
-            data={nodeConfig ? nodeConfig.menus : []}
+            data={nodeConfig ? nodeConfig.menus(t) : []}
             onClick={onAddStep}
           />
         </DropdownMenuContent>

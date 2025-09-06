@@ -16,8 +16,8 @@ export const MessageItem = (props: MessageItemProps) => {
   const { message, guestDisplay = false } = props
 
   const variants: Record<"left" | "right" | "full", string> = {
-    left: "px-3 py-2 rounded-xl bg-secondary text-secondary-foreground",
-    right: "px-3 py-2 rounded-xl bg-primary text-primary-foreground",
+    left: "px-4 py-3 rounded-xl bg-secondary text-secondary-foreground",
+    right: "px-4 py-3 rounded-xl bg-primary text-primary-foreground",
     full: "text-center w-full text-muted-foreground",
   }
 
@@ -42,7 +42,7 @@ export const MessageItem = (props: MessageItemProps) => {
       <div className="mx-3 flex max-w-[70%] flex-col gap-1">
         {message.content && message.content.length > 0 && (
           <div className={cn("text-sm", variants[variant])}>
-            <pre className="whitespace-normal break-all font-sans">
+            <pre className="whitespace-pre-line break-all font-sans">
               {message.content}
             </pre>
           </div>

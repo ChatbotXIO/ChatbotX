@@ -20,11 +20,7 @@ export const OpenAIGenerateTextAdvancedEditor = (
     <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAdvanced">
       <OpenAIModelSelect name={`${props.parentName}.model`} />
 
-      <TextareaField
-        isRequired={false}
-        label="Prompt"
-        name={`${props.parentName}.prompt`}
-      />
+      <TextareaField label="Prompt" name={`${props.parentName}.prompt`} />
 
       <InputField
         label="User Message"

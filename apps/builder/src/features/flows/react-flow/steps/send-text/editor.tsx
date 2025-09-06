@@ -1,6 +1,7 @@
 "use client"
 
-import { InputWithEmoji } from "@/components/input-with-emoji"
+import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
+import { useStepStore } from "../../stores/step-store-provider"
 import { ButtonGroupEditor } from "../button/editor"
 
 type SendTextStepEditorProps = {
@@ -9,10 +10,17 @@ type SendTextStepEditorProps = {
 
 const SendTextStepEditor = (props: SendTextStepEditorProps) => {
   const { parentName } = props
+  const { customFields } = useStepStore((state) => state)
 
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg">
-      <InputWithEmoji name={`${parentName}.message`} />
+      <div className="bg-secondary px-4 py-2">
+        <TiptapEditorField
+          customFields={customFields}
+          name={`${parentName}.message`}
+        />
+      </div>
+
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>

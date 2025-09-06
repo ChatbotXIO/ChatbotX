@@ -42,7 +42,7 @@ export const SetCustomFieldStepEditor = ({
   })
 
   function onSubmit(values: SetCustomFieldStepSchema) {
-    setValue(`${parentName}.customFieldId`, values.customFieldId)
+    setValue(`${parentName}.outputCFId`, values.outputCFId)
     setValue(`${parentName}.operation`, values.operation)
     setValue(`${parentName}.value`, values.value)
 

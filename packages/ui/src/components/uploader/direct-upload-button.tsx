@@ -19,9 +19,11 @@ export type DirectUploadButtonProps = FileUploadProps & {
   /** Custom upload handler URL, defaults to /api/presigned-upload */
   uploadHandlerUrl?: string
   /** Callback when upload is successful, receives the uploaded file path and file object */
-  onUploadSuccess?: (filePath: string, file: File) => void
+  onUploadSuccess?: (filePath: string, file: File, publicUrl: string) => void
   /** Callback when upload fails, receives the error and file object */
   onUploadError?: (error: Error, file: File) => void
+  /** Reference to the trigger button */
+  triggerRef?: React.RefObject<HTMLButtonElement | null>
 }
 
 /**
@@ -45,6 +47,7 @@ export function DirectUploadButton({
   uploadHandlerUrl = "/api/presigned-upload",
   onUploadSuccess,
   onUploadError,
+  triggerRef,
   ...props
 }: DirectUploadButtonProps) {
   const [files, setFiles] = useState<File[]>([])
@@ -97,7 +100,7 @@ export function DirectUploadButton({
               xhr.addEventListener("load", () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
                   onSuccess(file)
-                  onUploadSuccess?.(filePath, file)
+                  onUploadSuccess?.(filePath, file, presignedPost.publicUrl)
                   resolve()
                 } else {
                   const error = new Error(
@@ -164,7 +167,7 @@ export function DirectUploadButton({
     >
       <FileUploadDropzone className="border-none p-0">
         <FileUploadTrigger asChild>
-          <Button disabled={isUploading}>
+          <Button disabled={isUploading} ref={triggerRef}>
             {isUploading ? (
               <Loader2Icon className="size-4 animate-spin" />
             ) : (

@@ -30,7 +30,7 @@ export default async function ChatbotLayout({
   const isInboxPage = (headersList.get("x-url") ?? "")
     .split("/")
     .includes("inbox")
-  const requiredPadding = isInboxPage ? "" : "p-4"
+  const requiredPadding = isInboxPage ? "" : "p-8"
 
   const allChatbotsPromise = getAllChatbotMembers(userId)
 

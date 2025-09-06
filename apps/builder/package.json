@@ -35,6 +35,7 @@
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@greatsumini/react-facebook-login": "^3.4.0",
+    "@floating-ui/dom": "^1.7.4",
     "@hookform/resolvers": "^5.1.1",
     "@icons-pack/react-simple-icons": "^13.7.0",
     "@modelcontextprotocol/sdk": "^1.17.4",
@@ -70,6 +71,12 @@
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-table": "^8.21.3",
     "@types/facebook-js-sdk": "^3.3.12",
+    "@tiptap/extension-emoji": "^3.3.0",
+    "@tiptap/extension-mention": "^3.3.0",
+    "@tiptap/pm": "^3.3.0",
+    "@tiptap/react": "^3.3.0",
+    "@tiptap/starter-kit": "^3.3.0",
+    "@tiptap/suggestion": "^3.3.0",
     "@xyflow/react": "^12.8.1",
     "ai": "^5.0.24",
     "better-auth": "^1.2.12",
@@ -84,6 +91,7 @@
     "emblor": "^1.4.8",
     "emoji-mart": "^5.6.0",
     "emoji-picker-react": "^4.12.3",
+    "frimousse": "^0.3.0",
     "image-size": "^2.0.2",
     "input-otp": "^1.4.2",
     "ky": "^1.8.1",
@@ -117,14 +125,13 @@
     "use-debounce": "^10.0.5",
     "usehooks-ts": "^3.1.1",
     "vaul": "^1.1.2",
-    "zod": "^3.25.71",
+    "zod": "^3.25.76",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@aws-sdk/client-s3": "^3.842.0",
     "@aws-sdk/s3-presigned-post": "^3.842.0",
-    "@biomejs/biome": "^1.9.4",
     "@faker-js/faker": "^9.9.0",
     "@radix-ui/react-visually-hidden": "^1.2.3",
     "@tailwindcss/postcss": "^4.1.11",
@@ -138,6 +145,6 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "tw-animate-css": "^1.3.5",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   }
 }

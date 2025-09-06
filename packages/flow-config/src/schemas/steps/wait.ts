@@ -36,7 +36,7 @@ export const waitStepSchema = z
       }),
       z.object({
         delayType: z.literal(DelayType.DatetimeCustomField),
-        customFieldId: z.string().cuid2(),
+        outputCFId: z.string().cuid2(),
       }),
     ]),
   )

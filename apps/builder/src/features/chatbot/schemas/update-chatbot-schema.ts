@@ -9,7 +9,7 @@ export type UpdateChatbotBasicRequest = z.infer<
 >
 
 export const updateChatbotAdvancedRequest = z.object({
-  defaultReply: z.string().cuid2().nullish(),
+  defaultReply: z.string().nullish(),
   targetCountry: z.enum(allCountryCodes as [string, ...string[]]),
   defaultLanguage: z.enum(allLanguageCodes as [string, ...string[]]),
   accountTimezone: z.enum(allTimezoneCodes as [string, ...string[]]),
