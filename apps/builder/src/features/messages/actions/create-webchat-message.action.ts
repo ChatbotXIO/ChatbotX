@@ -124,7 +124,7 @@ export const createWebchatMessageAction = actionClient
             messageType: MessageType.INCOMING,
             chatbotId: conversation.chatbotId,
             conversationId: conversation.id,
-            senderType: SenderType.USER,
+            senderType: SenderType.CONTACT,
             senderId: conversation.contactId,
             inboxId: conversation.inboxId,
             contentType: ContentType.TEXT,
