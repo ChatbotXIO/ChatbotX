@@ -44,4 +44,8 @@ export type OrganizationSettings = {
   googleClientId: string
   googleClientSecret: string
   googleVerifyToken: string
+
+  messengerAppId: string
+  messengerAppSecret: string
+  messengerVerifyToken: string
 }

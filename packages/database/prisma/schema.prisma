@@ -157,6 +157,7 @@ model Chatbot {
   inboxTeamMembers         InboxTeamMember[]
   inboxTeams               InboxTeam[]
   integrationChatWidgets   IntegrationChatWidget[]
+  integrationMessengers    IntegrationMessenger[]
   integrationGoogleSheets  IntegrationGoogleSheets[]
   integrationOpenAIs       IntegrationOpenAI[]
   integrations             Integration[]
@@ -395,6 +396,7 @@ model Inbox {
 
   integrationWhatsapp   IntegrationWhatsapp?
   integrationChatWidget IntegrationChatWidget?
+  integrationMessenger  IntegrationMessenger?
   messages              Message[]
   conversations         Conversation[]
   chatbot               Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -681,6 +683,28 @@ model IntegrationGemini {
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
+model IntegrationMessenger {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auth   Json?
+  pageId String
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  inboxId String @unique
+  inbox   Inbox  @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  fallbackFlowId String?
+  fallbackFlow   Flow?   @relation(fields: [fallbackFlowId], references: [id])
+
+  @@index([chatbotId])
+  @@index([fallbackFlowId])
+  @@index([pageId])
+}
+
 model WhatsappMessageTemplate {
   id                    String                   @id @default(cuid(2))
   createdAt             DateTime                 @default(now())
@@ -733,24 +757,27 @@ model Spreadsheet {
 }
 
 model Flow {
-  id               String   @id @default(cuid(2))
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  chatbotId        String
-  folderId         String?
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   name             String
-  active           Boolean  @default(true)
-  enableInInbox    Boolean  @default(true)
+  active           Boolean @default(true)
+  enableInInbox    Boolean @default(true)
   currentVersionId String?
   draftVersionId   String?
 
-  chatbot      Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  folder       Folder?       @relation(fields: [folderId], references: [id])
-  flowVersions FlowVersion[]
-  broadcasts   Broadcast[]
-  flowRuns     FlowRun[]
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
-  aiFunctions AIFunction[]
+  folderId String?
+  folder   Folder? @relation(fields: [folderId], references: [id])
+
+  flowVersions          FlowVersion[]
+  broadcasts            Broadcast[]
+  flowRuns              FlowRun[]
+  aiFunctions           AIFunction[]
+  integrationMessengers IntegrationMessenger[]
 }
 
 model FlowVersion {

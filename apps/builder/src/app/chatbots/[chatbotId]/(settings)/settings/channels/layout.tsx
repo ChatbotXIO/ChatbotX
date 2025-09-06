@@ -7,18 +7,26 @@ import {
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
 import type { ReactNode } from "react"
+import { MessengerIcon } from "@/components/icons/messenger"
 import WhatsappIcon from "@/components/icons/whatsapp"
 
 export default function SettingsChannelsPage({
   whatsapp,
+  messenger,
 }: {
   whatsapp: ReactNode
+  messenger: ReactNode
 }) {
   const integrationItems = [
     {
       keyName: "Settings.Integrations.Whatsapp",
       icon: WhatsappIcon,
       content: whatsapp,
+    },
+    {
+      keyName: "Settings.Integrations.Messenger",
+      icon: MessengerIcon,
+      content: messenger,
     },
   ]
 

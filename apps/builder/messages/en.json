@@ -146,7 +146,7 @@
       "label": "Quick Reply"
     },
     "inboxTeam": {
-      "label": "Inbox Team"
+      "label": "Inbox Teamx"
     },
     "agent": {
       "label": "Agent"
@@ -905,5 +905,9 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "messenger": {
+    "title": "Facebook Messenger",
+    "description": "This integration lets you create Messenger bots."
   }
 }
