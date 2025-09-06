@@ -16,7 +16,7 @@ export const disconnectGeminiAction = chatbotActionClient
       where: { id: integrationGemini.id },
       data: {
         auth: null as unknown as NullableJsonNullValueInput,
-        aiAutoReply: false,
+        autoReply: false,
       },
     })
   })

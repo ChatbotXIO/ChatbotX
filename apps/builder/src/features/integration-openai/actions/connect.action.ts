@@ -49,7 +49,6 @@ export const connectOpenAIAction = authActionClient
                   authType: AuthType.SECRET_TEXT,
                   secretText: parsedInput.apiKey,
                 } as SecretTextAuthValue,
-                automatedResponse: false,
                 temperature: parsedInput.temperature,
                 maxTokens: parsedInput.maxTokens,
               },
