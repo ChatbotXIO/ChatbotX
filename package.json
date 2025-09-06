@@ -10,14 +10,14 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.0",
+    "@biomejs/biome": "^2.2.2",
     "@types/node": "^22.16.0",
     "knip": "^5.63.0",
-    "lefthook": "^1.11.16",
-    "tsx": "^4.20.3",
+    "lefthook": "^1.12.3",
+    "tsx": "^4.20.5",
     "turbo": "^2.5.6",
-    "typescript": "5.8.3",
-    "ultracite": "5.2.2"
+    "typescript": "5.9.2",
+    "ultracite": "5.3.2"
   },
   "packageManager": "pnpm@10.15.0",
   "engines": {

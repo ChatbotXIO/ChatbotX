@@ -30,11 +30,43 @@ export type ReplyFlow = {
   flowId: string
 }
 
+export const UploadMode = {
+  LINK: "link",
+  FILE: "file",
+} as const
+export type UploadMode = (typeof UploadMode)[keyof typeof UploadMode]
+
+export const CardLayout = {
+  VERTICAL: "vert",
+  HORIZONTAL: "horz",
+} as const
+export type CardLayout = (typeof CardLayout)[keyof typeof CardLayout]
+
 export type AutomatedResponseReply = ReplyMessage | ReplyFlow
 
 export type AIMcpServerAuthType = "NONE" | "TOKEN" | "HEADERS"
 
 export type AIMessageRole = "user" | "assistant" | "system"
+
+export type AIAgentProvider = {
+  provider: "openAI" | "gemini"
+  model: string
+}
+
+export const ConversationStarterType = {
+  FLOW: "flow",
+  MESSAGE: "message",
+  WEBSITE: "website",
+} as const
+export type ConversationStarterType =
+  (typeof ConversationStarterType)[keyof typeof ConversationStarterType]
+
+export const PersistentMenuType = {
+  FLOW: "flow",
+  WEBSITE: "website",
+} as const
+export type PersistentMenuType =
+  (typeof PersistentMenuType)[keyof typeof PersistentMenuType]
 
 export type OrganizationSettings = {
   whatsappClientId: string

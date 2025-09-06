@@ -1,0 +1,20 @@
+"use client"
+
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { RefreshCwIcon } from "lucide-react"
+
+export const WebchatHeader = () => {
+  const refreshGuestSession = () => {
+    localStorage.removeItem("x-conversation-id")
+    window.location.reload()
+  }
+
+  return (
+    <div className="flex flex-end items-center border border-b px-3 py-1">
+      <h1 className="flex-1 font-bold">AhaChat DEMO</h1>
+      <Button onClick={refreshGuestSession} size="icon" variant="ghost">
+        <RefreshCwIcon />
+      </Button>
+    </div>
+  )
+}

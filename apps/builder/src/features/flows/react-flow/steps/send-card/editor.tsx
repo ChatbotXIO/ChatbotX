@@ -1,14 +1,14 @@
 "use client"
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@aha.chat/ui/components/ui/card"
+import { CardLayout, FileType } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { Input } from "@aha.chat/ui/components/ui/input"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { RectangleHorizontalIcon, RectangleVerticalIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
-import FileDropzone from "@/components/file-dropzone"
+import { DirectUploadOrInsertLink } from "@/components/direct-upload"
+import { ButtonGroupEditor } from "@/features/flows/react-flow/steps/button/editor"
 
 type SendCardStepEditorProps = {
   parentName: string
@@ -16,39 +16,70 @@ type SendCardStepEditorProps = {
 
 export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
   const { parentName } = props
-  const { register } = useFormContext()
+  const { register, setValue, watch } = useFormContext()
+  const t = useTranslations()
+
+  const layout = watch(`${parentName}.layout`)
 
   return (
-    <Card className="w-full rounded-lg border-2 shadow-lg hover:cursor-pointer hover:border-blue-500 hover:border-solid">
-      <CardHeader className="p-0">
-        <FileDropzone
-          configs={{
-            uploadKeyName: "texts.or",
-            isCard: true,
-          }}
-          parentName={parentName}
-          register={register}
+    <div className="flex flex-col rounded-lg border border-gray-200">
+      <div className="relative flex flex-col gap-2 bg-secondary px-3 py-2">
+        <div className="absolute top-2 left-3 z-1 flex items-center gap-1 rounded-full bg-white px-2 py-1">
+          <Button
+            className={cn(
+              "!p-0 size-6",
+              layout === CardLayout.HORIZONTAL ? "text-destructive" : "",
+            )}
+            onClick={() =>
+              setValue(`${parentName}.layout`, CardLayout.HORIZONTAL)
+            }
+            size="icon"
+            variant="ghost"
+          >
+            <RectangleHorizontalIcon />
+          </Button>
+          <Button
+            className={cn(
+              "!p-0 size-6",
+              layout === CardLayout.VERTICAL ? "text-destructive" : "",
+            )}
+            onClick={() =>
+              setValue(`${parentName}.layout`, CardLayout.VERTICAL)
+            }
+            size="icon"
+            variant="ghost"
+          >
+            <RectangleVerticalIcon />
+          </Button>
+        </div>
+
+        <DirectUploadOrInsertLink
+          fileType={FileType.IMAGE}
+          parentName={`${parentName}.image`}
         />
-      </CardHeader>
-      <CardContent className="bg-gray-200 p-2">
+
         <Input
-          className="mb-2 border-0 focus-visible:border-none focus-visible:ring-0"
-          placeholder="Title (Required)"
+          className=""
+          placeholder={`${t("fields.title.placeholder")} (required)`}
+          required
           {...register(`${parentName}.title`)}
         />
 
         <Input
-          className="border-0 focus-visible:border-none focus-visible:ring-0"
-          placeholder="Subtitle"
+          className=""
+          placeholder={t("fields.subtitle.placeholder")}
           {...register(`${parentName}.subtitle`)}
         />
-      </CardContent>
-      <CardFooter className="flex-col bg-gray-200 p-2">
-        {/* <ButtonGroupEditor
-          parentName={`${parentName}.buttons`}
-          onEditButton={(name: string) => onEditButton(name)}
-        /> */}
-      </CardFooter>
-    </Card>
+
+        <Input
+          className=""
+          placeholder={t("fields.cardURL.placeholder")}
+          {...register(`${parentName}.cardURL`)}
+        />
+      </div>
+      <div className="bg-slate-200 px-3 py-2">
+        <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+      </div>
+    </div>
   )
 }

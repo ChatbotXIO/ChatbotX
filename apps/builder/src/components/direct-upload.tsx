@@ -1,180 +1,154 @@
 "use client"
 
+import { FileType } from "@aha.chat/database/types"
 import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import {
-  FileUpload,
-  FileUploadDropzone,
-  FileUploadTrigger,
-} from "@aha.chat/ui/components/ui/file-upload"
 import { Input } from "@aha.chat/ui/components/ui/input"
-import ky from "ky"
-import { ImageIcon, Upload } from "lucide-react"
+import { DirectUploadButton } from "@aha.chat/ui/components/uploader/direct-upload-button"
+import {
+  FileIcon,
+  ImageIcon,
+  ImagePlayIcon,
+  VideoIcon,
+  Volume2Icon,
+} from "lucide-react"
 import Image from "next/image"
 import { useParams } from "next/navigation"
-import { useCallback } from "react"
+import { useTranslations } from "next-intl"
+import { useMemo, useRef } from "react"
 import { useFormContext } from "react-hook-form"
 import { toast } from "sonner"
 
-export function DirectUpload({ parentName }: { parentName: string }) {
+export function DirectUploadOrInsertLink({
+  parentName,
+  fileType,
+}: {
+  parentName: string
+  fileType: FileType
+}) {
   const params = useParams<{ chatbotId: string; flowId: string }>()
+  const t = useTranslations()
 
   const { setValue, getValues } = useFormContext()
-  const uploadMode = getValues(`${parentName}.imageMode`)
+  const uploadMode = getValues(`${parentName}.mode`)
   const publicUrl = getValues(`${parentName}.url`)
   const stepId = getValues(`${parentName}.id`)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
 
-  const onUpload = useCallback(
-    async (
-      files: File[],
-      {
-        onProgress,
-        onSuccess,
-        onError,
-      }: {
-        onProgress: (file: File, progress: number) => void
-        onSuccess: (file: File) => void
-        onError: (file: File, error: Error) => void
-      },
-    ) => {
-      try {
-        // Process each file individually
-        const uploadPromises = files.map(async (file) => {
-          try {
-            // Simulate file upload with progress
-            const totalChunks = 10
-            let uploadedChunks = 0
+  const chooseInsertLink = () => {
+    setValue(`${parentName}.mode`, "link")
+  }
 
-            for (let i = 0; i < totalChunks; i++) {
-              // Update progress for this specific file
-              uploadedChunks++
-              const progress = (uploadedChunks / totalChunks) * 100
-              onProgress(file, progress)
-            }
+  const chooseUploadFile = () => {
+    triggerRef.current?.click()
+  }
 
-            const presignedPost = await ky
-              .post<
-                {
-                  url: string
-                  fields: Record<string, string>[]
-                  publicUrl: string
-                }[]
-              >("/api/presigned-upload", {
-                json: [
-                  {
-                    path: `public/chatbots/${params.chatbotId}/flows/${params.flowId}/steps/${stepId}`,
-                    name: file.name,
-                    mimeType: file.type,
-                  },
-                ],
-              })
-              .json()
-
-            const _formData = new FormData()
-            // for (const field in presignedPost[0].fields) {
-            //   if (Object.hasOwn(presignedPost[0].fields, field)) {
-            //     formData.append(field, String(presignedPost[0].fields[field]))
-            //   }
-            // }
-            // formData.append("file", file)
-
-            await fetch(presignedPost[0].url, {
-              method: "PUT",
-              body: file,
-              headers: {
-                "Content-type": file.type,
-              },
-            })
-
-            setValue(`${parentName}.url`, presignedPost[0].publicUrl)
-            onSuccess(file)
-          } catch (error) {
-            onError(
-              file,
-              error instanceof Error ? error : new Error("Upload failed"),
-            )
-          }
-        })
-
-        // Wait for all uploads to complete
-        await Promise.all(uploadPromises)
-      } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: wip
-        console.error(error)
-      }
-    },
-    [parentName, stepId, params, setValue],
-  )
-
-  const onFileReject = useCallback((file: File, message: string) => {
-    toast(message, {
-      description: `"${file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name}" has been rejected`,
-    })
-  }, [])
+  const fileConfigs = useMemo(() => {
+    switch (fileType) {
+      case FileType.IMAGE:
+        return {
+          icon: ImageIcon,
+          mimeType: "image/*",
+        }
+      case FileType.GIF:
+        return {
+          icon: ImagePlayIcon,
+          mimeType: "image/gif",
+        }
+      case FileType.VIDEO:
+        return {
+          icon: VideoIcon,
+          mimeType: "video/*",
+        }
+      case FileType.AUDIO:
+        return {
+          icon: Volume2Icon,
+          mimeType: "audio/*",
+        }
+      default:
+        return {
+          icon: FileIcon,
+          mimeType: "application/*",
+        }
+    }
+  }, [fileType])
 
   return (
     <>
-      <FormFieldWrapper name={`${parentName}.imageMode`}>
+      <FormFieldWrapper name={`${parentName}.mode`}>
         {(field) => <Input type="hidden" {...field} />}
       </FormFieldWrapper>
+
       {uploadMode === "file" ? (
-        <FormFieldWrapper name={`${parentName}.url`}>
-          {(field) => (
-            <FileUpload
-              accept="image/*"
-              maxFiles={1}
-              onFileReject={onFileReject}
-              onUpload={onUpload}
-              onValueChange={field.onChange}
-              value={field.value}
+        <>
+          <FormFieldWrapper name={`${parentName}.url`}>
+            {(field) => <Input type="hidden" {...field} />}
+          </FormFieldWrapper>
+
+          <DirectUploadButton
+            accept={fileConfigs.mimeType}
+            className="hidden"
+            maxSize={5_000_000} // 5MB
+            multiple={false}
+            onUploadError={(error, file) => {
+              toast.error(`Failed to upload ${file.name}`, {
+                description: error.message,
+              })
+            }}
+            onUploadSuccess={(_filePath, _file, finalUrl) => {
+              setValue(`${parentName}.url`, finalUrl)
+            }}
+            triggerRef={triggerRef}
+            uploadPath={`public/chatbots/${params.chatbotId}/flows/${params.flowId}/steps/${stepId}`}
+          />
+          {publicUrl && publicUrl.length > 0 ? (
+            <Button
+              className="!p-0 relative h-[150px] w-[240px]"
+              onClick={chooseUploadFile}
+              variant="ghost"
             >
-              <FileUploadDropzone className="rounded-b-none border-b-0">
-                {publicUrl ? (
-                  <Image alt={stepId} src={publicUrl} />
-                ) : (
-                  <>
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex items-center justify-center rounded-full border p-2.5">
-                        <Upload className="size-6 text-muted-foreground" />
-                      </div>
-                    </div>
-                    <div className="flex w-full items-center gap-1">
-                      <FileUploadTrigger asChild>
-                        <Button
-                          className="w-fit underline"
-                          size="sm"
-                          variant="ghost"
-                        >
-                          Upload image
-                        </Button>
-                      </FileUploadTrigger>
-                      <div className="w-4">or</div>
-                      <Button
-                        className="w-fit underline"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          setValue(`${parentName}.imageMode`, "link")
-                        }}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        Insert Link
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </FileUploadDropzone>
-            </FileUpload>
+              {fileType === FileType.IMAGE ? (
+                <Image alt={stepId} fill={true} src={publicUrl} />
+              ) : (
+                <>
+                  <fileConfigs.icon className="size-5" />
+                  <span className="flex-1 truncate">{publicUrl}</span>
+                </>
+              )}
+            </Button>
+          ) : (
+            <div className="flex w-full flex-col items-center justify-center">
+              <fileConfigs.icon className="mt-2" size={24} />
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  className="p-0 text-primary"
+                  onClick={chooseUploadFile}
+                  variant="link"
+                >
+                  {t("actions.uploadFile")}
+                </Button>
+                <span className="font-medium text-foreground text-sm">
+                  {t("messages.or")}
+                </span>
+                <Button
+                  className="p-0 text-primary"
+                  onClick={chooseInsertLink}
+                  variant="link"
+                >
+                  {t("actions.insertLink")}
+                </Button>
+              </div>
+            </div>
           )}
-        </FormFieldWrapper>
+        </>
       ) : (
-        <div className="flex w-full items-center gap-2 rounded-t-lg border-2 border-b-0 border-dashed p-2">
-          <ImageIcon />
+        <div className="flex w-full items-center gap-2 py-2">
+          <fileConfigs.icon size={24} />
           <InputField
             className="flex-1"
             name={`${parentName}.url`}
-            placeholder="Enter image URL"
+            placeholder={t("fields.url.placeholder")}
           />
         </div>
       )}

@@ -6,19 +6,30 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
+import { AppWindowIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import WhatsappIcon from "@/components/icons/whatsapp"
 
 export default function SettingsChannelsPage({
   whatsapp,
+  webchat,
 }: {
   whatsapp: ReactNode
+  webchat: ReactNode
 }) {
+  const t = useTranslations()
+
   const integrationItems = [
     {
-      keyName: "Settings.Integrations.Whatsapp",
+      keyName: t("whatsapp.title"),
       icon: WhatsappIcon,
       content: whatsapp,
+    },
+    {
+      keyName: t("webchat.title"),
+      icon: AppWindowIcon,
+      content: webchat,
     },
   ]
 
@@ -32,7 +43,7 @@ export default function SettingsChannelsPage({
         >
           <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
             <div className="flex items-center gap-2">
-              <integration.icon />
+              <integration.icon height="24" width="24" />
               {integration.keyName}
             </div>
           </AccordionTrigger>

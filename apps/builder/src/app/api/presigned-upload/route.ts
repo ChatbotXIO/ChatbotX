@@ -1,5 +1,6 @@
 import { createPresignedUploadRequest, uploader } from "@aha.chat/filesystem"
 import { type NextRequest, NextResponse } from "next/server"
+import { env } from "@/env"
 import { errorResponse } from "@/lib/error-handling"
 import { safeJsonParse } from "@/lib/serialize"
 
@@ -16,8 +17,11 @@ export async function POST(req: NextRequest) {
           // d.mimeType,
         )
 
+        const publicUrl = new URL(d.path, env.NEXT_PUBLIC_ASSET_URL).toString()
+
         return {
           presignedPostUrl,
+          publicUrl,
         }
       }),
     )

@@ -15,7 +15,13 @@ const nextConfig: NextConfig = {
     "@prisma/client",
   ],
   images: {
-    remotePatterns: [new URL(env.NEXT_PUBLIC_ASSET_URL)],
+    remotePatterns: [
+      new URL("**", env.NEXT_PUBLIC_ASSET_URL),
+      {
+        protocol: "https",
+        hostname: "*.picsum.photos",
+      },
+    ],
   },
   experimental: {
     serverActions: {

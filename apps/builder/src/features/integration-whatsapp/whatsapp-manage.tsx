@@ -20,8 +20,8 @@ export function WhatsappManage({ chatbotId, promises }: WhatsappManageProps) {
 
   return (
     <SettingRow
-      description={t("whatsapp.setting.description")}
-      label={t("whatsapp.setting.title")}
+      description={t("whatsapp.description")}
+      label={t("whatsapp.title")}
     >
       {integrationWhatsapp ? (
         <div className="flex flex-col gap-2">

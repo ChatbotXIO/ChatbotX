@@ -20,6 +20,8 @@ export default async function CustomFieldsPage(props: {
   const promises = Promise.all([
     listCustomFields({
       ...search,
+      page: search.page ?? 1,
+      perPage: search.perPage ?? 10,
       chatbotId: params.chatbotId,
       folderId,
     }),

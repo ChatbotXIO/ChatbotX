@@ -189,11 +189,7 @@ export function CreateAIAgentDialog({
                 name="name"
               />
 
-              <TextareaField
-                isRequired
-                label={t("fields.prompt.label")}
-                name="prompt"
-              />
+              <TextareaField label={t("fields.prompt.label")} name="prompt" />
 
               <div className="flex flex-col items-start gap-2">
                 <div className="font-medium text-sm">

@@ -13,11 +13,12 @@ export const SendImageStepViewer = (props: SendImageStepViewerProps) => {
 
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
-      {data.url?.startsWith("http") && (
-        <div className="h-[150px]">
+      {data.url && (
+        <div className="relative h-[150px]">
           <Image
             alt={data.id}
             className="h-full w-full object-contain"
+            fill={true}
             src={data.url}
           />
         </div>

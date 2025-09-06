@@ -78,7 +78,7 @@ export const StepType = {
   COUNT_CHARACTERS: "COUNT_CHARACTERS",
   PERFORM_ACTION: "PERFORM_ACTION",
 
-  OPEN_WEBSITE: "OPEN_WEBSITE",
+  OpenWebsite: "OpenWebsite",
   SEND_FLOW_NODE: "SEND_FLOW_NODE",
 } as const
 
