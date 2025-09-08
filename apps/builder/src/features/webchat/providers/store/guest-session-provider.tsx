@@ -1,5 +1,6 @@
 "use client"
 
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { createContext, type ReactNode, useContext, useRef } from "react"
 import { useStore } from "zustand"
 import {
@@ -15,14 +16,16 @@ export const GuestSessionStoreContext = createContext<
 
 export type GuestSessionStoreProviderProps = {
   children: ReactNode
+  config: IntegrationWebchatModel
 }
 
 export const GuestSessionStoreProvider = ({
   children,
+  config,
 }: GuestSessionStoreProviderProps) => {
   const storeRef = useRef<GuestSessionStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createGuestSessionStore()
+    storeRef.current = createGuestSessionStore(config)
   }
 
   return (

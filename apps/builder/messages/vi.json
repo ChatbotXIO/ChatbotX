@@ -820,7 +820,7 @@
     "showFooter": {
       "label": "Hiển thị chân trang"
     },
-    "showHeader": {
+    "hideHeader": {
       "label": "Hiển thị tiêu đề"
     },
     "conversationStarters": {

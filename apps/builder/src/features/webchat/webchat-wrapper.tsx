@@ -8,9 +8,8 @@ import { WebchatMessageList } from "./webchat-message-list"
 import { WebchatRealtime } from "./webchat-realtime"
 
 export const WebchatWrapper = () => {
-  const { initGuestSession, guestConversationId } = useGuestSessionStore(
-    (state) => state,
-  )
+  const { initGuestSession, guestConversationId, config } =
+    useGuestSessionStore((state) => state)
 
   useEffect(() => {
     initGuestSession()
@@ -20,7 +19,7 @@ export const WebchatWrapper = () => {
     <div className="flex h-screen w-screen flex-col">
       <WebchatHeader />
       <WebchatMessageList />
-      <WebchatMessageInput />
+      <WebchatMessageInput chatbotId={config.chatbotId} />
       {guestConversationId && (
         <WebchatRealtime guestConversationId={guestConversationId} />
       )}

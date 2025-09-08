@@ -156,7 +156,7 @@ model Chatbot {
   inboxes                  Inbox[]
   inboxTeamMembers         InboxTeamMember[]
   inboxTeams               InboxTeam[]
-  integrationChatWidgets   IntegrationChatWidget[]
+  integrationWebchats      IntegrationWebchat[]
   integrationGoogleSheets  IntegrationGoogleSheets[]
   integrationOpenAIs       IntegrationOpenAI[]
   integrations             Integration[]
@@ -355,9 +355,9 @@ model ChannelWebWidget {
   authorizedDomains   String[]
   webWidgetTemplateId String
   brandColor          String   @default("#007bff")
-  showHeader          Boolean  @default(true)
-  showPersonalLogo    Boolean  @default(false)
-  showMessageInput    Boolean  @default(true)
+  hideHeader          Boolean  @default(true)
+  showLogo            Boolean  @default(false)
+  hideMessageInput    Boolean  @default(true)
   customizeStyles     String?
 
   // welcomeFlow Flow? @relation(fields: [welcomeFlowId], references: [id])
@@ -393,10 +393,10 @@ model Inbox {
 
   inboxType InboxType
 
-  integrationWhatsapp   IntegrationWhatsapp?
-  integrationChatWidget IntegrationChatWidget?
-  messages              Message[]
-  conversations         Conversation[]
+  integrationWhatsapp IntegrationWhatsapp?
+  integrationWebchat  IntegrationWebchat?
+  messages            Message[]
+  conversations       Conversation[]
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -715,19 +715,35 @@ model WhatsappFlow {
   integrationWhatsapp IntegrationWhatsapp @relation(fields: [integrationWhatsappId], references: [id], onDelete: Cascade)
 }
 
-model IntegrationChatWidget {
+model IntegrationWebchat {
   id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  auth      Json
-  name      String
-  enable    Boolean  @default(true)
+
+  auth                 Json
+  name                 String
+  enable               Boolean  @default(true)
+  authorizedDomains    String[]
+  conversationStarters Json[]
+  persistentMenus      Json[]
+  brandColor           String   @default("#007bff")
+  hideHeader           Boolean  @default(false)
+  showLogo             Boolean  @default(false)
+  hideMessageInput     Boolean  @default(false)
+  customCss            String?
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   inboxId String @unique
   inbox   Inbox  @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  welcomeFlowId String?
+  welcomeFlow   Flow?   @relation(fields: [welcomeFlowId], references: [id])
+
+  @@index([chatbotId])
+  @@index([inboxId])
+  @@index([welcomeFlowId])
 }
 
 model Spreadsheet {
@@ -742,24 +758,27 @@ model Spreadsheet {
 }
 
 model Flow {
-  id               String   @id @default(cuid(2))
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  chatbotId        String
-  folderId         String?
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   name             String
-  active           Boolean  @default(true)
-  enableInInbox    Boolean  @default(true)
+  active           Boolean @default(true)
+  enableInInbox    Boolean @default(true)
   currentVersionId String?
   draftVersionId   String?
 
-  chatbot      Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  folder       Folder?       @relation(fields: [folderId], references: [id])
-  flowVersions FlowVersion[]
-  broadcasts   Broadcast[]
-  flowRuns     FlowRun[]
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
-  aiFunctions AIFunction[]
+  folderId String?
+  folder   Folder? @relation(fields: [folderId], references: [id])
+
+  flowVersions        FlowVersion[]
+  broadcasts          Broadcast[]
+  flowRuns            FlowRun[]
+  aiFunctions         AIFunction[]
+  integrationWebchats IntegrationWebchat[]
 }
 
 model FlowVersion {
@@ -918,7 +937,7 @@ enum AssignedType {
 }
 
 enum IntegrationType {
-  CHAT_WIDGET
+  WEBCHAT
   GOOGLE_SHEETS
   INSTAGRAM
   MESSENGER
@@ -929,7 +948,7 @@ enum IntegrationType {
 
 enum InboxType {
   OMNICHANNEL
-  CHAT_WIDGET
+  WEBCHAT
   INSTAGRAM
   MESSENGER
   WHATSAPP

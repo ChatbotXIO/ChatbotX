@@ -53,7 +53,7 @@ const TemplateTextPartialComponent = (
   })
   const _showHeader = useWatch({
     control,
-    name: `${parentName}.showHeader`,
+    name: `${parentName}.hideHeader`,
   })
   const _showFooter = useWatch({
     control,
@@ -62,7 +62,7 @@ const TemplateTextPartialComponent = (
 
   const _handleHeaderChange = useCallback(
     (value: boolean) => {
-      setValue(`${parentName}.showHeader`, value, {
+      setValue(`${parentName}.hideHeader`, value, {
         shouldValidate: true,
       })
     },
@@ -83,11 +83,11 @@ const TemplateTextPartialComponent = (
       <div className="flex gap-4">
         <CheckboxGroupField
           label={t("whatsapp.templateHeader.label")}
-          name={`${parentName}.showHeader`}
+          name={`${parentName}.hideHeader`}
           options={[
             {
               label: "Show header",
-              value: "showHeader",
+              value: "hideHeader",
             },
           ]}
         />

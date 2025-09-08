@@ -24,7 +24,7 @@ import { Separator } from "@aha.chat/ui/components/ui/separator"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -41,6 +41,7 @@ type CreateWebchatFormProps = {
 export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
+  const router = useRouter()
 
   const [{ data: allFlows }] = use(promises)
   const flowOptions = allFlows.map((flow) => ({
@@ -99,36 +100,39 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
     [t],
   )
 
-  const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      createWebchatAction.bind(null, chatbotId),
-      zodResolver(createWebchatRequest),
-      {
-        actionProps: {
-          onSuccess: () => {
-            toast.success("Webchat created successfully!")
-            resetFormAndAction()
-          },
-          onError: ({ error }) => {
-            toast.error(error.serverError || "Failed to create webchat")
-          },
+  const { form, handleSubmitWithAction } = useHookFormAction(
+    createWebchatAction.bind(null, chatbotId),
+    zodResolver(createWebchatRequest),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success(
+            t("messages.createdSuccessfully", {
+              feature: t("fields.webchat.label"),
+            }),
+          )
+          router.push(`/chatbots/${chatbotId}/webchats`)
         },
-        formProps: {
-          defaultValues: {
-            name: "",
-            welcomeFlowId: null,
-            authorizedDomains: [],
-            conversationStarters: [],
-            persistentMenus: [],
-            brandColor: "#007bff",
-            showHeader: true,
-            showPersonalLogo: false,
-            showMessageInput: true,
-            customCss: "",
-          },
+        onError: ({ error }) => {
+          toast.error(error.serverError || "Failed to create webchat")
         },
       },
-    )
+      formProps: {
+        defaultValues: {
+          name: "",
+          welcomeFlowId: null,
+          authorizedDomains: [],
+          conversationStarters: [],
+          persistentMenus: [],
+          brandColor: "#007bff",
+          hideHeader: true,
+          showLogo: false,
+          hideMessageInput: true,
+          customCss: "",
+        },
+      },
+    },
+  )
 
   const {
     fields: authorizedDomains,
@@ -178,6 +182,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
             {t("fields.authorizedDomain.description")}
           </p>
           {authorizedDomains.map((_, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: wip
             <div className="flex gap-2" key={index}>
               <InputField name={`authorizedDomains.${index}`} />
               <Button
@@ -213,6 +218,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
             {conversationStarters.map((_, index) => (
               <AccordionItem
                 className="flex flex-col gap-2"
+                // biome-ignore lint/suspicious/noArrayIndexKey: wip
                 key={index}
                 value={`conversationStarter-${index}`}
               >
@@ -292,6 +298,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
             {persistentMenus.map((_, index) => (
               <AccordionItem
                 className="flex flex-col gap-2"
+                // biome-ignore lint/suspicious/noArrayIndexKey: wip
                 key={index}
                 value={`persistentMenu-${index}`}
               >
@@ -360,26 +367,34 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
         <Separator />
 
         <ColorPickerField
-        required
           label={t("fields.brandColor.label")}
           name="brandColor"
-        />
-
-        <SwitchField label={t("fields.showHeader.label")} name="showHeader" required />
-
-        <SwitchField
-          label={t("fields.showPersonalLogo.label")}
-          name="showPersonalLogo"
           required
         />
 
         <SwitchField
-          label={t("fields.showMessageInput.label")}
-          name="showMessageInput"
+          label={t("fields.hideHeader.label")}
+          name="hideHeader"
           required
         />
 
-        <TextareaField label={t("fields.customCss.label")} name="customCss" placeholder="body { background-color: #000; }" />
+        <SwitchField
+          label={t("fields.showLogo.label")}
+          name="showLogo"
+          required
+        />
+
+        <SwitchField
+          label={t("fields.hideMessageInput.label")}
+          name="hideMessageInput"
+          required
+        />
+
+        <TextareaField
+          label={t("fields.customCss.label")}
+          name="customCss"
+          placeholder="body { background-color: #000; }"
+        />
 
         <DialogFooter>
           <Button type="button" variant="link">

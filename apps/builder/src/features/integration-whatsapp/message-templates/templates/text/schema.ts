@@ -3,7 +3,7 @@ import { buttonStepSchema } from "../button/schema"
 
 export const templateTextSchema = z
   .object({
-    showHeader: z.boolean(),
+    hideHeader: z.boolean(),
     showFooter: z.boolean(),
     header: z.object({
       text: z.string().trim().max(60).nullable(),
@@ -17,7 +17,7 @@ export const templateTextSchema = z
     buttons: z.array(buttonStepSchema).max(3),
   })
   .superRefine((data, ctx) => {
-    if (data.showHeader && !data.header.text?.length) {
+    if (data.hideHeader && !data.header.text?.length) {
       ctx.addIssue({
         path: ["header", "text"],
         message: "Header text is required",
@@ -38,7 +38,7 @@ export const templateTextSchema = z
 export type TemplateTextSchema = z.infer<typeof templateTextSchema>
 
 export const templateTextDefaultValue = (): TemplateTextSchema => ({
-  showHeader: false,
+  hideHeader: false,
   showFooter: false,
   header: {
     text: "",

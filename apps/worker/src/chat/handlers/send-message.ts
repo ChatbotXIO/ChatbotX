@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import { CHAT_WIDGET_SOURCE_PREFIX } from "@aha.chat/database/types"
+import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
 import type { ChatJobSendMessage } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
@@ -8,7 +8,7 @@ import { getIntegrationAuth } from "./integration.query"
 
 export async function sendMessageToExternal(data: ChatJobSendMessage) {
   const { conversation, message } = data.data
-  if (conversation.sourceId?.startsWith(CHAT_WIDGET_SOURCE_PREFIX)) {
+  if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
     return
   }
 
