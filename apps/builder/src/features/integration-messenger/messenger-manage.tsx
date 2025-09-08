@@ -1,7 +1,9 @@
 "use client"
 
 import type { OrganizationSettings } from "@aha.chat/database/types"
+import { generateAuthUrl } from "@aha.chat/integration-messenger"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { redirect, useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
@@ -18,10 +20,30 @@ export type MessengerManageProps = {
 }
 export function MessengerManage({ promises }: MessengerManageProps) {
   const [integrationMessenger, organization] = use(promises)
+  const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
 
-  const _organizationSettings =
+  const organizationSettings =
     organization.settings as unknown as OrganizationSettings
+
+  const connectMessenger = () => {
+    const redirectUri = new URL(
+      "/integrations/messenger/callback",
+      process.env.NEXT_PUBLIC_BUILDER_URL,
+    ).toString()
+    const clientId = organizationSettings.messengerAppId
+    const version = organizationSettings.messengerAppVersion
+    const redirectUrl = generateAuthUrl({
+      clientId,
+      redirectUri,
+      version,
+      stateParams: {
+        chatbotId,
+        referer: window.location.href,
+      },
+    })
+    redirect(redirectUrl)
+  }
 
   return (
     <SettingRow
@@ -32,7 +54,7 @@ export function MessengerManage({ promises }: MessengerManageProps) {
         <div>WIP</div>
       ) : (
         <div className="flex flex-col gap-2">
-          <Button className="w-full" size="sm" variant="secondary">
+          <Button onClick={connectMessenger} size="sm" variant="secondary">
             {t("actions.connect")}
           </Button>
         </div>

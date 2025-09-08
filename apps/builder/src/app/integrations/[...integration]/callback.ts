@@ -1,4 +1,4 @@
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
@@ -71,6 +71,42 @@ export const handleCallback = async (integrationName: string, req: Request) => {
       }
       break
     }
+    case IntegrationType.MESSENGER: {
+      authResult = (await integrations.MESSENGER.integration.handleRequest?.({
+        config: {
+          clientId: organizationSettings.messengerAppId,
+          clientSecret: organizationSettings.messengerAppSecret,
+          version: organizationSettings.messengerAppVersion,
+          redirectUri: new URL(
+            "/integrations/messenger/callback",
+            env.NEXT_PUBLIC_BUILDER_URL,
+          ).toString(),
+          stateParams: {
+            chatbotId: stateParams.chatbotId,
+          },
+        },
+        req,
+      })) as unknown as Oauth2AuthValue
+
+      // biome-ignore lint/suspicious/noConsole: wip
+      console.log(authResult)
+      await prisma.$transaction(async (tx) => {
+        await tx.inbox.create({
+          data: {
+            chatbotId: stateParams.chatbotId,
+            inboxType: IntegrationType.MESSENGER,
+            integrationMessenger: {
+              create: {
+                chatbotId: stateParams.chatbotId,
+                auth: authResult as Prisma.InputJsonValue,
+              },
+            },
+          },
+        })
+      })
+      return redirect(stateParams.referer)
+    }
+
     default:
       return notFound()
   }

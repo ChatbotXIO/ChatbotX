@@ -2,7 +2,7 @@ import type { AuthType, BaseAuthValue } from "./base"
 
 export type Oauth2Config = {
   clientId: string
-  clientSecret: string
+  clientSecret?: string
   redirectUri: string
   stateParams?: Record<string, unknown>
 }
