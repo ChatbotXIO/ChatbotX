@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
 import type { findOrganization } from "../organization/queries"
+import { DisconnectMessengerDialog } from "./messenger-disconnect-dialog"
 import type { findIntegrationMessenger } from "./queries"
 
 export type MessengerManageProps = {
@@ -45,13 +46,17 @@ export function MessengerManage({ promises }: MessengerManageProps) {
     redirect(redirectUrl)
   }
 
+  const renderIntegrationContent = () => {
+    return <DisconnectMessengerDialog chatbotId={chatbotId} />
+  }
+
   return (
     <SettingRow
       description={t("messenger.title")}
       label={t("messenger.description")}
     >
       {integrationMessenger ? (
-        <div>WIP</div>
+        renderIntegrationContent()
       ) : (
         <div className="flex flex-col gap-2">
           <Button onClick={connectMessenger} size="sm" variant="secondary">
