@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       where: {
         sourceId: data.guestConversationId,
         inbox: {
-          inboxType: InboxType.CHAT_WIDGET,
+          inboxType: InboxType.WEBCHAT,
         },
       },
     })

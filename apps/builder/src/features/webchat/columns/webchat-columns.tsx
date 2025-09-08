@@ -1,6 +1,6 @@
 "use client"
 
-import type { IntegrationChatWidgetModel } from "@aha.chat/database/types"
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -13,22 +13,27 @@ import { Switch } from "@aha.chat/ui/components/ui/switch"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { ExternalLinkIcon, MoreHorizontalIcon } from "lucide-react"
+import { CodeIcon, ExternalLinkIcon, MoreHorizontalIcon } from "lucide-react"
+import Link from "next/link"
+import type { useTranslations } from "next-intl"
+import { EmbedCodeDialog } from "../dialogs/embed-code-dialog"
 
 type WebchatColumnsProps = {
   setRowAction: (
-    action: DataTableRowAction<IntegrationChatWidgetModel> | null,
+    action: DataTableRowAction<IntegrationWebchatModel> | null,
   ) => void
+  t: ReturnType<typeof useTranslations>
 }
 
 export function getWebchatColumns({
   setRowAction,
-}: WebchatColumnsProps): ColumnDef<IntegrationChatWidgetModel>[] {
+  t,
+}: WebchatColumnsProps): ColumnDef<IntegrationWebchatModel>[] {
   return [
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => {
         const webchat = row.original
@@ -38,7 +43,10 @@ export function getWebchatColumns({
     {
       accessorKey: "updatedAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Modified" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.updatedAt.label")}
+        />
       ),
       cell: ({ row }) => {
         const date = row.getValue("updatedAt") as Date
@@ -50,7 +58,10 @@ export function getWebchatColumns({
     {
       accessorKey: "enable",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Enable" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.enable.label")}
+        />
       ),
       cell: ({ row }) => {
         const enable = row.getValue("enable") as boolean
@@ -65,10 +76,10 @@ export function getWebchatColumns({
         return (
           <div className="flex items-center gap-2">
             <Button
-              aria-label="Open webchat"
+              aria-label={t("actions.openWebchat")}
               onClick={() => {
                 // Open webchat in new tab
-                const url = `/webchat?chatbotId=${webchat.chatbotId}&widgetId=${webchat.id}`
+                const url = `/webchat?chatbotId=${webchat.chatbotId}&webchatId=${webchat.id}`
                 window.open(url, "_blank")
               }}
               size="sm"
@@ -76,10 +87,19 @@ export function getWebchatColumns({
             >
               <ExternalLinkIcon className="h-4 w-4" />
             </Button>
+            <EmbedCodeDialog webchat={webchat}>
+              <Button
+                aria-label={t("actions.getEmbedCode")}
+                size="sm"
+                variant="ghost"
+              >
+                <CodeIcon className="h-4 w-4" />
+              </Button>
+            </EmbedCodeDialog>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  aria-label="Open menu"
+                  aria-label={t("actions.openMenu")}
                   className="h-8 w-8 p-0"
                   variant="ghost"
                 >
@@ -87,15 +107,12 @@ export function getWebchatColumns({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    setRowAction({
-                      row,
-                      variant: "update",
-                    })
-                  }
-                >
-                  Edit
+                <DropdownMenuItem>
+                  <Link
+                    href={`/chatbots/${webchat.chatbotId}/webchats/${webchat.id}`}
+                  >
+                    {t("actions.edit")}
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
@@ -106,7 +123,7 @@ export function getWebchatColumns({
                     })
                   }
                 >
-                  Delete
+                  {t("actions.delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

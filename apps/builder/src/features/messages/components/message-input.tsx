@@ -39,7 +39,7 @@ export const MessageInput = () => {
     InboxType,
     { icon: ReactNode; label: string } | undefined
   > = {
-    CHAT_WIDGET: {
+    WEBCHAT: {
       icon: <GlobeIcon height={20} width={20} />,
       label: "Chat Widget",
     },
@@ -165,7 +165,7 @@ export const MessageInput = () => {
           className="flex w-full flex-col"
           onSubmit={handleSubmitWithAction}
         >
-          <div className="mb-1 w-full px-2.5">
+          <div className="mb-1 w-full px-2.5 py-1">
             <Controller
               control={form.control}
               name="content"
@@ -187,14 +187,13 @@ export const MessageInput = () => {
           <div className="flex w-full items-center pl-2.5">
             <div className="flex flex-1 items-center gap-1">
               {
-                inboxTypes[
-                  conversation?.inbox?.inboxType ?? InboxType.CHAT_WIDGET
-                ]?.icon
+                inboxTypes[conversation?.inbox?.inboxType ?? InboxType.WEBCHAT]
+                  ?.icon
               }
               <span className="text-sm">
                 {
                   inboxTypes[
-                    conversation?.inbox?.inboxType ?? InboxType.CHAT_WIDGET
+                    conversation?.inbox?.inboxType ?? InboxType.WEBCHAT
                   ]?.label
                 }
               </span>

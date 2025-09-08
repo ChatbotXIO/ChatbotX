@@ -1,6 +1,6 @@
 import {
   ConversationStarterType,
-  type IntegrationChatWidgetModel,
+  type IntegrationWebchatModel,
   PersistentMenuType,
 } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
@@ -23,6 +23,9 @@ export const conversationStarterSchema = z.discriminatedUnion("type", [
     url: z.string().url(),
   }),
 ])
+export type ConversationStarterSchema = z.infer<
+  typeof conversationStarterSchema
+>
 
 const persistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
@@ -36,6 +39,7 @@ const persistentMenuSchema = z.discriminatedUnion("type", [
     websiteUrl: z.string().url(),
   }),
 ])
+export type PersistentMenuSchema = z.infer<typeof persistentMenuSchema>
 
 export const createWebchatRequest = z.object({
   name: z.string().min(1).max(40),
@@ -44,9 +48,9 @@ export const createWebchatRequest = z.object({
   conversationStarters: z.array(conversationStarterSchema),
   persistentMenus: z.array(persistentMenuSchema),
   brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),
-  showHeader: z.boolean().default(true),
-  showPersonalLogo: z.boolean().default(false),
-  showMessageInput: z.boolean().default(true),
+  hideHeader: z.boolean().default(true),
+  showLogo: z.boolean().default(false),
+  hideMessageInput: z.boolean().default(true),
   customCss: z.string().optional(),
   enable: z.boolean().default(true),
 })
@@ -56,7 +60,7 @@ export const updateWebchatRequest = createWebchatRequest.partial()
 export type UpdateWebchatRequest = z.infer<typeof updateWebchatRequest>
 
 export const getWebchatRequest = createSearchParamsCache({
-  sort: getSortingStateParser<IntegrationChatWidgetModel>(),
+  sort: getSortingStateParser<IntegrationWebchatModel>(),
   perPage: parseAsInteger,
   page: parseAsInteger,
 })

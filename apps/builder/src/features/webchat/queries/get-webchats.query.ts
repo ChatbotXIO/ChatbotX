@@ -1,20 +1,20 @@
 "use server"
 
-import type { Prisma } from "@aha.chat/database"
-import { prisma } from "@aha.chat/database"
+import { type Prisma, prisma } from "@aha.chat/database"
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { GetWebchatRequest } from "../schemas/webchat.schema"
 
-export async function getWebchats(parsedInputs: GetWebchatRequest) {
+export async function getIntegationWebchats(parsedInputs: GetWebchatRequest) {
   const currentUserId = await getCurrentUserId()
   await findChatbotOrFail(currentUserId, parsedInputs.chatbotId)
 
   return await unstable_cache(
     async () => {
       try {
-        const where: Prisma.IntegrationChatWidgetWhereInput = {
+        const where: Prisma.IntegrationWebchatWhereInput = {
           chatbotId: parsedInputs.chatbotId,
         }
 
@@ -29,7 +29,7 @@ export async function getWebchats(parsedInputs: GetWebchatRequest) {
           const pagination: { skip?: number; take?: number } = {}
 
           if (parsedInputs.perPage) {
-            const count = await tx.integrationChatWidget.count({ where })
+            const count = await tx.integrationWebchat.count({ where })
             pageCount = Math.ceil(count / parsedInputs.perPage)
 
             pagination.skip =
@@ -38,7 +38,7 @@ export async function getWebchats(parsedInputs: GetWebchatRequest) {
             pagination.take = parsedInputs.perPage
           }
 
-          const data = await prisma.integrationChatWidget.findMany({
+          const data = await prisma.integrationWebchat.findMany({
             ...pagination,
             where,
             orderBy,
@@ -56,4 +56,12 @@ export async function getWebchats(parsedInputs: GetWebchatRequest) {
       tags: [`chatbots:${parsedInputs.chatbotId}#webchats`],
     },
   )()
+}
+
+export async function findIntegrationWebchat(
+  where: Pick<IntegrationWebchatModel, "id" | "chatbotId">,
+) {
+  return await prisma.integrationWebchat.findFirstOrThrow({
+    where,
+  })
 }

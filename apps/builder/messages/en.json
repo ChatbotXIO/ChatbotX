@@ -446,14 +446,20 @@
     "webchat": {
       "label": "Webchat"
     },
-    "showHeader": {
+    "hideHeader": {
       "label": "Show Header"
     },
-    "showPersonalLogo": {
+    "showLogo": {
       "label": "Show Personal Logo"
     },
-    "showMessageInput": {
+    "hideMessageInput": {
       "label": "Show Message Input"
+    },
+    "updatedAt": {
+      "label": "Updated At"
+    },
+    "enable": {
+      "label": "Enable"
     }
   },
 
@@ -466,6 +472,7 @@
     "addFeature": "Add {feature}",
     "create": "Create",
     "createFeature": "Create {feature}",
+    "edit": "Edit",
     "update": "Update",
     "save": "Save",
     "delete": "Delete",
@@ -546,7 +553,9 @@
     "sendFile": "Send File",
     "sendVideo": "Send Video",
     "sendCard": "Send Card",
-    "sendCarousel": "Send Carousel"
+    "sendCarousel": "Send Carousel",
+    "openWebchat": "Open Webchat",
+    "getEmbedCode": "Get Embed Code"
   },
 
   "dialog": {
@@ -908,7 +917,7 @@
     "showFooter": {
       "label": "Show footer"
     },
-    "showHeader": {
+    "hideHeader": {
       "label": "Show header"
     },
     "conversationStarters": {

@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
-import { useSearchParams } from "next/navigation"
 import { type KeyboardEvent, useEffect, useRef } from "react"
 import { Controller } from "react-hook-form"
 import { createWebchatMessageAction } from "../messages/actions/create-webchat-message.action"
@@ -17,12 +16,16 @@ import { FileUploadPreview } from "../messages/components/file-upload"
 import { createWebchatMessageRequest } from "../messages/schemas/create-message.schema"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
-export const WebchatMessageInput = () => {
+type WebchatMessageInputProps = {
+  chatbotId: string
+}
+
+export const WebchatMessageInput = ({
+  chatbotId,
+}: WebchatMessageInputProps) => {
   const { appendMessage, guestConversationId } = useGuestSessionStore(
     (state) => state,
   )
-  const searchParams = useSearchParams()
-  const chatbotId = searchParams.get("chatbotId")
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -65,7 +68,7 @@ export const WebchatMessageInput = () => {
           resetFormAndAction()
 
           setValue("clientId", createId())
-          setValue("chatbotId", chatbotId ?? "")
+          setValue("chatbotId", chatbotId)
           setValue(
             "guestConversationId",
             localStorage.getItem("x-conversation-id") ?? "",
@@ -128,7 +131,7 @@ export const WebchatMessageInput = () => {
           className="flex w-full flex-col"
           onSubmit={handleSubmitWithAction}
         >
-          <div className="mb-1 w-full px-2.5">
+          <div className="mb-1 w-full px-2.5 py-1">
             <Controller
               control={form.control}
               name="content"
@@ -148,7 +151,7 @@ export const WebchatMessageInput = () => {
             <FileUploadPreview ref={fileUploadRef} />
           </div>
           <div className="flex w-full items-center justify-end pl-2.5">
-            <div className="message-toolbar flex items-center gap-2">
+            <div className="message-toolbar flex items-center">
               <Button
                 className="px-2 py-1.5 [&_svg]:size-5"
                 disabled={!chatbotId}

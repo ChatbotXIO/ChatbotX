@@ -14,10 +14,10 @@ export const createWebchatAction = chatbotActionClient
       const inbox = await tx.inbox.create({
         data: {
           chatbotId,
-          inboxType: InboxType.CHAT_WIDGET,
+          inboxType: InboxType.WEBCHAT,
         },
       })
-      await tx.integrationChatWidget.create({
+      await tx.integrationWebchat.create({
         data: {
           ...parsedInput,
           chatbotId,

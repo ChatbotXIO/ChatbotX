@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getWebchats } from "@/features/webchat/queries/get-webchats.query"
+import { getIntegationWebchats } from "@/features/webchat/queries/get-webchats.query"
 import { getWebchatsSchema } from "@/features/webchat/schemas/webchat.schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
@@ -18,7 +18,7 @@ export async function GET(
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const search = getWebchatsSchema.parse(searchParams)
 
-    const result = await getWebchats({
+    const result = await getIntegationWebchats({
       ...search,
       chatbotId,
     })
@@ -28,4 +28,3 @@ export async function GET(
     return errorResponse(e)
   }
 }
-

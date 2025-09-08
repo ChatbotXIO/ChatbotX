@@ -8,14 +8,14 @@ import { chatbotActionClient } from "@/lib/safe-action"
 export const deleteWebchatAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .action(async ({ bindArgsParsedInputs: [chatbotId, id] }) => {
-    const integration = await prisma.integrationChatWidget.findFirstOrThrow({
+    const integration = await prisma.integrationWebchat.findFirstOrThrow({
       where: {
         id,
         chatbotId,
       },
     })
 
-    await prisma.integrationChatWidget.delete({
+    await prisma.integrationWebchat.delete({
       where: {
         id: integration.id,
       },

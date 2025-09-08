@@ -1,6 +1,6 @@
 "use client"
 
-import type { IntegrationChatWidgetModel } from "@aha.chat/database/types"
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
@@ -10,7 +10,7 @@ import { DeleteWebchatDialog } from "../dialogs/delete-webchat-dialog"
 
 type WebchatTableToolbarActionsProps = {
   chatbotId: string
-  table: Table<IntegrationChatWidgetModel>
+  table: Table<IntegrationWebchatModel>
   onOpenChange: (open: boolean) => void
 }
 
