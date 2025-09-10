@@ -79,7 +79,6 @@
       "label": "API Key",
       "placeholder": "Enter API key"
     },
-
     "developmentMode": {
       "label": "Development Mode",
       "description": "Your bot will work only for bot admins. Enable this option if you are building your bot and don't want non admins to use the bot."
@@ -462,11 +461,9 @@
       "label": "Enable"
     }
   },
-
   "validation": {
     "maxSize": "File size exceeds maximum limit"
   },
-
   "actions": {
     "add": "Add",
     "addFeature": "Add {feature}",
@@ -556,7 +553,6 @@
     "openWebchat": "Open Webchat",
     "getEmbedCode": "Get Embed Code"
   },
-
   "dialog": {
     "createTitle": "Create {feature}",
     "updateTitle": "Update {feature}",
@@ -591,7 +587,6 @@
       "title": "Add Tag"
     }
   },
-
   "messages": {
     "copiedToClipboard": "Copied to clipboard",
     "updatedSuccessfully": "{feature} updated successfully",
@@ -615,7 +610,6 @@
     "unknownError": "Unknown error",
     "or": "or"
   },
-
   "signin": {
     "title": "Sign in to {name}",
     "and": "and",
@@ -625,13 +619,11 @@
     "email": "Email",
     "password": "Password"
   },
-
   "folders": {
     "heading": {
       "title": "Folders"
     }
   },
-
   "flows": {
     "clickToSelectFlow": "Click to select a flow",
     "create": {
@@ -683,7 +675,6 @@
       "accountTimezone": "Account Timezone"
     }
   },
-
   "autoAssignConversation": {
     "rule": {
       "label": "Assignment Rule",
@@ -696,7 +687,6 @@
       "label": "Users"
     }
   },
-
   "aiAgent": {
     "setting": {
       "label": "AI Agents",
@@ -706,19 +696,16 @@
     "title": "AI Agents",
     "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses."
   },
-
   "aiTool": {
     "subtitle": "Manage your AI tools to enhance your chatbot capabilities.",
     "title": "AI Tools"
   },
-
   "aiTrigger": {
     "setting": {
       "label": "AI Triggers",
       "description": "AI Triggers description"
     }
   },
-
   "accountField": {
     "title": "Account Fields",
     "createDialog": {
@@ -728,7 +715,6 @@
       "title": "Update Account Field"
     }
   },
-
   "googleSheets": {
     "setting": {
       "label": "Google Sheets",
@@ -736,7 +722,6 @@
     },
     "title": "Google Sheets"
   },
-
   "customField": {
     "heading": {
       "title": "Custom Fields"
@@ -759,7 +744,6 @@
       "false": "False"
     }
   },
-
   "automatedResponse": {
     "heading": {
       "title": "Automated Responses"
@@ -769,20 +753,17 @@
       "description": "Automated responses description"
     }
   },
-
   "tags": {
     "heading": {
       "title": "Tags"
     }
   },
-
   "broadcasts": {
     "scheduleSendMessage": "Schedule send message",
     "update": {
       "title": "Update Broadcast"
     }
   },
-
   "inboxTeam": {
     "updateAction": {
       "heading": {
@@ -790,13 +771,11 @@
       }
     }
   },
-
   "teams": {
     "create": {
       "title": "Create Inbox Team"
     }
   },
-
   "settings": {
     "openAI": {
       "description": "OpenAI integration description",
@@ -814,12 +793,10 @@
       "title": "AI Triggers"
     }
   },
-
   "integration": {
     "disconnectConfirm": "Are you sure you want to disconnect?",
     "disconnectDescription": "This action cannot be undone."
   },
-
   "integrations": {
     "title": "Integrations",
     "openAI": {
@@ -842,7 +819,6 @@
       }
     }
   },
-
   "accountFields": {
     "create": {
       "successMessage": "Account field created successfully"
@@ -851,7 +827,6 @@
       "successMessage": "Account field deleted successfully"
     }
   },
-
   "whatsapp": {
     "title": "WhatsApp",
     "description": "WhatsApp description",
@@ -928,7 +903,6 @@
       "label": "Ice Breaker"
     }
   },
-
   "aiTriggers": {
     "setting": {
       "label": "AI Triggers",
@@ -952,7 +926,6 @@
       "label": "AI Trigger description"
     }
   },
-
   "openAI": {
     "title": "OpenAI",
     "setting": {
@@ -1013,5 +986,9 @@
   "webchat": {
     "title": "Web Chat",
     "description": "Let your customers get instant automated responses from your business directly from your website"
+  },
+  "embedCode": {
+    "title": "Embed Code",
+    "description": "Copy and paste this code into your website to embed the chat widget."
   }
 }

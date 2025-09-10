@@ -42,7 +42,7 @@ export const MessageItem = (props: MessageItemProps) => {
       <div className="mx-3 flex max-w-[70%] flex-col gap-1">
         {message.content && message.content.length > 0 && (
           <div className={cn("text-sm", variants[variant])}>
-            <pre className="whitespace-pre-line break-all font-sans">
+            <pre className="break-word whitespace-pre-line font-sans">
               {message.content}
             </pre>
           </div>
@@ -68,6 +68,7 @@ const renderAttachments = (props: { message: MessageResource }) => {
                 alt={attachment.name || "Attachment"}
                 height={attachment.height || 0}
                 key={attachment.id}
+                priority={false}
                 src={attachment.url}
                 width={attachment.width || 0}
               />

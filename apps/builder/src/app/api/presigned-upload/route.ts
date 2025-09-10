@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await safeJsonParse(req)
     const data = createPresignedUploadRequest.parse(body)
+    console.log("Presigned upload request received", data)
 
     const result = await Promise.all(
       data.map(async (d) => {

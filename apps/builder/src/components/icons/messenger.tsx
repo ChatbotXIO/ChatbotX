@@ -1,9 +1,6 @@
-type MessengerIconProps = {
-  width?: string
-  height?: string
-}
+import type { LucideProps } from "lucide-react"
 
-export const MessengerIcon = (props: MessengerIconProps) => {
+export const MessengerIcon = (props: LucideProps) => {
   const { width = "24px", height = "24px", ...rest } = props
 
   return (

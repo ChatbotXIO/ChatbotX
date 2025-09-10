@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { env } from "@/env"
 
 export function GET() {
-    const embedScript = `
+  const embedScript = `
 (function () {
   'use strict';
 
@@ -11,10 +11,15 @@ export function GET() {
     return;
   }
 
-  let ahaChatButton = null;
-
+  const widgetCSSLink = document.createElement("link");
+  widgetCSSLink.href = "${env.NEXT_PUBLIC_BUILDER_URL}/webchat/plugin.css";
+  widgetCSSLink.type = "text/css";
+  widgetCSSLink.rel = "stylesheet";
+  widgetCSSLink.media = "screen,print";
+  document.getElementsByTagName("head")[0].appendChild(widgetCSSLink);
 
   const ahachatWidget = {
+    wrapper: null,
     floatButton: null,
     floatHtml: null,
     init: function (config) {
@@ -43,11 +48,35 @@ export function GET() {
 
       console.log('url', url.toString());
 
-      ahachatWidget.floatButton = '<button type="button" class="ahc-btn"><img src="${env.NEXT_PUBLIC_BUILDER_URL}/brand/logo.svg" alt="chatbot"></button>';
-      ahachatWidget.floatHtml = '<div class="ahc-iframe"><iframe id="ahc-iframe" data-src="' + url.toString() +'" class="ahc-iframe"></iframe></div>';
+      ahachatWidget.wrapper = '<div class="ahc-wrapper"></div>';
+      ahachatWidget.floatButton = '<button type="button" class="ahc-trigger open"><img src="${env.NEXT_PUBLIC_BUILDER_URL}/icons/bot.webp" alt="chatbot"></button>';
+      ahachatWidget.floatHtml = '<iframe id="ahc-iframe" src="' + url.toString() +'" class="ahc-iframe"></iframe>';
 
-      appendHtml(document.body, ahachatWidget.floatButton);
-      appendHtml(document.body, ahachatWidget.floatHtml);
+      appendHtml(document.body, ahachatWidget.wrapper);
+      appendHtml(document.getElementsByClassName('ahc-wrapper')[0], ahachatWidget.floatButton);
+      appendHtml(document.getElementsByClassName('ahc-wrapper')[0], ahachatWidget.floatHtml);
+
+      ahachatWidget.createEvents();
+    },
+    createEvents: () => {
+      const ahachatTrigger = document.getElementsByClassName('ahc-trigger')[0];
+      const ahachatIframe = document.getElementsByClassName('ahc-iframe')[0];
+
+      if (ahachatTrigger) {
+        ahachatTrigger.addEventListener('click', function () {
+        console.log('ahachatTrigger', ahachatTrigger);
+        console.log('ahachatIframe', ahachatIframe);
+          ahachatTrigger.classList.toggle('open');
+          ahachatIframe.classList.toggle('open');
+        });
+      }
+
+      window.addEventListener('message', function (message) {
+        if (message.data.type === 'ahc.close') {
+          ahachatTrigger.classList.toggle('open');
+          ahachatIframe.classList.toggle('open');
+        }
+      });
     }
   };
 
@@ -63,10 +92,10 @@ export function GET() {
 })();
   `
 
-    return new NextResponse(embedScript, {
-        headers: {
-            "Content-Type": "application/javascript",
-            "Cache-Control": "public, max-age=3600",
-        },
-    })
+  return new NextResponse(embedScript, {
+    headers: {
+      "Content-Type": "application/javascript",
+      "Cache-Control": "public, max-age=3600",
+    },
+  })
 }

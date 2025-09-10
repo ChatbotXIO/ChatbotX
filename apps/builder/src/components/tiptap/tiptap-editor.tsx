@@ -21,6 +21,7 @@ export const TiptapEditor = ({
   const tiptapEditor = useEditor({
     extensions: [
       StarterKit,
+
       Mention.configure({
         suggestions: [
           variableInjectionSuggestion(customFields),

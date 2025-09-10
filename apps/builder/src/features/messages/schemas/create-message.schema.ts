@@ -1,26 +1,21 @@
 import { FileType, WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { z } from "zod"
 
-const MAX_FILE_SIZE = 5 * 1000 * 1000
-
 export const createMessageRequest = z
   .union([
     z.object({
       content: z.string().trim().min(1).max(1000),
     }),
     z.object({
-      files: z
-        .array(
-          z.instanceof(File).refine(
-            (file) => {
-              return file.size <= MAX_FILE_SIZE
-            },
-            {
-              message: "Max image size is 5MB.",
-            },
-          ),
-        )
-        .min(1),
+      attachment: z.object({
+        name: z.string(),
+        mimeType: z.string(),
+        size: z.number(),
+        fileType: z.nativeEnum(FileType),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        originPath: z.string(),
+      }),
     }),
   ])
   .and(
@@ -36,18 +31,15 @@ export const createWebchatMessageRequest = z
       content: z.string().trim().min(1).max(1000),
     }),
     z.object({
-      files: z
-        .array(
-          z.instanceof(File).refine(
-            (file) => {
-              return file.size <= MAX_FILE_SIZE
-            },
-            {
-              message: "Max image size is 5MB.",
-            },
-          ),
-        )
-        .min(1),
+      attachment: z.object({
+        name: z.string(),
+        mimeType: z.string(),
+        size: z.number(),
+        fileType: z.nativeEnum(FileType),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        originPath: z.string(),
+      }),
     }),
   ])
   .and(

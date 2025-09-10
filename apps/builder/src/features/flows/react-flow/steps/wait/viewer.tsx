@@ -25,7 +25,7 @@ export const WaitStepViewer = (props: WaitStepViewerProps) => {
   )
 
   return (
-    <div className="flex w-full items-center justify-center gap-2 break-all py-4 text-center">
+    <div className="break-word flex w-full items-center justify-center gap-2 py-4 text-center">
       {data.delayType === DelayType.Duration &&
         t("flows.delayType.durationValue", {
           duration: data.duration,

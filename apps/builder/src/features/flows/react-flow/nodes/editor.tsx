@@ -65,7 +65,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
   const { fields, append, move, remove, insert } = useFieldArray({
     control,
-  name: "steps",
+    name: "steps",
   })
 
   const onAddStep = (name: StepType) => {
@@ -156,7 +156,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                     )}
                     <div
                       className={cn(
-                        "flex-1 break-all",
+                        "break-word flex-1",
                         // biome-ignore lint/suspicious/noExplicitAny: wip
                         (field as any).stepType === StepType.SEND_CAROUSEL
                           ? "overflow-hidden"

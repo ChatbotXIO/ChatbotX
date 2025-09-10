@@ -30,7 +30,6 @@ export default async function WebchatPage(props: WebchatPageProps) {
     },
   })
 
-  console.log("integrationWebchat", integrationWebchat)
   if (!integrationWebchat) {
     return notFound()
   }

@@ -1,10 +1,13 @@
 "use client"
 
+import Script from "next/script"
+import { env } from "@/env"
+
 export default function DemoWebchatEmbedPage() {
   return (
     <div>
       <h1>Demo Webchat Embed</h1>
-      {/* <Script
+      <Script
         onLoad={() => {
           window.ahachatWidget.init({
             chatbotId: "hhtcd8n86igecbwt60p4zvmh",
@@ -14,13 +17,7 @@ export default function DemoWebchatEmbedPage() {
             hideMessageInput: true,
           })
         }}
-        src="http://builder.ahachat.example.com:3123/api/webchat/plugin.js"
-      /> */}
-      <iframe
-        height="100%"
-        src="http://builder.ahachat.example.com:3123/webchat?chatbotId=hhtcd8n86igecbwt60p4zvmh&webchatId=k79wuibbzvgkfyu34ilwno42"
-        title="Webchat"
-        width="100%"
+        src={`${env.NEXT_PUBLIC_BUILDER_URL}/api/webchat/plugin.js`}
       />
     </div>
   )

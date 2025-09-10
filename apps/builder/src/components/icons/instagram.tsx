@@ -1,9 +1,6 @@
-type InstagramIconProps = {
-  width?: string
-  height?: string
-}
+import type { LucideProps } from "lucide-react"
 
-export const InstagramIcon = (props: InstagramIconProps) => {
+export const InstagramIcon = (props: LucideProps) => {
   const { width = "24px", height = "24px", ...rest } = props
 
   return (

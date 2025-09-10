@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 import { WebchatHeader } from "./webchat-header"
-import { WebchatMessageInput } from "./webchat-message-input"
+import { WebchatInput } from "./webchat-input"
 import { WebchatMessageList } from "./webchat-message-list"
 import { WebchatRealtime } from "./webchat-realtime"
 
@@ -19,7 +19,7 @@ export const WebchatWrapper = () => {
     <div className="flex h-screen w-screen flex-col">
       <WebchatHeader />
       <WebchatMessageList />
-      <WebchatMessageInput chatbotId={config.chatbotId} />
+      <WebchatInput chatbotId={config.chatbotId} />
       {guestConversationId && (
         <WebchatRealtime guestConversationId={guestConversationId} />
       )}

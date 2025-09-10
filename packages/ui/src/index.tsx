@@ -4,6 +4,10 @@ import { Toaster } from "./components/ui/sonner"
 import { TooltipProvider } from "./components/ui/tooltip"
 import { ThemeProvider } from "./providers/theme"
 
+// Export hooks and utilities
+export * from "./hooks"
+export * from "./lib"
+
 type UiProviderProperties = ThemeProviderProps & {
   privacyUrl?: string
   termsUrl?: string

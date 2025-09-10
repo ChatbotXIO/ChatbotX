@@ -1,0 +1,72 @@
+.ahc-trigger {
+  width: 56px;
+  height: 56px;
+  border-radius: 100% 100% 0 100%;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background-color: #fff;
+  color: #fff;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  cursor: pointer;
+  transition: all 0.5s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+.ahc-trigger.open {
+  display: block;
+}
+
+.ahc-iframe {
+  width: calc(100vw - 40px);
+  height: 80vh;
+  max-height: 500px;
+  min-height: 300px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: none;
+  transition: all 0.5s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+.ahc-iframe.open {
+  display: block;
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+  .ahc-iframe {
+    width: 380px;
+    height: 500px;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+  .ahc-iframe {
+    width: 420px;
+    height: 550px;
+  }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  .ahc-iframe {
+    width: 450px;
+    height: 600px;
+  }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .ahc-iframe {
+    width: 500px;
+    height: 650px;
+  }
+}

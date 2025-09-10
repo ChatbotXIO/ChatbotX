@@ -1,9 +1,6 @@
-type WhatsappIconProps = {
-  width?: string
-  height?: string
-}
+import type { LucideProps } from "lucide-react"
 
-const WhatsappIcon = (props: WhatsappIconProps) => {
+const WhatsappIcon = (props: LucideProps) => {
   const { width = "24px", height = "24px", ...rest } = props
 
   return (

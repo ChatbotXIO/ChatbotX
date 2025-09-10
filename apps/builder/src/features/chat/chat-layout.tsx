@@ -7,7 +7,7 @@ import {
 } from "@aha.chat/ui/components/ui/resizable"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
-import { MessageInput } from "../messages/components/message-input"
+import { ChatInput } from "../messages/components/chat-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
 import { ChatRealtime } from "./chat-realtime"
@@ -43,7 +43,8 @@ export const ChatLayout = (props: ChatLayoutProps) => {
           <div className="flex h-full w-full flex-col">
             <MessageHead />
             <MessageList />
-            <MessageInput />
+            <ChatInput />
+            {/* <MessageInput /> */}
           </div>
 
           <ChatRealtime />

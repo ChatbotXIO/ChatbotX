@@ -7,14 +7,15 @@ import {
 } from "@aha.chat/ui/components/ui/avatar"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { cn } from "@aha.chat/ui/lib/utils"
+import {
+  SiInstagram,
+  SiMessenger,
+  SiWhatsapp,
+} from "@icons-pack/react-simple-icons"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
-import { useMemo, useState } from "react"
-import { InstagramIcon } from "@/components/icons/instagram"
-import { MessengerIcon } from "@/components/icons/messenger"
-import WhatsappIcon from "@/components/icons/whatsapp"
+import { useMemo } from "react"
 import type { ContactResource } from "../contacts/schemas"
-import type { MessageResource } from "../messages/schemas"
 import type { ConversationResource } from "./schemas"
 
 type ConversationItemProps = {
@@ -23,7 +24,11 @@ type ConversationItemProps = {
   onSelect: () => void
 }
 
-const assignedIcon = (conversation: ConversationResource) => {
+const AssignedIcon = ({
+  conversation,
+}: {
+  conversation: ConversationResource
+}) => {
   if (conversation.assignedUserId) {
     return (
       <Avatar className="h-4 w-4">
@@ -34,6 +39,7 @@ const assignedIcon = (conversation: ConversationResource) => {
       </Avatar>
     )
   }
+
   if (conversation.assignedInboxTeamId) {
     return (
       <div className="overflow-hidden rounded-full border border-zinc-600 bg-secondary">
@@ -41,17 +47,22 @@ const assignedIcon = (conversation: ConversationResource) => {
       </div>
     )
   }
-  return
+
+  return null
 }
 
-const sourceIcon = (contact: ContactResource) => {
+const SourceIcon = ({ contact }: { contact: ContactResource | null }) => {
+  if (!contact) {
+    return <GlobeIcon />
+  }
+
   switch (contact.source) {
     case "Whatsapp":
-      return <WhatsappIcon />
+      return <SiWhatsapp />
     case "Instagram":
-      return <InstagramIcon />
+      return <SiInstagram />
     case "Messenger":
-      return <MessengerIcon />
+      return <SiMessenger />
     default:
       return (
         <div className="rounded-full bg-white">
@@ -66,47 +77,49 @@ export default function ConversationItem({
   isActive,
   onSelect,
 }: ConversationItemProps) {
-  const [lastMessage, _setLastMessage] = useState<MessageResource | undefined>(
-    conversation.messages?.[0],
-  )
-  const [isSeen, _setIsSeen] = useState(
-    (conversation.agentLastSeenAt ?? new Date()) >=
-      (lastMessage?.createdAt ?? new Date()),
-  )
+  const lastMessage = conversation.messages?.[0]
+  const isSeen = useMemo(() => {
+    if (!lastMessage?.createdAt) {
+      return true
+    }
+    return (conversation.agentLastSeenAt ?? new Date()) >= lastMessage.createdAt
+  }, [conversation.agentLastSeenAt, lastMessage?.createdAt])
 
-  const contactFullName = useMemo(() => {
-    return conversation.contact?.fullName ?? ""
-  }, [conversation.contact])
+  const contactFullName = conversation.contact?.fullName ?? ""
+  const lastMessageContent = lastMessage?.content ?? " "
+  const lastMessageTime = lastMessage?.createdAt ?? new Date()
 
-  const contactAvatar = useMemo(() => {
-    return (
+  const contactAvatar = useMemo(
+    () => (
       <Avatar className="h-12 w-12">
         <AvatarImage
-          alt={conversation.contact?.fullName}
+          alt={contactFullName}
           src={conversation.contact?.avatar ?? ""}
         />
         <AvatarFallback className="bg-zinc-500">
-          {conversation.contact?.fullName.charAt(0)}
+          {contactFullName.charAt(0)}
         </AvatarFallback>
       </Avatar>
-    )
-  }, [conversation.contact])
+    ),
+    [contactFullName, conversation.contact?.avatar],
+  )
 
   return (
     <div className="w-full">
       <Button
+        aria-label={`Open conversation with ${contactFullName}`}
         className="h-auto w-full justify-center px-3 py-2 font-normal"
-        onClick={() => onSelect()}
+        onClick={onSelect}
+        type="button"
         variant={isActive ? "secondary" : "ghost"}
       >
         <div className="relative">
           {contactAvatar}
           <div className="-translate-x-1/2 absolute bottom-0 left-1/2 translate-y-1/2 transform">
-            {assignedIcon(conversation)}
+            <AssignedIcon conversation={conversation} />
           </div>
           <div className="absolute right-0 bottom-0 transform">
-            {/* biome-ignore lint/style/noNonNullAssertion: wip */}
-            {sourceIcon(conversation.contact!)}
+            <SourceIcon contact={conversation.contact ?? null} />
           </div>
         </div>
 
@@ -119,27 +132,17 @@ export default function ConversationItem({
           <p
             className={cn(
               "w-full truncate text-left text-gray-600 text-sm",
-              isSeen ? "font-semibold" : "",
+              !isSeen && "font-semibold",
             )}
           >
-            {conversation.messages?.[0]?.content ?? " "}
+            {lastMessageContent}
           </p>
           <p className="text-right text-xs">
-            <span>
-              {formatDistanceToNowStrict(
-                lastMessage?.createdAt ? lastMessage.createdAt : new Date(),
-              )}
-            </span>
+            <time>
+              {/* <time dateTime={lastMessageTime.toISOString()}> */}
+              {formatDistanceToNowStrict(lastMessageTime)}
+            </time>
           </p>
-          {/* <div className="flex gap-2 items-center"> */}
-          {/* {hasSeen ? (
-              <div className="absolute bottom-2.5 right-2.5">
-                {contactAvatar}
-              </div>
-            ) : (
-              <CheckCircleIcon size={13} color="gray" />
-            )} */}
-          {/* </div> */}
         </div>
       </Button>
     </div>

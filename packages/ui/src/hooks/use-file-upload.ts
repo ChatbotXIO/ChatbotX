@@ -1,38 +1,11 @@
-import { Loader2Icon, UploadIcon } from "lucide-react"
-import React, { useCallback, useMemo, useRef, useState } from "react"
-import { randomString } from "remeda"
+"use client"
+
+import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
-import { Button } from "../ui/button"
-import {
-  FileUpload,
-  FileUploadDropzone,
-  type FileUploadProps,
-  FileUploadTrigger,
-} from "../ui/file-upload"
+import { getPresignedUrl, uploadSingleFile, generateFilePath } from "../lib/upload"
+import type { FileUploadProps } from "../components/ui/file-upload"
 
-// Retry function with exponential backoff
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number,
-  retryDelay: number,
-  retries: number = maxRetries,
-): Promise<T> {
-  try {
-    return await fn()
-  } catch (error) {
-    if (retries > 0) {
-      const delay = retryDelay * (maxRetries - retries + 1)
-      await new Promise((resolve) => setTimeout(resolve, delay))
-      return retryWithBackoff(fn, maxRetries, retryDelay, retries - 1)
-    }
-    throw error
-  }
-}
-
-/**
- * Props for the DirectUploadButton component
- */
-export type DirectUploadButtonProps = FileUploadProps & {
+export type UseFileUploadOptions = {
   /** The base path where files will be uploaded to S3 */
   uploadPath?: string
   /** Custom upload handler URL, defaults to /api/presigned-upload */
@@ -41,8 +14,6 @@ export type DirectUploadButtonProps = FileUploadProps & {
   onUploadSuccess?: (filePath: string, file: File, publicUrl: string) => void
   /** Callback when upload fails, receives the error and file object */
   onUploadError?: (error: Error, file: File) => void
-  /** Reference to the trigger button */
-  triggerRef?: React.RefObject<HTMLButtonElement | null>
   /** Maximum number of concurrent uploads */
   maxConcurrentUploads?: number
   /** Custom retry configuration */
@@ -52,81 +23,70 @@ export type DirectUploadButtonProps = FileUploadProps & {
   }
 }
 
+export type UseFileUploadReturn = {
+  /** Files currently being uploaded or queued */
+  files: File[]
+  /** Whether upload is in progress */
+  isUploading: boolean
+  /** Upload progress for each file */
+  uploadProgress: Record<string, number>
+  /** Number of active uploads */
+  activeUploadCount: number
+  /** Upload handler function */
+  onUpload: NonNullable<FileUploadProps["onUpload"]>
+  /** File rejection handler */
+  onFileReject: (file: File, message: string) => void
+  /** Update files list */
+  setFiles: (files: File[]) => void
+  /** Abort all ongoing uploads */
+  abortUploads: () => void
+}
+
 /**
- * A file upload button component that handles presigned S3 uploads with progress tracking.
- *
+ * Custom hook for handling file uploads with progress tracking and concurrency control.
+ * 
  * @example
  * ```tsx
- * <DirectUploadButton
- *   uploadPath="public/chatbots/123/images"
- *   onUploadSuccess={(filePath, file) => {
+ * const {
+ *   files,
+ *   isUploading,
+ *   uploadProgress,
+ *   onUpload,
+ *   onFileReject,
+ *   setFiles
+ * } = useFileUpload({
+ *   uploadPath: "public/chatbots/123/images",
+ *   onUploadSuccess: (filePath, file, publicUrl) => {
  *     console.log(`File uploaded to: ${filePath}`)
- *   }}
- *   onUploadError={(error, file) => {
+ *   },
+ *   onUploadError: (error, file) => {
  *     console.error(`Failed to upload ${file.name}:`, error)
- *   }}
- *   maxConcurrentUploads={3}
- *   retryConfig={{ maxRetries: 3, retryDelay: 1000 }}
- * />
+ *   }
+ * })
  * ```
  */
-export function DirectUploadButton({
+export function useFileUpload({
   uploadPath = "public/uploads",
   uploadHandlerUrl = "/api/presigned-upload",
   onUploadSuccess,
   onUploadError,
-  triggerRef,
   maxConcurrentUploads = 3,
   retryConfig = { maxRetries: 3, retryDelay: 1000 },
-  ...props
-}: DirectUploadButtonProps) {
+}: UseFileUploadOptions = {}): UseFileUploadReturn {
   const [files, setFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
-  const abortControllerRef = useRef<AbortController | null>(null)
   const activeUploadsRef = useRef<Set<string>>(new Set())
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // Generate unique file path
-  const generateFilePath = useCallback(
-    (file: File) => `${uploadPath}/${randomString(20)}_${Date.now()}_${file.name}`,
+  const generateUniqueFilePath = useCallback(
+    (file: File) => `${generateFilePath(uploadPath)}_${file.name}`,
     [uploadPath],
   )
 
-  // Get presigned URL with retry
-  const getPresignedUrl = useCallback(
-    async (file: File, filePath: string) => {
-      return retryWithBackoff(
-        async () => {
-          const response = await fetch(uploadHandlerUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify([
-              {
-                path: filePath,
-                name: file.name,
-                mimeType: file.type,
-              },
-            ]),
-          })
-
-          if (!response.ok) {
-            throw new Error(`Failed to get presigned URL: ${response.statusText}`)
-          }
-
-          const data = await response.json()
-          return data[0]
-        },
-        retryConfig.maxRetries,
-        retryConfig.retryDelay,
-      )
-    },
-    [uploadHandlerUrl, retryConfig],
-  )
-
   // Upload single file with progress tracking
-  const uploadSingleFile = useCallback(
+  const uploadSingleFileWithProgress = useCallback(
     async (
       file: File,
       presignedPost: { presignedPostUrl: string; publicUrl: string },
@@ -134,10 +94,10 @@ export function DirectUploadButton({
       { onProgress, onSuccess, onError }: Parameters<NonNullable<FileUploadProps["onUpload"]>>[1],
     ) => {
       const fileId = `${file.name}_${file.size}_${file.lastModified}`
-      
+
       return new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
-        
+
         // Track active uploads
         activeUploadsRef.current.add(fileId)
 
@@ -155,7 +115,7 @@ export function DirectUploadButton({
             const { [fileId]: _, ...rest } = prev
             return rest
           })
-          
+
           if (xhr.status >= 200 && xhr.status < 300) {
             onSuccess(file)
             onUploadSuccess?.(filePath, file, presignedPost.publicUrl)
@@ -202,7 +162,7 @@ export function DirectUploadButton({
   // Process files with concurrency control
   const processFilesWithConcurrency = useCallback(
     async (
-      files: File[],
+      filesToUpload: File[],
       { onProgress, onSuccess, onError }: Parameters<NonNullable<FileUploadProps["onUpload"]>>[1],
     ) => {
       const results: Promise<void>[] = []
@@ -210,14 +170,19 @@ export function DirectUploadButton({
       let fileIndex = 0
 
       const processNextFile = async (): Promise<void> => {
-        if (fileIndex >= files.length) return
+        if (fileIndex >= filesToUpload.length) return
 
-        const file = files[fileIndex++]
-        const filePath = generateFilePath(file)
+        const file = filesToUpload[fileIndex++]
+        const filePath = generateUniqueFilePath(file)
 
         try {
-          const presignedPost = await getPresignedUrl(file, filePath)
-          await uploadSingleFile(file, presignedPost, filePath, {
+          const presignedPost = await getPresignedUrl({
+            file,
+            filePath,
+            uploadHandlerUrl,
+            retryConfig
+          })
+          await uploadSingleFileWithProgress(file, presignedPost, filePath, {
             onProgress,
             onSuccess,
             onError,
@@ -230,31 +195,31 @@ export function DirectUploadButton({
       }
 
       // Start initial batch
-      for (let i = 0; i < Math.min(maxConcurrentUploads, files.length); i++) {
+      for (let i = 0; i < Math.min(maxConcurrentUploads, filesToUpload.length); i++) {
         results.push(processNextFile())
       }
 
       // Process remaining files as slots become available
-      while (fileIndex < files.length) {
+      while (fileIndex < filesToUpload.length) {
         await Promise.race(results.filter(Boolean))
         results.push(processNextFile())
       }
 
       await Promise.all(results)
     },
-    [maxConcurrentUploads, generateFilePath, getPresignedUrl, uploadSingleFile, onUploadError],
+    [maxConcurrentUploads, generateUniqueFilePath, uploadHandlerUrl, retryConfig, uploadSingleFileWithProgress, onUploadError],
   )
 
   const onUpload: NonNullable<FileUploadProps["onUpload"]> = useCallback(
-    async (choosenFiles, callbacks) => {
+    async (chosenFiles, callbacks) => {
       try {
         setIsUploading(true)
         setUploadProgress({})
-        
+
         // Create new abort controller for this upload session
         abortControllerRef.current = new AbortController()
 
-        await processFilesWithConcurrency(choosenFiles, callbacks)
+        await processFilesWithConcurrency(chosenFiles, callbacks)
       } catch (error) {
         console.error("Upload process failed:", error)
         toast.error("Upload failed", {
@@ -275,8 +240,7 @@ export function DirectUploadButton({
     })
   }, [])
 
-  // Cleanup function to abort ongoing uploads
-  const cleanup = useCallback(() => {
+  const abortUploads = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
@@ -284,65 +248,14 @@ export function DirectUploadButton({
     setUploadProgress({})
   }, [])
 
-  // Cleanup on unmount
-  React.useEffect(() => {
-    return cleanup
-  }, [cleanup])
-
-  // Memoized upload progress calculation
-  const overallProgress = useMemo(() => {
-    const progressValues = Object.values(uploadProgress)
-    if (progressValues.length === 0) return 0
-    return progressValues.reduce((sum, progress) => sum + progress, 0) / progressValues.length
-  }, [uploadProgress])
-
-  // Memoized button content
-  const buttonContent = useMemo(() => {
-    if (isUploading) {
-      const activeCount = activeUploadsRef.current.size
-      return (
-        <>
-          <Loader2Icon className="size-4 animate-spin" />
-          {activeCount > 0 ? `Uploading ${activeCount} file${activeCount > 1 ? 's' : ''}...` : 'Uploading...'}
-        </>
-      )
-    }
-    return (
-      <>
-        <UploadIcon />
-        Upload file
-      </>
-    )
-  }, [isUploading])
-
-  // Memoized file upload props to prevent unnecessary re-renders
-  const fileUploadProps = useMemo(() => ({
-    onFileReject,
+  return {
+    files,
+    isUploading,
+    uploadProgress,
+    activeUploadCount: activeUploadsRef.current.size,
     onUpload,
-    onValueChange: setFiles,
-    value: files,
-    ...props,
-  }), [onFileReject, onUpload, files, props])
-
-  return (
-    <FileUpload {...fileUploadProps}>
-      <FileUploadDropzone className="border-none p-0">
-        <FileUploadTrigger asChild>
-          <Button 
-            disabled={isUploading} 
-            ref={triggerRef}
-            className="relative overflow-hidden"
-          >
-            {buttonContent}
-            {isUploading && overallProgress > 0 && (
-              <div 
-                className="absolute bottom-0 left-0 h-1 bg-primary/20 transition-all duration-300"
-                style={{ width: `${overallProgress}%` }}
-              />
-            )}
-          </Button>
-        </FileUploadTrigger>
-      </FileUploadDropzone>
-    </FileUpload>
-  )
+    onFileReject,
+    setFiles,
+    abortUploads,
+  }
 }

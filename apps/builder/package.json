@@ -34,6 +34,7 @@
     "@emoji-mart/react": "^1.1.1",
     "@floating-ui/dom": "^1.7.4",
     "@hookform/resolvers": "^5.1.1",
+    "@icons-pack/react-simple-icons": "^13.7.0",
     "@modelcontextprotocol/sdk": "^1.17.4",
     "@next-safe-action/adapter-react-hook-form": "^2.0.0",
     "@paralleldrive/cuid2": "^2.2.2",

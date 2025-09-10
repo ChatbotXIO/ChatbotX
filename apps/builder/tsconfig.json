@@ -19,7 +19,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "../../packages/ui/src/components/emoji-picker.tsx",
+    "../../packages/ui/src/components/emoji-picker/emoji-picker.tsx",
     "../../packages/tiptap/src/variable.ts"
   ],
   "exclude": ["node_modules"]

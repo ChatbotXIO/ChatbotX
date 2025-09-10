@@ -7,6 +7,7 @@ type TextareaFieldProps<T extends FieldValues> = ComponentProps<"textarea"> & {
   name: FieldPath<T>
   label?: string
   description?: string
+  ref?: React.RefObject<HTMLTextAreaElement>
 }
 
 export function TextareaField<T extends FieldValues>(
@@ -18,7 +19,7 @@ export function TextareaField<T extends FieldValues>(
     required,
     placeholder,
     description,
-    className,
+    ref,
     ...rest
   } = props
 
@@ -29,7 +30,7 @@ export function TextareaField<T extends FieldValues>(
       label={label}
       name={name}
     >
-      {(field) => <Textarea placeholder={placeholder} {...rest} {...field} />}
+      {(field) => <Textarea placeholder={placeholder} {...rest} {...field} ref={ref} />}
     </FormFieldWrapper>
   )
 }
