@@ -1,3 +1,4 @@
+import ky from "ky"
 import type { MessengerConfig } from "./schemas"
 
 export const scope = [
@@ -18,10 +19,8 @@ export async function convertCodeToAccessToken(
 ): Promise<string> {
   const { clientId, clientSecret, redirectUri, version } = props
 
-  const res = await fetch(
-    `https://graph.facebook.com/${version}/oauth/access_token`,
-    {
-      method: "POST",
+  const res = await ky
+    .post(`https://graph.facebook.com/${version}/oauth/access_token`, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,
@@ -29,34 +28,41 @@ export async function convertCodeToAccessToken(
         client_secret: clientSecret as string,
         redirect_uri: redirectUri,
       }),
-    },
-  )
+    })
+    .json<{
+      access_token: string
+      token_type: string
+      expires_in: number
+    }>()
 
-  const data = (await res.json()) as { access_token: string }
-  if (!res.ok) {
+  if (!res.access_token) {
     throw new Error("Can't get access token from Facebook")
   }
-  return await exchangeForLongLivedToken(data.access_token, props)
+  return await exchangeForLongLivedToken(res.access_token, props)
 }
 
 export async function exchangeForLongLivedToken(
   token: string,
   props: MessengerConfig,
 ): Promise<string> {
-  const url = new URL(
-    `https://graph.facebook.com/${props.version}/oauth/access_token`,
-  )
-  url.searchParams.set("grant_type", "fb_exchange_token")
-  url.searchParams.set("client_id", props.clientId)
-  url.searchParams.set("client_secret", props.clientSecret as string)
-  url.searchParams.set("fb_exchange_token", token)
-
-  const res = await fetch(url.toString())
-  if (!res.ok) {
-    throw new Error(`Facebook token exchange failed: ${res.statusText}`)
+  const res = await ky
+    .get(`https://graph.facebook.com/${props.version}/oauth/access_token`, {
+      searchParams: {
+        grant_type: "fb_exchange_token",
+        client_id: props.clientId,
+        client_secret: props.clientSecret as string,
+        fb_exchange_token: token,
+      },
+    })
+    .json<{
+      access_token: string
+      token_type: string
+      expires_in: number
+    }>()
+  if (!res.access_token) {
+    throw new Error("Can't convert access token from long lived token")
   }
-  const data = (await res.json()) as { access_token: string }
-  return data.access_token
+  return res.access_token
 }
 
 export function generateAuthUrl(props: MessengerConfig): string {

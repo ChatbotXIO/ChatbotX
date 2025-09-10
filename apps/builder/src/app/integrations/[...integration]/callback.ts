@@ -1,10 +1,11 @@
-import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
+import { IntegrationType, prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 import { env } from "@/env"
 import { findChatbot } from "@/features/chatbot/queries"
+import { saveAuthValueToCache } from "@/features/integration-messenger/queries/save-auth-value"
 import { findOrganization } from "@/features/organization/queries"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
@@ -88,22 +89,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
         req,
       })) as unknown as Oauth2AuthValue
 
-      // biome-ignore lint/suspicious/noConsole: wip
-      console.log(authResult)
-      await prisma.$transaction(async (tx) => {
-        await tx.inbox.create({
-          data: {
-            chatbotId: stateParams.chatbotId,
-            inboxType: IntegrationType.MESSENGER,
-            integrationMessenger: {
-              create: {
-                chatbotId: stateParams.chatbotId,
-                auth: authResult as Prisma.InputJsonValue,
-              },
-            },
-          },
-        })
-      })
+      await saveAuthValueToCache(stateParams.chatbotId, authResult)
       return redirect(stateParams.referer)
     }
 

@@ -2,13 +2,14 @@ import type { AuthType, BaseAuthValue } from "./base"
 
 export type Oauth2Config = {
   clientId: string
-  clientSecret?: string
+  clientSecret: string
   redirectUri: string
   stateParams?: Record<string, unknown>
 }
 
 export type TokenAuthValue = {
   accessToken: string
+  pageAccessToken?: string
   expiresAt?: string
   refreshToken?: string | null
   refreshTokenExpiresAt?: string | null

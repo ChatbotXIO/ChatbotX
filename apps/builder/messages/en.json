@@ -409,6 +409,7 @@
     "manage": "Manage",
     "more": "More",
     "connect": "Connect",
+    "reconnect": "Reconnect",
     "disconnect": "Disconnect",
     "getID": "Get ID",
     "insertLink": "Insert link",
@@ -908,6 +909,11 @@
   },
   "messenger": {
     "title": "Facebook Messenger",
-    "description": "This integration lets you create Messenger bots."
+    "description": "This integration lets you create Messenger bots.",
+    "selectFacebookPages": "Select Facebook Page",
+    "selectPageToBegin": "Select a Facebook Page to begin",
+    "selectPageToBeginDescription": "Select a Facebook Page in the form below.",
+    "pageSelectedSuccessfully": "Facebook Page selected successfully",
+    "failedToConnectFacebookPage": "Failed to connect Facebook Page"
   }
 }

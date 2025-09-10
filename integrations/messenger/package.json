@@ -6,7 +6,7 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
     "@aha.chat/sdk": "workspace:*",
-    "fb": "^2.0.0",
+    "ky": "^1.8.1",
     "remeda": "^2.23.3",
     "zod": "^3.25.71"
   },

@@ -1,7 +1,10 @@
 "use client"
 
 import type { OrganizationSettings } from "@aha.chat/database/types"
-import { generateAuthUrl } from "@aha.chat/integration-messenger"
+import {
+  generateAuthUrl,
+  type MessengerAuthValue,
+} from "@aha.chat/integration-messenger"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { redirect, useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -36,18 +39,26 @@ export function MessengerManage({ promises }: MessengerManageProps) {
     const version = organizationSettings.messengerAppVersion
     const redirectUrl = generateAuthUrl({
       clientId,
+      clientSecret: organizationSettings.messengerAppSecret,
       redirectUri,
       version,
       stateParams: {
         chatbotId,
-        referer: window.location.href,
+        referer: `${process.env.NEXT_PUBLIC_BUILDER_URL}/chatbots/${chatbotId}/messenger/pages`,
       },
     })
     redirect(redirectUrl)
   }
 
   const renderIntegrationContent = () => {
-    return <DisconnectMessengerDialog chatbotId={chatbotId} />
+    const pageName = (integrationMessenger?.auth as MessengerAuthValue)
+      ?.metadata.pageName
+    return (
+      <div className="flex items-center gap-2">
+        <DisconnectMessengerDialog chatbotId={chatbotId} name={pageName} />
+        {pageName}
+      </div>
+    )
   }
 
   return (

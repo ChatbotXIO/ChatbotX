@@ -22,8 +22,10 @@ import { disconnectMessengerAction } from "./actions/disconnect.action"
 
 export function DisconnectMessengerDialog({
   chatbotId,
+  name,
 }: {
   chatbotId: string
+  name: string
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -42,7 +44,7 @@ export function DisconnectMessengerDialog({
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
-        <Button size="sm" variant="destructive">
+        <Button className="w-fit" size="sm" variant="destructive">
           {t("actions.disconnect")}
         </Button>
       </AlertDialogTrigger>
@@ -55,7 +57,7 @@ export function DisconnectMessengerDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t("dialog.disconnect.description", {
-              feature: t("messenger.title"),
+              feature: name,
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>

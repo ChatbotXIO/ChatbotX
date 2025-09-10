@@ -8,8 +8,9 @@ export type MessengerConfig = Oauth2Config & {
 }
 
 export type MessengerAuthValue = Oauth2AuthValue & {
-  version: string
   metadata: {
+    pageName: string
+    version: string
     scope: string
   }
 }
