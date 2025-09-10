@@ -9,6 +9,7 @@ export type Oauth2Config = {
 
 export type TokenAuthValue = {
   accessToken: string
+  pageAccessToken?: string
   expiresAt?: string
   refreshToken?: string | null
   refreshTokenExpiresAt?: string | null

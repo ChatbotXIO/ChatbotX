@@ -1,6 +1,7 @@
 import { IntegrationType } from "@aha.chat/database"
 import type { GoogleSheetsConfig } from "@aha.chat/integration-google-sheets"
 import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
+import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 
 export const integrations = {
@@ -9,6 +10,12 @@ export const integrations = {
       return {}
     },
     integration: integrationWhatsapp,
+  },
+  [IntegrationType.MESSENGER]: {
+    getIntegrationConfig() {
+      return {}
+    },
+    integration: integrationMessenger,
   },
   [IntegrationType.GOOGLE_SHEETS]: {
     getIntegrationConfig(

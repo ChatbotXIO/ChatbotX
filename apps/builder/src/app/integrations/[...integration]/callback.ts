@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 import { env } from "@/env"
 import { findChatbot } from "@/features/chatbot/queries"
+import { saveAuthValueToCache } from "@/features/integration-messenger/queries/save-auth-value"
 import { findOrganization } from "@/features/organization/queries"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
@@ -71,6 +72,27 @@ export const handleCallback = async (integrationName: string, req: Request) => {
       }
       break
     }
+    case IntegrationType.MESSENGER: {
+      authResult = (await integrations.MESSENGER.integration.handleRequest?.({
+        config: {
+          clientId: organizationSettings.messengerAppId,
+          clientSecret: organizationSettings.messengerAppSecret,
+          version: organizationSettings.messengerAppVersion,
+          redirectUri: new URL(
+            "/integrations/messenger/callback",
+            env.NEXT_PUBLIC_BUILDER_URL,
+          ).toString(),
+          stateParams: {
+            chatbotId: stateParams.chatbotId,
+          },
+        },
+        req,
+      })) as unknown as Oauth2AuthValue
+
+      await saveAuthValueToCache(stateParams.chatbotId, authResult)
+      return redirect(stateParams.referer)
+    }
+
     default:
       return notFound()
   }

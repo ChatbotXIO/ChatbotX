@@ -1,0 +1,20 @@
+{
+  "name": "@aha.chat/integration-messenger",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@aha.chat/sdk": "workspace:*",
+    "ky": "^1.8.1",
+    "remeda": "^2.23.3",
+    "zod": "^3.25.71"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "typescript": "5.8.3"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

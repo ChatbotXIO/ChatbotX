@@ -47,5 +47,6 @@ export type OrganizationSettings = {
 
   messengerAppId: string
   messengerAppSecret: string
+  messengerAppVersion: string
   messengerVerifyToken: string
 }

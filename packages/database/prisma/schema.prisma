@@ -689,7 +689,7 @@ model IntegrationMessenger {
   updatedAt DateTime @updatedAt
 
   auth   Json?
-  pageId String
+  pageId String?
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
