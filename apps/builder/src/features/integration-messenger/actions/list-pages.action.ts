@@ -1,25 +1,15 @@
 "use server"
 
 import ky from "ky"
-import { z } from "zod"
+import type { z } from "zod"
 import { actionClient } from "@/lib/safe-action"
-import { facebookPageSchema, graphFacebookRequestParams } from "../schemas"
+import {
+  type facebookPageSchema,
+  graphFacebookRequestParams,
+  listPagesResponseSchema,
+} from "../schemas"
 
 export type FacebookPage = z.infer<typeof facebookPageSchema>
-
-const listPagesResponseSchema = z.object({
-  data: z.array(facebookPageSchema),
-  paging: z
-    .object({
-      cursors: z
-        .object({
-          before: z.string().optional(),
-          after: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-})
 
 export const getListPagesAction = actionClient
   .bindArgsSchemas(graphFacebookRequestParams.items)

@@ -21,21 +21,14 @@ import {
   RadioGroupItem,
 } from "@aha.chat/ui/components/ui/radio-group"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
-import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { z } from "zod"
 import type { FacebookPage } from "@/features/integration-messenger/libs"
 import { selectPageAction } from "./actions/select-page.action"
-
-const selectPageSchema = z.object({
-  pageId: z.string().min(1, "Please select a Facebook page"),
-})
-
-type SelectPageForm = z.infer<typeof selectPageSchema>
+import { selectPageRequestSchema } from "./schemas"
 
 type SelectPageCardProps = {
   readonly chatbotId: string
@@ -46,41 +39,42 @@ export function SelectPageCard({ chatbotId, pages }: SelectPageCardProps) {
   const t = useTranslations()
   const router = useRouter()
 
-  const form = useForm<SelectPageForm>({
-    resolver: zodResolver(selectPageSchema),
-    defaultValues: {
-      pageId: "",
-    },
-  })
-
-  const { execute, status } = useAction(
+  const { form, handleSubmitWithAction } = useHookFormAction(
     selectPageAction.bind(null, chatbotId),
+    zodResolver(selectPageRequestSchema),
     {
-      onSuccess: () => {
-        toast.success(t("messenger.pageSelectedSuccessfully"))
-        router.push(`/chatbots/${chatbotId}/channel/messenger`)
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          pageId: "",
+          pageName: "",
+          pageAccessToken: "",
+        },
       },
-      onError: (_error) => {
-        toast.error(t("messenger.failedToConnectFacebookPage"))
+      actionProps: {
+        onSuccess: () => {
+          toast.success(t("messenger.pageSelectedSuccessfully"))
+          router.push(`/chatbots/${chatbotId}/channel/messenger`)
+        },
+        onError: () => {
+          toast.error(t("messenger.failedToConnectFacebookPage"))
+        },
       },
+      errorMapProps: {},
     },
   )
 
-  const onSubmit = (data: SelectPageForm) => {
-    const selectedPage = pages.find((page) => page.id === data.pageId)
-    if (!selectedPage) {
-      toast.error(t("messenger.pageNotFound"))
-      return
-    }
+  const handlePageSelection = (pageId: string) => {
+    const selectedPage = pages.find((page) => page.id === pageId)
 
-    execute({
-      pageId: data.pageId,
-      pageName: selectedPage.name,
-      pageAccessToken: selectedPage.access_token,
-    })
+    if (selectedPage) {
+      form.setValue("pageId", pageId)
+      form.setValue("pageName", selectedPage.name)
+      form.setValue("pageAccessToken", selectedPage.access_token)
+    }
   }
 
-  const isSubmitting = status === "executing"
+  const isPageSelected = Boolean(form.watch("pageId"))
 
   if (pages.length === 0) {
     return (
@@ -119,7 +113,7 @@ export function SelectPageCard({ chatbotId, pages }: SelectPageCardProps) {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+            <form className="space-y-6" onSubmit={handleSubmitWithAction}>
               <FormField
                 control={form.control}
                 name="pageId"
@@ -128,7 +122,7 @@ export function SelectPageCard({ chatbotId, pages }: SelectPageCardProps) {
                     <FormControl>
                       <RadioGroup
                         className="flex flex-col space-y-2"
-                        onValueChange={field.onChange}
+                        onValueChange={handlePageSelection}
                         value={field.value}
                       >
                         {pages.map((page) => (
@@ -163,14 +157,16 @@ export function SelectPageCard({ chatbotId, pages }: SelectPageCardProps) {
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
-                  disabled={isSubmitting}
+                  disabled={!isPageSelected || form.formState.isSubmitting}
                   type="submit"
                 >
-                  {isSubmitting && <Loader2Icon className="animate-spin" />}
+                  {form.formState.isSubmitting && (
+                    <Loader2Icon className="animate-spin" />
+                  )}
                   {t("actions.connect")}
                 </Button>
                 <Button
-                  disabled={isSubmitting}
+                  disabled={form.formState.isSubmitting}
                   onClick={() =>
                     router.push(`/chatbots/${chatbotId}/settings/channels`)
                   }
