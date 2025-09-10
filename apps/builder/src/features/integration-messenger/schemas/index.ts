@@ -20,3 +20,23 @@ export const selectPageRequestSchema = z.object({
   pageAccessToken: z.string(),
 })
 export type SelectPageRequest = z.infer<typeof selectPageRequestSchema>
+
+export const listPagesResponseSchema = z.object({
+  data: z.array(facebookPageSchema),
+  paging: z
+    .object({
+      cursors: z
+        .object({
+          before: z.string().optional(),
+          after: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+})
+
+const selectPageSchema = z.object({
+  pageId: z.string().min(1, "Please select a Facebook page"),
+})
+
+export type SelectPageForm = z.infer<typeof selectPageSchema>
