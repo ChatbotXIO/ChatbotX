@@ -19,12 +19,13 @@ export const callbackHandler = async (
     clientId: props.config.clientId,
     clientSecret: props.config.clientSecret as string,
     redirectUri: props.config.redirectUri,
-    version: props.config.version,
     tokens: {
       accessToken: accessToken || "",
     },
     metadata: {
       scope,
+      version: props.config.version,
+      pageName: "",
     },
   }
 }
