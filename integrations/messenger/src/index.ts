@@ -1,3 +1,8 @@
 export * from "./client"
 export * from "./integration"
-export type { MessengerAuthValue, MessengerConfig } from "./schemas"
+export type {
+  MessengerAuthValue,
+  MessengerConfig,
+  MessengerMessagingEvent,
+  MessengerWebhookEvent,
+} from "./schemas"

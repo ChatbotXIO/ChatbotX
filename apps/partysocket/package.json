@@ -12,6 +12,7 @@
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
+    "@aha.chat/integration-messenger": "workspace:*",
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",

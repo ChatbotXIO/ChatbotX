@@ -420,6 +420,9 @@ importers:
       '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
+      '@aha.chat/integration-messenger':
+        specifier: workspace:*
+        version: link:../../integrations/messenger
       '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
@@ -472,6 +475,9 @@ importers:
       '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
+      '@aha.chat/integration-messenger':
+        specifier: workspace:*
+        version: link:../../integrations/messenger
       '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
