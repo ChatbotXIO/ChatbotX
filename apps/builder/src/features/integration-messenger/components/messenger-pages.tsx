@@ -13,7 +13,7 @@ import { useEffect } from "react"
 import { toast } from "sonner"
 import { selectPageAction } from "../actions/select-page.action"
 import type { FacebookPage } from "../libs/facebook"
-import { selectPageRequestSchema } from "../schemas"
+import { selectPageRequest } from "../schemas"
 
 export function FacebookPages({
   chatbotId,
@@ -27,7 +27,7 @@ export function FacebookPages({
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     selectPageAction.bind(null, chatbotId),
-    zodResolver(selectPageRequestSchema),
+    zodResolver(selectPageRequest),
     {
       formProps: {
         mode: "onChange",

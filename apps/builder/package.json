@@ -6,7 +6,8 @@
   "scripts": {
     "build": "dotenv -e .env -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123 --experimental-https",
+    "dev": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123",
+    "https": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123 --experimental-https",
     "lint": "biome check .",
     "start": "next start"
   },
@@ -68,6 +69,7 @@
     "@sindresorhus/slugify": "^2.2.1",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-table": "^8.21.3",
+    "@types/facebook-js-sdk": "^3.3.12",
     "@xyflow/react": "^12.8.1",
     "ai": "^5.0.24",
     "better-auth": "^1.2.12",
@@ -127,7 +129,6 @@
     "@radix-ui/react-visually-hidden": "^1.2.3",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/color": "^4.2.0",
-    "@types/facebook-js-sdk": "^3.3.12",
     "@types/node": "^22.16.0",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "19.1.0",

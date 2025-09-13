@@ -1,42 +1,18 @@
 import z from "zod"
 
-export const facebookPageSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  access_token: z.string(),
-})
-
-export const graphFacebookRequestParams = z.tuple([
-  z.string().describe("version"),
-  z.string().describe("accessToken"),
-])
-export type GraphFacebookRequestParams = z.infer<
-  typeof graphFacebookRequestParams
->
-
-export const selectPageRequestSchema = z.object({
+export const selectPageRequest = z.object({
   pageId: z.string(),
   pageName: z.string(),
   accessToken: z.string(),
 })
-export type SelectPageRequest = z.infer<typeof selectPageRequestSchema>
+export type SelectPageRequest = z.infer<typeof selectPageRequest>
 
-export const listPagesResponseSchema = z.object({
-  data: z.array(facebookPageSchema),
-  paging: z
-    .object({
-      cursors: z
-        .object({
-          before: z.string().optional(),
-          after: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
+export const validateOrganizationSettingSchema = z.object({
+  messengerClientId: z.string(),
+  messengerClientSecret: z.string(),
+  messengerVersion: z.string(),
+  messengerVerifyToken: z.string(),
 })
-
-const selectPageSchema = z.object({
-  pageId: z.string().min(1, "Please select a Facebook page"),
-})
-
-export type SelectPageForm = z.infer<typeof selectPageSchema>
+export type ValidateOrganizationSetting = z.infer<
+  typeof validateOrganizationSettingSchema
+>

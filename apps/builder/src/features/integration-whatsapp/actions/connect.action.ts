@@ -14,8 +14,11 @@ import { integrations } from "@/integration"
 import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
-import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
-import { validateWhatsappSettingSchema } from "../schemas/validate-whatsapp-setting"
+import {
+  type ConnectWhatsappSchema,
+  connectWhatsappSchema,
+  validateWhatsappSettingSchema,
+} from "../schemas"
 
 export const connectWhatsappAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)

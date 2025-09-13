@@ -15,10 +15,10 @@ export const findIntegrationMessenger = async ({
         },
       })
     },
-    [`chatbots:${chatbotId}#integrationMessengers`],
+    [`chatbots:${chatbotId}#messenger`],
     {
       revalidate: 3600,
-      tags: [`chatbots:${chatbotId}#integrationMessengers`],
+      tags: [`chatbots:${chatbotId}#messenger`],
     },
   )()
 }

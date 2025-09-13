@@ -14,3 +14,13 @@ export const listPhoneNumbersRequest = z.object({
   accessToken: z.string(),
 })
 export type ListPhoneNumbersRequest = z.infer<typeof listPhoneNumbersRequest>
+
+export const validateWhatsappSettingSchema = z.object({
+  whatsappClientId: z.string(),
+  whatsappClientSecret: z.string(),
+  whatsappVersion: z.string(),
+  whatsappVerifyToken: z.string(),
+})
+export type ValidateWhatsappSetting = z.infer<
+  typeof validateWhatsappSettingSchema
+>

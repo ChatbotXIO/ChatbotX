@@ -14,12 +14,15 @@ import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { findOrganization } from "@/features/organization/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { exchangeLongLivedToken } from "../libs/facebook"
-import { type SelectPageRequest, selectPageRequestSchema } from "../schemas"
-import { validateOrganizationSettingSchema } from "../schemas/organization-setting"
+import {
+  type SelectPageRequest,
+  selectPageRequest,
+  validateOrganizationSettingSchema,
+} from "../schemas"
 
 export const selectPageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
-  .inputSchema(selectPageRequestSchema)
+  .inputSchema(selectPageRequest)
   .action(
     async ({
       ctx,

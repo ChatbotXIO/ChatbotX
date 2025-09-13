@@ -71,28 +71,6 @@ export const handleCallback = async (integrationName: string, req: Request) => {
       }
       break
     }
-    case IntegrationType.MESSENGER: {
-      // return redirect(stateParams.referer)
-      // authResult = (await integrations.MESSENGER.integration.handleRequest?.({
-      //   config: {
-      //     clientId: organizationSettings.messengerClientId,
-      //     clientSecret: organizationSettings.messengerClientSecret,
-      //     version: organizationSettings.messengerVersion,
-      //     redirectUri: new URL(
-      //       "/integrations/messenger/callback",
-      //       env.NEXT_PUBLIC_BUILDER_URL,
-      //     ).toString(),
-      //     stateParams: {
-      //       chatbotId: stateParams.chatbotId,
-      //     },
-      //   },
-      //   req,
-      // })) as unknown as Oauth2AuthValue
-
-      // await saveAuthValueToCache(stateParams.chatbotId, authResult)
-      // return redirect(stateParams.referer)
-      return
-    }
 
     default:
       return notFound()
