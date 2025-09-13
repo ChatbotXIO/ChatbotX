@@ -19,17 +19,112 @@ import {
 } from "@aha.chat/worker-config"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import { createId } from "@paralleldrive/cuid2"
 import {
-  experimental_createMCPClient,
-  type experimental_MCPClient,
   generateText,
   jsonSchema,
   type ToolSet,
   tool,
 } from "ai"
 import { logger } from "../../lib/logger"
+
+// Helper function để gọi tool thông qua MCP server với JSON-RPC 2.0
+async function callMCPTool(
+  mcpServerUrl: string,
+  toolName: string,
+  args: any,
+  auth?: any
+): Promise<any> {
+  try {
+    // Tạo JSON-RPC 2.0 request để gọi tool (khớp với CURL request)
+    const requestBody = {
+      jsonrpc: "2.0",
+      id: 3, // Sử dụng ID cố định như trong CURL
+      method: "tools/call",
+      params: {
+        name: toolName,
+        arguments: args,
+      },
+    }
+
+    // Chuẩn bị headers
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    }
+
+    // Thêm authentication headers nếu có
+    if (auth) {
+      switch (auth.type) {
+        case "TOKEN":
+          headers.Authorization = `Bearer ${auth.token}`
+          break
+        case "HEADERS":
+          for (const header of auth.headers) {
+            headers[header.header] = header.value
+          }
+          break
+        case "NONE":
+        default:
+          // Không cần thêm headers
+          break
+      }
+    }
+
+    console.log(`Calling MCP tool ${toolName} at ${mcpServerUrl}`)
+    console.log("Request body:", JSON.stringify(requestBody, null, 2))
+
+    // Gửi HTTP request đến MCP server
+    const response = await fetch(mcpServerUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    })
+
+    console.log(`MCP response status: ${response.status}`)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`HTTP error! status: ${response.status}, body: ${errorText}`)
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`)
+    }
+
+    const result = await response.json()
+    console.log("MCP response:", JSON.stringify(result, null, 2))
+
+    // Kiểm tra JSON-RPC 2.0 response format
+    if (result.jsonrpc !== "2.0") {
+      throw new Error("Invalid JSON-RPC 2.0 response")
+    }
+
+    if (result.error) {
+      throw new Error(`MCP tool error: ${result.error.message}`)
+    }
+
+    // Extract content from MCP response
+    let content = result.result?.content || result.result
+
+    // If content is an array, extract text from first item
+    if (Array.isArray(content) && content.length > 0) {
+      const firstItem = content[0]
+      if (firstItem.type === "text" && firstItem.text) {
+        content = firstItem.text
+      }
+    }
+
+    console.log(`MCP tool ${toolName} result content:`, content)
+
+    return {
+      content: content,
+      success: true,
+    }
+  } catch (error) {
+    console.error(`Error calling MCP tool ${toolName}:`, error)
+    return {
+      error: error instanceof Error ? error.message : "Unknown error",
+      success: false,
+    }
+  }
+}
 
 type ReplyByOpenAIProps = {
   message: OutgoingMessageEntity
@@ -72,7 +167,6 @@ export async function triggerAutomatedResponse({
   }
 
   if (await replyByAutomatedResponse({ message })) {
-    console.log("replied by automated response")
     return
   }
 
@@ -82,7 +176,6 @@ export async function triggerAutomatedResponse({
       isDefault: true,
     },
   })
-  console.log("aiAgent", aiAgent)
   if (!aiAgent) {
     return
   }
@@ -117,7 +210,6 @@ export async function triggerAutomatedResponse({
     }
   }
   lastAIMessages.reverse()
-  console.log("lastAIMessages", lastAIMessages)
 
   const allFiles = await prisma.aIFile.findMany({
     where: {
@@ -129,11 +221,6 @@ export async function triggerAutomatedResponse({
       chatbotId: message.chatbotId,
     },
   })
-  // const allMCPServers = await prisma.aIMCPServer.findMany({
-  //   where: {
-  //     chatbotId: message.chatbotId,
-  //   },
-  // })
 
   if (
     await replyByOpenAI({
@@ -144,7 +231,6 @@ export async function triggerAutomatedResponse({
       allFunctions,
     })
   ) {
-    console.log("replied by openai")
     return
   }
 
@@ -176,7 +262,6 @@ async function replyByAutomatedResponse({
   }
 
   for (const automatedResponse of allAutomatedResponses) {
-    // Trigger flow if message matched automatedResponses config
     const matched = automatedResponse.userMessages.some((v) =>
       (message.content ?? "").includes(v),
     )
@@ -234,7 +319,6 @@ async function replyByGemini({
       autoReply: true,
     },
   })
-  console.log("integrationGemini", integrationGemini)
   if (!integrationGemini) {
     return false
   }
@@ -257,7 +341,6 @@ async function replyByGemini({
     maxOutputTokens: aiAgent.maxTokens,
     temperature: aiAgent.temperature,
   })
-  console.log("textttttttt", text)
 
   await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
     type: ChatJobAction.SEND_FLOW_STEP,
@@ -283,7 +366,6 @@ async function replyByOpenAI({
   allFiles,
   allFunctions,
 }: ReplyByOpenAIProps): Promise<boolean> {
-  let httpClient: experimental_MCPClient | null = null
   try {
     const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
       where: {
@@ -291,7 +373,6 @@ async function replyByOpenAI({
         autoReply: true,
       },
     })
-    console.log("integrationOpenAI", integrationOpenAI)
     if (!integrationOpenAI) {
       return false
     }
@@ -308,17 +389,8 @@ async function replyByOpenAI({
       return false
     }
 
-    const httpTransport = new StreamableHTTPClientTransport(
-      new URL("https://ahabanana-store.myshopify.com/api/mcp"),
-    )
-    httpClient = await experimental_createMCPClient({
-      transport: httpTransport,
-    })
-
-    const tools = await httpClient.tools()
-
-    // const tools = await getSelectedTools(aiAgent)
-    // console.log("toolssssss", tools)
+    const tools = await getSelectedTools(aiAgent)
+    console.log("Selected tools:", Object.keys(tools))
 
     const output = await generateText({
       model: openai(openaiModel.model),
@@ -327,9 +399,66 @@ async function replyByOpenAI({
       maxOutputTokens: aiAgent.maxTokens,
       temperature: aiAgent.temperature,
       tools,
+      toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
     })
 
-    if (output.text.length > 0) {
+    console.log("OpenAI output:", JSON.stringify(output, null, 2))
+    console.log("Tool calls:", output.toolCalls)
+    console.log("Tool results:", output.toolResults)
+    console.log("Output text length:", output.text?.length || 0)
+    console.log("Output text:", output.text)
+
+    // Check if we have tool calls but no text response
+    if (output.toolCalls && output.toolCalls.length > 0 && (!output.text || output.text.length === 0)) {
+      console.log("AI made tool calls but no text response. Generating follow-up response...")
+
+      // Create a follow-up message with tool results to force AI to generate text
+      const toolResultsText = output.toolResults.map(result => {
+        return `Tool ${result.toolName} result: ${result.output}`
+      }).join('\n\n')
+
+      const followUpMessages = [
+        ...lastAIMessages,
+        {
+          role: "assistant" as const,
+          content: "I've found some information for you:",
+        },
+        {
+          role: "user" as const,
+          content: `Please analyze this data and provide a helpful response in Vietnamese: ${toolResultsText}`,
+        },
+      ]
+
+      console.log("Generating follow-up response...")
+      const followUpOutput = await generateText({
+        model: openai(openaiModel.model),
+        system: aiAgent.prompt ?? undefined,
+        messages: followUpMessages,
+        maxOutputTokens: aiAgent.maxTokens,
+        temperature: aiAgent.temperature,
+      })
+
+      console.log("Follow-up output:", followUpOutput.text)
+
+      if (followUpOutput.text && followUpOutput.text.length > 0) {
+        await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
+          type: ChatJobAction.SEND_FLOW_STEP,
+          data: {
+            conversationId: message.conversationId,
+            flowVersionId: "",
+            step: {
+              id: createId(),
+              message: followUpOutput.text,
+              stepType: StepType.SEND_TEXT,
+              buttons: [],
+            },
+          },
+        })
+        return true
+      }
+    }
+
+    if (output.text && output.text.length > 0) {
       await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
         type: ChatJobAction.SEND_FLOW_STEP,
         data: {
@@ -349,49 +478,85 @@ async function replyByOpenAI({
 
     return false
   } catch (error) {
-    console.error("error", error)
+    console.error("Error in replyByOpenAI:", error)
     return false
-  } finally {
-    if (httpClient) {
-      await httpClient.close()
-    }
   }
 }
 
-async function getSelectedTools(aiAgent: AIAgentModel) {
-  const selectedMCPs = aiAgent.tools
-    .filter((v) => v.startsWith("mcp"))
-    .map((v) => v.split(":")[1])
+async function getSelectedTools(aiAgent: AIAgentModel): Promise<ToolSet> {
+  try {
+    const selectedMCPs = aiAgent.tools
+      .filter((v) => v.startsWith("mcp:"))
+      .map((v) => v.split(":")[1])
+      .filter(Boolean)
 
-  console.log("selectedMCPPPP", selectedMCPs)
-  const mcpServers = await prisma.aIMCPServer.findMany({
-    where: {
-      chatbotId: aiAgent.chatbotId,
-      id: {
-        in: selectedMCPs,
+    if (selectedMCPs.length === 0) {
+      return {}
+    }
+
+    const mcpServers = await prisma.aIMCPServer.findMany({
+      where: {
+        chatbotId: aiAgent.chatbotId,
+        id: { in: selectedMCPs },
       },
-    },
-  })
+    })
 
-  const tools: ToolSet = {}
-  for (const mcpServer of mcpServers) {
-    const availableTools = mcpServer.availableTools as unknown as Awaited<
-      ReturnType<
-        Awaited<ReturnType<typeof experimental_createMCPClient>>["tools"]
-      >
-    >
-
-    for (const tl of mcpServer.selectedTools) {
-      if (Object.hasOwn(availableTools, tl)) {
-        tools[tl] = tool({
-          description: availableTools[tl].description,
-          inputSchema: jsonSchema(
-            (availableTools[tl].inputSchema as any).jsonSchema,
-          ),
-        })
-      }
+    if (mcpServers.length === 0) {
+      return {}
     }
+
+    const tools: ToolSet = {}
+
+    for (const mcpServer of mcpServers) {
+      try {
+        const availableTools = mcpServer.availableTools as Record<
+          string,
+          {
+            description: string
+            inputSchema: { jsonSchema: unknown }
+          }
+        >
+
+        if (!availableTools || typeof availableTools !== "object") {
+          continue
+        }
+
+        for (const toolName of mcpServer.selectedTools) {
+          const toolDef = availableTools[toolName]
+          if (!toolDef) {
+            continue
+          }
+
+          const uniqueToolName = `${mcpServer.name}_${toolName}`
+
+          try {
+            tools[uniqueToolName] = tool({
+              description: `${toolDef.description} (from ${mcpServer.name})`,
+              inputSchema: jsonSchema(toolDef.inputSchema.jsonSchema as any),
+              execute: async (args) => {
+                try {
+                  console.log(`Executing MCP tool ${toolName} with args:`, JSON.stringify(args, null, 2))
+
+                  // Gọi tool thông qua MCP server với JSON-RPC 2.0
+                  const result = await callMCPTool(mcpServer.url, toolName, args, mcpServer.auth)
+
+                  // Return the content directly for AI to use
+                  console.log(`MCP tool ${toolName} result:`, result)
+                  return result.content || result
+                } catch (error) {
+                  console.error(`Error executing MCP tool ${toolName}:`, error)
+                  return `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+                }
+              },
+            })
+          } catch (_schemaError) { }
+        }
+      } catch (_error) { }
+    }
+
+    return tools
+  } catch (_error) {
+    return {}
   }
-  console.log("toolssssss", tools)
-  return tools
 }
+
