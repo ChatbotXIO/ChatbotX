@@ -103,6 +103,23 @@ const getReceiveMessageTemplate = async (
   }
 }
 
+const getMessageType = (
+  integrationName: string,
+  payload: OnMessageArgs | MessengerWebhookEvent,
+): MessageType => {
+  switch (integrationName) {
+    case "whatsapp":
+      return MessageType.INCOMING
+    case "messenger":
+      return (payload as MessengerWebhookEvent).entry[0].messaging[0].message
+        ?.is_echo
+        ? MessageType.OUTGOING
+        : MessageType.INCOMING
+    default:
+      return MessageType.INCOMING
+  }
+}
+
 export const receiveMessage = async ({
   integrationName,
   payload,
@@ -121,6 +138,7 @@ export const receiveMessage = async ({
       auth,
       payload,
     })
+  const messageType = getMessageType(integrationName, payload)
 
   const result = await prisma.$transaction(async (tx) => {
     const newContact = await tx.contact.upsert({
@@ -173,7 +191,7 @@ export const receiveMessage = async ({
         senderType: SenderType.CONTACT,
         chatbotId,
         senderId: newContact.id,
-        messageType: MessageType.INCOMING,
+        messageType,
         content: message.content,
         contentType: message.contentType as ContentType,
         contentAttributes: message.contentAttributes as Prisma.InputJsonValue,
