@@ -15,6 +15,7 @@ import { BaseException } from "@/lib/error"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
+import { validateWhatsappSettingSchema } from "../schemas/validate-whatsapp-setting"
 
 export const connectWhatsappAction = authActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
@@ -33,11 +34,16 @@ export const connectWhatsappAction = authActionClient
       })
       const organizationSettings =
         organization?.settings as unknown as OrganizationSettings
+      const { data: setting } =
+        validateWhatsappSettingSchema.safeParse(organizationSettings)
+      if (!setting) {
+        throw new Error("Organization settings are not valid")
+      }
 
       // Validate wabaId
       const auth: WhatsappAuthValue = {
-        clientId: organizationSettings.whatsappClientId,
-        clientSecret: organizationSettings.whatsappClientSecret,
+        clientId: setting.whatsappClientId,
+        clientSecret: setting.whatsappClientSecret,
         redirectUri: "",
         authType: AuthType.OAUTH2,
         tokens: {

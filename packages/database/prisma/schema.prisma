@@ -688,8 +688,8 @@ model IntegrationMessenger {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  auth   Json?
-  pageId String?
+  auth   Json
+  pageId String
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -700,9 +700,9 @@ model IntegrationMessenger {
   fallbackFlowId String?
   fallbackFlow   Flow?   @relation(fields: [fallbackFlowId], references: [id])
 
+  @@unique([pageId])
   @@index([chatbotId])
   @@index([fallbackFlowId])
-  @@index([pageId])
 }
 
 model WhatsappMessageTemplate {

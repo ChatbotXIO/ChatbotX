@@ -22,11 +22,11 @@ export const disconnectMessengerAction = chatbotActionClient
         })
 
       await prisma.$transaction(async (tx) => {
-        await tx.inbox.delete({
-          where: { id: integrationMessenger.inboxId },
+        await tx.integrationMessenger.delete({
+          where: { id: integrationMessenger.id },
         })
       })
-      revalidateTag(`chatbots:${chatbotId}#messengerAuthValue`)
-      return
+
+      revalidateTag(`chatbots:${chatbotId}#messenger`)
     },
   )

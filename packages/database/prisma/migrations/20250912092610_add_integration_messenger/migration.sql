@@ -3,7 +3,7 @@ CREATE TABLE "public"."IntegrationMessenger" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "auth" JSONB,
+    "auth" JSONB NOT NULL,
     "pageId" TEXT NOT NULL,
     "chatbotId" TEXT NOT NULL,
     "inboxId" TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE INDEX "IntegrationMessenger_chatbotId_idx" ON "public"."IntegrationMessen
 CREATE INDEX "IntegrationMessenger_fallbackFlowId_idx" ON "public"."IntegrationMessenger"("fallbackFlowId");
 
 -- CreateIndex
-CREATE INDEX "IntegrationMessenger_pageId_idx" ON "public"."IntegrationMessenger"("pageId");
+CREATE UNIQUE INDEX "IntegrationMessenger_pageId_key" ON "public"."IntegrationMessenger"("pageId");
 
 -- AddForeignKey
 ALTER TABLE "public"."IntegrationMessenger" ADD CONSTRAINT "IntegrationMessenger_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "public"."Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;

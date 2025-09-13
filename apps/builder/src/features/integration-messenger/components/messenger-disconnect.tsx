@@ -13,23 +13,18 @@ import {
 } from "@aha.chat/ui/components/ui/alert-dialog"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Loader2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
-import { disconnectMessengerAction } from "./actions/disconnect.action"
+import { disconnectMessengerAction } from "../actions/disconnect.action"
 
-export function DisconnectMessengerDialog({
-  chatbotId,
-  name,
-}: {
-  chatbotId: string
-  name: string
-}) {
+export function MessengerDisconnect() {
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState<boolean>(false)
+  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
     useAction(disconnectMessengerAction.bind(null, chatbotId), {
@@ -44,7 +39,11 @@ export function DisconnectMessengerDialog({
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
-        <Button className="w-fit" size="sm" variant="destructive">
+        <Button
+          className="w-fit cursor-pointer"
+          size="sm"
+          variant="destructive"
+        >
           {t("actions.disconnect")}
         </Button>
       </AlertDialogTrigger>
@@ -57,10 +56,11 @@ export function DisconnectMessengerDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t("dialog.disconnect.description", {
-              feature: name,
+              feature: t("messenger.title"),
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
         <AlertDialogFooter>
           <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
           <AlertDialogAction

@@ -6,26 +6,43 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
+import {
+  type IconType,
+  SiMessenger,
+  SiWhatsapp,
+} from "@icons-pack/react-simple-icons"
+import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
-import { MessengerIcon } from "@/components/icons/messenger"
-import WhatsappIcon from "@/components/icons/whatsapp"
+
+type SettingsChannelsPageProps = {
+  readonly whatsapp: ReactNode
+  readonly messenger: ReactNode
+}
+
+type IntegrationItem = {
+  readonly keyName: string
+  readonly icon: IconType
+  readonly iconColor: string
+  readonly content: ReactNode
+}
 
 export default function SettingsChannelsPage({
   whatsapp,
   messenger,
-}: {
-  whatsapp: ReactNode
-  messenger: ReactNode
-}) {
-  const integrationItems = [
+}: SettingsChannelsPageProps) {
+  const t = useTranslations()
+
+  const integrationItems: IntegrationItem[] = [
     {
-      keyName: "Settings.Integrations.Whatsapp",
-      icon: WhatsappIcon,
+      keyName: t("whatsapp.title"),
+      icon: SiWhatsapp,
+      iconColor: "#25D366",
       content: whatsapp,
     },
     {
-      keyName: "Settings.Integrations.Messenger",
-      icon: MessengerIcon,
+      keyName: t("messenger.title"),
+      icon: SiMessenger,
+      iconColor: "#0866FF",
       content: messenger,
     },
   ]
@@ -40,7 +57,7 @@ export default function SettingsChannelsPage({
         >
           <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
             <div className="flex items-center gap-2">
-              <integration.icon />
+              <integration.icon fill={integration.iconColor} />
               {integration.keyName}
             </div>
           </AccordionTrigger>

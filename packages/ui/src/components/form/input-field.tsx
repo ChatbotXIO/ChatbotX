@@ -11,7 +11,15 @@ type InputFieldProps<T extends FieldValues> = {
   defaultValue?: string
   disabled?: boolean
   className?: string
-  type?: "text" | "password" | "email" | "number" | "tel" | "url" | "search"
+  type?:
+    | "text"
+    | "password"
+    | "email"
+    | "number"
+    | "tel"
+    | "url"
+    | "search"
+    | "hidden"
 }
 
 export function InputField<T extends FieldValues>({

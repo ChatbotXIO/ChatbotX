@@ -17,6 +17,10 @@
       "cache": false,
       "persistent": true
     },
+    "https": {
+      "cache": false,
+      "persistent": true
+    },
     "packages:dev": {
       "cache": false,
       "persistent": true

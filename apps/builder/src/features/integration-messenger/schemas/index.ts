@@ -17,7 +17,7 @@ export type GraphFacebookRequestParams = z.infer<
 export const selectPageRequestSchema = z.object({
   pageId: z.string(),
   pageName: z.string(),
-  pageAccessToken: z.string(),
+  accessToken: z.string(),
 })
 export type SelectPageRequest = z.infer<typeof selectPageRequestSchema>
 

@@ -1,0 +1,94 @@
+"use client"
+
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { useEffect } from "react"
+import { toast } from "sonner"
+import { selectPageAction } from "../actions/select-page.action"
+import type { FacebookPage } from "../libs/facebook"
+import { selectPageRequestSchema } from "../schemas"
+
+export function FacebookPages({
+  chatbotId,
+  pages,
+}: {
+  chatbotId: string
+  pages: FacebookPage[]
+}) {
+  const t = useTranslations()
+  const router = useRouter()
+
+  const { form, handleSubmitWithAction } = useHookFormAction(
+    selectPageAction.bind(null, chatbotId),
+    zodResolver(selectPageRequestSchema),
+    {
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          pageId: "",
+          pageName: "",
+          accessToken: "",
+        },
+      },
+      actionProps: {
+        onSuccess: () => {
+          router.refresh()
+        },
+        onError: () => {
+          toast.error(
+            t("messages.createdFailed", {
+              feature: t("fields.messenger.label"),
+            }),
+          )
+        },
+      },
+      errorMapProps: {},
+    },
+  )
+
+  const { setValue, watch } = form
+  const watchedPageId = watch("pageId")
+  useEffect(() => {
+    const selectPage = pages.find((page) => page.id === watchedPageId)
+
+    setValue("accessToken", selectPage?.access_token ?? "")
+    setValue("pageName", selectPage?.name ?? "")
+  }, [watchedPageId, setValue, pages])
+
+  return (
+    <Form {...form}>
+      <form className="space-y-6" onSubmit={handleSubmitWithAction}>
+        <InputField name="accessToken" type="hidden" />
+
+        <InputField name="pageName" type="hidden" />
+
+        <RadioGroupField
+          label={t("messenger.selectFacebookPage")}
+          name="pageId"
+          options={pages.map((page) => ({
+            value: page.id,
+            label: page.name,
+          }))}
+          required
+        />
+
+        <Button
+          disabled={!form.formState.isValid || form.formState.isSubmitting}
+          type="submit"
+        >
+          {form.formState.isSubmitting && (
+            <Loader2Icon className="animate-spin" />
+          )}
+          {t("actions.continue")}
+        </Button>
+      </form>
+    </Form>
+  )
+}

@@ -11,7 +11,6 @@ export type MessengerAuthValue = Oauth2AuthValue & {
   metadata: {
     pageName: string
     version: string
-    scope: string
   }
 }
 
