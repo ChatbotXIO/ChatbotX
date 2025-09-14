@@ -22,11 +22,155 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { createId } from "@paralleldrive/cuid2"
 import {
   generateText,
+  streamText,
   jsonSchema,
   type ToolSet,
   tool,
 } from "ai"
 import { logger } from "../../lib/logger"
+
+// Helper function để xử lý text cho images và links
+function processTextForImagesAndLinks(text: string): string[] {
+  const parts = []
+  let lastIndex = 0
+  const seenUrls = new Set<string>() // Track URLs to avoid duplicates
+
+  // Handle markdown images
+  const markdownImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g
+  let match
+
+  while ((match = markdownImageRegex.exec(text)) !== null) {
+    // Add text before the image
+    if (match.index > lastIndex) {
+      const textBefore = text.substring(lastIndex, match.index).trim()
+      if (textBefore && textBefore.length > 0) {
+        parts.push(textBefore)
+      }
+    }
+
+    // Add the image URL as a separate message (only URL, no emoji) - avoid duplicates
+    const imageUrl = match[2].trim()
+    if (imageUrl && !seenUrls.has(imageUrl)) {
+      seenUrls.add(imageUrl)
+      parts.push(imageUrl) // Remove @ prefix as requested
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Handle plain image URLs (not in markdown format)
+  const plainImageRegex = /(https:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg)(\?[^\s]*)?)/gi
+  let plainMatch
+  let plainLastIndex = lastIndex
+
+  while ((plainMatch = plainImageRegex.exec(text)) !== null) {
+    // Add text before the image
+    if (plainMatch.index > plainLastIndex) {
+      const textBefore = text.substring(plainLastIndex, plainMatch.index).trim()
+      if (textBefore && textBefore.length > 0) {
+        parts.push(textBefore)
+      }
+    }
+
+    // Add the image URL as a separate message (only URL, no emoji) - avoid duplicates
+    const imageUrl = plainMatch[1].trim()
+    if (imageUrl && !seenUrls.has(imageUrl)) {
+      seenUrls.add(imageUrl)
+      parts.push(imageUrl) // Remove @ prefix as requested
+    }
+
+    plainLastIndex = plainMatch.index + plainMatch[0].length
+  }
+
+  // Handle markdown links (not images)
+  const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
+  let linkMatch
+  let linkLastIndex = plainLastIndex
+
+  while ((linkMatch = markdownLinkRegex.exec(text)) !== null) {
+    // Add text before the link
+    if (linkMatch.index > linkLastIndex) {
+      const textBefore = text.substring(linkLastIndex, linkMatch.index).trim()
+      if (textBefore && textBefore.length > 0) {
+        parts.push(textBefore)
+      }
+    }
+
+    // Add the link as a separate message (only URL, no emoji) - avoid duplicates
+    const linkUrl = linkMatch[2].trim()
+    if (linkUrl && !seenUrls.has(linkUrl)) {
+      seenUrls.add(linkUrl)
+      parts.push(linkUrl) // Remove @ prefix as requested
+    }
+
+    linkLastIndex = linkMatch.index + linkMatch[0].length
+  }
+
+  // Add remaining text after the last link
+  if (linkLastIndex < text.length) {
+    const remainingText = text.substring(linkLastIndex).trim()
+    if (remainingText && remainingText.length > 0) {
+      parts.push(remainingText)
+    }
+  }
+
+  // If no images or links found, return the original text
+  if (parts.length === 0) {
+    parts.push(text)
+  }
+
+  // Filter out empty parts, standalone icons, and clean up text
+  const filteredParts = parts
+    .filter(part => {
+      const trimmed = part.trim()
+
+      // Remove empty parts
+      if (trimmed.length === 0) {
+        return false
+      }
+
+      // Remove parts that are only whitespace
+      if (/^\s*$/.test(trimmed)) {
+        return false
+      }
+
+      // Remove standalone icons (single emoji or icon characters)
+      if (trimmed.length <= 2 && /^[\u{1F300}-\u{1F9FF}]$/u.test(trimmed)) {
+        return false
+      }
+
+      // Remove parts that are only whitespace or special characters
+      if (/^[\s\u{1F300}-\u{1F9FF}]*$/u.test(trimmed)) {
+        return false
+      }
+
+      // Remove parts that are only emojis and whitespace
+      if (/^[\s\u{1F300}-\u{1F9FF}]+$/u.test(trimmed)) {
+        return false
+      }
+
+      return true
+    })
+    .map(part => {
+      // Clean up text by removing standalone emojis at the beginning/end
+      let cleaned = part.trim()
+
+      // Remove leading emojis and whitespace
+      cleaned = cleaned.replace(/^[\u{1F300}-\u{1F9FF}\s]+/u, '')
+
+      // Remove trailing emojis and whitespace
+      cleaned = cleaned.replace(/[\u{1F300}-\u{1F9FF}\s]+$/u, '')
+
+      return cleaned.trim()
+    })
+    .filter(part => {
+      // Final filter to ensure no empty parts
+      const trimmed = part.trim()
+      return trimmed.length > 0 && !/^\s*$/.test(trimmed)
+    })
+
+  return filteredParts
+}
 
 // Helper function để gọi tool thông qua MCP server với JSON-RPC 2.0
 async function callMCPTool(
@@ -392,7 +536,7 @@ async function replyByOpenAI({
     const tools = await getSelectedTools(aiAgent)
     console.log("Selected tools:", Object.keys(tools))
 
-    const output = await generateText({
+    const result = await streamText({
       model: openai(openaiModel.model),
       system: aiAgent.prompt ?? undefined,
       messages: lastAIMessages,
@@ -402,18 +546,79 @@ async function replyByOpenAI({
       toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
     })
 
-    console.log("OpenAI output:", JSON.stringify(output, null, 2))
-    console.log("Tool calls:", output.toolCalls)
-    console.log("Tool results:", output.toolResults)
-    console.log("Output text length:", output.text?.length || 0)
-    console.log("Output text:", output.text)
+    // Collect the streamed text and send messages when encountering \n\n or markdown images
+    let fullText = ""
+    let currentMessage = ""
+    let messageCount = 0
+
+    console.log("=== START STREAMING TEXT ===")
+
+    for await (const delta of result.textStream) {
+      fullText += delta
+      currentMessage += delta
+      console.log("Stream delta:", delta)
+
+      // Check if we encounter \n\n (double newline) - this is the primary delimiter
+      if (currentMessage.includes('\n\n')) {
+        const segments = currentMessage.split('\n\n')
+
+        // Process all complete segments (except the last one which might be incomplete)
+        for (let i = 0; i < segments.length - 1; i++) {
+          const segment = segments[i].trim()
+          if (!segment) continue
+
+          // Process this segment for images and links
+          const processedParts = processTextForImagesAndLinks(segment)
+
+          // Send each processed part as a separate message
+          for (const part of processedParts) {
+            const trimmedPart = part.trim()
+            if (trimmedPart && trimmedPart.length > 0 && !/^\s*$/.test(trimmedPart)) {
+              messageCount++
+              console.log(`Sending message ${messageCount}:`, trimmedPart)
+
+              await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
+                type: ChatJobAction.SEND_FLOW_STEP,
+                data: {
+                  conversationId: message.conversationId,
+                  flowVersionId: "",
+                  step: {
+                    id: createId(),
+                    message: trimmedPart,
+                    stepType: StepType.SEND_TEXT,
+                    buttons: [],
+                  },
+                },
+              })
+            }
+          }
+        }
+
+        // Keep the last segment (might be incomplete)
+        currentMessage = segments[segments.length - 1]
+      }
+    }
+
+    // Get tool calls and results
+    const toolCalls = await result.toolCalls
+    const toolResults = await result.toolResults
+
+    console.log("=== FULL TEXT FROM AGENT ===")
+    console.log("Full text length:", fullText.length)
+    console.log("Full text content:")
+    console.log("--- START ---")
+    console.log(fullText)
+    console.log("--- END ---")
+    console.log("Tool calls:", toolCalls)
+    console.log("Tool results:", toolResults)
+    console.log("Messages sent:", messageCount)
 
     // Check if we have tool calls but no text response
-    if (output.toolCalls && output.toolCalls.length > 0 && (!output.text || output.text.length === 0)) {
+    if (toolCalls && toolCalls.length > 0 && (!fullText || fullText.length === 0)) {
       console.log("AI made tool calls but no text response. Generating follow-up response...")
 
       // Create a follow-up message with tool results to force AI to generate text
-      const toolResultsText = output.toolResults.map(result => {
+      const toolResultsText = toolResults.map(result => {
         return `Tool ${result.toolName} result: ${result.output}`
       }).join('\n\n')
 
@@ -430,7 +635,7 @@ async function replyByOpenAI({
       ]
 
       console.log("Generating follow-up response...")
-      const followUpOutput = await generateText({
+      const followUpResult = await streamText({
         model: openai(openaiModel.model),
         system: aiAgent.prompt ?? undefined,
         messages: followUpMessages,
@@ -438,41 +643,132 @@ async function replyByOpenAI({
         temperature: aiAgent.temperature,
       })
 
-      console.log("Follow-up output:", followUpOutput.text)
+      console.log("=== START FOLLOW-UP STREAMING TEXT ===")
 
-      if (followUpOutput.text && followUpOutput.text.length > 0) {
-        await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
-          type: ChatJobAction.SEND_FLOW_STEP,
-          data: {
-            conversationId: message.conversationId,
-            flowVersionId: "",
-            step: {
-              id: createId(),
-              message: followUpOutput.text,
-              stepType: StepType.SEND_TEXT,
-              buttons: [],
-            },
-          },
-        })
+
+      // Collect the follow-up streamed text and send messages when encountering \n\n or markdown images
+      let followUpText = ""
+      let followUpCurrentMessage = ""
+      let followUpMessageCount = 0
+
+      for await (const delta of followUpResult.textStream) {
+        followUpText += delta
+        followUpCurrentMessage += delta
+        console.log("Follow-up stream delta:", delta)
+
+        // Check if we encounter \n\n (double newline) - this is the primary delimiter
+        if (followUpCurrentMessage.includes('\n\n')) {
+          const segments = followUpCurrentMessage.split('\n\n')
+
+          // Process all complete segments (except the last one which might be incomplete)
+          for (let i = 0; i < segments.length - 1; i++) {
+            const segment = segments[i].trim()
+            if (!segment) continue
+
+            // Process this segment for images and links
+            const processedParts = processTextForImagesAndLinks(segment)
+
+            // Send each processed part as a separate message
+            for (const part of processedParts) {
+              const trimmedPart = part.trim()
+              if (trimmedPart && trimmedPart.length > 0 && !/^\s*$/.test(trimmedPart)) {
+                followUpMessageCount++
+                console.log(`Sending follow-up message ${followUpMessageCount}:`, trimmedPart)
+
+                await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
+                  type: ChatJobAction.SEND_FLOW_STEP,
+                  data: {
+                    conversationId: message.conversationId,
+                    flowVersionId: "",
+                    step: {
+                      id: createId(),
+                      message: trimmedPart,
+                      stepType: StepType.SEND_TEXT,
+                      buttons: [],
+                    },
+                  },
+                })
+              }
+            }
+          }
+
+          // Keep the last segment (might be incomplete)
+          followUpCurrentMessage = segments[segments.length - 1]
+        }
+      }
+
+      // Send any remaining text
+      if (followUpCurrentMessage.trim()) {
+        // Process remaining text for images and links
+        const parts = processTextForImagesAndLinks(followUpCurrentMessage)
+
+        // Send all parts
+        for (const part of parts) {
+          const trimmedPart = part.trim()
+          if (trimmedPart && trimmedPart.length > 0 && !/^\s*$/.test(trimmedPart)) {
+            followUpMessageCount++
+            console.log(`Sending final follow-up message ${followUpMessageCount}:`, trimmedPart)
+
+            await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
+              type: ChatJobAction.SEND_FLOW_STEP,
+              data: {
+                conversationId: message.conversationId,
+                flowVersionId: "",
+                step: {
+                  id: createId(),
+                  message: trimmedPart,
+                  stepType: StepType.SEND_TEXT,
+                  buttons: [],
+                },
+              },
+            })
+          }
+        }
+      }
+
+      console.log("=== FOLLOW-UP FULL TEXT FROM AGENT ===")
+      console.log("Follow-up text length:", followUpText.length)
+      console.log("Follow-up text content:")
+      console.log("--- FOLLOW-UP START ---")
+      console.log(followUpText)
+      console.log("--- FOLLOW-UP END ---")
+      console.log("Follow-up messages sent:", followUpMessageCount)
+
+      if (followUpMessageCount > 0) {
         return true
       }
     }
 
-    if (output.text && output.text.length > 0) {
-      await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
-        type: ChatJobAction.SEND_FLOW_STEP,
-        data: {
-          conversationId: message.conversationId,
-          flowVersionId: "",
-          step: {
-            id: createId(),
-            message: output.text,
-            stepType: StepType.SEND_TEXT,
-            buttons: [],
-          },
-        },
-      })
+    // Send any remaining text that didn't end with \n\n
+    if (currentMessage.trim()) {
+      // Process remaining text for images and links
+      const parts = processTextForImagesAndLinks(currentMessage)
 
+      // Send all parts
+      for (const part of parts) {
+        const trimmedPart = part.trim()
+        if (trimmedPart && trimmedPart.length > 0 && !/^\s*$/.test(trimmedPart)) {
+          messageCount++
+          console.log(`Sending final message ${messageCount}:`, trimmedPart)
+
+          await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
+            type: ChatJobAction.SEND_FLOW_STEP,
+            data: {
+              conversationId: message.conversationId,
+              flowVersionId: "",
+              step: {
+                id: createId(),
+                message: trimmedPart,
+                stepType: StepType.SEND_TEXT,
+                buttons: [],
+              },
+            },
+          })
+        }
+      }
+    }
+
+    if (messageCount > 0) {
       return true
     }
 
