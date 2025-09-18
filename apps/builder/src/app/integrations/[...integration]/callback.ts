@@ -71,6 +71,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
           data: {
             chatbotId: stateParams.chatbotId,
             inboxType: IntegrationType.ZALO,
+            sourceId: (authResult as ZaloAuthValue).oaId,
             integrationZalo: {
               create: {
                 chatbotId: stateParams.chatbotId,

@@ -20,17 +20,14 @@ export function ZaloConnect({ organization }: ZaloConnectProps) {
 
   const connectZalo = () => {
     const organizationSettings =
-      organization.settings as unknown as OrganizationSettings
-
+      organization?.settings as unknown as OrganizationSettings
     const { data: setting } =
       validateOrganizationSettingSchema.safeParse(organizationSettings)
+
     if (!setting) {
       throw new Error("Organization settings are not valid")
     }
 
-    if (!organizationSettings) {
-      throw new Error("Organization settings not found")
-    }
     const redirectUrl = new URL(
       "/integrations/zalo/callback",
       process.env.NEXT_PUBLIC_BUILDER_URL,
