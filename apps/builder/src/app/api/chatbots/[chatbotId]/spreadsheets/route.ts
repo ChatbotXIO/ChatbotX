@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSpreadSheets } from "@/features/spreadsheets/queries"
-import { getSpreadSheetSearchParams } from "@/features/spreadsheets/schemas"
+import { getWorksheetHeaderSearchParams } from "@/features/spreadsheets/schemas"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
@@ -16,10 +16,12 @@ export async function GET(
     await findChatbotOrFail(userId, chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-    const search = getSpreadSheetSearchParams.parse(searchParams)
+    const search = getWorksheetHeaderSearchParams.parse(searchParams)
 
     const allSpreadsheets = await getSpreadSheets({
       ...search,
+      page: null,
+      perPage: null,
       chatbotId: (await params).chatbotId,
     })
 

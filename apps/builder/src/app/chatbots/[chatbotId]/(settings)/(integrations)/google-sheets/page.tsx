@@ -2,7 +2,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateSpreadsheetDialog } from "@/features/spreadsheets/create-spreadsheet-dialog"
 import { getSpreadSheets } from "@/features/spreadsheets/queries/index"
-import { getSpreadSheetSearchParams } from "@/features/spreadsheets/schemas"
+import { getWorksheetHeaderSearchParams } from "@/features/spreadsheets/schemas"
 import { SpreadsheetsTable } from "@/features/spreadsheets/spreadsheets-table"
 
 export default async function SpreadsheetsPage(props: {
@@ -11,9 +11,14 @@ export default async function SpreadsheetsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = getSpreadSheetSearchParams.parse(searchParams)
+  const search = getWorksheetHeaderSearchParams.parse(searchParams)
   const promises = Promise.all([
-    getSpreadSheets({ ...search, chatbotId: params.chatbotId }),
+    getSpreadSheets({
+      ...search,
+      chatbotId: params.chatbotId,
+      page: null,
+      perPage: null,
+    }),
   ])
 
   return (

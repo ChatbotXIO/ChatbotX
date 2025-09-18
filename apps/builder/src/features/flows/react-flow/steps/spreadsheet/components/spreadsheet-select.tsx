@@ -1,8 +1,8 @@
 "use client"
 
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
 import type { ReactNode } from "react"
-import { SelectField } from "@/components/form/select-field"
 import type { SpreadsheetCollection } from "@/features/spreadsheets/schemas"
 import { callAPI } from "@/lib/swr"
 

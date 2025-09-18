@@ -19,23 +19,32 @@ export const getSpreadSheets = async (
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
+  let pageCount = 1
+  const pagination: { skip?: number; take?: number } = {}
+  if (input.perPage) {
+    pagination.take = input.perPage
+    pagination.skip = ((input.page ?? 1) - 1) * input.perPage
+  }
+
   return await unstable_cache(
     async () => {
       const where: Prisma.SpreadsheetWhereInput = {
         chatbotId: input.chatbotId,
       }
-      const [data, total] = await prisma.$transaction([
-        prisma.spreadsheet.findMany({
-          skip: (input.page - 1) * input.perPage,
-          take: input.perPage,
+
+      return await prisma.$transaction(async (tx) => {
+        const data = await tx.spreadsheet.findMany({
+          ...pagination,
           where,
-        }),
-        prisma.spreadsheet.count({ where }),
-      ])
+        })
 
-      const pageCount = Math.ceil(total / input.perPage)
+        if (pagination.skip && pagination.take) {
+          const total = await tx.spreadsheet.count({ where })
+          pageCount = Math.ceil(total / pagination.take)
+        }
 
-      return { data, pageCount }
+        return { data, pageCount }
+      })
     },
     [JSON.stringify(input)],
     {
@@ -55,7 +64,7 @@ export const getWorkSheets = async (
 
   const where: Prisma.SpreadsheetWhereInput = {
     chatbotId: input.chatbotId,
-    id: input.spreadsheetId,
+    id: input.spreadsheetId ?? "",
   }
   const spreadsheet = await prisma.spreadsheet.findFirstOrThrow({
     where,
@@ -91,7 +100,7 @@ export const getWorkSheetHeaders = async (
 
   const where: Prisma.SpreadsheetWhereInput = {
     chatbotId: input.chatbotId,
-    id: input.spreadsheetId,
+    id: input.spreadsheetId ?? "",
   }
   const spreadsheet = await prisma.spreadsheet.findFirstOrThrow({
     where,
@@ -111,7 +120,7 @@ export const getWorkSheetHeaders = async (
       ctx,
       props: {
         spreadsheetId: spreadsheet.spreadsheetId,
-        sheetName: input.sheetName,
+        sheetName: input.sheetName ?? "",
       },
     })
 

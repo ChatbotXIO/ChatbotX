@@ -1,5 +1,9 @@
 import type { SpreadsheetModel } from "@aha.chat/database/types"
-import { createSearchParamsCache, parseAsString } from "nuqs/server"
+import {
+  createSearchParamsCache,
+  parseAsInteger,
+  parseAsString,
+} from "nuqs/server"
 
 export type SpreadsheetResource = SpreadsheetModel
 
@@ -9,12 +13,14 @@ export type SpreadsheetCollection = {
 }
 
 export const getWorksheetSearchParams = createSearchParamsCache({
-  spreadsheetId: parseAsString.withDefault(""),
+  page: parseAsInteger,
+  perPage: parseAsInteger,
+  spreadsheetId: parseAsString,
 })
 
 export const getWorksheetHeaderSearchParams = createSearchParamsCache({
-  spreadsheetId: parseAsString.withDefault(""),
-  sheetName: parseAsString.withDefault(""),
+  spreadsheetId: parseAsString,
+  sheetName: parseAsString,
 })
 
 export type GetWorksheetSchema = Awaited<
