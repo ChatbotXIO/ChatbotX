@@ -3,7 +3,11 @@ import { z } from "zod"
 export type ContactEntity = {
   sourceId: string
   phoneNumber?: string
-  name?: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  avatar?: string
+  gender?: string
 }
 
 export type ConversationEntity = {
@@ -25,8 +29,15 @@ export type OutgoingMessageEntity = {
   attachments?: AttachmentEntity[]
 }
 
+const MessageType = {
+  INCOMING: "INCOMING",
+  OUTGOING: "OUTGOING",
+} as const
+export type MessageType = (typeof MessageType)[keyof typeof MessageType]
+
 export type MessageEntity = {
   sourceId: string
+  messageType: MessageType
   contentType: ContentType
   content?: string
   contentAttributes?: MessageLocationEntity | unknown

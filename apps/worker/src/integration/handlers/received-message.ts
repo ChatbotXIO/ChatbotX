@@ -1,54 +1,45 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import {
-  type ChatbotModel,
   type ContentType,
   type ConversationModel,
   Gender,
+  InboxType,
   type MessageModel,
-  MessageType,
   SenderType,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
-import type {
-  MessengerAuthValue,
-  MessengerWebhookEvent,
-} from "@aha.chat/integration-messenger"
-import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
-import {
-  integration as integrationWhatsapp,
-  type OnMessageArgs,
-  type WhatsappAuthValue,
-} from "@aha.chat/integration-whatsapp"
+import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
+import type { OnMessageArgs } from "@aha.chat/integration-whatsapp"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
 import type {
   AttachmentEntity,
+  AuthValue,
+  Context,
   ConversationEntity,
   MessageEntity,
 } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
+import { allIntegrations } from "../../shared/integrations"
 
 const getDBIntegration = async (
   integrationName: string,
   payload: OnMessageArgs | MessengerWebhookEvent,
 ) => {
   switch (integrationName) {
-    case "whatsapp":
+    case InboxType.WHATSAPP:
       return await prisma.integrationWhatsapp.findFirstOrThrow({
         where: {
-          auth: {
-            path: ["metadata", "phoneNumber", "id"],
-            equals: (payload as OnMessageArgs).phoneID,
-          },
+          phoneNumberId: (payload as OnMessageArgs).phoneID,
         },
         include: {
           chatbot: true,
         },
       })
-    case "messenger":
+    case InboxType.MESSENGER:
       return await prisma.integrationMessenger.findFirstOrThrow({
         where: {
           pageId: (payload as MessengerWebhookEvent).entry[0].id,
@@ -62,62 +53,26 @@ const getDBIntegration = async (
   }
 }
 
-const getReceiveMessageTemplate = async (
-  integrationName: string,
-  {
-    chatbot,
-    auth,
-    payload,
-  }: {
-    chatbot: ChatbotModel
-    auth: Prisma.JsonValue
-    payload: OnMessageArgs | MessengerWebhookEvent
-  },
-): Promise<{
-  message: MessageEntity
-  conversation: ConversationEntity
-  postbackAction?: { flowVersionId: string; buttonId: string } | null
-}> => {
-  switch (integrationName) {
-    case "whatsapp": {
-      return await integrationWhatsapp.runAction("receiveMessage", {
-        ctx: {
-          chatbot,
-          auth: auth as WhatsappAuthValue,
-          uploader,
-        },
-        data: payload as OnMessageArgs,
-      })
-    }
-    case "messenger":
-      return await integrationMessenger.runAction("receiveMessage", {
-        ctx: {
-          chatbot,
-          auth: auth as MessengerAuthValue,
-          uploader,
-        },
-        data: payload as MessengerWebhookEvent,
-      })
-    default:
-      throw new Error(`Unsupported integration: ${integrationName}`)
-  }
-}
-
-const getMessageType = (
+const parseReceivedMessage = async (
+  // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+  ctx: Context<any>,
   integrationName: string,
   payload: OnMessageArgs | MessengerWebhookEvent,
-): MessageType => {
-  switch (integrationName) {
-    case "whatsapp":
-      return MessageType.INCOMING
-    case "messenger":
-      return (payload as MessengerWebhookEvent).entry[0].messaging[0].message
-        ?.is_echo
-        ? MessageType.OUTGOING
-        : MessageType.INCOMING
-    default:
-      return MessageType.INCOMING
-  }
+): Promise<
+  | {
+      message: MessageEntity
+      conversation: ConversationEntity
+      postbackAction?: { flowVersionId: string; buttonId: string } | null
+    }
+  | undefined
+> => {
+  return await allIntegrations[
+    integrationName as keyof typeof allIntegrations
+  ]?.actions.receiveMessage({
+    ctx,
+    // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+    data: payload as any,
+  })
 }
 
 export const receiveMessage = async ({
@@ -130,36 +85,65 @@ export const receiveMessage = async ({
   message: MessageModel
   conversation: ConversationModel
 }> => {
-  const dbIntegration = await getDBIntegration(integrationName, payload)
-  const { chatbot, chatbotId, inboxId, auth } = dbIntegration
-  const { message, conversation, postbackAction } =
-    await getReceiveMessageTemplate(integrationName, {
-      chatbot,
-      auth,
-      payload,
-    })
-  const messageType = getMessageType(integrationName, payload)
+  const intName = integrationName.toUpperCase()
 
+  if (!Object.hasOwn(allIntegrations, intName)) {
+    throw new Error(`Unsupported integration: ${intName}`)
+  }
+
+  const dbIntegration = await getDBIntegration(intName, payload)
+  const { chatbot, chatbotId, inboxId, auth } = dbIntegration
+  const ctx = {
+    chatbot,
+    auth: auth as AuthValue,
+    uploader,
+  }
+  const parsedMessage = await parseReceivedMessage(ctx, intName, payload)
+  if (!parsedMessage) {
+    throw new Error("Unable to parse received message")
+  }
+
+  const { message, conversation, postbackAction } = parsedMessage
   const result = await prisma.$transaction(async (tx) => {
-    const newContact = await tx.contact.upsert({
+    let newContact = await tx.contact.findUnique({
       where: {
         chatbotId_sourceId: {
           chatbotId,
           sourceId: conversation.contact.sourceId,
         },
       },
-      create: {
-        chatbotId,
-        sourceId: conversation.contact.sourceId,
-        phoneNumber: conversation.contact.phoneNumber,
-        firstName: conversation.contact.name,
-        gender: Gender.UNKNOWN,
-        source: integrationName,
-      },
-      update: {
-        updatedAt: new Date(),
-      },
     })
+
+    if (!newContact) {
+      if (canGetUserProfileIfNeeded(intName)) {
+        const integration = allIntegrations[intName]
+        if (integration && "getUserProfile" in integration.actions) {
+          const userProfile = await integration.actions.getUserProfile({
+            // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+            ctx: ctx as Context<any>,
+            psid: conversation.contact.sourceId,
+          })
+          conversation.contact = {
+            ...conversation.contact,
+            ...userProfile,
+          }
+        }
+      }
+
+      newContact = await tx.contact.create({
+        data: {
+          chatbotId,
+          sourceId: conversation.contact.sourceId,
+          phoneNumber: conversation.contact.phoneNumber,
+          email: conversation.contact.email,
+          firstName: conversation.contact.firstName,
+          lastName: conversation.contact.lastName,
+          gender: (conversation.contact.gender as Gender) || Gender.UNKNOWN,
+          source: integrationName,
+          avatar: conversation.contact.avatar,
+        },
+      })
+    }
 
     const newConversation = await tx.conversation.upsert({
       where: {
@@ -191,7 +175,7 @@ export const receiveMessage = async ({
         senderType: SenderType.CONTACT,
         chatbotId,
         senderId: newContact.id,
-        messageType,
+        messageType: message.messageType,
         content: message.content,
         contentType: message.contentType as ContentType,
         contentAttributes: message.contentAttributes as Prisma.InputJsonValue,
@@ -237,4 +221,8 @@ export const receiveMessage = async ({
   }
 
   return result
+}
+
+const canGetUserProfileIfNeeded = (integrationName: string) => {
+  return integrationName === InboxType.MESSENGER
 }

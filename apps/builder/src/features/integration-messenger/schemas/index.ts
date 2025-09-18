@@ -8,10 +8,12 @@ export const selectPageRequest = z.object({
 export type SelectPageRequest = z.infer<typeof selectPageRequest>
 
 export const validateOrganizationSettingSchema = z.object({
-  messengerClientId: z.string(),
-  messengerClientSecret: z.string(),
-  messengerVersion: z.string(),
-  messengerVerifyToken: z.string(),
+  messenger: z.object({
+    clientId: z.string().min(1),
+    clientSecret: z.string().min(1),
+    version: z.string().min(1),
+    verifyToken: z.string().min(1),
+  }),
 })
 export type ValidateOrganizationSetting = z.infer<
   typeof validateOrganizationSettingSchema

@@ -6,7 +6,7 @@ export function getClient(props: GoogleSheetsConfig | GoogleSheetsAuthValue) {
   const client = new OAuth2Client(
     props.clientId,
     props.clientSecret,
-    props.redirectUri,
+    props.redirectUrl,
   )
 
   if ("tokens" in props) {

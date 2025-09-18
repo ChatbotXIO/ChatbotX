@@ -1,4 +1,3 @@
-export * from "./client"
 export * from "./integration"
 export type {
   MessengerAuthValue,

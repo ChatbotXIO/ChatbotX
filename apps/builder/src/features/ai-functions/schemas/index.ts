@@ -16,6 +16,7 @@ export const createAIFunctionRequest = z.object({
   dataCollect: z.array(
     z.object({
       from: z.string().trim().min(1),
+      description: z.string().trim().nullish(),
       to: z.string().trim().min(1),
     }),
   ),

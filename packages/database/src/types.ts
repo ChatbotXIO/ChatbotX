@@ -1,3 +1,5 @@
+import z from "zod"
+
 export * from "./generated/prisma/enums"
 export * from "./generated/prisma/models"
 
@@ -36,17 +38,29 @@ export type AIMcpServerAuthType = "NONE" | "TOKEN" | "HEADERS"
 
 export type AIMessageRole = "user" | "assistant" | "system"
 
-export type OrganizationSettings = {
-  whatsappClientId?: string
-  whatsappClientSecret?: string
-  whatsappVerifyToken?: string
-
-  googleClientId?: string
-  googleClientSecret?: string
-  googleVerifyToken?: string
-
-  messengerClientId?: string
-  messengerClientSecret?: string
-  messengerVersion?: string
-  messengerVerifyToken?: string
-}
+export const organizationSettingsSchema = z.object({
+  whatsapp: z
+    .object({
+      clientId: z.string(),
+      clientSecret: z.string(),
+      verifyToken: z.string(),
+      version: z.string(),
+    })
+    .optional(),
+  googleSheets: z
+    .object({
+      clientId: z.string(),
+      clientSecret: z.string(),
+      verifyToken: z.string(),
+    })
+    .optional(),
+  messenger: z
+    .object({
+      clientId: z.string(),
+      clientSecret: z.string(),
+      verifyToken: z.string(),
+      version: z.string(),
+    })
+    .optional(),
+})
+export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>

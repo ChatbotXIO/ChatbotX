@@ -18,6 +18,9 @@ export function ChatRealtime() {
   usePartySocket({
     host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
     room: chatbotId,
+    protocol: env.NEXT_PUBLIC_PARTYSOCKET_URL.startsWith("https")
+      ? "wss"
+      : "ws",
     party: "chatbots",
 
     query: async () => {

@@ -4,6 +4,7 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@aha.chat/sdk"
+import { getUserProfile } from "./apis/user"
 import { webhookHandler } from "./handlers/webhook"
 import { parseIncomingMessage } from "./incomming-message"
 import { sendOutgoingMessage } from "./outgoing-message"
@@ -25,6 +26,9 @@ const config: IntegrationDefinition<
     },
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
+    },
+    getUserProfile: async ({ ctx, psid }) => {
+      return await getUserProfile({ ctx, psid })
     },
   },
   handleRequest: async (props) => {

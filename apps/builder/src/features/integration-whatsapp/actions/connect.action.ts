@@ -47,7 +47,7 @@ export const connectWhatsappAction = authActionClient
       const auth: WhatsappAuthValue = {
         clientId: setting.whatsappClientId,
         clientSecret: setting.whatsappClientSecret,
-        redirectUri: "",
+        redirectUrl: "",
         authType: AuthType.OAUTH2,
         tokens: {
           accessToken: parsedInput.accessToken,
@@ -77,11 +77,13 @@ export const connectWhatsappAction = authActionClient
             data: {
               chatbotId,
               inboxType: IntegrationType.WHATSAPP,
+              sourceId: whatsappPhoneNumber.id,
               integrationWhatsapp: {
                 create: {
                   chatbotId,
                   auth: auth as Prisma.InputJsonValue,
                   phoneNumber: whatsappPhoneNumber.display_phone_number,
+                  phoneNumberId: whatsappPhoneNumber.id,
                 },
               },
             },

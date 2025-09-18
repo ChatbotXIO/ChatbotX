@@ -65,19 +65,22 @@ export function FacebookPages({
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField name="accessToken" type="hidden" />
+        <div className="hidden">
+          <InputField name="accessToken" type="hidden" />
+          <InputField name="pageName" type="hidden" />
+        </div>
 
-        <InputField name="pageName" type="hidden" />
-
-        <RadioGroupField
-          label={t("messenger.selectFacebookPage")}
-          name="pageId"
-          options={pages.map((page) => ({
-            value: page.id,
-            label: page.name,
-          }))}
-          required
-        />
+        <div className="mt-2">
+          <RadioGroupField
+            label={t("messenger.selectFacebookPage")}
+            name="pageId"
+            options={pages.map((page) => ({
+              value: page.id,
+              label: page.name,
+            }))}
+            required
+          />
+        </div>
 
         <Button
           disabled={!form.formState.isValid || form.formState.isSubmitting}

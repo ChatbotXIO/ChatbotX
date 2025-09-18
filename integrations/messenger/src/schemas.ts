@@ -1,4 +1,5 @@
 import type {
+  ContactEntity,
   Context,
   ConversationEntity,
   Handler,
@@ -9,8 +10,10 @@ import type {
 } from "@aha.chat/sdk"
 import { z } from "zod"
 
+export const MESSENGER_MESSAGE_METADATA = "SENT_FROM_AHACHATAI"
+
 export type MessengerConfig = Oauth2Config & {
-  webhookVerifyToken: string
+  verifyToken?: string
   version: string
   stateParams: {
     chatbotId: string
@@ -19,6 +22,7 @@ export type MessengerConfig = Oauth2Config & {
 
 export type MessengerAuthValue = Oauth2AuthValue & {
   metadata: {
+    pageId: string
     pageName: string
     version: string
   }
@@ -37,6 +41,10 @@ export type MessengerActions = {
     }
   >
   sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
+  getUserProfile: (props: {
+    ctx: Context<MessengerAuthValue>
+    psid: string
+  }) => Promise<ContactEntity>
 }
 
 export const messengerAttachmentSchema = z.object({
@@ -52,6 +60,7 @@ export const messengerMessageSchema = z.object({
   text: z.string().optional(),
   is_echo: z.boolean().optional(),
   attachments: z.array(messengerAttachmentSchema).optional(),
+  metadata: z.string().optional(),
 })
 export type MessengerMessage = z.infer<typeof messengerMessageSchema>
 
@@ -316,8 +325,8 @@ export const processMessageQueueDataSchema = z.object({
   config: z.object({
     clientId: z.string(),
     clientSecret: z.string(),
-    pageAccessToken: z.string(),
-    webhookVerifyToken: z.string(),
+    accessToken: z.string(),
+    verifyToken: z.string(),
     version: z.string(),
   }),
 })
@@ -333,8 +342,8 @@ export const processDeliveryQueueDataSchema = z.object({
   config: z.object({
     clientId: z.string(),
     clientSecret: z.string(),
-    pageAccessToken: z.string(),
-    webhookVerifyToken: z.string(),
+    accessToken: z.string(),
+    verifyToken: z.string(),
     version: z.string(),
   }),
 })
@@ -349,8 +358,8 @@ export const processReadQueueDataSchema = z.object({
   config: z.object({
     clientId: z.string(),
     clientSecret: z.string(),
-    pageAccessToken: z.string(),
-    webhookVerifyToken: z.string(),
+    accessToken: z.string(),
+    verifyToken: z.string(),
     version: z.string(),
   }),
 })
@@ -365,8 +374,8 @@ export const processPostbackQueueDataSchema = z.object({
   config: z.object({
     clientId: z.string(),
     clientSecret: z.string(),
-    pageAccessToken: z.string(),
-    webhookVerifyToken: z.string(),
+    accessToken: z.string(),
+    verifyToken: z.string(),
     version: z.string(),
   }),
 })
@@ -409,6 +418,6 @@ export type MessengerIntegrationResponse = z.infer<
 export const selectPageRequestSchema = z.object({
   pageId: z.string().min(1, "Please select a Facebook page"),
   pageName: z.string().min(1, "Page name is required"),
-  pageAccessToken: z.string().min(1, "Page access token is required"),
+  accessToken: z.string().min(1, "Page access token is required"),
 })
 export type SelectPageRequest = z.infer<typeof selectPageRequestSchema>

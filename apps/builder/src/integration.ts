@@ -24,7 +24,7 @@ export const integrations = {
       return {
         clientId: process.env.AUTH_GOOGLE_ID ?? "",
         clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-        redirectUri: `${process.env.BASE_URL}/integrations/google-sheets/callback`,
+        redirectUrl: `${process.env.BASE_URL}/integrations/google-sheets/callback`,
         stateParams,
       }
     },

@@ -1,10 +1,11 @@
 import { HandleRequestType } from "@aha.chat/sdk"
 import { notFound } from "next/navigation"
+import type { NextRequest } from "next/server"
 import { handleCallback } from "./callback"
 import { handleWebhook } from "./webhook"
 
 const handleRequest = async (
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ integration: string[] }> },
 ) => {
   const allParams = await params

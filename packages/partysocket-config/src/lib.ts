@@ -1,5 +1,6 @@
 import ky from "ky"
 import { keys } from "./keys"
+import { logger } from "./logger"
 import type { RealtimeEventData } from "./schemas"
 
 const env = keys()
@@ -8,28 +9,38 @@ export async function broadcastToChatbotParty(
   chatbotId: string,
   json: RealtimeEventData,
 ) {
-  return await ky.post(
-    `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/chatbots/${chatbotId}`,
-    {
-      headers: {
-        "X-API-KEY": env.PARTYSOCKET_API_KEY,
+  try {
+    return await ky.post(
+      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/chatbots/${chatbotId}`,
+      {
+        headers: {
+          "X-API-KEY": env.PARTYSOCKET_API_KEY,
+        },
+        json,
       },
-      json,
-    },
-  )
+    )
+  } catch (error) {
+    logger.error("Failed to broadcast to chatbot party", error)
+    return null
+  }
 }
 
 export async function broadcastToGuestParty(
   guestConversationId: string,
   json: RealtimeEventData,
 ) {
-  return await ky.post(
-    `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/guests/${guestConversationId}`,
-    {
-      headers: {
-        "X-API-KEY": env.PARTYSOCKET_API_KEY,
+  try {
+    return await ky.post(
+      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/guests/${guestConversationId}`,
+      {
+        headers: {
+          "X-API-KEY": env.PARTYSOCKET_API_KEY,
+        },
+        json,
       },
-      json,
-    },
-  )
+    )
+  } catch (error) {
+    logger.error("Failed to broadcast to guest party", error)
+    return null
+  }
 }

@@ -17,8 +17,7 @@ import type {
 import type { ListFlowsResponse, WhatsappPhoneNumber } from "./types"
 
 export type WhatsappConfig = BaseConfig & {
-  appSecret: string
-  webhookVerifyToken: string
+  verifyToken?: string
 }
 
 export type WhatsappAuthValue = Oauth2AuthValue & {

@@ -34,6 +34,7 @@ export const parseIncomingMessage = async (
 ) => {
   const message: MessageEntity = {
     sourceId: props.message.id,
+    messageType: "INCOMING",
     contentType: ContentType.TEXT,
   }
   const conversation: ConversationEntity = {
@@ -43,7 +44,7 @@ export const parseIncomingMessage = async (
     },
     contact: {
       sourceId: props.from,
-      name: props.name,
+      firstName: props.name,
     },
   }
   let postbackAction: { flowVersionId: string; buttonId: string } | null = null

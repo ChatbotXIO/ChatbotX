@@ -16,7 +16,6 @@ export const prisma =
     //   ? {
     //       $allModels: {
     //         async $allOperations({ operation, model, args, query }) {
-    //           console.log("debugggg", arguments)
     //           const start = performance.now()
     //           const result = await query(args)
     //           const end = performance.now()
@@ -44,6 +43,14 @@ export const prisma =
             }
 
             return contact.phoneNumber || "-"
+          },
+        },
+        avatarUrl: {
+          needs: { avatar: true },
+          compute(contact) {
+            return contact.avatar
+              ? new URL(contact.avatar, env.NEXT_PUBLIC_ASSET_URL).toString()
+              : null
           },
         },
       },

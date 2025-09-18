@@ -5,6 +5,7 @@
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
     "dev": "concurrently pnpm:worker:*",
+    "https": "pnpm dev",
     "build": "tsup",
     "test:domains": "tsx scripts/test-domains.ts"
   },

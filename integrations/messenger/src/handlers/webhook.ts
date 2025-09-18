@@ -3,41 +3,33 @@ import {
   type HandleRequestProps,
   SdkException,
 } from "@aha.chat/sdk"
-import type { MessengerConfig, MessengerWebhookEvent } from "../schemas"
+import crypto from "crypto"
+import z from "zod"
+import {
+  MESSENGER_MESSAGE_METADATA,
+  type MessengerConfig,
+  type MessengerWebhookEvent,
+} from "../schemas"
 
-const verifyWebhookSignature = async (
+const verifyWebhookSignature = (
   payload: string,
   signature: string,
-  secret: string,
-): Promise<boolean> => {
+  clientSecret: string,
+): boolean => {
   try {
-    // Remove 'sha256=' prefix from signature
-    const cleanSignature = signature.replace("sha256=", "")
+    const elements = signature.split("=")
+    if (elements.length !== 2) {
+      return false
+    }
 
-    // Create HMAC using Web Crypto API
-    const encoder = new TextEncoder()
-    const keyData = encoder.encode(secret)
-    const payloadData = encoder.encode(payload)
+    const signatureHash = elements[1]
 
-    const cryptoKey = await crypto.subtle.importKey(
-      "raw",
-      keyData,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
-    )
+    const expectedHash = crypto
+      .createHmac("sha256", clientSecret)
+      .update(payload)
+      .digest("hex")
 
-    const signatureBuffer = await crypto.subtle.sign(
-      "HMAC",
-      cryptoKey,
-      payloadData,
-    )
-    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("")
-
-    // Timing-safe comparison
-    return cleanSignature === expectedSignature
+    return signatureHash === expectedHash
   } catch (_error) {
     return false
   }
@@ -59,7 +51,7 @@ const handleWebhookEvent = async (
       throw new SdkException("Missing webhook signature")
     }
 
-    const isValidSignature = await verifyWebhookSignature(
+    const isValidSignature = verifyWebhookSignature(
       body,
       signature,
       config.clientSecret,
@@ -74,6 +66,14 @@ const handleWebhookEvent = async (
       throw new SdkException(
         `Unsupported webhook object type: ${webhookData.object}`,
       )
+    }
+
+    // Skip if this messsage is from our own bot
+    if (
+      webhookData.entry[0].messaging[0].message?.metadata ===
+      MESSENGER_MESSAGE_METADATA
+    ) {
+      return
     }
 
     await queue?.add("RECEIVE_MESSAGE", {
@@ -97,16 +97,20 @@ const handleSubscriptionEvent = ({
   config,
   req,
 }: HandleRequestProps<MessengerConfig>): string => {
-  const url = new URL(req.url)
-  const mode = url.searchParams.get("hub.mode")
-  const token = url.searchParams.get("hub.verify_token")
-  const challenge = url.searchParams.get("hub.challenge")
+  const validation = z.object({
+    "hub.mode": z.literal("subscribe"),
+    "hub.verify_token": z.literal(config.verifyToken),
+    "hub.challenge": z.string().min(1),
+  })
 
-  if (mode === "subscribe" && token === config.webhookVerifyToken) {
-    return challenge || ""
+  const searchParams = new URL(req.url).searchParams
+  const { data } = validation.safeParse(Object.fromEntries(searchParams))
+
+  if (!data) {
+    throw new SdkException("Invalid webhook verification parameters")
   }
 
-  throw new SdkException("Invalid webhook verification parameters")
+  return data["hub.challenge"]
 }
 
 export const webhookHandler = async ({
@@ -120,8 +124,9 @@ export const webhookHandler = async ({
     }
 
     if (req.method === "POST") {
-      const res = await handleWebhookEvent(req, config, queue as ContextQueue)
-      return JSON.stringify(res)
+      await handleWebhookEvent(req, config, queue as ContextQueue)
+
+      return "ok"
     }
 
     throw new SdkException(`Unsupported HTTP method: ${req.method}`)

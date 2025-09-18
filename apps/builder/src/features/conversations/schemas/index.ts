@@ -10,6 +10,7 @@ export type ConversationResource = ConversationModel & {
   messages?: MessageResource[]
   contact?: ContactResource & {
     fullName: string
+    avatarUrl: string | null
   }
   inbox?: InboxResource
   assignedUser?: UserResource | null

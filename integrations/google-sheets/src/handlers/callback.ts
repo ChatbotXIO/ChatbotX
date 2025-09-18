@@ -18,7 +18,7 @@ export const callbackHandler = async (
     authType: AuthType.OAUTH2,
     clientId: props.config.clientId,
     clientSecret: props.config.clientSecret,
-    redirectUri: props.config.redirectUri,
+    redirectUrl: props.config.redirectUrl,
     tokens: {
       accessToken: tokens.tokens.access_token || "",
       expiresAt: new Date(tokens.tokens.expiry_date ?? "").toISOString(),
