@@ -752,15 +752,20 @@ model IntegrationChatWidget {
 }
 
 model Spreadsheet {
-  id            String   @id @default(cuid(2))
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  chatbotId     String
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   name          String
   url           String
   spreadsheetId String
 
-  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
+  @@index([spreadsheetId])
+  @@index([chatbotId, spreadsheetId])
 }
 
 model Flow {

@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from "react"
+import type { ReactNode } from "react"
 import {
   type FieldPath,
   type FieldValues,
@@ -15,7 +15,7 @@ import {
 
 type FormFieldWrapperProps<T extends FieldValues> = {
   name: FieldPath<T>
-  label?: ReactElement | string
+  label?: string
   placeholder?: string
   isRequired?: boolean
   description?: string
