@@ -1,12 +1,6 @@
-declare const FB: facebook.FacebookStatic // Declare FB if not already globally available
+import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
 
-export type FacebookPage = {
-  id: string
-  name: string
-  access_token: string
-  category: string
-  tasks: number
-}
+declare const FB: facebook.FacebookStatic // Declare FB if not already globally available
 
 export const getFacebookPages = (): Promise<FacebookPage[]> => {
   return new Promise((resolve, reject) => {

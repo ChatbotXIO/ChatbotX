@@ -287,23 +287,6 @@ export const facebookPageSchema = z.object({
 })
 export type FacebookPage = z.infer<typeof facebookPageSchema>
 
-export const facebookPagesResponseSchema = z.object({
-  data: z.array(facebookPageSchema),
-  paging: z
-    .object({
-      cursors: z
-        .object({
-          before: z.string(),
-          after: z.string(),
-        })
-        .optional(),
-      next: z.string().optional(),
-      previous: z.string().optional(),
-    })
-    .optional(),
-})
-export type FacebookPagesResponse = z.infer<typeof facebookPagesResponseSchema>
-
 // Webhook verification schemas
 export const webhookVerificationRequestSchema = z.object({
   "hub.mode": z.literal("subscribe"),

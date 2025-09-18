@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "dotenv -e ../../.env -- partykit dev",
-    "https": "dotenv -e ../../.env -- partykit dev --https --https-key-path certificates/localhost+2-key.pem --https-cert-path certificates/localhost+2.pem"
+    "https": "dotenv -e ../../.env -- partykit dev --https --https-key-path certificates/partysocket.pem --https-cert-path certificates/partysocket.pem"
   },
   "keywords": [],
   "author": "",

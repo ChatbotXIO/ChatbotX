@@ -4,12 +4,13 @@ import type {
   OrganizationModel,
   OrganizationSettings,
 } from "@aha.chat/database/types"
+import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
 import FacebookLogin from "@greatsumini/react-facebook-login"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import { type FacebookPage, getFacebookPages } from "../libs/facebook"
+import { getFacebookPages } from "../libs/facebook"
 import { FacebookPages } from "./messenger-pages"
 
 const MESSENGER_SCOPE = [
