@@ -1,5 +1,6 @@
 import { IntegrationType, prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
+import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
@@ -48,6 +49,41 @@ export const handleCallback = async (integrationName: string, req: Request) => {
   let additionalIntegrationCreationData = {}
 
   switch (integrationName) {
+    case IntegrationType.ZALO: {
+      authResult = (await integrations.ZALO.integration.handleRequest?.({
+        config: {
+          clientId: organizationSettings.zaloClientId as string,
+          clientSecret: organizationSettings.zaloClientSecret as string,
+          version: organizationSettings.zaloVersion as string,
+          redirectUri: new URL(
+            "/integrations/zalo/callback",
+            env.NEXT_PUBLIC_BUILDER_URL,
+          ).toString(),
+          stateParams: {
+            chatbotId: stateParams.chatbotId,
+          },
+        },
+        req,
+      })) as unknown as BaseAuthValue
+
+      await prisma.$transaction(async (tx) => {
+        await tx.inbox.create({
+          data: {
+            chatbotId: stateParams.chatbotId,
+            inboxType: IntegrationType.ZALO,
+            integrationZalo: {
+              create: {
+                chatbotId: stateParams.chatbotId,
+                oaId: (authResult as ZaloAuthValue).oaId,
+                auth: authResult,
+              },
+            },
+          },
+        })
+      })
+      return redirect(stateParams.referer)
+    }
+
     case IntegrationType.GOOGLE_SHEETS: {
       authResult = integrations.GOOGLE_SHEETS.integration.handleRequest?.({
         config: {

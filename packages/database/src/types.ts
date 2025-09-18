@@ -49,4 +49,9 @@ export type OrganizationSettings = {
   messengerClientSecret?: string
   messengerVersion?: string
   messengerVerifyToken?: string
+
+  zaloClientId?: string
+  zaloClientSecret?: string
+  zaloVersion?: string
+  zaloVerifyToken?: string
 }

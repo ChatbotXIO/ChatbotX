@@ -3,6 +3,7 @@ import type { GoogleSheetsConfig } from "@aha.chat/integration-google-sheets"
 import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
 import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
+import { integration as integrationZalo } from "@aha.chat/integration-zalo"
 
 export const integrations = {
   [IntegrationType.WHATSAPP]: {
@@ -29,6 +30,12 @@ export const integrations = {
       }
     },
     integration: integrationGoogleSheets,
+  },
+  [IntegrationType.ZALO]: {
+    getIntegrationConfig() {
+      return {}
+    },
+    integration: integrationZalo,
   },
 }
 

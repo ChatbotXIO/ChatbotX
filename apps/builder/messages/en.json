@@ -909,5 +909,9 @@
     "title": "Facebook Messenger",
     "description": "This integration lets you create Messenger bots.",
     "selectFacebookPage": "Select Facebook Page"
+  },
+  "zalo": {
+    "title": "Zalo",
+    "description": "This integration lets you create Zalo bots."
   }
 }

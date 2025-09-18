@@ -6,7 +6,7 @@
   "scripts": {
     "build": "dotenv -e .env -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123",
+    "dev": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123 --experimental-https",
     "https": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123 --experimental-https",
     "lint": "biome check .",
     "start": "next start"
@@ -18,6 +18,7 @@
     "@aha.chat/integration-google-sheets": "workspace:*",
     "@aha.chat/integration-messenger": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
+    "@aha.chat/integration-zalo": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/mail": "workspace:*",
     "@aha.chat/partysocket-config": "workspace:*",

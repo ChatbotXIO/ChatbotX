@@ -158,6 +158,7 @@ model Chatbot {
   inboxTeams               InboxTeam[]
   integrationChatWidgets   IntegrationChatWidget[]
   integrationMessengers    IntegrationMessenger[]
+  integrationZalo          IntegrationZalo[]
   integrationGoogleSheets  IntegrationGoogleSheets[]
   integrationOpenAIs       IntegrationOpenAI[]
   integrations             Integration[]
@@ -397,6 +398,7 @@ model Inbox {
   integrationWhatsapp   IntegrationWhatsapp?
   integrationChatWidget IntegrationChatWidget?
   integrationMessenger  IntegrationMessenger?
+  integrationZalo       IntegrationZalo?
   messages              Message[]
   conversations         Conversation[]
   chatbot               Chatbot                @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -705,6 +707,27 @@ model IntegrationMessenger {
   @@index([fallbackFlowId])
 }
 
+model IntegrationZalo {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auth Json
+  oaId String
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  inboxId String @unique
+  inbox   Inbox  @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  fallbackFlowId String?
+  fallbackFlow   Flow?   @relation(fields: [fallbackFlowId], references: [id])
+
+  @@index([chatbotId])
+  @@index([fallbackFlowId])
+}
+
 model WhatsappMessageTemplate {
   id                    String                   @id @default(cuid(2))
   createdAt             DateTime                 @default(now())
@@ -778,6 +801,7 @@ model Flow {
   flowRuns              FlowRun[]
   aiFunctions           AIFunction[]
   integrationMessengers IntegrationMessenger[]
+  integrationZalo       IntegrationZalo[]
 }
 
 model FlowVersion {
@@ -943,6 +967,7 @@ enum IntegrationType {
   OPENAI
   GEMINI
   WHATSAPP
+  ZALO
 }
 
 enum InboxType {
@@ -951,6 +976,7 @@ enum InboxType {
   INSTAGRAM
   MESSENGER
   WHATSAPP
+  ZALO
 }
 
 enum SenderType {

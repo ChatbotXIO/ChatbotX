@@ -56,6 +56,7 @@ export const MessageInput = () => {
       label: "Whatsapp",
     },
     OMNICHANNEL: undefined,
+    ZALO: undefined,
   }
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
