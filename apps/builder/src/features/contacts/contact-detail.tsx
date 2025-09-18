@@ -87,7 +87,8 @@ export const ContactDetail = () => {
         <Avatar className="size-24">
           <AvatarImage
             alt={contact.firstName ?? ""}
-            src={contact.avatar ?? ""}
+            className="object-cover"
+            src={contact.avatarUrl ?? ""}
           />
           <AvatarFallback>NA</AvatarFallback>
         </Avatar>

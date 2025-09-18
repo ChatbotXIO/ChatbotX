@@ -33,7 +33,7 @@ export async function sendMessageToExternal(data: ChatJobSendMessage) {
     return
   }
 
-  await intergationDetail.runAction("sendMessage", {
+  await intergationDetail.actions.sendMessage({
     ctx: {
       chatbot: inbox.chatbot,
       // biome-ignore lint/suspicious/noExplicitAny: wip

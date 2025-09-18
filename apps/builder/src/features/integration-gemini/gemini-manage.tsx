@@ -39,14 +39,14 @@ export const GeminiAIManage = (props: GeminiAIManageProps) => {
         description={t("gemini.connect.description")}
         label={t("gemini.connect.label")}
       >
-        {integrationGemini.auth ? (
+        {integrationGemini?.auth ? (
           <GeminiDisconnectDialog />
         ) : (
           <GeminiConnectDialog />
         )}
       </SettingRow>
 
-      {integrationGemini.auth && (
+      {integrationGemini?.auth && (
         <SettingRow
           description={t("gemini.aiAutoReply.description")}
           label={t("gemini.aiAutoReply.label")}

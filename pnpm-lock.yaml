@@ -423,6 +423,9 @@ importers:
       '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
+      '@aha.chat/integration-messenger':
+        specifier: workspace:*
+        version: link:../../integrations/messenger
       '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
@@ -438,6 +441,9 @@ importers:
       bullmq:
         specifier: ^5.56.1
         version: 5.56.1
+      cross-fetch:
+        specifier: ^4.1.0
+        version: 4.1.0
       dot-prop:
         specifier: ^9.0.0
         version: 9.0.0
@@ -475,6 +481,9 @@ importers:
       '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
+      '@aha.chat/integration-messenger':
+        specifier: workspace:*
+        version: link:../../integrations/messenger
       '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
@@ -552,9 +561,21 @@ importers:
 
   integrations/messenger:
     dependencies:
+      '@aha.chat/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@paralleldrive/cuid2':
+        specifier: ^2.2.2
+        version: 2.2.2
+      cross-fetch:
+        specifier: ^4.1.0
+        version: 4.1.0
+      image-size:
+        specifier: ^2.0.2
+        version: 2.0.2
       ky:
         specifier: ^1.8.1
         version: 1.8.1
@@ -813,6 +834,9 @@ importers:
 
   packages/partysocket-config:
     dependencies:
+      '@aha.chat/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@t3-oss/env-nextjs':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.8.3)(zod@3.25.71)

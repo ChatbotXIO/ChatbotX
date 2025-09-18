@@ -5,7 +5,11 @@
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
+    "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "cross-fetch": "^4.1.0",
+    "image-size": "^2.0.2",
     "ky": "^1.8.1",
     "remeda": "^2.23.3",
     "zod": "^3.25.71"
@@ -15,6 +19,8 @@
     "typescript": "5.8.3"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./apis/*": "./src/apis/*.ts",
+    "./schemas": "./src/schemas.ts"
   }
 }

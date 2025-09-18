@@ -152,6 +152,7 @@ export const createMessageAction = chatbotActionClient
               conversation: conversation as ConversationEntity,
               message: {
                 ...message,
+                messageType: MessageType.OUTGOING,
                 clientId: parsedInput.clientId,
                 sourceId: message.sourceId || "",
                 contentType: message.contentType as unknown as ContentType,

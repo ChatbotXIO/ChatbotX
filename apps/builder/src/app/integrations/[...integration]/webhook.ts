@@ -1,17 +1,15 @@
 import type { OrganizationSettings } from "@aha.chat/database/types"
-import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 import { integrationQueue } from "@aha.chat/worker-config"
-import { headers } from "next/headers"
-import { notFound } from "next/navigation"
+import type { NextRequest } from "next/server"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"
 
-export const handleWebhook = async (integrationName: string, req: Request) => {
-  const headersList = await headers()
-  const url = new URL(headersList.get("x-url") ?? "")
-
+export const handleWebhook = async (
+  integrationName: string,
+  req: NextRequest,
+) => {
   const organization = await findOrganization({
-    domain: url.hostname,
+    domain: req.nextUrl.hostname,
   })
   const organizationSettings =
     organization?.settings as unknown as OrganizationSettings
@@ -28,24 +26,40 @@ export const handleWebhook = async (integrationName: string, req: Request) => {
     )
   }
 
-  try {
-    switch (integration.name) {
-      case "whatsapp": {
-        const result = await integrationWhatsapp.handleRequest({
-          config: {
-            appSecret: organizationSettings.whatsappClientSecret,
-            webhookVerifyToken: organizationSettings.whatsappVerifyToken,
-          },
-          req,
-          queue: integrationQueue,
-        })
-        return new Response(result as BodyInit)
-      }
+  const redirectUrl = new URL(
+    `/integrations/${integration.name}/callback`,
+    req.nextUrl,
+  ).toString()
 
-      default: {
-        return notFound()
-      }
-    }
+  const settings =
+    organizationSettings[integration.name as keyof OrganizationSettings]
+
+  if (!settings) {
+    return new Response(
+      JSON.stringify({ message: "Integration is not configured" }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      },
+    )
+  }
+
+  try {
+    const result = await integration.handleRequest({
+      config: {
+        ...settings,
+        redirectUrl,
+        stateParams: {
+          chatbotId: req.nextUrl.searchParams.get("chatbotId") ?? "",
+          referer: req.nextUrl.toString(),
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+      } as any,
+      req,
+      queue: integrationQueue,
+    })
+
+    return new Response(result as BodyInit)
   } catch (e: unknown) {
     return new Response(JSON.stringify({ message: (e as Error).message }), {
       status: 400,

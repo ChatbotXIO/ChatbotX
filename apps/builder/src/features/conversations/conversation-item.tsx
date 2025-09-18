@@ -83,7 +83,8 @@ export default function ConversationItem({
       <Avatar className="h-12 w-12">
         <AvatarImage
           alt={conversation.contact?.fullName}
-          src={conversation.contact?.avatar ?? ""}
+          className="object-cover"
+          src={conversation.contact?.avatarUrl ?? ""}
         />
         <AvatarFallback className="bg-zinc-500">
           {conversation.contact?.fullName.charAt(0)}

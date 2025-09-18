@@ -18,7 +18,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
-import { disconnectMessengerAction } from "../actions/disconnect.action"
+import { disconnectMessengerAction } from "../actions/disconnect-messenger.action"
 
 export function MessengerDisconnect() {
   const t = useTranslations()

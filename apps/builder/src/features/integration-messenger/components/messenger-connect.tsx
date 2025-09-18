@@ -4,12 +4,13 @@ import type {
   OrganizationModel,
   OrganizationSettings,
 } from "@aha.chat/database/types"
+import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
 import FacebookLogin from "@greatsumini/react-facebook-login"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import { type FacebookPage, getFacebookPages } from "../libs/facebook"
+import { getFacebookPages } from "../libs/facebook"
 import { FacebookPages } from "./messenger-pages"
 
 const MESSENGER_SCOPE = [
@@ -46,8 +47,12 @@ export function MessengerConnect({ organization }: MessengerConnectProps) {
       {pages.length === 0 && (
         <div className="flex">
           <FacebookLogin
-            appId={settings.messengerClientId as string}
+            appId={settings.messenger?.clientId as string}
             className="inline-flex h-8 items-center justify-start gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
+            initParams={{
+              // biome-ignore lint/suspicious/noExplicitAny: skip version check
+              version: settings.messenger?.version as any,
+            }}
             onFail={(error) => {
               // biome-ignore lint/suspicious/noConsole: debug
               console.log("error", error)

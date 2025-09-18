@@ -52,10 +52,10 @@ export const handleCallback = async (integrationName: string, req: Request) => {
     case IntegrationType.ZALO: {
       authResult = (await integrations.ZALO.integration.handleRequest?.({
         config: {
-          clientId: organizationSettings.zaloClientId as string,
-          clientSecret: organizationSettings.zaloClientSecret as string,
-          version: organizationSettings.zaloVersion as string,
-          redirectUri: new URL(
+          clientId: organizationSettings.zalo?.clientId as string,
+          clientSecret: organizationSettings.zalo?.clientSecret as string,
+          version: organizationSettings.zalo?.version as string,
+          redirectUrl: new URL(
             "/integrations/zalo/callback",
             env.NEXT_PUBLIC_BUILDER_URL,
           ).toString(),
@@ -87,9 +87,10 @@ export const handleCallback = async (integrationName: string, req: Request) => {
     case IntegrationType.GOOGLE_SHEETS: {
       authResult = integrations.GOOGLE_SHEETS.integration.handleRequest?.({
         config: {
-          clientId: organizationSettings.googleClientId as string,
-          clientSecret: organizationSettings.googleClientSecret as string,
-          redirectUri: new URL(
+          clientId: organizationSettings.googleSheets?.clientId as string,
+          clientSecret: organizationSettings.googleSheets
+            ?.clientSecret as string,
+          redirectUrl: new URL(
             "/integrations/google-sheets/callback",
             env.NEXT_PUBLIC_BUILDER_URL,
           ).toString(),

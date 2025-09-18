@@ -6,6 +6,10 @@ import type {
   OrganizationSettings,
 } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
+import {
+  exchangeLongLivedToken,
+  subscribePageToAppWebhook,
+} from "@aha.chat/integration-messenger/apis/page"
 import { AuthType } from "@aha.chat/sdk"
 import { revalidateTag } from "next/cache"
 import type { Prisma } from "node_modules/@aha.chat/database/src/generated/prisma/client"
@@ -13,7 +17,6 @@ import type { ChatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { findOrganization } from "@/features/organization/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { exchangeLongLivedToken } from "../libs/facebook"
 import {
   type SelectPageRequest,
   selectPageRequest,
@@ -47,37 +50,57 @@ export const selectPageAction = chatbotActionClient
           throw new Error("Organization settings are not valid")
         }
 
-        const longLivedToken = await exchangeLongLivedToken(
-          organizationSettings,
-          parsedInput.accessToken,
-        )
-
         await prisma.$transaction(async (tx) => {
+          const longLivedToken = await exchangeLongLivedToken(
+            setting.messenger,
+            parsedInput.accessToken,
+          )
+
+          await subscribePageToAppWebhook({
+            pageId: parsedInput.pageId,
+            accessToken: longLivedToken,
+            version: setting.messenger.version,
+          })
+
           const auth: MessengerAuthValue = {
             authType: AuthType.OAUTH2,
-            clientId: setting.messengerClientId,
-            clientSecret: setting.messengerClientSecret,
-            redirectUri: "",
+            clientId: setting.messenger.clientId,
+            clientSecret: setting.messenger.clientSecret,
+            redirectUrl: "",
             tokens: {
               accessToken: longLivedToken,
             },
             metadata: {
+              pageId: parsedInput.pageId,
               pageName: parsedInput.pageName,
-              version: setting.messengerVersion,
+              version: setting.messenger.version,
             },
           }
 
-          await tx.inbox.create({
-            data: {
+          const inbox = await tx.inbox.upsert({
+            where: {
+              chatbotId_inboxType_sourceId: {
+                chatbotId,
+                inboxType: IntegrationType.MESSENGER,
+                sourceId: parsedInput.pageId,
+              },
+            },
+            update: {
+              updatedAt: new Date(),
+            },
+            create: {
               chatbotId,
               inboxType: IntegrationType.MESSENGER,
-              integrationMessenger: {
-                create: {
-                  chatbotId,
-                  pageId: parsedInput.pageId,
-                  auth: auth as Prisma.InputJsonValue,
-                },
-              },
+              sourceId: parsedInput.pageId,
+            },
+          })
+
+          await tx.integrationMessenger.create({
+            data: {
+              chatbotId,
+              inboxId: inbox.id,
+              pageId: parsedInput.pageId,
+              auth: auth as Prisma.InputJsonValue,
             },
           })
         })

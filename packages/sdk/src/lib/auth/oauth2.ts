@@ -3,7 +3,7 @@ import type { AuthType, BaseAuthValue } from "./base"
 export type Oauth2Config = {
   clientId: string
   clientSecret: string
-  redirectUri: string
+  redirectUrl: string
   stateParams?: Record<string, unknown>
 }
 
@@ -18,8 +18,8 @@ export type Oauth2AuthValue = BaseAuthValue & {
   authType: typeof AuthType.OAUTH2
   clientId: string
   clientSecret: string
-  redirectUri: string
-  webhookVerifyToken?: string
+  redirectUrl: string
+  verifyToken?: string
   tokens: TokenAuthValue
   metadata?: Record<string, unknown>
 }

@@ -5,8 +5,8 @@ export const findIntegrationGemini = async ({
   chatbotId,
 }: {
   chatbotId: string
-}): Promise<IntegrationGeminiResource> => {
-  return await prisma.integrationGemini.findFirstOrThrow({
+}): Promise<IntegrationGeminiResource | null> => {
+  return await prisma.integrationGemini.findFirst({
     where: {
       chatbotId,
     },

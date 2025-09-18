@@ -111,9 +111,9 @@ main()
   .then(() => {
     return true
   })
-  .catch((_error) => {
+  .catch((error) => {
     // biome-ignore lint/suspicious/noConsole: wip
-    console.log(_error)
+    console.log(error)
   })
   .finally(async () => {
     await prisma.$disconnect()

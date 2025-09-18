@@ -1,5 +1,6 @@
 "use client"
 
+import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -12,7 +13,6 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { selectPageAction } from "../actions/select-page.action"
-import type { FacebookPage } from "../libs/facebook"
 import { selectPageRequest } from "../schemas"
 
 export function FacebookPages({
@@ -65,19 +65,22 @@ export function FacebookPages({
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField name="accessToken" type="hidden" />
+        <div className="hidden">
+          <InputField name="accessToken" type="hidden" />
+          <InputField name="pageName" type="hidden" />
+        </div>
 
-        <InputField name="pageName" type="hidden" />
-
-        <RadioGroupField
-          label={t("messenger.selectFacebookPage")}
-          name="pageId"
-          options={pages.map((page) => ({
-            value: page.id,
-            label: page.name,
-          }))}
-          required
-        />
+        <div className="mt-2">
+          <RadioGroupField
+            label={t("messenger.selectFacebookPage")}
+            name="pageId"
+            options={pages.map((page) => ({
+              value: page.id,
+              label: page.name,
+            }))}
+            required
+          />
+        </div>
 
         <Button
           disabled={!form.formState.isValid || form.formState.isSubmitting}

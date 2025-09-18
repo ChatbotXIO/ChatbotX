@@ -5,6 +5,7 @@
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
     "dev": "concurrently pnpm:worker:*",
+    "https": "pnpm dev",
     "build": "tsup",
     "test:domains": "tsx scripts/test-domains.ts"
   },
@@ -15,6 +16,7 @@
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
+    "@aha.chat/integration-messenger": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/partysocket-config": "workspace:*",

@@ -1,8 +1,13 @@
 import {
+  HandleRequestType,
   Integration,
   type IntegrationDefinition,
   SdkException,
 } from "@aha.chat/sdk"
+import { getUserProfile } from "./apis/user"
+import { webhookHandler } from "./handlers/webhook"
+import { parseIncomingMessage } from "./incomming-message"
+import { sendOutgoingMessage } from "./outgoing-message"
 import type {
   MessengerActions,
   MessengerAuthValue,
@@ -15,12 +20,24 @@ const config: IntegrationDefinition<
   MessengerActions
 > = {
   name: "messenger",
-  actions: {},
-  handleRequest: (props) => {
+  actions: {
+    receiveMessage: async ({ data }) => {
+      return await parseIncomingMessage(data)
+    },
+    sendMessage: async ({ ctx, message, conversation }) => {
+      await sendOutgoingMessage(ctx, conversation, message)
+    },
+    getUserProfile: async ({ ctx, psid }) => {
+      return await getUserProfile({ ctx, psid })
+    },
+  },
+  handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
-    const method = segments.pop()
+    const action = segments.pop()
 
-    switch (method) {
+    switch (action) {
+      case HandleRequestType.WEBHOOK:
+        return await webhookHandler(props)
       default:
         throw new SdkException(
           `Handler: ${props.req.method} ${props.req.url} is not implemented`,

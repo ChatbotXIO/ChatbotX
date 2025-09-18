@@ -26,7 +26,7 @@ export const callbackHandler = async (
     authType: AuthType.OAUTH2,
     clientId: props.config.clientId,
     clientSecret: props.config.clientSecret as string,
-    redirectUri: `${process.env.NEXT_PUBLIC_BUILDER_URL}/integrations/zalo/callback`,
+    redirectUrl: `${process.env.NEXT_PUBLIC_BUILDER_URL}/integrations/zalo/callback`,
     tokens: {
       accessToken: access_token,
       refreshToken: refresh_token,

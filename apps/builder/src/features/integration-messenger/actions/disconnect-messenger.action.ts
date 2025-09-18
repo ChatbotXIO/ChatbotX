@@ -1,6 +1,8 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
+import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
 import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
@@ -22,6 +24,14 @@ export const disconnectMessengerAction = chatbotActionClient
         })
 
       await prisma.$transaction(async (tx) => {
+        // Unsubscribe from app
+        const authValue = integrationMessenger.auth as MessengerAuthValue
+        await unsubscribePageFromAppWebhook({
+          pageId: integrationMessenger.pageId,
+          accessToken: authValue.tokens.accessToken as string,
+          version: authValue.metadata.version,
+        })
+
         await tx.integrationMessenger.delete({
           where: { id: integrationMessenger.id },
         })

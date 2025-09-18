@@ -11,6 +11,7 @@ export const webhookHandler = async ({
 }: HandleRequestProps<WhatsappConfig>) => {
   const middleware = new Middleware({
     token: "",
+    appSecret: "",
     v: DEFAULT_API_VERSION,
     secure: true,
     ...config,
