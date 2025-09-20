@@ -19,6 +19,7 @@ type SelectFieldProps<T extends FieldValues> = SelectProps & {
   description?: string
   options?: { value: string; label: string }[]
   fetchOptionsUrl?: string
+  className?: string
 } & React.ComponentProps<typeof Select>
 
 function SelectClear({

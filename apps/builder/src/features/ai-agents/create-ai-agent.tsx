@@ -241,17 +241,17 @@ export function CreateAIAgentDialog({
                 <CollapsibleContent className="space-y-6">
                   <div className="mt-4" />
                   <SelectField
-                    isRequired
                     label={t("fields.geminiModel.label")}
                     name="models.0.model"
                     options={GEMINI_MODEL_OPTIONS}
+                    required
                   />
 
                   <SelectField
-                    isRequired
                     label={t("fields.openAIModel.label")}
                     name="models.1.model"
                     options={OPENAI_MODEL_OPTIONS}
+                    required
                   />
 
                   <SliderField

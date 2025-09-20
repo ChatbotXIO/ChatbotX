@@ -157,11 +157,7 @@ export function CreateAITriggerDialog({
                 </Button>
               </div>
 
-              <FlowSelect
-                isRequired={false}
-                label={t("fields.flowId.label")}
-                name="flowId"
-              />
+              <FlowSelect label={t("fields.flowId.label")} name="flowId" />
 
               <TextareaField
                 label={t("fields.finalMessage.label")}

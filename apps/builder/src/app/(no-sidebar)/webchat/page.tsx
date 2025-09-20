@@ -29,8 +29,6 @@ export default async function WebchatPage(props: WebchatPageProps) {
       chatbotId: data.chatbotId,
     },
   })
-
-  console.log("integrationWebchat", integrationWebchat)
   if (!integrationWebchat) {
     return notFound()
   }

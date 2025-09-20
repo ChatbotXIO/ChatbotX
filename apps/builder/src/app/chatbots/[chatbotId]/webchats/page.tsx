@@ -20,10 +20,8 @@ export default async function WebchatsPage(props: {
   ])
 
   return (
-    <div>
-      <Suspense>
-        <WebchatTable promises={promises} />
-      </Suspense>
-    </div>
+    <Suspense>
+      <WebchatTable promises={promises} />
+    </Suspense>
   )
 }

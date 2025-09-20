@@ -6,12 +6,12 @@ import type { FlowCollection } from "./schemas/get-flows-schema"
 type FlowSelectProps = {
   name: string
   label?: string
-  isRequired?: boolean
+  required?: boolean
   className?: string
 }
 
 export const FlowSelect = (props: FlowSelectProps) => {
-  const { name, label, isRequired = false, className } = props
+  const { name, label, required, className } = props
 
   const params = useParams<{ chatbotId: string }>()
 
@@ -25,11 +25,11 @@ export const FlowSelect = (props: FlowSelectProps) => {
   return (
     <SelectField
       className={className}
-      isRequired={isRequired}
       label={label}
       name={name}
       options={flowOptions}
       placeholder="Please select flow"
+      required={required}
     />
   )
 }

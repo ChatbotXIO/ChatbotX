@@ -33,10 +33,7 @@ export const OpenAIGenerateTextAdvancedEditor = (
         name={`${props.parentName}.resultCustomFieldId`}
       />
 
-      <AITriggerMultiSelect
-        isRequired={false}
-        name={`${props.parentName}.aiTriggerIds`}
-      />
+      <AITriggerMultiSelect name={`${props.parentName}.aiTriggerIds`} />
 
       <CheckboxGroupField
         name={`${props.parentName}.rememberConversation`}
@@ -51,7 +48,6 @@ export const OpenAIGenerateTextAdvancedEditor = (
 
       <InputNumberField
         defaultValue={250}
-        isRequired={false}
         label="Maximum number of output tokens"
         name={`${props.parentName}.maxTokens`}
       />

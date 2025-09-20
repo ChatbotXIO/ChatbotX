@@ -104,7 +104,6 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
             />
 
             <SelectField
-              isRequired
               label={t("fields.timezone.label")}
               name="timezone"
               options={[
@@ -117,6 +116,7 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
                   value: FormatTimezone.ACCOUNT,
                 },
               ]}
+              required
             />
 
             <DialogFooter>

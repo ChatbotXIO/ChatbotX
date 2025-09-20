@@ -143,7 +143,6 @@ export function CreateAutomatedResponseForm({
                   <MessageSquareMoreIcon />
                   <InputField
                     className="flex-1"
-                    isRequired={false}
                     label=""
                     name={`replies.${index}.message`}
                     placeholder="Type a message"

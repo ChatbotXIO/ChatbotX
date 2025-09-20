@@ -2,7 +2,6 @@ import { computePosition, flip, shift } from "@floating-ui/dom"
 import type { MentionNodeAttrs } from "@tiptap/extension-mention"
 import { type Editor, posToDOMRect, ReactRenderer } from "@tiptap/react"
 import type { SuggestionOptions } from "@tiptap/suggestion"
-import type { CSSProperties } from "react"
 import EmojiList, { type EmojiListProps, type EmojiListRef } from "./emoji-list"
 
 const updatePosition = (editor: Editor, element: HTMLElement) => {
@@ -48,11 +47,11 @@ const suggestion: Omit<
           return
         }
 
-        component.element.style.position = "relative" as CSSProperties
-
-        document.body.appendChild(component.element)
-
-        updatePosition(props.editor, component.element as HTMLElement)
+        if (component.element instanceof HTMLElement) {
+          component.element.style.position = "relative"
+          document.body.appendChild(component.element)
+          updatePosition(props.editor, component.element)
+        }
       },
 
       onUpdate(props) {
@@ -72,7 +71,11 @@ const suggestion: Omit<
           return true
         }
 
-        return component.ref?.onKeyDown(props)
+        if (component.ref) {
+          return component.ref.onKeyDown(props)
+        }
+
+        return false
       },
 
       onExit() {

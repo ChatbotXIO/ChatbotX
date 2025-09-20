@@ -1,4 +1,4 @@
-export function GET(req: Request) {
+export function GET(_req: Request) {
   const css = `
 .ahc-iframe {
   width: 350px;

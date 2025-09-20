@@ -10,7 +10,6 @@ import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import { getWebchatColumns } from "./columns/webchat-columns"
 import { WebchatTableToolbarActions } from "./components/webchat-table-toolbar-actions"
-import { DeleteWebchatDialog } from "./dialogs/delete-webchat-dialog"
 import type { getIntegationWebchats } from "./queries/get-webchats.query"
 
 type WebchatTableProps = {
@@ -22,7 +21,7 @@ export function WebchatTable({ promises }: WebchatTableProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
 
-  const [rowAction, setRowAction] =
+  const [_, setRowAction] =
     useState<DataTableRowAction<IntegrationWebchatModel> | null>(null)
   const columns = useMemo(() => getWebchatColumns({ t, setRowAction }), [t])
 
@@ -51,13 +50,13 @@ export function WebchatTable({ promises }: WebchatTableProps) {
         </DataTableToolbar>
       </DataTable>
 
-      <DeleteWebchatDialog
+      {/* <DeleteWebchatDialog
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         open={rowAction?.variant === "delete"}
         webchats={rowAction?.row.original ? [rowAction.row.original] : []}
-      />
+      /> */}
     </>
   )
 }

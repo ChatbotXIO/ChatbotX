@@ -1,6 +1,7 @@
 import { InboxType, OMNICHANNEL } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+
 import {
   addContactTagStepSchema,
   addNotesStepSchema,
@@ -18,9 +19,9 @@ import {
   generateCodeStepSchema,
   getDataFromJsonStepSchema,
   markEmailVerifiedStepSchema,
-  // openAIAnalyzeImageSchema,
-  // openAIDeleteMessageHistorySchema,
-  // openAIGenerateImageSchema,
+  openAIAnalyzeImageSchema,
+  openAIDeleteMessageHistorySchema,
+  openAIGenerateImageSchema,
   openAIGenerateTextAdvancedSchema,
   openAIGenerateTextAgentSchema,
   openAIGenerateTextAssistantSchema,
@@ -45,11 +46,11 @@ export const actionsStepSchema = [
   openAIGenerateTextAgentSchema,
   openAIGenerateTextAdvancedSchema,
   openAIGenerateTextAssistantSchema,
-  // openAIGenerateImageSchema,
-  // openAIAnalyzeImageSchema,
+  openAIGenerateImageSchema,
+  openAIAnalyzeImageSchema,
   openAISpeechToTextSchema,
   openAITextToSpeechSchema,
-  // openAIDeleteMessageHistorySchema,
+  openAIDeleteMessageHistorySchema,
 
   // Email
   markEmailVerifiedStepSchema,

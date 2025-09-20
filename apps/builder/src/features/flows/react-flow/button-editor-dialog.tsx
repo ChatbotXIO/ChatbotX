@@ -205,7 +205,6 @@ export function ButtonEditorDialog() {
         break
       }
       case ButtonType.OpenWebsite: {
-        console.log("dddddddd")
         setValue("steps", [openWebsiteStepDefaultFn()])
         break
       }
@@ -217,7 +216,6 @@ export function ButtonEditorDialog() {
   }
 
   const onDelete = () => {
-    console.log("onDelete", activeNode, buttonPath)
     if (!(activeNode && buttonPath)) {
       return
     }

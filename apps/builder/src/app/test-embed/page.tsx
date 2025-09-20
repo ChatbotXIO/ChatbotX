@@ -1,3 +1,4 @@
+import { Button } from "@aha.chat/ui/components/ui/button"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -32,10 +33,10 @@ export default function TestEmbedPage() {
               placeholder="Paste your embed code here..."
               rows={6}
             />
-            <button
+            <Button
               className="mt-3 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               onClick={() => {
-                const code = document.getElementById("embed-code")?.value
+                const code = document.getElementById("embed-code")?.textContent
                 if (code) {
                   // Remove any existing widget
                   const existing = document.getElementById("aha-chat-widget")
@@ -51,7 +52,7 @@ export default function TestEmbedPage() {
               }}
             >
               Load Widget
-            </button>
+            </Button>
           </div>
 
           <div className="rounded-lg bg-white p-6 shadow">

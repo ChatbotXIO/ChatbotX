@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getIntegationWebchats } from "@/features/webchat/queries/get-webchats.query"
-import { getWebchatsSchema } from "@/features/webchat/schemas/webchat.schema"
+import { getWebchatRequest } from "@/features/webchat/schemas/webchat.schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { errorResponse } from "@/lib/error-handling"
 import { findChatbotOrFail } from "@/lib/user-permissions"
@@ -16,7 +16,7 @@ export async function GET(
     await findChatbotOrFail(userId, chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-    const search = getWebchatsSchema.parse(searchParams)
+    const search = getWebchatRequest.parse(searchParams)
 
     const result = await getIntegationWebchats({
       ...search,

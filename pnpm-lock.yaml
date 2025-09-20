@@ -745,9 +745,6 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.9.2)(zod@3.25.76)
-      prisma-extension-soft-delete:
-        specifier: ^2.0.1
-        version: 2.0.1(@prisma/client@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(typescript@5.9.2))(typescript@5.9.2))
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -2758,9 +2755,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@open-draft/deferred-promise@2.2.0':
-    resolution: {integrity: sha512-CecwLWx3rhxVQF6V4bAgPS5t+So2sTbPgAzafKkVizyi7tlwpcFpdFqq+wqF2OwNBmqFuu6tOyouTuxgpMfzmA==}
 
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
@@ -7754,16 +7748,6 @@ packages:
     peerDependencies:
       react: '>=16.0.0'
 
-  prisma-extension-nested-operations@1.0.1:
-    resolution: {integrity: sha512-mjMfVUplwCkrdClTqRP4793dOdPfT/H0zvV2uQ2R1BG2ZAqJ4LUEf//7f9LJdV5GhSOhp72w6b7DKJg1xIkgVA==}
-    peerDependencies:
-      '@prisma/client': '*'
-
-  prisma-extension-soft-delete@2.0.1:
-    resolution: {integrity: sha512-vozIlrmUr2RWgXNjWBn6yHWAZ4hBjskyJM0TCH66jKjkeGf8jfLhrIyO0FB4JlPMtuNeyyFVOVIg8yEjxbQH9Q==}
-    peerDependencies:
-      '@prisma/client': '*'
-
   prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6:
     resolution: {integrity: sha512-v9bcVDHNTvFvFQ5wtsmk8m6EPRAZCeGoa1Hy89eyWufJ3TTj/Z3xowzJcxIJZRP1XazSEJvb3ljZIZ3/Iw3EmA==}
     engines: {node: '>=18.18'}
@@ -10711,8 +10695,6 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
-
-  '@open-draft/deferred-promise@2.2.0': {}
 
   '@opentelemetry/api@1.9.0': {}
 
@@ -16286,17 +16268,6 @@ snapshots:
       '@types/prismjs': 1.26.5
       clsx: 2.1.1
       react: 19.0.0
-
-  prisma-extension-nested-operations@1.0.1(@prisma/client@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(typescript@5.9.2))(typescript@5.9.2)):
-    dependencies:
-      '@open-draft/deferred-promise': 2.2.0
-      '@prisma/client': 6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(typescript@5.9.2))(typescript@5.9.2)
-      lodash: 4.17.21
-
-  prisma-extension-soft-delete@2.0.1(@prisma/client@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(typescript@5.9.2))(typescript@5.9.2)):
-    dependencies:
-      '@prisma/client': 6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(typescript@5.9.2))(typescript@5.9.2)
-      prisma-extension-nested-operations: 1.0.1(@prisma/client@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(typescript@5.9.2))(typescript@5.9.2))
 
   prisma@6.14.0-integration-feat-client-wasm-base64-on-nodejs.6(typescript@5.9.2):
     dependencies:

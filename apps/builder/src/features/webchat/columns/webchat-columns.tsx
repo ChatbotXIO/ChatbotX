@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import { Switch } from "@aha.chat/ui/components/ui/switch"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -55,26 +54,32 @@ export function getWebchatColumns({
         )
       },
     },
-    {
-      accessorKey: "enable",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t("fields.enable.label")}
-        />
-      ),
-      cell: ({ row }) => {
-        const enable = row.getValue("enable") as boolean
-        return <Switch checked={enable} />
-      },
-    },
+    // {
+    //   accessorKey: "enable",
+    //   header: ({ column }) => (
+    //     <DataTableColumnHeader
+    //       column={column}
+    //       title={t("fields.enable.label")}
+    //     />
+    //   ),
+    //   cell: ({ row }) => {
+    //     const enable = row.getValue("enable") as boolean
+
+    //     return (
+    //       <Switch
+    //         checked={enable}
+    //         onChange={() => setRowAction({ row, variant: "enable" })}
+    //       />
+    //     )
+    //   },
+    // },
     {
       id: "actions",
       cell: ({ row }) => {
         const webchat = row.original
 
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <Button
               aria-label={t("actions.openWebchat")}
               onClick={() => {

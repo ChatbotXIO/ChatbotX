@@ -65,7 +65,7 @@ const flowStepHandlers: Record<
   [StepType.LANDING_PAGE]: undefined,
   [StepType.MARK_EMAIL_VERIFIED]: markEmailVerified,
   [StepType.NOTIFY_AGENT]: undefined,
-  [StepType.OpenWebsite]: undefined,
+  [StepType.OPEN_WEBSITE]: undefined,
   [StepType.OPENAI_ACTIONS]: undefined,
   [StepType.OPENAI_ANALYZE_IMAGE]: undefined,
   [StepType.OPENAI_DELETE_MESSAGE_HISTORY]: undefined,

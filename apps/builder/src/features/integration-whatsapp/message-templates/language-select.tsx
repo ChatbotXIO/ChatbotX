@@ -14,11 +14,11 @@ export function WhatsappMessageTemplateLanguageSelect({
 }) {
   return (
     <SelectField
-      isRequired={isRequired}
       label={label}
       name={name}
       options={LanguageOptions}
       placeholder="Please select"
+      required={isRequired}
     />
   )
 }

@@ -44,7 +44,11 @@ export type PersistentMenuSchema = z.infer<typeof persistentMenuSchema>
 export const createWebchatRequest = z.object({
   name: z.string().min(1).max(40),
   welcomeFlowId: z.string().nullish(),
-  authorizedDomains: z.array(z.string().url("Invalid domain URL")),
+  authorizedDomains: z.array(
+    z.object({
+      value: z.string().url("Invalid domain URL"),
+    }),
+  ),
   conversationStarters: z.array(conversationStarterSchema),
   persistentMenus: z.array(persistentMenuSchema),
   brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),

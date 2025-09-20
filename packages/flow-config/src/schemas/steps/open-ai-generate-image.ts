@@ -1,6 +1,6 @@
 import { z } from "zod"
-import { openAIDefaultFn } from "../../../../flow-config/src/schemas/steps/open-ai"
-import { baseOpenAISchema } from "./ai-base-block"
+import { openAIDefaultFn, openAISchema } from "./open-ai"
+import { StepType } from "./step-action"
 
 export const openAIGenerateImageSizes: Record<string, string> = {
   "dall-e-2::256x256": "256x256 (DALL·E 2)",
@@ -13,12 +13,11 @@ export const openAIGenerateImageSizes: Record<string, string> = {
 
 const [firstSize, ...otherSizes] = Object.keys(openAIGenerateImageSizes)
 
-const stepType = "OPENAI_GENERATE_IMAGE"
-
-export const openAIGenerateImageSchema = baseOpenAISchema.extend({
-  stepType: z.literal(stepType),
+export const openAIGenerateImageSchema = openAISchema.extend({
+  stepType: z.literal(StepType.OPENAI_GENERATE_IMAGE),
+  // biome-ignore lint/style/noNonNullAssertion: wip
   size: z.enum([firstSize!, ...otherSizes]),
-  outputCFId: z.string().cuid2(),
+  resultCustomFieldId: z.string().cuid2(),
 })
 
 export type OpenAIGenerateImageSchema = z.infer<
@@ -27,7 +26,7 @@ export type OpenAIGenerateImageSchema = z.infer<
 
 export const openAIGenerateImageDefaultFn = (): OpenAIGenerateImageSchema => ({
   ...openAIDefaultFn(),
-  stepType,
+  stepType: StepType.OPENAI_GENERATE_IMAGE,
   size: "dall-e-2::1024x1024",
-  outputCFId: "",
+  resultCustomFieldId: "",
 })

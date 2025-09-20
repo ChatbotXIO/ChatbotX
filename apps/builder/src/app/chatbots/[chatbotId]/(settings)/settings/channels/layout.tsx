@@ -51,7 +51,7 @@ export default function SettingsChannelsPage({
     {
       keyName: t("webchat.title"),
       icon: AppWindowIcon,
-      iconColor: "#000000",
+      iconColor: "none",
       content: webchat,
     },
   ]

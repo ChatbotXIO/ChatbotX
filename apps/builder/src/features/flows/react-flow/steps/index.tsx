@@ -114,7 +114,7 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.WAIT]: undefined,
   [StepType.SEND_FLOW_NODE]: undefined,
   [StepType.PERFORM_ACTION]: undefined,
-  [StepType.OpenWebsite]: openWebsiteStep,
+  [StepType.OPEN_WEBSITE]: openWebsiteStep,
   [StepType.SET_CUSTOM_FIELD]: setCustomFieldStep,
   [StepType.CLEAR_CUSTOM_FIELD]: clearCustomFieldStep,
   [StepType.LANDING_PAGE]: undefined,

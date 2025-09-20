@@ -129,7 +129,11 @@ export function UpdateWebchatForm({
         defaultValues: {
           name: integrationWebchat.name,
           welcomeFlowId: integrationWebchat.welcomeFlowId,
-          authorizedDomains: integrationWebchat.authorizedDomains,
+          authorizedDomains: integrationWebchat.authorizedDomains.map(
+            (domain) => ({
+              value: domain,
+            }),
+          ),
           conversationStarters:
             integrationWebchat.conversationStarters as ConversationStarterSchema[],
           persistentMenus:
@@ -204,7 +208,11 @@ export function UpdateWebchatForm({
             </div>
           ))}
           <Button
-            onClick={() => appendAuthorizedDomains("")}
+            onClick={() =>
+              appendAuthorizedDomains({
+                value: "",
+              })
+            }
             size="sm"
             variant="outline"
           >

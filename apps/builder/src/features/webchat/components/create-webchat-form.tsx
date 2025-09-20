@@ -184,7 +184,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
           {authorizedDomains.map((_, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: wip
             <div className="flex gap-2" key={index}>
-              <InputField name={`authorizedDomains.${index}`} />
+              <InputField name={`authorizedDomains.${index}.value`} />
               <Button
                 onClick={() => removeAuthorizedDomains(index)}
                 variant="outline"
@@ -194,7 +194,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
             </div>
           ))}
           <Button
-            onClick={() => appendAuthorizedDomains("")}
+            onClick={() => appendAuthorizedDomains({ value: "" })}
             size="sm"
             variant="outline"
           >

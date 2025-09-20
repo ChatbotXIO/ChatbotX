@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { env } from "@/env"
 
 export function GET() {
-    const embedScript = `
+  const embedScript = `
 (function () {
   'use strict';
 
@@ -63,10 +63,10 @@ export function GET() {
 })();
   `
 
-    return new NextResponse(embedScript, {
-        headers: {
-            "Content-Type": "application/javascript",
-            "Cache-Control": "public, max-age=3600",
-        },
-    })
+  return new NextResponse(embedScript, {
+    headers: {
+      "Content-Type": "application/javascript",
+      "Cache-Control": "public, max-age=3600",
+    },
+  })
 }

@@ -4,7 +4,7 @@ import type { MentionNodeAttrs } from "@tiptap/extension-mention"
 import { type Editor, posToDOMRect, ReactRenderer } from "@tiptap/react"
 import type { SuggestionOptions } from "@tiptap/suggestion"
 import { CalendarIcon, HashIcon, TextIcon } from "lucide-react"
-import { type CSSProperties, useMemo } from "react"
+import { useMemo } from "react"
 import type { CustomFieldResource } from "@/features/custom-fields/schemas"
 import VariableList, {
   type VariableListProps,
@@ -76,11 +76,11 @@ export function createSuggestion(customFields: CustomFieldResource[]) {
             return
           }
 
-          component.element.style.position = "relative" as CSSProperties
-
-          document.body.appendChild(component.element)
-
-          updatePosition(props.editor, component.element as HTMLElement)
+          if (component.element instanceof HTMLElement) {
+            component.element.style.position = "relative"
+            document.body.appendChild(component.element)
+            updatePosition(props.editor, component.element)
+          }
         },
 
         onUpdate(props) {
@@ -100,7 +100,11 @@ export function createSuggestion(customFields: CustomFieldResource[]) {
             return true
           }
 
-          return component.ref?.onKeyDown(props)
+          if (component.ref) {
+            return component.ref.onKeyDown(props)
+          }
+
+          return false
         },
 
         onExit() {

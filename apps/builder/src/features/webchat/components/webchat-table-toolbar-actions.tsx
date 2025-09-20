@@ -5,8 +5,6 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
-import { DeleteWebchatDialog } from "../dialogs/delete-webchat-dialog"
 
 type WebchatTableToolbarActionsProps = {
   chatbotId: string
@@ -16,12 +14,12 @@ type WebchatTableToolbarActionsProps = {
 
 export function WebchatTableToolbarActions({
   chatbotId,
-  table,
+  // table,
 }: WebchatTableToolbarActionsProps) {
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  // const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
-  const selectedRows = table.getFilteredSelectedRowModel().rows
-  const selectedWebchats = selectedRows.map((row) => row.original)
+  // const selectedRows = table.getFilteredSelectedRowModel().rows
+  // const selectedWebchats = selectedRows.map((row) => row.original)
 
   return (
     <>
@@ -43,7 +41,7 @@ export function WebchatTableToolbarActions({
         open={createDialogOpen}
       /> */}
 
-      <DeleteWebchatDialog
+      {/* <DeleteWebchatDialog
         chatbotId={chatbotId}
         onOpenChange={setDeleteDialogOpen}
         onSuccess={() => {
@@ -53,7 +51,7 @@ export function WebchatTableToolbarActions({
         }}
         open={deleteDialogOpen}
         webchats={selectedWebchats}
-      />
+      /> */}
     </>
   )
 }

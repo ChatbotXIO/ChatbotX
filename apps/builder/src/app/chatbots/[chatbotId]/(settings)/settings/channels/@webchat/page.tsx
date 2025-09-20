@@ -15,7 +15,7 @@ export default async function SettingChannelWebchatPage(props: {
         description={t("webchat.description")}
         label={t("webchat.title")}
       >
-        <Button className="w-full" variant="secondary">
+        <Button className="w-full" size="sm" variant="secondary">
           <Link href={`/chatbots/${params.chatbotId}/webchats`}>
             {t("actions.manage")}
           </Link>

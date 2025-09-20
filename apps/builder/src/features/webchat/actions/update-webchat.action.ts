@@ -10,6 +10,8 @@ export const updateWebchatAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .inputSchema(updateWebchatRequest)
   .action(async ({ parsedInput, bindArgsParsedInputs: [chatbotId, id] }) => {
+    const { authorizedDomains, ...rest } = parsedInput
+
     const integration = await prisma.integrationWebchat.findFirstOrThrow({
       where: {
         id,
@@ -22,7 +24,12 @@ export const updateWebchatAction = chatbotActionClient
         where: {
           id: integration.id,
         },
-        data: parsedInput,
+        data: {
+          ...rest,
+          authorizedDomains: authorizedDomains
+            ? authorizedDomains.map((domain) => domain.value)
+            : undefined,
+        },
       })
     })
 

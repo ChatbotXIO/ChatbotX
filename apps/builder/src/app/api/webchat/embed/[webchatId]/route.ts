@@ -2,56 +2,56 @@ import { prisma } from "@aha.chat/database"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { env } from "@/env"
 
 const webchatEmbedParams = z.object({
-    webchatId: z.string().cuid2(),
+  webchatId: z.string().cuid2(),
 })
 
 export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ webchatId: string }> },
+  req: NextRequest,
+  { params }: { params: Promise<{ webchatId: string }> },
 ) {
-    try {
-        const { webchatId } = webchatEmbedParams.parse(await params)
+  try {
+    const { webchatId } = webchatEmbedParams.parse(await params)
 
-        const webchat = await prisma.integrationWebchat.findFirst({
-            where: {
-                id: webchatId,
-                enable: true,
-            },
-            include: {
-                chatbot: true,
-            },
-        })
+    const webchat = await prisma.integrationWebchat.findFirst({
+      where: {
+        id: webchatId,
+        enable: true,
+      },
+      include: {
+        chatbot: true,
+      },
+    })
 
-        if (!webchat) {
-            return new NextResponse("Webchat not found", { status: 404 })
+    if (!webchat) {
+      return new NextResponse("Webchat not found", { status: 404 })
+    }
+
+    // Check if the request is from an authorized domain
+    const referer = req.headers.get("referer")
+    if (referer) {
+      const refererUrl = new URL(referer)
+      const refererDomain = refererUrl.hostname
+
+      const isAuthorized = webchat.authorizedDomains.some((domain) => {
+        try {
+          const authorizedUrl = new URL(domain)
+          return authorizedUrl.hostname === refererDomain
+        } catch {
+          return false
         }
+      })
 
-        // Check if the request is from an authorized domain
-        const referer = req.headers.get("referer")
-        if (referer) {
-            const refererUrl = new URL(referer)
-            const refererDomain = refererUrl.hostname
+      if (!isAuthorized) {
+        return new NextResponse("Domain not authorized", { status: 403 })
+      }
+    }
 
-            const isAuthorized = webchat.authorizedDomains.some((domain) => {
-                try {
-                    const authorizedUrl = new URL(domain)
-                    return authorizedUrl.hostname === refererDomain
-                } catch {
-                    return false
-                }
-            })
+    const baseUrl = env.NEXT_PUBLIC_BUILDER_URL
 
-            if (!isAuthorized) {
-                return new NextResponse("Domain not authorized", { status: 403 })
-            }
-        }
-
-        const baseUrl =
-            process.env.NEXT_PUBLIC_BUILDER_URL || "http://localhost:3000"
-
-        const embedScript = `
+    const embedScript = `
 (function() {
   'use strict';
   
@@ -127,15 +127,15 @@ export async function GET(
 })();
 `
 
-        return new NextResponse(embedScript, {
-            headers: {
-                "Content-Type": "application/javascript",
-                "Cache-Control": "public, max-age=3600",
-            },
-        })
-    } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: Error logging
-        console.error("Error generating embed script:", error)
-        return new NextResponse("Internal Server Error", { status: 500 })
-    }
+    return new NextResponse(embedScript, {
+      headers: {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=3600",
+      },
+    })
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Error logging
+    console.error("Error generating embed script:", error)
+    return new NextResponse("Internal Server Error", { status: 500 })
+  }
 }
