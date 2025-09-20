@@ -1,8 +1,13 @@
 import type { AIFileModel } from "@aha.chat/database/types"
 import { z } from "zod"
 
+export type AIFileWithProcessing = AIFileModel & {
+  isProcessed: boolean
+  chunksCount: number
+}
+
 export type AIFileCollection = {
-  data: AIFileModel[]
+  data: AIFileWithProcessing[]
 }
 
 export const getAIFilesRequest = z.object({

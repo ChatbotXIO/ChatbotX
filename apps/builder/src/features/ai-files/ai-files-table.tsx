@@ -1,6 +1,6 @@
 "use client"
 
-import type { AIFileModel } from "@aha.chat/database/types"
+import type { AIFileWithProcessing } from "./schemas"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { Badge } from "@aha.chat/ui/components/ui/badge"
@@ -29,6 +29,7 @@ import prettyBytes from "pretty-bytes"
 import { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 import { AIFilesCreate } from "./ai-files-create"
+import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import type { getAIFiles } from "./queries"
 
 type AIFilesTableProps = {
@@ -60,7 +61,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
     }
   }, [])
 
-  const columns = useMemo<ColumnDef<AIFileModel>[]>(
+  const columns = useMemo<ColumnDef<AIFileWithProcessing>[]>(
     () => [
       {
         id: "select",
@@ -135,6 +136,25 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
           </span>
         ),
         enableSorting: true,
+        enableHiding: true,
+      },
+      {
+        id: "processingStatus",
+        accessorKey: "processingStatus",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title="Processing Status"
+          />
+        ),
+        cell: ({ row }) => (
+          <AIFileProcessingStatus
+            aiFileId={row.original.id}
+            isProcessed={row.original.isProcessed}
+            chunksCount={row.original.chunksCount}
+          />
+        ),
+        enableSorting: false,
         enableHiding: true,
       },
       {

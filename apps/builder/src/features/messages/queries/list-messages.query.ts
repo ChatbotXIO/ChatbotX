@@ -9,6 +9,7 @@ import type {
   FindMessageSchema,
   ListMessagesRequest,
 } from "../schemas/list-messages.schema"
+import { env } from "@/env"
 
 export const listMessages = async (
   chatbotId: string,
@@ -33,8 +34,8 @@ export const listMessages = async (
     where,
     cursor: input.cursor
       ? {
-          id: input.cursor,
-        }
+        id: input.cursor,
+      }
       : undefined,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   }
@@ -44,6 +45,15 @@ export const listMessages = async (
   if (messages.length === 0) {
     return { data: [], nextCursor: null, prevCursor: null }
   }
+
+  // Transform attachments to include url field
+  messages = messages.map((message) => ({
+    ...message,
+    attachments: message.attachments?.map((attachment) => ({
+      ...attachment,
+      url: new URL(attachment.originPath, env.NEXT_PUBLIC_ASSET_URL).toString(),
+    })) || [],
+  }))
 
   let nextCursor: string | null = null
   const prevCursor: string | null = null

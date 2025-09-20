@@ -149,7 +149,10 @@ export const createWebchatMessageAction = actionClient
             },
           })
 
-          newMessage.attachments = [attachment as AttachmentResource]
+          newMessage.attachments = [{
+            ...attachment,
+            url: new URL(attachment.originPath, process.env.NEXT_PUBLIC_ASSET_URL).toString(),
+          } as AttachmentResource]
         }
 
         await tx.conversation.update({
