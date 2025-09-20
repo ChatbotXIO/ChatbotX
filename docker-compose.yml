@@ -1,7 +1,8 @@
 name: ahachat
+
 services:
   postgres:
-    image: postgres:16
+    image: timescale/timescaledb:2.22.0-pg17
     ports:
       - '5432:5432'
     volumes:
@@ -16,6 +17,7 @@ services:
       timeout: 60s
       retries: 5
       start_period: 80s
+
   pgadmin:
     image: dpage/pgadmin4:latest
     ports:
@@ -23,11 +25,13 @@ services:
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@aha.chat
       - PGADMIN_DEFAULT_PASSWORD=nr541Kv59xB4f48bhZOy5wBz
+
   mailhog:
     image: mailhog/mailhog
     ports:
       - 1025:1025
       - 8025:8025
+
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -45,6 +49,7 @@ services:
       timeout: 20s
       retries: 3
       start_period: 5s
+
   createbuckets:
     image: minio/mc
     depends_on:
@@ -58,6 +63,7 @@ services:
       /usr/bin/mc anonymous set public minio/ahachat/public;
       exit 0;
       "
+
   redis:
     image: redis:7-alpine
     ports:

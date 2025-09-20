@@ -1,12 +1,13 @@
 generator client {
   provider        = "prisma-client"
   output          = "../src/generated/prisma"
-  previewFeatures = ["driverAdapters", "queryCompiler", "nativeDistinct"]
+  previewFeatures = ["typedSql", "driverAdapters", "nativeDistinct", "postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 model User {
@@ -171,6 +172,7 @@ model Chatbot {
   aiFunctions              AIFunction[]
   aiMCPServers             AIMCPServer[]
   integrationGemini        IntegrationGemini?
+  aiEmbeddings             AIEmbedding[]
 }
 
 model ChatbotMember {
@@ -574,6 +576,23 @@ model AITrigger {
   integrationOpenAIs IntegrationOpenAI[]
 }
 
+model AIEmbedding {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  content   String
+  embedding Unsupported("vector")?
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  aiFileId String
+  aiFile   AIFile @relation(fields: [aiFileId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotId])
+}
+
 model IntegrationOpenAI {
   id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
@@ -615,6 +634,8 @@ model AIFile {
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  aiEmbeddings AIEmbedding[]
 }
 
 model AIFunction {

@@ -9,6 +9,8 @@
     "@prisma/client": "6.14.0-integration-feat-client-wasm-base64-on-nodejs.6",
     "@prisma/extension-accelerate": "^2.0.1",
     "@t3-oss/env-nextjs": "^0.13.8",
+    "pgvector": "^0.2.1",
+    "prisma-extension-pgvector": "^0.11.0",
     "prisma-extension-soft-delete": "^2.0.1",
     "zod": "^3.25.76"
   },
@@ -25,7 +27,7 @@
     "db:migrate": "dotenv -e ../../.env -- prisma migrate deploy",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
     "db:seed": "dotenv -e ../../.env -- tsx src/seeders/index.ts",
-    "db:client": "dotenv -e ../../.env -- prisma generate",
+    "db:client": "dotenv -e ../../.env -- prisma generate --sql",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
     "db:setup": "pnpm db:migrate && pnpm db:client && pnpm db:seed"
   },

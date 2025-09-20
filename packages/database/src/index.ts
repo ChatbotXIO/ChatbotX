@@ -1,4 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg"
+import { withPGVector } from "prisma-extension-pgvector"
 import { PrismaClient } from "./generated/prisma/client"
 import { keys } from "./keys"
 
@@ -75,7 +76,13 @@ export const prisma =
         },
       },
     },
-  })
+  }).$extends(
+    withPGVector({
+      modelName: "aIEmbedding",
+      vectorFieldName: "embedding",
+      idFieldName: "id",
+    }),
+  )
 
 if (env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma
@@ -83,3 +90,4 @@ if (env.NODE_ENV !== "production") {
 
 export { Prisma } from "./generated/prisma/client"
 export * from "./generated/prisma/enums"
+export * from "./generated/prisma/sql"
