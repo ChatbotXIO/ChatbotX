@@ -460,6 +460,15 @@
     },
     "enable": {
       "label": "Enable"
+    },
+    "embedUrl": {
+      "label": "Embed URL"
+    },
+    "embedCode": {
+      "label": "Embed Code",
+      "description": "Copy and paste this code into your website to embed the chat widget.",
+      "securityNote": "Security Note",
+      "securityNoteDescription": "This widget will only work on domains that are authorized in your webchat configuration. Make sure to add your domain to the authorized domains list."
     }
   },
 
@@ -595,6 +604,7 @@
 
   "messages": {
     "copiedToClipboard": "Copied to clipboard",
+    "failedToCopy": "Failed to copy",
     "updatedSuccessfully": "{feature} updated successfully",
     "createdSuccessfully": "{feature} created successfully",
     "createdFailed": "{feature} creation failed",

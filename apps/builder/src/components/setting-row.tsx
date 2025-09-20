@@ -11,7 +11,7 @@ type SettingRowProps = {
 export const SettingRow = (props: SettingRowProps) => {
   const { label, description, children } = props
   return (
-    <div className="grid grid-cols-4 items-start gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-4 items-start gap-4">
       <div className="mt-2 flex flex-col gap-1.5">
         <Label>{label}</Label>
       </div>

@@ -517,24 +517,12 @@ importers:
       '@aha.chat/worker-config':
         specifier: workspace:*
         version: link:../../packages/worker-config
-      '@ai-sdk/google':
-        specifier: ^2.0.8
-        version: 2.0.8(zod@4.1.9)
-      '@ai-sdk/openai':
-        specifier: ^2.0.21
-        version: 2.0.21(zod@4.1.9)
       '@faker-js/faker':
         specifier: ^9.9.0
         version: 9.9.0
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.17.4
-        version: 1.17.4
       '@paralleldrive/cuid2':
         specifier: ^2.2.2
         version: 2.2.2
-      ai:
-        specifier: ^5.0.24
-        version: 5.0.24(zod@4.1.9)
       bullmq:
         specifier: ^5.56.1
         version: 5.56.1
@@ -678,49 +666,6 @@ importers:
       '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
-      typescript:
-        specifier: 5.9.2
-        version: 5.9.2
-
-  packages/ai:
-    dependencies:
-      '@aha.chat/ui':
-        specifier: workspace:*
-        version: link:../ui
-      '@hookform/resolvers':
-        specifier: ^5.1.1
-        version: 5.1.1(react-hook-form@7.59.0(react@19.1.0))
-      '@paralleldrive/cuid2':
-        specifier: ^2.2.2
-        version: 2.2.2
-      '@t3-oss/env-nextjs':
-        specifier: ^0.13.8
-        version: 0.13.8(typescript@5.9.2)(zod@3.25.76)
-      next-intl:
-        specifier: ^4.3.5
-        version: 4.3.5(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(typescript@5.9.2)
-      react:
-        specifier: 19.1.0
-        version: 19.1.0
-      react-hook:
-        specifier: ^0.0.1
-        version: 0.0.1
-      react-hook-form:
-        specifier: ^7.59.0
-        version: 7.59.0(react@19.1.0)
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
-    devDependencies:
-      '@aha.chat/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/react':
-        specifier: 19.1.0
-        version: 19.1.0
-      '@types/react-dom':
-        specifier: 19.1.0
-        version: 19.1.0(@types/react@19.1.0)
       typescript:
         specifier: 5.9.2
         version: 5.9.2
@@ -885,9 +830,6 @@ importers:
 
   packages/openai:
     dependencies:
-      '@aha.chat/ai':
-        specifier: workspace:*
-        version: link:../ai
       '@paralleldrive/cuid2':
         specifier: ^2.2.2
         version: 2.2.2
@@ -7944,9 +7886,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
 
-  react-hook@0.0.1:
-    resolution: {integrity: sha512-2/Guf88/dGyFgUT7QDtBJ1l7V5yqTcAHlNRIZNTu2xg0KkDjaiYZp79ah49NDaLMI/J7voWcKLU8wMONG4A/1g==}
-
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -9114,12 +9053,6 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.5(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/google@2.0.8(zod@4.1.9)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.5(zod@4.1.9)
-      zod: 4.1.9
-
   '@ai-sdk/openai@2.0.21(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -9139,14 +9072,6 @@ snapshots:
       eventsource-parser: 3.0.5
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
-
-  '@ai-sdk/provider-utils@3.0.5(zod@4.1.9)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.5
-      zod: 4.1.9
-      zod-to-json-schema: 3.24.6(zod@4.1.9)
 
   '@ai-sdk/provider-utils@3.0.6(zod@3.25.76)':
     dependencies:
@@ -10606,7 +10531,8 @@ snapshots:
 
   '@next/env@15.4.2-canary.53': {}
 
-  '@next/env@15.4.7': {}
+  '@next/env@15.4.7':
+    optional: true
 
   '@next/swc-darwin-arm64@15.4.1':
     optional: true
@@ -15813,16 +15739,6 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.2
 
-  next-intl@4.3.5(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(typescript@5.9.2):
-    dependencies:
-      '@formatjs/intl-localematcher': 0.5.10
-      negotiator: 1.0.0
-      next: 15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      react: 19.1.0
-      use-intl: 4.3.5(react@19.1.0)
-    optionalDependencies:
-      typescript: 5.9.2
-
   next-safe-action@8.0.7(next@15.4.2-canary.53(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       next: 15.4.2-canary.53(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -15905,6 +15821,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+    optional: true
 
   node-abort-controller@3.1.1: {}
 
@@ -16580,8 +16497,6 @@ snapshots:
   react-hook-form@7.59.0(react@19.1.0):
     dependencies:
       react: 19.1.0
-
-  react-hook@0.0.1: {}
 
   react-is@16.13.1: {}
 
@@ -17863,10 +17778,6 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@3.25.76):
     dependencies:
       zod: 3.25.76
-
-  zod-to-json-schema@3.24.6(zod@4.1.9):
-    dependencies:
-      zod: 4.1.9
 
   zod-validation-error@3.5.3(zod@3.25.71):
     dependencies:

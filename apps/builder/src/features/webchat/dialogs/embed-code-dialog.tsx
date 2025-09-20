@@ -14,7 +14,9 @@ import { Input } from "@aha.chat/ui/components/ui/input"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { CopyIcon } from "lucide-react"
-import { useState } from "react"
+import { useTranslations } from "next-intl"
+import { toast } from "sonner"
+import { useCopyToClipboard } from "usehooks-ts"
 
 type EmbedCodeDialogProps = {
   webchat: IntegrationWebchatModel
@@ -22,7 +24,9 @@ type EmbedCodeDialogProps = {
 }
 
 export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
-  const [copied, setCopied] = useState(false)
+  const [_, copyToClipboard] = useCopyToClipboard()
+  const t = useTranslations()
+
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     (typeof window !== "undefined" ? window.location.origin : "")
@@ -30,31 +34,22 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
   const embedCode = `<!-- Aha Chat Widget -->
 <script>
   window.AhaChatConfig = {
-    // Optional: Override default settings
-    // brandColor: '#${webchat.brandColor.replace("#", "")}',
-    // hideHeader: ${webchat.hideHeader},
-    // showLogo: ${webchat.showLogo},
-    // hideMessageInput: ${webchat.hideMessageInput}
+    brandColor: '#${webchat.brandColor}',
+    hideHeader: ${webchat.hideHeader},
+    showLogo: ${webchat.showLogo},
+    hideMessageInput: ${webchat.hideMessageInput}
   };
 </script>
 <script src="${baseUrl}/api/webchat/embed/${webchat.id}"></script>`
 
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(embedCode)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // Fallback for older browsers
-      const textArea = document.createElement("textarea")
-      textArea.value = embedCode
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand("copy")
-      document.body.removeChild(textArea)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
+  const handleCopy = (text: string) => () => {
+    copyToClipboard(text)
+      .then(() => {
+        toast.success(t("messages.copiedToClipboard"))
+      })
+      .catch(() => {
+        toast.error(t("messages.failedToCopy"))
+      })
   }
 
   return (
@@ -62,15 +57,27 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Embed Code</DialogTitle>
+          <DialogTitle>{t("fields.embedCode.label")}</DialogTitle>
           <DialogDescription>
-            Copy and paste this code into your website to embed the chat widget.
+            {t("fields.embedCode.description")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-hidden">
           <div className="space-y-2">
-            <Label htmlFor="embed-url">Embed URL</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="embed-url">{t("fields.embedUrl.label")}</Label>
+              <Button
+                className="gap-2"
+                onClick={() =>
+                  handleCopy(`${baseUrl}/api/webchat/embed/${webchat.id}`)
+                }
+                size="sm"
+                variant="outline"
+              >
+                <CopyIcon className="h-4 w-4" />
+              </Button>
+            </div>
             <Input
               className="font-mono text-sm"
               id="embed-url"
@@ -81,15 +88,14 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="embed-code">Embed Code</Label>
+              <Label htmlFor="embed-code">{t("fields.embedCode.label")}</Label>
               <Button
                 className="gap-2"
-                onClick={copyToClipboard}
+                onClick={() => handleCopy(embedCode)}
                 size="sm"
                 variant="outline"
               >
                 <CopyIcon className="h-4 w-4" />
-                {copied ? "Copied!" : "Copy"}
               </Button>
             </div>
             <Textarea
@@ -101,36 +107,12 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
             />
           </div>
 
-          <div className="rounded-lg bg-muted p-4">
-            <h4 className="mb-2 font-medium">Configuration Options</h4>
-            <p className="mb-2 text-muted-foreground text-sm">
-              You can customize the widget by setting these options in the
-              AhaChatConfig object:
-            </p>
-            <ul className="space-y-1 text-muted-foreground text-sm">
-              <li>
-                • <code>brandColor</code> - Override the brand color (hex
-                format)
-              </li>
-              <li>
-                • <code>hideHeader</code> - Show/hide the header (boolean)
-              </li>
-              <li>
-                • <code>showLogo</code> - Show/hide personal logo (boolean)
-              </li>
-              <li>
-                • <code>hideMessageInput</code> - Show/hide message input
-                (boolean)
-              </li>
-            </ul>
-          </div>
-
           <div className="rounded-lg bg-blue-50 p-4">
-            <h4 className="mb-2 font-medium text-blue-900">Security Note</h4>
+            <h4 className="mb-2 font-medium text-blue-900">
+              {t("fields.embedCode.securityNote")}
+            </h4>
             <p className="text-blue-800 text-sm">
-              This widget will only work on domains that are authorized in your
-              webchat configuration. Make sure to add your domain to the
-              authorized domains list.
+              {t("fields.embedCode.securityNoteDescription")}
             </p>
           </div>
         </div>

@@ -8,7 +8,6 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@aha.chat/ai": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@t3-oss/env-nextjs": "^0.13.8",
     "zod": "^3.25.76"
