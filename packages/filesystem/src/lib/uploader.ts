@@ -1,5 +1,6 @@
 import type { Readable } from "node:stream"
 import {
+  GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
   type PutObjectCommandInput,
@@ -22,9 +23,9 @@ class Uploader {
       credentials:
         env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY
           ? {
-              accessKeyId: env.AWS_ACCESS_KEY_ID,
-              secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-            }
+            accessKeyId: env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+          }
           : undefined,
       region: env.AWS_REGION,
       forcePathStyle: Boolean(env.AWS_URL),
@@ -84,6 +85,29 @@ class Uploader {
     })
 
     return await this.#client.send(command)
+  }
+
+  async getObject(path: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: path,
+    })
+
+    const response = await this.#client.send(command)
+
+    if (!response.Body) {
+      throw new Error(`No body found for object: ${path}`)
+    }
+
+    // Convert stream to buffer
+    const chunks: Uint8Array[] = []
+    const stream = response.Body as Readable
+
+    return new Promise((resolve, reject) => {
+      stream.on('data', (chunk) => chunks.push(chunk))
+      stream.on('error', reject)
+      stream.on('end', () => resolve(Buffer.concat(chunks)))
+    })
   }
 }
 

@@ -28,12 +28,14 @@
     "bullmq": "^5.56.1",
     "date-fns": "^4.1.0",
     "dot-prop": "^9.0.0",
+    "image-size": "^1.0.2",
     "ioredis": "^5.6.1",
     "ky": "^1.8.1",
     "remeda": "^2.23.3"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
+    "@types/image-size": "^0.8.0",
     "@types/node": "^22.16.0",
     "concurrently": "^9.2.0",
     "dotenv-cli": "^8.0.0",

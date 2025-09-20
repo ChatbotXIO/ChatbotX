@@ -26,5 +26,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "prisma-extension-pgvector": "^0.11.0"
+  }
 }
