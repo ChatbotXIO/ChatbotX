@@ -13,7 +13,7 @@ export const WebchatHeader = () => {
   }
 
   return (
-    <div className="flex flex-end items-center border border-b px-3 py-1">
+    <div className="flex flex-end items-center border-b px-3 py-1">
       <h1 className="flex-1 font-bold">{config.name}</h1>
       <Button onClick={refreshGuestSession} size="icon" variant="ghost">
         <RefreshCwIcon />

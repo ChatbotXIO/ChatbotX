@@ -114,7 +114,7 @@ export function getWebchatColumns({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>
                   <Link
-                    href={`/chatbots/${webchat.chatbotId}/webchats/${webchat.id}`}
+                    href={`/chatbots/${webchat.chatbotId}/webchats/${webchat.id}/edit`}
                   >
                     {t("actions.edit")}
                   </Link>

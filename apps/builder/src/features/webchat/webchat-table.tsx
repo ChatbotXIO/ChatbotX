@@ -21,7 +21,7 @@ export function WebchatTable({ promises }: WebchatTableProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
 
-  const [_, setRowAction] =
+  const [_rowAction, setRowAction] =
     useState<DataTableRowAction<IntegrationWebchatModel> | null>(null)
   const columns = useMemo(() => getWebchatColumns({ t, setRowAction }), [t])
 

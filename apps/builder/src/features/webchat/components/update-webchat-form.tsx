@@ -27,7 +27,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useMemo } from "react"
+import { use, useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import type { getFlows } from "@/features/flows/queries"
@@ -39,7 +39,7 @@ import {
 } from "../schemas/webchat.schema"
 
 type UpdateWebchatFormProps = {
-  integrationWebchat: IntegrationWebchatModel
+  integrationWebchat: IntegrationWebchatModel | null
   promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
@@ -56,25 +56,6 @@ export function UpdateWebchatForm({
     label: flow.name,
     value: flow.id,
   }))
-  // const [domains, setDomains] = useState<string[]>([""])
-  //   const [templates, setTemplates] = useState<
-  //     Awaited<ReturnType<typeof getWebchatTemplates>>
-  //   >([])
-
-  //   useEffect(() => {
-  //     const loadTemplates = async () => {
-  //       try {
-  //         const templatesData = await getWebchatTemplates()
-  //         setTemplates(templatesData)
-  //         if (templatesData.length > 0) {
-  //           form.setValue("webWidgetTemplateId", templatesData[0].id)
-  //         }
-  //       } catch (error) {
-  //         console.error("Failed to load templates:", error)
-  //       }
-  //     }
-  //     loadTemplates()
-  //   }, [form])
 
   const conversationStarterTypeOptions: {
     value: ConversationStarterType
@@ -109,7 +90,7 @@ export function UpdateWebchatForm({
   )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateWebchatAction.bind(null, chatbotId, integrationWebchat.id),
+    updateWebchatAction.bind(null, chatbotId, integrationWebchat?.id ?? ""),
     zodResolver(updateWebchatRequest),
     {
       actionProps: {
@@ -126,27 +107,44 @@ export function UpdateWebchatForm({
         },
       },
       formProps: {
+        mode: "onChange",
         defaultValues: {
-          name: integrationWebchat.name,
-          welcomeFlowId: integrationWebchat.welcomeFlowId,
-          authorizedDomains: integrationWebchat.authorizedDomains.map(
-            (domain) => ({
-              value: domain,
-            }),
-          ),
-          conversationStarters:
-            integrationWebchat.conversationStarters as ConversationStarterSchema[],
-          persistentMenus:
-            integrationWebchat.persistentMenus as PersistentMenuSchema[],
-          brandColor: integrationWebchat.brandColor,
-          hideHeader: integrationWebchat.hideHeader,
-          showLogo: integrationWebchat.showLogo,
+          name: "",
+          welcomeFlowId: null,
+          authorizedDomains: [],
+          conversationStarters: [],
+          persistentMenus: [],
+          brandColor: "#007bff",
+          hideHeader: true,
+          showLogo: false,
           hideMessageInput: true,
-          customCss: integrationWebchat.customCss ?? "",
+          customCss: "",
         },
       },
     },
   )
+
+  useEffect(() => {
+    if (integrationWebchat) {
+      const {
+        authorizedDomains: authorizedDomainsArray,
+        conversationStarters: conversationStartersArray,
+        persistentMenus: persistentMenusArray,
+        customCss,
+        ...rest
+      } = integrationWebchat
+      form.reset({
+        authorizedDomains: authorizedDomainsArray.map((domain) => ({
+          value: domain,
+        })),
+        conversationStarters:
+          conversationStartersArray as ConversationStarterSchema[],
+        persistentMenus: persistentMenusArray as PersistentMenuSchema[],
+        customCss: customCss ?? "",
+        ...rest,
+      })
+    }
+  }, [integrationWebchat, form])
 
   const {
     fields: authorizedDomains,
@@ -198,7 +196,7 @@ export function UpdateWebchatForm({
           {authorizedDomains.map((_, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: wip
             <div className="flex gap-2" key={index}>
-              <InputField name={`authorizedDomains.${index}`} />
+              <InputField name={`authorizedDomains.${index}.value`} />
               <Button
                 onClick={() => removeAuthorizedDomains(index)}
                 variant="outline"
