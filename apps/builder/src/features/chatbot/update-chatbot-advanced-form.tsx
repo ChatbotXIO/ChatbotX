@@ -114,6 +114,7 @@ export function UpdateChatbotAdvancedForm({
         <div className="mt-4 flex flex-start">
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
+            size="sm"
             type="submit"
           >
             {form.formState.isSubmitting && (

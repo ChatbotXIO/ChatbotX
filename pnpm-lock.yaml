@@ -828,25 +828,6 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
-  packages/openai:
-    dependencies:
-      '@paralleldrive/cuid2':
-        specifier: ^2.2.2
-        version: 2.2.2
-      '@t3-oss/env-nextjs':
-        specifier: ^0.13.8
-        version: 0.13.8(typescript@5.9.2)(zod@3.25.76)
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
-    devDependencies:
-      '@aha.chat/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      typescript:
-        specifier: 5.9.2
-        version: 5.9.2
-
   packages/partysocket-config:
     dependencies:
       '@aha.chat/logger':
@@ -884,37 +865,6 @@ importers:
       '@aha.chat/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      typescript:
-        specifier: 5.9.2
-        version: 5.9.2
-
-  packages/tiptap:
-    dependencies:
-      '@tiptap/core':
-        specifier: ^3.3.0
-        version: 3.4.4(@tiptap/pm@3.4.4)
-      '@tiptap/suggestion':
-        specifier: ^3.3.0
-        version: 3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.4)
-      prosemirror-state:
-        specifier: ^1.4.3
-        version: 1.4.3
-      react:
-        specifier: 19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: 19.1.0
-        version: 19.1.0(react@19.1.0)
-    devDependencies:
-      '@aha.chat/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/react':
-        specifier: 19.1.0
-        version: 19.1.0
-      '@types/react-dom':
-        specifier: 19.1.0
-        version: 19.1.0(@types/react@19.1.0)
       typescript:
         specifier: 5.9.2
         version: 5.9.2

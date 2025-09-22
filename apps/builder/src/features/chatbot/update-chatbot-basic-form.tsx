@@ -96,6 +96,7 @@ export function UpdateChatbotBasicForm({
         <div className="flex justify-start">
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}
+            size="sm"
             type="submit"
           >
             {form.formState.isSubmitting && (

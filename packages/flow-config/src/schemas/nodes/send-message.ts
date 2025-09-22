@@ -1,7 +1,6 @@
 import { InboxType, OMNICHANNEL } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-
 import {
   addContactTagStepSchema,
   addNotesStepSchema,

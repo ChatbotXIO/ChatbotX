@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-// import { openAIAnalyzeImageSchema } from "../../../../ai/src/flows/blocks/ai-analyze-image"
-// import { openAIDeleteMessageHistorySchema } from "../../../../ai/src/flows/blocks/ai-delete-message-history"
-// import { openAIGenerateImageSchema } from "../../../../ai/src/flows/blocks/ai-generate-image"
+import { openAIAnalyzeImageSchema } from "./open-ai-analyze-image"
+import { openAIDeleteMessageHistorySchema } from "./open-ai-delete-message-history"
+import { openAIGenerateImageSchema } from "./open-ai-generate-image"
 import { openAIGenerateTextSchema } from "./open-ai-generate-text"
 import { openAIGenerateTextAdvancedSchema } from "./open-ai-generate-text-advanced"
 import { openAIGenerateTextAgentSchema } from "./open-ai-generate-text-agent"
@@ -18,11 +18,11 @@ export const performActionStepSchema = z.object({
       openAIGenerateTextSchema,
       openAIGenerateTextAgentSchema,
       openAIGenerateTextAdvancedSchema,
-      // openAIAnalyzeImageSchema,
-      // openAIGenerateImageSchema,
+      openAIAnalyzeImageSchema,
+      openAIGenerateImageSchema,
       openAISpeechToTextSchema,
       openAITextToSpeechSchema,
-      // openAIDeleteMessageHistorySchema,
+      openAIDeleteMessageHistorySchema,
     ]),
   ),
 })

@@ -10,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import { Input } from "@aha.chat/ui/components/ui/input"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { CopyIcon } from "lucide-react"
@@ -32,15 +31,15 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
     (typeof window !== "undefined" ? window.location.origin : "")
 
   const embedCode = `<!-- Aha Chat Widget -->
-<script>
-  window.AhaChatConfig = {
+<script src="${baseUrl}/chat-widget/plugin.js" crossorigin="anonymous" async
+  type="module" onload="window.ahachatWidget?.init({
+    webchatId: '${webchat.id}',
+    chatbotId: '${webchat.chatbotId}',
     brandColor: '#${webchat.brandColor}',
     hideHeader: ${webchat.hideHeader},
     showLogo: ${webchat.showLogo},
-    hideMessageInput: ${webchat.hideMessageInput}
-  };
-</script>
-<script src="${baseUrl}/api/webchat/embed/${webchat.id}"></script>`
+    hideMessageInput: true
+  });"></script>`
 
   const handleCopy = (text: string) => () => {
     copyToClipboard(text)
@@ -66,28 +65,6 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
         <div className="space-y-4 overflow-hidden">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="embed-url">{t("fields.embedUrl.label")}</Label>
-              <Button
-                className="gap-2"
-                onClick={() =>
-                  handleCopy(`${baseUrl}/api/webchat/embed/${webchat.id}`)
-                }
-                size="sm"
-                variant="outline"
-              >
-                <CopyIcon className="h-4 w-4" />
-              </Button>
-            </div>
-            <Input
-              className="font-mono text-sm"
-              id="embed-url"
-              readOnly
-              value={`${baseUrl}/api/webchat/embed/${webchat.id}`}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
               <Label htmlFor="embed-code">{t("fields.embedCode.label")}</Label>
               <Button
                 className="gap-2"
@@ -99,7 +76,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
               </Button>
             </div>
             <Textarea
-              className="resize-none font-mono text-sm"
+              className="resize-none font-mono text-sm focus-visible:outline-none focus-visible:ring-0"
               id="embed-code"
               readOnly
               rows={8}
