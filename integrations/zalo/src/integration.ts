@@ -4,17 +4,33 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@aha.chat/sdk"
+import { getUserProfile } from "./apis/user"
 import { callbackHandler } from "./handlers/callback"
-import type { ZaloActions, ZaloAuthValue, ZaloConfig } from "./schemas"
+import { webhookHandler } from "./handlers/webhook"
+import { parseIncomingMessage } from "./incomming-message"
+import { sendOutgoingMessage } from "./outgoing-message"
+import type { ZaloActions, ZaloAuthValue, ZaloConfig } from "./schemas/app"
 
 const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
   name: "zalo",
-  actions: {},
+  actions: {
+    receiveMessage: async ({ data }) => {
+      return await parseIncomingMessage(data)
+    },
+    sendMessage: async ({ ctx, message, conversation }) => {
+      await sendOutgoingMessage(ctx, conversation, message)
+    },
+    getUserProfile: async ({ ctx, uid }) => {
+      return await getUserProfile({ ctx, uid })
+    },
+  },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
     const method = segments.pop()
 
     switch (method) {
+      case HandleRequestType.WEBHOOK:
+        return await webhookHandler(props)
       case HandleRequestType.CALLBACK:
         return await callbackHandler(props)
       default:

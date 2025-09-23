@@ -1,5 +1,5 @@
 import ky from "ky"
-import type { ZaloConfig, ZaloTokens, zaloOAProfile } from "../schemas"
+import type { ZaloConfig, ZaloTokens, zaloOAProfile } from "../schemas/app"
 
 export async function convertCodeToTokens(
   code: string,

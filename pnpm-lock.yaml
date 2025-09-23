@@ -487,6 +487,9 @@ importers:
       '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
+      '@aha.chat/integration-zalo':
+        specifier: workspace:*
+        version: link:../../integrations/zalo
       '@aha.chat/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -654,6 +657,9 @@ importers:
 
   integrations/zalo:
     dependencies:
+      '@aha.chat/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk

@@ -32,14 +32,13 @@ export function ZaloConnect({ organization }: ZaloConnectProps) {
       "/integrations/zalo/callback",
       process.env.NEXT_PUBLIC_BUILDER_URL,
     ).toString()
-    const clientId = setting.zalo.clientId as string
-    const clientSecret = setting.zalo.clientSecret as string
-    const version = setting.zalo.version as string
+    const { clientId, clientSecret, version, oaSecretKey } = setting.zalo
     const redirectUri = generateAuthUrl({
       clientId,
       clientSecret,
       version,
       redirectUrl,
+      oaSecretKey,
       stateParams: {
         chatbotId,
         referer: `${process.env.NEXT_PUBLIC_BUILDER_URL}/chatbots/${chatbotId}/settings/channels`,

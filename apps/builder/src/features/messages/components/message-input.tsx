@@ -24,6 +24,7 @@ import { Controller } from "react-hook-form"
 import { InstagramIcon } from "@/components/icons/instagram"
 import { MessengerIcon } from "@/components/icons/messenger"
 import WhatsappIcon from "@/components/icons/whatsapp"
+import { ZaloIcon } from "@/components/icons/zalo"
 import { authClient } from "@/lib/auth-client"
 import type { ClientConversationResource } from "../../chat/store/chat-store"
 import { useChatStore } from "../../chat/store/chat-store-provider"
@@ -56,7 +57,10 @@ export const MessageInput = () => {
       label: "Whatsapp",
     },
     OMNICHANNEL: undefined,
-    ZALO: undefined,
+    ZALO: {
+      icon: <ZaloIcon />,
+      label: "Zalo",
+    },
   }
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)

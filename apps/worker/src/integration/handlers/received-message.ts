@@ -10,6 +10,7 @@ import {
 import { uploader } from "@aha.chat/filesystem"
 import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
 import type { OnMessageArgs } from "@aha.chat/integration-whatsapp"
+import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
@@ -27,7 +28,7 @@ import { allIntegrations } from "../../shared/integrations"
 
 const getDBIntegration = async (
   integrationName: string,
-  payload: OnMessageArgs | MessengerWebhookEvent,
+  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent,
 ) => {
   switch (integrationName) {
     case InboxType.WHATSAPP:
@@ -48,6 +49,15 @@ const getDBIntegration = async (
           chatbot: true,
         },
       })
+    case InboxType.ZALO:
+      return await prisma.integrationZalo.findFirstOrThrow({
+        where: {
+          oaId: (payload as ZaloWebhookEvent).recipient.id,
+        },
+        include: {
+          chatbot: true,
+        },
+      })
     default:
       throw new Error(`Unsupported integration: ${integrationName}`)
   }
@@ -57,7 +67,7 @@ const parseReceivedMessage = async (
   // biome-ignore lint/suspicious/noExplicitAny: safe pass value
   ctx: Context<any>,
   integrationName: string,
-  payload: OnMessageArgs | MessengerWebhookEvent,
+  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent,
 ): Promise<
   | {
       message: MessageEntity
@@ -80,7 +90,7 @@ export const receiveMessage = async ({
   payload,
 }: {
   integrationName: string
-  payload: OnMessageArgs | MessengerWebhookEvent
+  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel

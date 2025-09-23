@@ -5,7 +5,7 @@ export const validateOrganizationSettingSchema = z.object({
     clientId: z.string().min(1),
     clientSecret: z.string().min(1),
     version: z.string().min(1),
-    verifyToken: z.string().min(1),
+    oaSecretKey: z.string().min(1),
   }),
 })
 
