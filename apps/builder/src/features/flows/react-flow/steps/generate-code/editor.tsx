@@ -85,7 +85,6 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <SelectField
-              isRequired
               label={t("fields.type.label")}
               name="type"
               options={[
@@ -102,6 +101,7 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
                   value: GenerateCodeType.ALPHANUMERIC_LENGTH,
                 },
               ]}
+              required
             />
 
             <InputField isRequired label={t("fields.min.label")} name="min" />

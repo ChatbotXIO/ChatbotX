@@ -4,7 +4,7 @@ import {
   prisma,
   SenderType,
 } from "@aha.chat/database"
-import { CHAT_WIDGET_SOURCE_PREFIX } from "@aha.chat/database/types"
+import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { StepType } from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
@@ -47,7 +47,7 @@ export async function sendFlowStep({
       data: message,
     }),
   ]
-  if (conversation.sourceId?.startsWith(CHAT_WIDGET_SOURCE_PREFIX)) {
+  if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
     promises.push(
       broadcastToGuestParty(conversation.sourceId, {
         eventType: RealtimeEventType.CREATE_MESSAGE,

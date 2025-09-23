@@ -12,3 +12,5 @@ export const sendAudioStep: StepDefinition = {
   validator: sendAudioStepSchema,
   defaultFn: sendAudioStepDefaultFn,
 }
+
+export default sendAudioStep

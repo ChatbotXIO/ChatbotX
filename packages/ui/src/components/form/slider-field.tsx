@@ -7,20 +7,15 @@ type SliderFieldProps<T extends FieldValues> = {
   label?: string
   description?: string
   isRequired?: boolean
+  required?: boolean
 } & React.ComponentProps<typeof Slider>
 
-export function SliderField<T extends FieldValues>({
-  name,
-  label,
-  description,
-  isRequired,
-  ...props
-}: SliderFieldProps<T>) {
-  const { min, max, step } = props
+export function SliderField<T extends FieldValues>(props: SliderFieldProps<T>) {
+  const { name, label, description, min, max, step, required } = props
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={isRequired}
+      isRequired={required}
       label={label}
       name={name}
     >

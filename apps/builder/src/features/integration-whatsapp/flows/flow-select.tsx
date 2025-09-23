@@ -26,11 +26,11 @@ export const WhatsappFlowSelect = (props: WhatsappFlowSelectProps) => {
 
   return (
     <SelectField
-      isRequired={isRequired}
       label={label}
       name={name}
       options={flows}
       placeholder="Please select"
+      required={isRequired}
     />
   )
 }

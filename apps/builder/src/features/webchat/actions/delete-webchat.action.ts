@@ -1,0 +1,25 @@
+"use server"
+
+import { prisma } from "@aha.chat/database"
+import { revalidateTag } from "next/cache"
+import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
+import { chatbotActionClient } from "@/lib/safe-action"
+
+export const deleteWebchatAction = chatbotActionClient
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .action(async ({ bindArgsParsedInputs: [chatbotId, id] }) => {
+    const integration = await prisma.integrationWebchat.findFirstOrThrow({
+      where: {
+        id,
+        chatbotId,
+      },
+    })
+
+    await prisma.integrationWebchat.delete({
+      where: {
+        id: integration.id,
+      },
+    })
+
+    revalidateTag(`chatbots:${chatbotId}#webchats`)
+  })

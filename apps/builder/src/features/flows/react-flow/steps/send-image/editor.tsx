@@ -1,4 +1,5 @@
-import { DirectUpload } from "@/components/direct-upload"
+import { FileType } from "@aha.chat/database/types"
+import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { ButtonGroupEditor } from "../button/editor"
 
 type SendImageStepEditorProps = {
@@ -10,7 +11,12 @@ const SendImageStepEditor = (props: SendImageStepEditorProps) => {
 
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg">
-      <DirectUpload parentName={parentName} />
+      <div className="bg-secondary px-4 py-2">
+        <DirectUploadOrInsertLink
+          fileType={FileType.IMAGE}
+          parentName={parentName}
+        />
+      </div>
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>

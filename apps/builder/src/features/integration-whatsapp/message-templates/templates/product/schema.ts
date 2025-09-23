@@ -3,7 +3,7 @@ import { ButtonActionType, buttonStepSchema } from "../button/schema"
 
 export const templateProductSchema = z
   .object({
-    showHeader: z.boolean(),
+    hideHeader: z.boolean(),
     showFooter: z.boolean(),
     header: z.object({
       text: z.string().max(60),
@@ -29,7 +29,7 @@ export const templateProductSchema = z
 export type TemplateProductSchema = z.infer<typeof templateProductSchema>
 
 export const templateProductDefaultValue = (): TemplateProductSchema => ({
-  showHeader: true,
+  hideHeader: true,
   showFooter: false,
   header: {
     text: "",

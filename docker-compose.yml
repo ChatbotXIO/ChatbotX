@@ -1,42 +1,81 @@
 name: ahachat
 
-include:
-  - docker-compose.dev.yml
-
 services:
-  builder:
-    image: realcodesiman/ahachat-builder:latest
-    # build:
-    #   context: .
-    #   dockerfile: apps/builder/docker/Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ./.env
+  postgres:
+    image: postgres:16
     ports:
-      - "3123:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-ahachat}
+      - POSTGRES_USER=${POSTGRES_USER:-ahachat}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
       interval: 30s
-      timeout: 10s
-      retries: 3
+      timeout: 60s
+      retries: 5
+      start_period: 80s
 
-  # BullMQ Worker
-  worker:
-    image: realcodesiman/ahachat-worker:latest
-    restart: unless-stopped
-    env_file:
-      - ./.env
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - '5050:80'
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@aha.chat
+      - PGADMIN_DEFAULT_PASSWORD=nr541Kv59xB4f48bhZOy5wBz
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: ahachat
+      MINIO_ROOT_PASSWORD: nr541Kv59xB4f48bhZOy5wBz
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 5s
+
+  createbuckets:
+    image: minio/mc
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio http://minio:9000 ahachat nr541Kv59xB4f48bhZOy5wBz;
+      /usr/bin/mc mb minio/ahachat;
+      /usr/bin/mc anonymous set public minio/ahachat/public;
+      exit 0;
+      "
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - cache-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
+  s3-data:
+  cache-data:

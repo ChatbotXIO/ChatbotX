@@ -2,11 +2,7 @@
 
 import { IntegrationType, prisma } from "@aha.chat/database"
 import { OpenAIModel } from "@aha.chat/flow-config"
-import {
-  AuthType,
-  IntegrationException,
-  type SecretTextAuthValue,
-} from "@aha.chat/sdk"
+import { AuthType, type SecretTextAuthValue } from "@aha.chat/sdk"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -30,32 +26,41 @@ export const connectOpenAIAction = authActionClient
           chatbotId,
         },
       })
-      if (integrationOpenAI) {
-        throw new IntegrationException(
-          "OpenAI integration is already connected",
-        )
-      }
 
       await prisma.$transaction(async (tx) => {
-        await tx.integration.create({
-          data: {
-            chatbotId,
-            integrationType: IntegrationType.OPENAI,
-            openAI: {
-              create: {
-                chatbotId,
-                model: OpenAIModel.GPT4oMini,
-                auth: {
-                  authType: AuthType.SECRET_TEXT,
-                  secretText: parsedInput.apiKey,
-                } as SecretTextAuthValue,
-                automatedResponse: false,
-                temperature: parsedInput.temperature,
-                maxTokens: parsedInput.maxTokens,
+        if (integrationOpenAI) {
+          await tx.integrationOpenAI.update({
+            where: { id: integrationOpenAI.id },
+            data: {
+              model: OpenAIModel.GPT4oMini,
+              auth: {
+                authType: AuthType.SECRET_TEXT,
+                secretText: parsedInput.apiKey,
+              } as SecretTextAuthValue,
+              temperature: parsedInput.temperature,
+              maxTokens: parsedInput.maxTokens,
+            },
+          })
+        } else {
+          await tx.integration.create({
+            data: {
+              chatbotId,
+              integrationType: IntegrationType.OPENAI,
+              openAI: {
+                create: {
+                  chatbotId,
+                  model: OpenAIModel.GPT4oMini,
+                  auth: {
+                    authType: AuthType.SECRET_TEXT,
+                    secretText: parsedInput.apiKey,
+                  } as SecretTextAuthValue,
+                  temperature: parsedInput.temperature,
+                  maxTokens: parsedInput.maxTokens,
+                },
               },
             },
-          },
-        })
+          })
+        }
       })
 
       return

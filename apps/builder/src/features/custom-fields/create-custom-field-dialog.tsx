@@ -138,7 +138,6 @@ export function CreateCustomFieldDialog({
             />
 
             <TextareaField
-              isRequired={false}
               label={t("fields.description.label")}
               name="description"
               placeholder={t("fields.description.placeholder")}

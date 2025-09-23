@@ -4,6 +4,7 @@ import {
   NodeType,
 } from "@aha.chat/flow-config"
 import type { LucideIcon } from "lucide-react"
+import type { useTranslations } from "next-intl"
 import sendMessageNodeConfig from "./send-message"
 import type { MenuItem } from "./types"
 
@@ -14,7 +15,7 @@ export type NodeConfigProps = {
   defaultFn: ((config: NewNodeProps) => FlowNode) | undefined
   // biome-ignore lint/suspicious/noExplicitAny: wip
   validator: any
-  menus: MenuItem[]
+  menus: (t: ReturnType<typeof useTranslations>) => MenuItem[]
 }
 
 export const allNodesConfig: Record<NodeType, NodeConfigProps | undefined> = {

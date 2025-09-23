@@ -2,24 +2,24 @@
   "name": "ahachat.ai",
   "private": true,
   "scripts": {
-    "build": "dotenv -e .env -- turbo build",
-    "dev": "dotenv -e .env -- turbo dev",
-    "format": "ultracite format --unsafe",
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "format": "ultracite fix --unsafe",
     "lint": "ultracite lint",
     "clean": "pnpm store prune && pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf .turbo && pnpm -r exec rm -rf .next",
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.0",
+    "@biomejs/biome": "^2.2.2",
     "@types/node": "^22.16.0",
     "knip": "^5.63.0",
-    "lefthook": "^1.11.16",
-    "tsx": "^4.20.3",
+    "lefthook": "^1.12.3",
+    "tsx": "^4.20.5",
     "turbo": "^2.5.6",
-    "typescript": "5.8.3",
-    "ultracite": "5.2.2"
+    "typescript": "5.9.2",
+    "ultracite": "5.3.2"
   },
-  "packageManager": "pnpm@10.16.1+sha512.0e155aa2629db8672b49e8475da6226aa4bdea85fdcdfdc15350874946d4f3c91faaf64cbdc4a5d1ab8002f473d5c3fcedcd197989cf0390f9badd3c04678706",
+  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
   "engines": {
     "node": ">=22"
   },

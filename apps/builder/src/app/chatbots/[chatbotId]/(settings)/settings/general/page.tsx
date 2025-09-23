@@ -10,5 +10,9 @@ export default async function GeneralPage(props: {
   const userId = await getCurrentUserId()
   const { chatbot } = await findChatbotOrFail(userId, params.chatbotId)
 
-  return <UpdateChatbotForm chatbot={chatbot} />
+  return (
+    <div className="px-4">
+      <UpdateChatbotForm chatbot={chatbot} />
+    </div>
+  )
 }

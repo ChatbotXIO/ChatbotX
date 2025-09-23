@@ -83,8 +83,8 @@ export const parseHeader = async (
 ) => {
   if (
     !(
-      "showHeader" in content &&
-      content.showHeader &&
+      "hideHeader" in content &&
+      content.hideHeader &&
       "header" in content &&
       content.header
     )

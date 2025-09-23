@@ -6,7 +6,7 @@ import { sendFlowNodeStepSchema } from "./send-flow-node"
 
 export const ButtonType = {
   SendMessage: "SendMessage",
-  OPEN_WEBSITE: "OPEN_WEBSITE",
+  OpenWebsite: "OpenWebsite",
   PerformAction: "PerformAction",
   StartAnotherFlow: "StartAnotherFlow",
   StartAnotherStep: "StartAnotherStep",
@@ -54,7 +54,7 @@ export const buttonStepSchema = z
         ),
       }),
       z.object({
-        buttonType: z.literal(ButtonType.OPEN_WEBSITE),
+        buttonType: z.literal(ButtonType.OpenWebsite),
         steps: z.array(
           z.union([openWebsiteStepSchema, performActionStepSchema]),
         ),

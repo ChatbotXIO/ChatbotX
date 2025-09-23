@@ -23,6 +23,7 @@ import { optOutEmailStep } from "./opt-out-email"
 import { removeContactTagStep } from "./remove-contact-tag"
 import { sendAudioStep } from "./send-audio"
 import { sendCardStep } from "./send-card"
+import sendFileStep from "./send-file"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
@@ -60,7 +61,7 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.SET_DEBOUNCE]: undefined,
   [StepType.SEND_MESSENGER_OTN]: undefined,
   [StepType.SEND_AUDIO]: sendAudioStep,
-  [StepType.SEND_FILE]: undefined,
+  [StepType.SEND_FILE]: sendFileStep,
   [StepType.ADD_CONTACT_TAG]: addContactTagStep,
   [StepType.REMOVE_CONTACT_TAG]: removeContactTagStep,
   [StepType.NOTIFY_AGENT]: undefined,

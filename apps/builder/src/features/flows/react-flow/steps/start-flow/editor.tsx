@@ -14,7 +14,7 @@ export const StartFlowStepEditor = ({ parentName }: { parentName: string }) => {
 
   return (
     <BaseStepEditor icon={ExternalLink} title={t("flows.stepType.startFlow")}>
-      <FlowSelect isRequired={true} label="" name={name} />
+      <FlowSelect label="" name={name} required={true} />
     </BaseStepEditor>
   )
 }

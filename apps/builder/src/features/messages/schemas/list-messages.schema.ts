@@ -1,4 +1,4 @@
-import { CHAT_WIDGET_SOURCE_PREFIX } from "@aha.chat/database/types"
+import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const listMessagesRequest = z.object({
@@ -18,7 +18,7 @@ export const listGuestMessagesRequest = z.object({
   cursor: z.string().optional(),
   guestConversationId: z
     .string()
-    .refine((id) => id.startsWith(CHAT_WIDGET_SOURCE_PREFIX), {
+    .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {
       message: "Invalid guest conversation ID",
     }),
 })

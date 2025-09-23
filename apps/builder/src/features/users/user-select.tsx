@@ -30,11 +30,11 @@ export function UserSelect(props: UserSelectProps) {
   return (
     <SelectField
       className={className}
-      isRequired={isRequired}
       label={label}
       name={name}
       options={userOptions}
       placeholder={t("fields.user.selectAgent")}
+      required={isRequired}
     />
   )
 }

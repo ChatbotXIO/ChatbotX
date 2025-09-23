@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { cn } from "@aha.chat/ui/lib/utils"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -44,7 +45,7 @@ export function SettingsTab() {
   return (
     <nav
       aria-label="Settings navigation"
-      className="flex w-full flex-wrap gap-1 rounded-md bg-muted p-1"
+      className="flex w-full flex-wrap gap-1 border-red border-b bg-muted"
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.value
@@ -53,9 +54,12 @@ export function SettingsTab() {
           <Button
             aria-current={isActive ? "page" : undefined}
             asChild
-            className="hover:bg-primary-foreground"
+            className={cn(
+              "rounded-none px-4 py-6 hover:bg-primary-foreground",
+              isActive && "border-primary border-b-2",
+            )}
             key={tab.value}
-            variant={isActive ? "outline" : "ghost"}
+            variant="ghost"
           >
             {isActive ? (
               <span className="cursor-pointer">{tab.label}</span>

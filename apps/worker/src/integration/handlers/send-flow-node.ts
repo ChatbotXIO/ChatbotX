@@ -81,7 +81,7 @@ const flowStepHandlers: Record<
   [StepType.OTHERS]: undefined,
   [StepType.PERFORM_ACTION]: undefined,
   [StepType.REMOVE_CONTACT_TAG]: removeContactTag,
-  [StepType.SEND_AUDIO]: undefined,
+  [StepType.SEND_AUDIO]: dispatchFlowStep,
   [StepType.SEND_CARD]: undefined,
   [StepType.SEND_CAROUSEL]: undefined,
   [StepType.SEND_FILE]: undefined,

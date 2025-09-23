@@ -21,7 +21,7 @@ export const allButtonsConfig: IButtonConfig[] = [
     label: "Send Message",
   },
   {
-    buttonType: ButtonType.OPEN_WEBSITE,
+    buttonType: ButtonType.OpenWebsite,
     icon: LinkIcon,
     label: "Open Website",
   },

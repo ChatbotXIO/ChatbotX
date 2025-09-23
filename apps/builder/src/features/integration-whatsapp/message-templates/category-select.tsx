@@ -52,11 +52,11 @@ export function WhatsappMessageTemplateCategorySelect({
   return (
     <>
       <SelectField
-        isRequired={isRequired}
         label={label}
         name={name}
         options={options}
         placeholder="Please select"
+        required={isRequired}
       />
       {category === WhatsappTemplateCategory.MARKETING && (
         <div className="grid auto-cols-min grid-flow-col items-center gap-x-4 rounded bg-slate-200 p-6">

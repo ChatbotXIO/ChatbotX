@@ -1,18 +1,11 @@
 "use client"
 
+import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { ColorPicker } from "@aha.chat/ui/components/ui/color-picker"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@aha.chat/ui/components/ui/form"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -68,91 +61,69 @@ export function UpdateChatbotAdvancedForm({
   )
 
   return (
-    <Card>
-      <CardContent>
-        <Form {...form}>
-          <form
-            className="flex flex-col gap-y-4"
-            onSubmit={handleSubmitWithAction}
+    <Form {...form}>
+      <form className="flex flex-col gap-2" onSubmit={handleSubmitWithAction}>
+        <SettingRow
+          description={t("fields.defaultReply.description")}
+          label={t("fields.defaultReply.label")}
+        >
+          <FlowSelect name="defaultReply" />
+        </SettingRow>
+
+        <SettingRow
+          description={t("fields.targetCountry.description")}
+          label={t("fields.targetCountry.label")}
+        >
+          <ComboboxField name="targetCountry" options={allCountryOptions} />
+        </SettingRow>
+
+        <SettingRow
+          description={t("fields.defaultLanguage.description")}
+          label={t("fields.defaultLanguage.label")}
+        >
+          <SelectField
+            name="defaultLanguage"
+            options={[
+              { value: "en", label: t("fields.language.english") },
+              { value: "vi", label: t("fields.language.vietnamese") },
+            ]}
+          />
+        </SettingRow>
+
+        <SettingRow
+          description={t("fields.accountTimezone.description")}
+          label={t("fields.accountTimezone.label")}
+        >
+          <ComboboxField name="accountTimezone" options={allTimezoneOptions} />
+        </SettingRow>
+
+        <SettingRow
+          description={t("fields.brandColor.description")}
+          label={t("fields.brandColor.label")}
+        >
+          <ColorPickerField name="brandColor" required={true} />
+        </SettingRow>
+
+        <SettingRow
+          description={t("fields.developmentMode.description")}
+          label={t("fields.developmentMode.label")}
+        >
+          <SwitchField className="mt-1.5" name="developmentMode" />
+        </SettingRow>
+
+        <div className="mt-4 flex flex-start">
+          <Button
+            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            size="sm"
+            type="submit"
           >
-            <SettingRow
-              description={t("fields.defaultReply.description")}
-              label={t("fields.defaultReply.label")}
-            >
-              <FlowSelect name="defaultReply" />
-            </SettingRow>
-
-            <SettingRow
-              description={t("fields.targetCountry.description")}
-              label={t("fields.targetCountry.label")}
-            >
-              <ComboboxField name="targetCountry" options={allCountryOptions} />
-            </SettingRow>
-
-            <SettingRow
-              description={t("fields.defaultLanguage.description")}
-              label={t("fields.defaultLanguage.label")}
-            >
-              <SelectField
-                name="defaultLanguage"
-                options={[
-                  { value: "en", label: t("fields.language.english") },
-                  { value: "vi", label: t("fields.language.vietnamese") },
-                ]}
-              />
-            </SettingRow>
-
-            <SettingRow
-              description={t("fields.accountTimezone.description")}
-              label={t("fields.accountTimezone.label")}
-            >
-              <ComboboxField
-                name="accountTimezone"
-                options={allTimezoneOptions}
-              />
-            </SettingRow>
-
-            <SettingRow
-              description={t("fields.brandColor.description")}
-              label={t("fields.brandColor.label")}
-            >
-              <FormField
-                control={form.control}
-                name={"brandColor"}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ColorPicker {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </SettingRow>
-
-            <SettingRow
-              description={t("fields.developmentMode.description")}
-              label={t("fields.developmentMode.label")}
-            >
-              <SwitchField className="mt-1.5" name="developmentMode" />
-            </SettingRow>
-
-            <div className="mt-4 text-center">
-              <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                type="submit"
-              >
-                {form.formState.isSubmitting && (
-                  <Loader2Icon className="animate-spin" />
-                )}
-                {t("actions.confirm")}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            {form.formState.isSubmitting && (
+              <Loader2Icon className="animate-spin" />
+            )}
+            {t("actions.confirm")}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }

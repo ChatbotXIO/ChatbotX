@@ -12,10 +12,10 @@ export const GeminiLanguageModelSelect = ({
 
   return (
     <SelectField
-      isRequired={required}
       label={t("fields.geminiModel.label")}
       name="geminiModel"
       options={[]}
+      required={required}
     />
   )
 }

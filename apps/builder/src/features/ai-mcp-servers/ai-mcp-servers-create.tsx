@@ -143,10 +143,10 @@ export function AIMcpServersCreate() {
             <InputField isRequired label={t("fields.name.label")} name="name" />
             <InputField isRequired label={t("fields.url.label")} name="url" />
             <SelectField
-              isRequired
               label={t("fields.auth.label")}
               name="auth.type"
               options={authOptions}
+              required
             />
             {form.watch("auth.type") === "TOKEN" && (
               <InputField

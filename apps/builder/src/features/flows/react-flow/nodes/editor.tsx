@@ -218,7 +218,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
         <DropdownMenuContent className="w-full">
           <RecursiveDropdownMenu
-            data={nodeConfig ? nodeConfig.menus : []}
+            data={nodeConfig ? nodeConfig.menus(t) : []}
             onClick={onAddStep}
           />
         </DropdownMenuContent>

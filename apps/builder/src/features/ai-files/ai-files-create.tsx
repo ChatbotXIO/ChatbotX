@@ -33,7 +33,7 @@ export function AIFilesCreate() {
     <DirectUploadButton
       accept=".pdf,.md,.docx,.txt,.csv,.xlsx"
       disabled={isPending}
-      maxSize={100_000_000}
+      maxSize={25_000_000} // 25MB
       multiple={false}
       onUploadError={(error, file) => {
         toast.error(`Failed to upload ${file.name}`, {

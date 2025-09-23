@@ -6,16 +6,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import { useTranslations } from "next-intl"
 import type { MenuItem } from "../nodes/types"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
-  const t = useTranslations()
-
   return (
     <div className="flex gap-2">
       <menuItem.icon size={16} />
-      {t(menuItem.label)}
+      {menuItem.label}
     </div>
   )
 }

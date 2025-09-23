@@ -2,7 +2,6 @@
 
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Input } from "@aha.chat/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -60,61 +59,53 @@ export function UpdateChatbotBasicForm({
   )
 
   return (
-    <Card>
-      <CardContent>
-        <Form {...form}>
-          <form
-            className="flex flex-col gap-y-4"
-            onSubmit={handleSubmitWithAction}
-          >
-            <SettingRow
-              description={t("fields.chatbotId.description")}
-              label={t("fields.chatbotId.label")}
+    <Form {...form}>
+      <form className="flex flex-col gap-2" onSubmit={handleSubmitWithAction}>
+        <SettingRow
+          description={t("fields.chatbotId.description")}
+          label={t("fields.chatbotId.label")}
+        >
+          <div className="flex gap-x-2">
+            <Input className="flex-1" defaultValue={chatbot.id} disabled />
+            <Button onClick={() => onCopy(chatbot.id)} size={"icon"}>
+              <CopyIcon />
+            </Button>
+          </div>
+        </SettingRow>
+
+        <SettingRow description={""} label={t("fields.userId.label")}>
+          <div className="flex gap-x-2">
+            <Input
+              className="flex-1"
+              defaultValue={session?.data?.user.id}
+              disabled
+            />
+            <Button
+              onClick={() => onCopy(session?.data?.user.id ?? "")}
+              size={"icon"}
             >
-              <div className="flex gap-x-2">
-                <Input className="flex-1" defaultValue={chatbot.id} disabled />
-                <Button onClick={() => onCopy(chatbot.id)} size={"icon"}>
-                  <CopyIcon />
-                </Button>
-              </div>
-            </SettingRow>
+              <CopyIcon />
+            </Button>
+          </div>
+        </SettingRow>
 
-            <SettingRow description={""} label={t("fields.userId.label")}>
-              <div className="flex gap-x-2">
-                <Input
-                  className="flex-1"
-                  defaultValue={session?.data?.user.id}
-                  disabled
-                />
-                <Button
-                  onClick={() => onCopy(session?.data?.user.id ?? "")}
-                  size={"icon"}
-                >
-                  <CopyIcon />
-                </Button>
-              </div>
-            </SettingRow>
+        <SettingRow description={""} label={t("fields.name.label")}>
+          <InputField name="name" />
+        </SettingRow>
 
-            <SettingRow description={""} label={t("fields.name.label")}>
-              <InputField name="name" />
-            </SettingRow>
-
-            <div className="mt-4 text-center">
-              <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                type="submit"
-              >
-                {form.formState.isSubmitting && (
-                  <Loader2Icon className="animate-spin" />
-                )}
-                {t("actions.confirm")}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        <div className="flex justify-start">
+          <Button
+            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            size="sm"
+            type="submit"
+          >
+            {form.formState.isSubmitting && (
+              <Loader2Icon className="animate-spin" />
+            )}
+            {t("actions.confirm")}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }

@@ -21,7 +21,7 @@ export const WaitStepViewer = (props: WaitStepViewerProps) => {
   const customField = (dataCustomFields?.data ?? []).find(
     (obj) =>
       data.delayType === DelayType.DatetimeCustomField &&
-      obj.id === data.customFieldId,
+      obj.id === data.outputCFId,
   )
 
   return (

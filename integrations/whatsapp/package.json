@@ -14,11 +14,11 @@
     "image-size": "^2.0.2",
     "remeda": "^2.23.3",
     "whatsapp-api-js": "^6.0.0",
-    "zod": "^3.25.71"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "exports": {
     ".": "./src/index.ts"

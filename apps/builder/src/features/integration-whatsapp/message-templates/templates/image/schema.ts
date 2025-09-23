@@ -3,7 +3,7 @@ import { buttonStepDefaultFn, buttonStepSchema } from "../button/schema"
 
 export const templateImageSchema = z
   .object({
-    showHeader: z.boolean(),
+    hideHeader: z.boolean(),
     showFooter: z.boolean(),
     header: z.object({
       file: z
@@ -43,7 +43,7 @@ export type TemplateImageSchema = z.infer<typeof templateImageSchema>
 export const templateImageDefaultValue = (
   countBtn = 0,
 ): TemplateImageSchema => ({
-  showHeader: true,
+  hideHeader: true,
   showFooter: false,
   header: {
     file: null,

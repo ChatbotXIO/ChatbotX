@@ -5,7 +5,7 @@ import { StepType } from "./step-action"
 export const setCustomFieldStepSchema = z.object({
   id: z.string().cuid2(),
   stepType: z.literal(StepType.SET_CUSTOM_FIELD),
-  customFieldId: z.string().cuid2(),
+  outputCFId: z.string().cuid2(),
   operation: z.enum(["set", "append", "prepend"]),
   value: z.string().trim().min(1),
 })
@@ -16,6 +16,6 @@ export const setCustomFieldStepDefaultFn = (): SetCustomFieldStepSchema => ({
   id: createId(),
   stepType: StepType.SET_CUSTOM_FIELD,
   value: "",
-  customFieldId: "",
+  outputCFId: "",
   operation: "set",
 })

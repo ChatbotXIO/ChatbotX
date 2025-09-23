@@ -3,7 +3,7 @@ import { integration as integrationMessenger } from "@aha.chat/integration-messe
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 import { integration as integrationZalo } from "@aha.chat/integration-zalo"
 export const allIntegrations = {
-  [InboxType.CHAT_WIDGET]: undefined,
+  [InboxType.WEBCHAT]: undefined,
   [InboxType.INSTAGRAM]: undefined,
   [InboxType.MESSENGER]: integrationMessenger,
   [InboxType.WHATSAPP]: integrationWhatsapp,

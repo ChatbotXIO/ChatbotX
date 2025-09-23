@@ -13,10 +13,10 @@ export const OpenAILanguageModelSelect = ({
 
   return (
     <SelectField
-      isRequired={required}
       label={t("fields.openAIModel.label")}
       name="openAIModel"
       options={OPENAI_MODEL_OPTIONS}
+      required={required}
     />
   )
 }

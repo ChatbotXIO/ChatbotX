@@ -71,9 +71,7 @@ export function CreateFlowDialog({
           {t("actions.create")}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-sm overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", { feature: t("fields.flow.label") })}
@@ -83,14 +81,14 @@ export function CreateFlowDialog({
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form
-              className="flex-1 space-y-4"
+              className="flex-1 space-y-6"
               onSubmit={handleSubmitWithAction}
             >
               <InputField label={t("fields.name.label")} name="name" />
 
-              <DialogFooter className="justify-end">
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">
+              <DialogFooter>
+                <DialogClose>
+                  <Button type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>
                 </DialogClose>

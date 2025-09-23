@@ -5,7 +5,7 @@ export * from "./generated/prisma/models"
 
 export const OMNICHANNEL = "OMNICHANNEL"
 
-export const CHAT_WIDGET_SOURCE_PREFIX = "cw:"
+export const WEBCHAT_SOURCE_PREFIX = "cw:"
 
 export const CustomFieldOperation = {
   SET: "SET",
@@ -31,6 +31,18 @@ export type ReplyFlow = {
   type: typeof ReplyType.FLOW
   flowId: string
 }
+
+export const UploadMode = {
+  LINK: "link",
+  FILE: "file",
+} as const
+export type UploadMode = (typeof UploadMode)[keyof typeof UploadMode]
+
+export const CardLayout = {
+  VERTICAL: "vert",
+  HORIZONTAL: "horz",
+} as const
+export type CardLayout = (typeof CardLayout)[keyof typeof CardLayout]
 
 export type AutomatedResponseReply = ReplyMessage | ReplyFlow
 
@@ -72,3 +84,23 @@ export const organizationSettingsSchema = z.object({
     .optional(),
 })
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
+
+export type AIAgentProvider = {
+  provider: "openAI" | "gemini"
+  model: string
+}
+
+export const ConversationStarterType = {
+  FLOW: "flow",
+  MESSAGE: "message",
+  WEBSITE: "website",
+} as const
+export type ConversationStarterType =
+  (typeof ConversationStarterType)[keyof typeof ConversationStarterType]
+
+export const PersistentMenuType = {
+  FLOW: "flow",
+  WEBSITE: "website",
+} as const
+export type PersistentMenuType =
+  (typeof PersistentMenuType)[keyof typeof PersistentMenuType]

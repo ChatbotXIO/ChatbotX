@@ -5,7 +5,7 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.842.0",
@@ -15,7 +15,7 @@
     "aws4fetch": "^1.0.20",
     "ky": "^1.8.1",
     "minio": "^8.0.5",
-    "zod": "^3.25.71"
+    "zod": "^3.25.76"
   },
   "exports": {
     ".": "./src/index.ts"

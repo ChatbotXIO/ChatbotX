@@ -1,4 +1,4 @@
-import { CHAT_WIDGET_SOURCE_PREFIX, FileType } from "@aha.chat/database/types"
+import { FileType, WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { z } from "zod"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000
@@ -56,7 +56,7 @@ export const createWebchatMessageRequest = z
       chatbotId: z.string().cuid2(),
       guestConversationId: z
         .string()
-        .refine((id) => id.startsWith(CHAT_WIDGET_SOURCE_PREFIX), {
+        .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {
           message: "Invalid guest conversation ID",
         }),
     }),

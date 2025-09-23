@@ -1,8 +1,8 @@
 "use client"
 
 import type { SendVideoStepSchema } from "@aha.chat/flow-config"
-import { Card, CardFooter, CardHeader } from "@aha.chat/ui/components/ui/card"
-import { ButtonGroupViewer } from "@/features/flows/react-flow/steps/button/viewer"
+import { VideoIcon } from "lucide-react"
+import { ButtonGroupViewer } from "../button/viewer"
 
 type SendVideoStepViewerProps = {
   data: SendVideoStepSchema
@@ -12,15 +12,18 @@ export const SendVideoStepViewer = (props: SendVideoStepViewerProps) => {
   const { data } = props
 
   return (
-    <Card className="mb-2">
-      <CardHeader className="p-0">
-        <video className="rounded-xl" controls={false} muted src={data.url} />
-      </CardHeader>
-      {data.buttons.length > 0 && (
-        <CardFooter className="bg-gray-200 p-2">
-          <ButtonGroupViewer data={data.buttons} />
-        </CardFooter>
+    <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
+      {data.url && (
+        <div className="flex items-center justify-start gap-2 px-4 py-2">
+          <VideoIcon size={24} />
+          <span className="flex-1 truncate">{data.url}</span>
+        </div>
       )}
-    </Card>
+      {data.buttons.length > 0 && (
+        <div className="bg-slate-200 px-3 py-2">
+          <ButtonGroupViewer data={data.buttons} />
+        </div>
+      )}
+    </div>
   )
 }

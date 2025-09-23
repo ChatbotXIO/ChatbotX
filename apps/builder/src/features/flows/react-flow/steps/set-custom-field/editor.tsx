@@ -42,7 +42,7 @@ export const SetCustomFieldStepEditor = ({
   })
 
   function onSubmit(values: SetCustomFieldStepSchema) {
-    setValue(`${parentName}.customFieldId`, values.customFieldId)
+    setValue(`${parentName}.outputCFId`, values.outputCFId)
     setValue(`${parentName}.operation`, values.operation)
     setValue(`${parentName}.value`, values.value)
 
@@ -74,10 +74,10 @@ export const SetCustomFieldStepEditor = ({
               name="customFieldId"
             />
             <SelectField
-              isRequired={true}
               label={t("fields.operation.label")}
               name="operation"
               options={operations}
+              required
             />
             <InputField label={t("fields.value.label")} name="value" />
 

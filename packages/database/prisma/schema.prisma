@@ -156,7 +156,7 @@ model Chatbot {
   inboxes                  Inbox[]
   inboxTeamMembers         InboxTeamMember[]
   inboxTeams               InboxTeam[]
-  integrationChatWidgets   IntegrationChatWidget[]
+  integrationWebchats      IntegrationWebchat[]
   integrationMessengers    IntegrationMessenger[]
   integrationZalo          IntegrationZalo[]
   integrationGoogleSheets  IntegrationGoogleSheets[]
@@ -357,9 +357,9 @@ model ChannelWebWidget {
   authorizedDomains   String[]
   webWidgetTemplateId String
   brandColor          String   @default("#007bff")
-  showHeader          Boolean  @default(true)
-  showPersonalLogo    Boolean  @default(false)
-  showMessageInput    Boolean  @default(true)
+  hideHeader          Boolean  @default(true)
+  showLogo            Boolean  @default(false)
+  hideMessageInput    Boolean  @default(true)
   customizeStyles     String?
 
   // welcomeFlow Flow? @relation(fields: [welcomeFlowId], references: [id])
@@ -395,15 +395,17 @@ model Inbox {
 
   inboxType InboxType
   sourceId  String
-  chatbotId String
-  chatbot   Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
-  integrationWhatsapp   IntegrationWhatsapp?
-  integrationChatWidget IntegrationChatWidget?
-  integrationMessenger  IntegrationMessenger?
-  integrationZalo       IntegrationZalo?
-  messages              Message[]
-  conversations         Conversation[]
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  integrationWhatsapp  IntegrationWhatsapp?
+  integrationWebchat   IntegrationWebchat?
+  integrationMessenger IntegrationMessenger?
+  integrationZalo      IntegrationZalo?
+
+  messages      Message[]
+  conversations Conversation[]
 
   @@unique([chatbotId, inboxType, sourceId])
   @@index([chatbotId])
@@ -580,27 +582,32 @@ model AITrigger {
 }
 
 model IntegrationOpenAI {
-  id                     String   @id @default(cuid(2))
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  chatbotId              String
-  integrationId          String   @unique
-  auth                   Json
-  automatedResponse      Boolean
-  automatedVoiceResponse Boolean  @default(false)
-  voice                  String?
-  prompt                 String?
-  model                  String
-  temperature            Float
-  maxTokens              Int
-  aiAssistantId          String?
-  aiAgentId              String?
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  chatbot     Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  integration Integration  @relation(fields: [integrationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  aiTriggers  AITrigger[]
-  aiAssistant AIAssistant? @relation(fields: [aiAssistantId], references: [id])
-  aiAgent     AIAgent?     @relation(fields: [aiAgentId], references: [id])
+  auth           Json
+  autoReply      Boolean @default(true)
+  autoReplyVoice Boolean @default(false)
+  voice          String?
+  prompt         String?
+  model          String
+  temperature    Float
+  maxTokens      Int
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  integrationId String      @unique
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  aiTriggers AITrigger[]
+
+  aiAssistantId String?
+  aiAssistant   AIAssistant? @relation(fields: [aiAssistantId], references: [id])
+
+  aiAgentId String?
+  aiAgent   AIAgent? @relation(fields: [aiAgentId], references: [id])
 }
 
 model AIFile {
@@ -682,8 +689,8 @@ model IntegrationGemini {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  auth        Json?
-  aiAutoReply Boolean @default(false)
+  auth      Json?
+  autoReply Boolean @default(false)
 
   chatbotId String  @unique
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -759,17 +766,35 @@ model WhatsappFlow {
   integrationWhatsapp IntegrationWhatsapp @relation(fields: [integrationWhatsappId], references: [id], onDelete: Cascade)
 }
 
-model IntegrationChatWidget {
+model IntegrationWebchat {
   id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  chatbotId String
-  inboxId   String   @unique
-  auth      Json
-  name      String
 
-  chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  inbox   Inbox   @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  auth                 Json
+  name                 String
+  enable               Boolean  @default(true)
+  authorizedDomains    String[]
+  conversationStarters Json[]
+  persistentMenus      Json[]
+  brandColor           String   @default("#007bff")
+  hideHeader           Boolean  @default(false)
+  showLogo             Boolean  @default(false)
+  hideMessageInput     Boolean  @default(false)
+  customCss            String?
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  inboxId String @unique
+  inbox   Inbox  @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  welcomeFlowId String?
+  welcomeFlow   Flow?   @relation(fields: [welcomeFlowId], references: [id])
+
+  @@index([chatbotId])
+  @@index([inboxId])
+  @@index([welcomeFlowId])
 }
 
 model Spreadsheet {
@@ -804,6 +829,7 @@ model Flow {
   broadcasts            Broadcast[]
   flowRuns              FlowRun[]
   aiFunctions           AIFunction[]
+  integrationWebchats   IntegrationWebchat[]
   integrationMessengers IntegrationMessenger[]
   integrationZalo       IntegrationZalo[]
 }
@@ -964,7 +990,7 @@ enum AssignedType {
 }
 
 enum IntegrationType {
-  CHAT_WIDGET
+  WEBCHAT
   GOOGLE_SHEETS
   INSTAGRAM
   MESSENGER
@@ -976,7 +1002,7 @@ enum IntegrationType {
 
 enum InboxType {
   OMNICHANNEL
-  CHAT_WIDGET
+  WEBCHAT
   INSTAGRAM
   MESSENGER
   WHATSAPP

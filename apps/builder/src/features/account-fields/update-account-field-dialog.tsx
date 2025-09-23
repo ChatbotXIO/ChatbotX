@@ -90,7 +90,6 @@ export function UpdateAccountFieldDialog({
               <InputField label={t("fields.name.label")} name="name" />
 
               <TextareaField
-                isRequired={false}
                 label={t("fields.description.label")}
                 name="description"
               />

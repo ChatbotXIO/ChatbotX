@@ -113,9 +113,9 @@ export function CreateBroadcastForm({
               {hasInboxType && hasSubAction && (
                 <>
                   <FlowSelect
-                    isRequired={true}
                     label={t("fields.flowToSend.label")}
                     name="flowId"
+                    required={true}
                   />
 
                   <SelectField

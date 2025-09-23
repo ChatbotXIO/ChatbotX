@@ -2,11 +2,11 @@
 
 import { prisma } from "@aha.chat/database"
 import {
-  CHAT_WIDGET_SOURCE_PREFIX,
   ContentType,
   MessageType,
   SenderType,
   type UserModel,
+  WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import {
@@ -134,7 +134,7 @@ export const createMessageAction = chatbotActionClient
           },
         }),
       ]
-      if (conversation.sourceId?.startsWith(CHAT_WIDGET_SOURCE_PREFIX)) {
+      if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
         promises.push(
           broadcastToGuestParty(conversation.sourceId, {
             eventType: RealtimeEventType.CREATE_MESSAGE,

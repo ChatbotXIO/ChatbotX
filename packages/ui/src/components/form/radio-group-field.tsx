@@ -1,7 +1,6 @@
 import type { RadioGroupProps } from "@radix-ui/react-radio-group"
 import type { FieldPath, FieldValues } from "react-hook-form"
-import { Controller } from "react-hook-form"
-import { FormControl, FormItem, FormLabel } from "../ui/form"
+import { Label } from "../ui/label"
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
 import { FormFieldWrapper } from "./field-wrapper"
 
@@ -29,33 +28,25 @@ export function RadioGroupField<T extends FieldValues>({
       label={label}
       name={name}
     >
-      {() => (
-        <Controller
-          name={name}
-          render={({ field }) => {
-            return (
-              <RadioGroup
-                className="mt-2 flex flex-col"
-                defaultValue={field.value}
-                onValueChange={field.onChange}
-              >
-                {options.map((option) => (
-                  <FormItem
-                    className="flex items-center gap-3"
-                    key={option.value}
-                  >
-                    <FormControl>
-                      <RadioGroupItem value={option.value} />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      {option.label}
-                    </FormLabel>
-                  </FormItem>
-                ))}
-              </RadioGroup>
-            )
-          }}
-        />
+      {(field) => (
+        <RadioGroup
+          className="flex flex-col"
+          defaultValue={field.value}
+          onValueChange={field.onChange}
+        >
+          {options.map((option) => (
+            <div className="flex items-center space-x-2" key={option.value}>
+              <RadioGroupItem
+                id={option.value}
+                key={option.value}
+                value={option.value}
+              />
+              <Label className="font-normal" htmlFor={option.value}>
+                {option.label}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
       )}
     </FormFieldWrapper>
   )

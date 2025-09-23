@@ -12,6 +12,7 @@ import {
   SiWhatsapp,
   SiZalo,
 } from "@icons-pack/react-simple-icons"
+import { AppWindowIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 
@@ -19,6 +20,7 @@ type SettingsChannelsPageProps = {
   readonly whatsapp: ReactNode
   readonly messenger: ReactNode
   readonly zalo: ReactNode
+  readonly webchat: ReactNode
 }
 
 type IntegrationItem = {
@@ -32,6 +34,7 @@ export default function SettingsChannelsPage({
   whatsapp,
   messenger,
   zalo,
+  webchat,
 }: SettingsChannelsPageProps) {
   const t = useTranslations()
 
@@ -53,6 +56,12 @@ export default function SettingsChannelsPage({
       icon: SiZalo,
       iconColor: "#0068ff",
       content: zalo,
+    },
+    {
+      keyName: t("webchat.title"),
+      icon: AppWindowIcon,
+      iconColor: "none",
+      content: webchat,
     },
   ]
 
