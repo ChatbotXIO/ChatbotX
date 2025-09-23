@@ -1,5 +1,5 @@
 import type { Context, ConversationEntity, MessageEntity } from "@aha.chat/sdk"
-import { sendMessage } from "../apis/oa"
+import { sendMessage } from "../apis/message"
 import type { ZaloAuthValue } from "../schemas/app"
 import {
   ZALO_MESSAGE_METADATA,

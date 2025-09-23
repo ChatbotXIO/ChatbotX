@@ -4,6 +4,8 @@ export type Oauth2Config = {
   clientId: string
   clientSecret: string
   redirectUrl: string
+  version?: string
+  verifyToken?: string
   stateParams?: Record<string, unknown>
 }
 

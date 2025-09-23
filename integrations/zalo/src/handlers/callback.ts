@@ -1,9 +1,14 @@
-import { AuthType, type HandleRequestProps, SdkException } from "@aha.chat/sdk"
-import { convertCodeToTokens, getZaloOAProfile } from "../libs/zalo"
-import type { ZaloAuthValue, ZaloConfig } from "../schemas"
+import {
+  AuthType,
+  type HandleRequestProps,
+  type Oauth2Config,
+  SdkException,
+} from "@aha.chat/sdk"
+import { convertCodeToTokens, getZaloOAProfile } from "../apis/auth"
+import type { ZaloAuthValue } from "../schemas"
 
 export const callbackHandler = async (
-  props: HandleRequestProps<ZaloConfig>,
+  props: HandleRequestProps<Oauth2Config>,
 ): Promise<ZaloAuthValue> => {
   const url = new URL(props.req.url)
   const code = url.searchParams.get("code")
@@ -13,12 +18,12 @@ export const callbackHandler = async (
   }
 
   const { access_token, refresh_token, expires_in } = await convertCodeToTokens(
-    code,
     props.config,
+    code,
   )
-  const OAProfile = await getZaloOAProfile(access_token)
+  const oaProfile = await getZaloOAProfile(access_token)
 
-  if (!OAProfile) {
+  if (!oaProfile) {
     throw new SdkException("Can't get OA profile from Zalo")
   }
 
@@ -32,10 +37,10 @@ export const callbackHandler = async (
       refreshToken: refresh_token,
       expiresAt: expires_in,
     },
-    oaId: OAProfile.oa_id,
+    oaId: oaProfile.oaid,
     metadata: {
       version: props.config.version,
-      OAName: OAProfile.name,
+      oaName: oaProfile.name,
     },
   }
 }

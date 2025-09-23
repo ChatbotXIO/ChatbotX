@@ -23,7 +23,7 @@ const verifyWebhookSignature = (
     const appId = payload.app_id
     const timeStamp = payload.timestamp
     const dataString = JSON.stringify(payload)
-    const content = appId + dataString + timeStamp + config.oaSecretKey
+    const content = appId + dataString + timeStamp + config.verifyToken
     const expectedHash = crypto
       .createHash("sha256")
       .update(content, "utf8")

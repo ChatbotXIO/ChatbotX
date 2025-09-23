@@ -1,9 +1,9 @@
 "use server"
 
 import { IntegrationType, prisma } from "@aha.chat/database"
-import type {
-  ChatbotModel,
-  OrganizationSettings,
+import {
+  type ChatbotModel,
+  organizationSettingsSchema,
 } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import {
@@ -17,11 +17,7 @@ import type { ChatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { findOrganization } from "@/features/organization/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  type SelectPageRequest,
-  selectPageRequest,
-  validateOrganizationSettingSchema,
-} from "../schemas"
+import { type SelectPageRequest, selectPageRequest } from "../schemas"
 
 export const selectPageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams.items)
@@ -42,30 +38,31 @@ export const selectPageAction = chatbotActionClient
         const organization = await findOrganization({
           id: ctx.chatbot.organizationId,
         })
-        const organizationSettings =
-          organization?.settings as unknown as OrganizationSettings
-        const { data: setting } =
-          validateOrganizationSettingSchema.safeParse(organizationSettings)
-        if (!setting) {
+        const { data: setting } = organizationSettingsSchema.safeParse(
+          organization.settings,
+        )
+        if (!setting?.messenger) {
           throw new Error("Organization settings are not valid")
         }
 
+        const messengerSetting = setting.messenger
+
         await prisma.$transaction(async (tx) => {
           const longLivedToken = await exchangeLongLivedToken(
-            setting.messenger,
+            messengerSetting,
             parsedInput.accessToken,
           )
 
           await subscribePageToAppWebhook({
             pageId: parsedInput.pageId,
             accessToken: longLivedToken,
-            version: setting.messenger.version,
+            version: messengerSetting.version,
           })
 
           const auth: MessengerAuthValue = {
             authType: AuthType.OAUTH2,
-            clientId: setting.messenger.clientId,
-            clientSecret: setting.messenger.clientSecret,
+            clientId: messengerSetting.clientId,
+            clientSecret: messengerSetting.clientSecret,
             redirectUrl: "",
             tokens: {
               accessToken: longLivedToken,
@@ -73,7 +70,7 @@ export const selectPageAction = chatbotActionClient
             metadata: {
               pageId: parsedInput.pageId,
               pageName: parsedInput.pageName,
-              version: setting.messenger.version,
+              version: messengerSetting.version,
             },
           }
 

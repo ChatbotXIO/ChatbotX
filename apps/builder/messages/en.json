@@ -1033,5 +1033,8 @@
   "webchat": {
     "title": "Web Chat",
     "description": "Let your customers get instant automated responses from your business directly from your website"
+  },
+  "omnichannel": {
+    "title": "Omnichannel"
   }
 }

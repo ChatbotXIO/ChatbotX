@@ -8,23 +8,16 @@ import type {
   Oauth2Config,
   SendMessageProps,
 } from "@aha.chat/sdk"
-import z from "zod"
 import type { ZaloWebhookEvent } from "./webhook"
 
-export const ZALO_MESSAGE_METADATA = "SENT_FROM_AHACHATAI"
+export type ZaloConfig = Oauth2Config
 
-export type ZaloConfig = Oauth2Config & {
-  oaSecretKey: string
-  version: string
-  stateParams: {
-    chatbotId: string
-  }
-}
+export const ZALO_MESSAGE_METADATA = "SENT_FROM_AHACHATAI"
 
 export type ZaloAuthValue = Oauth2AuthValue & {
   oaId: string
   metadata: {
-    OAName: string
+    oaName: string
   }
 }
 
@@ -46,18 +39,3 @@ export type ZaloActions = {
     uid: string
   }) => Promise<ContactEntity>
 }
-
-export const zaloTokens = z.object({
-  access_token: z.string(),
-  refresh_token: z.string(),
-  expires_in: z.string(),
-})
-export type ZaloTokens = z.infer<typeof zaloTokens>
-
-export const OAProfile = z.object({
-  oa_id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  avatar: z.string().url(),
-})
-export type zaloOAProfile = z.infer<typeof OAProfile>

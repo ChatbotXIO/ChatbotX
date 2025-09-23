@@ -1,8 +1,8 @@
 import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { SiMessenger, SiWhatsapp, SiZalo } from "@icons-pack/react-simple-icons"
 import { AtomIcon } from "lucide-react"
-import { MessengerIcon } from "@/components/icons/messenger"
-import WhatsappIcon from "@/components/icons/whatsapp"
+import { useTranslations } from "next-intl"
 
 type InboxTypeSelectProps = {
   inboxTypes: string[]
@@ -10,48 +10,56 @@ type InboxTypeSelectProps = {
 }
 
 export const InboxTypeSelect = (props: InboxTypeSelectProps) => {
+  const t = useTranslations()
+
   const allTypes = [
     {
-      icon: <AtomIcon />,
-      name: "Omnichannel",
+      icon: AtomIcon,
+      name: t("omnichannel.title"),
       value: InboxType.OMNICHANNEL,
       description:
         "Send a flow to all contacts. You can send messages or executes actions.",
     },
     {
-      icon: <MessengerIcon />,
-      name: "Messenger",
+      icon: SiMessenger,
+      name: t("messenger.title"),
       value: InboxType.MESSENGER,
       description: "",
     },
     {
-      icon: <WhatsappIcon />,
-      name: "Whatsapp",
+      icon: SiWhatsapp,
+      name: t("whatsapp.title"),
+      value: InboxType.WHATSAPP,
+      description: "",
+    },
+    {
+      icon: SiZalo,
+      name: t("zalo.title"),
       value: InboxType.WHATSAPP,
       description: "",
     },
   ]
 
   const validTypes: typeof allTypes = []
-  for (const t of allTypes) {
-    if (props.inboxTypes.includes(t.value ?? "")) {
-      validTypes.push(t)
+  for (const tt of allTypes) {
+    if (props.inboxTypes.includes(tt.value ?? "")) {
+      validTypes.push(tt)
     }
   }
 
   return (
     <>
-      {validTypes.map((t) => (
-        <div className="flex w-full items-center gap-2" key={t.value}>
+      {validTypes.map((tt) => (
+        <div className="flex w-full items-center gap-2" key={tt.value}>
           <span className="flex flex-1 gap-2">
-            {t.icon}
-            {t.name}
+            <tt.icon />
+            {tt.name}
           </span>
           <Button
-            onClick={() => props.onSelectInboxType(t.value)}
+            onClick={() => props.onSelectInboxType(tt.value)}
             variant="secondary"
           >
-            Continue
+            {t("actions.continue")}
           </Button>
         </div>
       ))}

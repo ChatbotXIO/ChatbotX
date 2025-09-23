@@ -78,7 +78,7 @@ export const organizationSettingsSchema = z.object({
     .object({
       clientId: z.string(),
       clientSecret: z.string(),
-      oaSecretKey: z.string(),
+      verifyToken: z.string(),
       version: z.string(),
     })
     .optional(),

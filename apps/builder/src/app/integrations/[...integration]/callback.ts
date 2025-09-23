@@ -55,7 +55,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
           clientId: organizationSettings.zalo?.clientId as string,
           clientSecret: organizationSettings.zalo?.clientSecret as string,
           version: organizationSettings.zalo?.version as string,
-          oaSecretKey: organizationSettings.zalo?.oaSecretKey as string,
+          verifyToken: organizationSettings.zalo?.verifyToken as string,
           redirectUrl: new URL(
             "/integrations/zalo/callback",
             env.NEXT_PUBLIC_BUILDER_URL,

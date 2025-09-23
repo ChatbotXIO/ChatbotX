@@ -5,7 +5,6 @@ export type ContactEntity = {
   phoneNumber?: string
   firstName?: string
   lastName?: string
-  fullName?: string
   email?: string
   avatar?: string
   gender?: string
