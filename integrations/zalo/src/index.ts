@@ -1,3 +1,3 @@
-export * from "./apis"
+export * from "./api"
 export * from "./integration"
-export * from "./schemas"
+export * from "./schemas/definition"

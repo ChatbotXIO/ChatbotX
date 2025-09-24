@@ -27,10 +27,9 @@ export const getWhatsappIceBreakers = async (
       uploader,
     }
 
-    const data =
-      await integrations.WHATSAPP.integration.actions?.getIceBreakers({
-        ctx,
-      })
+    const data = await integrations.WHATSAPP.actions?.getIceBreakers({
+      ctx,
+    })
     return { data }
   } catch (_err) {
     return { data: [] }

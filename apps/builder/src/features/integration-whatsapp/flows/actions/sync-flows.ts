@@ -34,15 +34,12 @@ export const syncWhatsappFlowAction = chatbotActionClient
         uploader,
       }
 
-      const res = (await integrations.WHATSAPP.integration.runAction(
-        "getFlows",
-        {
-          ctx,
-          params: {
-            limit: 1000,
-          },
+      const res = (await integrations.WHATSAPP.runAction("getFlows", {
+        ctx,
+        params: {
+          limit: 1000,
         },
-      )) as unknown as ListFlowsResponse
+      })) as unknown as ListFlowsResponse
       await prisma.$transaction(async (tx) => {
         await tx.whatsappFlow.deleteMany({
           where: {

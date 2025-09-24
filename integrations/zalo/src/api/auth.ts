@@ -2,7 +2,7 @@ import type { Oauth2Config } from "@aha.chat/sdk"
 import ky from "ky"
 import { ZaloException } from "../libs/exception"
 import { logger } from "../libs/logger"
-import { DEFAULT_VERSION } from "../schemas"
+import { DEFAULT_VERSION } from "../schemas/definition"
 
 export function generateAuthUrl(props: Oauth2Config) {
   const {
@@ -57,7 +57,7 @@ export async function convertCodeToTokens(
 
 export type ZaloOAProfileResponse = {
   data: {
-    oaid: string
+    oa_id: string
     name: string
     description: string
     avatar: string

@@ -45,8 +45,10 @@ export function ZaloConnect({ organization }: ZaloConnectProps) {
       redirectUrl,
       stateParams: {
         chatbotId,
+        referer: currentUrl,
       },
     })
+
     redirect(redirectUri)
   }
 

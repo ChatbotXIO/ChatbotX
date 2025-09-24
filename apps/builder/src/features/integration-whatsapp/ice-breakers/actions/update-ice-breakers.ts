@@ -36,7 +36,7 @@ export const updateWhatsappIceBreakerAction = chatbotActionClient
         uploader,
       }
 
-      await integrations.WHATSAPP.integration.actions?.updateIceBreaker({
+      await integrations.WHATSAPP.actions?.updateIceBreaker({
         ctx,
         prompts: parsedInput.prompts.map((obj) => obj.value),
       })

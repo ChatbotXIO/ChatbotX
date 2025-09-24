@@ -2,21 +2,29 @@ import {
   ContentType,
   type ConversationEntity,
   type MessageEntity,
+  MessageType,
 } from "@aha.chat/sdk"
-import type { ZaloWebhookEvent } from "./schemas/webhook"
+import type { ZaloWebhookEvent } from "../schemas/webhook"
 
-export const parseIncomingMessage = (props: ZaloWebhookEvent) => {
+export const parseIncomingMessage = (event: ZaloWebhookEvent) => {
+  if (!event.message) {
+    return null
+  }
+
   const message: MessageEntity = {
-    sourceId: props.message?.msg_id ?? "",
-    messageType: "INCOMING",
-    content: props.message?.text ?? "",
+    sourceId: event.message.msg_id,
+    messageType:
+      event.event_name === "oa_send_msg"
+        ? MessageType.OUTGOING
+        : MessageType.INCOMING,
+    content: event.message?.text,
     contentType: ContentType.TEXT,
   }
   const conversation: ConversationEntity = {
-    sourceId: props.user_id_by_app ?? "",
+    sourceId: event.user_id_by_app,
     conversationAttributes: {},
     contact: {
-      sourceId: props.sender.id,
+      sourceId: event.sender.id,
     },
   }
   const postbackAction: { flowVersionId: string; buttonId: string } | null =

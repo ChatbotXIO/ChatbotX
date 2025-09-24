@@ -1,9 +1,16 @@
+-- AlterEnum
+ALTER TYPE "public"."InboxType" ADD VALUE 'ZALO';
+
+-- AlterEnum
+ALTER TYPE "public"."IntegrationType" ADD VALUE 'ZALO';
+
 -- CreateTable
 CREATE TABLE "public"."IntegrationZalo" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "auth" JSONB NOT NULL,
+    "oaId" TEXT NOT NULL,
     "chatbotId" TEXT NOT NULL,
     "inboxId" TEXT NOT NULL,
     "fallbackFlowId" TEXT,
@@ -28,3 +35,4 @@ ALTER TABLE "public"."IntegrationZalo" ADD CONSTRAINT "IntegrationZalo_inboxId_f
 
 -- AddForeignKey
 ALTER TABLE "public"."IntegrationZalo" ADD CONSTRAINT "IntegrationZalo_fallbackFlowId_fkey" FOREIGN KEY ("fallbackFlowId") REFERENCES "public"."Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

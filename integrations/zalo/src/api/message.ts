@@ -1,6 +1,6 @@
 import ky from "ky"
 import { logger } from "../libs/logger"
-import type { ZaloAuthValue } from "../schemas/app"
+import type { ZaloAuthValue } from "../schemas/definition"
 import type {
   ZaloSendMessageRequest,
   ZaloSendMessageResponse,
@@ -14,7 +14,6 @@ export const sendMessage = async (
     return await ky
       .post("https://openapi.zalo.me/v3.0/oa/message/cs", {
         headers: {
-          "Content-Type": "application/json",
           access_token: auth.tokens.accessToken,
         },
         json: payload,

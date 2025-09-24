@@ -4,7 +4,6 @@ import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
-import { env } from "@/env"
 import { findChatbot } from "@/features/chatbot/queries"
 import { findOrganization } from "@/features/organization/queries"
 import { integrations } from "@/integration"
@@ -32,7 +31,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
   if (
     !(
       "handleRequest" in
-      integrations[integrationName as keyof typeof integrations].integration
+      integrations[integrationName as keyof typeof integrations]
     )
   ) {
     logger.warn(`${integrationName} is missing handleRequest method`)
@@ -50,15 +49,16 @@ export const handleCallback = async (integrationName: string, req: Request) => {
 
   switch (integrationName) {
     case IntegrationType.ZALO: {
-      authResult = (await integrations.ZALO.integration.handleRequest?.({
+      if (!organizationSettings.zalo) {
+        return notFound()
+      }
+
+      authResult = (await integrations.ZALO.handleRequest?.({
         config: {
-          clientId: organizationSettings.zalo?.clientId as string,
-          clientSecret: organizationSettings.zalo?.clientSecret as string,
-          version: organizationSettings.zalo?.version as string,
-          verifyToken: organizationSettings.zalo?.verifyToken as string,
+          ...organizationSettings.zalo,
           redirectUrl: new URL(
             "/integrations/zalo/callback",
-            env.NEXT_PUBLIC_BUILDER_URL,
+            req.url,
           ).toString(),
           stateParams: {
             chatbotId: stateParams.chatbotId,
@@ -87,14 +87,16 @@ export const handleCallback = async (integrationName: string, req: Request) => {
     }
 
     case IntegrationType.GOOGLE_SHEETS: {
-      authResult = integrations.GOOGLE_SHEETS.integration.handleRequest?.({
+      if (!organizationSettings.googleSheets) {
+        return notFound()
+      }
+
+      authResult = integrations.GOOGLE_SHEETS.handleRequest?.({
         config: {
-          clientId: organizationSettings.googleSheets?.clientId as string,
-          clientSecret: organizationSettings.googleSheets
-            ?.clientSecret as string,
+          ...organizationSettings.googleSheets,
           redirectUrl: new URL(
             "/integrations/google-sheets/callback",
-            env.NEXT_PUBLIC_BUILDER_URL,
+            req.url,
           ).toString(),
         },
         req,

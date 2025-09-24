@@ -4,8 +4,8 @@ import {
   type Oauth2Config,
   SdkException,
 } from "@aha.chat/sdk"
-import { convertCodeToTokens, getZaloOAProfile } from "../apis/auth"
-import type { ZaloAuthValue } from "../schemas"
+import { convertCodeToTokens, getZaloOAProfile } from "../api/auth"
+import type { ZaloAuthValue } from "../schemas/definition"
 
 export const callbackHandler = async (
   props: HandleRequestProps<Oauth2Config>,
@@ -37,7 +37,7 @@ export const callbackHandler = async (
       refreshToken: refresh_token,
       expiresAt: expires_in,
     },
-    oaId: oaProfile.oaid,
+    oaId: oaProfile.oa_id,
     metadata: {
       version: props.config.version,
       oaName: oaProfile.name,

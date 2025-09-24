@@ -144,7 +144,6 @@ model Chatbot {
   aiTriggers               AITrigger[]
   attachments              Attachment[]
   broadcasts               Broadcast[]
-  channelWebWidgets        ChannelWebWidget[]
   chatbotMembers           ChatbotMember[]
   contacts                 Contact[]
   conversationParticipants ConversationParticipant[]
@@ -344,32 +343,6 @@ model ContactInbox {
   @@id([contactId, inboxId])
 }
 
-model WebWidgetTemplate {
-  id   String @id @default(cuid(2))
-  name String
-
-  channelWebWidgets ChannelWebWidget[]
-}
-
-model ChannelWebWidget {
-  id                  String   @id @default(cuid(2))
-  chatbotId           String
-  authorizedDomains   String[]
-  webWidgetTemplateId String
-  brandColor          String   @default("#007bff")
-  hideHeader          Boolean  @default(true)
-  showLogo            Boolean  @default(false)
-  hideMessageInput    Boolean  @default(true)
-  customizeStyles     String?
-
-  // welcomeFlow Flow? @relation(fields: [welcomeFlowId], references: [id])
-  chatbot  Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  template WebWidgetTemplate @relation(fields: [webWidgetTemplateId], references: [id])
-
-  @@index([chatbotId])
-  @@index([webWidgetTemplateId])
-}
-
 model Field {
   id              String          @id @default(cuid(2))
   createdAt       DateTime        @default(now())
@@ -402,7 +375,7 @@ model Inbox {
   integrationWhatsapp  IntegrationWhatsapp?
   integrationWebchat   IntegrationWebchat?
   integrationMessenger IntegrationMessenger?
-  integrationZalos     IntegrationZalo?
+  integrationZalo      IntegrationZalo?
 
   messages      Message[]
   conversations Conversation[]

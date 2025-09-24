@@ -12,11 +12,6 @@
     "remeda": "^2.23.3",
     "zod": "^3.25.71"
   },
-  "scripts": {
-    "dev": "dotenv -e .env -e ../../.env -- tsx src/index.ts",
-    "build": "tsc",
-    "start": "dotenv -e .env -e ../../.env -- node dist/index.js"
-  },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "dotenv-cli": "^8.0.0",

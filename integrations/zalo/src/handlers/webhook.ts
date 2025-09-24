@@ -4,8 +4,11 @@ import {
   SdkException,
 } from "@aha.chat/sdk"
 import crypto from "crypto"
-import type { ZaloConfig } from "../schemas/app"
-import type { ZaloWebhookEvent } from "../schemas/webhook"
+import type { ZaloConfig } from "../schemas/definition"
+import {
+  type ZaloWebhookEvent,
+  zaloWebhookEventSchema,
+} from "../schemas/webhook"
 
 const verifyWebhookSignature = (
   payload: ZaloWebhookEvent,
@@ -41,12 +44,12 @@ const handleWebhookEvent = async (
   queue: ContextQueue,
 ): Promise<void> => {
   try {
-    const body = await req.text()
+    const body = await req.json()
     if (!body) {
       throw new SdkException("Empty webhook payload")
     }
 
-    const webhookData = JSON.parse(body) as ZaloWebhookEvent
+    const webhookData = zaloWebhookEventSchema.parse(body)
 
     const signature = req.headers.get("X-ZEvent-Signature") ?? ""
     if (!signature) {
@@ -61,15 +64,13 @@ const handleWebhookEvent = async (
       throw new SdkException("Invalid webhook signature")
     }
 
-    if (webhookData.recipient.id === "4598245833493169062") {
-      await queue?.add("RECEIVE_MESSAGE", {
-        type: "RECEIVE_MESSAGE",
-        data: {
-          integrationName: "zalo",
-          payload: webhookData,
-        },
-      })
-    }
+    await queue?.add("RECEIVE_MESSAGE", {
+      type: "RECEIVE_MESSAGE",
+      data: {
+        integrationName: "zalo",
+        payload: webhookData,
+      },
+    })
   } catch (error) {
     const errorMessage =
       error instanceof Error

@@ -15,20 +15,15 @@ import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type {
-  AttachmentEntity,
-  AuthValue,
-  Context,
-  ConversationEntity,
-  MessageEntity,
-} from "@aha.chat/sdk"
+import type { AttachmentEntity, AuthValue, Context } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
 import { allIntegrations } from "../../shared/integrations"
 
 const getDBIntegration = async (
   integrationName: string,
-  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent,
+  // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+  payload: any,
 ) => {
   switch (integrationName) {
     case InboxType.WHATSAPP:
@@ -63,28 +58,6 @@ const getDBIntegration = async (
   }
 }
 
-const parseReceivedMessage = async (
-  // biome-ignore lint/suspicious/noExplicitAny: safe pass value
-  ctx: Context<any>,
-  integrationName: string,
-  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent,
-): Promise<
-  | {
-      message: MessageEntity
-      conversation: ConversationEntity
-      postbackAction?: { flowVersionId: string; buttonId: string } | null
-    }
-  | undefined
-> => {
-  return await allIntegrations[
-    integrationName as keyof typeof allIntegrations
-  ]?.actions.receiveMessage({
-    ctx,
-    // biome-ignore lint/suspicious/noExplicitAny: safe pass value
-    data: payload as any,
-  })
-}
-
 export const receiveMessage = async ({
   integrationName,
   payload,
@@ -108,7 +81,12 @@ export const receiveMessage = async ({
     auth: auth as AuthValue,
     uploader,
   }
-  const parsedMessage = await parseReceivedMessage(ctx, intName, payload)
+  const parsedMessage = await allIntegrations[
+    integrationName as keyof typeof allIntegrations
+  ]?.actions.receiveMessage({
+    ctx,
+    data: payload,
+  })
   if (!parsedMessage) {
     throw new Error("Unable to parse received message")
   }

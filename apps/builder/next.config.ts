@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         source: "/assets/:path*",
         destination: `${env.NEXT_PUBLIC_ASSET_URL}/:path*`, // Proxy to Backend
       },
+      // Zalo verifier
+      {
+        source: "/zalo_verifier:verifier.html",
+        destination: "/api/zalo-verifier/:verifier",
+      },
       ...(env.NEXT_PUBLIC_BILLING_URL
         ? [
             {

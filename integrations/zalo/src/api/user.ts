@@ -1,9 +1,9 @@
 import type { ContactEntity, Context } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
 import ky from "ky"
 import { ZaloException } from "../libs/exception"
+import { fetchAndReuploadImage } from "../libs/image"
 import { logger } from "../libs/logger"
-import type { ZaloAuthValue } from "../schemas/app"
+import type { ZaloAuthValue } from "../schemas/definition"
 
 export type ZaloUserProfileResponse = {
   error: number
@@ -48,7 +48,7 @@ export const getUserProfile = async ({
     }
 
     if (response.data?.avatar) {
-      result.avatar = await getUserAvatar({
+      result.avatar = await fetchAndReuploadImage({
         ctx,
         avatarUrl: response.data.avatar,
       })
@@ -59,32 +59,5 @@ export const getUserProfile = async ({
     logger.error("getUserProfile error", error)
 
     throw new Error(`Zalo request user profile failed: ${error}`)
-  }
-}
-
-export const getUserAvatar = async ({
-  ctx,
-  avatarUrl,
-}: {
-  ctx: Context<ZaloAuthValue>
-  avatarUrl: string
-}): Promise<string | undefined> => {
-  const response = await fetch(avatarUrl, {
-    headers: {
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-      "User-Agent": "node",
-    },
-  })
-  if (response.ok && response.body) {
-    const originPath = `public/chatbots/avatars/${createId()}`
-    const bytes = await response.arrayBuffer()
-    const mimeType = response.headers.get("content-type") ?? "image/png"
-
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
-    })
-
-    return originPath
   }
 }

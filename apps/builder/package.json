@@ -7,7 +7,7 @@
     "build": "dotenv -e .env -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
     "dev": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123",
-    "https": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 3123 --experimental-https",
+    "https": "dotenv -e .env -e ../../.env -- next dev --turbopack -H builder.ahachat.example.com -p 80 --experimental-https",
     "lint": "biome check .",
     "start": "next start"
   },

@@ -59,7 +59,7 @@ export const connectWhatsappAction = authActionClient
 
       try {
         const whatsappPhoneNumber =
-          await integrations.WHATSAPP.integration.actions?.verifyAccessToken({
+          await integrations.WHATSAPP.actions?.verifyAccessToken({
             ctx: {
               auth,
             },

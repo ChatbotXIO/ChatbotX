@@ -10,9 +10,11 @@ import type {
 } from "@aha.chat/sdk"
 import type { ZaloWebhookEvent } from "./webhook"
 
-export type ZaloConfig = Oauth2Config
+export const DEFAULT_VERSION = "v4"
 
 export const ZALO_MESSAGE_METADATA = "SENT_FROM_AHACHATAI"
+
+export type ZaloConfig = Oauth2Config
 
 export type ZaloAuthValue = Oauth2AuthValue & {
   oaId: string
@@ -31,7 +33,7 @@ export type ZaloActions = {
       message: MessageEntity
       conversation: ConversationEntity
       postbackAction?: { flowVersionId: string; buttonId: string } | null
-    }
+    } | null
   >
   sendMessage: (props: SendMessageProps<ZaloAuthValue>) => Promise<void>
   getUserProfile: (props: {

@@ -29,7 +29,7 @@ export type OutgoingMessageEntity = {
   attachments?: AttachmentEntity[]
 }
 
-const MessageType = {
+export const MessageType = {
   INCOMING: "INCOMING",
   OUTGOING: "OUTGOING",
 } as const
