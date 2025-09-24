@@ -28,12 +28,10 @@ export const handleCallback = async (integrationName: string, req: Request) => {
     return notFound()
   }
 
-  if (
-    !(
-      "handleRequest" in
-      integrations[integrationName as keyof typeof integrations]
-    )
-  ) {
+  const targetIntegration =
+    integrations[integrationName as keyof typeof integrations]
+
+  if (!(targetIntegration && "handleRequest" in targetIntegration)) {
     logger.warn(`${integrationName} is missing handleRequest method`)
     return notFound()
   }
