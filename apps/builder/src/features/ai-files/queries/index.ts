@@ -17,9 +17,23 @@ export async function getAIFiles(
         where: {
           chatbotId: input.chatbotId,
         },
+        include: {
+          aiEmbeddings: {
+            select: {
+              id: true,
+            },
+          },
+        },
       })
 
-      return { data }
+      // Transform data to include processing status
+      const transformedData = data.map(file => ({
+        ...file,
+        isProcessed: file.aiEmbeddings.length > 0,
+        chunksCount: file.aiEmbeddings.length,
+      }))
+
+      return { data: transformedData }
     },
     [JSON.stringify(input)],
     calcCacheTags(`chatbots:${input.chatbotId}#aiFiles`),

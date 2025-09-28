@@ -48,11 +48,12 @@ export const FileUploadPreview = ({
     return (
       <div className="relative rounded-md border" key={file.name}>
         <div className="max-w-36 overflow-hidden rounded-md">
-          {file.type.startsWith("image") ? (
+          {file.type.startsWith("image") && file.preview ? (
             <Image
               alt="file"
               className="h-16 w-auto"
               height={64}
+              width={64}
               onLoad={() => {
                 URL.revokeObjectURL(file.preview)
               }}
@@ -93,7 +94,15 @@ export const FileUploadPreview = ({
             <input
               {...getInputProps({
                 onChange: (e) => {
-                  onChange([e.target.files?.[0]])
+                  const raw = e.target.files?.[0]
+                  if (!raw) {
+                    onChange([])
+                    return
+                  }
+                  const withPreview = Object.assign(raw, {
+                    preview: URL.createObjectURL(raw),
+                  })
+                  onChange([withPreview])
                 },
               })}
             />
