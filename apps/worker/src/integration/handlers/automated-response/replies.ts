@@ -10,10 +10,8 @@ import { chatQueue, ChatJobAction } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { sendProcessedTextParts, processStreamingText, sendMessageWithRender } from "./text"
 
-// Import the helper function for replacing custom field attributes
 async function replaceCustomFieldAttributes(message: string, conversationId: string): Promise<string> {
     try {
-        // Find conversation and contact
         const conversation = await prisma.conversation.findFirst({
             where: { id: conversationId },
             include: {
@@ -33,7 +31,6 @@ async function replaceCustomFieldAttributes(message: string, conversationId: str
             return message
         }
 
-        // Create a map of field names to values
         const fieldMap = new Map<string, string>()
         for (const customField of conversation.contact.contactCustomFields) {
             if (customField.customField?.name && customField.value) {
@@ -41,19 +38,17 @@ async function replaceCustomFieldAttributes(message: string, conversationId: str
             }
         }
 
-        // Replace {{fieldName}} with actual values
         let processedMessage = message
         const attributeRegex = /\{\{(\w+)\}\}/g
 
         processedMessage = processedMessage.replace(attributeRegex, (match, fieldName) => {
             const value = fieldMap.get(fieldName)
-            return value || match // Return original if not found
+            return value || match
         })
 
         return processedMessage
     } catch (error) {
-        console.error('Error replacing custom field attributes:', error)
-        return message // Return original message if error
+        return message
     }
 }
 
@@ -111,17 +106,7 @@ export async function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
         if (!geminiModel) return false
 
         const completePrompt = await replaceCustomFieldAttributes(aiAgent.prompt || "", message.conversationId)
-        console.log("[AGENT][Gemini] ✅ Final system prompt:\n", completePrompt)
-        console.log(
-            "[AGENT][Gemini] ✅ Available tool names:",
-            Object.keys(tools),
-            "| groups:",
-            {
-                file: availableTools.fileTools,
-                functions: availableTools.functionTools,
-                mcp: availableTools.mcpTools,
-            },
-        )
+
 
         const result = await streamText({
             model: gemini(geminiModel.model),
@@ -135,20 +120,7 @@ export async function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
 
         const toolCalls = await result.toolCalls
         const toolResults = await result.toolResults
-        if (toolCalls && toolCalls.length > 0) {
-            console.log(
-                "[AGENT][Gemini] 🔧 Tools called:",
-                toolCalls.map((t: any) => t.toolName || t.name),
-            )
-            try {
-                const detailed = toolCalls.map((t: any, i: number) => ({
-                    index: i,
-                    name: t.toolName || t.name,
-                    args: t.args || t.arguments || {},
-                }))
-                console.log("[AGENT][Gemini] 🔧 Tool call details:", detailed)
-            } catch (_e) { }
-        }
+
 
         const { messageCount, fullText } = await processStreamingText(result.textStream, message.conversationId, { sendParts: true })
 
@@ -197,17 +169,7 @@ export async function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
         if (!openaiModel) return false
 
         const completePrompt = await replaceCustomFieldAttributes(aiAgent.prompt || "", message.conversationId)
-        console.log("[AGENT][OpenAI] ✅ Final system prompt:\n", completePrompt)
-        console.log(
-            "[AGENT][OpenAI] ✅ Available tool names:",
-            Object.keys(tools),
-            "| groups:",
-            {
-                file: availableTools.fileTools,
-                functions: availableTools.functionTools,
-                mcp: availableTools.mcpTools,
-            },
-        )
+
 
         const result = await streamText({
             model: openai(openaiModel.model),
@@ -221,20 +183,7 @@ export async function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
 
         const toolCalls = await result.toolCalls
         const toolResults = await result.toolResults
-        if (toolCalls && toolCalls.length > 0) {
-            console.log(
-                "[AGENT][OpenAI] 🔧 Tools called:",
-                toolCalls.map((t: any) => t.toolName || t.name),
-            )
-            try {
-                const detailed = toolCalls.map((t: any, i: number) => ({
-                    index: i,
-                    name: t.toolName || t.name,
-                    args: t.args || t.arguments || {},
-                }))
-                console.log("[AGENT][OpenAI] 🔧 Tool call details:", detailed)
-            } catch (_e) { }
-        }
+
 
         const { messageCount, fullText } = await processStreamingText(result.textStream, message.conversationId, { sendParts: true })
 
