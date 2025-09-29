@@ -34,7 +34,6 @@ async function getAIFileTools(aiAgent: AIAgentModel): Promise<ToolSet> {
                     required: ["query"],
                 }),
                 execute: async (args: { query: string }) => {
-                    console.log("[AGENT][Tool:file_search] ▶ args:", args)
                     const config = {
                         chatbotId: aiAgent.chatbotId,
                         selectedFileIds,
@@ -48,7 +47,6 @@ async function getAIFileTools(aiAgent: AIAgentModel): Promise<ToolSet> {
 
         return tools
     } catch (error) {
-        console.error("Error in getAIFileTools:", error)
         return {}
     }
 }
@@ -90,22 +88,18 @@ async function getAIFunctionTools(aiAgent: AIAgentModel): Promise<ToolSet> {
                     inputSchema: jsonSchema({ type: JSON_TYPE.object, properties, required }),
                     execute: async (args) => {
                         try {
-                            console.log(`[AGENT][Tool:function:${functionName}] ▶ args:`, args)
                             return outputMessage
                         } catch (error) {
-                            console.error(`[FUNCTION] Error in ${functionName}:`, error)
                             return `Error: ${error instanceof Error ? error.message : "Unknown error"}`
                         }
                     },
                 })
             } catch (error) {
-                console.error(`Error processing AI function ${aiFunction.name}:`, error)
             }
         }
 
         return tools
     } catch (error) {
-        console.error("Error in getAIFunctionTools:", error)
         return {}
     }
 }
@@ -147,27 +141,22 @@ async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
                             inputSchema: jsonSchema(cleanedSchema as any),
                             execute: async (args) => {
                                 try {
-                                    console.log(`[AGENT][Tool:mcp:${uniqueToolName}] ▶ args:`, args)
                                     const result = await callMCPTool(mcpServer.url, toolName, args, mcpServer.auth)
                                     return (result as any).content || result
                                 } catch (error) {
-                                    console.error(`[MCP] Error executing tool ${toolName}:`, error)
                                     return `Error: ${error instanceof Error ? error.message : "Unknown error"}`
                                 }
                             },
                         })
                     } catch (schemaError) {
-                        console.error(`Schema error for tool ${uniqueToolName}:`, schemaError)
                     }
                 }
             } catch (error) {
-                console.error(`Error processing MCP server ${mcpServer.name}:`, error)
             }
         }
 
         return tools
     } catch (error) {
-        console.error("Error in getMCPServerTools:", error)
         return {}
     }
 }
@@ -192,7 +181,6 @@ export async function getSelectedTools(aiAgent: AIAgentModel): Promise<{
 
         return { tools: allTools, availableTools }
     } catch (error) {
-        console.error("Error in getSelectedTools:", error)
         return { tools: {}, availableTools: { fileTools: [], functionTools: [], mcpTools: [] } }
     }
 }

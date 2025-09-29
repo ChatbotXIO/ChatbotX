@@ -38,8 +38,6 @@ export async function callMCPTool(
             }
         }
 
-        console.log(`[MCP] tool=${toolName} url=${mcpServerUrl}`)
-
         const response = await fetch(mcpServerUrl, {
             method: "POST",
             headers,
@@ -48,7 +46,6 @@ export async function callMCPTool(
 
         if (!response.ok) {
             const errorText = await response.text()
-            console.error(`HTTP error! status: ${response.status}, body: ${errorText}`)
             throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`)
         }
 
@@ -76,7 +73,6 @@ export async function callMCPTool(
             success: true,
         }
     } catch (error) {
-        console.error(`Error calling MCP tool ${toolName}:`, error)
         return {
             error: error instanceof Error ? error.message : TEXT.unknownError,
             success: false,
