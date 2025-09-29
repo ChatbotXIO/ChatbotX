@@ -83,7 +83,6 @@ export async function downloadAndUploadImage(
 
         return true
     } catch (error) {
-        console.error("Error downloading and uploading image:", error)
         return false
     }
 }
