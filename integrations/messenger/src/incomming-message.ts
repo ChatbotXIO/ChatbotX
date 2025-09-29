@@ -1,13 +1,13 @@
-import { MessageType } from "@aha.chat/database/types"
 import {
   type AttachmentEntity,
   ContentType,
   type Context,
   type ConversationEntity,
-  SdkException,
+  type MessageEntity,
 } from "@aha.chat/sdk"
 
 import { getMessageAttachmentEntity } from "./apis/page"
+import { MessengerException } from "./exception"
 import { logger } from "./lib/logger"
 import type {
   MessengerAuthValue,
@@ -54,19 +54,17 @@ export const parseIncomingMessage = async ({
   const entry = data.entry[0]
 
   if (!entry.messaging[0]) {
-    throw new SdkException("No messaging found")
+    throw new MessengerException("No messaging found")
   }
 
   const messaging = entry.messaging[0]
   if (!(messaging.message || messaging.postback)) {
-    throw new SdkException("No message found")
+    throw new MessengerException("No message found")
   }
 
   const sourceId = entry.id
   const message = await getMessageEntity(ctx, messaging)
-  if (!message) {
-    throw new SdkException("Cannot parse message")
-  }
+
   const postbackAction: { flowVersionId: string; buttonId: string } | null =
     getPostbackAction(messaging)
 
@@ -86,13 +84,11 @@ export const parseIncomingMessage = async ({
 const getMessageEntity = async (
   ctx: Context<MessengerAuthValue>,
   messaging: MessengerMessagingEvent,
-) => {
+): Promise<MessageEntity> => {
   if (messaging.message) {
     return {
       sourceId: messaging.message.mid,
-      messageType: messaging.message.is_echo
-        ? MessageType.OUTGOING
-        : MessageType.INCOMING,
+      messageType: messaging.message.is_echo ? "OUTGOING" : "INCOMING",
       content: messaging.message.text,
       contentType: ContentType.TEXT,
       attachments: await getMessageAttachments(ctx, messaging.message),
@@ -101,12 +97,13 @@ const getMessageEntity = async (
   if (messaging.postback) {
     return {
       sourceId: messaging.postback.mid,
-      messageType: MessageType.INCOMING,
+      messageType: "INCOMING",
       content: messaging.postback.title,
       contentType: ContentType.TEXT,
       attachments: [],
     }
   }
+  throw new MessengerException("No message found")
 }
 
 const getPostbackAction = (

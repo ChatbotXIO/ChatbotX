@@ -1,7 +1,7 @@
 import { type ButtonStepSchema, ButtonType } from "@aha.chat/flow-config"
 import { chunk } from "remeda"
+import { MAX_BUTTONS } from "../constants"
 import type { FacebookButton } from "../schemas"
-import { MAX_BUTTONS } from "./shared"
 
 export function getButtonTemplate(
   flowVersionId: string,

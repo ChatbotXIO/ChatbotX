@@ -1,6 +1,8 @@
 import type { ContactEntity, Context } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import ky from "ky"
+import { MessengerException } from "../exception"
+import { logger } from "../lib/logger"
 import type { FacebookUserProfile, MessengerAuthValue } from "../schemas"
 
 export const getUserProfile = async ({
@@ -37,7 +39,8 @@ export const getUserProfile = async ({
 
     return result
   } catch (error) {
-    throw new Error(`Facebook Graph API request failed: ${error}`)
+    logger.error("getUserProfile error", error)
+    throw new MessengerException("Failed to fetch user profile")
   }
 }
 

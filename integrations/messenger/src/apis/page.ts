@@ -1,12 +1,9 @@
-import {
-  type AttachmentEntity,
-  type Context,
-  FileType,
-  SdkException,
-} from "@aha.chat/sdk"
+import { type AttachmentEntity, type Context, FileType } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
 import ky from "ky"
+import { MessengerException } from "../exception"
+import { logger } from "../lib/logger"
 import type {
   FacebookMessageAttachment,
   FacebookSendMessageRequest,
@@ -82,41 +79,9 @@ export const unsubscribePageFromAppWebhook = async (props: {
         },
       )
       .json()
-  } catch (_error) {
-    throw new SdkException("Unsubscribe Page From AppWebhook failed")
-  }
-}
-
-export const uploadAttachment = async (
-  auth: MessengerAuthValue,
-  url: string,
-  type: "image" | "video" | "audio" | "file",
-): Promise<FacebookSendMessageResponse | undefined> => {
-  try {
-    return await ky
-      .post(
-        `https://graph.facebook.com/${auth.metadata.version}/me/message_attachments`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          json: {
-            access_token: auth.tokens.accessToken,
-            message: {
-              attachment: {
-                type,
-                payload: {
-                  is_reusable: true,
-                  url,
-                } as FacebookMessageAttachment["payload"],
-              },
-            },
-          },
-        },
-      )
-      .json()
   } catch (error) {
-    throw new SdkException(`Upload attachment failed ${JSON.stringify(error)}`)
+    logger.error("Unsubscribe Page From AppWebhook failed", error)
+    throw new MessengerException("Unsubscribe Page From AppWebhook failed")
   }
 }
 
@@ -138,9 +103,8 @@ export const sendMessage = async (
       )
       .json()
   } catch (error) {
-    throw new Error(
-      `Facebook Graph API request failed: ${JSON.stringify(error)}`,
-    )
+    logger.error("Send Message error", error)
+    throw new MessengerException("An error occurred while sending the message")
   }
 }
 

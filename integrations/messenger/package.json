@@ -5,7 +5,6 @@
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
