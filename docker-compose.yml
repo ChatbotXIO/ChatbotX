@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:16
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
@@ -21,7 +21,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     ports:
-      - '5050:80'
+      - "5050:80"
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@aha.chat
       - PGADMIN_DEFAULT_PASSWORD=nr541Kv59xB4f48bhZOy5wBz
@@ -36,8 +36,8 @@ services:
     image: minio/minio
     command: server /data --console-address ":9001"
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: ahachat
       MINIO_ROOT_PASSWORD: nr541Kv59xB4f48bhZOy5wBz

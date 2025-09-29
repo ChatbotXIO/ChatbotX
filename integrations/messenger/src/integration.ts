@@ -7,7 +7,7 @@ import {
 import { getUserProfile } from "./apis/user"
 import { webhookHandler } from "./handlers/webhook"
 import { parseIncomingMessage } from "./incomming-message"
-import { sendOutgoingMessage } from "./outgoing-message"
+import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
 import type {
   MessengerActions,
   MessengerAuthValue,
@@ -21,11 +21,14 @@ const config: IntegrationDefinition<
 > = {
   name: "messenger",
   actions: {
-    receiveMessage: async ({ data }) => {
-      return await parseIncomingMessage(data)
+    receiveMessage: async ({ ctx, data }) => {
+      return await parseIncomingMessage({ ctx, data })
     },
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
+    },
+    sendFlowStep: async ({ ctx, flowVersionId, step, conversation }) => {
+      await sendFlowStep(ctx, conversation, flowVersionId, step)
     },
     getUserProfile: async ({ ctx, psid }) => {
       return await getUserProfile({ ctx, psid })

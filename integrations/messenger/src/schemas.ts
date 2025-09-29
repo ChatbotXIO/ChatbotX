@@ -6,6 +6,7 @@ import type {
   MessageEntity,
   Oauth2AuthValue,
   Oauth2Config,
+  SendFlowStepProps,
   SendMessageProps,
 } from "@aha.chat/sdk"
 import { z } from "zod"
@@ -41,6 +42,7 @@ export type MessengerActions = {
     }
   >
   sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
+  sendFlowStep: (props: SendFlowStepProps<MessengerAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<MessengerAuthValue>
     psid: string
@@ -76,6 +78,7 @@ export const messengerReadSchema = z.object({
 export type MessengerRead = z.infer<typeof messengerReadSchema>
 
 export const messengerPostbackSchema = z.object({
+  mid: z.string(),
   title: z.string(),
   payload: z.string(),
 })
@@ -134,7 +137,7 @@ export const facebookButtonSchema = z.object({
 export type FacebookButton = z.infer<typeof facebookButtonSchema>
 
 export const facebookElementSchema = z.object({
-  title: z.string(),
+  title: z.string().optional(),
   subtitle: z.string().optional(),
   image_url: z.string().url().optional(),
   default_action: z

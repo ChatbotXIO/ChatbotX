@@ -1,7 +1,6 @@
 import type { ContactEntity, Context } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import ky from "ky"
-import { logger } from "../lib/logger"
 import type { FacebookUserProfile, MessengerAuthValue } from "../schemas"
 
 export const getUserProfile = async ({
@@ -38,8 +37,6 @@ export const getUserProfile = async ({
 
     return result
   } catch (error) {
-    logger.error("getUserProfile error", error)
-
     throw new Error(`Facebook Graph API request failed: ${error}`)
   }
 }

@@ -1,6 +1,14 @@
+import {
+  type AttachmentEntity,
+  type Context,
+  FileType,
+  SdkException,
+} from "@aha.chat/sdk"
+import { createId } from "@paralleldrive/cuid2"
+import imageSize from "image-size"
 import ky from "ky"
-import { logger } from "../lib/logger"
 import type {
+  FacebookMessageAttachment,
   FacebookSendMessageRequest,
   FacebookSendMessageResponse,
   MessengerAuthValue,
@@ -74,8 +82,41 @@ export const unsubscribePageFromAppWebhook = async (props: {
         },
       )
       .json()
+  } catch (_error) {
+    throw new SdkException("Unsubscribe Page From AppWebhook failed")
+  }
+}
+
+export const uploadAttachment = async (
+  auth: MessengerAuthValue,
+  url: string,
+  type: "image" | "video" | "audio" | "file",
+): Promise<FacebookSendMessageResponse | undefined> => {
+  try {
+    return await ky
+      .post(
+        `https://graph.facebook.com/${auth.metadata.version}/me/message_attachments`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          json: {
+            access_token: auth.tokens.accessToken,
+            message: {
+              attachment: {
+                type,
+                payload: {
+                  is_reusable: true,
+                  url,
+                } as FacebookMessageAttachment["payload"],
+              },
+            },
+          },
+        },
+      )
+      .json()
   } catch (error) {
-    logger.error("unsubscribePageFromAppWebhook error", error)
+    throw new SdkException(`Upload attachment failed ${JSON.stringify(error)}`)
   }
 }
 
@@ -97,8 +138,71 @@ export const sendMessage = async (
       )
       .json()
   } catch (error) {
-    logger.error("sendMessage error", error)
+    throw new Error(
+      `Facebook Graph API request failed: ${JSON.stringify(error)}`,
+    )
+  }
+}
 
-    throw new Error(`Facebook Graph API request failed: ${error}`)
+export const getMessageAttachmentEntity = async ({
+  ctx,
+  attachment,
+}: {
+  ctx: Context<MessengerAuthValue>
+  attachment: FacebookMessageAttachment
+}): Promise<AttachmentEntity | undefined> => {
+  if (!attachment.payload.url) {
+    throw new Error("No attachment URL found")
+  }
+  const response = await fetch(attachment.payload.url as string, {
+    headers: {
+      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      "User-Agent": "node",
+    },
+  })
+  if (response.ok && response.body) {
+    const originPath = `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`
+    const bytes = await response.arrayBuffer()
+    const mimeType = response.headers.get("content-type") ?? "image/png"
+    const fileType = guessFileTypeFromMimeType(attachment.type)
+
+    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
+      ACL: "public-read",
+      ContentType: mimeType,
+    })
+
+    const imageProperties: {
+      width?: number
+      height?: number
+    } = {}
+    if (mimeType.startsWith("image/")) {
+      // Retrieve width / height
+      const arrayBytes = new Uint8Array(bytes)
+      const dimensions = imageSize(arrayBytes)
+      imageProperties.width = dimensions.width
+      imageProperties.height = dimensions.height
+    }
+
+    return {
+      sourceId: createId(),
+      originPath,
+      fileType,
+      mimeType,
+      size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
+      ...imageProperties,
+    }
+  }
+}
+
+export const guessFileTypeFromMimeType = (attachmentType: string) => {
+  switch (attachmentType) {
+    case "image":
+      return FileType.IMAGE
+    case "video":
+      return FileType.VIDEO
+    case "audio":
+      return FileType.AUDIO
+    default:
+      return FileType.DOCUMENT
   }
 }

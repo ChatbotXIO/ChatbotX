@@ -579,6 +579,12 @@ importers:
 
   integrations/messenger:
     dependencies:
+      '@aha.chat/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@aha.chat/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
       '@aha.chat/logger':
         specifier: workspace:*
         version: link:../../packages/logger
