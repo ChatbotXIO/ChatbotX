@@ -1,3 +1,4 @@
+import type { Prisma } from "@aha.chat/database"
 import {
   ContentType,
   MessageType,
@@ -5,7 +6,6 @@ import {
   SenderType,
 } from "@aha.chat/database"
 import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
-import { StepType } from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
   broadcastToGuestParty,
@@ -28,8 +28,45 @@ export async function sendFlowStep({
     return
   }
 
+  // Type guards to avoid `any`
+  type ImageAttachment = {
+    originPath: string
+    name: string
+    mimeType: string
+    size?: number
+    width?: number
+    height?: number
+    fileType?: string
+  }
+
+  function isSendImageStepWithAttachment(
+    s: unknown,
+  ): s is { stepType: "SEND_IMAGE"; attachment: ImageAttachment } {
+    if (
+      typeof s !== "object" ||
+      s === null ||
+      !("stepType" in s) ||
+      (s as { stepType?: unknown }).stepType !== "SEND_IMAGE"
+    ) {
+      return false
+    }
+    const att = (s as { attachment?: unknown }).attachment as
+      | ImageAttachment
+      | undefined
+    return (
+      !!att &&
+      typeof att === "object" &&
+      typeof att.originPath === "string" &&
+      typeof att.name === "string" &&
+      typeof att.mimeType === "string"
+    )
+  }
+
   // Create message with attachment if SEND_IMAGE
-  const message = await prisma.message.create({
+  type MessageWithAttachments = Prisma.MessageGetPayload<{
+    include: { attachments: true }
+  }>
+  const message: MessageWithAttachments = await prisma.message.create({
     data: {
       inboxId: conversation.inboxId,
       chatbotId: conversation.chatbotId,
@@ -38,37 +75,37 @@ export async function sendFlowStep({
       contentType: ContentType.TEXT,
       senderType: SenderType.BOT,
       sourceId: null,
-      content: step.stepType === StepType.SEND_TEXT ? step.message : null,
+      content: step.stepType === "SEND_TEXT" ? step.message : null,
       // Create attachment if SEND_IMAGE and attachment data is provided
-      ...(step.stepType === StepType.SEND_IMAGE && (step as any).attachment ? {
-        attachments: {
-          create: {
-            chatbotId: conversation.chatbotId,
-            conversationId: conversation.id,
-            originPath: (step as any).attachment.originPath,
-            name: (step as any).attachment.name,
-            mimeType: (step as any).attachment.mimeType,
-            size: (step as any).attachment.size,
-            width: (step as any).attachment.width,
-            height: (step as any).attachment.height,
-            fileType: (step as any).attachment.fileType,
-          }
+      ...(isSendImageStepWithAttachment(step)
+        ? {
+          attachments: {
+            create: {
+              chatbotId: conversation.chatbotId,
+              conversationId: conversation.id,
+              originPath: step.attachment.originPath,
+              name: step.attachment.name,
+              mimeType: step.attachment.mimeType,
+              size: step.attachment.size,
+              width: step.attachment.width,
+              height: step.attachment.height,
+              fileType: step.attachment.fileType,
+            },
+          },
         }
-      } : {})
+        : {}),
     },
     include: {
       attachments: true,
     },
   })
 
-  // Transform attachments to include url field
-  const assetUrl = process.env.NEXT_PUBLIC_ASSET_URL || 'http://localhost:9000'
   const messageWithAttachments = {
     ...message,
-    attachments: message.attachments?.map((attachment) => ({
-      ...attachment,
-      url: new URL(attachment.originPath, assetUrl).toString(),
-    })) || [],
+    attachments:
+      message.attachments?.map((attachment) => ({
+        ...attachment
+      })) || [],
   }
 
   const promises: Promise<unknown>[] = [
@@ -86,13 +123,13 @@ export async function sendFlowStep({
     )
   } else {
     const isTextOrImage =
-      step.stepType === StepType.SEND_TEXT || step.stepType === StepType.SEND_IMAGE
+      step.stepType === "SEND_TEXT" || step.stepType === "SEND_IMAGE"
     if (isTextOrImage) {
       promises.push(
         sendFlowStepToExternal({
           conversation: conversation as ConversationEntity,
           flowVersionId,
-          // biome-ignore lint/suspicious/noExplicitAny: narrowed at runtime
+          // biome-ignore lint/suspicious/noExplicitAny: upstream type not exported; runtime validated
           step: step as any,
         }),
       )

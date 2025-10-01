@@ -43,7 +43,7 @@ export async function processChunk(data: ProcessChunkData) {
 
   await prisma.$executeRaw`
     UPDATE "AIEmbedding"
-    SET "embedding" = ${embeddingString}::vector, "updatedAt" = ${new Date()}
+    SET "embedding" = ${embeddingString}::vector, "updatedAt" = ${new Date()}, "status" = 'success'
     WHERE "id" = ${created.id}
   `
 }

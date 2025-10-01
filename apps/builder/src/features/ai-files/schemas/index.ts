@@ -4,6 +4,7 @@ import { z } from "zod"
 export type AIFileWithProcessing = AIFileModel & {
   isProcessed: boolean
   chunksCount: number
+  processingStatus: 'idle' | 'processing' | 'success' | 'error'
 }
 
 export type AIFileCollection = {
