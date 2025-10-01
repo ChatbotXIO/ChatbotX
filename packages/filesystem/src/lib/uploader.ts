@@ -109,6 +109,19 @@ class Uploader {
       stream.on('end', () => resolve(Buffer.concat(chunks)))
     })
   }
+
+  async getObjectStream(path: string): Promise<Readable> {
+    const command = new GetObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: path,
+    })
+
+    const response = await this.#client.send(command)
+    if (!response.Body) {
+      throw new Error(`No body found for object: ${path}`)
+    }
+    return response.Body as Readable
+  }
 }
 
 export const uploader = Uploader.getInstance()
