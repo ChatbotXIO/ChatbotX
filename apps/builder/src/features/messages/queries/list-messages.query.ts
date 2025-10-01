@@ -9,7 +9,6 @@ import type {
   FindMessageSchema,
   ListMessagesRequest,
 } from "../schemas/list-messages.schema"
-import { env } from "@/env"
 
 export const listMessages = async (
   chatbotId: string,
@@ -49,10 +48,10 @@ export const listMessages = async (
   // Transform attachments to include url field
   messages = messages.map((message) => ({
     ...message,
-    attachments: message.attachments?.map((attachment) => ({
-      ...attachment,
-      url: new URL(attachment.originPath, env.NEXT_PUBLIC_ASSET_URL).toString(),
-    })) || [],
+    attachments:
+      message.attachments?.map((attachment) => ({
+        ...attachment,
+      })) || [],
   }))
 
   let nextCursor: string | null = null

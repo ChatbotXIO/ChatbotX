@@ -68,18 +68,21 @@ export async function processAiFile(data: ProcessAiFileData) {
 
   const chunks = splitTextIntoChunks(text, chunkSize, overlapSize)
 
-  // Enqueue chunk jobs
-  await Promise.all(
-    chunks.map((c, index) =>
-      aiFilesQueue.add(AiFilesJobAction.PROCESS_CHUNK, {
-        type: AiFilesJobAction.PROCESS_CHUNK,
-        data: {
-          chatbotId: data.chatbotId,
-          aiFileId: data.aiFileId,
-          content: c.content,
-          index,
-        },
-      }),
-    ),
-  )
+  // Job1: create pending AIEmbedding rows for each chunk
+  await prisma.aIEmbedding.createMany({
+    data: chunks.map((c) => ({
+      content: c.content,
+      chatbotId: data.chatbotId,
+      aiFileId: data.aiFileId,
+      status: "pending",
+    })),
+  })
+
+  // Optionally trigger Job2 dispatcher
+  await aiFilesQueue.add(AiFilesJobAction.PROCESS_PENDING_EMBEDDINGS, {
+    type: AiFilesJobAction.PROCESS_PENDING_EMBEDDINGS,
+    data: {
+      chatbotId: data.chatbotId,
+    },
+  })
 }

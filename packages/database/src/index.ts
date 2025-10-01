@@ -7,7 +7,7 @@ const env = keys()
 const pool = new PrismaPg({ connectionString: env.DATABASE_URL })
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 
-export const prisma =
+const baseClient =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter: pool,
@@ -83,13 +83,17 @@ export const prisma =
         },
       },
     },
-  }).$extends(
+  })
+
+export const prisma: PrismaClient = env.ENABLE_PGVECTOR_EXTENSION
+  ? (baseClient.$extends(
     withPGVector({
       modelName: "aIEmbedding",
       vectorFieldName: "embedding",
       idFieldName: "id",
     }),
-  )
+  ) as unknown as PrismaClient)
+  : baseClient
 
 if (env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma

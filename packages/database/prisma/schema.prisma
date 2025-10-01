@@ -563,6 +563,7 @@ model AIEmbedding {
 
   content   String
   embedding Unsupported("vector")?
+  status    AIEmbeddingStatus @default(pending)
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -571,6 +572,12 @@ model AIEmbedding {
   aiFile   AIFile @relation(fields: [aiFileId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
+}
+
+enum AIEmbeddingStatus {
+  pending
+  success
+  error
 }
 
 model IntegrationOpenAI {
