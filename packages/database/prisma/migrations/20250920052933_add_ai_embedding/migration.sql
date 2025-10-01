@@ -24,6 +24,7 @@ CREATE TABLE "public"."AIEmbedding" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "content" TEXT NOT NULL,
     "embedding" vector,
+    "status" TEXT NOT NULL DEFAULT 'pending',
     "chatbotId" TEXT NOT NULL,
     "aiFileId" TEXT NOT NULL,
 
