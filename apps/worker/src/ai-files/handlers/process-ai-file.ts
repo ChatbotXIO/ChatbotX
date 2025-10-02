@@ -1,5 +1,6 @@
 // import fs from "node:fs/promises"
 
+import { TextDecoder } from "node:util"
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
 import {
@@ -52,21 +53,57 @@ export async function processAiFile(data: ProcessAiFileData) {
     data: { updatedAt: new Date() },
   })
 
-  // Read file from MinIO (try original key, then without public/ prefix)
-  let buffer: Buffer
-  try {
-    buffer = await uploader.getObject(filePath)
-  } catch (err) {
-    if (filePath.startsWith("public/")) {
-      const withoutPublic = filePath.slice(7)
-      buffer = await uploader.getObject(withoutPublic)
-    } else {
-      throw err
+  // Read file via stream, avoid buffering all content in memory
+  // Try multiple key variants to be resilient to public/ prefix differences
+  const candidates: string[] = [filePath]
+  if (filePath.startsWith("public/")) {
+    candidates.push(filePath.slice(7))
+  } else {
+    candidates.push(`public/${filePath}`)
+  }
+
+  let streamPath: string | null = null
+  for (const key of candidates) {
+    try {
+      await uploader.headObject(key)
+      streamPath = key
+      break
+    } catch {
+      // try next candidate
     }
   }
-  const text = buffer.toString("utf8")
+  if (!streamPath) {
+    throw new Error(
+      `AI file object not found. Tried keys: ${candidates.join(", ")}`,
+    )
+  }
 
-  const chunks = splitTextIntoChunks(text, chunkSize, overlapSize)
+  const stream = await uploader.getObjectStream(streamPath)
+  const decoder = new TextDecoder("utf-8")
+  let carry = ""
+  const chunks: TextChunk[] = []
+
+  for await (const part of stream) {
+    const textPart = decoder.decode(part as Uint8Array, { stream: true })
+    carry += textPart
+
+    while (carry.length >= chunkSize + overlapSize) {
+      const slice = carry.slice(0, chunkSize).trim()
+      if (slice.length > 0) {
+        chunks.push({ content: slice })
+      }
+      carry = carry.slice(Math.max(0, chunkSize - overlapSize))
+    }
+  }
+
+  // flush remaining
+  const tail = carry.trim()
+  if (tail.length > 0) {
+    // tail may be longer than chunkSize, split with helper for correctness
+    for (const c of splitTextIntoChunks(tail, chunkSize, overlapSize)) {
+      chunks.push(c)
+    }
+  }
 
   // Job1: create pending AIEmbedding rows for each chunk
   await prisma.aIEmbedding.createMany({
