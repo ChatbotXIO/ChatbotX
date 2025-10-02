@@ -1,6 +1,5 @@
 // import fs from "node:fs/promises"
 
-import { TextDecoder } from "node:util"
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
 import {
@@ -8,6 +7,7 @@ import {
   aiFilesQueue,
   type ProcessAiFileData,
 } from "@aha.chat/worker-config"
+import { extractTextFromStream } from "../lib/text-extractor"
 
 type TextChunk = { content: string }
 
@@ -43,6 +43,7 @@ export async function processAiFile(data: ProcessAiFileData) {
   const {
     aiFileId,
     filePath,
+    mimeType,
     chunkSize = DEFAULT_CHUNK_SIZE,
     overlapSize = DEFAULT_OVERLAP_SIZE,
   } = data
@@ -79,31 +80,8 @@ export async function processAiFile(data: ProcessAiFileData) {
   }
 
   const stream = await uploader.getObjectStream(streamPath)
-  const decoder = new TextDecoder("utf-8")
-  let carry = ""
-  const chunks: TextChunk[] = []
-
-  for await (const part of stream) {
-    const textPart = decoder.decode(part as Uint8Array, { stream: true })
-    carry += textPart
-
-    while (carry.length >= chunkSize + overlapSize) {
-      const slice = carry.slice(0, chunkSize).trim()
-      if (slice.length > 0) {
-        chunks.push({ content: slice })
-      }
-      carry = carry.slice(Math.max(0, chunkSize - overlapSize))
-    }
-  }
-
-  // flush remaining
-  const tail = carry.trim()
-  if (tail.length > 0) {
-    // tail may be longer than chunkSize, split with helper for correctness
-    for (const c of splitTextIntoChunks(tail, chunkSize, overlapSize)) {
-      chunks.push(c)
-    }
-  }
+  const extracted = await extractTextFromStream(stream, mimeType)
+  const chunks: TextChunk[] = splitTextIntoChunks(extracted, chunkSize, overlapSize).map((c) => ({ content: c.content }))
 
   // Job1: create pending AIEmbedding rows for each chunk
   await prisma.aIEmbedding.createMany({
