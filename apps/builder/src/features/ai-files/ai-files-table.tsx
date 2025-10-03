@@ -5,6 +5,7 @@ import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-t
 import { Badge } from "@aha.chat/ui/components/ui/badge"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+//
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,16 +26,67 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
-import { use, useCallback, useMemo } from "react"
+import { use, useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { deleteAiFileAction } from "./actions/delete-ai-file.action"
+//
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
+import { DeleteAiFileDialog } from "./delete-ai-file-dialog"
 import type { getAIFiles } from "./queries"
 import type { AIFileWithProcessing } from "./schemas"
 
 type AIFilesTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getAIFiles>>]>
+}
+
+function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
+  const t = useTranslations()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="icon" variant="ghost">
+            <MoreHorizontalIcon className="h-4 w-4" />
+            <span className="sr-only">{t("actions.openMenu")}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => {
+              toast.info(t("messages.viewFileComingSoon"))
+            }}
+          >
+            <EyeIcon className="mr-2 h-4 w-4" />
+            {t("actions.view")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              toast.info(t("messages.downloadComingSoon"))
+            }}
+          >
+            <DownloadIcon className="mr-2 h-4 w-4" />
+            {t("actions.download")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => setOpen(true)}
+          >
+            <Trash2Icon className="mr-2 h-4 w-4" />
+            {t("actions.delete")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DeleteAiFileDialog
+        aiFile={aiFile}
+        onOpenChange={setOpen}
+        open={open}
+        showTrigger={false}
+      />
+    </>
+  )
 }
 
 export default function AIFilesTable({ promises }: AIFilesTableProps) {
@@ -176,51 +228,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
       {
         id: "actions",
         header: t("actions.actions"),
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">{t("actions.openMenu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  toast.info(t("messages.viewFileComingSoon"))
-                }}
-              >
-                <EyeIcon className="mr-2 h-4 w-4" />
-                {t("actions.view")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  toast.info(t("messages.downloadComingSoon"))
-                }}
-              >
-                <DownloadIcon className="mr-2 h-4 w-4" />
-                {t("actions.download")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={async () => {
-                  try {
-                    const rowData = row.original
-                    await deleteAiFileAction(rowData.chatbotId, {
-                      aiFileId: rowData.id,
-                    })
-                    toast.success(t("messages.deleted"))
-                  } catch {
-                    toast.error(t("errors.unexpected"))
-                  }
-                }}
-              >
-                <Trash2Icon className="mr-2 h-4 w-4" />
-                {t("actions.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
+        cell: ({ row }) => <RowActionCell aiFile={row.original} />,
         size: 50,
         enableSorting: false,
         enableHiding: false,

@@ -4,6 +4,7 @@ import { StepType } from "@aha.chat/flow-config"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
+import { logger } from "../../../lib/logger"
 import { SUPPORTED_IMAGE_EXTENSIONS } from "./constants"
 
 // Precompiled regex literals (top-level for performance)
@@ -93,7 +94,8 @@ export async function downloadAndUploadImage(
     })
 
     return true
-  } catch (_error) {
+  } catch (error) {
+    logger.error("[automated-response] downloadAndUploadImage failed", { error, imageUrl, conversationId })
     return false
   }
 }
