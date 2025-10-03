@@ -626,7 +626,11 @@
     "unknownError": "Unknown error",
     "or": "or"
   },
-
+  "errors": {
+    "aiFile": {
+      "notFound": "AI file not found"
+    }
+  },
   "signin": {
     "title": "Sign in to {name}",
     "and": "and",

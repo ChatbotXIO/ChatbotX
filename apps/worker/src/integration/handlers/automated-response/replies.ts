@@ -55,7 +55,8 @@ async function replaceCustomFieldAttributes(
     )
 
     return processedMessage
-  } catch (_error) {
+  } catch (error) {
+    logger.error("[automated-response] replaceCustomFieldAttributes failed", { error, conversationId })
     return message
   }
 }
@@ -69,7 +70,8 @@ export async function listAllEnabledAutomatedResponses({
     return await prisma.automatedResponse.findMany({
       where: { chatbotId, status: true },
     })
-  } catch (_err) {
+  } catch (error) {
+    logger.error("[automated-response] listAllEnabledAutomatedResponses failed", { error, chatbotId })
     return []
   }
 }
@@ -272,7 +274,8 @@ async function runAIReply(
         if (followUpMessageCount > 0) {
           return true
         }
-      } catch (_e) {
+      } catch (error) {
+        logger.error("[automated-response] follow-up streamText failed", { error, provider: cfg.provider, conversationId: message.conversationId })
         return await cfg.onFollowUpError({
           conversationId: message.conversationId,
           toolResultsText,
@@ -284,7 +287,8 @@ async function runAIReply(
       return true
     }
     return false
-  } catch (_err) {
+  } catch (error) {
+    logger.error("[automated-response] runAIReply failed", { error, provider: cfg.provider, chatbotId: message.chatbotId })
     return false
   }
 }
