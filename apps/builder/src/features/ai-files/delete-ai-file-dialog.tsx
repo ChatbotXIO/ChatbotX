@@ -1,0 +1,98 @@
+"use client"
+
+import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@aha.chat/ui/components/ui/dialog"
+import { Loader, Trash2Icon } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
+import type { ComponentPropsWithoutRef } from "react"
+import { toast } from "sonner"
+import { deleteAiFileAction } from "./actions/delete-ai-file.action"
+import type { AIFileWithProcessing } from "./schemas"
+
+type DeleteAiFileDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+  aiFile: AIFileWithProcessing
+  showTrigger?: boolean
+}
+
+export function DeleteAiFileDialog({
+  aiFile,
+  showTrigger = true,
+  ...props
+}: DeleteAiFileDialogProps) {
+  const t = useTranslations()
+
+  const { execute, isPending } = useAction(
+    deleteAiFileAction.bind(null, aiFile.chatbotId),
+    {
+      onSuccess: () => {
+        toast.success(
+          t("messages.deletedSuccessfully", {
+            feature: t("fields.aiFile.label"),
+          }),
+        )
+      },
+      onError: ({ error }) => {
+        error.serverError && toast.error(error.serverError)
+      },
+    },
+  )
+
+  return (
+    <Dialog {...props}>
+      {showTrigger ? (
+        <DialogTrigger asChild>
+          <Button size="icon" variant="ghost">
+            <Trash2Icon className="h-4 w-4" />
+            <span className="sr-only">{t("actions.delete")}</span>
+          </Button>
+        </DialogTrigger>
+      ) : null}
+
+      <DialogContent
+        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
+      >
+        <DialogHeader>
+          <DialogTitle>
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.aiFile.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.aiFile.label"),
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:space-x-0">
+          <DialogClose asChild>
+            <Button variant="outline">{t("actions.cancel")}</Button>
+          </DialogClose>
+          <Button
+            aria-label="Delete AI file"
+            disabled={isPending}
+            onClick={() => execute({ aiFileId: aiFile.id })}
+            variant="destructive"
+          >
+            {isPending && (
+              <Loader
+                aria-hidden="true"
+                className="mr-2 h-4 w-4 animate-spin"
+              />
+            )}
+            {t("actions.delete")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

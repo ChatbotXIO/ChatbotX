@@ -2,10 +2,13 @@
 
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
+import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { invalidateCacheTags } from "@/lib/cache-helper"
+import { NotfoundException } from "@/lib/error"
 import { chatbotActionClient } from "@/lib/safe-action"
+import { logger } from "../../../lib/log"
 
 const deleteAiFileRequest = z.object({
   aiFileId: z.string(),
@@ -23,7 +26,8 @@ export const deleteAiFileAction = chatbotActionClient
       where: { id: aiFileId, chatbotId },
     })
     if (!aiFile) {
-      throw new Error("AI file not found")
+      const t = await getTranslations()
+      throw new NotfoundException(t("errors.aiFile.notFound"))
     }
 
     // Best-effort: delete object on S3/MinIO; try both with and without public/ prefix
@@ -39,12 +43,19 @@ export const deleteAiFileAction = chatbotActionClient
           await uploader.headObject(key)
           await uploader.deleteObject(key)
           break
-        } catch {
-          // try next candidate
+        } catch (error) {
+          logger.debug(
+            "[ai-files] Skip candidate key (not found or delete failed)",
+            { key, error },
+          )
         }
       }
-    } catch {
-      // ignore storage deletion error
+    } catch (error) {
+      logger.warn("[ai-files] Best-effort storage deletion failed", {
+        error,
+        aiFileId: aiFile.id,
+        path: aiFile.path,
+      })
     }
 
     // Delete AIFile (will cascade delete AIEmbeddings)
@@ -53,5 +64,3 @@ export const deleteAiFileAction = chatbotActionClient
     invalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
     return { success: true }
   })
-
-

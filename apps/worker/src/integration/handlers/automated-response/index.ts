@@ -1,6 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import { SenderType } from "@aha.chat/database/types"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import { logger } from "../../../lib/logger"
 import { ROLES } from "./constants"
 import {
   replyByAutomatedResponse,
@@ -19,7 +20,11 @@ export const listAllEnabledAutomatedResponses = async ({
     return await prisma.automatedResponse.findMany({
       where: { chatbotId, status: true },
     })
-  } catch (_err) {
+  } catch (error) {
+    logger.error(
+      "[automated-response] listAllEnabledAutomatedResponses failed",
+      { error, chatbotId },
+    )
     return []
   }
 }

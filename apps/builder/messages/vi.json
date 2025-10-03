@@ -511,6 +511,11 @@
     "uploadFailed": "Tải lên thất bại",
     "unknownError": "Lỗi không xác định"
   },
+  "errors": {
+    "aiFile": {
+      "notFound": "Không tìm thấy AI file"
+    }
+  },
   "signin": {
     "title": "Đăng nhập vào {name}",
     "or": "Hoặc",

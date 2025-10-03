@@ -1,3 +1,4 @@
+import { logger } from "../../../lib/logger"
 import { AUTH_TYPES, JSON_TYPE, TEXT } from "./constants"
 
 type MCPHeader = { header: string; value: string }
@@ -84,6 +85,11 @@ export async function callMCPTool(
       success: true,
     }
   } catch (error) {
+    logger.error("[automated-response] callMCPTool failed", {
+      error,
+      mcpServerUrl,
+      toolName,
+    })
     return {
       error: error instanceof Error ? error.message : TEXT.unknownError,
       success: false,
@@ -96,10 +102,14 @@ export function cleanSchemaForGemini(schema: unknown): unknown {
     return schema
   }
 
-  const cleaned: Record<string, unknown> = { ...(schema as Record<string, unknown>) }
+  const cleaned: Record<string, unknown> = {
+    ...(schema as Record<string, unknown>),
+  }
 
   if (cleaned.properties && typeof cleaned.properties === JSON_TYPE.object) {
-    const cleanedProperties: Record<string, unknown> = { ...(cleaned.properties as Record<string, unknown>) }
+    const cleanedProperties: Record<string, unknown> = {
+      ...(cleaned.properties as Record<string, unknown>),
+    }
 
     for (const [key, prop] of Object.entries(cleanedProperties)) {
       if (prop && typeof prop === JSON_TYPE.object) {

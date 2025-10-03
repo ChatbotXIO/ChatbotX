@@ -1,6 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import type { AIAgentModel } from "@aha.chat/database/types"
 import { jsonSchema, type ToolSet, tool } from "ai"
+import { logger } from "../../../lib/logger"
 import { JSON_TYPE, TEXT, TOOL_PREFIX } from "./constants"
 import { callMCPTool, cleanSchemaForGemini } from "./mcp"
 import { performFileSearch } from "./search"
@@ -66,7 +67,8 @@ async function getAIFileTools(aiAgent: AIAgentModel): Promise<ToolSet> {
     }
 
     return tools
-  } catch (_error) {
+  } catch (error) {
+    logger.error("[automated-response] getAIFileTools failed", { error, chatbotId: aiAgent.chatbotId })
     return {}
   }
 }
@@ -128,7 +130,8 @@ async function getAIFunctionTools(aiAgent: AIAgentModel): Promise<ToolSet> {
     }
 
     return tools
-  } catch (_error) {
+  } catch (error) {
+    logger.error("[automated-response] getAIFunctionTools failed", { error, chatbotId: aiAgent.chatbotId })
     return {}
   }
 }
@@ -194,7 +197,8 @@ async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
     }
 
     return tools
-  } catch (_error) {
+  } catch (error) {
+    logger.error("[automated-response] getMCPServerTools failed", { error, chatbotId: aiAgent.chatbotId })
     return {}
   }
 }
@@ -222,7 +226,8 @@ export async function getSelectedTools(aiAgent: AIAgentModel): Promise<{
     }
 
     return { tools: allTools, availableTools }
-  } catch (_error) {
+  } catch (error) {
+    logger.error("[automated-response] getSelectedTools failed", { error, chatbotId: aiAgent.chatbotId })
     return {
       tools: {},
       availableTools: { fileTools: [], functionTools: [], mcpTools: [] },
