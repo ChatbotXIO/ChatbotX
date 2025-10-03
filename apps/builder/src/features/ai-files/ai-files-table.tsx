@@ -27,6 +27,7 @@ import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
 import { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
+import { deleteAiFileAction } from "./actions/delete-ai-file.action"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
 import type { getAIFiles } from "./queries"
@@ -175,7 +176,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
       {
         id: "actions",
         header: t("actions.actions"),
-        cell: () => (
+        cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
@@ -202,8 +203,16 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => {
-                  toast.info(t("messages.deleteComingSoon"))
+                onClick={async () => {
+                  try {
+                    const rowData = row.original
+                    await deleteAiFileAction(rowData.chatbotId, {
+                      aiFileId: rowData.id,
+                    })
+                    toast.success(t("messages.deleted"))
+                  } catch {
+                    toast.error(t("errors.unexpected"))
+                  }
                 }}
               >
                 <Trash2Icon className="mr-2 h-4 w-4" />
