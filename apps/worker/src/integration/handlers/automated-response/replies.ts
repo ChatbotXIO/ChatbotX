@@ -7,6 +7,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, streamText } from "ai"
+import { logger } from "../../../lib/logger"
 import { AI_PROVIDERS, ROLES, TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { AIMessage, ReplyByAIProps } from "./types"
@@ -210,7 +211,28 @@ async function runAIReply(
     })
 
     const toolCalls = await result.toolCalls
+    if (toolCalls && toolCalls.length > 0) {
+      try {
+        const planned = toolCalls.map((t) => t.toolName).join(", ")
+        logger.info(`[AI_TOOL] Planned tool calls: ${planned}`)
+      } catch {
+        // ignore
+      }
+    }
     const toolResults = await result.toolResults
+    if (toolResults && toolResults.length > 0) {
+      for (const r of toolResults) {
+        try {
+          const outputPreview =
+            typeof r.output === "string"
+              ? r.output.slice(0, 200)
+              : JSON.stringify(r.output).slice(0, 200)
+          logger.info(`[AI_TOOL] Result: ${r.toolName} -> ${outputPreview}`)
+        } catch {
+          // ignore
+        }
+      }
+    }
 
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,

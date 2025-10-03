@@ -1,5 +1,6 @@
 import type { Readable } from "node:stream"
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -104,9 +105,9 @@ class Uploader {
     const stream = response.Body as Readable
 
     return new Promise((resolve, reject) => {
-      stream.on('data', (chunk) => chunks.push(chunk))
-      stream.on('error', reject)
-      stream.on('end', () => resolve(Buffer.concat(chunks)))
+      stream.on("data", (chunk) => chunks.push(chunk))
+      stream.on("error", reject)
+      stream.on("end", () => resolve(Buffer.concat(chunks)))
     })
   }
 
@@ -121,6 +122,14 @@ class Uploader {
       throw new Error(`No body found for object: ${path}`)
     }
     return response.Body as Readable
+  }
+
+  async deleteObject(path: string) {
+    const command = new DeleteObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: path,
+    })
+    return await this.#client.send(command)
   }
 }
 
