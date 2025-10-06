@@ -7,7 +7,4 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-folder=$(date +%Y%m%d%H%M%S)_$1
-mkdir -p "prisma/migrations/$folder"
-
-prisma migrate dev --create-only --name $1/migration.sql
+prisma migrate dev --create-only --name $1

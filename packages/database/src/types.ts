@@ -57,6 +57,7 @@ export const organizationSettingsSchema = z.object({
       clientSecret: z.string(),
       verifyToken: z.string(),
       version: z.string(),
+      configId: z.string(),
     })
     .optional(),
   googleSheets: z

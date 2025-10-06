@@ -3,7 +3,7 @@ import type {
   ContactModel,
 } from "@aha.chat/database/types"
 import type { ConversationResource } from "@/features/conversations/schemas"
-import { BaseException } from "@/lib/error"
+import { BaseException } from "@/lib/errors/exception"
 
 export class ContactException extends BaseException {}
 

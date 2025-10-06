@@ -1,10 +1,7 @@
 "use server"
 
 import { IntegrationType, prisma } from "@aha.chat/database"
-import {
-  type ChatbotModel,
-  organizationSettingsSchema,
-} from "@aha.chat/database/types"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import {
   exchangeLongLivedToken,
@@ -15,7 +12,7 @@ import { revalidateTag } from "next/cache"
 import type { Prisma } from "node_modules/@aha.chat/database/src/generated/prisma/client"
 import type { ChatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { findOrganization } from "@/features/organization/queries"
+import { findOrganizationSettingsByKey } from "@/features/organization/queries"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schemas"
 
@@ -35,17 +32,12 @@ export const selectPageAction = chatbotActionClient
       parsedInput: SelectPageRequest
     }) => {
       try {
-        const organization = await findOrganization({
-          id: ctx.chatbot.organizationId,
-        })
-        const { data: setting } = organizationSettingsSchema.safeParse(
-          organization.settings,
+        const messengerSetting = await findOrganizationSettingsByKey(
+          {
+            id: ctx.chatbot.organizationId,
+          },
+          "messenger",
         )
-        if (!setting?.messenger) {
-          throw new Error("Organization settings are not valid")
-        }
-
-        const messengerSetting = setting.messenger
 
         await prisma.$transaction(async (tx) => {
           const longLivedToken = await exchangeLongLivedToken(
@@ -98,6 +90,7 @@ export const selectPageAction = chatbotActionClient
               inboxId: inbox.id,
               pageId: parsedInput.pageId,
               auth: auth as Prisma.InputJsonValue,
+              name: parsedInput.pageName,
             },
           })
         })

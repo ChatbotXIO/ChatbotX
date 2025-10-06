@@ -1,4 +1,5 @@
 import ky from "ky"
+import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { logger } from "../lib/logger"
 import type {
   FacebookSendMessageRequest,
@@ -26,12 +27,14 @@ export const exchangeLongLivedToken = async (
   settings: {
     clientId: string
     clientSecret: string
-    version: string
+    version?: string
   },
   accessToken: string,
 ): Promise<string> => {
+  const { version = DEFAULT_API_VERSION } = settings
+
   const res: { access_token: string } = await ky
-    .get(`https://graph.facebook.com/${settings.version}/oauth/access_token`, {
+    .get(`${API_URL}/${version}/oauth/access_token`, {
       searchParams: {
         grant_type: "fb_exchange_token",
         client_id: settings.clientId as string,
@@ -47,32 +50,30 @@ export const exchangeLongLivedToken = async (
 export const subscribePageToAppWebhook = async (props: {
   pageId: string
   accessToken: string
-  version: string
+  version?: string
 }): Promise<void> => {
-  await ky.post(
-    `https://graph.facebook.com/${props.version}/${props.pageId}/subscribed_apps`,
-    {
-      json: {
-        subscribed_fields: PAGE_SUBSCRIBE_SCOPES.join(","),
-        access_token: props.accessToken,
-      },
+  const { version = DEFAULT_API_VERSION } = props
+
+  await ky.post(`${API_URL}/${version}/${props.pageId}/subscribed_apps`, {
+    json: {
+      subscribed_fields: PAGE_SUBSCRIBE_SCOPES.join(","),
+      access_token: props.accessToken,
     },
-  )
+  })
 }
 
 export const unsubscribePageFromAppWebhook = async (props: {
   pageId: string
   accessToken: string
-  version: string
+  version?: string
 }): Promise<void> => {
+  const { version = DEFAULT_API_VERSION } = props
+
   try {
     await ky
-      .delete(
-        `https://graph.facebook.com/${props.version}/${props.pageId}/subscribed_apps`,
-        {
-          searchParams: { access_token: props.accessToken },
-        },
-      )
+      .delete(`${API_URL}/${version}/${props.pageId}/subscribed_apps`, {
+        searchParams: { access_token: props.accessToken },
+      })
       .json()
   } catch (error) {
     logger.error("unsubscribePageFromAppWebhook error", error)
@@ -83,18 +84,17 @@ export const sendMessage = async (
   auth: MessengerAuthValue,
   payload: FacebookSendMessageRequest,
 ): Promise<FacebookSendMessageResponse> => {
+  const { version = DEFAULT_API_VERSION } = auth
+
   try {
     return await ky
-      .post(
-        `https://graph.facebook.com/${auth.metadata.version}/${auth.metadata.pageId}/messages`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.tokens.accessToken}`,
-          },
-          json: payload,
+      .post(`${API_URL}/${version}/${auth.metadata.pageId}/messages`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.tokens.accessToken}`,
         },
-      )
+        json: payload,
+      })
       .json()
   } catch (error) {
     logger.error("sendMessage error", error)

@@ -9,8 +9,11 @@ import {
 import {
   type IconType,
   SiMessenger,
+  SiMessengerHex,
   SiWhatsapp,
+  SiWhatsappHex,
   SiZalo,
+  SiZaloHex,
 } from "@icons-pack/react-simple-icons"
 import { AppWindowIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -26,7 +29,7 @@ type SettingsChannelsPageProps = {
 type IntegrationItem = {
   readonly keyName: string
   readonly icon: IconType
-  readonly iconColor: string
+  readonly iconColor?: string
   readonly content: ReactNode
 }
 
@@ -42,19 +45,19 @@ export default function SettingsChannelsPage({
     {
       keyName: t("whatsapp.title"),
       icon: SiWhatsapp,
-      iconColor: "#25D366",
+      iconColor: SiWhatsappHex,
       content: whatsapp,
     },
     {
       keyName: t("messenger.title"),
       icon: SiMessenger,
-      iconColor: "#0866FF",
+      iconColor: SiMessengerHex,
       content: messenger,
     },
     {
       keyName: t("zalo.title"),
       icon: SiZalo,
-      iconColor: "#0068ff",
+      iconColor: SiZaloHex,
       content: zalo,
     },
     {

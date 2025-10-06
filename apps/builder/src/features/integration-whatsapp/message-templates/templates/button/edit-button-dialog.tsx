@@ -16,7 +16,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useForm, useFormContext } from "react-hook-form"
-import { WhatsappFlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
 import {
   ButtonActionType,
   type ButtonStepSchema,
@@ -97,12 +96,6 @@ export function EditButtonDialog({
               <InputField
                 label={t("fields.phoneNumber.label")}
                 name="phone_number"
-              />
-            )}
-            {type === ButtonActionType.Flow && (
-              <WhatsappFlowSelect
-                label={t("fields.whatsappFlow.label")}
-                name="flow_id"
               />
             )}
             <DialogFooter>

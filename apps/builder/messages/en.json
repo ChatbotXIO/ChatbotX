@@ -36,6 +36,11 @@
       "label": "Phone number",
       "placeholder": "Enter phone number"
     },
+    "phoneNumberId": {
+      "label": "Phone number",
+      "description": "Select phone number",
+      "noPhoneNumbersFound": "No phone numbers found for this account"
+    },
     "gender": {
       "label": "Gender",
       "female": "Female",
@@ -79,7 +84,6 @@
       "label": "API Key",
       "placeholder": "Enter API key"
     },
-
     "developmentMode": {
       "label": "Development Mode",
       "description": "Your bot will work only for bot admins. Enable this option if you are building your bot and don't want non admins to use the bot."
@@ -187,6 +191,15 @@
     },
     "analytics": {
       "label": "Analytics"
+    },
+    "templateMessages": {
+      "label": "Template Messages"
+    },
+    "paymentMethods": {
+      "label": "Payment Methods"
+    },
+    "paymentHistory": {
+      "label": "Payment History"
     },
     "flows": {
       "label": "Flows",
@@ -469,13 +482,17 @@
       "description": "Copy and paste this code into your website to embed the chat widget.",
       "securityNote": "Security Note",
       "securityNoteDescription": "This widget will only work on domains that are authorized in your webchat configuration. Make sure to add your domain to the authorized domains list."
+    },
+    "status": {
+      "label": "Status"
+    },
+    "category": {
+      "label": "Category"
     }
   },
-
   "validation": {
     "maxSize": "File size exceeds maximum limit"
   },
-
   "actions": {
     "add": "Add",
     "addFeature": "Add {feature}",
@@ -564,9 +581,11 @@
     "sendCard": "Send Card",
     "sendCarousel": "Send Carousel",
     "openWebchat": "Open Webchat",
-    "getEmbedCode": "Get Embed Code"
+    "getEmbedCode": "Get Embed Code",
+    "back": "Back",
+    "contine": "Contine",
+    "testNow": "Test Now"
   },
-
   "dialog": {
     "createTitle": "Create {feature}",
     "updateTitle": "Update {feature}",
@@ -601,7 +620,6 @@
       "title": "Add Tag"
     }
   },
-
   "messages": {
     "copiedToClipboard": "Copied to clipboard",
     "failedToCopy": "Failed to copy",
@@ -624,9 +642,11 @@
     "failedToPreviewImage": "Failed to preview image",
     "uploadFailed": "Upload failed",
     "unknownError": "Unknown error",
-    "or": "or"
+    "or": "or",
+    "needToAddSettings": "You need to add settings to use this integration",
+    "connectFailed": "Failed to connect {feature}",
+    "connectSuccess": "Connected {feature} successfully"
   },
-
   "signin": {
     "title": "Sign in to {name}",
     "and": "and",
@@ -636,13 +656,11 @@
     "email": "Email",
     "password": "Password"
   },
-
   "folders": {
     "heading": {
       "title": "Folders"
     }
   },
-
   "flows": {
     "clickToSelectFlow": "Click to select a flow",
     "create": {
@@ -694,7 +712,6 @@
       "accountTimezone": "Account Timezone"
     }
   },
-
   "autoAssignConversation": {
     "rule": {
       "label": "Assignment Rule",
@@ -707,7 +724,6 @@
       "label": "Users"
     }
   },
-
   "aiAgent": {
     "setting": {
       "label": "AI Agents",
@@ -717,19 +733,16 @@
     "title": "AI Agents",
     "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses."
   },
-
   "aiTool": {
     "subtitle": "Manage your AI tools to enhance your chatbot capabilities.",
     "title": "AI Tools"
   },
-
   "aiTrigger": {
     "setting": {
       "label": "AI Triggers",
       "description": "AI Triggers description"
     }
   },
-
   "accountField": {
     "title": "Account Fields",
     "createDialog": {
@@ -739,7 +752,6 @@
       "title": "Update Account Field"
     }
   },
-
   "googleSheets": {
     "setting": {
       "label": "Google Sheets",
@@ -747,7 +759,6 @@
     },
     "title": "Google Sheets"
   },
-
   "customField": {
     "heading": {
       "title": "Custom Fields"
@@ -770,7 +781,6 @@
       "false": "False"
     }
   },
-
   "automatedResponse": {
     "heading": {
       "title": "Automated Responses"
@@ -780,20 +790,17 @@
       "description": "Automated responses description"
     }
   },
-
   "tags": {
     "heading": {
       "title": "Tags"
     }
   },
-
   "broadcasts": {
     "scheduleSendMessage": "Schedule send message",
     "update": {
       "title": "Update Broadcast"
     }
   },
-
   "inboxTeam": {
     "updateAction": {
       "heading": {
@@ -801,13 +808,11 @@
       }
     }
   },
-
   "teams": {
     "create": {
       "title": "Create Inbox Team"
     }
   },
-
   "settings": {
     "openAI": {
       "description": "OpenAI integration description",
@@ -825,12 +830,10 @@
       "title": "AI Triggers"
     }
   },
-
   "integration": {
     "disconnectConfirm": "Are you sure you want to disconnect?",
     "disconnectDescription": "This action cannot be undone."
   },
-
   "integrations": {
     "title": "Integrations",
     "openAI": {
@@ -853,7 +856,6 @@
       }
     }
   },
-
   "accountFields": {
     "create": {
       "successMessage": "Account field created successfully"
@@ -862,10 +864,21 @@
       "successMessage": "Account field deleted successfully"
     }
   },
-
   "whatsapp": {
     "title": "WhatsApp",
     "description": "WhatsApp description",
+    "connectExisting": "Connect an existing WhatsApp Business Account",
+    "transferPhoneNumber": "Transfer phone from another Whatsapp provider",
+    "manualConnect": "Manual connect using System User Access token.",
+    "marketingMessageLite": "Marketing Message Lite",
+    "tabs": {
+      "usefulLinks": "Useful Links",
+      "profile": "Profile",
+      "messageTemplates": "Message Templates",
+      "automation": "Automation",
+      "flows": "Flows",
+      "ecommerce": "Ecommerce"
+    },
     "category": {
       "makerting": {
         "label": "Marketing",
@@ -935,11 +948,15 @@
       "description1": "Conversation starters are used to start a conversation with a user.",
       "description2": "Conversation starters are used to start a conversation with a user."
     },
-    "iceBreaker": {
-      "label": "Ice Breaker"
+    "icebreakers": {
+      "label": "Icebreakers",
+      "description": "These are common questions that people can easily ask you."
+    },
+    "commands": {
+      "label": "Commands",
+      "description": "These are special keywords that tell the WhatsApp bot what to do"
     }
   },
-
   "aiTriggers": {
     "setting": {
       "label": "AI Triggers",
@@ -963,7 +980,6 @@
       "label": "AI Trigger description"
     }
   },
-
   "openAI": {
     "title": "OpenAI",
     "setting": {
@@ -1004,6 +1020,9 @@
   "general": {
     "title": "General"
   },
+  "chanel": {
+    "label": "Channel"
+  },
   "channels": {
     "title": "Channels"
   },
@@ -1036,5 +1055,13 @@
   },
   "omnichannel": {
     "title": "Omnichannel"
+  },
+  "chatbots": {
+    "create": {
+      "title": "Create Chatbot"
+    },
+    "list": {
+      "title": "Chatbots List"
+    }
   }
 }

@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getIntegationWebchats } from "@/features/webchat/queries/get-webchats.query"
 import { getWebchatRequest } from "@/features/webchat/schemas/webchat.schema"
 import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
@@ -25,6 +25,6 @@ export async function GET(
 
     return NextResponse.json(result)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

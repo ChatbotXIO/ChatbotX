@@ -1,54 +1,28 @@
-import { type Prisma, prisma } from "@aha.chat/database"
-import type {
-  WhatsappFlowModel,
-  WhatsappFlowStatus,
-} from "@aha.chat/database/types"
-import { unstable_cache } from "next/cache"
-import type { GetWhatsappFlowsSchema } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
+import { prisma } from "@aha.chat/database"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import {
+  type ListFlowsResponse,
+  listFlows,
+} from "@aha.chat/integration-whatsapp/api/waba"
+import type { ListWhatsappFlowsRequest } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { getCurrentUserId } from "@/lib/auth"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
-export const getWhatsappFlows = async (
-  input: GetWhatsappFlowsSchema,
-): Promise<{
-  data: WhatsappFlowModel[]
-  pageCount: number
-}> => {
+export async function listWhatsappFlows(
+  input: ListWhatsappFlowsRequest,
+): Promise<ListFlowsResponse> {
   const userId = await getCurrentUserId()
   await findChatbotOrFail(userId, input.chatbotId)
 
-  return await unstable_cache(
-    async () => {
-      let where: Prisma.WhatsappFlowWhereInput = {
-        integrationWhatsapp: {
-          is: {
-            chatbotId: input.chatbotId,
-          },
-        },
-      }
-      if (input.status) {
-        where = {
-          ...where,
-          status: input.status as WhatsappFlowStatus,
-        }
-      }
-      const [data, total] = await prisma.$transaction([
-        prisma.whatsappFlow.findMany({
-          skip: (input.page - 1) * input.perPage,
-          take: input.perPage,
-          where,
-        }),
-        prisma.whatsappFlow.count({ where }),
-      ])
+  const integrationWhatsapp =
+    await prisma.integrationWhatsapp.findUniqueOrThrow({
+      where: {
+        chatbotId: input.chatbotId,
+        id: input.id,
+      },
+    })
 
-      const pageCount = Math.ceil(total / input.perPage)
-
-      return { data, pageCount }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#whatsapp#flows`],
-    },
-  )()
+  return await listFlows({
+    auth: integrationWhatsapp.auth as WhatsappAuthValue,
+  })
 }

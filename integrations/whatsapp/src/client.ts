@@ -1,8 +1,11 @@
 import { type Context, SdkException } from "@aha.chat/sdk"
 import { WhatsAppAPI } from "whatsapp-api-js"
-import { DEFAULT_API_VERSION } from "whatsapp-api-js/types"
+import type {
+  WhatsappPhoneNumber,
+  WhatsappPhoneNumberResponse,
+} from "./api/phone-number"
+import { API_URL, DEFAULT_API_VERSION } from "./constants"
 import type { WhatsappAuthValue } from "./schemas"
-import type { WhatsappPhoneNumber, WhatsappPhoneNumberResponse } from "./types"
 
 export const getWhatsappClient = (auth: WhatsappAuthValue) => {
   return new WhatsAppAPI({
@@ -41,7 +44,7 @@ export const verifyAccessToken = async (
    *  }
    */
   const res = await client.$$apiFetch$$(
-    `https://graph.facebook.com/${DEFAULT_API_VERSION}/${ctx.auth.metadata.wabaId}/phone_numbers`,
+    `${API_URL}/${DEFAULT_API_VERSION}/${ctx.auth.metadata.wabaId}/phone_numbers`,
   )
   if (!res.ok) {
     throw new SdkException("Access token is not valid")
@@ -74,7 +77,7 @@ export const uploadMedia = async (
 ): Promise<string> => {
   const client = getWhatsappClient(auth)
   const resSession = await client.$$apiFetch$$(
-    `https://graph.facebook.com/${DEFAULT_API_VERSION}/${auth.clientId}/uploads`,
+    `${API_URL}/${DEFAULT_API_VERSION}/${auth.clientId}/uploads`,
     {
       method: "POST",
       body: new URLSearchParams({
@@ -94,7 +97,7 @@ export const uploadMedia = async (
   }
 
   const res = await client.$$apiFetch$$(
-    `https://graph.facebook.com/${DEFAULT_API_VERSION}/${sessionId}`,
+    `${API_URL}/${DEFAULT_API_VERSION}/${sessionId}`,
     {
       method: "POST",
       headers: {

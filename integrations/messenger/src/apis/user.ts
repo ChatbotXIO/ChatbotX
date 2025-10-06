@@ -1,6 +1,7 @@
 import type { ContactEntity, Context } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import ky from "ky"
+import { API_URL } from "../constants"
 import { logger } from "../lib/logger"
 import type { FacebookUserProfile, MessengerAuthValue } from "../schemas"
 
@@ -13,14 +14,11 @@ export const getUserProfile = async ({
 }): Promise<ContactEntity> => {
   try {
     const response = await ky
-      .get<FacebookUserProfile>(
-        `https://graph.facebook.com/${ctx.auth.metadata.version}/${psid}`,
-        {
-          headers: {
-            Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-          },
+      .get<FacebookUserProfile>(`${API_URL}/${ctx.auth.version}/${psid}`, {
+        headers: {
+          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
         },
-      )
+      })
       .json()
 
     const result: ContactEntity = {
