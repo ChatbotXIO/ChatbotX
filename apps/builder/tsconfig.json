@@ -18,8 +18,7 @@
     "next.config.js",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/features/integration-whatsapp/message-templates/message-templates-table-columns._tsx"
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -60,29 +60,29 @@ export const getAllChatbotMembers = async (
   chatbots: ChatbotResource[]
   chatbotIds: string[]
 }> => {
-  // return await unstable_cache(
-  //   async () => {
-  const chatbotMembers = await prisma.chatbotMember.findMany({
-    where: {
-      userId,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-    include: {
-      chatbot: true,
-    },
-  })
-  const chatbots = chatbotMembers
-    .map((cm) => cm.chatbot)
-    .filter((c) => Boolean(c))
-  const chatbotIds = chatbots.map((c) => c.id)
+  return await unstable_cache(
+    async () => {
+      const chatbotMembers = await prisma.chatbotMember.findMany({
+        where: {
+          userId,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+        include: {
+          chatbot: true,
+        },
+      })
+      const chatbots = chatbotMembers
+        .map((cm) => cm.chatbot)
+        .filter((c) => Boolean(c))
+      const chatbotIds = chatbots.map((c) => c.id)
 
-  return { chatbotMembers, chatbots, chatbotIds }
-  //   },
-  //   [userId],
-  //   {
-  //     tags: [`users:${userId}#chatbotMembers`],
-  //   },
-  // )()
+      return { chatbotMembers, chatbots, chatbotIds }
+    },
+    [userId],
+    {
+      tags: [`users:${userId}#chatbotMembers`],
+    },
+  )()
 }
