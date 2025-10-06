@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getTags } from "@/features/tags/queries"
 import { getTagsSearchParamsCache } from "@/features/tags/schemas/get-tags-schema"
 import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
@@ -25,6 +25,6 @@ export async function GET(
 
     return NextResponse.json(data)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

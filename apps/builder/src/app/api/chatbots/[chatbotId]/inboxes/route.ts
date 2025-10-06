@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { listInboxes } from "@/features/inboxes/queries"
 import { listInboxesNuqs } from "@/features/inboxes/schemas/list-inboxes.schema"
 import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
@@ -25,6 +25,6 @@ export async function GET(
 
     return NextResponse.json(allInboxes)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

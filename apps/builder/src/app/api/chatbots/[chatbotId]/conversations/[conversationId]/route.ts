@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { findConversation } from "@/features/conversations/queries/list-conversations.query"
 import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
@@ -20,6 +20,6 @@ export async function GET(
 
     return NextResponse.json(result)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

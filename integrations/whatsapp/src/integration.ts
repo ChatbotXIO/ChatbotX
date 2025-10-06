@@ -4,15 +4,14 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@aha.chat/sdk"
-import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client"
-import { getFlows } from "./flows"
-import { webhookHandler } from "./handlers/webhook"
-import { getIceBreakers, updateIceBreaker } from "./ice-breaker"
-import { parseIncomingMessage } from "./incomming-message"
 import {
-  createMessageTemplate,
-  listMessageTemplates,
-} from "./message-templates"
+  findConversationalAutomation,
+  updateConversationalAutomation,
+} from "./api/phone-number"
+import { listFlows, listMessageTemplates } from "./api/waba"
+import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client"
+import { webhookHandler } from "./handlers/webhook"
+import { parseIncomingMessage } from "./incomming-message"
 import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
 import type {
   WhatsappActions,
@@ -44,20 +43,17 @@ const config: IntegrationDefinition<
     sendFlowStep: async ({ ctx, flowVersionId, step, conversation }) => {
       await sendFlowStep(ctx, conversation, flowVersionId, step)
     },
-    listMessageTemplates: async ({ ctx, params }) => {
-      return await listMessageTemplates(ctx.auth, params)
+    listMessageTemplates: async ({ ctx }) => {
+      return await listMessageTemplates(ctx.auth)
     },
-    createMessageTemplate: async ({ ctx, data }) => {
-      return await createMessageTemplate(ctx.auth, data)
+    listFlows: async ({ ctx }) => {
+      return await listFlows(ctx)
     },
-    getFlows: async ({ ctx, params }) => {
-      return await getFlows(ctx.auth, params)
+    findConversationalAutomation: async ({ ctx }) => {
+      return await findConversationalAutomation(ctx.auth)
     },
-    getIceBreakers: async ({ ctx }) => {
-      return await getIceBreakers(ctx.auth)
-    },
-    updateIceBreaker: async ({ ctx, prompts }) => {
-      return await updateIceBreaker(ctx.auth, prompts)
+    updateConversationalAutomation: async ({ ctx, data }) => {
+      return await updateConversationalAutomation(ctx.auth, data)
     },
   },
   handleRequest: async (props) => {

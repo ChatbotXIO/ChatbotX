@@ -159,8 +159,10 @@ export const parseHeaderMedia = async (
     header_handle: string[]
   }
 }> => {
-  const uploadedFileId =
-    await integrations.WHATSAPP.integration.actions?.uploadMedia({ ctx, file })
+  const uploadedFileId = await integrations.WHATSAPP.actions?.uploadMedia({
+    ctx,
+    file,
+  })
   if (!uploadedFileId) {
     throw new Error("Upload file can't upload")
   }

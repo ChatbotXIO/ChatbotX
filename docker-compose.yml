@@ -57,7 +57,7 @@ services:
     entrypoint: >
       /bin/sh -c "
       sleep 10;
-      /usr/bin/mc config host add minio http://minio:9000 ahachat nr541Kv59xB4f48bhZOy5wBz;
+      /usr/bin/mc alias set minio http://minio:9000 ahachat nr541Kv59xB4f48bhZOy5wBz;
       /usr/bin/mc mb minio/ahachat;
       /usr/bin/mc anonymous set public minio/ahachat/public;
       exit 0;

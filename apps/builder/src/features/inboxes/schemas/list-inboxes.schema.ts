@@ -10,5 +10,6 @@ const listInboxRequest = z.object({
   page: z.number().int().min(1).default(1).optional(),
   perPage: z.number().int().min(1).default(10).optional(),
   chatbotId: z.string().cuid2(),
+  includes: z.array(z.literal("intergration")).optional(),
 })
 export type ListInboxesRequest = z.infer<typeof listInboxRequest>

@@ -57,6 +57,7 @@ export const organizationSettingsSchema = z.object({
       clientSecret: z.string(),
       verifyToken: z.string(),
       version: z.string(),
+      configId: z.string(),
     })
     .optional(),
   googleSheets: z
@@ -67,6 +68,14 @@ export const organizationSettingsSchema = z.object({
     })
     .optional(),
   messenger: z
+    .object({
+      clientId: z.string(),
+      clientSecret: z.string(),
+      verifyToken: z.string(),
+      version: z.string(),
+    })
+    .optional(),
+  zalo: z
     .object({
       clientId: z.string(),
       clientSecret: z.string(),

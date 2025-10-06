@@ -14,7 +14,10 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { formatDate } from "@aha.chat/ui/lib/format"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontalIcon } from "lucide-react"
+import { MoreHorizontalIcon, PlusIcon } from "lucide-react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
@@ -26,6 +29,9 @@ type BroadcastsTableProps = {
 
 export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
+  const t = useTranslations()
+  const { chatbotId } = useParams<{ chatbotId: string }>()
+
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<BroadcastResource> | null>(null)
 
@@ -125,7 +131,18 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} />
+        <DataTableToolbar table={table}>
+          <div className="flex justify-end">
+            <Button asChild size="sm">
+              <Link href={`/chatbots/${chatbotId}/broadcasts/create`}>
+                <PlusIcon />
+                {t("actions.createFeature", {
+                  feature: t("fields.broadcast.label"),
+                })}
+              </Link>
+            </Button>
+          </div>
+        </DataTableToolbar>
       </DataTable>
 
       <RenameBroadcastDialog

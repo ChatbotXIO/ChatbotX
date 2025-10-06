@@ -17,7 +17,7 @@ export const SettingRow = (props: SettingRowProps) => {
       </div>
       <div>{children}</div>
       {description && (
-        <p className="col-span-2 mt-2 break-words text-muted-foreground text-sm">
+        <p className="col-span-2 mt-1.5 break-words text-muted-foreground text-sm">
           {description}
         </p>
       )}

@@ -2,29 +2,25 @@
 
 import { prisma } from "@aha.chat/database"
 import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
 
 export const disconnectWhatsappAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [chatbotId, id],
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationWhatsapp =
-        await prisma.integrationWhatsapp.findFirstOrThrow({
-          where: { chatbotId },
-        })
-
       await prisma.$transaction(async (tx) => {
-        await tx.inbox.delete({
-          where: { id: integrationWhatsapp.inboxId },
+        await tx.integrationWhatsapp.delete({
+          where: { chatbotId, id },
         })
       })
+
       return
     },
   )

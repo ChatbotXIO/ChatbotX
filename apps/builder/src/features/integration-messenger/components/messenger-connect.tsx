@@ -5,7 +5,10 @@ import type {
   OrganizationSettings,
 } from "@aha.chat/database/types"
 import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
-import FacebookLogin from "@greatsumini/react-facebook-login"
+import FacebookLogin, {
+  type InitParams,
+} from "@greatsumini/react-facebook-login"
+import { SiMessenger } from "@icons-pack/react-simple-icons"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
@@ -50,18 +53,22 @@ export function MessengerConnect({ organization }: MessengerConnectProps) {
             appId={settings.messenger?.clientId as string}
             className="inline-flex h-8 items-center justify-start gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
             initParams={{
-              // biome-ignore lint/suspicious/noExplicitAny: skip version check
-              version: settings.messenger?.version as any,
+              version:
+                (settings.messenger?.version as InitParams["version"]) ??
+                "v18.0",
             }}
             onFail={(error) => {
               // biome-ignore lint/suspicious/noConsole: debug
               console.log("error", error)
-              toast.error(t("failedToConnectFacebookPage"))
+              toast.error(t("connectFailed", { feature: "Messenger" }))
             }}
-            onSuccess={onLoginSuccess}
+            onSuccess={() => {
+              toast.success(t("connectSuccess", { feature: "Messenger" }))
+              onLoginSuccess()
+            }}
             scope={MESSENGER_SCOPE.join(",")}
           >
-            {/* <SiMessenger className="size-4" fill="#0866FF" /> */}
+            <SiMessenger className="size-4" fill="#0866FF" />
             {t("actions.connect")}
           </FacebookLogin>
         </div>

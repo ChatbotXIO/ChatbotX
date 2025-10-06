@@ -10,24 +10,20 @@ import {
 import { uploader } from "@aha.chat/filesystem"
 import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
 import type { OnMessageArgs } from "@aha.chat/integration-whatsapp"
+import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type {
-  AttachmentEntity,
-  AuthValue,
-  Context,
-  ConversationEntity,
-  MessageEntity,
-} from "@aha.chat/sdk"
+import type { AttachmentEntity, AuthValue, Context } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
 import { allIntegrations } from "../../shared/integrations"
 
 const getDBIntegration = async (
   integrationName: string,
-  payload: OnMessageArgs | MessengerWebhookEvent,
+  // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+  payload: any,
 ) => {
   switch (integrationName) {
     case InboxType.WHATSAPP:
@@ -48,31 +44,18 @@ const getDBIntegration = async (
           chatbot: true,
         },
       })
+    case InboxType.ZALO:
+      return await prisma.integrationZalo.findFirstOrThrow({
+        where: {
+          oaId: (payload as ZaloWebhookEvent).recipient.id,
+        },
+        include: {
+          chatbot: true,
+        },
+      })
     default:
       throw new Error(`Unsupported integration: ${integrationName}`)
   }
-}
-
-const parseReceivedMessage = async (
-  // biome-ignore lint/suspicious/noExplicitAny: safe pass value
-  ctx: Context<any>,
-  integrationName: string,
-  payload: OnMessageArgs | MessengerWebhookEvent,
-): Promise<
-  | {
-      message: MessageEntity
-      conversation: ConversationEntity
-      postbackAction?: { flowVersionId: string; buttonId: string } | null
-    }
-  | undefined
-> => {
-  return await allIntegrations[
-    integrationName as keyof typeof allIntegrations
-  ]?.actions.receiveMessage({
-    ctx,
-    // biome-ignore lint/suspicious/noExplicitAny: safe pass value
-    data: payload as any,
-  })
 }
 
 export const receiveMessage = async ({
@@ -80,7 +63,7 @@ export const receiveMessage = async ({
   payload,
 }: {
   integrationName: string
-  payload: OnMessageArgs | MessengerWebhookEvent
+  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel
@@ -98,7 +81,12 @@ export const receiveMessage = async ({
     auth: auth as AuthValue,
     uploader,
   }
-  const parsedMessage = await parseReceivedMessage(ctx, intName, payload)
+  const parsedMessage = await allIntegrations[
+    integrationName as keyof typeof allIntegrations
+  ]?.actions.receiveMessage({
+    ctx,
+    data: payload,
+  })
   if (!parsedMessage) {
     throw new Error("Unable to parse received message")
   }

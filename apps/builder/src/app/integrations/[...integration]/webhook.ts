@@ -14,8 +14,7 @@ export const handleWebhook = async (
   const organizationSettings =
     organization?.settings as unknown as OrganizationSettings
 
-  const integration =
-    integrations[integrationName as IntegrationKey].integration
+  const integration = integrations[integrationName as IntegrationKey]
   if (!integration?.handleRequest) {
     return new Response(
       JSON.stringify({ message: "Method is not implemented" }),

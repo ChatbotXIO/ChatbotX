@@ -1,7 +1,7 @@
 import { createPresignedUploadRequest, uploader } from "@aha.chat/filesystem"
 import { type NextRequest, NextResponse } from "next/server"
 import { env } from "@/env"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { safeJsonParse } from "@/lib/serialize"
 
 export async function POST(req: NextRequest) {
@@ -28,6 +28,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result)
   } catch (error) {
-    return errorResponse(error)
+    return serverErrorHandler(error)
   }
 }

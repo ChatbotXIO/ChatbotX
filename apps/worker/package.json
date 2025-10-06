@@ -18,6 +18,7 @@
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/integration-messenger": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
+    "@aha.chat/integration-zalo": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",

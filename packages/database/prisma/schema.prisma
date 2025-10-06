@@ -144,7 +144,6 @@ model Chatbot {
   aiTriggers               AITrigger[]
   attachments              Attachment[]
   broadcasts               Broadcast[]
-  channelWebWidgets        ChannelWebWidget[]
   chatbotMembers           ChatbotMember[]
   contacts                 Contact[]
   conversationParticipants ConversationParticipant[]
@@ -158,6 +157,7 @@ model Chatbot {
   inboxTeams               InboxTeam[]
   integrationWebchats      IntegrationWebchat[]
   integrationMessengers    IntegrationMessenger[]
+  integrationZalos         IntegrationZalo[]
   integrationGoogleSheets  IntegrationGoogleSheets[]
   integrationOpenAIs       IntegrationOpenAI[]
   integrations             Integration[]
@@ -343,32 +343,6 @@ model ContactInbox {
   @@id([contactId, inboxId])
 }
 
-model WebWidgetTemplate {
-  id   String @id @default(cuid(2))
-  name String
-
-  channelWebWidgets ChannelWebWidget[]
-}
-
-model ChannelWebWidget {
-  id                  String   @id @default(cuid(2))
-  chatbotId           String
-  authorizedDomains   String[]
-  webWidgetTemplateId String
-  brandColor          String   @default("#007bff")
-  hideHeader          Boolean  @default(true)
-  showLogo            Boolean  @default(false)
-  hideMessageInput    Boolean  @default(true)
-  customizeStyles     String?
-
-  // welcomeFlow Flow? @relation(fields: [welcomeFlowId], references: [id])
-  chatbot  Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  template WebWidgetTemplate @relation(fields: [webWidgetTemplateId], references: [id])
-
-  @@index([chatbotId])
-  @@index([webWidgetTemplateId])
-}
-
 model Field {
   id              String          @id @default(cuid(2))
   createdAt       DateTime        @default(now())
@@ -395,14 +369,16 @@ model Inbox {
   inboxType InboxType
   sourceId  String
 
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
   integrationWhatsapp  IntegrationWhatsapp?
   integrationWebchat   IntegrationWebchat?
   integrationMessenger IntegrationMessenger?
-  messages             Message[]
-  conversations        Conversation[]
+  integrationZalo      IntegrationZalo?
 
-  chatbotId String
-  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  messages      Message[]
+  conversations Conversation[]
 
   @@unique([chatbotId, inboxType, sourceId])
   @@index([chatbotId])
@@ -666,17 +642,22 @@ model IntegrationGoogleSheets {
 }
 
 model IntegrationWhatsapp {
-  id            String   @id @default(cuid(2))
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  chatbotId     String
-  inboxId       String   @unique
-  auth          Json
-  phoneNumber   String
-  phoneNumberId String
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  chatbot          Chatbot                   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  inbox            Inbox                     @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  auth          Json
+  phoneNumberId String
+  wabaId        String
+  businessId    String
+  name          String
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  inboxId String @unique
+  inbox   Inbox  @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   messageTemplates WhatsappMessageTemplate[]
   whatsappFlows    WhatsappFlow[]
 }
@@ -700,6 +681,7 @@ model IntegrationMessenger {
 
   auth   Json
   pageId String
+  name   String
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -711,6 +693,28 @@ model IntegrationMessenger {
   fallbackFlow   Flow?   @relation(fields: [fallbackFlowId], references: [id])
 
   @@unique([pageId])
+  @@index([chatbotId])
+  @@index([fallbackFlowId])
+}
+
+model IntegrationZalo {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auth Json
+  oaId String
+  name String
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  inboxId String @unique
+  inbox   Inbox  @relation(fields: [inboxId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  fallbackFlowId String?
+  fallbackFlow   Flow?   @relation(fields: [fallbackFlowId], references: [id])
+
   @@index([chatbotId])
   @@index([fallbackFlowId])
 }
@@ -807,6 +811,7 @@ model Flow {
   aiFunctions           AIFunction[]
   integrationWebchats   IntegrationWebchat[]
   integrationMessengers IntegrationMessenger[]
+  integrationZalos      IntegrationZalo[]
 }
 
 model FlowVersion {
@@ -972,6 +977,7 @@ enum IntegrationType {
   OPENAI
   GEMINI
   WHATSAPP
+  ZALO
 }
 
 enum InboxType {
@@ -980,6 +986,7 @@ enum InboxType {
   INSTAGRAM
   MESSENGER
   WHATSAPP
+  ZALO
 }
 
 enum SenderType {

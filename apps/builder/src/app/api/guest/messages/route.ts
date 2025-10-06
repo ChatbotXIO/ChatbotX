@@ -2,7 +2,7 @@ import { InboxType, prisma } from "@aha.chat/database"
 import { type NextRequest, NextResponse } from "next/server"
 import { listMessages } from "@/features/messages/queries/list-messages.query"
 import { listGuestMessagesRequest } from "@/features/messages/schemas/list-messages.schema"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function GET(req: NextRequest) {
   try {
@@ -33,6 +33,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(result)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }
