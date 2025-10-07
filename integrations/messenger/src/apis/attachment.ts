@@ -1,5 +1,5 @@
-import ky from "ky"
-import { MessengerException } from "../exception"
+import { MessengerAttachmentException } from "../exception"
+import { facebookAttachmentClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type {
   FacebookMessageAttachment,
@@ -13,30 +13,27 @@ export const uploadAttachment = async (
   type: "image" | "video" | "audio" | "file",
 ): Promise<FacebookSendMessageResponse> => {
   try {
-    return await ky
-      .post<FacebookSendMessageResponse>(
-        `https://graph.facebook.com/${auth.metadata.version}/me/message_attachments`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          json: {
-            access_token: auth.tokens.accessToken,
-            message: {
-              attachment: {
-                type,
-                payload: {
-                  is_reusable: true,
-                  url,
-                } as FacebookMessageAttachment["payload"],
-              },
+    return await facebookAttachmentClient.post<FacebookSendMessageResponse>(
+      `${auth.metadata.version}/me/message_attachments`,
+      {
+        headers: {
+          Authorization: `Bearer ${auth.tokens.accessToken}`,
+        },
+        json: {
+          message: {
+            attachment: {
+              type,
+              payload: {
+                is_reusable: true,
+                url,
+              } as FacebookMessageAttachment["payload"],
             },
           },
         },
-      )
-      .json()
+      },
+    )
   } catch (error) {
     logger.error("Upload attachment failed", error)
-    throw new MessengerException("Upload attachment failed")
+    throw new MessengerAttachmentException("Upload attachment failed", url)
   }
 }

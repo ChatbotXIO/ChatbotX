@@ -25,19 +25,22 @@ const getMessageAttachments = async (
   }
 
   try {
-    const attachments: AttachmentEntity[] = []
-    for (const attachment of message.attachments) {
-      if (attachment.payload.url) {
-        const messageAttachment = await getMessageAttachmentEntity({
-          ctx,
-          attachment,
-        })
-        if (messageAttachment) {
-          attachments.push(messageAttachment)
-        }
-      }
-    }
-    return attachments
+    const attachmentPromises = message.attachments
+      .filter((attachment) => attachment.payload.url)
+      .map((attachment) =>
+        getMessageAttachmentEntity({ ctx, attachment }).catch((error) => {
+          logger.error("Error processing attachment", error)
+          return null
+        }),
+      )
+
+    const attachmentResults = await Promise.allSettled(attachmentPromises)
+    return attachmentResults
+      .filter(
+        (result): result is PromiseFulfilledResult<AttachmentEntity> =>
+          result.status === "fulfilled" && result.value !== null,
+      )
+      .map((result) => result.value)
   } catch (_error) {
     logger.error("Error getting message attachments", _error)
     return []

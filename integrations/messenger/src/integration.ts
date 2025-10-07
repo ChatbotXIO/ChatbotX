@@ -2,9 +2,9 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
-  SdkException,
 } from "@aha.chat/sdk"
 import { getUserProfile } from "./apis/user"
+import { MessengerAPIException } from "./exception"
 import { webhookHandler } from "./handlers/webhook"
 import { parseIncomingMessage } from "./incomming-message"
 import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
@@ -42,8 +42,9 @@ const config: IntegrationDefinition<
       case HandleRequestType.WEBHOOK:
         return await webhookHandler(props)
       default:
-        throw new SdkException(
-          `Handler: ${props.req.method} ${props.req.url} is not implemented`,
+        throw new MessengerAPIException(
+          `${props.req.method} ${props.req.url} is not implemented`,
+          props.req.url,
         )
     }
   },

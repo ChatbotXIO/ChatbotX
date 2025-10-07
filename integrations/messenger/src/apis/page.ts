@@ -1,9 +1,14 @@
-import { type AttachmentEntity, type Context, FileType } from "@aha.chat/sdk"
+import {
+  type AttachmentEntity,
+  type Context,
+  guessFileTypeFromMimeType,
+} from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
+import fetch from "cross-fetch"
 import imageSize from "image-size"
-import ky from "ky"
-import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { MessengerException } from "../exception"
+import { DEFAULT_API_VERSION } from "../constants"
+import { MessengerAPIException } from "../exception"
+import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type {
   FacebookMessageAttachment,
@@ -38,16 +43,17 @@ export const exchangeLongLivedToken = async (
 ): Promise<string> => {
   const { version = DEFAULT_API_VERSION } = settings
 
-  const res: { access_token: string } = await ky
-    .get(`${API_URL}/${version}/oauth/access_token`, {
+  const res: { access_token: string } = await facebookGraphClient.get(
+    `${version}/oauth/access_token`,
+    {
       searchParams: {
         grant_type: "fb_exchange_token",
         client_id: settings.clientId as string,
         client_secret: settings.clientSecret as string,
         fb_exchange_token: accessToken,
       },
-    })
-    .json()
+    },
+  )
 
   return res.access_token
 }
@@ -59,10 +65,12 @@ export const subscribePageToAppWebhook = async (props: {
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
 
-  await ky.post(`${API_URL}/${version}/${props.pageId}/subscribed_apps`, {
+  await facebookGraphClient.post(`${version}/${props.pageId}/subscribed_apps`, {
+    headers: {
+      Authorization: `Bearer ${props.accessToken}`,
+    },
     json: {
       subscribed_fields: PAGE_SUBSCRIBE_SCOPES.join(","),
-      access_token: props.accessToken,
     },
   })
 }
@@ -75,14 +83,20 @@ export const unsubscribePageFromAppWebhook = async (props: {
   const { version = DEFAULT_API_VERSION } = props
 
   try {
-    await ky
-      .delete(`${API_URL}/${version}/${props.pageId}/subscribed_apps`, {
-        searchParams: { access_token: props.accessToken },
-      })
-      .json()
+    await facebookGraphClient.delete(
+      `${version}/${props.pageId}/subscribed_apps`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.accessToken}`,
+        },
+      },
+    )
   } catch (error) {
     logger.error("Unsubscribe Page From AppWebhook failed", error)
-    throw new MessengerException("Unsubscribe Page From AppWebhook failed")
+    throw new MessengerAPIException(
+      "Unsubscribe Page From AppWebhook failed",
+      `${version}/${props.pageId}/subscribed_apps`,
+    )
   }
 }
 
@@ -93,18 +107,22 @@ export const sendMessage = async (
   const { version = DEFAULT_API_VERSION } = auth
 
   try {
-    return await ky
-      .post(`${API_URL}/${version}/${auth.metadata.pageId}/messages`, {
+    return await facebookGraphClient.post(
+      `${version}/${auth.metadata.pageId}/messages`,
+      {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.tokens.accessToken}`,
         },
         json: payload,
-      })
-      .json()
+      },
+    )
   } catch (error) {
     logger.error("Send Message error", error)
-    throw new MessengerException("An error occurred while sending the message")
+    throw new MessengerAPIException(
+      "An error occurred while sending the message",
+      `${version}/${auth.metadata.pageId}/messages`,
+    )
   }
 }
 
@@ -155,18 +173,5 @@ export const getMessageAttachmentEntity = async ({
       size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
       ...imageProperties,
     }
-  }
-}
-
-export const guessFileTypeFromMimeType = (attachmentType: string) => {
-  switch (attachmentType) {
-    case "image":
-      return FileType.IMAGE
-    case "video":
-      return FileType.VIDEO
-    case "audio":
-      return FileType.AUDIO
-    default:
-      return FileType.DOCUMENT
   }
 }

@@ -49,11 +49,22 @@ export type MessengerActions = {
   }) => Promise<ContactEntity>
 }
 
+// Common attachment types
+const attachmentTypeSchema = z.enum(["image", "video", "audio", "file"])
+
+// Base attachment payload
+const baseAttachmentPayloadSchema = z.object({
+  url: z.string().url(),
+})
+
+// Common ID schemas
+const idSchema = z.object({
+  id: z.string(),
+})
+
 export const messengerAttachmentSchema = z.object({
-  type: z.enum(["image", "video", "audio", "file"]),
-  payload: z.object({
-    url: z.string().url(),
-  }),
+  type: attachmentTypeSchema,
+  payload: baseAttachmentPayloadSchema,
 })
 export type MessengerAttachment = z.infer<typeof messengerAttachmentSchema>
 
@@ -84,14 +95,10 @@ export const messengerPostbackSchema = z.object({
 })
 export type MessengerPostback = z.infer<typeof messengerPostbackSchema>
 
-export const messengerSenderSchema = z.object({
-  id: z.string(),
-})
+export const messengerSenderSchema = idSchema
 export type MessengerSender = z.infer<typeof messengerSenderSchema>
 
-export const messengerRecipientSchema = z.object({
-  id: z.string(),
-})
+export const messengerRecipientSchema = idSchema
 export type MessengerRecipient = z.infer<typeof messengerRecipientSchema>
 
 export const messengerMessagingEventSchema = z.object({
