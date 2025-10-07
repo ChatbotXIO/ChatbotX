@@ -3,7 +3,11 @@ import { unstable_cache } from "next/cache"
 import { getCurrentUserId } from "@/lib/auth"
 import { calcCacheTags } from "@/lib/cache-helper"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import type { AIFileCollection, GetAIFilesRequest } from "../schemas"
+import type {
+  AIFileCollection,
+  GetAIFilesRequest,
+  ProcessingStatus,
+} from "../schemas"
 
 export async function getAIFiles(
   input: GetAIFilesRequest,
@@ -27,21 +31,18 @@ export async function getAIFiles(
         },
       })
 
-      // Transform data to include processing status based on embeddings status
       const transformedData = data.map((file) => {
         const embeddings = file.aiEmbeddings
         const hasEmbeddings = embeddings.length > 0
 
-        // Determine overall status based on embeddings status
-        let processingStatus: "idle" | "processing" | "success" | "error" =
-          "idle"
+        let processingStatus: ProcessingStatus = "idle"
         if (hasEmbeddings) {
-          const statuses = embeddings.map((e) => e.status)
-          if (statuses.some((s) => s === AIEmbeddingStatus.error)) {
+          const statusSet = new Set(embeddings.map((e) => e.status))
+          if (statusSet.has(AIEmbeddingStatus.error)) {
             processingStatus = "error"
-          } else if (statuses.some((s) => s === AIEmbeddingStatus.pending)) {
+          } else if (statusSet.has(AIEmbeddingStatus.pending)) {
             processingStatus = "processing"
-          } else if (statuses.every((s) => s === AIEmbeddingStatus.success)) {
+          } else {
             processingStatus = "success"
           }
         }

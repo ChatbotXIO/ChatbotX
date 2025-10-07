@@ -1,2 +1,1 @@
-export * from "./automated-response/index"
-
+export * from "./automated-response"

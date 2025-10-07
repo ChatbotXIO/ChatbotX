@@ -276,6 +276,9 @@
     "size": {
       "label": "Kích thước"
     },
+    "processingStatus": {
+      "label": "Trạng thái xử lý"
+    },
     "createdAt": {
       "label": "Tạo lúc"
     },
@@ -393,9 +396,11 @@
       "whenPressed": "Khi nút này được nhấn"
     }
   },
+
   "validation": {
     "maxSize": "Kích thước tệp vượt quá giới hạn tối đa"
   },
+
   "actions": {
     "add": "Thêm",
     "create": "Tạo",
@@ -452,6 +457,7 @@
     "selectRow": "Chọn hàng",
     "deleteSelectedRows": "Xóa các hàng đã chọn"
   },
+
   "dialog": {
     "createTitle": "Tạo {feature}",
     "updateTitle": "Cập nhật {feature}",
@@ -486,9 +492,11 @@
       "title": "Thêm thẻ"
     }
   },
+
   "texts": {
     "or": "hoặc"
   },
+
   "messages": {
     "copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
     "updatedSuccessfully": "{feature} đã được cập nhật thành công",
@@ -516,6 +524,7 @@
       "notFound": "Không tìm thấy AI file"
     }
   },
+
   "signin": {
     "title": "Đăng nhập vào {name}",
     "or": "Hoặc",
@@ -526,11 +535,13 @@
     "email": "Email",
     "password": "Mật khẩu"
   },
+
   "folders": {
     "heading": {
       "title": "Thư mục"
     }
   },
+
   "flows": {
     "clickToSelectFlow": "Nhấp để chọn luồng",
     "create": {
@@ -582,6 +593,7 @@
       "accountTimezone": "Múi giờ tài khoản"
     }
   },
+
   "autoAssignConversation": {
     "rule": {
       "label": "Quy tắc gán",
@@ -594,6 +606,7 @@
       "label": "Người dùng"
     }
   },
+
   "aiAgent": {
     "setting": {
       "label": "AI Agents",
@@ -603,16 +616,19 @@
     "title": "AI Agents",
     "description": "Quản lý và cấu hình AI Agents để nâng cao khả năng chatbot của bạn với tự động hóa và phản hồi thông minh."
   },
+
   "aiTool": {
     "subtitle": "Quản lý AI tools để nâng cao khả năng chatbot của bạn.",
     "title": "AI Tools"
   },
+
   "aiTrigger": {
     "setting": {
       "label": "AI Triggers",
       "description": "Mô tả AI Triggers"
     }
   },
+
   "accountField": {
     "title": "Trường tài khoản",
     "createDialog": {
@@ -622,6 +638,7 @@
       "title": "Cập nhật trường tài khoản"
     }
   },
+
   "googleSheets": {
     "setting": {
       "label": "Google Sheets",
@@ -629,6 +646,7 @@
     },
     "title": "Google Sheets"
   },
+
   "customField": {
     "heading": {
       "title": "Trường tùy chỉnh"
@@ -651,6 +669,7 @@
       "false": "Sai"
     }
   },
+
   "automatedResponse": {
     "heading": {
       "title": "Phản hồi tự động"
@@ -660,17 +679,20 @@
       "description": "Mô tả phản hồi tự động"
     }
   },
+
   "tags": {
     "heading": {
       "title": "Thẻ"
     }
   },
+
   "broadcasts": {
     "scheduleSendMessage": "Lên lịch gửi tin nhắn",
     "update": {
       "title": "Cập nhật phát sóng"
     }
   },
+
   "inboxTeam": {
     "updateAction": {
       "heading": {
@@ -678,11 +700,13 @@
       }
     }
   },
+
   "teams": {
     "create": {
       "title": "Tạo nhóm hộp thư"
     }
   },
+
   "settings": {
     "openAI": {
       "description": "Mô tả tích hợp OpenAI",
@@ -700,10 +724,12 @@
       "title": "AI Triggers"
     }
   },
+
   "integration": {
     "disconnectConfirm": "Bạn có chắc chắn muốn ngắt kết nối?",
     "disconnectDescription": "Hành động này không thể hoàn tác."
   },
+
   "integrations": {
     "title": "Tích hợp",
     "openAI": {
@@ -726,6 +752,7 @@
       }
     }
   },
+
   "accountFields": {
     "create": {
       "successMessage": "Đã tạo trường tài khoản thành công"
@@ -734,6 +761,7 @@
       "successMessage": "Đã xóa trường tài khoản thành công"
     }
   },
+
   "whatsapp": {
     "setting": {
       "title": "WhatsApp",
@@ -812,6 +840,7 @@
       "label": "Câu mở đầu"
     }
   },
+
   "aiTriggers": {
     "setting": {
       "label": "AI Triggers",
@@ -835,6 +864,7 @@
       "label": "Mô tả AI Trigger"
     }
   },
+
   "openAI": {
     "title": "OpenAI",
     "setting": {
@@ -859,7 +889,14 @@
   },
   "aiFiles": {
     "title": "AI Files",
-    "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa"
+    "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
+    "status": {
+      "idle": "Chưa xử lý",
+      "processing": "Đang xử lý...",
+      "success": "Đã xử lý",
+      "error": "Lỗi"
+    },
+    "chunks": "{count} mảnh"
   },
   "aiFunctions": {
     "title": "AI Functions",

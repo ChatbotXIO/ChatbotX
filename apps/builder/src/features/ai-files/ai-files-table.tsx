@@ -5,7 +5,6 @@ import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-t
 import { Badge } from "@aha.chat/ui/components/ui/badge"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
-//
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +26,7 @@ import {
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
 import { use, useCallback, useMemo, useState } from "react"
-import { toast } from "sonner"
-//
+import { env } from "@/env"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
 import { DeleteAiFileDialog } from "./delete-ai-file-dialog"
@@ -42,6 +40,12 @@ type AIFilesTableProps = {
 function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
+  const openInNewTab = useCallback((url: string) => {
+    window.open(url, "_blank", "noopener")
+  }, [])
+  const getPublicUrl = useCallback((path: string) => {
+    return new URL(path, env.NEXT_PUBLIC_ASSET_URL).toString()
+  }, [])
 
   return (
     <>
@@ -55,7 +59,8 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() => {
-              toast.info(t("messages.viewFileComingSoon"))
+              const url = getPublicUrl(aiFile.path)
+              openInNewTab(url)
             }}
           >
             <EyeIcon className="mr-2 h-4 w-4" />
@@ -63,7 +68,14 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              toast.info(t("messages.downloadComingSoon"))
+              const url = getPublicUrl(aiFile.path)
+              const a = document.createElement("a")
+              a.href = url
+              a.rel = "noopener"
+              a.download = aiFile.name
+              document.body.appendChild(a)
+              a.click()
+              a.remove()
             }}
           >
             <DownloadIcon className="mr-2 h-4 w-4" />
@@ -195,13 +207,15 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         id: "processingStatus",
         accessorKey: "processingStatus",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Processing Status" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.processingStatus.label")}
+          />
         ),
         cell: ({ row }) => (
           <AIFileProcessingStatus
             aiFileId={row.original.id}
             chunksCount={row.original.chunksCount}
-            isProcessed={row.original.isProcessed}
             processingStatus={row.original.processingStatus}
           />
         ),

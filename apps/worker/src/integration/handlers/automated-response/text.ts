@@ -88,14 +88,18 @@ export async function downloadAndUploadImage(
             width: detectedWidth,
             height: detectedHeight,
             fileType: FileType.IMAGE,
-          }
+          },
         },
       },
     })
 
     return true
   } catch (error) {
-    logger.error("[automated-response] downloadAndUploadImage failed", { error, imageUrl, conversationId })
+    logger.error("[automated-response] downloadAndUploadImage failed", {
+      error,
+      imageUrl,
+      conversationId,
+    })
     return false
   }
 }

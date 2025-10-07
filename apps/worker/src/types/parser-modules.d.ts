@@ -22,5 +22,3 @@ declare module "html-to-text" {
 declare module "remove-markdown" {
   export default function removeMarkdown(input: string, opts?: unknown): string
 }
-
-

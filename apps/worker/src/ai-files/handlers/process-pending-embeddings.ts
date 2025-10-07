@@ -1,9 +1,7 @@
-import { prisma } from "@aha.chat/database"
-import type { SecretTextAuthValue } from "@aha.chat/sdk"
-import { createOpenAI } from "@ai-sdk/openai"
+import { prisma, updateAIEmbeddingVector } from "@aha.chat/database"
 import { embed } from "ai"
-import { OPENAI_EMBEDDING_MODELS } from "../../integration/handlers/automated-response/constants"
 import { logger } from "../../lib/logger"
+import { resolveEmbeddingModel } from "../lib/embedding-model"
 
 export async function processPendingEmbeddings({
   chatbotId,
@@ -21,34 +19,36 @@ export async function processPendingEmbeddings({
     return 0
   }
 
-  const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
-    where: { chatbotId, autoReply: true },
-  })
-  if (!integrationOpenAI) {
-    throw new Error("OpenAI integration not found")
-  }
-
-  const apiKey = (integrationOpenAI.auth as SecretTextAuthValue | null)?.secretText
-  const openai = createOpenAI({ apiKey })
-  const embeddingModel = openai.embedding(OPENAI_EMBEDDING_MODELS.TEXT_EMBEDDING_ADA_002)
+  const embeddingModel = await resolveEmbeddingModel(chatbotId)
 
   let processed = 0
   for (const item of pending) {
     try {
-      const { embedding } = await embed({ model: embeddingModel, value: item.content })
+      const { embedding } = await embed({
+        model: embeddingModel,
+        value: item.content,
+      })
       const embeddingString = `[${embedding.join(",")}]`
-      await prisma.$executeRaw`
-        UPDATE "AIEmbedding"
-        SET "embedding" = ${embeddingString}::vector, "updatedAt" = ${new Date()}, "status" = 'success'
-        WHERE "id" = ${item.id}
-      `
+      await prisma.$queryRawTyped(
+        updateAIEmbeddingVector(
+          embeddingString,
+          new Date(),
+          "success",
+          item.id,
+        ),
+      )
       processed++
     } catch (error) {
-      logger.error("[ai-files] processPendingEmbeddings item failed", { error, embeddingId: item.id, chatbotId })
-      await prisma.aIEmbedding.update({ where: { id: item.id }, data: { status: "error" } })
+      logger.error("[ai-files] processPendingEmbeddings item failed", {
+        error,
+        embeddingId: item.id,
+        chatbotId,
+      })
+      await prisma.aIEmbedding.update({
+        where: { id: item.id },
+        data: { status: "error" },
+      })
     }
   }
   return processed
 }
-
-

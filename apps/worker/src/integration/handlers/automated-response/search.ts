@@ -4,53 +4,53 @@ import { embed } from "ai"
 import { logger } from "../../../lib/logger"
 import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
 import type {
-    FileSearchArgs,
-    FileSearchConfig,
-    SecretTextAuthValue,
-    SimilaritySearchResult,
+  FileSearchArgs,
+  FileSearchConfig,
+  SecretTextAuthValue,
+  SimilaritySearchResult,
 } from "./types"
 
 async function getOpenAIIntegration(chatbotId: string) {
-    const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
-        where: {
-            chatbotId,
-            autoReply: true,
-        },
-    })
+  const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
+    where: {
+      chatbotId,
+      autoReply: true,
+    },
+  })
 
-    if (!integrationOpenAI) {
-        throw new Error("OpenAI integration not found")
-    }
+  if (!integrationOpenAI) {
+    throw new Error("OpenAI integration not found")
+  }
 
-    return integrationOpenAI
+  return integrationOpenAI
 }
 
 async function createQueryEmbedding(
-    query: string,
-    chatbotId: string,
+  query: string,
+  chatbotId: string,
 ): Promise<number[]> {
-    const integrationOpenAI = await getOpenAIIntegration(chatbotId)
+  const integrationOpenAI = await getOpenAIIntegration(chatbotId)
 
-    const openai = createOpenAI({
-        apiKey: (integrationOpenAI.auth as SecretTextAuthValue | null)?.secretText,
-    })
+  const openai = createOpenAI({
+    apiKey: (integrationOpenAI.auth as SecretTextAuthValue | null)?.secretText,
+  })
 
-    const embeddingModel = openai.embedding(DEFAULT_OPENAI_EMBEDDING_MODEL)
-    const { embedding } = await embed({
-        model: embeddingModel,
-        value: query,
-    })
+  const embeddingModel = openai.embedding(DEFAULT_OPENAI_EMBEDDING_MODEL)
+  const { embedding } = await embed({
+    model: embeddingModel,
+    value: query,
+  })
 
-    return embedding
+  return embedding
 }
 
 async function searchSimilarEmbeddings(
-    queryEmbedding: number[],
-    config: FileSearchConfig,
+  queryEmbedding: number[],
+  config: FileSearchConfig,
 ): Promise<SimilaritySearchResult[]> {
-    const embeddingString = `[${queryEmbedding.join(",")}]`
+  const embeddingString = `[${queryEmbedding.join(",")}]`
 
-    const results = await prisma.$queryRaw<SimilaritySearchResult[]>`
+  const results = await prisma.$queryRaw<SimilaritySearchResult[]>`
     SELECT
       "id",
       "content",
@@ -63,59 +63,59 @@ async function searchSimilarEmbeddings(
     LIMIT ${config.maxResults}
   `
 
-    return results
+  return results
 }
 
 function filterRelevantResults(
-    results: SimilaritySearchResult[],
-    threshold: number,
+  results: SimilaritySearchResult[],
+  threshold: number,
 ): SimilaritySearchResult[] {
-    return results.filter((result) => result.distance > threshold)
+  return results.filter((result) => result.distance > threshold)
 }
 
 function formatSearchResults(results: SimilaritySearchResult[]): string {
-    if (results.length === 0) {
-        return TEXT.fileSearchNoResult
-    }
+  if (results.length === 0) {
+    return TEXT.fileSearchNoResult
+  }
 
-    const formattedResults = results
-        .map((item, index) => `${index + 1}. ${item.content}`)
-        .join("\n\n")
+  const formattedResults = results
+    .map((item, index) => `${index + 1}. ${item.content}`)
+    .join("\n\n")
 
-    return `${TEXT.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
+  return `${TEXT.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
 }
 
 export async function performFileSearch(
-    args: FileSearchArgs,
-    config: FileSearchConfig,
+  args: FileSearchArgs,
+  config: FileSearchConfig,
 ): Promise<string> {
-    try {
-        const queryEmbedding = await createQueryEmbedding(
-            args.query,
-            config.chatbotId,
-        )
-        const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
+  try {
+    const queryEmbedding = await createQueryEmbedding(
+      args.query,
+      config.chatbotId,
+    )
+    const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
 
-        if (searchResults.length === 0) {
-            return TEXT.fileSearchNoResult
-        }
-
-        const relevantResults = filterRelevantResults(
-            searchResults,
-            config.similarityThreshold,
-        )
-
-        if (relevantResults.length === 0) {
-            return TEXT.fileSearchNoResult
-        }
-
-        const result = formatSearchResults(relevantResults)
-        return result
-    } catch (error) {
-        logger.error("[automated-response] performFileSearch failed", {
-            error,
-            chatbotId: config.chatbotId,
-        })
-        return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : "Unknown error"}`
+    if (searchResults.length === 0) {
+      return TEXT.fileSearchNoResult
     }
+
+    const relevantResults = filterRelevantResults(
+      searchResults,
+      config.similarityThreshold,
+    )
+
+    if (relevantResults.length === 0) {
+      return TEXT.fileSearchNoResult
+    }
+
+    const result = formatSearchResults(relevantResults)
+    return result
+  } catch (error) {
+    logger.error("[automated-response] performFileSearch failed", {
+      error,
+      chatbotId: config.chatbotId,
+    })
+    return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : "Unknown error"}`
+  }
 }

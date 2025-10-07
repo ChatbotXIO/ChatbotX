@@ -1,4 +1,3 @@
-import type { Prisma } from "@aha.chat/database"
 import {
   ContentType,
   MessageType,
@@ -6,6 +5,7 @@ import {
   SenderType,
 } from "@aha.chat/database"
 import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
+import { StepType } from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
   broadcastToGuestParty,
@@ -28,45 +28,7 @@ export async function sendFlowStep({
     return
   }
 
-  // Type guards to avoid `any`
-  type ImageAttachment = {
-    originPath: string
-    name: string
-    mimeType: string
-    size?: number
-    width?: number
-    height?: number
-    fileType?: string
-  }
-
-  function isSendImageStepWithAttachment(
-    s: unknown,
-  ): s is { stepType: "SEND_IMAGE"; attachment: ImageAttachment } {
-    if (
-      typeof s !== "object" ||
-      s === null ||
-      !("stepType" in s) ||
-      (s as { stepType?: unknown }).stepType !== "SEND_IMAGE"
-    ) {
-      return false
-    }
-    const att = (s as { attachment?: unknown }).attachment as
-      | ImageAttachment
-      | undefined
-    return (
-      !!att &&
-      typeof att === "object" &&
-      typeof att.originPath === "string" &&
-      typeof att.name === "string" &&
-      typeof att.mimeType === "string"
-    )
-  }
-
-  // Create message with attachment if SEND_IMAGE
-  type MessageWithAttachments = Prisma.MessageGetPayload<{
-    include: { attachments: true }
-  }>
-  const message: MessageWithAttachments = await prisma.message.create({
+  const message = await prisma.message.create({
     data: {
       inboxId: conversation.inboxId,
       chatbotId: conversation.chatbotId,
@@ -75,65 +37,76 @@ export async function sendFlowStep({
       contentType: ContentType.TEXT,
       senderType: SenderType.BOT,
       sourceId: null,
-      content: step.stepType === "SEND_TEXT" ? step.message : null,
-      // Create attachment if SEND_IMAGE and attachment data is provided
-      ...(isSendImageStepWithAttachment(step)
-        ? {
-          attachments: {
-            create: {
-              chatbotId: conversation.chatbotId,
-              conversationId: conversation.id,
-              originPath: step.attachment.originPath,
-              name: step.attachment.name,
-              mimeType: step.attachment.mimeType,
-              size: step.attachment.size,
-              width: step.attachment.width,
-              height: step.attachment.height,
-              fileType: step.attachment.fileType,
-            },
-          },
-        }
-        : {}),
-    },
-    include: {
-      attachments: true,
+      content: step.stepType === StepType.SEND_TEXT ? step.message : null,
     },
   })
 
-  const messageWithAttachments = {
-    ...message,
-    attachments:
-      message.attachments?.map((attachment) => ({
-        ...attachment
-      })) || [],
+  // If this is an image step, persist attachment linked to the message
+  if (step.stepType === StepType.SEND_IMAGE && step.attachment) {
+    const createdAttachment = await prisma.attachment.create({
+      data: {
+        chatbotId: conversation.chatbotId,
+        conversationId: conversation.id,
+        messageId: message.id,
+        originPath: step.attachment.originPath,
+        name: step.attachment.name ?? undefined,
+        mimeType: step.attachment.mimeType,
+        size: step.attachment.size,
+        width: step.attachment.width,
+        height: step.attachment.height,
+        fileType: step.attachment.fileType,
+        sourceId: null,
+      },
+    })
+    // Attach to message for broadcasting so UI can render immediately
+    ;(
+      message as unknown as { attachments?: (typeof createdAttachment)[] }
+    ).attachments = [createdAttachment]
   }
 
   const promises: Promise<unknown>[] = [
     broadcastToChatbotParty(conversation.chatbotId, {
       eventType: RealtimeEventType.CREATE_MESSAGE,
-      data: messageWithAttachments,
+      data: message,
     }),
   ]
   if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
     promises.push(
       broadcastToGuestParty(conversation.sourceId, {
         eventType: RealtimeEventType.CREATE_MESSAGE,
-        data: messageWithAttachments,
+        data: message,
       }),
     )
-  } else {
-    const isTextOrImage =
-      step.stepType === "SEND_TEXT" || step.stepType === "SEND_IMAGE"
-    if (isTextOrImage) {
-      promises.push(
-        sendFlowStepToExternal({
-          conversation: conversation as ConversationEntity,
-          flowVersionId,
-          // biome-ignore lint/suspicious/noExplicitAny: upstream type not exported; runtime validated
-          step: step as any,
-        }),
-      )
-    }
+  } else if (step.stepType === StepType.SEND_TEXT) {
+    // Only SEND_TEXT and SEND_IMAGE are supported for external at this layer
+    promises.push(
+      sendFlowStepToExternal({
+        conversation: conversation as ConversationEntity,
+        flowVersionId,
+        step: {
+          id: step.id,
+          stepType: StepType.SEND_TEXT,
+          message: step.message,
+          buttons: step.buttons,
+        },
+      }),
+    )
+  } else if (step.stepType === StepType.SEND_IMAGE) {
+    promises.push(
+      sendFlowStepToExternal({
+        conversation: conversation as ConversationEntity,
+        flowVersionId,
+        step: {
+          id: step.id,
+          stepType: StepType.SEND_IMAGE,
+          mode: step.mode,
+          url: step.url,
+          buttons: step.buttons,
+          // attachment is optional in schema
+          attachment: step.attachment,
+        },
+      }),
+    )
   }
 
   await Promise.all(promises)

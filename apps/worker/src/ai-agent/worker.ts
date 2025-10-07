@@ -6,9 +6,9 @@ import {
   QueueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
-import { processAiFile } from "../ai-agent/handlers/process-ai-file"
-import { processChunk } from "../ai-agent/handlers/process-chunk"
-import { processPendingEmbeddings } from "../ai-agent/handlers/process-pending-embeddings"
+import { processAiFile } from "../ai-files/handlers/process-ai-file"
+import { processChunk } from "../ai-files/handlers/process-chunk"
+import { processPendingEmbeddings } from "../ai-files/handlers/process-pending-embeddings"
 import { logger } from "../lib/logger"
 
 const worker = new Worker(

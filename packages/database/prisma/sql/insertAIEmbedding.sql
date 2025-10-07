@@ -1,1 +1,0 @@
-INSERT INTO "AIEmbedding" ("id", "createdAt", "updatedAt", "content", "embedding", "chatbotId", "aiFileId") VALUES ($1, $2, $3, $4, $5, $6, $7);

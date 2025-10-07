@@ -9,6 +9,18 @@
 -- CreateExtension
 CREATE EXTENSION IF NOT EXISTS "vector";
 
+-- Create enum type for AIEmbeddingStatus
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type t
+    JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE t.typname = 'AIEmbeddingStatus' AND n.nspname = 'public'
+  ) THEN
+    CREATE TYPE "public"."AIEmbeddingStatus" AS ENUM ('pending','success','error');
+  END IF;
+END $$;
+
 -- AlterTable
 ALTER TABLE "public"."ChannelWebWidget" DROP COLUMN "showHeader",
 DROP COLUMN "showMessageInput",
@@ -24,7 +36,7 @@ CREATE TABLE "public"."AIEmbedding" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "content" TEXT NOT NULL,
     "embedding" vector,
-    "status" TEXT NOT NULL DEFAULT 'pending',
+    "status" "public"."AIEmbeddingStatus" NOT NULL DEFAULT 'pending',
     "chatbotId" TEXT NOT NULL,
     "aiFileId" TEXT NOT NULL,
 

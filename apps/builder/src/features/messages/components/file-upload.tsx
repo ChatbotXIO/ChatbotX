@@ -48,7 +48,7 @@ export const FileUploadPreview = ({
     return (
       <div className="relative rounded-md border" key={file.name}>
         <div className="max-w-36 overflow-hidden rounded-md">
-          {file.type?.startsWith("image/") ? (
+          {file.type.startsWith("image") ? (
             <Image
               alt="file"
               className="h-16 w-auto"

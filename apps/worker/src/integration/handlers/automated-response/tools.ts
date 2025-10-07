@@ -68,7 +68,10 @@ async function getAIFileTools(aiAgent: AIAgentModel): Promise<ToolSet> {
 
     return tools
   } catch (error) {
-    logger.error("[automated-response] getAIFileTools failed", { error, chatbotId: aiAgent.chatbotId })
+    logger.error("[automated-response] getAIFileTools failed", {
+      error,
+      chatbotId: aiAgent.chatbotId,
+    })
     return {}
   }
 }
@@ -131,7 +134,10 @@ async function getAIFunctionTools(aiAgent: AIAgentModel): Promise<ToolSet> {
 
     return tools
   } catch (error) {
-    logger.error("[automated-response] getAIFunctionTools failed", { error, chatbotId: aiAgent.chatbotId })
+    logger.error("[automated-response] getAIFunctionTools failed", {
+      error,
+      chatbotId: aiAgent.chatbotId,
+    })
     return {}
   }
 }
@@ -183,14 +189,15 @@ async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
         )
         tools[uniqueToolName] = tool({
           description: `${toolDef.description} (from ${mcpServer.name})`,
-          inputSchema: jsonSchema(cleanedSchema as Parameters<typeof jsonSchema>[0]),
+          inputSchema: jsonSchema(
+            cleanedSchema as Parameters<typeof jsonSchema>[0],
+          ),
           execute: async (args: Record<string, unknown>) => {
-            const result = await callMCPTool(
-              mcpServer.url,
-              toolName,
-              args,
+            const result = await callMCPTool(mcpServer.url, toolName, args)
+            return (
+              (result as unknown as { content?: unknown }).content ??
+              (await Promise.resolve(result))
             )
-            return (result as unknown as { content?: unknown }).content ?? await Promise.resolve(result)
           },
         })
       }
@@ -198,7 +205,10 @@ async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
 
     return tools
   } catch (error) {
-    logger.error("[automated-response] getMCPServerTools failed", { error, chatbotId: aiAgent.chatbotId })
+    logger.error("[automated-response] getMCPServerTools failed", {
+      error,
+      chatbotId: aiAgent.chatbotId,
+    })
     return {}
   }
 }
@@ -227,7 +237,10 @@ export async function getSelectedTools(aiAgent: AIAgentModel): Promise<{
 
     return { tools: allTools, availableTools }
   } catch (error) {
-    logger.error("[automated-response] getSelectedTools failed", { error, chatbotId: aiAgent.chatbotId })
+    logger.error("[automated-response] getSelectedTools failed", {
+      error,
+      chatbotId: aiAgent.chatbotId,
+    })
     return {
       tools: {},
       availableTools: { fileTools: [], functionTools: [], mcpTools: [] },

@@ -56,7 +56,10 @@ async function replaceCustomFieldAttributes(
 
     return processedMessage
   } catch (error) {
-    logger.error("[automated-response] replaceCustomFieldAttributes failed", { error, conversationId })
+    logger.error("[automated-response] replaceCustomFieldAttributes failed", {
+      error,
+      conversationId,
+    })
     return message
   }
 }
@@ -71,7 +74,10 @@ export async function listAllEnabledAutomatedResponses({
       where: { chatbotId, status: true },
     })
   } catch (error) {
-    logger.error("[automated-response] listAllEnabledAutomatedResponses failed", { error, chatbotId })
+    logger.error(
+      "[automated-response] listAllEnabledAutomatedResponses failed",
+      { error, chatbotId },
+    )
     return []
   }
 }
@@ -275,7 +281,11 @@ async function runAIReply(
           return true
         }
       } catch (error) {
-        logger.error("[automated-response] follow-up streamText failed", { error, provider: cfg.provider, conversationId: message.conversationId })
+        logger.error("[automated-response] follow-up streamText failed", {
+          error,
+          provider: cfg.provider,
+          conversationId: message.conversationId,
+        })
         return await cfg.onFollowUpError({
           conversationId: message.conversationId,
           toolResultsText,
@@ -288,7 +298,11 @@ async function runAIReply(
     }
     return false
   } catch (error) {
-    logger.error("[automated-response] runAIReply failed", { error, provider: cfg.provider, chatbotId: message.chatbotId })
+    logger.error("[automated-response] runAIReply failed", {
+      error,
+      provider: cfg.provider,
+      chatbotId: message.chatbotId,
+    })
     return false
   }
 }

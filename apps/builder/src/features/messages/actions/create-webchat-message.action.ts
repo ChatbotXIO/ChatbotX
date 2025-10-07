@@ -149,9 +149,7 @@ export const createWebchatMessageAction = actionClient
             },
           })
 
-          newMessage.attachments = [{
-            ...attachment
-          } as AttachmentResource]
+          newMessage.attachments = [attachment as AttachmentResource]
         }
 
         await tx.conversation.update({

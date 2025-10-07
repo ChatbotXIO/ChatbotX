@@ -33,8 +33,8 @@ export const listMessages = async (
     where,
     cursor: input.cursor
       ? {
-        id: input.cursor,
-      }
+          id: input.cursor,
+        }
       : undefined,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   }
@@ -44,15 +44,6 @@ export const listMessages = async (
   if (messages.length === 0) {
     return { data: [], nextCursor: null, prevCursor: null }
   }
-
-  // Transform attachments to include url field
-  messages = messages.map((message) => ({
-    ...message,
-    attachments:
-      message.attachments?.map((attachment) => ({
-        ...attachment,
-      })) || [],
-  }))
 
   let nextCursor: string | null = null
   const prevCursor: string | null = null

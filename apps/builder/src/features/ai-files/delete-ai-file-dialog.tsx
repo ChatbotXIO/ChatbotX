@@ -32,7 +32,7 @@ export function DeleteAiFileDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteAiFileAction.bind(null, aiFile.chatbotId),
+    deleteAiFileAction.bind(null, aiFile.chatbotId, aiFile.id),
     {
       onSuccess: () => {
         toast.success(
@@ -80,7 +80,7 @@ export function DeleteAiFileDialog({
           <Button
             aria-label="Delete AI file"
             disabled={isPending}
-            onClick={() => execute({ aiFileId: aiFile.id })}
+            onClick={() => execute()}
             variant="destructive"
           >
             {isPending && (

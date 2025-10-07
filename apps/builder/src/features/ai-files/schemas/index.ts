@@ -4,12 +4,14 @@ import { z } from "zod"
 export type AIFileWithProcessing = AIFileModel & {
   isProcessed: boolean
   chunksCount: number
-  processingStatus: 'idle' | 'processing' | 'success' | 'error'
+  processingStatus: ProcessingStatus
 }
 
 export type AIFileCollection = {
   data: AIFileWithProcessing[]
 }
+
+export type ProcessingStatus = "idle" | "processing" | "success" | "error"
 
 export const getAIFilesRequest = z.object({
   chatbotId: z.string(),

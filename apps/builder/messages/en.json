@@ -302,6 +302,9 @@
     "size": {
       "label": "Size"
     },
+    "processingStatus": {
+      "label": "Processing Status"
+    },
     "createdAt": {
       "label": "Created At"
     },
@@ -992,7 +995,14 @@
   },
   "aiFiles": {
     "title": "AI Files",
-    "description": "Give Your Agents Access to PDFs, Docs, and More"
+    "description": "Give Your Agents Access to PDFs, Docs, and More",
+    "status": {
+      "idle": "Not processed",
+      "processing": "Processing...",
+      "success": "Processed",
+      "error": "Error"
+    },
+    "chunks": "{count} chunks"
   },
   "aiFunctions": {
     "title": "AI Functions",

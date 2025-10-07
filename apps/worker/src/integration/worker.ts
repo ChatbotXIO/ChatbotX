@@ -9,7 +9,7 @@ import {
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
-import { triggerAutomatedResponse } from "./handlers/automated-response"
+import { triggerAutomatedResponse } from "./handlers/automated-response/index"
 import { receiveMessage } from "./handlers/received-message"
 import { sendFlowNode } from "./handlers/send-flow-node"
 import { sendFlowPostback } from "./handlers/send-flow-postback"

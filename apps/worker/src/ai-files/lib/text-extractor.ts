@@ -1,10 +1,7 @@
 import type { Readable } from "node:stream"
 import { TextDecoder } from "node:util"
-import { htmlToText } from "html-to-text"
-import mammoth from "mammoth"
 import pdfParse from "pdf-parse"
-import removeMarkdown from "remove-markdown"
-import { read, utils } from "xlsx"
+import { logger } from "../../lib/logger"
 
 function normalizeWhitespace(input: string): string {
   let out = ""
@@ -35,32 +32,54 @@ async function streamToBuffer(
 }
 
 async function extractFromPdf(buffer: Buffer): Promise<string> {
-  const result = await pdfParse(buffer)
-  return normalizeWhitespace(result.text || "")
+  try {
+    const result = await pdfParse(buffer)
+    return normalizeWhitespace(result.text || "")
+  } catch (error) {
+    logger.warn("PDF parsing failed, falling back to plain text", { error })
+    const decoder = new TextDecoder("utf-8")
+    return normalizeWhitespace(decoder.decode(buffer))
+  }
 }
 
 async function extractFromDocx(buffer: Buffer): Promise<string> {
-  const { value } = await mammoth.extractRawText({ buffer })
-  return normalizeWhitespace(value || "")
+  try {
+    const mammothModule = await import("mammoth")
+    const mammoth = mammothModule.default || mammothModule
+    const { value } = await mammoth.extractRawText({ buffer })
+    return normalizeWhitespace(value || "")
+  } catch (error) {
+    logger.warn("DOCX parsing failed, falling back to plain text", { error })
+    const decoder = new TextDecoder("utf-8")
+    return normalizeWhitespace(decoder.decode(buffer))
+  }
 }
 
-function extractFromXlsx(buffer: Buffer): string {
-  const workbook = read(buffer, { type: "buffer" }) as {
-    SheetNames: string[]
-    Sheets: Record<string, unknown>
-  }
-  const texts: string[] = []
-  for (const sheetName of workbook.SheetNames) {
-    const sheet = workbook.Sheets[sheetName]
-    if (!sheet) {
-      continue
+async function extractFromXlsx(buffer: Buffer): Promise<string> {
+  try {
+    const xlsxModule = await import("xlsx")
+    const { read, utils } = xlsxModule
+    const workbook = read(buffer, { type: "buffer" }) as {
+      SheetNames: string[]
+      Sheets: Record<string, unknown>
     }
-    const csv = utils.sheet_to_csv(sheet)
-    if (csv) {
-      texts.push(csv)
+    const texts: string[] = []
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName]
+      if (!sheet) {
+        continue
+      }
+      const csv = utils.sheet_to_csv(sheet)
+      if (csv) {
+        texts.push(csv)
+      }
     }
+    return normalizeWhitespace(texts.join("\n"))
+  } catch (error) {
+    logger.warn("XLSX parsing failed, falling back to plain text", { error })
+    const decoder = new TextDecoder("utf-8")
+    return normalizeWhitespace(decoder.decode(buffer))
   }
-  return normalizeWhitespace(texts.join("\n"))
 }
 
 function extractFromCsv(buffer: Buffer): string {
@@ -69,17 +88,35 @@ function extractFromCsv(buffer: Buffer): string {
   return normalizeWhitespace(decoder.decode(buffer))
 }
 
-function extractFromHtml(buffer: Buffer): string {
-  const decoder = new TextDecoder("utf-8")
-  const html = decoder.decode(buffer)
-  return normalizeWhitespace(htmlToText(html, { wordwrap: false }))
+async function extractFromHtml(buffer: Buffer): Promise<string> {
+  try {
+    const htmlToTextModule = await import("html-to-text")
+    const { htmlToText } = htmlToTextModule
+    const decoder = new TextDecoder("utf-8")
+    const html = decoder.decode(buffer)
+    return normalizeWhitespace(htmlToText(html, { wordwrap: false }))
+  } catch (error) {
+    logger.warn("HTML parsing failed, falling back to plain text", { error })
+    const decoder = new TextDecoder("utf-8")
+    return normalizeWhitespace(decoder.decode(buffer))
+  }
 }
 
-function extractFromMarkdown(buffer: Buffer): string {
-  const decoder = new TextDecoder("utf-8")
-  const md = decoder.decode(buffer)
-  const plain = removeMarkdown(md, { stripListLeaders: true, gfm: true })
-  return normalizeWhitespace(plain)
+async function extractFromMarkdown(buffer: Buffer): Promise<string> {
+  try {
+    const removeMarkdownModule = await import("remove-markdown")
+    const removeMarkdown = removeMarkdownModule.default || removeMarkdownModule
+    const decoder = new TextDecoder("utf-8")
+    const md = decoder.decode(buffer)
+    const plain = removeMarkdown(md, { stripListLeaders: true, gfm: true })
+    return normalizeWhitespace(plain)
+  } catch (error) {
+    logger.warn("Markdown parsing failed, falling back to plain text", {
+      error,
+    })
+    const decoder = new TextDecoder("utf-8")
+    return normalizeWhitespace(decoder.decode(buffer))
+  }
 }
 
 function extractFromRtf(buffer: Buffer): string {
@@ -135,7 +172,7 @@ export async function extractTextFromStream(
     )
   ) {
     const buf = await streamToBuffer(stream)
-    return extractFromXlsx(buf)
+    return await extractFromXlsx(buf)
   }
   if (lower.includes("csv")) {
     const buf = await streamToBuffer(stream)
@@ -143,11 +180,11 @@ export async function extractTextFromStream(
   }
   if (lower.includes("html") || lower.includes("xhtml")) {
     const buf = await streamToBuffer(stream)
-    return extractFromHtml(buf)
+    return await extractFromHtml(buf)
   }
   if (lower.includes("markdown") || lower.includes("md")) {
     const buf = await streamToBuffer(stream)
-    return extractFromMarkdown(buf)
+    return await extractFromMarkdown(buf)
   }
   if (lower.includes("rtf")) {
     const buf = await streamToBuffer(stream)

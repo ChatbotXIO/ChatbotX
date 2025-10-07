@@ -1,24 +1,12 @@
-import { prisma } from "@aha.chat/database"
-import type { SecretTextAuthValue } from "@aha.chat/sdk"
+import { prisma, updateAIEmbeddingVector } from "@aha.chat/database"
 import type { ProcessChunkData } from "@aha.chat/worker-config"
-import { createOpenAI } from "@ai-sdk/openai"
 import { embed } from "ai"
-import { OPENAI_EMBEDDING_MODELS } from "../../integration/handlers/automated-response/constants"
+import { resolveEmbeddingModel } from "../lib/embedding-model"
 
 export async function processChunk(data: ProcessChunkData) {
   const { aiFileId, chatbotId, content } = data
 
-  const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
-    where: { chatbotId, autoReply: true },
-  })
-  if (!integrationOpenAI) {
-    throw new Error("OpenAI integration not found")
-  }
-
-  const apiKey = (integrationOpenAI.auth as SecretTextAuthValue | null)
-    ?.secretText
-  const openai = createOpenAI({ apiKey })
-  const embeddingModel = openai.embedding(OPENAI_EMBEDDING_MODELS.TEXT_EMBEDDING_ADA_002)
+  const embeddingModel = await resolveEmbeddingModel(chatbotId)
 
   const timeoutMs = 30_000
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -41,9 +29,7 @@ export async function processChunk(data: ProcessChunkData) {
     },
   })
 
-  await prisma.$executeRaw`
-    UPDATE "AIEmbedding"
-    SET "embedding" = ${embeddingString}::vector, "updatedAt" = ${new Date()}, "status" = 'success'
-    WHERE "id" = ${created.id}
-  `
+  await prisma.$queryRawTyped(
+    updateAIEmbeddingVector(embeddingString, new Date(), "success", created.id),
+  )
 }

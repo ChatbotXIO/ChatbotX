@@ -87,12 +87,12 @@ const baseClient =
 
 export const prisma: PrismaClient = env.ENABLE_PGVECTOR_EXTENSION
   ? (baseClient.$extends(
-    withPGVector({
-      modelName: "aIEmbedding",
-      vectorFieldName: "embedding",
-      idFieldName: "id",
-    }),
-  ) as unknown as PrismaClient)
+      withPGVector({
+        modelName: "aIEmbedding",
+        vectorFieldName: "embedding",
+        idFieldName: "id",
+      }),
+    ) as unknown as PrismaClient)
   : baseClient
 
 if (env.NODE_ENV !== "production") {
