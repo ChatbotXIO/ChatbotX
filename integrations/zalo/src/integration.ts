@@ -8,7 +8,7 @@ import { getUserProfile } from "./api/user"
 import { callbackHandler } from "./handlers/callback"
 import { webhookHandler } from "./handlers/webhook"
 import { parseIncomingMessage } from "./incoming-message"
-import { sendOutgoingMessage } from "./outgoing-message"
+import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
 import type {
   ZaloActions,
   ZaloAuthValue,
@@ -18,11 +18,14 @@ import type {
 const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
   name: "zalo",
   actions: {
-    receiveMessage: async ({ data }) => {
-      return await parseIncomingMessage(data)
+    receiveMessage: async ({ ctx, data }) => {
+      return await parseIncomingMessage({ ctx, data })
     },
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
+    },
+    sendFlowStep: async ({ ctx, flowVersionId, step, conversation }) => {
+      await sendFlowStep(ctx, conversation, flowVersionId, step)
     },
     getUserProfile: async ({ ctx, uid }) => {
       return await getUserProfile({ ctx, uid })

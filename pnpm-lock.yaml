@@ -678,6 +678,9 @@ importers:
 
   integrations/zalo:
     dependencies:
+      '@aha.chat/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
       '@aha.chat/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -687,6 +690,9 @@ importers:
       '@paralleldrive/cuid2':
         specifier: ^2.2.2
         version: 2.2.2
+      image-size:
+        specifier: ^2.0.2
+        version: 2.0.2
       ky:
         specifier: ^1.8.1
         version: 1.8.1

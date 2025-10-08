@@ -35,7 +35,7 @@ export const callbackHandler = async (
     tokens: {
       accessToken: access_token,
       refreshToken: refresh_token,
-      expiresAt: expires_in,
+      expiresAt: calculateExpiresAt(expires_in),
     },
     oaId: oaProfile.oa_id,
     metadata: {
@@ -43,4 +43,10 @@ export const callbackHandler = async (
       oaName: oaProfile.name,
     },
   }
+}
+
+function calculateExpiresAt(expiresIn: number): string {
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + expiresIn * 1000)
+  return expiresAt.toISOString()
 }

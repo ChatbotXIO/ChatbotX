@@ -5,9 +5,11 @@
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
+    "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
+    "image-size": "^2.0.2",
     "ky": "^1.8.1",
     "remeda": "^2.23.3",
     "zod": "^3.25.71"

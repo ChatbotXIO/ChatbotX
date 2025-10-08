@@ -1,8 +1,7 @@
 import type { ContactEntity, Context } from "@aha.chat/sdk"
-import ky from "ky"
 import { ZaloException } from "../libs/exception"
+import { ZaloHttpClient } from "../libs/http-client"
 import { fetchAndReuploadImage } from "../libs/image"
-import { logger } from "../libs/logger"
 import type { ZaloAuthValue } from "../schemas/definition"
 
 export type ZaloUserProfileResponse = {
@@ -26,16 +25,14 @@ export const getUserProfile = async ({
   uid: string
 }): Promise<ContactEntity> => {
   try {
-    const response = await ky
-      .get<ZaloUserProfileResponse>(
-        `GET https://openapi.zalo.me/v2.0/oa/getprofile?data={"user_id":"${uid}"}`,
-        {
-          headers: {
-            access_token: ctx.auth.tokens.accessToken,
-          },
-        },
-      )
-      .json()
+    const client = ZaloHttpClient.createAuthenticatedClient(
+      ctx.auth.tokens.accessToken,
+    )
+
+    const queryData = encodeURIComponent(JSON.stringify({ user_id: uid }))
+    const response = await client.get<ZaloUserProfileResponse>(
+      `v2.0/oa/getprofile?data=${queryData}`,
+    )
 
     if (response.error !== 0) {
       throw new ZaloException(response.message)
@@ -56,8 +53,13 @@ export const getUserProfile = async ({
 
     return result
   } catch (error) {
-    logger.error("getUserProfile error", error)
+    if (error instanceof ZaloException) {
+      throw error
+    }
 
-    throw new Error(`Zalo request user profile failed: ${error}`)
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred"
+
+    throw new ZaloException(`Zalo request user profile failed: ${errorMessage}`)
   }
 }

@@ -84,7 +84,7 @@ const flowStepHandlers: Record<
   [StepType.SEND_AUDIO]: dispatchFlowStep,
   [StepType.SEND_CARD]: undefined,
   [StepType.SEND_CAROUSEL]: undefined,
-  [StepType.SEND_FILE]: undefined,
+  [StepType.SEND_FILE]: dispatchFlowStep,
   [StepType.SEND_FLOW_NODE]: undefined,
   [StepType.SEND_GIF]: undefined,
   [StepType.SEND_IMAGE]: dispatchFlowStep,

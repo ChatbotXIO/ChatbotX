@@ -47,7 +47,9 @@ const getDBIntegration = async (
     case InboxType.ZALO:
       return await prisma.integrationZalo.findFirstOrThrow({
         where: {
-          oaId: (payload as ZaloWebhookEvent).recipient.id,
+          oaId: (payload as ZaloWebhookEvent).event_name.includes("user_send")
+            ? (payload as ZaloWebhookEvent).recipient.id
+            : (payload as ZaloWebhookEvent).sender.id,
         },
         include: {
           chatbot: true,
@@ -82,7 +84,7 @@ export const receiveMessage = async ({
     uploader,
   }
   const parsedMessage = await allIntegrations[
-    integrationName as keyof typeof allIntegrations
+    integrationName.toUpperCase() as keyof typeof allIntegrations
   ]?.actions.receiveMessage({
     ctx,
     data: payload,
