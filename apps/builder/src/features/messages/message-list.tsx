@@ -74,10 +74,8 @@ const MessageComponentHeader: GridComponents["Header"] = () => {
 const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
-}) => {
-  return (
-    <div {...props} className="virtuoso-item-list flex flex-col gap-1.5">
-      {children}
-    </div>
-  )
-}
+}) => (
+  <div {...props} className="virtuoso-item-list flex flex-col gap-1.5">
+    {children}
+  </div>
+)

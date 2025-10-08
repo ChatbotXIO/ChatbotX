@@ -22,15 +22,13 @@ export default function InboxCardList({
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      {inboxes.map((inbox) => {
-        return (
-          <div key={inbox.id}>
-            {inbox.inboxType === InboxType.WHATSAPP && (
-              <InboxWhatsappCard inbox={inbox} />
-            )}
-          </div>
-        )
-      })}
+      {inboxes.map((inbox) => (
+        <div key={inbox.id}>
+          {inbox.inboxType === InboxType.WHATSAPP && (
+            <InboxWhatsappCard inbox={inbox} />
+          )}
+        </div>
+      ))}
 
       <InboxNewCard chatbotId={chatbotId} />
     </div>
@@ -66,7 +64,7 @@ function InboxNewCard({ chatbotId }: { chatbotId: string }) {
     <Card className="items-center justify-center py-0">
       <CardContent className="justify-middle flex h-full w-full flex-wrap items-center gap-2 px-0">
         <Link
-          className="flex h-full w-full items-center justify-center gap-2 text-sm"
+          className="flex h-14 w-full items-center justify-center gap-2 text-sm"
           href={`/channels/create?chatbotId=${chatbotId}`}
         >
           <PlusCircleIcon className="h-4 w-4" />

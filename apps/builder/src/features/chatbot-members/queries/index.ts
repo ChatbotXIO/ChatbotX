@@ -59,8 +59,8 @@ export const getAllChatbotMembers = async (
   chatbotMembers: ChatbotMemberResource[]
   chatbots: ChatbotResource[]
   chatbotIds: string[]
-}> => {
-  return await unstable_cache(
+}> =>
+  await unstable_cache(
     async () => {
       const chatbotMembers = await prisma.chatbotMember.findMany({
         where: {
@@ -85,4 +85,3 @@ export const getAllChatbotMembers = async (
       tags: [`users:${userId}#chatbotMembers`],
     },
   )()
-}

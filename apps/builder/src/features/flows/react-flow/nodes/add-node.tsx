@@ -33,8 +33,8 @@ export function AddNodeButton() {
       </PopoverTrigger>
       <PopoverContent>
         <div className="flex flex-col items-start">
-          {Object.values(allNodesConfig).map((item) => {
-            return item ? (
+          {Object.values(allNodesConfig).map((item) =>
+            item ? (
               <Button
                 className="w-full justify-start"
                 key={item.type}
@@ -44,8 +44,8 @@ export function AddNodeButton() {
                 <item.icon />
                 {item.label}
               </Button>
-            ) : null
-          })}
+            ) : null,
+          )}
         </div>
       </PopoverContent>
     </Popover>

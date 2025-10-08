@@ -10,11 +10,6 @@ export const createContactSchema = z.object({
   email: z.union([z.literal(""), z.string().max(100).email()]),
   firstName: z.optional(z.string().trim().max(100)),
   lastName: z.optional(z.string().trim().max(100)),
-  gender: z.nativeEnum(Gender),
+  gender: z.enum(Gender),
 })
 export type CreateContactRequest = z.infer<typeof createContactSchema>
-
-export const createContactBindSchema: [chatbotId: z.ZodString] = [
-  z.string().cuid2(),
-]
-export type CreateContactBindSchema = [chatbotId: string]

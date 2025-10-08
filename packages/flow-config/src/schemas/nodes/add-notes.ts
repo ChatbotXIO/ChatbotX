@@ -15,18 +15,16 @@ export type AddNotesNodeSchema = z.infer<typeof addNotesNodeSchema>
 export const addNotesNodeDefaultFn = ({
   labelVersion,
   ...props
-}: NewNodeProps): AddNotesNodeSchema => {
-  return {
-    id: createId(),
-    type: NodeType.AddNotes,
-    measured: {
-      width: 288,
-      height: 100,
-    },
-    ...props,
-    data: {
-      name: `Add notes ${labelVersion}`,
-      message: "",
-    },
-  }
-}
+}: NewNodeProps): AddNotesNodeSchema => ({
+  id: createId(),
+  type: NodeType.AddNotes,
+  measured: {
+    width: 288,
+    height: 100,
+  },
+  ...props,
+  data: {
+    name: `Add notes ${labelVersion}`,
+    message: "",
+  },
+})

@@ -16,7 +16,7 @@ import {
 } from "../schemas/create-flow-schema"
 
 export const createFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createFlowSchema)
   .action(
     async ({

@@ -14,8 +14,8 @@ export default async function WebchatPage(props: WebchatPageProps) {
 
   const { data } = z
     .object({
-      chatbotId: z.string().cuid2(),
-      webchatId: z.string().cuid2(),
+      chatbotId: z.cuid2(),
+      webchatId: z.cuid2(),
     })
     .safeParse(searchParams)
 

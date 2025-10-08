@@ -6,7 +6,7 @@ import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteWebchatAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs: [chatbotId, id] }) => {
     const integration = await prisma.integrationWebchat.findFirstOrThrow({
       where: {

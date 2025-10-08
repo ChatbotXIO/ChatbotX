@@ -3,7 +3,7 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const clearCustomFieldStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.CLEAR_CUSTOM_FIELD),
   inputCFId: z.string().trim(),
 })

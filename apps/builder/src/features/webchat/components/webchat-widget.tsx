@@ -122,10 +122,8 @@ const WebchatWidgetContent = () => {
   )
 }
 
-export const WebchatWidget = ({ config }: WebchatWidgetProps) => {
-  return (
-    <GuestSessionStoreProvider config={config}>
-      <WebchatWidgetContent />
-    </GuestSessionStoreProvider>
-  )
-}
+export const WebchatWidget = ({ config }: WebchatWidgetProps) => (
+  <GuestSessionStoreProvider config={config}>
+    <WebchatWidgetContent />
+  </GuestSessionStoreProvider>
+)

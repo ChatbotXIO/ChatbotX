@@ -5,13 +5,13 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "typescript": "5.9.2"
+    "typescript": "5.9.3"
   },
   "dependencies": {
     "@aha.chat/database": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
-    "@xyflow/react": "^12.8.1",
-    "zod": "^3.25.76"
+    "@xyflow/react": "^12.8.6",
+    "zod": "^4.1.12"
   },
   "exports": {
     ".": "./src/index.ts"

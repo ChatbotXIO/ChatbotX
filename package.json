@@ -10,14 +10,14 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.2",
-    "@types/node": "^22.16.0",
-    "knip": "^5.63.0",
-    "lefthook": "^1.12.3",
-    "tsx": "^4.20.5",
-    "turbo": "^2.5.6",
-    "typescript": "5.9.2",
-    "ultracite": "5.3.2"
+    "@biomejs/biome": "^2.2.5",
+    "@types/node": "^24.7.0",
+    "knip": "^5.64.2",
+    "lefthook": "^1.13.6",
+    "tsx": "^4.20.6",
+    "turbo": "^2.5.8",
+    "typescript": "5.9.3",
+    "ultracite": "5.6.1"
   },
   "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34",
   "engines": {

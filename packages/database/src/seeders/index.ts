@@ -108,9 +108,7 @@ async function main() {
 }
 
 main()
-  .then(() => {
-    return true
-  })
+  .then(() => true)
   .catch((error) => {
     // biome-ignore lint/suspicious/noConsole: wip
     console.log(error)

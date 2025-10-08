@@ -18,15 +18,11 @@ import type {
 const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
   name: "zalo",
   actions: {
-    receiveMessage: async ({ data }) => {
-      return await parseIncomingMessage(data)
-    },
+    receiveMessage: async ({ data }) => await parseIncomingMessage(data),
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
     },
-    getUserProfile: async ({ ctx, uid }) => {
-      return await getUserProfile({ ctx, uid })
-    },
+    getUserProfile: async ({ ctx, uid }) => await getUserProfile({ ctx, uid }),
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

@@ -54,14 +54,12 @@ export function ReactFlowWrapper({
     ),
     {
       currentState: { flowVersion },
-      updateFn: (state, updatedData) => {
-        return {
-          flowVersion: {
-            ...state.flowVersion,
-            ...updatedData,
-          },
-        }
-      },
+      updateFn: (state, updatedData) => ({
+        flowVersion: {
+          ...state.flowVersion,
+          ...updatedData,
+        },
+      }),
     },
   )
 

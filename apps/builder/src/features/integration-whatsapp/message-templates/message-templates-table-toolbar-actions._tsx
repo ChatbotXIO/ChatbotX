@@ -21,7 +21,9 @@ export function WhatsappMessageTemplatesTableToolbarActions({
         toast.success(t("messages.syncedSuccessfully"))
       },
       onError({ error }) {
-        error.serverError && toast.error(error.serverError)
+        if (error.serverError) {
+            toast.error(error.serverError)
+          }
       },
     },
   )

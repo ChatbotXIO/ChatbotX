@@ -9,6 +9,7 @@ export const integrations = {
   MESSENGER: integrationMessenger,
   GOOGLE_SHEETS: integrationGoogleSheets,
   ZALO: integrationZalo,
+  zalo: integrationZalo,
   WEBCHAT: undefined,
   INSTAGRAM: undefined,
   OPENAI: undefined,

@@ -13,7 +13,7 @@ import {
 } from "../schemas/delete-log-schema"
 
 export const deleteLogAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(deleteLogsRequest)
   .action(
     async ({

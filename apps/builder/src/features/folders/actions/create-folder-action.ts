@@ -14,7 +14,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const createFolderAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createFolderSchema)
   .action(
     async ({

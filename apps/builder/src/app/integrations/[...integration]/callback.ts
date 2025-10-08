@@ -3,6 +3,7 @@ import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
+import type { InputJsonValue } from "node_modules/@aha.chat/database/src/generated/prisma/internal/prismaNamespace"
 import { z } from "zod"
 import { findChatbot } from "@/features/chatbot/queries"
 import { findOrganization } from "@/features/organization/queries"
@@ -10,7 +11,7 @@ import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
 const stateValidationSchema = z.object({
-  chatbotId: z.string().cuid2(),
+  chatbotId: z.cuid2(),
   referer: z.string().url(),
 })
 
@@ -51,7 +52,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
         return notFound()
       }
 
-      authResult = (await integrations.ZALO.handleRequest?.({
+      const authValue = (await integrations.zalo.handleRequest({
         config: {
           ...organizationSettings.zalo,
           redirectUrl: new URL(
@@ -63,19 +64,20 @@ export const handleCallback = async (integrationName: string, req: Request) => {
           },
         },
         req,
-      })) as unknown as BaseAuthValue
+      })) as ZaloAuthValue
 
       await prisma.$transaction(async (tx) => {
         await tx.inbox.create({
           data: {
             chatbotId: stateParams.chatbotId,
             inboxType: IntegrationType.ZALO,
-            sourceId: (authResult as ZaloAuthValue).oaId,
+            sourceId: authValue.oaId,
             integrationZalo: {
               create: {
                 chatbotId: stateParams.chatbotId,
-                oaId: (authResult as ZaloAuthValue).oaId,
-                auth: authResult,
+                oaId: authValue.oaId,
+                auth: authValue as unknown as InputJsonValue,
+                name: authValue.metadata.oaName,
               },
             },
           },

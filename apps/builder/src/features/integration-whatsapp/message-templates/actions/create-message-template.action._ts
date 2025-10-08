@@ -21,7 +21,7 @@ import {
 import { parseComponents } from "./utils"
 
 export const createMessageTemplateAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createMessageTemplateRequest)
   .action(
     async ({

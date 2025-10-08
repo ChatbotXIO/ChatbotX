@@ -11,7 +11,7 @@ export const conversationStarterSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
     type: z.literal(ConversationStarterType.FLOW),
-    flowId: z.string().cuid2(),
+    flowId: z.cuid2(),
   }),
   z.object({
     label: z.string().min(1),
@@ -31,7 +31,7 @@ const persistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
     type: z.literal(PersistentMenuType.FLOW),
-    flowId: z.string().cuid2(),
+    flowId: z.cuid2(),
   }),
   z.object({
     label: z.string().min(1),

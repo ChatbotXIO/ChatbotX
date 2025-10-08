@@ -1,6 +1,9 @@
 "use client"
 
-import type { SetCustomFieldStepSchema } from "@aha.chat/flow-config"
+import {
+  type SetCustomFieldStepSchema,
+  setCustomFieldStepSchema,
+} from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -37,7 +40,7 @@ export const SetCustomFieldStepEditor = ({
   ]
 
   const customFieldForm = useForm<SetCustomFieldStepSchema>({
-    resolver: zodResolver(setCustomFieldStep.validator),
+    resolver: zodResolver(setCustomFieldStepSchema),
     defaultValues: defaultValue ?? setCustomFieldStep.defaultFn(),
   })
 

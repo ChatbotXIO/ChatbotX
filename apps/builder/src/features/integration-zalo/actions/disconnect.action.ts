@@ -9,7 +9,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const disconnectZaloAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

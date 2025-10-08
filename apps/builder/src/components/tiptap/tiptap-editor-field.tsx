@@ -12,16 +12,14 @@ export type TiptapEditorFieldProps = {
 export const TiptapEditorField = ({
   name,
   customFields,
-}: TiptapEditorFieldProps) => {
-  return (
-    <FormFieldWrapper name={name}>
-      {(field) => (
-        <TiptapEditor
-          customFields={customFields}
-          defaultValue={field.value}
-          onChange={field.onChange}
-        />
-      )}
-    </FormFieldWrapper>
-  )
-}
+}: TiptapEditorFieldProps) => (
+  <FormFieldWrapper name={name}>
+    {(field) => (
+      <TiptapEditor
+        customFields={customFields}
+        defaultValue={field.value}
+        onChange={field.onChange}
+      />
+    )}
+  </FormFieldWrapper>
+)

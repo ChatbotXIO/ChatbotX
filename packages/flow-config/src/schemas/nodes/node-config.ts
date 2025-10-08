@@ -22,8 +22,8 @@ export type NewNodeProps = {
 }
 
 export const baseNodeSchema = z.object({
-  id: z.string().cuid2(),
-  type: z.nativeEnum(NodeType),
+  id: z.cuid2(),
+  type: z.enum(NodeType),
   position: z.object({
     x: z.number(),
     y: z.number(),

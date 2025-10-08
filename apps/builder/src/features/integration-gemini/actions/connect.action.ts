@@ -12,7 +12,7 @@ import { verifyGeminiApiKey } from "../lib"
 import { type ConnectGeminiRequest, connectGeminiRequest } from "../schemas"
 
 export const connectGeminiAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(connectGeminiRequest)
   .action(
     async ({

@@ -11,7 +11,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const unarchiveConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({

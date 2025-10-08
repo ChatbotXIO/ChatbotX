@@ -15,42 +15,37 @@ type OpenAIGenerateTextAdvancedEditorProps = {
 
 export const OpenAIGenerateTextAdvancedEditor = (
   props: OpenAIGenerateTextAdvancedEditorProps,
-) => {
-  return (
-    <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAdvanced">
-      <OpenAIModelSelect name={`${props.parentName}.model`} />
+) => (
+  <OpenAIDialog name="Flows.OpenAI.Title.GenerateTextAdvanced">
+    <OpenAIModelSelect name={`${props.parentName}.model`} />
 
-      <TextareaField label="Prompt" name={`${props.parentName}.prompt`} />
+    <TextareaField label="Prompt" name={`${props.parentName}.prompt`} />
 
-      <InputField
-        label="User Message"
-        name={`${props.parentName}.userMessage`}
-      />
+    <InputField label="User Message" name={`${props.parentName}.userMessage`} />
 
-      <CustomFieldSelect
-        allowCreate={true}
-        label="Save response to a custom field"
-        name={`${props.parentName}.resultCustomFieldId`}
-      />
+    <CustomFieldSelect
+      allowCreate={true}
+      label="Save response to a custom field"
+      name={`${props.parentName}.resultCustomFieldId`}
+    />
 
-      <AITriggerMultiSelect name={`${props.parentName}.aiTriggerIds`} />
+    <AITriggerMultiSelect name={`${props.parentName}.aiTriggerIds`} />
 
-      <CheckboxGroupField
-        name={`${props.parentName}.rememberConversation`}
-        options={[{ value: "1", label: "Remember Conversation" }]}
-      />
+    <CheckboxGroupField
+      name={`${props.parentName}.rememberConversation`}
+      options={[{ value: "1", label: "Remember Conversation" }]}
+    />
 
-      <InputNumberField
-        defaultValue={0.4}
-        label="Temperature"
-        name={`${props.parentName}.temperature`}
-      />
+    <InputNumberField
+      defaultValue={0.4}
+      label="Temperature"
+      name={`${props.parentName}.temperature`}
+    />
 
-      <InputNumberField
-        defaultValue={250}
-        label="Maximum number of output tokens"
-        name={`${props.parentName}.maxTokens`}
-      />
-    </OpenAIDialog>
-  )
-}
+    <InputNumberField
+      defaultValue={250}
+      label="Maximum number of output tokens"
+      name={`${props.parentName}.maxTokens`}
+    />
+  </OpenAIDialog>
+)

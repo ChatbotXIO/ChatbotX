@@ -60,7 +60,9 @@ export function CreateAITriggerDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {

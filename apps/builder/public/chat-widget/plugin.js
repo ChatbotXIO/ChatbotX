@@ -4,8 +4,8 @@
     return
   }
 
-  const loadStylesheet = (href) => {
-    return new Promise((resolve, reject) => {
+  const loadStylesheet = (href) =>
+    new Promise((resolve, reject) => {
       const link = document.createElement("link")
       link.rel = "stylesheet"
       link.href = href
@@ -13,7 +13,6 @@
       link.onerror = reject
       document.head.appendChild(link)
     })
-  }
 
   const iconUrl = new URL("/brand/logo.svg", window.location.href).toString()
   const cssUrl = new URL(

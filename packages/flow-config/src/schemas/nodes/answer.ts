@@ -3,7 +3,7 @@ import { AnswerType } from "../steps/user-input"
 
 const answerBaseStepSchema = z.object({
   stepType: z.literal(AnswerType.Number),
-  inputCFId: z.string().cuid2(),
+  inputCFId: z.cuid2(),
   validationMessage: z.string().trim().max(255).nullable(),
   skipButtonLabel: z.string().trim().max(255).nullable(),
   autoSkipAfter: z.object({

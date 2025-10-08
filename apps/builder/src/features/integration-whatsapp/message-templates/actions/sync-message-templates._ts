@@ -12,7 +12,7 @@ import { integrations } from "@/integration"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const syncMessageTemplateAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

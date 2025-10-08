@@ -4,9 +4,9 @@ import { OpenAIModel } from "./open-ai"
 import { StepType } from "./step-action"
 
 export const openAIDeleteMessageHistorySchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.OPENAI_DELETE_MESSAGE_HISTORY),
-  model: z.nativeEnum(OpenAIModel),
+  model: z.enum(OpenAIModel),
 })
 
 export type OpenAIDeleteMessageHistorySchema = z.infer<

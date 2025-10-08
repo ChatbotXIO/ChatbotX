@@ -5,9 +5,9 @@ import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendFileStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.SEND_FILE),
-  mode: z.nativeEnum(UploadMode),
+  mode: z.enum(UploadMode),
   url: z.string().url(),
   buttons: z.array(buttonStepSchema),
 })

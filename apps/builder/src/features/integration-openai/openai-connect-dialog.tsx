@@ -46,7 +46,9 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
           router.refresh()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {

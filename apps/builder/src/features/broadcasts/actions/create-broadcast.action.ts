@@ -18,7 +18,7 @@ import {
   createBroadcastRequest,
 } from "../schemas/create-broadcast-schema"
 export const createBroadcastAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createBroadcastRequest)
   .action(
     async ({

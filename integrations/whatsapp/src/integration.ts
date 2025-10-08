@@ -26,12 +26,8 @@ const config: IntegrationDefinition<
 > = {
   name: "whatsapp",
   actions: {
-    verifyAccessToken: async ({ ctx }) => {
-      return await verifyAccessToken(ctx)
-    },
-    uploadMedia: async ({ ctx, file }) => {
-      return await uploadMedia(ctx.auth, file)
-    },
+    verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
+    uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
     receiveMessage: async ({ ctx, data }) => {
       const whatsappClient = getWhatsappClient(ctx.auth)
 
@@ -43,18 +39,13 @@ const config: IntegrationDefinition<
     sendFlowStep: async ({ ctx, flowVersionId, step, conversation }) => {
       await sendFlowStep(ctx, conversation, flowVersionId, step)
     },
-    listMessageTemplates: async ({ ctx }) => {
-      return await listMessageTemplates(ctx.auth)
-    },
-    listFlows: async ({ ctx }) => {
-      return await listFlows(ctx)
-    },
-    findConversationalAutomation: async ({ ctx }) => {
-      return await findConversationalAutomation(ctx.auth)
-    },
-    updateConversationalAutomation: async ({ ctx, data }) => {
-      return await updateConversationalAutomation(ctx.auth, data)
-    },
+    listMessageTemplates: async ({ ctx }) =>
+      await listMessageTemplates(ctx.auth),
+    listFlows: async ({ ctx }) => await listFlows(ctx),
+    findConversationalAutomation: async ({ ctx }) =>
+      await findConversationalAutomation(ctx.auth),
+    updateConversationalAutomation: async ({ ctx, data }) =>
+      await updateConversationalAutomation(ctx.auth, data),
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

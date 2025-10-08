@@ -14,7 +14,7 @@ import {
 } from "../schemas/update-custom-field.schema"
 
 export const updateCustomFieldAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateCustomFieldSchema)
   .action(
     async ({

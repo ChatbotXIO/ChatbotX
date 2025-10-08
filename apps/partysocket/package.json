@@ -17,16 +17,16 @@
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
-    "bullmq": "^5.56.1",
+    "bullmq": "^5.61.0",
     "cross-fetch": "^4.1.0",
-    "dot-prop": "^9.0.0",
-    "ioredis": "^5.6.1",
-    "ky": "^1.8.1",
-    "partysocket": "1.1.4"
+    "dot-prop": "^10.1.0",
+    "ioredis": "^5.8.1",
+    "ky": "^1.11.0",
+    "partysocket": "1.1.6"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "dotenv-cli": "^8.0.0",
+    "dotenv-cli": "^10.0.0",
     "partykit": "0.0.115",
     "tsup": "^8.5.0"
   }

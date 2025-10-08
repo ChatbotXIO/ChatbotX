@@ -16,9 +16,9 @@ export const AnswerType = {
 } as const
 
 export const userInputStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.USER_INPUT),
-  answerType: z.nativeEnum(AnswerType),
+  answerType: z.enum(AnswerType),
 })
 
 export type UserInputStepSchema = z.infer<typeof userInputStepSchema>

@@ -15,7 +15,7 @@ import {
 } from "../schemas/update-automated-responses-schema"
 
 export const updateAutomatedResponseAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateAutomatedResponseRequest)
   .action(
     async ({

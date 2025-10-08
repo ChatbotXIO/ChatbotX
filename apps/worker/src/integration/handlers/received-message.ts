@@ -170,13 +170,11 @@ export const receiveMessage = async ({
         attachments: message.attachments
           ? {
               create: message.attachments.map(
-                (attachment: AttachmentEntity) => {
-                  return {
-                    chatbotId: newConversation.chatbotId,
-                    conversationId: newConversation.id,
-                    ...attachment,
-                  }
-                },
+                (attachment: AttachmentEntity) => ({
+                  chatbotId: newConversation.chatbotId,
+                  conversationId: newConversation.id,
+                  ...attachment,
+                }),
               ),
             }
           : undefined,
@@ -211,6 +209,5 @@ export const receiveMessage = async ({
   return result
 }
 
-const canGetUserProfileIfNeeded = (integrationName: string) => {
-  return integrationName === InboxType.MESSENGER
-}
+const canGetUserProfileIfNeeded = (integrationName: string) =>
+  integrationName === InboxType.MESSENGER

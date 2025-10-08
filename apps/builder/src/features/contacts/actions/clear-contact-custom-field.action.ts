@@ -13,7 +13,7 @@ import {
 } from "../schemas/clear-contact-custom-field.request"
 
 export const clearContactCustomFieldAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(clearContactCustomFieldRequest)
   .action(
     async ({

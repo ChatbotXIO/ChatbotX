@@ -21,8 +21,7 @@ export const findIntegrationWhatsapp = async ({
   where,
 }: {
   where: IntegrationWhatsappWhereInput
-}): Promise<IntegrationWhatsappResource> => {
-  return await prisma.integrationWhatsapp.findFirstOrThrow({
+}): Promise<IntegrationWhatsappResource> =>
+  await prisma.integrationWhatsapp.findFirstOrThrow({
     where,
   })
-}

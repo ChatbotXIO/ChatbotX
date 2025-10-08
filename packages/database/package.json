@@ -5,18 +5,18 @@
   "dependencies": {
     "@aha.chat/logger": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
-    "@prisma/adapter-pg": "6.14.0-integration-feat-client-wasm-base64-on-nodejs.6",
-    "@prisma/client": "6.14.0-integration-feat-client-wasm-base64-on-nodejs.6",
-    "@prisma/extension-accelerate": "^2.0.1",
+    "@prisma/adapter-pg": "6.17.0",
+    "@prisma/client": "6.17.0",
+    "@prisma/extension-accelerate": "^2.0.2",
     "@t3-oss/env-nextjs": "^0.13.8",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@faker-js/faker": "^9.9.0",
-    "@types/node": "^22.16.0",
-    "dotenv-cli": "^8.0.0",
-    "prisma": "6.14.0-integration-feat-client-wasm-base64-on-nodejs.6",
+    "@faker-js/faker": "^10.0.0",
+    "@types/node": "^24.7.0",
+    "dotenv-cli": "^10.0.0",
+    "prisma": "6.17.0",
     "ts-node": "^10.9.2"
   },
   "scripts": {

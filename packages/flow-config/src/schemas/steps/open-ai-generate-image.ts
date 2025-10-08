@@ -17,7 +17,7 @@ export const openAIGenerateImageSchema = openAISchema.extend({
   stepType: z.literal(StepType.OPENAI_GENERATE_IMAGE),
   // biome-ignore lint/style/noNonNullAssertion: wip
   size: z.enum([firstSize!, ...otherSizes]),
-  resultCustomFieldId: z.string().cuid2(),
+  resultCustomFieldId: z.cuid2(),
 })
 
 export type OpenAIGenerateImageSchema = z.infer<

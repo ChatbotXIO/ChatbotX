@@ -8,7 +8,7 @@ import { StepType } from "./step-action"
 export const sendCardStepSchema = z.object({
   id: z.string(),
   stepType: z.literal(StepType.SEND_CARD),
-  layout: z.nativeEnum(CardLayout),
+  layout: z.enum(CardLayout),
   title: z.string().trim().min(1).max(255),
   subtitle: z.string().trim().max(255).optional(),
   cardURL: z.string().trim().url().optional(),

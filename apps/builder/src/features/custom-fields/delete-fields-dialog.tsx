@@ -53,7 +53,9 @@ export function DeleteFieldsDialog({
         onOpenChange?.(false)
       },
       onError: ({ error }) => {
-        error.serverError && toast.error(error.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )

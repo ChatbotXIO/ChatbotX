@@ -11,7 +11,7 @@ const deleteAIFunctionRequest = z.object({
 })
 
 export const deleteAIFunctionAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(deleteAIFunctionRequest)
   .action(async ({ bindArgsParsedInputs, parsedInput }) => {
     const [chatbotId] = bindArgsParsedInputs

@@ -7,13 +7,12 @@ import type {
 import { API_URL, DEFAULT_API_VERSION } from "./constants"
 import type { WhatsappAuthValue } from "./schemas"
 
-export const getWhatsappClient = (auth: WhatsappAuthValue) => {
-  return new WhatsAppAPI({
+export const getWhatsappClient = (auth: WhatsappAuthValue) =>
+  new WhatsAppAPI({
     token: auth.tokens.accessToken,
     appSecret: auth.clientSecret,
     v: DEFAULT_API_VERSION,
   })
-}
 
 /**
  * Verify token and get first phoneNumberId

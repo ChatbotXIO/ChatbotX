@@ -10,7 +10,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const unblockContactAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({

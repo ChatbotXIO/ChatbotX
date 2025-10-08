@@ -5,12 +5,12 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "typescript": "5.9.2"
+    "typescript": "5.9.3"
   },
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/logger": "workspace:*",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "exports": {
     ".": "./src/index.ts"

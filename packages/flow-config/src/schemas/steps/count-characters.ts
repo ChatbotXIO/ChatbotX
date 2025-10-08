@@ -3,10 +3,10 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const countCharactersStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.COUNT_CHARACTERS),
-  inputCustomFieldId: z.string().cuid2(),
-  outputCustomFieldId: z.string().cuid2(),
+  inputCustomFieldId: z.cuid2(),
+  outputCustomFieldId: z.cuid2(),
 })
 export type CountCharactersStepSchema = z.infer<
   typeof countCharactersStepSchema

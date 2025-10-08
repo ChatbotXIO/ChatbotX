@@ -2,9 +2,9 @@ import { ChatbotMemberRole } from "@aha.chat/database"
 import { z } from "zod"
 
 export const addChatbotMemberSchema = z.object({
-  chatbotId: z.string().cuid2(),
-  userId: z.string().cuid2(),
-  role: z.nativeEnum(ChatbotMemberRole),
+  chatbotId: z.cuid2(),
+  userId: z.cuid2(),
+  role: z.enum(ChatbotMemberRole),
   isAdmin: z.boolean(),
   enableAnalytics: z.boolean(),
   enableFlows: z.boolean(),

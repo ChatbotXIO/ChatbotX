@@ -4,12 +4,12 @@ import { OpenAIModel, openAISchema } from "./open-ai"
 import { StepType } from "./step-action"
 
 export const openAIAnalyzeImageSchema = openAISchema.extend({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.OPENAI_ANALYZE_IMAGE),
-  model: z.nativeEnum(OpenAIModel),
-  inputCustomFieldId: z.string().cuid2(),
+  model: z.enum(OpenAIModel),
+  inputCustomFieldId: z.cuid2(),
   prompt: z.string().min(1).max(1000),
-  outputCustomFieldId: z.string().cuid2(),
+  outputCustomFieldId: z.cuid2(),
 })
 export type OpenAIAnalyzeImageSchema = z.infer<typeof openAIAnalyzeImageSchema>
 

@@ -3,7 +3,7 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const markEmailVerifiedStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.MARK_EMAIL_VERIFIED),
 })
 

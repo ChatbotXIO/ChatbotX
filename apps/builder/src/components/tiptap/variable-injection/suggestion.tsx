@@ -46,13 +46,11 @@ export function createSuggestion(customFields: CustomFieldResource[]) {
       return TextIcon
     }
 
-    return customFields.map((cf) => {
-      return {
-        value: cf.name,
-        label: cf.name,
-        icon: getIcon(cf.customFieldType),
-      }
-    })
+    return customFields.map((cf) => ({
+      value: cf.name,
+      label: cf.name,
+      icon: getIcon(cf.customFieldType),
+    }))
   }, [customFields])
 
   const suggestion: Omit<
