@@ -1,5 +1,5 @@
 pre-commit:
   jobs:
-    - run: pnpm ultracite format --unsafe
+    - run: pnpm ultracite fix --unsafe
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
       stage_fixed: true

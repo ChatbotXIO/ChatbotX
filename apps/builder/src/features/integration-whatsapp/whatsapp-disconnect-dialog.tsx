@@ -20,20 +20,31 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectWhatsappAction } from "./actions/disconnect.action"
 
-export function WhatsappDisconnectDialog({ chatbotId }: { chatbotId: string }) {
+type WhatsappDisconnectDialogProps = {
+  chatbotId: string
+  integrationWhatsappId: string
+}
+
+export function WhatsappDisconnectDialog({
+  chatbotId,
+  integrationWhatsappId,
+}: WhatsappDisconnectDialogProps) {
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState<boolean>(false)
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectWhatsappAction.bind(null, chatbotId), {
-      onSuccess: () => {
-        router.refresh()
+    useAction(
+      disconnectWhatsappAction.bind(null, chatbotId, integrationWhatsappId),
+      {
+        onSuccess: () => {
+          router.refresh()
+        },
+        onError: ({ error }) => {
+          error.serverError && toast.error(error.serverError)
+        },
       },
-      onError: ({ error }) => {
-        error.serverError && toast.error(error.serverError)
-      },
-    })
+    )
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>

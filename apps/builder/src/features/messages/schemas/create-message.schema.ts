@@ -1,4 +1,4 @@
-import { FileType, WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
+import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { z } from "zod"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000
@@ -64,16 +64,3 @@ export const createWebchatMessageRequest = z
 export type CreateWebchatMessageRequest = z.infer<
   typeof createWebchatMessageRequest
 >
-
-export const guessFileTypeFromMimeType = (mimeType: string) => {
-  if (mimeType.startsWith("image/")) {
-    return FileType.IMAGE
-  }
-  if (mimeType.startsWith("video/")) {
-    return FileType.VIDEO
-  }
-  if (mimeType.startsWith("audio/")) {
-    return FileType.AUDIO
-  }
-  return FileType.DOCUMENT
-}

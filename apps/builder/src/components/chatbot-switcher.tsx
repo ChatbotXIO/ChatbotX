@@ -21,14 +21,25 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@aha.chat/ui/components/ui/sidebar"
-import { ChevronsUpDown, Plus } from "lucide-react"
-import { useState } from "react"
+import { ChevronsUpDown, PlusCircle } from "lucide-react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { useEffect, useState } from "react"
 
 export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
   const { isMobile } = useSidebar()
-  const [activeChatbot, setActiveChatbot] = useState<ChatbotModel | undefined>(
-    chatbots[0],
-  )
+  const params = useParams<{ chatbotId: string }>()
+
+  const [activeChatbot, setActiveChatbot] = useState<ChatbotModel | null>(null)
+  const t = useTranslations()
+
+  useEffect(() => {
+    const foundChatbot = chatbots.find(
+      (chatbot) => chatbot.id === params.chatbotId,
+    )
+    setActiveChatbot(foundChatbot ?? null)
+  }, [chatbots, params.chatbotId])
 
   return (
     <SidebarMenu>
@@ -64,34 +75,40 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Chatbots
+              {t("chatbots.list.title")}
             </DropdownMenuLabel>
             {chatbots.map((chatbot) => (
               <DropdownMenuItem
+                asChild
                 className="gap-2 p-2"
                 key={chatbot.name}
                 onClick={() => setActiveChatbot(chatbot)}
               >
-                <Avatar className="rounded-lg border">
-                  <AvatarImage
-                    alt={activeChatbot?.name}
-                    src={activeChatbot?.logo ?? ""}
-                  />
-                  <AvatarFallback className="rounded">
-                    {activeChatbot?.name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                {chatbot.name}
+                <Link href={`/chatbots/${chatbot.id}/dashboard`}>
+                  <Avatar className="rounded-lg border">
+                    <AvatarImage
+                      alt={activeChatbot?.name}
+                      src={activeChatbot?.logo ?? ""}
+                    />
+                    <AvatarFallback className="rounded">
+                      {activeChatbot?.name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {chatbot.name}
+                </Link>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                <Plus className="size-4" />
-              </div>
-              <div className="font-medium text-muted-foreground">
-                Add chatbot
-              </div>
+            <DropdownMenuItem asChild className="gap-2 p-2">
+              <Link
+                className="gap-4 font-medium text-muted-foreground"
+                href="/channels/create"
+              >
+                <PlusCircle className="ml-2 size-4" />
+                {t("actions.addFeature", {
+                  feature: t("fields.chatbot.label"),
+                })}
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -14,7 +14,11 @@ import {
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
+import {
+  type AttachmentEntity,
+  type ConversationEntity,
+  guessFileTypeFromMimeType,
+} from "@aha.chat/sdk"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
@@ -31,7 +35,6 @@ import type { MessageResource } from "../schemas"
 import {
   type CreateMessageRequest,
   createMessageRequest,
-  guessFileTypeFromMimeType,
 } from "../schemas/create-message.schema"
 
 export const createMessageAction = chatbotActionClient

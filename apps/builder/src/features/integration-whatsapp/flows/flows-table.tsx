@@ -1,52 +1,82 @@
 "use client"
 
-import type { WhatsappFlowModel } from "@aha.chat/database/types"
-import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
-import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
-import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
-import React, { useMemo, useState } from "react"
-import type { getWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
-import { getColumns } from "./flows-table-columns"
-import { WhatsappFlowsTableToolbarActions } from "./flows-table-toolbar-actions"
+import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@aha.chat/ui/components/ui/table"
+import { ExternalLink } from "lucide-react"
+import Link from "next/link"
+import { useTranslations } from "next-intl"
+import React from "react"
+import type { listWhatsappFlows } from "@/features/integration-whatsapp/flows/queries"
 
 type WhatsappFlowsTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof getWhatsappFlows>>]>
-  chatbotId: string
+  integrationWhatsapp: IntegrationWhatsappModel
+  promises: Promise<[Awaited<ReturnType<typeof listWhatsappFlows>>]>
 }
 
 export function WhatsappFlowsTable({
+  integrationWhatsapp,
   promises,
-  chatbotId,
 }: WhatsappFlowsTableProps) {
-  const [{ data, pageCount }] = React.use(promises)
-  const [_rowAction, setRowAction] =
-    useState<DataTableRowAction<WhatsappFlowModel> | null>(null)
+  const t = useTranslations()
+  const [{ data }] = React.use(promises)
 
-  const columns = useMemo<ColumnDef<WhatsappFlowModel>[]>(
-    () => getColumns({ setRowAction }),
-    [],
-  )
-
-  const { table } = useDataTable({
-    data,
-    columns,
-    pageCount,
-    initialState: {
-      sorting: [{ id: "createdAt", desc: true }],
-      columnPinning: { right: ["actions"] },
-    },
-    getRowId: (originalRow) => originalRow.id,
-    shallow: false,
-    clearOnDefault: true,
-  })
+  const auth = integrationWhatsapp.auth as unknown as WhatsappAuthValue
 
   return (
-    <DataTable table={table}>
-      <DataTableToolbar table={table}>
-        <WhatsappFlowsTableToolbarActions chatbotId={chatbotId} />
-      </DataTableToolbar>
-    </DataTable>
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <Button size="sm" variant="secondary">
+          <Link
+            href={`https://business.facebook.com/latest/whatsapp_manager/flows?business_id=${auth.metadata.businessId}&asset_id=${auth.metadata.wabaId}`}
+            target="_blank"
+          >
+            {t("actions.manage")}
+          </Link>
+        </Button>
+      </div>
+      <div className="rounded border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("fields.name.label")}</TableHead>
+              <TableHead>{t("fields.status.label")}</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((flow) => (
+              <TableRow key={flow.id}>
+                <TableCell>{flow.name}</TableCell>
+                <TableCell>{flow.status}</TableCell>
+                <TableCell>
+                  <Link
+                    href={`https://business.facebook.com/latest/whatsapp_manager/flow_edit/?business_id=${auth.metadata.businessId}&tab=flow-edit&id=${flow.id}&nav_ref=whatsapp_manager&asset_id=${auth.metadata.wabaId}`}
+                    target="_blank"
+                  >
+                    <ExternalLink className="size-4" />
+                  </Link>
+                </TableCell>
+              </TableRow>
+            ))}
+            {data.length === 0 && (
+              <TableRow>
+                <TableCell className="text-center" colSpan={3}>
+                  {t("messages.noData")}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   )
 }

@@ -12,21 +12,23 @@ import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import {
+  guessFileTypeFromMimeType,
+  type OutgoingMessageEntity,
+} from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
 import { revalidateTag } from "next/cache"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import { BaseException } from "@/lib/error"
+import { BaseException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
   type CreateWebchatMessageRequest,
   createWebchatMessageRequest,
-  guessFileTypeFromMimeType,
 } from "../schemas/create-message.schema"
 
 export const createWebchatMessageAction = actionClient

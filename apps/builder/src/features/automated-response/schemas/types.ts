@@ -1,6 +1,6 @@
 import type { AutomatedResponseModel } from "@aha.chat/database/types"
 import type { FlowResource } from "@/features/flows/schemas/get-flows-schema"
-import { BaseException } from "@/lib/error"
+import { BaseException } from "@/lib/errors/exception"
 
 export class AutomatedResponseException extends BaseException {}
 

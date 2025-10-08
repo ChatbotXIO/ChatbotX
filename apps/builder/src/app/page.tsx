@@ -22,7 +22,9 @@ export default async function MainPage() {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Chatbots List</CardTitle>
+              <CardTitle className="text-2xl">
+                {t("chatbots.list.title")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">

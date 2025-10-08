@@ -5,6 +5,7 @@ import { integration as integrationZalo } from "@aha.chat/integration-zalo"
 
 export const integrations = {
   WHATSAPP: integrationWhatsapp,
+  whatsapp: integrationWhatsapp,
   MESSENGER: integrationMessenger,
   GOOGLE_SHEETS: integrationGoogleSheets,
   ZALO: integrationZalo,

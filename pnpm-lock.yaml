@@ -585,6 +585,9 @@ importers:
 
   integrations/messenger:
     dependencies:
+      '@aha.chat/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
       '@aha.chat/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -659,6 +662,9 @@ importers:
       image-size:
         specifier: ^2.0.2
         version: 2.0.2
+      ky:
+        specifier: ^1.8.1
+        version: 1.8.1
       remeda:
         specifier: ^2.23.3
         version: 2.23.3

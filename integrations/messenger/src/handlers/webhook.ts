@@ -1,10 +1,7 @@
-import {
-  type ContextQueue,
-  type HandleRequestProps,
-  SdkException,
-} from "@aha.chat/sdk"
+import type { ContextQueue, HandleRequestProps } from "@aha.chat/sdk"
 import crypto from "crypto"
 import z from "zod"
+import { MessengerWebhookException } from "../exception"
 import {
   MESSENGER_MESSAGE_METADATA,
   type MessengerConfig,
@@ -43,12 +40,12 @@ const handleWebhookEvent = async (
   try {
     const body = await req.text()
     if (!body) {
-      throw new SdkException("Empty webhook payload")
+      throw new MessengerWebhookException("Empty webhook payload")
     }
 
     const signature = req.headers.get("x-hub-signature-256") ?? ""
     if (!signature) {
-      throw new SdkException("Missing webhook signature")
+      throw new MessengerWebhookException("Missing webhook signature")
     }
 
     const isValidSignature = verifyWebhookSignature(
@@ -58,13 +55,14 @@ const handleWebhookEvent = async (
     )
 
     if (!isValidSignature) {
-      throw new SdkException("Invalid webhook signature")
+      throw new MessengerWebhookException("Invalid webhook signature")
     }
 
     const webhookData = JSON.parse(body) as MessengerWebhookEvent
     if (webhookData.object !== "page") {
-      throw new SdkException(
+      throw new MessengerWebhookException(
         `Unsupported webhook object type: ${webhookData.object}`,
+        webhookData,
       )
     }
 
@@ -89,7 +87,10 @@ const handleWebhookEvent = async (
         ? error.message
         : "Unknown error processing webhook"
 
-    throw new SdkException(`Failed to process webhook event: ${errorMessage}`)
+    throw new MessengerWebhookException(
+      `Failed to process webhook event: ${errorMessage}`,
+      await req.text().catch(() => null),
+    )
   }
 }
 
@@ -107,7 +108,9 @@ const handleSubscriptionEvent = ({
   const { data } = validation.safeParse(Object.fromEntries(searchParams))
 
   if (!data) {
-    throw new SdkException("Invalid webhook verification parameters")
+    throw new MessengerWebhookException(
+      "Invalid webhook verification parameters",
+    )
   }
 
   return data["hub.challenge"]
@@ -129,11 +132,15 @@ export const webhookHandler = async ({
       return "ok"
     }
 
-    throw new SdkException(`Unsupported HTTP method: ${req.method}`)
+    throw new MessengerWebhookException(
+      `Unsupported HTTP method: ${req.method}`,
+    )
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown webhook error"
 
-    throw new SdkException(`Webhook processing failed: ${errorMessage}`)
+    throw new MessengerWebhookException(
+      `Webhook processing failed: ${errorMessage}`,
+    )
   }
 }

@@ -26,6 +26,7 @@
     "db:client": "dotenv -e ../../.env -- prisma generate",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
     "db:setup": "pnpm migrate && pnpm db:client && pnpm db:seed",
+    "db:rollback": "dotenv -e ../../.env -- ./scripts/db-rollback.sh",
     "migrate": "dotenv -e ../../.env -- prisma migrate deploy",
     "migrate:squash": "dotenv -e ../../.env -- ./scripts/squash-migrations.sh",
     "migrate:status": "dotenv -e ../../.env -- prisma migrate status"

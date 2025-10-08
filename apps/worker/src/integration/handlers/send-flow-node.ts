@@ -90,7 +90,7 @@ const flowStepHandlers: Record<
   [StepType.SEND_IMAGE]: dispatchFlowStep,
   [StepType.SEND_MESSENGER_OTN]: undefined,
   [StepType.SEND_TEXT]: dispatchFlowStep,
-  [StepType.SEND_VIDEO]: undefined,
+  [StepType.SEND_VIDEO]: dispatchFlowStep,
   [StepType.SET_CUSTOM_FIELD]: setContactCustomField,
   [StepType.SET_DEBOUNCE]: undefined,
   [StepType.SPLIT_TRAFFIC]: undefined,

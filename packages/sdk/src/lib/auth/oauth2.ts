@@ -21,6 +21,7 @@ export type Oauth2AuthValue = BaseAuthValue & {
   clientId: string
   clientSecret: string
   redirectUrl: string
+  version?: string
   verifyToken?: string
   tokens: TokenAuthValue
   metadata?: Record<string, unknown>

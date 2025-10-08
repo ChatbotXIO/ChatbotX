@@ -5,6 +5,7 @@
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
+    "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",

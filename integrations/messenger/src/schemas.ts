@@ -6,6 +6,7 @@ import type {
   MessageEntity,
   Oauth2AuthValue,
   Oauth2Config,
+  SendFlowStepProps,
   SendMessageProps,
 } from "@aha.chat/sdk"
 import { z } from "zod"
@@ -41,17 +42,29 @@ export type MessengerActions = {
     }
   >
   sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
+  sendFlowStep: (props: SendFlowStepProps<MessengerAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<MessengerAuthValue>
     psid: string
   }) => Promise<ContactEntity>
 }
 
+// Common attachment types
+const attachmentTypeSchema = z.enum(["image", "video", "audio", "file"])
+
+// Base attachment payload
+const baseAttachmentPayloadSchema = z.object({
+  url: z.string().url(),
+})
+
+// Common ID schemas
+const idSchema = z.object({
+  id: z.string(),
+})
+
 export const messengerAttachmentSchema = z.object({
-  type: z.enum(["image", "video", "audio", "file"]),
-  payload: z.object({
-    url: z.string().url(),
-  }),
+  type: attachmentTypeSchema,
+  payload: baseAttachmentPayloadSchema,
 })
 export type MessengerAttachment = z.infer<typeof messengerAttachmentSchema>
 
@@ -76,19 +89,16 @@ export const messengerReadSchema = z.object({
 export type MessengerRead = z.infer<typeof messengerReadSchema>
 
 export const messengerPostbackSchema = z.object({
+  mid: z.string(),
   title: z.string(),
   payload: z.string(),
 })
 export type MessengerPostback = z.infer<typeof messengerPostbackSchema>
 
-export const messengerSenderSchema = z.object({
-  id: z.string(),
-})
+export const messengerSenderSchema = idSchema
 export type MessengerSender = z.infer<typeof messengerSenderSchema>
 
-export const messengerRecipientSchema = z.object({
-  id: z.string(),
-})
+export const messengerRecipientSchema = idSchema
 export type MessengerRecipient = z.infer<typeof messengerRecipientSchema>
 
 export const messengerMessagingEventSchema = z.object({
@@ -134,7 +144,7 @@ export const facebookButtonSchema = z.object({
 export type FacebookButton = z.infer<typeof facebookButtonSchema>
 
 export const facebookElementSchema = z.object({
-  title: z.string(),
+  title: z.string().optional(),
   subtitle: z.string().optional(),
   image_url: z.string().url().optional(),
   default_action: z
