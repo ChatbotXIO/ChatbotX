@@ -56,6 +56,7 @@ export const FileUploadPreview = ({
               URL.revokeObjectURL(file.preview)
             }}
             src={file.preview}
+            width={64}
           />
         ) : (
           <div className="truncate bg-white px-2 py-1 text-sm">{file.name}</div>

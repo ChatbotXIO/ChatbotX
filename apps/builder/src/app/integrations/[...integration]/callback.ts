@@ -1,9 +1,8 @@
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
-import type { InputJsonValue } from "node_modules/@aha.chat/database/src/generated/prisma/internal/prismaNamespace"
 import { z } from "zod"
 import { findChatbot } from "@/features/chatbot/queries"
 import { findOrganization } from "@/features/organization/queries"
@@ -76,7 +75,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
               create: {
                 chatbotId: stateParams.chatbotId,
                 oaId: authValue.oaId,
-                auth: authValue as unknown as InputJsonValue,
+                auth: authValue as unknown as Prisma.InputJsonValue,
                 name: authValue.metadata.oaName,
               },
             },

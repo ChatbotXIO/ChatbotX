@@ -3,6 +3,7 @@ import createNextIntlPlugin from "next-intl/plugin"
 import { env } from "@/env"
 
 const withNextIntl = createNextIntlPlugin()
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   eslint: {
