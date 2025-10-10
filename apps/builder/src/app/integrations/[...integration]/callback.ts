@@ -11,7 +11,7 @@ import { logger } from "@/lib/log"
 
 const stateValidationSchema = z.object({
   chatbotId: z.cuid2(),
-  referer: z.string().url(),
+  referer: z.url(),
 })
 
 export const handleCallback = async (integrationName: string, req: Request) => {

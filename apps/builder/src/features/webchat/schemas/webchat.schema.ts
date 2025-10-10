@@ -20,7 +20,7 @@ export const conversationStarterSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
     type: z.literal(ConversationStarterType.WEBSITE),
-    url: z.string().url(),
+    url: z.url(),
   }),
 ])
 export type ConversationStarterSchema = z.infer<
@@ -36,7 +36,7 @@ const persistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
     type: z.literal(PersistentMenuType.WEBSITE),
-    websiteUrl: z.string().url(),
+    websiteUrl: z.url(),
   }),
 ])
 export type PersistentMenuSchema = z.infer<typeof persistentMenuSchema>
@@ -46,7 +46,7 @@ export const createWebchatRequest = z.object({
   welcomeFlowId: z.string().nullish(),
   authorizedDomains: z.array(
     z.object({
-      value: z.string().url("Invalid domain URL"),
+      value: z.url(),
     }),
   ),
   conversationStarters: z.array(conversationStarterSchema),

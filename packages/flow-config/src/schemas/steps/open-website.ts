@@ -5,7 +5,7 @@ import { StepType } from "./step-action"
 export const openWebsiteStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.OPEN_WEBSITE),
-  url: z.string().url(),
+  url: z.url(),
   browserSize: z.union([z.literal(40), z.literal(70), z.literal(100)]),
 })
 

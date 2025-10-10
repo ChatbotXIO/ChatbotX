@@ -54,7 +54,7 @@ const attachmentTypeSchema = z.enum(["image", "video", "audio", "file"])
 
 // Base attachment payload
 const baseAttachmentPayloadSchema = z.object({
-  url: z.string().url(),
+  url: z.url(),
 })
 
 // Common ID schemas
@@ -131,14 +131,14 @@ export const facebookQuickReplySchema = z.object({
   content_type: z.enum(["text", "location", "user_phone_number"]),
   title: z.string().optional(),
   payload: z.string().optional(),
-  image_url: z.string().url().optional(),
+  image_url: z.url().optional(),
 })
 export type FacebookQuickReply = z.infer<typeof facebookQuickReplySchema>
 
 export const facebookButtonSchema = z.object({
   type: z.enum(["web_url", "postback", "phone_number"]),
   title: z.string(),
-  url: z.string().url().optional(),
+  url: z.url().optional(),
   payload: z.string().optional(),
 })
 export type FacebookButton = z.infer<typeof facebookButtonSchema>
@@ -146,11 +146,11 @@ export type FacebookButton = z.infer<typeof facebookButtonSchema>
 export const facebookElementSchema = z.object({
   title: z.string().optional(),
   subtitle: z.string().optional(),
-  image_url: z.string().url().optional(),
+  image_url: z.url().optional(),
   default_action: z
     .object({
       type: z.literal("web_url"),
-      url: z.string().url(),
+      url: z.url(),
     })
     .optional(),
   buttons: z.array(facebookButtonSchema).max(3).optional(),
@@ -158,7 +158,7 @@ export const facebookElementSchema = z.object({
 export type FacebookElement = z.infer<typeof facebookElementSchema>
 
 export const facebookMessageAttachmentPayloadSchema = z.object({
-  url: z.string().url().optional(),
+  url: z.url().optional(),
   is_reusable: z.boolean().optional(),
   template_type: z
     .enum([
@@ -272,7 +272,7 @@ export const facebookUserProfileSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   name: z.string().optional(),
-  profile_pic: z.string().url().optional(),
+  profile_pic: z.url().optional(),
   locale: z.string().optional(),
   timezone: z.number().optional(),
   gender: z.string().optional(),

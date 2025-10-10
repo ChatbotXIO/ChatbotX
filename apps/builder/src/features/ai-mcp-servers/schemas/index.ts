@@ -11,7 +11,7 @@ export const getAIMcpServersRequest = z.object({
 export type GetAIMcpServersRequest = z.infer<typeof getAIMcpServersRequest>
 
 const baseAIMcpServerRequest = z.object({
-  url: z.string().url(),
+  url: z.url(),
   auth: z.discriminatedUnion("type", [
     z.object({
       type: z.literal("NONE"),

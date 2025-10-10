@@ -8,7 +8,7 @@ export const sendAudioStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.SEND_AUDIO),
   mode: z.enum(UploadMode),
-  url: z.string().url(),
+  url: z.url(),
   buttons: z.array(buttonStepSchema),
 })
 

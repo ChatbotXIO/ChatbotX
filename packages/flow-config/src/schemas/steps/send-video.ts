@@ -8,7 +8,7 @@ export const sendVideoStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.SEND_VIDEO),
   mode: z.enum(UploadMode),
-  url: z.string().url(),
+  url: z.url(),
   buttons: z.array(buttonStepSchema),
 })
 

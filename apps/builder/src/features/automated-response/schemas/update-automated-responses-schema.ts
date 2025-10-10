@@ -17,7 +17,7 @@ export const updateAutomatedResponseRequest = z.object({
           buttons: z.array(
             z.object({
               label: z.string().min(1).max(255),
-              url: z.string().url(),
+              url: z.url(),
             }),
           ),
         }),

@@ -8,7 +8,7 @@ export const recipient = z.object({
 export type Recipient = z.infer<typeof recipient>
 
 export const buttonOpenUrlPayload = z.object({
-  url: z.string().url(),
+  url: z.url(),
 })
 export const buttonOpenPhonePayload = z.object({
   phone_code: z.string(),
@@ -35,7 +35,7 @@ export const mediaAttachmentTemplate = z.object({
     z.literal("audio"),
     z.literal("file"),
   ]),
-  url: z.string().url().optional(),
+  url: z.url().optional(),
   attachment_id: z.string().optional(),
 })
 export const mediaPayloadTemplate = z.object({
@@ -65,8 +65,8 @@ export type MessageTemplate = z.infer<typeof messageTemplate>
 export const messageAttachmentSchema = z.object({
   type: z.enum(["image", "video", "audio", "file", "sticker", "location"]),
   payload: z.object({
-    url: z.string().url().optional(),
-    thumbnail: z.string().url().optional(),
+    url: z.url().optional(),
+    thumbnail: z.url().optional(),
     id: z.string().optional(),
     description: z.string().optional(),
     coordinates: z
@@ -83,7 +83,7 @@ export const imageMessageSchema = z.object({
   attachment: z.object({
     type: z.literal("image"),
     payload: z.object({
-      url: z.string().url(),
+      url: z.url(),
     }),
   }),
   metadata: z.string().optional(),

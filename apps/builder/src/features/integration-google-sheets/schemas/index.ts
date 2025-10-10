@@ -4,7 +4,7 @@ import { z } from "zod"
 export type IntegrationGoogleSheetsResource = IntegrationGoogleSheetsModel
 
 export const connectGoogleSheetsSchema = z.object({
-  referer: z.string().url(),
+  referer: z.url(),
 })
 export type ConnectGoogleSheetsSchema = z.infer<
   typeof connectGoogleSheetsSchema
