@@ -10,24 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
-    "@aha.chat/filesystem": "workspace:*",
-    "@aha.chat/integration-messenger": "workspace:*",
-    "@aha.chat/integration-whatsapp": "workspace:*",
-    "@aha.chat/partysocket-config": "workspace:*",
-    "@aha.chat/sdk": "workspace:*",
-    "@aha.chat/worker-config": "workspace:*",
-    "bullmq": "^5.61.0",
-    "cross-fetch": "^4.1.0",
-    "dot-prop": "^10.1.0",
-    "ioredis": "^5.8.1",
-    "ky": "^1.11.0",
-    "partysocket": "1.1.6"
+    "ky": "^1.11.0"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "dotenv-cli": "^10.0.0",
-    "partykit": "0.0.115",
-    "tsup": "^8.5.0"
+    "partykit": "0.0.115"
   }
 }

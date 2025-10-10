@@ -10,11 +10,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   output: "standalone",
-  serverExternalPackages: [
-    "@aws-sdk/client-s3",
-    "@aws-sdk/s3-presigned-post",
-    "@prisma/client",
-  ],
   images: {
     remotePatterns: [
       new URL("**", env.NEXT_PUBLIC_ASSET_URL),

@@ -9,13 +9,10 @@
     "@aha.chat/sdk": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "ky": "^1.11.0",
-    "remeda": "^2.32.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "dotenv-cli": "^10.0.0",
-    "tsx": "^4.20.6",
     "typescript": "5.9.3"
   },
   "exports": {

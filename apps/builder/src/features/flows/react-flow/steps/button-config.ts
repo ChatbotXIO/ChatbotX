@@ -8,7 +8,7 @@ import {
   ZapIcon,
 } from "lucide-react"
 
-export type IButtonConfig = {
+type IButtonConfig = {
   icon: LucideIcon
   label: string
   buttonType: ButtonType

@@ -27,14 +27,11 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "bullmq": "^5.61.0",
     "date-fns": "^4.1.0",
-    "dot-prop": "^10.1.0",
-    "ioredis": "^5.8.1",
-    "ky": "^1.11.0",
-    "remeda": "^2.32.0"
+    "dot-prop": "^10.1.0"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^24.7.0",
+    "@types/node": "^24.7.1",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^10.0.0",
     "tsup": "^8.5.0"
