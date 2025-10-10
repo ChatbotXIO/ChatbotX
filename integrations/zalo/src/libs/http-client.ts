@@ -1,5 +1,5 @@
 import ky, { type KyInstance, type Options } from "ky"
-import { ZALO_API_BASE_URL } from "../constants"
+import { ZALO_API_BASE_URL, ZALO_OAUTH_BASE_URL } from "../constants"
 import { ZaloException } from "../libs/exception"
 import { logger } from "../libs/logger"
 
@@ -13,6 +13,7 @@ type ZaloClientConfig = {
   version?: string
   timeout?: number
   retries?: number
+  prefixUrl?: string
 }
 
 export class ZaloHttpClient {
@@ -20,12 +21,17 @@ export class ZaloHttpClient {
   private readonly accessToken?: string
 
   constructor(config: ZaloClientConfig = {}) {
-    const { accessToken, timeout = 30_000, retries = 2 } = config
+    const {
+      accessToken,
+      timeout = 30_000,
+      retries = 2,
+      prefixUrl = ZALO_API_BASE_URL,
+    } = config
 
     this.accessToken = accessToken
 
     this.client = ky.create({
-      prefixUrl: ZALO_API_BASE_URL,
+      prefixUrl,
       timeout,
       retry: retries,
       headers: {
@@ -125,6 +131,7 @@ export class ZaloHttpClient {
     return new ZaloHttpClient({
       ...config,
       accessToken: undefined,
+      prefixUrl: ZALO_OAUTH_BASE_URL,
     })
   }
 
@@ -135,6 +142,7 @@ export class ZaloHttpClient {
     return new ZaloHttpClient({
       ...config,
       accessToken,
+      prefixUrl: ZALO_API_BASE_URL,
     })
   }
 }

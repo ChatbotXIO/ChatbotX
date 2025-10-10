@@ -1,5 +1,10 @@
-import { type AttachmentEntity, type Context, FileType } from "@aha.chat/sdk"
+import {
+  type AttachmentEntity,
+  type Context,
+  guessFileTypeFromMimeType,
+} from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
+import { fetch } from "cross-fetch"
 import imageSize from "image-size"
 import { ZALO_API_ENDPOINTS } from "../constants"
 import { handleZaloError, ZaloException } from "../libs/exception"
@@ -45,8 +50,6 @@ export const getMessageAttachmentEntity = ({
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
         "User-Agent": "Mozilla/5.0 (compatible; AhaChat/1.0)",
-        Accept: "*/*",
-        "Cache-Control": "no-cache",
       },
     })
 
@@ -61,7 +64,7 @@ export const getMessageAttachmentEntity = ({
     const originPath = `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
-    const fileType = guessFileTypeFromMimeType(attachment.type)
+    const fileType = guessFileTypeFromMimeType(mimeType)
 
     await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
       ACL: "public-read",
@@ -89,16 +92,6 @@ export const getMessageAttachmentEntity = ({
       ...imageProperties,
     }
   })
-
-export const guessFileTypeFromMimeType = (attachmentType: string) => {
-  switch (attachmentType) {
-    case "image":
-    case "sticker":
-      return FileType.IMAGE
-    default:
-      return FileType.DOCUMENT
-  }
-}
 
 export const uploadAttachment = (
   auth: ZaloAuthValue,

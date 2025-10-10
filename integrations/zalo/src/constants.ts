@@ -9,10 +9,8 @@ export const ZALO_API_BASE_URL = "https://openapi.zalo.me"
 // API Endpoints
 export const ZALO_API_ENDPOINTS = {
   AUTH: {
-    PERMISSION: (version: string) =>
-      `${ZALO_OAUTH_BASE_URL}/${version}/oa/permission`,
-    ACCESS_TOKEN: (version: string) =>
-      `${ZALO_OAUTH_BASE_URL}/${version}/oa/access_token`,
+    PERMISSION: "/v4/oa/permission",
+    ACCESS_TOKEN: "/v4/oa/access_token",
   },
   OA: {
     GET_PROFILE: "v2.0/oa/getoa",

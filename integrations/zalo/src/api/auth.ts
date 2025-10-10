@@ -2,16 +2,10 @@ import type { Oauth2Config } from "@aha.chat/sdk"
 import { ZALO_API_ENDPOINTS } from "../constants"
 import { handleZaloError, ZaloException } from "../libs/exception"
 import { ZaloHttpClient } from "../libs/http-client"
-import { DEFAULT_VERSION } from "../schemas/definition"
 
 export function generateAuthUrl(props: Oauth2Config) {
-  const {
-    clientId,
-    redirectUrl,
-    version = DEFAULT_VERSION,
-    stateParams,
-  } = props
-  const baseUrl = ZALO_API_ENDPOINTS.AUTH.PERMISSION(version)
+  const { clientId, redirectUrl, stateParams } = props
+  const baseUrl = ZALO_API_ENDPOINTS.AUTH.PERMISSION
   const params = new URLSearchParams({
     app_id: clientId,
     redirect_uri: redirectUrl,
@@ -32,13 +26,11 @@ export const convertCodeToTokens = (
   code: string,
 ): Promise<ZaloAccessTokenResponse> =>
   handleZaloError("Convert code to tokens", async () => {
-    const { version = DEFAULT_VERSION } = setting
-    const client = ZaloHttpClient.createOAuthClient({ version })
+    const client = ZaloHttpClient.createOAuthClient()
 
     return await client.post<ZaloAccessTokenResponse>(
-      ZALO_API_ENDPOINTS.AUTH.ACCESS_TOKEN(version),
+      ZALO_API_ENDPOINTS.AUTH.ACCESS_TOKEN,
       {
-        prefixUrl: "",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           secret_key: setting.clientSecret,
@@ -58,13 +50,11 @@ export const refreshAccessToken = (
   refreshToken: string,
 ): Promise<ZaloAccessTokenResponse> =>
   handleZaloError("Refresh access token", async () => {
-    const { version = DEFAULT_VERSION } = setting
-    const client = ZaloHttpClient.createOAuthClient({ version })
+    const client = ZaloHttpClient.createOAuthClient()
 
     return await client.post<ZaloAccessTokenResponse>(
-      ZALO_API_ENDPOINTS.AUTH.ACCESS_TOKEN(version),
+      ZALO_API_ENDPOINTS.AUTH.ACCESS_TOKEN,
       {
-        prefixUrl: "",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           secret_key: setting.clientSecret,
