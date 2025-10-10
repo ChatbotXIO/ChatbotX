@@ -66,8 +66,8 @@ export function CreateAIAgentDialog({
   const router = useRouter()
   const t = useTranslations()
 
-  const toolOptions = useMemo(() => {
-    return [
+  const toolOptions = useMemo(
+    () => [
       {
         heading: t("fields.file.label"),
         options: files.map((file) => ({
@@ -92,15 +92,17 @@ export function CreateAIAgentDialog({
           icon: ServerIcon,
         })),
       },
-    ]
-  }, [files, functions, mcpServers, t])
+    ],
+    [files, functions, mcpServers, t],
+  )
 
-  const messageRoleOptions = useMemo(() => {
-    return [
+  const messageRoleOptions = useMemo(
+    () => [
       { label: t("fields.promptMessages.role.user"), value: "user" },
       { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
-    ]
-  }, [t])
+    ],
+    [t],
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -120,7 +122,9 @@ export function CreateAIAgentDialog({
             router.refresh()
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {

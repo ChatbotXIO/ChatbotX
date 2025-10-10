@@ -8,7 +8,7 @@ import {
 import { authActionClient } from "@/lib/safe-action"
 
 export const disconnectWhatsappAction = authActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

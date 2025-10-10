@@ -17,7 +17,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schemas"
 
 export const selectPageAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(selectPageRequest)
   .action(
     async ({

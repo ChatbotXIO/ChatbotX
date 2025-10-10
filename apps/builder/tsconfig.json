@@ -3,7 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@aha.chat/ui/*": ["../../packages/ui/src/*"]
     },
     "plugins": [
       {

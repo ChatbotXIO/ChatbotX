@@ -6,7 +6,7 @@ export type IntegrationOpenAIResource = IntegrationOpenAIModel
 
 export const connectOpenAISchema = z.object({
   apiKey: z.string(),
-  model: z.nativeEnum(OpenAIModel).default(OpenAIModel.GPT4oMini),
+  model: z.enum(OpenAIModel).default(OpenAIModel.GPT4oMini),
   temperature: z.coerce.number().min(0).max(2),
   maxTokens: z.coerce.number().int().min(1).max(8192),
 })

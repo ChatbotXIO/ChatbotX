@@ -26,8 +26,8 @@ export default function RecursiveDropdownMenu({
 }) {
   return (
     <>
-      {data.map((menuItem: MenuItem, index: number) => {
-        return menuItem.children && menuItem.children.length > 0 ? (
+      {data.map((menuItem: MenuItem, index: number) =>
+        menuItem.children && menuItem.children.length > 0 ? (
           <DropdownMenuSub key={menuItem.stepType ?? index}>
             <DropdownMenuSubTrigger>
               <MenuRow menuItem={menuItem} />
@@ -49,8 +49,8 @@ export default function RecursiveDropdownMenu({
           >
             <MenuRow menuItem={menuItem} />
           </DropdownMenuItem>
-        )
-      })}
+        ),
+      )}
     </>
   )
 }

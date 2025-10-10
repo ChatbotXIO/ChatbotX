@@ -10,10 +10,10 @@ export const AutoAssignConversationRule = {
 } as const
 
 export const autoAssignConversationStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.AUTO_ASSIGN_CONVERSATION),
-  assignedIds: z.array(z.string().cuid2()),
-  rule: z.nativeEnum(AutoAssignConversationRule),
+  assignedIds: z.array(z.cuid2()),
+  rule: z.enum(AutoAssignConversationRule),
 })
 
 export type AutoAssignConversationStepSchema = z.infer<

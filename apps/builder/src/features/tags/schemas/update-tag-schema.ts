@@ -3,9 +3,10 @@ import { z } from "zod"
 export const updateTagSchema = z.object({
   name: z.string().trim().min(1).max(255),
 })
-export type UpdateTagSchema = z.infer<typeof updateTagSchema>
+export type UpdateTagSchema = z.input<typeof updateTagSchema>
 
-export const updateTagBindSchema: [chatbotId: z.ZodString, tagId: z.ZodString] =
-  [z.string().cuid2(), z.string().cuid2()]
-
-export type UpdateTagBindSchema = [chatbotId: string, tagId: string]
+export const updateTagBindSchema: [z.ZodCUID2, z.ZodCUID2] = [
+  z.cuid2(),
+  z.cuid2(),
+]
+export type UpdateTagBindSchema = [string, string]

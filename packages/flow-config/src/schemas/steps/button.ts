@@ -23,7 +23,7 @@ export const BrowserSize = {
 
 export const buttonStepSchema = z
   .object({
-    id: z.string().cuid2(),
+    id: z.cuid2(),
     label: z.string().min(1).max(100),
     steps: z.array(z.any()),
     //   z.union([

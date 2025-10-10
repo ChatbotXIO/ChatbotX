@@ -44,8 +44,8 @@ export function EditButtonDialog({
     mode: "onChange",
   })
 
-  const buttonOptions = useMemo(() => {
-    return [
+  const buttonOptions = useMemo(
+    () => [
       { label: t("fields.url.label"), value: ButtonActionType.Url },
       {
         label: t("fields.quickReply.label"),
@@ -59,8 +59,9 @@ export function EditButtonDialog({
         label: t("fields.whatsappFlow.label"),
         value: ButtonActionType.Flow,
       },
-    ]
-  }, [t])
+    ],
+    [t],
+  )
 
   const { watch, formState, handleSubmit } = form
   const type = watch("type")

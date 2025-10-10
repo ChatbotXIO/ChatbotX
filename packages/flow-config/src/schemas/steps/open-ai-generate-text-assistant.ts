@@ -3,11 +3,11 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const openAIGenerateTextAssistantSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.OPENAI_GENERATE_TEXT_ASSISTANT),
-  aiAssistantId: z.string().cuid2(),
+  aiAssistantId: z.cuid2(),
   userMessage: z.string(),
-  outputCustomFieldId: z.string().cuid2(),
+  outputCustomFieldId: z.cuid2(),
 })
 export type OpenAIGenerateTextAssistantSchema = z.infer<
   typeof openAIGenerateTextAssistantSchema

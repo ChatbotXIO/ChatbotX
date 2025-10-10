@@ -123,15 +123,13 @@ export function AutomatedResponsesTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Status" />
         ),
-        cell: ({ cell, row }) => {
-          return (
-            <AutomatedResponseStatusCell
-              chatbotId={chatbotId}
-              checked={cell.getValue<AutomatedResponseResource["status"]>()}
-              id={row.original.id}
-            />
-          )
-        },
+        cell: ({ cell, row }) => (
+          <AutomatedResponseStatusCell
+            chatbotId={chatbotId}
+            checked={cell.getValue<AutomatedResponseResource["status"]>()}
+            id={row.original.id}
+          />
+        ),
         enableSorting: false,
         enableHiding: false,
       },
@@ -140,9 +138,9 @@ export function AutomatedResponsesTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Created" />
         ),
-        cell: ({ row }) => {
-          return <div>{format(row.original.createdAt, "yyyy/MM/dd HH:mm")}</div>
-        },
+        cell: ({ row }) => (
+          <div>{format(row.original.createdAt, "yyyy/MM/dd HH:mm")}</div>
+        ),
       },
       {
         id: "action",
@@ -150,33 +148,31 @@ export function AutomatedResponsesTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="" />
         ),
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "update" })}
-                  variant="destructive"
-                >
-                  {t("actions.update")}
-                </DropdownMenuItem>
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "update" })}
+                variant="destructive"
+              >
+                {t("actions.update")}
+              </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                  variant="destructive"
-                >
-                  {t("actions.delete")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
-        },
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "delete" })}
+                variant="destructive"
+              >
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
         enableSorting: false,
         enableHiding: false,
       },
@@ -226,7 +222,9 @@ const AutomatedResponseStatusCell = (props: {
     updateAutomatedResponseAction.bind(null, props.chatbotId, props.id),
     {
       onError: ({ error }) => {
-        error.serverError && toast.error(error.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )

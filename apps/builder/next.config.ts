@@ -3,17 +3,13 @@ import createNextIntlPlugin from "next-intl/plugin"
 import { env } from "@/env"
 
 const withNextIntl = createNextIntlPlugin()
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
   },
   output: "standalone",
-  serverExternalPackages: [
-    "@aws-sdk/client-s3",
-    "@aws-sdk/s3-presigned-post",
-    "@prisma/client",
-  ],
   images: {
     remotePatterns: [
       new URL("**", env.NEXT_PUBLIC_ASSET_URL),

@@ -51,95 +51,86 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Contacts" />
         ),
-        cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberResource["enableContacts"]>() ? (
+        cell: ({ cell }) =>
+          cell.getValue<ChatbotMemberResource["enableContacts"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
-          )
-        },
+          ),
       },
       {
         id: "enableAnalytics",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Analytics" />
         ),
-        cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberResource["enableAnalytics"]>() ? (
+        cell: ({ cell }) =>
+          cell.getValue<ChatbotMemberResource["enableAnalytics"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
-          )
-        },
+          ),
       },
       {
         id: "enableFlows",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Flows" />
         ),
-        cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberResource["enableFlows"]>() ? (
+        cell: ({ cell }) =>
+          cell.getValue<ChatbotMemberResource["enableFlows"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
-          )
-        },
+          ),
       },
       {
         id: "settings",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Flows" />
         ),
-        cell: ({ cell }) => {
-          return cell.getValue<ChatbotMemberResource["isAdmin"]>() ? (
+        cell: ({ cell }) =>
+          cell.getValue<ChatbotMemberResource["isAdmin"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
-          )
-        },
+          ),
       },
       {
         id: "notifications",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Notifications" />
         ),
-        cell: ({ cell }) => {
-          return cell.getValue<
-            ChatbotMemberResource["enableEmailAndPhone"]
-          >() ? (
+        cell: ({ cell }) =>
+          cell.getValue<ChatbotMemberResource["enableEmailAndPhone"]>() ? (
             <CheckCircle2Icon />
           ) : (
             <XCircleIcon />
-          )
-        },
+          ),
       },
       {
         id: "actions",
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "update" })}
-                >
-                  Update
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                  variant="destructive"
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
-        },
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "update" })}
+              >
+                Update
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "delete" })}
+                variant="destructive"
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
       },
     ]
   }, [])

@@ -42,7 +42,9 @@ export function UpdateChatbotAdvancedForm({
           )
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {

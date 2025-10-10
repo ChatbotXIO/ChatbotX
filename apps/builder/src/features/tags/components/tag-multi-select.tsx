@@ -1,6 +1,6 @@
 import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
+import { type Tag, TagInput } from "@aha.chat/ui/components/tag-input"
 import { createId } from "@paralleldrive/cuid2"
-import { type Tag, TagInput } from "emblor"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { type FieldValues, useFormContext } from "react-hook-form"

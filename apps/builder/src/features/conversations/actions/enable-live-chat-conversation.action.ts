@@ -9,7 +9,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const enableLiveChatConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({

@@ -13,7 +13,7 @@ import {
 } from "../schemas/update-broadcast-schema"
 
 export const updateBroadcastAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateBroadcastSchema)
   .action(
     async ({

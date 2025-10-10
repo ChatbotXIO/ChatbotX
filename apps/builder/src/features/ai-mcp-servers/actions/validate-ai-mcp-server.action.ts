@@ -7,7 +7,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import { validateAIMcpServerRequest } from "../schemas"
 
 export const validateAIMcpServerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(validateAIMcpServerRequest)
   .action(async ({ parsedInput }) => {
     const headers: Record<string, string> = {}

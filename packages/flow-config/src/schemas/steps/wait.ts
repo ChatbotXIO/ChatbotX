@@ -17,7 +17,7 @@ export const DelayUnit = {
 
 export const waitStepSchema = z
   .object({
-    id: z.string().cuid2(),
+    id: z.cuid2(),
     stepType: z.literal(StepType.WAIT),
   })
   .and(
@@ -25,7 +25,7 @@ export const waitStepSchema = z
       z.object({
         delayType: z.literal(DelayType.Duration),
         duration: z.number().int(),
-        unit: z.nativeEnum(DelayUnit),
+        unit: z.enum(DelayUnit),
         repeat: z.boolean(),
         startTime: z.string().time(),
         endTime: z.string().time(),
@@ -36,7 +36,7 @@ export const waitStepSchema = z
       }),
       z.object({
         delayType: z.literal(DelayType.DatetimeCustomField),
-        outputCFId: z.string().cuid2(),
+        outputCFId: z.cuid2(),
       }),
     ]),
   )
@@ -50,12 +50,10 @@ export const waitStepDefaultFn = (): WaitStepSchema => ({
   ...delayTypeDurationDefaultFn(),
 })
 
-export const delayTypeDurationDefaultFn = () => {
-  return {
-    duration: 1,
-    unit: DelayUnit.Hours,
-    repeat: false,
-    startTime: "00:00:00",
-    endTime: "23:00:00",
-  }
-}
+export const delayTypeDurationDefaultFn = () => ({
+  duration: 1,
+  unit: DelayUnit.Hours,
+  repeat: false,
+  startTime: "00:00:00",
+  endTime: "23:00:00",
+})

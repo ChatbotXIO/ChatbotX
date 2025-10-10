@@ -78,7 +78,9 @@ export function AIMcpServersCreate() {
             setIsOpen(false)
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         errorMapProps: {},
@@ -157,28 +159,26 @@ export function AIMcpServersCreate() {
             )}
             {form.watch("auth.type") === "HEADERS" && fields && (
               <div className="flex flex-col gap-2">
-                {fields.map((field, index) => {
-                  return (
-                    <div className="flex items-start gap-2" key={field.id}>
-                      <InputField
-                        name={`auth.headers.${index}.header`}
-                        placeholder="Header"
-                      />
-                      <MoveRightIcon className="size-10" />
-                      <InputField
-                        name={`auth.headers.${index}.value`}
-                        placeholder="Value"
-                      />
-                      <Button
-                        onClick={() => remove(index)}
-                        size="icon"
-                        variant="outline"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )
-                })}
+                {fields.map((field, index) => (
+                  <div className="flex items-start gap-2" key={field.id}>
+                    <InputField
+                      name={`auth.headers.${index}.header`}
+                      placeholder="Header"
+                    />
+                    <MoveRightIcon className="size-10" />
+                    <InputField
+                      name={`auth.headers.${index}.value`}
+                      placeholder="Value"
+                    />
+                    <Button
+                      onClick={() => remove(index)}
+                      size="icon"
+                      variant="outline"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
                 <Button
                   onClick={() => append({ header: "", value: "" })}
                   variant="secondary"

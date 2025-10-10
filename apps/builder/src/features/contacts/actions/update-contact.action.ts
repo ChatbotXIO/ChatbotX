@@ -13,7 +13,7 @@ import {
 } from "../schemas/update-contact.request"
 
 export const updateContactAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateContactRequest)
   .action(
     async ({

@@ -38,7 +38,7 @@ export function DeleteTagsDialog({
 }: DeleteTagsDialogProps) {
   const t = useTranslations()
 
-  const { execute, result, isPending } = useAction(
+  const { execute, isPending } = useAction(
     deleteTagAction.bind(null, chatbotId),
     {
       onSuccess: () => {
@@ -50,7 +50,9 @@ export function DeleteTagsDialog({
         onOpenChange?.(false)
       },
       onError: ({ error }) => {
-        error.serverError && toast.error(result.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )

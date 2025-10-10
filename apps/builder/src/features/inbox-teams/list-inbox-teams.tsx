@@ -63,67 +63,63 @@ function ListInboxTeamsDetail({
   return (
     <>
       <Accordion className="w-full" collapsible type="single">
-        {allInboxTeams.map((team) => {
-          return (
-            <AccordionItem key={team.id} value={team.id}>
-              <div className="flex w-full items-center">
-                <AccordionTrigger className="flex-1 gap-2 text-left">
-                  <span className="flex-1 text-left">{team.name}</span>
-                </AccordionTrigger>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="icon" variant="ghost">
-                      <MoreHorizontalIcon className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="flex flex-col gap-2 p-3">
-                    <DropdownMenuItem
-                      className="cursor-pointer text-sm"
-                      onClick={() => setRenameInboxTeam(team)}
-                    >
-                      {t("actions.rename")}
-                    </DropdownMenuItem>
+        {allInboxTeams.map((team) => (
+          <AccordionItem key={team.id} value={team.id}>
+            <div className="flex w-full items-center">
+              <AccordionTrigger className="flex-1 gap-2 text-left">
+                <span className="flex-1 text-left">{team.name}</span>
+              </AccordionTrigger>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost">
+                    <MoreHorizontalIcon className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="flex flex-col gap-2 p-3">
+                  <DropdownMenuItem
+                    className="cursor-pointer text-sm"
+                    onClick={() => setRenameInboxTeam(team)}
+                  >
+                    {t("actions.rename")}
+                  </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      className="cursor-pointer text-sm"
-                      onClick={() => setAddInboxTeamMember(team)}
-                    >
-                      {t("actions.addMember")}
-                    </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer text-sm"
+                    onClick={() => setAddInboxTeamMember(team)}
+                  >
+                    {t("actions.addMember")}
+                  </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      className="cursor-pointer text-destructive text-sm"
-                      onClick={() => setDeleteInboxTeam(team)}
-                    >
-                      {t("actions.delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <AccordionContent>
-                {(team.inboxTeamMembers || []).map((member) => {
-                  return (
-                    <div
-                      className="flex w-full items-center"
-                      key={`${team.id}-${member.id}`}
-                    >
-                      <span className="flex-1 gap-1">{member.user?.name}</span>
-                      <Button
-                        className="size-6"
-                        onClick={() => setDeleteInboxTeamMember(member)}
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <Trash2Icon className="text-destructive" />
-                      </Button>
-                    </div>
-                  )
-                })}
-              </AccordionContent>
-            </AccordionItem>
-          )
-        })}
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive text-sm"
+                    onClick={() => setDeleteInboxTeam(team)}
+                  >
+                    {t("actions.delete")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <AccordionContent>
+              {(team.inboxTeamMembers || []).map((member) => (
+                <div
+                  className="flex w-full items-center"
+                  key={`${team.id}-${member.id}`}
+                >
+                  <span className="flex-1 gap-1">{member.user?.name}</span>
+                  <Button
+                    className="size-6"
+                    onClick={() => setDeleteInboxTeamMember(member)}
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <Trash2Icon className="text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
       </Accordion>
 
       <RenameInboxTeamDialog

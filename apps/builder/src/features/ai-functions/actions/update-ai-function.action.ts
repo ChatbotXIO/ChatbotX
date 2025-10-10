@@ -7,7 +7,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import { updateAIFunctionRequest } from "../schemas"
 
 export const updateAIFunctionAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(updateAIFunctionRequest)
   .action(async ({ bindArgsParsedInputs, parsedInput }) => {
     const [chatbotId] = bindArgsParsedInputs

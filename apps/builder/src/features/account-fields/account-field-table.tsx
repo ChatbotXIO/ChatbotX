@@ -106,9 +106,7 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Value" />
         ),
-        cell: ({ row }) => {
-          return <div>{row.original.value}</div>
-        },
+        cell: ({ row }) => <div>{row.original.value}</div>,
         enableHiding: false,
         enableSorting: false,
       },

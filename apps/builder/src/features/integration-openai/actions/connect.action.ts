@@ -11,7 +11,7 @@ import { authActionClient } from "@/lib/safe-action"
 import { type ConnectOpenAISchema, connectOpenAISchema } from "../schemas"
 
 export const connectOpenAIAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(connectOpenAISchema)
   .action(
     async ({

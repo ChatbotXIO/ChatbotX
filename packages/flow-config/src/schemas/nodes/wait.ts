@@ -16,15 +16,13 @@ export type WaitNodeSchema = z.infer<typeof waitNodeSchema>
 export const waitNodeDefaultFn = ({
   labelVersion,
   ...props
-}: NewNodeProps): WaitNodeSchema => {
-  return {
-    id: createId(),
-    type: NodeType.Wait,
-    measured: { width: 288, height: 100 },
-    ...props,
-    data: {
-      name: `Wait #${labelVersion}`,
-      steps: [waitStepDefaultFn()],
-    },
-  }
-}
+}: NewNodeProps): WaitNodeSchema => ({
+  id: createId(),
+  type: NodeType.Wait,
+  measured: { width: 288, height: 100 },
+  ...props,
+  data: {
+    name: `Wait #${labelVersion}`,
+    steps: [waitStepDefaultFn()],
+  },
+})

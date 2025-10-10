@@ -49,7 +49,9 @@ export function CreateFolderDialog({
             setOpen(false)
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
@@ -72,9 +74,7 @@ export function CreateFolderDialog({
           {t("actions.create")}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", {

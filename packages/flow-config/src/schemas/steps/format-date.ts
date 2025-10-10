@@ -8,12 +8,12 @@ export const FormatTimezone = {
 } as const
 
 export const formatDateStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.FORMAT_DATE),
-  inputCustomFieldId: z.string().cuid2(),
+  inputCustomFieldId: z.cuid2(),
   format: z.string().trim().min(1),
-  outputCustomFieldId: z.string().cuid2(),
-  timezone: z.nativeEnum(FormatTimezone),
+  outputCustomFieldId: z.cuid2(),
+  timezone: z.enum(FormatTimezone),
 })
 export type FormatDateStepSchema = z.infer<typeof formatDateStepSchema>
 

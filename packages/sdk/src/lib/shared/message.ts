@@ -17,9 +17,9 @@ export type ConversationEntity = {
   contact: ContactEntity
 }
 
-export const conversationEntitySchema = z.custom<ConversationEntity>((data) => {
-  return typeof data === "object"
-})
+export const conversationEntitySchema = z.custom<ConversationEntity>(
+  (data) => typeof data === "object",
+)
 
 export type OutgoingMessageEntity = {
   chatbotId: string
@@ -45,9 +45,9 @@ export type MessageEntity = {
   clientId?: string | null
 }
 
-export const MessageEntitySchema = z.custom<MessageEntity>((data) => {
-  return typeof data === "object"
-})
+export const MessageEntitySchema = z.custom<MessageEntity>(
+  (data) => typeof data === "object",
+)
 
 export type AttachmentEntity = {
   sourceId: string

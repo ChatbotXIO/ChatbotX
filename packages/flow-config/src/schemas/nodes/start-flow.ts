@@ -14,16 +14,14 @@ export const startFlowNodeSchema = baseNodeSchema.extend({
 
 export type StartFlowNodeSchema = z.infer<typeof startFlowNodeSchema>
 
-export const startFlowNodeDefaultFn = (): StartFlowNodeSchema => {
-  return {
-    id: createId(),
-    type: NodeType.StartFlow,
-    position: { x: 100, y: 100 },
-    measured: { width: 288, height: 100 },
-    data: {
-      name: "Start Flow #1",
-      isStartNode: false,
-      steps: [startFlowStepDefaultFn()],
-    },
-  }
-}
+export const startFlowNodeDefaultFn = (): StartFlowNodeSchema => ({
+  id: createId(),
+  type: NodeType.StartFlow,
+  position: { x: 100, y: 100 },
+  measured: { width: 288, height: 100 },
+  data: {
+    name: "Start Flow #1",
+    isStartNode: false,
+    steps: [startFlowStepDefaultFn()],
+  },
+})

@@ -7,7 +7,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import { updateWebchatRequest } from "../schemas/webchat.schema"
 
 export const updateWebchatAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateWebchatRequest)
   .action(async ({ parsedInput, bindArgsParsedInputs: [chatbotId, id] }) => {
     const { authorizedDomains, welcomeFlowId, ...rest } = parsedInput

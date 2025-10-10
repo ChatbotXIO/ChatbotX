@@ -14,8 +14,8 @@ export const OpenAIModel = {
 } as const
 
 export const openAISchema = z.object({
-  id: z.string().cuid2(),
-  model: z.nativeEnum(OpenAIModel),
+  id: z.cuid2(),
+  model: z.enum(OpenAIModel),
 })
 export type OpenAISchema = z.infer<typeof openAISchema>
 

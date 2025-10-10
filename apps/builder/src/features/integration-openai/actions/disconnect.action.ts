@@ -8,7 +8,7 @@ import {
 import { authActionClient } from "@/lib/safe-action"
 
 export const disconnectOpenAIAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

@@ -76,9 +76,10 @@ export const MessageInput = () => {
   )
 
   // Memoize active conversation to prevent unnecessary re-renders
-  const conversation = useMemo(() => {
-    return conversations.find((c) => c.id === activeConversationId) ?? null
-  }, [conversations, activeConversationId])
+  const conversation = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId) ?? null,
+    [conversations, activeConversationId],
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(

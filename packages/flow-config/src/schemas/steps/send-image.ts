@@ -5,9 +5,9 @@ import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendImageStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.SEND_IMAGE),
-  mode: z.nativeEnum(UploadMode),
+  mode: z.enum(UploadMode),
   url: z.string().trim().url(),
   buttons: z.array(buttonStepSchema),
 })

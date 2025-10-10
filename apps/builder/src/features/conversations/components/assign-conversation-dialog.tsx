@@ -86,7 +86,9 @@ export default function AssignConversationDialog({
           setOpen(false)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {

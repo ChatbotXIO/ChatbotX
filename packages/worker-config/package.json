@@ -5,15 +5,15 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "typescript": "5.9.2"
+    "typescript": "5.9.3"
   },
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.8",
-    "bullmq": "^5.56.1",
-    "ioredis": "^5.6.1",
-    "zod": "^3.25.76"
+    "bullmq": "^5.61.0",
+    "ioredis": "^5.8.1",
+    "zod": "^4.1.12"
   },
   "exports": {
     ".": "./src/index.ts",

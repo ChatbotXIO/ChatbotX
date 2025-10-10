@@ -1,7 +1,9 @@
 import { FileType } from "./shared"
 
 export function guessFileTypeFromMimeType(mimeType: string) {
-  switch (mimeType) {
+  const prefix = mimeType.split("/")[0]
+
+  switch (prefix) {
     case "image":
       return FileType.IMAGE
     case "video":

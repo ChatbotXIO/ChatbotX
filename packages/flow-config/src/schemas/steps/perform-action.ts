@@ -11,7 +11,7 @@ import { openAITextToSpeechSchema } from "./open-ai-text-to-speech"
 import { StepType } from "./step-action"
 
 export const performActionStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.PERFORM_ACTION),
   steps: z.array(
     z.union([

@@ -6,19 +6,17 @@ export const findIntegrationZalo = async ({
   chatbotId,
 }: {
   chatbotId: string
-}): Promise<IntegrationZaloModel | null> => {
-  return await unstable_cache(
-    async () => {
-      return await prisma.integrationZalo.findFirst({
+}): Promise<IntegrationZaloModel | null> =>
+  await unstable_cache(
+    async () =>
+      await prisma.integrationZalo.findFirst({
         where: {
           chatbotId,
         },
-      })
-    },
+      }),
     [`chatbots:${chatbotId}#zalo`],
     {
       revalidate: 3600,
       tags: [`chatbots:${chatbotId}#zalo`],
     },
   )()
-}

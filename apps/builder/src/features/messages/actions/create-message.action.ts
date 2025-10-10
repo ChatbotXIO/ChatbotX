@@ -38,7 +38,7 @@ import {
 } from "../schemas/create-message.schema"
 
 export const createMessageAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(createMessageRequest)
   .action(
     async ({

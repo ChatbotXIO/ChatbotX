@@ -15,7 +15,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const updateAITriggerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateAITriggerRequest)
   .action(
     async ({

@@ -5,10 +5,10 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "typescript": "5.9.2"
+    "typescript": "5.9.3"
   },
   "dependencies": {
-    "tslog": "^4.9.3"
+    "tslog": "^4.10.2"
   },
   "exports": {
     ".": "./src/index.ts"

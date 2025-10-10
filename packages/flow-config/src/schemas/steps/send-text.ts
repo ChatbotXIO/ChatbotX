@@ -4,7 +4,7 @@ import { type ButtonStepSchema, buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendTextStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.SEND_TEXT),
   message: z.string().trim().min(1).max(1000),
   buttons: z.array(buttonStepSchema),

@@ -15,7 +15,7 @@ import {
 } from "../schemas/update-ice-breaker-schema"
 
 export const updateWhatsappIceBreakerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(updateWhatsappIceBreakerSchema)
   .action(
     async ({

@@ -36,18 +36,20 @@ export function WhatsappMessageTemplateCategorySelect({
     ]
   }, [templateType])
 
-  const options = useMemo(() => {
-    return [
-      {
-        label: "Marketing",
-        value: WhatsappTemplateCategory.MARKETING,
-      },
-      {
-        label: "Utility",
-        value: WhatsappTemplateCategory.UTILITY,
-      },
-    ].filter((option) => allowOptions.includes(option.value))
-  }, [allowOptions])
+  const options = useMemo(
+    () =>
+      [
+        {
+          label: "Marketing",
+          value: WhatsappTemplateCategory.MARKETING,
+        },
+        {
+          label: "Utility",
+          value: WhatsappTemplateCategory.UTILITY,
+        },
+      ].filter((option) => allowOptions.includes(option.value)),
+    [allowOptions],
+  )
 
   return (
     <>

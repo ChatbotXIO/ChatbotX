@@ -13,7 +13,7 @@ import {
 } from "../schemas/update-inbox-team.request"
 
 export const updateInboxTeamAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateInboxTeamRequest)
   .action(
     async ({

@@ -34,7 +34,7 @@ const updatePosition = (editor: Editor, element: HTMLElement) => {
   })
 }
 
-export function createSuggestion(customFields: CustomFieldResource[]) {
+export default function createSuggestion(customFields: CustomFieldResource[]) {
   const itemOptions = useMemo(() => {
     const getIcon = (type: CustomFieldType) => {
       if (type === "NUMBER") {
@@ -46,13 +46,11 @@ export function createSuggestion(customFields: CustomFieldResource[]) {
       return TextIcon
     }
 
-    return customFields.map((cf) => {
-      return {
-        value: cf.name,
-        label: cf.name,
-        icon: getIcon(cf.customFieldType),
-      }
-    })
+    return customFields.map((cf) => ({
+      value: cf.name,
+      label: cf.name,
+      icon: getIcon(cf.customFieldType),
+    }))
   }, [customFields])
 
   const suggestion: Omit<
@@ -117,5 +115,3 @@ export function createSuggestion(customFields: CustomFieldResource[]) {
 
   return suggestion
 }
-
-export default createSuggestion

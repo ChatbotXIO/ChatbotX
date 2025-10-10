@@ -2,9 +2,9 @@ import { CustomFieldOperation } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const addContactCustomFieldRequest = z.object({
-  ids: z.array(z.string().cuid2()),
-  customFieldId: z.string().cuid2(),
-  operation: z.nativeEnum(CustomFieldOperation),
+  ids: z.array(z.cuid2()),
+  customFieldId: z.cuid2(),
+  operation: z.enum(CustomFieldOperation),
   value: z.string().trim(),
 })
 export type AddContactCustomFieldRequest = z.infer<

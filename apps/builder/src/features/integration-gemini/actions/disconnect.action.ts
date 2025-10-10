@@ -6,7 +6,7 @@ import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const disconnectGeminiAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(async ({ bindArgsParsedInputs: [chatbotId] }) => {
     const integrationGemini = await prisma.integrationGemini.findFirstOrThrow({
       where: { chatbotId },

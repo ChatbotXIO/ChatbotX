@@ -11,21 +11,16 @@ export const createMessageRequest = z
     z.object({
       files: z
         .array(
-          z.instanceof(File).refine(
-            (file) => {
-              return file.size <= MAX_FILE_SIZE
-            },
-            {
-              message: "Max image size is 5MB.",
-            },
-          ),
+          z.instanceof(File).refine((file) => file.size <= MAX_FILE_SIZE, {
+            message: "Max image size is 5MB.",
+          }),
         )
         .min(1),
     }),
   ])
   .and(
     z.object({
-      clientId: z.string().cuid2(),
+      clientId: z.cuid2(),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
@@ -38,22 +33,17 @@ export const createWebchatMessageRequest = z
     z.object({
       files: z
         .array(
-          z.instanceof(File).refine(
-            (file) => {
-              return file.size <= MAX_FILE_SIZE
-            },
-            {
-              message: "Max image size is 5MB.",
-            },
-          ),
+          z.instanceof(File).refine((file) => file.size <= MAX_FILE_SIZE, {
+            message: "Max image size is 5MB.",
+          }),
         )
         .min(1),
     }),
   ])
   .and(
     z.object({
-      clientId: z.string().cuid2(),
-      chatbotId: z.string().cuid2(),
+      clientId: z.cuid2(),
+      chatbotId: z.cuid2(),
       guestConversationId: z
         .string()
         .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {

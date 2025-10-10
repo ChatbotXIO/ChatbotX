@@ -12,7 +12,7 @@ import {
 import { authActionClient } from "@/lib/safe-action"
 
 export const deleteAIAgentAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
