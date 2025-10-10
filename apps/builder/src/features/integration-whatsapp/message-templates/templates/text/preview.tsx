@@ -16,9 +16,9 @@ const TemplateTextPreviewComponent = (
   const { parentName = "content", ...rest } = props
 
   const { control } = useFormContext()
-  const showHeader = useWatch({
+  const hideHeader = useWatch({
     control,
-    name: `${parentName}.showHeader`,
+    name: `${parentName}.hideHeader`,
   })
   const showFooter = useWatch({
     control,
@@ -28,7 +28,7 @@ const TemplateTextPreviewComponent = (
   return (
     <CardContent className="rounded bg-white p-4">
       <div className="flex w-full flex-col gap-4" {...rest}>
-        {showHeader && <TemplateHeader parentName={`${parentName}.header`} />}
+        {hideHeader && <TemplateHeader parentName={`${parentName}.header`} />}
         <TemplateBody parentName={`${parentName}.body`} />
         {showFooter && <TemplateFooter parentName={parentName} />}
         <hr />

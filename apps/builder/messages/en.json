@@ -1,5 +1,17 @@
 {
   "fields": {
+    "title": {
+      "label": "Title",
+      "placeholder": "Enter title"
+    },
+    "subtitle": {
+      "label": "Subtitle",
+      "placeholder": "Enter subtitle"
+    },
+    "cardURL": {
+      "label": "Card URL",
+      "placeholder": "Enter card URL"
+    },
     "name": {
       "label": "Name",
       "placeholder": "Enter name"
@@ -23,6 +35,11 @@
     "phoneNumber": {
       "label": "Phone number",
       "placeholder": "Enter phone number"
+    },
+    "phoneNumberId": {
+      "label": "Phone number",
+      "description": "Select phone number",
+      "noPhoneNumbersFound": "No phone numbers found for this account"
     },
     "gender": {
       "label": "Gender",
@@ -67,7 +84,6 @@
       "label": "API Key",
       "placeholder": "Enter API key"
     },
-
     "developmentMode": {
       "label": "Development Mode",
       "description": "Your bot will work only for bot admins. Enable this option if you are building your bot and don't want non admins to use the bot."
@@ -137,7 +153,8 @@
       "label": "Final Message"
     },
     "url": {
-      "label": "URL"
+      "label": "URL",
+      "placeholder": "Enter URL"
     },
     "flow": {
       "label": "Flow"
@@ -175,17 +192,43 @@
     "analytics": {
       "label": "Analytics"
     },
+    "templateMessages": {
+      "label": "Template Messages"
+    },
+    "paymentMethods": {
+      "label": "Payment Methods"
+    },
+    "paymentHistory": {
+      "label": "Payment History"
+    },
     "flows": {
       "label": "Flows",
       "sendMessage": {
         "label": "Send Message"
+      },
+      "aiGenerateText": {
+        "label": "{aiName}: Generate Text"
       }
+    },
+    "persistentMenu": {
+      "label": "Persistent Menu{plural, select, 1 {s} other {}}",
+      "description": "The persistent menus are used to start a conversation with a user.",
+      "type": {
+        "sendFlow": "Send Flow",
+        "openWebsite": "Open Website"
+      }
+    },
+    "customCss": {
+      "label": "Custom CSS"
     },
     "contacts": {
       "label": "Contacts"
     },
     "automatedResponses": {
       "label": "Automated Responses"
+    },
+    "autoReply": {
+      "label": "Auto Reply"
     },
     "broadcasts": {
       "label": "Broadcasts"
@@ -210,6 +253,10 @@
     },
     "conversation": {
       "label": "Conversation"
+    },
+    "welcomeFlowId": {
+      "label": "Welcome Flow",
+      "description": "The welcome message is automatically sent when the user opens your webchat."
     },
     "folder": {
       "label": "Folder"
@@ -305,6 +352,22 @@
     "auth": {
       "label": "Auth"
     },
+    "authorizedDomain": {
+      "label": "Authorized Domain{plural, select, 1 {s} other {}}",
+      "description": "The domains or subdomains that are authorized to access your webchat."
+    },
+    "conversationStarter": {
+      "label": "Conversation Starter{plural, select, 1 {s} other {}}",
+      "description": "The conversation starters are used to start a conversation with a user.",
+      "type": {
+        "sendFlow": "Send Flow",
+        "openWebsite": "Open Website",
+        "sendText": "Send Text"
+      }
+    },
+    "buttonLabel": {
+      "label": "Button Label"
+    },
     "aiMcpServer": {
       "label": "AI MCP Server",
       "auth": {
@@ -338,7 +401,7 @@
       "placeholder": "What data is collected?"
     },
     "promptMessages": {
-      "label": "Prompt Messages",
+      "label": "Messages",
       "role": {
         "user": "User",
         "assistant": "Assistant"
@@ -383,16 +446,59 @@
     "button": {
       "label": "Button",
       "whenPressed": "When this button is pressed"
+    },
+    "model": {
+      "label": "Model"
+    },
+    "instructions": {
+      "label": "System Message (Prompt)"
+    },
+    "ouputCFId": {
+      "label": "Save response to a custom field"
+    },
+    "webchat": {
+      "label": "Webchat"
+    },
+    "hideHeader": {
+      "label": "Show Header"
+    },
+    "showLogo": {
+      "label": "Show Personal Logo"
+    },
+    "hideMessageInput": {
+      "label": "Show Message Input"
+    },
+    "updatedAt": {
+      "label": "Updated At"
+    },
+    "enable": {
+      "label": "Enable"
+    },
+    "embedUrl": {
+      "label": "Embed URL"
+    },
+    "embedCode": {
+      "label": "Embed Code",
+      "description": "Copy and paste this code into your website to embed the chat widget.",
+      "securityNote": "Security Note",
+      "securityNoteDescription": "This widget will only work on domains that are authorized in your webchat configuration. Make sure to add your domain to the authorized domains list."
+    },
+    "status": {
+      "label": "Status"
+    },
+    "category": {
+      "label": "Category"
     }
   },
-
   "validation": {
     "maxSize": "File size exceeds maximum limit"
   },
-
   "actions": {
     "add": "Add",
+    "addFeature": "Add {feature}",
     "create": "Create",
+    "createFeature": "Create {feature}",
+    "edit": "Edit",
     "update": "Update",
     "save": "Save",
     "delete": "Delete",
@@ -445,9 +551,41 @@
     "toggleTheme": "Toggle theme",
     "selectAll": "Select all",
     "selectRow": "Select row",
-    "deleteSelectedRows": "Delete selected rows"
+    "deleteSelectedRows": "Delete selected rows",
+    "sendText": "Send Text",
+    "sendImage": "Send Image",
+    "inboxActions": "Inbox Actions",
+    "assignConversation": "Assign Conversation",
+    "autoAssignConversation": "Auto Assign Conversation",
+    "unassignConversation": "Unassign Conversation",
+    "addContactNotes": "Add Contact Notes",
+    "followConversation": "Follow Conversation",
+    "unfollowConversation": "Unfollow Conversation",
+    "unarchiveConversation": "Unarchive Conversation",
+    "blockContact": "Block Contact",
+    "addContactTag": "Add Contact Tag",
+    "removeContactTag": "Remove Contact Tag",
+    "emailActions": "Email Actions",
+    "markEmailVerified": "Mark Email Verified",
+    "optInEmail": "Opt In Email",
+    "optOutEmail": "Opt Out Email",
+    "deleteContact": "Delete Contact",
+    "getDataFromJson": "Get Data From JSON",
+    "formatDate": "Format Date",
+    "generateCode": "Generate Code",
+    "countCharacters": "Count Characters",
+    "tools": "Tools",
+    "sendAudio": "Send Audio",
+    "sendFile": "Send File",
+    "sendVideo": "Send Video",
+    "sendCard": "Send Card",
+    "sendCarousel": "Send Carousel",
+    "openWebchat": "Open Webchat",
+    "getEmbedCode": "Get Embed Code",
+    "back": "Back",
+    "contine": "Contine",
+    "testNow": "Test Now"
   },
-
   "dialog": {
     "createTitle": "Create {feature}",
     "updateTitle": "Update {feature}",
@@ -482,13 +620,9 @@
       "title": "Add Tag"
     }
   },
-
-  "texts": {
-    "or": "or"
-  },
-
   "messages": {
     "copiedToClipboard": "Copied to clipboard",
+    "failedToCopy": "Failed to copy",
     "updatedSuccessfully": "{feature} updated successfully",
     "createdSuccessfully": "{feature} created successfully",
     "createdFailed": "{feature} creation failed",
@@ -507,12 +641,14 @@
     "videoError": "Video error",
     "failedToPreviewImage": "Failed to preview image",
     "uploadFailed": "Upload failed",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "or": "or",
+    "needToAddSettings": "You need to add settings to use this integration",
+    "connectFailed": "Failed to connect {feature}",
+    "connectSuccess": "Connected {feature} successfully"
   },
-
   "signin": {
     "title": "Sign in to {name}",
-    "or": "OR",
     "and": "and",
     "acceptTermsAndPolicy": "By clicking continue, you agree to our",
     "termsOfService": "Terms of Service",
@@ -520,13 +656,11 @@
     "email": "Email",
     "password": "Password"
   },
-
   "folders": {
     "heading": {
       "title": "Folders"
     }
   },
-
   "flows": {
     "clickToSelectFlow": "Click to select a flow",
     "create": {
@@ -578,7 +712,6 @@
       "accountTimezone": "Account Timezone"
     }
   },
-
   "autoAssignConversation": {
     "rule": {
       "label": "Assignment Rule",
@@ -591,7 +724,6 @@
       "label": "Users"
     }
   },
-
   "aiAgent": {
     "setting": {
       "label": "AI Agents",
@@ -601,19 +733,16 @@
     "title": "AI Agents",
     "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses."
   },
-
   "aiTool": {
     "subtitle": "Manage your AI tools to enhance your chatbot capabilities.",
     "title": "AI Tools"
   },
-
   "aiTrigger": {
     "setting": {
       "label": "AI Triggers",
       "description": "AI Triggers description"
     }
   },
-
   "accountField": {
     "title": "Account Fields",
     "createDialog": {
@@ -623,7 +752,6 @@
       "title": "Update Account Field"
     }
   },
-
   "googleSheets": {
     "setting": {
       "label": "Google Sheets",
@@ -631,7 +759,6 @@
     },
     "title": "Google Sheets"
   },
-
   "customField": {
     "heading": {
       "title": "Custom Fields"
@@ -654,7 +781,6 @@
       "false": "False"
     }
   },
-
   "automatedResponse": {
     "heading": {
       "title": "Automated Responses"
@@ -664,20 +790,17 @@
       "description": "Automated responses description"
     }
   },
-
   "tags": {
     "heading": {
       "title": "Tags"
     }
   },
-
   "broadcasts": {
     "scheduleSendMessage": "Schedule send message",
     "update": {
       "title": "Update Broadcast"
     }
   },
-
   "inboxTeam": {
     "updateAction": {
       "heading": {
@@ -685,13 +808,11 @@
       }
     }
   },
-
   "teams": {
     "create": {
       "title": "Create Inbox Team"
     }
   },
-
   "settings": {
     "openAI": {
       "description": "OpenAI integration description",
@@ -709,12 +830,10 @@
       "title": "AI Triggers"
     }
   },
-
   "integration": {
     "disconnectConfirm": "Are you sure you want to disconnect?",
     "disconnectDescription": "This action cannot be undone."
   },
-
   "integrations": {
     "title": "Integrations",
     "openAI": {
@@ -737,7 +856,6 @@
       }
     }
   },
-
   "accountFields": {
     "create": {
       "successMessage": "Account field created successfully"
@@ -746,10 +864,21 @@
       "successMessage": "Account field deleted successfully"
     }
   },
-
   "whatsapp": {
     "title": "WhatsApp",
-    "description": "Whatspp description",
+    "description": "WhatsApp description",
+    "connectExisting": "Connect an existing WhatsApp Business Account",
+    "transferPhoneNumber": "Transfer phone from another Whatsapp provider",
+    "manualConnect": "Manual connect using System User Access token.",
+    "marketingMessageLite": "Marketing Message Lite",
+    "tabs": {
+      "usefulLinks": "Useful Links",
+      "profile": "Profile",
+      "messageTemplates": "Message Templates",
+      "automation": "Automation",
+      "flows": "Flows",
+      "ecommerce": "Ecommerce"
+    },
     "category": {
       "makerting": {
         "label": "Marketing",
@@ -811,7 +940,7 @@
     "showFooter": {
       "label": "Show footer"
     },
-    "showHeader": {
+    "hideHeader": {
       "label": "Show header"
     },
     "conversationStarters": {
@@ -819,11 +948,15 @@
       "description1": "Conversation starters are used to start a conversation with a user.",
       "description2": "Conversation starters are used to start a conversation with a user."
     },
-    "iceBreaker": {
-      "label": "Ice Breaker"
+    "icebreakers": {
+      "label": "Icebreakers",
+      "description": "These are common questions that people can easily ask you."
+    },
+    "commands": {
+      "label": "Commands",
+      "description": "These are special keywords that tell the WhatsApp bot what to do"
     }
   },
-
   "aiTriggers": {
     "setting": {
       "label": "AI Triggers",
@@ -847,7 +980,6 @@
       "label": "AI Trigger description"
     }
   },
-
   "openAI": {
     "title": "OpenAI",
     "setting": {
@@ -865,7 +997,7 @@
       "label": "Google Gemini",
       "description": "Respond to users naturally with AI powered by your business data."
     },
-    "aiAutoReply": {
+    "autoReply": {
       "label": "AI Auto Reply",
       "description": "Enable AI auto reply to respond to users naturally with AI powered by your business data."
     }
@@ -888,6 +1020,9 @@
   "general": {
     "title": "General"
   },
+  "chanel": {
+    "label": "Channel"
+  },
   "channels": {
     "title": "Channels"
   },
@@ -909,5 +1044,24 @@
     "title": "Facebook Messenger",
     "description": "This integration lets you create Messenger bots.",
     "selectFacebookPage": "Select Facebook Page"
+  },
+  "zalo": {
+    "title": "Zalo",
+    "description": "This integration lets you create Zalo bots."
+  },
+  "webchat": {
+    "title": "Web Chat",
+    "description": "Let your customers get instant automated responses from your business directly from your website"
+  },
+  "omnichannel": {
+    "title": "Omnichannel"
+  },
+  "chatbots": {
+    "create": {
+      "title": "Create Chatbot"
+    },
+    "list": {
+      "title": "Chatbots List"
+    }
   }
 }

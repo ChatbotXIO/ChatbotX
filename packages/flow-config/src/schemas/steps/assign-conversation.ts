@@ -3,9 +3,9 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const assignConversationStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.ASSIGN_CONVERSATION),
-  assignedId: z.string().cuid2(),
+  assignedId: z.cuid2(),
 })
 
 export type AssignConversationStepSchema = z.infer<

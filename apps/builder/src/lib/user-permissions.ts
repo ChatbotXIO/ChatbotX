@@ -1,6 +1,6 @@
 import { prisma } from "@aha.chat/database"
 import type { ChatbotMemberModel, ChatbotModel } from "@aha.chat/database/types"
-import { NotfoundException } from "./error"
+import { NotfoundException } from "./errors/exception"
 
 export const findChatbotOrFail = async (
   userId: string | null | undefined,

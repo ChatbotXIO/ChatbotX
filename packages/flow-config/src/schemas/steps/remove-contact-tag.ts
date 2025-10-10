@@ -3,7 +3,7 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const removeContactTagStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.REMOVE_CONTACT_TAG),
   tags: z.array(z.string().trim().min(1)).min(1),
 })

@@ -12,12 +12,16 @@ export const StepStoreContext = createContext<StepStoreApi | undefined>(
 
 export type StepStoreProviderProps = {
   children: ReactNode
+  initialState?: Partial<StepStore>
 }
 
-export const StepStoreProvider = ({ children }: StepStoreProviderProps) => {
+export const StepStoreProvider = ({
+  children,
+  initialState,
+}: StepStoreProviderProps) => {
   const storeRef = useRef<StepStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createStepStore()
+    storeRef.current = createStepStore(initialState)
   }
 
   return (

@@ -11,7 +11,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const disconnectMessengerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

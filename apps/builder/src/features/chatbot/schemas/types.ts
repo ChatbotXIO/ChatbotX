@@ -8,12 +8,10 @@ export const allCountryCodes = [
 ]
 export const allCountryOptions = [
   { value: UNKNOWN_COUNTRY, label: "Unknown" },
-  ...Object.values(getAllCountries()).map((country) => {
-    return {
-      value: country.id,
-      label: country.name,
-    }
-  }),
+  ...Object.values(getAllCountries()).map((country) => ({
+    value: country.id,
+    label: country.name,
+  })),
 ]
 
 export const allSupportedLanguages = [
@@ -25,12 +23,10 @@ export const allLanguageCodes = allSupportedLanguages.map(
 )
 
 export const allTimezoneOptions = Object.values(getAllTimezones()).map(
-  (timezone) => {
-    return {
-      value: timezone.name,
-      label: timezone.name,
-    }
-  },
+  (timezone) => ({
+    value: timezone.name,
+    label: timezone.name,
+  }),
 )
 export const allTimezoneCodes = Object.keys(getAllTimezones())
 

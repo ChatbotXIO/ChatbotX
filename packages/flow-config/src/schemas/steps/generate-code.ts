@@ -10,22 +10,22 @@ export const GenerateCodeType = {
 
 export const generateCodeStepSchema = z
   .object({
-    id: z.string().cuid2(),
+    id: z.cuid2(),
     stepType: z.literal(StepType.GENERATE_CODE),
-    type: z.nativeEnum(GenerateCodeType),
+    type: z.enum(GenerateCodeType),
     min: z.coerce
       .number()
       .int()
       .min(0)
       .max(Number.MAX_SAFE_INTEGER - 1),
     max: z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
-    outputCustomFieldId: z.string().cuid2(),
+    outputCustomFieldId: z.cuid2(),
   })
   .refine((data) => data.min <= data.max, {
     message: "Max must be larger than Min",
     path: ["max"],
   })
-export type GenerateCodeStepSchema = z.infer<typeof generateCodeStepSchema>
+export type GenerateCodeStepSchema = z.input<typeof generateCodeStepSchema>
 
 export const generateCodeStepDefaultFn = (): GenerateCodeStepSchema => ({
   id: createId(),

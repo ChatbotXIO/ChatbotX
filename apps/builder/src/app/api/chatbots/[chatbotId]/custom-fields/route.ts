@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
 import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
@@ -25,6 +25,6 @@ export async function GET(
 
     return NextResponse.json(allCustomFields)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

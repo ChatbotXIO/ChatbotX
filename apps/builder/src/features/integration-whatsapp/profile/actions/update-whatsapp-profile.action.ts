@@ -6,9 +6,10 @@ import { updateWhatsappProfileRequest } from "../schemas/update-whatsapp-profile
 
 export const updateWhatsappProfileAction = chatbotActionClient
   .inputSchema(updateWhatsappProfileRequest)
-  .bindArgsSchemas(chatbotIdRequestParams.items)
-  .action(async () => {
-    return await {
-      success: true,
-    }
-  })
+  .bindArgsSchemas(chatbotIdRequestParams)
+  .action(
+    async () =>
+      await {
+        success: true,
+      },
+  )

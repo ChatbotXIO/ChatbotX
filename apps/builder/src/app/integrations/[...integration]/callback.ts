@@ -1,17 +1,17 @@
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
+import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
-import { env } from "@/env"
 import { findChatbot } from "@/features/chatbot/queries"
 import { findOrganization } from "@/features/organization/queries"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
 const stateValidationSchema = z.object({
-  chatbotId: z.string().cuid2(),
-  referer: z.string().url(),
+  chatbotId: z.cuid2(),
+  referer: z.url(),
 })
 
 export const handleCallback = async (integrationName: string, req: Request) => {
@@ -28,12 +28,10 @@ export const handleCallback = async (integrationName: string, req: Request) => {
     return notFound()
   }
 
-  if (
-    !(
-      "handleRequest" in
-      integrations[integrationName as keyof typeof integrations].integration
-    )
-  ) {
+  const targetIntegration =
+    integrations[integrationName as keyof typeof integrations]
+
+  if (!(targetIntegration && "handleRequest" in targetIntegration)) {
     logger.warn(`${integrationName} is missing handleRequest method`)
     return notFound()
   }
@@ -48,20 +46,60 @@ export const handleCallback = async (integrationName: string, req: Request) => {
   let additionalIntegrationCreationData = {}
 
   switch (integrationName) {
-    case IntegrationType.GOOGLE_SHEETS: {
-      authResult =
-        (await integrations.GOOGLE_SHEETS.integration.handleRequest?.({
-          config: {
-            clientId: organizationSettings.googleSheets?.clientId as string,
-            clientSecret: organizationSettings.googleSheets
-              ?.clientSecret as string,
-            redirectUrl: new URL(
-              "/integrations/google-sheets/callback",
-              env.NEXT_PUBLIC_BUILDER_URL,
-            ).toString(),
+    case IntegrationType.ZALO: {
+      if (!organizationSettings.zalo) {
+        return notFound()
+      }
+
+      const authValue = (await integrations.zalo.handleRequest({
+        config: {
+          ...organizationSettings.zalo,
+          redirectUrl: new URL(
+            "/integrations/zalo/callback",
+            req.url,
+          ).toString(),
+          stateParams: {
+            chatbotId: stateParams.chatbotId,
           },
-          req,
-        })) as unknown as Oauth2AuthValue
+        },
+        req,
+      })) as ZaloAuthValue
+
+      await prisma.$transaction(async (tx) => {
+        await tx.inbox.create({
+          data: {
+            chatbotId: stateParams.chatbotId,
+            inboxType: IntegrationType.ZALO,
+            sourceId: authValue.oaId,
+            integrationZalo: {
+              create: {
+                chatbotId: stateParams.chatbotId,
+                oaId: authValue.oaId,
+                auth: authValue as unknown as Prisma.InputJsonValue,
+                name: authValue.metadata.oaName,
+              },
+            },
+          },
+        })
+      })
+      return redirect(stateParams.referer)
+    }
+
+    case IntegrationType.GOOGLE_SHEETS: {
+      if (!organizationSettings.googleSheets) {
+        return notFound()
+      }
+
+      authResult = integrations.googleSheets.handleRequest?.({
+        config: {
+          ...organizationSettings.googleSheets,
+          redirectUrl: new URL(
+            "/integrations/google-sheets/callback",
+            req.url,
+          ).toString(),
+        },
+        req,
+      }) as unknown as Oauth2AuthValue
 
       additionalIntegrationCreationData = {
         googleSheets: {

@@ -12,26 +12,24 @@ type OpenAITextToSpeechEditorProps = {
 
 export const OpenAITextToSpeechEditor = (
   props: OpenAITextToSpeechEditorProps,
-) => {
-  return (
-    <OpenAIDialog name="Flows.OpenAI.Title.TextToSpeech">
-      <InputField label="Input Text" name={`${props.parentName}.userMessage`} />
+) => (
+  <OpenAIDialog name="Flows.OpenAI.Title.TextToSpeech">
+    <InputField label="Input Text" name={`${props.parentName}.userMessage`} />
 
-      <SelectField
-        defaultValue="alloy"
-        label="Voice Type"
-        name={`${props.parentName}.voiceType`}
-        options={Object.keys(voiceTypes).map((k) => ({
-          value: k,
-          label: voiceTypes[k] as string,
-        }))}
-      />
+    <SelectField
+      defaultValue="alloy"
+      label="Voice Type"
+      name={`${props.parentName}.voiceType`}
+      options={Object.keys(voiceTypes).map((k) => ({
+        value: k,
+        label: voiceTypes[k] as string,
+      }))}
+    />
 
-      <CustomFieldSelect
-        allowCreate={true}
-        label="Save response to a custom field"
-        name={`${props.parentName}.resultCustomFieldId`}
-      />
-    </OpenAIDialog>
-  )
-}
+    <CustomFieldSelect
+      allowCreate={true}
+      label="Save response to a custom field"
+      name={`${props.parentName}.resultCustomFieldId`}
+    />
+  </OpenAIDialog>
+)

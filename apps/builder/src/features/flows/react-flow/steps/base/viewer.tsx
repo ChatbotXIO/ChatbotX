@@ -7,14 +7,12 @@ export const BaseStepViewer = (props: {
   icon: LucideIcon
   title: string
   children?: ReactElement
-}) => {
-  return (
-    <div className="w-full text-sm">
-      <div className="flex items-center gap-1 break-all font-medium">
-        <props.icon className="text-yellow-500" size={16} />
-        <span>{props.title}</span>
-        {props.children}
-      </div>
+}) => (
+  <div className="w-full text-sm">
+    <div className="flex items-center gap-1 break-all font-medium">
+      <props.icon className="text-yellow-500" size={16} />
+      <span>{props.title}</span>
+      {props.children}
     </div>
-  )
-}
+  </div>
+)

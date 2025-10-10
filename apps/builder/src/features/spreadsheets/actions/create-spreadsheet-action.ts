@@ -14,7 +14,7 @@ import {
 import { verifyGoogleSheetsUrl } from "./util"
 
 export const createSpreadsheetAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createSpreadsheetRequest)
   .action(
     async ({

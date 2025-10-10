@@ -2,11 +2,11 @@
 
 import { prisma } from "@aha.chat/database"
 import {
-  CHAT_WIDGET_SOURCE_PREFIX,
   ContentType,
   MessageType,
   SenderType,
   type UserModel,
+  WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import {
@@ -14,7 +14,11 @@ import {
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
+import {
+  type AttachmentEntity,
+  type ConversationEntity,
+  guessFileTypeFromMimeType,
+} from "@aha.chat/sdk"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
@@ -31,11 +35,10 @@ import type { MessageResource } from "../schemas"
 import {
   type CreateMessageRequest,
   createMessageRequest,
-  guessFileTypeFromMimeType,
 } from "../schemas/create-message.schema"
 
 export const createMessageAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(createMessageRequest)
   .action(
     async ({
@@ -134,7 +137,7 @@ export const createMessageAction = chatbotActionClient
           },
         }),
       ]
-      if (conversation.sourceId?.startsWith(CHAT_WIDGET_SOURCE_PREFIX)) {
+      if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
         promises.push(
           broadcastToGuestParty(conversation.sourceId, {
             eventType: RealtimeEventType.CREATE_MESSAGE,

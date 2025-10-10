@@ -14,7 +14,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const createAIAgentAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createAIAgentRequest)
   .action(
     async ({

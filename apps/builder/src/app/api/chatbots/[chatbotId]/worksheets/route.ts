@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getWorkSheets } from "@/features/spreadsheets/queries"
 import { getWorksheetSearchParams } from "@/features/spreadsheets/schemas"
 import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
@@ -25,6 +25,6 @@ export async function GET(
 
     return NextResponse.json(worksheets)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

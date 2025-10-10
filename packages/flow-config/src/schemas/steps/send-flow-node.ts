@@ -3,9 +3,9 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const sendFlowNodeStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.SEND_FLOW_NODE),
-  nodeId: z.string().cuid2(),
+  nodeId: z.cuid2(),
 })
 
 export type SendFlowNodeStepSchema = z.infer<typeof sendFlowNodeStepSchema>

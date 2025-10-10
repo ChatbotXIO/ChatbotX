@@ -1,30 +1,76 @@
 import {
+  type AttachmentEntity,
   ContentType,
+  type Context,
   type ConversationEntity,
   type MessageEntity,
-  SdkException,
 } from "@aha.chat/sdk"
-import type { MessengerWebhookEvent } from "./schemas"
 
-export const parseIncomingMessage = (props: MessengerWebhookEvent) => {
-  const entry = props.entry[0]
+import { getMessageAttachmentEntity } from "./apis/page"
+import { MessengerException } from "./exception"
+import { logger } from "./lib/logger"
+import type {
+  MessengerAuthValue,
+  MessengerMessage,
+  MessengerMessagingEvent,
+  MessengerWebhookEvent,
+} from "./schemas"
+
+const getMessageAttachments = async (
+  ctx: Context<MessengerAuthValue>,
+  message: MessengerMessage,
+): Promise<AttachmentEntity[]> => {
+  if (!message.attachments) {
+    return []
+  }
+
+  try {
+    const attachmentPromises = message.attachments
+      .filter((attachment) => attachment.payload.url)
+      .map((attachment) =>
+        getMessageAttachmentEntity({ ctx, attachment }).catch((error) => {
+          logger.error("Error processing attachment", error)
+          return null
+        }),
+      )
+
+    const attachmentResults = await Promise.allSettled(attachmentPromises)
+    return attachmentResults
+      .filter(
+        (result): result is PromiseFulfilledResult<AttachmentEntity> =>
+          result.status === "fulfilled" && result.value !== null,
+      )
+      .map((result) => result.value)
+  } catch (_error) {
+    logger.error("Error getting message attachments", _error)
+    return []
+  }
+}
+
+export const parseIncomingMessage = async ({
+  ctx,
+  data,
+}: {
+  ctx: Context<MessengerAuthValue>
+  data: MessengerWebhookEvent
+}) => {
+  const entry = data.entry[0]
 
   if (!entry.messaging[0]) {
-    throw new SdkException("No messaging found")
+    throw new MessengerException("No messaging found")
   }
 
   const messaging = entry.messaging[0]
-  if (!messaging.message) {
-    throw new SdkException("No message found")
+  if (!(messaging.message || messaging.postback)) {
+    throw new MessengerException("No message found")
   }
 
   const sourceId = entry.id
-  const message: MessageEntity = {
-    sourceId: messaging.message.mid,
-    messageType: messaging.message.is_echo ? "OUTGOING" : "INCOMING",
-    content: messaging.message.text,
-    contentType: ContentType.TEXT,
-  }
+  const message = await getMessageEntity(ctx, messaging)
+
+  const postbackAction: { flowVersionId: string; buttonId: string } | null =
+    getPostbackAction(messaging)
+
   const conversation: ConversationEntity = {
     sourceId,
     conversationAttributes: {},
@@ -34,8 +80,46 @@ export const parseIncomingMessage = (props: MessengerWebhookEvent) => {
         : messaging.sender.id,
     },
   }
-  const postbackAction: { flowVersionId: string; buttonId: string } | null =
-    null
 
   return Promise.resolve({ message, conversation, postbackAction })
+}
+
+const getMessageEntity = async (
+  ctx: Context<MessengerAuthValue>,
+  messaging: MessengerMessagingEvent,
+): Promise<MessageEntity> => {
+  if (messaging.message) {
+    return {
+      sourceId: messaging.message.mid,
+      messageType: messaging.message.is_echo ? "OUTGOING" : "INCOMING",
+      content: messaging.message.text,
+      contentType: ContentType.TEXT,
+      attachments: await getMessageAttachments(ctx, messaging.message),
+    }
+  }
+  if (messaging.postback) {
+    return {
+      sourceId: messaging.postback.mid,
+      messageType: "INCOMING",
+      content: messaging.postback.title,
+      contentType: ContentType.TEXT,
+      attachments: [],
+    }
+  }
+  throw new MessengerException("No message found")
+}
+
+const getPostbackAction = (
+  messaging: MessengerMessagingEvent,
+): { flowVersionId: string; buttonId: string } | null => {
+  if (messaging.postback) {
+    const postbackPayload: string[] = messaging.postback.payload.split("_")
+    if (postbackPayload.length === 2) {
+      return {
+        flowVersionId: postbackPayload[0],
+        buttonId: postbackPayload[1],
+      }
+    }
+  }
+  return null
 }

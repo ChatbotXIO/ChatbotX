@@ -2,7 +2,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { experimental_createMCPClient, type experimental_MCPClient } from "ai"
 import { type NextRequest, NextResponse } from "next/server"
 import { validateAIMcpServerRequest } from "@/features/ai-mcp-servers/schemas"
-import { errorResponse } from "@/lib/error-handling"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function POST(request: NextRequest) {
   const data = await request.json()
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(tools)
   } catch (error) {
-    return errorResponse(error)
+    return serverErrorHandler(error)
   } finally {
     if (httpClient) {
       await httpClient.close()

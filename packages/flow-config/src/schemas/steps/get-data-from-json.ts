@@ -3,13 +3,13 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const getDataFromJsonStepSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.GET_DATA_FROM_JSON),
-  inputCustomFieldId: z.string().cuid2(),
+  inputCustomFieldId: z.cuid2(),
   mapping: z.array(
     z.object({
       jsonPath: z.string().trim().min(1),
-      outputCustomFieldId: z.string().cuid2(),
+      outputCustomFieldId: z.cuid2(),
     }),
   ),
 })

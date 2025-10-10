@@ -58,7 +58,9 @@ export function UpdateCustomFieldDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -101,7 +103,6 @@ export function UpdateCustomFieldDialog({
               />
 
               <TextareaField
-                isRequired={false}
                 label={t("fields.description.label")}
                 name="description"
                 placeholder={t("fields.description.placeholder")}

@@ -1,7 +1,7 @@
 "use server"
 
 // export const duplicateAIAgentAction = authActionClient
-//   .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+//   .bindArgsSchemas(chatbotIdAndIdRequestParams)
 //   .action(
 //     async ({
 //       bindArgsParsedInputs: [chatbotId, id],

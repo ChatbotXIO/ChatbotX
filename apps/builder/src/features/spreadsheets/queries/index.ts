@@ -79,13 +79,12 @@ export const getWorkSheets = async (
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
   }
 
-  const sheets =
-    await integrations.GOOGLE_SHEETS.integration.actions.listSheetNames({
-      ctx,
-      props: {
-        spreadsheetId: spreadsheet.spreadsheetId,
-      },
-    })
+  const sheets = await integrations.googleSheets.actions.listSheetNames({
+    ctx,
+    props: {
+      spreadsheetId: spreadsheet.spreadsheetId,
+    },
+  })
 
   return { data: sheets }
 }
@@ -115,14 +114,13 @@ export const getWorkSheetHeaders = async (
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
   }
 
-  const headers =
-    await integrations.GOOGLE_SHEETS.integration.actions.listSheetHeaders({
-      ctx,
-      props: {
-        spreadsheetId: spreadsheet.spreadsheetId,
-        sheetName: input.sheetName ?? "",
-      },
-    })
+  const headers = await integrations.googleSheets.actions.listSheetHeaders({
+    ctx,
+    props: {
+      spreadsheetId: spreadsheet.spreadsheetId,
+      sheetName: input.sheetName ?? "",
+    },
+  })
 
   return { data: headers }
 }

@@ -66,8 +66,8 @@ export function CreateAIAgentDialog({
   const router = useRouter()
   const t = useTranslations()
 
-  const toolOptions = useMemo(() => {
-    return [
+  const toolOptions = useMemo(
+    () => [
       {
         heading: t("fields.file.label"),
         options: files.map((file) => ({
@@ -92,15 +92,17 @@ export function CreateAIAgentDialog({
           icon: ServerIcon,
         })),
       },
-    ]
-  }, [files, functions, mcpServers, t])
+    ],
+    [files, functions, mcpServers, t],
+  )
 
-  const messageRoleOptions = useMemo(() => {
-    return [
+  const messageRoleOptions = useMemo(
+    () => [
       { label: t("fields.promptMessages.role.user"), value: "user" },
       { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
-    ]
-  }, [t])
+    ],
+    [t],
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -120,7 +122,9 @@ export function CreateAIAgentDialog({
             router.refresh()
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
@@ -190,9 +194,9 @@ export function CreateAIAgentDialog({
               />
 
               <TextareaField
-                isRequired
                 label={t("fields.prompt.label")}
                 name="prompt"
+                required
               />
 
               <div className="flex flex-col items-start gap-2">
@@ -245,17 +249,17 @@ export function CreateAIAgentDialog({
                 <CollapsibleContent className="space-y-6">
                   <div className="mt-4" />
                   <SelectField
-                    isRequired
                     label={t("fields.geminiModel.label")}
                     name="models.0.model"
                     options={GEMINI_MODEL_OPTIONS}
+                    required
                   />
 
                   <SelectField
-                    isRequired
                     label={t("fields.openAIModel.label")}
                     name="models.1.model"
                     options={OPENAI_MODEL_OPTIONS}
+                    required
                   />
 
                   <SliderField

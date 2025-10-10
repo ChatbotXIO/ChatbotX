@@ -1,3 +1,7 @@
+import { logger } from "@aha.chat/ui/lib/logger"
+import type { SelectProps } from "@radix-ui/react-select"
+import ky from "ky"
+import { useEffect, useState } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import {
   Select,
@@ -8,14 +12,13 @@ import {
 } from "../ui/select"
 import { FormFieldWrapper } from "./field-wrapper"
 
-type SelectFieldProps<T extends FieldValues> = {
+type SelectFieldProps<T extends FieldValues> = SelectProps & {
   name: FieldPath<T>
   label?: string
-  isRequired?: boolean
   placeholder?: string
   description?: string
-  defaultValue?: string
-  options: { value: string; label: string }[]
+  options?: { value: string; label: string }[]
+  fetchOptionsUrl?: string
   className?: string
 } & React.ComponentProps<typeof Select>
 
@@ -29,24 +32,53 @@ function SelectClear({
 }) {
   return (
     <SelectItem className="opacity-50" key={"reset"} value={value} {...props}>
-      {children ?? "Reset"}
+      {children ?? "----"}
     </SelectItem>
   )
 }
 
-export function SelectField<T extends FieldValues>({
-  name,
-  label,
-  isRequired,
-  placeholder,
-  description,
-  options,
-  ...props
-}: SelectFieldProps<T>) {
+export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
+  const {
+    name,
+    label,
+    required,
+    placeholder,
+    description,
+    options = [],
+    fetchOptionsUrl,
+    ...rest
+  } = props
+
+  const [stateOptions, setStateOptions] = useState<
+    { value: string; label: string }[]
+  >([])
+
+  useEffect(() => {
+    if (options && options.length > 0) {
+      setStateOptions(options)
+    } else if (fetchOptionsUrl) {
+      const fetchOptions = async () => {
+        try {
+          const body = await ky
+            .get<{ data: { id: string; name: string }[] }>(fetchOptionsUrl)
+            .json()
+
+          setStateOptions(
+            body.data.map((v) => ({ value: v.id, label: v.name })),
+          )
+        } catch (error) {
+          logger.error("Error fetching options:", error)
+        }
+      }
+
+      fetchOptions()
+    }
+  }, [options, fetchOptionsUrl])
+
   return (
     <FormFieldWrapper<T>
       description={description}
-      isRequired={isRequired}
+      isRequired={required}
       label={label}
       name={name}
     >
@@ -54,7 +86,7 @@ export function SelectField<T extends FieldValues>({
         <Select
           defaultValue={field.value}
           onValueChange={field.onChange}
-          {...props}
+          {...rest}
           {...field}
         >
           <SelectTrigger className="w-full">
@@ -62,7 +94,7 @@ export function SelectField<T extends FieldValues>({
           </SelectTrigger>
           <SelectContent>
             <SelectClear />
-            {options.map((option) => (
+            {stateOptions.map((option) => (
               <SelectItem key={option.value} value={String(option.value)}>
                 {option.label}
               </SelectItem>

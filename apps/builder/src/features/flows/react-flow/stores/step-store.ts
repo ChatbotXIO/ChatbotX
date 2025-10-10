@@ -1,26 +1,40 @@
 import { createStore } from "zustand"
+import type { CustomFieldResource } from "@/features/custom-fields/schemas"
+import type { FlowResource } from "@/features/flows/schemas/get-flows-schema"
 
-export type StepStore = {
+export type StepState = {
   isOpenDialog: boolean
-  setIsOpenDialog: (isOpen: boolean) => void
-
   buttonPath: string | null
-  setButtonPath: (buttonPath: string | null) => void
-
   openNodeDetailSheet: boolean
-  setOpenNodeDetailSheet: (openNodeDetailSheet: boolean) => void
+  customFields: CustomFieldResource[]
+  flows: FlowResource[]
 }
 
-export const createStepStore = () => {
-  return createStore<StepStore>()((set) => ({
+export type StepStore = StepState & {
+  setIsOpenDialog: (isOpen: boolean) => void
+  setButtonPath: (buttonPath: string | null) => void
+  setOpenNodeDetailSheet: (openNodeDetailSheet: boolean) => void
+  setCustomFields: (customFields: CustomFieldResource[]) => void
+  setFlows: (flows: FlowResource[]) => void
+}
+
+export const createStepStore = (initState?: Partial<StepState>) => {
+  const defaultProps = {
     isOpenDialog: false,
-    setIsOpenDialog: (isOpenDialog) => set({ isOpenDialog }),
-
     buttonPath: null,
-    setButtonPath: (buttonPath) => set({ buttonPath }),
-
     openNodeDetailSheet: false,
+    customFields: [],
+    flows: [],
+  }
+
+  return createStore<StepStore>()((set) => ({
+    ...defaultProps,
+    ...initState,
+    setIsOpenDialog: (isOpenDialog) => set({ isOpenDialog }),
+    setButtonPath: (buttonPath) => set({ buttonPath }),
     setOpenNodeDetailSheet: (openNodeDetailSheet) =>
       set({ openNodeDetailSheet }),
+    setCustomFields: (customFields) => set({ customFields }),
+    setFlows: (flows) => set({ flows }),
   }))
 }

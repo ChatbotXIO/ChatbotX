@@ -13,7 +13,7 @@ import {
 } from "../schemas/add-contact-tag.request"
 
 export const addContactTagAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(addContactTagRequest)
   .action(
     async ({

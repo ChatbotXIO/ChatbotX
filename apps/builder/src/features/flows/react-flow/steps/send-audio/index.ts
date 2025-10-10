@@ -6,9 +6,11 @@ import type { StepDefinition } from ".."
 import { SendAudioStepEditor } from "./editor"
 import { SendAudioStepViewer } from "./viewer"
 
-export const sendAudioStep: StepDefinition = {
+const sendAudioStep: StepDefinition = {
   editor: SendAudioStepEditor,
   viewer: SendAudioStepViewer,
   validator: sendAudioStepSchema,
   defaultFn: sendAudioStepDefaultFn,
 }
+
+export default sendAudioStep

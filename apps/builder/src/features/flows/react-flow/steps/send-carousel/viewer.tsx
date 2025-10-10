@@ -12,16 +12,14 @@ export const SendCarouselStepViewer = ({
   data,
 }: {
   data: SendCarouselStepSchema
-}) => {
-  return (
-    <Carousel className="pointer-events-none">
-      <CarouselContent>
-        {data.cards.map((card) => (
-          <CarouselItem key={card.id}>
-            <SendCardStepViewer data={card} />
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-    </Carousel>
-  )
-}
+}) => (
+  <Carousel className="pointer-events-none">
+    <CarouselContent>
+      {data.cards.map((card) => (
+        <CarouselItem key={card.id}>
+          <SendCardStepViewer data={card} />
+        </CarouselItem>
+      ))}
+    </CarouselContent>
+  </Carousel>
+)

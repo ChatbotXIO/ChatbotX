@@ -12,12 +12,10 @@ import {
   useReactFlow,
 } from "@xyflow/react"
 import { Plus } from "lucide-react"
-import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { allNodesConfig } from "./node-config"
 
 export function AddNodeButton() {
-  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const reactFlow = useReactFlow()
 
@@ -35,8 +33,8 @@ export function AddNodeButton() {
       </PopoverTrigger>
       <PopoverContent>
         <div className="flex flex-col items-start">
-          {Object.values(allNodesConfig).map((item) => {
-            return item ? (
+          {Object.values(allNodesConfig).map((item) =>
+            item ? (
               <Button
                 className="w-full justify-start"
                 key={item.type}
@@ -44,10 +42,10 @@ export function AddNodeButton() {
                 variant="ghost"
               >
                 <item.icon />
-                {t(item.label)}
+                {item.label}
               </Button>
-            ) : null
-          })}
+            ) : null,
+          )}
         </div>
       </PopoverContent>
     </Popover>

@@ -6,6 +6,6 @@ import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/componen
 //   parentName: string
 // }
 
-export const OpenAIDeleteMessageHistoryEditor = () => {
-  return <OpenAIDialog name="Flows.OpenAI.Title.DeleteMessageHistory" />
-}
+export const OpenAIDeleteMessageHistoryEditor = () => (
+  <OpenAIDialog name="Flows.OpenAI.Title.DeleteMessageHistory" />
+)

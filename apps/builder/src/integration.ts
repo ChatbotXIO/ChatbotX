@@ -1,35 +1,19 @@
-import { IntegrationType } from "@aha.chat/database"
-import type { GoogleSheetsConfig } from "@aha.chat/integration-google-sheets"
 import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
 import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
+import { integration as integrationZalo } from "@aha.chat/integration-zalo"
 
 export const integrations = {
-  [IntegrationType.WHATSAPP]: {
-    getIntegrationConfig() {
-      return {}
-    },
-    integration: integrationWhatsapp,
-  },
-  [IntegrationType.MESSENGER]: {
-    getIntegrationConfig() {
-      return {}
-    },
-    integration: integrationMessenger,
-  },
-  [IntegrationType.GOOGLE_SHEETS]: {
-    getIntegrationConfig(
-      stateParams?: GoogleSheetsConfig["stateParams"],
-    ): GoogleSheetsConfig {
-      return {
-        clientId: process.env.AUTH_GOOGLE_ID ?? "",
-        clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-        redirectUrl: `${process.env.BASE_URL}/integrations/google-sheets/callback`,
-        stateParams,
-      }
-    },
-    integration: integrationGoogleSheets,
-  },
+  WHATSAPP: integrationWhatsapp,
+  whatsapp: integrationWhatsapp,
+  MESSENGER: integrationMessenger,
+  googleSheets: integrationGoogleSheets,
+  ZALO: integrationZalo,
+  zalo: integrationZalo,
+  WEBCHAT: undefined,
+  INSTAGRAM: undefined,
+  OPENAI: undefined,
+  GEMINI: undefined,
 }
 
 export type IntegrationKey = keyof typeof integrations

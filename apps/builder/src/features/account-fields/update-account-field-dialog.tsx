@@ -54,7 +54,9 @@ export function UpdateAccountFieldDialog({
           resetFormAndAction()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -90,7 +92,6 @@ export function UpdateAccountFieldDialog({
               <InputField label={t("fields.name.label")} name="name" />
 
               <TextareaField
-                isRequired={false}
                 label={t("fields.description.label")}
                 name="description"
               />

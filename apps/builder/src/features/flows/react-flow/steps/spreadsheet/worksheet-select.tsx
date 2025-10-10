@@ -8,7 +8,7 @@ type WorksheetSelectProps = {
   name: string
   spreadsheetId: string
   label?: string
-  isRequired?: boolean
+  required?: boolean
   onChange?: (value: string) => void
 }
 
@@ -16,7 +16,7 @@ export const WorksheetSelect = ({
   name,
   spreadsheetId,
   label = "Worksheet",
-  isRequired = true,
+  required = true,
   onChange,
 }: WorksheetSelectProps) => {
   const params = useParams<{ chatbotId: string }>()
@@ -39,12 +39,12 @@ export const WorksheetSelect = ({
 
   return (
     <SelectField
-      isRequired={isRequired}
       label={label}
       name={name}
       onValueChange={(value: string) => onChange?.(value)}
       options={worksheetOptions}
       placeholder="Please select"
+      required={required}
     />
   )
 }

@@ -14,7 +14,10 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { formatDate } from "@aha.chat/ui/lib/format"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontalIcon } from "lucide-react"
+import { MoreHorizontalIcon, PlusIcon } from "lucide-react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
@@ -26,6 +29,9 @@ type BroadcastsTableProps = {
 
 export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
+  const t = useTranslations()
+  const { chatbotId } = useParams<{ chatbotId: string }>()
+
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<BroadcastResource> | null>(null)
 
@@ -77,30 +83,28 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "rename" })}
-                >
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "resend" })}
-                >
-                  Resend
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
-        },
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "rename" })}
+              >
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "resend" })}
+              >
+                Resend
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
         size: 50,
         enableSorting: false,
         enableHiding: false,
@@ -125,7 +129,18 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} />
+        <DataTableToolbar table={table}>
+          <div className="flex justify-end">
+            <Button asChild size="sm">
+              <Link href={`/chatbots/${chatbotId}/broadcasts/create`}>
+                <PlusIcon />
+                {t("actions.createFeature", {
+                  feature: t("fields.broadcast.label"),
+                })}
+              </Link>
+            </Button>
+          </div>
+        </DataTableToolbar>
       </DataTable>
 
       <RenameBroadcastDialog

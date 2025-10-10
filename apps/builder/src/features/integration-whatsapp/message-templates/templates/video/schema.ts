@@ -3,7 +3,7 @@ import { buttonStepDefaultFn, buttonStepSchema } from "../button/schema"
 
 export const templateVideoSchema = z
   .object({
-    showHeader: z.boolean(),
+    hideHeader: z.boolean(),
     showFooter: z.boolean(),
     header: z.object({
       file: z
@@ -40,7 +40,7 @@ export type TemplateVideoSchema = z.infer<typeof templateVideoSchema>
 export const templateVideoDefaultValue = (
   countBtn = 0,
 ): TemplateVideoSchema => ({
-  showHeader: true,
+  hideHeader: true,
   showFooter: false,
   header: {
     file: null,

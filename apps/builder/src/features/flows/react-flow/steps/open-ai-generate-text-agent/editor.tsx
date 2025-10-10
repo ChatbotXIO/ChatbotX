@@ -46,7 +46,6 @@ export const OpenAIGenerateTextAgentEditor = (
 
       <InputNumberField
         defaultValue={250}
-        isRequired={false}
         label="Maximum number of output tokens"
         name={`${parentName}.maxTokens`}
       />

@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: Props) {
           src="//unpkg.com/react-scan/dist/auto.global.js"
         /> */}
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <UiProvider>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </UiProvider>

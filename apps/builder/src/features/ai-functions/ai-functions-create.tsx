@@ -82,7 +82,9 @@ export function AIFunctionsCreate({
             setIsOpen(false)
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         errorMapProps: {},

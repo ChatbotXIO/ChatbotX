@@ -14,7 +14,7 @@ import {
 } from "../schemas/create-contact-schema"
 
 export const createContactAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createContactSchema)
   .action(
     async ({

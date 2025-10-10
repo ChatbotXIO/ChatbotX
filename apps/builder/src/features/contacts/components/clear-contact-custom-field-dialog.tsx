@@ -51,7 +51,9 @@ export default function ClearContactCustomFieldDialog({
           setOpen(false)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {

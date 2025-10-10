@@ -9,7 +9,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const followConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

@@ -41,19 +41,26 @@ export async function listCustomFields(
           [sortItem.id]: sortItem.desc ? "desc" : "asc",
         }))
 
-        const [data, total] = await prisma.$transaction([
-          prisma.field.findMany({
-            skip: (input.page - 1) * input.perPage,
-            take: input.perPage,
+        return await prisma.$transaction(async (tx) => {
+          let pageCount = 1
+          const pagination: { skip?: number; take?: number } = {}
+
+          if (input.perPage) {
+            const count = await tx.field.count({ where })
+            pageCount = Math.ceil(count / input.perPage)
+
+            pagination.skip = (input.page ? input.page - 1 : 0) * input.perPage
+            pagination.take = input.perPage
+          }
+
+          const data = await prisma.field.findMany({
+            ...pagination,
             where,
             orderBy,
-          }),
-          prisma.field.count({ where }),
-        ])
+          })
 
-        const pageCount = Math.ceil(total / input.perPage)
-
-        return { data, pageCount }
+          return { data, pageCount }
+        })
       } catch (_err) {
         return { data: [], pageCount: 0 }
       }

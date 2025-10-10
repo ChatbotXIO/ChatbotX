@@ -12,7 +12,7 @@ import {
 } from "../schemas/update-flow-schema"
 
 export const updateDraftFlowVersionAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateDraftFlowVersionSchema)
   .action(
     async ({

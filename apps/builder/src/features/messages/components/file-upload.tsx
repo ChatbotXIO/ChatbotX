@@ -44,38 +44,35 @@ export const FileUploadPreview = ({
     setValue("files", filteredFiles, { shouldValidate: true })
   }
 
-  const thumbs = getValues("files").map((file: FileWithPreview) => {
-    return (
-      <div className="relative rounded-md border" key={file.name}>
-        <div className="max-w-36 overflow-hidden rounded-md">
-          {file.type.startsWith("image") ? (
-            <Image
-              alt="file"
-              className="h-16 w-auto"
-              height={64}
-              onLoad={() => {
-                URL.revokeObjectURL(file.preview)
-              }}
-              src={file.preview}
-            />
-          ) : (
-            <div className="truncate bg-white px-2 py-1 text-sm">
-              {file.name}
-            </div>
-          )}
-        </div>
-
-        <Button
-          className="-top-2 -right-2 absolute h-auto rounded-full bg-white p-0 px-0"
-          onClick={() => onRemoveChooseFile(file.name)}
-          type="button"
-          variant="ghost"
-        >
-          <XCircleIcon />
-        </Button>
+  const thumbs = getValues("files").map((file: FileWithPreview) => (
+    <div className="relative rounded-md border" key={file.name}>
+      <div className="max-w-36 overflow-hidden rounded-md">
+        {file.type.startsWith("image") ? (
+          <Image
+            alt="file"
+            className="h-16 w-auto"
+            height={64}
+            onLoad={() => {
+              URL.revokeObjectURL(file.preview)
+            }}
+            src={file.preview}
+            width={64}
+          />
+        ) : (
+          <div className="truncate bg-white px-2 py-1 text-sm">{file.name}</div>
+        )}
       </div>
-    )
-  })
+
+      <Button
+        className="-top-2 -right-2 absolute h-auto rounded-full bg-white p-0 px-0"
+        onClick={() => onRemoveChooseFile(file.name)}
+        type="button"
+        variant="ghost"
+      >
+        <XCircleIcon />
+      </Button>
+    </div>
+  ))
 
   // useEffect(() => {
   //   // Make sure to revoke the data uris to avoid memory leaks, will run on unmount

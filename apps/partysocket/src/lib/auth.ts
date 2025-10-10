@@ -13,13 +13,12 @@ export type Session = {
 }
 
 /** Check that the user exists, and isn't expired */
-export const isSessionValid = (session?: Session | null): boolean => {
-  return Boolean(
+export const isSessionValid = (session?: Session | null): boolean =>
+  Boolean(
     session &&
       (!session.session.expiresAt ||
         session.session.expiresAt > new Date().toISOString()),
   )
-}
 
 export const getAuthSession = async (
   proxiedRequest: Party.Request,

@@ -140,10 +140,8 @@ const ConversationListFooter: GridComponents["Footer"] = () => {
 const ConversationListList: GridComponents["List"] = ({
   children,
   ...props
-}) => {
-  return (
-    <div {...props} className="virtuoso-item-list flex flex-col gap-1">
-      {children}
-    </div>
-  )
-}
+}) => (
+  <div {...props} className="virtuoso-item-list flex flex-col gap-1">
+    {children}
+  </div>
+)

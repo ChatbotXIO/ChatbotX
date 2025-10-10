@@ -38,7 +38,7 @@ export function DeleteLogsDialog({
 }: DeleteLogsDialogProps) {
   const t = useTranslations()
 
-  const { execute, result, isPending } = useAction(
+  const { execute, isPending } = useAction(
     deleteLogAction.bind(null, chatbotId),
     {
       onSuccess: () => {
@@ -50,7 +50,9 @@ export function DeleteLogsDialog({
         onSuccess?.()
       },
       onError: ({ error }) => {
-        error.serverError && toast.error(result.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )

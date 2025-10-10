@@ -9,6 +9,6 @@ export const connectGeminiRequest = z.object({
 export type ConnectGeminiRequest = z.infer<typeof connectGeminiRequest>
 
 export const updateGeminiRequest = z.object({
-  aiAutoReply: z.boolean().optional(),
+  autoReply: z.boolean().optional(),
 })
 export type UpdateGeminiRequest = z.infer<typeof updateGeminiRequest>

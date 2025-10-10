@@ -27,11 +27,10 @@ export type Context<AO extends BaseAuthValue> = {
   queue?: ContextQueue
 }
 
-export const contextSchema = z.custom<Context<BaseAuthValue>>((data) => {
-  return (
+export const contextSchema = z.custom<Context<BaseAuthValue>>(
+  (data) =>
     typeof data === "object" &&
     data !== null &&
     "auth" in data &&
-    typeof data.auth === "object"
-  )
-})
+    typeof data.auth === "object",
+)

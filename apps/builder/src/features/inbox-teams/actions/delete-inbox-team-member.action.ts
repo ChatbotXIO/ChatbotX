@@ -11,7 +11,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteTeamMembersAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({

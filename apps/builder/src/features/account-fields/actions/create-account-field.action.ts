@@ -15,7 +15,7 @@ import {
 
 export const createAccountFieldAction = chatbotActionClient
   .inputSchema(createAccountFieldRequest)
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       parsedInput,

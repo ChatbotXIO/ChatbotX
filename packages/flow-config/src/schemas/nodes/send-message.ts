@@ -30,8 +30,11 @@ import {
   optInEmailStepSchema,
   optOutEmailStepSchema,
   removeContactTagStepSchema,
+  sendAudioStepSchema,
+  sendFileStepSchema,
   sendImageStepSchema,
   sendTextStepSchema,
+  sendVideoStepSchema,
   setCustomFieldStepSchema,
   unarchiveConversationStepSchema,
   unassignConversationStepSchema,
@@ -62,7 +65,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
   data: z.object({
     name: z.string().trim().min(1).max(255),
     isStartNode: z.boolean(),
-    inboxType: z.union([z.nativeEnum(InboxType), z.literal(OMNICHANNEL)]),
+    inboxType: z.union([z.enum(InboxType), z.literal(OMNICHANNEL)]),
     steps: z.array(
       z.union([
         addNotesStepSchema,
@@ -90,9 +93,11 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         addContactTagStepSchema,
         removeContactTagStepSchema,
         deleteContactStepSchema,
+        sendFileStepSchema,
         // sendCardStepSchema,
-        // sendVideoStepSchema,
-        // sendAudioStepSchema,
+        sendVideoStepSchema,
+        sendAudioStepSchema,
+        sendFileStepSchema,
         // sendCarouselStepSchema,
         // ...actionsStepSchema,
       ]),
@@ -104,17 +109,15 @@ export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
 export const sendMessageNodeDefaultFn = ({
   labelVersion,
   ...props
-}: NewNodeProps): SendMessageNodeSchema => {
-  return {
-    id: createId(),
-    type: NodeType.SendMessage,
-    measured: { width: 288, height: 100 },
-    ...props,
-    data: {
-      name: `Send Message #${labelVersion}`,
-      inboxType: OMNICHANNEL,
-      isStartNode: false,
-      steps: [],
-    },
-  }
-}
+}: NewNodeProps): SendMessageNodeSchema => ({
+  id: createId(),
+  type: NodeType.SendMessage,
+  measured: { width: 288, height: 100 },
+  ...props,
+  data: {
+    name: `Send Message #${labelVersion}`,
+    inboxType: OMNICHANNEL,
+    isStartNode: false,
+    steps: [],
+  },
+})

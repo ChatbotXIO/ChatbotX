@@ -47,7 +47,9 @@ export function CreateAutomatedResponseForm({
           router.push(`/chatbots/${chatbotId}/automated-responses`)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -143,7 +145,6 @@ export function CreateAutomatedResponseForm({
                   <MessageSquareMoreIcon />
                   <InputField
                     className="flex-1"
-                    isRequired={false}
                     label=""
                     name={`replies.${index}.message`}
                     placeholder="Type a message"

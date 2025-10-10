@@ -1,4 +1,7 @@
-import { CHAT_WIDGET_SOURCE_PREFIX } from "@aha.chat/database/types"
+import {
+  type IntegrationWebchatModel,
+  WEBCHAT_SOURCE_PREFIX,
+} from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
@@ -12,6 +15,7 @@ export type GuestSessionState = {
   // default state
   guestConversationId: string | null
   user: UserResource | null
+  config: IntegrationWebchatModel
 
   // messages
   messages: MessageResource[]
@@ -35,11 +39,12 @@ export type GuestSessionActions = {
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
 
-export const createGuestSessionStore = () => {
+export const createGuestSessionStore = (config: IntegrationWebchatModel) => {
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
     user: null,
+    config,
 
     // messages related state
     messages: [],
@@ -55,7 +60,7 @@ export const createGuestSessionStore = () => {
         const key = "x-conversation-id"
         let guestId = localStorage.getItem(key)
         if (!guestId) {
-          guestId = `${CHAT_WIDGET_SOURCE_PREFIX}${createId()}`
+          guestId = `${WEBCHAT_SOURCE_PREFIX}${createId()}`
           localStorage.setItem(key, guestId)
         }
         set({ guestConversationId: guestId })

@@ -4,22 +4,22 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "format": "ultracite format --unsafe",
+    "format": "ultracite fix --unsafe",
     "lint": "ultracite lint",
-    "clean": "pnpm store prune && pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf .turbo && pnpm -r exec rm -rf .next",
+    "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.0",
-    "@types/node": "^22.16.0",
-    "knip": "^5.63.0",
-    "lefthook": "^1.11.16",
-    "tsx": "^4.20.3",
-    "turbo": "^2.5.6",
-    "typescript": "5.8.3",
-    "ultracite": "5.2.2"
+    "@biomejs/biome": "^2.2.5",
+    "@types/node": "^24.7.1",
+    "knip": "^5.64.3",
+    "lefthook": "^1.13.6",
+    "tsx": "^4.20.6",
+    "turbo": "^2.5.8",
+    "typescript": "5.9.3",
+    "ultracite": "5.6.1"
   },
-  "packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef",
+  "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34",
   "engines": {
     "node": ">=22"
   },

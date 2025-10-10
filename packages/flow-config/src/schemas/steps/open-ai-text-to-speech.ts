@@ -17,12 +17,12 @@ export const voiceTypes: Record<string, string> = {
 const [fistVoiceType, ...otherVoiceTypes] = Object.keys(voiceTypes)
 
 export const openAITextToSpeechSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.OPENAI_TEXT_TO_SPEECH),
-  model: z.nativeEnum(OpenAIModel),
+  model: z.enum(OpenAIModel),
   userMessage: z.string(),
   voiceType: z.enum([fistVoiceType, ...otherVoiceTypes]),
-  outputCustomFieldId: z.string().cuid2(),
+  outputCustomFieldId: z.cuid2(),
 })
 
 export type OpenAITextToSpeechSchema = z.infer<typeof openAITextToSpeechSchema>

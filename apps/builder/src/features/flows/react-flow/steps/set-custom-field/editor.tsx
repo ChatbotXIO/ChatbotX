@@ -1,6 +1,9 @@
 "use client"
 
-import type { SetCustomFieldStepSchema } from "@aha.chat/flow-config"
+import {
+  type SetCustomFieldStepSchema,
+  setCustomFieldStepSchema,
+} from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -37,12 +40,12 @@ export const SetCustomFieldStepEditor = ({
   ]
 
   const customFieldForm = useForm<SetCustomFieldStepSchema>({
-    resolver: zodResolver(setCustomFieldStep.validator),
+    resolver: zodResolver(setCustomFieldStepSchema),
     defaultValues: defaultValue ?? setCustomFieldStep.defaultFn(),
   })
 
   function onSubmit(values: SetCustomFieldStepSchema) {
-    setValue(`${parentName}.customFieldId`, values.customFieldId)
+    setValue(`${parentName}.outputCFId`, values.outputCFId)
     setValue(`${parentName}.operation`, values.operation)
     setValue(`${parentName}.value`, values.value)
 
@@ -74,10 +77,10 @@ export const SetCustomFieldStepEditor = ({
               name="customFieldId"
             />
             <SelectField
-              isRequired={true}
               label={t("fields.operation.label")}
               name="operation"
               options={operations}
+              required
             />
             <InputField label={t("fields.value.label")} name="value" />
 

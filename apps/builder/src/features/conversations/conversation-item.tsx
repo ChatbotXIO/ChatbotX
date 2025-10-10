@@ -74,12 +74,13 @@ export default function ConversationItem({
       (lastMessage?.createdAt ?? new Date()),
   )
 
-  const contactFullName = useMemo(() => {
-    return conversation.contact?.fullName ?? ""
-  }, [conversation.contact])
+  const contactFullName = useMemo(
+    () => conversation.contact?.fullName ?? "",
+    [conversation.contact],
+  )
 
-  const contactAvatar = useMemo(() => {
-    return (
+  const contactAvatar = useMemo(
+    () => (
       <Avatar className="h-12 w-12">
         <AvatarImage
           alt={conversation.contact?.fullName}
@@ -90,8 +91,9 @@ export default function ConversationItem({
           {conversation.contact?.fullName.charAt(0)}
         </AvatarFallback>
       </Avatar>
-    )
-  }, [conversation.contact])
+    ),
+    [conversation.contact],
+  )
 
   return (
     <div className="w-full">

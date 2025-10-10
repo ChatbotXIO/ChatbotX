@@ -11,7 +11,7 @@ import {
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteSpreadsheetAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .schema(bulkUpdateIdsRequest)
   .action(
     async ({

@@ -192,6 +192,9 @@
     "automatedResponses": {
       "label": "Phản hồi tự động"
     },
+    "autoReply": {
+      "label": "Tự động trả lời"
+    },
     "broadcasts": {
       "label": "Phát sóng"
     },
@@ -817,7 +820,7 @@
     "showFooter": {
       "label": "Hiển thị chân trang"
     },
-    "showHeader": {
+    "hideHeader": {
       "label": "Hiển thị tiêu đề"
     },
     "conversationStarters": {
@@ -871,7 +874,7 @@
       "label": "Google Gemini",
       "description": "Trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn."
     },
-    "aiAutoReply": {
+    "autoReply": {
       "label": "AI tự động trả lời",
       "description": "Bật AI tự động trả lời để trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn."
     }

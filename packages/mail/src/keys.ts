@@ -1,8 +1,8 @@
 import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
 
-export const keys = () => {
-  return createEnv({
+export const keys = () =>
+  createEnv({
     server: {
       SMTP_SERVER: z.string().min(1),
     },
@@ -13,4 +13,3 @@ export const keys = () => {
       NEXT_PUBLIC_SMTP_FROM: process.env.NEXT_PUBLIC_SMTP_FROM,
     },
   })
-}

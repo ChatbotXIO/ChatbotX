@@ -1,0 +1,26 @@
+{
+  "name": "@aha.chat/integration-zalo",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@aha.chat/flow-config": "workspace:*",
+    "@aha.chat/logger": "workspace:*",
+    "@aha.chat/sdk": "workspace:*",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "cross-fetch": "^4.1.0",
+    "image-size": "^2.0.2",
+    "ky": "^1.11.0",
+    "remeda": "^2.32.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "typescript": "5.9.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas": "./src/schemas/*.ts"
+  }
+}

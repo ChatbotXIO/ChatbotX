@@ -1,0 +1,140 @@
+import {
+  type AttachmentEntity,
+  type Context,
+  guessFileTypeFromMimeType,
+} from "@aha.chat/sdk"
+import { createId } from "@paralleldrive/cuid2"
+import { fetch } from "cross-fetch"
+import imageSize from "image-size"
+import { ZALO_API_ENDPOINTS } from "../constants"
+import { handleZaloError, ZaloException } from "../libs/exception"
+import { ZaloHttpClient } from "../libs/http-client"
+import type { ZaloAuthValue } from "../schemas/definition"
+import type {
+  MessageAttachment,
+  UploadAttachmentResponse,
+  ZaloSendMessageRequest,
+  ZaloSendMessageResponse,
+} from "../schemas/webhook"
+
+export const sendMessage = (
+  auth: ZaloAuthValue,
+  payload: ZaloSendMessageRequest,
+): Promise<ZaloSendMessageResponse> =>
+  handleZaloError("Send message", async () => {
+    const client = ZaloHttpClient.createAuthenticatedClient(
+      auth.tokens.accessToken,
+    )
+
+    return await client.post<ZaloSendMessageResponse>(
+      ZALO_API_ENDPOINTS.OA.SEND_MESSAGE,
+      {
+        json: payload,
+      },
+    )
+  })
+
+export const getMessageAttachmentEntity = ({
+  ctx,
+  attachment,
+}: {
+  ctx: Context<ZaloAuthValue>
+  attachment: MessageAttachment
+}): Promise<AttachmentEntity | undefined> =>
+  handleZaloError("Get message attachment", async () => {
+    if (!attachment.payload.url) {
+      throw new ZaloException("No attachment URL found")
+    }
+
+    const response = await fetch(attachment.payload.url, {
+      headers: {
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+        "User-Agent": "Mozilla/5.0 (compatible; AhaChat/1.0)",
+      },
+    })
+
+    if (!response.ok) {
+      throw new ZaloException(`Failed to fetch attachment: ${response.status}`)
+    }
+
+    if (!response.body) {
+      throw new ZaloException("No response body received")
+    }
+
+    const originPath = `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`
+    const bytes = await response.arrayBuffer()
+    const mimeType = response.headers.get("content-type") ?? "image/png"
+    const fileType = guessFileTypeFromMimeType(mimeType)
+
+    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
+      ACL: "public-read",
+      ContentType: mimeType,
+    })
+
+    const imageProperties: {
+      width?: number
+      height?: number
+    } = {}
+
+    if (mimeType.startsWith("image/")) {
+      const arrayBytes = new Uint8Array(bytes)
+      const dimensions = imageSize(arrayBytes)
+      imageProperties.width = dimensions.width
+      imageProperties.height = dimensions.height
+    }
+
+    return {
+      sourceId: createId(),
+      originPath,
+      fileType,
+      mimeType,
+      size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
+      ...imageProperties,
+    }
+  })
+
+export const uploadAttachment = (
+  auth: ZaloAuthValue,
+  uploadType: "image" | "file",
+  url: string,
+): Promise<UploadAttachmentResponse> =>
+  handleZaloError("Upload attachment", async () => {
+    const response = await fetch(url)
+
+    if (!response.ok) {
+      throw new ZaloException(`Failed to fetch file: ${response.status}`)
+    }
+
+    const contentType = response.headers.get("content-type")
+    if (!contentType) {
+      throw new ZaloException("No content-type header received")
+    }
+
+    const buffer = await response.arrayBuffer()
+    const uint8 = new Uint8Array(buffer)
+
+    const form = new FormData()
+    form.append("file", new Blob([uint8], { type: contentType }))
+
+    const client = ZaloHttpClient.createAuthenticatedClient(
+      auth.tokens.accessToken,
+    )
+
+    const endpoint =
+      uploadType === "image"
+        ? ZALO_API_ENDPOINTS.OA.UPLOAD_IMAGE
+        : ZALO_API_ENDPOINTS.OA.UPLOAD_FILE
+
+    const result = await client.post<UploadAttachmentResponse>(endpoint, {
+      body: form,
+      headers: {
+        "Content-Type": undefined,
+      },
+    })
+
+    if (result.error && result.error !== 0) {
+      throw new ZaloException(result.message || "Zalo upload file failed")
+    }
+
+    return result
+  })

@@ -21,11 +21,12 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNodes, useReactFlow } from "@xyflow/react"
-import { deleteProperty, getProperty, setProperty } from "dot-prop"
+import { getProperty, setProperty } from "dot-prop"
 import { XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
+import { deleteProperty } from "@/lib/object-util"
 import { DynamicStepEditor } from "./steps"
 import { allButtonsConfig } from "./steps/button-config"
 import { useStepStore } from "./stores/step-store-provider"
@@ -203,7 +204,7 @@ export function ButtonEditorDialog() {
 
         break
       }
-      case ButtonType.OPEN_WEBSITE: {
+      case ButtonType.OpenWebsite: {
         setValue("steps", [openWebsiteStepDefaultFn()])
         break
       }
@@ -223,9 +224,9 @@ export function ButtonEditorDialog() {
     if (deleted) {
       // updateNodeData(activeNode.id, updatedCurrentNodeData.data)
       // onSave()
+      updateNodeData(activeNode.id, activeNode.data)
+      onSave()
     }
-    updateNodeData(activeNode.id, activeNode.data)
-    onSave()
     // removeOldEdge()
     // const arr = parentName.split(".")
     // const btnIndex = Number.parseInt(arr.pop() as string)
@@ -258,9 +259,7 @@ export function ButtonEditorDialog() {
 
   return data ? (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.updateTitle", { feature: t("fields.flow.label") })}
@@ -268,7 +267,7 @@ export function ButtonEditorDialog() {
           <DialogDescription />
         </DialogHeader>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
           <Form {...form}>
             <form className="flex w-full flex-col gap-3">
               <InputField label={t("fields.name.label")} name="label" />
@@ -292,7 +291,12 @@ export function ButtonEditorDialog() {
           </Form>
         </div>
         <DialogFooter>
-          <Button onClick={onDelete} size="sm" variant="destructive">
+          <Button
+            className="text-destructive"
+            onClick={onDelete}
+            size="sm"
+            variant="ghost"
+          >
             {t("actions.delete")}
           </Button>
           <Button disabled={!formState.isValid} onClick={onSave} size="sm">

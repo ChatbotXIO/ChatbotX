@@ -1,4 +1,4 @@
-import { CHAT_WIDGET_SOURCE_PREFIX, FileType } from "@aha.chat/database/types"
+import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { z } from "zod"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000
@@ -11,21 +11,16 @@ export const createMessageRequest = z
     z.object({
       files: z
         .array(
-          z.instanceof(File).refine(
-            (file) => {
-              return file.size <= MAX_FILE_SIZE
-            },
-            {
-              message: "Max image size is 5MB.",
-            },
-          ),
+          z.instanceof(File).refine((file) => file.size <= MAX_FILE_SIZE, {
+            message: "Max image size is 5MB.",
+          }),
         )
         .min(1),
     }),
   ])
   .and(
     z.object({
-      clientId: z.string().cuid2(),
+      clientId: z.cuid2(),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
@@ -38,25 +33,20 @@ export const createWebchatMessageRequest = z
     z.object({
       files: z
         .array(
-          z.instanceof(File).refine(
-            (file) => {
-              return file.size <= MAX_FILE_SIZE
-            },
-            {
-              message: "Max image size is 5MB.",
-            },
-          ),
+          z.instanceof(File).refine((file) => file.size <= MAX_FILE_SIZE, {
+            message: "Max image size is 5MB.",
+          }),
         )
         .min(1),
     }),
   ])
   .and(
     z.object({
-      clientId: z.string().cuid2(),
-      chatbotId: z.string().cuid2(),
+      clientId: z.cuid2(),
+      chatbotId: z.cuid2(),
       guestConversationId: z
         .string()
-        .refine((id) => id.startsWith(CHAT_WIDGET_SOURCE_PREFIX), {
+        .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {
           message: "Invalid guest conversation ID",
         }),
     }),
@@ -64,16 +54,3 @@ export const createWebchatMessageRequest = z
 export type CreateWebchatMessageRequest = z.infer<
   typeof createWebchatMessageRequest
 >
-
-export const guessFileTypeFromMimeType = (mimeType: string) => {
-  if (mimeType.startsWith("image/")) {
-    return FileType.IMAGE
-  }
-  if (mimeType.startsWith("video/")) {
-    return FileType.VIDEO
-  }
-  if (mimeType.startsWith("audio/")) {
-    return FileType.AUDIO
-  }
-  return FileType.DOCUMENT
-}

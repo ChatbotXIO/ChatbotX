@@ -103,10 +103,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
             description={t("automatedResponse.setting.description")}
             label={t("automatedResponse.setting.label")}
           >
-            <Switch
-              checked={integrationOpenAI.automatedResponse}
-              disabled={true}
-            />
+            <Switch checked={integrationOpenAI.autoReply} disabled={true} />
           </SettingRow>
 
           <SettingRow

@@ -1,6 +1,6 @@
 "use server"
 
-import { Gender, InboxType, prisma } from "@aha.chat/database"
+import { Gender, InboxType, IntegrationType, prisma } from "@aha.chat/database"
 import {
   ContentType,
   type ConversationModel,
@@ -12,21 +12,23 @@ import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import {
+  guessFileTypeFromMimeType,
+  type OutgoingMessageEntity,
+} from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
 import { revalidateTag } from "next/cache"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import { BaseException } from "@/lib/error"
+import { BaseException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
   type CreateWebchatMessageRequest,
   createWebchatMessageRequest,
-  guessFileTypeFromMimeType,
 } from "../schemas/create-message.schema"
 
 export const createWebchatMessageAction = actionClient
@@ -39,7 +41,7 @@ export const createWebchatMessageAction = actionClient
       const inbox = await prisma.inbox.findFirst({
         where: {
           chatbotId: parsedInput.chatbotId,
-          inboxType: InboxType.CHAT_WIDGET,
+          inboxType: InboxType.WEBCHAT,
         },
       })
       if (!inbox) {
@@ -70,7 +72,7 @@ export const createWebchatMessageAction = actionClient
               chatbotId: parsedInput.chatbotId,
               sourceId,
               email: parsedInput.guestConversationId,
-              source: "CHAT_WIDGET",
+              source: IntegrationType.WEBCHAT,
               gender: Gender.UNKNOWN,
               firstName: "Guest",
               lastName: randomString(10),
@@ -124,7 +126,7 @@ export const createWebchatMessageAction = actionClient
             messageType: MessageType.INCOMING,
             chatbotId: conversation.chatbotId,
             conversationId: conversation.id,
-            senderType: SenderType.USER,
+            senderType: SenderType.CONTACT,
             senderId: conversation.contactId,
             inboxId: conversation.inboxId,
             contentType: ContentType.TEXT,

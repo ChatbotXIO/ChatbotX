@@ -16,20 +16,18 @@ const VariableInput = memo(
     index: number
     parentName: string
     type: "header" | "body"
-  }) => {
-    return (
-      <div className="mt-2 flex w-full gap-2">
-        <Button variant="secondary">{`{{${index + 1}}}`}</Button>
-        <div className="flex-1">
-          <InputField
-            label={type === "body" ? "" : undefined}
-            name={`${parentName}.${type}.variables.${index}`}
-            placeholder="Type a message"
-          />
-        </div>
+  }) => (
+    <div className="mt-2 flex w-full gap-2">
+      <Button variant="secondary">{`{{${index + 1}}}`}</Button>
+      <div className="flex-1">
+        <InputField
+          label={type === "body" ? "" : undefined}
+          name={`${parentName}.${type}.variables.${index}`}
+          placeholder="Type a message"
+        />
       </div>
-    )
-  },
+    </div>
+  ),
 )
 
 const TemplateProductPartialComponent = (props: { parentName?: string }) => {

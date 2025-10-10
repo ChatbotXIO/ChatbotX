@@ -30,6 +30,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   runtime: "nodejs",
   matcher: [
-    "/((?!api|webchat|signin|integrations|pricing|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
+    "/((?!api|webchat|signin|integrations|zalo_verifier|pricing|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
   ],
 }

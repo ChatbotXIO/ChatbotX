@@ -6,16 +6,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import { useTranslations } from "next-intl"
 import type { MenuItem } from "../nodes/types"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
-  const t = useTranslations()
-
   return (
     <div className="flex gap-2">
       <menuItem.icon size={16} />
-      {t(menuItem.label)}
+      {menuItem.label}
     </div>
   )
 }
@@ -29,8 +26,8 @@ export default function RecursiveDropdownMenu({
 }) {
   return (
     <>
-      {data.map((menuItem: MenuItem, index: number) => {
-        return menuItem.children && menuItem.children.length > 0 ? (
+      {data.map((menuItem: MenuItem, index: number) =>
+        menuItem.children && menuItem.children.length > 0 ? (
           <DropdownMenuSub key={menuItem.stepType ?? index}>
             <DropdownMenuSubTrigger>
               <MenuRow menuItem={menuItem} />
@@ -52,8 +49,8 @@ export default function RecursiveDropdownMenu({
           >
             <MenuRow menuItem={menuItem} />
           </DropdownMenuItem>
-        )
-      })}
+        ),
+      )}
     </>
   )
 }

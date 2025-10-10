@@ -16,19 +16,17 @@ const VariableInput = memo(
     parentName: string
     index: number
     type: "header" | "body"
-  }) => {
-    return (
-      <div className="mt-2 flex w-full gap-2">
-        <Button variant="secondary">{`{{${index + 1}}}`}</Button>
-        <div className="flex-1">
-          <InputField
-            name={`${parentName}.${type}.variables.${index}`}
-            placeholder="Type a message"
-          />
-        </div>
+  }) => (
+    <div className="mt-2 flex w-full gap-2">
+      <Button variant="secondary">{`{{${index + 1}}}`}</Button>
+      <div className="flex-1">
+        <InputField
+          name={`${parentName}.${type}.variables.${index}`}
+          placeholder="Type a message"
+        />
       </div>
-    )
-  },
+    </div>
+  ),
 )
 
 type TemplateTextPartialComponentProps = {
@@ -53,7 +51,7 @@ const TemplateTextPartialComponent = (
   })
   const _showHeader = useWatch({
     control,
-    name: `${parentName}.showHeader`,
+    name: `${parentName}.hideHeader`,
   })
   const _showFooter = useWatch({
     control,
@@ -62,7 +60,7 @@ const TemplateTextPartialComponent = (
 
   const _handleHeaderChange = useCallback(
     (value: boolean) => {
-      setValue(`${parentName}.showHeader`, value, {
+      setValue(`${parentName}.hideHeader`, value, {
         shouldValidate: true,
       })
     },
@@ -83,11 +81,11 @@ const TemplateTextPartialComponent = (
       <div className="flex gap-4">
         <CheckboxGroupField
           label={t("whatsapp.templateHeader.label")}
-          name={`${parentName}.showHeader`}
+          name={`${parentName}.hideHeader`}
           options={[
             {
               label: "Show header",
-              value: "showHeader",
+              value: "hideHeader",
             },
           ]}
         />

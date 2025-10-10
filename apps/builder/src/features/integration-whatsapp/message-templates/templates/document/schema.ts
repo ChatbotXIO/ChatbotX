@@ -3,7 +3,7 @@ import { buttonStepSchema } from "../button/schema"
 
 export const templateDocumentSchema = z
   .object({
-    showHeader: z.boolean(),
+    hideHeader: z.boolean(),
     showFooter: z.boolean(),
     header: z.object({
       file: z
@@ -39,7 +39,7 @@ export const templateDocumentSchema = z
 export type TemplateDocumentSchema = z.infer<typeof templateDocumentSchema>
 
 export const templateDocumentDefaultValue = (): TemplateDocumentSchema => ({
-  showHeader: true,
+  hideHeader: true,
   showFooter: false,
   header: {
     file: null,

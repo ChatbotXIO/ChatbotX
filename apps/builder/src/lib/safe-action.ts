@@ -6,7 +6,7 @@ import {
 } from "next-safe-action"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth"
-import { BaseException } from "./error"
+import { BaseException } from "./errors/exception"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {

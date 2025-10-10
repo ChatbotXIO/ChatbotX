@@ -11,7 +11,7 @@ import { FlowException } from "../schemas/exception"
 import { publishFlowSchema } from "../schemas/update-flow-schema"
 
 export const publishFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

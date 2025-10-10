@@ -37,5 +37,3 @@ LoginMagicLinkEmail.PreviewProps = {
   name: "Whoami",
   url: "https://ahachat.ai",
 } as LoginMagicLinkEmailProps
-
-export default LoginMagicLinkEmail

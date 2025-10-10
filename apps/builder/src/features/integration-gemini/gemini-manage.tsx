@@ -48,16 +48,16 @@ export const GeminiAIManage = (props: GeminiAIManageProps) => {
 
       {integrationGemini?.auth && (
         <SettingRow
-          description={t("gemini.aiAutoReply.description")}
-          label={t("gemini.aiAutoReply.label")}
+          description={t("gemini.autoReply.description")}
+          label={t("gemini.autoReply.label")}
         >
           <div className="flex gap-2">
             <Switch
-              checked={integrationGemini.aiAutoReply}
+              checked={integrationGemini.autoReply}
               disabled={onPendingGemini}
-              onCheckedChange={(aiAutoReply) => {
+              onCheckedChange={(autoReply) => {
                 onChangeGemini({
-                  aiAutoReply,
+                  autoReply,
                 })
               }}
             />

@@ -13,7 +13,7 @@ import {
 } from "../schemas/remove-contact-tag.request"
 
 export const removeContactTagAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(removeContactTagRequest)
   .action(
     async ({

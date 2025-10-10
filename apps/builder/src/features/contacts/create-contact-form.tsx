@@ -40,7 +40,9 @@ export function CreateContactForm({
             onSubmmited?.()
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
@@ -82,21 +84,18 @@ export function CreateContactForm({
         />
 
         <InputField
-          isRequired={false}
           label={t("fields.email.label")}
           name="email"
           placeholder="email@aha.chat"
         />
 
         <InputField
-          isRequired={false}
           label={t("fields.firstName.label")}
           name="firstName"
           placeholder={t("fields.firstName.placeholder")}
         />
 
         <InputField
-          isRequired={false}
           label={t("fields.lastName.label")}
           name="lastName"
           placeholder={t("fields.lastName.placeholder")}
@@ -104,7 +103,6 @@ export function CreateContactForm({
 
         <SelectField
           defaultValue={Gender.UNKNOWN}
-          isRequired={false}
           label={t("fields.gender.label")}
           name="gender"
           options={genderLabels}

@@ -16,7 +16,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useForm, useFormContext } from "react-hook-form"
-import { WhatsappFlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
 import {
   ButtonActionType,
   type ButtonStepSchema,
@@ -45,8 +44,8 @@ export function EditButtonDialog({
     mode: "onChange",
   })
 
-  const buttonOptions = useMemo(() => {
-    return [
+  const buttonOptions = useMemo(
+    () => [
       { label: t("fields.url.label"), value: ButtonActionType.Url },
       {
         label: t("fields.quickReply.label"),
@@ -60,8 +59,9 @@ export function EditButtonDialog({
         label: t("fields.whatsappFlow.label"),
         value: ButtonActionType.Flow,
       },
-    ]
-  }, [t])
+    ],
+    [t],
+  )
 
   const { watch, formState, handleSubmit } = form
   const type = watch("type")
@@ -73,9 +73,7 @@ export function EditButtonDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.updateTitle", { feature: t("fields.button.label") })}
@@ -99,12 +97,6 @@ export function EditButtonDialog({
               <InputField
                 label={t("fields.phoneNumber.label")}
                 name="phone_number"
-              />
-            )}
-            {type === ButtonActionType.Flow && (
-              <WhatsappFlowSelect
-                label={t("fields.whatsappFlow.label")}
-                name="flow_id"
               />
             )}
             <DialogFooter>

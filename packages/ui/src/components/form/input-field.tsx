@@ -11,6 +11,7 @@ type InputFieldProps<T extends FieldValues> = {
   defaultValue?: string
   disabled?: boolean
   className?: string
+  formItemClassName?: string
   type?:
     | "text"
     | "password"
@@ -29,6 +30,7 @@ export function InputField<T extends FieldValues>({
   placeholder,
   description,
   type = "text",
+  formItemClassName,
   ...props
 }: InputFieldProps<T>) {
   return (
@@ -37,6 +39,7 @@ export function InputField<T extends FieldValues>({
       isRequired={isRequired}
       label={label}
       name={name}
+      formItemClassName={formItemClassName}
     >
       {(field) => (
         <Input placeholder={placeholder} type={type} {...props} {...field} />

@@ -9,7 +9,7 @@ import { callAPI } from "@/lib/swr"
 type SpreadsheetSelectProps = {
   name: string
   label?: ReactNode | string
-  isRequired?: boolean
+  required?: boolean
   allowCreate?: boolean
   onChange?: () => void
 }
@@ -17,7 +17,7 @@ type SpreadsheetSelectProps = {
 export const SpreadsheetSelect = ({
   name,
   // label = "Select Spreadsheet",
-  isRequired = true,
+  required = true,
   // allowCreate = true,
 }: SpreadsheetSelectProps) => {
   const params = useParams<{ chatbotId: string }>()
@@ -32,11 +32,11 @@ export const SpreadsheetSelect = ({
 
   return (
     <SelectField
-      isRequired={isRequired}
       label="Spreadsheet"
       name={name}
       options={spreadsheetOptions}
       placeholder="Please select"
+      required={required}
     />
 
     // <FormItem className="w-full">

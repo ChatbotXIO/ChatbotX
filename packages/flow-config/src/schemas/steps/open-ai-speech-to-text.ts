@@ -3,10 +3,10 @@ import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const openAISpeechToTextSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.literal(StepType.OPENAI_SPEECH_TO_TEXT),
-  inputCustomFieldId: z.string().cuid2(),
-  ouputCustomFieldId: z.string().cuid2(),
+  inputCustomFieldId: z.cuid2(),
+  ouputCustomFieldId: z.cuid2(),
 })
 export type OpenAISpeechToTextSchema = z.infer<typeof openAISpeechToTextSchema>
 
