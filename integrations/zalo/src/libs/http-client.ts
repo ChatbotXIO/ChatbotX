@@ -1,4 +1,5 @@
 import ky, { type KyInstance, type Options } from "ky"
+import { ZALO_API_BASE_URL } from "../constants"
 import { ZaloException } from "../libs/exception"
 import { logger } from "../libs/logger"
 
@@ -24,7 +25,7 @@ export class ZaloHttpClient {
     this.accessToken = accessToken
 
     this.client = ky.create({
-      prefixUrl: "https://openapi.zalo.me",
+      prefixUrl: ZALO_API_BASE_URL,
       timeout,
       retry: retries,
       headers: {
@@ -90,43 +91,32 @@ export class ZaloHttpClient {
     }
   }
 
-  get<T>(url: string, options: Options = {}): Promise<T> {
-    const mergedOptions: Options = {
+  private mergeOptions(options: Options): Options {
+    return {
       ...options,
       headers: {
         ...options.headers,
         ...(this.accessToken && { access_token: this.accessToken }),
       },
     }
+  }
 
-    const responsePromise = this.client.get(url, mergedOptions)
-    return this.handleResponse<T>(responsePromise)
+  get<T>(url: string, options: Options = {}): Promise<T> {
+    return this.handleResponse<T>(
+      this.client.get(url, this.mergeOptions(options)),
+    )
   }
 
   post<T>(url: string, options: Options = {}): Promise<T> {
-    const mergedOptions: Options = {
-      ...options,
-      headers: {
-        ...options.headers,
-        ...(this.accessToken && { access_token: this.accessToken }),
-      },
-    }
-
-    const responsePromise = this.client.post(url, mergedOptions)
-    return this.handleResponse<T>(responsePromise)
+    return this.handleResponse<T>(
+      this.client.post(url, this.mergeOptions(options)),
+    )
   }
 
   delete<T>(url: string, options: Options = {}): Promise<T> {
-    const mergedOptions: Options = {
-      ...options,
-      headers: {
-        ...options.headers,
-        ...(this.accessToken && { access_token: this.accessToken }),
-      },
-    }
-
-    const responsePromise = this.client.delete(url, mergedOptions)
-    return this.handleResponse<T>(responsePromise)
+    return this.handleResponse<T>(
+      this.client.delete(url, this.mergeOptions(options)),
+    )
   }
 
   static createOAuthClient(

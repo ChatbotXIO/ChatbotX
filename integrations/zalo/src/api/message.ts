@@ -1,7 +1,8 @@
 import { type AttachmentEntity, type Context, FileType } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
-import { ZaloException } from "../exceptions"
+import { ZALO_API_ENDPOINTS } from "../constants"
+import { handleZaloError, ZaloException } from "../libs/exception"
 import { ZaloHttpClient } from "../libs/http-client"
 import type { ZaloAuthValue } from "../schemas/definition"
 import type {
@@ -11,38 +12,35 @@ import type {
   ZaloSendMessageResponse,
 } from "../schemas/webhook"
 
-export const sendMessage = async (
+export const sendMessage = (
   auth: ZaloAuthValue,
   payload: ZaloSendMessageRequest,
-): Promise<ZaloSendMessageResponse> => {
-  try {
+): Promise<ZaloSendMessageResponse> =>
+  handleZaloError("Send message", async () => {
     const client = ZaloHttpClient.createAuthenticatedClient(
       auth.tokens.accessToken,
     )
 
-    return await client.post<ZaloSendMessageResponse>("v3.0/oa/message/cs", {
-      json: payload,
-    })
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred"
+    return await client.post<ZaloSendMessageResponse>(
+      ZALO_API_ENDPOINTS.OA.SEND_MESSAGE,
+      {
+        json: payload,
+      },
+    )
+  })
 
-    throw new ZaloException(`Zalo send message failed: ${errorMessage}`)
-  }
-}
-
-export const getMessageAttachmentEntity = async ({
+export const getMessageAttachmentEntity = ({
   ctx,
   attachment,
 }: {
   ctx: Context<ZaloAuthValue>
   attachment: MessageAttachment
-}): Promise<AttachmentEntity | undefined> => {
-  if (!attachment.payload.url) {
-    throw new ZaloException("No attachment URL found")
-  }
+}): Promise<AttachmentEntity | undefined> =>
+  handleZaloError("Get message attachment", async () => {
+    if (!attachment.payload.url) {
+      throw new ZaloException("No attachment URL found")
+    }
 
-  try {
     const response = await fetch(attachment.payload.url, {
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
@@ -90,13 +88,7 @@ export const getMessageAttachmentEntity = async ({
       size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
       ...imageProperties,
     }
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred"
-
-    throw new ZaloException(`Get message attachment failed: ${errorMessage}`)
-  }
-}
+  })
 
 export const guessFileTypeFromMimeType = (attachmentType: string) => {
   switch (attachmentType) {
@@ -108,12 +100,12 @@ export const guessFileTypeFromMimeType = (attachmentType: string) => {
   }
 }
 
-export const uploadAttachment = async (
+export const uploadAttachment = (
   auth: ZaloAuthValue,
   uploadType: "image" | "file",
   url: string,
-): Promise<UploadAttachmentResponse> => {
-  try {
+): Promise<UploadAttachmentResponse> =>
+  handleZaloError("Upload attachment", async () => {
     const response = await fetch(url)
 
     if (!response.ok) {
@@ -135,29 +127,21 @@ export const uploadAttachment = async (
       auth.tokens.accessToken,
     )
 
-    const result = await client.post<UploadAttachmentResponse>(
-      `v2.0/oa/upload/${uploadType}`,
-      {
-        body: form,
-        headers: {
-          "Content-Type": undefined,
-        },
+    const endpoint =
+      uploadType === "image"
+        ? ZALO_API_ENDPOINTS.OA.UPLOAD_IMAGE
+        : ZALO_API_ENDPOINTS.OA.UPLOAD_FILE
+
+    const result = await client.post<UploadAttachmentResponse>(endpoint, {
+      body: form,
+      headers: {
+        "Content-Type": undefined,
       },
-    )
+    })
 
     if (result.error && result.error !== 0) {
       throw new ZaloException(result.message || "Zalo upload file failed")
     }
 
     return result
-  } catch (error) {
-    if (error instanceof ZaloException) {
-      throw error
-    }
-
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred"
-
-    throw new ZaloException(`Upload attachment failed: ${errorMessage}`)
-  }
-}
+  })

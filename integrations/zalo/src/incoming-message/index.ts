@@ -7,7 +7,7 @@ import {
   MessageType,
 } from "@aha.chat/sdk"
 import { getMessageAttachmentEntity } from "../api/message"
-import { ZaloException } from "../exceptions"
+import { ZaloException } from "../libs/exception"
 import { logger } from "../libs/logger"
 import type { ZaloAuthValue } from "../schemas/definition"
 import type { ZaloWebhookEvent } from "../schemas/webhook"
@@ -21,21 +21,27 @@ const getMessageAttachments = async (
   }
 
   try {
-    const attachments: AttachmentEntity[] = []
-    for (const attachment of message.attachments) {
-      if (attachment.payload.url) {
-        const messageAttachment = await getMessageAttachmentEntity({
+    const attachmentPromises = message.attachments
+      .filter((attachment) => attachment.payload.url)
+      .map((attachment) =>
+        getMessageAttachmentEntity({
           ctx,
           attachment,
-        })
-        if (messageAttachment) {
-          attachments.push(messageAttachment)
-        }
-      }
-    }
-    return attachments
-  } catch (_error) {
-    logger.error("Error getting message attachments", _error)
+        }),
+      )
+
+    const results = await Promise.allSettled(attachmentPromises)
+
+    return results
+      .filter(
+        (
+          result,
+        ): result is PromiseFulfilledResult<AttachmentEntity | undefined> =>
+          result.status === "fulfilled" && result.value !== undefined,
+      )
+      .map((result) => result.value as AttachmentEntity)
+  } catch (error) {
+    logger.error("Error getting message attachments", error)
     return []
   }
 }

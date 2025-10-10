@@ -7,15 +7,23 @@ export async function* convertFlowStepFile(
   auth: ZaloAuthValue,
   payload: SendFileStepSchema,
 ): AsyncGenerator<MessageTemplate> {
+  if (!payload.url?.trim()) {
+    throw new Error("File URL is required")
+  }
+
   const {
     data: { token },
   } = await uploadAttachment(auth, "file", payload.url)
+
+  if (!token) {
+    throw new Error("Failed to upload file: No token received")
+  }
 
   yield {
     attachment: {
       type: "file",
       payload: {
-        token: token as string,
+        token,
       },
     },
   }

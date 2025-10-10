@@ -1,7 +1,5 @@
 import z from "zod"
 
-export const ZALO_MESSAGE_METADATA = "SENT_FROM_AHACHATAI"
-
 export const recipient = z.object({
   user_id: z.string().min(1),
 })

@@ -93,8 +93,8 @@ const buildMessagePayload = (
 ): ZaloSendMessageRequest => {
   const recipientId = conversation.contact?.sourceId
 
-  if (!recipientId) {
-    throw new Error("Missing recipient ID in conversation")
+  if (!recipientId?.trim()) {
+    throw new Error("Recipient ID is required and cannot be empty")
   }
 
   return {

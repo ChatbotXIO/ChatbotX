@@ -11,9 +11,18 @@ export async function* convertFlowStepImage(
   payload: SendImageStepSchema,
 ): AsyncGenerator<MessageTemplate> {
   try {
+    if (!payload.url?.trim()) {
+      throw new Error("Image URL is required")
+    }
+
     const {
       data: { attachment_id },
     } = await uploadAttachment(auth, "image", payload.url)
+
+    if (!attachment_id) {
+      throw new Error("Failed to upload image: No attachment ID received")
+    }
+
     const buttons = await convertZaloButtons(flowVersionId, payload.buttons)
     yield {
       attachment: {
@@ -32,5 +41,6 @@ export async function* convertFlowStepImage(
     }
   } catch (error) {
     logger.error("Error uploading media:", JSON.stringify(error))
+    throw error
   }
 }
