@@ -17,16 +17,14 @@ export const getWorksheetSearchParams = createSearchParamsCache({
   perPage: parseAsInteger,
   spreadsheetId: parseAsString,
 })
+export type GetWorksheetSchema = Awaited<
+  ReturnType<typeof getWorksheetSearchParams.parse>
+> & { chatbotId: string }
 
 export const getWorksheetHeaderSearchParams = createSearchParamsCache({
   spreadsheetId: parseAsString,
   sheetName: parseAsString,
 })
-
-export type GetWorksheetSchema = Awaited<
-  ReturnType<typeof getWorksheetSearchParams.parse>
-> & { chatbotId: string }
-
 export type GetWorksheetHeaderSchema = Awaited<
   ReturnType<typeof getWorksheetHeaderSearchParams.parse>
 > & { chatbotId: string }

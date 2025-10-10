@@ -16,9 +16,6 @@ export const getSpreadSheets = async (
   data: SpreadsheetResource[]
   pageCount: number
 }> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
-
   let pageCount = 1
   const pagination: { skip?: number; take?: number } = {}
   if (input.perPage) {
