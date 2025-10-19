@@ -19,11 +19,19 @@ export const updateGeminiAction = chatbotActionClient
       parsedInput: UpdateGeminiRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationGemini = await prisma.integrationGemini.findFirstOrThrow(
-        {
-          where: { chatbotId },
-        },
-      )
+      // Check if integration exists, if not create it
+      let integrationGemini = await prisma.integrationGemini.findFirst({
+        where: { chatbotId },
+      })
+
+      if (!integrationGemini) {
+        integrationGemini = await prisma.integrationGemini.create({
+          data: {
+            chatbotId,
+            autoReply: false,
+          },
+        })
+      }
 
       await prisma.integrationGemini.update({
         where: { id: integrationGemini.id },

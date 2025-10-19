@@ -46,6 +46,10 @@ export function FlowEditToolbar({
       onSuccess: () => {
         toast.success("A new version has been published")
       },
+      onError: ({ error }) => {
+        console.error("Publish error:", error)
+        toast.error(error.serverError || "Failed to publish flow")
+      },
     },
   )
 
@@ -53,13 +57,15 @@ export function FlowEditToolbar({
     setIsValidating(true)
 
     // validate nodes & edges
-    const { success } = updateFlowVersionSchema.safeParse({
+    const result = updateFlowVersionSchema.safeParse({
       nodes,
       edges,
     })
-    if (success) {
+
+    if (result.success) {
       executePublish()
     } else {
+      console.error("Validation error:", result.error)
       toast.error("Some configurations are incomplete")
     }
     setIsValidating(false)

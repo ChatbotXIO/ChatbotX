@@ -22,13 +22,21 @@ export const connectGeminiAction = chatbotActionClient
       parsedInput: ConnectGeminiRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationGemini = await prisma.integrationGemini.findFirstOrThrow(
-        {
-          where: {
-            chatbotId,
-          },
+      // Check if integration exists, if not create it
+      let integrationGemini = await prisma.integrationGemini.findFirst({
+        where: {
+          chatbotId,
         },
-      )
+      })
+
+      if (!integrationGemini) {
+        integrationGemini = await prisma.integrationGemini.create({
+          data: {
+            chatbotId,
+            autoReply: false,
+          },
+        })
+      }
 
       if (!(await verifyGeminiApiKey(parsedInput.apiKey))) {
         return returnValidationErrors(connectGeminiRequest, {

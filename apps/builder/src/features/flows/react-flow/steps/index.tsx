@@ -1,22 +1,27 @@
 import { StepType } from "@aha.chat/flow-config"
 import type { JSX } from "react"
 import type { ZodTypeAny } from "zod"
+import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 import { addContactTagStep } from "./add-contact-tag"
 import { addNotesStep } from "./add-notes"
 import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
 import { blockContactStep } from "./block-contact"
+import { claudeGenerateTextStep } from "./claude-generate-text"
 import { clearCustomFieldStep } from "./clear-custom-field"
 import { countCharactersStep } from "./count-characters"
+import { deepseekGenerateTextStep } from "./deepseek-generate-text"
 import { deleteContactStep } from "./delete-contact"
 import { disableBotStep } from "./disable-bot"
 import { enableBotStep } from "./enable-bot"
 import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
+import { geminiGenerateTextStep } from "./gemini-generate-text"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
 import { markEmailVerifiedStep } from "./mark-email-verified"
+import { openAIGenerateTextStep } from "./open-ai-generate-text"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
@@ -34,6 +39,7 @@ import { unfollowConversationStep } from "./unfollow-conversation"
 
 type StepEditorProps = {
   parentName: string
+  flowVersion: FlowVersionResource
 }
 
 export type DefaultFnProps = {
@@ -81,15 +87,20 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.UNARCHIVE_CONVERSATION]: unarchiveConversationStep,
   [StepType.BLOCK_CONTACT]: blockContactStep,
   [StepType.OPENAI_ACTIONS]: undefined,
-  [StepType.OPENAI_GENERATE_TEXT]: undefined,
+  [StepType.OPENAI_GENERATE_TEXT]: openAIGenerateTextStep,
   [StepType.OPENAI_GENERATE_TEXT_AGENT]: undefined,
-  [StepType.OPENAI_GENERATE_TEXT_ADVANCED]: undefined,
   [StepType.OPENAI_GENERATE_TEXT_ASSISTANT]: undefined,
   [StepType.OPENAI_GENERATE_IMAGE]: undefined,
   [StepType.OPENAI_ANALYZE_IMAGE]: undefined,
   [StepType.OPENAI_SPEECH_TO_TEXT]: undefined,
   [StepType.OPENAI_TEXT_TO_SPEECH]: undefined,
   [StepType.OPENAI_DELETE_MESSAGE_HISTORY]: undefined,
+  [StepType.GEMINI_ACTIONS]: undefined,
+  [StepType.GEMINI_GENERATE_TEXT]: geminiGenerateTextStep,
+  [StepType.CLAUDE_ACTIONS]: undefined,
+  [StepType.CLAUDE_GENERATE_TEXT]: claudeGenerateTextStep,
+  [StepType.DEEPSEEK_ACTIONS]: undefined,
+  [StepType.DEEPSEEK_GENERATE_TEXT]: deepseekGenerateTextStep,
   [StepType.EMAIL_ACTIONS]: undefined,
   [StepType.MARK_EMAIL_VERIFIED]: markEmailVerifiedStep,
   [StepType.OPT_IN_EMAIL]: optInEmailStep,
@@ -123,14 +134,18 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
 export function DynamicStepEditor({
   type,
   parentName,
+  flowVersion,
   ...props
 }: {
   type: StepType
   parentName: string
+  flowVersion: FlowVersionResource
 }) {
   const Element = allSteps[type]?.editor
 
-  return Element ? <Element parentName={parentName} {...props} /> : null
+  return Element ? (
+    <Element flowVersion={flowVersion} parentName={parentName} {...props} />
+  ) : null
 }
 
 export function DynamicStepViewer({

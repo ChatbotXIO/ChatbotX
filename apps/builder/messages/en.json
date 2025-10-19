@@ -343,6 +343,12 @@
     "openai": {
       "label": "OpenAI"
     },
+    "claude": {
+      "label": "Claude"
+    },
+    "deepseek": {
+      "label": "Deepseek"
+    },
     "prompt": {
       "label": "Prompt"
     },
@@ -418,6 +424,22 @@
     },
     "maxTokens": {
       "label": "Max Tokens"
+    },
+    "rememberConversation": {
+      "label": "Remember Conversation"
+    },
+    "placeholders": {
+      "enterNumber": "Enter number",
+      "selectTrueFalse": "Select true/false",
+      "enterText": "Enter text",
+      "selectTools": "Select tools...",
+      "loading": "Loading...",
+      "temperatureHint": "0.4",
+      "maxTokensHint": "250",
+      "selectModelOpenAI": "Select OpenAI model",
+      "selectModelClaude": "Select Claude model",
+      "selectModelGemini": "Select Gemini model",
+      "selectModelDeepseek": "Select Deepseek model"
     },
     "format": {
       "label": "Format"
@@ -584,7 +606,12 @@
     "getEmbedCode": "Get Embed Code",
     "back": "Back",
     "contine": "Contine",
-    "testNow": "Test Now"
+    "testNow": "Test Now",
+    "openAIActions": "OpenAI",
+    "geminiActions": "Gemini",
+    "claudeActions": "Claude",
+    "deepseekActions": "Deepseek",
+    "generateText": "Generate Text"
   },
   "dialog": {
     "createTitle": "Create {feature}",
@@ -679,7 +706,11 @@
       "countCharacters": "Count Characters",
       "openAIGenerateImage": "OpenAI Generate Image",
       "openAIGenerateTextAgent": "OpenAI Generate Text Agent",
-      "openAIDeleteMessageHistory": "OpenAI Delete Message History"
+      "openAIDeleteMessageHistory": "OpenAI Delete Message History",
+      "openAIGenerateText": "OpenAI Generate Text",
+      "geminiGenerateText": "Gemini Generate Text",
+      "claudeGenerateText": "Claude Generate Text",
+      "deepseekGenerateText": "Deepseek Generate Text"
     },
     "button": {
       "label": "Button Label"

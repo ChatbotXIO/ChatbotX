@@ -4,10 +4,12 @@ import {
   BellOffIcon,
   BellRingIcon,
   BotIcon,
+  BrainIcon,
   CalculatorIcon,
   CircleCheckIcon,
   CodeIcon,
   CogIcon,
+  CpuIcon,
   CreditCardIcon,
   ImageIcon,
   MailIcon,
@@ -261,6 +263,54 @@ export const sendMessageEditorMenus = (
             //           icon: LogsIcon,
             //           stepType: StepType.AddMessengerRichmenu,
             //         },
+          ],
+        },
+        {
+          label: t("actions.openAIActions"),
+          icon: BotIcon,
+          stepType: null,
+          children: [
+            {
+              label: t("actions.generateText"),
+              icon: TextIcon,
+              stepType: StepType.OPENAI_GENERATE_TEXT,
+            },
+          ],
+        },
+        {
+          label: t("actions.geminiActions"),
+          icon: BrainIcon,
+          stepType: null,
+          children: [
+            {
+              label: t("actions.generateText"),
+              icon: TextIcon,
+              stepType: StepType.GEMINI_GENERATE_TEXT,
+            },
+          ],
+        },
+        {
+          label: t("actions.claudeActions"),
+          icon: CpuIcon,
+          stepType: null,
+          children: [
+            {
+              label: t("actions.generateText"),
+              icon: TextIcon,
+              stepType: StepType.CLAUDE_GENERATE_TEXT,
+            },
+          ],
+        },
+        {
+          label: t("actions.deepseekActions"),
+          icon: ZapIcon,
+          stepType: null,
+          children: [
+            {
+              label: t("actions.generateText"),
+              icon: TextIcon,
+              stepType: StepType.DEEPSEEK_GENERATE_TEXT,
+            },
           ],
         },
         //     {

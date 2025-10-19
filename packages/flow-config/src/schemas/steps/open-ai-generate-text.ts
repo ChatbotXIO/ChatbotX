@@ -1,25 +1,30 @@
-import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { OpenAIModel } from "./open-ai"
+import { openAIDefaultFn, openAISchema } from "./open-ai"
 import { StepType } from "./step-action"
 
-export const openAIGenerateTextSchema = z.object({
-  id: z.cuid2(),
+export const openAIGenerateTextSchema = openAISchema.extend({
   stepType: z.literal(StepType.OPENAI_GENERATE_TEXT),
-  model: z.enum(OpenAIModel),
   prompt: z.string().optional(),
-  userMessage: z.string(),
-  resultCustomFieldId: z.cuid2(),
+  userMessage: z.string().optional(),
+  resultCustomFieldId: z.union([z.cuid2(), z.literal("")]).optional(),
+  tools: z.array(z.string()).optional(),
   aiTriggerIds: z.array(z.cuid2()),
+  rememberConversation: z.boolean(),
+  temperature: z.number().min(0).max(2),
+  maxTokens: z.number().int().min(250).max(4096),
 })
+
 export type OpenAIGenerateTextSchema = z.infer<typeof openAIGenerateTextSchema>
 
 export const openAIGenerateTextDefaultFn = (): OpenAIGenerateTextSchema => ({
-  id: createId(),
+  ...openAIDefaultFn(),
   stepType: StepType.OPENAI_GENERATE_TEXT,
-  model: OpenAIModel.GPT4oMini,
   prompt: "",
   userMessage: "",
-  resultCustomFieldId: "",
+  resultCustomFieldId: undefined,
+  tools: [],
   aiTriggerIds: [],
+  rememberConversation: true,
+  temperature: 1.0,
+  maxTokens: 250,
 })

@@ -44,20 +44,15 @@ const getDBIntegration = async (
           chatbot: true,
         },
       })
-    case InboxType.ZALO: {
-      const input = payload as ZaloWebhookEvent
-
+    case InboxType.ZALO:
       return await prisma.integrationZalo.findFirstOrThrow({
         where: {
-          oaId: input.event_name.includes("user_send")
-            ? input.recipient.id
-            : input.sender.id,
+          oaId: (payload as ZaloWebhookEvent).recipient.id,
         },
         include: {
           chatbot: true,
         },
       })
-    }
     default:
       throw new Error(`Unsupported integration: ${integrationName}`)
   }
@@ -87,7 +82,7 @@ export const receiveMessage = async ({
     uploader,
   }
   const parsedMessage = await allIntegrations[
-    integrationName.toUpperCase() as keyof typeof allIntegrations
+    integrationName as keyof typeof allIntegrations
   ]?.actions.receiveMessage({
     ctx,
     data: payload,
@@ -175,11 +170,13 @@ export const receiveMessage = async ({
         attachments: message.attachments
           ? {
               create: message.attachments.map(
-                (attachment: AttachmentEntity) => ({
-                  chatbotId: newConversation.chatbotId,
-                  conversationId: newConversation.id,
-                  ...attachment,
-                }),
+                (attachment: AttachmentEntity) => {
+                  return {
+                    chatbotId: newConversation.chatbotId,
+                    conversationId: newConversation.id,
+                    ...attachment,
+                  }
+                },
               ),
             }
           : undefined,
@@ -214,5 +211,6 @@ export const receiveMessage = async ({
   return result
 }
 
-const canGetUserProfileIfNeeded = (integrationName: string) =>
-  integrationName === InboxType.MESSENGER
+const canGetUserProfileIfNeeded = (integrationName: string) => {
+  return integrationName === InboxType.MESSENGER
+}

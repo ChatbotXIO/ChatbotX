@@ -30,13 +30,20 @@ import { useEffect } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { funnel } from "remeda"
 import { z } from "zod"
+import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 import { InboxSelect } from "@/features/inboxes/inbox-select"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ErrorAlert } from "../steps/error-alert"
 import { allNodesConfig } from "./node-config"
 
-export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
+export function NodeEditor({
+  activeNode,
+  flowVersion,
+}: {
+  activeNode: FlowNode
+  flowVersion: FlowVersionResource
+}) {
   const t = useTranslations()
   const { updateNodeData } = useReactFlow()
   const nodeConfig = activeNode.type
@@ -163,6 +170,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                       )}
                     >
                       <DynamicStepEditor
+                        flowVersion={flowVersion}
                         key={field.id}
                         parentName={`steps.${index}`}
                         // biome-ignore lint/suspicious/noExplicitAny: wip

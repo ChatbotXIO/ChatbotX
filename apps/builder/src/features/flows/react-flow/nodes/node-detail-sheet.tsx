@@ -8,14 +8,20 @@ import {
   SheetTitle,
 } from "@aha.chat/ui/components/ui/sheet"
 import { useStore } from "@xyflow/react"
+import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 import { NodeEditor } from "./editor"
 
 type NodeDetailSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  flowVersion: FlowVersionResource
 }
 
-export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
+export function NodeDetailSheet({
+  open,
+  onOpenChange,
+  flowVersion,
+}: NodeDetailSheetProps) {
   const activeNode = useStore((state) =>
     state.nodes.find((node) => node.selected),
   ) as FlowNode
@@ -26,7 +32,7 @@ export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
         <SheetTitle />
         <SheetDescription />
         <div className="flex flex-1 flex-col gap-4 overflow-hidden p-5">
-          <NodeEditor activeNode={activeNode} />
+          <NodeEditor activeNode={activeNode} flowVersion={flowVersion} />
         </div>
       </SheetContent>
     </Sheet>
