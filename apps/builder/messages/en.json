@@ -554,6 +554,9 @@
     "deleteSelectedRows": "Delete selected rows",
     "sendText": "Send Text",
     "sendImage": "Send Image",
+    "sendGif": "Send Gif",
+    "findGif": "Find Gif",
+    "search": "Search",
     "inboxActions": "Inbox Actions",
     "assignConversation": "Assign Conversation",
     "autoAssignConversation": "Auto Assign Conversation",
@@ -618,7 +621,8 @@
     },
     "addTag": {
       "title": "Add Tag"
-    }
+    },
+    "poweredBy": "Powered by {name}"
   },
   "messages": {
     "copiedToClipboard": "Copied to clipboard",
@@ -645,7 +649,8 @@
     "or": "or",
     "needToAddSettings": "You need to add settings to use this integration",
     "connectFailed": "Failed to connect {feature}",
-    "connectSuccess": "Connected {feature} successfully"
+    "connectSuccess": "Connected {feature} successfully",
+    "failedToDownloadGif": "Failed to download GIF"
   },
   "signin": {
     "title": "Sign in to {name}",

@@ -24,6 +24,7 @@ import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
 import { sendCardStep } from "./send-card"
 import sendFileStep from "./send-file"
+import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
@@ -57,7 +58,7 @@ export const allSteps: Record<StepType, StepDefinition | undefined> = {
   [StepType.SEND_CAROUSEL]: sendCardStep,
   [StepType.USER_INPUT]: undefined,
   [StepType.SEND_VIDEO]: sendVideoStep,
-  [StepType.SEND_GIF]: undefined,
+  [StepType.SEND_GIF]: sendGifStep,
   [StepType.SET_DEBOUNCE]: undefined,
   [StepType.SEND_MESSENGER_OTN]: undefined,
   [StepType.SEND_AUDIO]: sendAudioStep,

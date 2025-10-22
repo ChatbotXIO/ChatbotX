@@ -17,6 +17,7 @@ import type {
 } from "../schemas"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepFile } from "./send-file"
+import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
 import { convertFlowStepText } from "./send-text"
 
@@ -124,6 +125,9 @@ export async function* convertFlowStepToFacebookMessage(
     case StepType.SEND_AUDIO:
     case StepType.SEND_FILE:
       await (yield* convertFlowStepFile(auth, step))
+      break
+    case StepType.SEND_GIF:
+      yield* convertFlowStepGif(step.url) as Generator<FacebookMessage>
       break
     default:
       break

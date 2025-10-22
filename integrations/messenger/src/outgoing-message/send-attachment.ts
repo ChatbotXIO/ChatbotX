@@ -19,6 +19,7 @@ export function convertMediaType(
 ): "audio" | "video" | "file" | "image" {
   switch (stepType) {
     case StepType.SEND_IMAGE:
+    case StepType.SEND_GIF:
       return "image"
     case StepType.SEND_AUDIO:
       return "audio"

@@ -10,6 +10,7 @@ import {
   CogIcon,
   CreditCardIcon,
   ImageIcon,
+  ImagePlayIcon,
   MailIcon,
   MessageCircleMoreIcon,
   MessageCirclePlusIcon,
@@ -46,6 +47,11 @@ export const sendMessageEditorMenus = (
       label: t("actions.sendImage"),
       icon: ImageIcon,
       stepType: StepType.SEND_IMAGE,
+    },
+    {
+      label: t("actions.sendGif"),
+      icon: ImagePlayIcon,
+      stepType: StepType.SEND_GIF,
     },
     {
       label: t("actions.sendCard"),

@@ -1,6 +1,7 @@
 import type {
   SendAudioStepSchema,
   SendFileStepSchema,
+  SendGifStepSchema,
   SendImageStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
@@ -17,6 +18,7 @@ export type SendMessageProps<TAuth extends BaseAuthValue> = {
 export type SendFlowStepData =
   | SendTextStepSchema
   | SendImageStepSchema
+  | SendGifStepSchema
   | SendAudioStepSchema
   | SendVideoStepSchema
   | SendFileStepSchema

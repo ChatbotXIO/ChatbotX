@@ -83,6 +83,11 @@ export const organizationSettingsSchema = z.object({
       version: z.string(),
     })
     .optional(),
+  giphy: z
+    .object({
+      appKey: z.string(),
+    })
+    .optional(),
 })
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
 
