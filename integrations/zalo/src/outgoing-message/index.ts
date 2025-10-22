@@ -113,6 +113,7 @@ export async function* convertFlowStepToZaloMessage(
       yield* convertFlowStepText(flowVersionId, step)
       break
     case StepType.SEND_IMAGE:
+    case StepType.SEND_GIF:
       yield* await convertFlowStepImage(auth, flowVersionId, step)
       break
     case StepType.SEND_FILE:

@@ -18,5 +18,6 @@ export const ZALO_API_ENDPOINTS = {
     SEND_MESSAGE: "v3.0/oa/message/cs",
     UPLOAD_IMAGE: "v2.0/oa/upload/image",
     UPLOAD_FILE: "v2.0/oa/upload/file",
+    UPLOAD_GIF: "v2.0/oa/upload/gif",
   },
 } as const
