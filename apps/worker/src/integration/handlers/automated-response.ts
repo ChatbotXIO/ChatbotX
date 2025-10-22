@@ -49,7 +49,7 @@ export async function triggerAutomatedResponse({
     if (matched) {
       for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
-          case ReplyType.MESSAGE:
+          case ReplyType.Message:
             await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
               type: ChatJobAction.SEND_FLOW_STEP,
               data: {
@@ -58,14 +58,14 @@ export async function triggerAutomatedResponse({
                 step: {
                   id: createId(),
                   message: reply.message,
-                  stepType: StepType.SEND_TEXT,
+                  stepType: StepType.sendText,
                   buttons: [],
                 },
               },
             })
             break
 
-          case ReplyType.FLOW:
+          case ReplyType.Flow:
             await integrationQueue.add(IntegrationJobAction.SEND_FLOW, {
               type: IntegrationJobAction.SEND_FLOW,
               data: {

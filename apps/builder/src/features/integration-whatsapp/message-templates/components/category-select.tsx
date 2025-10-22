@@ -27,12 +27,12 @@ export function WhatsappMessageTemplateCategorySelect({
         templateType,
       )
     ) {
-      return [WhatsappTemplateCategory.MARKETING]
+      return [WhatsappTemplateCategory.marketing]
     }
 
     return [
-      WhatsappTemplateCategory.MARKETING,
-      WhatsappTemplateCategory.UTILITY,
+      WhatsappTemplateCategory.marketing,
+      WhatsappTemplateCategory.utility,
     ]
   }, [templateType])
 
@@ -41,11 +41,11 @@ export function WhatsappMessageTemplateCategorySelect({
       [
         {
           label: "Marketing",
-          value: WhatsappTemplateCategory.MARKETING,
+          value: WhatsappTemplateCategory.marketing,
         },
         {
           label: "Utility",
-          value: WhatsappTemplateCategory.UTILITY,
+          value: WhatsappTemplateCategory.utility,
         },
       ].filter((option) => allowOptions.includes(option.value)),
     [allowOptions],
@@ -60,7 +60,7 @@ export function WhatsappMessageTemplateCategorySelect({
         placeholder="Please select"
         required={isRequired}
       />
-      {category === WhatsappTemplateCategory.MARKETING && (
+      {category === WhatsappTemplateCategory.marketing && (
         <div className="grid auto-cols-min grid-flow-col items-center gap-x-4 rounded bg-slate-200 p-6">
           <VolumeIcon className="row-span-2" size={36} />
           <span className="font-bold">
@@ -71,7 +71,7 @@ export function WhatsappMessageTemplateCategorySelect({
           </span>
         </div>
       )}
-      {category === WhatsappTemplateCategory.UTILITY && (
+      {category === WhatsappTemplateCategory.utility && (
         <div className="grid auto-cols-min grid-flow-col items-center rounded bg-slate-200 p-6">
           <VolumeIcon className="row-span-2" size={36} />
           <span className="font-bold">

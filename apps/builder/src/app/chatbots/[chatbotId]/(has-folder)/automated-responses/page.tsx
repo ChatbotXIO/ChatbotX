@@ -32,7 +32,9 @@ export default async function AutomatedResponesPage(props: {
         <Button asChild size={"sm"}>
           <Link href={`/chatbots/${chatbotId}/automated-responses/create`}>
             <PlusIcon />
-            {t("actions.create")}
+            {t("actions.createFeature", {
+              feature: t("fields.automatedResponse.label"),
+            })}
           </Link>
         </Button>
       </div>

@@ -52,7 +52,7 @@ export function CreateContactForm({
             email: "",
             firstName: "",
             lastName: "",
-            gender: Gender.UNKNOWN,
+            gender: Gender.unknown,
           },
         },
         errorMapProps: {},
@@ -61,15 +61,15 @@ export function CreateContactForm({
 
   const genderLabels = [
     {
-      value: Gender.MALE,
+      value: Gender.male,
       label: t("fields.gender.male"),
     },
     {
-      value: Gender.FEMALE,
+      value: Gender.female,
       label: t("fields.gender.female"),
     },
     {
-      value: Gender.UNKNOWN,
+      value: Gender.unknown,
       label: t("fields.gender.unknown"),
     },
   ]
@@ -102,7 +102,7 @@ export function CreateContactForm({
         />
 
         <SelectField
-          defaultValue={Gender.UNKNOWN}
+          defaultValue={Gender.unknown}
           label={t("fields.gender.label")}
           name="gender"
           options={genderLabels}

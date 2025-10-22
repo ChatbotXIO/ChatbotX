@@ -1,12 +1,13 @@
 import {
+  type SendImageStepSchema,
   sendImageStepDefaultFn,
   sendImageStepSchema,
 } from "@aha.chat/flow-config"
-import type { StepDefinition } from ".."
-import { SendImageStepEditor } from "./editor"
-import { SendImageStepViewer } from "./viewer"
+import type { StepDefinition } from "../definition"
+import SendImageStepEditor from "./editor"
+import SendImageStepViewer from "./viewer"
 
-const sendImageStep: StepDefinition = {
+const sendImageStep: StepDefinition<SendImageStepSchema> = {
   editor: SendImageStepEditor,
   viewer: SendImageStepViewer,
   validator: sendImageStepSchema,

@@ -1,12 +1,21 @@
 "use client"
-import type { FlowNode } from "@aha.chat/flow-config"
+import type {
+  FlowNode,
+  OpenWebsiteStepSchema,
+  StartAnotherNodeStepSchema,
+  StartExternalNodeStepSchema,
+  StepType,
+} from "@aha.chat/flow-config"
 import {
-  type ButtonStepSchema,
+  type ButtonStepProps,
   ButtonType,
   buttonStepSchema,
   openWebsiteStepDefaultFn,
-  sendFlowNodeStepDefaultFn,
+  performActionNodeDefaultFn,
   sendMessageNodeDefaultFn,
+  startAnotherNodeStepDefaultFn,
+  startExternalNodeStepDefaultFn,
+  startFlowNodeDefaultFn,
 } from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -18,15 +27,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNodes, useReactFlow } from "@xyflow/react"
 import { getProperty, setProperty } from "dot-prop"
-import { XIcon } from "lucide-react"
+import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import { deleteProperty } from "@/lib/object-util"
+import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
+import { sendMessageEditorMenusWithButton } from "./nodes/send-message/menu"
 import { DynamicStepEditor } from "./steps"
 import { allButtonsConfig } from "./steps/button-config"
 import { useStepStore } from "./stores/step-store-provider"
@@ -36,9 +52,12 @@ function AllButtonOptions({
 }: {
   onChooseButton: (buttonType: ButtonType | null) => void
 }) {
+  const t = useTranslations()
+  const allButtons = allButtonsConfig(t)
+
   return (
     <div className="flex flex-col gap-1.5">
-      {allButtonsConfig.map((buttonConfig) => (
+      {allButtons.map((buttonConfig) => (
         <Button
           className="flex w-full justify-start gap-2"
           key={buttonConfig.buttonType}
@@ -61,60 +80,115 @@ function ActiveButton({
   buttonType: ButtonType
   onChooseButton: (buttonType: ButtonType | null) => void
 }) {
-  const activeButton = allButtonsConfig.find(
-    (button) => button.buttonType === buttonType,
-  )
+  const t = useTranslations()
+  const allButtons = allButtonsConfig(t)
+  const activeButton = allButtons.find((bt) => bt.buttonType === buttonType)
+  const { getValues } = useFormContext()
+  const beforeStep = getValues("beforeStep")
+
   if (!activeButton) {
     return null
   }
 
   return (
-    <div className="flex items-center gap-1 rounded border border-dashed pl-4 text-sm">
-      <activeButton.icon className="size-4" />
-      <span className="flex-1 text-center">{activeButton.label}</span>
-      <Button
-        className="hover:bg-red hover:text-destructive"
-        onClick={() => onChooseButton(null)}
-        variant="ghost"
-      >
-        <XIcon />
-      </Button>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-1.5 rounded border border-dashed pl-4 text-sm">
+        <activeButton.icon className="size-4" />
+        <span className="flex-1">{activeButton.label}</span>
+        <Button
+          className="hover:bg-red hover:text-destructive"
+          onClick={(e) => {
+            e.stopPropagation()
+            onChooseButton(null)
+          }}
+          type="button"
+          variant="ghost"
+        >
+          <XIcon />
+        </Button>
+      </div>
+
+      {beforeStep && (
+        <DynamicStepEditor parentName="beforeStep" type={beforeStep.stepType} />
+      )}
     </div>
   )
 }
 
 function ButtonSteps() {
+  const t = useTranslations()
   const { control } = useFormContext()
-  const { fields } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "steps",
   })
 
+  const onAddAction = (action: StepType) => {
+    append({
+      stepType: action,
+    })
+  }
+
   return (
     <div className="mt-2 flex flex-col gap-2">
-      <div className="font-medium text-sm">Additional steps</div>
+      <div className="font-medium">{t("flows.additionalSteps")}</div>
+
       {fields.map((field, index) => (
-        <DynamicStepEditor
-          key={field.id}
-          parentName={`steps.${index}`}
-          // biome-ignore lint/suspicious/noExplicitAny: wip
-          type={(field as any).stepType}
-        />
+        <div className="flex items-center gap-2" key={field.id}>
+          <div className="flex-1 break-all">
+            <DynamicStepEditor
+              parentName={`steps.${index}`}
+              // biome-ignore lint/suspicious/noExplicitAny: wip
+              type={(field as any).stepType}
+            />
+          </div>
+          <Button
+            className="size-8 shrink-0"
+            onClick={() => remove(index)}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <XIcon aria-hidden="true" className="size-4" />
+          </Button>
+        </div>
       ))}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button className="w-32" size="sm" variant="outline">
+            <PlusIcon />
+            Actions
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <RecursiveDropdownMenu
+            data={sendMessageEditorMenusWithButton(t)}
+            onClick={onAddAction}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }
 
 export function ButtonEditorDialog() {
-  const [open, setOpen] = useState<boolean>(false)
-  const [data, setData] = useState<ButtonStepSchema | null>(null)
+  const [openDialog, setOpenDialog] = useState<boolean>(false)
+  const [data, setData] = useState<ButtonStepProps | null>(null)
+  const [originData, setOriginData] = useState<ButtonStepProps | null>(null)
   const [activeNode, setActiveNode] = useState<FlowNode | null>(null)
+  const [needReconnectEdges, setNeedReconnectEdges] = useState<boolean>(false)
 
   const nodes = useNodes() as FlowNode[]
   const t = useTranslations()
 
-  const { addNodes, screenToFlowPosition, addEdges, updateNodeData } =
-    useReactFlow()
+  const {
+    addNodes,
+    screenToFlowPosition,
+    addEdges,
+    updateNodeData,
+    deleteElements,
+  } = useReactFlow()
   const { buttonPath, setButtonPath, setOpenNodeDetailSheet } = useStepStore(
     (state) => state,
   )
@@ -125,6 +199,12 @@ export function ButtonEditorDialog() {
     }
   }
 
+  const calcPosition = () =>
+    screenToFlowPosition({
+      x: window.innerWidth - 400,
+      y: 100,
+    })
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     if (buttonPath) {
@@ -134,8 +214,9 @@ export function ButtonEditorDialog() {
 
         if (rawData) {
           setActiveNode(foundNode)
-          setData(rawData as ButtonStepSchema)
-          setOpen(true)
+          setData(rawData as ButtonStepProps)
+          setOriginData(rawData as ButtonStepProps)
+          setOpenDialog(true)
           return
         }
       }
@@ -143,15 +224,15 @@ export function ButtonEditorDialog() {
 
     setData(null)
     setActiveNode(null)
-    setOpen(false)
+    setOpenDialog(false)
   }, [buttonPath])
 
-  const form = useForm<ButtonStepSchema>({
+  const form = useForm<ButtonStepProps>({
     resolver: zodResolver(buttonStepSchema),
     defaultValues: data || {},
     mode: "onChange",
   })
-  const { formState, setValue, getValues, watch } = form
+  const { formState, setValue, watch } = form
   const [buttonType] = watch(["buttonType"])
 
   useEffect(() => {
@@ -163,56 +244,89 @@ export function ButtonEditorDialog() {
   // const activeButtonType = watch("buttonType")
   const onChooseButton = (selectedButtonType: ButtonType | null) => {
     setValue("buttonType", selectedButtonType)
+    setValue("steps", [])
+    setValue("beforeStep", null)
 
+    let newNode: FlowNode | null = null
+    let beforeStep:
+      | StartAnotherNodeStepSchema
+      | OpenWebsiteStepSchema
+      | StartExternalNodeStepSchema
+      | null = null
     switch (selectedButtonType) {
       case ButtonType.SendMessage: {
-        // create new node
-        const newNode = sendMessageNodeDefaultFn({
-          labelVersion: nodes.length + 1,
-          position: screenToFlowPosition({
-            x: window.innerWidth - 400,
-            y: 50,
-          }),
+        newNode = sendMessageNodeDefaultFn({
+          name: `${t("actions.sendMessage")} #${nodes.length + 1}`,
+          position: calcPosition(),
         })
-        addNodes([newNode])
-        addEdges({
-          id: `xy-edge__${activeNode?.id}${data?.id}-${newNode.id}${newNode.id}`,
-          source: activeNode?.id ?? "",
-          target: newNode.id,
-          sourceHandle: data?.id,
-          targetHandle: newNode.id,
+        beforeStep = startAnotherNodeStepDefaultFn({
+          nodeId: newNode.id,
+          viewOnly: true,
         })
-
-        // update current node
-        if (activeNode && buttonPath) {
-          setValue("steps", [sendFlowNodeStepDefaultFn(newNode.id)])
-          const newData = {
-            ...data,
-            ...getValues(),
-          }
-
-          const updatedCurrentNodeData = setProperty(
-            activeNode,
-            buttonPath,
-            newData,
-          )
-
-          updateNodeData(activeNode.id, updatedCurrentNodeData.data)
-
-          onSave()
-        }
-
+        setNeedReconnectEdges(true)
+        break
+      }
+      case ButtonType.PerformAction: {
+        newNode = performActionNodeDefaultFn({
+          name: `${t("flows.actions.performAction")} #${nodes.length + 1}`,
+          position: calcPosition(),
+        })
+        beforeStep = startAnotherNodeStepDefaultFn({
+          nodeId: newNode.id,
+          viewOnly: true,
+        })
+        setNeedReconnectEdges(true)
+        break
+      }
+      case ButtonType.StartExternalFlow: {
+        newNode = startFlowNodeDefaultFn({
+          name: `${t("flows.actions.startExternalFlow")} #${nodes.length + 1}`,
+          position: calcPosition(),
+        })
+        beforeStep = startAnotherNodeStepDefaultFn({
+          nodeId: newNode.id,
+          viewOnly: true,
+        })
+        setNeedReconnectEdges(true)
         break
       }
       case ButtonType.OpenWebsite: {
-        setValue("steps", [openWebsiteStepDefaultFn()])
+        beforeStep = openWebsiteStepDefaultFn()
         break
       }
-      default:
-        setValue("steps", [])
+      case ButtonType.StartExternalNode: {
+        beforeStep = startExternalNodeStepDefaultFn()
         break
+      }
+      case ButtonType.StartAnotherNode: {
+        beforeStep = startAnotherNodeStepDefaultFn()
+        break
+      }
+      default: {
+        return
+      }
     }
-    setValue("buttonType", buttonType)
+
+    if (beforeStep) {
+      setValue("beforeStep", beforeStep)
+    }
+
+    // Add new node if exists
+    if (newNode) {
+      addNodes([newNode])
+
+      if (data && activeNode) {
+        addEdges({
+          id: data.id,
+          source: activeNode.id,
+          target: newNode.id,
+          sourceHandle: data.id,
+          targetHandle: newNode.id,
+        })
+      }
+
+      onSave()
+    }
   }
 
   const onDelete = () => {
@@ -220,49 +334,58 @@ export function ButtonEditorDialog() {
       return
     }
 
+    const foundedStep = getProperty<FlowNode, string, ButtonStepProps>(
+      activeNode,
+      buttonPath,
+    )
     const deleted = deleteProperty(activeNode, buttonPath)
-    if (deleted) {
+    if (deleted && foundedStep) {
       // updateNodeData(activeNode.id, updatedCurrentNodeData.data)
       // onSave()
       updateNodeData(activeNode.id, activeNode.data)
-      onSave()
+      deleteElements({
+        edges: [
+          {
+            id: foundedStep.id,
+          },
+        ],
+      })
+      // onSave()
     }
-    // removeOldEdge()
-    // const arr = parentName.split(".")
-    // const btnIndex = Number.parseInt(arr.pop() as string)
-    // const currentBtns = getValuesOriginEditor(arr.join("."))
-    // currentBtns.splice(btnIndex, 1)
-    // setValueOriginEditor(arr.join("."), currentBtns)
-    // onOpenChange(false)
+
+    setOpenDialog(false)
+    setButtonPath(null)
   }
 
   const onSave = () => {
-    setOpenNodeDetailSheet(false)
-    setOpen(false)
+    // Re-connect edges if needed
+    if (needReconnectEdges && originData) {
+      deleteElements({
+        edges: [
+          {
+            id: originData.id,
+          },
+        ],
+      })
+    }
 
-    // Check if change type next flow, reset edge
-    // const type = getValues("type")
-    // if (!type || !ButtonActionFlow.includes(type)) {
-    //   removeOldEdge()
-    // }
-    // if (type === ButtonActionType.StartAnotherStep) {
-    //   const newNode = nodes.find((node) => node.id === getValues("nodeId"))
-    //   if (newNode) {
-    //     removeOldEdge()
-    //     setNewEdge(newNode)
-    //   }
-    // }
-    // setValueOriginEditor(parentName, getValues())
-    // onOpenChange(false)
-    // setOpenNodeDetailSheet(false)
+    if (activeNode && buttonPath) {
+      setProperty(activeNode, buttonPath, form.getValues())
+
+      updateNodeData(activeNode.id, activeNode.data)
+
+      setOpenDialog(false)
+
+      setOpenNodeDetailSheet(false)
+    }
   }
 
   return data ? (
-    <Dialog onOpenChange={onOpenChange} open={open}>
+    <Dialog onOpenChange={onOpenChange} open={openDialog}>
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.flow.label") })}
+            {t("dialog.updateTitle", { feature: t("fields.button.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -272,8 +395,8 @@ export function ButtonEditorDialog() {
             <form className="flex w-full flex-col gap-3">
               <InputField label={t("fields.name.label")} name="label" />
 
-              <div className="mt-2 font-medium text-sm">
-                {t("messages.whenThisButtonIsPressed")}
+              <div className="mt-2 font-medium">
+                {t("fields.button.whenPressed")}
               </div>
 
               {buttonType ? (
@@ -290,6 +413,7 @@ export function ButtonEditorDialog() {
             </form>
           </Form>
         </div>
+
         <DialogFooter>
           <Button
             className="text-destructive"

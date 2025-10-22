@@ -159,7 +159,7 @@ export const parseHeaderMedia = async (
     header_handle: string[]
   }
 }> => {
-  const uploadedFileId = await integrations.WHATSAPP.actions?.uploadMedia({
+  const uploadedFileId = await integrations.Whatsapp.actions?.uploadMedia({
     ctx,
     file,
   })

@@ -8,7 +8,7 @@ type SendFileStepViewerProps = {
   data: SendFileStepSchema
 }
 
-export const SendFileStepViewer = (props: SendFileStepViewerProps) => {
+const SendFileStepViewer = (props: SendFileStepViewerProps) => {
   const { data } = props
 
   return (
@@ -27,3 +27,5 @@ export const SendFileStepViewer = (props: SendFileStepViewerProps) => {
     </div>
   )
 }
+
+export default SendFileStepViewer

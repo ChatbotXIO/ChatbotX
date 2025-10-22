@@ -63,7 +63,7 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
                 <span className="truncate font-semibold">
                   {activeChatbot?.name}
                 </span>
-                <span className="truncate text-xs">{activeChatbot?.plan}</span>
+                {/* <span className="truncate text-xs">{activeChatbot?.plan}</span> */}
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>

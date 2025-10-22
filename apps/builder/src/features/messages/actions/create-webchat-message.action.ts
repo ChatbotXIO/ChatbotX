@@ -1,9 +1,11 @@
 "use server"
 
-import { Gender, InboxType, IntegrationType, prisma } from "@aha.chat/database"
+import { Gender, prisma } from "@aha.chat/database"
 import {
   ContentType,
   type ConversationModel,
+  InboxType,
+  IntegrationType,
   MessageType,
   SenderType,
 } from "@aha.chat/database/types"
@@ -41,7 +43,7 @@ export const createWebchatMessageAction = actionClient
       const inbox = await prisma.inbox.findFirst({
         where: {
           chatbotId: parsedInput.chatbotId,
-          inboxType: InboxType.WEBCHAT,
+          inboxType: InboxType.Webchat,
         },
       })
       if (!inbox) {
@@ -72,8 +74,8 @@ export const createWebchatMessageAction = actionClient
               chatbotId: parsedInput.chatbotId,
               sourceId,
               email: parsedInput.guestConversationId,
-              source: IntegrationType.WEBCHAT,
-              gender: Gender.UNKNOWN,
+              source: IntegrationType.Webchat,
+              gender: Gender.unknown,
               firstName: "Guest",
               lastName: randomString(10),
             },
@@ -123,13 +125,13 @@ export const createWebchatMessageAction = actionClient
         const newMessage: MessageResource = await tx.message.create({
           data: {
             content: "content" in parsedInput ? parsedInput.content : null,
-            messageType: MessageType.INCOMING,
+            messageType: MessageType.incoming,
             chatbotId: conversation.chatbotId,
             conversationId: conversation.id,
-            senderType: SenderType.CONTACT,
+            senderType: SenderType.contact,
             senderId: conversation.contactId,
             inboxId: conversation.inboxId,
-            contentType: ContentType.TEXT,
+            contentType: ContentType.text,
           },
         })
 

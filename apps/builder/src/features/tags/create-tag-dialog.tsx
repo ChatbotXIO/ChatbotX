@@ -82,9 +82,7 @@ export function CreateTagDialog({
           {t("actions.add")}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", { feature: t("fields.tag.label") })}

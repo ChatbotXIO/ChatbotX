@@ -1,6 +1,6 @@
 "use client"
 
-import type {
+import {
   ConversationStarterType,
   PersistentMenuType,
 } from "@aha.chat/database/types"
@@ -74,15 +74,15 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
   }[] = useMemo(
     () => [
       {
-        value: "flow",
+        value: ConversationStarterType.flow,
         label: t("fields.conversationStarter.type.sendFlow"),
       },
       {
-        value: "website",
+        value: ConversationStarterType.website,
         label: t("fields.conversationStarter.type.openWebsite"),
       },
       {
-        value: "message",
+        value: ConversationStarterType.message,
         label: t("fields.conversationStarter.type.sendText"),
       },
     ],
@@ -94,8 +94,14 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
     label: string
   }[] = useMemo(
     () => [
-      { value: "flow", label: t("fields.persistentMenu.type.sendFlow") },
-      { value: "website", label: t("fields.persistentMenu.type.openWebsite") },
+      {
+        value: PersistentMenuType.flow,
+        label: t("fields.persistentMenu.type.sendFlow"),
+      },
+      {
+        value: PersistentMenuType.website,
+        label: t("fields.persistentMenu.type.openWebsite"),
+      },
     ],
     [t],
   )
@@ -247,7 +253,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
                   />
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    "flow" && (
+                    ConversationStarterType.flow && (
                     <SelectField
                       label={t("fields.flowId.label")}
                       name={`conversationStarters.${index}.flowId`}
@@ -256,7 +262,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
                   )}
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    "website" && (
+                    ConversationStarterType.website && (
                     <InputField
                       label={t("fields.url.label")}
                       name={`conversationStarters.${index}.url`}
@@ -271,7 +277,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
             onClick={() =>
               appendConversationStarters({
                 label: "",
-                type: "flow",
+                type: ConversationStarterType.flow,
                 flowId: "",
               })
             }
@@ -326,7 +332,8 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
                     options={persistentMenuTypeOptions}
                   />
 
-                  {form.watch(`persistentMenus.${index}.type`) === "flow" && (
+                  {form.watch(`persistentMenus.${index}.type`) ===
+                    PersistentMenuType.flow && (
                     <SelectField
                       label={t("fields.flowId.label")}
                       name={`persistentMenus.${index}.flowId`}
@@ -335,7 +342,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
                   )}
 
                   {form.watch(`persistentMenus.${index}.type`) ===
-                    "website" && (
+                    PersistentMenuType.website && (
                     <InputField
                       label={t("fields.url.label")}
                       name={`persistentMenus.${index}.url`}
@@ -350,7 +357,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
             onClick={() =>
               appendPersistentMenus({
                 label: "",
-                type: "flow",
+                type: PersistentMenuType.flow,
                 flowId: "",
               })
             }

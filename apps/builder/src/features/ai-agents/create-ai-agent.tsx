@@ -47,7 +47,7 @@ import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/create.schema"
 import { GEMINI_MODEL_OPTIONS } from "../gemini/models"
-import { OPENAI_MODEL_OPTIONS } from "../openai/models"
+import { openAIModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   files: AIFileModel[]
@@ -168,12 +168,10 @@ export function CreateAIAgentDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.aiAgent.label") })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", { feature: t("fields.aiAgent.label") })}
@@ -258,7 +256,7 @@ export function CreateAIAgentDialog({
                   <SelectField
                     label={t("fields.openAIModel.label")}
                     name="models.1.model"
-                    options={OPENAI_MODEL_OPTIONS}
+                    options={openAIModelOptions}
                     required
                   />
 
@@ -295,7 +293,7 @@ export function CreateAIAgentDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               </DialogFooter>
             </form>

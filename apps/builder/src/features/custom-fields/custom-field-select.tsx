@@ -5,7 +5,6 @@ import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
 import { useParams } from "next/navigation"
-import type { ReactNode } from "react"
 import { mutate } from "swr"
 import { callAPI } from "@/lib/swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
@@ -13,7 +12,7 @@ import type { CustomFieldCollection } from "./schemas"
 
 type CustomFieldSelectProps = {
   name: string
-  label: ReactNode | string
+  label?: string
   isRequired?: boolean
   allowCreate?: boolean
   customFieldType?: CustomFieldType

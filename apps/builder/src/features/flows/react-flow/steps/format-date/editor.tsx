@@ -27,21 +27,17 @@ import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
-export default function FormatDateStepEditor({
-  parentName,
-}: {
-  parentName: string
-}) {
+const FormatDateStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
 
   return (
-    <BaseStepEditor icon={ZapIcon} title={t("flows.stepType.formatDate")}>
+    <BaseStepEditor icon={ZapIcon} title={t("flows.actions.formatDate")}>
       <FormatDateDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
-function FormatDateDialog({ parentName }: { parentName: string }) {
+const FormatDateDialog = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
@@ -71,11 +67,9 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>{t("flows.stepType.formatDate")}</DialogTitle>
+          <DialogTitle>{t("flows.actions.formatDate")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -139,3 +133,5 @@ function FormatDateDialog({ parentName }: { parentName: string }) {
     </Dialog>
   )
 }
+
+export default FormatDateStepEditor

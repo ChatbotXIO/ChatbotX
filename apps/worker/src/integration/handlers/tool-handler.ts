@@ -19,7 +19,7 @@ export async function countCharacters({
   const customFieldIds = [step.inputCustomFieldId, step.outputCustomFieldId]
   const customFieldsCount = await prisma.field.count({
     where: {
-      fieldType: FieldType.CUSTOM_FIELD,
+      fieldType: FieldType.customField,
       id: {
         in: customFieldIds,
       },
@@ -160,7 +160,7 @@ export async function getDataFromJSON({
   // Find valid custom fields
   const validCustomFields = await prisma.field.findMany({
     where: {
-      fieldType: FieldType.CUSTOM_FIELD,
+      fieldType: FieldType.customField,
       chatbotId: conversation.chatbotId,
       id: {
         in: mapping.map((m) => m.outputCustomFieldId),

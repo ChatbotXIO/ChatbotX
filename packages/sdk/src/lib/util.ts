@@ -5,12 +5,12 @@ export function guessFileTypeFromMimeType(mimeType: string) {
 
   switch (prefix) {
     case "image":
-      return FileType.IMAGE
+      return FileType.image
     case "video":
-      return FileType.VIDEO
+      return FileType.video
     case "audio":
-      return FileType.AUDIO
+      return FileType.audio
     default:
-      return FileType.DOCUMENT
+      return FileType.file
   }
 }

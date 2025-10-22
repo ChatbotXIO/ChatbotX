@@ -1,9 +1,9 @@
 "use server"
 
-import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import {
   ChatbotMemberRole,
-  ChatbotPlan,
+  IntegrationType,
   type OrganizationSettings,
   organizationSettingsSchema,
   type UserModel,
@@ -38,6 +38,9 @@ export const connectWhatsappAction = authActionClient
       const organization = await findOrganization({
         domain: baseUrl.hostname,
       })
+      if (!organization) {
+        throw new BaseException("Organization not found")
+      }
       const organizationSettings =
         organization?.settings as unknown as OrganizationSettings
       const { data: setting } =
@@ -103,7 +106,7 @@ export const connectWhatsappAction = authActionClient
           "integrations/whatsapp/callback",
           baseUrl,
         ).toString(),
-        authType: AuthType.OAUTH2,
+        authType: AuthType.oauth2,
         tokens: {
           accessToken: parsedInput.accessToken,
         },
@@ -122,8 +125,7 @@ export const connectWhatsappAction = authActionClient
               data: {
                 organizationId: organization.id,
                 name: foundPhoneNumber.verified_name,
-                accountTimezone: "UTC", // TODO: get from user's
-                plan: ChatbotPlan.FREE,
+                accountTimezone: "UTC",
               },
             })
             chatbotId = chatbot.id
@@ -132,7 +134,7 @@ export const connectWhatsappAction = authActionClient
               data: {
                 userId: ctx.user.id,
                 chatbotId,
-                role: ChatbotMemberRole.OWNER,
+                role: ChatbotMemberRole.owner,
                 isAdmin: true,
                 enableAnalytics: true,
                 enableFlows: true,
@@ -147,7 +149,7 @@ export const connectWhatsappAction = authActionClient
           await tx.inbox.create({
             data: {
               chatbotId,
-              inboxType: IntegrationType.WHATSAPP,
+              inboxType: IntegrationType.Whatsapp,
               sourceId: foundPhoneNumber.id,
               integrationWhatsapp: {
                 create: {

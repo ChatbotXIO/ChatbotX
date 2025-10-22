@@ -4,16 +4,16 @@ import {
   sendMessageNodeSchema,
 } from "@aha.chat/flow-config"
 import { MessageCircleMoreIcon } from "lucide-react"
-import type { NodeConfigProps } from "../node-config"
+import type { TranslationFn } from "../types"
 import { sendMessageEditorMenus } from "./menu"
 
-const sendMessageNodeConfig: NodeConfigProps = {
+const sendMessageNodeConfig = (t: TranslationFn) => ({
   defaultFn: sendMessageNodeDefaultFn,
   icon: MessageCircleMoreIcon,
-  label: "flows.sendMessage.label",
+  label: t("actions.sendMessage"),
   menus: sendMessageEditorMenus,
-  type: NodeType.SendMessage,
+  type: NodeType.sendMessage,
   validator: sendMessageNodeSchema,
-}
+})
 
 export default sendMessageNodeConfig

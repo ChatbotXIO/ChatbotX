@@ -71,12 +71,10 @@ export function CreateInboxTeamDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.inboxTeam.label") })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.createTitle", { feature: t("fields.inboxTeam.label") })}
@@ -111,7 +109,7 @@ export function CreateInboxTeamDialog({
                   {form.formState.isSubmitting && (
                     <Loader2 className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

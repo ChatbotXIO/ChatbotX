@@ -26,20 +26,16 @@ import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
-export default function GetDataFromJsonStepEditor({
-  parentName,
-}: {
-  parentName: string
-}) {
+const GetDataFromJsonStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   return (
-    <BaseStepEditor icon={CodeIcon} title={t("flows.stepType.getDataFromJson")}>
+    <BaseStepEditor icon={CodeIcon} title={t("flows.actions.getDataFromJson")}>
       <GetDataFromJsonDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
-function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
+const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
@@ -72,11 +68,9 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("flows.stepType.getDataFromJson")}</DialogTitle>
+          <DialogTitle>{t("flows.actions.getDataFromJson")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -116,7 +110,6 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
                     </div>
                     <div className="w-[45%]">
                       <CustomFieldSelect
-                        label=""
                         name={`mapping.${index}.outputCustomFieldId`}
                       />
                     </div>
@@ -145,3 +138,5 @@ function GetDataFromJsonDialog({ parentName }: { parentName: string }) {
     </Dialog>
   )
 }
+
+export default GetDataFromJsonStepEditor

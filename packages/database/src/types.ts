@@ -3,24 +3,24 @@ import z from "zod"
 export * from "./generated/prisma/enums"
 export * from "./generated/prisma/models"
 
-export const OMNICHANNEL = "OMNICHANNEL"
+export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
 
-export const CustomFieldOperation = {
-  SET: "SET",
-  APPEND: "APPEND",
-  PREPEND: "PREPEND",
+export const FieldOperationType = {
+  set: "O01",
+  append: "O02",
+  prepend: "O03",
 } as const
 
 export const ReplyType = {
-  MESSAGE: "MESSAGE",
-  FLOW: "FLOW",
+  Message: "R01",
+  Flow: "R02",
 } as const
 
 export type ReplyMessage = {
   message: string
-  type: typeof ReplyType.MESSAGE
+  type: typeof ReplyType.Message
   buttons: {
     url: string
     label: string
@@ -28,27 +28,39 @@ export type ReplyMessage = {
 }
 
 export type ReplyFlow = {
-  type: typeof ReplyType.FLOW
+  type: typeof ReplyType.Flow
   flowId: string
 }
 
 export const UploadMode = {
-  LINK: "link",
-  FILE: "file",
+  link: "link",
+  file: "file",
 } as const
 export type UploadMode = (typeof UploadMode)[keyof typeof UploadMode]
 
 export const CardLayout = {
-  VERTICAL: "vert",
-  HORIZONTAL: "horz",
+  vertical: "ver",
+  horizontal: "hor",
 } as const
 export type CardLayout = (typeof CardLayout)[keyof typeof CardLayout]
 
 export type AutomatedResponseReply = ReplyMessage | ReplyFlow
 
-export type AIMcpServerAuthType = "NONE" | "TOKEN" | "HEADERS"
+export const AIMcpServerAuthType = {
+  none: "none",
+  token: "token",
+  header: "header",
+} as const
+export type AIMcpServerAuthType =
+  (typeof AIMcpServerAuthType)[keyof typeof AIMcpServerAuthType]
 
-export type AIMessageRole = "user" | "assistant" | "system"
+export const AIMessageRole = {
+  user: "user",
+  assistant: "assistant",
+  system: "system",
+  developer: "developer",
+} as const
+export type AIMessageRole = (typeof AIMessageRole)[keyof typeof AIMessageRole]
 
 export const organizationSettingsSchema = z.object({
   whatsapp: z
@@ -92,16 +104,23 @@ export type AIAgentProvider = {
 }
 
 export const ConversationStarterType = {
-  FLOW: "flow",
-  MESSAGE: "message",
-  WEBSITE: "website",
+  flow: "C01",
+  message: "C02",
+  website: "C03",
 } as const
 export type ConversationStarterType =
   (typeof ConversationStarterType)[keyof typeof ConversationStarterType]
 
 export const PersistentMenuType = {
-  FLOW: "flow",
-  WEBSITE: "website",
+  flow: "P01",
+  website: "P02",
 } as const
 export type PersistentMenuType =
   (typeof PersistentMenuType)[keyof typeof PersistentMenuType]
+
+export const WhatsappTemplateCategory = {
+  marketing: "MARKETING",
+  utility: "UTILITY",
+} as const
+export type WhatsappTemplateCategory =
+  (typeof WhatsappTemplateCategory)[keyof typeof WhatsappTemplateCategory]

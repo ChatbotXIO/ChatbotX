@@ -27,21 +27,17 @@ import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
-export default function GenerateCodeStepEditor({
-  parentName,
-}: {
-  parentName: string
-}) {
+const GenerateCodeStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
 
   return (
-    <BaseStepEditor icon={ShuffleIcon} title={t("flows.stepType.generateCode")}>
+    <BaseStepEditor icon={ShuffleIcon} title={t("flows.actions.generateCode")}>
       <GenerateCodeDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }
 
-function GenerateCodeDialog({ parentName }: { parentName: string }) {
+const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
@@ -71,11 +67,9 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>{t("flows.stepType.generateCode")}</DialogTitle>
+          <DialogTitle>{t("flows.actions.generateCode")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -135,3 +129,5 @@ function GenerateCodeDialog({ parentName }: { parentName: string }) {
     </Dialog>
   )
 }
+
+export default GenerateCodeStepEditor

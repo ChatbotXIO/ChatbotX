@@ -70,7 +70,7 @@ export function CreateFlowDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.flow.label") })}
         </Button>
       </DialogTrigger>
       <DialogContent className={"max-h-screen max-w-sm overflow-y-scroll"}>
@@ -89,7 +89,7 @@ export function CreateFlowDialog({
               <InputField label={t("fields.name.label")} name="name" />
 
               <DialogFooter>
-                <DialogClose>
+                <DialogClose asChild>
                   <Button type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>

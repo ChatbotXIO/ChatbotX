@@ -24,17 +24,13 @@ import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
-export default function CountCharactersStepEditor({
-  parentName,
-}: {
-  parentName: string
-}) {
+const CountCharactersStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
 
   return (
     <BaseStepEditor
       icon={CalculatorIcon}
-      title={t("flows.stepType.countCharacters")}
+      title={t("flows.actions.countCharacters")}
     >
       <CountCharactersDialog parentName={parentName} />
     </BaseStepEditor>
@@ -69,11 +65,9 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>{t("flows.stepType.countCharacters")}</DialogTitle>
+          <DialogTitle>{t("flows.actions.countCharacters")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -115,3 +109,5 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
     </Dialog>
   )
 }
+
+export default CountCharactersStepEditor

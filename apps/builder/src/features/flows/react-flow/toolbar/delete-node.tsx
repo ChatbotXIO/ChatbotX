@@ -4,17 +4,19 @@ import { TrashIcon } from "lucide-react"
 import { type MouseEvent, useCallback } from "react"
 
 export function DeleteNode() {
-  const { setNodes, getNodes } = useReactFlow()
+  const { setNodes, getNodes, getEdges, setEdges } = useReactFlow()
 
   const nodes = getNodes()
+  const edges = getEdges()
   const startNode = nodes.find((n) => n.data.isStartNode)
   const targetNode = nodes.find((n) => n.data.forceToolbarVisible)
 
   const deleteNode = useCallback(() => {
     setTimeout(() => {
       setNodes(nodes.filter((node) => !node.data.forceToolbarVisible))
+      setEdges(edges.filter((edge) => edge.target !== targetNode?.id))
     })
-  }, [setNodes, nodes])
+  }, [setNodes, nodes, edges, setEdges, targetNode?.id])
 
   const onClick = (e: MouseEvent) => {
     e.preventDefault()

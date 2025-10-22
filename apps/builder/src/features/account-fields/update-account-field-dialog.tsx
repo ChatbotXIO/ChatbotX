@@ -76,9 +76,7 @@ export function UpdateAccountFieldDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>{t("accountField.updateForm.title")}</DialogTitle>
           <DialogDescription />

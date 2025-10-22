@@ -33,11 +33,11 @@ export async function sendFlowStep({
       inboxId: conversation.inboxId,
       chatbotId: conversation.chatbotId,
       conversationId: conversation.id,
-      messageType: MessageType.OUTGOING,
-      contentType: ContentType.TEXT,
-      senderType: SenderType.BOT,
+      messageType: MessageType.outgoing,
+      contentType: ContentType.text,
+      senderType: SenderType.bot,
       sourceId: null,
-      content: step.stepType === StepType.SEND_TEXT ? step.message : null,
+      content: step.stepType === StepType.sendText ? step.message : null,
     },
   })
 

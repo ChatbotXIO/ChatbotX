@@ -1,7 +1,7 @@
 "use client"
 
 import {
-  type BroadcastSchedulesType,
+  BroadcastSchedulesType,
   BroadcastSubaction,
   type InboxType,
 } from "@aha.chat/database/types"
@@ -92,7 +92,7 @@ export function CreateBroadcastForm({
 
     if (inboxType === null) {
       setHasSubAction(true)
-      setValue("subaction", BroadcastSubaction.ALL_CONTACTS)
+      setValue("subaction", BroadcastSubaction.allContacts)
     }
   }
 
@@ -130,7 +130,7 @@ export function CreateBroadcastForm({
                     options={schedulesOptions}
                   />
 
-                  {schedulesType === "FUTURE" && (
+                  {schedulesType === BroadcastSchedulesType.future && (
                     <DateTimePicker
                       displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
                       granularity="minute"

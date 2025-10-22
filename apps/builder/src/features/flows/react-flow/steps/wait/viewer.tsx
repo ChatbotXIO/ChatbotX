@@ -10,7 +10,7 @@ type WaitStepViewerProps = {
   data: WaitStepSchema
 }
 
-export const WaitStepViewer = (props: WaitStepViewerProps) => {
+const WaitStepViewer = (props: WaitStepViewerProps) => {
   const { data } = props
 
   const t = useTranslations()
@@ -20,24 +20,25 @@ export const WaitStepViewer = (props: WaitStepViewerProps) => {
 
   const customField = (dataCustomFields?.data ?? []).find(
     (obj) =>
-      data.delayType === DelayType.DatetimeCustomField &&
-      obj.id === data.outputCFId,
+      data.delayType === DelayType.customField && obj.id === data.outputCfId,
   )
 
   return (
     <div className="flex w-full items-center justify-center gap-2 break-all py-4 text-center">
-      {data.delayType === DelayType.Duration &&
+      {data.delayType === DelayType.duration &&
         t("flows.delayType.durationValue", {
           duration: data.duration,
         })}
-      {data.delayType === DelayType.SpecificDate &&
+      {data.delayType === DelayType.specify &&
         t("flows.delayType.specificDateValue", {
           date: data.datetime,
         })}
-      {data.delayType === DelayType.DatetimeCustomField &&
+      {data.delayType === DelayType.customField &&
         t("flows.delayType.datetimeCustomFieldValue", {
           customField: customField?.name ?? "",
         })}
     </div>
   )
 }
+
+export default WaitStepViewer

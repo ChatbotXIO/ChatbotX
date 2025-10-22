@@ -1,8 +1,8 @@
 export const AuthType = {
-  NONE: "NONE",
-  BASIC_AUTH: "BASIC_AUTH",
-  OAUTH2: "OAUTH2",
-  SECRET_TEXT: "SECRET_TEXT",
+  none: "none",
+  basicAuth: "basicAuth",
+  oauth2: "oauth2",
+  secretText: "secretText",
 } as const
 
 export type AuthType = (typeof AuthType)[keyof typeof AuthType]

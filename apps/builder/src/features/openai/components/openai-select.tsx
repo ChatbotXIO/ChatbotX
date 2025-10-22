@@ -1,6 +1,6 @@
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
-import { OPENAI_MODEL_OPTIONS } from "../models"
+import { openAIModelOptions } from "../models"
 
 type OpenAILanguageModelSelectProps = {
   required?: boolean
@@ -15,7 +15,7 @@ export const OpenAILanguageModelSelect = ({
     <SelectField
       label={t("fields.openAIModel.label")}
       name="openAIModel"
-      options={OPENAI_MODEL_OPTIONS}
+      options={openAIModelOptions}
       required={required}
     />
   )

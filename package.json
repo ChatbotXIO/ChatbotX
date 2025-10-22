@@ -7,17 +7,18 @@
     "format": "ultracite fix --unsafe",
     "lint": "ultracite lint",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
+    "imports:check": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.5",
-    "@types/node": "^24.7.1",
-    "knip": "^5.64.2",
-    "lefthook": "^1.13.6",
+    "@biomejs/biome": "^2.2.6",
+    "@types/node": "^22.18.12",
+    "knip": "^5.66.2",
+    "lefthook": "^2.0.0",
     "tsx": "^4.20.6",
     "turbo": "^2.5.8",
     "typescript": "5.9.3",
-    "ultracite": "5.6.1"
+    "ultracite": "5.6.4"
   },
   "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34",
   "engines": {

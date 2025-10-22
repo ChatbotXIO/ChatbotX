@@ -10,9 +10,9 @@ const UnfollowConversationStepEditor = () => {
   return (
     <BaseStepEditor
       icon={StarOffIcon}
-      title={t("flows.stepType.unfollowConversation")}
+      title={t("flows.actions.unfollowConversation")}
     />
   )
 }
 
-export { UnfollowConversationStepEditor }
+export default UnfollowConversationStepEditor

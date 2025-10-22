@@ -71,7 +71,7 @@ export function CreateFolderDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.folder.label") })}
         </Button>
       </DialogTrigger>
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
@@ -108,7 +108,7 @@ export function CreateFolderDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

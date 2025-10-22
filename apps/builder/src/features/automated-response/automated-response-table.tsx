@@ -106,7 +106,7 @@ export function AutomatedResponsesTable({
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: wip
               <li key={idx}>
-                {reply.type === ReplyType.MESSAGE
+                {reply.type === ReplyType.Message
                   ? `Message: ${reply.message}`
                   : `Flow: ${reply.flowId}`}
               </li>

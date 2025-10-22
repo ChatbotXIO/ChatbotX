@@ -2,11 +2,7 @@ import { Input } from "@aha.chat/ui/components/ui/input"
 import { Slider } from "@aha.chat/ui/components/ui/slider"
 import { useFormContext } from "react-hook-form"
 
-export const SplitTrafficStepEditor = ({
-  parentName,
-}: {
-  parentName: string
-}) => {
+const SplitTrafficStepEditor = ({ parentName }: { parentName: string }) => {
   const { register } = useFormContext()
 
   return (
@@ -18,3 +14,5 @@ export const SplitTrafficStepEditor = ({
     </div>
   )
 }
+
+export default SplitTrafficStepEditor

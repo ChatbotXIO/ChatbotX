@@ -21,6 +21,10 @@ export function MessengerManage({ promises }: MessengerManageProps) {
 
   const [integrationMessenger, organization] = use(promises)
 
+  if (!organization) {
+    return <div>Organization not found</div>
+  }
+
   return (
     <SettingRow
       description={t("messenger.description")}

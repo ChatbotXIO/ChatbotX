@@ -22,20 +22,20 @@ import { convertFlowStepText } from "./send-text"
 export function* convertMessageToWhatsappMessage(
   message: MessageEntity,
 ): Generator<ClientMessage | null> {
-  if (message.contentType === ContentType.TEXT) {
+  if (message.contentType === ContentType.text) {
     if (message.content) {
       yield new Text(message.content)
     }
 
     for (const attachment of message.attachments || []) {
       switch (attachment.fileType) {
-        case FileType.IMAGE:
+        case FileType.image:
           yield new Image(attachment.url ?? "")
           continue
-        case FileType.VIDEO:
+        case FileType.video:
           yield new Video(attachment.url ?? "")
           continue
-        case FileType.AUDIO:
+        case FileType.audio:
           yield new Audio(attachment.url ?? "")
           continue
         default:
@@ -53,10 +53,10 @@ export function* convertFlowStepToWhatsappMessage(
   step: SendFlowStepData,
 ) {
   switch (step.stepType) {
-    case StepType.SEND_TEXT:
+    case StepType.sendText:
       yield* convertFlowStepText(flowVersionId, step)
       break
-    case StepType.SEND_IMAGE:
+    case StepType.sendImage:
       yield* convertFlowStepImage(flowVersionId, step)
       break
     default:

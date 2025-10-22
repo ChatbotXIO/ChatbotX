@@ -70,7 +70,7 @@ const ChatbotCard = ({ chatbot }: ChatbotCardProps) => {
 }
 
 const ChatbotList = ({ chatbots }: ChatbotListProps) => (
-  <div className="flex h-screen w-screen justify-center bg-accent">
+  <div className="flex h-screen w-screen justify-start bg-accent px-20">
     <div className="mt-20 flex flex-wrap gap-6">
       <CreateChatbotCard />
       {chatbots?.map((chatbot) => (

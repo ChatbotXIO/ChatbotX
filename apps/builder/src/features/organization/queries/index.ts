@@ -10,10 +10,10 @@ import {
 
 export async function findOrganization(
   where: OrganizationWhereInput,
-): Promise<OrganizationModel> {
+): Promise<OrganizationModel | null> {
   // return await unstable_cache(
   //   async () => {
-  return await prisma.organization.findFirstOrThrow({
+  return await prisma.organization.findFirst({
     where,
   })
   //   },

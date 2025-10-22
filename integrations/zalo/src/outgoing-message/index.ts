@@ -1,9 +1,10 @@
 import { StepType } from "@aha.chat/flow-config"
-import type {
-  Context,
-  ConversationEntity,
-  MessageEntity,
-  SendFlowStepData,
+import {
+  type Context,
+  type ConversationEntity,
+  FileType,
+  type MessageEntity,
+  type SendFlowStepData,
 } from "@aha.chat/sdk"
 import { sendMessage, uploadAttachment } from "../api/message"
 import { logger } from "../libs/logger"
@@ -48,7 +49,7 @@ export async function* convertMessageToZaloMessage(
     }
   } else if (message.attachments) {
     for (const attachment of message.attachments) {
-      if (attachment.fileType === "IMAGE") {
+      if (attachment.fileType === FileType.image) {
         const {
           data: { attachment_id },
         } = await uploadAttachment(auth, "image", attachment.url as string)
@@ -66,7 +67,7 @@ export async function* convertMessageToZaloMessage(
             },
           },
         }
-      } else if (attachment.fileType === "DOCUMENT") {
+      } else if (attachment.fileType === FileType.file) {
         const {
           data: { token },
         } = await uploadAttachment(auth, "file", attachment.url as string)
@@ -109,13 +110,13 @@ export async function* convertFlowStepToZaloMessage(
   step: SendFlowStepData,
 ): AsyncGenerator<MessageTemplate> {
   switch (step.stepType) {
-    case StepType.SEND_TEXT:
+    case StepType.sendText:
       yield* convertFlowStepText(flowVersionId, step)
       break
-    case StepType.SEND_IMAGE:
+    case StepType.sendImage:
       yield* await convertFlowStepImage(auth, flowVersionId, step)
       break
-    case StepType.SEND_FILE:
+    case StepType.sendFile:
       yield* await convertFlowStepFile(auth, step)
       break
     default:

@@ -463,7 +463,7 @@ function ManualConnectSection({
                   {isLoadingPhoneNumbers && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.contine")}
+                  {t("actions.continue")}
                 </Button>
               </div>
             </>

@@ -45,7 +45,7 @@ export const createTagAction = authActionClient
       }
 
       if (folderId) {
-        await ensureFolderIdIsExists(folderId, chatbotId, FolderType.TAG)
+        await ensureFolderIdIsExists(folderId, chatbotId, FolderType.tag)
       }
 
       await prisma.tag.create({

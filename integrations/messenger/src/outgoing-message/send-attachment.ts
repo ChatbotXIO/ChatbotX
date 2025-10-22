@@ -1,4 +1,5 @@
 import { StepType } from "@aha.chat/flow-config"
+import type { FileType } from "@aha.chat/sdk"
 import type { FacebookMessageAttachment } from "../schemas"
 
 export function getAttachmentTemplate(
@@ -14,15 +15,13 @@ export function getAttachmentTemplate(
   }
 }
 
-export function convertMediaType(
-  stepType: string,
-): "audio" | "video" | "file" | "image" {
+export function convertMediaType(stepType: string): FileType {
   switch (stepType) {
-    case StepType.SEND_IMAGE:
+    case StepType.sendImage:
       return "image"
-    case StepType.SEND_AUDIO:
+    case StepType.sendAudio:
       return "audio"
-    case StepType.SEND_VIDEO:
+    case StepType.sendVideo:
       return "video"
     default:
       return "file"

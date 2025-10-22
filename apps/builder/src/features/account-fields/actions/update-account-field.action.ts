@@ -28,7 +28,7 @@ export const updateAccountFieldAction = chatbotActionClient
         where: {
           id,
           chatbotId,
-          fieldType: FieldType.ACCOUNT_FIELD,
+          fieldType: FieldType.accountField,
         },
       })
 
@@ -39,7 +39,7 @@ export const updateAccountFieldAction = chatbotActionClient
         await ensureFolderIdIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.CUSTOM_FIELD,
+          FolderType.customField,
         )
       }
 

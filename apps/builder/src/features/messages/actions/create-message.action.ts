@@ -84,13 +84,13 @@ export const createMessageAction = chatbotActionClient
         const newMessage: MessageResource = await tx.message.create({
           data: {
             content: "content" in parsedInput ? parsedInput.content : null,
-            messageType: MessageType.OUTGOING,
+            messageType: MessageType.outgoing,
             chatbotId: conversation.chatbotId,
             conversationId,
-            senderType: SenderType.USER,
+            senderType: SenderType.user,
             senderId: ctx.user.id,
             inboxId: conversation.inboxId,
-            contentType: ContentType.TEXT,
+            contentType: ContentType.text,
           },
         })
 
@@ -155,7 +155,7 @@ export const createMessageAction = chatbotActionClient
               conversation: conversation as ConversationEntity,
               message: {
                 ...message,
-                messageType: MessageType.OUTGOING,
+                messageType: MessageType.outgoing,
                 clientId: parsedInput.clientId,
                 sourceId: message.sourceId || "",
                 contentType: message.contentType as unknown as ContentType,
