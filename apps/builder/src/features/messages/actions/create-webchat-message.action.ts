@@ -50,6 +50,13 @@ export const createWebchatMessageAction = actionClient
         throw new BaseException("Inbox not found")
       }
 
+      const chatbotUsage = await prisma.chatbotUsage.findFirstOrThrow({
+        where: { chatbotId: parsedInput.chatbotId },
+      })
+      if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+        throw new BaseException("Max contacts reached")
+      }
+
       const sourceId = parsedInput.guestConversationId
       conversation = await prisma.conversation.findFirst({
         where: {

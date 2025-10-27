@@ -442,15 +442,15 @@ function ManualConnectSection({
           {phoneNumbers.length === 0 && (
             <>
               <InputField
-                isRequired
                 label={t("fields.wabaId.label")}
                 name={FORM_FIELDS.WABA_ID}
+                required
               />
 
               <InputField
-                isRequired
                 label={t("fields.accessToken.label")}
                 name={FORM_FIELDS.ACCESS_TOKEN}
+                required
               />
 
               <div className="flex items-center justify-end gap-2">

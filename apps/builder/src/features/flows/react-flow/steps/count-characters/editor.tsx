@@ -77,16 +77,16 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
-              isRequired
               label={t("fields.customField.label")}
               name="inputCustomFieldId"
+              required
             />
 
             <CustomFieldSelect
               allowCreate={true}
-              isRequired
               label={t("fields.customField.label")}
               name="outputCustomFieldId"
+              required
             />
 
             <DialogFooter>

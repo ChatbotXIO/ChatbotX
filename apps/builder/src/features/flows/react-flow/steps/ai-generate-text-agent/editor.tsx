@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -18,6 +19,7 @@ const AIGenerateImageEditor = () => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("flows.actions.aiGenerateTextAgent")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
 
         <div className="flex flex-col gap-2">wip</div>

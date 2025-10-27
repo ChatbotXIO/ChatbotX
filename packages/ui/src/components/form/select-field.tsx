@@ -82,7 +82,7 @@ export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
   return (
     <FormFieldWrapper<T>
       description={description}
-      isRequired={required}
+      required={required}
       label={label}
       name={name}
     >

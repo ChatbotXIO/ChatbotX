@@ -40,7 +40,7 @@ export function CreateFlowDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.flow.label"),
               }),
             )
@@ -76,7 +76,7 @@ export function CreateFlowDialog({
       <DialogContent className={"max-h-screen max-w-sm overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.flow.label") })}
+            {t("messages.createTitle", { feature: t("fields.flow.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

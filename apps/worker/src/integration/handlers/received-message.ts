@@ -122,6 +122,13 @@ export const receiveMessage = async ({
         }
       }
 
+      const chatbotUsage = await tx.chatbotUsage.findFirstOrThrow({
+        where: { chatbotId },
+      })
+      if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+        throw new Error("Max contacts reached")
+      }
+
       newContact = await tx.contact.create({
         data: {
           chatbotId,

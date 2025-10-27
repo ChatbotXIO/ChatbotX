@@ -33,7 +33,7 @@ export function TagInputField<T extends FieldValues>(props: TagInputFieldProps<T
   return (
     <FormFieldWrapper<T>
       description={description}
-      isRequired={required}
+      required={required}
       label={label}
       name={name}
     >

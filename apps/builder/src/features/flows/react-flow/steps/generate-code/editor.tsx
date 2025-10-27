@@ -98,15 +98,15 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
               required
             />
 
-            <InputField isRequired label={t("fields.min.label")} name="min" />
+            <InputField label={t("fields.min.label")} name="min" required />
 
-            <InputField isRequired label={t("fields.max.label")} name="max" />
+            <InputField label={t("fields.max.label")} name="max" required />
 
             <CustomFieldSelect
               allowCreate={true}
-              isRequired
               label={t("fields.customField.label")}
               name="outputCustomFieldId"
+              required
             />
 
             <DialogFooter>

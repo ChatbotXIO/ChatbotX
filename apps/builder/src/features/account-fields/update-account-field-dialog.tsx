@@ -97,7 +97,7 @@ export function UpdateAccountFieldDialog({
               {/* <TextareaField
                 name="value"
                 label={t("accountField.value.label")}
-                isRequired={false}
+                required={false}
               /> */}
 
               <div className="flex justify-end gap-4">

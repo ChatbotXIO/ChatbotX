@@ -14,7 +14,7 @@ export function AIFilesCreate() {
     {
       onSuccess: () => {
         toast.success(
-          t("messages.createdSuccessfully", {
+          t("messages.createSuccess", {
             feature: t("fields.aiFile.label"),
           }),
         )

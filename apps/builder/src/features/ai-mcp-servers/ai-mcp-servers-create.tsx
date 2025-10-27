@@ -69,7 +69,7 @@ export function AIMcpServersCreate() {
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.aiMcpServer.label"),
               }),
             )
@@ -132,7 +132,7 @@ export function AIMcpServersCreate() {
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.aiMcpServer.label"),
             })}
           </DialogTitle>
@@ -143,8 +143,8 @@ export function AIMcpServersCreate() {
             className="flex flex-col space-y-6 py-4"
             onSubmit={handleSubmitWithAction}
           >
-            <InputField isRequired label={t("fields.name.label")} name="name" />
-            <InputField isRequired label={t("fields.url.label")} name="url" />
+            <InputField label={t("fields.name.label")} name="name" required />
+            <InputField label={t("fields.url.label")} name="url" required />
             <SelectField
               label={t("fields.auth.label")}
               name="auth.type"
@@ -153,9 +153,9 @@ export function AIMcpServersCreate() {
             />
             {form.watch("auth.type") === AIMcpServerAuthType.token && (
               <InputField
-                isRequired
                 label={t("fields.authToken.label")}
                 name="auth.token"
+                required
               />
             )}
             {form.watch("auth.type") === AIMcpServerAuthType.header &&

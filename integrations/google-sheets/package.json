@@ -10,6 +10,7 @@
     "googleapis": "^164.1.0"
   },
   "devDependencies": {
+    "@types/node": "^22.18.12",
     "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.9.3"
   },

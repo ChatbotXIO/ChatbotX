@@ -113,7 +113,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createdSuccessfully", {
+            t("messages.createSuccess", {
               feature: t("fields.webchat.label"),
             }),
           )
@@ -170,7 +170,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField isRequired label="Name" name="name" />
+        <InputField label="Name" name="name" required />
 
         <SelectField
           description={t("fields.welcomeFlowId.description")}

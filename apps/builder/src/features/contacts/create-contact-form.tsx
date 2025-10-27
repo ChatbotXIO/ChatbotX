@@ -33,7 +33,7 @@ export function CreateContactForm({
           onSuccess: () => {
             resetFormAndAction()
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.contact.label"),
               }),
             )

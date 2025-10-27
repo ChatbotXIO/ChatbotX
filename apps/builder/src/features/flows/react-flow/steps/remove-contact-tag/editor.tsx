@@ -19,9 +19,9 @@ const RemoveContactTagStepEditor = (props: RemoveContactTagStepEditorProps) => {
       title={t("flows.actions.removeContactTag")}
     >
       <TagMultiSelect
-        isRequired
         label={t("fields.tag.label")}
         name={`${parentName}.tags`}
+        required
       />
     </BaseStepEditor>
   )

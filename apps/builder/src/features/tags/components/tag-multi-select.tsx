@@ -10,14 +10,10 @@ import type { TagCollection } from "../schemas"
 type TagMultiSelectProps = {
   name: string
   label: string
-  isRequired: boolean
+  required: boolean
 }
 
-export function TagMultiSelect({
-  name,
-  label,
-  isRequired,
-}: TagMultiSelectProps) {
+export function TagMultiSelect({ name, label, required }: TagMultiSelectProps) {
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null)
   const [tags, setTags] = useState<Tag[]>([])
   const { setValue, getValues } = useFormContext()
@@ -45,9 +41,9 @@ export function TagMultiSelect({
 
   return (
     <FormFieldWrapper<FieldValues>
-      isRequired={isRequired}
       label={label}
       name={name}
+      required={required}
     >
       {(field) => (
         <TagInput

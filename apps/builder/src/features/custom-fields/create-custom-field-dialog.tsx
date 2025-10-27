@@ -47,7 +47,7 @@ export function CreateCustomFieldDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.customField.label"),
               }),
             )
@@ -124,7 +124,7 @@ export function CreateCustomFieldDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.customField.label"),
             })}
           </DialogTitle>

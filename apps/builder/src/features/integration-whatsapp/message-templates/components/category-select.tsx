@@ -11,11 +11,11 @@ import { TemplateType } from "../type"
 export function WhatsappMessageTemplateCategorySelect({
   name,
   label,
-  isRequired = false,
+  required = false,
 }: {
   name: string
   label: string
-  isRequired?: boolean
+  required?: boolean
 }) {
   const t = useTranslations()
   const { watch } = useFormContext()
@@ -58,7 +58,7 @@ export function WhatsappMessageTemplateCategorySelect({
         name={name}
         options={options}
         placeholder="Please select"
-        required={isRequired}
+        required={required}
       />
       {category === WhatsappTemplateCategory.marketing && (
         <div className="grid auto-cols-min grid-flow-col items-center gap-x-4 rounded bg-slate-200 p-6">

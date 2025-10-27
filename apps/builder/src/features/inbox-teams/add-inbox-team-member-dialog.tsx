@@ -43,7 +43,7 @@ export function AddInboxTeamMemberDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createdSuccessfully", {
+            t("messages.createSuccess", {
               feature: t("fields.inboxTeamMember.label"),
             }),
           )
@@ -75,7 +75,7 @@ export function AddInboxTeamMemberDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.inboxTeamMember.label"),
             })}
           </DialogTitle>

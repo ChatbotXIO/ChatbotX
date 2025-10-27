@@ -112,7 +112,7 @@ export function CreateAIAgentDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.aiAgent.label"),
               }),
             )
@@ -174,7 +174,7 @@ export function CreateAIAgentDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.aiAgent.label") })}
+            {t("messages.createTitle", { feature: t("fields.aiAgent.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -185,11 +185,7 @@ export function CreateAIAgentDialog({
               className="flex-1 space-y-6"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField
-                isRequired
-                label={t("fields.name.label")}
-                name="name"
-              />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <TextareaField
                 label={t("fields.prompt.label")}

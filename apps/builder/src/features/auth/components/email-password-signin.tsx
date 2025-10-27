@@ -47,16 +47,16 @@ export const EmailPasswordSignIn = () => {
         onSubmit={emailPasswordForm.handleSubmit(onSubmitEmailPasswordForm)}
       >
         <InputField
-          isRequired
           name="email"
           placeholder={t("signin.email")}
+          required
           type="email"
         />
 
         <InputField
-          isRequired
           name="password"
           placeholder={t("signin.password")}
+          required
           type="password"
         />
 

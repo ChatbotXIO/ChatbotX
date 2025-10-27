@@ -82,9 +82,9 @@ export default function AddContactTagDialog({
             onSubmit={handleSubmitWithAction}
           >
             <TagMultiSelect
-              isRequired
               label={t("fields.tag.label")}
               name="tags"
+              required
             />
 
             <DialogFooter>

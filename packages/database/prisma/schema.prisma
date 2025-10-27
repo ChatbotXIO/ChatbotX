@@ -137,6 +137,7 @@ model Chatbot {
   brandColor      String  @default("#016DFF")
   developmentMode Boolean @default(false)
   logo            String?
+  plan            String  @default("free")
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -175,6 +176,7 @@ model Chatbot {
   aiFunctions              AIFunction[]
   aiMCPServers             AIMCPServer[]
   integrationGemini        IntegrationGemini?
+  chatbotUsage             ChatbotUsage?
 }
 
 model ChatbotMember {
@@ -966,6 +968,18 @@ model ContactCustomField {
   customField   Field  @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
 
   @@unique([contactId, customFieldId])
+}
+
+model ChatbotUsage {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactsCount Int @default(0)
+  maxContacts   Int @default(0)
+
+  chatbotId String  @unique
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
 enum LogType {

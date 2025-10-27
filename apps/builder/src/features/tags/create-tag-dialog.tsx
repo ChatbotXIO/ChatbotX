@@ -48,7 +48,7 @@ export function CreateTagDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.tag.label"),
               }),
             )
@@ -85,7 +85,7 @@ export function CreateTagDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.tag.label") })}
+            {t("messages.createTitle", { feature: t("fields.tag.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

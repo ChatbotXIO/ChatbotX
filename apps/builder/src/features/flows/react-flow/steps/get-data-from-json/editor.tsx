@@ -80,9 +80,9 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
-              isRequired
               label={t("fields.inputCustomField.label")}
               name="inputCustomFieldId"
+              required
             />
 
             <div>

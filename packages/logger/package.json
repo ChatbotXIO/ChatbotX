@@ -8,6 +8,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "@types/node": "^22.18.12",
     "tslog": "^4.10.2"
   },
   "exports": {

@@ -41,7 +41,7 @@ export function CreateFolderDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.folder.label"),
               }),
             )
@@ -77,7 +77,7 @@ export function CreateFolderDialog({
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.folder.label"),
             })}
           </DialogTitle>

@@ -3,16 +3,16 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@prisma/adapter-pg": "6.17.1",
+    "@prisma/adapter-pg": "6.18.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@prisma/client": "^6.17.1",
+    "@prisma/client": "^6.18.0",
     "@types/node": "^22.18.12",
     "dotenv-cli": "^10.0.0",
-    "prisma": "6.17.1"
+    "prisma": "6.18.0"
   },
   "scripts": {
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",

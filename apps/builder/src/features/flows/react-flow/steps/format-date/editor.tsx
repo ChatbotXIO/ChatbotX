@@ -79,22 +79,22 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
-              isRequired
               label={t("fields.inputCustomField.label")}
               name="inputCustomFieldId"
+              required
             />
 
             <InputField
-              isRequired
               label={t("fields.format.label")}
               name="format"
+              required
             />
 
             <CustomFieldSelect
               allowCreate={true}
-              isRequired
               label={t("fields.outputCustomField.label")}
               name="outputCustomFieldId"
+              required
             />
 
             <SelectField

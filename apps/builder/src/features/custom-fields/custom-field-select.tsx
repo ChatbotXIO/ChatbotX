@@ -13,7 +13,7 @@ import type { CustomFieldCollection } from "./schemas"
 type CustomFieldSelectProps = {
   name: string
   label?: string
-  isRequired?: boolean
+  required?: boolean
   allowCreate?: boolean
   customFieldType?: CustomFieldType
 }
@@ -22,7 +22,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
   const {
     name,
     label = "Select Custom Field",
-    isRequired,
+    required,
     allowCreate,
     customFieldType,
   } = props
@@ -49,7 +49,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
         <div className="flex items-center">
           <FormLabel className="flex flex-1 items-center gap-1">
             {label}
-            {!isRequired && (
+            {!required && (
               <span className="self-start font-normal text-xxs">
                 (optional)
               </span>

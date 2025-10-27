@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ky": "^1.12.0"
+    "@types/node": "^22.18.12",
+    "ky": "^1.13.0"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

@@ -50,7 +50,7 @@ export function CreateAITriggerDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createdSuccessfully", {
+            t("messages.createSuccess", {
               feature: t("fields.aiTrigger.label"),
             }),
           )
@@ -101,7 +101,9 @@ export function CreateAITriggerDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.aiTrigger.label") })}
+            {t("messages.createTitle", {
+              feature: t("fields.aiTrigger.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

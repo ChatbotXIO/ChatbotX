@@ -74,7 +74,7 @@ export function AIFunctionsCreate({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.aiFunction.label"),
               }),
             )
@@ -109,7 +109,7 @@ export function AIFunctionsCreate({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.aiFunction.label"),
             })}
           </DialogTitle>
@@ -121,10 +121,10 @@ export function AIFunctionsCreate({
             onSubmit={handleSubmitWithAction}
           >
             <InputField
-              isRequired
               label={t("fields.name.label")}
               name="name"
               placeholder={t("fields.name.placeholder")}
+              required
             />
             <TextareaField
               label={t("fields.purpose.label")}

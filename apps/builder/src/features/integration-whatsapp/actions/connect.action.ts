@@ -128,6 +128,12 @@ export const connectWhatsappAction = authActionClient
                 accountTimezone: "UTC",
               },
             })
+            await tx.chatbotUsage.create({
+              data: {
+                chatbotId: chatbot.id,
+                maxContacts: Number.MAX_SAFE_INTEGER,
+              },
+            })
             chatbotId = chatbot.id
 
             await tx.chatbotMember.create({

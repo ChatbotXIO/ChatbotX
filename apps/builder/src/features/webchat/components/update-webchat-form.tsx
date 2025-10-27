@@ -182,7 +182,7 @@ export function UpdateWebchatForm({
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField isRequired label="Name" name="name" />
+        <InputField label="Name" name="name" required />
 
         <SelectField
           description={t("fields.welcomeFlowId.description")}

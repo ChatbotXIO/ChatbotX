@@ -63,7 +63,7 @@ export function CreateBroadcastForm({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createdSuccessfully", {
+            t("messages.createSuccess", {
               feature: t("fields.broadcast.label"),
             }),
           )
