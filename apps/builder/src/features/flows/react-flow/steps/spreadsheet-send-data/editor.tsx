@@ -1,5 +1,6 @@
 "use client"
 
+import { spreadsheetSendDataSchema } from "@aha.chat/flow-config"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useState } from "react"
@@ -8,7 +9,6 @@ import { SpreadsheetDialog } from "@/features/flows/react-flow/steps/spreadsheet
 import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
 import { SpreadsheetCustomFieldMapping } from "../spreadsheet/custom-field-mapping"
 import { WorksheetSelect } from "../spreadsheet/worksheet-select"
-import { spreadsheetSendDataSchema } from "./schema"
 
 type SpreadsheetSendDataEditorProps = {
   parentName: string
@@ -53,7 +53,7 @@ export const SpreadsheetSendDataEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="Flows.Spreadsheets.SendData"
+        name="googleSheets.sendData"
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}

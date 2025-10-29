@@ -274,6 +274,9 @@ importers:
       '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config
+      '@aha.chat/integration-google-sheets':
+        specifier: workspace:*
+        version: link:../../integrations/google-sheets
       '@aha.chat/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger

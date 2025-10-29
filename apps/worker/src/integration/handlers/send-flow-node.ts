@@ -29,6 +29,13 @@ import {
   unassignConversation,
   unfollowConversation,
 } from "./conversation-handler"
+import {
+  clearSpreadsheetRow,
+  getSpreadsheetRandomRow,
+  getSpreadsheetRow,
+  sendSpreadsheetData,
+  updateSpreadsheetRow,
+} from "./spreadsheet-handler"
 import { dispatchFlowStep, type FlowStepProps } from "./step-handler"
 import {
   countCharacters,
@@ -109,6 +116,11 @@ const flowStepHandlers: Record<
   [StepType.USER_INPUT]: undefined,
   [StepType.WAIT]: undefined,
   [StepType.ZAPIER_CUSTOM_LOG]: undefined,
+  [StepType.SPREADSHEET_GET_ROW]: getSpreadsheetRow,
+  [StepType.SPREADSHEET_CLEAR_ROW]: clearSpreadsheetRow,
+  [StepType.SPREADSHEET_GET_RANDOM_ROW]: getSpreadsheetRandomRow,
+  [StepType.SPREADSHEET_SEND_DATA]: sendSpreadsheetData,
+  [StepType.SPREADSHEET_UPDATE_ROW]: updateSpreadsheetRow,
 }
 
 export const sendFlowNode = async (props: IntegrationJobSendFlow) => {

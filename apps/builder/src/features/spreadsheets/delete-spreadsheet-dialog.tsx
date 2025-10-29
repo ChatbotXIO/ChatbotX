@@ -42,7 +42,7 @@ export function DeleteSpreadsheetsDialog({
     deleteSpreadsheetAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(t("spreadsheets.deleted"))
+        toast.success(t("googleSheets.deleted"))
         onOpenChange(false)
       },
       onError: ({ error }) => {
@@ -65,12 +65,12 @@ export function DeleteSpreadsheetsDialog({
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("spreadsheets.delete.dialog_title")}</DialogTitle>
+          <DialogTitle>{t("googleSheets.delete.dialog_title")}</DialogTitle>
           <DialogDescription>
-            {t("spreadsheets.confirmDeleteDesc")}{" "}
+            {t("googleSheets.confirmDeleteDesc")}{" "}
             <span className="font-medium">{spreadsheets.length}</span>
             {spreadsheets.length === 1 ? " spreadsheet " : " spreadsheets "}
-            {t("spreadsheets.confirmDeleteDesc")}
+            {t("googleSheets.confirmDeleteDesc")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">

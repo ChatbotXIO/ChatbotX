@@ -1,10 +1,10 @@
-import type { StepDefinition } from ".."
-import { SpreadsheetViewer } from "../spreadsheet/viewer"
-import { SpreadsheetGetRandomRowEditor } from "./editor"
 import {
   spreadsheetGetRandomRowDefaultFn,
   spreadsheetGetRandomRowSchema,
-} from "./schema"
+} from "@aha.chat/flow-config"
+import type { StepDefinition } from ".."
+import { SpreadsheetViewer } from "../spreadsheet/viewer"
+import { SpreadsheetGetRandomRowEditor } from "./editor"
 
 export const spreadsheetGetRandomRowStep: StepDefinition = {
   editor: SpreadsheetGetRandomRowEditor,

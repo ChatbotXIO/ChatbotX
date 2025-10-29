@@ -9,7 +9,6 @@ type WorksheetSelectProps = {
   spreadsheetId: string
   label?: string
   required?: boolean
-  onChange?: (value: string) => void
 }
 
 export const WorksheetSelect = ({
@@ -17,7 +16,6 @@ export const WorksheetSelect = ({
   spreadsheetId,
   label = "Worksheet",
   required = true,
-  onChange,
 }: WorksheetSelectProps) => {
   const params = useParams<{ chatbotId: string }>()
   // const { control } = useFormContext()
@@ -41,7 +39,6 @@ export const WorksheetSelect = ({
     <SelectField
       label={label}
       name={name}
-      onValueChange={(value: string) => onChange?.(value)}
       options={worksheetOptions}
       placeholder="Please select"
       required={required}

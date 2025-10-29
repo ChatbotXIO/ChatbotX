@@ -8,6 +8,7 @@ export const integrations = {
   whatsapp: integrationWhatsapp,
   MESSENGER: integrationMessenger,
   googleSheets: integrationGoogleSheets,
+  GOOGLE_SHEETS: integrationGoogleSheets,
   ZALO: integrationZalo,
   zalo: integrationZalo,
   WEBCHAT: undefined,

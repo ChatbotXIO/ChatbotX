@@ -645,7 +645,9 @@
     "or": "or",
     "needToAddSettings": "You need to add settings to use this integration",
     "connectFailed": "Failed to connect {feature}",
-    "connectSuccess": "Connected {feature} successfully"
+    "connectSuccess": "Connected {feature} successfully",
+    "success": "Success",
+    "failed": "Failed"
   },
   "signin": {
     "title": "Sign in to {name}",
@@ -679,7 +681,12 @@
       "countCharacters": "Count Characters",
       "openAIGenerateImage": "OpenAI Generate Image",
       "openAIGenerateTextAgent": "OpenAI Generate Text Agent",
-      "openAIDeleteMessageHistory": "OpenAI Delete Message History"
+      "openAIDeleteMessageHistory": "OpenAI Delete Message History",
+      "SPREADSHEET_CLEAR_ROW": "Google Sheet Clear Row",
+      "SPREADSHEET_GET_ROW": "Google Sheet Get Row",
+      "SPREADSHEET_UPDATE_ROW": "Google Sheet Update Row",
+      "SPREADSHEET_SEND_DATA": "Google Sheet Send Data",
+      "SPREADSHEET_GET_RANDOM_ROW": "Google Sheet Get Random Row"
     },
     "button": {
       "label": "Button Label"
@@ -753,10 +760,31 @@
     }
   },
   "googleSheets": {
+    "delete": {
+      "dialog_title": "Delete Google Sheets"
+    },
+    "name": "Spreadsheet Name",
+    "link": "Spreadsheet Link",
+    "create": {
+      "title": "Create Spreadsheet"
+    },
+    "confirmDeleteDesc": "Are you sure you want to delete this Google Sheets?",
+    "update": {
+      "dialog_title": "Update Google Sheets"
+    },
+    "deleted": "Google Sheets deleted successfully",
+    "length": "Google Sheets length",
     "setting": {
       "label": "Google Sheets",
       "description": "Google Sheets description"
     },
+    "getRow": "Get Row",
+    "addRow": "Add Row",
+    "updateRow": "Update Row",
+    "sendData": "Send Data",
+    "randomRow": "Get Random Row",
+    "clearRow": "Clear Row",
+    "header": "Column Header",
     "title": "Google Sheets"
   },
   "customField": {

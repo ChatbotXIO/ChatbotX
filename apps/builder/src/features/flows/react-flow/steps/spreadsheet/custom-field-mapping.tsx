@@ -1,5 +1,6 @@
 "use client"
 
+import { spreadsheetMappingDefaultFn } from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react"
 import { useParams } from "next/navigation"
@@ -8,7 +9,6 @@ import { useEffect } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { callAPI } from "@/lib/swr"
-import { spreadsheetMappingDefaultFn } from "./schema"
 
 type FieldAction = "get" | "update"
 
@@ -45,8 +45,8 @@ export const SpreadsheetCustomFieldMapping = ({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between">
-        <div className="w-[45%]">{t("CustomField.label")}</div>
-        <div className="w-[45%]">{t("Flows.GoogleSheets.Header")}</div>
+        <div className="w-[45%]">{t("fields.customField.label")}</div>
+        <div className="w-[45%]">{t("googleSheets.header")}</div>
       </div>
       {headers.map((_header, index) => (
         <div

@@ -1,10 +1,10 @@
-import { StepType } from "@aha.chat/flow-config"
 import { z } from "zod"
 import {
   spreadsheetDefaultFn,
   spreadsheetMappingSchema,
   spreadsheetSchema,
-} from "../spreadsheet/schema"
+} from "./spreadsheet"
+import { StepType } from "./step-action"
 
 export const spreadsheetSendDataSchema = spreadsheetSchema.extend({
   stepType: z.literal(StepType.SPREADSHEET_SEND_DATA),

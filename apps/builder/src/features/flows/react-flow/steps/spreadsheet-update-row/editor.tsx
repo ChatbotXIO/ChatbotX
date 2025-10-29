@@ -1,5 +1,6 @@
 "use client"
 
+import { spreadsheetUpdateRowSchema } from "@aha.chat/flow-config"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useState } from "react"
@@ -9,7 +10,6 @@ import { SpreadsheetColumnFilter } from "../spreadsheet/components/spreadsheet-c
 import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
 import { SpreadsheetCustomFieldMapping } from "../spreadsheet/custom-field-mapping"
 import { WorksheetSelect } from "../spreadsheet/worksheet-select"
-import { spreadsheetUpdateRowSchema } from "./schema"
 
 type SpreadsheetUpdateRowEditorProps = {
   parentName: string
@@ -54,7 +54,7 @@ export const SpreadsheetUpdateRowEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="Flows.Spreadsheets.UpdateRow"
+        name="googleSheets.updateRow"
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}

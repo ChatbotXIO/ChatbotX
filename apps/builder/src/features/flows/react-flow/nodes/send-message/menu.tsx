@@ -20,6 +20,7 @@ import {
   PaperclipIcon,
   SaveIcon,
   SaveOffIcon,
+  SheetIcon,
   ShuffleIcon,
   StarIcon,
   StarOffIcon,
@@ -277,6 +278,38 @@ export const sendMessageEditorMenus = (
           label: t("actions.clearCustomField"),
           icon: SaveOffIcon,
           stepType: StepType.CLEAR_CUSTOM_FIELD,
+        },
+        {
+          label: t("fields.googleSheets.label"),
+          icon: SheetIcon,
+          stepType: null,
+          children: [
+            {
+              label: t("googleSheets.getRow"),
+              icon: SheetIcon,
+              stepType: StepType.SPREADSHEET_GET_ROW,
+            },
+            {
+              label: t("googleSheets.randomRow"),
+              icon: SheetIcon,
+              stepType: StepType.SPREADSHEET_GET_RANDOM_ROW,
+            },
+            {
+              label: t("googleSheets.updateRow"),
+              icon: SheetIcon,
+              stepType: StepType.SPREADSHEET_UPDATE_ROW,
+            },
+            {
+              label: t("googleSheets.clearRow"),
+              icon: SheetIcon,
+              stepType: StepType.SPREADSHEET_CLEAR_ROW,
+            },
+            {
+              label: t("googleSheets.sendData"),
+              icon: SheetIcon,
+              stepType: StepType.SPREADSHEET_SEND_DATA,
+            },
+          ],
         },
         //     {
         //       label: t("actions.AddCustomLog"),

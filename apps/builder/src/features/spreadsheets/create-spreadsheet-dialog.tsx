@@ -87,7 +87,7 @@ export function CreateSpreadsheetDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("spreadsheets.create.title")}</DialogTitle>
+          <DialogTitle>{t("googleSheets.create.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -96,9 +96,13 @@ export function CreateSpreadsheetDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("spreadsheets.name")} name="name" />
+              <InputField label={t("googleSheets.name")} name="name" />
 
-              <InputField label={t("spreadsheets.link")} name="url" />
+              <InputField
+                label={t("googleSheets.link")}
+                name="url"
+                placeholder="https://docs.google.com/spreadsheets/d/1WqW6HDKgHNGXtDmmq5mqx_iMda1bVjtKYjU23uRCFgE/edit"
+              />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>

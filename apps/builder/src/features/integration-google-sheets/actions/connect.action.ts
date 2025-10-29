@@ -40,6 +40,10 @@ export const connectGoogleSheets = chatbotActionClient
             "/integrations/google-sheets/callback",
             parsedInput.referer,
           ).toString(),
+          stateParams: {
+            chatbotId: ctx.chatbot.id,
+            referer: parsedInput.referer,
+          },
         },
         req: new Request(
           new URL(

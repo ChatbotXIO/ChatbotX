@@ -1,8 +1,8 @@
 "use client"
 
+import { Operator } from "@aha.chat/flow-config"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useMemo } from "react"
-import { Operator } from "./schema"
 
 type ISpreadsheetOperatorSelectProps = {
   name: string

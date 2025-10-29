@@ -1,11 +1,11 @@
 "use client"
 
+import { FilterMode, Operator } from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { TrashIcon } from "lucide-react"
 import { useFieldArray, useFormContext } from "react-hook-form"
-import { FilterMode, Operator } from "../schema"
 import { SpreadsheetOperatorSelect } from "../spreadsheet-operator-select"
 import { WorksheetColumnSelect } from "../worksheet-column-select"
 

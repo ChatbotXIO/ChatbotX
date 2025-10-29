@@ -1,51 +1,25 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { SheetIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { useForm, useFormContext } from "react-hook-form"
-import { BaseStepEditor } from "../base/editor"
-import { SpreadsheetColumnFilter } from "../spreadsheet/components/spreadsheet-column-filter"
-import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
-import { WorksheetSelect } from "../spreadsheet/worksheet-select"
 import {
   type SpreadsheetClearRowSchema,
   spreadsheetClearRowSchema,
-} from "./schema"
+} from "@aha.chat/flow-config"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useCallback, useState } from "react"
+import { useForm, useFormContext } from "react-hook-form"
+import { SpreadsheetDialog } from "../spreadsheet/components/dialog"
+import { SpreadsheetColumnFilter } from "../spreadsheet/components/spreadsheet-column-filter"
+import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
+import { WorksheetSelect } from "../spreadsheet/worksheet-select"
 
-export default function SpreadsheetClearRowEditor({
+export const SpreadsheetClearRowEditor = ({
   parentName,
 }: {
   parentName: string
-}) {
-  const t = useTranslations()
-
-  return (
-    <BaseStepEditor
-      icon={SheetIcon}
-      title={t("flows.StepType.SpreadsheetClearRow")}
-    >
-      <SpreadsheetClearRowDialog parentName={parentName} />
-    </BaseStepEditor>
-  )
-}
-
-function SpreadsheetClearRowDialog({ parentName }: { parentName: string }) {
+}) => {
   const [open, setOpen] = useState(false)
-  const { setValue, getValues } = useFormContext()
+  const { getValues, setValue: setValueParent } = useFormContext()
 
   const form = useForm<SpreadsheetClearRowSchema>({
     resolver: zodResolver(spreadsheetClearRowSchema),
@@ -58,64 +32,29 @@ function SpreadsheetClearRowDialog({ parentName }: { parentName: string }) {
   const spreadsheetId = form.watch("spreadsheetId")
   const sheetName = form.watch("sheetName")
 
-  const onSubmit = (data: SpreadsheetClearRowSchema) => {
-    setValue(`${parentName}.spreadsheetId`, data.spreadsheetId)
-    setValue(`${parentName}.sheetName`, data.sheetName)
-    setValue(`${parentName}.lookup`, data.lookup)
+  const onSubmit = useCallback(() => {
+    setValueParent(parentName, form.getValues())
     setOpen(false)
-  }
+  }, [setValueParent, parentName, form.getValues])
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <div className="flex justify-center">
-          <Button size="sm" variant="outline">
-            Edit
-          </Button>
+    <Form {...form}>
+      <SpreadsheetDialog
+        name="googleSheets.clearRow"
+        onOpenChange={(val: boolean) => setOpen(val)}
+        onSubmit={onSubmit}
+        open={open}
+      >
+        <div className="flex flex-col gap-4">
+          <SpreadsheetSelect label="Spreadsheet" name="spreadsheetId" />
+
+          {spreadsheetId && (
+            <WorksheetSelect name="sheetName" spreadsheetId={spreadsheetId} />
+          )}
+
+          {spreadsheetId && sheetName && <SpreadsheetColumnFilter />}
         </div>
-      </DialogTrigger>
-
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Spreadsheet Clear Row</DialogTitle>
-          <DialogDescription />
-        </DialogHeader>
-
-        <Form {...form}>
-          <form
-            className="flex w-full flex-col gap-4"
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
-            <SpreadsheetSelect label="Spreadsheet" name="spreadsheetId" />
-
-            {spreadsheetId && (
-              <WorksheetSelect name="sheetName" spreadsheetId={spreadsheetId} />
-            )}
-
-            {spreadsheetId && sheetName && (
-              <SpreadsheetColumnFilter
-              // spreadsheetId={spreadsheetId}
-              // sheetName={sheetName}
-              />
-            )}
-
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-
-              <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                type="submit"
-              >
-                Save changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      </SpreadsheetDialog>
+    </Form>
   )
 }

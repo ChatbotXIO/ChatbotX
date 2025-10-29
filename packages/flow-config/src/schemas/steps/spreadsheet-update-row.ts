@@ -1,4 +1,3 @@
-import { StepType } from "@aha.chat/flow-config"
 import { z } from "zod"
 import {
   spreadsheetColumnFilterDefaultFn,
@@ -6,7 +5,8 @@ import {
   spreadsheetDefaultFn,
   spreadsheetMappingSchema,
   spreadsheetSchema,
-} from "../spreadsheet/schema"
+} from "./spreadsheet"
+import { StepType } from "./step-action"
 
 export const spreadsheetUpdateRowSchema = spreadsheetSchema.extend({
   stepType: z.literal(StepType.SPREADSHEET_UPDATE_ROW),

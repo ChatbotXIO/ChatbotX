@@ -1,4 +1,5 @@
 import type { IntegrationType } from "@aha.chat/database"
+import { integration as integrationGooglesheets } from "@aha.chat/integration-google-sheets"
 import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 import { integration as integrationZalo } from "@aha.chat/integration-zalo"
@@ -10,7 +11,7 @@ export const allIntegrations: Record<
   Integration<IntegrationDefinition<any, any, any>> | undefined
 > = {
   GEMINI: undefined,
-  GOOGLE_SHEETS: undefined,
+  GOOGLE_SHEETS: integrationGooglesheets,
   INSTAGRAM: undefined,
   MESSENGER: integrationMessenger,
   OPENAI: undefined,

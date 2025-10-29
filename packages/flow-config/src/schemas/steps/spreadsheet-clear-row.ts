@@ -1,11 +1,11 @@
-import { StepType } from "@aha.chat/flow-config"
 import { z } from "zod"
 import {
   spreadsheetColumnFilterDefaultFn,
   spreadsheetColumnFilterSchema,
   spreadsheetDefaultFn,
   spreadsheetSchema,
-} from "../spreadsheet/schema"
+} from "./spreadsheet"
+import { StepType } from "./step-action"
 
 export const spreadsheetClearRowSchema = spreadsheetSchema.extend({
   stepType: z.literal(StepType.SPREADSHEET_CLEAR_ROW),

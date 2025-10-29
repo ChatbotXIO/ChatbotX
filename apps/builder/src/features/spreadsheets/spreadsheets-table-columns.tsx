@@ -12,21 +12,21 @@ import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 import type { SpreadsheetResource } from "./schemas/index"
 
 type GetColumnsProps = {
+  t: ReturnType<typeof useTranslations>
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<SpreadsheetResource> | null>
   >
 }
 
 export function getSpreadsheetColumns({
+  t,
   setRowAction,
 }: GetColumnsProps): ColumnDef<SpreadsheetResource>[] {
-  const t = useTranslations()
-
   return [
     {
       accessorKey: "name",

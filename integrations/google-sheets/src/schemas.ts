@@ -30,10 +30,36 @@ export type GoogleSheetsActions = {
     },
     string[]
   >
+  getSheetValues: Handler<
+    {
+      ctx: Context<GoogleSheetsAuthValue>
+      props: { spreadsheetId: string; sheetName: string }
+    },
+    string[][]
+  >
   insertRow: Handler<
     {
       ctx: Context<GoogleSheetsAuthValue>
       props: { spreadsheetId: string; sheetName: string; data: string[] }
+    },
+    void
+  >
+  updateRow: Handler<
+    {
+      ctx: Context<GoogleSheetsAuthValue>
+      props: {
+        spreadsheetId: string
+        sheetName: string
+        rowIndex: number
+        data: string[]
+      }
+    },
+    void
+  >
+  clearRow: Handler<
+    {
+      ctx: Context<GoogleSheetsAuthValue>
+      props: { spreadsheetId: string; sheetName: string; rowIndex: number }
     },
     void
   >

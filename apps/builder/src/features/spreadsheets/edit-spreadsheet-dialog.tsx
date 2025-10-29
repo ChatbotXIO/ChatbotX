@@ -83,7 +83,7 @@ export function UpdateSpreadsheetDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("spreadsheets.update.title")}</DialogTitle>
+          <DialogTitle>{t("googleSheets.update.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -92,9 +92,9 @@ export function UpdateSpreadsheetDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("spreadsheets.name")} name="name" />
+              <InputField label={t("googleSheets.name")} name="name" />
 
-              <InputField label={t("spreadsheets.link")} name="url" />
+              <InputField label={t("googleSheets.link")} name="url" />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>

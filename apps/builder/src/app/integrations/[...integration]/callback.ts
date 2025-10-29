@@ -90,7 +90,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
         return notFound()
       }
 
-      authResult = integrations.googleSheets.handleRequest?.({
+      authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...organizationSettings.googleSheets,
           redirectUrl: new URL(
@@ -99,7 +99,7 @@ export const handleCallback = async (integrationName: string, req: Request) => {
           ).toString(),
         },
         req,
-      }) as unknown as Oauth2AuthValue
+      })) as unknown as Oauth2AuthValue
 
       additionalIntegrationCreationData = {
         googleSheets: {
