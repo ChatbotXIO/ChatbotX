@@ -67,22 +67,23 @@ export function DeleteLogsDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.deleteTitle", { feature: t("fields.log.label") })}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("dialog.deleteConfirmation", {
               feature: t("fields.log.label"),
             })}
           </DialogDescription>
         </DialogHeader>
+
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t("actions.cancel")}</Button>
+            <Button size="sm" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
@@ -93,6 +94,7 @@ export function DeleteLogsDialog({
                 logType: logType as LogType,
               })
             }
+            size="sm"
             variant="destructive"
           >
             {isPending && (

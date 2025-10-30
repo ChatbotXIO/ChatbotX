@@ -53,10 +53,13 @@ export function FlowEditToolbar({
     setIsValidating(true)
 
     // validate nodes & edges
-    const { success } = updateFlowVersionSchema.safeParse({
+    const { success, error } = updateFlowVersionSchema.safeParse({
       nodes,
       edges,
     })
+
+    // biome-ignore lint/suspicious/noConsole: debug
+    console.log("error", error)
     if (success) {
       executePublish()
     } else {

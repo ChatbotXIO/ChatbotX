@@ -79,15 +79,13 @@ export function CreateSpreadsheetDialog({
         ) : (
           <Button size="sm">
             <PlusIcon />
-            {t("actions.createFeature", {
-              feature: t("fields.spreadsheet.label"),
-            })}
+            {t("googleSheets.add.title")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("googleSheets.create.title")}</DialogTitle>
+          <DialogTitle>{t("googleSheets.add.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">

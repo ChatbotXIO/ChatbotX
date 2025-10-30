@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,14 +8,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@aha.chat/ui/components/ui/breadcrumb"
-import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
+import type { FlowResource } from "../schemas/get-flows-schema"
 import { FlowEditToolbar } from "./flow-edit-toolbar"
 
-export function FrameHeader() {
-  const { chatbotId, flowId } = useParams<{
-    chatbotId: string
-    flowId: string
-  }>()
+export function FrameHeader({ flow }: { flow: FlowResource }) {
+  const t = useTranslations()
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -22,19 +22,19 @@ export function FrameHeader() {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="capitalize"
-              href={`/chatbots/${chatbotId}/flows`}
+              href={`/chatbots/${flow.chatbotId}/flows`}
             >
-              Flows
+              {t("fields.flow.label")}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="capitalize">{flowId}</BreadcrumbPage>
+            <BreadcrumbPage>{flow.name}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <FlowEditToolbar chatbotId={chatbotId} flowId={flowId} />
+      <FlowEditToolbar chatbotId={flow.chatbotId} flowId={flow.id} />
     </header>
   )
 }

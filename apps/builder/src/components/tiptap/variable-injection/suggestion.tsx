@@ -1,11 +1,10 @@
-import type { CustomFieldType } from "@aha.chat/database/types"
+import { CustomFieldType } from "@aha.chat/database/types"
 import { computePosition, flip, shift } from "@floating-ui/dom"
 import type { MentionNodeAttrs } from "@tiptap/extension-mention"
 import { type Editor, posToDOMRect, ReactRenderer } from "@tiptap/react"
 import type { SuggestionOptions } from "@tiptap/suggestion"
 import { CalendarIcon, HashIcon, TextIcon } from "lucide-react"
 import { useMemo } from "react"
-import type { CustomFieldResource } from "@/features/custom-fields/schemas"
 import VariableList, {
   type VariableListProps,
   type VariableListRef,
@@ -34,22 +33,24 @@ const updatePosition = (editor: Editor, element: HTMLElement) => {
   })
 }
 
-export default function createSuggestion(customFields: CustomFieldResource[]) {
+export default function createSuggestion(
+  customFields: { label: string; value: string; type: string }[],
+) {
   const itemOptions = useMemo(() => {
     const getIcon = (type: CustomFieldType) => {
-      if (type === "NUMBER") {
+      if (type === CustomFieldType.number) {
         return HashIcon
       }
-      if (type === "DATE" || type === "DATETIME") {
+      if (type === CustomFieldType.date || type === CustomFieldType.datetime) {
         return CalendarIcon
       }
       return TextIcon
     }
 
     return customFields.map((cf) => ({
-      value: cf.name,
-      label: cf.name,
-      icon: getIcon(cf.customFieldType),
+      value: cf.value,
+      label: cf.label,
+      icon: getIcon(cf.type as CustomFieldType),
     }))
   }, [customFields])
 

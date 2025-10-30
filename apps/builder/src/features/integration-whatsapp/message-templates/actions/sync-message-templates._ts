@@ -31,7 +31,7 @@ export const syncMessageTemplateAction = chatbotActionClient
         uploader,
       }
 
-      const res = await integrations.whatsapp.runAction(
+      const res = await integrations.Whatsapp.runAction(
         "listMessageTemplates",
         {
           ctx,

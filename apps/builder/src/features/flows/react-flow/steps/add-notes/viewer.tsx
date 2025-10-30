@@ -4,13 +4,15 @@ import { MessageCircleMore } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
-export const AddNotesStepViewer = () => {
+const AddNotesStepViewer = () => {
   const t = useTranslations()
 
   return (
     <BaseStepViewer
       icon={MessageCircleMore}
-      title={t("flows.stepType.addNotes")}
+      title={t("flows.actions.addContactNotes")}
     />
   )
 }
+
+export default AddNotesStepViewer

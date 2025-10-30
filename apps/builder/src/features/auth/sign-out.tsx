@@ -24,9 +24,7 @@ export function SignOut() {
         <LogOutIcon />
         Log Out
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>Are you sure you want to log out?</DialogTitle>
           <DialogDescription />

@@ -165,7 +165,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
 
       <DeleteFieldsDialog
         chatbotId={chatbotId}
-        fieldType={FieldType.CUSTOM_FIELD}
+        fieldType={FieldType.customField}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         open={rowAction?.variant === "delete"}

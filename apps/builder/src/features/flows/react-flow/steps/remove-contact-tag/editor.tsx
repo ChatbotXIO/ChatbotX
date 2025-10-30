@@ -9,22 +9,22 @@ type RemoveContactTagStepEditorProps = {
   parentName: string
 }
 
-export const RemoveContactTagStepEditor = (
-  props: RemoveContactTagStepEditorProps,
-) => {
+const RemoveContactTagStepEditor = (props: RemoveContactTagStepEditorProps) => {
   const t = useTranslations()
   const { parentName } = props
 
   return (
     <BaseStepEditor
       icon={OctagonXIcon}
-      title={t("flows.stepType.removeContactTag")}
+      title={t("flows.actions.removeContactTag")}
     >
       <TagMultiSelect
-        isRequired
         label={t("fields.tag.label")}
         name={`${parentName}.tags`}
+        required
       />
     </BaseStepEditor>
   )
 }
+
+export default RemoveContactTagStepEditor

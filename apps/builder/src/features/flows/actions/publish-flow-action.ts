@@ -43,13 +43,25 @@ export const publishFlowAction = chatbotActionClient
       })
 
       await prisma.$transaction(async (tx) => {
+        // Remove all other latest versions
+        await tx.flowVersion.updateMany({
+          where: {
+            flowId: flow.id,
+            isLatest: true,
+          },
+          data: {
+            isLatest: false,
+          },
+        })
+
         const newVersion = await prisma.flowVersion.create({
           data: {
             chatbotId: flow.chatbotId,
             flowId: flow.id,
             isDraft: false,
+            isLatest: true,
             ...validated,
-            startNodeId: "",
+            startNodeId: draftVersion.startNodeId,
           },
         })
 

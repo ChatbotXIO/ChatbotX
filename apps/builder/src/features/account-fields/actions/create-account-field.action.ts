@@ -28,14 +28,14 @@ export const createAccountFieldAction = chatbotActionClient
         await ensureFolderIdIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.CUSTOM_FIELD,
+          FolderType.customField,
         )
       }
 
       await prisma.field.create({
         data: {
           chatbotId,
-          fieldType: FieldType.ACCOUNT_FIELD,
+          fieldType: FieldType.accountField,
           showInInbox: false,
           ...parsedInput,
         },

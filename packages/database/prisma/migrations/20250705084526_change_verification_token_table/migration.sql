@@ -1,1 +1,0 @@
-ALTER TABLE "VerificationToken" RENAME TO "Verification";

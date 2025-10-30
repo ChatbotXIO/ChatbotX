@@ -24,7 +24,7 @@ export default function InboxCardList({
     <div className="grid grid-cols-2 gap-4">
       {inboxes.map((inbox) => (
         <div key={inbox.id}>
-          {inbox.inboxType === InboxType.WHATSAPP && (
+          {inbox.inboxType === InboxType.Whatsapp && (
             <InboxWhatsappCard inbox={inbox} />
           )}
         </div>

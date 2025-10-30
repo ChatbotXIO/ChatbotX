@@ -7,7 +7,7 @@ import { FormFieldWrapper } from "./field-wrapper"
 type CheckboxGroupFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
-  isRequired?: boolean
+  required?: boolean
   description?: string
   options: {
     value: string
@@ -18,14 +18,14 @@ type CheckboxGroupFieldProps<T extends FieldValues> = {
 export function CheckboxGroupField<T extends FieldValues>({
   name,
   label,
-  isRequired,
+  required,
   description,
   options,
 }: CheckboxGroupFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={isRequired}
+      required={required}
       label={label}
       name={name}
     >

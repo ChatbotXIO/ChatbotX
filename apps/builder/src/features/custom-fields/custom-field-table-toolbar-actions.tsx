@@ -22,7 +22,7 @@ export function CustomFieldsTableToolbarActions({
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <DeleteFieldsDialog
           chatbotId={chatbotId}
-          fieldType={FieldType.CUSTOM_FIELD}
+          fieldType={FieldType.customField}
           onSuccess={() => table.toggleAllRowsSelected(false)}
           records={table
             .getFilteredSelectedRowModel()

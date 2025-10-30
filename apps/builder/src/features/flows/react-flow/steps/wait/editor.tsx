@@ -15,15 +15,15 @@ import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { DelayTypeSelect } from "@/features/flows/react-flow/steps/wait/delay-type-select"
-import { DelayUnitSelect } from "@/features/flows/react-flow/steps/wait/delay-unit-select"
-import { TimeSelect } from "@/features/flows/react-flow/steps/wait/time-select"
+import DelayTypeSelect from "@/features/flows/react-flow/steps/wait/components/delay-type-select"
+import DelayUnitSelect from "@/features/flows/react-flow/steps/wait/components/delay-unit-select"
+import TimeSelect from "@/features/flows/react-flow/steps/wait/components/time-select"
 
 type WaitStepEditorProps = {
   parentName: string
 }
 
-export const WaitStepEditor = (props: WaitStepEditorProps) => {
+const WaitStepEditor = (props: WaitStepEditorProps) => {
   const { parentName } = props
 
   const t = useTranslations()
@@ -38,7 +38,7 @@ export const WaitStepEditor = (props: WaitStepEditorProps) => {
   return (
     <div className="flex flex-col gap-3">
       <DelayTypeSelect name={`${parentName}.delayType`} />
-      {delayType === DelayType.Duration && (
+      {delayType === DelayType.duration && (
         <>
           <div className="flex justify-between gap-2">
             <InputNumberField
@@ -72,7 +72,7 @@ export const WaitStepEditor = (props: WaitStepEditorProps) => {
           )}
         </>
       )}
-      {delayType === DelayType.SpecificDate && (
+      {delayType === DelayType.specify && (
         <>
           <div className="flex items-center gap-2">
             <Tooltip>
@@ -80,7 +80,7 @@ export const WaitStepEditor = (props: WaitStepEditorProps) => {
                 <InfoIcon size={18} />
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t("flows.wait.datetime.tooltip")}</p>
+                <p>{t("flows.wait.datetimeTooltip")}</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -98,25 +98,15 @@ export const WaitStepEditor = (props: WaitStepEditorProps) => {
           />
         </>
       )}
-      {delayType === DelayType.DatetimeCustomField && (
+      {delayType === DelayType.customField && (
         <CustomFieldSelect
-          customFieldType={CustomFieldType.DATETIME}
-          label={
-            <>
-              {t("flows.wait.datetimeCustomField")}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <InfoIcon size={18} />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("flows.wait.datetime.tooltip")}</p>
-                </TooltipContent>
-              </Tooltip>
-            </>
-          }
+          customFieldType={CustomFieldType.datetime}
+          label={t("flows.wait.datetimeTooltip")}
           name={`${parentName}.customFieldId`}
         />
       )}
     </div>
   )
 }
+
+export default WaitStepEditor

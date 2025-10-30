@@ -27,7 +27,7 @@ export const clearContactCustomFieldAction = chatbotActionClient
         where: {
           chatbotId,
           id: parsedInput.customFieldId,
-          fieldType: FieldType.CUSTOM_FIELD,
+          fieldType: FieldType.customField,
         },
       })
 

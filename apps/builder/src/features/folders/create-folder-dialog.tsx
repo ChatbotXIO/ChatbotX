@@ -41,7 +41,7 @@ export function CreateFolderDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.folder.label"),
               }),
             )
@@ -71,13 +71,13 @@ export function CreateFolderDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.folder.label") })}
         </Button>
       </DialogTrigger>
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.folder.label"),
             })}
           </DialogTitle>
@@ -108,7 +108,7 @@ export function CreateFolderDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

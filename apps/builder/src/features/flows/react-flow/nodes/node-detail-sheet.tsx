@@ -7,28 +7,70 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@aha.chat/ui/components/ui/sheet"
-import { useStore } from "@xyflow/react"
+import { type ReactFlowState, useStore } from "@xyflow/react"
+import { memo } from "react"
 import { NodeEditor } from "./editor"
+import { NodeNameEditor } from "./node-name-editor"
 
 type NodeDetailSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
-  const activeNode = useStore((state) =>
-    state.nodes.find((node) => node.selected),
-  ) as FlowNode
+// Select only the selected node from the store
+const selectSelectedNode = (state: ReactFlowState): FlowNode | null =>
+  (state.nodes.find((node) => node.selected) as FlowNode) || null
 
-  return activeNode ? (
+// Custom equality function that compares node ID and data reference
+// This prevents re-renders from position/dragging changes but allows data updates
+const equalityFn = (a: FlowNode | null, b: FlowNode | null): boolean => {
+  if (a === b) {
+    return true
+  }
+  if (!a) {
+    return false
+  }
+  if (!b) {
+    return false
+  }
+
+  // Compare ID and data reference (data reference changes when updateNodeData is called)
+  return a.id === b.id && a.data === b.data
+}
+
+export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
+  // Use store selector with custom equality function
+  const activeNode = useStore(selectSelectedNode, equalityFn)
+
+  return open && activeNode ? (
+    <NodeDetailSheetContent
+      activeNode={activeNode}
+      onOpenChange={onOpenChange}
+      open={open}
+    />
+  ) : null
+}
+
+export const NodeDetailSheetContent = memo(
+  ({
+    activeNode,
+    open,
+    onOpenChange,
+  }: {
+    activeNode: FlowNode
+    open: boolean
+    onOpenChange: (open: boolean) => void
+  }) => (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="flex flex-col" side="left">
-        <SheetTitle />
+      <SheetContent className="flex flex-col gap-0" side="left">
+        <SheetTitle>
+          <NodeNameEditor activeNode={activeNode} />
+        </SheetTitle>
         <SheetDescription />
         <div className="flex flex-1 flex-col gap-4 overflow-hidden p-5">
           <NodeEditor activeNode={activeNode} />
         </div>
       </SheetContent>
     </Sheet>
-  ) : null
-}
+  ),
+)

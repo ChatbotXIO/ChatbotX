@@ -12,8 +12,8 @@ export function CreateBroadcastHeader(
   description: string
 } {
   const header = useMemo(() => {
-    if (inboxType === InboxType.WHATSAPP) {
-      if (subaction === BroadcastSubaction.TEMPLATE_MESSAGE) {
+    if (inboxType === InboxType.Whatsapp) {
+      if (subaction === BroadcastSubaction.templateMessage) {
         return {
           icon: <WhatsappIcon />,
           title: "Template message",

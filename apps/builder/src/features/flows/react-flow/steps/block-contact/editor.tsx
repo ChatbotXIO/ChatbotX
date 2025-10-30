@@ -10,9 +10,9 @@ const BlockContactStepEditor = () => {
   return (
     <BaseStepEditor
       icon={UserRoundXIcon}
-      title={t("flows.stepType.blockContact")}
+      title={t("flows.actions.blockContact")}
     />
   )
 }
 
-export { BlockContactStepEditor }
+export default BlockContactStepEditor

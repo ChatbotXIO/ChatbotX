@@ -8,8 +8,11 @@ const DisableBotStepEditor = () => {
   const t = useTranslations()
 
   return (
-    <BaseStepEditor icon={UserIcon} title={t("flows.stepType.disableBot")} />
+    <BaseStepEditor
+      icon={UserIcon}
+      title={t("flows.actions.transferConversationToHuman")}
+    />
   )
 }
 
-export { DisableBotStepEditor }
+export default DisableBotStepEditor

@@ -18,7 +18,7 @@ export const buttonStepSchema = z
       }),
       z.object({
         type: z.literal(ButtonActionType.Url),
-        url: z.string().trim().url(),
+        url: z.url(),
       }),
       z.object({
         type: z.literal(ButtonActionType.Flow),
@@ -37,9 +37,9 @@ export const buttonStepSchema = z
     ]),
   )
 
-export type ButtonStepSchema = z.infer<typeof buttonStepSchema>
+export type ButtonStepProps = z.infer<typeof buttonStepSchema>
 
-export const buttonStepDefaultFn = (text = ""): ButtonStepSchema => ({
+export const buttonStepDefaultFn = (text = ""): ButtonStepProps => ({
   text,
   type: ButtonActionType.QuickReply,
 })

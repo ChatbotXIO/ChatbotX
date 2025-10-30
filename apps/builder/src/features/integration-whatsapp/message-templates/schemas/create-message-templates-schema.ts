@@ -20,8 +20,8 @@ export const createMessageTemplateRequest = z
       LanguageOptions.map((option) => option.value) as [string, ...string[]],
     ),
     category: z.enum([
-      WhatsappTemplateCategory.MARKETING,
-      WhatsappTemplateCategory.UTILITY,
+      WhatsappTemplateCategory.marketing,
+      WhatsappTemplateCategory.utility,
     ]),
     templateType: z.enum(TemplateType),
   })

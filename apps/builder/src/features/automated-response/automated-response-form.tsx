@@ -140,12 +140,11 @@ export function CreateAutomatedResponseForm({
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <div className="flex w-full gap-2" key={index}>
             <div className="flex flex-1 items-center gap-2">
-              {reply.type === ReplyType.MESSAGE ? (
+              {reply.type === ReplyType.Message ? (
                 <>
                   <MessageSquareMoreIcon />
                   <InputField
                     className="flex-1"
-                    label=""
                     name={`replies.${index}.message`}
                     placeholder="Type a message"
                   />
@@ -155,7 +154,6 @@ export function CreateAutomatedResponseForm({
                   <ZapIcon />
                   <FlowSelect
                     className="flex-1"
-                    label=""
                     name={`replies.${index}.flowId`}
                   />
                 </>
@@ -176,7 +174,7 @@ export function CreateAutomatedResponseForm({
             onClick={(e) => {
               e.preventDefault()
               appendReplies({
-                type: ReplyType.MESSAGE,
+                type: ReplyType.Message,
                 message: "",
                 buttons: [],
               })
@@ -191,7 +189,7 @@ export function CreateAutomatedResponseForm({
             onClick={(e) => {
               e.preventDefault()
               appendReplies({
-                type: ReplyType.FLOW,
+                type: ReplyType.Flow,
                 flowId: "",
               })
             }}

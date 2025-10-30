@@ -33,9 +33,9 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
     const method = segments.pop()
 
     switch (method) {
-      case HandleRequestType.WEBHOOK:
+      case HandleRequestType.webhook:
         return await webhookHandler(props)
-      case HandleRequestType.CALLBACK:
+      case HandleRequestType.callback:
         return await callbackHandler(props)
       default:
         throw new SdkException(

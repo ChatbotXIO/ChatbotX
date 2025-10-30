@@ -1,30 +1,60 @@
 "use client"
 
-import { ReactFlowProvider } from "@xyflow/react"
+import { type Node, ReactFlowProvider } from "@xyflow/react"
 import { use } from "react"
 import type { listCustomFields } from "../custom-fields/queries"
-import type { getFlows } from "./queries"
+import type { listFlowVersions } from "../flow-versions/queries/list-flow-versions"
+import type { getTags } from "../tags/queries"
 import { ReactFlowFrame } from "./react-flow/frame"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
-import type { FlowVersionResource } from "./schemas/get-flows-schema"
+import type {
+  FlowResource,
+  FlowVersionResource,
+} from "./schemas/get-flows-schema"
 
 type FlowDetailProps = {
+  flow: FlowResource
   flowVersion: FlowVersionResource
   promises: Promise<
     [
       Awaited<ReturnType<typeof listCustomFields>>,
-      Awaited<ReturnType<typeof getFlows>>,
+      Awaited<ReturnType<typeof listFlowVersions>>,
+      Awaited<ReturnType<typeof getTags>>,
     ]
   >
 }
 
-export function FlowDetail({ flowVersion, promises }: FlowDetailProps) {
-  const [{ data: customFields }] = use(promises)
+export function FlowDetail({ flow, flowVersion, promises }: FlowDetailProps) {
+  const [{ data: customFields }, { data: flowVersions }, { data: tags }] =
+    use(promises)
+
+  const customFieldOptions = customFields.map((field) => ({
+    label: field.name,
+    value: field.id,
+    type: field.customFieldType,
+  }))
+
+  const flowOptions = flowVersions.map((fv) => ({
+    label: fv.flow.name,
+    value: fv.flow.id,
+    nodes: fv.nodes as unknown as Node[],
+  }))
+
+  const tagOptions = tags.map((tag) => ({
+    text: tag.name,
+    id: tag.id,
+  }))
 
   return (
     <ReactFlowProvider>
-      <StepStoreProvider initialState={{ customFields, flows: [] }}>
-        <ReactFlowFrame flowVersion={flowVersion} />
+      <StepStoreProvider
+        initialState={{
+          customFieldOptions,
+          flowOptions,
+          tagOptions,
+        }}
+      >
+        <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
       </StepStoreProvider>
     </ReactFlowProvider>
   )

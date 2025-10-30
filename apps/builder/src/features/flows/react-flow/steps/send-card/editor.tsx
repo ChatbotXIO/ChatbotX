@@ -14,7 +14,7 @@ type SendCardStepEditorProps = {
   parentName: string
 }
 
-export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
+const SendCardStepEditor = (props: SendCardStepEditorProps) => {
   const { parentName } = props
   const { register, setValue, watch } = useFormContext()
   const t = useTranslations()
@@ -27,11 +27,11 @@ export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
         <div className="absolute top-2 left-3 z-1 flex items-center gap-1 rounded-full bg-white px-2 py-1">
           <Button
             className={cn(
-              "!p-0 size-6",
-              layout === CardLayout.HORIZONTAL ? "text-destructive" : "",
+              "size-6 p-0!",
+              layout === CardLayout.horizontal ? "text-destructive" : "",
             )}
             onClick={() =>
-              setValue(`${parentName}.layout`, CardLayout.HORIZONTAL)
+              setValue(`${parentName}.layout`, CardLayout.horizontal)
             }
             size="icon"
             variant="ghost"
@@ -40,11 +40,11 @@ export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
           </Button>
           <Button
             className={cn(
-              "!p-0 size-6",
-              layout === CardLayout.VERTICAL ? "text-destructive" : "",
+              "size-6 p-0!",
+              layout === CardLayout.vertical ? "text-destructive" : "",
             )}
             onClick={() =>
-              setValue(`${parentName}.layout`, CardLayout.VERTICAL)
+              setValue(`${parentName}.layout`, CardLayout.vertical)
             }
             size="icon"
             variant="ghost"
@@ -54,27 +54,24 @@ export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
         </div>
 
         <DirectUploadOrInsertLink
-          fileType={FileType.IMAGE}
+          fileType={FileType.image}
           parentName={`${parentName}.image`}
         />
 
         <Input
-          className=""
           placeholder={`${t("fields.title.placeholder")} (required)`}
           required
           {...register(`${parentName}.title`)}
         />
 
         <Input
-          className=""
           placeholder={t("fields.subtitle.placeholder")}
           {...register(`${parentName}.subtitle`)}
         />
 
         <Input
-          className=""
-          placeholder={t("fields.cardURL.placeholder")}
-          {...register(`${parentName}.cardURL`)}
+          placeholder={t("fields.cardUrl.placeholder")}
+          {...register(`${parentName}.cardUrl`)}
         />
       </div>
       <div className="bg-slate-200 px-3 py-2">
@@ -83,3 +80,5 @@ export const SendCardStepEditor = (props: SendCardStepEditorProps) => {
     </div>
   )
 }
+
+export default SendCardStepEditor

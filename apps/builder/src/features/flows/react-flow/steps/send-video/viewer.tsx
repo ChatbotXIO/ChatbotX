@@ -8,7 +8,7 @@ type SendVideoStepViewerProps = {
   data: SendVideoStepSchema
 }
 
-export const SendVideoStepViewer = (props: SendVideoStepViewerProps) => {
+const SendVideoStepViewer = (props: SendVideoStepViewerProps) => {
   const { data } = props
 
   return (
@@ -27,3 +27,5 @@ export const SendVideoStepViewer = (props: SendVideoStepViewerProps) => {
     </div>
   )
 }
+
+export default SendVideoStepViewer

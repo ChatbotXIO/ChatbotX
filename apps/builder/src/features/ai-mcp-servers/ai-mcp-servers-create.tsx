@@ -1,5 +1,6 @@
 "use client"
 
+import { AIMcpServerAuthType } from "@aha.chat/database/types"
 import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -38,11 +39,11 @@ export function AIMcpServersCreate() {
 
   const authOptions = useMemo(
     () => [
-      { label: t("fields.aiMcpServer.auth.type.none"), value: "NONE" },
-      { label: t("fields.aiMcpServer.auth.type.token"), value: "TOKEN" },
+      { label: t("fields.authType.none"), value: AIMcpServerAuthType.none },
+      { label: t("fields.authType.token"), value: AIMcpServerAuthType.token },
       {
-        label: t("fields.aiMcpServer.auth.type.headers"),
-        value: "HEADERS",
+        label: t("fields.authType.headers"),
+        value: AIMcpServerAuthType.header,
       },
     ],
     [t],
@@ -59,7 +60,7 @@ export function AIMcpServersCreate() {
             url: "",
             name: "",
             auth: {
-              type: "NONE",
+              type: AIMcpServerAuthType.none,
             },
             availableTools: {},
             selectedTools: [],
@@ -68,7 +69,7 @@ export function AIMcpServersCreate() {
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.aiMcpServer.label"),
               }),
             )
@@ -123,15 +124,15 @@ export function AIMcpServersCreate() {
       <DialogTrigger asChild>
         <Button>
           <PlusIcon className="h-4 w-4" />
-          {t("actions.create")}
+          {t("actions.createFeature", {
+            feature: t("fields.aiMcpServer.label"),
+          })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.aiMcpServer.label"),
             })}
           </DialogTitle>
@@ -142,52 +143,53 @@ export function AIMcpServersCreate() {
             className="flex flex-col space-y-6 py-4"
             onSubmit={handleSubmitWithAction}
           >
-            <InputField isRequired label={t("fields.name.label")} name="name" />
-            <InputField isRequired label={t("fields.url.label")} name="url" />
+            <InputField label={t("fields.name.label")} name="name" required />
+            <InputField label={t("fields.url.label")} name="url" required />
             <SelectField
               label={t("fields.auth.label")}
               name="auth.type"
               options={authOptions}
               required
             />
-            {form.watch("auth.type") === "TOKEN" && (
+            {form.watch("auth.type") === AIMcpServerAuthType.token && (
               <InputField
-                isRequired
-                label={t("fields.aiMcpServer.auth.token.label")}
+                label={t("fields.authToken.label")}
                 name="auth.token"
+                required
               />
             )}
-            {form.watch("auth.type") === "HEADERS" && fields && (
-              <div className="flex flex-col gap-2">
-                {fields.map((field, index) => (
-                  <div className="flex items-start gap-2" key={field.id}>
-                    <InputField
-                      name={`auth.headers.${index}.header`}
-                      placeholder="Header"
-                    />
-                    <MoveRightIcon className="size-10" />
-                    <InputField
-                      name={`auth.headers.${index}.value`}
-                      placeholder="Value"
-                    />
-                    <Button
-                      onClick={() => remove(index)}
-                      size="icon"
-                      variant="outline"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  onClick={() => append({ header: "", value: "" })}
-                  variant="secondary"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  {t("actions.addMore")}
-                </Button>
-              </div>
-            )}
+            {form.watch("auth.type") === AIMcpServerAuthType.header &&
+              fields && (
+                <div className="flex flex-col gap-2">
+                  {fields.map((field, index) => (
+                    <div className="flex items-start gap-2" key={field.id}>
+                      <InputField
+                        name={`auth.headers.${index}.header`}
+                        placeholder="Header"
+                      />
+                      <MoveRightIcon className="size-10" />
+                      <InputField
+                        name={`auth.headers.${index}.value`}
+                        placeholder="Value"
+                      />
+                      <Button
+                        onClick={() => remove(index)}
+                        size="icon"
+                        variant="outline"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    onClick={() => append({ header: "", value: "" })}
+                    variant="secondary"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                    {t("actions.addMore")}
+                  </Button>
+                </div>
+              )}
             {allTools.length > 0 && (
               <div className="flex flex-col gap-4">
                 <div className="font-medium text-sm leading-none">
@@ -232,7 +234,7 @@ export function AIMcpServersCreate() {
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               )}
             </DialogFooter>

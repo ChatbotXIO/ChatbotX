@@ -1,31 +1,36 @@
 import {
+  type BaseNodeProps,
+  type BaseNodeSchema,
   type FlowNode,
-  type NewNodeProps,
+  type NodeFnProps,
   NodeType,
 } from "@aha.chat/flow-config"
 import type { LucideIcon } from "lucide-react"
-import type { useTranslations } from "next-intl"
+import performActionNodeConfig from "./perform-action"
 import sendMessageNodeConfig from "./send-message"
-import type { MenuItem } from "./types"
+import startFlowNodeConfig from "./start-flow"
+import type { MenuItem, TranslationFn } from "./types"
 
-export type NodeConfigProps = {
+export type NodeConfigProps<
+  I extends BaseNodeSchema,
+  J extends BaseNodeProps,
+> = {
   type: NodeType
   icon: LucideIcon
   label: string
-  defaultFn: ((config: NewNodeProps) => FlowNode) | undefined
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  validator: any
-  menus: (t: ReturnType<typeof useTranslations>) => MenuItem[]
+  defaultFn: ((config: NodeFnProps<J>) => FlowNode) | undefined
+  validator: I
+  menus: (t: TranslationFn) => MenuItem[]
 }
 
-export const allNodesConfig: Record<NodeType, NodeConfigProps | undefined> = {
-  [NodeType.SendMessage]: sendMessageNodeConfig,
-  [NodeType.StartFlow]: undefined,
-  [NodeType.Actions]: undefined,
-  [NodeType.Condition]: undefined,
-  [NodeType.SendMail]: undefined,
-  [NodeType.SplitTraffic]: undefined,
-  [NodeType.Wait]: undefined,
-  [NodeType.LandingPage]: undefined,
-  [NodeType.AddNotes]: undefined,
+export const allNodesConfig = {
+  [NodeType.sendMessage]: sendMessageNodeConfig,
+  [NodeType.startFlow]: startFlowNodeConfig,
+  [NodeType.performAction]: performActionNodeConfig,
+  [NodeType.condition]: undefined,
+  [NodeType.sendMail]: undefined,
+  [NodeType.splitTraffic]: undefined,
+  [NodeType.wait]: undefined,
+  [NodeType.landingPage]: undefined,
+  [NodeType.addNotes]: undefined,
 }

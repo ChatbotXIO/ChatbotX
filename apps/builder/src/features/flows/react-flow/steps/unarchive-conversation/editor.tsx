@@ -10,9 +10,9 @@ const UnarchiveConversationStepEditor = () => {
   return (
     <BaseStepEditor
       icon={PackageOpenIcon}
-      title={t("flows.stepType.unarchiveConversation")}
+      title={t("flows.actions.unarchiveConversation")}
     />
   )
 }
 
-export { UnarchiveConversationStepEditor }
+export default UnarchiveConversationStepEditor

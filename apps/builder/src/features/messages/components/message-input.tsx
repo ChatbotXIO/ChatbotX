@@ -38,24 +38,23 @@ import { FileUploadPreview } from "./file-upload"
 const createInboxTypes = (
   t: (key: string) => string,
 ): Record<
-  InboxType,
+  InboxType | "Omnichannel",
   { icon: IconType | LucideIcon; label: string } | undefined
 > => ({
-  WEBCHAT: {
+  Webchat: {
     icon: GlobeIcon,
     label: t("webchat.title"),
   },
-  INSTAGRAM: undefined,
-  MESSENGER: {
+  Messenger: {
     icon: SiMessenger,
     label: t("messenger.title"),
   },
-  WHATSAPP: {
+  Whatsapp: {
     icon: SiWhatsapp,
     label: t("whatsapp.title"),
   },
-  OMNICHANNEL: undefined,
-  ZALO: {
+  Omnichannel: undefined,
+  Zalo: {
     icon: SiZalo,
     label: t("zalo.title"),
   },
@@ -110,9 +109,9 @@ export const MessageInput = () => {
                 sourceId: null,
                 conversationId: conversation?.id ?? "",
                 contentAttributes: null,
-                messageType: MessageType.OUTGOING,
-                contentType: ContentType.TEXT,
-                senderType: SenderType.USER,
+                messageType: MessageType.outgoing,
+                contentType: ContentType.text,
+                senderType: SenderType.user,
                 senderId: session?.data?.user.id ?? null,
                 clientId: typedInput.clientId,
               })
@@ -176,8 +175,8 @@ export const MessageInput = () => {
   )
 
   // Memoize inbox type and icon for current conversation
-  const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.WEBCHAT
-  const inboxConfig = inboxTypes[currentInboxType]
+  const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.Webchat
+  const inboxConfig = inboxTypes[currentInboxType as InboxType]
   const IconComponent = inboxConfig?.icon
 
   // Early return if no active conversation

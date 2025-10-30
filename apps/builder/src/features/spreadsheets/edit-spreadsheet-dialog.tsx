@@ -52,7 +52,7 @@ export function UpdateSpreadsheetDialog({
         onSuccess: () => {
           toast.success(
             t("messages.updatedSuccessfully", {
-              feature: t("fields.spreadsheet.label"),
+              feature: t("googleSheets.spreadsheet"),
             }),
           )
           resetFormAndAction()
@@ -83,7 +83,7 @@ export function UpdateSpreadsheetDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("googleSheets.update.title")}</DialogTitle>
+          <DialogTitle>{t("googleSheets.update.dialog_title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">

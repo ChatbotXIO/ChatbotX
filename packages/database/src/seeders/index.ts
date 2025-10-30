@@ -1,9 +1,5 @@
 import { prisma } from ".."
-import {
-  type Chatbot,
-  ChatbotMemberRole,
-  ChatbotPlan,
-} from "../generated/prisma/client"
+import { type Chatbot, ChatbotMemberRole } from "../generated/prisma/client"
 
 async function main() {
   let organization = await prisma.organization.findFirst()
@@ -14,6 +10,7 @@ async function main() {
     data: {
       name: "AhaChat AI",
       createdAt: new Date(),
+      domain: new URL(process.env.NEXT_PUBLIC_BUILDER_URL ?? "").hostname,
     },
   })
 
@@ -46,7 +43,7 @@ async function main() {
     data: {
       organizationId: organization.id,
       userId: user.id,
-      role: "ADMIN",
+      role: "admin",
     },
   })
 
@@ -59,13 +56,11 @@ async function main() {
           organizationId: organization.id,
           name: "FREE",
           accountTimezone: "Asia/Saigon",
-          plan: ChatbotPlan.FREE,
         },
         {
           organizationId: organization.id,
           name: "PRO",
           accountTimezone: "Asia/Saigon",
-          plan: ChatbotPlan.PRO,
         },
       ] as Chatbot[],
     })
@@ -73,7 +68,7 @@ async function main() {
       data: chatbots.map((chatbot) => ({
         chatbotId: chatbot.id,
         userId: user.id,
-        role: ChatbotMemberRole.OWNER,
+        role: ChatbotMemberRole.owner,
         isAdmin: true,
         enableAnalytics: true,
         enableFlows: true,

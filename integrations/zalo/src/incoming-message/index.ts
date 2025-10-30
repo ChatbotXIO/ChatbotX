@@ -87,10 +87,10 @@ const getMessageEntity = async (
   const baseMessage = {
     sourceId: event.message.msg_id,
     messageType: event.event_name.includes("user_send")
-      ? MessageType.INCOMING
-      : MessageType.OUTGOING,
+      ? MessageType.incoming
+      : MessageType.outgoing,
     content: event.message?.text,
-    contentType: ContentType.TEXT,
+    contentType: ContentType.text,
     attachments: [],
   }
   switch (event.event_name) {
@@ -114,7 +114,7 @@ const getMessageEntity = async (
         content: attachment?.payload?.coordinates
           ? `https://www.google.com/maps/search/?api=1&query=${attachment.payload.coordinates.latitude},${attachment.payload.coordinates.longitude}`
           : "Location",
-        contentType: ContentType.LOCATION,
+        contentType: ContentType.location,
         attachments: await getMessageAttachments(ctx, event.message),
         contentAttributes: {
           latitude: attachment?.payload.coordinates?.latitude,

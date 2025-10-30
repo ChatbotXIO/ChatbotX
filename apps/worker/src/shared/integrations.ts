@@ -1,5 +1,5 @@
-import type { IntegrationType } from "@aha.chat/database"
-import { integration as integrationGooglesheets } from "@aha.chat/integration-google-sheets"
+import type { IntegrationType } from "@aha.chat/database/types"
+import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
 import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 import { integration as integrationZalo } from "@aha.chat/integration-zalo"
@@ -10,12 +10,11 @@ export const allIntegrations: Record<
   // biome-ignore lint/suspicious/noExplicitAny: safe pass value
   Integration<IntegrationDefinition<any, any, any>> | undefined
 > = {
-  GEMINI: undefined,
-  GOOGLE_SHEETS: integrationGooglesheets,
-  INSTAGRAM: undefined,
-  MESSENGER: integrationMessenger,
-  OPENAI: undefined,
-  WEBCHAT: undefined,
-  WHATSAPP: integrationWhatsapp,
-  ZALO: integrationZalo,
+  Gemini: undefined,
+  GoogleSheets: integrationGoogleSheets,
+  Messenger: integrationMessenger,
+  OpenAI: undefined,
+  Webchat: undefined,
+  Whatsapp: integrationWhatsapp,
+  Zalo: integrationZalo,
 }

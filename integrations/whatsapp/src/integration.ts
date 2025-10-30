@@ -50,7 +50,7 @@ const config: IntegrationDefinition<
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
 
-    if (segments.includes(HandleRequestType.WEBHOOK)) {
+    if (segments.includes(HandleRequestType.webhook)) {
       return await webhookHandler(props)
     }
 

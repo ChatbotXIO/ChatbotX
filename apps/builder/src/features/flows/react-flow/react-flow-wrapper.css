@@ -1,0 +1,11 @@
+:root {
+  .react-flow {
+    --xy-handle-border-color-default: #333;
+    --xy-handle-background-color-default: #fff;
+  }
+}
+
+.react-flow__handle {
+  width: 12px;
+  height: 12px;
+}

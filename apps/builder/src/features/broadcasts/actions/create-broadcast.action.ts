@@ -34,14 +34,14 @@ export const createBroadcastAction = chatbotActionClient
         ...parsedInput,
         name: flow.name,
         chatbotId,
-        status: BroadcastStatus.SCHEDULED,
+        status: BroadcastStatus.scheduled,
         schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
       }
       if (
-        data.schedulesType === BroadcastSchedulesType.NOW ||
+        data.schedulesType === BroadcastSchedulesType.now ||
         data.schedulesAt <= new Date()
       ) {
-        data.status = BroadcastStatus.SENT
+        data.status = BroadcastStatus.sent
       }
       const contacts = await prisma.contact.findMany({
         select: {

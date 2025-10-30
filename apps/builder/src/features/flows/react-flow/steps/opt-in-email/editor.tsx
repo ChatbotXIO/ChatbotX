@@ -8,11 +8,8 @@ const OptInEmailStepEditor = () => {
   const t = useTranslations()
 
   return (
-    <BaseStepEditor
-      icon={BellRingIcon}
-      title={t("flows.stepType.optInEmail")}
-    />
+    <BaseStepEditor icon={BellRingIcon} title={t("flows.actions.optInEmail")} />
   )
 }
 
-export { OptInEmailStepEditor }
+export default OptInEmailStepEditor

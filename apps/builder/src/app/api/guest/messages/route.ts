@@ -1,4 +1,5 @@
-import { InboxType, prisma } from "@aha.chat/database"
+import { prisma } from "@aha.chat/database"
+import { InboxType } from "@aha.chat/database/types"
 import { type NextRequest, NextResponse } from "next/server"
 import { listMessages } from "@/features/messages/queries/list-messages.query"
 import { listGuestMessagesRequest } from "@/features/messages/schemas/list-messages.schema"
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
       where: {
         sourceId: data.guestConversationId,
         inbox: {
-          inboxType: InboxType.WEBCHAT,
+          inboxType: InboxType.Webchat,
         },
       },
     })

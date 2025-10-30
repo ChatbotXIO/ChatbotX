@@ -8,11 +8,11 @@ export const updateAutomatedResponseRequest = z.object({
     .array(
       z.discriminatedUnion("type", [
         z.object({
-          type: z.literal(ReplyType.FLOW),
+          type: z.literal(ReplyType.Flow),
           flowId: z.cuid2(),
         }),
         z.object({
-          type: z.literal(ReplyType.MESSAGE),
+          type: z.literal(ReplyType.Message),
           message: z.string().min(1).max(255),
           buttons: z.array(
             z.object({

@@ -24,7 +24,7 @@ export function RadioGroupField<T extends FieldValues>({
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={required}
+      required={required}
       label={label}
       name={name}
     >

@@ -15,7 +15,7 @@ export async function listAccountFields(
     async () => {
       const where: Prisma.FieldWhereInput = {
         chatbotId: input.chatbotId,
-        fieldType: FieldType.ACCOUNT_FIELD,
+        fieldType: FieldType.accountField,
       }
 
       if (input.folderId !== undefined) {

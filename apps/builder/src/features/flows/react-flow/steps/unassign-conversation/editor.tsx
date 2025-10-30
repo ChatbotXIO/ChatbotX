@@ -10,9 +10,9 @@ const UnassignConversationStepEditor = () => {
   return (
     <BaseStepEditor
       icon={MessageCircleXIcon}
-      title={t("flows.stepType.unassignConversation")}
+      title={t("flows.actions.unassignConversation")}
     />
   )
 }
 
-export { UnassignConversationStepEditor }
+export default UnassignConversationStepEditor

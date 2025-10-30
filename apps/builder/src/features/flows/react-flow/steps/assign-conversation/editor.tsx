@@ -16,7 +16,7 @@ const AssignConversationStepEditor = (
   return (
     <BaseStepEditor
       icon={MessageCirclePlusIcon}
-      title={t("flows.stepType.assignConversation")}
+      title={t("flows.actions.assignConversation")}
     >
       <UserSelect
         label={t("fields.agent.label")}
@@ -26,4 +26,4 @@ const AssignConversationStepEditor = (
   )
 }
 
-export { AssignConversationStepEditor }
+export default AssignConversationStepEditor

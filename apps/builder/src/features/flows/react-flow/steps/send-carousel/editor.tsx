@@ -17,13 +17,13 @@ import {
 import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react"
 import { useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
-import { SendCardStepEditor } from "@/features/flows/react-flow/steps/send-card/editor"
+import SendCardStepEditor from "@/features/flows/react-flow/steps/send-card/editor"
 
 type SendCarouselStepEditorProps = {
   parentName: string
 }
 
-export const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
+const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
   const { parentName } = props
 
   const [api, setApi] = useState<CarouselApi>()
@@ -157,3 +157,5 @@ export const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
     </>
   )
 }
+
+export default SendCarouselStepEditor

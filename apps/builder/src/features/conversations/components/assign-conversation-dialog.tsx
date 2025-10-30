@@ -106,9 +106,7 @@ export default function AssignConversationDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>Assign Conversation</DialogTitle>
           <DialogDescription />
@@ -120,9 +118,9 @@ export default function AssignConversationDialog({
             onSubmit={handleSubmitWithAction}
           >
             <FormFieldWrapper<FieldValues>
-              isRequired={true}
               label="Assign To"
               name="assignedId"
+              required={true}
             >
               {(field) => (
                 <Select

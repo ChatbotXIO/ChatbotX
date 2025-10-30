@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 
 type AITriggerSelectProps = {
   name: string
-  isRequired?: boolean
+  required?: boolean
 }
 
 export function AITriggerMultiSelect(props: AITriggerSelectProps) {

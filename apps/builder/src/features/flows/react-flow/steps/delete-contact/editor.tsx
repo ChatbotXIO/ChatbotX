@@ -4,13 +4,15 @@ import { UserRoundXIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 
-export const DeleteContactStepEditor = () => {
+const DeleteContactStepEditor = () => {
   const t = useTranslations()
 
   return (
     <BaseStepEditor
       icon={UserRoundXIcon}
-      title={t("flows.stepType.deleteContact")}
+      title={t("flows.actions.deleteContact")}
     />
   )
 }
+
+export default DeleteContactStepEditor

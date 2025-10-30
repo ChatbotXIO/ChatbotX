@@ -16,7 +16,7 @@ export async function listCustomFields(
       try {
         const where: Prisma.FieldWhereInput = {
           chatbotId: input.chatbotId,
-          fieldType: FieldType.CUSTOM_FIELD,
+          fieldType: FieldType.customField,
         }
 
         if (input.folderId !== undefined) {

@@ -47,7 +47,7 @@ export function CreateCustomFieldDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createSuccess", {
                 feature: t("fields.customField.label"),
               }),
             )
@@ -71,7 +71,7 @@ export function CreateCustomFieldDialog({
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: CustomFieldType.SHORTTEXT,
+            customFieldType: CustomFieldType.shortText,
             description: "",
             folderId,
           },
@@ -82,27 +82,27 @@ export function CreateCustomFieldDialog({
 
   const customFieldTypeOptions = [
     {
-      value: CustomFieldType.SHORTTEXT,
+      value: CustomFieldType.shortText,
       label: t("customField.types.shortText"),
     },
     {
-      value: CustomFieldType.NUMBER,
+      value: CustomFieldType.number,
       label: t("customField.types.number"),
     },
     {
-      value: CustomFieldType.DATE,
+      value: CustomFieldType.date,
       label: t("customField.types.date"),
     },
     {
-      value: CustomFieldType.DATETIME,
+      value: CustomFieldType.datetime,
       label: t("customField.types.dateTime"),
     },
     {
-      value: CustomFieldType.BOOLEAN,
+      value: CustomFieldType.boolean,
       label: t("customField.types.boolean"),
     },
     {
-      value: CustomFieldType.LONGTEXT,
+      value: CustomFieldType.longText,
       label: t("customField.types.longText"),
     },
   ]
@@ -115,16 +115,16 @@ export function CreateCustomFieldDialog({
         ) : (
           <Button size="sm">
             <PlusIcon />
-            {t("actions.create")}
+            {t("actions.createFeature", {
+              feature: t("fields.customField.label"),
+            })}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createTitle", {
               feature: t("fields.customField.label"),
             })}
           </DialogTitle>

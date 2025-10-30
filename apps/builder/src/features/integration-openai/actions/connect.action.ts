@@ -1,12 +1,13 @@
 "use server"
 
-import { IntegrationType, prisma } from "@aha.chat/database"
-import { OpenAIModel } from "@aha.chat/flow-config"
+import { prisma } from "@aha.chat/database"
+import { IntegrationType } from "@aha.chat/database/types"
 import { AuthType, type SecretTextAuthValue } from "@aha.chat/sdk"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { openAIModels } from "@/features/openai/models"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectOpenAISchema, connectOpenAISchema } from "../schemas"
 
@@ -32,9 +33,9 @@ export const connectOpenAIAction = authActionClient
           await tx.integrationOpenAI.update({
             where: { id: integrationOpenAI.id },
             data: {
-              model: OpenAIModel.GPT4oMini,
+              model: openAIModels.GPT4oMini,
               auth: {
-                authType: AuthType.SECRET_TEXT,
+                authType: AuthType.secretText,
                 secretText: parsedInput.apiKey,
               } as SecretTextAuthValue,
               temperature: parsedInput.temperature,
@@ -45,13 +46,13 @@ export const connectOpenAIAction = authActionClient
           await tx.integration.create({
             data: {
               chatbotId,
-              integrationType: IntegrationType.OPENAI,
+              integrationType: IntegrationType.OpenAI,
               openAI: {
                 create: {
                   chatbotId,
-                  model: OpenAIModel.GPT4oMini,
+                  model: openAIModels.GPT4oMini,
                   auth: {
-                    authType: AuthType.SECRET_TEXT,
+                    authType: AuthType.secretText,
                     secretText: parsedInput.apiKey,
                   } as SecretTextAuthValue,
                   temperature: parsedInput.temperature,

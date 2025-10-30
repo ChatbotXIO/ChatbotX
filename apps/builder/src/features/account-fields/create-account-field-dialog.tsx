@@ -56,27 +56,27 @@ export function CreateAccountFieldDialog({
 
   const customFieldTypeLabels = [
     {
-      value: CustomFieldType.SHORTTEXT,
+      value: CustomFieldType.shortText,
       label: t("customField.types.shortText"),
     },
     {
-      value: CustomFieldType.NUMBER,
+      value: CustomFieldType.number,
       label: t("customField.types.number"),
     },
     {
-      value: CustomFieldType.DATE,
+      value: CustomFieldType.date,
       label: t("customField.types.date"),
     },
     {
-      value: CustomFieldType.DATETIME,
+      value: CustomFieldType.datetime,
       label: t("customField.types.dateTime"),
     },
     {
-      value: CustomFieldType.BOOLEAN,
+      value: CustomFieldType.boolean,
       label: t("customField.types.boolean"),
     },
     {
-      value: CustomFieldType.LONGTEXT,
+      value: CustomFieldType.longText,
       label: t("customField.types.longText"),
     },
   ]
@@ -106,7 +106,7 @@ export function CreateAccountFieldDialog({
         mode: "onChange",
         defaultValues: {
           name: "",
-          customFieldType: CustomFieldType.SHORTTEXT,
+          customFieldType: CustomFieldType.shortText,
           value: "",
           description: "",
           folderId: searchParams.get("folderId"),
@@ -118,12 +118,12 @@ export function CreateAccountFieldDialog({
 
   const watchCustomFieldType = watch(
     "customFieldType",
-    CustomFieldType.SHORTTEXT,
+    CustomFieldType.shortText,
   )
 
   const renderValueInput = () => {
     switch (watchCustomFieldType) {
-      case CustomFieldType.NUMBER:
+      case CustomFieldType.number:
         return (
           <Input
             placeholder={t("customField.placeholders.enterNumber")}
@@ -131,7 +131,7 @@ export function CreateAccountFieldDialog({
             {...register("value")}
           />
         )
-      case CustomFieldType.BOOLEAN:
+      case CustomFieldType.boolean:
         return (
           <Controller
             control={control}
@@ -155,7 +155,7 @@ export function CreateAccountFieldDialog({
             )}
           />
         )
-      case CustomFieldType.DATE:
+      case CustomFieldType.date:
         return (
           <DateTimePicker
             displayFormat={{ hour24: "yyyy-MM-dd" }}
@@ -167,7 +167,7 @@ export function CreateAccountFieldDialog({
           />
         )
 
-      case CustomFieldType.DATETIME:
+      case CustomFieldType.datetime:
         return (
           <DateTimePicker
             displayFormat={{ hour24: "yyyy-MM-dd hh:mm" }}
@@ -177,7 +177,7 @@ export function CreateAccountFieldDialog({
             value={new Date()}
           />
         )
-      case CustomFieldType.LONGTEXT:
+      case CustomFieldType.longText:
         return (
           <Textarea
             placeholder={t("customField.placeholders.enterText")}
@@ -199,12 +199,12 @@ export function CreateAccountFieldDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", {
+            feature: t("fields.accountField.label"),
+          })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>{t("accountField.createDialog.title")}</DialogTitle>
           <DialogDescription />

@@ -1,8 +1,8 @@
+import { AIMessageRole } from "@aha.chat/database/types"
 import { z } from "zod"
-import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
 
 export const messageSchema = z.object({
-  role: z.enum(OpenAIMessageRole).optional(),
+  role: z.enum(AIMessageRole).optional(),
   content: z.string().min(1).optional(),
 })
 export type MessageSchema = z.infer<typeof messageSchema>

@@ -19,7 +19,7 @@ export function SwitchField<T extends FieldValues>(props: SwitchFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={required}
+      required={required}
       label={label}
       name={name}
       formItemClassName={formItemClassName}

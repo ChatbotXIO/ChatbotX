@@ -14,7 +14,7 @@ export async function verifyGoogleSheetsUrl(
   const dbIntegration = await prisma.integration.findFirst({
     where: {
       chatbotId,
-      integrationType: IntegrationType.GOOGLE_SHEETS,
+      integrationType: IntegrationType.GoogleSheets,
     },
     include: {
       googleSheets: true,
@@ -40,7 +40,7 @@ export async function verifyGoogleSheetsUrl(
 
   // make sure integration can access to url
   try {
-    await integrations.googleSheets.actions.listSheetNames({
+    await integrations.GoogleSheets.actions.listSheetNames({
       ctx: {
         auth: dbIntegration.googleSheets
           .auth as unknown as GoogleSheetsAuthValue,

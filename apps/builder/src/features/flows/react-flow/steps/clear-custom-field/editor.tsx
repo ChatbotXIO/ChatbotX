@@ -9,18 +9,18 @@ type ClearCustomFieldStepEditorProps = {
   parentName: string
 }
 
-export const ClearCustomFieldStepEditor = (
-  props: ClearCustomFieldStepEditorProps,
-) => {
+const ClearCustomFieldStepEditor = (props: ClearCustomFieldStepEditorProps) => {
   const { parentName } = props
   const t = useTranslations()
 
   return (
     <BaseStepEditor
       icon={SaveOffIcon}
-      title={t("flows.stepType.clearCustomField")}
+      title={t("flows.actions.clearCustomField")}
     >
-      <CustomFieldSelect label="" name={`${parentName}.customFieldId`} />
+      <CustomFieldSelect name={`${parentName}.customFieldId`} />
     </BaseStepEditor>
   )
 }
+
+export default ClearCustomFieldStepEditor

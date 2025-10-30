@@ -46,22 +46,22 @@ export function DirectUploadOrInsertLink({
 
   const fileConfigs = useMemo(() => {
     switch (fileType) {
-      case FileType.IMAGE:
+      case FileType.image:
         return {
           icon: ImageIcon,
           mimeType: "image/*",
         }
-      case FileType.GIF:
+      case FileType.gif:
         return {
           icon: ImagePlayIcon,
           mimeType: "image/gif",
         }
-      case FileType.VIDEO:
+      case FileType.video:
         return {
           icon: VideoIcon,
           mimeType: "video/*",
         }
-      case FileType.AUDIO:
+      case FileType.audio:
         return {
           icon: Volume2Icon,
           mimeType: "audio/*",
@@ -104,11 +104,11 @@ export function DirectUploadOrInsertLink({
           />
           {publicUrl && publicUrl.length > 0 ? (
             <Button
-              className="!p-0 relative h-[150px] w-[240px]"
+              className="relative h-[150px] w-[240px] p-0!"
               onClick={chooseUploadFile}
               variant="ghost"
             >
-              {fileType === FileType.IMAGE ? (
+              {fileType === FileType.image ? (
                 <Image alt={stepId} fill={true} src={publicUrl} />
               ) : (
                 <>
@@ -129,7 +129,7 @@ export function DirectUploadOrInsertLink({
                   {t("actions.uploadFile")}
                 </Button>
                 <span className="font-medium text-foreground text-sm">
-                  {t("messages.or")}
+                  {t("texts.or")}
                 </span>
                 <Button
                   className="p-0 text-primary"

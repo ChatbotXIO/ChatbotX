@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { UserMultipleSelect } from "@/features/users/user-select"
 import { BaseStepEditor } from "../base/editor"
 
-export const AutoAssignConversationStepEditor = ({
+const AutoAssignConversationStepEditor = ({
   parentName,
 }: {
   parentName: string
@@ -36,7 +36,7 @@ export const AutoAssignConversationStepEditor = ({
   return (
     <BaseStepEditor
       icon={MessageCirclePlusIcon}
-      title={t("flows.stepType.autoAssignConversation")}
+      title={t("flows.actions.autoAssignConversation")}
     >
       <div className="flex w-[243px] flex-wrap gap-1.5 overflow-hidden">
         <SelectField
@@ -52,3 +52,5 @@ export const AutoAssignConversationStepEditor = ({
     </BaseStepEditor>
   )
 }
+
+export default AutoAssignConversationStepEditor

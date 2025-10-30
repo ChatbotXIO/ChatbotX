@@ -9,12 +9,12 @@ type AddNotesStepEditorProps = {
   parentName: string
 }
 
-export const AddNotesStepEditor = (props: AddNotesStepEditorProps) => {
+const AddNotesStepEditor = (props: AddNotesStepEditorProps) => {
   const { parentName } = props
   const t = useTranslations()
 
   return (
-    <BaseStepEditor icon={TextIcon} title={t("flows.stepType.addContactNotes")}>
+    <BaseStepEditor icon={TextIcon} title={t("flows.actions.addContactNotes")}>
       <InputField
         label={t("fields.notes.label")}
         name={`${parentName}.content`}
@@ -22,3 +22,5 @@ export const AddNotesStepEditor = (props: AddNotesStepEditorProps) => {
     </BaseStepEditor>
   )
 }
+
+export default AddNotesStepEditor
