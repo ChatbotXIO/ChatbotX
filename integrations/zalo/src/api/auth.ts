@@ -5,14 +5,13 @@ import { ZaloHttpClient } from "../libs/http-client"
 
 export function generateAuthUrl(props: Oauth2Config) {
   const { clientId, redirectUrl, stateParams } = props
-  const baseUrl = ZALO_API_ENDPOINTS.AUTH.PERMISSION
   const params = new URLSearchParams({
     app_id: clientId,
     redirect_uri: redirectUrl,
     state: btoa(JSON.stringify(stateParams)),
   })
 
-  return `${ZALO_OAUTH_BASE_URL}${baseUrl}?${params.toString()}`
+  return `${ZALO_OAUTH_BASE_URL}${ZALO_API_ENDPOINTS.AUTH.PERMISSION}?${params.toString()}`
 }
 
 export type ZaloAccessTokenResponse = {

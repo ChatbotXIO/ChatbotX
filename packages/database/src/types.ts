@@ -97,7 +97,7 @@ export const organizationSettingsSchema = z.object({
     .optional(),
   giphy: z
     .object({
-      appKey: z.string(),
+      apiKey: z.string(),
     })
     .optional(),
 })

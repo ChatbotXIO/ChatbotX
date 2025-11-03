@@ -126,7 +126,7 @@ export async function* convertFlowStepToFacebookMessage(
     case StepType.sendFile:
       await (yield* convertFlowStepFile(auth, step))
       break
-    case StepType.SEND_GIF:
+    case StepType.sendGif:
       yield* convertFlowStepGif(step.url) as Generator<FacebookMessage>
       break
     default:

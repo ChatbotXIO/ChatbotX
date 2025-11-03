@@ -77,9 +77,6 @@ importers:
       '@floating-ui/dom':
         specifier: ^1.7.4
         version: 1.7.4
-      '@giphy/js-fetch-api':
-        specifier: ^5.7.0
-        version: 5.7.0
       '@giphy/js-types':
         specifier: ^5.1.0
         version: 5.1.0

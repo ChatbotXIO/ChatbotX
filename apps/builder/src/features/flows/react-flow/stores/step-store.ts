@@ -1,3 +1,4 @@
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { Node } from "@xyflow/react"
 import { createStore } from "zustand"
 
@@ -31,6 +32,7 @@ export type StepState = {
   flowOptions: FlowOption[]
   channelOptions: SelectOption[]
   tagOptions: TagOption[]
+  organizationSetings: OrganizationSettings | null
 }
 
 export type StepStore = StepState & {
@@ -41,6 +43,9 @@ export type StepStore = StepState & {
   setFlowOptions: (flowOptions: FlowOption[]) => void
   setChannelOptions: (channelOptions: SelectOption[]) => void
   setTagOptions: (tagOptions: TagOption[]) => void
+  setOrganizationSetings: (
+    organizationSetings: OrganizationSettings | null,
+  ) => void
 }
 
 export const createStepStore = (initState?: Partial<StepState>) => {
@@ -57,6 +62,7 @@ export const createStepStore = (initState?: Partial<StepState>) => {
       },
     ],
     tagOptions: [],
+    organizationSetings: null,
   }
 
   return createStore<StepStore>()((set) => ({
@@ -70,5 +76,7 @@ export const createStepStore = (initState?: Partial<StepState>) => {
     setFlowOptions: (flowOptions) => set({ flowOptions }),
     setChannelOptions: (channelOptions) => set({ channelOptions }),
     setTagOptions: (tagOptions) => set({ tagOptions }),
+    setOrganizationSetings: (organizationSetings) =>
+      set({ organizationSetings }),
   }))
 }

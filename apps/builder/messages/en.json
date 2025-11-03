@@ -128,7 +128,8 @@
     "getPublishedLink": "Get Published Link",
     "analytics": "Analytics",
     "flowVersions": "Flow Versions",
-    "revertToPublished": "Revert to Published"
+    "revertToPublished": "Revert to Published",
+    "search": "Search"
   },
   "admins": {
     "title": "Admins"
@@ -896,7 +897,8 @@
       "waitUserReply": "Wait User Reply",
       "getUserInput": "Get User Input",
       "sendCarousel": "Send Carousel",
-      "actions": "Actions"
+      "actions": "Actions",
+      "findGif": "Find Gif"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1005,6 +1007,8 @@
     "title": "Integrations"
   },
   "messages": {
+    "poweredBy": "Powered by {name}",
+    "noGiphyApiKey": "No GIPHY API key found. Please add a GIPHY API key in the organization settings.",
     "actionCompleted": "Action completed successfully",
     "actionFailed": "Action failed. Please try again.",
     "archivedSuccessfully": "{feature} archived successfully",

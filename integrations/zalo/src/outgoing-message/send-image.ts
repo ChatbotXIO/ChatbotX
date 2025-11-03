@@ -19,7 +19,7 @@ export async function* convertFlowStepImage(
       throw new Error("Image URL is required")
     }
 
-    const mediaType = payload.stepType === StepType.SEND_GIF ? "gif" : "image"
+    const mediaType = payload.stepType === StepType.sendGif ? "gif" : "image"
     const {
       data: { attachment_id, width, height },
     } = await uploadAttachment(auth, mediaType, payload.url)
@@ -29,7 +29,7 @@ export async function* convertFlowStepImage(
     }
 
     const buttons =
-      payload.stepType === StepType.SEND_IMAGE
+      payload.stepType === StepType.sendImage
         ? await convertZaloButtons(
             flowVersionId,
             (payload as SendImageStepSchema).buttons,

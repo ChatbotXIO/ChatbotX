@@ -28,6 +28,7 @@ import sendAudioStep from "./send-audio"
 import { sendCardStep } from "./send-card"
 import { sendCarouselStep } from "./send-carousel"
 import sendFileStep from "./send-file"
+import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
@@ -49,7 +50,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.sendCarousel]: sendCarouselStep,
   [StepType.getUserInput]: waitUserReplyStep,
   [StepType.sendVideo]: sendVideoStep,
-  [StepType.sendGif]: undefined,
+  [StepType.sendGif]: sendGifStep,
   [StepType.setDebounce]: undefined,
   [StepType.sendMessengerOtn]: undefined,
   [StepType.sendAudio]: sendAudioStep,
