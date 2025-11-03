@@ -370,7 +370,7 @@ model Field {
 
   contactCustomFields ContactCustomField[]
 
-  @@unique([chatbotId, name])
+  @@unique([chatbotId, fieldType, name])
 }
 
 model Inbox {

@@ -7,16 +7,6 @@ import { splitTrafficNodeSchema } from "./split-traffic"
 import { startFlowNodeSchema } from "./start-flow"
 import { waitNodeSchema } from "./wait"
 
-export const draftFlowVersionSchema = z.union([
-  sendMessageNodeSchema.partial(),
-  startFlowNodeSchema.partial(),
-  performActionNodeSchema.partial(),
-  splitTrafficNodeSchema.partial(),
-  waitNodeSchema.partial(),
-  addNotesNodeSchema.partial(),
-])
-export type DraftFlowVersionSchema = z.infer<typeof draftFlowVersionSchema>
-
 export const flowVersionSchema = z.union([
   sendMessageNodeSchema,
   startFlowNodeSchema,
