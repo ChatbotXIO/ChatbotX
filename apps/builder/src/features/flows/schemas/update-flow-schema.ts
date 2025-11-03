@@ -14,7 +14,7 @@ export const updateFlowSchema = z.object({
 export type UpdateFlowSchema = z.infer<typeof updateFlowSchema>
 
 export const updateDraftFlowVersionSchema = z.object({
-  nodes: z.array(flowVersionSchema),
+  nodes: z.array(z.any()),
   edges: z.array(edgeSchema),
 })
 export type UpdateDraftFlowVersionSchema = z.infer<

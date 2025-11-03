@@ -88,7 +88,7 @@ const flowStepHandlers: Record<
   [StepType.unarchiveConversation]: unarchiveConversation,
   [StepType.unassignConversation]: unassignConversation,
   [StepType.unfollowConversation]: unfollowConversation,
-  [StepType.waitUserReply]: undefined,
+  [StepType.getUserInput]: undefined,
   [StepType.wait]: undefined,
   [StepType.startExternalFlow]: undefined,
   [StepType.chooseChannel]: undefined,
@@ -99,7 +99,7 @@ const flowStepHandlers: Record<
   [StepType.startAnotherNode]: undefined,
   [StepType.startExternalNode]: undefined,
   [StepType.addNotes]: undefined,
-  [StepType.userInput]: undefined,
+  [StepType.waitUserReply]: undefined,
 }
 
 export const sendFlowNode = async (props: IntegrationJobSendFlow) => {

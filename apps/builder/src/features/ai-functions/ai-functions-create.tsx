@@ -109,7 +109,7 @@ export function AIFunctionsCreate({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.aiFunction.label"),
             })}
           </DialogTitle>

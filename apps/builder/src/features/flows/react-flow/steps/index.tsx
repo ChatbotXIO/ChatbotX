@@ -18,6 +18,7 @@ import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
+import { waitUserReplyStep } from "./get-user-input"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
@@ -25,6 +26,7 @@ import { optOutEmailStep } from "./opt-out-email"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
 import { sendCardStep } from "./send-card"
+import { sendCarouselStep } from "./send-carousel"
 import sendFileStep from "./send-file"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
@@ -38,15 +40,14 @@ import { unarchiveConversationStep } from "./unarchive-conversation"
 import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
 import { unsubscribeBroadcastStep } from "./unsubscribe-broadcast"
-import { waitUserReplyStep } from "./wait-user-reply"
 
 // biome-ignore lint/suspicious/noExplicitAny: wip
 export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.sendText]: sendTextStep,
   [StepType.sendImage]: sendImageStep,
   [StepType.sendCard]: sendCardStep,
-  [StepType.sendCarousel]: sendCardStep,
-  [StepType.waitUserReply]: waitUserReplyStep,
+  [StepType.sendCarousel]: sendCarouselStep,
+  [StepType.getUserInput]: waitUserReplyStep,
   [StepType.sendVideo]: sendVideoStep,
   [StepType.sendGif]: undefined,
   [StepType.setDebounce]: undefined,
@@ -92,7 +93,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.chooseChannel]: chooseChannelStep,
   [StepType.filterContact]: undefined,
   [StepType.addNotes]: addNotesStep,
-  [StepType.userInput]: undefined,
+  [StepType.waitUserReply]: undefined,
   [StepType.aiGenerateText]: undefined,
   [StepType.aiGenerateTextAgent]: undefined,
   [StepType.aiGenerateImage]: undefined,

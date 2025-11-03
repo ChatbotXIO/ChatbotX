@@ -98,6 +98,7 @@ export function UpdateCustomFieldDialog({
                 label={t("fields.name.label")}
                 name="name"
                 placeholder={t("fields.name.placeholder")}
+                required
               />
 
               <TextareaField

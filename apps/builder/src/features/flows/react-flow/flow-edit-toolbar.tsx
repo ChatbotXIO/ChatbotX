@@ -23,6 +23,7 @@ import {
   Trash2Icon,
   TypeIcon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -36,6 +37,7 @@ export function FlowEditToolbar({
   chatbotId: string
   flowId: string
 }) {
+  const t = useTranslations()
   const [isValidating, setIsValidating] = useState<boolean>(false)
   const nodes = useNodes()
   const edges = useEdges()
@@ -89,48 +91,47 @@ export function FlowEditToolbar({
         )}
         Publish
       </Button>
+
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button className="px-1.5" size="sm" variant="outline">
-            <EllipsisIcon />
-          </Button>
+        <DropdownMenuTrigger className="px-1.5">
+          <EllipsisIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuGroup>
             <DropdownMenuItem>
               <TypeIcon />
-              <span>Rename</span>
+              {t("actions.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <CopyIcon />
-              <span>Duplicate</span>
+              {t("actions.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <LinkIcon />
-              <span>Get draft link</span>
+              {t("actions.getDraftLink")}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <LinkIcon />
-              <span>Get published link</span>
+              {t("actions.getPublishedLink")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem>
               <ChartNoAxesCombinedIcon />
-              <span>Analytics</span>
+              {t("actions.analytics")}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <HistoryIcon />
-              <span>Flow Versions</span>
+              {t("actions.flowVersions")}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Trash2Icon />
-              <span>Delete</span>
+              {t("actions.delete")}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <RefreshCcwIcon />
-              <span>Revert to published</span>
+              {t("actions.revertToPublished")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

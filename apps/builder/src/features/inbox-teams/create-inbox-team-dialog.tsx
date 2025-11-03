@@ -77,7 +77,7 @@ export function CreateInboxTeamDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.inboxTeam.label"),
             })}
           </DialogTitle>

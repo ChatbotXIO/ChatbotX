@@ -4,6 +4,7 @@ import {
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
 } from "../steps/choose-channel"
+import { getUserInputStepSchema } from "../steps/get-user-input"
 import { sendAudioStepSchema } from "../steps/send-audio"
 import { sendCardStepSchema } from "../steps/send-card"
 import { sendCarouselStepSchema } from "../steps/send-carousel"
@@ -12,7 +13,6 @@ import { sendGifStepSchema } from "../steps/send-gif"
 import { sendImageStepSchema } from "../steps/send-image"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
-import { waitUserReplyStepSchema } from "../steps/wait-user-reply"
 import {
   baseNodeDefaultFn,
   baseNodeSchema,
@@ -37,7 +37,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         sendVideoStepSchema,
         sendCardStepSchema,
         sendCarouselStepSchema,
-        waitUserReplyStepSchema,
+        getUserInputStepSchema,
         sendGifStepSchema,
         ...actionSteps,
       ]),

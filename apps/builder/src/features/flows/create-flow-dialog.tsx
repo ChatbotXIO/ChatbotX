@@ -76,7 +76,7 @@ export function CreateFlowDialog({
       <DialogContent className={"max-h-screen max-w-sm overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", { feature: t("fields.flow.label") })}
+            {t("messages.createFeature", { feature: t("fields.flow.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -86,7 +86,7 @@ export function CreateFlowDialog({
               className="flex-1 space-y-6"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter>
                 <DialogClose asChild>

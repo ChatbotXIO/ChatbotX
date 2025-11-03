@@ -7,12 +7,17 @@ import {
 } from "@aha.chat/ui/components/ui/avatar"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { cn } from "@aha.chat/ui/lib/utils"
+import {
+  SiInstagram,
+  SiInstagramHex,
+  SiMessenger,
+  SiMessengerHex,
+  SiWhatsapp,
+  SiWhatsappHex,
+} from "@icons-pack/react-simple-icons"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
-import { InstagramIcon } from "@/components/icons/instagram"
-import { MessengerIcon } from "@/components/icons/messenger"
-import WhatsappIcon from "@/components/icons/whatsapp"
 import type { ContactResource } from "../contacts/schemas"
 import type { MessageResource } from "../messages/schemas"
 import type { ConversationResource } from "./schemas"
@@ -47,11 +52,11 @@ const assignedIcon = (conversation: ConversationResource) => {
 const sourceIcon = (contact: ContactResource) => {
   switch (contact.source) {
     case "Whatsapp":
-      return <WhatsappIcon />
+      return <SiWhatsapp fill={SiWhatsappHex} />
     case "Instagram":
-      return <InstagramIcon />
+      return <SiInstagram fill={SiInstagramHex} />
     case "Messenger":
-      return <MessengerIcon />
+      return <SiMessenger fill={SiMessengerHex} />
     default:
       return (
         <div className="rounded-full bg-white">

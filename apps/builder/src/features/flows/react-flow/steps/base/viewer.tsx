@@ -8,11 +8,11 @@ export const BaseStepViewer = (props: {
   title: string
   children?: ReactElement
 }) => (
-  <div className="w-full text-sm">
-    <div className="flex items-center gap-1 break-all font-medium">
+  <div className="flex w-full flex-col justify-start gap-1 break-all text-sm">
+    <div className="flex items-center gap-1 font-medium">
       <props.icon className="text-yellow-500" size={16} />
       <span>{props.title}</span>
-      {props.children}
     </div>
+    {props.children}
   </div>
 )

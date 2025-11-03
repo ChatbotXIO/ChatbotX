@@ -174,7 +174,9 @@ export function CreateAIAgentDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", { feature: t("fields.aiAgent.label") })}
+            {t("messages.createFeature", {
+              feature: t("fields.aiAgent.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

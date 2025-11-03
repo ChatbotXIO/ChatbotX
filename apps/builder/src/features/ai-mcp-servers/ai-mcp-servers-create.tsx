@@ -132,7 +132,7 @@ export function AIMcpServersCreate() {
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.aiMcpServer.label"),
             })}
           </DialogTitle>

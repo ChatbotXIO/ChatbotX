@@ -1,0 +1,42 @@
+.react-renderer {
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-100);
+  border-radius: 0.7rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  overflow: auto;
+  padding: 0.4rem;
+  position: relative;
+  /* min-width: 150px; */
+
+  button {
+    align-items: center;
+    background-color: transparent;
+    display: flex;
+    gap: 0.25rem;
+    text-align: left;
+    width: 100%;
+
+    &:hover,
+    &:hover.is-selected {
+      background-color: var(--color-gray-200);
+    }
+
+    &.is-selected {
+      background-color: var(--color-gray-300);
+    }
+
+    img {
+      height: 1em;
+      width: 1em;
+    }
+  }
+}

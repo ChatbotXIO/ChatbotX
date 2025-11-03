@@ -122,7 +122,13 @@
     "uploadFile": "Upload File",
     "view": "View",
     "viewProject": "View Project",
-    "waitUserAnswer": "Wait User Answer"
+    "waitUserAnswer": "Wait User Answer",
+    "duplicate": "Duplicate",
+    "getDraftLink": "Get Draft Link",
+    "getPublishedLink": "Get Published Link",
+    "analytics": "Analytics",
+    "flowVersions": "Flow Versions",
+    "revertToPublished": "Revert to Published"
   },
   "admins": {
     "title": "Admins"
@@ -240,14 +246,6 @@
       "enterText": "Enter text",
       "selectTrueFalse": "Select true/false"
     },
-    "types": {
-      "boolean": "Boolean",
-      "date": "Date",
-      "dateTime": "Date & Time",
-      "longText": "Long Text",
-      "number": "Number",
-      "shortText": "Short Text"
-    },
     "values": {
       "false": "False",
       "true": "True"
@@ -265,7 +263,6 @@
     "connect": {
       "title": "Connect {feature}"
     },
-    "createTitle": "Create {feature}",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "deleteContact": {
       "description": "Are you sure to delete those contacts?",
@@ -451,7 +448,12 @@
       "placeholder": "Delay Type"
     },
     "delayUnit": {
-      "label": "Delay Unit"
+      "label": "Delay Unit",
+      "days": "Days",
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "placeholder": "Select a unit",
+      "seconds": "Seconds"
     },
     "description": {
       "label": "Description",
@@ -721,6 +723,9 @@
       "label": "Subtitle",
       "placeholder": "Enter subtitle"
     },
+    "syncToMessenger": {
+      "label": "Sync to Messenger"
+    },
     "tag": {
       "label": "Tag"
     },
@@ -798,6 +803,36 @@
     },
     "whatsappFlow": {
       "label": "WhatsApp Flow"
+    },
+    "shortText": {
+      "label": "Short Text"
+    },
+    "number": {
+      "label": "Number"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "datetime": {
+      "label": "Datetime"
+    },
+    "boolean": {
+      "label": "Boolean"
+    },
+    "longText": {
+      "label": "Long Text"
+    },
+    "replyFormat": {
+      "number": "Number",
+      "text": "Text",
+      "email": "Email",
+      "phone": "Phone",
+      "image": "Image",
+      "file": "File",
+      "link": "Link",
+      "date": "Date",
+      "datetime": "Datetime",
+      "location": "Location"
     }
   },
   "flows": {
@@ -857,7 +892,11 @@
       "unarchiveConversation": "Unarchive Conversation",
       "unassignConversation": "Unassign Conversation",
       "unfollowConversation": "Unfollow Conversation",
-      "unsubscribeBroadcast": "Unsubscribe Broadcast"
+      "unsubscribeBroadcast": "Unsubscribe Broadcast",
+      "waitUserReply": "Wait User Reply",
+      "getUserInput": "Get User Input",
+      "sendCarousel": "Send Carousel",
+      "actions": "Actions"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -875,13 +914,6 @@
       "placeholder": "Select a type",
       "specificDate": "Specific Date",
       "specificDateValue": "{date}"
-    },
-    "delayUnit": {
-      "days": "Days",
-      "hours": "Hours",
-      "minutes": "Minutes",
-      "placeholder": "Select a unit",
-      "seconds": "Seconds"
     },
     "formatTimezone": {
       "accountTimezone": "Account Timezone",
@@ -981,7 +1013,6 @@
     "connectSuccess": "Connected {feature} successfully",
     "copiedToClipboard": "Copied to clipboard",
     "createdFailed": "{feature} creation failed",
-    "createdSuccessfully": "{feature} created successfully",
     "deleteComingSoon": "Delete functionality coming soon",
     "deletedSuccessfully": "{feature} deleted successfully",
     "deleteFileComingSoon": "Delete file functionality coming soon",
@@ -1007,7 +1038,10 @@
     "updateFileComingSoon": "Update file functionality coming soon",
     "uploadFailed": "Upload failed",
     "videoError": "Video error",
-    "viewFileComingSoon": "View file functionality coming soon"
+    "viewFileComingSoon": "View file functionality coming soon",
+    "createSuccess": "{feature} created successfully",
+    "createFeature": "Create {feature}",
+    "noItemsFound": "No items found"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

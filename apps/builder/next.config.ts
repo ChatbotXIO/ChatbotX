@@ -52,6 +52,28 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
+
+      ...(env.NEXT_PUBLIC_MANAGE_URL
+        ? [
+            {
+              source: "/manage",
+              destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage`,
+            },
+            {
+              source: "/manage/:path+",
+              destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage/:path+`,
+            },
+
+            // {
+            //   source: "/api/manage",
+            //   destination: `${env.NEXT_PUBLIC_BILLING_URL}/api/manage`,
+            // },
+            {
+              source: "/manage-static/:path+",
+              destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage-static/:path+`,
+            },
+          ]
+        : []),
     ]
   },
 }
