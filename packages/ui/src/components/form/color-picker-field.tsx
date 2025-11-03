@@ -25,7 +25,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={required}
+      required={required}
       label={label}
       name={name}
     >

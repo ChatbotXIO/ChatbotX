@@ -24,7 +24,7 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "[css]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "vscode.css-language-features"
   },
   "[graphql]": {
     "editor.defaultFormatter": "biomejs.biome"

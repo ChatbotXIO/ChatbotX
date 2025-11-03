@@ -1,7 +1,8 @@
 "use server"
 
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import type { ChatbotModel } from "@aha.chat/database/types"
+import { IntegrationType } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import {
   exchangeLongLivedToken,
@@ -9,7 +10,6 @@ import {
 } from "@aha.chat/integration-messenger/apis/page"
 import { AuthType } from "@aha.chat/sdk"
 import { revalidateTag } from "next/cache"
-import type { Prisma } from "node_modules/@aha.chat/database/src/generated/prisma/client"
 import type { ChatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { findOrganizationSettingsByKey } from "@/features/organization/queries"
@@ -52,7 +52,7 @@ export const selectPageAction = chatbotActionClient
           })
 
           const auth: MessengerAuthValue = {
-            authType: AuthType.OAUTH2,
+            authType: AuthType.oauth2,
             clientId: messengerSetting.clientId,
             clientSecret: messengerSetting.clientSecret,
             redirectUrl: "",
@@ -70,7 +70,7 @@ export const selectPageAction = chatbotActionClient
             where: {
               chatbotId_inboxType_sourceId: {
                 chatbotId,
-                inboxType: IntegrationType.MESSENGER,
+                inboxType: IntegrationType.Messenger,
                 sourceId: parsedInput.pageId,
               },
             },
@@ -79,7 +79,7 @@ export const selectPageAction = chatbotActionClient
             },
             create: {
               chatbotId,
-              inboxType: IntegrationType.MESSENGER,
+              inboxType: IntegrationType.Messenger,
               sourceId: parsedInput.pageId,
             },
           })

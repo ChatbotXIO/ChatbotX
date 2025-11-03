@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import type { SecretTextAuthValue } from "@aha.chat/sdk"
+import { AuthType, type SecretTextAuthValue } from "@aha.chat/sdk"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -44,7 +44,7 @@ export const connectGeminiAction = chatbotActionClient
         },
         data: {
           auth: {
-            authType: "SECRET_TEXT",
+            authType: AuthType.secretText,
             secretText: parsedInput.apiKey,
           } as SecretTextAuthValue,
         },

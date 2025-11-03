@@ -50,7 +50,7 @@ export function CreateAITriggerDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createdSuccessfully", {
+            t("messages.createSuccess", {
               feature: t("fields.aiTrigger.label"),
             }),
           )
@@ -95,15 +95,15 @@ export function CreateAITriggerDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.aiTrigger.label") })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.aiTrigger.label") })}
+            {t("messages.createFeature", {
+              feature: t("fields.aiTrigger.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -132,10 +132,7 @@ export function CreateAITriggerDialog({
                     </div>
 
                     <div className="basis-5/12">
-                      <CustomFieldSelect
-                        label=""
-                        name={`questions.${i}.fieldId`}
-                      />
+                      <CustomFieldSelect name={`questions.${i}.fieldId`} />
                     </div>
 
                     <div className="basis-1/12">

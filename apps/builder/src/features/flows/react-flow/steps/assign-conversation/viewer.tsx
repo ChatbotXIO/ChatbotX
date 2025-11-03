@@ -4,13 +4,15 @@ import { MessageCirclePlus } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
-export const AssignConversationStepViewer = () => {
+const AssignConversationStepViewer = () => {
   const t = useTranslations()
 
   return (
     <BaseStepViewer
       icon={MessageCirclePlus}
-      title={t("flows.stepType.assignConversation")}
+      title={t("flows.actions.assignConversation")}
     />
   )
 }
+
+export default AssignConversationStepViewer

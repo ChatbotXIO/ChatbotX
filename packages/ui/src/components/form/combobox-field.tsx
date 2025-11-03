@@ -21,7 +21,7 @@ import type { FieldPath, FieldValues } from "react-hook-form"
 interface SelectFieldProps<T extends FieldValues> {
   name: FieldPath<T>
   label?: string
-  isRequired?: boolean
+  required?: boolean
   placeholder?: string
   description?: string
   defaultValue?: string
@@ -31,7 +31,7 @@ interface SelectFieldProps<T extends FieldValues> {
 export function ComboboxField<T extends FieldValues>({
   name,
   label,
-  isRequired,
+  required,
   placeholder,
   description,
   options,
@@ -43,7 +43,7 @@ export function ComboboxField<T extends FieldValues>({
     <FormFieldWrapper<T>
       name={name}
       label={label}
-      isRequired={isRequired}
+      required={required}
       description={description}
     >
       {(field) => (

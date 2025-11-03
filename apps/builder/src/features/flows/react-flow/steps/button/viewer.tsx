@@ -1,9 +1,9 @@
-import type { ButtonStepSchema } from "@aha.chat/flow-config"
+import type { ButtonStepProps } from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Handle, Position } from "@xyflow/react"
 
 type ButtonStepViewerProps = {
-  data: ButtonStepSchema
+  data: ButtonStepProps
 }
 
 export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
@@ -25,7 +25,7 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
 }
 
 type ButtonGroupViewerProps = {
-  data: ButtonStepSchema[]
+  data: ButtonStepProps[]
 }
 
 export const ButtonGroupViewer = (props: ButtonGroupViewerProps) => {

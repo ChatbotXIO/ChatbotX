@@ -14,7 +14,7 @@ export type HandleRequestProps<IConfig extends BaseConfig> = {
 }
 
 export const HandleRequestType = {
-  CALLBACK: "callback",
-  WEBHOOK: "webhook",
-  GENERATE_AUTH_URL: "generate-auth-url",
+  callback: "callback",
+  webhook: "webhook",
+  generateAuthUrl: "generate-auth-url",
 } as const

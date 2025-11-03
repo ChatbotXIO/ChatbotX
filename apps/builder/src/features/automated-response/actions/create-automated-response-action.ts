@@ -28,7 +28,7 @@ export const createAutomatedResponseAction = chatbotActionClient
       if (parsedInput.folderId) {
         await ensureFolderIdExists(
           chatbotId,
-          FolderType.AUTOMATED_RESPONSE,
+          FolderType.automatedResponse,
           parsedInput.folderId,
         )
       }

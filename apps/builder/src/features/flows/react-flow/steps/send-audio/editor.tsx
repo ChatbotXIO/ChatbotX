@@ -13,7 +13,7 @@ const SendAudioStepEditor = (props: SendAudioStepEditorProps) => {
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-secondary px-4 py-2 pt-3">
         <DirectUploadOrInsertLink
-          fileType={FileType.AUDIO}
+          fileType={FileType.audio}
           parentName={parentName}
         />
       </div>
@@ -24,4 +24,4 @@ const SendAudioStepEditor = (props: SendAudioStepEditorProps) => {
   )
 }
 
-export { SendAudioStepEditor }
+export default SendAudioStepEditor

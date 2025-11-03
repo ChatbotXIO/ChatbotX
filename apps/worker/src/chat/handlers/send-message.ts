@@ -1,5 +1,8 @@
 import { prisma } from "@aha.chat/database"
-import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
+import {
+  type IntegrationType,
+  WEBCHAT_SOURCE_PREFIX,
+} from "@aha.chat/database/types"
 import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
 import type { ChatJobSendMessage } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
@@ -27,7 +30,7 @@ export async function sendMessageToExternal(data: ChatJobSendMessage) {
   }
 
   // Find integration detail
-  const intergationDetail = allIntegrations[inbox.inboxType]
+  const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
   if (!intergationDetail) {
     logger.info("Does not support this integration:", inbox.inboxType)
     return
@@ -68,7 +71,7 @@ export async function sendFlowStepToExternal({
   }
 
   // Find integration detail
-  const intergationDetail = allIntegrations[inbox.inboxType]
+  const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
   if (!intergationDetail) {
     logger.error("Unable to find integration detail:", inbox.inboxType)
     return

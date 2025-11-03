@@ -10,16 +10,16 @@ import { z } from "zod"
 export const conversationStarterSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
-    type: z.literal(ConversationStarterType.FLOW),
+    type: z.literal(ConversationStarterType.flow),
     flowId: z.cuid2(),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(ConversationStarterType.MESSAGE),
+    type: z.literal(ConversationStarterType.message),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(ConversationStarterType.WEBSITE),
+    type: z.literal(ConversationStarterType.website),
     url: z.url(),
   }),
 ])
@@ -30,12 +30,12 @@ export type ConversationStarterSchema = z.infer<
 const persistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
-    type: z.literal(PersistentMenuType.FLOW),
+    type: z.literal(PersistentMenuType.flow),
     flowId: z.cuid2(),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(PersistentMenuType.WEBSITE),
+    type: z.literal(PersistentMenuType.website),
     websiteUrl: z.url(),
   }),
 ])

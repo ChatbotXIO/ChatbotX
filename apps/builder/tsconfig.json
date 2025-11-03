@@ -12,7 +12,8 @@
       }
     ],
     "strictNullChecks": true,
-    "incremental": true
+    "incremental": true,
+    "allowArbitraryExtensions": true
   },
   "include": [
     "next-env.d.ts",

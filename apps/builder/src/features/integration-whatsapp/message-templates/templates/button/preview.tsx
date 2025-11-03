@@ -116,7 +116,9 @@ const ButtonGroupPreviewComponent = (
           variant="secondary"
         >
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", {
+            feature: t("fields.messageTemplate.label"),
+          })}
         </Button>
       )}
       {openModal && (

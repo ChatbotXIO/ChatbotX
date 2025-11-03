@@ -37,7 +37,7 @@ const config: IntegrationDefinition<
     const action = segments.pop()
 
     switch (action) {
-      case HandleRequestType.WEBHOOK:
+      case HandleRequestType.webhook:
         return await webhookHandler(props)
       default:
         throw new MessengerAPIException(

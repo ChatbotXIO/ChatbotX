@@ -27,7 +27,7 @@ export const deleteAccountFieldsAction = chatbotActionClient
             in: parsedInput.ids,
           },
           chatbotId,
-          fieldType: FieldType.ACCOUNT_FIELD,
+          fieldType: FieldType.accountField,
         },
       })
 

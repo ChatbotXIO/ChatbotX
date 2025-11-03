@@ -10,13 +10,13 @@ type SendTextStepEditorProps = {
 
 const SendTextStepEditor = (props: SendTextStepEditorProps) => {
   const { parentName } = props
-  const { customFields } = useStepStore((state) => state)
+  const { customFieldOptions } = useStepStore((state) => state)
 
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-secondary px-4 py-2">
         <TiptapEditorField
-          customFields={customFields}
+          customFields={customFieldOptions}
           name={`${parentName}.message`}
         />
       </div>

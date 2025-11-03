@@ -1,6 +1,6 @@
 "use client"
 
-import type { AIAgentModel } from "@aha.chat/database/types"
+import { type AIAgentModel, AIMessageRole } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -25,7 +25,6 @@ import {
   type MessageSchema,
   updateAIAgentRequest,
 } from "@/features/ai-agents/schemas/update.schema"
-import { OpenAIMessageRole } from "@/features/integration-openai/schemas"
 
 export function UpdateAIAgentDialog({
   chatbotId,
@@ -84,20 +83,20 @@ export function UpdateAIAgentDialog({
   const onChangeRole = (index: number) => {
     update(index, {
       role:
-        fields[index]?.role === OpenAIMessageRole.User
-          ? OpenAIMessageRole.Assistant
-          : OpenAIMessageRole.User,
+        fields[index]?.role === AIMessageRole.user
+          ? AIMessageRole.assistant
+          : AIMessageRole.user,
       content: "",
     })
   }
 
   const addOptions = () => {
-    const lastRole: string = fields.at(-1)?.role || OpenAIMessageRole.Assistant
+    const lastRole: string = fields.at(-1)?.role || AIMessageRole.assistant
     append({
       role:
-        lastRole === OpenAIMessageRole.User
-          ? OpenAIMessageRole.Assistant
-          : OpenAIMessageRole.User,
+        lastRole === AIMessageRole.user
+          ? AIMessageRole.assistant
+          : AIMessageRole.user,
       content: "",
     })
   }
@@ -114,9 +113,7 @@ export function UpdateAIAgentDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.updateTitle", { feature: t("fields.aiAgent.label") })}

@@ -13,7 +13,7 @@ const SendFileStepEditor = (props: SendFileStepEditorProps) => {
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-secondary px-4 py-2 pt-3">
         <DirectUploadOrInsertLink
-          fileType={FileType.DOCUMENT}
+          fileType={FileType.file}
           parentName={parentName}
         />
       </div>
@@ -24,4 +24,4 @@ const SendFileStepEditor = (props: SendFileStepEditorProps) => {
   )
 }
 
-export { SendFileStepEditor }
+export default SendFileStepEditor

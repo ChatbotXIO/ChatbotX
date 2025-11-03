@@ -4,7 +4,6 @@ import React, { useMemo } from 'react';
 import { Input } from '@aha.chat/ui/components/ui/input';
 import { Button } from '@aha.chat/ui/components/ui/button';
 import { type VariantProps } from 'class-variance-authority';
-// import { CommandInput } from '../ui/command';
 import { TagPopover } from '@aha.chat/ui/components/tag-popover';
 import { TagList } from '@aha.chat/ui/components/tag-list';
 import { tagVariants } from '@aha.chat/ui/components/tag';

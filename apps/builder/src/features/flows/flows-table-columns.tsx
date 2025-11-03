@@ -15,18 +15,21 @@ import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
 import Link from "next/link"
+import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
 import { updateFlowAction } from "./actions/update-flow-action"
 import type { FlowResource } from "./schemas/get-flows-schema"
 
 type GetColumnsProps = {
+  t: ReturnType<typeof useTranslations>
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<FlowResource> | null>
   >
 }
 
 export function getFlowColumns({
+  t,
   setRowAction,
 }: GetColumnsProps): ColumnDef<FlowResource>[] {
   return [
@@ -159,13 +162,14 @@ export function getFlowColumns({
               onSelect={() => setRowAction({ row, variant: "rename" })}
             >
               <TextIcon className="mr-2" />
-              Rename
+              {t("actions.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "delete" })}
+              variant="destructive"
             >
               <Trash className="mr-2" />
-              Delete
+              {t("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

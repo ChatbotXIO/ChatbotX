@@ -20,14 +20,19 @@ import { useOptimisticAction } from "next-safe-action/hooks"
 import { type MouseEvent, useCallback, useEffect } from "react"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
-import { AddNodeButton } from "./nodes/add-node"
 import { NodeViewer } from "./nodes/viewer"
+import AddNodeButton from "./panel-buttons/add-node-button"
+import FocusButton from "./panel-buttons/focus-button"
+import ZoomInButton from "./panel-buttons/zoom-in-button"
+import ZoomOutButton from "./panel-buttons/zoom-out-button"
+import "./react-flow-wrapper.css"
 
 const nodeTypes = {
-  [NodeType.SendMessage]: NodeViewer,
-  [NodeType.AddNotes]: NodeViewer,
-  [NodeType.Wait]: NodeViewer,
-  [NodeType.StartFlow]: NodeViewer,
+  [NodeType.sendMessage]: NodeViewer,
+  [NodeType.performAction]: NodeViewer,
+  [NodeType.addNotes]: NodeViewer,
+  [NodeType.wait]: NodeViewer,
+  [NodeType.startFlow]: NodeViewer,
 }
 
 type ReactFlowFrameProps = {
@@ -57,7 +62,8 @@ export function ReactFlowWrapper({
       updateFn: (state, updatedData) => ({
         flowVersion: {
           ...state.flowVersion,
-          ...updatedData,
+          nodes: JSON.parse(JSON.stringify(updatedData.nodes)),
+          edges: JSON.parse(JSON.stringify(updatedData.edges)),
         },
       }),
     },
@@ -142,6 +148,14 @@ export function ReactFlowWrapper({
 
   return (
     <ReactFlow
+      defaultEdgeOptions={{
+        markerEnd: {
+          type: "arrowclosed",
+        },
+        style: {
+          strokeWidth: 2,
+        },
+      }}
       edges={edges}
       nodes={nodes}
       nodeTypes={nodeTypes}
@@ -158,7 +172,16 @@ export function ReactFlowWrapper({
       <MiniMap />
       <Background />
       <Panel position="bottom-center">
-        <Controls orientation="horizontal">
+        <Controls
+          className="overflow-hidden rounded-md"
+          orientation="horizontal"
+          showFitView={false}
+          showInteractive={false}
+          showZoom={false}
+        >
+          <FocusButton />
+          <ZoomInButton />
+          <ZoomOutButton />
           <AddNodeButton />
         </Controls>
       </Panel>

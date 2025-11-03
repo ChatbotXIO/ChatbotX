@@ -30,8 +30,8 @@ export type OutgoingMessageEntity = {
 }
 
 export const MessageType = {
-  INCOMING: "INCOMING",
-  OUTGOING: "OUTGOING",
+  incoming: "incoming",
+  outgoing: "outgoing",
 } as const
 export type MessageType = (typeof MessageType)[keyof typeof MessageType]
 
@@ -75,17 +75,17 @@ export type MessageLocationEntity = {
 }
 
 export const ContentType = {
-  TEXT: "TEXT",
-  LOCATION: "LOCATION",
+  text: "text",
+  location: "location",
 } as const
 
 export type ContentType = (typeof ContentType)[keyof typeof ContentType]
 
 export const FileType = {
-  IMAGE: "IMAGE",
-  AUDIO: "AUDIO",
-  VIDEO: "VIDEO",
-  DOCUMENT: "DOCUMENT",
+  image: "image",
+  audio: "audio",
+  video: "video",
+  file: "file",
 } as const
 
 export type FileType = (typeof FileType)[keyof typeof FileType]

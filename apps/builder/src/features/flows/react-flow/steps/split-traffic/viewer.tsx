@@ -2,12 +2,16 @@
 
 import type { SplitTrafficStepSchema } from "@aha.chat/flow-config"
 
-export const SplitTrafficStepViewer = ({
-  data,
-}: {
-  data: SplitTrafficStepSchema
-}) => (
+const SplitTrafficStepViewer = ({ data }: { data: SplitTrafficStepSchema }) => (
   <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
-    <p className="px-4 py-2">{`${data.value}%`}</p>
+    {data.cases.length > 0 &&
+      data.cases.map((c, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: safe index
+        <div key={i}>
+          <p>{c.value}%</p>
+        </div>
+      ))}
   </div>
 )
+
+export default SplitTrafficStepViewer

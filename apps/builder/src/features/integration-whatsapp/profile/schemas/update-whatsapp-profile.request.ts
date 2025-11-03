@@ -4,8 +4,8 @@ export const updateWhatsappProfileRequest = z.object({
   about: z.string().trim().max(255),
   description: z.string().trim().max(255),
   address: z.string().trim().max(255),
-  email: z.string().trim().email(),
-  websiteUrl: z.string().trim().url(),
+  email: z.email(),
+  websiteUrl: z.url(),
 })
 export type UpdateWhatsappProfileRequest = z.infer<
   typeof updateWhatsappProfileRequest

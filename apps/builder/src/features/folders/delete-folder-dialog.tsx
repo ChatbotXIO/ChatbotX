@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
@@ -49,25 +50,22 @@ export function DeleteFolderDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.deleteTitle", { feature: t("fields.folder.label") })}
           </DialogTitle>
-          <DialogDescription />
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.folder.label"),
+            })}
+          </DialogDescription>
         </DialogHeader>
 
-        <div>
-          {t("dialog.deleteConfirmation", {
-            feature: t("fields.folder.label"),
-          })}
-        </div>
-
-        <div className="flex justify-end gap-4">
+        <DialogFooter className="gap-2 sm:space-x-0">
           <Button
             onClick={() => onOpenChange(false)}
+            size="sm"
             type="button"
             variant="ghost"
           >
@@ -76,13 +74,14 @@ export function DeleteFolderDialog({
           <Button
             disabled={isPending}
             onClick={() => execute({ ids: [folder?.id ?? ""] })}
+            size="sm"
             type="submit"
             variant={"destructive"}
           >
             {isPending && <Loader2Icon className="animate-spin" />}
             {t("actions.delete")}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

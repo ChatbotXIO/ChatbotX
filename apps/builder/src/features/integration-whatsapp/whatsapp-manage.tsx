@@ -33,9 +33,9 @@ export function WhatsappManage({ chatbotId, promises }: WhatsappManageProps) {
   const t = useTranslations()
 
   const { data: settings } = organizationSettingsSchema.safeParse(
-    organization.settings,
+    organization?.settings,
   )
-  if (!settings?.whatsapp) {
+  if (!(organization && settings?.whatsapp)) {
     return (
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground text-sm">

@@ -1,5 +1,6 @@
 "use client"
 
+import { FieldOperationType } from "@aha.chat/database/types"
 import {
   type SetCustomFieldStepSchema,
   setCustomFieldStepSchema,
@@ -21,31 +22,26 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { setCustomFieldStep } from "."
 
-export const SetCustomFieldStepEditor = ({
-  parentName,
-}: {
-  parentName: string
-}) => {
+const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   const { setValue, getValues } = useFormContext()
-  const defaultValue: SetCustomFieldStepSchema = getValues(parentName)
+  const defaultValues: SetCustomFieldStepSchema = getValues(parentName)
 
   const [open, setOpen] = useState<boolean>(false)
   const operations = [
-    { label: t("actions.setTo"), value: "set" },
-    { label: t("actions.appendToEnd"), value: "append" },
-    { label: t("actions.prependToStart"), value: "prepend" },
+    { label: t("flows.operators.set"), value: FieldOperationType.set },
+    { label: t("flows.operators.append"), value: FieldOperationType.append },
+    { label: t("flows.operators.prepend"), value: FieldOperationType.prepend },
   ]
 
   const customFieldForm = useForm<SetCustomFieldStepSchema>({
     resolver: zodResolver(setCustomFieldStepSchema),
-    defaultValues: defaultValue ?? setCustomFieldStep.defaultFn(),
+    defaultValues,
   })
 
   function onSubmit(values: SetCustomFieldStepSchema) {
-    setValue(`${parentName}.outputCFId`, values.outputCFId)
+    setValue(`${parentName}.outputCfId`, values.outputCfId)
     setValue(`${parentName}.operation`, values.operation)
     setValue(`${parentName}.value`, values.value)
 
@@ -56,14 +52,12 @@ export const SetCustomFieldStepEditor = ({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="rounded-lg border-2 border-dashed p-4 text-sm">
-          {t("flows.stepType.setCustomField")}
+          {t("flows.actions.setCustomField")}
         </div>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>{t("flows.stepType.setCustomField")}</DialogTitle>
+          <DialogTitle>{t("flows.actions.setCustomField")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...customFieldForm}>
@@ -109,3 +103,5 @@ export const SetCustomFieldStepEditor = ({
     </Dialog>
   )
 }
+
+export default SetCustomFieldStepEditor

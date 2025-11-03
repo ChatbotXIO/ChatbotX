@@ -5,7 +5,7 @@ import { BroadcastStatus, prisma } from "@aha.chat/database"
 export default async (datetime: Date = new Date()) => {
   const broadcasts = await prisma.broadcast.findMany({
     where: {
-      status: BroadcastStatus.SCHEDULED,
+      status: BroadcastStatus.scheduled,
       schedulesAt: {
         lte: datetime,
       },

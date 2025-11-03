@@ -3,13 +3,15 @@
 import { SaveIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 
-export const SetCustomFieldStepViewer = () => {
+const SetCustomFieldStepViewer = () => {
   const t = useTranslations()
 
   return (
     <div className="flex w-full items-center justify-center gap-2 py-4 text-center font-medium text-sm">
       <SaveIcon className="text-yellow-500" size={18} />
-      {t("flows.stepType.setCustomField")}
+      {t("flows.actions.setCustomField")}
     </div>
   )
 }
+
+export default SetCustomFieldStepViewer

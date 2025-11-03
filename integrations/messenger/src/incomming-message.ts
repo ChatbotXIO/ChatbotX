@@ -4,6 +4,7 @@ import {
   type Context,
   type ConversationEntity,
   type MessageEntity,
+  MessageType,
 } from "@aha.chat/sdk"
 
 import { getMessageAttachmentEntity } from "./apis/page"
@@ -91,18 +92,20 @@ const getMessageEntity = async (
   if (messaging.message) {
     return {
       sourceId: messaging.message.mid,
-      messageType: messaging.message.is_echo ? "OUTGOING" : "INCOMING",
+      messageType: messaging.message.is_echo
+        ? MessageType.outgoing
+        : MessageType.incoming,
       content: messaging.message.text,
-      contentType: ContentType.TEXT,
+      contentType: ContentType.text,
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
   }
   if (messaging.postback) {
     return {
       sourceId: messaging.postback.mid,
-      messageType: "INCOMING",
+      messageType: MessageType.incoming,
       content: messaging.postback.title,
-      contentType: ContentType.TEXT,
+      contentType: ContentType.text,
       attachments: [],
     }
   }

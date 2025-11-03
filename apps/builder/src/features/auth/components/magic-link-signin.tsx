@@ -39,9 +39,9 @@ export const MagicLinkSignIn = () => {
         onSubmit={magicLinkForm.handleSubmit(onSubmitMagicLinkForm)}
       >
         <InputField
-          isRequired
           name="email"
           placeholder={t("signin.email")}
+          required
           type="email"
         />
 

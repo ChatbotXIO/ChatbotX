@@ -66,13 +66,11 @@ export function EditFolderDialog({
 
   useEffect(() => {
     form.reset({ name: folder?.name })
-  }, [folder, form.reset])
+  }, [folder, form.reset, form])
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-5xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.updateTitle", { feature: t("fields.folder.label") })}

@@ -35,25 +35,25 @@ const createInboxOptions = (t: (key: string) => string): InboxOption[] => [
     title: t("whatsapp.title"),
     icon: SiWhatsapp,
     iconColor: SiWhatsappHex,
-    value: InboxType.WHATSAPP,
+    value: InboxType.Whatsapp,
   },
   {
     title: t("messenger.title"),
     icon: SiMessenger,
     iconColor: SiMessengerHex,
-    value: InboxType.MESSENGER,
+    value: InboxType.Messenger,
   },
   {
     title: t("zalo.title"),
     icon: SiZalo,
     iconColor: SiZaloHex,
-    value: InboxType.ZALO,
+    value: InboxType.Zalo,
   },
   {
     title: t("webchat.title"),
     icon: AppWindowIcon,
     iconColor: "none",
-    value: InboxType.WEBCHAT,
+    value: InboxType.Webchat,
   },
 ]
 
@@ -67,7 +67,7 @@ function InboxSelectCard() {
   // Memoize navigation handler to prevent recreation on every render
   const handleInboxSelect = useCallback(
     (inboxType: InboxType) => {
-      router.push(`/channels/create?channel=${inboxType.toLowerCase()}`)
+      router.push(`/channels/create?channel=${inboxType}`)
     },
     [router],
   )

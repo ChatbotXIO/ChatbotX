@@ -9,7 +9,7 @@ type SendCardStepViewerProps = {
   data: SendCardStepSchema
 }
 
-export const SendCardStepViewer = (props: SendCardStepViewerProps) => {
+const SendCardStepViewer = (props: SendCardStepViewerProps) => {
   const { data } = props
 
   return (
@@ -42,3 +42,5 @@ export const SendCardStepViewer = (props: SendCardStepViewerProps) => {
     </div>
   )
 }
+
+export default SendCardStepViewer

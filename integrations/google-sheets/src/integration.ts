@@ -54,9 +54,9 @@ const config: IntegrationDefinition<
     const method = segments.pop()
 
     switch (method) {
-      case HandleRequestType.CALLBACK:
+      case HandleRequestType.callback:
         return await callbackHandler(props)
-      case HandleRequestType.GENERATE_AUTH_URL:
+      case HandleRequestType.generateAuthUrl:
         return await generateAuthUrl(props.config)
       default:
         throw new SdkException(

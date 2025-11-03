@@ -52,7 +52,7 @@ export const createMessageTemplateAction = chatbotActionClient
         ),
       }
 
-      const res = await integrations.WHATSAPP.runAction(
+      const res = await integrations.Whatsapp.runAction(
         "createMessageTemplate",
         {
           ctx,
