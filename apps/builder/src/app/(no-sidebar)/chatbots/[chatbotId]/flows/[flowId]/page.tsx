@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation"
+import { findChatbot } from "@/features/chatbot/queries"
 import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
 import { listFlowVersions } from "@/features/flow-versions/queries/list-flow-versions"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { findFlow } from "@/features/flows/queries"
+import { findOrganization } from "@/features/organization/queries"
 import { getTags } from "@/features/tags/queries"
 import { getTagsSearchParamsCache } from "@/features/tags/schemas/get-tags-schema"
 
@@ -23,6 +25,17 @@ export default async function FlowPage(props: {
   const targetFlowVersion = flowResult.data.flowVersions?.find((v) => v.isDraft)
   if (!targetFlowVersion) {
     return null
+  }
+
+  const chatbot = await findChatbot({
+    id: params.chatbotId,
+  })
+
+  const organization = await findOrganization({
+    id: chatbot.organizationId,
+  })
+  if (!organization) {
+    return notFound()
   }
 
   const promises = Promise.all([
@@ -46,6 +59,7 @@ export default async function FlowPage(props: {
     <FlowDetail
       flow={flowResult.data}
       flowVersion={targetFlowVersion}
+      organization={organization}
       promises={promises}
     />
   )

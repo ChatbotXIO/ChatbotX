@@ -18,6 +18,7 @@ export function getAttachmentTemplate(
 export function convertMediaType(stepType: string): FileType {
   switch (stepType) {
     case StepType.sendImage:
+    case StepType.sendGif:
       return "image"
     case StepType.sendAudio:
       return "audio"

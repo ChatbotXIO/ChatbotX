@@ -1,18 +1,17 @@
 import type { Oauth2Config } from "@aha.chat/sdk"
-import { ZALO_API_ENDPOINTS } from "../constants"
+import { ZALO_API_ENDPOINTS, ZALO_OAUTH_BASE_URL } from "../constants"
 import { handleZaloError, ZaloException } from "../libs/exception"
 import { ZaloHttpClient } from "../libs/http-client"
 
 export function generateAuthUrl(props: Oauth2Config) {
   const { clientId, redirectUrl, stateParams } = props
-  const baseUrl = ZALO_API_ENDPOINTS.AUTH.PERMISSION
   const params = new URLSearchParams({
     app_id: clientId,
     redirect_uri: redirectUrl,
     state: btoa(JSON.stringify(stateParams)),
   })
 
-  return `${baseUrl}?${params.toString()}`
+  return `${ZALO_OAUTH_BASE_URL}${ZALO_API_ENDPOINTS.AUTH.PERMISSION}?${params.toString()}`
 }
 
 export type ZaloAccessTokenResponse = {

@@ -49,12 +49,12 @@ export const SpreadsheetGetRowEditor = ({
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
     setOpen(false)
-  }, [setValueParent, parentName, form.getValues])
+  }, [setValueParent, parentName, form.getValues, form])
 
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="googleSheets.getRow"
+        name="flows.actions.spreadsheetGetRow"
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}

@@ -57,27 +57,27 @@ export function CreateAccountFieldDialog({
   const customFieldTypeLabels = [
     {
       value: CustomFieldType.shortText,
-      label: t("customField.types.shortText"),
+      label: t("fields.shortText.label"),
     },
     {
       value: CustomFieldType.number,
-      label: t("customField.types.number"),
+      label: t("fields.number.label"),
     },
     {
       value: CustomFieldType.date,
-      label: t("customField.types.date"),
+      label: t("fields.date.label"),
     },
     {
       value: CustomFieldType.datetime,
-      label: t("customField.types.dateTime"),
+      label: t("fields.datetime.label"),
     },
     {
       value: CustomFieldType.boolean,
-      label: t("customField.types.boolean"),
+      label: t("fields.boolean.label"),
     },
     {
       value: CustomFieldType.longText,
-      label: t("customField.types.longText"),
+      label: t("fields.longText.label"),
     },
   ]
 

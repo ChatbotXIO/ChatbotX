@@ -9,10 +9,10 @@ export const DelayType = {
 } as const
 
 export const DelayUnit = {
-  second: "sec",
-  minute: "min",
-  hour: "hrs",
-  day: "days",
+  second: "s",
+  minute: "m",
+  hour: "h",
+  day: "d",
 } as const
 
 export const waitStepSchema = z

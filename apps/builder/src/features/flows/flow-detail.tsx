@@ -1,5 +1,9 @@
 "use client"
 
+import type {
+  OrganizationModel,
+  OrganizationSettings,
+} from "@aha.chat/database/types"
 import { type Node, ReactFlowProvider } from "@xyflow/react"
 import { use } from "react"
 import type { listCustomFields } from "../custom-fields/queries"
@@ -15,6 +19,7 @@ import type {
 type FlowDetailProps = {
   flow: FlowResource
   flowVersion: FlowVersionResource
+  organization: OrganizationModel
   promises: Promise<
     [
       Awaited<ReturnType<typeof listCustomFields>>,
@@ -24,7 +29,12 @@ type FlowDetailProps = {
   >
 }
 
-export function FlowDetail({ flow, flowVersion, promises }: FlowDetailProps) {
+export function FlowDetail({
+  flow,
+  flowVersion,
+  organization,
+  promises,
+}: FlowDetailProps) {
   const [{ data: customFields }, { data: flowVersions }, { data: tags }] =
     use(promises)
 
@@ -52,6 +62,8 @@ export function FlowDetail({ flow, flowVersion, promises }: FlowDetailProps) {
           customFieldOptions,
           flowOptions,
           tagOptions,
+          organizationSetings:
+            organization.settings as unknown as OrganizationSettings,
         }}
       >
         <ReactFlowFrame flow={flow} flowVersion={flowVersion} />

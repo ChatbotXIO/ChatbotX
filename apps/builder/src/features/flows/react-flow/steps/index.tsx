@@ -18,6 +18,7 @@ import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
+import { waitUserReplyStep } from "./get-user-input"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
@@ -25,7 +26,9 @@ import { optOutEmailStep } from "./opt-out-email"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
 import { sendCardStep } from "./send-card"
+import { sendCarouselStep } from "./send-carousel"
 import sendFileStep from "./send-file"
+import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
@@ -43,17 +46,16 @@ import { unarchiveConversationStep } from "./unarchive-conversation"
 import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
 import { unsubscribeBroadcastStep } from "./unsubscribe-broadcast"
-import { waitUserReplyStep } from "./wait-user-reply"
 
 // biome-ignore lint/suspicious/noExplicitAny: wip
 export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.sendText]: sendTextStep,
   [StepType.sendImage]: sendImageStep,
   [StepType.sendCard]: sendCardStep,
-  [StepType.sendCarousel]: sendCardStep,
-  [StepType.waitUserReply]: waitUserReplyStep,
+  [StepType.sendCarousel]: sendCarouselStep,
+  [StepType.getUserInput]: waitUserReplyStep,
   [StepType.sendVideo]: sendVideoStep,
-  [StepType.sendGif]: undefined,
+  [StepType.sendGif]: sendGifStep,
   [StepType.setDebounce]: undefined,
   [StepType.sendMessengerOtn]: undefined,
   [StepType.sendAudio]: sendAudioStep,
@@ -97,7 +99,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.chooseChannel]: chooseChannelStep,
   [StepType.filterContact]: undefined,
   [StepType.addNotes]: addNotesStep,
-  [StepType.userInput]: undefined,
+  [StepType.waitUserReply]: undefined,
   [StepType.aiGenerateText]: undefined,
   [StepType.aiGenerateTextAgent]: undefined,
   [StepType.aiGenerateImage]: undefined,
@@ -105,11 +107,11 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.aiSpeechToText]: undefined,
   [StepType.aiTextToSpeech]: undefined,
   [StepType.aiDeleteMessageHistory]: undefined,
-  [StepType.getRow]: spreadsheetGetRowStep,
-  [StepType.getRandomRow]: spreadsheetGetRandomRowStep,
-  [StepType.updateRow]: spreadsheetUpdateRowStep,
-  [StepType.clearRow]: spreadsheetClearRowStep,
-  [StepType.sendData]: spreadsheetSendDataStep,
+  [StepType.spreadsheetGetRow]: spreadsheetGetRowStep,
+  [StepType.spreadsheetGetRandomRow]: spreadsheetGetRandomRowStep,
+  [StepType.spreadsheetUpdateRow]: spreadsheetUpdateRowStep,
+  [StepType.spreadsheetClearRow]: spreadsheetClearRowStep,
+  [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
 }
 
 export const DynamicStepEditor = memo(

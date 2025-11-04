@@ -369,6 +369,8 @@ model Field {
   folder   Folder? @relation(fields: [folderId], references: [id])
 
   contactCustomFields ContactCustomField[]
+
+  @@unique([chatbotId, fieldType, name])
 }
 
 model Inbox {

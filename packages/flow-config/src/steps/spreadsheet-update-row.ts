@@ -9,7 +9,7 @@ import {
 import { StepType } from "./step-action"
 
 export const spreadsheetUpdateRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(StepType.updateRow),
+  stepType: z.literal(StepType.spreadsheetUpdateRow),
   lookup: spreadsheetColumnFilterSchema,
   map: z.array(spreadsheetMappingSchema).min(1),
 })
@@ -20,7 +20,7 @@ export type SpreadsheetUpdateRowSchema = z.infer<
 export const spreadsheetUpdateRowDefaultFn =
   (): SpreadsheetUpdateRowSchema => ({
     ...spreadsheetDefaultFn(),
-    stepType: StepType.updateRow,
+    stepType: StepType.spreadsheetUpdateRow,
     lookup: spreadsheetColumnFilterDefaultFn(),
     map: [],
   })

@@ -12,7 +12,7 @@ import {
 } from "../ui/select"
 import { FormFieldWrapper } from "./field-wrapper"
 
-type SelectFieldProps<T extends FieldValues> = SelectProps & {
+export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   name: FieldPath<T>
   label?: string
   placeholder?: string

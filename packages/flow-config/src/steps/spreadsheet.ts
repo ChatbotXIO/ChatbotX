@@ -23,13 +23,13 @@ export const FilterMode = {
 export type FilterMode = (typeof FilterMode)[keyof typeof FilterMode]
 
 export const spreadsheetSchema = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   stepType: z.union([
-    z.literal(StepType.getRandomRow),
-    z.literal(StepType.getRow),
-    z.literal(StepType.clearRow),
-    z.literal(StepType.sendData),
-    z.literal(StepType.updateRow),
+    z.literal(StepType.spreadsheetGetRandomRow),
+    z.literal(StepType.spreadsheetGetRow),
+    z.literal(StepType.spreadsheetClearRow),
+    z.literal(StepType.spreadsheetSendData),
+    z.literal(StepType.spreadsheetUpdateRow),
   ]),
   spreadsheetId: z.string().cuid2(),
   sheetName: z.string().min(1),
@@ -40,7 +40,7 @@ export type SpreadSheetSchema = z.infer<typeof spreadsheetSchema>
 
 export const spreadsheetDefaultFn = (): SpreadSheetSchema => ({
   id: createId(),
-  stepType: StepType.getRow,
+  stepType: StepType.spreadsheetGetRow,
   spreadsheetId: "",
   sheetName: "",
   successNodeId: createId(),
@@ -62,11 +62,11 @@ export const spreadsheetMappingDefaultFn = (
 })
 
 export const spreadsheetColumnFilterSchema = z.object({
-  mode: z.nativeEnum(FilterMode),
+  mode: z.enum(FilterMode),
   conditions: z.array(
     z.object({
       column: z.string(),
-      operator: z.nativeEnum(Operator),
+      operator: z.enum(Operator),
       value: z.string(),
     }),
   ),

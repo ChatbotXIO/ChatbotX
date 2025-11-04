@@ -77,7 +77,7 @@ export function CreateFolderDialog({
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.folder.label"),
             })}
           </DialogTitle>
@@ -89,7 +89,11 @@ export function CreateFolderDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.folder.label")} name="name" />
+              <InputField
+                label={t("fields.folder.label")}
+                name="name"
+                required
+              />
 
               <div className="flex justify-end gap-4">
                 <Button

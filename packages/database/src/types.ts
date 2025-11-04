@@ -95,6 +95,11 @@ export const organizationSettingsSchema = z.object({
       version: z.string(),
     })
     .optional(),
+  giphy: z
+    .object({
+      apiKey: z.string(),
+    })
+    .optional(),
 })
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
 

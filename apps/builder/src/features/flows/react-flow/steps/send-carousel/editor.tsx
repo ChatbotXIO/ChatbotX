@@ -1,20 +1,27 @@
 "use client"
 
+import { CardLayout } from "@aha.chat/database/types"
 import { sendCardStepDefaultFn } from "@aha.chat/flow-config"
+import {
+  SelectedSnapDisplay,
+  useSelectedSnapDisplay,
+} from "@aha.chat/ui/components/carousel-snap"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Carousel,
   type CarouselApi,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@aha.chat/ui/components/ui/carousel"
+import { cn } from "@aha.chat/ui/lib/utils"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
-import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react"
+  PlusIcon,
+  RectangleHorizontalIcon,
+  RectangleVerticalIcon,
+  TrashIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import SendCardStepEditor from "@/features/flows/react-flow/steps/send-card/editor"
@@ -27,134 +34,114 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
   const { parentName } = props
 
   const [api, setApi] = useState<CarouselApi>()
-  const [_current, setCurrent] = useState<number>()
+  const { selectedSnap, snapCount } = useSelectedSnapDisplay(api)
 
-  const { control } = useFormContext()
-  const { fields, append, remove } = useFieldArray({
+  const { control, watch, setValue } = useFormContext()
+  const { fields, append, insert, remove } = useFieldArray({
     control,
-    name: parentName,
+    name: `${parentName}.cards`,
   })
 
-  const addCard = () => {
-    append(sendCardStepDefaultFn())
-    setCurrent(api?.selectedScrollSnap())
+  const layout = watch(`${parentName}.layout`)
+
+  const insertCard = () => {
+    const startIndex = selectedSnap
+
+    if (selectedSnap === snapCount - 1) {
+      append(sendCardStepDefaultFn())
+    } else {
+      insert(selectedSnap + 1, sendCardStepDefaultFn())
+    }
+
+    if (api) {
+      api.reInit()
+      api.scrollTo(startIndex, true)
+    }
   }
 
   const removeCard = () => {
-    remove(api?.selectedScrollSnap())
-  }
+    remove(selectedSnap)
 
-  const onNext = () => {
-    if (!api) {
-      return
+    if (api) {
+      api.reInit()
     }
-
-    api.scrollNext()
-    setCurrent(api.selectedScrollSnap())
-  }
-
-  const onPrev = () => {
-    if (!api) {
-      return
-    }
-
-    api.scrollPrev()
-    setCurrent(api.selectedScrollSnap())
   }
 
   return (
-    <>
-      <Carousel opts={{ dragFree: false }} setApi={setApi}>
+    <div className="relative pr-3">
+      <div className="absolute top-2 left-3 z-1 flex items-center gap-1 rounded-full bg-white px-2 py-1">
+        <Button
+          className={cn(
+            "size-6 p-0!",
+            layout === CardLayout.horizontal ? "text-destructive" : "",
+          )}
+          onClick={() =>
+            setValue(`${parentName}.layout`, CardLayout.horizontal)
+          }
+          size="icon"
+          variant="ghost"
+        >
+          <RectangleHorizontalIcon />
+        </Button>
+        <Button
+          className={cn(
+            "size-6 p-0!",
+            layout === CardLayout.vertical ? "text-destructive" : "",
+          )}
+          onClick={() => setValue(`${parentName}.layout`, CardLayout.vertical)}
+          size="icon"
+          variant="ghost"
+        >
+          <RectangleVerticalIcon />
+        </Button>
+      </div>
+
+      <Carousel opts={{ loop: false }} setApi={setApi}>
         <CarouselContent>
           {fields.map((field, index) => (
-            <CarouselItem className="" key={field.id}>
-              <div className="p-1">
-                <SendCardStepEditor
-                  parentName={`${parentName}.cards.${index}`}
-                />
-              </div>
+            <CarouselItem key={field.id}>
+              <SendCardStepEditor parentName={`${parentName}.cards.${index}`} />
             </CarouselItem>
           ))}
         </CarouselContent>
+
+        <div className="-translate-y-1/2 -right-3 absolute top-1/2 flex flex-col gap-2">
+          <Button
+            className="size-6 cursor-pointer rounded-full"
+            data-slot="carousel-add"
+            onClick={insertCard}
+            type="button"
+          >
+            <PlusIcon />
+            <span className="sr-only">Add slide</span>
+          </Button>
+
+          <Button
+            className="size-6 cursor-pointer rounded-full"
+            data-slot="carousel-remove"
+            disabled={selectedSnap >= snapCount - 1}
+            onClick={removeCard}
+            type="button"
+            variant="destructive"
+          >
+            <TrashIcon />
+            <span className="sr-only">Remove slide</span>
+          </Button>
+        </div>
+
+        <div className="mt-1 flex items-center gap-1">
+          <div className="flex flex-1 gap-1">
+            <CarouselPrevious className="static top-0 translate-y-0" />
+            <CarouselNext className="static top-0 translate-y-0" />
+          </div>
+
+          <SelectedSnapDisplay
+            selectedSnap={selectedSnap}
+            snapCount={snapCount}
+          />
+        </div>
       </Carousel>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className="absolute top-1/2 right-0 mt-[50px] size-8 shrink-0"
-              onClick={addCard}
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              <Plus size={25} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Add</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      {fields.length > 1 && (
-        <>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  className="absolute top-1/2 right-0 mt-[85px] size-8 shrink-0"
-                  onClick={removeCard}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  <Minus size={25} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  className="absolute top-3 right-0 size-8 shrink-0"
-                  onClick={onNext}
-                  type="button"
-                  variant="ghost"
-                >
-                  <ChevronRight size={25} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Next</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  className="-left-3 absolute top-3 size-8 shrink-0"
-                  onClick={onPrev}
-                  type="button"
-                  variant="ghost"
-                >
-                  <ChevronLeft size={25} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Prev</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </>
-      )}
-    </>
+    </div>
   )
 }
 

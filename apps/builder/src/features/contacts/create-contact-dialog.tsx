@@ -44,7 +44,9 @@ export function CreateContactDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", { feature: t("fields.contact.label") })}
+            {t("messages.createFeature", {
+              feature: t("fields.contact.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

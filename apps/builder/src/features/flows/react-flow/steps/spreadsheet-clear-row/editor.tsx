@@ -35,7 +35,7 @@ export const SpreadsheetClearRowEditor = ({
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
     setOpen(false)
-  }, [setValueParent, parentName, form.getValues])
+  }, [setValueParent, parentName, form.getValues, form])
 
   return (
     <Form {...form}>

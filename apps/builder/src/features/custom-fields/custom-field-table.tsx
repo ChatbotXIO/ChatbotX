@@ -17,7 +17,9 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import CustomFieldLabel from "./components/custom-field-label"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 import type { listCustomFields } from "./queries"
@@ -30,6 +32,7 @@ type FieldsTableProps = {
 }
 
 export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
+  const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<FieldModel> | null>(null)
@@ -91,7 +94,9 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Type" />
         ),
-        cell: ({ row }) => <div>{row.original.customFieldType}</div>,
+        cell: ({ row }) => (
+          <CustomFieldLabel customFieldType={row.original.customFieldType} />
+        ),
         enableSorting: true,
         enableHiding: false,
       },
@@ -119,13 +124,13 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}
               >
-                Edit
+                {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
                 variant="destructive"
               >
-                Delete
+                {t("actions.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -135,7 +140,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         enableHiding: false,
       },
     ],
-    [],
+    [t],
   )
 
   const { table } = useDataTable({

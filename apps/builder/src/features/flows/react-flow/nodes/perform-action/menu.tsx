@@ -29,6 +29,34 @@ import {
 } from "lucide-react"
 import type { MenuItem, TranslationFn } from "../types"
 
+const sheetsMenus = (t: TranslationFn): MenuItem[] => [
+  {
+    label: t("flows.actions.spreadsheetGetRow"),
+    icon: SheetIcon,
+    stepType: StepType.spreadsheetGetRow,
+  },
+  {
+    label: t("flows.actions.spreadsheetGetRandomRow"),
+    icon: SheetIcon,
+    stepType: StepType.spreadsheetGetRandomRow,
+  },
+  {
+    label: t("flows.actions.spreadsheetUpdateRow"),
+    icon: SheetIcon,
+    stepType: StepType.spreadsheetUpdateRow,
+  },
+  {
+    label: t("flows.actions.spreadsheetClearRow"),
+    icon: SheetIcon,
+    stepType: StepType.spreadsheetClearRow,
+  },
+  {
+    label: t("flows.actions.spreadsheetSendData"),
+    icon: SheetIcon,
+    stepType: StepType.spreadsheetSendData,
+  },
+]
+
 export const performActionMenus = (t: TranslationFn): MenuItem[] => [
   {
     label: t("flows.actions.inboxActions"),
@@ -167,33 +195,7 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     label: t("fields.googleSheets.label"),
     icon: SheetIcon,
     stepType: null,
-    children: [
-      {
-        label: t("googleSheets.getRow"),
-        icon: SheetIcon,
-        stepType: StepType.getRow,
-      },
-      {
-        label: t("googleSheets.randomRow"),
-        icon: SheetIcon,
-        stepType: StepType.getRandomRow,
-      },
-      {
-        label: t("googleSheets.updateRow"),
-        icon: SheetIcon,
-        stepType: StepType.updateRow,
-      },
-      {
-        label: t("googleSheets.clearRow"),
-        icon: SheetIcon,
-        stepType: StepType.clearRow,
-      },
-      {
-        label: t("googleSheets.sendData"),
-        icon: SheetIcon,
-        stepType: StepType.sendData,
-      },
-    ],
+    children: sheetsMenus(t),
   },
   {
     label: t("flows.actions.flowActions"),

@@ -83,27 +83,27 @@ export function CreateCustomFieldDialog({
   const customFieldTypeOptions = [
     {
       value: CustomFieldType.shortText,
-      label: t("customField.types.shortText"),
+      label: t("fields.shortText.label"),
     },
     {
       value: CustomFieldType.number,
-      label: t("customField.types.number"),
+      label: t("fields.number.label"),
     },
     {
       value: CustomFieldType.date,
-      label: t("customField.types.date"),
+      label: t("fields.date.label"),
     },
     {
       value: CustomFieldType.datetime,
-      label: t("customField.types.dateTime"),
+      label: t("fields.datetime.label"),
     },
     {
       value: CustomFieldType.boolean,
-      label: t("customField.types.boolean"),
+      label: t("fields.boolean.label"),
     },
     {
       value: CustomFieldType.longText,
-      label: t("customField.types.longText"),
+      label: t("fields.longText.label"),
     },
   ]
 
@@ -124,7 +124,7 @@ export function CreateCustomFieldDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.customField.label"),
             })}
           </DialogTitle>
@@ -136,12 +136,14 @@ export function CreateCustomFieldDialog({
               label={t("fields.name.label")}
               name="name"
               placeholder={t("fields.name.placeholder")}
+              required
             />
 
             <SelectField
               label={t("fields.type.label")}
               name="customFieldType"
               options={customFieldTypeOptions}
+              required
             />
 
             <TextareaField

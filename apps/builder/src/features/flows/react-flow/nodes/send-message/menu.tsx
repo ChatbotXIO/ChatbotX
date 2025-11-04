@@ -16,59 +16,59 @@ import type { MenuItem, TranslationFn } from "../types"
 
 export const sendMessageEditorMenus = (t: TranslationFn): MenuItem[] => [
   {
-    label: t("actions.sendText"),
+    label: t("flows.actions.sendText"),
     icon: TextIcon,
     stepType: StepType.sendText,
   },
   {
-    label: t("actions.sendImage"),
+    label: t("flows.actions.sendImage"),
     icon: ImageIcon,
     stepType: StepType.sendImage,
   },
   {
-    label: t("actions.sendCard"),
+    label: t("flows.actions.sendCard"),
     icon: CreditCardIcon,
     stepType: StepType.sendCard,
   },
   {
-    label: t("actions.sendCarousel"),
+    label: t("flows.actions.sendCarousel"),
     icon: PictureInPicture2Icon,
     stepType: StepType.sendCarousel,
   },
   {
-    label: t("actions.sendVideo"),
+    label: t("flows.actions.sendVideo"),
     icon: VideoIcon,
     stepType: StepType.sendVideo,
   },
   {
-    label: t("actions.waitUserAnswer"),
+    label: t("flows.actions.getUserInput"),
     icon: KeyboardIcon,
-    stepType: StepType.waitUserReply,
+    stepType: StepType.getUserInput,
   },
   {
-    label: t("actions.sendGif"),
+    label: t("flows.actions.sendGif"),
     icon: ImagePlayIcon,
     stepType: StepType.sendGif,
   },
   {
-    label: t("actions.sendFile"),
+    label: t("flows.actions.sendFile"),
     icon: PaperclipIcon,
     stepType: null,
     children: [
       {
-        label: t("actions.sendAudio"),
+        label: t("flows.actions.sendAudio"),
         icon: Volume2Icon,
         stepType: StepType.sendAudio,
       },
       {
-        label: t("actions.sendFile"),
+        label: t("flows.actions.sendFile"),
         icon: PaperclipIcon,
         stepType: StepType.sendFile,
       },
     ],
   },
   {
-    label: t("actions.actions"),
+    label: t("flows.actions.actions"),
     icon: ZapIcon,
     stepType: null,
     children: performActionMenus(t),

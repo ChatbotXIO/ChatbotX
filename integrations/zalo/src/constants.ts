@@ -10,7 +10,7 @@ export const ZALO_API_BASE_URL = "https://openapi.zalo.me"
 export const ZALO_API_ENDPOINTS = {
   AUTH: {
     PERMISSION: "/v4/oa/permission",
-    ACCESS_TOKEN: "/v4/oa/access_token",
+    ACCESS_TOKEN: "v4/oa/access_token",
   },
   OA: {
     GET_PROFILE: "v2.0/oa/getoa",
@@ -18,5 +18,6 @@ export const ZALO_API_ENDPOINTS = {
     SEND_MESSAGE: "v3.0/oa/message/cs",
     UPLOAD_IMAGE: "v2.0/oa/upload/image",
     UPLOAD_FILE: "v2.0/oa/upload/file",
+    UPLOAD_GIF: "v2.0/oa/upload/gif",
   },
 } as const

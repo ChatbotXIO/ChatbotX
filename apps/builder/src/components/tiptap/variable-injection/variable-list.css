@@ -1,8 +1,0 @@
-.react-renderer {
-  z-index: 100;
-  pointer-events: auto;
-}
-
-.ProseMirror {
-  outline: none;
-}

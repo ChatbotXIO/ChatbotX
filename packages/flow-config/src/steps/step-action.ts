@@ -19,7 +19,7 @@ export const StepType = {
   waitUserReply: "W01",
   setDebounce: "W02",
   wait: "W03",
-  userInput: "W04",
+  getUserInput: "W04",
 
   // Contact Operations (C_)
   addContactTag: "C01",
@@ -81,11 +81,11 @@ export const StepType = {
   unsubscribeBroadcast: "B02",
 
   // Google Sheets Operations (G_)
-  sendData: "G01",
-  getRow: "G02",
-  getRandomRow: "G03",
-  updateRow: "G04",
-  clearRow: "G05",
+  spreadsheetSendData: "G01",
+  spreadsheetGetRow: "G02",
+  spreadsheetGetRandomRow: "G03",
+  spreadsheetUpdateRow: "G04",
+  spreadsheetClearRow: "G05",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

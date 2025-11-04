@@ -48,12 +48,12 @@ export const SpreadsheetSendDataEditor = ({
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
     setOpen(false)
-  }, [setValueParent, parentName, form.getValues])
+  }, [setValueParent, parentName, form.getValues, form])
 
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="googleSheets.sendData"
+        name="flows.actions.sheetsSendData"
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}
