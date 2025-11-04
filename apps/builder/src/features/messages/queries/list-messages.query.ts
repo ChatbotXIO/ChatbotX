@@ -2,7 +2,10 @@
 
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { MessageModel } from "@aha.chat/database/types"
-import { getCurrentUserId } from "@/lib/auth"
+
+lib/auth/
+
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { MessageCollection, MessageResource } from "../schemas"
 import type {

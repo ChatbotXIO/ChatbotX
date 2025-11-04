@@ -9,7 +9,7 @@ import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
-import { getCurrentUserId } from "@/lib/auth"
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export default async function ChatbotLayout({

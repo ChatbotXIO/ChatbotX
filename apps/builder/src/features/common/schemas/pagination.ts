@@ -8,6 +8,11 @@ export const cursorPagination = z.object({
 
 export type CursorPagination = z.infer<typeof cursorPagination>
 
+export type PaginationResponse<T> = {
+  data: T[]
+  pageCount: number
+}
+
 export type BaseCursorCollection<T> = {
   data: T[]
   nextCursor: string | null

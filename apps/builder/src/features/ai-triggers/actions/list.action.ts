@@ -4,14 +4,12 @@ import type {
   AITriggerCollection,
   ListAITriggersRequest,
 } from "@/features/ai-triggers/schemas/get.schema"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export const listAITriggers = async (
   input: ListAITriggersRequest,
 ): Promise<AITriggerCollection> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId as string)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

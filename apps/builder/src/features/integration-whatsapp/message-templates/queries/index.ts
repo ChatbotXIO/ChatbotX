@@ -5,7 +5,10 @@ import {
   listMessageTemplates,
 } from "@aha.chat/integration-whatsapp/api/waba"
 import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schemas/get-message-templates-schema"
-import { getCurrentUserId } from "@/lib/auth"
+
+lib/auth/
+
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export const getMessageTemplates = async (

@@ -1,6 +1,6 @@
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import ChatbotList from "@/features/chatbots/components/chatbot-list"
-import { getCurrentUserId } from "@/lib/auth"
+import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function MainPage() {
   const userId = await getCurrentUserId()

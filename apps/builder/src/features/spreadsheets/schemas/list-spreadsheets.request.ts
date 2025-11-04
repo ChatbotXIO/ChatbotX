@@ -1,10 +1,10 @@
-import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
+import { z } from "zod"
 
-export const listSpreadsheetsRequest = createSearchParamsCache({
-  page: parseAsInteger.withDefault(1),
-  perPage: parseAsInteger.withDefault(10),
+export const listSpreadsheetsRequest = z.object({
+  chatbotId: z.cuid2(),
+  page: z.number().optional(),
+  perPage: z.number().optional(),
+  name: z.string().optional(),
 })
 
-export type ListSpreadsheetsRequest = Awaited<
-  ReturnType<typeof listSpreadsheetsRequest.parse>
-> & { chatbotId: string }
+export type ListSpreadsheetsRequest = z.infer<typeof listSpreadsheetsRequest>

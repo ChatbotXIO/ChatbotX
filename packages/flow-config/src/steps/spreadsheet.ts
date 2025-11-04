@@ -36,9 +36,9 @@ export const spreadsheetSchema = z.object({
   successNodeId: z.string().optional(),
   errorNodeId: z.string().optional(),
 })
-export type SpreadSheetSchema = z.infer<typeof spreadsheetSchema>
+export type SpreadsheetSchema = z.infer<typeof spreadsheetSchema>
 
-export const spreadsheetDefaultFn = (): SpreadSheetSchema => ({
+export const spreadsheetDefaultFn = (): SpreadsheetSchema => ({
   id: createId(),
   stepType: StepType.spreadsheetGetRow,
   spreadsheetId: "",

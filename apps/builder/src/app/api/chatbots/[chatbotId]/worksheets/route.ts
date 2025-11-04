@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getWorkSheets } from "@/features/spreadsheets/queries"
-import { getWorksheetSearchParams } from "@/features/spreadsheets/schemas"
-import { getCurrentUserId } from "@/lib/auth"
+import { listWorksheets } from "@/features/spreadsheets/queries/worksheet.queries"
+import { listWorksheetsRequest } from "@/features/spreadsheets/schemas/list-worksheets.request"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
   req: NextRequest,
@@ -11,17 +10,15 @@ export async function GET(
 ) {
   try {
     const { chatbotId } = await params
-
-    const userId = await getCurrentUserId()
-    await findChatbotOrFail(userId, chatbotId)
+    await assertCurrentUserCanAccessChatbot(chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-    const search = getWorksheetSearchParams.parse(searchParams)
-
-    const worksheets = await getWorkSheets({
-      ...search,
-      chatbotId: (await params).chatbotId,
+    const search = listWorksheetsRequest.parse({
+      ...searchParams,
+      chatbotId,
     })
+
+    const worksheets = await listWorksheets(search)
 
     return NextResponse.json(worksheets)
   } catch (e) {

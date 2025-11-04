@@ -7,7 +7,10 @@ import type {
   FindConversationSchema,
   ListConversationsRequest,
 } from "@/features/conversations/schemas/list-conversations.request"
-import { getCurrentUserId } from "@/lib/auth"
+
+lib/auth/
+
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { ConversationCollection, ConversationResource } from "../schemas"
 

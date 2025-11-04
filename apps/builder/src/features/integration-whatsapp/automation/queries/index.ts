@@ -4,7 +4,10 @@ import {
   type ConversationalAutomation,
   findConversationalAutomation,
 } from "@aha.chat/integration-whatsapp/api/phone-number"
-import { getCurrentUserId } from "@/lib/auth"
+
+lib/auth/
+
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { ListWhatsappPhoneNumberAutomation } from "../schemas/get-ice-breakers-schema"
 

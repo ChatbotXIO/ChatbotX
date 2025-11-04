@@ -5,7 +5,7 @@ import {
   listFlows,
 } from "@aha.chat/integration-whatsapp/api/waba"
 import type { ListWhatsappFlowsRequest } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
-import { getCurrentUserId } from "@/lib/auth"
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function listWhatsappFlows(

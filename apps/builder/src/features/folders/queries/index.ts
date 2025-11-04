@@ -1,7 +1,10 @@
 import { prisma } from "@aha.chat/database"
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
+
+lib/auth/
+
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type {
   GetCurrentFolderSchema,

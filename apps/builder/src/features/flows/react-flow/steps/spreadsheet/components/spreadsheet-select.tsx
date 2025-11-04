@@ -1,42 +1,31 @@
 "use client"
 
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import {
+  SelectField,
+  type SelectFieldProps,
+} from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
-import type { ReactNode } from "react"
-import type { SpreadsheetCollection } from "@/features/spreadsheets/schemas"
-import { callAPI } from "@/lib/swr"
+import { useTranslations } from "next-intl"
+import type { FieldValues } from "react-hook-form"
 
-type SpreadsheetSelectProps = {
-  name: string
-  label?: ReactNode | string
-  required?: boolean
+type SpreadsheetSelectProps = SelectFieldProps<FieldValues> & {
   allowCreate?: boolean
-  onChange?: () => void
 }
 
 export const SpreadsheetSelect = ({
-  name,
-  // label = "Select Spreadsheet",
-  required = true,
-  // allowCreate = true,
+  allowCreate = false,
+  ...props
 }: SpreadsheetSelectProps) => {
   const params = useParams<{ chatbotId: string }>()
+  const t = useTranslations()
 
   const url = `/api/chatbots/${params.chatbotId}/spreadsheets?perPage=9999`
-  const { data } = callAPI<SpreadsheetCollection>(url)
-
-  const spreadsheetOptions = (data?.data ?? []).map((v) => ({
-    label: v.name,
-    value: v.id,
-  }))
 
   return (
     <SelectField
-      label="Spreadsheet"
-      name={name}
-      options={spreadsheetOptions}
-      placeholder="Please select"
-      required={required}
+      {...props}
+      fetchOptionsUrl={url}
+      label={t("fields.spreadsheets.label")}
     />
 
     // <FormItem className="w-full">

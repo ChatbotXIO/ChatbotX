@@ -1,12 +1,12 @@
 "use client"
 
-import type { SpreadSheetSchema } from "@aha.chat/flow-config"
+import type { SpreadsheetSchema } from "@aha.chat/flow-config"
 import { Handle, Position } from "@xyflow/react"
 import { FileSpreadsheetIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 type SpreadsheetViewerProps = {
-  data: SpreadSheetSchema
+  data: SpreadsheetSchema
 }
 
 export const SpreadsheetViewer = ({ data }: SpreadsheetViewerProps) => {

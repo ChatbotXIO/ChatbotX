@@ -10,7 +10,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import GoogleButton from "react-google-button"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { EmailPasswordSignIn } from "./components/email-password-signin"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
 

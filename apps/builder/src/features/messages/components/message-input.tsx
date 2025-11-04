@@ -27,7 +27,7 @@ import {
 import { useTranslations } from "next-intl"
 import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
 import { Controller } from "react-hook-form"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
 import { createMessageRequest } from "../schemas/create-message.schema"

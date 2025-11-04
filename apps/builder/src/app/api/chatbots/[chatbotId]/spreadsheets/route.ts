@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSpreadSheets } from "@/features/spreadsheets/queries"
-import { getWorksheetHeaderSearchParams } from "@/features/spreadsheets/schemas"
-import { getCurrentUserId } from "@/lib/auth"
+import { listSpreadsheets } from "@/features/spreadsheets/queries/spreadsheet.queries"
+import { listSpreadsheetsRequest } from "@/features/spreadsheets/schemas/list-spreadsheets.request"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
   req: NextRequest,
@@ -12,18 +11,15 @@ export async function GET(
   try {
     const { chatbotId } = await params
 
-    const userId = await getCurrentUserId()
-    await findChatbotOrFail(userId, chatbotId)
+    await assertCurrentUserCanAccessChatbot(chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-    const search = getWorksheetHeaderSearchParams.parse(searchParams)
-
-    const allSpreadsheets = await getSpreadSheets({
-      ...search,
-      page: null,
-      perPage: null,
-      chatbotId: (await params).chatbotId,
+    const search = listSpreadsheetsRequest.parse({
+      ...searchParams,
+      chatbotId,
     })
+
+    const allSpreadsheets = await listSpreadsheets(search)
 
     return NextResponse.json(allSpreadsheets)
   } catch (e) {

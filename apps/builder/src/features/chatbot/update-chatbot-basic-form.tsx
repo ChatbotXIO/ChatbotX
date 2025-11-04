@@ -12,7 +12,7 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { SettingRow } from "@/components/setting-row"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { updateChatbotBasicAction } from "./actions/update-chatbox-action"
 import { updateChatbotBasicRequest } from "./schemas/update-chatbot-schema"
 

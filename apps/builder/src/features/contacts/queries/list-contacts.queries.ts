@@ -1,7 +1,10 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
+
+lib/auth/
+
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { ContactCollection } from "../schemas"
 import type { ListContactsRequest } from "../schemas/get-contacts-schema"

@@ -1,6 +1,9 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
+
+lib/auth/
+
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import type { LogCollection } from "../schemas"
 import type { GetLogsSchema } from "../schemas/get-logs-schema"

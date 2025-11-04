@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getWorkSheetHeaders } from "@/features/spreadsheets/queries"
-import { getWorksheetHeaderSearchParams } from "@/features/spreadsheets/schemas"
-import { getCurrentUserId } from "@/lib/auth"
+import { listWorksheetHeaders } from "@/features/spreadsheets/queries/worksheet.queries"
+import { listWorksheetHeadersRequest } from "@/features/spreadsheets/schemas/list-worksheets.request"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
   req: NextRequest,
@@ -11,19 +10,17 @@ export async function GET(
 ) {
   try {
     const { chatbotId } = await params
-
-    const userId = await getCurrentUserId()
-    await findChatbotOrFail(userId, chatbotId)
+    await assertCurrentUserCanAccessChatbot(chatbotId)
 
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
-    const search = getWorksheetHeaderSearchParams.parse(searchParams)
-
-    const worksheets = await getWorkSheetHeaders({
-      ...search,
-      chatbotId: (await params).chatbotId,
+    const search = listWorksheetHeadersRequest.parse({
+      ...searchParams,
+      chatbotId,
     })
 
-    return NextResponse.json(worksheets)
+    const headers = await listWorksheetHeaders(search)
+
+    return NextResponse.json(headers)
   } catch (e) {
     return serverErrorHandler(e)
   }
