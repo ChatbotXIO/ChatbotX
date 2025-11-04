@@ -5,14 +5,12 @@ import {
   listFlows,
 } from "@aha.chat/integration-whatsapp/api/waba"
 import type { ListWhatsappFlowsRequest } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export async function listWhatsappFlows(
   input: ListWhatsappFlowsRequest,
 ): Promise<ListFlowsResponse> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const integrationWhatsapp =
     await prisma.integrationWhatsapp.findUniqueOrThrow({

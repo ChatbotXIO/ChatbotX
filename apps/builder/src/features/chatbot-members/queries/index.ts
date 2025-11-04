@@ -2,17 +2,14 @@ import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ChatbotMemberCollection, ChatbotMemberResource } from "../schemas"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"
 
 export async function getAgents(
   input: GetChatbotMembersSchema,
 ): Promise<ChatbotMemberCollection> {
-  const userId = await getCurrentUserId()
-
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

@@ -1,14 +1,11 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { LogCollection } from "../schemas"
 import type { GetLogsSchema } from "../schemas/get-logs-schema"
 
 export async function getLogs(input: GetLogsSchema): Promise<LogCollection> {
-  const userId = await getCurrentUserId()
-
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

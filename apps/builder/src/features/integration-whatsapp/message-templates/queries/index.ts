@@ -5,14 +5,12 @@ import {
   listMessageTemplates,
 } from "@aha.chat/integration-whatsapp/api/waba"
 import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schemas/get-message-templates-schema"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export const getMessageTemplates = async (
   input: ListMessageTemplatesRequest,
 ): Promise<ListMessageTemplatesReponse> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const integrationWhatsapp =
     await prisma.integrationWhatsapp.findUniqueOrThrow({

@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getInboxTeams } from "@/features/inbox-teams/queries"
-import { getCurrentUserId } from "@/lib/auth"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 
 export async function GET(
   _request: NextRequest,
@@ -10,9 +9,7 @@ export async function GET(
 ) {
   try {
     const { chatbotId } = await params
-
-    const userId = await getCurrentUserId()
-    await findChatbotOrFail(userId, chatbotId)
+    await assertCurrentUserCanAccessChatbot(chatbotId)
 
     const data = await getInboxTeams({
       chatbotId,

@@ -1,15 +1,13 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { InboxCollection } from "../schemas"
 import type { ListInboxesRequest } from "../schemas/list-inboxes.schema"
 
 export async function listInboxes(
   input: ListInboxesRequest,
 ): Promise<InboxCollection> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

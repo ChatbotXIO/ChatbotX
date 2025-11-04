@@ -1,15 +1,13 @@
 import { FieldType, type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListAccountFieldsSearchParams } from "../schemas/list-account-fields.schema"
 import type { AccountFieldCollection } from "../schemas/types"
 
 export async function listAccountFields(
   input: ListAccountFieldsSearchParams,
 ): Promise<AccountFieldCollection> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {
