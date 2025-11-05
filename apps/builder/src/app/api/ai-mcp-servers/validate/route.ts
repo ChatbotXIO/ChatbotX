@@ -1,6 +1,9 @@
 import { AIMcpServerAuthType } from "@aha.chat/database/types"
+import {
+  experimental_createMCPClient,
+  type experimental_MCPClient,
+} from "@ai-sdk/mcp"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
-import { experimental_createMCPClient, type experimental_MCPClient } from "ai"
 import { type NextRequest, NextResponse } from "next/server"
 import { validateAIMcpServerRequest } from "@/features/ai-mcp-servers/schemas"
 import { serverErrorHandler } from "@/lib/errors/server-handler"

@@ -12,6 +12,8 @@ type CreateChannelPageProps = {
   }>
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function CreateChannelPage({
   searchParams,
 }: CreateChannelPageProps) {
