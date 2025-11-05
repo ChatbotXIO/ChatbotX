@@ -1,18 +1,13 @@
 import { FieldType, type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-
-lib/auth/
-
-import { getCurrentUserId } from "@/lib/auth/utils"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { CustomFieldCollection } from "../schemas"
 import type { ListCustomFieldsSearchParams } from "../schemas/list-custom-fields.schema"
 
 export async function listCustomFields(
   input: ListCustomFieldsSearchParams,
 ): Promise<CustomFieldCollection> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

@@ -65,12 +65,13 @@ export function DeleteSpreadsheetsDialog({
       ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("googleSheets.delete.dialog_title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.deleteFeature", { feature: t("googleSheets.label") })}
+          </DialogTitle>
           <DialogDescription>
-            {t("googleSheets.confirmDeleteDesc")}{" "}
-            <span className="font-medium">{spreadsheets.length}</span>
-            {spreadsheets.length === 1 ? " spreadsheet " : " spreadsheets "}
-            {t("googleSheets.confirmDeleteDesc")}
+            {t("messages.deleteConfirmation", {
+              feature: t("googleSheets.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">

@@ -14,7 +14,7 @@ import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
-import type { SpreadsheetResource } from "./schemas/index"
+import type { SpreadsheetResource } from "./schemas/resource"
 
 type GetColumnsProps = {
   t: ReturnType<typeof useTranslations>

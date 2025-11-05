@@ -7,19 +7,14 @@ import type {
   FindConversationSchema,
   ListConversationsRequest,
 } from "@/features/conversations/schemas/list-conversations.request"
-
-lib/auth/
-
-import { getCurrentUserId } from "@/lib/auth/utils"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ConversationCollection, ConversationResource } from "../schemas"
 
 export const listConversations = async (
   chatbotId: string,
   input: ListConversationsRequest,
 ): Promise<ConversationCollection> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, chatbotId)
+  await assertCurrentUserCanAccessChatbot(chatbotId)
 
   // return await unstable_cache(
   //   async () => {
@@ -109,8 +104,7 @@ export const findConversation = async (
 ): Promise<{
   data: ConversationResource
 }> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

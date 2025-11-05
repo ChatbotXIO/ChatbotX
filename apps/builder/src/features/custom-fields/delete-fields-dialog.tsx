@@ -73,7 +73,7 @@ export function DeleteFieldsDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.deleteTitle", {
+            {t("messages.deleteTitle", {
               feature: t("fields.customField.label"),
             })}
           </DialogTitle>

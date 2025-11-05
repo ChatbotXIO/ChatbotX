@@ -385,7 +385,7 @@ export function ButtonEditorDialog() {
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.button.label") })}
+            {t("messages.editFeature", { feature: t("fields.button.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

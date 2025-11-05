@@ -5,10 +5,10 @@ import type { ChatbotResource } from "@/features/chatbots/schemas"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { getPaginationFromInput } from "@/lib/pagination"
 import type { ChatbotMemberCollection, ChatbotMemberResource } from "../schemas"
-import type { ListChatbotMembersRequest } from "../schemas/get-chatbot-members-schema"
+import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"
 
 export async function getAgents(
-  input: ListChatbotMembersRequest,
+  input: GetChatbotMembersSchema,
 ): Promise<ChatbotMemberCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 

@@ -7,6 +7,7 @@ import {
   type OrganizationWhereInput,
   organizationSettingsSchema,
 } from "@aha.chat/database/types"
+import { BaseException } from "@/lib/errors/exception"
 
 export async function findOrganization(
   where: OrganizationWhereInput,
@@ -47,7 +48,7 @@ export async function findOrganizationSettingsByKey<
 
   const value = settings?.[settingsKey]
   if (!value) {
-    throw new Error(`Organization settings ${settingsKey} is not valid`)
+    throw new BaseException(`Organization settings ${settingsKey} is not valid`)
   }
 
   return value as NonNullable<OrganizationSettings[K]>

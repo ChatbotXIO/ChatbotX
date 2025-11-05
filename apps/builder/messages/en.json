@@ -253,9 +253,6 @@
     }
   },
   "dialog": {
-    "addTag": {
-      "title": "Add Tag"
-    },
     "archiveConversation": {
       "description": "Are you sure to archive those conversations?",
       "title": "Archive Conversation"
@@ -265,12 +262,6 @@
       "title": "Connect {feature}"
     },
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
-    "deleteContact": {
-      "description": "Are you sure to delete those contacts?",
-      "title": "Delete Contact",
-      "warning": "This action can not be reverted."
-    },
-    "deleteTitle": "Delete {feature}",
     "disableBot": {
       "description": "Are you sure to disable bot?",
       "title": "Disable Bot"
@@ -282,8 +273,7 @@
     "enable": {
       "description": "Are you sure to enable {feature}?",
       "title": "Enable {feature}"
-    },
-    "updateTitle": "Update {feature}"
+    }
   },
   "fields": {
     "accessToken": {
@@ -935,25 +925,7 @@
       "prepend": "Prepend to the start",
       "set": "Set to"
     },
-    "stepType": {
-      "countCharacters": "Count Characters",
-      "formatDate": "Format Date",
-      "generateCode": "Generate Code",
-      "getDataFromJson": "Get Data From JSON",
-      "openAIDeleteMessageHistory": "OpenAI Delete Message History",
-      "openAIGenerateImage": "OpenAI Generate Image",
-      "openAIGenerateTextAgent": "OpenAI Generate Text Agent",
-      "optInEmail": "Opt In Email",
-      "sendFlow": "Send Flow",
-      "startFlow": "Start Flow",
-      "spreadsheetClearRow": "Clear Row",
-      "spreadsheetGetRow": "Get Row",
-      "spreadsheetUpdateRow": "Update Row",
-      "spreadsheetSendData": "Send Data",
-      "spreadsheetGetRandomRow": "Get Random Row"
-    },
     "wait": {
-      "datetimeCustomField": "Datetime Custom Field",
       "datetimeTooltip": "The date and time when the flow will be triggered.",
       "setInterval": "Set Interval"
     }
@@ -1074,7 +1046,11 @@
     "viewFileComingSoon": "View file functionality coming soon",
     "createSuccess": "{feature} created successfully",
     "createFeature": "Create {feature}",
-    "noItemsFound": "No items found"
+    "noItemsFound": "No items found",
+    "editFeature": "Edit {feature}",
+    "deleteFeature": "Delete {feature}",
+    "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
+    "addFeature": "Add {feature}"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

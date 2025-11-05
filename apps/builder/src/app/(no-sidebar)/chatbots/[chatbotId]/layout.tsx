@@ -8,7 +8,7 @@ export default async function ChatbotNoSidebarLayout({
   params: Promise<{ chatbotId: string }>
   children: React.ReactNode
 }) {
-  const chatbotId = (await params).chatbotId
+  const { chatbotId } = await params
 
   try {
     await assertCurrentUserCanAccessChatbot(chatbotId)

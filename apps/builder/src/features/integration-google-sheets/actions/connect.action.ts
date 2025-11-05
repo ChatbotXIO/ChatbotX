@@ -37,7 +37,7 @@ export const connectGoogleSheets = chatbotActionClient
         config: {
           ...googleSheetsSetting,
           redirectUrl: new URL(
-            "/integrations/GoogleSheets/callback",
+            "/integrations/google-sheets/callback",
             parsedInput.referer,
           ).toString(),
           stateParams: {

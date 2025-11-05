@@ -2,11 +2,7 @@
 
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { MessageModel } from "@aha.chat/database/types"
-
-lib/auth/
-
-import { getCurrentUserId } from "@/lib/auth/utils"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { MessageCollection, MessageResource } from "../schemas"
 import type {
   FindMessageSchema,
@@ -17,8 +13,7 @@ export const listMessages = async (
   chatbotId: string,
   input: ListMessagesRequest,
 ): Promise<MessageCollection> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, chatbotId)
+  await assertCurrentUserCanAccessChatbot(chatbotId)
 
   // return await unstable_cache(
   //   async () => {
@@ -70,8 +65,7 @@ export const listMessages = async (
 export const findMessage = async (
   input: FindMessageSchema,
 ): Promise<MessageResource> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const message = await prisma.message.findFirstOrThrow({
     include: {

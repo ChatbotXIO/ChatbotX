@@ -116,7 +116,7 @@ export function UpdateAIAgentDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.aiAgent.label") })}
+            {t("messages.editFeature", { feature: t("fields.aiAgent.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

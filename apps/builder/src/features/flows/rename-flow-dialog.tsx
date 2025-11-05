@@ -79,7 +79,7 @@ export function RenameFlowDialog({
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.flow.label") })}
+            {t("messages.editFeature", { feature: t("fields.flow.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

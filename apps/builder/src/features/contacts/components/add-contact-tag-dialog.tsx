@@ -72,7 +72,9 @@ export default function AddContactTagDialog({
 
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>{t("dialog.addTag.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.addFeature", { feature: t("fields.tag.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 

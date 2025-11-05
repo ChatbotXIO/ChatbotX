@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import { DeleteSpreadsheetsDialog } from "./delete-spreadsheet-dialog"
 import { UpdateSpreadsheetDialog } from "./edit-spreadsheet-dialog"
-import type { listSpreadsheets } from "./queries/spreadsheet.queries"
+import type { listSpreadsheets } from "./queries/list-spreadsheet.queries"
 import type { SpreadsheetResource } from "./schemas/resource"
 import { getSpreadsheetColumns } from "./spreadsheets-table-columns"
 

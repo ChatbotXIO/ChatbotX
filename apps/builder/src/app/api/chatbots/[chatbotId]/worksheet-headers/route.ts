@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { listWorksheetHeaders } from "@/features/spreadsheets/queries/worksheet.queries"
+import { listWorksheetHeaders } from "@/features/spreadsheets/queries/list-worksheet.qureies"
 import { listWorksheetHeadersRequest } from "@/features/spreadsheets/schemas/list-worksheets.request"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"

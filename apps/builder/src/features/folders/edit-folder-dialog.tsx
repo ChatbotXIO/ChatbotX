@@ -73,7 +73,7 @@ export function EditFolderDialog({
       <DialogContent className={"max-h-screen max-w-5xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.folder.label") })}
+            {t("messages.editFeature", { feature: t("fields.folder.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

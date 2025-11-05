@@ -71,7 +71,7 @@ export function DeleteAccountFieldsDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.deleteTitle", {
+            {t("messages.deleteTitle", {
               feature: t("fields.accountField.label"),
             })}
           </DialogTitle>

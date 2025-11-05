@@ -73,7 +73,7 @@ export function DeleteAIAgentsDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.deleteTitle", { feature: t("fields.aiAgent.label") })}
+            {t("messages.deleteTitle", { feature: t("fields.aiAgent.label") })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("dialog.deleteConfirmation", {

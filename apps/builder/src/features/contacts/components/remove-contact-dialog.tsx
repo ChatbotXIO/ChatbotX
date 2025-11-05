@@ -57,10 +57,15 @@ export default function DeleteContactDialog({
 
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>{t("dialog.deleteContact.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.deleteFeature", {
+              feature: t("fields.contact.label"),
+            })}
+          </DialogTitle>
           <DialogDescription>
-            <div>{t("dialog.deleteContact.description")}</div>
-            <div>{t("dialog.deleteContact.warning")}</div>
+            {t("messages.deleteConfirmation", {
+              feature: t("fields.contact.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -82,7 +82,7 @@ export function UpdateCustomFieldDialog({
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", {
+            {t("messages.editFeature", {
               feature: t("fields.customField.label"),
             })}
           </DialogTitle>
