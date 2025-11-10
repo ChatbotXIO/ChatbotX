@@ -10,7 +10,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import GoogleButton from "react-google-button"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { EmailPasswordSignIn } from "./components/email-password-signin"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
 
@@ -96,7 +96,7 @@ export const OrSeparator = () => {
   return (
     <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">
       <span className="relative z-10 bg-background px-4 font-medium text-muted-foreground text-uppercase text-xs">
-        {t("messages.or")}
+        {t("texts.or")}
       </span>
     </div>
   )

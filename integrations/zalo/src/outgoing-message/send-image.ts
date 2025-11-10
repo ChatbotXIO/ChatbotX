@@ -1,4 +1,8 @@
-import type { SendImageStepSchema } from "@aha.chat/flow-config"
+import {
+  type SendGifStepSchema,
+  type SendImageStepSchema,
+  StepType,
+} from "@aha.chat/flow-config"
 import { uploadAttachment } from "../api/message"
 import { logger } from "../libs/logger"
 import type { ZaloAuthValue } from "../schemas/definition"
@@ -8,22 +12,29 @@ import { convertZaloButtons } from "./send-button"
 export async function* convertFlowStepImage(
   auth: ZaloAuthValue,
   flowVersionId: string,
-  payload: SendImageStepSchema,
+  payload: SendImageStepSchema | SendGifStepSchema,
 ): AsyncGenerator<MessageTemplate> {
   try {
     if (!payload.url?.trim()) {
       throw new Error("Image URL is required")
     }
 
+    const mediaType = payload.stepType === StepType.sendGif ? "gif" : "image"
     const {
-      data: { attachment_id },
-    } = await uploadAttachment(auth, "image", payload.url)
+      data: { attachment_id, width, height },
+    } = await uploadAttachment(auth, mediaType, payload.url)
 
     if (!attachment_id) {
       throw new Error("Failed to upload image: No attachment ID received")
     }
 
-    const buttons = await convertZaloButtons(flowVersionId, payload.buttons)
+    const buttons =
+      payload.stepType === StepType.sendImage
+        ? await convertZaloButtons(
+            flowVersionId,
+            (payload as SendImageStepSchema).buttons,
+          )
+        : undefined
     yield {
       attachment: {
         type: "template",
@@ -31,8 +42,10 @@ export async function* convertFlowStepImage(
           template_type: "media",
           elements: [
             {
-              media_type: "image",
+              media_type: mediaType,
               attachment_id,
+              width,
+              height,
             },
           ],
           buttons,

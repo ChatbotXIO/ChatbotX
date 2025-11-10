@@ -1,14 +1,14 @@
 import {
-  openAITextToSpeechDefaultFn,
-  openAITextToSpeechSchema,
+  AITextToSpeechDefaultFn,
+  AITextToSpeechSchema,
 } from "@aha.chat/flow-config"
-import type { StepDefinition } from ".."
-import { OpenAITextToSpeechEditor } from "./editor"
-import { OpenAITextToSpeechViewer } from "./viewer"
+import type { StepDefinition } from "../definition"
+import AITextToSpeechEditor from "./editor"
+import AITextToSpeechViewer from "./viewer"
 
-export const openAITextToSpeechStep: StepDefinition = {
-  editor: OpenAITextToSpeechEditor,
-  viewer: OpenAITextToSpeechViewer,
-  validator: openAITextToSpeechSchema,
-  defaultFn: openAITextToSpeechDefaultFn,
+export const AITextToSpeechStep: StepDefinition<AITextToSpeechSchema> = {
+  editor: AITextToSpeechEditor,
+  viewer: AITextToSpeechViewer,
+  validator: AITextToSpeechSchema,
+  defaultFn: AITextToSpeechDefaultFn,
 }

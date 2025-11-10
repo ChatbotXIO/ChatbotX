@@ -7,7 +7,7 @@ import { redirect } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { type MagicLinkRequest, magicLinkRequest } from "../schemas/signin"
 
 export const MagicLinkSignIn = () => {
@@ -39,9 +39,9 @@ export const MagicLinkSignIn = () => {
         onSubmit={magicLinkForm.handleSubmit(onSubmitMagicLinkForm)}
       >
         <InputField
-          isRequired
           name="email"
           placeholder={t("signin.email")}
+          required
           type="email"
         />
 

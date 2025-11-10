@@ -32,9 +32,12 @@ export const mediaAttachmentTemplate = z.object({
     z.literal("video"),
     z.literal("audio"),
     z.literal("file"),
+    z.literal("gif"),
   ]),
   url: z.url().optional(),
   attachment_id: z.string().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
 })
 export const mediaPayloadTemplate = z.object({
   template_type: z.literal("media"),
@@ -92,6 +95,8 @@ export const uploadAttachmentResponse = z.object({
   data: z.object({
     attachment_id: z.string().optional(),
     token: z.string().optional(),
+    width: z.number().optional(),
+    height: z.number().optional(),
   }),
   error: z.number(),
   message: z.string(),

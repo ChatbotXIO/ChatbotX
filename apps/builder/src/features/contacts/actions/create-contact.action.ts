@@ -48,9 +48,30 @@ export const createContactAction = chatbotActionClient
         },
       })
 
+      const chatbotUsage = await prisma.chatbotUsage.findFirstOrThrow({
+        where: { chatbotId },
+      })
+      if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+        return returnValidationErrors(createContactSchema, {
+          _errors: ["Validation Exception"],
+          phoneNumber: {
+            _errors: ["Max contacts reached"],
+          },
+        })
+      }
+
       await prisma.$transaction(async (tx) => {
         const contact = await tx.contact.create({
           data: { ...parsedInput, chatbotId, source: "whatsapp" },
+        })
+
+        await tx.chatbotUsage.update({
+          where: { chatbotId },
+          data: {
+            contactsCount: {
+              increment: 1,
+            },
+          },
         })
 
         await tx.conversation.create({

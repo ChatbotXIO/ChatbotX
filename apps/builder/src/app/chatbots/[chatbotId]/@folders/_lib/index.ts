@@ -9,16 +9,14 @@ export function getFolderTypeFromFeature(
 
   switch (featureName) {
     case "automated-responses":
-      return FolderType.AUTOMATED_RESPONSE
+      return FolderType.automatedResponse
     case "flows":
-      return FolderType.FLOW
+      return FolderType.flow
     case "account-fields":
     case "custom-fields":
-      return FolderType.CUSTOM_FIELD
-    case "email-campaigns":
-      return FolderType.EMAIL_CAMPAIGN
+      return FolderType.customField
     case "tags":
-      return FolderType.TAG
+      return FolderType.tag
     default:
       return null
   }

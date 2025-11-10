@@ -11,8 +11,9 @@
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.8",
+    "@types/node": "^22.18.12",
     "bullmq": "^5.61.0",
-    "ioredis": "^5.8.1",
+    "ioredis": "^5.8.2",
     "zod": "^4.1.12"
   },
   "exports": {

@@ -1,4 +1,3 @@
-import { OMNICHANNEL } from "@aha.chat/database/types"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
 import { callAPI } from "@/lib/swr"
@@ -16,7 +15,7 @@ export function InboxSelect({ name }: { name: string }) {
       value: v.id,
     }),
   )
-  inboxes.unshift({ label: "Omnichannel", value: OMNICHANNEL })
+  inboxes.unshift({ label: "Omnichannel", value: "omnichannel" })
 
   return (
     <SelectField
@@ -24,6 +23,7 @@ export function InboxSelect({ name }: { name: string }) {
       name={name}
       options={inboxes}
       placeholder="Please select"
+      required
     />
   )
 }

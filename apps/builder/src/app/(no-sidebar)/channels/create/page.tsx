@@ -12,6 +12,8 @@ type CreateChannelPageProps = {
   }>
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function CreateChannelPage({
   searchParams,
 }: CreateChannelPageProps) {
@@ -26,17 +28,12 @@ export default async function CreateChannelPage({
 
   return (
     <Suspense>
-      {selectedChannel === InboxType.WHATSAPP.toLowerCase() &&
-        settings.whatsapp && (
-          <WhatsappCreate chatbotId={chatbotId} settings={settings.whatsapp} />
-        )}
-      {selectedChannel === InboxType.MESSENGER.toLowerCase() && (
-        <div>Messenger</div>
+      {selectedChannel === InboxType.Whatsapp && settings.whatsapp && (
+        <WhatsappCreate chatbotId={chatbotId} settings={settings.whatsapp} />
       )}
-      {selectedChannel === InboxType.ZALO.toLowerCase() && <div>Zalo</div>}
-      {selectedChannel === InboxType.WEBCHAT.toLowerCase() && (
-        <div>Webchat</div>
-      )}
+      {selectedChannel === InboxType.Messenger && <div>Messenger</div>}
+      {selectedChannel === InboxType.Zalo && <div>Zalo</div>}
+      {selectedChannel === InboxType.Webchat && <div>Webchat</div>}
       {!selectedChannel && <InboxSelectCard />}
     </Suspense>
   )

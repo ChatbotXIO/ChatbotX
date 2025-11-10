@@ -33,17 +33,21 @@ export const connectGoogleSheets = chatbotActionClient
         "googleSheets",
       )
 
-      const redirectUrl = (await integrations.GOOGLE_SHEETS.handleRequest?.({
+      const redirectUrl = (await integrations.GoogleSheets.handleRequest?.({
         config: {
           ...googleSheetsSetting,
           redirectUrl: new URL(
             "/integrations/google-sheets/callback",
             parsedInput.referer,
           ).toString(),
+          stateParams: {
+            chatbotId: ctx.chatbot.id,
+            referer: parsedInput.referer,
+          },
         },
         req: new Request(
           new URL(
-            HandleRequestType.GENERATE_AUTH_URL,
+            HandleRequestType.generateAuthUrl,
             headersList.get("x-url") ?? "",
           ),
         ),

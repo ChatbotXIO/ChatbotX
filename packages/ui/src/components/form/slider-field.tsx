@@ -6,7 +6,6 @@ type SliderFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   description?: string
-  isRequired?: boolean
   required?: boolean
 } & React.ComponentProps<typeof Slider>
 
@@ -15,7 +14,7 @@ export function SliderField<T extends FieldValues>(props: SliderFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={required}
+      required={required}
       label={label}
       name={name}
     >

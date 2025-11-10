@@ -1,11 +1,11 @@
-import { type ButtonStepSchema, ButtonType } from "@aha.chat/flow-config"
+import { type ButtonStepProps, ButtonType } from "@aha.chat/flow-config"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../constants"
 import type { ButtonPayload } from "../schemas/webhook"
 
 export function getButtonTemplate(
   flowVersionId: string,
-  button: ButtonStepSchema,
+  button: ButtonStepProps,
 ): ButtonPayload {
   switch (button.buttonType) {
     case ButtonType.OpenWebsite:
@@ -13,7 +13,7 @@ export function getButtonTemplate(
         type: "oa.open.url",
         title: button.label,
         payload: {
-          url: button.steps[0].url,
+          url: button.beforeStep.url,
         },
       }
     default:
@@ -27,7 +27,7 @@ export function getButtonTemplate(
 
 export function convertZaloButtons(
   flowVersionId: string,
-  buttons: ButtonStepSchema[],
+  buttons: ButtonStepProps[],
 ): ButtonPayload[] | undefined {
   const chunks = chunk(buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {

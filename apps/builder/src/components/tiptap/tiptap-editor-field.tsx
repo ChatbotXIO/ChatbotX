@@ -1,12 +1,11 @@
 "use client"
 
 import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
-import type { CustomFieldResource } from "@/features/custom-fields/schemas"
 import { TiptapEditor } from "./tiptap-editor"
 
 export type TiptapEditorFieldProps = {
   name: string
-  customFields: CustomFieldResource[]
+  customFields: { label: string; value: string; type: string }[]
 }
 
 export const TiptapEditorField = ({

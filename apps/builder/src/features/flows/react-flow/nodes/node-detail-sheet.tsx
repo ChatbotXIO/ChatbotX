@@ -7,9 +7,12 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@aha.chat/ui/components/ui/sheet"
-import { useStore } from "@xyflow/react"
-import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
+import { type ReactFlowState, useStore } from "@xyflow/react"
+import { memo } from "react"
 import { NodeEditor } from "./editor"
+import { NodeNameEditor } from "./node-name-editor"
+
+import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 
 type NodeDetailSheetProps = {
   open: boolean
@@ -17,24 +20,67 @@ type NodeDetailSheetProps = {
   flowVersion: FlowVersionResource
 }
 
+// Select only the selected node from the store
+const selectSelectedNode = (state: ReactFlowState): FlowNode | null =>
+  (state.nodes.find((node) => node.selected) as FlowNode) || null
+
+// Custom equality function that compares node ID and data reference
+// This prevents re-renders from position/dragging changes but allows data updates
+const equalityFn = (a: FlowNode | null, b: FlowNode | null): boolean => {
+  if (a === b) {
+    return true
+  }
+  if (!a) {
+    return false
+  }
+  if (!b) {
+    return false
+  }
+
+  // Compare ID and data reference (data reference changes when updateNodeData is called)
+  return a.id === b.id && a.data === b.data
+}
+
 export function NodeDetailSheet({
   open,
   onOpenChange,
   flowVersion,
 }: NodeDetailSheetProps) {
-  const activeNode = useStore((state) =>
-    state.nodes.find((node) => node.selected),
-  ) as FlowNode
+  // Use store selector with custom equality function
+  const activeNode = useStore(selectSelectedNode, equalityFn)
 
-  return activeNode ? (
+  return open && activeNode ? (
+    <NodeDetailSheetContent
+      activeNode={activeNode}
+      flowVersion={flowVersion}
+      onOpenChange={onOpenChange}
+      open={open}
+    />
+  ) : null
+}
+
+export const NodeDetailSheetContent = memo(
+  ({
+    activeNode,
+    flowVersion,
+    open,
+    onOpenChange,
+  }: {
+    activeNode: FlowNode
+    flowVersion: FlowVersionResource
+    open: boolean
+    onOpenChange: (open: boolean) => void
+  }) => (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="flex flex-col" side="left">
-        <SheetTitle />
+      <SheetContent className="flex flex-col gap-0" side="left">
+        <SheetTitle>
+          <NodeNameEditor activeNode={activeNode} />
+        </SheetTitle>
         <SheetDescription />
         <div className="flex flex-1 flex-col gap-4 overflow-hidden p-5">
           <NodeEditor activeNode={activeNode} flowVersion={flowVersion} />
         </div>
       </SheetContent>
     </Sheet>
-  ) : null
-}
+  ),
+)

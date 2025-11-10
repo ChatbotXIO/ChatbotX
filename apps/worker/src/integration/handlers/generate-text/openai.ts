@@ -1,9 +1,8 @@
-import type { OpenAIGenerateTextSchema } from "@aha.chat/flow-config"
 import type { FlowStepProps } from "../step-handler"
 import { handleAIGenerateText } from "./index"
 
 export async function handleOpenAIGenerateText(
-  props: FlowStepProps<OpenAIGenerateTextSchema>,
+  props: FlowStepProps<Record<string, unknown>>,
 ) {
-  return handleAIGenerateText(props)
+  return await handleAIGenerateText(props)
 }

@@ -1,7 +1,10 @@
 "use client"
 
 import "@xyflow/react/dist/style.css"
-import type { FlowVersionResource } from "../schemas/get-flows-schema"
+import type {
+  FlowResource,
+  FlowVersionResource,
+} from "../schemas/get-flows-schema"
 import { ButtonEditorDialog } from "./button-editor-dialog"
 import { FrameHeader } from "./frame-header"
 import { NodeDetailSheet } from "./nodes/node-detail-sheet"
@@ -9,17 +12,19 @@ import { ReactFlowWrapper } from "./react-flow-wrapper"
 import { useStepStore } from "./stores/step-store-provider"
 
 type ReactFlowFrameProps = {
+  flow: FlowResource
   flowVersion: FlowVersionResource
 }
 
-export function ReactFlowFrame({ flowVersion }: ReactFlowFrameProps) {
-  const { openNodeDetailSheet, setOpenNodeDetailSheet } = useStepStore(
-    (state) => state,
+export function ReactFlowFrame({ flow, flowVersion }: ReactFlowFrameProps) {
+  const openNodeDetailSheet = useStepStore((state) => state.openNodeDetailSheet)
+  const setOpenNodeDetailSheet = useStepStore(
+    (state) => state.setOpenNodeDetailSheet,
   )
 
   return (
     <>
-      <FrameHeader />
+      <FrameHeader flow={flow} />
 
       <ReactFlowWrapper
         flowVersion={flowVersion}

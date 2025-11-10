@@ -50,8 +50,13 @@ type AIModelFormProps = {
     name: string
     children?: React.ReactNode
     onSubmit?: () => void
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+    showTrigger?: boolean
   }>
   flowVersion: FlowVersionResource
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export const AIModelForm = ({
@@ -59,6 +64,8 @@ export const AIModelForm = ({
   modelSelectComponent: ModelSelectComponent,
   dialogComponent: DialogComponent,
   flowVersion,
+  open,
+  onOpenChange,
 }: AIModelFormProps) => {
   const t = useTranslations()
   const { setValue, getValues } = useFormContext()
@@ -226,6 +233,8 @@ export const AIModelForm = ({
       onSubmit={() => {
         form.handleSubmit(onSubmit)()
       }}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <Form {...form}>
         <div className="space-y-4">

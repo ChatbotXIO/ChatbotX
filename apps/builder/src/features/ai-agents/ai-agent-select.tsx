@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 
 type AIAgentSelectProps = {
   name: string
-  isRequired?: boolean
+  required?: boolean
 }
 
 export function AIAgentSelect(props: AIAgentSelectProps) {

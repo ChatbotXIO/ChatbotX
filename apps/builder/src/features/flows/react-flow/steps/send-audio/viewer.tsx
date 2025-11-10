@@ -8,7 +8,7 @@ type SendAudioStepViewerProps = {
   data: SendAudioStepSchema
 }
 
-export const SendAudioStepViewer = (props: SendAudioStepViewerProps) => {
+const SendAudioStepViewer = (props: SendAudioStepViewerProps) => {
   const { data } = props
 
   return (
@@ -27,3 +27,5 @@ export const SendAudioStepViewer = (props: SendAudioStepViewerProps) => {
     </div>
   )
 }
+
+export default SendAudioStepViewer

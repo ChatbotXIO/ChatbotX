@@ -1,16 +1,14 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListAutomatedResponsesRequest } from "../schemas/get-automated-responses-schema"
 import type { AutomatedResponseCollection } from "../schemas/types"
 
 export async function getAutomatedResponses(
   input: ListAutomatedResponsesRequest,
 ): Promise<AutomatedResponseCollection> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

@@ -1,15 +1,12 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { TagCollection } from "../schemas"
 import type { GetTagsSchema } from "../schemas/get-tags-schema"
 
 export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
-  const userId = await getCurrentUserId()
-
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

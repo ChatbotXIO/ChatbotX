@@ -74,13 +74,13 @@ export function WhatsappMessageTemplateTypeSelect(
     <div className="grid grid-cols-2 gap-4">
       {validTypes.map((validType) => (
         <Button
-          className="!h-auto flex w-full items-center justify-start gap-4 truncate p-6 text-xl"
+          className="flex h-auto! w-full items-center justify-start gap-4 truncate p-6 text-xl"
           disabled={validType.value === TemplateType.Location}
           key={validType.value}
           onClick={() => props.onSelectTemplateType(validType.value)}
           variant="secondary"
         >
-          <validType.icon className="!h-6 !w-auto" size={24} />
+          <validType.icon className="h-6! w-auto!" size={24} />
           {validType.name}
         </Button>
       ))}

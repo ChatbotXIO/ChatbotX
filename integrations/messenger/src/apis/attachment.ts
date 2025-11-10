@@ -1,3 +1,4 @@
+import type { FileType } from "@aha.chat/sdk"
 import { MessengerAttachmentException } from "../exception"
 import { facebookAttachmentClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
@@ -10,7 +11,7 @@ import type {
 export const uploadAttachment = async (
   auth: MessengerAuthValue,
   url: string,
-  type: "image" | "video" | "audio" | "file",
+  type: FileType,
 ): Promise<FacebookSendMessageResponse> => {
   try {
     return await facebookAttachmentClient.post<FacebookSendMessageResponse>(

@@ -9,6 +9,8 @@ type WebchatPageProps = {
   searchParams: Promise<SearchParams>
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function WebchatPage(props: WebchatPageProps) {
   const searchParams = await props.searchParams
 

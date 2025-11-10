@@ -1114,13 +1114,13 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             <div
                               aria-hidden="true"
                               className={cn(
-                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                "mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border-2 shadow-xs",
                                 isSelected
-                                  ? "bg-primary text-primary-foreground"
-                                  : "opacity-50 [&_svg]:invisible",
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-gray-300 bg-background dark:border-gray-600",
                               )}
                             >
-                              <CheckIcon className="h-4 w-4" />
+                              {isSelected && <CheckIcon className="h-4 w-4" />}
                             </div>
                             {option.icon && (
                               <option.icon
@@ -1157,13 +1157,13 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           <div
                             aria-hidden="true"
                             className={cn(
-                              "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                              "mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border-2 shadow-xs",
                               isSelected
-                                ? "bg-primary text-primary-foreground"
-                                : "opacity-50 [&_svg]:invisible",
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-gray-300 bg-background dark:border-gray-600",
                             )}
                           >
-                            <CheckIcon className="h-4 w-4" />
+                            {isSelected && <CheckIcon className="h-4 w-4" />}
                           </div>
                           {option.icon && (
                             <option.icon

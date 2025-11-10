@@ -52,9 +52,9 @@ export const WebchatMessageInput = ({
               sourceId: null,
               conversationId: "",
               contentAttributes: null,
-              messageType: MessageType.INCOMING,
-              contentType: ContentType.TEXT,
-              senderType: SenderType.CONTACT,
+              messageType: MessageType.incoming,
+              contentType: ContentType.text,
+              senderType: SenderType.contact,
               senderId: "",
               clientId: input.clientId,
             })

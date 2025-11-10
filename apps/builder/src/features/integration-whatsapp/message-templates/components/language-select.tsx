@@ -6,11 +6,11 @@ import { LanguageOptions } from "@/features/integration-whatsapp/message-templat
 export function WhatsappMessageTemplateLanguageSelect({
   name,
   label,
-  isRequired = false,
+  required = false,
 }: {
   name: string
   label: string
-  isRequired?: boolean
+  required?: boolean
 }) {
   return (
     <SelectField
@@ -18,7 +18,7 @@ export function WhatsappMessageTemplateLanguageSelect({
       name={name}
       options={LanguageOptions}
       placeholder="Please select"
-      required={isRequired}
+      required={required}
     />
   )
 }

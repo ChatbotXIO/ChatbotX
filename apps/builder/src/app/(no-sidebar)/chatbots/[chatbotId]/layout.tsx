@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export default async function ChatbotNoSidebarLayout({
   params,
@@ -9,11 +8,10 @@ export default async function ChatbotNoSidebarLayout({
   params: Promise<{ chatbotId: string }>
   children: React.ReactNode
 }) {
-  const userId = await getCurrentUserId()
-  const chatbotId = (await params).chatbotId
+  const { chatbotId } = await params
 
   try {
-    await findChatbotOrFail(userId, chatbotId)
+    await assertCurrentUserCanAccessChatbot(chatbotId)
   } catch (_) {
     redirect("/")
   }

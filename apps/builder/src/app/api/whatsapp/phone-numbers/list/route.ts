@@ -2,7 +2,7 @@ import { listPhoneNumbers as whatsappListPhoneNumbers } from "@aha.chat/integrat
 import { type NextRequest, NextResponse } from "next/server"
 import { listPhoneNumbersRequest } from "@/features/integration-whatsapp/schemas"
 import { findOrganizationSettingsByKey } from "@/features/organization/queries"
-import { getCurrentUserId } from "@/lib/auth"
+import { getCurrentUserId } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function POST(request: NextRequest) {

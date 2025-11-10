@@ -12,7 +12,7 @@ import {
 import { Loader2Icon, LogOutIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 
 export function SignOut() {
   const [isLoading, setIsLoading] = useState(false)
@@ -24,9 +24,7 @@ export function SignOut() {
         <LogOutIcon />
         Log Out
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>Are you sure you want to log out?</DialogTitle>
           <DialogDescription />

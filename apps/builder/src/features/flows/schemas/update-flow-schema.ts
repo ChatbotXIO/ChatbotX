@@ -1,9 +1,4 @@
-import {
-  addNotesNodeSchema,
-  edgeSchema,
-  flowVersionSchema,
-  sendMessageNodeSchema,
-} from "@aha.chat/flow-config"
+import { edgeSchema, flowVersionSchema } from "@aha.chat/flow-config"
 import { z } from "zod"
 
 export const updateFlowSchema = z.object({
@@ -14,7 +9,7 @@ export const updateFlowSchema = z.object({
 export type UpdateFlowSchema = z.infer<typeof updateFlowSchema>
 
 export const updateDraftFlowVersionSchema = z.object({
-  nodes: z.array(flowVersionSchema),
+  nodes: z.array(z.any()),
   edges: z.array(edgeSchema),
 })
 export type UpdateDraftFlowVersionSchema = z.infer<
@@ -28,17 +23,7 @@ export const publishFlowSchema = z.object({
 export type PublishFlowSchema = z.infer<typeof publishFlowSchema>
 
 export const updateFlowVersionSchema = z.object({
-  nodes: z.array(
-    z.discriminatedUnion("type", [sendMessageNodeSchema, addNotesNodeSchema]),
-  ),
-  edges: z.array(
-    z.object({
-      id: z.string(),
-      source: z.string(),
-      sourceHandle: z.string(),
-      target: z.string(),
-      targetHandle: z.string(),
-    }),
-  ),
+  nodes: z.array(flowVersionSchema),
+  edges: z.array(edgeSchema),
 })
 export type UpdateFlowVersionSchema = z.infer<typeof updateFlowVersionSchema>

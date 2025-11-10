@@ -42,7 +42,7 @@ export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
         <DataTableToolbar table={table}>
           <LogsTableToolbarActions
             chatbotId={chatbotId}
-            logType={LogType.Error}
+            logType={LogType.error}
             table={table}
           />
         </DataTableToolbar>
@@ -51,7 +51,7 @@ export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
       <DeleteLogsDialog
         chatbotId={chatbotId}
         logs={rowAction?.row.original ? [rowAction?.row.original] : []}
-        logType={LogType.Error}
+        logType={LogType.error}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         open={rowAction?.variant === "delete"}

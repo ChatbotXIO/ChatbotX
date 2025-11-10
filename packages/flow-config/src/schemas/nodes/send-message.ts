@@ -48,7 +48,6 @@ export const actionsStepSchema = [
   // Open AI
   openAIGenerateTextSchema,
   openAIGenerateTextAgentSchema,
-  openAIGenerateTextSchema,
   openAIGenerateTextAssistantSchema,
   openAIGenerateImageSchema,
   openAIAnalyzeImageSchema,

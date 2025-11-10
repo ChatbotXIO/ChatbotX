@@ -17,6 +17,7 @@ import type {
 } from "../schemas"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepFile } from "./send-file"
+import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
 import { convertFlowStepText } from "./send-text"
 
@@ -42,7 +43,7 @@ export const sendOutgoingMessage = async (
 export function* convertMessageToFacebookMessage(
   message: MessageEntity,
 ): Generator<FacebookMessage> {
-  if (message.contentType === ContentType.TEXT) {
+  if (message.contentType === ContentType.text) {
     if (message.content) {
       yield {
         text: message.content,
@@ -50,7 +51,7 @@ export function* convertMessageToFacebookMessage(
     }
     for (const attachment of message.attachments || []) {
       switch (attachment.fileType) {
-        case FileType.IMAGE:
+        case FileType.image:
           yield {
             attachment: getAttachmentTemplate(
               attachment.url as string,
@@ -58,7 +59,7 @@ export function* convertMessageToFacebookMessage(
             ),
           }
           continue
-        case FileType.VIDEO:
+        case FileType.video:
           yield {
             attachment: getAttachmentTemplate(
               attachment.url as string,
@@ -66,7 +67,7 @@ export function* convertMessageToFacebookMessage(
             ),
           }
           continue
-        case FileType.AUDIO:
+        case FileType.audio:
           yield {
             attachment: getAttachmentTemplate(
               attachment.url as string,
@@ -112,18 +113,21 @@ export async function* convertFlowStepToFacebookMessage(
   step: SendFlowStepData,
 ): AsyncGenerator<FacebookMessageAttachmentPayload | FacebookMessage> {
   switch (step.stepType) {
-    case StepType.SEND_TEXT:
+    case StepType.sendText:
       yield* convertFlowStepText(flowVersionId, step) as Generator<
         FacebookMessageAttachmentPayload | FacebookMessage
       >
       break
-    case StepType.SEND_IMAGE:
-    case StepType.SEND_VIDEO:
+    case StepType.sendImage:
+    case StepType.sendVideo:
       await (yield* convertFlowStepMedia(auth, flowVersionId, step))
       break
-    case StepType.SEND_AUDIO:
-    case StepType.SEND_FILE:
+    case StepType.sendAudio:
+    case StepType.sendFile:
       await (yield* convertFlowStepFile(auth, step))
+      break
+    case StepType.sendGif:
+      yield* convertFlowStepGif(step.url) as Generator<FacebookMessage>
       break
     default:
       break

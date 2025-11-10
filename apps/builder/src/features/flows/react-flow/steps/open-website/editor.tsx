@@ -9,14 +9,14 @@ type OpenWebsiteStepEditorProps = {
   parentName: string
 }
 
-const OpenWebsiteStepEditor = (props: OpenWebsiteStepEditorProps) => {
+const OpenWebsiteStepEditor = ({ parentName }: OpenWebsiteStepEditorProps) => {
   const t = useTranslations()
 
   return (
-    <BaseStepEditor icon={LinkIcon} title={t("flows.stepType.openWebsite")}>
-      <InputField label="Link" name={`${props.parentName}.url`} />
+    <BaseStepEditor icon={LinkIcon} title={t("flows.actions.openWebsite")}>
+      <InputField label="Link" name={`${parentName}.url`} />
     </BaseStepEditor>
   )
 }
 
-export { OpenWebsiteStepEditor }
+export default OpenWebsiteStepEditor

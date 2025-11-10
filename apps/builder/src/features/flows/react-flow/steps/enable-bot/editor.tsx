@@ -7,7 +7,12 @@ import { BaseStepEditor } from "../base/editor"
 const EnableBotStepEditor = () => {
   const t = useTranslations()
 
-  return <BaseStepEditor icon={BotIcon} title={t("flows.stepType.enableBot")} />
+  return (
+    <BaseStepEditor
+      icon={BotIcon}
+      title={t("flows.actions.transferConversationToBot")}
+    />
+  )
 }
 
-export { EnableBotStepEditor }
+export default EnableBotStepEditor

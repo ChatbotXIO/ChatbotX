@@ -23,10 +23,10 @@ export const MessageItem = (props: MessageItemProps) => {
 
   let variant: "left" | "right" | "full" = "full"
   switch (message.messageType) {
-    case MessageType.INCOMING:
+    case MessageType.incoming:
       variant = guestDisplay ? "right" : "left"
       break
-    case MessageType.OUTGOING:
+    case MessageType.outgoing:
       variant = guestDisplay ? "left" : "right"
       break
     default:
@@ -62,7 +62,7 @@ const renderAttachments = (props: { message: MessageResource }) => {
     <div>
       {(message.attachments ?? []).map((attachment) => {
         switch (attachment.fileType) {
-          case FileType.IMAGE:
+          case FileType.image:
             return (
               <Image
                 alt={attachment.name || "Attachment"}
@@ -72,7 +72,7 @@ const renderAttachments = (props: { message: MessageResource }) => {
                 width={attachment.width || 0}
               />
             )
-          case FileType.VIDEO:
+          case FileType.video:
             return (
               <video
                 controls
@@ -85,7 +85,7 @@ const renderAttachments = (props: { message: MessageResource }) => {
                 <source src={attachment.url} type={attachment.mimeType} />
               </video>
             )
-          case FileType.AUDIO:
+          case FileType.audio:
             return (
               <audio controls key={attachment.id} preload="none">
                 <track default kind="captions" />

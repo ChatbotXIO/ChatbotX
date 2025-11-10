@@ -18,7 +18,7 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
   const { parentName, ...rest } = props
 
   const { getValues } = useFormContext()
-  const { setButtonPath } = useStepStore((state) => state)
+  const setButtonPath = useStepStore((state) => state.setButtonPath)
 
   const buttonData = getValues(`${parentName}`)
 
@@ -27,7 +27,7 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
       <Button
         className="w-full hover:text-blue-500"
         onClick={() => {
-          setButtonPath(`data.${parentName}`.replace(/\.(\d+)/g, "[$1]"))
+          setButtonPath(`data.${parentName}`)
         }}
         type="button"
         variant="secondary"
@@ -52,7 +52,11 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
   })
 
   function addButton() {
-    append(buttonStepDefaultFn(`Button #${fields.length + 1}`))
+    append(
+      buttonStepDefaultFn({
+        label: `${t("fields.button.label")} #${fields.length + 1}`,
+      }),
+    )
   }
 
   return (

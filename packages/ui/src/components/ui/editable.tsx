@@ -459,7 +459,7 @@ const EditableInput = React.forwardRef<HTMLInputElement, EditableInputProps>(
 
     const isDisabled = disabled || context.disabled
     const isReadOnly = readOnly || context.readOnly
-    const isRequired = required || context.required
+    const required = required || context.required
 
     const onAutosize = React.useCallback(
       (target: InputElement) => {
@@ -574,13 +574,13 @@ const EditableInput = React.forwardRef<HTMLInputElement, EditableInputProps>(
 
     return (
       <InputPrimitive
-        aria-required={isRequired}
+        aria-required={required}
         aria-invalid={context.invalid}
         data-slot="editable-input"
         dir={context.dir}
         disabled={isDisabled}
         readOnly={isReadOnly}
-        required={isRequired}
+        required={required}
         {...inputProps}
         id={context.inputId}
         aria-labelledby={context.labelId}

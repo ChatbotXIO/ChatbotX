@@ -1,35 +1,29 @@
 "use client"
 
-import { voiceTypes } from "@aha.chat/flow-config"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { OpenAIDialog } from "@/features/flows/react-flow/steps/open-ai/components/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@aha.chat/ui/components/ui/dialog"
+import { useTranslations } from "next-intl"
 
-type OpenAITextToSpeechEditorProps = {
-  parentName: string
+const AITextToSpeechEditor = () => {
+  const t = useTranslations()
+
+  return (
+    <Dialog>
+      <DialogTrigger>{t("actions.edit")}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("flows.actions.aiTextToSpeech")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-2">wip</div>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
-export const OpenAITextToSpeechEditor = (
-  props: OpenAITextToSpeechEditorProps,
-) => (
-  <OpenAIDialog name="Flows.OpenAI.Title.TextToSpeech">
-    <InputField label="Input Text" name={`${props.parentName}.userMessage`} />
-
-    <SelectField
-      defaultValue="alloy"
-      label="Voice Type"
-      name={`${props.parentName}.voiceType`}
-      options={Object.keys(voiceTypes).map((k) => ({
-        value: k,
-        label: voiceTypes[k] as string,
-      }))}
-    />
-
-    <CustomFieldSelect
-      allowCreate={true}
-      label="Save response to a custom field"
-      name={`${props.parentName}.resultCustomFieldId`}
-    />
-  </OpenAIDialog>
-)
+export default AITextToSpeechEditor

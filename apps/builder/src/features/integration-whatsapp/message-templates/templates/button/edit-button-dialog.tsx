@@ -18,7 +18,7 @@ import { useMemo } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import {
   ButtonActionType,
-  type ButtonStepSchema,
+  type ButtonStepProps,
   buttonStepSchema,
 } from "./schema"
 
@@ -38,7 +38,7 @@ export function EditButtonDialog({
   const { setValue: setValueOriginEditor, getValues: getValuesOriginEditor } =
     useFormContext()
 
-  const form = useForm<ButtonStepSchema>({
+  const form = useForm<ButtonStepProps>({
     resolver: zodResolver(buttonStepSchema),
     defaultValues: getValuesOriginEditor(parentName),
     mode: "onChange",
@@ -76,7 +76,7 @@ export function EditButtonDialog({
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.button.label") })}
+            {t("messages.editFeature", { feature: t("fields.button.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

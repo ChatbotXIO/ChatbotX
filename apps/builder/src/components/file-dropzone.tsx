@@ -53,23 +53,23 @@ function UploadIcon({
   ...props
 }: { type?: FileType; size: number } & SVGProps<SVGSVGElement>) {
   const uploadIcons: Record<FileType, { icon: LucideIcon }> = {
-    [FileType.VIDEO]: {
+    [FileType.video]: {
       icon: Video,
     },
-    [FileType.DOCUMENT]: {
+    [FileType.file]: {
       icon: File,
     },
-    [FileType.AUDIO]: {
+    [FileType.audio]: {
       icon: Volume2,
     },
-    [FileType.GIF]: {
+    [FileType.gif]: {
       icon: ImagePlay,
     },
-    [FileType.IMAGE]: {
+    [FileType.image]: {
       icon: ImageIcon,
     },
   }
-  const dyanmicIcon = uploadIcons[type ?? FileType.IMAGE]
+  const dyanmicIcon = uploadIcons[type ?? FileType.image]
 
   return <dyanmicIcon.icon {...props} />
 }
@@ -78,7 +78,7 @@ export default function FileDropzone({
   register,
   unregister,
   parentName,
-  type = FileType.IMAGE,
+  type = FileType.image,
   mode = "file",
   configs: {
     uploadKeyName = "texts.or",

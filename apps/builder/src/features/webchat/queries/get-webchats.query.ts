@@ -3,13 +3,11 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetWebchatRequest } from "../schemas/webchat.schema"
 
 export async function getIntegationWebchats(parsedInputs: GetWebchatRequest) {
-  const currentUserId = await getCurrentUserId()
-  await findChatbotOrFail(currentUserId, parsedInputs.chatbotId)
+  await assertCurrentUserCanAccessChatbot(parsedInputs.chatbotId)
 
   return await unstable_cache(
     async () => {

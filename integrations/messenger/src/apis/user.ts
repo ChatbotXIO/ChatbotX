@@ -15,7 +15,7 @@ export const getUserProfile = async ({
 }): Promise<ContactEntity> => {
   try {
     const response = await facebookGraphClient.get<FacebookUserProfile>(
-      `${ctx.auth.version}/${psid}`,
+      `${ctx.auth.metadata.version}/${psid}`,
       {
         headers: {
           Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
@@ -41,7 +41,7 @@ export const getUserProfile = async ({
     logger.error("getUserProfile error", error)
     throw new MessengerAPIException(
       "Failed to fetch user profile",
-      `${API_URL}/${ctx.auth.version}/${psid}`,
+      `${API_URL}/${ctx.auth.metadata.version}/${psid}`,
     )
   }
 }

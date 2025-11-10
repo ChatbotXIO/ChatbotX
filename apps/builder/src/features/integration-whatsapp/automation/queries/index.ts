@@ -4,15 +4,13 @@ import {
   type ConversationalAutomation,
   findConversationalAutomation,
 } from "@aha.chat/integration-whatsapp/api/phone-number"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListWhatsappPhoneNumberAutomation } from "../schemas/get-ice-breakers-schema"
 
 export const findWhatsappAutomation = async (
   input: ListWhatsappPhoneNumberAutomation,
 ): Promise<ConversationalAutomation> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const integrationWhatsapp =
     await prisma.integrationWhatsapp.findUniqueOrThrow({

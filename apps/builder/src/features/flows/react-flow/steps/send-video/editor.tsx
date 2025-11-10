@@ -13,7 +13,7 @@ const SendVideoStepEditor = (props: SendVideoStepEditorProps) => {
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-secondary px-4 py-2 pt-3">
         <DirectUploadOrInsertLink
-          fileType={FileType.VIDEO}
+          fileType={FileType.video}
           parentName={parentName}
         />
       </div>
@@ -24,4 +24,4 @@ const SendVideoStepEditor = (props: SendVideoStepEditorProps) => {
   )
 }
 
-export { SendVideoStepEditor }
+export default SendVideoStepEditor

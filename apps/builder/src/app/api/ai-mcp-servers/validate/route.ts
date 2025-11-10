@@ -1,5 +1,9 @@
+import { AIMcpServerAuthType } from "@aha.chat/database/types"
+import {
+  experimental_createMCPClient,
+  type experimental_MCPClient,
+} from "@ai-sdk/mcp"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
-import { experimental_createMCPClient, type experimental_MCPClient } from "ai"
 import { type NextRequest, NextResponse } from "next/server"
 import { validateAIMcpServerRequest } from "@/features/ai-mcp-servers/schemas"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
@@ -9,9 +13,9 @@ export async function POST(request: NextRequest) {
   const parsedInput = validateAIMcpServerRequest.parse(data)
 
   const headers: Record<string, string> = {}
-  if (parsedInput.auth.type === "TOKEN") {
+  if (parsedInput.auth.type === AIMcpServerAuthType.token) {
     headers.Authorization = `Bearer ${parsedInput.auth.token}`
-  } else if (parsedInput.auth.type === "HEADERS") {
+  } else if (parsedInput.auth.type === AIMcpServerAuthType.header) {
     for (const header of parsedInput.auth.headers) {
       headers[header.header] = header.value
     }

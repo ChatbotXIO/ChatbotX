@@ -23,7 +23,7 @@ import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 
 export function AppSidebar({
   chatbotId,

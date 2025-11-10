@@ -28,14 +28,14 @@ export const createCustomFieldAction = chatbotActionClient
         await ensureFolderIdIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.CUSTOM_FIELD,
+          FolderType.customField,
         )
       }
 
       await prisma.field.create({
         data: {
           chatbotId,
-          fieldType: FieldType.CUSTOM_FIELD,
+          fieldType: FieldType.customField,
           showInInbox: true,
           ...parsedInput,
         },

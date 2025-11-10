@@ -1,4 +1,7 @@
-import type { AIMCPServerModel } from "@aha.chat/database/types"
+import {
+  type AIMCPServerModel,
+  AIMcpServerAuthType,
+} from "@aha.chat/database/types"
 import { z } from "zod"
 
 export type AIMcpServerCollection = {
@@ -14,14 +17,14 @@ const baseAIMcpServerRequest = z.object({
   url: z.url(),
   auth: z.discriminatedUnion("type", [
     z.object({
-      type: z.literal("NONE"),
+      type: z.literal(AIMcpServerAuthType.none),
     }),
     z.object({
-      type: z.literal("TOKEN"),
+      type: z.literal(AIMcpServerAuthType.token),
       token: z.string().trim().min(1),
     }),
     z.object({
-      type: z.literal("HEADERS"),
+      type: z.literal(AIMcpServerAuthType.header),
       headers: z.array(
         z.object({
           header: z.string().trim().min(1),

@@ -95,7 +95,7 @@ export const getMessageAttachmentEntity = ({
 
 export const uploadAttachment = (
   auth: ZaloAuthValue,
-  uploadType: "image" | "file",
+  uploadType: "image" | "file" | "gif",
   url: string,
 ): Promise<UploadAttachmentResponse> =>
   handleZaloError("Upload attachment", async () => {
@@ -111,6 +111,13 @@ export const uploadAttachment = (
     }
 
     const buffer = await response.arrayBuffer()
+    const imageProperties: { width?: number; height?: number } = {}
+    if (contentType?.startsWith("image/")) {
+      const dimensions = imageSize(new Uint8Array(buffer))
+      imageProperties.width = dimensions.width
+      imageProperties.height = dimensions.height
+    }
+
     const uint8 = new Uint8Array(buffer)
 
     const form = new FormData()
@@ -120,10 +127,20 @@ export const uploadAttachment = (
       auth.tokens.accessToken,
     )
 
-    const endpoint =
-      uploadType === "image"
-        ? ZALO_API_ENDPOINTS.OA.UPLOAD_IMAGE
-        : ZALO_API_ENDPOINTS.OA.UPLOAD_FILE
+    let endpoint = ""
+    switch (uploadType) {
+      case "image":
+        endpoint = ZALO_API_ENDPOINTS.OA.UPLOAD_IMAGE
+        break
+      case "file":
+        endpoint = ZALO_API_ENDPOINTS.OA.UPLOAD_FILE
+        break
+      case "gif":
+        endpoint = ZALO_API_ENDPOINTS.OA.UPLOAD_GIF
+        break
+      default:
+        throw new ZaloException("Invalid upload type")
+    }
 
     const result = await client.post<UploadAttachmentResponse>(endpoint, {
       body: form,
@@ -136,5 +153,8 @@ export const uploadAttachment = (
       throw new ZaloException(result.message || "Zalo upload file failed")
     }
 
-    return result
+    return {
+      ...result,
+      ...imageProperties,
+    }
   })

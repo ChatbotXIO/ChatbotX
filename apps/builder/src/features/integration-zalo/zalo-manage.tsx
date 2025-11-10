@@ -21,6 +21,10 @@ export function ZaloManage({ promises }: ZaloManageProps) {
 
   const [integrationZalo, organization] = use(promises)
 
+  if (!organization) {
+    return <div>Organization not found</div>
+  }
+
   return (
     <SettingRow description={t("zalo.description")} label={t("zalo.title")}>
       {integrationZalo ? (

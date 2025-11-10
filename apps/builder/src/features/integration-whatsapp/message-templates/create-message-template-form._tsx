@@ -93,7 +93,7 @@ export function CreateMessageTemplateForm({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createdSuccessfully", {
+            t("messages.createSuccess", {
               feature: t("whatsapp.messageTemplate.label"),
             }),
           )
@@ -136,7 +136,7 @@ export function CreateMessageTemplateForm({
     // biome-ignore lint/suspicious/noExplicitAny: wip
     setValue("templateType", type as any)
     setValue("name", "")
-    setValue("category", WhatsappTemplateCategory.MARKETING)
+    setValue("category", WhatsappTemplateCategory.marketing)
 
     switch (type) {
       case TemplateType.Text:

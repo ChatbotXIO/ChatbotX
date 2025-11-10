@@ -9,9 +9,9 @@ const MarkEmailVerifiedStepEditor = () => {
   return (
     <BaseStepEditor
       icon={CircleCheckIcon}
-      title={t("flows.stepType.markEmailVerified")}
+      title={t("flows.actions.markEmailVerified")}
     />
   )
 }
 
-export { MarkEmailVerifiedStepEditor }
+export default MarkEmailVerifiedStepEditor

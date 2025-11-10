@@ -18,7 +18,7 @@ type FormFieldWrapperProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   placeholder?: string
-  isRequired?: boolean
+  required?: boolean
   description?: string
   formItemClassName?: string
   children: (
@@ -34,7 +34,7 @@ type FormFieldWrapperProps<T extends FieldValues> = {
 export function FormFieldWrapper<T extends FieldValues>({
   name,
   label,
-  isRequired,
+  required,
   description,
   formItemClassName,
   children,
@@ -50,7 +50,7 @@ export function FormFieldWrapper<T extends FieldValues>({
           {label && (
             <FormLabel className="flex gap-1">
               {label}
-              {!isRequired && (
+              {!required && (
                 <span className="self-start font-normal text-xxs">
                   (optional)
                 </span>

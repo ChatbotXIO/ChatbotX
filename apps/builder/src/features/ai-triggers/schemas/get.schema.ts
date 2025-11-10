@@ -15,10 +15,10 @@ export const listAITriggersRequest = createSearchParamsCache({
   name: parseAsString.withDefault(""),
 })
 
-export type ListAITriggersRequest = Partial<
-  Awaited<ReturnType<typeof listAITriggersRequest.parse>>
+export type ListAITriggersRequest = Awaited<
+  ReturnType<typeof listAITriggersRequest.parse>
 > & {
-  chatbotId?: string
+  chatbotId: string
 }
 
 export type AITriggerResource = AITriggerModel

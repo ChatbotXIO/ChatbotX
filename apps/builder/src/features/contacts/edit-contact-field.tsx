@@ -67,12 +67,10 @@ export function EditContactField({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.contact.label") })}
+            {t("messages.editFeature", { feature: t("fields.contact.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
