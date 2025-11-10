@@ -7,8 +7,8 @@ export function calcCacheTags(input: string | string[]) {
   }
 }
 
-export function invalidateCacheTags(input: string | string[]) {
+export function revalidateCacheTags(input: string | string[]) {
   for (const tag of Array.isArray(input) ? input : [input]) {
-    revalidateTag(tag)
+    revalidateTag(tag, "max")
   }
 }

@@ -16,25 +16,25 @@
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
+    "@aha.chat/integration-google-sheets": "workspace:*",
     "@aha.chat/integration-messenger": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
     "@aha.chat/integration-zalo": "workspace:*",
-    "@aha.chat/integration-google-sheets": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
     "@faker-js/faker": "^10.1.0",
     "@paralleldrive/cuid2": "^3.1.0",
-    "bullmq": "^5.61.0",
+    "bullmq": "^5.63.0",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^22.18.12",
+    "@types/node": "^24.10.0",
     "concurrently": "^9.2.1",
-    "dotenv-cli": "^10.0.0",
+    "dotenv-cli": "^11.0.0",
     "tsup": "^8.5.0"
   }
 }

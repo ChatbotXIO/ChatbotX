@@ -1,11 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { FlowException } from "../schemas/exception"
 import { publishFlowSchema } from "../schemas/update-flow-schema"
@@ -75,7 +75,9 @@ export const publishFlowAction = chatbotActionClient
         })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#flows`)
-      revalidateTag(`chatbots:${chatbotId}#flows:${id}`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#flows`,
+        `chatbots:${chatbotId}#flows:${id}`,
+      ])
     },
   )

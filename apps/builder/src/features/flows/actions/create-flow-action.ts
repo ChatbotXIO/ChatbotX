@@ -2,12 +2,12 @@
 
 import { FolderType, type Prisma, prisma } from "@aha.chat/database"
 import { sendMessageNodeDefaultFn } from "@aha.chat/flow-config"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateFlowSchema,
@@ -55,6 +55,6 @@ export const createFlowAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#flows`)
+      revalidateCacheTags(`chatbots:${chatbotId}#flows`)
     },
   )

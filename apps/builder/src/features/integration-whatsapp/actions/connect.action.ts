@@ -12,10 +12,10 @@ import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { exchangeAccessToken } from "@aha.chat/integration-whatsapp/api/auth"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@aha.chat/integration-whatsapp/api/phone-number"
 import { AuthType } from "@aha.chat/sdk"
-import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { findChatbot } from "@/features/chatbot/queries"
 import { findOrganization } from "@/features/organization/queries"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { BaseException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -171,7 +171,7 @@ export const connectWhatsappAction = authActionClient
           })
         })
 
-        revalidateTag(`users:${ctx.user.id}#chatbotMembers`)
+        revalidateCacheTags(`users:${ctx.user.id}#chatbotMembers`)
 
         return {
           redirectUrl: `/chatbots/${chatbotId}/dashboard`,

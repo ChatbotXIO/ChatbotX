@@ -7,7 +7,6 @@ import type {
   WhatsappAuthValue,
 } from "@aha.chat/integration-whatsapp"
 import slugify from "@sindresorhus/slugify"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -71,6 +70,6 @@ export const createMessageTemplateAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#whatsapp#messageTemplates`)
+      revalidateCacheTags(`chatbots:${chatbotId}#whatsapp#messageTemplates`)
     },
   )

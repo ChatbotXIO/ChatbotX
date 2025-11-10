@@ -70,7 +70,7 @@ export function addNewNode(
   let labelVersion = 1
   for (const node of allNodes) {
     if (node.type === nodeType) {
-      labelVersion++
+      labelVersion += 1
     }
   }
 

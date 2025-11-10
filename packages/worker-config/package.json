@@ -5,15 +5,17 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
+    "@types/ioredis-mock": "^8.2.6",
     "typescript": "5.9.3"
   },
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.8",
-    "@types/node": "^22.18.12",
-    "bullmq": "^5.61.0",
+    "@types/node": "^24.10.0",
+    "bullmq": "^5.63.0",
     "ioredis": "^5.8.2",
+    "ioredis-mock": "^8.13.1",
     "zod": "^4.1.12"
   },
   "exports": {

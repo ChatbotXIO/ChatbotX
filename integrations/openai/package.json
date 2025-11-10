@@ -6,12 +6,12 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
     "@aha.chat/sdk": "workspace:*",
-    "@ai-sdk/openai": "^2.0.53",
-    "ai": "^5.0.76"
+    "@ai-sdk/openai": "^2.0.64",
+    "ai": "^5.0.89"
   },
   "devDependencies": {
-    "@types/node": "^22.18.12",
     "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.0",
     "typescript": "5.9.3"
   },
   "exports": {

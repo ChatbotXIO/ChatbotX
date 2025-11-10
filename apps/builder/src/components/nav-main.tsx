@@ -7,6 +7,7 @@ import {
   SidebarMenuItem,
 } from "@aha.chat/ui/components/ui/sidebar"
 import type { LucideIcon } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 export function NavMain({
   items,
@@ -22,6 +23,8 @@ export function NavMain({
     }[]
   }[]
 }) {
+  const pathname = usePathname()
+
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -29,7 +32,7 @@ export function NavMain({
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton
               asChild
-              isActive={item.isActive}
+              isActive={pathname.startsWith(item.url)}
               tooltip={item.title}
             >
               <a href={item.url}>

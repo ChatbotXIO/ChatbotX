@@ -2,7 +2,7 @@
 
 import { prisma } from "@aha.chat/database"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { invalidateCacheTags } from "@/lib/cache-helper"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { updateAIFunctionRequest } from "../schemas"
 
@@ -27,5 +27,5 @@ export const updateAIFunctionAction = chatbotActionClient
       },
       data,
     })
-    invalidateCacheTags(`chatbots:${chatbotId}#aiFunctions`)
+    revalidateCacheTags(`chatbots:${chatbotId}#aiFunctions`)
   })

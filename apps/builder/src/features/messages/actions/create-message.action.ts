@@ -22,13 +22,13 @@ import {
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
-import { revalidateTag } from "next/cache"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { findConversation } from "@/features/conversations/queries/list-conversations.query"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
@@ -170,6 +170,6 @@ export const createMessageAction = chatbotActionClient
       // Broadcast and send
       await Promise.all(promises)
 
-      revalidateTag(`chatbots:${chatbotId}:conversations`)
+      revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
     },
   )

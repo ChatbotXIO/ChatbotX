@@ -1,7 +1,6 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -10,6 +9,7 @@ import {
   type EditFolderSchema,
   editFolderSchema,
 } from "@/features/folders/schemas/edit-folder-schema"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const editFolderAction = chatbotActionClient
@@ -36,8 +36,10 @@ export const editFolderAction = chatbotActionClient
           data: parsedInput,
         })
 
-        revalidateTag(`chatbots:${chatbotId}#folders:${folder.folderType}`)
-        revalidateTag(`chatbots:${chatbotId}#folders:${folder.id}`)
+        revalidateCacheTags([
+          `chatbots:${chatbotId}#folders:${folder.folderType}`,
+          `chatbots:${chatbotId}#folders:${folder.id}`,
+        ])
       })
     },
   )

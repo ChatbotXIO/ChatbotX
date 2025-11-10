@@ -6,7 +6,7 @@ This is offical source code for Aha.Chat
 
 This project is 99.99% NodeJS/TypeScript.
 
-- nodejs: v22
+- nodejs: v24
 - corepack enable
 - package manager: pnpm
 - docker & docker-composer

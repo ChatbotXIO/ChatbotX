@@ -6,12 +6,12 @@ import {
   type Prisma,
   prisma,
 } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFlowIdIsExists } from "@/features/flows/queries"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateBroadcastRequest,
@@ -65,6 +65,6 @@ export const createBroadcastAction = chatbotActionClient
 
       // TODO: add logic to send broadcast
 
-      revalidateTag(`chatbots:${chatbotId}#broadcasts`)
+      revalidateCacheTags(`chatbots:${chatbotId}#broadcasts`)
     },
   )

@@ -58,7 +58,6 @@ export function MessengerConnect({ organization }: MessengerConnectProps) {
                 "v18.0",
             }}
             onFail={(error) => {
-              // biome-ignore lint/suspicious/noConsole: debug
               console.log("error", error)
               toast.error(t("connectFailed", { feature: "Messenger" }))
             }}

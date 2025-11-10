@@ -176,7 +176,6 @@ export default function WhatsappCreate({
           }
         }
       } catch {
-        // biome-ignore lint/suspicious/noConsole: debug
         console.log("handle message event error: ", event)
       }
     }
@@ -325,7 +324,6 @@ function SdkConnectSection({
               } as any
             }
             onFail={(error) => {
-              // biome-ignore lint/suspicious/noConsole: debug
               console.log("error", error)
               toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
             }}

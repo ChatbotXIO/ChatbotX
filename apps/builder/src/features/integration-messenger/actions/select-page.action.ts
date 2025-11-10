@@ -9,10 +9,10 @@ import {
   subscribePageToAppWebhook,
 } from "@aha.chat/integration-messenger/apis/page"
 import { AuthType } from "@aha.chat/sdk"
-import { revalidateTag } from "next/cache"
 import type { ChatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { findOrganizationSettingsByKey } from "@/features/organization/queries"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schemas"
 
@@ -95,7 +95,7 @@ export const selectPageAction = chatbotActionClient
           })
         })
 
-        revalidateTag(`chatbots:${chatbotId}#messenger`)
+        revalidateCacheTags(`chatbots:${chatbotId}#messenger`)
       } catch (_error) {
         throw new Error("Failed to select Facebook page")
       }

@@ -1,15 +1,16 @@
-import IORedis from "ioredis"
+import { default as IORedis, type RedisOptions } from "ioredis"
+import RedisMock from "ioredis-mock"
 import { keys } from "../keys"
 
-let connection: IORedis | null = null
+let permanentRedis: IORedis | null = null
 const env = keys()
 
 export function getRedisConnection() {
-  if (connection) {
-    return connection
+  if (permanentRedis) {
+    return permanentRedis
   }
 
-  connection = new IORedis(env.REDIS_URL, {
+  const options: RedisOptions = {
     maxRetriesPerRequest: null,
     enableReadyCheck: true,
     retryStrategy: (times) => {
@@ -23,9 +24,14 @@ export function getRedisConnection() {
       }
       return false
     },
-  })
+  }
 
-  return connection
+  permanentRedis =
+    env.NEXT_PHASE === "phase-production-build"
+      ? new RedisMock(env.REDIS_URL, options)
+      : new IORedis(env.REDIS_URL, options)
+
+  return permanentRedis
 }
 
 export const defaultJobOptions = {

@@ -3,11 +3,11 @@
 import { prisma } from "@aha.chat/database"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const disconnectMessengerAction = chatbotActionClient
@@ -37,6 +37,6 @@ export const disconnectMessengerAction = chatbotActionClient
         })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#messenger`)
+      revalidateCacheTags(`chatbots:${chatbotId}#messenger`)
     },
   )

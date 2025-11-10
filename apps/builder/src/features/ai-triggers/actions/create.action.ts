@@ -1,7 +1,6 @@
 "use server"
 
 import { type Prisma, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type CreateAITriggerRequest,
   createAITriggerRequest,
@@ -11,6 +10,7 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const createAITriggerAction = chatbotActionClient
@@ -48,6 +48,6 @@ export const createAITriggerAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#aiTriggers`)
+      revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
     },
   )

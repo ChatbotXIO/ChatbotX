@@ -5,16 +5,16 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^22.18.12",
-    "@types/nodemailer": "^7.0.2",
+    "@types/node": "^24.10.0",
+    "@types/nodemailer": "^7.0.3",
     "@types/react": "19.2.2",
-    "react-email": "4.3.1",
+    "react-email": "4.3.2",
     "typescript": "5.9.3"
   },
   "dependencies": {
     "@react-email/components": "0.5.7",
     "@t3-oss/env-nextjs": "^0.13.8",
-    "nodemailer": "^7.0.9",
+    "nodemailer": "^7.0.10",
     "react": "19.2.0",
     "zod": "^4.1.12"
   },

@@ -3,7 +3,7 @@ import { headers } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const cookies = getSessionCookie(request)
   if (!(cookies || request.nextUrl.pathname.includes("/signin"))) {
     return NextResponse.redirect(new URL("/signin", request.url))
@@ -28,7 +28,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  runtime: "nodejs",
   matcher: [
     "/((?!api|webchat|signin|integrations|zalo_verifier|pricing|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
   ],

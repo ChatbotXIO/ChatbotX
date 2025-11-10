@@ -10,12 +10,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^22.18.12",
-    "ky": "^1.13.0"
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "@types/node": "^24.10.0",
+    "ky": "^1.14.0",
+    "partykit": "0.0.115",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "dotenv-cli": "^10.0.0",
-    "partykit": "0.0.115"
+    "dotenv-cli": "^11.0.0"
   }
 }

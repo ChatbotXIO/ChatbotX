@@ -1,17 +1,26 @@
 import { InboxType } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { SiWhatsapp, SiWhatsappHex } from "@icons-pack/react-simple-icons"
-import { PlusCircleIcon } from "lucide-react"
-import Link from "next/link"
-import { useTranslations } from "next-intl"
 import { use } from "react"
 import type { listInboxes } from "../queries"
 import type { InboxResource } from "../schemas"
+import InboxMessengerCard from "./inbox-messenger-card"
+import InboxNewCard from "./inbox-new-card"
+import InboxWebchatCard from "./inbox-webchat-card"
+import InboxWhatsappCard from "./inbox-whatsapp-card"
+import InboxZaloCard from "./inbox-zalo-card"
 
 type InboxCardListProps = {
   chatbotId: string
   inboxesPromise: Promise<[Awaited<ReturnType<typeof listInboxes>>]>
+}
+
+const cardConfigs: Record<
+  InboxType,
+  React.ComponentType<{ inbox: InboxResource }>
+> = {
+  [InboxType.Whatsapp]: InboxWhatsappCard,
+  [InboxType.Webchat]: InboxWebchatCard,
+  [InboxType.Messenger]: InboxMessengerCard,
+  [InboxType.Zalo]: InboxZaloCard,
 }
 
 export default function InboxCardList({
@@ -20,57 +29,23 @@ export default function InboxCardList({
 }: InboxCardListProps) {
   const [{ data: inboxes }] = use(inboxesPromise)
 
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      {inboxes.map((inbox) => (
-        <div key={inbox.id}>
-          {inbox.inboxType === InboxType.Whatsapp && (
-            <InboxWhatsappCard inbox={inbox} />
-          )}
-        </div>
-      ))}
+  console.log(inboxes)
 
-      <InboxNewCard chatbotId={chatbotId} />
+  return (
+    <div className="flex flex-wrap gap-4">
+      {inboxes.map((inbox) =>
+        (() => {
+          const CardComponent = cardConfigs[inbox.inboxType]
+          return (
+            <div className="w-[416px]">
+              <CardComponent inbox={inbox} key={inbox.id} />
+            </div>
+          )
+        })(),
+      )}
+      <div className="w-[416px]">
+        <InboxNewCard chatbotId={chatbotId} />
+      </div>
     </div>
-  )
-}
-
-function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
-  const t = useTranslations()
-
-  return (
-    <Card className="py-3" key={inbox.id}>
-      <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <SiWhatsapp
-          aria-hidden="true"
-          className="size-5"
-          fill={SiWhatsappHex}
-        />
-        <p className="flex-1 truncate text-sm">
-          {inbox.integrationWhatsapp?.name}
-        </p>
-        <Button size="sm" type="button" variant="secondary">
-          {t("actions.testNow")}
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
-
-function InboxNewCard({ chatbotId }: { chatbotId: string }) {
-  const t = useTranslations()
-
-  return (
-    <Card className="items-center justify-center py-0">
-      <CardContent className="justify-middle flex h-full w-full flex-wrap items-center gap-2 px-0">
-        <Link
-          className="flex h-14 w-full items-center justify-center gap-2 text-sm"
-          href={`/channels/create?chatbotId=${chatbotId}`}
-        >
-          <PlusCircleIcon className="h-4 w-4" />
-          {t("actions.createFeature", { feature: t("fields.inbox.label") })}
-        </Link>
-      </CardContent>
-    </Card>
   )
 }

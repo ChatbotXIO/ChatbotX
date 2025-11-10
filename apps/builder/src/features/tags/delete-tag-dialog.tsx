@@ -70,7 +70,7 @@ export function DeleteTagsDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.deleteTitle", {
+            {t("messages.deleteFeature", {
               feature: t("fields.tag.label"),
             })}
           </DialogTitle>

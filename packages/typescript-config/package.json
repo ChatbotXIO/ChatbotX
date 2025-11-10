@@ -7,6 +7,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@types/node": "^22.18.12"
+    "@types/node": "^24.10.0"
   }
 }

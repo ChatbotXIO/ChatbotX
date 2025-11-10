@@ -60,7 +60,6 @@ export function FlowEditToolbar({
       edges,
     })
 
-    // biome-ignore lint/suspicious/noConsole: debug
     console.log("error", error)
     if (success) {
       executePublish()

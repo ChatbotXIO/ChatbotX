@@ -11,13 +11,13 @@
     "@paralleldrive/cuid2": "^3.1.0",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
-    "ky": "^1.13.0",
+    "ky": "^1.14.0",
     "remeda": "^2.32.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@types/node": "^22.18.12",
     "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.0",
     "typescript": "5.9.3"
   },
   "exports": {

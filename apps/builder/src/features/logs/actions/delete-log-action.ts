@@ -1,11 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type DeleteLogsRequest,
@@ -33,10 +33,6 @@ export const deleteLogAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#logs#${parsedInput.logType}`)
-
-      return {
-        successful: true,
-      }
+      revalidateCacheTags(`chatbots:${chatbotId}#logs#${parsedInput.logType}`)
     },
   )

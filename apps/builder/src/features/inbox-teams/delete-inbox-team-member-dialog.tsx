@@ -62,7 +62,7 @@ export function DeleteInboxTeamMembersDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.deleteTitle", {
+            {t("messages.deleteFeature", {
               feature: t("fields.inboxTeamMember.label"),
             })}
           </DialogTitle>

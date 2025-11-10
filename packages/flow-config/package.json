@@ -5,14 +5,14 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.0",
     "@types/react": "19.2.2",
-    "@types/node": "^22.18.12",
     "typescript": "5.9.3"
   },
   "dependencies": {
     "@aha.chat/database": "workspace:*",
     "@paralleldrive/cuid2": "^3.1.0",
-    "@xyflow/react": "^12.9.0",
+    "@xyflow/react": "^12.9.2",
     "zod": "^4.1.12"
   },
   "exports": {

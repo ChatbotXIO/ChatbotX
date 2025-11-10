@@ -3,7 +3,6 @@
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -61,6 +60,6 @@ export const syncMessageTemplateAction = chatbotActionClient
         })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#whatsapp#messageTemplates`)
+      revalidateCacheTags(`chatbots:${chatbotId}#whatsapp#messageTemplates`)
     },
   )

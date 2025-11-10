@@ -87,6 +87,20 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64 #,linux/arm64
 
+      - name: Build and push realtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/partysocket/docker/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-realtime:${{ steps.meta.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-realtime:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64 #,linux/arm64
+
       - name: Output image URLs
         if: github.event_name != 'pull_request'
         run: |

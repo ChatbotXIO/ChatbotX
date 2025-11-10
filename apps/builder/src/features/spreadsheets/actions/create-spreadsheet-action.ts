@@ -1,11 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateSpreadsheetRequest,
@@ -37,6 +37,6 @@ export const createSpreadsheetAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#spreadsheets`)
+      revalidateCacheTags(`chatbots:${chatbotId}#spreadsheets`)
     },
   )

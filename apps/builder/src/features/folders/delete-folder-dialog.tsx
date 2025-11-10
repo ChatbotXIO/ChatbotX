@@ -53,7 +53,7 @@ export function DeleteFolderDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.deleteTitle", { feature: t("fields.folder.label") })}
+            {t("messages.deleteFeature", { feature: t("fields.folder.label") })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("dialog.deleteConfirmation", {

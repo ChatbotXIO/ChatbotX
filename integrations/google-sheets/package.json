@@ -6,12 +6,12 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
     "@aha.chat/sdk": "workspace:*",
-    "google-auth-library": "^10.4.1",
-    "googleapis": "^164.1.0"
+    "google-auth-library": "^10.5.0",
+    "googleapis": "^165.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.18.12",
     "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.0",
     "typescript": "5.9.3"
   },
   "exports": {

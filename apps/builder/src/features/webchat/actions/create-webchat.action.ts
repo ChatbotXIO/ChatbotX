@@ -3,8 +3,8 @@
 import { prisma } from "@aha.chat/database"
 import { InboxType } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
-import { revalidateTag } from "next/cache"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { createWebchatRequest } from "../schemas/webchat.schema"
 
@@ -33,5 +33,5 @@ export const createWebchatAction = chatbotActionClient
       })
     })
 
-    revalidateTag(`chatbots:${chatbotId}#webchats`)
+    revalidateCacheTags(`chatbots:${chatbotId}#webchats`)
   })

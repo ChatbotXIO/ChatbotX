@@ -41,7 +41,6 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
             break
         }
       } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: wip
         console.error("Unable to parse realtime message", error)
       }
     },
