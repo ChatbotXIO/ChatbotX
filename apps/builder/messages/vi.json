@@ -122,7 +122,14 @@
     "uploadFile": "Tải lên tệp",
     "view": "Xem",
     "viewProject": "Xem dự án",
-    "waitUserAnswer": "Chờ câu trả lời người dùng"
+    "waitUserAnswer": "Chờ câu trả lời người dùng",
+    "duplicate": "Nhân bản",
+    "getDraftLink": "Lấy liên kết bản nháp",
+    "getPublishedLink": "Lấy liên kết đã xuất bản",
+    "analytics": "Phân tích",
+    "flowVersions": "Phiên bản luồng",
+    "revertToPublished": "Khôi phục về phiên bản đã xuất bản",
+    "search": "Tìm kiếm"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -451,7 +458,12 @@
       "placeholder": "Loại trì hoãn"
     },
     "delayUnit": {
-      "label": "Đơn vị trì hoãn"
+      "label": "Đơn vị trì hoãn",
+      "days": "Ngày",
+      "hours": "Giờ",
+      "minutes": "Phút",
+      "placeholder": "Chọn đơn vị",
+      "seconds": "Giây"
     },
     "description": {
       "label": "Mô tả",
@@ -721,6 +733,9 @@
       "label": "Phụ đề",
       "placeholder": "Nhập phụ đề"
     },
+    "syncToMessenger": {
+      "label": "Đồng bộ với Messenger"
+    },
     "tag": {
       "label": "Thẻ"
     },
@@ -798,6 +813,36 @@
     },
     "whatsappFlow": {
       "label": "Luồng WhatsApp"
+    },
+    "shortText": {
+      "label": "Văn bản ngắn"
+    },
+    "number": {
+      "label": "Số"
+    },
+    "date": {
+      "label": "Ngày"
+    },
+    "datetime": {
+      "label": "Ngày giờ"
+    },
+    "boolean": {
+      "label": "Boolean"
+    },
+    "longText": {
+      "label": "Văn bản dài"
+    },
+    "replyFormat": {
+      "number": "Số",
+      "text": "Văn bản",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "image": "Hình ảnh",
+      "file": "Tệp",
+      "link": "Liên kết",
+      "date": "Ngày",
+      "datetime": "Ngày giờ",
+      "location": "Vị trí"
     }
   },
   "flows": {
@@ -857,7 +902,18 @@
       "unarchiveConversation": "Bỏ lưu trữ cuộc trò chuyện",
       "unassignConversation": "Bỏ gán cuộc trò chuyện",
       "unfollowConversation": "Bỏ theo dõi cuộc trò chuyện",
-      "unsubscribeBroadcast": "Hủy đăng ký phát sóng"
+      "unsubscribeBroadcast": "Hủy đăng ký phát sóng",
+      "waitUserReply": "Chờ người dùng trả lời",
+      "getUserInput": "Lấy đầu vào người dùng",
+      "sendCarousel": "Gửi băng chuyền",
+      "actions": "Hành động",
+      "findGif": "Tìm Gif",
+      "spreadsheetGetRow": "Lấy hàng",
+      "spreadsheetAddRow": "Thêm hàng",
+      "spreadsheetUpdateRow": "Cập nhật hàng",
+      "spreadsheetSendData": "Gửi dữ liệu",
+      "spreadsheetGetRandomRow": "Lấy hàng ngẫu nhiên",
+      "spreadsheetClearRow": "Xóa hàng"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -933,10 +989,26 @@
     "title": "Chung"
   },
   "googleSheets": {
+    "delete": {
+      "dialog_title": "Xóa bảng tính"
+    },
+    "spreadsheet": "Bảng tính",
+    "name": "Tên bảng tính",
+    "link": "Liên kết bảng tính",
+    "add": {
+      "title": "Thêm bảng tính"
+    },
+    "confirmDeleteDesc": "Bạn có chắc chắn muốn xóa Google Sheets này?",
+    "update": {
+      "dialog_title": "Cập nhật bảng tính"
+    },
+    "deleted": "Đã xóa Google Sheets thành công",
+    "length": "Độ dài Google Sheets",
     "setting": {
       "description": "Mô tả Google Sheets",
       "label": "Google Sheets"
     },
+    "header": "Tiêu đề cột",
     "title": "Google Sheets"
   },
   "inboxTeam": {
@@ -973,15 +1045,21 @@
     "title": "Tích hợp"
   },
   "messages": {
+    "poweredBy": "Được cung cấp bởi {name}",
+    "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm khóa API GIPHY trong cài đặt tổ chức.",
     "actionCompleted": "Hành động hoàn tất thành công",
     "actionFailed": "Hành động thất bại. Vui lòng thử lại.",
     "archivedSuccessfully": "Đã lưu trữ {feature} thành công",
     "connectedSuccessfully": "{feature} đã được kết nối thành công",
     "connectFailed": "Không thể kết nối {feature}",
     "connectSuccess": "Đã kết nối {feature} thành công",
+    "success": "Thành công",
+    "failed": "Thất bại",
     "copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
     "createdFailed": "Tạo {feature} thất bại",
     "createdSuccessfully": "{feature} đã được tạo thành công",
+    "createSuccess": "{feature} đã được tạo thành công",
+    "createFeature": "Tạo {feature}",
     "deleteComingSoon": "Chức năng xóa sẽ sớm có",
     "deletedSuccessfully": "{feature} đã được xóa thành công",
     "deleteFileComingSoon": "Chức năng xóa tệp sẽ sớm có",
@@ -1007,7 +1085,12 @@
     "updateFileComingSoon": "Chức năng cập nhật tệp sẽ sớm có",
     "uploadFailed": "Tải lên thất bại",
     "videoError": "Lỗi video",
-    "viewFileComingSoon": "Chức năng xem tệp sẽ sớm có"
+    "viewFileComingSoon": "Chức năng xem tệp sẽ sớm có",
+    "noItemsFound": "Không tìm thấy mục nào",
+    "editFeature": "Chỉnh sửa {feature}",
+    "deleteFeature": "Xóa {feature}",
+    "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
+    "addFeature": "Thêm {feature}"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",

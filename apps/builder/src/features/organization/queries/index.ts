@@ -8,6 +8,7 @@ import {
   organizationSettingsSchema,
 } from "@aha.chat/database/types"
 import { BaseException } from "@/lib/errors/exception"
+import { logger } from "@/lib/log"
 
 export async function findOrganization(
   where: OrganizationWhereInput,
@@ -31,6 +32,9 @@ export async function findOrganizationSettings(
   const { data: settings } = organizationSettingsSchema.safeParse(
     organization?.settings,
   )
+
+  logger.info("Organization settings", { settings })
+
   if (!settings) {
     throw new Error("Organization settings is not valid")
   }

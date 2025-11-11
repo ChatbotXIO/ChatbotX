@@ -37,8 +37,8 @@ export default function InboxCardList({
         (() => {
           const CardComponent = cardConfigs[inbox.inboxType]
           return (
-            <div className="w-[416px]">
-              <CardComponent inbox={inbox} key={inbox.id} />
+            <div className="w-[416px]" key={inbox.id}>
+              <CardComponent inbox={inbox} />
             </div>
           )
         })(),
