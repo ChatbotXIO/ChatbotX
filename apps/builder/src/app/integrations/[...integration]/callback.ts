@@ -8,6 +8,7 @@ import { z } from "zod"
 import { findChatbot } from "@/features/chatbot/queries"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 
 const stateValidationSchema = z.object({
@@ -48,12 +49,12 @@ export const handleCallback = async (
   let authResult: BaseAuthValue
   let additionalIntegrationCreationData = {}
   switch (integrationType) {
-    case IntegrationType.Zalo: {
+    case IntegrationType.zalo: {
       if (!organizationSettings.zalo) {
         return notFound()
       }
 
-      const authValue = (await integrations.Zalo.handleRequest({
+      const authValue = (await integrations.zalo.handleRequest({
         config: {
           ...organizationSettings.zalo,
           redirectUrl: new URL(
@@ -71,7 +72,7 @@ export const handleCallback = async (
         await tx.inbox.create({
           data: {
             chatbotId: stateParams.chatbotId,
-            inboxType: IntegrationType.Zalo,
+            inboxType: IntegrationType.zalo,
             sourceId: authValue.oaId,
             integrationZalo: {
               create: {
@@ -84,15 +85,18 @@ export const handleCallback = async (
           },
         })
       })
+
+      revalidateCacheTags(`chatbots:${stateParams.chatbotId}#zalos`)
+
       return redirect(stateParams.referer)
     }
 
-    case IntegrationType.GoogleSheets: {
+    case IntegrationType.googleSheets: {
       if (!organizationSettings.googleSheets) {
         return notFound()
       }
 
-      authResult = (await integrations.GoogleSheets.handleRequest?.({
+      authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...organizationSettings.googleSheets,
           redirectUrl: new URL(

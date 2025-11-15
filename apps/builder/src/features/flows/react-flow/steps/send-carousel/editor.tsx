@@ -23,7 +23,7 @@ import {
   TrashIcon,
 } from "lucide-react"
 import { useState } from "react"
-import { useFieldArray, useFormContext } from "react-hook-form"
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import SendCardStepEditor from "@/features/flows/react-flow/steps/send-card/editor"
 
 type SendCarouselStepEditorProps = {
@@ -36,13 +36,13 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
   const [api, setApi] = useState<CarouselApi>()
   const { selectedSnap, snapCount } = useSelectedSnapDisplay(api)
 
-  const { control, watch, setValue } = useFormContext()
+  const { control, setValue } = useFormContext()
   const { fields, append, insert, remove } = useFieldArray({
     control,
     name: `${parentName}.cards`,
   })
 
-  const layout = watch(`${parentName}.layout`)
+  const layout = useWatch({ name: `${parentName}.layout` })
 
   const insertCard = () => {
     const startIndex = selectedSnap

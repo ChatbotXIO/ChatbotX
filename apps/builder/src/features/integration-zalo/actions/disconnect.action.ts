@@ -26,6 +26,6 @@ export const disconnectZaloAction = chatbotActionClient
         })
       })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#zalo`)
+      revalidateCacheTags(`chatbots:${chatbotId}#zalos`)
     },
   )

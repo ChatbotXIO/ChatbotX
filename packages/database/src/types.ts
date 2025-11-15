@@ -129,3 +129,24 @@ export const WhatsappTemplateCategory = {
 } as const
 export type WhatsappTemplateCategory =
   (typeof WhatsappTemplateCategory)[keyof typeof WhatsappTemplateCategory]
+
+export const reservedCustomFieldNames = {
+  first_name: "first_name",
+  last_name: "last_name",
+  full_name: "full_name",
+  email: "email",
+  phone_number: "phone_number",
+  avatar: "avatar",
+  locale: "locale",
+  gender: "gender",
+  timezone: "timezone",
+  user_id: "user_id",
+  user_tags: "user_tags",
+  account_name: "account_name",
+  account_id: "account_id",
+  page_user_name: "page_user_name",
+  last_input: "last_input",
+  current_time: "current_time",
+} as const
+export type ReservedCustomFieldNames =
+  (typeof reservedCustomFieldNames)[keyof typeof reservedCustomFieldNames]

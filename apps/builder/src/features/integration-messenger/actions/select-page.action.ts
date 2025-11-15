@@ -1,7 +1,7 @@
 "use server"
 
 import { type Prisma, prisma } from "@aha.chat/database"
-import type { ChatbotModel } from "@aha.chat/database/types"
+import type { UserModel } from "@aha.chat/database/types"
 import { IntegrationType } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import {
@@ -9,52 +9,66 @@ import {
   subscribePageToAppWebhook,
 } from "@aha.chat/integration-messenger/apis/page"
 import { AuthType } from "@aha.chat/sdk"
-import type { ChatbotIdRequestParams } from "@/features/common/schemas"
-import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { findOrganizationSettingsByKey } from "@/features/organization/queries"
+import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
+import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
+import { verifyOrganizationSettings } from "@/features/organization/queries"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { BaseException } from "@/lib/errors/exception"
+import { logger } from "@/lib/log"
+import { authActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schemas"
 
-export const selectPageAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const selectPageAction = authActionClient
   .inputSchema(selectPageRequest)
   .action(
     async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId],
       parsedInput,
+      ctx,
     }: {
-      ctx: {
-        chatbot: ChatbotModel
-      }
-      bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: SelectPageRequest
+      ctx: { user: UserModel }
     }) => {
       try {
-        const messengerSetting = await findOrganizationSettingsByKey(
-          {
-            id: ctx.chatbot.organizationId,
-          },
-          "messenger",
-        )
+        let chatbotId = parsedInput.chatbotId
+        const { organization } =
+          await identifyChatbotAndOrganizationFromRequest(parsedInput.chatbotId)
+        const settings = await verifyOrganizationSettings(organization)
+        const messengerSettings = settings.messenger
+        if (!messengerSettings) {
+          throw new BaseException("Messenger settings not found")
+        }
 
         await prisma.$transaction(async (tx) => {
+          // create new chatbot if not exists
+          if (!chatbotId) {
+            const chatbot = await createSimpleChatbot(
+              tx,
+              ctx.user.id,
+              organization,
+              {
+                name: parsedInput.pageName,
+                accountTimezone: "UTC",
+                organizationId: organization.id,
+              },
+            )
+            chatbotId = chatbot.id
+          }
+
           const longLivedToken = await exchangeLongLivedToken(
-            messengerSetting,
+            messengerSettings,
             parsedInput.accessToken,
           )
 
           await subscribePageToAppWebhook({
             pageId: parsedInput.pageId,
             accessToken: longLivedToken,
-            version: messengerSetting.version,
+            version: messengerSettings.version,
           })
 
           const auth: MessengerAuthValue = {
             authType: AuthType.oauth2,
-            clientId: messengerSetting.clientId,
-            clientSecret: messengerSetting.clientSecret,
+            clientId: messengerSettings.clientId,
+            clientSecret: messengerSettings.clientSecret,
             redirectUrl: "",
             tokens: {
               accessToken: longLivedToken,
@@ -62,7 +76,7 @@ export const selectPageAction = chatbotActionClient
             metadata: {
               pageId: parsedInput.pageId,
               pageName: parsedInput.pageName,
-              version: messengerSetting.version,
+              version: messengerSettings.version,
             },
           }
 
@@ -70,7 +84,7 @@ export const selectPageAction = chatbotActionClient
             where: {
               chatbotId_inboxType_sourceId: {
                 chatbotId,
-                inboxType: IntegrationType.Messenger,
+                inboxType: IntegrationType.messenger,
                 sourceId: parsedInput.pageId,
               },
             },
@@ -79,7 +93,7 @@ export const selectPageAction = chatbotActionClient
             },
             create: {
               chatbotId,
-              inboxType: IntegrationType.Messenger,
+              inboxType: IntegrationType.messenger,
               sourceId: parsedInput.pageId,
             },
           })
@@ -96,7 +110,8 @@ export const selectPageAction = chatbotActionClient
         })
 
         revalidateCacheTags(`chatbots:${chatbotId}#messenger`)
-      } catch (_error) {
+      } catch (error) {
+        logger.error("Failed to select Facebook page", { error })
         throw new Error("Failed to select Facebook page")
       }
     },

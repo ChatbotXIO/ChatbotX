@@ -17,8 +17,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/signin", request.url))
   }
 
+  // Calculate proxy url
+  const host =
+    request.headers.get("x-forwarded-host") || request.headers.get("host")
+  const protocol = request.headers.get("x-forwarded-proto") || "https"
+  const proxyUrl = `${protocol}://${host}${request.nextUrl.pathname}${request.nextUrl.search}`
+
   const requestHeaders = new Headers(request.headers)
-  requestHeaders.set("x-url", request.url)
+  requestHeaders.set("x-url", proxyUrl)
 
   return NextResponse.next({
     request: {

@@ -64,7 +64,7 @@ export function ComboboxField<T extends FieldValues>({
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0">
+          <PopoverContent className="w-[200px] p-0" align="start">
             <Command>
               <CommandInput placeholder="Search..." className="h-9" />
               <CommandList>

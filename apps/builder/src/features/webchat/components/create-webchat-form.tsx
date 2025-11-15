@@ -5,6 +5,7 @@ import {
   PersistentMenuType,
 } from "@aha.chat/database/types"
 import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -31,7 +32,6 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import type { getFlows } from "@/features/flows/queries"
 import { createWebchatAction } from "../actions/create-webchat.action"
-// import { getWebchatTemplates } from "../queries/get-webchat-templates.query"
 import { createWebchatRequest } from "../schemas/webchat.schema"
 
 type CreateWebchatFormProps = {
@@ -48,25 +48,6 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
     label: flow.name,
     value: flow.id,
   }))
-  // const [domains, setDomains] = useState<string[]>([""])
-  //   const [templates, setTemplates] = useState<
-  //     Awaited<ReturnType<typeof getWebchatTemplates>>
-  //   >([])
-
-  //   useEffect(() => {
-  //     const loadTemplates = async () => {
-  //       try {
-  //         const templatesData = await getWebchatTemplates()
-  //         setTemplates(templatesData)
-  //         if (templatesData.length > 0) {
-  //           form.setValue("webWidgetTemplateId", templatesData[0].id)
-  //         }
-  //       } catch (error) {
-  //         console.error("Failed to load templates:", error)
-  //       }
-  //     }
-  //     loadTemplates()
-  //   }, [form])
 
   const conversationStarterTypeOptions: {
     value: ConversationStarterType
@@ -107,7 +88,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
   )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createWebchatAction.bind(null, chatbotId),
+    createWebchatAction,
     zodResolver(createWebchatRequest),
     {
       actionProps: {
@@ -125,6 +106,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
       },
       formProps: {
         defaultValues: {
+          chatbotId,
           name: "",
           welcomeFlowId: null,
           authorizedDomains: [],
@@ -172,10 +154,11 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <InputField label="Name" name="name" required />
 
-        <SelectField
+        <ComboboxField
           description={t("fields.welcomeFlowId.description")}
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
+          options={flowOptions}
         />
 
         <Separator />

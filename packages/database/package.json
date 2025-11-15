@@ -10,7 +10,7 @@
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@prisma/client": "^6.19.0",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "dotenv-cli": "^11.0.0",
     "prisma": "6.19.0"
   },

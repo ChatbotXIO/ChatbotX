@@ -6,6 +6,7 @@ import {
   PersistentMenuType,
 } from "@aha.chat/database/types"
 import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -184,10 +185,11 @@ export function UpdateWebchatForm({
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <InputField label="Name" name="name" required />
 
-        <SelectField
+        <ComboboxField
           description={t("fields.welcomeFlowId.description")}
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
+          options={flowOptions}
         />
 
         <Separator />
@@ -420,7 +422,11 @@ export function UpdateWebchatForm({
         />
 
         <DialogFooter>
-          <Button type="button" variant="link">
+          <Button
+            onClick={() => router.push(`/chatbots/${chatbotId}/webchats`)}
+            type="button"
+            variant="link"
+          >
             {t("actions.cancel")}
           </Button>
           <Button

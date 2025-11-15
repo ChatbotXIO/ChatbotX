@@ -1,6 +1,6 @@
 "use client"
 
-import { InboxType } from "@aha.chat/database/types"
+import { InboxType, type OrganizationSettings } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Card,
@@ -18,7 +18,7 @@ import {
   SiZaloHex,
 } from "@icons-pack/react-simple-icons"
 import { AppWindowIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useMemo } from "react"
 
@@ -35,31 +35,32 @@ const createInboxOptions = (t: (key: string) => string): InboxOption[] => [
     title: t("whatsapp.title"),
     icon: SiWhatsapp,
     iconColor: SiWhatsappHex,
-    value: InboxType.Whatsapp,
+    value: InboxType.whatsapp,
   },
   {
     title: t("messenger.title"),
     icon: SiMessenger,
     iconColor: SiMessengerHex,
-    value: InboxType.Messenger,
+    value: InboxType.messenger,
   },
   {
     title: t("zalo.title"),
     icon: SiZalo,
     iconColor: SiZaloHex,
-    value: InboxType.Zalo,
+    value: InboxType.zalo,
   },
   {
     title: t("webchat.title"),
     icon: AppWindowIcon,
     iconColor: "none",
-    value: InboxType.Webchat,
+    value: InboxType.webchat,
   },
 ]
 
-function InboxSelectCard() {
+function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
   const t = useTranslations()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Memoize inbox options to prevent recreation on every render
   const inboxOptions = useMemo(() => createInboxOptions(t), [t])
@@ -67,9 +68,11 @@ function InboxSelectCard() {
   // Memoize navigation handler to prevent recreation on every render
   const handleInboxSelect = useCallback(
     (inboxType: InboxType) => {
-      router.push(`/channels/create?channel=${inboxType}`)
+      router.push(
+        `/channels/create?${searchParams.toString()}&channel=${inboxType}`,
+      )
     },
-    [router],
+    [router, searchParams],
   )
 
   return (
@@ -94,6 +97,7 @@ function InboxSelectCard() {
               </div>
               <Button
                 aria-label={`Continue with ${inbox.title}`}
+                disabled={!(inbox.value in settings)}
                 onClick={() => handleInboxSelect(inbox.value)}
                 size="sm"
                 type="button"

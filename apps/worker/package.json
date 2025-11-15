@@ -26,15 +26,15 @@
     "@aha.chat/worker-config": "workspace:*",
     "@faker-js/faker": "^10.1.0",
     "@paralleldrive/cuid2": "^3.1.0",
-    "bullmq": "^5.63.0",
+    "bullmq": "^5.63.2",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
-    "tsup": "^8.5.0"
+    "tsup": "^8.5.1"
   }
 }

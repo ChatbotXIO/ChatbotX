@@ -3,22 +3,41 @@
 import { prisma } from "@aha.chat/database"
 import { InboxType } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
-import { chatbotIdRequestParams } from "@/features/common/schemas"
+import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
+import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { authActionClient } from "@/lib/safe-action"
 import { createWebchatRequest } from "../schemas/webchat.schema"
 
-export const createWebchatAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createWebchatAction = authActionClient
   .inputSchema(createWebchatRequest)
-  .action(async ({ parsedInput, bindArgsParsedInputs: [chatbotId] }) => {
+  .action(async ({ parsedInput, ctx }) => {
     const { authorizedDomains, ...rest } = parsedInput
 
+    let chatbotId = parsedInput.chatbotId
+    const { organization } = await identifyChatbotAndOrganizationFromRequest(
+      parsedInput.chatbotId,
+    )
+
     await prisma.$transaction(async (tx) => {
+      if (!chatbotId) {
+        const newChatbot = await createSimpleChatbot(
+          tx,
+          ctx.user.id,
+          organization,
+          {
+            name: parsedInput.name,
+            accountTimezone: "UTC",
+            organizationId: organization.id,
+          },
+        )
+        chatbotId = newChatbot.id
+      }
+
       const inbox = await tx.inbox.create({
         data: {
           chatbotId,
-          inboxType: InboxType.Webchat,
+          inboxType: InboxType.webchat,
           sourceId: createId(),
         },
       })

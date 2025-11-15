@@ -5,12 +5,12 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.926.0",
-    "@aws-sdk/s3-presigned-post": "^3.926.0",
+    "@aws-sdk/client-s3": "^3.932.0",
+    "@aws-sdk/s3-presigned-post": "^3.932.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "aws4fetch": "^1.0.20",
     "ky": "^1.14.0",

@@ -84,6 +84,7 @@ export const ButtonGroupEditor = (props: ButtonGroupEditorProps) => {
 
       <Button
         className="my-1.5 w-full"
+        disabled={fields.length >= 3}
         onClick={addButton}
         type="button"
         variant="secondary"

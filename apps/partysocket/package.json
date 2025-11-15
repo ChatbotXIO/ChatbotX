@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.8",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "ky": "^1.14.0",
     "partykit": "0.0.115",
     "zod": "^4.1.12"

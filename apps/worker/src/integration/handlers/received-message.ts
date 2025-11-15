@@ -27,7 +27,7 @@ const getDBIntegration = async (
   payload: any,
 ) => {
   switch (integrationName) {
-    case InboxType.Whatsapp:
+    case InboxType.whatsapp:
       return await prisma.integrationWhatsapp.findFirstOrThrow({
         where: {
           phoneNumberId: (payload as OnMessageArgs).phoneID,
@@ -36,7 +36,7 @@ const getDBIntegration = async (
           chatbot: true,
         },
       })
-    case InboxType.Messenger:
+    case InboxType.messenger:
       return await prisma.integrationMessenger.findFirstOrThrow({
         where: {
           pageId: (payload as MessengerWebhookEvent).entry[0].id,
@@ -45,7 +45,7 @@ const getDBIntegration = async (
           chatbot: true,
         },
       })
-    case InboxType.Zalo: {
+    case InboxType.zalo: {
       const input = payload as ZaloWebhookEvent
 
       return await prisma.integrationZalo.findFirstOrThrow({
@@ -221,4 +221,4 @@ export const receiveMessage = async ({
 }
 
 const canGetUserProfileIfNeeded = (integrationName: string) =>
-  integrationName === InboxType.Messenger
+  integrationName === InboxType.messenger

@@ -13,7 +13,7 @@ import {
 import { parseISO } from "date-fns"
 import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useFormContext } from "react-hook-form"
+import { useFormContext, useWatch } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import DelayTypeSelect from "@/features/flows/react-flow/steps/wait/components/delay-type-select"
 import DelayUnitSelect from "@/features/flows/react-flow/steps/wait/components/delay-unit-select"
@@ -27,13 +27,11 @@ const WaitStepEditor = (props: WaitStepEditorProps) => {
   const { parentName } = props
 
   const t = useTranslations()
-  const { register, watch, setValue } = useFormContext()
+  const { register, setValue } = useFormContext()
 
-  const [delayType, repeat, datetime] = watch([
-    `${parentName}.delayType`,
-    `${parentName}.repeat`,
-    `${parentName}.datetime`,
-  ])
+  const delayType = useWatch({ name: `${parentName}.delayType` })
+  const repeat = useWatch({ name: `${parentName}.repeat` })
+  const datetime = useWatch({ name: `${parentName}.datetime` })
 
   return (
     <div className="flex flex-col gap-3">

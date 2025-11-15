@@ -17,6 +17,9 @@ RUN turbo prune partysocket --docker
 FROM base AS deps
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
+RUN apt-get update && apt-get install -y ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY apps/partysocket/docker/rootfs/ /
 
 COPY --from=pre /app/out/json/ .

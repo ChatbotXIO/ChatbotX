@@ -12,7 +12,7 @@ export function CreateBroadcastHeader(
   description: string
 } {
   const header = useMemo(() => {
-    if (inboxType === InboxType.Whatsapp) {
+    if (inboxType === InboxType.whatsapp) {
       if (subaction === BroadcastSubaction.templateMessage) {
         return {
           icon: <SiWhatsapp fill={SiWhatsappHex} />,

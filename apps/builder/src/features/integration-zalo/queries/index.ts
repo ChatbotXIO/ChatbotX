@@ -1,6 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
+import { calcCacheTags } from "@/lib/cache-helper"
 
 export const findIntegrationZalo = async ({
   chatbotId,
@@ -14,9 +15,6 @@ export const findIntegrationZalo = async ({
           chatbotId,
         },
       }),
-    [`chatbots:${chatbotId}#zalo`],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${chatbotId}#zalo`],
-    },
+    [`chatbots:${chatbotId}#zalos`],
+    calcCacheTags(`chatbots:${chatbotId}#zalos`),
   )()

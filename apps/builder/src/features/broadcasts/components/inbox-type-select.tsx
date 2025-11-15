@@ -1,4 +1,4 @@
-import { InboxType, Omnichannel } from "@aha.chat/database/types"
+import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { SiMessenger, SiWhatsapp, SiZalo } from "@icons-pack/react-simple-icons"
 import { AtomIcon } from "lucide-react"
@@ -16,26 +16,26 @@ export const InboxTypeSelect = (props: InboxTypeSelectProps) => {
     {
       icon: AtomIcon,
       name: t("omnichannel.title"),
-      value: Omnichannel,
+      value: "omnichannel",
       description:
         "Send a flow to all contacts. You can send messages or executes actions.",
     },
     {
       icon: SiMessenger,
       name: t("messenger.title"),
-      value: InboxType.Messenger,
+      value: InboxType.messenger,
       description: "",
     },
     {
       icon: SiWhatsapp,
       name: t("whatsapp.title"),
-      value: InboxType.Whatsapp,
+      value: InboxType.whatsapp,
       description: "",
     },
     {
       icon: SiZalo,
       name: t("zalo.title"),
-      value: InboxType.Zalo,
+      value: InboxType.zalo,
       description: "",
     },
   ]

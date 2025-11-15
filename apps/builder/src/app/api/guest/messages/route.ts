@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       where: {
         sourceId: data.guestConversationId,
         inbox: {
-          inboxType: InboxType.Webchat,
+          inboxType: InboxType.webchat,
         },
       },
     })

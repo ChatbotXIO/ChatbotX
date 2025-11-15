@@ -14,7 +14,7 @@ import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
 import { FlowSelect } from "@/features/flows/flow-select"
-import { updateChatbotAdvancedAction } from "./actions/update-chatbox-action"
+import { updateChatbotAdvancedAction } from "./actions/update-chatbot-action"
 import {
   allCountryOptions,
   allTimezoneOptions,

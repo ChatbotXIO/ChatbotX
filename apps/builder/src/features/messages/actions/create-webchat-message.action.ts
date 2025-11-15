@@ -43,7 +43,7 @@ export const createWebchatMessageAction = actionClient
       const inbox = await prisma.inbox.findFirst({
         where: {
           chatbotId: parsedInput.chatbotId,
-          inboxType: InboxType.Webchat,
+          inboxType: InboxType.webchat,
         },
       })
       if (!inbox) {
@@ -81,7 +81,7 @@ export const createWebchatMessageAction = actionClient
               chatbotId: parsedInput.chatbotId,
               sourceId,
               email: parsedInput.guestConversationId,
-              source: IntegrationType.Webchat,
+              source: IntegrationType.webchat,
               gender: Gender.unknown,
               firstName: "Guest",
               lastName: randomString(10),

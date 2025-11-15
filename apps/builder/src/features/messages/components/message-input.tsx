@@ -38,23 +38,23 @@ import { FileUploadPreview } from "./file-upload"
 const createInboxTypes = (
   t: (key: string) => string,
 ): Record<
-  InboxType | "Omnichannel",
+  InboxType | "omnichannel",
   { icon: IconType | LucideIcon; label: string } | undefined
 > => ({
-  Webchat: {
+  webchat: {
     icon: GlobeIcon,
     label: t("webchat.title"),
   },
-  Messenger: {
+  messenger: {
     icon: SiMessenger,
     label: t("messenger.title"),
   },
-  Whatsapp: {
+  whatsapp: {
     icon: SiWhatsapp,
     label: t("whatsapp.title"),
   },
-  Omnichannel: undefined,
-  Zalo: {
+  omnichannel: undefined,
+  zalo: {
     icon: SiZalo,
     label: t("zalo.title"),
   },
@@ -175,7 +175,7 @@ export const MessageInput = () => {
   )
 
   // Memoize inbox type and icon for current conversation
-  const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.Webchat
+  const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.webchat
   const inboxConfig = inboxTypes[currentInboxType as InboxType]
   const IconComponent = inboxConfig?.icon
 

@@ -80,13 +80,14 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name         String
-  slug         String?
-  logo         String?
-  metadata     String?
-  domain       String?
-  supportEmail String?
-  settings     Json    @default("{}")
+  name               String
+  slug               String?
+  logo               String?
+  metadata           String?
+  domain             String?
+  supportEmail       String?
+  settings           Json    @default("{}")
+  defaultMaxContacts Int     @default(999999999)
 
   organizationMembers     OrganizationMember[]
   organizationInvitations OrganizationInvitation[]
@@ -1032,20 +1033,20 @@ enum AssignedType {
 }
 
 enum IntegrationType {
-  Webchat
-  GoogleSheets
-  Messenger
-  OpenAI
-  Gemini
-  Whatsapp
-  Zalo
+  webchat
+  googleSheets
+  messenger
+  openai
+  gemini
+  whatsapp
+  zalo
 }
 
 enum InboxType {
-  Webchat
-  Messenger
-  Whatsapp
-  Zalo
+  webchat
+  messenger
+  whatsapp
+  zalo
 }
 
 enum SenderType {

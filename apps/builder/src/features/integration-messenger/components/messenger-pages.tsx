@@ -11,6 +11,7 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { selectPageAction } from "../actions/select-page.action"
 import { selectPageRequest } from "../schemas"
@@ -19,19 +20,20 @@ export function FacebookPages({
   chatbotId,
   pages,
 }: {
-  chatbotId: string
+  chatbotId?: string | null
   pages: FacebookPage[]
 }) {
   const t = useTranslations()
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    selectPageAction.bind(null, chatbotId),
+    selectPageAction,
     zodResolver(selectPageRequest),
     {
       formProps: {
         mode: "onChange",
         defaultValues: {
+          chatbotId,
           pageId: "",
           pageName: "",
           accessToken: "",
@@ -53,8 +55,8 @@ export function FacebookPages({
     },
   )
 
-  const { setValue, watch } = form
-  const watchedPageId = watch("pageId")
+  const { setValue } = form
+  const watchedPageId = useWatch({ name: "pageId" })
   useEffect(() => {
     const selectPage = pages.find((page) => page.id === watchedPageId)
 

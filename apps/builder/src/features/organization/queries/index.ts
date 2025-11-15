@@ -28,18 +28,12 @@ export async function findOrganizationSettings(
   where: OrganizationWhereInput,
 ): Promise<OrganizationSettings> {
   const organization = await findOrganization(where)
-
-  const { data: settings } = organizationSettingsSchema.safeParse(
-    organization?.settings,
-  )
-
-  logger.info("Organization settings", { settings })
-
-  if (!settings) {
-    throw new Error("Organization settings is not valid")
+  if (!organization) {
+    logger.error("Organization not found", { where })
+    throw new BaseException("Organization not found")
   }
 
-  return settings
+  return verifyOrganizationSettings(organization)
 }
 
 export async function findOrganizationSettingsByKey<
@@ -56,4 +50,19 @@ export async function findOrganizationSettingsByKey<
   }
 
   return value as NonNullable<OrganizationSettings[K]>
+}
+
+export async function verifyOrganizationSettings(
+  organization: OrganizationModel,
+): Promise<OrganizationSettings> {
+  const { data: settings } = organizationSettingsSchema.safeParse(
+    organization?.settings,
+  )
+  logger.info("Organization settings", { settings })
+
+  if (!settings) {
+    throw new Error("Organization settings is not valid")
+  }
+
+  return await settings
 }

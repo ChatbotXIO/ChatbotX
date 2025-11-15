@@ -8,6 +8,7 @@ import { useParams } from "next/navigation"
 import { mutate } from "swr"
 import { callAPI } from "@/lib/swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
+import { reservedCustomFieldOptions } from "./lib/reserved-custom-field"
 import type { CustomFieldCollection } from "./schemas"
 
 type CustomFieldSelectProps = {
@@ -42,6 +43,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     label: v.name,
     value: v.id,
   }))
+  const allOptions = [...reservedCustomFieldOptions, ...customFields]
 
   return (
     <FormItem>
@@ -76,7 +78,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
       )}
       <SelectField
         name={name}
-        options={customFields}
+        options={allOptions}
         placeholder="Please select"
       />
     </FormItem>

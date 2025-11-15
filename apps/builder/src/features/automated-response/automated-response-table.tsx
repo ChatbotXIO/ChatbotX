@@ -23,6 +23,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import React, { useMemo } from "react"
 import { toast } from "sonner"
+import type { getFlows } from "../flows/queries"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
@@ -32,14 +33,17 @@ import type { AutomatedResponseResource } from "./schemas/types"
 type AutomatedResponseTableProps = {
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof getAutomatedResponses>>]>
+  flowPromises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export function AutomatedResponsesTable({
   chatbotId,
   promises,
+  flowPromises,
 }: AutomatedResponseTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = React.use(promises)
+  const [{ data: allFlows }] = React.use(flowPromises)
 
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AutomatedResponseResource> | null>(null)
@@ -102,17 +106,27 @@ export function AutomatedResponsesTable({
           const replies = cell.getValue<
             AutomatedResponseResource["replies"]
           >() as CreateAutomatedResponseRequest["replies"]
-          const displayData = replies.map((reply, idx) => {
-            return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: wip
-              <li key={idx}>
-                {reply.type === ReplyType.Message
-                  ? `Message: ${reply.message}`
-                  : `Flow: ${reply.flowId}`}
-              </li>
-            )
-          })
-          return <ul className="list-disc">{displayData}</ul>
+
+          const displayData: string[] = []
+          for (const reply of replies) {
+            if (reply.type === ReplyType.Message) {
+              displayData.push(`Message: ${reply.message}`)
+            } else {
+              const flow = allFlows.find((f) => f.id === reply.flowId)
+              displayData.push(`Flow: ${flow?.name}`)
+            }
+          }
+
+          return (
+            <ul className="list-disc">
+              {displayData.map((reply, idx) => {
+                return (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                  <li key={idx}>{reply}</li>
+                )
+              })}
+            </ul>
+          )
         },
         enableSorting: false,
         enableHiding: false,
@@ -177,7 +191,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [chatbotId, t],
+    [chatbotId, t, allFlows],
   )
 
   const { table } = useDataTable({

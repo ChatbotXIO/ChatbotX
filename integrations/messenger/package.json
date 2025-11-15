@@ -9,7 +9,7 @@
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@paralleldrive/cuid2": "^3.1.0",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
     "ky": "^1.14.0",

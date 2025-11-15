@@ -2,6 +2,7 @@ import type { IntegrationType } from "@aha.chat/database"
 import { HandleRequestType } from "@aha.chat/sdk"
 import { notFound } from "next/navigation"
 import type { NextRequest } from "next/server"
+import { toCamelCase } from "remeda"
 import { handleCallback } from "./callback"
 import { handleWebhook } from "./webhook"
 
@@ -10,7 +11,9 @@ const handleRequest = async (
   { params }: { params: Promise<{ integration: string[] }> },
 ) => {
   const allParams = await params
-  const integrationType = allParams.integration[0] as IntegrationType
+  const integrationType = toCamelCase(
+    allParams.integration[0],
+  ) as IntegrationType
   const integrationAction = allParams.integration[1]
 
   if (!(integrationType && integrationAction)) {

@@ -92,16 +92,19 @@ function usePhoneNumbers() {
   }
 }
 
+type WhatsappCreateProps = {
+  chatbotId?: string | null
+  settings: NonNullable<OrganizationSettings["whatsapp"]>
+}
+
 export default function WhatsappCreate({
   chatbotId,
   settings,
-}: {
-  chatbotId: string | null | undefined
-  settings: NonNullable<OrganizationSettings["whatsapp"]>
-}) {
+}: WhatsappCreateProps) {
   const t = useTranslations()
   const { visibility, updateVisibility } = useFormVisibility()
   const router = useRouter()
+
   // Form setup
   const { form, handleSubmitWithAction } = useHookFormAction(
     connectWhatsappAction,

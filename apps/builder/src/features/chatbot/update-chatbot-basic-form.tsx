@@ -13,7 +13,7 @@ import { useCopyToClipboard } from "usehooks-ts"
 import { SettingRow } from "@/components/setting-row"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
 import { authClient } from "@/lib/auth/auth-client"
-import { updateChatbotBasicAction } from "./actions/update-chatbox-action"
+import { updateChatbotBasicAction } from "./actions/update-chatbot-action"
 import { updateChatbotBasicRequest } from "./schemas/update-chatbot-schema"
 
 export function UpdateChatbotBasicForm({

@@ -51,7 +51,7 @@ export const createMessageTemplateAction = chatbotActionClient
         ),
       }
 
-      const res = await integrations.Whatsapp.runAction(
+      const res = await integrations.whatsapp.runAction(
         "createMessageTemplate",
         {
           ctx,

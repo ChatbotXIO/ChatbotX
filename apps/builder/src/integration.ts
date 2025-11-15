@@ -4,10 +4,10 @@ import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsa
 import { integration as integrationZalo } from "@aha.chat/integration-zalo"
 
 export const integrations = {
-  Whatsapp: integrationWhatsapp,
-  Messenger: integrationMessenger,
-  GoogleSheets: integrationGoogleSheets,
-  Zalo: integrationZalo,
+  whatsapp: integrationWhatsapp,
+  messenger: integrationMessenger,
+  googleSheets: integrationGoogleSheets,
+  zalo: integrationZalo,
 }
 
 export type IntegrationKey = keyof typeof integrations

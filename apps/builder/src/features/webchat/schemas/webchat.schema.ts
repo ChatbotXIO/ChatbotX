@@ -43,6 +43,7 @@ export type PersistentMenuSchema = z.infer<typeof persistentMenuSchema>
 
 export const createWebchatRequest = z.object({
   name: z.string().min(1).max(40),
+  chatbotId: z.cuid2().nullish(),
   welcomeFlowId: z.string().nullish(),
   authorizedDomains: z.array(
     z.object({
@@ -59,6 +60,13 @@ export const createWebchatRequest = z.object({
   enable: z.boolean().default(true),
 })
 export type CreateWebchatRequest = z.infer<typeof createWebchatRequest>
+
+export const simpleCreateWebchatRequest = z.object({
+  name: z.string().min(1).max(40),
+})
+export type SimpleCreateWebchatRequest = z.infer<
+  typeof simpleCreateWebchatRequest
+>
 
 export const updateWebchatRequest = createWebchatRequest.partial()
 export type UpdateWebchatRequest = z.infer<typeof updateWebchatRequest>

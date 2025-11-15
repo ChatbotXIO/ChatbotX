@@ -17,10 +17,10 @@ const cardConfigs: Record<
   InboxType,
   React.ComponentType<{ inbox: InboxResource }>
 > = {
-  [InboxType.Whatsapp]: InboxWhatsappCard,
-  [InboxType.Webchat]: InboxWebchatCard,
-  [InboxType.Messenger]: InboxMessengerCard,
-  [InboxType.Zalo]: InboxZaloCard,
+  [InboxType.whatsapp]: InboxWhatsappCard,
+  [InboxType.webchat]: InboxWebchatCard,
+  [InboxType.messenger]: InboxMessengerCard,
+  [InboxType.zalo]: InboxZaloCard,
 }
 
 export default function InboxCardList({

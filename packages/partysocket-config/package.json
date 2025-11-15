@@ -5,7 +5,7 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "typescript": "5.9.3"
   },
   "dependencies": {

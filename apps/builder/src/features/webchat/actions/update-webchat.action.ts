@@ -26,6 +26,7 @@ export const updateWebchatAction = chatbotActionClient
         },
         data: {
           ...rest,
+          chatbotId,
           welcomeFlowId: welcomeFlowId?.length ? welcomeFlowId : null,
           authorizedDomains: authorizedDomains
             ? authorizedDomains.map((domain) => domain.value)
