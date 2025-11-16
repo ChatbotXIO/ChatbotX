@@ -1,10 +1,10 @@
 "use client"
 
 import { ReplyType } from "@aha.chat/database/types"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
-import { Input } from "@aha.chat/ui/components/ui/input"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -17,21 +17,31 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Controller, useFieldArray } from "react-hook-form"
+import { use } from "react"
+import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { FlowSelect } from "../flows/flow-select"
+import type { getFlows } from "../flows/queries"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
 import { createAutomatedResponseRequest } from "./schemas/create-automated-responses-schema"
 
-export function CreateAutomatedResponseForm({
-  chatbotId,
-  folderId,
-}: {
+type CreateAutomatedResponseFormProps = {
   chatbotId: string
   folderId: string | null
-}) {
+  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
+}
+
+export function CreateAutomatedResponseForm(
+  props: CreateAutomatedResponseFormProps,
+) {
+  const { chatbotId, folderId, promises } = props
   const t = useTranslations()
   const router = useRouter()
+
+  const [{ data: flows }] = use(promises)
+  const flowOptions = flows.map((flow) => ({
+    label: flow.name,
+    value: flow.id,
+  }))
 
   const {
     form,
@@ -56,7 +66,7 @@ export function CreateAutomatedResponseForm({
         mode: "onChange",
         defaultValues: {
           folderId: folderId ?? null,
-          userMessages: [""],
+          userMessages: [{ value: "" }],
           replies: [],
         },
       },
@@ -73,61 +83,56 @@ export function CreateAutomatedResponseForm({
     name: "replies",
   })
 
+  const {
+    fields: userMessages,
+    append: appendUserMessages,
+    remove: removeUserMessages,
+  } = useFieldArray({
+    control,
+    name: "userMessages",
+  })
+
   return (
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-        <Controller
-          control={control}
-          name="userMessages"
-          render={({ field }) => (
-            <div className="flex flex-col gap-2">
-              <Label className="flex-1" htmlFor="userMessages">
-                {t("fields.userMessage.label")}
-              </Label>
-              {/* Render existing inputs */}
-              {field.value.map((m, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                <div className="flex gap-2" key={index}>
-                  <Input
-                    className="flex-1"
-                    onChange={(e) => {
-                      const userMessages = [...field.value]
-                      userMessages[index] = e.target.value
-                      field.onChange(userMessages)
-                    }}
-                    value={m}
-                  />
-                  {index === 0 ? (
-                    <div className="w-12">&nbsp;</div>
-                  ) : (
-                    <Button
-                      onClick={() => {
-                        const newTags = field.value.filter(
-                          (_, i) => i !== index,
-                        ) // Remove the input
-                        field.onChange(newTags)
-                      }}
-                      variant="ghost"
-                    >
-                      <XIcon />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <FormMessage />
-              <div>
+        <div className="flex flex-col gap-2">
+          <Label className="flex-1" htmlFor="userMessages">
+            {t("fields.userMessage.label")}
+          </Label>
+
+          {userMessages.map((_, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: wip
+            <div className="flex gap-2" key={index}>
+              <InputField
+                formItemClassName="w-1/2"
+                name={`userMessages.${index}.value`}
+              />
+              {index === 0 ? (
+                <div className="w-12">&nbsp;</div>
+              ) : (
                 <Button
                   onClick={() => {
-                    field.onChange([...field.value, ""])
+                    removeUserMessages(index)
                   }}
                   variant="ghost"
                 >
-                  <PlusCircleIcon /> {t("actions.addMore")}
+                  <XIcon />
                 </Button>
-              </div>
+              )}
             </div>
-          )}
-        />
+          ))}
+          <FormMessage />
+          <div>
+            <Button
+              onClick={() => {
+                appendUserMessages({ value: "" })
+              }}
+              variant="ghost"
+            >
+              <PlusCircleIcon /> {t("actions.addMore")}
+            </Button>
+          </div>
+        </div>
 
         {/* Bot response block */}
         <div className="mt-4">
@@ -139,7 +144,7 @@ export function CreateAutomatedResponseForm({
         {replies.map((reply, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <div className="flex w-full gap-2" key={index}>
-            <div className="flex flex-1 items-center gap-2">
+            <div className="flex w-1/2 items-center gap-2">
               {reply.type === ReplyType.Message ? (
                 <>
                   <MessageSquareMoreIcon />
@@ -152,9 +157,12 @@ export function CreateAutomatedResponseForm({
               ) : (
                 <>
                   <ZapIcon />
-                  <FlowSelect
+                  <ComboboxField
                     className="flex-1"
                     name={`replies.${index}.flowId`}
+                    options={flowOptions}
+                    placeholder="Please select flow"
+                    required={true}
                   />
                 </>
               )}

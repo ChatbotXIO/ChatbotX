@@ -94,7 +94,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createSuccess", {
+            t("messages.createdSuccess", {
               feature: t("fields.webchat.label"),
             }),
           )

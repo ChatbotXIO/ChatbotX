@@ -40,7 +40,7 @@ export const SignInForm = ({
             />
           </div>
           <CardTitle className="text-slate-600 text-xl">
-            {t("signin.title", { name: brandName })}
+            {t("signIn.title", { name: brandName })}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -86,10 +86,10 @@ const AcceptTermsAndPolicy = ({
 
   return (
     <div className="text-balance text-center text-muted-foreground text-xs [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-      <span>{t("signin.acceptTermsAndPolicy")}</span>{" "}
-      <Link href={termsOfService}>{t("signin.termsOfService")}</Link>{" "}
-      <span>{t("signin.and")}</span>{" "}
-      <Link href={privacyPolicy}>{t("signin.privacyPolicy")}</Link>
+      <span>{t("signIn.acceptTermsAndPolicy")}</span>{" "}
+      <Link href={termsOfService}>{t("signIn.termsOfService")}</Link>{" "}
+      <span>{t("signIn.and")}</span>{" "}
+      <Link href={privacyPolicy}>{t("signIn.privacyPolicy")}</Link>
     </div>
   )
 }

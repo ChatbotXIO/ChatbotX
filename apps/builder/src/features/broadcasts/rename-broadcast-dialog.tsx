@@ -49,7 +49,7 @@ export function RenameBroadcastDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.broadcast.label"),
             }),
           )

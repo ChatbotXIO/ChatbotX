@@ -26,9 +26,11 @@ interface SelectFieldProps<T extends FieldValues> {
   description?: string
   defaultValue?: string
   options: { value: string; label: string }[]
+  className?: string
 }
 
 export function ComboboxField<T extends FieldValues>({
+  className,
   name,
   label,
   required,
@@ -55,6 +57,7 @@ export function ComboboxField<T extends FieldValues>({
               aria-expanded={open}
               className={cn(
                 "justify-between w-full",
+                className,
                 !field.value && "text-muted-foreground",
               )}
             >

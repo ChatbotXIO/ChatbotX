@@ -33,7 +33,7 @@ export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createSuccess", {
+            t("messages.createdSuccess", {
               feature: t("fields.webchat.label"),
             }),
           )

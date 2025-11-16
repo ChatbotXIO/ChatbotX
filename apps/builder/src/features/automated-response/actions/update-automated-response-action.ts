@@ -50,7 +50,10 @@ export const updateAutomatedResponseAction = chatbotActionClient
         where: {
           id,
         },
-        data: parsedInput,
+        data: {
+          ...parsedInput,
+          userMessages: parsedInput.userMessages?.map((m) => m.value) ?? [],
+        },
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#automatedResponses`)

@@ -74,7 +74,7 @@ export function AIFunctionsCreate({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createSuccess", {
+              t("messages.createdSuccess", {
                 feature: t("fields.aiFunction.label"),
               }),
             )

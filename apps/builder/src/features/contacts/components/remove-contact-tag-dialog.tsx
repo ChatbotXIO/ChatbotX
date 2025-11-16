@@ -55,7 +55,7 @@ export default function RemoveContactTagDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.contact.label"),
             }),
           )

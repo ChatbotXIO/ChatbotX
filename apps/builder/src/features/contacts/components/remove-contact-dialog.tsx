@@ -37,7 +37,7 @@ export default function DeleteContactDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.updatedSuccessfully", {
+          t("messages.updatedSuccess", {
             feature: t("fields.contact.label"),
           }),
         )

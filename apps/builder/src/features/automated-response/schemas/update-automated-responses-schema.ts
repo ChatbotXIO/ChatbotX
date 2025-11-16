@@ -3,7 +3,14 @@ import { z } from "zod"
 
 export const updateAutomatedResponseRequest = z.object({
   folderId: z.cuid2().nullable().optional(),
-  userMessages: z.array(z.string().min(1).max(255)).optional(),
+  userMessages: z
+    .array(
+      z.object({
+        value: z.string().min(1).max(255),
+      }),
+    )
+    .min(1)
+    .optional(),
   replies: z
     .array(
       z.discriminatedUnion("type", [

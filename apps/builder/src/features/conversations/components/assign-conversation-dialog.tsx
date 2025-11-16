@@ -79,7 +79,7 @@ export default function AssignConversationDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.conversation.label"),
             }),
           )

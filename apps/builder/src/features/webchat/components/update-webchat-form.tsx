@@ -103,7 +103,7 @@ export function UpdateWebchatForm({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.webchat.label"),
             }),
           )

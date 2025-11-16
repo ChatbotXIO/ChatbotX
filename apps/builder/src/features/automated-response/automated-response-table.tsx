@@ -87,7 +87,9 @@ export function AutomatedResponsesTable({
         cell: ({ row }) => {
           const { id, userMessages } = row.original
           return (
-            <Link href={`/chatbots/${chatbotId}/automated-responses/${id}`}>
+            <Link
+              href={`/chatbots/${chatbotId}/automated-responses/${id}/edit`}
+            >
               {userMessages.join(",")}
             </Link>
           )

@@ -46,7 +46,7 @@ export function RenameInboxTeamDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.inboxTeam.label"),
             }),
           )

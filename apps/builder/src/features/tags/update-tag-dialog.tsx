@@ -54,7 +54,7 @@ export function UpdateTagDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.tag.label"),
             }),
           )

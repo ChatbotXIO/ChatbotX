@@ -47,6 +47,7 @@ export const createAutomatedResponseAction = chatbotActionClient
           ...parsedInput,
           chatbotId,
           status: true,
+          userMessages: parsedInput.userMessages.map((m) => m.value),
         },
       })
 

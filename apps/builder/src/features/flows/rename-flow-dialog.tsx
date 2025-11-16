@@ -47,7 +47,7 @@ export function RenameFlowDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.flow.label"),
             }),
           )

@@ -48,14 +48,14 @@ export const EmailPasswordSignIn = () => {
       >
         <InputField
           name="email"
-          placeholder={t("signin.email")}
+          placeholder={t("signIn.email")}
           required
           type="email"
         />
 
         <InputField
           name="password"
-          placeholder={t("signin.password")}
+          placeholder={t("signIn.password")}
           required
           type="password"
         />

@@ -40,7 +40,7 @@ export const MagicLinkSignIn = () => {
       >
         <InputField
           name="email"
-          placeholder={t("signin.email")}
+          placeholder={t("signIn.email")}
           required
           type="email"
         />

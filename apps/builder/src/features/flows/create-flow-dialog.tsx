@@ -40,7 +40,7 @@ export function CreateFlowDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createSuccess", {
+              t("messages.createdSuccess", {
                 feature: t("fields.flow.label"),
               }),
             )

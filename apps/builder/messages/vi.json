@@ -1060,7 +1060,7 @@
     "copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
     "createdFailed": "Tạo {feature} thất bại",
     "createdSuccessfully": "{feature} đã được tạo thành công",
-    "createSuccess": "{feature} đã được tạo thành công",
+    "createdSuccess": "{feature} đã được tạo thành công",
     "createFeature": "Tạo {feature}",
     "deleteComingSoon": "Chức năng xóa sẽ sớm có",
     "deletedSuccessfully": "{feature} đã được xóa thành công",
@@ -1083,7 +1083,7 @@
     "signedInSuccessfully": "Đăng nhập thành công",
     "unarchivedSuccessfully": "Đã bỏ lưu trữ {feature} thành công",
     "unknownError": "Lỗi không xác định",
-    "updatedSuccessfully": "{feature} đã được cập nhật thành công",
+    "updatedSuccess": "{feature} đã được cập nhật thành công",
     "updateFileComingSoon": "Chức năng cập nhật tệp sẽ sớm có",
     "uploadFailed": "Tải lên thất bại",
     "videoError": "Lỗi video",
@@ -1131,7 +1131,7 @@
       "title": "Tích hợp OpenAI"
     }
   },
-  "signin": {
+  "signIn": {
     "acceptTermsAndPolicy": "Bằng cách nhấn tiếp tục, bạn đồng ý với",
     "and": "và",
     "email": "Email",
