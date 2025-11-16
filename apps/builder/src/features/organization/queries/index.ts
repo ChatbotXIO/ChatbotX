@@ -7,8 +7,27 @@ import {
   type OrganizationWhereInput,
   organizationSettingsSchema,
 } from "@aha.chat/database/types"
+import { unstable_cache } from "next/cache"
+import { headers } from "next/headers"
+import { calcCacheTags } from "@/lib/cache-helper"
 import { BaseException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
+
+export async function findOrganizationByDomain(): Promise<OrganizationModel | null> {
+  const headersList = await headers()
+  const domain = new URL(headersList.get("x-url") ?? "")
+
+  return await unstable_cache(
+    async () =>
+      await prisma.organization.findFirst({
+        where: {
+          domain: domain.hostname,
+        },
+      }),
+    ["organization"],
+    calcCacheTags(`organizations:${domain.hostname}`),
+  )()
+}
 
 export async function findOrganization(
   where: OrganizationWhereInput,

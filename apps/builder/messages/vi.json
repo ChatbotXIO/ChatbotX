@@ -129,7 +129,9 @@
     "analytics": "Phân tích",
     "flowVersions": "Phiên bản luồng",
     "revertToPublished": "Khôi phục về phiên bản đã xuất bản",
-    "search": "Tìm kiếm"
+    "search": "Tìm kiếm",
+    "signOut": "Đăng xuất",
+    "backToSignIn": "Quay lại đăng nhập"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -1090,7 +1092,8 @@
     "editFeature": "Chỉnh sửa {feature}",
     "deleteFeature": "Xóa {feature}",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
-    "addFeature": "Thêm {feature}"
+    "addFeature": "Thêm {feature}",
+    "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1135,7 +1138,13 @@
     "password": "Mật khẩu",
     "privacyPolicy": "Chính sách bảo mật",
     "termsOfService": "Điều khoản dịch vụ",
-    "title": "Đăng nhập vào {name}"
+    "title": "Đăng nhập vào {name}",
+    "checkYourEmail": "Kiểm tra email của bạn",
+    "magicLinkSent": "Chúng tôi đã gửi URL xác minh đến email của bạn",
+    "magicLinkSentDescription": "Nhấp vào liên kết trong email của bạn để tiếp tục.",
+    "backToSignIn": "Quay lại đăng nhập",
+    "didNotReceiveEmail": "Không nhận được email? Kiểm tra thư mục spam của bạn.",
+    "trySigningInAgain": "Bạn cũng có thể thử đăng nhập lại bằng email khác."
   },
   "tags": {
     "heading": {

@@ -97,7 +97,10 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
               </div>
               <Button
                 aria-label={`Continue with ${inbox.title}`}
-                disabled={!(inbox.value in settings)}
+                disabled={
+                  inbox.value !== InboxType.webchat &&
+                  !(inbox.value in settings)
+                }
                 onClick={() => handleInboxSelect(inbox.value)}
                 size="sm"
                 type="button"

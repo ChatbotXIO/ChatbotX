@@ -62,7 +62,7 @@ export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
   )
 
   return (
-    <div className="m-auto flex h-screen max-w-2xl flex-col justify-center gap-4">
+    <div className="m-auto flex h-screen max-w-xl flex-col justify-center gap-4">
       <Card>
         <CardHeader className="text-xl">
           <CardTitle>

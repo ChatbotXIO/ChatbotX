@@ -9,7 +9,7 @@ export default function InboxNewCard({ chatbotId }: { chatbotId: string }) {
   const t = useTranslations()
 
   return (
-    <Card className="w-[416px] items-center justify-center py-0">
+    <Card className="items-center justify-center py-0">
       <CardContent className="justify-middle flex h-full w-full flex-wrap items-center gap-2 px-0">
         <Link
           className="flex h-14 w-full items-center justify-center gap-2 text-sm"

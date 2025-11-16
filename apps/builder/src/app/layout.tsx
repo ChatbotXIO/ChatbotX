@@ -6,8 +6,8 @@ import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 
 export const metadata: Metadata = {
-  title: "AhaChat AI",
-  description: "AhaChat AI",
+  title: "ChatbotX",
+  description: "ChatbotX",
 }
 
 type Props = {

@@ -29,23 +29,17 @@ export default function InboxCardList({
 }: InboxCardListProps) {
   const [{ data: inboxes }] = use(inboxesPromise)
 
-  console.log(inboxes)
-
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {inboxes.map((inbox) =>
         (() => {
           const CardComponent = cardConfigs[inbox.inboxType]
-          return (
-            <div className="w-[416px]" key={inbox.id}>
-              <CardComponent inbox={inbox} />
-            </div>
-          )
+
+          return <CardComponent inbox={inbox} key={inbox.id} />
         })(),
       )}
-      <div className="w-[416px]">
-        <InboxNewCard chatbotId={chatbotId} />
-      </div>
+
+      <InboxNewCard chatbotId={chatbotId} />
     </div>
   )
 }

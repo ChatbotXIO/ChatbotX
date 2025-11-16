@@ -17,7 +17,7 @@ export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
         },
         json: {
           override_callback_uri: ["messages"],
-          verify_token: auth.verifyToken ?? "ahachat",
+          verify_token: auth.verifyToken ?? "ChatbotX",
         },
       })
       .json()

@@ -1,6 +1,6 @@
 ;((window) => {
   // Prevent multiple initializations
-  if (window.AhaChatWidget) {
+  if (window.csmChatWidget) {
     return
   }
 
@@ -22,7 +22,7 @@
 
   loadStylesheet(cssUrl)
 
-  const ahachatWidget = {
+  const csmChatWidget = {
     floatButton: null,
     floatHtml: null,
     init(config) {
@@ -49,15 +49,15 @@
 
       url.searchParams.set("domain", window.location.hostname)
 
-      ahachatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}"></button>`
-      ahachatWidget.floatHtml = `<div class="ahc-iframe"><iframe id="ahc-iframe" src="${url.toString()}" class="ahc-iframe"></iframe></div>`
+      csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}"></button>`
+      csmChatWidget.floatHtml = `<div class="ahc-iframe"><iframe id="ahc-iframe" src="${url.toString()}" class="ahc-iframe"></iframe></div>`
 
-      appendHtml(document.body, ahachatWidget.floatButton)
-      appendHtml(document.body, ahachatWidget.floatHtml)
+      appendHtml(document.body, csmChatWidget.floatButton)
+      appendHtml(document.body, csmChatWidget.floatHtml)
     },
   }
 
-  window.ahachatWidget = ahachatWidget
+  window.csmChatWidget = csmChatWidget
 
   function appendHtml(el, str) {
     const div = document.createElement("div")

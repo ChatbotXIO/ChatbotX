@@ -8,7 +8,7 @@ async function main() {
   }
   organization = await prisma.organization.create({
     data: {
-      name: "AhaChat AI",
+      name: "ChatbotX",
       createdAt: new Date(),
       domain: new URL(process.env.NEXT_PUBLIC_BUILDER_URL ?? "").hostname,
     },
@@ -22,8 +22,8 @@ async function main() {
   // create user
   user = await prisma.user.create({
     data: {
-      email: "demo@aha.chat",
-      name: "Demo AhaChat",
+      email: "demo@example.com",
+      name: "Demo ChatbotX",
     },
   })
 

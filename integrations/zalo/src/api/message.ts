@@ -49,7 +49,7 @@ export const getMessageAttachmentEntity = ({
     const response = await fetch(attachment.payload.url, {
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-        "User-Agent": "Mozilla/5.0 (compatible; AhaChat/1.0)",
+        "User-Agent": "Mozilla/5.0 (compatible; ChatbotX/1.0)",
       },
     })
 

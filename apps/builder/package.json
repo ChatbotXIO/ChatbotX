@@ -6,8 +6,8 @@
   "scripts": {
     "build": "dotenv -e .env -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e .env -e ../../.env -- next dev -H builder.ahachat.example.com -p 3123",
-    "https": "dotenv -e .env -e ../../.env -- next dev -H builder.ahachat.example.com -p 3123 --experimental-https",
+    "dev": "dotenv -e .env -e ../../.env -- next dev -H builder.example.com -p 3123",
+    "https": "dotenv -e .env -e ../../.env -- next dev -H builder.example.com -p 3123 --experimental-https",
     "lint": "biome check .",
     "start": "next start"
   },

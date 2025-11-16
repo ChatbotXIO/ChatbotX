@@ -13,7 +13,7 @@ import type { ZaloWebhookEvent } from "./webhook"
 
 export const DEFAULT_VERSION = "v4"
 
-export const ZALO_MESSAGE_METADATA = "SENT_FROM_AHACHATAI"
+export const ZALO_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
 
 export type ZaloConfig = Oauth2Config
 

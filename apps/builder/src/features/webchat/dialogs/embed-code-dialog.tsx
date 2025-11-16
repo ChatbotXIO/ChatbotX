@@ -32,7 +32,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
 
   const embedCode = `<!-- Aha Chat Widget -->
 <script src="${baseUrl}/chat-widget/plugin.js" crossorigin="anonymous" async
-  type="module" onload="window.ahachatWidget?.init({
+  type="module" onload="window.csmChatWidget?.init({
     webchatId: '${webchat.id}',
     chatbotId: '${webchat.chatbotId}',
     brandColor: '#${webchat.brandColor}',

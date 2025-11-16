@@ -14,12 +14,16 @@ import { authClient } from "@/lib/auth/auth-client"
 import { EmailPasswordSignIn } from "./components/email-password-signin"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
 
+export type SignInFormProps = {
+  brandName: string
+  callbackUrl?: string
+}
+
 export const SignInForm = ({
+  brandName,
   callbackUrl,
   ...props
-}: {
-  callbackUrl?: string
-}) => {
+}: SignInFormProps) => {
   const t = useTranslations()
 
   return (
@@ -28,7 +32,7 @@ export const SignInForm = ({
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2">
             <Image
-              alt="AhaChat AI"
+              alt={brandName}
               height={64}
               priority={true}
               src="/brand/logo.svg"
@@ -36,7 +40,7 @@ export const SignInForm = ({
             />
           </div>
           <CardTitle className="text-slate-600 text-xl">
-            {t("signin.title", { name: "AhaChat" })}
+            {t("signin.title", { name: brandName })}
           </CardTitle>
         </CardHeader>
         <CardContent>

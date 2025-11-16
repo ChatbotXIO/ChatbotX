@@ -129,7 +129,9 @@
     "analytics": "Analytics",
     "flowVersions": "Flow Versions",
     "revertToPublished": "Revert to Published",
-    "search": "Search"
+    "search": "Search",
+    "signOut": "Sign Out",
+    "backToSignIn": "Back to sign in"
   },
   "admins": {
     "title": "Admins"
@@ -1050,7 +1052,8 @@
     "editFeature": "Edit {feature}",
     "deleteFeature": "Delete {feature}",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
-    "addFeature": "Add {feature}"
+    "addFeature": "Add {feature}",
+    "signOutConfirmation": "Are you sure you want to sign out?"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1088,14 +1091,20 @@
       "title": "OpenAI Integration"
     }
   },
-  "signin": {
+  "signIn": {
     "acceptTermsAndPolicy": "By clicking continue, you agree to our",
     "and": "and",
     "email": "Email",
     "password": "Password",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "title": "Sign in to {name}"
+    "title": "Sign in to {name}",
+    "checkYourEmail": "Check your email",
+    "magicLinkSent": "We sent verification URL to your email",
+    "magicLinkSentDescription": "Click the link in your email to continue.",
+    "backToSignIn": "Back to sign in",
+    "didNotReceiveEmail": "Didn't receive the email? Check your spam folder.",
+    "trySigningInAgain": "You can also try signing in again with a different email."
   },
   "tags": {
     "heading": {

@@ -4442,8 +4442,8 @@ packages:
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
 
-  csstype@3.2.0:
-    resolution: {integrity: sha512-si++xzRAY9iPp60roQiFta7OFbhrgvcthrhlNAGeQptSY25uJjkfUV8OArC3KLocB8JT8ohz+qgxWCmz8RhjIg==}
+  csstype@3.2.1:
+    resolution: {integrity: sha512-98XGutrXoh75MlgLihlNxAGbUuFQc7l1cqcnEZlLNKc0UrVdPndgmaDmYTDDh929VS/eqTZV0rozmhu2qqT1/g==}
 
   d3-array@3.2.4:
     resolution: {integrity: sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==}
@@ -10141,7 +10141,7 @@ snapshots:
 
   '@types/react@19.2.5':
     dependencies:
-      csstype: 3.2.0
+      csstype: 3.2.1
 
   '@types/stylis@4.2.5': {}
 
@@ -10526,7 +10526,7 @@ snapshots:
 
   csstype@3.1.3: {}
 
-  csstype@3.2.0: {}
+  csstype@3.2.1: {}
 
   d3-array@3.2.4:
     dependencies:
@@ -11629,7 +11629,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
       css-tree: 1.1.3
-      csstype: 3.2.0
+      csstype: 3.2.1
       fastest-stable-stringify: 2.0.2
       inline-style-prefixer: 7.0.1
       react: 19.2.0

@@ -38,7 +38,7 @@ pnpm turbo db:migrate && turbo db:seed
 pnpm turbo dev
 ```
 
-The seeder makes default user `demo@aha.chat | Ahachat@1234`
+The seeder makes default user `demo@example.com | Ahachat@1234`
 
 ### Folder structure
 
