@@ -46,7 +46,7 @@ export function FacebookPages({
         onError: () => {
           toast.error(
             t("messages.createdFailed", {
-              feature: t("fields.messenger.label"),
+              feature: t("messenger.title"),
             }),
           )
         },
@@ -55,8 +55,8 @@ export function FacebookPages({
     },
   )
 
-  const { setValue } = form
-  const watchedPageId = useWatch({ name: "pageId" })
+  const { control, setValue } = form
+  const watchedPageId = useWatch({ control, name: "pageId" })
   useEffect(() => {
     const selectPage = pages.find((page) => page.id === watchedPageId)
 
