@@ -9,8 +9,8 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.932.0",
-    "@aws-sdk/s3-presigned-post": "^3.932.0",
+    "@aws-sdk/client-s3": "^3.934.0",
+    "@aws-sdk/s3-presigned-post": "^3.934.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "aws4fetch": "^1.0.20",
     "ky": "^1.14.0",

@@ -131,7 +131,9 @@
     "revertToPublished": "Revert to Published",
     "search": "Search",
     "signOut": "Sign Out",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "connectFeature": "Connect {feature}",
+    "scanQRCode": "Scan me with your camera"
   },
   "admins": {
     "title": "Admins"
@@ -1053,7 +1055,8 @@
     "deleteFeature": "Delete {feature}",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",
-    "signOutConfirmation": "Are you sure you want to sign out?"
+    "signOutConfirmation": "Are you sure you want to sign out?",
+    "unableToConnectFeature": "Unable to connect {feature}. Please send logs to developer team."
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

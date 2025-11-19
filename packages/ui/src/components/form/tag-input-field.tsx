@@ -49,7 +49,6 @@ export function TagInputField<T extends FieldValues>(props: TagInputFieldProps<T
         enableAutocomplete={true}
         tags={field.value}
         setTags={(value) => {
-          console.log(value)
           setTags(value)
             // setValue(
             //   name,

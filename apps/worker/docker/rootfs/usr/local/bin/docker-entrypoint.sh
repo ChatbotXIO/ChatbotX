@@ -4,7 +4,7 @@ set -e
 
 case "${1:-}" in
     "worker")
-        exec /bin/sh -c '/sbin/tini -- /usr/bin/supervisord -n -c /etc/supervisord-worker.conf'
+        exec /bin/sh -c '/usr/bin/tini -- /usr/bin/supervisord -n -c /etc/supervisord-worker.conf'
         ;;
     "/bin/sh" | "sh" | "/bin/bash" | "bash" )
         exec "$@"

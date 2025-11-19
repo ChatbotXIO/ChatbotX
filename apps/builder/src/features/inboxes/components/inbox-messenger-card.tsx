@@ -2,8 +2,22 @@
 
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@aha.chat/ui/components/ui/dialog"
 import { SiMessenger, SiMessengerHex } from "@icons-pack/react-simple-icons"
+import { CopyIcon } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { useEffect, useState } from "react"
+import QRCode from "react-qr-code"
+import { toast } from "sonner"
+import { useCopyToClipboard } from "usehooks-ts"
 import type { InboxResource } from "../schemas"
 
 export default function InboxMessengerCard({
@@ -11,8 +25,6 @@ export default function InboxMessengerCard({
 }: {
   inbox: InboxResource
 }) {
-  const t = useTranslations()
-
   return (
     <Card className="py-3" key={inbox.id}>
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
@@ -24,10 +36,69 @@ export default function InboxMessengerCard({
         <p className="flex-1 truncate text-sm">
           {inbox.integrationMessenger?.name}
         </p>
+        <MessengerQRCodeDiaglog
+          pageId={inbox.integrationMessenger?.pageId ?? ""}
+        />
+      </CardContent>
+    </Card>
+  )
+}
+
+function MessengerQRCodeDiaglog({ pageId }: { pageId: string }) {
+  const t = useTranslations()
+  const [_, copy] = useCopyToClipboard()
+
+  const [messengerUrl, setMessengerUrl] = useState<string>("")
+
+  useEffect(() => {
+    setMessengerUrl(`https://m.me/${pageId}`)
+  }, [pageId])
+
+  const handleCopy = () => {
+    copy(messengerUrl).then(() => {
+      toast.success(t("messages.copiedToClipboard"))
+    })
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
         <Button size="sm" type="button" variant="secondary">
           {t("actions.testNow")}
         </Button>
-      </CardContent>
-    </Card>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("actions.connectFeature", {
+              feature: t("fields.whatsapp.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription />
+        </DialogHeader>
+        <div className="flex flex-col items-center justify-center gap-2">
+          <p>{t("actions.scanQRCode")}</p>
+          <QRCode value={messengerUrl} />
+
+          <p>{t("texts.or")}</p>
+          <div className="-mt-2 flex items-center justify-center gap-2">
+            <Link
+              className="text-sky-600 no-underline hover:underline dark:text-sky-400"
+              href={messengerUrl}
+            >
+              {messengerUrl}
+            </Link>
+            <Button
+              onClick={handleCopy}
+              size="icon"
+              type="button"
+              variant="secondary"
+            >
+              <CopyIcon className="size-4" />
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

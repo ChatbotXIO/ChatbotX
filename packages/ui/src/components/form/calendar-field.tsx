@@ -33,8 +33,6 @@ export function CalendarField<T extends FieldValues>({
   min,
   max,
 }: CalendarFieldProps<T>) {
-  console.log("min", min)
-  console.log("max", max)
   return (
     <FormFieldWrapper
       description={description}

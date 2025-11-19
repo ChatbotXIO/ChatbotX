@@ -3,21 +3,21 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@prisma/adapter-pg": "6.19.0",
+    "@prisma/adapter-pg": "7.0.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "^7.0.0",
     "@types/node": "^24.10.1",
     "dotenv-cli": "^11.0.0",
-    "prisma": "6.19.0"
+    "prisma": "7.0.0"
   },
   "scripts": {
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
-    "db:seed": "dotenv -e ../../.env -- tsx src/seeders/index.ts",
+    "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:client": "dotenv -e ../../.env -- prisma generate",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
     "db:setup": "pnpm migrate && pnpm db:client && pnpm db:seed",

@@ -1,5 +1,4 @@
 import { default as IORedis, type RedisOptions } from "ioredis"
-import RedisMock from "ioredis-mock"
 import { keys } from "../keys"
 
 let permanentRedis: IORedis | null = null
@@ -26,10 +25,7 @@ export function getRedisConnection() {
     },
   }
 
-  permanentRedis =
-    env.NEXT_PHASE === "phase-production-build"
-      ? new RedisMock(env.REDIS_URL, options)
-      : new IORedis(env.REDIS_URL, options)
+  permanentRedis = new IORedis(env.REDIS_URL, options)
 
   return permanentRedis
 }

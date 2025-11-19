@@ -1,74 +1,74 @@
+import url from "node:url"
 import { type HandleRequestProps, SdkException } from "@aha.chat/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
-import z from "zod"
+import type { GetParams } from "whatsapp-api-js/types"
 import { DEFAULT_API_VERSION } from "../constants"
 import type { WhatsappConfig } from "../schemas"
 
 export const webhookHandler = async (
   props: HandleRequestProps<WhatsappConfig>,
 ) => {
+  const { version = DEFAULT_API_VERSION } = props.config
+  const middleware = new Middleware({
+    token: "",
+    appSecret: props.config.clientSecret as string,
+    webhookVerifyToken: props.config.verifyToken as string,
+    v: version as string,
+    // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+    secure: false as any,
+  })
+
   if (props.req.method === "GET") {
-    return await handleGetRequest(props)
+    const parsedUrl = url.parse(props.req.url, true) // true to parse query string into an object
+
+    return await middleware.get(parsedUrl.query as GetParams)
   }
 
   if (props.req.method === "POST") {
-    return await handlePostRequest(props)
-  }
+    try {
+      const result = await new Promise<OnMessageArgs | null>(
+        (resolve, reject) => {
+          middleware.on.message = (args: OnMessageArgs) => {
+            resolve(args)
+          }
+          middleware.on.sent = () => {
+            resolve(null)
+          }
+          middleware.on.status = () => {
+            resolve(null)
+          }
+          middleware.handle_post(props.req).then((rs) => {
+            if (rs !== 200) {
+              reject(new SdkException("Failed to handle webhook"))
+            }
+          })
 
-  throw SdkException.methodNotImplemented()
-}
+          setTimeout(() => {
+            resolve(null)
+          }, 300)
+        },
+      )
 
-async function handleGetRequest({
-  config,
-  req,
-}: HandleRequestProps<WhatsappConfig>) {
-  // Validate the request
-  const getRequestSchema = z.object({
-    "hub.challenge": z.string().min(1),
-    "hub.mode": z.literal("subscribe"),
-    "hub.verify_token": z.literal(config.verifyToken),
-  })
-  const url = new URL(req.url)
-  const { data } = getRequestSchema.safeParse(
-    Object.fromEntries(url.searchParams),
-  )
+      if (result?.message) {
+        await props.queue?.add("RECEIVE_MESSAGE", {
+          type: "RECEIVE_MESSAGE",
+          data: {
+            integrationType: "whatsapp",
+            payload: {
+              phoneID: result.phoneID,
+              from: result.from,
+              message: result.message,
+              name: result.name,
+            },
+          },
+        })
+      }
 
-  if (!data) {
-    throw new SdkException("Invalid webhook verification parameters")
-  }
-
-  return await data["hub.challenge"]
-}
-
-async function handlePostRequest({
-  config,
-  req,
-  queue,
-}: HandleRequestProps<WhatsappConfig>) {
-  const middleware = new Middleware({
-    token: "",
-    appSecret: "",
-    v: DEFAULT_API_VERSION,
-    secure: true,
-    ...config,
-  })
-  middleware.on.message = async (props: OnMessageArgs) => {
-    await queue?.add("RECEIVE_MESSAGE", {
-      type: "RECEIVE_MESSAGE",
-      data: {
-        integrationName: "whatsapp",
-        payload: props,
-      },
-    })
-  }
-
-  if (req.method === "GET") {
-    return await middleware.handle_get(req)
-  }
-
-  if (req.method === "POST") {
-    return await middleware.handle_post(req)
+      return "ok"
+    } catch (_error) {
+      throw new SdkException("Failed to handle webhook")
+    }
   }
 
   throw SdkException.methodNotImplemented()
