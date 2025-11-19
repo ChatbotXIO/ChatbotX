@@ -5,12 +5,13 @@ import { FormFieldWrapper } from "./field-wrapper"
 type InputFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
-  isRequired?: boolean
+  required?: boolean
   placeholder?: string
   description?: string
   defaultValue?: string
   disabled?: boolean
   className?: string
+  formItemClassName?: string
   type?:
     | "text"
     | "password"
@@ -25,18 +26,20 @@ type InputFieldProps<T extends FieldValues> = {
 export function InputField<T extends FieldValues>({
   name,
   label,
-  isRequired = true,
+  required,
   placeholder,
   description,
   type = "text",
+  formItemClassName,
   ...props
 }: InputFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={isRequired}
+      required={required}
       label={label}
       name={name}
+      formItemClassName={formItemClassName}
     >
       {(field) => (
         <Input placeholder={placeholder} type={type} {...props} {...field} />

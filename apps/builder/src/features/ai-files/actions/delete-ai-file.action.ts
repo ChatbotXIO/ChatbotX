@@ -3,12 +3,12 @@
 import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
-import { invalidateCacheTags } from "@/lib/cache-helper"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { logger } from "../../../lib/log"
 
 export const deleteAiFileAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs }) => {
     const [chatbotId, aiFileId] = bindArgsParsedInputs
 
@@ -32,5 +32,5 @@ export const deleteAiFileAction = chatbotActionClient
       prisma.aIFile.delete({ where: { id: aiFileId, chatbotId } }),
     ])
 
-    invalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
+    revalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
   })

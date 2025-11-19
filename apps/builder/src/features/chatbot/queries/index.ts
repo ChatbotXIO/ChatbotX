@@ -7,14 +7,12 @@ import { calcCacheTags } from "@/lib/cache-helper"
 
 export const findChatbot = async (
   where: ChatbotWhereInput,
-): Promise<ChatbotModel> => {
-  return await unstable_cache(
-    async () => {
-      return await prisma.chatbot.findFirstOrThrow({
+): Promise<ChatbotModel> =>
+  await unstable_cache(
+    async () =>
+      await prisma.chatbot.findFirstOrThrow({
         where,
-      })
-    },
+      }),
     [JSON.stringify(where)],
     calcCacheTags("chatbots"),
   )()
-}

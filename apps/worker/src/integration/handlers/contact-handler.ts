@@ -19,13 +19,13 @@ export async function setContactCustomField({
   await prisma.contactCustomField.upsert({
     create: {
       contactId: conversation.contactId,
-      customFieldId: step.outputCFId,
+      customFieldId: step.outputCfId,
       value: step.value,
     },
     where: {
       contactId_customFieldId: {
         contactId: conversation.contactId,
-        customFieldId: step.outputCFId,
+        customFieldId: step.outputCfId,
       },
     },
     update: {
@@ -41,7 +41,7 @@ export async function clearContactCustomField({
   await prisma.contactCustomField.deleteMany({
     where: {
       contactId: conversation.contactId,
-      customFieldId: step.inputCFId,
+      customFieldId: step.inputCfId,
     },
   })
 }

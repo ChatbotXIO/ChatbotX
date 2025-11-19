@@ -48,7 +48,7 @@ export function UpdateCustomFieldDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.customField.label"),
             }),
           )
@@ -58,7 +58,9 @@ export function UpdateCustomFieldDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -77,12 +79,10 @@ export function UpdateCustomFieldDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", {
+            {t("messages.editFeature", {
               feature: t("fields.customField.label"),
             })}
           </DialogTitle>
@@ -98,6 +98,7 @@ export function UpdateCustomFieldDialog({
                 label={t("fields.name.label")}
                 name="name"
                 placeholder={t("fields.name.placeholder")}
+                required
               />
 
               <TextareaField

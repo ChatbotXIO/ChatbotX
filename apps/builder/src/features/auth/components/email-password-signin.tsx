@@ -7,7 +7,7 @@ import { redirect } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import {
   type EmailPasswordSignInRequest,
   emailPasswordSignInRequest,
@@ -47,16 +47,16 @@ export const EmailPasswordSignIn = () => {
         onSubmit={emailPasswordForm.handleSubmit(onSubmitEmailPasswordForm)}
       >
         <InputField
-          isRequired
           name="email"
-          placeholder={t("signin.email")}
+          placeholder={t("signIn.email")}
+          required
           type="email"
         />
 
         <InputField
-          isRequired
           name="password"
-          placeholder={t("signin.password")}
+          placeholder={t("signIn.password")}
+          required
           type="password"
         />
 

@@ -47,24 +47,31 @@ export function CreateCustomFieldDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createdSuccess", {
                 feature: t("fields.customField.label"),
               }),
             )
 
             setOpen(false)
             resetFormAndAction()
-            onSuccess ? onSuccess() : router.refresh()
+
+            if (onSuccess) {
+              onSuccess()
+            } else {
+              router.refresh()
+            }
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: CustomFieldType.SHORTTEXT,
+            customFieldType: CustomFieldType.shortText,
             description: "",
             folderId,
           },
@@ -75,28 +82,28 @@ export function CreateCustomFieldDialog({
 
   const customFieldTypeOptions = [
     {
-      value: CustomFieldType.SHORTTEXT,
-      label: t("customField.types.shortText"),
+      value: CustomFieldType.shortText,
+      label: t("fields.shortText.label"),
     },
     {
-      value: CustomFieldType.NUMBER,
-      label: t("customField.types.number"),
+      value: CustomFieldType.number,
+      label: t("fields.number.label"),
     },
     {
-      value: CustomFieldType.DATE,
-      label: t("customField.types.date"),
+      value: CustomFieldType.date,
+      label: t("fields.date.label"),
     },
     {
-      value: CustomFieldType.DATETIME,
-      label: t("customField.types.dateTime"),
+      value: CustomFieldType.datetime,
+      label: t("fields.datetime.label"),
     },
     {
-      value: CustomFieldType.BOOLEAN,
-      label: t("customField.types.boolean"),
+      value: CustomFieldType.boolean,
+      label: t("fields.boolean.label"),
     },
     {
-      value: CustomFieldType.LONGTEXT,
-      label: t("customField.types.longText"),
+      value: CustomFieldType.longText,
+      label: t("fields.longText.label"),
     },
   ]
 
@@ -108,16 +115,16 @@ export function CreateCustomFieldDialog({
         ) : (
           <Button size="sm">
             <PlusIcon />
-            {t("actions.create")}
+            {t("actions.createFeature", {
+              feature: t("fields.customField.label"),
+            })}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.customField.label"),
             })}
           </DialogTitle>
@@ -129,12 +136,14 @@ export function CreateCustomFieldDialog({
               label={t("fields.name.label")}
               name="name"
               placeholder={t("fields.name.placeholder")}
+              required
             />
 
             <SelectField
               label={t("fields.type.label")}
               name="customFieldType"
               options={customFieldTypeOptions}
+              required
             />
 
             <TextareaField

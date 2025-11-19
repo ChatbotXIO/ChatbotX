@@ -44,14 +44,16 @@ export default function ClearContactCustomFieldDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.customField.label"),
             }),
           )
           setOpen(false)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -69,9 +71,7 @@ export default function ClearContactCustomFieldDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>{t("dialog.clearCustomField")}</DialogTitle>
           <DialogDescription />

@@ -47,7 +47,7 @@ import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/create.schema"
 import { GEMINI_MODEL_OPTIONS } from "../gemini/models"
-import { OPENAI_MODEL_OPTIONS } from "../openai/models"
+import { openAIModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   files: AIFileModel[]
@@ -66,8 +66,8 @@ export function CreateAIAgentDialog({
   const router = useRouter()
   const t = useTranslations()
 
-  const toolOptions = useMemo(() => {
-    return [
+  const toolOptions = useMemo(
+    () => [
       {
         heading: t("fields.file.label"),
         options: files.map((file) => ({
@@ -92,15 +92,17 @@ export function CreateAIAgentDialog({
           icon: ServerIcon,
         })),
       },
-    ]
-  }, [files, functions, mcpServers, t])
+    ],
+    [files, functions, mcpServers, t],
+  )
 
-  const messageRoleOptions = useMemo(() => {
-    return [
+  const messageRoleOptions = useMemo(
+    () => [
       { label: t("fields.promptMessages.role.user"), value: "user" },
       { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
-    ]
-  }, [t])
+    ],
+    [t],
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -110,7 +112,7 @@ export function CreateAIAgentDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createdSuccess", {
                 feature: t("fields.aiAgent.label"),
               }),
             )
@@ -120,7 +122,9 @@ export function CreateAIAgentDialog({
             router.refresh()
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
@@ -164,15 +168,15 @@ export function CreateAIAgentDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.aiAgent.label") })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.aiAgent.label") })}
+            {t("messages.createFeature", {
+              feature: t("fields.aiAgent.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -183,11 +187,7 @@ export function CreateAIAgentDialog({
               className="flex-1 space-y-6"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField
-                isRequired
-                label={t("fields.name.label")}
-                name="name"
-              />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <TextareaField
                 label={t("fields.prompt.label")}
@@ -254,7 +254,7 @@ export function CreateAIAgentDialog({
                   <SelectField
                     label={t("fields.openAIModel.label")}
                     name="models.1.model"
-                    options={OPENAI_MODEL_OPTIONS}
+                    options={openAIModelOptions}
                     required
                   />
 
@@ -291,7 +291,7 @@ export function CreateAIAgentDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               </DialogFooter>
             </form>

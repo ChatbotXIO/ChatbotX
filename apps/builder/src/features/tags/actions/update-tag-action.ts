@@ -2,7 +2,7 @@
 
 import { prisma } from "@aha.chat/database"
 import type { UserModel } from "@aha.chat/database/types"
-import { revalidateTag } from "next/cache"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import { TagException } from "../schemas/error"
@@ -55,10 +55,6 @@ export const updateTagAction = authActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#tags`)
-
-      return {
-        successful: true,
-      }
+      revalidateCacheTags(`chatbots:${chatbotId}#tags`)
     },
   )

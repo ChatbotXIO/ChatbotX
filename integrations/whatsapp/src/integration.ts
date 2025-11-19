@@ -4,15 +4,14 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@aha.chat/sdk"
-import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client"
-import { getFlows } from "./flows"
-import { webhookHandler } from "./handlers/webhook"
-import { getIceBreakers, updateIceBreaker } from "./ice-breaker"
-import { parseIncomingMessage } from "./incomming-message"
 import {
-  createMessageTemplate,
-  listMessageTemplates,
-} from "./message-templates"
+  findConversationalAutomation,
+  updateConversationalAutomation,
+} from "./api/phone-number"
+import { listFlows, listMessageTemplates } from "./api/waba"
+import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client"
+import { webhookHandler } from "./handlers/webhook"
+import { parseIncomingMessage } from "./incomming-message"
 import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
 import type {
   WhatsappActions,
@@ -27,12 +26,8 @@ const config: IntegrationDefinition<
 > = {
   name: "whatsapp",
   actions: {
-    verifyAccessToken: async ({ ctx }) => {
-      return await verifyAccessToken(ctx)
-    },
-    uploadMedia: async ({ ctx, file }) => {
-      return await uploadMedia(ctx.auth, file)
-    },
+    verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
+    uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
     receiveMessage: async ({ ctx, data }) => {
       const whatsappClient = getWhatsappClient(ctx.auth)
 
@@ -44,26 +39,18 @@ const config: IntegrationDefinition<
     sendFlowStep: async ({ ctx, flowVersionId, step, conversation }) => {
       await sendFlowStep(ctx, conversation, flowVersionId, step)
     },
-    listMessageTemplates: async ({ ctx, params }) => {
-      return await listMessageTemplates(ctx.auth, params)
-    },
-    createMessageTemplate: async ({ ctx, data }) => {
-      return await createMessageTemplate(ctx.auth, data)
-    },
-    getFlows: async ({ ctx, params }) => {
-      return await getFlows(ctx.auth, params)
-    },
-    getIceBreakers: async ({ ctx }) => {
-      return await getIceBreakers(ctx.auth)
-    },
-    updateIceBreaker: async ({ ctx, prompts }) => {
-      return await updateIceBreaker(ctx.auth, prompts)
-    },
+    listMessageTemplates: async ({ ctx }) =>
+      await listMessageTemplates(ctx.auth),
+    listFlows: async ({ ctx }) => await listFlows(ctx),
+    findConversationalAutomation: async ({ ctx }) =>
+      await findConversationalAutomation(ctx.auth),
+    updateConversationalAutomation: async ({ ctx, data }) =>
+      await updateConversationalAutomation(ctx.auth, data),
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
 
-    if (segments.includes(HandleRequestType.WEBHOOK)) {
+    if (segments.includes(HandleRequestType.webhook)) {
       return await webhookHandler(props)
     }
 

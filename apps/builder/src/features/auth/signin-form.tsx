@@ -10,16 +10,20 @@ import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import GoogleButton from "react-google-button"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { EmailPasswordSignIn } from "./components/email-password-signin"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
 
+export type SignInFormProps = {
+  brandName: string
+  callbackUrl?: string
+}
+
 export const SignInForm = ({
+  brandName,
   callbackUrl,
   ...props
-}: {
-  callbackUrl?: string
-}) => {
+}: SignInFormProps) => {
   const t = useTranslations()
 
   return (
@@ -28,7 +32,7 @@ export const SignInForm = ({
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2">
             <Image
-              alt="AhaChat AI"
+              alt={brandName}
               height={64}
               priority={true}
               src="/brand/logo.svg"
@@ -36,7 +40,7 @@ export const SignInForm = ({
             />
           </div>
           <CardTitle className="text-slate-600 text-xl">
-            {t("signin.title", { name: "AhaChat" })}
+            {t("signIn.title", { name: brandName })}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -82,10 +86,10 @@ const AcceptTermsAndPolicy = ({
 
   return (
     <div className="text-balance text-center text-muted-foreground text-xs [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-      <span>{t("signin.acceptTermsAndPolicy")}</span>{" "}
-      <Link href={termsOfService}>{t("signin.termsOfService")}</Link>{" "}
-      <span>{t("signin.and")}</span>{" "}
-      <Link href={privacyPolicy}>{t("signin.privacyPolicy")}</Link>
+      <span>{t("signIn.acceptTermsAndPolicy")}</span>{" "}
+      <Link href={termsOfService}>{t("signIn.termsOfService")}</Link>{" "}
+      <span>{t("signIn.and")}</span>{" "}
+      <Link href={privacyPolicy}>{t("signIn.privacyPolicy")}</Link>
     </div>
   )
 }
@@ -96,7 +100,7 @@ export const OrSeparator = () => {
   return (
     <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">
       <span className="relative z-10 bg-background px-4 font-medium text-muted-foreground text-uppercase text-xs">
-        {t("messages.or")}
+        {t("texts.or")}
       </span>
     </div>
   )

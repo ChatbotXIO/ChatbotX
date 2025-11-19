@@ -1,11 +1,12 @@
 "use client"
 
-import type {
+import {
   ConversationStarterType,
-  IntegrationWebchatModel,
+  type IntegrationWebchatModel,
   PersistentMenuType,
 } from "@aha.chat/database/types"
 import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -63,15 +64,15 @@ export function UpdateWebchatForm({
   }[] = useMemo(
     () => [
       {
-        value: "flow",
+        value: ConversationStarterType.flow,
         label: t("fields.conversationStarter.type.sendFlow"),
       },
       {
-        value: "website",
+        value: ConversationStarterType.website,
         label: t("fields.conversationStarter.type.openWebsite"),
       },
       {
-        value: "message",
+        value: ConversationStarterType.message,
         label: t("fields.conversationStarter.type.sendText"),
       },
     ],
@@ -83,8 +84,14 @@ export function UpdateWebchatForm({
     label: string
   }[] = useMemo(
     () => [
-      { value: "flow", label: t("fields.persistentMenu.type.sendFlow") },
-      { value: "website", label: t("fields.persistentMenu.type.openWebsite") },
+      {
+        value: PersistentMenuType.flow,
+        label: t("fields.persistentMenu.type.sendFlow"),
+      },
+      {
+        value: PersistentMenuType.website,
+        label: t("fields.persistentMenu.type.openWebsite"),
+      },
     ],
     [t],
   )
@@ -96,7 +103,7 @@ export function UpdateWebchatForm({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.webchat.label"),
             }),
           )
@@ -176,12 +183,13 @@ export function UpdateWebchatForm({
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField isRequired label="Name" name="name" />
+        <InputField label="Name" name="name" required />
 
-        <SelectField
+        <ComboboxField
           description={t("fields.welcomeFlowId.description")}
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
+          options={flowOptions}
         />
 
         <Separator />
@@ -263,7 +271,7 @@ export function UpdateWebchatForm({
                   />
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    "flow" && (
+                    ConversationStarterType.flow && (
                     <SelectField
                       label={t("fields.flowId.label")}
                       name={`conversationStarters.${index}.flowId`}
@@ -272,7 +280,7 @@ export function UpdateWebchatForm({
                   )}
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    "website" && (
+                    ConversationStarterType.website && (
                     <InputField
                       label={t("fields.url.label")}
                       name={`conversationStarters.${index}.url`}
@@ -287,7 +295,7 @@ export function UpdateWebchatForm({
             onClick={() =>
               appendConversationStarters({
                 label: "",
-                type: "flow",
+                type: ConversationStarterType.flow,
                 flowId: "",
               })
             }
@@ -342,7 +350,8 @@ export function UpdateWebchatForm({
                     options={persistentMenuTypeOptions}
                   />
 
-                  {form.watch(`persistentMenus.${index}.type`) === "flow" && (
+                  {form.watch(`persistentMenus.${index}.type`) ===
+                    PersistentMenuType.flow && (
                     <SelectField
                       label={t("fields.flowId.label")}
                       name={`persistentMenus.${index}.flowId`}
@@ -351,7 +360,7 @@ export function UpdateWebchatForm({
                   )}
 
                   {form.watch(`persistentMenus.${index}.type`) ===
-                    "website" && (
+                    PersistentMenuType.website && (
                     <InputField
                       label={t("fields.url.label")}
                       name={`persistentMenus.${index}.url`}
@@ -366,7 +375,7 @@ export function UpdateWebchatForm({
             onClick={() =>
               appendPersistentMenus({
                 label: "",
-                type: "flow",
+                type: PersistentMenuType.flow,
                 flowId: "",
               })
             }
@@ -413,7 +422,11 @@ export function UpdateWebchatForm({
         />
 
         <DialogFooter>
-          <Button type="button" variant="link">
+          <Button
+            onClick={() => router.push(`/chatbots/${chatbotId}/webchats`)}
+            type="button"
+            variant="link"
+          >
             {t("actions.cancel")}
           </Button>
           <Button

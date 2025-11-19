@@ -17,7 +17,9 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import CustomFieldLabel from "./components/custom-field-label"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 import type { listCustomFields } from "./queries"
@@ -30,6 +32,7 @@ type FieldsTableProps = {
 }
 
 export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
+  const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<FieldModel> | null>(null)
@@ -91,7 +94,9 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Type" />
         ),
-        cell: ({ row }) => <div>{row.original.customFieldType}</div>,
+        cell: ({ row }) => (
+          <CustomFieldLabel customFieldType={row.original.customFieldType} />
+        ),
         enableSorting: true,
         enableHiding: false,
       },
@@ -107,37 +112,35 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
       {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "update" })}
-                >
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                  variant="destructive"
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
-        },
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "update" })}
+              >
+                {t("actions.edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "delete" })}
+                variant="destructive"
+              >
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
         size: 50,
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    [],
+    [t],
   )
 
   const { table } = useDataTable({
@@ -167,7 +170,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
 
       <DeleteFieldsDialog
         chatbotId={chatbotId}
-        fieldType={FieldType.CUSTOM_FIELD}
+        fieldType={FieldType.customField}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         open={rowAction?.variant === "delete"}

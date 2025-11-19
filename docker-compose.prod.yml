@@ -1,17 +1,20 @@
 name: ahachat
 
 include:
-  - docker-compose.dev.yml
+  - docker-compose.yml
 
 services:
   builder:
-    image: realcodesiman/ahachat-builder:latest
     # build:
     #   context: .
     #   dockerfile: apps/builder/docker/Dockerfile
+    image: realcodesiman/ahachat-builder:latest
+    platform: linux/amd64
     restart: unless-stopped
     env_file:
-      - ./.env
+      - ./.env.prod
+    environment:
+      - HOSTNAME=0.0.0.0
     ports:
       - "3123:3000"
     depends_on:
@@ -26,13 +29,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # BullMQ Worker
   worker:
     image: realcodesiman/ahachat-worker:latest
+    platform: linux/amd64
     restart: unless-stopped
     env_file:
-      - ./.env
+      - ./.env.prod
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,3 +46,23 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  realtime:
+    # build:
+    #   context: .
+    #   dockerfile: apps/partysocket/docker/Dockerfile
+    image: realcodesiman/ahachat-partysocket:latest
+    platform: linux/amd64
+    restart: unless-stopped
+    env_file:
+      - ./.env.prod
+    ports:
+      - "1999:1999"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  ahachat-network:
+    driver: bridge

@@ -1,8 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
@@ -12,8 +11,7 @@ import { FolderException } from "../schemas/types"
 export const getFolders = async (
   input: ListFoldersSearchParams,
 ): Promise<{ data: FolderModel[] }> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const { folderId, ...others } = input
 
@@ -44,8 +42,7 @@ export const getFolders = async (
 export const getCurrentFolder = async (
   input: GetCurrentFolderSchema,
 ): Promise<{ folder: FolderModel | null; parents: FolderModel[] }> => {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const folder = await prisma.folder.findFirst({
     where: input,

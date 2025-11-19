@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { findConversation } from "@/features/conversations/queries/list-conversations.query"
-import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function GET(
   _req: NextRequest,
@@ -12,14 +11,12 @@ export async function GET(
 ) {
   try {
     const { chatbotId, conversationId } = await params
-
-    const userId = await getCurrentUserId()
-    await findChatbotOrFail(userId, chatbotId)
+    await assertCurrentUserCanAccessChatbot(chatbotId)
 
     const result = await findConversation({ id: conversationId, chatbotId })
 
     return NextResponse.json(result)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

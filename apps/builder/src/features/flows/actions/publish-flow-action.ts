@@ -1,17 +1,17 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { FlowException } from "../schemas/exception"
 import { publishFlowSchema } from "../schemas/update-flow-schema"
 
 export const publishFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],
@@ -43,13 +43,25 @@ export const publishFlowAction = chatbotActionClient
       })
 
       await prisma.$transaction(async (tx) => {
+        // Remove all other latest versions
+        await tx.flowVersion.updateMany({
+          where: {
+            flowId: flow.id,
+            isLatest: true,
+          },
+          data: {
+            isLatest: false,
+          },
+        })
+
         const newVersion = await prisma.flowVersion.create({
           data: {
             chatbotId: flow.chatbotId,
             flowId: flow.id,
             isDraft: false,
+            isLatest: true,
             ...validated,
-            startNodeId: "",
+            startNodeId: draftVersion.startNodeId,
           },
         })
 
@@ -63,7 +75,9 @@ export const publishFlowAction = chatbotActionClient
         })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#flows`)
-      revalidateTag(`chatbots:${chatbotId}#flows:${id}`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#flows`,
+        `chatbots:${chatbotId}#flows:${id}`,
+      ])
     },
   )

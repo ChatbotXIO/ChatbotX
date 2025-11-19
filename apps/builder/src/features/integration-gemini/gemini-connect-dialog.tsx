@@ -40,7 +40,9 @@ export const GeminiConnectDialog = () => {
           router.refresh()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -55,7 +57,7 @@ export const GeminiConnectDialog = () => {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="default">
+        <Button size="sm" variant="secondary">
           {t("actions.connect")}
         </Button>
       </DialogTrigger>

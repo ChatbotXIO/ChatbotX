@@ -46,7 +46,7 @@ export function UpdateAccountFieldDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.accountField.label"),
             }),
           )
@@ -54,7 +54,9 @@ export function UpdateAccountFieldDialog({
           resetFormAndAction()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -74,9 +76,7 @@ export function UpdateAccountFieldDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>{t("accountField.updateForm.title")}</DialogTitle>
           <DialogDescription />
@@ -97,7 +97,7 @@ export function UpdateAccountFieldDialog({
               {/* <TextareaField
                 name="value"
                 label={t("accountField.value.label")}
-                isRequired={false}
+                required={false}
               /> */}
 
               <div className="flex justify-end gap-4">

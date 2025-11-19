@@ -3,10 +3,15 @@ import { z } from "zod"
 export const cursorPagination = z.object({
   direction: z.enum(["next", "prev"]),
   createdAt: z.coerce.date(),
-  id: z.string().cuid2(),
+  id: z.cuid2(),
 })
 
 export type CursorPagination = z.infer<typeof cursorPagination>
+
+export type PaginationResponse<T> = {
+  data: T[]
+  pageCount: number
+}
 
 export type BaseCursorCollection<T> = {
   data: T[]

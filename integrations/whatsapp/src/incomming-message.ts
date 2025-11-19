@@ -5,13 +5,13 @@ import {
   type ExternalMediaResult,
   FileType,
   type MessageEntity,
+  MessageType,
   SdkException,
 } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import fetch from "cross-fetch"
 import imageSize from "image-size"
 import type { WhatsAppAPI } from "whatsapp-api-js"
-import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import type {
   ServerAudioMessage,
   ServerButtonMessage,
@@ -25,17 +25,17 @@ import type {
   ServerVideoMessage,
 } from "whatsapp-api-js/types"
 import { logger } from "./lib/logger"
-import type { WhatsappAuthValue } from "./schemas"
+import type { WhatsappAuthValue, WhatsappWebhookEvent } from "./schemas"
 
 export const parseIncomingMessage = async (
   ctx: Context<WhatsappAuthValue>,
   whatsappClient: WhatsAppAPI,
-  props: OnMessageArgs,
+  props: WhatsappWebhookEvent,
 ) => {
   const message: MessageEntity = {
     sourceId: props.message.id,
-    messageType: "INCOMING",
-    contentType: ContentType.TEXT,
+    messageType: MessageType.incoming,
+    contentType: ContentType.text,
   }
   const conversation: ConversationEntity = {
     sourceId: props.from,
@@ -61,7 +61,7 @@ export const parseIncomingMessage = async (
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.AUDIO,
+          fileType: FileType.audio,
           ...mediaSpecs,
         },
       ]
@@ -77,7 +77,7 @@ export const parseIncomingMessage = async (
           name: attached.filename,
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.DOCUMENT,
+          fileType: FileType.file,
           ...mediaSpecs,
         },
       ]
@@ -92,7 +92,7 @@ export const parseIncomingMessage = async (
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.IMAGE,
+          fileType: FileType.image,
           ...mediaSpecs,
         },
       ]
@@ -107,7 +107,7 @@ export const parseIncomingMessage = async (
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.IMAGE,
+          fileType: FileType.image,
           ...mediaSpecs,
         },
       ]
@@ -121,7 +121,7 @@ export const parseIncomingMessage = async (
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.VIDEO,
+          fileType: FileType.video,
           ...mediaSpecs,
         },
       ]
@@ -129,7 +129,7 @@ export const parseIncomingMessage = async (
     }
     case "location": {
       const attached = (props.message as ServerLocationMessage).location
-      // message.contentType = ContentType.LOCATION
+      // message.contentType = ContentType.location
       message.content =
         [attached.name, attached.address]
           .filter((v) => Boolean(v))

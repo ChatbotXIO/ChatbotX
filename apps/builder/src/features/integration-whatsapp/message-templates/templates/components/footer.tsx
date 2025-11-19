@@ -37,11 +37,11 @@ const TemplateFooterComponent = ({ parentName }: { parentName: string }) => {
     [handleChange],
   )
 
-  const displayText = useMemo(() => {
-    return (
-      getValues(`${parentName}.footer`) || `---- ${t("actions.update")} ----`
-    )
-  }, [getValues, parentName, t])
+  const displayText = useMemo(
+    () =>
+      getValues(`${parentName}.footer`) || `---- ${t("actions.update")} ----`,
+    [getValues, parentName, t],
+  )
 
   return (
     <>

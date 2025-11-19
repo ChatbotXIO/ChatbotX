@@ -1,9 +1,11 @@
 "use server"
 
-import { Gender, InboxType, IntegrationType, prisma } from "@aha.chat/database"
+import { Gender, prisma } from "@aha.chat/database"
 import {
   ContentType,
   type ConversationModel,
+  InboxType,
+  IntegrationType,
   MessageType,
   SenderType,
 } from "@aha.chat/database/types"
@@ -12,21 +14,23 @@ import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import {
+  guessFileTypeFromMimeType,
+  type OutgoingMessageEntity,
+} from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
-import { revalidateTag } from "next/cache"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import { BaseException } from "@/lib/error"
+import { revalidateCacheTags } from "@/lib/cache-helper"
+import { BaseException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
   type CreateWebchatMessageRequest,
   createWebchatMessageRequest,
-  guessFileTypeFromMimeType,
 } from "../schemas/create-message.schema"
 
 export const createWebchatMessageAction = actionClient
@@ -39,11 +43,18 @@ export const createWebchatMessageAction = actionClient
       const inbox = await prisma.inbox.findFirst({
         where: {
           chatbotId: parsedInput.chatbotId,
-          inboxType: InboxType.WEBCHAT,
+          inboxType: InboxType.webchat,
         },
       })
       if (!inbox) {
         throw new BaseException("Inbox not found")
+      }
+
+      const chatbotUsage = await prisma.chatbotUsage.findFirstOrThrow({
+        where: { chatbotId: parsedInput.chatbotId },
+      })
+      if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+        throw new BaseException("Max contacts reached")
       }
 
       const sourceId = parsedInput.guestConversationId
@@ -70,8 +81,8 @@ export const createWebchatMessageAction = actionClient
               chatbotId: parsedInput.chatbotId,
               sourceId,
               email: parsedInput.guestConversationId,
-              source: IntegrationType.WEBCHAT,
-              gender: Gender.UNKNOWN,
+              source: IntegrationType.webchat,
+              gender: Gender.unknown,
               firstName: "Guest",
               lastName: randomString(10),
             },
@@ -121,13 +132,13 @@ export const createWebchatMessageAction = actionClient
         const newMessage: MessageResource = await tx.message.create({
           data: {
             content: "content" in parsedInput ? parsedInput.content : null,
-            messageType: MessageType.INCOMING,
+            messageType: MessageType.incoming,
             chatbotId: conversation.chatbotId,
             conversationId: conversation.id,
-            senderType: SenderType.CONTACT,
+            senderType: SenderType.contact,
             senderId: conversation.contactId,
             inboxId: conversation.inboxId,
-            contentType: ContentType.TEXT,
+            contentType: ContentType.text,
           },
         })
 
@@ -191,6 +202,6 @@ export const createWebchatMessageAction = actionClient
       // Broadcast and send
       await Promise.all(promises)
 
-      revalidateTag(`chatbots:${conversation.chatbotId}:conversations`)
+      revalidateCacheTags(`chatbots:${conversation.chatbotId}:conversations`)
     },
   )

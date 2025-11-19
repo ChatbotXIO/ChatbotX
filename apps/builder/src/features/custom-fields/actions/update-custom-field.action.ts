@@ -1,12 +1,12 @@
 "use server"
 
 import { FieldType, FolderType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateCustomFieldSchema,
@@ -14,7 +14,7 @@ import {
 } from "../schemas/update-custom-field.schema"
 
 export const updateCustomFieldAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateCustomFieldSchema)
   .action(
     async ({
@@ -28,7 +28,7 @@ export const updateCustomFieldAction = chatbotActionClient
         where: {
           id,
           chatbotId,
-          fieldType: FieldType.ACCOUNT_FIELD,
+          fieldType: FieldType.accountField,
         },
       })
 
@@ -39,7 +39,7 @@ export const updateCustomFieldAction = chatbotActionClient
         await ensureFolderIdIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.CUSTOM_FIELD,
+          FolderType.customField,
         )
       }
 
@@ -50,6 +50,6 @@ export const updateCustomFieldAction = chatbotActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`chatbots:${chatbotId}#customFields`)
+      revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
     },
   )

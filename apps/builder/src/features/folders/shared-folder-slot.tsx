@@ -24,20 +24,17 @@ export default async function SharedFolderSlot(props: {
   let folderType: FolderType | null = null
   switch (featureName) {
     case "automated-responses":
-      folderType = FolderType.AUTOMATED_RESPONSE
+      folderType = FolderType.automatedResponse
       break
     case "flows":
-      folderType = FolderType.FLOW
+      folderType = FolderType.flow
       break
     case "account-fields":
     case "custom-fields":
-      folderType = FolderType.CUSTOM_FIELD
-      break
-    case "email-campaigns":
-      folderType = FolderType.EMAIL_CAMPAIGN
+      folderType = FolderType.customField
       break
     case "tags":
-      folderType = FolderType.TAG
+      folderType = FolderType.tag
       break
     default:
       break

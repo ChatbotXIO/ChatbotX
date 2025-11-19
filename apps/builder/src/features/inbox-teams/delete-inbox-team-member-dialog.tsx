@@ -50,36 +50,40 @@ export function DeleteInboxTeamMembersDialog({
         onOpenChange(false)
       },
       onError: ({ error }) => {
-        error.serverError && toast.error(error.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )
 
   return (
     <Dialog {...props}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.deleteTitle", {
+            {t("messages.deleteFeature", {
               feature: t("fields.inboxTeamMember.label"),
             })}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("dialog.deleteConfirmation", {
               feature: t("fields.inboxTeamMember.label"),
             })}
           </DialogDescription>
         </DialogHeader>
+
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">{t("actions.cancel")}</Button>
+            <Button size="sm" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
             onClick={() => execute({ ids: [teamMember?.id ?? ""] })}
+            size="sm"
             variant="destructive"
           >
             {isPending && (

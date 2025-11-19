@@ -1,17 +1,17 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteInboxTeamAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
@@ -30,10 +30,6 @@ export const deleteInboxTeamAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#inboxTeams`)
-
-      return {
-        successful: true,
-      }
+      revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
     },
   )

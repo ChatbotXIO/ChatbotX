@@ -1,0 +1,427 @@
+import { prisma } from "@aha.chat/database"
+import type {
+  ConversationModel,
+  SpreadsheetModel,
+} from "@aha.chat/database/types"
+import type {
+  EdgeSchema,
+  FilterMode,
+  Operator,
+  SpreadsheetClearRowSchema,
+  SpreadsheetGetRandomRowSchema,
+  SpreadsheetGetRowSchema,
+  SpreadsheetSendDataSchema,
+  SpreadsheetUpdateRowSchema,
+} from "@aha.chat/flow-config"
+import {
+  type GoogleSheetsAuthValue,
+  integration as integrationGooglesheets,
+} from "@aha.chat/integration-google-sheets"
+import { SdkException } from "@aha.chat/sdk"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { logger } from "../../lib/logger"
+import { isMatchedRow } from "./operator-handler"
+import type { FlowStepProps } from "./step-handler"
+
+const findRowType = {
+  SINGLE: "single",
+  ALL: "all",
+  RANDOM: "random",
+}
+type FindRowType = (typeof findRowType)[keyof typeof findRowType]
+
+const getWorksheet = async ({
+  id,
+  chatbotId,
+}: {
+  id: string
+  chatbotId: string
+}): Promise<SpreadsheetModel> =>
+  await prisma.spreadsheet.findFirstOrThrow({
+    where: {
+      id,
+      chatbotId,
+    },
+  })
+
+const getGoogleSheetsIntegration = async (chatbotId: string) =>
+  await prisma.integrationGoogleSheets.findFirstOrThrow({
+    where: {
+      chatbotId,
+    },
+  })
+
+const getSheetData = async ({
+  conversation,
+  step,
+}: FlowStepProps<SpreadsheetGetRowSchema>) => {
+  const auth = await getGoogleSheetAuth(conversation.chatbotId)
+  const worksheet = await getWorksheet({
+    id: step.spreadsheetId,
+    chatbotId: conversation.chatbotId,
+  })
+
+  const headers = await integrationGooglesheets.actions.listSheetHeaders({
+    ctx: {
+      auth,
+    },
+    props: {
+      spreadsheetId: worksheet.spreadsheetId,
+      sheetName: step.sheetName,
+    },
+  })
+  const values = await integrationGooglesheets.actions.getSheetValues({
+    ctx: {
+      auth,
+    },
+    props: {
+      spreadsheetId: worksheet.spreadsheetId,
+      sheetName: step.sheetName,
+    },
+  })
+  return {
+    headers,
+    rows: values,
+  }
+}
+
+const findRows = ({
+  headers,
+  rows,
+  lookup,
+  type,
+}: {
+  headers: string[]
+  rows: string[][]
+  lookup: {
+    mode: FilterMode
+    conditions: { value: string; column: string; operator: OperatorType }[]
+  }
+  type: FindRowType
+}): string[][] | string[] | null => {
+  const matched: string[][] = []
+  for (const row of rows) {
+    if (isMatchedRow(headers, row, lookup)) {
+      matched.push(row)
+      if (type === findRowType.SINGLE) {
+        return row
+      }
+    }
+  }
+  if (matched.length === 0) {
+    return null
+  }
+  return type === findRowType.RANDOM ? getRandomRow(matched) : matched
+}
+
+type OperatorType = (typeof Operator)[keyof typeof Operator]
+
+export const getSpreadsheetRow = async ({
+  conversation,
+  flowVersionId,
+  step,
+}: FlowStepProps<SpreadsheetGetRowSchema>) => {
+  try {
+    const { headers, rows: values } = await getSheetData({
+      conversation,
+      step,
+      flowVersionId: "",
+    })
+    const foundRow = findRows({
+      headers,
+      rows: values,
+      lookup: step.lookup,
+      type: findRowType.SINGLE,
+    }) as string[] | null
+    if (!foundRow) {
+      return
+    }
+
+    await updateContactCustomFields({
+      conversation,
+      step,
+      headers,
+      foundRow,
+    })
+    await sendFlow({ conversation, flowVersionId, step }, true)
+  } catch (error) {
+    await sendFlow({ conversation, flowVersionId, step }, false)
+    logger.error("Error in getSpreadsheetRow:", error)
+  }
+}
+
+const getGoogleSheetAuth = async (chatbotId: string) => {
+  const googleSheetsIntegration = await getGoogleSheetsIntegration(chatbotId)
+  if (!googleSheetsIntegration.auth) {
+    throw new SdkException("Google Sheets integration auth is missing")
+  }
+  return googleSheetsIntegration.auth as GoogleSheetsAuthValue
+}
+
+export const sendSpreadsheetData = async ({
+  conversation,
+  flowVersionId,
+  step,
+}: FlowStepProps<SpreadsheetGetRowSchema>) => {
+  try {
+    const auth = await getGoogleSheetAuth(conversation.chatbotId)
+    const worksheet = await getWorksheet({
+      id: step.spreadsheetId,
+      chatbotId: conversation.chatbotId,
+    })
+
+    const data: string[] = []
+    for (const mapItem of step.map) {
+      let value = ""
+      if (mapItem.customFieldId) {
+        const contactCustomField = await prisma.contactCustomField.findFirst({
+          where: {
+            contactId: conversation.contactId,
+            customFieldId: mapItem.customFieldId,
+          },
+        })
+        value = contactCustomField?.value || ""
+      }
+      data.push(value)
+    }
+
+    await integrationGooglesheets.actions.insertRow({
+      ctx: {
+        auth,
+      },
+      props: {
+        spreadsheetId: worksheet.spreadsheetId,
+        sheetName: step.sheetName,
+        data,
+      },
+    })
+    await sendFlow({ conversation, flowVersionId, step }, true)
+  } catch (error) {
+    await sendFlow({ conversation, flowVersionId, step }, false)
+    logger.error("Error in sendSpreadsheetData:", error)
+  }
+}
+
+export const updateSpreadsheetRow = async ({
+  conversation,
+  flowVersionId,
+  step,
+}: FlowStepProps<SpreadsheetGetRowSchema>) => {
+  try {
+    const { headers, rows: values } = await getSheetData({
+      conversation,
+      step,
+      flowVersionId: "",
+    })
+    const foundRows = findRows({
+      headers,
+      rows: values,
+      lookup: step.lookup,
+      type: findRowType.ALL,
+    }) as string[][] | null
+    if (!foundRows) {
+      return
+    }
+
+    const auth = await getGoogleSheetAuth(conversation.chatbotId)
+    const worksheet = await getWorksheet({
+      id: step.spreadsheetId,
+      chatbotId: conversation.chatbotId,
+    })
+
+    const data: string[] = []
+    for (const mapItem of step.map) {
+      let value = ""
+      if (mapItem.customFieldId) {
+        const contactCustomField = await prisma.contactCustomField.findFirst({
+          where: {
+            contactId: conversation.contactId,
+            customFieldId: mapItem.customFieldId,
+          },
+        })
+        value = contactCustomField?.value || ""
+      }
+      data.push(value)
+    }
+
+    for (const foundRow of foundRows) {
+      await integrationGooglesheets.actions.updateRow({
+        ctx: {
+          auth,
+        },
+        props: {
+          spreadsheetId: worksheet.spreadsheetId,
+          sheetName: step.sheetName,
+          rowIndex: values.indexOf(foundRow),
+          data,
+        },
+      })
+    }
+    await sendFlow({ conversation, flowVersionId, step }, true)
+  } catch (error) {
+    await sendFlow({ conversation, flowVersionId, step }, false)
+    logger.error("Error in updateSpreadsheetRow:", error)
+  }
+}
+
+export const clearSpreadsheetRow = async ({
+  conversation,
+  flowVersionId,
+  step,
+}: FlowStepProps<SpreadsheetGetRowSchema>) => {
+  try {
+    const { headers, rows: values } = await getSheetData({
+      conversation,
+      step,
+      flowVersionId: "",
+    })
+    const foundRows = findRows({
+      headers,
+      rows: values,
+      lookup: step.lookup,
+      type: findRowType.ALL,
+    }) as string[][] | null
+    if (!foundRows) {
+      return
+    }
+
+    const auth = await getGoogleSheetAuth(conversation.chatbotId)
+    const worksheet = await getWorksheet({
+      id: step.spreadsheetId,
+      chatbotId: conversation.chatbotId,
+    })
+
+    for (const foundRow of foundRows) {
+      await integrationGooglesheets.actions.clearRow({
+        ctx: {
+          auth,
+        },
+        props: {
+          spreadsheetId: worksheet.spreadsheetId,
+          sheetName: step.sheetName,
+          rowIndex: values.indexOf(foundRow),
+        },
+      })
+    }
+    await sendFlow({ conversation, flowVersionId, step }, true)
+  } catch (error) {
+    await sendFlow({ conversation, flowVersionId, step }, false)
+    logger.error("Error in clearSpreadsheetRow:", error)
+  }
+}
+
+export const getSpreadsheetRandomRow = async ({
+  conversation,
+  flowVersionId,
+  step,
+}: FlowStepProps<SpreadsheetGetRowSchema>) => {
+  try {
+    const { headers, rows: values } = await getSheetData({
+      conversation,
+      step,
+      flowVersionId: "",
+    })
+    const foundRow = findRows({
+      headers,
+      rows: values,
+      lookup: step.lookup,
+      type: findRowType.RANDOM,
+    }) as string[] | null
+    if (!foundRow) {
+      return
+    }
+
+    await updateContactCustomFields({
+      conversation,
+      step,
+      headers,
+      foundRow,
+    })
+    await sendFlow({ conversation, flowVersionId, step }, true)
+  } catch (error) {
+    await sendFlow({ conversation, flowVersionId, step }, false)
+    logger.error("Error in getSpreadsheetRandomRow:", error)
+  }
+}
+
+const updateContactCustomFields = async ({
+  conversation,
+  step,
+  headers,
+  foundRow,
+}: {
+  conversation: ConversationModel
+  step: SpreadsheetGetRowSchema
+  headers: string[]
+  foundRow: string[]
+}) => {
+  for (const mapItem of step.map) {
+    const headerIndex = headers.indexOf(mapItem.header)
+    if (headerIndex !== -1 && mapItem.customFieldId) {
+      const value = foundRow[headerIndex]
+      await prisma.contactCustomField.upsert({
+        create: {
+          contactId: conversation.contactId,
+          customFieldId: mapItem.customFieldId,
+          value,
+        },
+        where: {
+          contactId_customFieldId: {
+            contactId: conversation.contactId,
+            customFieldId: mapItem.customFieldId,
+          },
+        },
+        update: {
+          value,
+        },
+      })
+    }
+  }
+}
+
+const getRandomRow = (rows: string[][]): string[] | null => {
+  if (!rows.length) {
+    return null
+  }
+  const i = Math.floor(Math.random() * rows.length)
+  return rows[i]
+}
+
+const sendFlow = async (
+  {
+    conversation,
+    flowVersionId,
+    step,
+  }: FlowStepProps<
+    | SpreadsheetGetRowSchema
+    | SpreadsheetSendDataSchema
+    | SpreadsheetGetRandomRowSchema
+    | SpreadsheetClearRowSchema
+    | SpreadsheetUpdateRowSchema
+  >,
+  isSuccess: boolean,
+) => {
+  const currentFlow = await prisma.flowVersion.findFirst({
+    where: {
+      id: flowVersionId,
+      chatbotId: conversation.chatbotId,
+    },
+  })
+  const edges = currentFlow?.edges || []
+  const nodeId: string | undefined = isSuccess
+    ? step.successNodeId
+    : step.errorNodeId
+  const foundEdge = (edges as EdgeSchema[]).find(
+    ({ sourceHandle }) => sourceHandle === nodeId,
+  )
+  if (foundEdge) {
+    await integrationQueue.add(IntegrationJobAction.SEND_FLOW, {
+      type: IntegrationJobAction.SEND_FLOW,
+      data: {
+        conversationId: conversation.id,
+        flowVersionId,
+        nodeId: foundEdge.target,
+      },
+    })
+  }
+}

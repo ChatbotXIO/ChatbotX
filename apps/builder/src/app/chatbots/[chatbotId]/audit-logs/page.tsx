@@ -17,7 +17,7 @@ export default async function AuditLogsPage(props: {
     getLogs({
       ...search,
       chatbotId: params.chatbotId,
-      logType: LogType.Audit,
+      logType: LogType.audit,
     }),
   ])
 

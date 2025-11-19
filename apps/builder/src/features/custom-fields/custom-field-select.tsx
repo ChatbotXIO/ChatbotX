@@ -5,16 +5,16 @@ import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
 import { useParams } from "next/navigation"
-import type { ReactNode } from "react"
 import { mutate } from "swr"
 import { callAPI } from "@/lib/swr"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
+import { reservedCustomFieldOptions } from "./lib/reserved-custom-field"
 import type { CustomFieldCollection } from "./schemas"
 
 type CustomFieldSelectProps = {
   name: string
-  label: ReactNode | string
-  isRequired?: boolean
+  label?: string
+  required?: boolean
   allowCreate?: boolean
   customFieldType?: CustomFieldType
 }
@@ -23,7 +23,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
   const {
     name,
     label = "Select Custom Field",
-    isRequired,
+    required,
     allowCreate,
     customFieldType,
   } = props
@@ -43,6 +43,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     label: v.name,
     value: v.id,
   }))
+  const allOptions = [...reservedCustomFieldOptions, ...customFields]
 
   return (
     <FormItem>
@@ -50,7 +51,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
         <div className="flex items-center">
           <FormLabel className="flex flex-1 items-center gap-1">
             {label}
-            {!isRequired && (
+            {!required && (
               <span className="self-start font-normal text-xxs">
                 (optional)
               </span>
@@ -77,7 +78,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
       )}
       <SelectField
         name={name}
-        options={customFields}
+        options={allOptions}
         placeholder="Please select"
       />
     </FormItem>

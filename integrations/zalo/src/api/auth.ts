@@ -1,41 +1,35 @@
 import type { Oauth2Config } from "@aha.chat/sdk"
-import ky from "ky"
-import { ZaloException } from "../libs/exception"
-import { logger } from "../libs/logger"
-import { DEFAULT_VERSION } from "../schemas/definition"
+import { ZALO_API_ENDPOINTS, ZALO_OAUTH_BASE_URL } from "../constants"
+import { handleZaloError, ZaloException } from "../libs/exception"
+import { ZaloHttpClient } from "../libs/http-client"
 
 export function generateAuthUrl(props: Oauth2Config) {
-  const {
-    clientId,
-    redirectUrl,
-    version = DEFAULT_VERSION,
-    stateParams,
-  } = props
-  const baseUrl = `https://oauth.zaloapp.com/${version}/oa/permission`
+  const { clientId, redirectUrl, stateParams } = props
   const params = new URLSearchParams({
     app_id: clientId,
     redirect_uri: redirectUrl,
     state: btoa(JSON.stringify(stateParams)),
   })
 
-  return `${baseUrl}?${params.toString()}`
+  return `${ZALO_OAUTH_BASE_URL}${ZALO_API_ENDPOINTS.AUTH.PERMISSION}?${params.toString()}`
 }
 
 export type ZaloAccessTokenResponse = {
   access_token: string
   refresh_token: string
-  expires_in: string
+  expires_in: number
 }
 
-export async function convertCodeToTokens(
+export const convertCodeToTokens = (
   setting: Oauth2Config,
   code: string,
-): Promise<ZaloAccessTokenResponse> {
-  try {
-    const { version = DEFAULT_VERSION } = setting
+): Promise<ZaloAccessTokenResponse> =>
+  handleZaloError("Convert code to tokens", async () => {
+    const client = ZaloHttpClient.createOAuthClient()
 
-    return await ky
-      .post(`https://oauth.zaloapp.com/${version}/oa/access_token`, {
+    return await client.post<ZaloAccessTokenResponse>(
+      ZALO_API_ENDPOINTS.AUTH.ACCESS_TOKEN,
+      {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           secret_key: setting.clientSecret,
@@ -46,14 +40,33 @@ export async function convertCodeToTokens(
           redirect_uri: setting.redirectUrl,
           grant_type: "authorization_code",
         }),
-      })
-      .json<ZaloAccessTokenResponse>()
-  } catch (error) {
-    logger.error("convertCodeToTokens error", error)
+      },
+    )
+  })
 
-    throw new ZaloException(`Zalo request access token failed: ${error}`)
-  }
-}
+export const refreshAccessToken = (
+  setting: Oauth2Config,
+  refreshToken: string,
+): Promise<ZaloAccessTokenResponse> =>
+  handleZaloError("Refresh access token", async () => {
+    const client = ZaloHttpClient.createOAuthClient()
+
+    return await client.post<ZaloAccessTokenResponse>(
+      ZALO_API_ENDPOINTS.AUTH.ACCESS_TOKEN,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          secret_key: setting.clientSecret,
+        },
+        body: new URLSearchParams({
+          app_id: setting.clientId,
+          app_secret: setting.clientSecret,
+          refresh_token: refreshToken,
+          grant_type: "refresh_token",
+        }),
+      },
+    )
+  })
 
 export type ZaloOAProfileResponse = {
   data: {
@@ -66,26 +79,18 @@ export type ZaloOAProfileResponse = {
   message: string
 }
 
-export async function getZaloOAProfile(
+export const getZaloOAProfile = (
   accessToken: string,
-): Promise<ZaloOAProfileResponse["data"]> {
-  try {
-    const result = await ky
-      .get("https://openapi.zalo.me/v2.0/oa/getoa", {
-        headers: {
-          access_token: accessToken,
-        },
-      })
-      .json<ZaloOAProfileResponse>()
+): Promise<ZaloOAProfileResponse["data"]> =>
+  handleZaloError("Get OA profile", async () => {
+    const client = ZaloHttpClient.createAuthenticatedClient(accessToken)
+    const result = await client.get<ZaloOAProfileResponse>(
+      ZALO_API_ENDPOINTS.OA.GET_PROFILE,
+    )
 
     if (result.error !== 0) {
       throw new ZaloException(result.message)
     }
 
     return result.data
-  } catch (error) {
-    logger.error("getZaloOAProfile error", error)
-
-    throw new ZaloException(`Zalo request OA profile failed: ${error}`)
-  }
-}
+  })

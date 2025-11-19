@@ -54,7 +54,7 @@ export function UpdateTagDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.tag.label"),
             }),
           )
@@ -63,7 +63,9 @@ export function UpdateTagDialog({
           router.refresh()
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -81,12 +83,10 @@ export function UpdateTagDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.tag.label") })}
+            {t("messages.editFeature", { feature: t("fields.tag.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

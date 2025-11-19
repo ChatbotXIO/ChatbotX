@@ -12,13 +12,15 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form"
+import { cn } from "@aha.chat/ui/lib/utils"
 
 type FormFieldWrapperProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   placeholder?: string
-  isRequired?: boolean
+  required?: boolean
   description?: string
+  formItemClassName?: string
   children: (
     field: {
       value: T[FieldPath<T>]
@@ -32,8 +34,9 @@ type FormFieldWrapperProps<T extends FieldValues> = {
 export function FormFieldWrapper<T extends FieldValues>({
   name,
   label,
-  isRequired,
+  required,
   description,
+  formItemClassName,
   children,
 }: FormFieldWrapperProps<T>) {
   const { control } = useFormContext()
@@ -43,11 +46,11 @@ export function FormFieldWrapper<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="w-full">
+        <FormItem className={cn("w-full", formItemClassName)}>
           {label && (
             <FormLabel className="flex gap-1">
               {label}
-              {!isRequired && (
+              {!required && (
                 <span className="self-start font-normal text-xxs">
                   (optional)
                 </span>

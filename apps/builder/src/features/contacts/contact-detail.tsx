@@ -94,25 +94,23 @@ export const ContactDetail = () => {
         </Avatar>
       </div>
       <div className="flex flex-col gap-1 font-medium text-[12px] text-gray-600">
-        {editableData.map((editable) => {
-          return (
-            <div className="flex w-full items-center gap-1" key={editable.key}>
-              <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
-                <editable.icon className="size-4" />
-                <div className="flex-1 truncate">{editable.label}</div>
-              </div>
-
-              <Button
-                className="flex-1 justify-start truncate text-[12px]"
-                onClick={() => setSelectedField(editable.key)}
-                size="sm"
-                variant="ghost"
-              >
-                {editable.value ?? "-- Click to edit --"}
-              </Button>
+        {editableData.map((editable) => (
+          <div className="flex w-full items-center gap-1" key={editable.key}>
+            <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
+              <editable.icon className="size-4" />
+              <div className="flex-1 truncate">{editable.label}</div>
             </div>
-          )
-        })}
+
+            <Button
+              className="flex-1 justify-start truncate text-[12px]"
+              onClick={() => setSelectedField(editable.key)}
+              size="sm"
+              variant="ghost"
+            >
+              {editable.value ?? "-- Click to edit --"}
+            </Button>
+          </div>
+        ))}
 
         <ContactCustomFieldManage chatbotId={chatbotId} />
       </div>

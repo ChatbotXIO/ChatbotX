@@ -70,24 +70,22 @@ const ListFolders = (props: ListFoldersProps) => {
               </Button>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {parents.map((parentFolder: FolderModel) => {
-            return (
-              <Fragment key={parentFolder.id}>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Button
-                      className="p-0 hover:bg-transparent"
-                      onClick={() => setFolderId(parentFolder.id)}
-                      variant="ghost"
-                    >
-                      {parentFolder.name}
-                    </Button>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-              </Fragment>
-            )
-          })}
+          {parents.map((parentFolder: FolderModel) => (
+            <Fragment key={parentFolder.id}>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Button
+                    className="p-0 hover:bg-transparent"
+                    onClick={() => setFolderId(parentFolder.id)}
+                    variant="ghost"
+                  >
+                    {parentFolder.name}
+                  </Button>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            </Fragment>
+          ))}
           {folder && (
             <>
               <BreadcrumbSeparator />
@@ -110,45 +108,43 @@ const ListFolders = (props: ListFoldersProps) => {
       {/* Folders list */}
       <ScrollArea className="max-h-44" type="auto">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {folders.map((folderItem: FolderModel) => {
-            return (
-              <div className="overflow-hidden" key={folderItem.id}>
-                <div className="group flex items-center gap-2 rounded-lg border pr-3 hover:border-primary">
-                  <Button
-                    className="flex flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-0 pl-4 hover:bg-transparent"
-                    onClick={() => setFolderId(folderItem.id)}
-                    size="lg"
-                    variant="ghost"
-                  >
-                    <FolderIcon />
-                    <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-left">
-                      {folderItem.name}
-                    </div>
-                  </Button>
-                  {!folderItem.isTrash && (
-                    <>
-                      <Button
-                        className="px-1 lg:hidden lg:group-hover:inline-flex"
-                        onClick={() => onEdit(folderItem)}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        <PencilIcon />
-                      </Button>
-                      <Button
-                        className="px-1 lg:hidden lg:group-hover:inline-flex"
-                        onClick={() => onDelete(folderItem)}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        <TrashIcon />
-                      </Button>
-                    </>
-                  )}
-                </div>
+          {folders.map((folderItem: FolderModel) => (
+            <div className="overflow-hidden" key={folderItem.id}>
+              <div className="group flex items-center gap-2 rounded-lg border pr-3 hover:border-primary">
+                <Button
+                  className="flex flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-0 pl-4 hover:bg-transparent"
+                  onClick={() => setFolderId(folderItem.id)}
+                  size="lg"
+                  variant="ghost"
+                >
+                  <FolderIcon />
+                  <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-left">
+                    {folderItem.name}
+                  </div>
+                </Button>
+                {!folderItem.isTrash && (
+                  <>
+                    <Button
+                      className="px-1 lg:hidden lg:group-hover:inline-flex"
+                      onClick={() => onEdit(folderItem)}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <PencilIcon />
+                    </Button>
+                    <Button
+                      className="px-1 lg:hidden lg:group-hover:inline-flex"
+                      onClick={() => onDelete(folderItem)}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <TrashIcon />
+                    </Button>
+                  </>
+                )}
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       </ScrollArea>
 

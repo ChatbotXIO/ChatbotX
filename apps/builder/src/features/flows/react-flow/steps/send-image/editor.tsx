@@ -13,7 +13,7 @@ const SendImageStepEditor = (props: SendImageStepEditorProps) => {
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-secondary px-4 py-2">
         <DirectUploadOrInsertLink
-          fileType={FileType.IMAGE}
+          fileType={FileType.image}
           parentName={parentName}
         />
       </div>
@@ -24,4 +24,4 @@ const SendImageStepEditor = (props: SendImageStepEditorProps) => {
   )
 }
 
-export { SendImageStepEditor }
+export default SendImageStepEditor

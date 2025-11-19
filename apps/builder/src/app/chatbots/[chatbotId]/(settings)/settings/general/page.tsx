@@ -1,14 +1,11 @@
 import { UpdateChatbotForm } from "@/features/chatbot/update-chatbot-form"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export default async function GeneralPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const params = await props.params
-
-  const userId = await getCurrentUserId()
-  const { chatbot } = await findChatbotOrFail(userId, params.chatbotId)
+  const { chatbotId } = await props.params
+  const { chatbot } = await assertCurrentUserCanAccessChatbot(chatbotId)
 
   return (
     <div className="px-4">

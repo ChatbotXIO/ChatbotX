@@ -1,17 +1,17 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
@@ -30,6 +30,6 @@ export const deleteFlowAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#flows`)
+      revalidateCacheTags(`chatbots:${chatbotId}#flows`)
     },
   )

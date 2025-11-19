@@ -1,21 +1,26 @@
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
+import { IntegrationType } from "@aha.chat/database/types"
 import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 import { findChatbot } from "@/features/chatbot/queries"
 import { findOrganization } from "@/features/organization/queries"
-import { integrations } from "@/integration"
+import { type IntegrationKey, integrations } from "@/integration"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 
 const stateValidationSchema = z.object({
-  chatbotId: z.string().cuid2(),
-  referer: z.string().url(),
+  chatbotId: z.cuid2(),
+  referer: z.url(),
 })
 
-export const handleCallback = async (integrationName: string, req: Request) => {
-  if (!(integrationName in integrations)) {
+export const handleCallback = async (
+  integrationType: IntegrationType,
+  req: Request,
+) => {
+  if (!(integrationType in integrations)) {
     return notFound()
   }
 
@@ -28,11 +33,10 @@ export const handleCallback = async (integrationName: string, req: Request) => {
     return notFound()
   }
 
-  const targetIntegration =
-    integrations[integrationName as keyof typeof integrations]
+  const targetIntegration = integrations[integrationType as IntegrationKey]
 
   if (!(targetIntegration && "handleRequest" in targetIntegration)) {
-    logger.warn(`${integrationName} is missing handleRequest method`)
+    logger.warn(`${integrationType} is missing handleRequest method`)
     return notFound()
   }
 
@@ -44,14 +48,13 @@ export const handleCallback = async (integrationName: string, req: Request) => {
 
   let authResult: BaseAuthValue
   let additionalIntegrationCreationData = {}
-
-  switch (integrationName) {
-    case IntegrationType.ZALO: {
+  switch (integrationType) {
+    case IntegrationType.zalo: {
       if (!organizationSettings.zalo) {
         return notFound()
       }
 
-      authResult = (await integrations.ZALO.handleRequest?.({
+      const authValue = (await integrations.zalo.handleRequest({
         config: {
           ...organizationSettings.zalo,
           redirectUrl: new URL(
@@ -63,42 +66,46 @@ export const handleCallback = async (integrationName: string, req: Request) => {
           },
         },
         req,
-      })) as unknown as BaseAuthValue
+      })) as ZaloAuthValue
 
       await prisma.$transaction(async (tx) => {
         await tx.inbox.create({
           data: {
             chatbotId: stateParams.chatbotId,
-            inboxType: IntegrationType.ZALO,
-            sourceId: (authResult as ZaloAuthValue).oaId,
+            inboxType: IntegrationType.zalo,
+            sourceId: authValue.oaId,
             integrationZalo: {
               create: {
                 chatbotId: stateParams.chatbotId,
-                oaId: (authResult as ZaloAuthValue).oaId,
-                auth: authResult,
+                oaId: authValue.oaId,
+                auth: authValue as unknown as Prisma.InputJsonValue,
+                name: authValue.metadata.oaName,
               },
             },
           },
         })
       })
+
+      revalidateCacheTags(`chatbots:${stateParams.chatbotId}#zalos`)
+
       return redirect(stateParams.referer)
     }
 
-    case IntegrationType.GOOGLE_SHEETS: {
+    case IntegrationType.googleSheets: {
       if (!organizationSettings.googleSheets) {
         return notFound()
       }
 
-      authResult = integrations.GOOGLE_SHEETS.handleRequest?.({
+      authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...organizationSettings.googleSheets,
           redirectUrl: new URL(
-            "/integrations/google-sheets/callback",
+            "/integrations/GoogleSheets/callback",
             req.url,
           ).toString(),
         },
         req,
-      }) as unknown as Oauth2AuthValue
+      })) as unknown as Oauth2AuthValue
 
       additionalIntegrationCreationData = {
         googleSheets: {
@@ -120,10 +127,6 @@ export const handleCallback = async (integrationName: string, req: Request) => {
   }
 
   await prisma.$transaction(async (tx) => {
-    const integrationType = integrationName
-      .replace(/-/g, "_")
-      .toUpperCase() as IntegrationType
-
     // create intergration
     await tx.integration.create({
       data: {

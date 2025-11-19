@@ -10,24 +10,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
-    "@aha.chat/filesystem": "workspace:*",
-    "@aha.chat/integration-messenger": "workspace:*",
-    "@aha.chat/integration-whatsapp": "workspace:*",
-    "@aha.chat/partysocket-config": "workspace:*",
-    "@aha.chat/sdk": "workspace:*",
-    "@aha.chat/worker-config": "workspace:*",
-    "bullmq": "^5.56.1",
-    "cross-fetch": "^4.1.0",
-    "dot-prop": "^9.0.0",
-    "ioredis": "^5.6.1",
-    "ky": "^1.8.1",
-    "partysocket": "1.1.4"
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "@types/node": "^24.10.1",
+    "ky": "^1.14.0",
+    "partykit": "0.0.115",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "dotenv-cli": "^8.0.0",
-    "partykit": "0.0.115",
-    "tsup": "^8.5.0"
+    "dotenv-cli": "^11.0.0"
   }
 }

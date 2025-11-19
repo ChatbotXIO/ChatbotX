@@ -1,6 +1,10 @@
 import type {
+  SendAudioStepSchema,
+  SendFileStepSchema,
+  SendGifStepSchema,
   SendImageStepSchema,
   SendTextStepSchema,
+  SendVideoStepSchema,
 } from "@aha.chat/flow-config"
 import type { BaseAuthValue } from "./auth"
 import type { Context, ConversationEntity, MessageEntity } from "./shared"
@@ -11,7 +15,13 @@ export type SendMessageProps<TAuth extends BaseAuthValue> = {
   message: MessageEntity
 }
 
-export type SendFlowStepData = SendTextStepSchema | SendImageStepSchema
+export type SendFlowStepData =
+  | SendTextStepSchema
+  | SendImageStepSchema
+  | SendGifStepSchema
+  | SendAudioStepSchema
+  | SendVideoStepSchema
+  | SendFileStepSchema
 
 export type SendFlowStepProps<TAuth extends BaseAuthValue> = {
   ctx: Context<TAuth>

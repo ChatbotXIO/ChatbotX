@@ -43,7 +43,7 @@ export async function sendFlowPostback(
     case ButtonType.SendMessage: {
       if (
         foundedButton.steps[0] &&
-        foundedButton.steps[0].stepType === StepType.SEND_FLOW_NODE &&
+        foundedButton.steps[0].stepType === StepType.startAnotherNode &&
         foundedButton.steps[0].nodeId
       ) {
         await integrationQueue.add(IntegrationJobAction.SEND_FLOW, {

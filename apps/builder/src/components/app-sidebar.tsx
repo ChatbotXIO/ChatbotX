@@ -15,7 +15,6 @@ import {
   SlidersHorizontalIcon,
   UsersIcon,
   WorkflowIcon,
-  WrenchIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type ComponentProps, use } from "react"
@@ -23,7 +22,7 @@ import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import type { ChatbotResource } from "@/features/chatbots/schemas"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 
 export function AppSidebar({
   chatbotId,
@@ -80,11 +79,11 @@ export function AppSidebar({
         url: `/chatbots/${chatbotId}/broadcasts`,
         icon: RadioIcon,
       },
-      {
-        title: t("fields.tools.label"),
-        url: `/chatbots/${chatbotId}/tools`,
-        icon: WrenchIcon,
-      },
+      // {
+      //   title: t("fields.tools.label"),
+      //   url: `/chatbots/${chatbotId}/tools`,
+      //   icon: WrenchIcon,
+      // },
       {
         title: t("fields.settings.label"),
         url: `/chatbots/${chatbotId}/settings/general`,

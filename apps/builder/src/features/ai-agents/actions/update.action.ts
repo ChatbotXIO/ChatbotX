@@ -1,7 +1,6 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import { AIAgentException } from "@/features/ai-agents/schemas/errors.schema"
 import {
   type UpdateAIAgentRequest,
@@ -11,10 +10,11 @@ import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const updateAIAgentAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateAIAgentRequest)
   .action(
     async ({
@@ -50,6 +50,6 @@ export const updateAIAgentAction = chatbotActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`chatbots:${chatbotId}#aiAgents`)
+      revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)
     },
   )

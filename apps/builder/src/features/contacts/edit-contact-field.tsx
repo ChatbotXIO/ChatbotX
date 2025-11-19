@@ -44,7 +44,7 @@ export function EditContactField({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.updatedSuccessfully", {
+              t("messages.updatedSuccess", {
                 feature: t("fields.contact.label"),
               }),
             )
@@ -52,7 +52,9 @@ export function EditContactField({
             resetFormAndAction()
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
@@ -65,12 +67,10 @@ export function EditContactField({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.contact.label") })}
+            {t("messages.editFeature", { feature: t("fields.contact.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

@@ -2,7 +2,7 @@ import { SelectField } from "@aha.chat/ui/components/form/select-field"
 
 type AIAsistantSelectProps = {
   name: string
-  isRequired?: boolean
+  required?: boolean
 }
 
 export const AIAsistantSelect = (props: AIAsistantSelectProps) => {

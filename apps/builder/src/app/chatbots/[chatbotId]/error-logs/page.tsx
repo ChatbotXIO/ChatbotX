@@ -17,7 +17,7 @@ export default async function ErrorLogsPage(props: {
     getLogs({
       ...search,
       chatbotId: params.chatbotId,
-      logType: LogType.Error,
+      logType: LogType.error,
     }),
   ])
 

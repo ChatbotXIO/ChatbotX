@@ -53,7 +53,9 @@ export function DeleteFlowsDialog({
         router.refresh()
       },
       onError: ({ error }) => {
-        error.serverError && toast.error(error.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )
@@ -68,22 +70,25 @@ export function DeleteFlowsDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.deleteTitle", { feature: t("fields.flow.label") })}
+            {t("messages.deleteFeature", { feature: t("fields.flow.label") })}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("dialog.deleteConfirmation", {
               feature: t("fields.flow.label"),
             })}
           </DialogDescription>
         </DialogHeader>
+
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button onClick={() => onOpenChange(false)} variant="outline">
+            <Button
+              onClick={() => onOpenChange(false)}
+              size="sm"
+              variant="ghost"
+            >
               {t("actions.cancel")}
             </Button>
           </DialogClose>
@@ -91,6 +96,7 @@ export function DeleteFlowsDialog({
             aria-label="Delete selected rows"
             disabled={isPending}
             onClick={() => execute({ ids: flows.map((f) => f.id) })}
+            size="sm"
             variant="destructive"
           >
             {isPending && (

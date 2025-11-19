@@ -15,7 +15,7 @@ export const callbackHandler = async (
   const tokens = await client.getToken(code)
 
   return {
-    authType: AuthType.OAUTH2,
+    authType: AuthType.oauth2,
     clientId: props.config.clientId,
     clientSecret: props.config.clientSecret,
     redirectUrl: props.config.redirectUrl,

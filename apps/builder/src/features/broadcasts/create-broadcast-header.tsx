@@ -1,7 +1,7 @@
 import { BroadcastSubaction, InboxType } from "@aha.chat/database/types"
+import { SiWhatsapp, SiWhatsappHex } from "@icons-pack/react-simple-icons"
 import { AtomIcon } from "lucide-react"
 import { type ReactNode, useMemo } from "react"
-import WhatsappIcon from "@/components/icons/whatsapp"
 
 export function CreateBroadcastHeader(
   inboxType: InboxType | null,
@@ -12,17 +12,17 @@ export function CreateBroadcastHeader(
   description: string
 } {
   const header = useMemo(() => {
-    if (inboxType === InboxType.WHATSAPP) {
-      if (subaction === BroadcastSubaction.TEMPLATE_MESSAGE) {
+    if (inboxType === InboxType.whatsapp) {
+      if (subaction === BroadcastSubaction.templateMessage) {
         return {
-          icon: <WhatsappIcon />,
+          icon: <SiWhatsapp fill={SiWhatsappHex} />,
           title: "Template message",
           description: "Send WhatsApp template message to your contacts",
         }
       }
 
       return {
-        icon: <WhatsappIcon />,
+        icon: <SiWhatsapp fill={SiWhatsappHex} />,
         title: "Active contacts within 24 hours",
         description:
           "May contain promotions and will only be sent to users who messaged your bot within the last 24h.",

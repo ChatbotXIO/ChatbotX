@@ -4,10 +4,12 @@ import { TagIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
-export const addContactTagStepViewer = () => {
+const AddContactTagStepViewer = () => {
   const t = useTranslations()
 
   return (
-    <BaseStepViewer icon={TagIcon} title={t("flows.stepType.addContactTag")} />
+    <BaseStepViewer icon={TagIcon} title={t("flows.actions.addContactTag")} />
   )
 }
+
+export default AddContactTagStepViewer

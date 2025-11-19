@@ -7,7 +7,7 @@ export const keys = () =>
       PARTYSOCKET_API_KEY: z.string().min(1),
     },
     client: {
-      NEXT_PUBLIC_PARTYSOCKET_URL: z.string().url(),
+      NEXT_PUBLIC_PARTYSOCKET_URL: z.url(),
     },
     experimental__runtimeEnv: {
       NEXT_PUBLIC_PARTYSOCKET_URL: process.env.NEXT_PUBLIC_PARTYSOCKET_URL,

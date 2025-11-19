@@ -1,6 +1,8 @@
+import type { IntegrationType } from "@aha.chat/database"
 import { HandleRequestType } from "@aha.chat/sdk"
 import { notFound } from "next/navigation"
 import type { NextRequest } from "next/server"
+import { toCamelCase } from "remeda"
 import { handleCallback } from "./callback"
 import { handleWebhook } from "./webhook"
 
@@ -9,20 +11,20 @@ const handleRequest = async (
   { params }: { params: Promise<{ integration: string[] }> },
 ) => {
   const allParams = await params
-  let integrationName = allParams.integration[0]
-  const interationAction = allParams.integration[1]
+  const integrationType = toCamelCase(
+    allParams.integration[0],
+  ) as IntegrationType
+  const integrationAction = allParams.integration[1]
 
-  if (!integrationName) {
+  if (!(integrationType && integrationAction)) {
     return notFound()
   }
 
-  integrationName = integrationName.replace(/-/g, "_").toUpperCase()
-
-  switch (interationAction) {
-    case HandleRequestType.CALLBACK:
-      return await handleCallback(integrationName, req)
-    case HandleRequestType.WEBHOOK:
-      return await handleWebhook(integrationName, req)
+  switch (integrationAction) {
+    case HandleRequestType.callback:
+      return await handleCallback(integrationType, req)
+    case HandleRequestType.webhook:
+      return await handleWebhook(integrationType, req)
     default:
       return notFound()
   }

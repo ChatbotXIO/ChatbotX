@@ -38,7 +38,7 @@ export function DeleteTagsDialog({
 }: DeleteTagsDialogProps) {
   const t = useTranslations()
 
-  const { execute, result, isPending } = useAction(
+  const { execute, isPending } = useAction(
     deleteTagAction.bind(null, chatbotId),
     {
       onSuccess: () => {
@@ -50,7 +50,9 @@ export function DeleteTagsDialog({
         onOpenChange?.(false)
       },
       onError: ({ error }) => {
-        error.serverError && toast.error(result.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )
@@ -65,27 +67,25 @@ export function DeleteTagsDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.deleteConfirmation", {
+            {t("messages.deleteFeature", {
               feature: t("fields.tag.label"),
             })}
           </DialogTitle>
-          <DialogDescription />
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
+            {t("dialog.deleteConfirmation", {
+              feature: t("fields.tag.label"),
+            })}
+          </DialogDescription>
         </DialogHeader>
-        <DialogContent
-          className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-        >
-          {t("dialog.deleteConfirmation", {
-            feature: t("fields.tag.label"),
-          })}{" "}
-        </DialogContent>
+
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t("actions.cancel")}</Button>
+            <Button size="sm" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
@@ -95,6 +95,7 @@ export function DeleteTagsDialog({
                 ids: (tags ?? []).map((tag) => tag.id),
               })
             }
+            size="sm"
             variant="destructive"
           >
             {isPending && (

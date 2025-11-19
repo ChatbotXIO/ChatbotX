@@ -1,30 +1,43 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { unsubscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
 import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 
 export const disconnectWhatsappAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [chatbotId, id],
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
       const integrationWhatsapp =
         await prisma.integrationWhatsapp.findFirstOrThrow({
-          where: { chatbotId },
+          where: {
+            chatbotId,
+            id,
+          },
         })
 
+      await unsubscribeWebhook({
+        auth: integrationWhatsapp.auth as WhatsappAuthValue,
+      })
+
       await prisma.$transaction(async (tx) => {
-        await tx.inbox.delete({
-          where: { id: integrationWhatsapp.inboxId },
+        await tx.integrationWhatsapp.delete({
+          where: { id: integrationWhatsapp.id },
         })
       })
+
+      revalidateCacheTags(`chatbots:${chatbotId}#inboxes`)
+
       return
     },
   )

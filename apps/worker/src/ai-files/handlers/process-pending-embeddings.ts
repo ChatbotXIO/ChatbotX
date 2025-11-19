@@ -37,7 +37,7 @@ export async function processPendingEmbeddings({
           item.id,
         ),
       )
-      processed++
+      processed += 1
     } catch (error) {
       logger.error("[ai-files] processPendingEmbeddings item failed", {
         error,

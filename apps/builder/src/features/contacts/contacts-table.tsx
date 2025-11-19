@@ -53,9 +53,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
-        cell: ({ row }) => {
-          return <div>{row.original.fullName}</div>
-        },
+        cell: ({ row }) => <div>{row.original.fullName}</div>,
         meta: {
           label: "Name",
           placeholder: "Search name...",
@@ -78,15 +76,13 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Assignee" />
         ),
-        cell: ({ row }) => {
-          return (
-            <div>
-              {row.original.conversation?.assignedUser?.name ||
-                row.original.conversation?.assignedInboxTeam?.name ||
-                "Unassigned"}
-            </div>
-          )
-        },
+        cell: ({ row }) => (
+          <div>
+            {row.original.conversation?.assignedUser?.name ||
+              row.original.conversation?.assignedInboxTeam?.name ||
+              "Unassigned"}
+          </div>
+        ),
         enableSorting: false,
       },
       {
@@ -94,17 +90,15 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Last seen" />
         ),
-        cell: ({ row }) => {
-          return (
-            <div>
-              {row.original.lastSeenAt
-                ? formatDistance(new Date(), row.original.lastSeenAt, {
-                    addSuffix: true,
-                  })
-                : null}
-            </div>
-          )
-        },
+        cell: ({ row }) => (
+          <div>
+            {row.original.lastSeenAt
+              ? formatDistance(new Date(), row.original.lastSeenAt, {
+                  addSuffix: true,
+                })
+              : null}
+          </div>
+        ),
         enableSorting: false,
       },
       {

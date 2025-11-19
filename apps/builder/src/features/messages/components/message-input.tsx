@@ -27,7 +27,7 @@ import {
 import { useTranslations } from "next-intl"
 import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
 import { Controller } from "react-hook-form"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
 import { createMessageRequest } from "../schemas/create-message.schema"
@@ -38,24 +38,23 @@ import { FileUploadPreview } from "./file-upload"
 const createInboxTypes = (
   t: (key: string) => string,
 ): Record<
-  InboxType,
+  InboxType | "omnichannel",
   { icon: IconType | LucideIcon; label: string } | undefined
 > => ({
-  WEBCHAT: {
+  webchat: {
     icon: GlobeIcon,
     label: t("webchat.title"),
   },
-  INSTAGRAM: undefined,
-  MESSENGER: {
+  messenger: {
     icon: SiMessenger,
     label: t("messenger.title"),
   },
-  WHATSAPP: {
+  whatsapp: {
     icon: SiWhatsapp,
     label: t("whatsapp.title"),
   },
-  OMNICHANNEL: undefined,
-  ZALO: {
+  omnichannel: undefined,
+  zalo: {
     icon: SiZalo,
     label: t("zalo.title"),
   },
@@ -76,9 +75,10 @@ export const MessageInput = () => {
   )
 
   // Memoize active conversation to prevent unnecessary re-renders
-  const conversation = useMemo(() => {
-    return conversations.find((c) => c.id === activeConversationId) ?? null
-  }, [conversations, activeConversationId])
+  const conversation = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId) ?? null,
+    [conversations, activeConversationId],
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -109,9 +109,9 @@ export const MessageInput = () => {
                 sourceId: null,
                 conversationId: conversation?.id ?? "",
                 contentAttributes: null,
-                messageType: MessageType.OUTGOING,
-                contentType: ContentType.TEXT,
-                senderType: SenderType.USER,
+                messageType: MessageType.outgoing,
+                contentType: ContentType.text,
+                senderType: SenderType.user,
                 senderId: session?.data?.user.id ?? null,
                 clientId: typedInput.clientId,
               })
@@ -175,8 +175,8 @@ export const MessageInput = () => {
   )
 
   // Memoize inbox type and icon for current conversation
-  const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.WEBCHAT
-  const inboxConfig = inboxTypes[currentInboxType]
+  const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.webchat
+  const inboxConfig = inboxTypes[currentInboxType as InboxType]
   const IconComponent = inboxConfig?.icon
 
   // Early return if no active conversation

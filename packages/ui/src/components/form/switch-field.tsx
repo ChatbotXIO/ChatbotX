@@ -10,17 +10,19 @@ type SwitchFieldProps<T extends FieldValues> = React.ComponentProps<
   label?: string
   required?: boolean
   description?: string
+  formItemClassName?: string
 }
 
 export function SwitchField<T extends FieldValues>(props: SwitchFieldProps<T>) {
-  const { name, label, description, required, ...rest } = props
+  const { name, label, description, required, formItemClassName, ...rest } = props
 
   return (
     <FormFieldWrapper
       description={description}
-      isRequired={required}
+      required={required}
       label={label}
       name={name}
+      formItemClassName={formItemClassName}
     >
       {(field) => (
         <Switch

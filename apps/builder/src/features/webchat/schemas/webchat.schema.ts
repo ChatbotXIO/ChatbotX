@@ -10,17 +10,17 @@ import { z } from "zod"
 export const conversationStarterSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
-    type: z.literal(ConversationStarterType.FLOW),
-    flowId: z.string().cuid2(),
+    type: z.literal(ConversationStarterType.flow),
+    flowId: z.cuid2(),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(ConversationStarterType.MESSAGE),
+    type: z.literal(ConversationStarterType.message),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(ConversationStarterType.WEBSITE),
-    url: z.string().url(),
+    type: z.literal(ConversationStarterType.website),
+    url: z.url(),
   }),
 ])
 export type ConversationStarterSchema = z.infer<
@@ -30,23 +30,24 @@ export type ConversationStarterSchema = z.infer<
 const persistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
-    type: z.literal(PersistentMenuType.FLOW),
-    flowId: z.string().cuid2(),
+    type: z.literal(PersistentMenuType.flow),
+    flowId: z.cuid2(),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(PersistentMenuType.WEBSITE),
-    websiteUrl: z.string().url(),
+    type: z.literal(PersistentMenuType.website),
+    websiteUrl: z.url(),
   }),
 ])
 export type PersistentMenuSchema = z.infer<typeof persistentMenuSchema>
 
 export const createWebchatRequest = z.object({
   name: z.string().min(1).max(40),
+  chatbotId: z.cuid2().nullish(),
   welcomeFlowId: z.string().nullish(),
   authorizedDomains: z.array(
     z.object({
-      value: z.string().url("Invalid domain URL"),
+      value: z.url(),
     }),
   ),
   conversationStarters: z.array(conversationStarterSchema),
@@ -59,6 +60,13 @@ export const createWebchatRequest = z.object({
   enable: z.boolean().default(true),
 })
 export type CreateWebchatRequest = z.infer<typeof createWebchatRequest>
+
+export const simpleCreateWebchatRequest = z.object({
+  name: z.string().min(1).max(40),
+})
+export type SimpleCreateWebchatRequest = z.infer<
+  typeof simpleCreateWebchatRequest
+>
 
 export const updateWebchatRequest = createWebchatRequest.partial()
 export type UpdateWebchatRequest = z.infer<typeof updateWebchatRequest>

@@ -1,50 +1,152 @@
-import type { Context, ConversationEntity, MessageEntity } from "@aha.chat/sdk"
-import { sendMessage } from "../api/message"
-import type { ZaloAuthValue } from "../schemas/definition"
+import { StepType } from "@aha.chat/flow-config"
 import {
-  ZALO_MESSAGE_METADATA,
-  type ZaloSendMessageRequest,
-  type ZaloSendMessageResponse,
+  type Context,
+  type ConversationEntity,
+  FileType,
+  type MessageEntity,
+  type SendFlowStepData,
+} from "@aha.chat/sdk"
+import { sendMessage, uploadAttachment } from "../api/message"
+import { logger } from "../libs/logger"
+import type { ZaloAuthValue } from "../schemas/definition"
+import type {
+  MessageTemplate,
+  ZaloSendMessageRequest,
 } from "../schemas/webhook"
+import { convertFlowStepFile } from "./send-file"
+import { convertFlowStepImage } from "./send-image"
+import { convertFlowStepText } from "./send-text"
 
 export const sendOutgoingMessage = async (
   ctx: Context<ZaloAuthValue>,
   conversation: ConversationEntity,
   message: MessageEntity,
-): Promise<ZaloSendMessageResponse> => {
+): Promise<void> => {
   try {
-    const payload = buildMessagePayload(conversation, message)
-
-    const response = await sendMessage(ctx.auth, payload)
-
-    return response
+    for await (const zaloMessage of convertMessageToZaloMessage(
+      ctx.auth,
+      message,
+    )) {
+      const payload = buildMessagePayload(conversation, zaloMessage)
+      await sendMessage(ctx.auth, payload)
+      logger.info(`Message sent for Zalo UID: ${conversation.sourceId}`)
+    }
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error sending message"
+    logger.error(
+      "An error occurred while sending the message",
+      JSON.stringify(error),
+    )
+  }
+}
 
-    throw new Error(`Failed to send Zalo message: ${errorMessage}`)
+export async function* convertMessageToZaloMessage(
+  auth: ZaloAuthValue,
+  message: MessageEntity,
+): AsyncGenerator<MessageTemplate> {
+  if (message.content) {
+    yield {
+      text: message.content,
+    }
+  } else if (message.attachments) {
+    for (const attachment of message.attachments) {
+      if (attachment.fileType === FileType.image) {
+        const {
+          data: { attachment_id },
+        } = await uploadAttachment(auth, "image", attachment.url as string)
+        yield {
+          attachment: {
+            type: "template",
+            payload: {
+              template_type: "media",
+              elements: [
+                {
+                  media_type: "image",
+                  attachment_id,
+                },
+              ],
+            },
+          },
+        }
+      } else if (attachment.fileType === FileType.file) {
+        const {
+          data: { token },
+        } = await uploadAttachment(auth, "file", attachment.url as string)
+        yield {
+          attachment: {
+            type: "file",
+            payload: {
+              token: token as string,
+            },
+          },
+        }
+      } else {
+        throw new Error(`Unsupported attachment type: ${attachment.fileType}`)
+      }
+    }
+  } else {
+    throw new Error("Unsupported message type or missing content")
   }
 }
 
 const buildMessagePayload = (
   conversation: ConversationEntity,
-  message: MessageEntity,
+  message: MessageTemplate,
 ): ZaloSendMessageRequest => {
   const recipientId = conversation.contact?.sourceId
 
-  if (!recipientId) {
-    throw new Error("Missing recipient ID in conversation")
+  if (!recipientId?.trim()) {
+    throw new Error("Recipient ID is required and cannot be empty")
   }
 
-  if (message.content) {
-    return {
-      recipient: { user_id: recipientId },
-      message: {
-        text: message.content,
-        metadata: ZALO_MESSAGE_METADATA,
-      },
+  return {
+    recipient: { user_id: recipientId },
+    message,
+  }
+}
+
+export async function* convertFlowStepToZaloMessage(
+  auth: ZaloAuthValue,
+  flowVersionId: string,
+  step: SendFlowStepData,
+): AsyncGenerator<MessageTemplate> {
+  switch (step.stepType) {
+    case StepType.sendText:
+      yield* convertFlowStepText(flowVersionId, step)
+      break
+    case StepType.sendImage:
+    case StepType.sendGif:
+      yield* await convertFlowStepImage(auth, flowVersionId, step)
+      break
+    case StepType.sendFile:
+      yield* await convertFlowStepFile(auth, step)
+      break
+    default:
+      break
+  }
+}
+
+export const sendFlowStep = async (
+  ctx: Context<ZaloAuthValue>,
+  conversation: ConversationEntity,
+  flowVersionId: string,
+  step: SendFlowStepData,
+) => {
+  try {
+    for await (const zaloMessage of convertFlowStepToZaloMessage(
+      ctx.auth,
+      flowVersionId,
+      step,
+    )) {
+      await sendMessage(
+        ctx.auth,
+        buildMessagePayload(conversation, zaloMessage),
+      )
+      logger.info(`Message sent for ID: ${conversation.sourceId}`)
     }
+  } catch (error) {
+    logger.error(
+      "An error occurred while sending the message",
+      JSON.stringify(error),
+    )
   }
-
-  throw new Error("Unsupported message type or missing content")
 }

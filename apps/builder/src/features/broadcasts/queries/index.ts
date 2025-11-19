@@ -1,16 +1,13 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { BroadcastModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetBroadcastsSchema } from "../schemas/get-broadcasts-schema"
 
 export async function listBroadcasts(
   input: GetBroadcastsSchema,
 ): Promise<{ data: BroadcastModel[]; pageCount: number }> {
-  const userId = await getCurrentUserId()
-
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

@@ -1,14 +1,11 @@
 "use server"
 
-import type { OrganizationSettings } from "@aha.chat/database/types"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import { HandleRequestType } from "@aha.chat/sdk"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
-import { findOrganization } from "@/features/organization/queries"
+import { chatbotIdRequestParams } from "@/features/common/schemas"
+import { findOrganizationSettingsByKey } from "@/features/organization/queries"
 import { integrations } from "@/integration"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
@@ -17,37 +14,40 @@ import {
 } from "../schemas"
 
 export const connectGoogleSheets = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(connectGoogleSheetsSchema)
   .action(
     async ({
+      ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId],
     }: {
+      ctx: {
+        chatbot: ChatbotModel
+      }
       parsedInput: ConnectGoogleSheetsSchema
-      bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       const headersList = await headers()
 
-      const organization = await findOrganization({ id: chatbotId })
-      const googleSheetsSetting = (
-        organization.settings as OrganizationSettings
-      ).googleSheets
-      if (!googleSheetsSetting) {
-        throw new Error("Google Sheets setting is not valid")
-      }
+      const googleSheetsSetting = await findOrganizationSettingsByKey(
+        { id: ctx.chatbot.organizationId },
+        "googleSheets",
+      )
 
-      const redirectUrl = (await integrations.GOOGLE_SHEETS.handleRequest?.({
+      const redirectUrl = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...googleSheetsSetting,
           redirectUrl: new URL(
             "/integrations/google-sheets/callback",
             parsedInput.referer,
           ).toString(),
+          stateParams: {
+            chatbotId: ctx.chatbot.id,
+            referer: parsedInput.referer,
+          },
         },
         req: new Request(
           new URL(
-            HandleRequestType.GENERATE_AUTH_URL,
+            HandleRequestType.generateAuthUrl,
             headersList.get("x-url") ?? "",
           ),
         ),

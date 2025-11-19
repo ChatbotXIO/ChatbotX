@@ -17,10 +17,11 @@ export type TokenAuthValue = {
 }
 
 export type Oauth2AuthValue = BaseAuthValue & {
-  authType: typeof AuthType.OAUTH2
+  authType: typeof AuthType.oauth2
   clientId: string
   clientSecret: string
   redirectUrl: string
+  version?: string
   verifyToken?: string
   tokens: TokenAuthValue
   metadata?: Record<string, unknown>

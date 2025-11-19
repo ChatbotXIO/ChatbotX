@@ -74,7 +74,7 @@ export function AIFunctionsCreate({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createdSuccess", {
                 feature: t("fields.aiFunction.label"),
               }),
             )
@@ -82,7 +82,9 @@ export function AIFunctionsCreate({
             setIsOpen(false)
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         errorMapProps: {},
@@ -99,15 +101,15 @@ export function AIFunctionsCreate({
       <DialogTrigger asChild>
         <Button>
           <PlusIcon className="h-4 w-4" />
-          {t("actions.create")}
+          {t("actions.createFeature", {
+            feature: t("fields.aiFunction.label"),
+          })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.aiFunction.label"),
             })}
           </DialogTitle>
@@ -119,10 +121,10 @@ export function AIFunctionsCreate({
             onSubmit={handleSubmitWithAction}
           >
             <InputField
-              isRequired
               label={t("fields.name.label")}
               name="name"
               placeholder={t("fields.name.placeholder")}
+              required
             />
             <TextareaField
               label={t("fields.purpose.label")}
@@ -182,7 +184,7 @@ export function AIFunctionsCreate({
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                {t("actions.create")}
+                {t("actions.confirm")}
               </Button>
             </DialogFooter>
           </form>

@@ -38,14 +38,42 @@ const config: IntegrationDefinition<
 
       return response.data.values ? (response.data.values[0] as string[]) : []
     },
+    getSheetValues: async ({ ctx, props }): Promise<string[][]> => {
+      const sheetsClient = getSheetsClient(ctx.auth)
+      const response = await sheetsClient.spreadsheets.values.get({
+        spreadsheetId: props.spreadsheetId,
+        range: props.sheetName,
+      })
+      return response.data.values ? (response.data.values as string[][]) : []
+    },
     insertRow: async ({ ctx, props }): Promise<void> => {
       const sheetsClient = getSheetsClient(ctx.auth)
       await sheetsClient.spreadsheets.values.append({
         spreadsheetId: props.spreadsheetId,
-        range: `${props.sheetName}!1:1`,
+        range: props.sheetName,
+        valueInputOption: "USER_ENTERED",
+        insertDataOption: "INSERT_ROWS",
         requestBody: {
           values: [props.data],
         },
+      })
+    },
+    updateRow: async ({ ctx, props }): Promise<void> => {
+      const sheetsClient = getSheetsClient(ctx.auth)
+      await sheetsClient.spreadsheets.values.update({
+        spreadsheetId: props.spreadsheetId,
+        range: `${props.sheetName}!A${props.rowIndex + 1}`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: {
+          values: [props.data],
+        },
+      })
+    },
+    clearRow: async ({ ctx, props }): Promise<void> => {
+      const sheetsClient = getSheetsClient(ctx.auth)
+      await sheetsClient.spreadsheets.values.clear({
+        spreadsheetId: props.spreadsheetId,
+        range: `${props.sheetName}!A${props.rowIndex + 1}:Z${props.rowIndex + 1}`,
       })
     },
   },
@@ -54,9 +82,9 @@ const config: IntegrationDefinition<
     const method = segments.pop()
 
     switch (method) {
-      case HandleRequestType.CALLBACK:
+      case HandleRequestType.callback:
         return await callbackHandler(props)
-      case HandleRequestType.GENERATE_AUTH_URL:
+      case HandleRequestType.generateAuthUrl:
         return await generateAuthUrl(props.config)
       default:
         throw new SdkException(

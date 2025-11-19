@@ -126,9 +126,7 @@ async function getAIFunctionTools(aiAgent: AIAgentModel): Promise<ToolSet> {
           properties,
           required,
         } as Parameters<typeof jsonSchema>[0]),
-        execute: async () => {
-          return await Promise.resolve(outputMessage)
-        },
+        execute: async () => await Promise.resolve(outputMessage),
       })
     }
 

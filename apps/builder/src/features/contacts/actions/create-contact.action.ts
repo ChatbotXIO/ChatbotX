@@ -1,12 +1,12 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateContactRequest,
@@ -14,7 +14,7 @@ import {
 } from "../schemas/create-contact-schema"
 
 export const createContactAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createContactSchema)
   .action(
     async ({
@@ -48,9 +48,30 @@ export const createContactAction = chatbotActionClient
         },
       })
 
+      const chatbotUsage = await prisma.chatbotUsage.findFirstOrThrow({
+        where: { chatbotId },
+      })
+      if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+        return returnValidationErrors(createContactSchema, {
+          _errors: ["Validation Exception"],
+          phoneNumber: {
+            _errors: ["Max contacts reached"],
+          },
+        })
+      }
+
       await prisma.$transaction(async (tx) => {
         const contact = await tx.contact.create({
           data: { ...parsedInput, chatbotId, source: "whatsapp" },
+        })
+
+        await tx.chatbotUsage.update({
+          where: { chatbotId },
+          data: {
+            contactsCount: {
+              increment: 1,
+            },
+          },
         })
 
         await tx.conversation.create({
@@ -62,7 +83,9 @@ export const createContactAction = chatbotActionClient
         })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#contacts`)
-      revalidateTag(`chatbots:${chatbotId}#conversations`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#contacts`,
+        `chatbots:${chatbotId}#conversations`,
+      ])
     },
   )

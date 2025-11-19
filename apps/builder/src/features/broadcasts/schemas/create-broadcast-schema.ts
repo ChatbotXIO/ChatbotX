@@ -6,10 +6,10 @@ import {
 import { z } from "zod"
 
 export const createBroadcastRequest = z.object({
-  inboxType: z.nativeEnum(InboxType).nullable(),
-  flowId: z.string().cuid2(),
-  subaction: z.nativeEnum(BroadcastSubaction),
-  schedulesType: z.nativeEnum(BroadcastSchedulesType),
+  inboxType: z.enum(InboxType).nullable(),
+  flowId: z.cuid2(),
+  subaction: z.enum(BroadcastSubaction),
+  schedulesType: z.enum(BroadcastSchedulesType),
   schedulesAt: z
     .string()
     .refine(

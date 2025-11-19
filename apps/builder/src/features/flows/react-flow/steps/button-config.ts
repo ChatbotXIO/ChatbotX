@@ -7,47 +7,43 @@ import {
   SquareArrowOutUpRightIcon,
   ZapIcon,
 } from "lucide-react"
+import type { TranslationFn } from "../nodes/types"
 
-export type IButtonConfig = {
+type IButtonConfig = {
   icon: LucideIcon
   label: string
   buttonType: ButtonType
 }
 
-export const allButtonsConfig: IButtonConfig[] = [
+export const allButtonsConfig = (t: TranslationFn): IButtonConfig[] => [
   {
     buttonType: ButtonType.SendMessage,
     icon: MessageCircleIcon,
-    label: "Send Message",
+    label: t("flows.actions.sendMessage"),
   },
   {
     buttonType: ButtonType.OpenWebsite,
     icon: LinkIcon,
-    label: "Open Website",
+    label: t("flows.actions.openWebsite"),
   },
-  // {
-  // buttonType: ButtonType.CallPhoneNumber,
-  //   icon: "phone",
-  //   label: "Call Phone Number"
-  // },
   {
     buttonType: ButtonType.PerformAction,
     icon: ZapIcon,
-    label: "Perform Action",
+    label: t("flows.actions.performAction"),
   },
   {
-    buttonType: ButtonType.StartAnotherFlow,
+    buttonType: ButtonType.StartExternalFlow,
     icon: SquareArrowOutUpRightIcon,
-    label: "Start Another Flow",
+    label: t("flows.actions.startExternalFlow"),
   },
   {
-    buttonType: ButtonType.StartAnotherStep,
+    buttonType: ButtonType.StartExternalNode,
     icon: SkipForwardIcon,
-    label: "Start Another Step",
+    label: t("flows.actions.startExternalNode"),
   },
   {
-    buttonType: ButtonType.StartExternalStep,
+    buttonType: ButtonType.StartAnotherNode,
     icon: SquareArrowOutUpRightIcon,
-    label: "Start External Step",
+    label: t("flows.actions.startAnotherNode"),
   },
 ]

@@ -6,7 +6,7 @@ This is offical source code for Aha.Chat
 
 This project is 99.99% NodeJS/TypeScript.
 
-- nodejs: v22
+- nodejs: v24
 - corepack enable
 - package manager: pnpm
 - docker & docker-composer
@@ -38,7 +38,7 @@ pnpm turbo db:migrate && turbo db:seed
 pnpm turbo dev
 ```
 
-The seeder makes default user `demo@aha.chat | Ahachat@1234`
+The seeder makes default user `demo@example.com | Ahachat@1234`
 
 ### Folder structure
 

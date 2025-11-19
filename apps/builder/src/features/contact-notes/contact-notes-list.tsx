@@ -25,22 +25,20 @@ export function ContactNotesList() {
         </Button>
       </div>
       <div className="flex w-full flex-col">
-        {listContactNotes.data.map((contactNote) => {
-          return (
-            <div className="flex w-full flex-col" key={contactNote.id}>
-              <div className="flex w-full">
-                <div className="flex-1">{contactNote.createdById}</div>
-                <Button size="icon" variant="ghost">
-                  <PencilIcon />
-                </Button>
-                <Button size="icon" variant="ghost">
-                  <TrashIcon />
-                </Button>
-              </div>
-              <div className="w-full">{contactNote.content}</div>
+        {listContactNotes.data.map((contactNote) => (
+          <div className="flex w-full flex-col" key={contactNote.id}>
+            <div className="flex w-full">
+              <div className="flex-1">{contactNote.createdById}</div>
+              <Button size="icon" variant="ghost">
+                <PencilIcon />
+              </Button>
+              <Button size="icon" variant="ghost">
+                <TrashIcon />
+              </Button>
             </div>
-          )
-        })}
+            <div className="w-full">{contactNote.content}</div>
+          </div>
+        ))}
       </div>
     </div>
   )

@@ -46,7 +46,7 @@ export function RenameInboxTeamDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.inboxTeam.label"),
             }),
           )
@@ -54,7 +54,9 @@ export function RenameInboxTeamDialog({
           onOpenChange(false)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -77,12 +79,10 @@ export function RenameInboxTeamDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", {
+            {t("messages.editFeature", {
               feature: t("fields.inboxTeam.label"),
             })}
           </DialogTitle>

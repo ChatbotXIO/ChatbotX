@@ -79,14 +79,16 @@ export default function AssignConversationDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.conversation.label"),
             }),
           )
           setOpen(false)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -104,9 +106,7 @@ export default function AssignConversationDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>Assign Conversation</DialogTitle>
           <DialogDescription />
@@ -118,9 +118,9 @@ export default function AssignConversationDialog({
             onSubmit={handleSubmitWithAction}
           >
             <FormFieldWrapper<FieldValues>
-              isRequired={true}
               label="Assign To"
               name="assignedId"
+              required={true}
             >
               {(field) => (
                 <Select

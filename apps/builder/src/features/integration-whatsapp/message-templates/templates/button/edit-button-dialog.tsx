@@ -15,11 +15,10 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import { useForm, useFormContext } from "react-hook-form"
-import { WhatsappFlowSelect } from "@/features/integration-whatsapp/flows/flow-select"
+import { useForm, useFormContext, useWatch } from "react-hook-form"
 import {
   ButtonActionType,
-  type ButtonStepSchema,
+  type ButtonStepProps,
   buttonStepSchema,
 } from "./schema"
 
@@ -39,14 +38,14 @@ export function EditButtonDialog({
   const { setValue: setValueOriginEditor, getValues: getValuesOriginEditor } =
     useFormContext()
 
-  const form = useForm<ButtonStepSchema>({
+  const form = useForm<ButtonStepProps>({
     resolver: zodResolver(buttonStepSchema),
     defaultValues: getValuesOriginEditor(parentName),
     mode: "onChange",
   })
 
-  const buttonOptions = useMemo(() => {
-    return [
+  const buttonOptions = useMemo(
+    () => [
       { label: t("fields.url.label"), value: ButtonActionType.Url },
       {
         label: t("fields.quickReply.label"),
@@ -60,11 +59,12 @@ export function EditButtonDialog({
         label: t("fields.whatsappFlow.label"),
         value: ButtonActionType.Flow,
       },
-    ]
-  }, [t])
+    ],
+    [t],
+  )
 
-  const { watch, formState, handleSubmit } = form
-  const type = watch("type")
+  const { formState, handleSubmit } = form
+  const type = useWatch({ name: "type" })
 
   const onSubmit = handleSubmit((data) => {
     setValueOriginEditor(parentName, data)
@@ -76,7 +76,7 @@ export function EditButtonDialog({
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.updateTitle", { feature: t("fields.button.label") })}
+            {t("messages.editFeature", { feature: t("fields.button.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -97,12 +97,6 @@ export function EditButtonDialog({
               <InputField
                 label={t("fields.phoneNumber.label")}
                 name="phone_number"
-              />
-            )}
-            {type === ButtonActionType.Flow && (
-              <WhatsappFlowSelect
-                label={t("fields.whatsappFlow.label")}
-                name="flow_id"
               />
             )}
             <DialogFooter>

@@ -4,13 +4,15 @@ import { CalculatorIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
-export default function CountCharactersStepViewer() {
+const CountCharactersStepViewer = () => {
   const t = useTranslations()
 
   return (
     <BaseStepViewer
       icon={CalculatorIcon}
-      title={t("flows.stepType.countCharacters")}
+      title={t("flows.actions.countCharacters")}
     />
   )
 }
+
+export default CountCharactersStepViewer

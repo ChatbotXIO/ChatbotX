@@ -3,32 +3,26 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@aha.chat/logger": "workspace:*",
-    "@paralleldrive/cuid2": "^2.2.2",
-    "@prisma/adapter-pg": "6.14.0-integration-feat-client-wasm-base64-on-nodejs.6",
-    "@prisma/client": "6.14.0-integration-feat-client-wasm-base64-on-nodejs.6",
-    "@prisma/extension-accelerate": "^2.0.1",
+    "@prisma/adapter-pg": "7.0.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "pgvector": "^0.2.1",
-    "prisma-extension-pgvector": "^0.11.0",
-    "prisma-extension-soft-delete": "^2.0.1",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@faker-js/faker": "^9.9.0",
-    "@types/node": "^22.16.0",
-    "dotenv-cli": "^8.0.0",
-    "prisma": "6.14.0-integration-feat-client-wasm-base64-on-nodejs.6",
-    "ts-node": "^10.9.2"
+    "@prisma/client": "^7.0.0",
+    "@types/node": "^24.10.1",
+    "dotenv-cli": "^11.0.0",
+    "prisma": "7.0.0"
   },
   "scripts": {
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
-    "db:seed": "dotenv -e ../../.env -- tsx src/seeders/index.ts",
+    "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:client": "dotenv -e ../../.env -- prisma generate --sql",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
     "db:setup": "pnpm migrate && pnpm db:client && pnpm db:seed",
+    "db:rollback": "dotenv -e ../../.env -- ./scripts/db-rollback.sh",
     "migrate": "dotenv -e ../../.env -- prisma migrate deploy",
     "migrate:squash": "dotenv -e ../../.env -- ./scripts/squash-migrations.sh",
     "migrate:status": "dotenv -e ../../.env -- prisma migrate status"

@@ -1,17 +1,17 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteFolderAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
@@ -49,8 +49,10 @@ export const deleteFolderAction = chatbotActionClient
             },
           })
 
-          revalidateTag(`chatbots:${chatbotId}#folders:${folder.folderType}`)
-          revalidateTag(`chatbots:${chatbotId}#folders:${folder.id}`)
+          revalidateCacheTags([
+            `chatbots:${chatbotId}#folders:${folder.folderType}`,
+            `chatbots:${chatbotId}#folders:${folder.id}`,
+          ])
         }
       })
     },

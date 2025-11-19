@@ -1,22 +1,18 @@
 "use client"
 
-import {
-  type OrganizationModel,
-  organizationSettingsSchema,
-} from "@aha.chat/database/types"
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import { generateAuthUrl } from "@aha.chat/integration-zalo"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { redirect, useParams } from "next/navigation"
+import { RedirectType, redirect } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
 
 export type ZaloConnectProps = {
-  organization: OrganizationModel
+  chatbotId?: string | null
+  settings: NonNullable<OrganizationSettings["zalo"]>
 }
 
-export function ZaloConnect({ organization }: ZaloConnectProps) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+export function ZaloConnect({ chatbotId, settings }: ZaloConnectProps) {
   const t = useTranslations()
 
   const [currentUrl, setCurrentUrl] = useState<string>("")
@@ -26,22 +22,13 @@ export function ZaloConnect({ organization }: ZaloConnectProps) {
   }, [])
 
   const connectZalo = () => {
-    const { data: setting } = organizationSettingsSchema.safeParse(
-      organization.settings,
-    )
-
-    if (!setting?.zalo) {
-      toast.error("Organization settings are not valid")
-      return
-    }
-
     const redirectUrl = new URL(
       "/integrations/zalo/callback",
       currentUrl,
     ).toString()
 
     const redirectUri = generateAuthUrl({
-      ...setting.zalo,
+      ...settings,
       redirectUrl,
       stateParams: {
         chatbotId,
@@ -49,7 +36,7 @@ export function ZaloConnect({ organization }: ZaloConnectProps) {
       },
     })
 
-    redirect(redirectUri)
+    redirect(redirectUri, RedirectType.push)
   }
 
   return (

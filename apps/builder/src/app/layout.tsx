@@ -6,8 +6,8 @@ import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 
 export const metadata: Metadata = {
-  title: "AhaChat AI",
-  description: "AhaChat AI",
+  title: "ChatbotX",
+  description: "ChatbotX",
 }
 
 type Props = {
@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: Props) {
           src="//unpkg.com/react-scan/dist/auto.global.js"
         /> */}
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <UiProvider>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </UiProvider>

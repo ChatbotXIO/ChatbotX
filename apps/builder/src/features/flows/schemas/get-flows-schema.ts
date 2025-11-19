@@ -2,6 +2,7 @@ import type { FlowModel, FlowVersionModel } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
+  parseAsBoolean,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
@@ -12,6 +13,7 @@ export const listFlowsSearchParams = createSearchParamsCache({
   sort: getSortingStateParser<FlowModel>(),
   name: parseAsString,
   folderId: parseAsString,
+  active: parseAsBoolean,
 })
 
 export type ListFlowsParams = Awaited<

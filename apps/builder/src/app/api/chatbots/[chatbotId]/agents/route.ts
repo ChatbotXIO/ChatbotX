@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getAgents } from "@/features/chatbot-members/queries"
-import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
-import { getCurrentUserId } from "@/lib/auth"
-import { errorResponse } from "@/lib/error-handling"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { listChatbotMembersRequest } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function GET(
   request: NextRequest,
@@ -11,20 +10,17 @@ export async function GET(
 ) {
   try {
     const { chatbotId } = await params
+    await assertCurrentUserCanAccessChatbot(chatbotId)
 
-    const userId = await getCurrentUserId()
-    await findChatbotOrFail(userId, chatbotId)
-
-    const searchParams = getChatbotMembersSearchParamsCache.parse(
-      Object.fromEntries(request.nextUrl.searchParams),
-    )
-    const data = await getAgents({
+    const searchParams = listChatbotMembersRequest.parse({
+      ...Object.fromEntries(request.nextUrl.searchParams),
       chatbotId,
-      ...searchParams,
     })
+
+    const data = await getAgents(searchParams)
 
     return NextResponse.json(data)
   } catch (e) {
-    return errorResponse(e)
+    return serverErrorHandler(e)
   }
 }

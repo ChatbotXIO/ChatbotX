@@ -1,12 +1,12 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { AutomatedResponseException } from "../schemas/types"
 import {
@@ -15,7 +15,7 @@ import {
 } from "../schemas/update-automated-responses-schema"
 
 export const updateAutomatedResponseAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateAutomatedResponseRequest)
   .action(
     async ({
@@ -50,9 +50,12 @@ export const updateAutomatedResponseAction = chatbotActionClient
         where: {
           id,
         },
-        data: parsedInput,
+        data: {
+          ...parsedInput,
+          userMessages: parsedInput.userMessages?.map((m) => m.value) ?? [],
+        },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#automatedResponses`)
+      revalidateCacheTags(`chatbots:${chatbotId}#automatedResponses`)
     },
   )

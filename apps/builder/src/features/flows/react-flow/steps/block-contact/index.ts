@@ -1,12 +1,13 @@
 import {
+  type BlockContactStepSchema,
   blockContactStepDefaultFn,
   blockContactStepSchema,
 } from "@aha.chat/flow-config"
-import type { StepDefinition } from ".."
-import { BlockContactStepEditor } from "./editor"
-import { BlockContactStepViewer } from "./viewer"
+import type { StepDefinition } from "../definition"
+import BlockContactStepEditor from "./editor"
+import BlockContactStepViewer from "./viewer"
 
-export const blockContactStep: StepDefinition = {
+export const blockContactStep: StepDefinition<BlockContactStepSchema> = {
   editor: BlockContactStepEditor,
   viewer: BlockContactStepViewer,
   validator: blockContactStepSchema,

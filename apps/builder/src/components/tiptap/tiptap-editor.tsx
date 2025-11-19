@@ -1,16 +1,17 @@
 "use client"
 
+import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji"
 import Mention from "@tiptap/extension-mention"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
-import type { CustomFieldResource } from "@/features/custom-fields/schemas"
-import emojiSuggestion from "./emoji/suggestion"
-import variableInjectionSuggestion from "./variable-injection/suggestion"
+import emojiSuggestion from "./extensions/emoij/suggestion"
+import variableInjectionSuggestion from "./extensions/variable-injection/suggestion"
+import "./tiptap-editor.css"
 
 type TiptapEditorProps = {
   defaultValue?: string
   onChange?: (content: string) => void
-  customFields: CustomFieldResource[]
+  customFields: { label: string; value: string; type: string }[]
 }
 
 export const TiptapEditor = ({
@@ -22,10 +23,14 @@ export const TiptapEditor = ({
     extensions: [
       StarterKit,
       Mention.configure({
-        suggestions: [
-          variableInjectionSuggestion(customFields),
-          emojiSuggestion,
-        ],
+        suggestion: variableInjectionSuggestion({
+          listOfPromptVariables: customFields,
+        }),
+      }),
+      Emoji.configure({
+        emojis: gitHubEmojis,
+        enableEmoticons: true,
+        suggestion: emojiSuggestion,
       }),
     ],
     content: defaultValue,

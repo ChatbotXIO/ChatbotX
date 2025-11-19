@@ -223,7 +223,7 @@ export async function sendProcessedTextParts(
       trimmedPart.length > 0 &&
       !REGEX_ONLY_WHITESPACE.test(trimmedPart)
     ) {
-      count++
+      count += 1
       await sendMessageWithRender(conversationId, trimmedPart)
     }
   }
@@ -261,7 +261,7 @@ export async function processStreamingText(
             trimmedPart.length > 0 &&
             !REGEX_ONLY_WHITESPACE.test(trimmedPart)
           ) {
-            messageCount++
+            messageCount += 1
             if (sendParts) {
               await sendMessageWithRender(conversationId, trimmedPart)
             }
@@ -282,7 +282,7 @@ export async function processStreamingText(
         trimmedPart.length > 0 &&
         !REGEX_ONLY_WHITESPACE.test(trimmedPart)
       ) {
-        messageCount++
+        messageCount += 1
         if (sendParts) {
           await sendMessageWithRender(conversationId, trimmedPart)
         }

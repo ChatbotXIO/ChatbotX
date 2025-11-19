@@ -43,9 +43,10 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
   const openInNewTab = useCallback((url: string) => {
     window.open(url, "_blank", "noopener")
   }, [])
-  const getPublicUrl = useCallback((path: string) => {
-    return new URL(path, env.NEXT_PUBLIC_ASSET_URL).toString()
-  }, [])
+  const getPublicUrl = useCallback(
+    (path: string) => new URL(path, env.NEXT_PUBLIC_ASSET_URL).toString(),
+    [],
+  )
 
   return (
     <>

@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
+import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import { connectGoogleSheets } from "./actions/connect.action"
 import { disconnectGoogleSheets } from "./actions/disconnect.action"
@@ -38,11 +39,23 @@ export function GoogleSheetsManage({
 
   const { executeAsync: onConnect, isPending: isPendingConnect } = useAction(
     connectGoogleSheets.bind(null, chatbotId),
+    {
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
   )
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
     useAction(disconnectGoogleSheets.bind(null, chatbotId), {
       onSuccess: () => {
         router.refresh()
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     })
 

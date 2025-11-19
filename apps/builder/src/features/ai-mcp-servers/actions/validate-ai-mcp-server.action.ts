@@ -1,19 +1,23 @@
 "use server"
 
+import { AIMcpServerAuthType } from "@aha.chat/database/types"
+import {
+  experimental_createMCPClient,
+  type experimental_MCPClient,
+} from "@ai-sdk/mcp"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
-import { experimental_createMCPClient, type experimental_MCPClient } from "ai"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { validateAIMcpServerRequest } from "../schemas"
 
 export const validateAIMcpServerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(validateAIMcpServerRequest)
   .action(async ({ parsedInput }) => {
     const headers: Record<string, string> = {}
-    if (parsedInput.auth.type === "TOKEN") {
+    if (parsedInput.auth.type === AIMcpServerAuthType.token) {
       headers.Authorization = `Bearer ${parsedInput.auth.token}`
-    } else if (parsedInput.auth.type === "HEADERS") {
+    } else if (parsedInput.auth.type === AIMcpServerAuthType.header) {
       for (const header of parsedInput.auth.headers) {
         headers[header.header] = header.value
       }

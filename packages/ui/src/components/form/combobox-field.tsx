@@ -21,17 +21,19 @@ import type { FieldPath, FieldValues } from "react-hook-form"
 interface SelectFieldProps<T extends FieldValues> {
   name: FieldPath<T>
   label?: string
-  isRequired?: boolean
+  required?: boolean
   placeholder?: string
   description?: string
   defaultValue?: string
   options: { value: string; label: string }[]
+  className?: string
 }
 
 export function ComboboxField<T extends FieldValues>({
+  className,
   name,
   label,
-  isRequired,
+  required,
   placeholder,
   description,
   options,
@@ -43,7 +45,7 @@ export function ComboboxField<T extends FieldValues>({
     <FormFieldWrapper<T>
       name={name}
       label={label}
-      isRequired={isRequired}
+      required={required}
       description={description}
     >
       {(field) => (
@@ -55,6 +57,7 @@ export function ComboboxField<T extends FieldValues>({
               aria-expanded={open}
               className={cn(
                 "justify-between w-full",
+                className,
                 !field.value && "text-muted-foreground",
               )}
             >
@@ -64,7 +67,7 @@ export function ComboboxField<T extends FieldValues>({
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0">
+          <PopoverContent className="w-[200px] p-0" align="start">
             <Command>
               <CommandInput placeholder="Search..." className="h-9" />
               <CommandList>

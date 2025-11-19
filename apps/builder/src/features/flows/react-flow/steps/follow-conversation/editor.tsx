@@ -10,9 +10,9 @@ const FollowConversationStepEditor = () => {
   return (
     <BaseStepEditor
       icon={StarIcon}
-      title={t("flows.stepType.followConversation")}
+      title={t("flows.actions.followConversation")}
     />
   )
 }
 
-export { FollowConversationStepEditor }
+export default FollowConversationStepEditor

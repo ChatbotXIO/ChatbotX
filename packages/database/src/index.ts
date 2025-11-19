@@ -1,5 +1,5 @@
+import { inspect } from "node:util"
 import { PrismaPg } from "@prisma/adapter-pg"
-import { withPGVector } from "prisma-extension-pgvector"
 import { PrismaClient } from "./generated/prisma/client"
 import { keys } from "./keys"
 
@@ -7,31 +7,31 @@ const env = keys()
 const pool = new PrismaPg({ connectionString: env.DATABASE_URL })
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 
-const baseClient =
+export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter: pool,
     log: env.PRISMA_DEBUG ? ["query"] : [],
   }).$extends({
-    // query: enableDebug
-    //   ? {
-    //       $allModels: {
-    //         async $allOperations({ operation, model, args, query }) {
-    //           const start = performance.now()
-    //           const result = await query(args)
-    //           const end = performance.now()
-    //           const time = end - start
-    //           console.log(
-    //             util.inspect(
-    //               { query, time },
-    //               { showHidden: false, depth: null, colors: true },
-    //             ),
-    //           )
-    //           return result
-    //         },
-    //       },
-    //     }
-    //   : undefined,
+    query: env.PRISMA_DEBUG
+      ? {
+          $allModels: {
+            async $allOperations({ args, query }) {
+              const start = performance.now()
+              const result = await query(args)
+              const end = performance.now()
+              const time = end - start
+              console.log(
+                inspect(
+                  { query, time },
+                  { showHidden: false, depth: null, colors: true },
+                ),
+              )
+              return result
+            },
+          },
+        }
+      : undefined,
     result: {
       contact: {
         fullName: {
@@ -84,16 +84,6 @@ const baseClient =
       },
     },
   })
-
-export const prisma: PrismaClient = env.ENABLE_PGVECTOR_EXTENSION
-  ? (baseClient.$extends(
-      withPGVector({
-        modelName: "aIEmbedding",
-        vectorFieldName: "embedding",
-        idFieldName: "id",
-      }),
-    ) as unknown as PrismaClient)
-  : baseClient
 
 if (env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma

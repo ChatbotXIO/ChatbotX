@@ -36,7 +36,6 @@ const WebchatWidgetContent = () => {
     }
 
     // TODO: Implement sendMessage functionality
-    // biome-ignore lint/suspicious/noConsole: Debug logging
     console.log("Sending message:", message.trim())
     setMessage("")
   }
@@ -122,10 +121,8 @@ const WebchatWidgetContent = () => {
   )
 }
 
-export const WebchatWidget = ({ config }: WebchatWidgetProps) => {
-  return (
-    <GuestSessionStoreProvider config={config}>
-      <WebchatWidgetContent />
-    </GuestSessionStoreProvider>
-  )
-}
+export const WebchatWidget = ({ config }: WebchatWidgetProps) => (
+  <GuestSessionStoreProvider config={config}>
+    <WebchatWidgetContent />
+  </GuestSessionStoreProvider>
+)

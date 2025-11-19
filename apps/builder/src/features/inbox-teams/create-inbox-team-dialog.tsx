@@ -45,7 +45,9 @@ export function CreateInboxTeamDialog({
           setOpen(false)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -69,15 +71,15 @@ export function CreateInboxTeamDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.inboxTeam.label") })}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.inboxTeam.label") })}
+            {t("messages.createFeature", {
+              feature: t("fields.inboxTeam.label"),
+            })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -109,7 +111,7 @@ export function CreateInboxTeamDialog({
                   {form.formState.isSubmitting && (
                     <Loader2 className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               </div>
             </form>

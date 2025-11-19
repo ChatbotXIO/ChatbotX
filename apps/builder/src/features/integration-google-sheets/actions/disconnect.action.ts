@@ -13,7 +13,7 @@ import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 
 export const disconnectGoogleSheets = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],

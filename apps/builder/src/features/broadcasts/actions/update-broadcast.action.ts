@@ -1,11 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateBroadcastSchema,
@@ -13,7 +13,7 @@ import {
 } from "../schemas/update-broadcast-schema"
 
 export const updateBroadcastAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateBroadcastSchema)
   .action(
     async ({
@@ -37,6 +37,6 @@ export const updateBroadcastAction = chatbotActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`chatbots:${chatbotId}#broadcasts`)
+      revalidateCacheTags(`chatbots:${chatbotId}#broadcasts`)
     },
   )

@@ -23,6 +23,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import React, { useMemo } from "react"
 import { toast } from "sonner"
+import type { getFlows } from "../flows/queries"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
@@ -32,14 +33,17 @@ import type { AutomatedResponseResource } from "./schemas/types"
 type AutomatedResponseTableProps = {
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof getAutomatedResponses>>]>
+  flowPromises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export function AutomatedResponsesTable({
   chatbotId,
   promises,
+  flowPromises,
 }: AutomatedResponseTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = React.use(promises)
+  const [{ data: allFlows }] = React.use(flowPromises)
 
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AutomatedResponseResource> | null>(null)
@@ -83,7 +87,9 @@ export function AutomatedResponsesTable({
         cell: ({ row }) => {
           const { id, userMessages } = row.original
           return (
-            <Link href={`/chatbots/${chatbotId}/automated-responses/${id}`}>
+            <Link
+              href={`/chatbots/${chatbotId}/automated-responses/${id}/edit`}
+            >
               {userMessages.join(",")}
             </Link>
           )
@@ -102,17 +108,27 @@ export function AutomatedResponsesTable({
           const replies = cell.getValue<
             AutomatedResponseResource["replies"]
           >() as CreateAutomatedResponseRequest["replies"]
-          const displayData = replies.map((reply, idx) => {
-            return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: wip
-              <li key={idx}>
-                {reply.type === ReplyType.MESSAGE
-                  ? `Message: ${reply.message}`
-                  : `Flow: ${reply.flowId}`}
-              </li>
-            )
-          })
-          return <ul className="list-disc">{displayData}</ul>
+
+          const displayData: string[] = []
+          for (const reply of replies) {
+            if (reply.type === ReplyType.Message) {
+              displayData.push(`Message: ${reply.message}`)
+            } else {
+              const flow = allFlows.find((f) => f.id === reply.flowId)
+              displayData.push(`Flow: ${flow?.name}`)
+            }
+          }
+
+          return (
+            <ul className="list-disc">
+              {displayData.map((reply, idx) => {
+                return (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                  <li key={idx}>{reply}</li>
+                )
+              })}
+            </ul>
+          )
         },
         enableSorting: false,
         enableHiding: false,
@@ -123,15 +139,13 @@ export function AutomatedResponsesTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Status" />
         ),
-        cell: ({ cell, row }) => {
-          return (
-            <AutomatedResponseStatusCell
-              chatbotId={chatbotId}
-              checked={cell.getValue<AutomatedResponseResource["status"]>()}
-              id={row.original.id}
-            />
-          )
-        },
+        cell: ({ cell, row }) => (
+          <AutomatedResponseStatusCell
+            chatbotId={chatbotId}
+            checked={cell.getValue<AutomatedResponseResource["status"]>()}
+            id={row.original.id}
+          />
+        ),
         enableSorting: false,
         enableHiding: false,
       },
@@ -140,9 +154,9 @@ export function AutomatedResponsesTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Created" />
         ),
-        cell: ({ row }) => {
-          return <div>{format(row.original.createdAt, "yyyy/MM/dd HH:mm")}</div>
-        },
+        cell: ({ row }) => (
+          <div>{format(row.original.createdAt, "yyyy/MM/dd HH:mm")}</div>
+        ),
       },
       {
         id: "action",
@@ -150,38 +164,36 @@ export function AutomatedResponsesTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="" />
         ),
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "update" })}
-                  variant="destructive"
-                >
-                  {t("actions.update")}
-                </DropdownMenuItem>
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "update" })}
+                variant="destructive"
+              >
+                {t("actions.update")}
+              </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                  variant="destructive"
-                >
-                  {t("actions.delete")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
-        },
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "delete" })}
+                variant="destructive"
+              >
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    [chatbotId, t],
+    [chatbotId, t, allFlows],
   )
 
   const { table } = useDataTable({
@@ -226,7 +238,9 @@ const AutomatedResponseStatusCell = (props: {
     updateAutomatedResponseAction.bind(null, props.chatbotId, props.id),
     {
       onError: ({ error }) => {
-        error.serverError && toast.error(error.serverError)
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )

@@ -1,14 +1,13 @@
 "use server"
 
-import { FolderType, prisma } from "@aha.chat/database"
-import { OMNICHANNEL } from "@aha.chat/database/types"
-import { createId } from "@paralleldrive/cuid2"
-import { revalidateTag } from "next/cache"
+import { FolderType, type Prisma, prisma } from "@aha.chat/database"
+import { sendMessageNodeDefaultFn } from "@aha.chat/flow-config"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateFlowSchema,
@@ -16,7 +15,7 @@ import {
 } from "../schemas/create-flow-schema"
 
 export const createFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createFlowSchema)
   .action(
     async ({
@@ -30,11 +29,13 @@ export const createFlowAction = chatbotActionClient
         await ensureFolderIdIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.FLOW,
+          FolderType.flow,
         )
       }
 
-      const firstNodeId = createId()
+      const defaultNode = sendMessageNodeDefaultFn({
+        name: "Send Message #1",
+      })
 
       await prisma.flow.create({
         data: {
@@ -44,29 +45,16 @@ export const createFlowAction = chatbotActionClient
             create: [
               {
                 chatbotId,
-                nodes: [
-                  {
-                    id: firstNodeId,
-                    type: "SendMessage",
-                    position: { x: 100, y: 100 },
-                    data: {
-                      id: createId(),
-                      name: "Send Message #1",
-                      isStartNode: true,
-                      inboxType: OMNICHANNEL,
-                      steps: [],
-                    },
-                  },
-                ],
+                nodes: [defaultNode as Prisma.InputJsonObject],
                 edges: [],
                 isDraft: true,
-                startNodeId: firstNodeId,
+                startNodeId: defaultNode.id,
               },
             ],
           },
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#flows`)
+      revalidateCacheTags(`chatbots:${chatbotId}#flows`)
     },
   )

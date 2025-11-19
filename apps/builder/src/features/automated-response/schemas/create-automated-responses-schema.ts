@@ -2,22 +2,28 @@ import { ReplyType } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const createAutomatedResponseRequest = z.object({
-  folderId: z.string().cuid2().nullish(),
-  userMessages: z.array(z.string().min(1).max(255)),
+  folderId: z.cuid2().nullish(),
+  userMessages: z
+    .array(
+      z.object({
+        value: z.string().min(1).max(255),
+      }),
+    )
+    .min(1),
   replies: z
     .array(
       z.discriminatedUnion("type", [
         z.object({
-          type: z.literal(ReplyType.FLOW),
+          type: z.literal(ReplyType.Flow),
           flowId: z.string(),
         }),
         z.object({
-          type: z.literal(ReplyType.MESSAGE),
+          type: z.literal(ReplyType.Message),
           message: z.string().min(1).max(255),
           buttons: z.array(
             z.object({
               label: z.string().min(1).max(255),
-              url: z.string().url(),
+              url: z.url(),
             }),
           ),
         }),

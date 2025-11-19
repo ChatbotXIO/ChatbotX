@@ -40,7 +40,7 @@ export function CreateFlowDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createdSuccess", {
                 feature: t("fields.flow.label"),
               }),
             )
@@ -49,7 +49,9 @@ export function CreateFlowDialog({
             resetFormAndAction()
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
@@ -68,13 +70,13 @@ export function CreateFlowDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.create")}
+          {t("actions.createFeature", { feature: t("fields.flow.label") })}
         </Button>
       </DialogTrigger>
       <DialogContent className={"max-h-screen max-w-sm overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.flow.label") })}
+            {t("messages.createFeature", { feature: t("fields.flow.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -84,10 +86,10 @@ export function CreateFlowDialog({
               className="flex-1 space-y-6"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter>
-                <DialogClose>
+                <DialogClose asChild>
                   <Button type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>

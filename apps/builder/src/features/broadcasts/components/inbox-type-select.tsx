@@ -16,26 +16,26 @@ export const InboxTypeSelect = (props: InboxTypeSelectProps) => {
     {
       icon: AtomIcon,
       name: t("omnichannel.title"),
-      value: InboxType.OMNICHANNEL,
+      value: "omnichannel",
       description:
         "Send a flow to all contacts. You can send messages or executes actions.",
     },
     {
       icon: SiMessenger,
       name: t("messenger.title"),
-      value: InboxType.MESSENGER,
+      value: InboxType.messenger,
       description: "",
     },
     {
       icon: SiWhatsapp,
       name: t("whatsapp.title"),
-      value: InboxType.WHATSAPP,
+      value: InboxType.whatsapp,
       description: "",
     },
     {
       icon: SiZalo,
       name: t("zalo.title"),
-      value: InboxType.WHATSAPP,
+      value: InboxType.zalo,
       description: "",
     },
   ]
@@ -56,7 +56,7 @@ export const InboxTypeSelect = (props: InboxTypeSelectProps) => {
             {tt.name}
           </span>
           <Button
-            onClick={() => props.onSelectInboxType(tt.value)}
+            onClick={() => props.onSelectInboxType(tt.value as InboxType)}
             variant="secondary"
           >
             {t("actions.continue")}

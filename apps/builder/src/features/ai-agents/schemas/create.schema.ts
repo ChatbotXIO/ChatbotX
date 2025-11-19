@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { GEMINI_MODELS } from "@/features/gemini/models"
-import { OPENAI_MODELS } from "@/features/openai/models"
+import { openAIModels } from "@/features/openai/models"
 
 export const createAIAgentRequest = z.object({
   name: z.string().trim().min(1).max(255),
@@ -19,7 +19,7 @@ export const createAIAgentRequest = z.object({
       }),
       z.object({
         provider: z.literal("openAI"),
-        model: z.enum(Object.keys(OPENAI_MODELS) as [string, ...string[]]),
+        model: z.enum(openAIModels),
       }),
     ]),
   ),

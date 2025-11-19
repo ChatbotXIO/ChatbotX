@@ -2,8 +2,7 @@ import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import type { FlowModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { FlowException } from "../schemas/exception"
 import type {
   FindFlowParams,
@@ -15,9 +14,7 @@ import type {
 export async function getFlows(
   input: ListFlowsParams,
 ): Promise<FlowCollection> {
-  const userId = await getCurrentUserId()
-
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {
@@ -41,6 +38,10 @@ export async function getFlows(
             },
           },
         ]
+      }
+
+      if (input.active) {
+        where.active = input.active
       }
 
       const orderBy = input.sort
@@ -86,9 +87,7 @@ export async function getFlows(
 export const findFlow = async (
   input: FindFlowParams,
 ): Promise<{ data: FlowResource | null }> => {
-  const userId = await getCurrentUserId()
-
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   // return await unstable_cache(
   //   async () => {

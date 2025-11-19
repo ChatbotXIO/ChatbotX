@@ -43,14 +43,16 @@ export function AddInboxTeamMemberDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createdSuccessfully", {
+            t("messages.createdSuccess", {
               feature: t("fields.inboxTeamMember.label"),
             }),
           )
           onOpenChange(false)
         },
         onError: ({ error }) => {
-          error.serverError && toast.error(error.serverError)
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       formProps: {
@@ -70,12 +72,10 @@ export function AddInboxTeamMemberDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", {
+            {t("messages.createFeature", {
               feature: t("fields.inboxTeamMember.label"),
             })}
           </DialogTitle>

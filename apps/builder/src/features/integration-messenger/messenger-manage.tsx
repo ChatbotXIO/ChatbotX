@@ -1,5 +1,7 @@
 "use client"
 
+import type { OrganizationSettings } from "@aha.chat/database/types"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
@@ -18,8 +20,17 @@ export type MessengerManageProps = {
 }
 export function MessengerManage({ promises }: MessengerManageProps) {
   const t = useTranslations()
+  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const [integrationMessenger, organization] = use(promises)
+  if (!organization) {
+    return null
+  }
+  const messengerSettings = (organization?.settings as OrganizationSettings)
+    .messenger
+  if (!messengerSettings) {
+    return null
+  }
 
   return (
     <SettingRow
@@ -31,7 +42,7 @@ export function MessengerManage({ promises }: MessengerManageProps) {
           <MessengerDisconnect />
         </div>
       ) : (
-        <MessengerConnect organization={organization} />
+        <MessengerConnect chatbotId={chatbotId} settings={messengerSettings} />
       )}
     </SettingRow>
   )

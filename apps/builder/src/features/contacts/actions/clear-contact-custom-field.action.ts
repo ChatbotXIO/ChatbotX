@@ -1,11 +1,11 @@
 "use server"
 
 import { FieldType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type ClearContactCustomFieldRequest,
@@ -13,7 +13,7 @@ import {
 } from "../schemas/clear-contact-custom-field.request"
 
 export const clearContactCustomFieldAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(clearContactCustomFieldRequest)
   .action(
     async ({
@@ -27,7 +27,7 @@ export const clearContactCustomFieldAction = chatbotActionClient
         where: {
           chatbotId,
           id: parsedInput.customFieldId,
-          fieldType: FieldType.CUSTOM_FIELD,
+          fieldType: FieldType.customField,
         },
       })
 
@@ -57,8 +57,10 @@ export const clearContactCustomFieldAction = chatbotActionClient
         })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#contacts`)
-      revalidateTag(`chatbots:${chatbotId}#conversations`)
-      revalidateTag(`chatbots:${chatbotId}#tags`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#contacts`,
+        `chatbots:${chatbotId}#conversations`,
+        `chatbots:${chatbotId}#fields`,
+      ])
     },
   )

@@ -48,7 +48,7 @@ export function CreateTagDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccessfully", {
+              t("messages.createdSuccess", {
                 feature: t("fields.tag.label"),
               }),
             )
@@ -58,7 +58,9 @@ export function CreateTagDialog({
             router.refresh()
           },
           onError: ({ error }) => {
-            error.serverError && toast.error(error.serverError)
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
           },
         },
         formProps: {
@@ -80,12 +82,10 @@ export function CreateTagDialog({
           {t("actions.add")}
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.createTitle", { feature: t("fields.tag.label") })}
+            {t("messages.createFeature", { feature: t("fields.tag.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>

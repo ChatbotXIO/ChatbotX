@@ -4,13 +4,15 @@ import { ArchiveIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseStepViewer } from "../base/viewer"
 
-export const ArchiveConversationStepViewer = () => {
+const ArchiveConversationStepViewer = () => {
   const t = useTranslations()
 
   return (
     <BaseStepViewer
       icon={ArchiveIcon}
-      title={t("flows.stepType.archiveConversation")}
+      title={t("flows.actions.archiveConversation")}
     />
   )
 }
+
+export default ArchiveConversationStepViewer

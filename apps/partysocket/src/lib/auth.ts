@@ -1,5 +1,6 @@
 import ky from "ky"
 import type * as Party from "partykit/server"
+import { env } from "../env"
 
 export type Session = {
   user: {
@@ -13,13 +14,12 @@ export type Session = {
 }
 
 /** Check that the user exists, and isn't expired */
-export const isSessionValid = (session?: Session | null): boolean => {
-  return Boolean(
+export const isSessionValid = (session?: Session | null): boolean =>
+  Boolean(
     session &&
       (!session.session.expiresAt ||
         session.session.expiresAt > new Date().toISOString()),
   )
-}
 
 export const getAuthSession = async (
   proxiedRequest: Party.Request,
@@ -31,7 +31,13 @@ export const getAuthSession = async (
   }
 
   const headers = proxiedRequest.headers
-  const origin = headers.get("origin") ?? "https://example.com"
+  const origin =
+    env.NEXT_PUBLIC_PARTYSOCKET_AUTH_URL ??
+    headers.get("origin") ??
+    "https://example.com"
+
+  console.log("originnnnnnnn", origin)
+
   const verificationUrl = new URL("/api/auth/one-time-token/verify", origin)
 
   const session: Session | null = await ky

@@ -1,5 +1,5 @@
-export type { OnMessageArgs } from "whatsapp-api-js/emitters"
 export * from "./integration"
-export type { CreateMessageTemplateProps } from "./message-templates"
-export type { WhatsappAuthValue } from "./schemas"
-export type { ListFlowsResponse } from "./types"
+export type {
+  WhatsappAuthValue,
+  WhatsappWebhookEvent,
+} from "./schemas"

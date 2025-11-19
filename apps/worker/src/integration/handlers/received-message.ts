@@ -4,12 +4,13 @@ import {
   type ConversationModel,
   Gender,
   InboxType,
+  type IntegrationType,
   type MessageModel,
   SenderType,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
-import type { OnMessageArgs } from "@aha.chat/integration-whatsapp"
+import type { WhatsappWebhookEvent } from "@aha.chat/integration-whatsapp"
 import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import {
   broadcastToChatbotParty,
@@ -26,16 +27,16 @@ const getDBIntegration = async (
   payload: any,
 ) => {
   switch (integrationName) {
-    case InboxType.WHATSAPP:
+    case InboxType.whatsapp:
       return await prisma.integrationWhatsapp.findFirstOrThrow({
         where: {
-          phoneNumberId: (payload as OnMessageArgs).phoneID,
+          phoneNumberId: (payload as WhatsappWebhookEvent).phoneID,
         },
         include: {
           chatbot: true,
         },
       })
-    case InboxType.MESSENGER:
+    case InboxType.messenger:
       return await prisma.integrationMessenger.findFirstOrThrow({
         where: {
           pageId: (payload as MessengerWebhookEvent).entry[0].id,
@@ -44,37 +45,40 @@ const getDBIntegration = async (
           chatbot: true,
         },
       })
-    case InboxType.ZALO:
+    case InboxType.zalo: {
+      const input = payload as ZaloWebhookEvent
+
       return await prisma.integrationZalo.findFirstOrThrow({
         where: {
-          oaId: (payload as ZaloWebhookEvent).recipient.id,
+          oaId: input.event_name.includes("user_send")
+            ? input.recipient.id
+            : input.sender.id,
         },
         include: {
           chatbot: true,
         },
       })
+    }
     default:
       throw new Error(`Unsupported integration: ${integrationName}`)
   }
 }
 
 export const receiveMessage = async ({
-  integrationName,
+  integrationType,
   payload,
 }: {
-  integrationName: string
-  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent
+  integrationType: IntegrationType
+  payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel
 }> => {
-  const intName = integrationName.toUpperCase()
-
-  if (!Object.hasOwn(allIntegrations, intName)) {
-    throw new Error(`Unsupported integration: ${intName}`)
+  if (!Object.hasOwn(allIntegrations, integrationType)) {
+    throw new Error(`Unsupported integration: ${integrationType}`)
   }
 
-  const dbIntegration = await getDBIntegration(intName, payload)
+  const dbIntegration = await getDBIntegration(integrationType, payload)
   const { chatbot, chatbotId, inboxId, auth } = dbIntegration
   const ctx = {
     chatbot,
@@ -82,7 +86,7 @@ export const receiveMessage = async ({
     uploader,
   }
   const parsedMessage = await allIntegrations[
-    integrationName as keyof typeof allIntegrations
+    integrationType
   ]?.actions.receiveMessage({
     ctx,
     data: payload,
@@ -103,8 +107,8 @@ export const receiveMessage = async ({
     })
 
     if (!newContact) {
-      if (canGetUserProfileIfNeeded(intName)) {
-        const integration = allIntegrations[intName]
+      if (canGetUserProfileIfNeeded(integrationType)) {
+        const integration = allIntegrations[integrationType]
         if (integration && "getUserProfile" in integration.actions) {
           const userProfile = await integration.actions.getUserProfile({
             // biome-ignore lint/suspicious/noExplicitAny: safe pass value
@@ -118,6 +122,13 @@ export const receiveMessage = async ({
         }
       }
 
+      const chatbotUsage = await tx.chatbotUsage.findFirstOrThrow({
+        where: { chatbotId },
+      })
+      if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+        throw new Error("Max contacts reached")
+      }
+
       newContact = await tx.contact.create({
         data: {
           chatbotId,
@@ -126,8 +137,8 @@ export const receiveMessage = async ({
           email: conversation.contact.email,
           firstName: conversation.contact.firstName,
           lastName: conversation.contact.lastName,
-          gender: (conversation.contact.gender as Gender) || Gender.UNKNOWN,
-          source: integrationName,
+          gender: (conversation.contact.gender as Gender) || Gender.unknown,
+          source: integrationType,
           avatar: conversation.contact.avatar,
         },
       })
@@ -160,7 +171,7 @@ export const receiveMessage = async ({
       create: {
         conversationId: newConversation.id,
         inboxId,
-        senderType: SenderType.CONTACT,
+        senderType: SenderType.contact,
         chatbotId,
         senderId: newContact.id,
         messageType: message.messageType,
@@ -170,13 +181,11 @@ export const receiveMessage = async ({
         attachments: message.attachments
           ? {
               create: message.attachments.map(
-                (attachment: AttachmentEntity) => {
-                  return {
-                    chatbotId: newConversation.chatbotId,
-                    conversationId: newConversation.id,
-                    ...attachment,
-                  }
-                },
+                (attachment: AttachmentEntity) => ({
+                  chatbotId: newConversation.chatbotId,
+                  conversationId: newConversation.id,
+                  ...attachment,
+                }),
               ),
             }
           : undefined,
@@ -211,6 +220,5 @@ export const receiveMessage = async ({
   return result
 }
 
-const canGetUserProfileIfNeeded = (integrationName: string) => {
-  return integrationName === InboxType.MESSENGER
-}
+const canGetUserProfileIfNeeded = (integrationName: string) =>
+  integrationName === InboxType.messenger

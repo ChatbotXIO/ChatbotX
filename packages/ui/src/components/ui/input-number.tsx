@@ -141,6 +141,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             aria-label="Increase value"
             className="px-2 h-4.5 rounded-l-none rounded-br-none border-input border-l-0 border-b-[0.5px] focus-visible:relative"
             variant="outline"
+            type="button"
             onClick={handleIncrement}
             disabled={value === max}
           >
@@ -150,6 +151,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             aria-label="Decrease value"
             className="px-2 h-4.5 rounded-l-none rounded-tr-none border-input border-l-0 border-t-[0.5px] focus-visible:relative"
             variant="outline"
+            type="button"
             onClick={handleDecrement}
             disabled={value === min}
           >

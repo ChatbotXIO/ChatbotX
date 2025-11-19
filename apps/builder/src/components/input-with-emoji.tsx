@@ -1,11 +1,10 @@
+import { EmojiPicker } from "@aha.chat/ui/components/emoji-picker"
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@aha.chat/ui/components/ui/hover-card"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
-import data from "@emoji-mart/data"
-import Picker from "@emoji-mart/react"
 import { CodeIcon, SmileIcon } from "lucide-react"
 import { useFormContext } from "react-hook-form"
 
@@ -29,11 +28,8 @@ export const InputWithEmoji = ({ name }: { name: string }) => {
             <SmileIcon size={16} />
           </HoverCardTrigger>
           <HoverCardContent className="w-auto border-none bg-transparent p-0">
-            <Picker
-              data={data}
-              emojiButtonSize={30}
-              emojiSize={24}
-              // onEmojiSelect={console.log}
+            <EmojiPicker
+            //  onSelect={console.log}
             />
           </HoverCardContent>
         </HoverCard>

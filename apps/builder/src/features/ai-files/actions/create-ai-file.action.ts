@@ -3,12 +3,12 @@
 import { prisma } from "@aha.chat/database"
 import { enqueueProcessAiFileJob } from "@aha.chat/worker-config"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { invalidateCacheTags } from "@/lib/cache-helper"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { createAiFileRequest } from "../schemas"
 
 export const createAiFileAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createAiFileRequest)
   .action(async ({ bindArgsParsedInputs, parsedInput }) => {
     const [chatbotId] = bindArgsParsedInputs
@@ -28,5 +28,5 @@ export const createAiFileAction = chatbotActionClient
       mimeType: created.mimeType,
     })
 
-    invalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
+    revalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
   })

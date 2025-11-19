@@ -1,11 +1,6 @@
-import {
-  disabledCopyActionTypes,
-  type FlowNode,
-  type NodeType,
-  StepType,
-} from "@aha.chat/flow-config"
+import type { FlowNode, NodeType } from "@aha.chat/flow-config"
+import { disabledCopyActionTypes, StepType } from "@aha.chat/flow-config"
 import { TriggerFormInitially } from "@aha.chat/ui/components/form/form-trigger-initially"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -13,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
 import {
   Sortable,
   SortableContent,
@@ -26,25 +20,27 @@ import { createId } from "@paralleldrive/cuid2"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon, MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { memo, useEffect, useMemo } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { funnel } from "remeda"
-import { z } from "zod"
-import { InboxSelect } from "@/features/inboxes/inbox-select"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ErrorAlert } from "../steps/error-alert"
 import { allNodesConfig } from "./node-config"
 
-export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
+export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
   const t = useTranslations()
-  const { updateNodeData } = useReactFlow()
   const nodeConfig = activeNode.type
-    ? allNodesConfig[activeNode.type as NodeType]
+    ? allNodesConfig[activeNode.type as NodeType]?.(t)
     : null
+  const validator = nodeConfig?.validator
 
-  const form = useForm({
-    resolver: zodResolver(nodeConfig ? nodeConfig.validator : z.object({})),
+  const { updateNodeData } = useReactFlow()
+
+  // biome-ignore lint/suspicious/noExplicitAny: wip - complex node data types
+  const form = useForm<any>({
+    // biome-ignore lint/suspicious/noExplicitAny: wip - validator can be undefined
+    resolver: validator ? zodResolver(validator as any) : undefined,
     defaultValues: {
       ...activeNode.data,
     },
@@ -53,12 +49,17 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
   const { control, getValues } = form
 
   const allValues = useWatch({ control })
-  const debounceUpdateNodeData = funnel(
-    () => {
-      updateNodeData(activeNode.id, allValues)
-    },
-    { minQuietPeriodMs: 100 },
+  const debounceUpdateNodeData = useMemo(
+    () =>
+      funnel(
+        () => {
+          updateNodeData(activeNode.id, allValues)
+        },
+        { minQuietPeriodMs: 100 },
+      ),
+    [allValues, activeNode.id, updateNodeData],
   )
+
   useEffect(() => {
     debounceUpdateNodeData.call()
   }, [debounceUpdateNodeData])
@@ -76,7 +77,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: wip
-  function replaceIds(data: any): any {
+  const replaceIds = (data: any): any => {
     if (typeof data === "object" && data !== null) {
       if (Array.isArray(data)) {
         return data.map((item) => replaceIds(item))
@@ -97,7 +98,8 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
   }
 
   const onCopyStep = (index: number) => {
-    const values = getValues(`steps.${index}`)
+    // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
+    const values = getValues(`steps.${index}` as any)
     if (values) {
       insert(index + 1, replaceIds(values))
     }
@@ -109,13 +111,15 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
 
   return (
     <Form {...form}>
-      <InputField label={t("fields.name.label")} name="name" />
-
-      <Separator />
-
-      <InboxSelect name={"inboxType"} />
-
-      {/* <Separator /> */}
+      {"beforeStep" in activeNode.data && activeNode.data.beforeStep && (
+        <DynamicStepEditor
+          parentName="beforeStep"
+          type={
+            (activeNode.data as { beforeStep: { stepType: StepType } })
+              .beforeStep.stepType
+          }
+        />
+      )}
 
       <div className="my-2 flex flex-1 flex-col gap-2 overflow-y-auto">
         <Sortable
@@ -131,12 +135,13 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                     className={cn(
                       "flex items-center gap-2",
                       // biome-ignore lint/suspicious/noExplicitAny: wip
-                      (field as any).stepType === StepType.SEND_CAROUSEL
+                      (field as any).stepType === StepType.sendCarousel
                         ? "relative"
                         : "",
                     )}
                   >
-                    {form.formState.errors.steps ? (
+                    {/* biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors */}
+                    {(form.formState.errors as any).steps ? (
                       <ErrorAlert
                         message={
                           JSON.stringify(form.formState.errors)
@@ -157,7 +162,7 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
                       className={cn(
                         "flex-1 break-all",
                         // biome-ignore lint/suspicious/noExplicitAny: wip
-                        (field as any).stepType === StepType.SEND_CAROUSEL
+                        (field as any).stepType === StepType.sendCarousel
                           ? "overflow-hidden"
                           : "",
                       )}
@@ -227,4 +232,4 @@ export function NodeEditor({ activeNode }: { activeNode: FlowNode }) {
       <TriggerFormInitially form={form} />
     </Form>
   )
-}
+})

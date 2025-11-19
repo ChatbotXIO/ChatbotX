@@ -10,13 +10,13 @@ import type { ChatbotMemberCollection } from "../chatbot-members/schemas"
 type UserSelectProps = {
   name: string
   label?: string
-  isRequired?: boolean
+  required?: boolean
   className?: string
 }
 
 export function UserSelect(props: UserSelectProps) {
   const t = useTranslations()
-  const { name, label, isRequired = false, className } = props
+  const { name, label, required = false, className } = props
 
   const params = useParams<{ chatbotId: string }>()
 
@@ -34,14 +34,14 @@ export function UserSelect(props: UserSelectProps) {
       name={name}
       options={userOptions}
       placeholder={t("fields.user.selectAgent")}
-      required={isRequired}
+      required={required}
     />
   )
 }
 
 export const UserMultipleSelect = (props: UserSelectProps) => {
   const t = useTranslations()
-  const { name, label, isRequired = false, className } = props
+  const { name, label, required = false, className } = props
 
   const params = useParams<{ chatbotId: string }>()
 
@@ -59,7 +59,7 @@ export const UserMultipleSelect = (props: UserSelectProps) => {
       name={name}
       options={userOptions}
       placeholder={t("fields.user.selectAgents")}
-      required={isRequired}
+      required={required}
     />
   )
 }

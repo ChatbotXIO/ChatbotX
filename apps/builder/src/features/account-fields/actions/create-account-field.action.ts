@@ -1,12 +1,12 @@
 "use server"
 
 import { FieldType, FolderType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateAccountFieldRequest,
@@ -15,7 +15,7 @@ import {
 
 export const createAccountFieldAction = chatbotActionClient
   .inputSchema(createAccountFieldRequest)
-  .bindArgsSchemas(chatbotIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       parsedInput,
@@ -28,19 +28,19 @@ export const createAccountFieldAction = chatbotActionClient
         await ensureFolderIdIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.CUSTOM_FIELD,
+          FolderType.customField,
         )
       }
 
       await prisma.field.create({
         data: {
           chatbotId,
-          fieldType: FieldType.ACCOUNT_FIELD,
+          fieldType: FieldType.accountField,
           showInInbox: false,
           ...parsedInput,
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#accountFields`)
+      revalidateCacheTags(`chatbots:${chatbotId}#accountFields`)
     },
   )

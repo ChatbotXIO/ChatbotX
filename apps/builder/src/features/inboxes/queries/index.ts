@@ -1,15 +1,13 @@
 import { type Prisma, prisma } from "@aha.chat/database"
-import type { InboxModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import type { InboxCollection } from "../schemas"
 import type { ListInboxesRequest } from "../schemas/list-inboxes.schema"
 
 export async function listInboxes(
   input: ListInboxesRequest,
-): Promise<{ data: InboxModel[]; pageCount: number }> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+): Promise<InboxCollection> {
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {
@@ -24,6 +22,14 @@ export async function listInboxes(
           skip,
           take,
           where,
+          include: input.includes?.includes("intergration")
+            ? {
+                integrationWhatsapp: true,
+                integrationWebchat: true,
+                integrationMessenger: true,
+                integrationZalo: true,
+              }
+            : undefined,
         }),
         prisma.inbox.count({ where }),
       ])

@@ -1,16 +1,14 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ContactCollection } from "../schemas"
 import type { ListContactsRequest } from "../schemas/get-contacts-schema"
 
 export async function listContacts(
   input: ListContactsRequest,
 ): Promise<ContactCollection> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {
@@ -50,8 +48,7 @@ export async function listContacts(
 export async function countContacts(
   input: ListContactsRequest,
 ): Promise<{ total: number }> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const where = generateWhere(input)
 

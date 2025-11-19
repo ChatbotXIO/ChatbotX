@@ -1,8 +1,7 @@
 import { AIEmbeddingStatus, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import { getCurrentUserId } from "@/lib/auth"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { calcCacheTags } from "@/lib/cache-helper"
-import { findChatbotOrFail } from "@/lib/user-permissions"
 import type {
   AIFileCollection,
   GetAIFilesRequest,
@@ -12,8 +11,7 @@ import type {
 export async function getAIFiles(
   input: GetAIFilesRequest,
 ): Promise<AIFileCollection> {
-  const userId = await getCurrentUserId()
-  await findChatbotOrFail(userId, input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await unstable_cache(
     async () => {

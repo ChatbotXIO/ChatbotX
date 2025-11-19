@@ -1,11 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type AddInboxTeamMemberRequest,
@@ -13,7 +13,7 @@ import {
 } from "../schemas/add-inbox-team-member.request"
 
 export const addInboxTeamMemberAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams.items)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(addInboxTeamMemberRequest)
   .action(
     async ({
@@ -54,6 +54,6 @@ export const addInboxTeamMemberAction = chatbotActionClient
         })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#inboxTeams`)
+      revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
     },
   )

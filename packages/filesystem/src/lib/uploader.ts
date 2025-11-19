@@ -16,7 +16,7 @@ class Uploader {
   readonly #client: S3Client
   readonly #bucketName: string
 
-  private static instance: Uploader
+  static instance: Uploader
 
   constructor() {
     this.#client = new S3Client({

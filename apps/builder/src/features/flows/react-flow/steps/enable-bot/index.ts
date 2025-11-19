@@ -1,12 +1,13 @@
 import {
+  type EnableBotStepSchema,
   enableBotStepDefaultFn,
   enableBotStepSchema,
 } from "@aha.chat/flow-config"
-import type { StepDefinition } from ".."
-import { EnableBotStepEditor } from "./editor"
-import { EnableBotStepViewer } from "./viewer"
+import type { StepDefinition } from "../definition"
+import EnableBotStepEditor from "./editor"
+import EnableBotStepViewer from "./viewer"
 
-export const enableBotStep: StepDefinition = {
+export const enableBotStep: StepDefinition<EnableBotStepSchema> = {
   editor: EnableBotStepEditor,
   viewer: EnableBotStepViewer,
   validator: enableBotStepSchema,
