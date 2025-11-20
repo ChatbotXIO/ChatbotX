@@ -4,6 +4,9 @@
       "title": "Tạo trường tài khoản"
     },
     "title": "Trường tài khoản",
+    "value": {
+      "label": "Giá trị"
+    },
     "updateForm": {
       "title": "Cập nhật trường tài khoản"
     }
@@ -131,7 +134,14 @@
     "revertToPublished": "Khôi phục về phiên bản đã xuất bản",
     "search": "Tìm kiếm",
     "signOut": "Đăng xuất",
-    "backToSignIn": "Quay lại đăng nhập"
+    "backToSignIn": "Quay lại đăng nhập",
+    "addMember": "Thêm thành viên",
+    "addVariable": "Thêm biến",
+    "wait": "Chờ"
+  },
+  "common": {
+    "cancelBtn": "Hủy",
+    "deleteBtn": "Xóa"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -560,6 +570,9 @@
     "googleSheets": {
       "label": "Google Sheets"
     },
+    "messageTemplate": {
+      "label": "Mẫu tin nhắn"
+    },
     "hideHeader": {
       "label": "Hiển thị tiêu đề"
     },
@@ -684,6 +697,9 @@
         "openWebsite": "Mở trang web",
         "sendFlow": "Gửi luồng"
       }
+    },
+    "spreadsheets": {
+      "label": "Bảng tính"
     },
     "phoneNumber": {
       "label": "Số điện thoại",
@@ -994,6 +1010,7 @@
     "title": "Chung"
   },
   "googleSheets": {
+    "label": "Google Sheets",
     "delete": {
       "dialog_title": "Xóa bảng tính"
     },
@@ -1080,6 +1097,7 @@
     "needToAddSettings": "Bạn cần thêm cài đặt để sử dụng tích hợp này",
     "noChatbotsFound": "Không tìm thấy chatbot nào",
     "noDataAvailable": "Không có dữ liệu",
+    "noData": "Không có dữ liệu",
     "pleaseWait": "Vui lòng đợi...",
     "processingRequest": "Đang xử lý yêu cầu của bạn...",
     "savedSuccessfully": "Đã lưu thành công",
