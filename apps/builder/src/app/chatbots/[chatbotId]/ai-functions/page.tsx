@@ -1,6 +1,6 @@
 import AIFunctionsTable from "@/features/ai-functions/ai-functions-table"
 import { getAIFunctions } from "@/features/ai-functions/queries"
-import { AiHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
+import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
 import { getFlows } from "@/features/flows/queries"
@@ -37,7 +37,7 @@ export default async function AIFunctionsPage({
 
   return (
     <div className="space-y-6">
-      <AiHubBreadcrumb />
+      <AIHubBreadcrumb />
       <AIFunctionsTable promises={promises} />
     </div>
   )

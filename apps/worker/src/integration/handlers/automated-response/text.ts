@@ -76,7 +76,7 @@ export async function downloadAndUploadImage(
         flowVersionId: "",
         step: {
           id: createId(),
-          stepType: StepType.SEND_IMAGE,
+          stepType: StepType.sendImage,
           mode: "file",
           url: path,
           buttons: [],
@@ -87,7 +87,7 @@ export async function downloadAndUploadImage(
             size: buffer.length,
             width: detectedWidth,
             height: detectedHeight,
-            fileType: FileType.IMAGE,
+            fileType: FileType.image,
           },
         },
       },
@@ -203,7 +203,7 @@ export async function sendMessageWithRender(
       step: {
         id: createId(),
         message,
-        stepType: StepType.SEND_TEXT,
+        stepType: StepType.sendText,
         buttons: [],
       },
     },

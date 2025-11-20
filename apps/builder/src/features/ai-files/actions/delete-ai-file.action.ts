@@ -7,7 +7,7 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { logger } from "../../../lib/log"
 
-export const deleteAiFileAction = chatbotActionClient
+export const deleteAIFileAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs }) => {
     const [chatbotId, aiFileId] = bindArgsParsedInputs

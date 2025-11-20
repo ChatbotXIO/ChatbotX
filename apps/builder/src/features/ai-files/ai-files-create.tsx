@@ -3,14 +3,14 @@ import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { createAiFileAction } from "./actions/create-ai-file.action"
+import { createAIFileAction } from "./actions/create-ai-file.action"
 
 export function AIFilesCreate() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    createAiFileAction.bind(null, chatbotId),
+    createAIFileAction.bind(null, chatbotId),
     {
       onSuccess: () => {
         toast.success(
@@ -33,7 +33,7 @@ export function AIFilesCreate() {
     <DirectUploadButton
       accept=".pdf,.md,.docx,.txt,.csv,.xlsx"
       disabled={isPending}
-      maxSize={25_000_000} // 25MB
+      maxSize={26_214_400} // 25MB
       multiple={false}
       onUploadError={(error, file) => {
         toast.error(`Failed to upload ${file.name}`, {

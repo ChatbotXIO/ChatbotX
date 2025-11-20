@@ -1,6 +1,6 @@
 import type { AIAgentModel, AIMessageRole } from "@aha.chat/database/types"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
-import type { ToolSet } from "ai"
+import type { ModelMessage, ToolSet } from "ai"
 
 export type AIMessage = {
   role: AIMessageRole
@@ -9,7 +9,7 @@ export type AIMessage = {
 
 export type ReplyByAIProps = {
   message: OutgoingMessageEntity
-  lastAIMessages: AIMessage[]
+  lastAIMessages: ModelMessage[]
   aiAgent: AIAgentModel
   tools: ToolSet
   availableTools: {

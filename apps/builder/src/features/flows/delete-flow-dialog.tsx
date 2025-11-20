@@ -45,7 +45,7 @@ export function DeleteFlowsDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.flow.label"),
           }),
         )

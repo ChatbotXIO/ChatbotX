@@ -25,21 +25,21 @@ function createStatusBadge(
   t: ReturnType<typeof useTranslations>,
 ): Record<ProcessingStatus, ReactNode> {
   return {
-    idle: <Badge variant="outline">{t("aiFiles.status.idle")}</Badge>,
+    idle: <Badge variant="outline">{t("fields.status.idle")}</Badge>,
     processing: (
-      <Badge variant="secondary">{t("aiFiles.status.processing")}</Badge>
+      <Badge variant="secondary">{t("fields.status.processing")}</Badge>
     ),
     success: (
       <Badge className="bg-green-500" variant="default">
-        {t("aiFiles.status.success")}
+        {t("fields.status.success")}
       </Badge>
     ),
-    error: <Badge variant="destructive">{t("aiFiles.status.error")}</Badge>,
+    error: <Badge variant="destructive">{t("fields.status.error")}</Badge>,
   }
 }
 
 export function AIFileProcessingStatus(props: AIFileProcessingStatusProps) {
-  const { chunksCount = 0, processingStatus } = props
+  const { processingStatus } = props
   const t = useTranslations()
   const statusIcon = useMemo(
     () => STATUS_ICON[processingStatus],
@@ -57,12 +57,6 @@ export function AIFileProcessingStatus(props: AIFileProcessingStatusProps) {
         {statusIcon}
         {statusBadge}
       </div>
-
-      {processingStatus === "success" && chunksCount > 0 && (
-        <span className="text-muted-foreground text-sm">
-          {t("aiFiles.chunks", { count: chunksCount })}
-        </span>
-      )}
     </div>
   )
 }

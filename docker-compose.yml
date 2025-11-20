@@ -2,7 +2,7 @@ name: ahachat
 
 services:
   postgres:
-    image: timescale/timescaledb:latest-pg16
+    image: timescale/timescaledb:latest-pg17
     ports:
       - "5432:5432"
     volumes:
@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-ahachat}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
       timeout: 60s
       retries: 5

@@ -56,13 +56,23 @@ async function main() {
           organizationId: organization.id,
           name: "FREE",
           accountTimezone: "Asia/Saigon",
+          chatbotUsage: {
+            create: {
+              maxContacts: 999_999,
+            },
+          },
         },
         {
           organizationId: organization.id,
           name: "PRO",
           accountTimezone: "Asia/Saigon",
+          chatbotUsage: {
+            create: {
+              maxContacts: 999_999,
+            },
+          },
         },
-      ] as Chatbot[],
+      ] as unknown as Chatbot[],
     })
     await prisma.chatbotMember.createMany({
       data: chatbots.map((chatbot) => ({

@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@aws-sdk/client-s3": "^3.935.0",
+    "@aws-sdk/client-s3": "^3.936.0",
     "@prisma/client": "^7.0.0",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/facebook-js-sdk": "^3.3.12",

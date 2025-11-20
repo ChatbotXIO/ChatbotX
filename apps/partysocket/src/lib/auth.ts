@@ -36,8 +36,6 @@ export const getAuthSession = async (
     headers.get("origin") ??
     "https://example.com"
 
-  console.log("originnnnnnnn", origin)
-
   const verificationUrl = new URL("/api/auth/one-time-token/verify", origin)
 
   const session: Session | null = await ky

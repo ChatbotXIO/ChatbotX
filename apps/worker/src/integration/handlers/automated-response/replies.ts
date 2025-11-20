@@ -6,11 +6,11 @@ import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createId } from "@paralleldrive/cuid2"
-import { type LanguageModel, streamText } from "ai"
+import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
 import { AI_PROVIDERS, ROLES, TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
-import type { AIMessage, ReplyByAIProps } from "./types"
+import type { ReplyByAIProps } from "./types"
 
 async function replaceCustomFieldAttributes(
   message: string,
@@ -117,7 +117,7 @@ export async function replyByAutomatedResponse({
                 step: {
                   id: createId(),
                   message: reply.message ?? "",
-                  stepType: StepType.SEND_TEXT,
+                  stepType: StepType.sendText,
                   buttons: [],
                 },
               },
@@ -252,7 +252,7 @@ async function runAIReply(
       const toolResultsText = toolResults
         .map((r) => `Tool ${r.toolName} result: ${r.output}`)
         .join("\n\n")
-      const followUpMessages: AIMessage[] = [
+      const followUpMessages: ModelMessage[] = [
         ...lastAIMessages,
         {
           role: ROLES.assistant,

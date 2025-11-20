@@ -1,6 +1,6 @@
 import AIFilesTable from "@/features/ai-files/ai-files-table"
 import { getAIFiles } from "@/features/ai-files/queries"
-import { AiHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
+import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 
 type AIFilesPageProps = {
   params: Promise<{
@@ -19,7 +19,7 @@ export default async function AIFilesPage({ params }: AIFilesPageProps) {
 
   return (
     <div className="space-y-6">
-      <AiHubBreadcrumb />
+      <AIHubBreadcrumb />
       <AIFilesTable promises={promises} />
     </div>
   )

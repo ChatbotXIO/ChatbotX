@@ -18,10 +18,10 @@ export async function resolveEmbeddingModel(
 ): Promise<EmbeddingModel> {
   const [integrationOpenAI, integrationGemini] = await Promise.all([
     prisma.integrationOpenAI.findFirst({
-      where: { chatbotId, autoReply: true },
+      where: { chatbotId },
     }),
     prisma.integrationGemini.findFirst({
-      where: { chatbotId, autoReply: true },
+      where: { chatbotId },
     }),
   ])
 

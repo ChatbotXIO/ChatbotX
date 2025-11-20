@@ -43,7 +43,7 @@ export function DeleteAITriggerDialog({
     {
       onSuccess() {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.aiTrigger.label"),
           }),
         )

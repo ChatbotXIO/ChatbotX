@@ -1,36 +1,33 @@
 import {
-  AIFilesJobAction,
-  type AiFilesJobData,
+  AIJobAction,
+  type AIJobData,
   defaultWorkerOptions,
   getRedisConnection,
   QueueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
-import { processAiFile } from "../ai-files/handlers/process-ai-file"
-import { processChunk } from "../ai-files/handlers/process-chunk"
-import { processPendingEmbeddings } from "../ai-files/handlers/process-pending-embeddings"
-import { logger } from "../lib/logger"
+import { aiLogger, logger } from "../lib/logger"
+import { processAIFile } from "./handlers/process-ai-file"
+import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 
 const worker = new Worker(
-  QueueName.AI_AGENT,
-  async (job: Job<AiFilesJobData>) => {
-    logger.info("[ai-files] Worker received job", {
+  QueueName.aiAgent,
+  async (job: Job<AIJobData>) => {
+    aiLogger.info("Worker received job", {
       id: job.id,
       name: job.name,
       type: job.data.type,
     })
+
     switch (job.data.type) {
-      case AIFilesJobAction.PROCESS_AI_FILE:
-        await processAiFile(job.data.data)
+      case AIJobAction.processAIFile:
+        await processAIFile(job.data.data)
         return
-      case AIFilesJobAction.PROCESS_CHUNK:
-        await processChunk(job.data.data)
-        return
-      case AIFilesJobAction.PROCESS_PENDING_EMBEDDINGS:
-        await processPendingEmbeddings(job.data.data)
+      case AIJobAction.processPendingEmbedding:
+        await processPendingEmbedding(job.data.data)
         return
       default:
-        logger.warn("[ai-files] Unknown job type", {
+        aiLogger.warn("Unknown job type", {
           type: (job.data as { type?: string }).type,
         })
         return

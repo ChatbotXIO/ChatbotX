@@ -4,7 +4,7 @@ import { AIAgentsTable } from "@/features/ai-agents/ai-agent-table"
 import { listAIAgentRequest } from "@/features/ai-agents/schemas/list.schema"
 import { getAIFiles } from "@/features/ai-files/queries"
 import { getAIFunctions } from "@/features/ai-functions/queries"
-import { AiHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
+import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { getAIMcpServers } from "@/features/ai-mcp-servers/queries"
 
 type AIAgentsPageProps = {
@@ -39,7 +39,7 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
 
   return (
     <div className="space-y-6">
-      <AiHubBreadcrumb />
+      <AIHubBreadcrumb />
       <AIAgentsTable
         createPromises={aiCreatePromises}
         listPromises={aiAgentPromises}

@@ -16,30 +16,34 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
-import { deleteAiFileAction } from "./actions/delete-ai-file.action"
+import { deleteAIFileAction } from "./actions/delete-ai-file.action"
 import type { AIFileWithProcessing } from "./schemas"
 
-type DeleteAiFileDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+type DeleteAIFileDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   aiFile: AIFileWithProcessing
   showTrigger?: boolean
+  open: boolean
+  setOpen: (open: boolean) => void
 }
 
-export function DeleteAiFileDialog({
+export function DeleteAIFileDialog({
   aiFile,
   showTrigger = true,
-  ...props
-}: DeleteAiFileDialogProps) {
+  open,
+  setOpen,
+}: DeleteAIFileDialogProps) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteAiFileAction.bind(null, aiFile.chatbotId, aiFile.id),
+    deleteAIFileAction.bind(null, aiFile.chatbotId, aiFile.id),
     {
       onSuccess: () => {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.aiFile.label"),
           }),
         )
+        setOpen(false)
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -50,7 +54,7 @@ export function DeleteAiFileDialog({
   )
 
   return (
-    <Dialog {...props}>
+    <Dialog onOpenChange={setOpen} open={open}>
       {showTrigger ? (
         <DialogTrigger asChild>
           <Button size="icon" variant="ghost">
@@ -60,24 +64,22 @@ export function DeleteAiFileDialog({
         </DialogTrigger>
       ) : null}
 
-      <DialogContent
-        className={"max-h-screen overflow-y-scroll lg:max-w-screen-lg"}
-      >
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.deleteConfirmation", {
+            {t("messages.deleteFeature", {
               feature: t("fields.aiFile.label"),
             })}
           </DialogTitle>
           <DialogDescription>
-            {t("dialog.deleteConfirmation", {
+            {t("messages.deleteConfirmation", {
               feature: t("fields.aiFile.label"),
             })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant="outline">{t("actions.cancel")}</Button>
+            <Button variant="ghost">{t("actions.cancel")}</Button>
           </DialogClose>
           <Button
             aria-label="Delete AI file"

@@ -1,6 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import { SenderType } from "@aha.chat/database/types"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import type { ModelMessage } from "ai"
 import { logger } from "../../../lib/logger"
 import { ROLES } from "./constants"
 import {
@@ -9,7 +10,6 @@ import {
   replyByOpenAI,
 } from "./replies"
 import { getSelectedTools } from "./tools"
-import type { AIMessage } from "./types"
 
 export const listAllEnabledAutomatedResponses = async ({
   chatbotId,
@@ -54,16 +54,16 @@ export async function triggerAutomatedResponse({
     orderBy: { createdAt: "desc" },
     take: 100,
   })
-  const lastAIMessages: AIMessage[] = []
+  const lastAIMessages: ModelMessage[] = []
   for (const msg of last100Messages) {
     if (!msg.content) {
       continue
     }
-    if (msg.senderType === SenderType.CONTACT) {
+    if (msg.senderType === SenderType.contact) {
       lastAIMessages.push({ role: ROLES.user, content: msg.content })
     } else if (
-      msg.senderType === SenderType.USER ||
-      msg.senderType === SenderType.BOT
+      msg.senderType === SenderType.user ||
+      msg.senderType === SenderType.bot
     ) {
       lastAIMessages.push({ role: ROLES.assistant, content: msg.content })
     }

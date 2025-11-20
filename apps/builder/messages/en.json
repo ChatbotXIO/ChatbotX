@@ -715,7 +715,11 @@
       "placeholder": "Sort by..."
     },
     "status": {
-      "label": "Status"
+      "label": "Status",
+      "idle": "Idle",
+      "processing": "Processing",
+      "success": "Success",
+      "error": "Error"
     },
     "subtitle": {
       "label": "Subtitle",
@@ -1026,7 +1030,7 @@
     "copiedToClipboard": "Copied to clipboard",
     "createdFailed": "{feature} creation failed",
     "deleteComingSoon": "Delete functionality coming soon",
-    "deletedSuccessfully": "{feature} deleted successfully",
+    "deletedSuccess": "{feature} deleted successfully",
     "deleteFileComingSoon": "Delete file functionality coming soon",
     "disabledSuccessfully": "{feature} disabled successfully",
     "disconnectedSuccessfully": "{feature} disconnected successfully",

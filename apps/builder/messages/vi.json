@@ -1066,7 +1066,7 @@
     "createdSuccess": "{feature} đã được tạo thành công",
     "createFeature": "Tạo {feature}",
     "deleteComingSoon": "Chức năng xóa sẽ sớm có",
-    "deletedSuccessfully": "{feature} đã được xóa thành công",
+    "deletedSuccess": "{feature} đã được xóa thành công",
     "deleteFileComingSoon": "Chức năng xóa tệp sẽ sớm có",
     "disabledSuccessfully": "Đã tắt {feature} thành công",
     "disconnectedSuccessfully": "Đã ngắt kết nối {feature} thành công",

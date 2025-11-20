@@ -29,7 +29,7 @@ import { use, useCallback, useMemo, useState } from "react"
 import { env } from "@/env"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
-import { DeleteAiFileDialog } from "./delete-ai-file-dialog"
+import { DeleteAIFileDialog } from "./delete-ai-file-dialog"
 import type { getAIFiles } from "./queries"
 import type { AIFileWithProcessing } from "./schemas"
 
@@ -92,10 +92,10 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DeleteAiFileDialog
+      <DeleteAIFileDialog
         aiFile={aiFile}
-        onOpenChange={setOpen}
         open={open}
+        setOpen={setOpen}
         showTrigger={false}
       />
     </>

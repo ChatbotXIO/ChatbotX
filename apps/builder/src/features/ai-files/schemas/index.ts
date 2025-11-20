@@ -18,10 +18,10 @@ export const getAIFilesRequest = z.object({
 })
 export type GetAIFilesRequest = z.infer<typeof getAIFilesRequest>
 
-export const createAiFileRequest = z.object({
+export const createAIFileRequest = z.object({
   path: z.string(),
   name: z.string(),
   mimeType: z.string(),
   size: z.number(),
 })
-export type CreateAiFileRequest = z.infer<typeof createAiFileRequest>
+export type CreateAIFileRequest = z.infer<typeof createAIFileRequest>

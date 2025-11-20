@@ -603,6 +603,7 @@ model AIEmbedding {
 
 enum AIEmbeddingStatus {
   pending
+  processing
   success
   error
 }

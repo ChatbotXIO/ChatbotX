@@ -89,7 +89,7 @@ export function DirectUploadOrInsertLink({
           <DirectUploadButton
             accept={fileConfigs.mimeType}
             className="hidden"
-            maxSize={5_000_000} // 5MB
+            maxSize={10_485_760} // 10MB
             multiple={false}
             onUploadError={(error, file) => {
               toast.error(`Failed to upload ${file.name}`, {
