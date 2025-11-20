@@ -716,7 +716,7 @@
     },
     "status": {
       "label": "Status",
-      "idle": "Idle",
+      "pending": "Pending",
       "processing": "Processing",
       "success": "Success",
       "error": "Error"

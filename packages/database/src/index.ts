@@ -82,6 +82,14 @@ export const prisma =
           },
         },
       },
+      aIFile: {
+        url: {
+          needs: { path: true },
+          compute(aIFile) {
+            return new URL(aIFile.path, env.NEXT_PUBLIC_ASSET_URL)
+          },
+        },
+      },
     },
   })
 

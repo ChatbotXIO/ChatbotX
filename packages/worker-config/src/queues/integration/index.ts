@@ -49,7 +49,7 @@ export type IntegrationJobData =
   | IntegrationJobTriggerAutomatedResponse
 
 export const integrationQueue = new Queue<IntegrationJobData>(
-  QueueName.INTEGRATION,
+  QueueName.integration,
   {
     connection: getRedisConnection(),
     defaultJobOptions,

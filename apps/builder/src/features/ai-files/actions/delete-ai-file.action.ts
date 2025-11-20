@@ -17,20 +17,17 @@ export const deleteAIFileAction = chatbotActionClient
     })
 
     try {
-      const key = aiFile.path
-      await uploader.deleteObject(key)
+      await prisma.$transaction(async (tx) => {
+        await uploader.deleteObject(aiFile.path)
+        await tx.aIEmbedding.deleteMany({ where: { aiFileId, chatbotId } })
+        await tx.aIFile.delete({ where: { id: aiFileId, chatbotId } })
+      })
+
+      revalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
     } catch (error) {
-      logger.warn("[ai-files] storage deletion failed", {
+      logger.warn("deleteAIFileAction failed", {
         error,
         aiFileId: aiFile.id,
-        path: aiFile.path,
       })
     }
-
-    await prisma.$transaction([
-      prisma.aIEmbedding.deleteMany({ where: { aiFileId, chatbotId } }),
-      prisma.aIFile.delete({ where: { id: aiFileId, chatbotId } }),
-    ])
-
-    revalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
   })

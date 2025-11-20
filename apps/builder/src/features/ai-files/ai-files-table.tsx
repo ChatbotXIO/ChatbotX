@@ -23,10 +23,10 @@ import {
   TextIcon,
   Trash2Icon,
 } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
 import { use, useCallback, useMemo, useState } from "react"
-import { env } from "@/env"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
 import { DeleteAIFileDialog } from "./delete-ai-file-dialog"
@@ -40,13 +40,6 @@ type AIFilesTableProps = {
 function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const openInNewTab = useCallback((url: string) => {
-    window.open(url, "_blank", "noopener")
-  }, [])
-  const getPublicUrl = useCallback(
-    (path: string) => new URL(path, env.NEXT_PUBLIC_ASSET_URL).toString(),
-    [],
-  )
 
   return (
     <>
@@ -58,29 +51,17 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => {
-              const url = getPublicUrl(aiFile.path)
-              openInNewTab(url)
-            }}
-          >
-            <EyeIcon className="mr-2 h-4 w-4" />
-            {t("actions.view")}
+          <DropdownMenuItem asChild>
+            <Link href={aiFile.url} rel="noopener" target="_blank">
+              <EyeIcon className="mr-2 h-4 w-4" />
+              {t("actions.view")}
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              const url = getPublicUrl(aiFile.path)
-              const a = document.createElement("a")
-              a.href = url
-              a.rel = "noopener"
-              a.download = aiFile.name
-              document.body.appendChild(a)
-              a.click()
-              a.remove()
-            }}
-          >
-            <DownloadIcon className="mr-2 h-4 w-4" />
-            {t("actions.download")}
+          <DropdownMenuItem asChild>
+            <Link href={aiFile.url} rel="noopener" target="_blank">
+              <DownloadIcon className="mr-2 h-4 w-4" />
+              {t("actions.download")}
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive"
@@ -106,8 +87,6 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
   const [{ data }] = use(promises)
 
   const t = useTranslations()
-  // const [rowAction, setRowAction] =
-  //   useState<DataTableRowAction<AIFileModel> | null>(null)
 
   const getFileIcon = useCallback((fileType: string) => {
     const extension = fileType.split("/").at(-1)

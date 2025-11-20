@@ -3,7 +3,6 @@ import { SenderType } from "@aha.chat/database/types"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import type { ModelMessage } from "ai"
 import { logger } from "../../../lib/logger"
-import { ROLES } from "./constants"
 import {
   replyByAutomatedResponse,
   replyByGemini,
@@ -60,12 +59,12 @@ export async function triggerAutomatedResponse({
       continue
     }
     if (msg.senderType === SenderType.contact) {
-      lastAIMessages.push({ role: ROLES.user, content: msg.content })
+      lastAIMessages.push({ role: "user", content: msg.content })
     } else if (
       msg.senderType === SenderType.user ||
       msg.senderType === SenderType.bot
     ) {
-      lastAIMessages.push({ role: ROLES.assistant, content: msg.content })
+      lastAIMessages.push({ role: "assistant", content: msg.content })
     }
   }
   lastAIMessages.reverse()

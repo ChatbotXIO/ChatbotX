@@ -1,5 +1,5 @@
 export const QueueName = {
-  INTEGRATION: "INTEGRATION",
-  CHAT: "CHAT",
+  integration: "integration",
+  chat: "chat",
   aiAgent: "aiAgent",
 } as const

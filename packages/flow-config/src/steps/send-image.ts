@@ -1,4 +1,4 @@
-import { FileType, UploadMode } from "@aha.chat/database/types"
+import { UploadMode } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { buttonStepSchema } from "./button"
@@ -10,17 +10,6 @@ export const sendImageStepSchema = z.object({
   mode: z.enum(UploadMode),
   url: z.url(),
   buttons: z.array(buttonStepSchema),
-  attachment: z
-    .object({
-      originPath: z.string(),
-      name: z.string().nullable(),
-      mimeType: z.string(),
-      size: z.number().int().nonnegative(),
-      width: z.number().int().positive().optional(),
-      height: z.number().int().positive().optional(),
-      fileType: z.nativeEnum(FileType),
-    })
-    .optional(),
 })
 
 export type SendImageStepSchema = z.infer<typeof sendImageStepSchema>

@@ -1,5 +1,5 @@
 import { DirectUploadButton } from "@aha.chat/ui/components/uploader/direct-upload-button"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -7,7 +7,9 @@ import { createAIFileAction } from "./actions/create-ai-file.action"
 
 export function AIFilesCreate() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
+
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
     createAIFileAction.bind(null, chatbotId),
@@ -18,6 +20,7 @@ export function AIFilesCreate() {
             feature: t("fields.aiFile.label"),
           }),
         )
+        router.refresh()
       },
       onError: (_error) => {
         toast.error(

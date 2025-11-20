@@ -1,5 +1,5 @@
 import { prisma } from ".."
-import { type Chatbot, ChatbotMemberRole } from "../generated/prisma/client"
+import { ChatbotMemberRole } from "../generated/prisma/client"
 
 async function main() {
   let organization = await prisma.organization.findFirst()
@@ -31,9 +31,9 @@ async function main() {
     data: {
       accountId: user.id,
       providerId: "credential",
-      // NOTES: password is "Ahachat@1234" hashed with scrypt
+      // NOTES: password is "Demo@1234" hashed with scrypt
       password:
-        "feffc83af6cb10b0475fdb825b68ece4:f109f93cf72748525e47b9ecd424d63f62f8cf27a3fff969ff1e1d26bd5636f5eb989775f6a2a8f68e3717f7a7cd42ed67dcf5cfb8c262ddc9a5c6045bc5c128",
+        "641c52171319d3ae13b238da41318493:90d5458996d391675ebdea8d4902afb94acdbad160f555b0bc7fe68d70ace03dc3cf903b8a21fa8433e9a016d52741d2fb2d444ed20b329dd7effbf8d5341d87",
       userId: user.id,
     },
   })
@@ -50,44 +50,31 @@ async function main() {
   // create chatbot
   const chatbotsCount = await prisma.chatbot.count()
   if (chatbotsCount === 0) {
-    const chatbots = await prisma.chatbot.createManyAndReturn({
-      data: [
-        {
-          organizationId: organization.id,
-          name: "FREE",
-          accountTimezone: "Asia/Saigon",
-          chatbotUsage: {
-            create: {
-              maxContacts: 999_999,
-            },
+    await prisma.chatbot.create({
+      data: {
+        organizationId: organization.id,
+        name: "DEMO",
+        accountTimezone: "Asia/Saigon",
+        chatbotUsage: {
+          create: {
+            maxContacts: 999_999,
           },
         },
-        {
-          organizationId: organization.id,
-          name: "PRO",
-          accountTimezone: "Asia/Saigon",
-          chatbotUsage: {
-            create: {
-              maxContacts: 999_999,
-            },
+        chatbotMembers: {
+          create: {
+            userId: user.id,
+            role: ChatbotMemberRole.owner,
+            isAdmin: true,
+            enableAnalytics: true,
+            enableFlows: true,
+            enableContacts: true,
+            enableOnlyAssignedContacts: true,
+            enableEmailAndPhone: true,
+            enableBroadcast: true,
+            enableEcommerce: true,
           },
         },
-      ] as unknown as Chatbot[],
-    })
-    await prisma.chatbotMember.createMany({
-      data: chatbots.map((chatbot) => ({
-        chatbotId: chatbot.id,
-        userId: user.id,
-        role: ChatbotMemberRole.owner,
-        isAdmin: true,
-        enableAnalytics: true,
-        enableFlows: true,
-        enableContacts: true,
-        enableOnlyAssignedContacts: true,
-        enableEmailAndPhone: true,
-        enableBroadcast: true,
-        enableEcommerce: true,
-      })),
+      },
     })
   }
 

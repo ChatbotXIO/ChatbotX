@@ -1,12 +1,9 @@
 import { AIEmbeddingStatus, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
+import { env } from "@/env"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { calcCacheTags } from "@/lib/cache-helper"
-import type {
-  AIFileCollection,
-  GetAIFilesRequest,
-  ProcessingStatus,
-} from "../schemas"
+import type { AIFileCollection, GetAIFilesRequest } from "../schemas"
 
 export async function getAIFiles(
   input: GetAIFilesRequest,
@@ -33,23 +30,21 @@ export async function getAIFiles(
         const embeddings = file.aiEmbeddings
         const hasEmbeddings = embeddings.length > 0
 
-        let processingStatus: ProcessingStatus = "idle"
+        let processingStatus: AIEmbeddingStatus = AIEmbeddingStatus.pending
         if (hasEmbeddings) {
           const statusSet = new Set(embeddings.map((e) => e.status))
           if (statusSet.has(AIEmbeddingStatus.error)) {
-            processingStatus = "error"
+            processingStatus = AIEmbeddingStatus.error
           } else if (statusSet.has(AIEmbeddingStatus.pending)) {
-            processingStatus = "processing"
+            processingStatus = AIEmbeddingStatus.processing
           } else {
-            processingStatus = "success"
+            processingStatus = AIEmbeddingStatus.success
           }
         }
 
         return {
           ...file,
-          isProcessed:
-            hasEmbeddings &&
-            embeddings.every((e) => e.status === AIEmbeddingStatus.success),
+          url: new URL(file.path, env.NEXT_PUBLIC_ASSET_URL).toString(),
           chunksCount: embeddings.length,
           processingStatus,
         }

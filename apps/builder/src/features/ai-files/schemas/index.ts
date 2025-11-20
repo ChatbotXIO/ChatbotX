@@ -1,17 +1,15 @@
-import type { AIFileModel } from "@aha.chat/database/types"
+import type { AIEmbeddingStatus, AIFileModel } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export type AIFileWithProcessing = AIFileModel & {
-  isProcessed: boolean
+  url: string
   chunksCount: number
-  processingStatus: ProcessingStatus
+  processingStatus: AIEmbeddingStatus
 }
 
 export type AIFileCollection = {
   data: AIFileWithProcessing[]
 }
-
-export type ProcessingStatus = "idle" | "processing" | "success" | "error"
 
 export const getAIFilesRequest = z.object({
   chatbotId: z.string(),

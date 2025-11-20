@@ -16,6 +16,7 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -30,6 +31,8 @@ export function CreateFlowDialog({
   folderId: string | null
 }) {
   const t = useTranslations()
+  const router = useRouter()
+
   const [open, setOpen] = useState(false)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -47,6 +50,7 @@ export function CreateFlowDialog({
 
             setOpen(false)
             resetFormAndAction()
+            router.refresh()
           },
           onError: ({ error }) => {
             if (error.serverError) {

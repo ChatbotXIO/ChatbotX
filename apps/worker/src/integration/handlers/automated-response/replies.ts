@@ -1,14 +1,23 @@
 import { prisma } from "@aha.chat/database"
-import type { AIAgentProvider } from "@aha.chat/database/types"
+import {
+  type AIAgentProvider,
+  type AutomatedResponseReply,
+  ReplyType,
+} from "@aha.chat/database/types"
 import { StepType } from "@aha.chat/flow-config"
 import type { SecretTextAuthValue } from "@aha.chat/sdk"
-import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
+import {
+  ChatJobAction,
+  chatQueue,
+  IntegrationJobAction,
+  integrationQueue,
+} from "@aha.chat/worker-config"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
-import { AI_PROVIDERS, ROLES, TEXT } from "./constants"
+import { AI_PROVIDERS, TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
 
@@ -104,11 +113,9 @@ export async function replyByAutomatedResponse({
       (message.content ?? "").includes(v),
     )
     if (matched) {
-      type MinimalReply = { type: number; message?: string }
-      for (const r of automatedResponse.replies as unknown[]) {
-        const reply = r as MinimalReply
+      for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
-          case 0: // ReplyType.MESSAGE
+          case ReplyType.Message:
             await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
               type: ChatJobAction.SEND_FLOW_STEP,
               data: {
@@ -124,9 +131,21 @@ export async function replyByAutomatedResponse({
             })
             replied = true
             break
-          case 1: // ReplyType.FLOW
-            // handled in original file via integrationQueue; keep behavior there
+          case ReplyType.Flow: {
+            const flow = await prisma.flow.findFirst({
+              where: { id: reply.flowId },
+            })
+            if (flow?.currentVersionId) {
+              await integrationQueue.add(IntegrationJobAction.SEND_FLOW, {
+                type: IntegrationJobAction.SEND_FLOW,
+                data: {
+                  conversationId: message.conversationId,
+                  flowVersionId: flow.currentVersionId,
+                },
+              })
+            }
             break
+          }
           default:
             break
         }
@@ -255,11 +274,11 @@ async function runAIReply(
       const followUpMessages: ModelMessage[] = [
         ...lastAIMessages,
         {
-          role: ROLES.assistant,
+          role: "assistant",
           content: fullText || TEXT.assistantFoundPrefix,
         },
         {
-          role: ROLES.user,
+          role: "user",
           content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
         },
       ]

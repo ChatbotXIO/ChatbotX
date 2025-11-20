@@ -21,12 +21,6 @@ export const TEXT = {
   fileSearchQueryDescription: "Search keywords to find relevant information",
 } as const
 
-export const ROLES = {
-  user: "user" as const,
-  assistant: "assistant" as const,
-  system: "system" as const,
-}
-
 export const TOOL_PREFIX = {
   file: "file:",
   fn: "fn:",

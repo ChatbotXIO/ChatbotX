@@ -41,7 +41,7 @@ export type ChatJobSendFlowStep = {
 
 export type ChatJobData = ChatJobSendMessage | ChatJobSendFlowStep
 
-export const chatQueue = new Queue<ChatJobData>(QueueName.CHAT, {
+export const chatQueue = new Queue<ChatJobData>(QueueName.chat, {
   connection: getRedisConnection(),
   defaultJobOptions,
 })
