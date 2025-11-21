@@ -5,25 +5,18 @@ include:
 
 services:
   builder:
-    # build:
-    #   context: .
-    #   dockerfile: apps/builder/docker/Dockerfile
-    image: realcodesiman/ahachat-builder:latest
+    build:
+      context: .
+      dockerfile: apps/builder/docker/Dockerfile
+    # image: realcodesiman/ahachat-builder:latest
     platform: linux/amd64
     restart: unless-stopped
     env_file:
-      - ./.env.prod
+      - ./.env
     environment:
       - HOSTNAME=0.0.0.0
     ports:
       - "3123:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
@@ -34,18 +27,14 @@ services:
 
   # BullMQ Worker
   worker:
-    image: realcodesiman/ahachat-worker:latest
+    build:
+      context: .
+      dockerfile: apps/builder/docker/Dockerfile
+    # image: realcodesiman/ahachat-worker:latest
     platform: linux/amd64
     restart: unless-stopped
     env_file:
       - ./.env.prod
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

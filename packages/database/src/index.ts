@@ -99,4 +99,3 @@ if (env.NODE_ENV !== "production") {
 
 export { Prisma } from "./generated/prisma/client"
 export * from "./generated/prisma/enums"
-export * from "./generated/prisma/sql"

@@ -19,7 +19,7 @@
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
-    "db:client": "dotenv -e ../../.env -- prisma generate --sql",
+    "db:client": "dotenv -e ../../.env -- prisma generate",
     "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
     "db:setup": "pnpm migrate && pnpm db:client && pnpm db:seed",
     "db:rollback": "dotenv -e ../../.env -- ./scripts/db-rollback.sh",
