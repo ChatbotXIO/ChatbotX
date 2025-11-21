@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import AIFilesTable from "@/features/ai-files/ai-files-table"
 import { getAIFiles } from "@/features/ai-files/queries"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
@@ -20,7 +21,9 @@ export default async function AIFilesPage({ params }: AIFilesPageProps) {
   return (
     <div className="space-y-6">
       <AIHubBreadcrumb />
-      <AIFilesTable promises={promises} />
+      <Suspense>
+        <AIFilesTable promises={promises} />
+      </Suspense>
     </div>
   )
 }

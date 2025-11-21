@@ -52,11 +52,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    services:
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Checkout repository
@@ -76,6 +71,11 @@ jobs:
           registry: ${{ vars.DOCKER_REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.7.0 # Use the latest version
+        with:
+          redis-version: 7
 
       - name: Build and push builder image
         uses: docker/build-push-action@v6
