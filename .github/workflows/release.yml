@@ -52,6 +52,11 @@ jobs:
     permissions:
       contents: read
       packages: write
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Checkout repository
