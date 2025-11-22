@@ -4,6 +4,7 @@ import { type Prisma, prisma } from "@aha.chat/database"
 import {
   ChatbotMemberRole,
   IntegrationType,
+  MAX_32_BIT_SIGNED_INTEGER,
   type OrganizationSettings,
   organizationSettingsSchema,
   type UserModel,
@@ -131,7 +132,7 @@ export const connectWhatsappAction = authActionClient
             await tx.chatbotUsage.create({
               data: {
                 chatbotId: chatbot.id,
-                maxContacts: Number.MAX_SAFE_INTEGER,
+                maxContacts: MAX_32_BIT_SIGNED_INTEGER,
               },
             })
             chatbotId = chatbot.id

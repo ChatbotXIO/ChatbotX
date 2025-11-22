@@ -7,6 +7,18 @@ export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
 
+/**
+ * Maximum value for a 32-bit signed integer (2^31 - 1) = 2,147,483,647
+ *
+ * This is the limit for PostgreSQL INTEGER type (32-bit signed integer).
+ * Unlike Number.MAX_SAFE_INTEGER (2^53 - 1) which is JavaScript's limit,
+ * this constant represents the database constraint.
+ *
+ * Note: JavaScript/TypeScript doesn't have this constant built-in because
+ * JS numbers are 64-bit floating point, not 32-bit integers.
+ */
+export const MAX_32_BIT_SIGNED_INTEGER = 2_147_483_647
+
 export const FieldOperationType = {
   set: "O01",
   append: "O02",
@@ -102,6 +114,15 @@ export const organizationSettingsSchema = z.object({
     .optional(),
 })
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
+
+export const AI_PROVIDERS = {
+  OPENAI: "openai",
+  GEMINI: "gemini",
+  CLAUDE: "claude",
+  DEEPSEEK: "deepseek",
+} as const
+
+export type AIProvider = (typeof AI_PROVIDERS)[keyof typeof AI_PROVIDERS]
 
 export type AIAgentProvider = {
   provider: "openAI" | "gemini"

@@ -6,6 +6,7 @@ import {
   type ConversationModel,
   InboxType,
   IntegrationType,
+  MAX_32_BIT_SIGNED_INTEGER,
   MessageType,
   SenderType,
 } from "@aha.chat/database/types"
@@ -50,9 +51,19 @@ export const createWebchatMessageAction = actionClient
         throw new BaseException("Inbox not found")
       }
 
-      const chatbotUsage = await prisma.chatbotUsage.findFirstOrThrow({
+      // Get or create chatbotUsage
+      let chatbotUsage = await prisma.chatbotUsage.findFirst({
         where: { chatbotId: parsedInput.chatbotId },
       })
+      if (!chatbotUsage) {
+        chatbotUsage = await prisma.chatbotUsage.create({
+          data: {
+            chatbotId: parsedInput.chatbotId,
+            maxContacts: MAX_32_BIT_SIGNED_INTEGER,
+            contactsCount: 0,
+          },
+        })
+      }
       if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
         throw new BaseException("Max contacts reached")
       }

@@ -1,8 +1,0 @@
-import type { FlowStepProps } from "../step-handler"
-import { handleAIGenerateText } from "./index"
-
-export async function handleGeminiGenerateText(
-  props: FlowStepProps<Record<string, unknown>>,
-) {
-  return await handleAIGenerateText(props)
-}
