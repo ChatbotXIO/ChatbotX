@@ -8,7 +8,7 @@ import { cn } from "@aha.chat/ui/lib/utils"
 import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import type { ChatbotResource } from "../schemas"
+import type { ChatbotResource } from "../schemas/resource"
 
 type ChatbotListProps = {
   chatbots: ChatbotResource[]

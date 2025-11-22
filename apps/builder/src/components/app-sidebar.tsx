@@ -21,7 +21,7 @@ import { type ComponentProps, use } from "react"
 import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import type { ChatbotResource } from "@/features/chatbots/schemas"
+import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { authClient } from "@/lib/auth/auth-client"
 
 export function AppSidebar({

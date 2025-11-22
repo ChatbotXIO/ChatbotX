@@ -3,6 +3,11 @@
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@aha.chat/ui/components/ui/avatar"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -14,9 +19,14 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { DeleteChatbotMemberDialog } from "./components/delete-chatbot-member"
+import { InviteChatbotMemberDialog } from "./components/invite-chatbot-member"
+import { UpdateChatbotMemberDialog } from "./components/update-chatbot-member"
+import { isEnableAtLeastOneNotification } from "./helpers"
 import type { getAgents } from "./queries"
-import type { ChatbotMemberResource } from "./schemas"
+import type { ChatbotMemberResource } from "./schemas/resource"
 
 type ChatbotMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getAgents>>]>
@@ -24,38 +34,44 @@ type ChatbotMembersTableProps = {
 
 export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
   const [{ data, pageCount }] = use(promises)
+  const t = useTranslations()
 
-  const [_rowAction, setRowAction] =
+  const [rowAction, setRowAction] =
     useState<DataTableRowAction<ChatbotMemberResource> | null>(null)
 
-  const columns = useMemo<ColumnDef<ChatbotMemberResource>[]>(() => {
-    return [
+  const columns = useMemo<ColumnDef<ChatbotMemberResource>[]>(
+    () => [
       {
         id: "name",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
-        // <Avatar className="justify-items-center w-5 h-5">
-        //         <AvatarImage
-        //           src={row.original.user.image ?? undefined}
-        //           alt="avatar"
-        //         />
-        //         <AvatarFallback>
-        //           {(row.original.user.name ?? "").charAt(0).toUpperCase()}
-        //         </AvatarFallback>
-        //       </Avatar>
-        cell: ({ row }) => <div>{row.original.user?.name}</div>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Avatar className="size-7 justify-items-center">
+              <AvatarImage
+                alt="avatar"
+                src={row.original.user?.image ?? undefined}
+              />
+              <AvatarFallback>
+                {(row.original.user?.name || "").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+
+            <span>{row.original.user?.name}</span>
+          </div>
+        ),
       },
       {
         id: "enableContacts",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Contacts" />
         ),
-        cell: ({ cell }) =>
-          cell.getValue<ChatbotMemberResource["enableContacts"]>() ? (
-            <CheckCircle2Icon />
+        cell: ({ row }) =>
+          row.original.permissions.contacts ? (
+            <CheckCircle2Icon className="size-5 text-green-500" />
           ) : (
-            <XCircleIcon />
+            <XCircleIcon className="size-5" />
           ),
       },
       {
@@ -63,11 +79,11 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Analytics" />
         ),
-        cell: ({ cell }) =>
-          cell.getValue<ChatbotMemberResource["enableAnalytics"]>() ? (
-            <CheckCircle2Icon />
+        cell: ({ row }) =>
+          row.original.permissions.analytics ? (
+            <CheckCircle2Icon className="size-5 text-green-500" />
           ) : (
-            <XCircleIcon />
+            <XCircleIcon className="size-5" />
           ),
       },
       {
@@ -75,35 +91,36 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Flows" />
         ),
-        cell: ({ cell }) =>
-          cell.getValue<ChatbotMemberResource["enableFlows"]>() ? (
-            <CheckCircle2Icon />
+        cell: ({ row }) =>
+          row.original.permissions.flows ? (
+            <CheckCircle2Icon className="size-5 text-green-500" />
           ) : (
-            <XCircleIcon />
+            <XCircleIcon className="size-5" />
           ),
       },
       {
-        id: "settings",
+        id: "flows",
+        className: "justify-center",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Flows" />
         ),
-        cell: ({ cell }) =>
-          cell.getValue<ChatbotMemberResource["isAdmin"]>() ? (
-            <CheckCircle2Icon />
+        cell: ({ row }) =>
+          row.original.permissions.flows ? (
+            <CheckCircle2Icon className="size-5 text-green-500" />
           ) : (
-            <XCircleIcon />
+            <XCircleIcon className="size-5" />
           ),
       },
       {
-        id: "notifications",
+        id: "notificationTypes",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Notifications" />
         ),
-        cell: ({ cell }) =>
-          cell.getValue<ChatbotMemberResource["enableEmailAndPhone"]>() ? (
-            <CheckCircle2Icon />
+        cell: ({ row }) =>
+          isEnableAtLeastOneNotification(row.original.notificationTypes) ? (
+            <CheckCircle2Icon className="size-5 text-green-500" />
           ) : (
-            <XCircleIcon />
+            <XCircleIcon className="size-5" />
           ),
       },
       {
@@ -120,20 +137,21 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}
               >
-                Update
+                {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
                 variant="destructive"
               >
-                Delete
+                {t("actions.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
       },
-    ]
-  }, [])
+    ],
+    [t],
+  )
 
   const { table } = useDataTable({
     data,
@@ -149,8 +167,26 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
   })
 
   return (
-    <DataTable table={table}>
-      <DataTableToolbar table={table} />
-    </DataTable>
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <InviteChatbotMemberDialog />
+      </div>
+
+      <DataTable table={table}>
+        <DataTableToolbar table={table} />
+      </DataTable>
+
+      <DeleteChatbotMemberDialog
+        chatbotMember={rowAction?.row.original || undefined}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "delete"}
+      />
+
+      <UpdateChatbotMemberDialog
+        chatbotMember={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
+      />
+    </div>
   )
 }

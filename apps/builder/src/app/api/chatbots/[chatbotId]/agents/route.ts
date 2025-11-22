@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getAgents } from "@/features/chatbot-members/queries"
-import { listChatbotMembersRequest } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
+import { listChatbotMembersRequest } from "@/features/chatbot-members/schemas/get-chatbot-members.request"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 

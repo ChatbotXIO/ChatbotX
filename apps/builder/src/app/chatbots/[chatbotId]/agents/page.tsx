@@ -2,7 +2,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ChatbotMembersTable } from "@/features/chatbot-members/chatbot-members-table"
 import { getAgents } from "@/features/chatbot-members/queries"
-import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members-schema"
+import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members.request"
 
 export default async function AgentsPage(props: {
   params: Promise<{ chatbotId: string }>

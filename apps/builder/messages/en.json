@@ -17,6 +17,7 @@
     }
   },
   "actions": {
+    "copy": "Copy",
     "actions": "Actions",
     "add": "Add",
     "addContactNotes": "Add Contact Notes",
@@ -133,7 +134,9 @@
     "signOut": "Sign Out",
     "backToSignIn": "Back to sign in",
     "connectFeature": "Connect {feature}",
-    "scanQRCode": "Scan me with your camera"
+    "scanQRCode": "Scan me with your camera",
+    "inviteFeature": "Invite {feature}",
+    "joinTheTeam": "Join the team"
   },
   "admins": {
     "title": "Admins"
@@ -280,6 +283,19 @@
     }
   },
   "fields": {
+    "notificationType": {
+      "label": "Notification Type",
+      "notifyAdmin": "Notify Admin",
+      "newMessageToHuman": "New Message to Human",
+      "newOrder": "New Order"
+    },
+    "notificationChannel": {
+      "label": "Notification Channel",
+      "messenger": "Messenger",
+      "email": "Email",
+      "telegram": "Telegram",
+      "browser": "Browser"
+    },
     "accessToken": {
       "label": "Access Token"
     },
@@ -835,6 +851,20 @@
       "date": "Date",
       "datetime": "Datetime",
       "location": "Location"
+    },
+    "chatbotMember": {
+      "label": "Chatbot Member"
+    },
+    "permissions": {
+      "label": "Permissions",
+      "superAdmin": "Super Admin",
+      "analytics": "Analytics",
+      "flows": "Flows",
+      "contacts": "Contacts",
+      "onlyAssignedContacts": "Only Assigned Contacts",
+      "emailAndPhone": "Email and Phone",
+      "broadcast": "Broadcast",
+      "ecommerce": "Ecommerce"
     }
   },
   "flows": {
@@ -1063,7 +1093,8 @@
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",
     "signOutConfirmation": "Are you sure you want to sign out?",
-    "unableToConnectFeature": "Unable to connect {feature}. Please send logs to developer team."
+    "unableToConnectFeature": "Unable to connect {feature}. Please send logs to developer team.",
+    "copyInvitationUrlSuccess": "Copy the link below and send to the person that you want to add as admin."
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1248,5 +1279,12 @@
   "zalo": {
     "description": "This integration lets you create Zalo bots.",
     "title": "Zalo"
+  },
+  "invitation": {
+    "title": "Invitation",
+    "chatbotInvitationDescription1": "Join {chatbotName} on {organizationName}",
+    "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName} on {organizationName}.",
+    "organizationInvitationDescription1": "Join {organizationName}",
+    "organizationInvitationDescription2": "{userName} has invited you to join {organizationName}."
   }
 }

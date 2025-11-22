@@ -30,7 +30,7 @@ model User {
   contactNotes             ContactNote[]
   assignedConversations    Conversation[]
   organizationMembers      OrganizationMember[]
-  invitations              OrganizationInvitation[]
+  invitations              Invitation[]
 }
 
 model Account {
@@ -88,9 +88,9 @@ model Organization {
   settings           Json    @default("{}")
   defaultMaxContacts Int     @default(999999999)
 
-  organizationMembers     OrganizationMember[]
-  organizationInvitations OrganizationInvitation[]
-  chatbots                Chatbot[]
+  organizationMembers OrganizationMember[]
+  chatbots            Chatbot[]
+  invitations         Invitation[]
 
   @@unique([slug])
   @@index([domain])
@@ -108,20 +108,6 @@ model OrganizationMember {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model OrganizationInvitation {
-  id        String   @id @default(cuid(2))
-  email     String
-  role      String?
-  status    String
-  expiresAt DateTime
-
-  inviterId String
-  user      User   @relation(fields: [inviterId], references: [id], onDelete: Cascade)
-
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 model Chatbot {
@@ -178,6 +164,8 @@ model Chatbot {
   integrationGemini        IntegrationGemini?
   aiEmbeddings             AIEmbedding[]
   chatbotUsage             ChatbotUsage?
+
+  invitations Invitation[]
 }
 
 model ChatbotMember {
@@ -185,15 +173,10 @@ model ChatbotMember {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  role                       ChatbotMemberRole
-  isAdmin                    Boolean
-  enableAnalytics            Boolean
-  enableFlows                Boolean
-  enableContacts             Boolean
-  enableOnlyAssignedContacts Boolean
-  enableEmailAndPhone        Boolean
-  enableBroadcast            Boolean
-  enableEcommerce            Boolean
+  role                 ChatbotMemberRole
+  permissions          Json              @default("{}")
+  notificationTypes    Json              @default("{}")
+  notificationChannels Json              @default("{}")
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1015,6 +998,25 @@ model ChatbotUsage {
 
   chatbotId String  @unique
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  code        String   @unique
+  permissions Json
+  expiresAt   DateTime
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  chatbotId String?
+  chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  invitedBy     String
+  invitedByUser User   @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
 }
 
 enum LogType {
