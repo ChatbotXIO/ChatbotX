@@ -50,7 +50,7 @@ export function InviteChatbotMemberDialog() {
         <Button>
           <PlusIcon className="size-4" />
           {t("actions.inviteFeature", {
-            feature: t("fields.chatbotMember.label"),
+            feature: t("fields.member.label"),
           })}
         </Button>
       </DialogTrigger>
@@ -58,7 +58,7 @@ export function InviteChatbotMemberDialog() {
         <DialogHeader>
           <DialogTitle>
             {t("actions.inviteFeature", {
-              feature: t("fields.chatbotMember.label"),
+              feature: t("fields.member.label"),
             })}
           </DialogTitle>
           <DialogDescription />

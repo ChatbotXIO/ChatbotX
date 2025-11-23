@@ -1,9 +1,3 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@aha.chat/ui/components/ui/card"
 import { Suspense } from "react"
 import { ListInboxTeams } from "@/features/inbox-teams/list-inbox-teams"
 import { getInboxTeams } from "@/features/inbox-teams/queries"
@@ -20,15 +14,8 @@ export default async function InboxTeamsPage(props: {
   ])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Inbox Teams</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Suspense>
-          <ListInboxTeams chatbotId={params.chatbotId} promises={promises} />
-        </Suspense>
-      </CardContent>
-    </Card>
+    <Suspense>
+      <ListInboxTeams chatbotId={params.chatbotId} promises={promises} />
+    </Suspense>
   )
 }

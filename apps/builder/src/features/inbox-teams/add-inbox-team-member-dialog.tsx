@@ -72,10 +72,10 @@ export function AddInboxTeamMemberDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createFeature", {
+            {t("messages.addFeature", {
               feature: t("fields.inboxTeamMember.label"),
             })}
           </DialogTitle>

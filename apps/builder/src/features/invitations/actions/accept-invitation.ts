@@ -1,6 +1,10 @@
 "use server"
 
 import { ChatbotMemberRole, prisma } from "@aha.chat/database"
+import type {
+  ChatbotMemberNotificationChannels,
+  ChatbotMemberNotificationTypes,
+} from "@aha.chat/database/types"
 import type { InputJsonObject } from "node_modules/@aha.chat/database/src/generated/prisma/internal/prismaNamespace"
 import { z } from "zod"
 import { BaseException } from "@/lib/errors/exception"
@@ -34,13 +38,13 @@ export const acceptInvitationAction = authActionClient
             notifyAdmin: true,
             newMessageToHuman: true,
             newOrder: true,
-          },
+          } as ChatbotMemberNotificationTypes,
           notificationChannels: {
             messenger: true,
             email: true,
             telegram: true,
             browser: true,
-          },
+          } as ChatbotMemberNotificationChannels,
         },
       })
     } else {

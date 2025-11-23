@@ -865,6 +865,9 @@
       "emailAndPhone": "Email and Phone",
       "broadcast": "Broadcast",
       "ecommerce": "Ecommerce"
+    },
+    "member": {
+      "label": "Member"
     }
   },
   "flows": {
@@ -1286,5 +1289,8 @@
     "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName} on {organizationName}.",
     "organizationInvitationDescription1": "Join {organizationName}",
     "organizationInvitationDescription2": "{userName} has invited you to join {organizationName}."
+  },
+  "inboxTeams": {
+    "title": "Inbox Teams"
   }
 }

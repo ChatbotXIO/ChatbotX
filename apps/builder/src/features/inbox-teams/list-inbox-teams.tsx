@@ -14,7 +14,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import { MoreHorizontalIcon, Trash2Icon } from "lucide-react"
+import {
+  MoreHorizontalIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useState } from "react"
 import type { getUsers } from "../users/queries"
@@ -76,11 +81,12 @@ function ListInboxTeamsDetail({
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="flex flex-col gap-2 p-3">
+                <DropdownMenuContent className="flex flex-col gap-1 p-3">
                   <DropdownMenuItem
                     className="cursor-pointer text-sm"
                     onClick={() => setRenameInboxTeam(team)}
                   >
+                    <PencilIcon />
                     {t("actions.rename")}
                   </DropdownMenuItem>
 
@@ -88,13 +94,17 @@ function ListInboxTeamsDetail({
                     className="cursor-pointer text-sm"
                     onClick={() => setAddInboxTeamMember(team)}
                   >
-                    {t("actions.addMember")}
+                    <PlusIcon />
+                    {t("actions.addFeature", {
+                      feature: t("fields.member.label"),
+                    })}
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
                     className="cursor-pointer text-destructive text-sm"
                     onClick={() => setDeleteInboxTeam(team)}
                   >
+                    <Trash2Icon />
                     {t("actions.delete")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -155,13 +165,15 @@ export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
   const [{ data: allInboxTeams }, { data: allUsers }] = use(promises)
 
   return (
-    <>
-      <CreateInboxTeamDialog chatbotId={chatbotId} users={allUsers} />
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <CreateInboxTeamDialog chatbotId={chatbotId} users={allUsers} />
+      </div>
       <ListInboxTeamsDetail
         allInboxTeams={allInboxTeams || []}
         allUsers={allUsers || []}
         chatbotId={chatbotId}
       />
-    </>
+    </div>
   )
 }
