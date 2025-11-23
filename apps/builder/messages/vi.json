@@ -135,6 +135,11 @@
     "search": "Tìm kiếm",
     "signOut": "Đăng xuất",
     "backToSignIn": "Quay lại đăng nhập",
+    "connectFeature": "Kết nối {feature}",
+    "scanQRCode": "Quét tôi bằng camera của bạn",
+    "inviteFeature": "Mời {feature}",
+    "joinTheTeam": "Tham gia nhóm",
+    "copy": "Sao chép",
     "addMember": "Thêm thành viên",
     "addVariable": "Thêm biến",
     "wait": "Chờ"
@@ -748,7 +753,11 @@
       "placeholder": "Sắp xếp theo..."
     },
     "status": {
-      "label": "Trạng thái"
+      "label": "Trạng thái",
+      "pending": "Đang chờ",
+      "processing": "Đang xử lý",
+      "success": "Thành công",
+      "error": "Lỗi"
     },
     "subtitle": {
       "label": "Phụ đề",
@@ -864,6 +873,36 @@
       "date": "Ngày",
       "datetime": "Ngày giờ",
       "location": "Vị trí"
+    },
+    "notificationType": {
+      "label": "Loại thông báo",
+      "notifyAdmin": "Thông báo quản trị viên",
+      "newMessageToHuman": "Tin nhắn mới cho người",
+      "newOrder": "Đơn hàng mới"
+    },
+    "notificationChannel": {
+      "label": "Kênh thông báo",
+      "messenger": "Messenger",
+      "email": "Email",
+      "telegram": "Telegram",
+      "browser": "Trình duyệt"
+    },
+    "chatbotMember": {
+      "label": "Thành viên chatbot"
+    },
+    "permissions": {
+      "label": "Quyền",
+      "superAdmin": "Siêu quản trị viên",
+      "analytics": "Phân tích",
+      "flows": "Luồng",
+      "contacts": "Liên hệ",
+      "onlyAssignedContacts": "Chỉ liên hệ được gán",
+      "emailAndPhone": "Email và Số điện thoại",
+      "broadcast": "Phát sóng",
+      "ecommerce": "Thương mại điện tử"
+    },
+    "member": {
+      "label": "Thành viên"
     }
   },
   "flows": {
@@ -1114,7 +1153,9 @@
     "deleteFeature": "Xóa {feature}",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
     "addFeature": "Thêm {feature}",
-    "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?"
+    "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
+    "unableToConnectFeature": "Không thể kết nối {feature}. Vui lòng gửi nhật ký cho nhóm phát triển.",
+    "copyInvitationUrlSuccess": "Sao chép liên kết bên dưới và gửi cho người mà bạn muốn thêm làm quản trị viên."
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1220,6 +1261,7 @@
     },
     "connectExisting": "Kết nối tài khoản WhatsApp Business hiện có",
     "conversationStarters": {
+      "description": "Câu mở đầu cuộc trò chuyện được sử dụng để bắt đầu cuộc trò chuyện với người dùng.",
       "description1": "Câu mở đầu cuộc trò chuyện được sử dụng để bắt đầu cuộc trò chuyện với người dùng.",
       "description2": "Câu mở đầu cuộc trò chuyện được sử dụng để bắt đầu cuộc trò chuyện với người dùng.",
       "label": "Câu mở đầu cuộc trò chuyện"
@@ -1299,5 +1341,15 @@
   "zalo": {
     "description": "Tích hợp này cho phép bạn tạo bot Zalo.",
     "title": "Zalo"
+  },
+  "invitation": {
+    "title": "Lời mời",
+    "chatbotInvitationDescription1": "Tham gia {chatbotName} trên {organizationName}",
+    "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName} trên {organizationName}.",
+    "organizationInvitationDescription1": "Tham gia {organizationName}",
+    "organizationInvitationDescription2": "{userName} đã mời bạn tham gia {organizationName}."
+  },
+  "inboxTeams": {
+    "title": "Nhóm hộp thư"
   }
 }

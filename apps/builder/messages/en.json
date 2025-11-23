@@ -190,10 +190,6 @@
     "name": {
       "label": "AI Trigger name"
     },
-    "setting": {
-      "description": "AI Triggers description",
-      "label": "AI Triggers"
-    },
     "update": {
       "title": "Update AI Trigger"
     }
@@ -1203,8 +1199,7 @@
     },
     "connectExisting": "Connect an existing WhatsApp Business Account",
     "conversationStarters": {
-      "description1": "Conversation starters are used to start a conversation with a user.",
-      "description2": "Conversation starters are used to start a conversation with a user.",
+      "description": "Conversation starters are used to start a conversation with a user.",
       "label": "Conversation Starters"
     },
     "description": "WhatsApp description",
