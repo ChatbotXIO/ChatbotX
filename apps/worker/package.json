@@ -1,13 +1,14 @@
 {
   "name": "worker",
   "version": "0.1.0",
+  "type": "module",
   "scripts": {
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
     "worker:ai-agent": "dotenv -e ../../.env -- tsx --watch src/ai-agent/worker.ts",
     "dev": "concurrently pnpm:worker:*",
     "https": "pnpm dev",
-    "build": "tsup",
+    "build": "tsdown",
     "test:domains": "tsx scripts/test-domains.ts"
   },
   "keywords": [],
@@ -25,11 +26,11 @@
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
-    "@ai-sdk/google": "^2.0.41",
+    "@ai-sdk/google": "^2.0.42",
     "@ai-sdk/openai": "^2.0.71",
     "@faker-js/faker": "^10.1.0",
     "@paralleldrive/cuid2": "^3.0.4",
-    "ai": "^5.0.99",
+    "ai": "^5.0.101",
     "bullmq": "^5.64.1",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
@@ -39,16 +40,18 @@
     "ky": "^1.14.0",
     "mammoth": "^1.11.0",
     "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^5.4.296",
     "remeda": "^2.32.0",
     "remove-markdown": "^0.6.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/image-size": "^0.8.0",
+    "@types/html-to-text": "^9.0.4",
     "@types/node": "^24.10.1",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
+    "tsdown": "^0.16.6",
     "tsup": "^8.5.1"
   }
 }

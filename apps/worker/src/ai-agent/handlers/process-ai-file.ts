@@ -1,11 +1,10 @@
 import { AIEmbeddingStatus, prisma } from "@aha.chat/database"
-import { uploader } from "@aha.chat/filesystem"
 import {
   AIJobAction,
   type AIJobProcessFile,
   aiAgentQueue,
 } from "@aha.chat/worker-config"
-import { extractTextFromStream } from "../lib/text-extractor"
+import { extractTextFromFile } from "../lib/text-extractor"
 
 type TextChunk = { content: string }
 
@@ -51,12 +50,10 @@ export async function processAIFile(
     throw new Error("AI file not found")
   }
 
-  const streamKey = aiFile.path
-  // await uploader.headObject(streamKey)
-  const stream = await uploader.getObjectStream(streamKey)
-  const extracted = await extractTextFromStream(stream, aiFile.mimeType)
+  const text = await extractTextFromFile(aiFile.path, aiFile.mimeType)
+
   const chunks: TextChunk[] = splitTextIntoChunks(
-    extracted,
+    text,
     chunkSize,
     overlapSize,
   ).map((c) => ({ content: c.content }))

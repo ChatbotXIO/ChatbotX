@@ -1,7 +1,13 @@
 import type { Readable } from "node:stream"
 import { TextDecoder } from "node:util"
-import pdfParse from "pdf-parse"
+import { uploader } from "@aha.chat/filesystem"
+import { htmlToText } from "html-to-text"
+import { extractRawText } from "mammoth"
+import { PDFParse } from "pdf-parse"
+import removeMd from "remove-markdown"
+import { read, utils } from "xlsx"
 import { logger } from "../../lib/logger"
+import "pdfjs-dist/legacy/build/pdf.worker.mjs"
 
 function normalizeWhitespace(input: string): string {
   let out = ""
@@ -31,38 +37,32 @@ async function streamToBuffer(
   return Buffer.concat(chunks)
 }
 
-async function extractFromPdf(buffer: Buffer): Promise<string> {
+export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
-    const result = await pdfParse(buffer)
-    return normalizeWhitespace(result.text || "")
+    const parser = new PDFParse({ data: buffer })
+    const { text } = await parser.getText()
+    await parser.destroy()
+
+    return text
   } catch (error) {
     logger.warn("PDF parsing failed, falling back to plain text", { error })
-    const decoder = new TextDecoder("utf-8")
-    return normalizeWhitespace(decoder.decode(buffer))
+    throw new Error("PDF parsing failed")
   }
 }
 
-async function extractFromDocx(buffer: Buffer): Promise<string> {
+async function extractTextFromDocx(buffer: Buffer): Promise<string> {
   try {
-    const mammothModule = await import("mammoth")
-    const mammoth = mammothModule.default || mammothModule
-    const { value } = await mammoth.extractRawText({ buffer })
+    const { value } = await extractRawText({ buffer })
     return normalizeWhitespace(value || "")
   } catch (error) {
     logger.warn("DOCX parsing failed, falling back to plain text", { error })
-    const decoder = new TextDecoder("utf-8")
-    return normalizeWhitespace(decoder.decode(buffer))
+    throw new Error("DOCX parsing failed")
   }
 }
 
-async function extractFromXlsx(buffer: Buffer): Promise<string> {
+async function extractTextFromXlsx(buffer: Buffer): Promise<string> {
   try {
-    const xlsxModule = await import("xlsx")
-    const { read, utils } = xlsxModule
-    const workbook = read(buffer, { type: "buffer" }) as {
-      SheetNames: string[]
-      Sheets: Record<string, unknown>
-    }
+    const workbook = read(buffer, { type: "buffer" })
     const texts: string[] = []
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName]
@@ -74,42 +74,40 @@ async function extractFromXlsx(buffer: Buffer): Promise<string> {
         texts.push(csv)
       }
     }
-    return normalizeWhitespace(texts.join("\n"))
+    return await normalizeWhitespace(texts.join("\n"))
   } catch (error) {
     logger.warn("XLSX parsing failed, falling back to plain text", { error })
-    const decoder = new TextDecoder("utf-8")
-    return normalizeWhitespace(decoder.decode(buffer))
+    throw new Error("XLSX parsing failed")
   }
 }
 
-function extractFromCsv(buffer: Buffer): string {
+function extractTextFromCsv(buffer: Buffer): string {
   // Simple fallback: treat as UTF-8 text
   const decoder = new TextDecoder("utf-8")
   return normalizeWhitespace(decoder.decode(buffer))
 }
 
-async function extractFromHtml(buffer: Buffer): Promise<string> {
+async function extractTextFromHtml(buffer: Buffer): Promise<string> {
   try {
-    const htmlToTextModule = await import("html-to-text")
-    const { htmlToText } = htmlToTextModule
     const decoder = new TextDecoder("utf-8")
     const html = decoder.decode(buffer)
-    return normalizeWhitespace(htmlToText(html, { wordwrap: false }))
+    return await normalizeWhitespace(htmlToText(html, { wordwrap: false }))
   } catch (error) {
     logger.warn("HTML parsing failed, falling back to plain text", { error })
-    const decoder = new TextDecoder("utf-8")
-    return normalizeWhitespace(decoder.decode(buffer))
+    throw new Error("HTML parsing failed")
   }
 }
 
-async function extractFromMarkdown(buffer: Buffer): Promise<string> {
+async function extractTextFromMarkdown(buffer: Buffer): Promise<string> {
   try {
-    const removeMarkdownModule = await import("remove-markdown")
-    const removeMarkdown = removeMarkdownModule.default || removeMarkdownModule
     const decoder = new TextDecoder("utf-8")
     const md = decoder.decode(buffer)
-    const plain = removeMarkdown(md, { stripListLeaders: true, gfm: true })
-    return normalizeWhitespace(plain)
+    const plain = removeMd(md, {
+      stripListLeaders: true,
+      gfm: true,
+      useImgAltText: true,
+    })
+    return await normalizeWhitespace(plain)
   } catch (error) {
     logger.warn("Markdown parsing failed, falling back to plain text", {
       error,
@@ -119,7 +117,7 @@ async function extractFromMarkdown(buffer: Buffer): Promise<string> {
   }
 }
 
-function extractFromRtf(buffer: Buffer): string {
+function extractTextFromRtf(buffer: Buffer): string {
   const decoder = new TextDecoder("utf-8")
   const rtf = decoder.decode(buffer)
   // Very basic RTF to text: remove groups, control words, keep plain text
@@ -131,6 +129,7 @@ function extractFromRtf(buffer: Buffer): string {
   text = text.replace(/\{[^{}]*\}/g, " ")
   // 4) Remove remaining braces and backslashes
   text = text.replace(/[{}\\]/g, " ")
+
   return normalizeWhitespace(text)
 }
 
@@ -145,15 +144,19 @@ async function extractAsPlainText(
   return normalizeWhitespace(out)
 }
 
-export async function extractTextFromStream(
-  stream: AsyncIterable<Uint8Array> | Readable,
+export async function extractTextFromFile(
+  remotePath: string,
   mimeType: string,
 ): Promise<string> {
   const lower = (mimeType || "").toLowerCase()
+
+  const fileStream = await uploader.getObjectStream(remotePath)
+  const buffer = await streamToBuffer(fileStream)
+
   if (lower.includes("pdf")) {
-    const buf = await streamToBuffer(stream)
-    return extractFromPdf(buf)
+    return await extractTextFromPdf(buffer)
   }
+
   if (
     lower.includes("word") ||
     lower.includes("docx") ||
@@ -161,9 +164,9 @@ export async function extractTextFromStream(
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
   ) {
-    const buf = await streamToBuffer(stream)
-    return extractFromDocx(buf)
+    return extractTextFromDocx(buffer)
   }
+
   if (
     lower.includes("spreadsheet") ||
     lower.includes("xlsx") ||
@@ -171,25 +174,23 @@ export async function extractTextFromStream(
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
   ) {
-    const buf = await streamToBuffer(stream)
-    return await extractFromXlsx(buf)
+    return await extractTextFromXlsx(buffer)
   }
+
   if (lower.includes("csv")) {
-    const buf = await streamToBuffer(stream)
-    return extractFromCsv(buf)
+    return extractTextFromCsv(buffer)
   }
+
   if (lower.includes("html") || lower.includes("xhtml")) {
-    const buf = await streamToBuffer(stream)
-    return await extractFromHtml(buf)
+    return await extractTextFromHtml(buffer)
   }
   if (lower.includes("markdown") || lower.includes("md")) {
-    const buf = await streamToBuffer(stream)
-    return await extractFromMarkdown(buf)
+    return await extractTextFromMarkdown(buffer)
   }
   if (lower.includes("rtf")) {
-    const buf = await streamToBuffer(stream)
-    return extractFromRtf(buf)
+    return extractTextFromRtf(buffer)
   }
+
   // default: treat as utf-8 text stream
-  return extractAsPlainText(stream)
+  return extractAsPlainText(fileStream)
 }

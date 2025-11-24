@@ -20,9 +20,9 @@ export async function processPendingEmbedding(
     throw new Error("AI embedding is processing or already processed")
   }
 
-  const embeddingModel = await resolveEmbeddingModel(aiEmbedding.chatbotId)
-
   try {
+    const embeddingModel = await resolveEmbeddingModel(aiEmbedding.chatbotId)
+
     const { embedding } = await embed({
       model: embeddingModel,
       value: aiEmbedding.content,

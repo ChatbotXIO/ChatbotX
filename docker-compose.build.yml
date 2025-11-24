@@ -29,7 +29,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: apps/builder/docker/Dockerfile
+      dockerfile: apps/worker/docker/Dockerfile
     # image: realcodesiman/ahachat-worker:latest
     platform: linux/amd64
     restart: unless-stopped

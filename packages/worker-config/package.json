@@ -16,7 +16,7 @@
     "bullmq": "^5.64.1",
     "ioredis": "^5.8.2",
     "ioredis-mock": "^8.13.1",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "exports": {
     ".": "./src/index.ts",

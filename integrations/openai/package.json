@@ -7,7 +7,7 @@
   "dependencies": {
     "@aha.chat/sdk": "workspace:*",
     "@ai-sdk/openai": "^2.0.71",
-    "ai": "^5.0.99"
+    "ai": "^5.0.101"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

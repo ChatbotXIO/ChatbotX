@@ -11,7 +11,6 @@ export const AI_FILES_DEFAULT_CHUNK_SIZE = 1000
 export const AI_FILES_DEFAULT_OVERLAP_SIZE = 200
 
 export const AIJobAction = {
-  processChunk: "processChunk",
   processAIFile: "processAIFile",
   processPendingEmbedding: "processPendingEmbedding",
 } as const
@@ -27,16 +26,6 @@ export type AIJobProcessPendingEmbedding = {
   type: typeof AIJobAction.processPendingEmbedding
   data: {
     aiEmbeddingId: string
-  }
-}
-
-export type AIJobProcessChunk = {
-  type: typeof AIJobAction.processChunk
-  data: {
-    chatbotId: string
-    aiFileId: string
-    content: string
-    index: number
   }
 }
 

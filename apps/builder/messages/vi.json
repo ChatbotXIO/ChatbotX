@@ -4,9 +4,6 @@
       "title": "Tạo trường tài khoản"
     },
     "title": "Trường tài khoản",
-    "value": {
-      "label": "Giá trị"
-    },
     "updateForm": {
       "title": "Cập nhật trường tài khoản"
     }
@@ -139,14 +136,7 @@
     "scanQRCode": "Quét tôi bằng camera của bạn",
     "inviteFeature": "Mời {feature}",
     "joinTheTeam": "Tham gia nhóm",
-    "copy": "Sao chép",
-    "addMember": "Thêm thành viên",
-    "addVariable": "Thêm biến",
-    "wait": "Chờ"
-  },
-  "common": {
-    "cancelBtn": "Hủy",
-    "deleteBtn": "Xóa"
+    "copy": "Sao chép"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -199,10 +189,6 @@
     },
     "name": {
       "label": "Tên AI Trigger"
-    },
-    "setting": {
-      "description": "Mô tả AI Triggers",
-      "label": "AI Triggers"
     },
     "update": {
       "title": "Cập nhật AI Trigger"
@@ -264,23 +250,12 @@
       "enterText": "Nhập văn bản",
       "selectTrueFalse": "Chọn đúng/sai"
     },
-    "types": {
-      "boolean": "Boolean",
-      "date": "Ngày",
-      "dateTime": "Ngày & Giờ",
-      "longText": "Văn bản dài",
-      "number": "Số",
-      "shortText": "Văn bản ngắn"
-    },
     "values": {
       "false": "Sai",
       "true": "Đúng"
     }
   },
   "dialog": {
-    "addTag": {
-      "title": "Thêm thẻ"
-    },
     "archiveConversation": {
       "description": "Bạn có chắc chắn muốn lưu trữ những cuộc trò chuyện đó?",
       "title": "Lưu trữ cuộc trò chuyện"
@@ -289,14 +264,7 @@
     "connect": {
       "title": "Kết nối {feature}"
     },
-    "createTitle": "Tạo {feature}",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác. Điều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi",
-    "deleteContact": {
-      "description": "Bạn có chắc chắn muốn xóa những liên hệ đó?",
-      "title": "Xóa liên hệ",
-      "warning": "Hành động này không thể hoàn tác."
-    },
-    "deleteTitle": "Xóa {feature}",
     "disableBot": {
       "description": "Bạn có chắc chắn muốn tắt bot?",
       "title": "Tắt Bot"
@@ -308,8 +276,7 @@
     "enable": {
       "description": "Bạn có chắc chắn muốn bật {feature}?",
       "title": "Bật {feature}"
-    },
-    "updateTitle": "Cập nhật {feature}"
+    }
   },
   "fields": {
     "accessToken": {
@@ -575,9 +542,6 @@
     "googleSheets": {
       "label": "Google Sheets"
     },
-    "messageTemplate": {
-      "label": "Mẫu tin nhắn"
-    },
     "hideHeader": {
       "label": "Hiển thị tiêu đề"
     },
@@ -702,9 +666,6 @@
         "openWebsite": "Mở trang web",
         "sendFlow": "Gửi luồng"
       }
-    },
-    "spreadsheets": {
-      "label": "Bảng tính"
     },
     "phoneNumber": {
       "label": "Số điện thoại",
@@ -992,13 +953,6 @@
       "specificDate": "Ngày cụ thể",
       "specificDateValue": "{date}"
     },
-    "delayUnit": {
-      "days": "Ngày",
-      "hours": "Giờ",
-      "minutes": "Phút",
-      "placeholder": "Chọn đơn vị",
-      "seconds": "Giây"
-    },
     "formatTimezone": {
       "accountTimezone": "Múi giờ tài khoản",
       "contactTimezone": "Múi giờ liên hệ"
@@ -1011,20 +965,7 @@
       "prepend": "Thêm vào đầu",
       "set": "Thiết lập thành"
     },
-    "stepType": {
-      "countCharacters": "Đếm ký tự",
-      "formatDate": "Định dạng ngày",
-      "generateCode": "Tạo mã",
-      "getDataFromJson": "Lấy dữ liệu từ JSON",
-      "openAIDeleteMessageHistory": "OpenAI xóa lịch sử tin nhắn",
-      "openAIGenerateImage": "OpenAI tạo hình ảnh",
-      "openAIGenerateTextAgent": "OpenAI tạo văn bản agent",
-      "optInEmail": "Đăng ký email",
-      "sendFlow": "Gửi luồng",
-      "startFlow": "Bắt đầu luồng"
-    },
     "wait": {
-      "datetimeCustomField": "Trường tùy chỉnh ngày giờ",
       "datetimeTooltip": "Ngày và giờ khi luồng sẽ được kích hoạt.",
       "setInterval": "Thiết lập khoảng thời gian"
     }
@@ -1049,7 +990,6 @@
     "title": "Chung"
   },
   "googleSheets": {
-    "label": "Google Sheets",
     "delete": {
       "dialog_title": "Xóa bảng tính"
     },
@@ -1118,7 +1058,6 @@
     "failed": "Thất bại",
     "copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
     "createdFailed": "Tạo {feature} thất bại",
-    "createdSuccessfully": "{feature} đã được tạo thành công",
     "createdSuccess": "{feature} đã được tạo thành công",
     "createFeature": "Tạo {feature}",
     "deleteComingSoon": "Chức năng xóa sẽ sớm có",
@@ -1136,7 +1075,6 @@
     "needToAddSettings": "Bạn cần thêm cài đặt để sử dụng tích hợp này",
     "noChatbotsFound": "Không tìm thấy chatbot nào",
     "noDataAvailable": "Không có dữ liệu",
-    "noData": "Không có dữ liệu",
     "pleaseWait": "Vui lòng đợi...",
     "processingRequest": "Đang xử lý yêu cầu của bạn...",
     "savedSuccessfully": "Đã lưu thành công",
@@ -1155,7 +1093,8 @@
     "addFeature": "Thêm {feature}",
     "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
     "unableToConnectFeature": "Không thể kết nối {feature}. Vui lòng gửi nhật ký cho nhóm phát triển.",
-    "copyInvitationUrlSuccess": "Sao chép liên kết bên dưới và gửi cho người mà bạn muốn thêm làm quản trị viên."
+    "copyInvitationUrlSuccess": "Sao chép liên kết bên dưới và gửi cho người mà bạn muốn thêm làm quản trị viên.",
+    "noAIIntegrationFound": "Không tìm thấy tích hợp AI. Vui lòng kết nối tích hợp AI để sử dụng AI agents."
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1262,8 +1201,6 @@
     "connectExisting": "Kết nối tài khoản WhatsApp Business hiện có",
     "conversationStarters": {
       "description": "Câu mở đầu cuộc trò chuyện được sử dụng để bắt đầu cuộc trò chuyện với người dùng.",
-      "description1": "Câu mở đầu cuộc trò chuyện được sử dụng để bắt đầu cuộc trò chuyện với người dùng.",
-      "description2": "Câu mở đầu cuộc trò chuyện được sử dụng để bắt đầu cuộc trò chuyện với người dùng.",
       "label": "Câu mở đầu cuộc trò chuyện"
     },
     "description": "Mô tả WhatsApp",

@@ -13,7 +13,7 @@
     "image-size": "^2.0.2",
     "ky": "^1.14.0",
     "remeda": "^2.32.0",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
