@@ -4,6 +4,7 @@ import {
   BroadcastSchedulesType,
   BroadcastSubaction,
   type InboxType,
+  type MessengerTag,
 } from "@aha.chat/database/types"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -13,16 +14,22 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"
-import { Loader2Icon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useState } from "react"
+import { use, useMemo, useState } from "react"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import { FlowSelect } from "../flows/flow-select"
 import type { listInboxes } from "../inboxes/queries"
 import { InboxTypeSelect } from "./components/inbox-type-select"
+import { ConditionsDialog } from "./conditions-dialog"
+import type { Condition } from "./schemas/conditions-schema"
+import { SelectMessengerTags } from "./select-messenger-tags"
+import { SelectSubAction } from "./select-sub-action"
 
 export function CreateBroadcastForm({
   chatbotId,
@@ -32,30 +39,31 @@ export function CreateBroadcastForm({
   promises: Promise<Awaited<ReturnType<typeof listInboxes>>>
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
+  const [openConditions, setOpenConditions] = useState(false)
+  const [currentConditions, setCurrentConditions] = useState<Condition[]>([])
   const [hasInboxType, setHasInboxType] = useState(false)
   const [hasSubAction, setHasSubAction] = useState(false)
-  const [schedulesType, _setSchedulesType] =
-    useState<BroadcastSchedulesType | null>(null)
+  const [hasMessengerTag, setHasMessengerTag] = useState(false)
 
   const { data } = use(promises)
   const inboxTypes = data.map((inbox) => inbox.inboxType)
   const schedulesOptions = [
     {
-      value: "NOW",
-      label: "Now",
+      value: BroadcastSchedulesType.now,
+      label: t("now"),
     },
     {
-      value: "FUTURE",
-      label: "Schedule for later (All simultaneously)",
+      value: BroadcastSchedulesType.future,
+      label: t("schedule_for_later"),
     },
   ]
 
   const {
     form,
     handleSubmitWithAction,
-    resetFormAndAction,
-    form: { setValue },
+    form: { control, getValues, setValue },
   } = useHookFormAction(
     createBroadcastAction.bind(null, chatbotId),
     zodResolver(createBroadcastRequest),
@@ -67,7 +75,7 @@ export function CreateBroadcastForm({
               feature: t("fields.broadcast.label"),
             }),
           )
-          resetFormAndAction()
+          router.push(`/chatbots/${chatbotId}/broadcasts`)
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -79,12 +87,55 @@ export function CreateBroadcastForm({
         mode: "onChange",
         defaultValues: {
           inboxType: null,
+          flowId: "",
+          subaction: BroadcastSubaction.allContacts,
+          messengerTag: null,
+          schedulesType: BroadcastSchedulesType.now,
+          schedulesAt: null,
           conditions: [],
         },
       },
       errorMapProps: {},
     },
   )
+  const watchedSchedulesType = useWatch({ control, name: "schedulesType" })
+  const watchedSubAction = useWatch({ control, name: "subaction" })
+  const watchedInboxType = useWatch({ control, name: "inboxType" })
+
+  const showSelectSubAction = useMemo(
+    () => hasInboxType && !hasSubAction,
+    [hasInboxType, hasSubAction],
+  )
+
+  const showSelectMessengerTag = useMemo(
+    () =>
+      hasInboxType &&
+      hasSubAction &&
+      !hasMessengerTag &&
+      watchedSubAction === "allContacts",
+    [hasInboxType, hasSubAction, hasMessengerTag, watchedSubAction],
+  )
+
+  const showFlow = useMemo(() => {
+    if (!(hasInboxType && hasSubAction)) {
+      return false
+    }
+
+    if (
+      watchedInboxType === "messenger" &&
+      watchedSubAction === "allContacts"
+    ) {
+      return hasMessengerTag
+    }
+
+    return true
+  }, [
+    hasInboxType,
+    hasSubAction,
+    hasMessengerTag,
+    watchedInboxType,
+    watchedSubAction,
+  ])
 
   const onSelectInboxType = (inboxType: InboxType | null) => {
     setHasInboxType(true)
@@ -96,8 +147,50 @@ export function CreateBroadcastForm({
     }
   }
 
+  const onSelectSubAction = (subaction: BroadcastSubaction) => {
+    setHasSubAction(true)
+    setValue("subaction", subaction)
+  }
+
+  const onSelectMessengerTag = (tag: MessengerTag) => {
+    setHasMessengerTag(true)
+    setValue("messengerTag", tag)
+  }
+
+  // biome-ignore lint/correctness/noUnusedVariables: wip
+  const renderCondition = () => (
+    <>
+      <div className="flex flex-col gap-1">
+        {currentConditions.map((condition) => (
+          <Button
+            className="p-0"
+            key={condition.field}
+            onClick={() => setOpenConditions(true)}
+            variant="ghost"
+          >
+            <div className="flex h-full w-full items-center gap-1 border-1 px-3 py-2 text-left">
+              <div>{condition.field}</div>
+              <div>{t(`condition.operators.${condition.operator}`)}</div>
+              <span className="font-medium">
+                {condition.value?.toString() || ""}
+              </span>
+            </div>
+          </Button>
+        ))}
+      </div>
+      <Button
+        onClick={() => setOpenConditions(true)}
+        type="button"
+        variant="outline"
+      >
+        <PlusIcon />
+        {t("condition.add")}
+      </Button>
+    </>
+  )
+
   return (
-    <div className="flex justify-center">
+    <div className="flex h-svh flex-col items-center justify-center">
       <Card className="w-5/6" key={t.name}>
         <CardContent className="py-4">
           <Form {...form}>
@@ -112,7 +205,18 @@ export function CreateBroadcastForm({
                 />
               )}
 
-              {hasInboxType && hasSubAction && (
+              {showSelectSubAction && (
+                <SelectSubAction
+                  inboxType={getValues("inboxType") as InboxType}
+                  onSelectSubAction={onSelectSubAction}
+                />
+              )}
+
+              {showSelectMessengerTag && (
+                <SelectMessengerTags onSelectTag={onSelectMessengerTag} />
+              )}
+
+              {showFlow && (
                 <>
                   <FlowSelect
                     label={t("fields.flowToSend.label")}
@@ -121,7 +225,7 @@ export function CreateBroadcastForm({
                   />
 
                   <SelectField
-                    defaultValue="Now"
+                    defaultValue={BroadcastSchedulesType.now}
                     label={t("broadcasts.scheduleSendMessage")}
                     name="schedulesType"
                     // onValueChange={(value) =>
@@ -130,8 +234,11 @@ export function CreateBroadcastForm({
                     options={schedulesOptions}
                   />
 
-                  {schedulesType === BroadcastSchedulesType.future && (
+                  {watchedSchedulesType === BroadcastSchedulesType.future && (
                     <DateTimePicker
+                      disabled={{
+                        before: new Date(),
+                      }}
                       displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
                       granularity="minute"
                       onChange={(value) => {
@@ -143,6 +250,8 @@ export function CreateBroadcastForm({
                       value={add(new Date(), { minutes: 15 })}
                     />
                   )}
+
+                  {/* {renderCondition()} */}
 
                   <div className="flex justify-end gap-2">
                     <Button asChild variant="outline">
@@ -169,6 +278,14 @@ export function CreateBroadcastForm({
           </Form>
         </CardContent>
       </Card>
+      <ConditionsDialog
+        onOpenChange={setOpenConditions}
+        onSave={(conditions: Condition) => {
+          setCurrentConditions([...currentConditions, conditions])
+          setOpenConditions(false)
+        }}
+        open={openConditions}
+      />
     </div>
   )
 }
