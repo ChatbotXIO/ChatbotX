@@ -34,7 +34,7 @@ export function DeleteInboxTeamDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.inboxTeam.label"),
           }),
         )

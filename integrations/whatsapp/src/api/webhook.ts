@@ -1,4 +1,4 @@
-import ky from "ky"
+import ky, { HTTPError } from "ky"
 import type { WhatsappAuthValue } from ".."
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
@@ -15,10 +15,6 @@ export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
         headers: {
           Authorization: `Bearer ${auth.tokens.accessToken}`,
         },
-        json: {
-          override_callback_uri: ["messages"],
-          verify_token: auth.verifyToken ?? "ChatbotX",
-        },
       })
       .json()
 
@@ -26,7 +22,14 @@ export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
       throw new WhatsappException("Failed to subscribe webhook")
     }
   } catch (error) {
-    logger.error("Failed to subscribe webhook", { error })
+    if (error instanceof HTTPError) {
+      const result = await error.response.json()
+      if (result.error === "invalid_request") {
+        logger.error("Failed to subscribe webhook", { result })
+      }
+    } else {
+      logger.error("Failed to subscribe webhook", { error })
+    }
 
     throw new WhatsappException("Failed to subscribe webhook")
   }
@@ -41,7 +44,7 @@ export async function unsubscribeWebhook({
 
   try {
     const result = await ky
-      .post<{
+      .delete<{
         success: boolean
       }>(`${API_URL}/${version}/${auth.metadata.wabaId}/subscribed_apps`, {
         headers: {

@@ -18,6 +18,7 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import "react-day-picker/style.css"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { updateInboxTeamAction } from "./actions/update-inbox-team.action"
 import type { InboxTeamResource } from "./schemas/types"
@@ -35,6 +36,7 @@ export function RenameInboxTeamDialog({
   inboxTeam: InboxTeamResource | null
 }) {
   const t = useTranslations()
+  const router = useRouter()
   const {
     form,
     handleSubmitWithAction,
@@ -52,6 +54,7 @@ export function RenameInboxTeamDialog({
           )
 
           onOpenChange(false)
+          router.refresh()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -79,7 +82,7 @@ export function RenameInboxTeamDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.editFeature", {
@@ -94,7 +97,7 @@ export function RenameInboxTeamDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label="Name" name="name" />
+              <InputField label="Name" name="name" required />
 
               <DialogFooter className="sm:justify-start">
                 <DialogClose asChild>

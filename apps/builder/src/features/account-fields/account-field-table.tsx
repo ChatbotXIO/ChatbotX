@@ -44,7 +44,6 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
   const [_, copyToClipboard] = useCopyToClipboard()
   const t = useTranslations()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   const columns = useMemo<ColumnDef<AccountFieldResource>[]>(
     () => [
       {
@@ -153,7 +152,7 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
         enableHiding: false,
       },
     ],
-    [],
+    [copyToClipboard, t],
   )
 
   const { table } = useDataTable({

@@ -7,12 +7,14 @@ import { z } from "zod"
 const baseEnv = {
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),
+    NEXT_PUBLIC_WEBHOOK_PROXY_URL: z.url().optional(),
     NEXT_PUBLIC_BILLING_URL: z.url().optional(),
     NEXT_PUBLIC_MANAGE_URL: z.url().optional(),
     NEXT_PUBLIC_ASSET_URL: z.url().optional(),
   },
   runtimeEnv: {
     NEXT_PUBLIC_BUILDER_URL: process.env.NEXT_PUBLIC_BUILDER_URL,
+    NEXT_PUBLIC_WEBHOOK_PROXY_URL: process.env.NEXT_PUBLIC_WEBHOOK_PROXY_URL,
     NEXT_PUBLIC_BILLING_URL: process.env.NEXT_PUBLIC_BILLING_URL,
     NEXT_PUBLIC_ASSET_URL: process.env.NEXT_PUBLIC_ASSET_URL,
     NEXT_PUBLIC_MANAGE_URL: process.env.NEXT_PUBLIC_MANAGE_URL,

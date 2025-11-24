@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -18,7 +19,7 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -36,7 +37,9 @@ export function AIFunctionsCreate({
   customFields,
 }: AIFunctionsCreateProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
+
   const t = useTranslations()
+  const router = useRouter()
 
   const [isOpen, setIsOpen] = useState(false)
 
@@ -80,6 +83,7 @@ export function AIFunctionsCreate({
             )
             resetFormAndAction()
             setIsOpen(false)
+            router.refresh()
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -113,6 +117,7 @@ export function AIFunctionsCreate({
               feature: t("fields.aiFunction.label"),
             })}
           </DialogTitle>
+          <DialogDescription />
         </DialogHeader>
 
         <Form {...form}>

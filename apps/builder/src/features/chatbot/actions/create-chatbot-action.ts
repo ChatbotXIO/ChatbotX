@@ -1,5 +1,8 @@
 import type { Prisma } from "@aha.chat/database"
 import {
+  type ChatbotMemberNotificationChannels,
+  type ChatbotMemberNotificationTypes,
+  type ChatbotMemberPermissions,
   ChatbotMemberRole,
   type ChatbotModel,
   type ChatbotUncheckedCreateInput,
@@ -31,14 +34,27 @@ export async function createSimpleChatbot(
       userId,
       chatbotId: newChatbot.id,
       role: ChatbotMemberRole.owner,
-      isAdmin: true,
-      enableAnalytics: true,
-      enableFlows: true,
-      enableContacts: true,
-      enableOnlyAssignedContacts: false,
-      enableEmailAndPhone: true,
-      enableBroadcast: true,
-      enableEcommerce: false,
+      permissions: {
+        superAdmin: true,
+        analytics: true,
+        flows: true,
+        contacts: true,
+        onlyAssignedContacts: false,
+        emailAndPhone: true,
+        broadcast: true,
+        ecommerce: false,
+      } as ChatbotMemberPermissions,
+      notificationTypes: {
+        notifyAdmin: true,
+        newMessageToHuman: true,
+        newOrder: true,
+      } as ChatbotMemberNotificationTypes,
+      notificationChannels: {
+        messenger: true,
+        email: true,
+        telegram: true,
+        browser: true,
+      } as ChatbotMemberNotificationChannels,
     },
   })
 

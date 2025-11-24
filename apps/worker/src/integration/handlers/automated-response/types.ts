@@ -1,0 +1,41 @@
+import type { AIAgentModel, AIMessageRole } from "@aha.chat/database/types"
+import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import type { ModelMessage, ToolSet } from "ai"
+
+export type AIMessage = {
+  role: AIMessageRole
+  content: string
+}
+
+export type ReplyByAIProps = {
+  message: OutgoingMessageEntity
+  lastAIMessages: ModelMessage[]
+  aiAgent: AIAgentModel
+  tools: ToolSet
+  availableTools: {
+    fileTools: string[]
+    functionTools: string[]
+    mcpTools: string[]
+  }
+}
+
+export type SimilaritySearchResult = {
+  id: string
+  content: string
+  aiFileId: string
+  distance: number
+}
+
+export type FileSearchArgs = {
+  query: string
+}
+
+export type FileSearchConfig = {
+  chatbotId: string
+  selectedFileIds: string[]
+  similarityThreshold: number
+  maxResults: number
+}
+
+export type { AutomatedResponseReply } from "@aha.chat/database/types"
+export type { SecretTextAuthValue } from "@aha.chat/sdk"

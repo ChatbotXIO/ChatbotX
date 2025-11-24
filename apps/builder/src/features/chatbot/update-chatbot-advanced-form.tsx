@@ -12,7 +12,7 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
-import type { ChatbotResource } from "@/features/chatbots/schemas"
+import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { FlowSelect } from "@/features/flows/flow-select"
 import { updateChatbotAdvancedAction } from "./actions/update-chatbot-action"
 import {

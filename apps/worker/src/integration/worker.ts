@@ -15,7 +15,7 @@ import { sendFlowNode } from "./handlers/send-flow-node"
 import { sendFlowPostback } from "./handlers/send-flow-postback"
 
 const worker = new Worker(
-  QueueName.INTEGRATION,
+  QueueName.integration,
   async (job: Job<IntegrationJobData>) => {
     switch (job.data.type) {
       case IntegrationJobAction.RECEIVE_MESSAGE: {

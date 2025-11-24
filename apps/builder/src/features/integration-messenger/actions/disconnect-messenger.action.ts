@@ -37,6 +37,9 @@ export const disconnectMessengerAction = chatbotActionClient
         })
       })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#messenger`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#messenger`,
+        `chatbots:${chatbotId}#inboxes`,
+      ])
     },
   )

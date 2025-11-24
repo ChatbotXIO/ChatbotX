@@ -12,7 +12,6 @@ import { createId } from "@paralleldrive/cuid2"
 import fetch from "cross-fetch"
 import imageSize from "image-size"
 import type { WhatsAppAPI } from "whatsapp-api-js"
-import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import type {
   ServerAudioMessage,
   ServerButtonMessage,
@@ -26,12 +25,12 @@ import type {
   ServerVideoMessage,
 } from "whatsapp-api-js/types"
 import { logger } from "./lib/logger"
-import type { WhatsappAuthValue } from "./schemas"
+import type { WhatsappAuthValue, WhatsappWebhookEvent } from "./schemas"
 
 export const parseIncomingMessage = async (
   ctx: Context<WhatsappAuthValue>,
   whatsappClient: WhatsAppAPI,
-  props: OnMessageArgs,
+  props: WhatsappWebhookEvent,
 ) => {
   const message: MessageEntity = {
     sourceId: props.message.id,

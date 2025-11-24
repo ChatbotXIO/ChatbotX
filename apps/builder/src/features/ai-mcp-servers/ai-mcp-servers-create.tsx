@@ -17,8 +17,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import ky from "ky"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -28,7 +29,9 @@ import { createAIMcpServerRequest } from "./schemas"
 
 export function AIMcpServersCreate() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
+
   const t = useTranslations()
+  const router = useRouter()
 
   const [isMcpServerValidating, setIsMcpServerValidating] =
     useState<boolean>(false)
@@ -77,6 +80,7 @@ export function AIMcpServersCreate() {
             setAllTools([])
             setIsMcpServerValidated(false)
             setIsOpen(false)
+            router.refresh()
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -91,11 +95,11 @@ export function AIMcpServersCreate() {
   const validateMcpServer = async () => {
     try {
       setIsMcpServerValidating(true)
-      const response = await fetch("/api/ai-mcp-servers/validate", {
-        method: "POST",
-        body: JSON.stringify(form.getValues()),
-      })
-      const data = await response.json()
+      const data = await ky
+        .post<Record<string, unknown>[]>("/api/ai-mcp-servers/validate", {
+          json: form.getValues(),
+        })
+        .json()
 
       const toolKeys = Object.keys(data)
       setIsMcpServerValidated(toolKeys.length > 0)

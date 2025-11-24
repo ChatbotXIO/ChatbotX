@@ -130,6 +130,7 @@ export function CreateAIAgentDialog({
         formProps: {
           mode: "onChange",
           defaultValues: {
+            name: "",
             prompt: "",
             isDefault: false,
             models: [

@@ -46,7 +46,7 @@ export function DeleteFieldsDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.customField.label"),
           }),
         )

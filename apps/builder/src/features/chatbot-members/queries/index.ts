@@ -1,11 +1,16 @@
+"use server"
+
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
-import type { ChatbotResource } from "@/features/chatbots/schemas"
+import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { getPaginationFromInput } from "@/lib/pagination"
-import type { ChatbotMemberCollection, ChatbotMemberResource } from "../schemas"
-import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members-schema"
+import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members.request"
+import type {
+  ChatbotMemberCollection,
+  ChatbotMemberResource,
+} from "../schemas/resource"
 
 export async function getAgents(
   input: GetChatbotMembersSchema,
@@ -42,7 +47,7 @@ export async function getAgents(
       ])
       const pageCount = Math.ceil(total / (pagination.take ?? 10))
 
-      return { data, pageCount }
+      return { data: data as ChatbotMemberResource[], pageCount }
     },
     [JSON.stringify(input)],
     {
@@ -58,29 +63,20 @@ export const getAllChatbotMembers = async (
   chatbotMembers: ChatbotMemberResource[]
   chatbots: ChatbotResource[]
   chatbotIds: string[]
-}> =>
-  await unstable_cache(
-    async () => {
-      const chatbotMembers = await prisma.chatbotMember.findMany({
-        where: {
-          userId,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        include: {
-          chatbot: true,
-        },
-      })
-      const chatbots = chatbotMembers
-        .map((cm) => cm.chatbot)
-        .filter((c) => Boolean(c))
-      const chatbotIds = chatbots.map((c) => c.id)
+}> => {
+  const chatbotMembers = (await prisma.chatbotMember.findMany({
+    where: {
+      userId,
+    },
+  })) as ChatbotMemberResource[]
+  const chatbots = await prisma.chatbot.findMany({
+    where: {
+      id: {
+        in: chatbotMembers.map((cm) => cm.chatbotId),
+      },
+    },
+  })
+  const chatbotIds = chatbots.map((c) => c.id)
 
-      return { chatbotMembers, chatbots, chatbotIds }
-    },
-    [userId],
-    {
-      tags: [`users:${userId}#chatbotMembers`],
-    },
-  )()
+  return { chatbotMembers, chatbots, chatbotIds }
+}

@@ -1,9 +1,11 @@
+"use client"
+
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LinkIcon, Loader2Icon } from "lucide-react"
-import { redirect } from "next/navigation"
+import { redirect, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -12,6 +14,9 @@ import { type MagicLinkRequest, magicLinkRequest } from "../schemas/signin"
 
 export const MagicLinkSignIn = () => {
   const t = useTranslations()
+  const searchParams = useSearchParams()
+  const callbackURL = searchParams.get("callbackURL")
+
   const magicLinkForm = useForm<MagicLinkRequest>({
     resolver: zodResolver(magicLinkRequest),
     defaultValues: {
@@ -23,6 +28,7 @@ export const MagicLinkSignIn = () => {
   const onSubmitMagicLinkForm = async (input: MagicLinkRequest) => {
     const { data, error } = await authClient.signIn.magicLink({
       email: input.email,
+      callbackURL: callbackURL ?? undefined,
     })
 
     if (data) {

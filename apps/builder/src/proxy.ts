@@ -5,8 +5,12 @@ import { auth } from "@/lib/auth/auth"
 
 export async function proxy(request: NextRequest) {
   const cookies = getSessionCookie(request)
+
+  const fallbackSigninUrl = new URL("/signin", request.url)
+  fallbackSigninUrl.searchParams.set("callbackURL", request.url)
+
   if (!(cookies || request.nextUrl.pathname.includes("/signin"))) {
-    return NextResponse.redirect(new URL("/signin", request.url))
+    return NextResponse.redirect(fallbackSigninUrl)
   }
 
   // Verify the session is valid
@@ -14,7 +18,7 @@ export async function proxy(request: NextRequest) {
     headers: await headers(),
   })
   if (!session) {
-    return NextResponse.redirect(new URL("/signin", request.url))
+    return NextResponse.redirect(fallbackSigninUrl)
   }
 
   // Calculate proxy url

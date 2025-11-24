@@ -17,6 +17,7 @@
     }
   },
   "actions": {
+    "copy": "Copy",
     "actions": "Actions",
     "add": "Add",
     "addContactNotes": "Add Contact Notes",
@@ -131,7 +132,11 @@
     "revertToPublished": "Revert to Published",
     "search": "Search",
     "signOut": "Sign Out",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "connectFeature": "Connect {feature}",
+    "scanQRCode": "Scan me with your camera",
+    "inviteFeature": "Invite {feature}",
+    "joinTheTeam": "Join the team"
   },
   "admins": {
     "title": "Admins"
@@ -184,10 +189,6 @@
     },
     "name": {
       "label": "AI Trigger name"
-    },
-    "setting": {
-      "description": "AI Triggers description",
-      "label": "AI Triggers"
     },
     "update": {
       "title": "Update AI Trigger"
@@ -390,6 +391,19 @@
     }
   },
   "fields": {
+    "notificationType": {
+      "label": "Notification Type",
+      "notifyAdmin": "Notify Admin",
+      "newMessageToHuman": "New Message to Human",
+      "newOrder": "New Order"
+    },
+    "notificationChannel": {
+      "label": "Notification Channel",
+      "messenger": "Messenger",
+      "email": "Email",
+      "telegram": "Telegram",
+      "browser": "Browser"
+    },
     "accessToken": {
       "label": "Access Token"
     },
@@ -577,6 +591,9 @@
       "label": "Embed Code",
       "securityNote": "Security Note",
       "securityNoteDescription": "This widget will only work on domains that are authorized in your webchat configuration. Make sure to add your domain to the authorized domains list."
+    },
+    "processingStatus": {
+      "label": "Processing Status"
     },
     "embedUrl": {
       "label": "Embed URL"
@@ -822,7 +839,11 @@
       "placeholder": "Sort by..."
     },
     "status": {
-      "label": "Status"
+      "label": "Status",
+      "pending": "Pending",
+      "processing": "Processing",
+      "success": "Success",
+      "error": "Error"
     },
     "subtitle": {
       "label": "Subtitle",
@@ -938,6 +959,23 @@
       "date": "Date",
       "datetime": "Datetime",
       "location": "Location"
+    },
+    "chatbotMember": {
+      "label": "Chatbot Member"
+    },
+    "permissions": {
+      "label": "Permissions",
+      "superAdmin": "Super Admin",
+      "analytics": "Analytics",
+      "flows": "Flows",
+      "contacts": "Contacts",
+      "onlyAssignedContacts": "Only Assigned Contacts",
+      "emailAndPhone": "Email and Phone",
+      "broadcast": "Broadcast",
+      "ecommerce": "Ecommerce"
+    },
+    "member": {
+      "label": "Member"
     }
   },
   "flows": {
@@ -1133,7 +1171,7 @@
     "copiedToClipboard": "Copied to clipboard",
     "createdFailed": "{feature} creation failed",
     "deleteComingSoon": "Delete functionality coming soon",
-    "deletedSuccessfully": "{feature} deleted successfully",
+    "deletedSuccess": "{feature} deleted successfully",
     "deleteFileComingSoon": "Delete file functionality coming soon",
     "disabledSuccessfully": "{feature} disabled successfully",
     "disconnectedSuccessfully": "{feature} disconnected successfully",
@@ -1165,7 +1203,10 @@
     "deleteFeature": "Delete {feature}",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",
-    "signOutConfirmation": "Are you sure you want to sign out?"
+    "signOutConfirmation": "Are you sure you want to sign out?",
+    "unableToConnectFeature": "Unable to connect {feature}. Please send logs to developer team.",
+    "copyInvitationUrlSuccess": "Copy the link below and send to the person that you want to add as admin.",
+    "noAIIntegrationFound": "No AI integration found. Please connect an AI integration to use AI agents."
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1271,8 +1312,7 @@
     },
     "connectExisting": "Connect an existing WhatsApp Business Account",
     "conversationStarters": {
-      "description1": "Conversation starters are used to start a conversation with a user.",
-      "description2": "Conversation starters are used to start a conversation with a user.",
+      "description": "Conversation starters are used to start a conversation with a user.",
       "label": "Conversation Starters"
     },
     "description": "WhatsApp description",
@@ -1367,5 +1407,15 @@
   "confirmed_event_update": "Confirmed Event Update",
   "confirmed_event_update_description": "Send the user reminders or updates for an event they have registered for (e.g., purchased tickets). This tag may be used for upcoming events and events in progress.",
   "post_purchase_update": "Post-Purchase Update",
-  "post_purchase_update_description": "Notify the user of an update on a recent purchase. Confirmation of transaction, such as invoices or receipts, Notifications of shipment status, such as product in-transit, shipped, delivered, or delayed."
+  "post_purchase_update_description": "Notify the user of an update on a recent purchase. Confirmation of transaction, such as invoices or receipts, Notifications of shipment status, such as product in-transit, shipped, delivered, or delayed.",
+  "invitation": {
+    "title": "Invitation",
+    "chatbotInvitationDescription1": "Join {chatbotName} on {organizationName}",
+    "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName} on {organizationName}.",
+    "organizationInvitationDescription1": "Join {organizationName}",
+    "organizationInvitationDescription2": "{userName} has invited you to join {organizationName}."
+  },
+  "inboxTeams": {
+    "title": "Inbox Teams"
+  }
 }

@@ -1,9 +1,13 @@
-FROM node:22-alpine AS base
+FROM node:24-trixie-slim AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
 
 # Install dependencies only when needed
 FROM base AS pre
-
-# Install pnpm
 RUN npm install -g turbo@^2
 
 # Generate a partial monorepo for a target package
@@ -12,14 +16,14 @@ COPY . .
 RUN turbo prune worker --docker
 
 FROM base AS deps
-
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-
-RUN apk add --upgrade --no-cache libc6-compat supervisor tini redis
+RUN apt update && \
+  apt install -y supervisor tini redis && \
+  apt-get autoremove -y && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-RUN npm install -g pnpm@^10
-
 COPY --from=pre /app/out/json/ .
 COPY --from=pre /app/.env .env
 RUN pnpm install --frozen-lockfile

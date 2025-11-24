@@ -17,7 +17,6 @@ RUN turbo prune builder --docker
 # Install dependencies
 FROM base AS deps
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN apt update && apt install redis-server -y
 
 WORKDIR /app
 COPY --from=pre /app/out/json/ .
@@ -32,7 +31,6 @@ RUN pnpm turbo run build --filter=builder
 # Build the application
 FROM base AS release
 COPY apps/builder/docker/rootfs/ /
-
 
 # # Don't run production as root
 # RUN addgroup --system --gid 1001 nodejs

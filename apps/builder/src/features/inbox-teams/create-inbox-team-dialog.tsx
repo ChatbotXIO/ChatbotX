@@ -16,6 +16,7 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2, PlusIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -31,35 +32,43 @@ export function CreateInboxTeamDialog({
   users: UserResource[]
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const [open, setOpen] = useState(false)
-  // const router = useRouter()
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    createInboxTeamAction.bind(null, chatbotId),
-    zodResolver(createInboxTeamRequest),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Inbox team created successfully")
-          setOpen(false)
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      createInboxTeamAction.bind(null, chatbotId),
+      zodResolver(createInboxTeamRequest),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(
+              t("messages.createdSuccess", {
+                feature: t("fields.inboxTeam.label"),
+              }),
+            )
+
+            setOpen(false)
+            resetFormAndAction()
+            router.refresh()
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: "",
+            userIds: [],
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: "",
-          userIds: [],
-        },
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
   const userOptions = users.map((user) => ({
     value: user.id,
@@ -74,7 +83,7 @@ export function CreateInboxTeamDialog({
           {t("actions.createFeature", { feature: t("fields.inboxTeam.label") })}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {
@@ -89,7 +98,7 @@ export function CreateInboxTeamDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label="Name" name="name" />
+              <InputField label="Name" name="name" required />
 
               <MultiSelectField
                 label="Select users"

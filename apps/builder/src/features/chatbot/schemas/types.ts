@@ -1,4 +1,3 @@
-import type { ChatbotModel } from "@aha.chat/database/types"
 import { getAllCountries, getAllTimezones } from "countries-and-timezones"
 
 export const UNKNOWN_COUNTRY = "unknown"
@@ -29,5 +28,3 @@ export const allTimezoneOptions = Object.values(getAllTimezones()).map(
   }),
 )
 export const allTimezoneCodes = Object.keys(getAllTimezones())
-
-export type ChatboResource = ChatbotModel

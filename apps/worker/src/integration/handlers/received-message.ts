@@ -10,7 +10,7 @@ import {
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
-import type { OnMessageArgs } from "@aha.chat/integration-whatsapp"
+import type { WhatsappWebhookEvent } from "@aha.chat/integration-whatsapp"
 import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import {
   broadcastToChatbotParty,
@@ -30,7 +30,7 @@ const getDBIntegration = async (
     case InboxType.whatsapp:
       return await prisma.integrationWhatsapp.findFirstOrThrow({
         where: {
-          phoneNumberId: (payload as OnMessageArgs).phoneID,
+          phoneNumberId: (payload as WhatsappWebhookEvent).phoneID,
         },
         include: {
           chatbot: true,
@@ -69,7 +69,7 @@ export const receiveMessage = async ({
   payload,
 }: {
   integrationType: IntegrationType
-  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent
+  payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel

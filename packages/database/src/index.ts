@@ -78,7 +78,18 @@ export const prisma =
         url: {
           needs: { originPath: true },
           compute(attachment) {
-            return new URL(attachment.originPath, env.NEXT_PUBLIC_ASSET_URL)
+            return new URL(
+              attachment.originPath,
+              env.NEXT_PUBLIC_ASSET_URL,
+            ).toString()
+          },
+        },
+      },
+      aIFile: {
+        url: {
+          needs: { path: true },
+          compute(aIFile) {
+            return new URL(aIFile.path, env.NEXT_PUBLIC_ASSET_URL).toString()
           },
         },
       },

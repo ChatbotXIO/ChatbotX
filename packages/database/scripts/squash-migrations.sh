@@ -10,5 +10,6 @@ fi
 folder=$(date +%Y%m%d%H%M%S)_$1
 mkdir -p "prisma/migrations/$folder"
 
-prisma migrate diff --from-migrations prisma/migrations --shadow-database-url $DATABASE_URL --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/$folder/migration.sql
+
+prisma migrate diff --from-migrations prisma/migrations --to-schema-datasource prisma/schema.prisma --script > prisma/migrations/$folder/migration.sql
 prisma migrate resolve --applied $folder

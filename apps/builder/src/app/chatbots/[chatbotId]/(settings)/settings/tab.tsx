@@ -30,6 +30,10 @@ export function SettingsTab() {
         value: "admins",
       },
       {
+        label: t("inboxTeams.title"),
+        value: "inbox-teams",
+      },
+      {
         label: t("billing.title"),
         value: "billing",
       },

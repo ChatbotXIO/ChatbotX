@@ -14,7 +14,7 @@
     "@types/node": "^24.10.1",
     "ky": "^1.14.0",
     "partykit": "0.0.115",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

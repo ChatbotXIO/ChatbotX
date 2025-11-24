@@ -4,7 +4,7 @@ import { openAIModels } from "@/features/openai/models"
 
 export const createAIAgentRequest = z.object({
   name: z.string().trim().min(1).max(255),
-  prompt: z.string().trim().min(1).max(255),
+  prompt: z.string().trim().min(1).max(5000),
   messages: z.array(
     z.object({
       role: z.enum(["user", "assistant"]),
