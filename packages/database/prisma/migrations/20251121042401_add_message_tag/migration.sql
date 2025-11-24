@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "MessengerTag" AS ENUM ('CONFIRMED_EVENT_UPDATE', 'POST_PURCHASE_UPDATE', 'ACCOUNT_UPDATE', 'HUMAN_AGENT', 'CUSTOMER_FEEDBACK');
+
+-- AlterTable
+ALTER TABLE "Broadcast" ADD COLUMN     "messengerTag" "MessengerTag";

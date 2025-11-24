@@ -42,17 +42,15 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
-        cell: ({ cell }) => (
-          <div>{cell.getValue<BroadcastResource["name"]>()}</div>
-        ),
+        cell: ({ row }) => <div>{row.original.name ?? ""}</div>,
       },
       {
         id: "channel",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Channel" />
         ),
-        cell: ({ cell }) => (
-          <div>{cell.getValue<BroadcastResource["inboxType"]>()}</div>
+        cell: ({ row }) => (
+          <div>{t(`broadcasts.inboxType.${row.original.inboxType}`) ?? ""}</div>
         ),
       },
       {
@@ -60,8 +58,8 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Status" />
         ),
-        cell: ({ cell }) => (
-          <div>{cell.getValue<BroadcastResource["status"]>()}</div>
+        cell: ({ row }) => (
+          <div>{t(`broadcasts.status.${row.original.status}`) ?? ""}</div>
         ),
       },
       {
@@ -110,7 +108,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         enableHiding: false,
       },
     ],
-    [],
+    [t],
   )
 
   const { table } = useDataTable({

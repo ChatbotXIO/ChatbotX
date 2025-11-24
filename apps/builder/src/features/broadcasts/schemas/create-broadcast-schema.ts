@@ -2,6 +2,7 @@ import {
   BroadcastSchedulesType,
   BroadcastSubaction,
   InboxType,
+  MessengerTag,
 } from "@aha.chat/database/types"
 import { z } from "zod"
 
@@ -9,6 +10,7 @@ export const createBroadcastRequest = z.object({
   inboxType: z.enum(InboxType).nullable(),
   flowId: z.cuid2(),
   subaction: z.enum(BroadcastSubaction),
+  messengerTag: z.enum(MessengerTag).nullable(),
   schedulesType: z.enum(BroadcastSchedulesType),
   schedulesAt: z
     .string()

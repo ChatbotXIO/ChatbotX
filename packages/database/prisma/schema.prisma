@@ -899,6 +899,7 @@ model Broadcast {
   name          String
   inboxType     InboxType?
   subaction     BroadcastSubaction?
+  messengerTag  MessengerTag?
   status        BroadcastStatus
   schedulesType BroadcastSchedulesType
   schedulesAt   DateTime
@@ -1089,4 +1090,113 @@ enum BroadcastSubaction {
   templateMessage
   recentContacts
   allContacts
+  OTN
+}
+
+enum MessengerTag {
+  CONFIRMED_EVENT_UPDATE
+  POST_PURCHASE_UPDATE
+  ACCOUNT_UPDATE
+  HUMAN_AGENT
+  CUSTOMER_FEEDBACK
+}
+
+enum ConditionField {
+  language
+  fullName
+  country
+  continent
+  gender
+  subscribedToBroadcast
+  contactCreatedDate
+  contactCreatedDateMinutesAgo
+  source
+  conversationTransferredToHuman
+  interactedInLast24H
+  existingContact
+  isGuestUser
+  currentChannel
+  timezone
+  hasOpportunity
+  hasOpenOpportunity
+  hasWonOpportunity
+  hasLostOpportunity
+  followsBusinessOnInstagram
+  businessFollowsUserOnInstagram
+  verifiedAccountOnInstagram
+  followerCountOnInstagram
+  lastSent
+  lastDelivered
+  lastSeen
+  lastSeenMinutesAgo
+  lastInteraction
+  lastInteractionMinutesAgo
+  noAdminReply
+  tags
+  getDataFromJSON
+  messengerList
+  subscribedToDripCampaign
+  conversationAssigned
+  emptyPointsLinks
+  sentMessage
+  automatedResponseReceived
+  executedFlow
+  executedStep
+  questionnaireStarted
+  questionnaireInProgress
+  questionnaireFinished
+  votedOnThePoll
+  commentedOnThePost
+  phone
+  phoneWasVerified
+  optedInForSMS
+  broadcastSent
+  broadcastDelivered
+  broadcastSeen
+  broadcastClicked
+  broadcastFailed
+  email
+  emailWasVerified
+  optedInForEmail
+  emailSent
+  emailDelivered
+  emailOpened
+  emailClicked
+  bought
+  boughtTheItems
+  totalSpent
+  numberOfOrders
+  shoppingCartTotal
+  shoppingCartSubTotal
+  shoppingCartIsEmpty
+  shoppingCartContainsItems
+  lastUserInput
+  lastUserInputType
+}
+
+enum ConditionFieldType {
+  string
+  number
+  boolean
+  date
+  datetime
+  list
+  json
+}
+
+enum ConditionOperator {
+  is
+  isNot
+  hasAnyValue
+  hasNoValue
+  greaterThan
+  lessThan
+  greaterThanOrEqualTo
+  lessThanOrEqualTo
+  contains
+  doesNotContain
+  startsWith
+  endsWith
+  interval
+  notInterval
 }

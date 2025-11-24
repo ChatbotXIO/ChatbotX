@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@aha.chat/ui/components/ui/select"
+import type { Matcher } from "react-day-picker"
 
 // ---------- utils start ----------
 /**
@@ -520,7 +521,8 @@ type Granularity = "day" | "hour" | "minute" | "second"
 type DateTimePickerProps = {
   value?: Date
   onChange?: (date: Date | undefined) => void
-  disabled?: boolean
+  readonly?: boolean
+  disabled?: Matcher | Matcher[] | undefined;
   /** showing `AM/PM` or not. */
   hourCycle?: 12 | 24
   placeholder?: string
@@ -563,7 +565,8 @@ const DateTimePicker = ({
   onChange,
   hourCycle = 24,
   yearRange = 50,
-  disabled = false,
+  readonly = false,
+  disabled = undefined,
   displayFormat,
   granularity = "second",
   placeholder = "Pick a date",
@@ -649,7 +652,7 @@ const DateTimePicker = ({
 
   return (
     <Popover>
-      <PopoverTrigger asChild disabled={disabled}>
+      <PopoverTrigger asChild disabled={readonly}>
         <Button
           variant="outline"
           className={cn(
@@ -691,6 +694,7 @@ const DateTimePicker = ({
           onMonthChange={handleSelect}
           // yearRange={yearRange}
           locale={locale}
+          disabled={disabled}
           {...props}
         />
         {granularity !== "day" && (
