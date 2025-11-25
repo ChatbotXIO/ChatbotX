@@ -6,6 +6,7 @@ import {
   type Prisma,
   prisma,
 } from "@aha.chat/database"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -43,6 +44,8 @@ export const createBroadcastAction = chatbotActionClient
       ) {
         data.status = BroadcastStatus.sent
       }
+
+      // Calculate contacts to send broadcast
       const contacts = await prisma.contact.findMany({
         select: {
           id: true,
@@ -52,18 +55,28 @@ export const createBroadcastAction = chatbotActionClient
         },
       })
 
-      await prisma.broadcast.create({
-        data: {
-          ...data,
-          contacts: {
-            create: contacts.map((contact) => ({
-              contactId: contact.id,
-            })),
-          },
-        },
-      })
+      const broadcast = await prisma.$transaction(
+        async (tx) =>
+          await tx.broadcast.create({
+            data: {
+              ...data,
+              contacts: {
+                create: contacts.map((contact) => ({
+                  contactId: contact.id,
+                })),
+              },
+            },
+          }),
+      )
 
-      // TODO: add logic to send broadcast
+      if (broadcast.status === BroadcastStatus.sent) {
+        await integrationQueue.add(IntegrationJobAction.sendBroadcast, {
+          type: IntegrationJobAction.sendBroadcast,
+          data: {
+            broadcastId: broadcast.id,
+          },
+        })
+      }
 
       revalidateCacheTags(`chatbots:${chatbotId}#broadcasts`)
     },

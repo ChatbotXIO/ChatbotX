@@ -8,6 +8,7 @@ export const IntegrationJobAction = {
   RECEIVE_MESSAGE: "RECEIVE_MESSAGE",
   SEND_FLOW_POSTBACK: "SEND_FLOW_POSTBACK",
   TRIGGER_AUTOMATED_RESPONSE: "TRIGGER_AUTOMATED_RESPONSE",
+  sendBroadcast: "sendBroadcast",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -42,11 +43,19 @@ export type IntegrationJobTriggerAutomatedResponse = {
   }
 }
 
+export type IntegrationJobSendBroadcast = {
+  type: typeof IntegrationJobAction.sendBroadcast
+  data: {
+    broadcastId: string
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobSendFlow
   | IntegrationJobSendFlowPostback
   | IntegrationJobTriggerAutomatedResponse
+  | IntegrationJobSendBroadcast
 
 export const integrationQueue = new Queue<IntegrationJobData>(
   QueueName.integration,

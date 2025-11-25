@@ -138,7 +138,8 @@
     "inviteFeature": "Invite {feature}",
     "joinTheTeam": "Join the team",
     "chooseChannel": "Choose Channel",
-    "chooseSubaction": "Choose Subaction"
+    "chooseSubaction": "Choose Subaction",
+    "resend": "Resend"
   },
   "admins": {
     "title": "Admins"
@@ -401,6 +402,15 @@
     }
   },
   "fields": {
+    "omnichannel": {
+      "label": "Omnichannel"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "zalo": {
+      "label": "Zalo"
+    },
     "matchAll": {
       "label": "Match all the conditions below"
     },
@@ -1268,7 +1278,10 @@
     "signOutConfirmation": "Are you sure you want to sign out?",
     "unableToConnectFeature": "Unable to connect {feature}. Please send logs to developer team.",
     "copyInvitationUrlSuccess": "Copy the link below and send to the person that you want to add as admin.",
-    "noAIIntegrationFound": "No AI integration found. Please connect an AI integration to use AI agents."
+    "noAIIntegrationFound": "No AI integration found. Please connect an AI integration to use AI agents.",
+    "resendFeature": "Resend {feature}",
+    "resendFeatureDescription": "Resend the {feature} to the contacts that have not received it yet.",
+    "resendSuccess": "Resend successfully"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1453,21 +1466,6 @@
     "description": "This integration lets you create Zalo bots.",
     "title": "Zalo"
   },
-  "template_message": "Template Message",
-  "template_message_description": "Send WhatsApp template message to your contacts",
-  "active_contacts_within_24_hours": "Active contacts within 24 hours",
-  "active_contacts_within_24_hours_description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h.",
-  "send_to_all_contacts": "Send a flow to all contacts. You can send messages or executes actions.",
-  "otn_message": "OTN - One Time Notification",
-  "otn_message_description": "May contain promotions, and it will send only to people that subscribed to your Messenger list.",
-  "all_messages": "All Messages",
-  "all_messages_description": "Reach all your Messenger contacts. Your message must not be promotional and must follow the Messenger tags use case.",
-  "account_update": "Account Update",
-  "account_update_description": "Notify the user of a non-recurring change to their application or account.",
-  "confirmed_event_update": "Confirmed Event Update",
-  "confirmed_event_update_description": "Send the user reminders or updates for an event they have registered for (e.g., purchased tickets). This tag may be used for upcoming events and events in progress.",
-  "post_purchase_update": "Post-Purchase Update",
-  "post_purchase_update_description": "Notify the user of an update on a recent purchase. Confirmation of transaction, such as invoices or receipts, Notifications of shipment status, such as product in-transit, shipped, delivered, or delayed.",
   "invitation": {
     "title": "Invitation",
     "chatbotInvitationDescription1": "Join {chatbotName} on {organizationName}",
@@ -1477,22 +1475,5 @@
   },
   "inboxTeams": {
     "title": "Inbox Teams"
-  },
-  "now": "Now",
-  "schedule_for_later": "Schedule for later (All simultaneously)",
-  "template_message": "Template Message",
-  "template_message_description": "Send WhatsApp template message to your contacts",
-  "active_contacts_within_24_hours": "Active contacts within 24 hours",
-  "active_contacts_within_24_hours_description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h.",
-  "send_to_all_contacts": "Send a flow to all contacts. You can send messages or executes actions.",
-  "otn_message": "OTN - One Time Notification",
-  "otn_message_description": "May contain promotions, and it will send only to people that subscribed to your Messenger list.",
-  "all_messages": "All Messages",
-  "all_messages_description": "Reach all your Messenger contacts. Your message must not be promotional and must follow the Messenger tags use case.",
-  "account_update": "Account Update",
-  "account_update_description": "Notify the user of a non-recurring change to their application or account.",
-  "confirmed_event_update": "Confirmed Event Update",
-  "confirmed_event_update_description": "Send the user reminders or updates for an event they have registered for (e.g., purchased tickets). This tag may be used for upcoming events and events in progress.",
-  "post_purchase_update": "Post-Purchase Update",
-  "post_purchase_update_description": "Notify the user of an update on a recent purchase. Confirmation of transaction, such as invoices or receipts, Notifications of shipment status, such as product in-transit, shipped, delivered, or delayed."
+  }
 }

@@ -1,9 +1,13 @@
-import { BroadcastSubaction, Operator } from "@aha.chat/database/enums"
-import { BroadcastSchedulesType, InboxType } from "@aha.chat/database/types"
+import {
+  BroadcastInboxType,
+  BroadcastSubaction,
+  Operator,
+} from "@aha.chat/database/enums"
+import { BroadcastSchedulesType } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const createBroadcastRequest = z.object({
-  inboxType: z.enum(InboxType).nullable(),
+  inboxType: z.enum(BroadcastInboxType),
   flowId: z.cuid2(),
   subaction: z.enum(BroadcastSubaction),
   schedulesType: z.enum(BroadcastSchedulesType),

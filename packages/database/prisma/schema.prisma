@@ -907,8 +907,8 @@ model Broadcast {
   updatedAt DateTime @updatedAt
 
   name          String
-  inboxType     InboxType?
-  subaction     String
+  inboxType     String                 @default("omnichannel")
+  subaction     String                 @default("BSOO")
   status        BroadcastStatus
   schedulesType BroadcastSchedulesType
   schedulesAt   DateTime
@@ -925,6 +925,7 @@ model Broadcast {
   @@index([chatbotId])
   @@index([flowId])
   @@index([schedulesAt])
+  @@index([inboxType])
 }
 
 model ContactsOnBroadcasts {

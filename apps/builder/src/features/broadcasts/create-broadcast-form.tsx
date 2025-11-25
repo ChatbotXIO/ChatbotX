@@ -1,7 +1,11 @@
 "use client"
 
-import { BroadcastSubaction } from "@aha.chat/database/enums"
+import {
+  type BroadcastInboxType,
+  BroadcastSubaction,
+} from "@aha.chat/database/enums"
 import { BroadcastSchedulesType, InboxType } from "@aha.chat/database/types"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -33,8 +37,10 @@ import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import { ContactFilter } from "../contacts/components/contact-filter"
-import { FlowSelect } from "../flows/flow-select"
-import { FlowStoreProvider } from "../flows/provider/flow-store-context"
+import {
+  FlowStoreProvider,
+  useFlowStore,
+} from "../flows/provider/flow-store-context"
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   {
@@ -142,8 +148,8 @@ export function CreateBroadcastForm({ chatbotId }: { chatbotId: string }) {
       formProps: {
         mode: "onChange",
         defaultValues: {
-          inboxType: null,
-          flowId: "",
+          inboxType: undefined,
+          flowId: undefined,
           subaction: BroadcastSubaction.allContacts,
           schedulesType: BroadcastSchedulesType.now,
           schedulesAt: null,
@@ -247,7 +253,7 @@ function CreateBroadcastChooseChannel() {
 function CreateBroadcastChooseSubaction({
   inboxType,
 }: {
-  inboxType: InboxType
+  inboxType: BroadcastInboxType
 }) {
   const t = useTranslations()
   const { setValue } = useFormContext()
@@ -331,6 +337,8 @@ function CreateBroadcastChooseFlow() {
     [t],
   )
 
+  const { flows } = useFlowStore((state) => state)
+
   const { control, setValue, formState } = useFormContext()
   const watchedSchedulesType = useWatch({ control, name: "schedulesType" })
 
@@ -363,9 +371,13 @@ function CreateBroadcastChooseFlow() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6">
-        <FlowSelect
+        <ComboboxField
           label={t("fields.flowId.label")}
           name="flowId"
+          options={flows.map((flow) => ({
+            label: flow.name,
+            value: flow.id,
+          }))}
           required={true}
         />
 

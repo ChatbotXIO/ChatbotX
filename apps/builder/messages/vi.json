@@ -136,7 +136,10 @@
     "scanQRCode": "Quét tôi bằng camera của bạn",
     "inviteFeature": "Mời {feature}",
     "joinTheTeam": "Tham gia nhóm",
-    "copy": "Sao chép"
+    "copy": "Sao chép",
+    "chooseChannel": "Chọn kênh",
+    "chooseSubaction": "Chọn hành động phụ",
+    "resend": "Gửi lại"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -225,6 +228,127 @@
     "scheduleSendMessage": "Lên lịch gửi tin nhắn",
     "update": {
       "title": "Cập nhật phát sóng"
+    },
+    "inboxType": {
+      "messenger": "Messenger",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo"
+    },
+    "status": {
+      "scheduled": "Đã lên lịch",
+      "sent": "Đã gửi"
+    },
+    "messengerList": {
+      "title": "Danh sách Messenger",
+      "description": "Có thể chứa khuyến mãi và sẽ chỉ gửi cho những người đã đăng ký danh sách Messenger của bạn."
+    },
+    "messengerActiveContacts": {
+      "title": "Liên hệ Messenger hoạt động",
+      "description": "Có thể chứa khuyến mãi và sẽ chỉ được gửi cho người dùng đã nhắn tin cho bot của bạn trong vòng 24 giờ qua."
+    },
+    "messengerAccountUpdate": {
+      "title": "Cập nhật tài khoản Messenger",
+      "description": "Thông báo cho người dùng về thay đổi không định kỳ đối với ứng dụng hoặc tài khoản của họ."
+    },
+    "messengerConfirmedEventUpdate": {
+      "title": "Cập nhật sự kiện đã xác nhận Messenger",
+      "description": "Gửi cho người dùng lời nhắc hoặc cập nhật cho sự kiện mà họ đã đăng ký (ví dụ: mua vé). Thẻ này có thể được sử dụng cho các sự kiện sắp tới và các sự kiện đang diễn ra."
+    },
+    "messengerPostPurchaseUpdate": {
+      "title": "Cập nhật sau mua hàng Messenger",
+      "description": "Thông báo cho người dùng về cập nhật về giao dịch mua gần đây. Xác nhận giao dịch, chẳng hạn như hóa đơn hoặc biên lai, Thông báo về trạng thái vận chuyển, chẳng hạn như sản phẩm đang vận chuyển, đã gửi, đã giao hoặc bị trì hoãn."
+    },
+    "allContacts": {
+      "title": "Tất cả liên hệ",
+      "description": "Gửi luồng đến tất cả liên hệ."
+    },
+    "details": "Chi tiết phát sóng"
+  },
+  "condition": {
+    "add": "Thêm điều kiện",
+    "title": "Điều kiện",
+    "fields": {
+      "language": "Ngôn ngữ",
+      "fullName": "Họ và tên",
+      "country": "Quốc gia",
+      "continent": "Lục địa",
+      "gender": "Giới tính",
+      "subscribedToBroadcast": "Đã đăng ký phát sóng",
+      "contactCreatedDate": "Ngày tạo liên hệ",
+      "contactCreatedDateMinutesAgo": "Ngày tạo liên hệ (phút trước)",
+      "source": "Nguồn",
+      "conversationTransferredToHuman": "Cuộc trò chuyện đã chuyển cho người",
+      "interactedInLast24H": "Đã tương tác trong 24 giờ qua",
+      "existingContact": "Liên hệ hiện có",
+      "isGuestUser": "Là người dùng khách",
+      "currentChannel": "Kênh hiện tại",
+      "timezone": "Múi giờ",
+      "hasOpportunity": "Có cơ hội",
+      "hasOpenOpportunity": "Có cơ hội mở",
+      "hasWonOpportunity": "Có cơ hội thắng",
+      "hasLostOpportunity": "Có cơ hội thua",
+      "followsBusinessOnInstagram": "Theo dõi doanh nghiệp trên Instagram",
+      "businessFollowsUserOnInstagram": "Doanh nghiệp theo dõi người dùng trên Instagram",
+      "verifiedAccountOnInstagram": "Tài khoản đã xác minh trên Instagram",
+      "followerCountOnInstagram": "Số người theo dõi trên Instagram",
+      "lastSent": "Lần gửi cuối",
+      "lastDelivered": "Lần giao cuối",
+      "lastSeen": "Lần xem cuối",
+      "lastSeenMinutesAgo": "Lần xem cuối (phút trước)",
+      "lastInteraction": "Tương tác cuối",
+      "lastInteractionMinutesAgo": "Tương tác cuối (phút trước)",
+      "noAdminReply": "Không có phản hồi quản trị viên",
+      "tags": "Thẻ",
+      "getDataFromJSON": "Lấy dữ liệu từ JSON",
+      "messengerList": "Danh sách Messenger",
+      "subscribedToDripCampaign": "Đã đăng ký chiến dịch nhỏ giọt",
+      "conversationAssigned": "Cuộc trò chuyện đã được gán",
+      "emptyPointsLinks": "Liên kết điểm trống",
+      "sentMessage": "Đã gửi tin nhắn",
+      "automatedResponseReceived": "Đã nhận phản hồi tự động",
+      "executedFlow": "Đã thực thi luồng",
+      "executedStep": "Đã thực thi bước",
+      "questionnaireStarted": "Đã bắt đầu bảng câu hỏi",
+      "questionnaireInProgress": "Bảng câu hỏi đang tiến hành",
+      "questionnaireFinished": "Đã hoàn thành bảng câu hỏi",
+      "votedOnThePoll": "Đã bình chọn",
+      "commentedOnThePost": "Đã bình luận bài đăng",
+      "phone": "Số điện thoại",
+      "phoneWasVerified": "Số điện thoại đã được xác minh",
+      "optedInForSMS": "Đã đăng ký nhận SMS",
+      "broadcastSent": "Đã gửi phát sóng",
+      "broadcastDelivered": "Đã giao phát sóng",
+      "broadcastSeen": "Đã xem phát sóng",
+      "broadcastClicked": "Đã nhấp phát sóng",
+      "broadcastFailed": "Phát sóng thất bại",
+      "email": "Email",
+      "emailWasVerified": "Email đã được xác minh",
+      "optedInForEmail": "Đã đăng ký nhận email",
+      "emailSent": "Đã gửi email",
+      "emailDelivered": "Đã giao email",
+      "emailOpened": "Đã mở email",
+      "emailClicked": "Đã nhấp email",
+      "bought": "Đã mua",
+      "boughtTheItems": "Đã mua các mặt hàng",
+      "totalSpent": "Tổng chi tiêu",
+      "numberOfOrders": "Số đơn hàng",
+      "shoppingCartTotal": "Tổng giỏ hàng",
+      "shoppingCartSubTotal": "Tổng phụ giỏ hàng",
+      "shoppingCartIsEmpty": "Giỏ hàng trống",
+      "shoppingCartContainsItems": "Giỏ hàng chứa mặt hàng",
+      "lastUserInput": "Đầu vào người dùng cuối",
+      "lastUserInputType": "Loại đầu vào người dùng cuối"
+    },
+    "groups": {
+      "instagram": "Instagram",
+      "analysis": "Phân tích",
+      "facebookInstagramComment": "Bình luận Facebook & Instagram",
+      "sms": "SMS",
+      "broadcastWhatsApp": "Phát sóng WhatsApp",
+      "email": "Email",
+      "ecommerce": "Thương mại điện tử",
+      "customFields": "Trường tùy chỉnh",
+      "systemFields": "Trường hệ thống"
     }
   },
   "channel": {
@@ -279,6 +403,47 @@
     }
   },
   "fields": {
+    "omnichannel": {
+      "label": "Đa kênh"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "zalo": {
+      "label": "Zalo"
+    },
+    "matchAll": {
+      "label": "Khớp tất cả các điều kiện bên dưới"
+    },
+    "matchAny": {
+      "label": "Khớp một trong các điều kiện bên dưới"
+    },
+    "condition": {
+      "label": "Điều kiện"
+    },
+    "operator": {
+      "label": "Toán tử",
+      "is": "Là",
+      "isNot": "Không phải",
+      "hasAnyValue": "Có bất kỳ giá trị nào",
+      "hasNoValue": "Không có giá trị",
+      "greaterThan": "Lớn hơn",
+      "lessThan": "Nhỏ hơn",
+      "greaterThanOrEqualTo": "Lớn hơn hoặc bằng",
+      "lessThanOrEqualTo": "Nhỏ hơn hoặc bằng",
+      "contains": "Chứa",
+      "doesNotContain": "Không chứa",
+      "startsWith": "Bắt đầu bằng",
+      "endsWith": "Kết thúc bằng",
+      "interval": "Khoảng",
+      "notInterval": "Không phải khoảng"
+    },
+    "contactFilter": {
+      "label": "Bộ lọc liên hệ"
+    },
+    "chooseTime": {
+      "label": "Chọn thời gian"
+    },
     "accessToken": {
       "label": "Token truy cập"
     },
@@ -864,6 +1029,11 @@
     },
     "member": {
       "label": "Thành viên"
+    },
+    "schedule": {
+      "label": "Lịch trình",
+      "now": "Ngay bây giờ",
+      "scheduled": "Lên lịch cho sau"
     }
   },
   "flows": {
@@ -1094,7 +1264,10 @@
     "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
     "unableToConnectFeature": "Không thể kết nối {feature}. Vui lòng gửi nhật ký cho nhóm phát triển.",
     "copyInvitationUrlSuccess": "Sao chép liên kết bên dưới và gửi cho người mà bạn muốn thêm làm quản trị viên.",
-    "noAIIntegrationFound": "Không tìm thấy tích hợp AI. Vui lòng kết nối tích hợp AI để sử dụng AI agents."
+    "noAIIntegrationFound": "Không tìm thấy tích hợp AI. Vui lòng kết nối tích hợp AI để sử dụng AI agents.",
+    "resendFeature": "Gửi lại {feature}",
+    "resendFeatureDescription": "Gửi lại {feature} cho các liên hệ chưa nhận được.",
+    "resendSuccess": "Gửi lại thành công"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",

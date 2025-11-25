@@ -1,0 +1,82 @@
+"use client"
+
+import type { BroadcastModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@aha.chat/ui/components/ui/dialog"
+import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
+import { toast } from "sonner"
+import { resendBroadcastAction } from "./actions/resend-broadcast.action"
+
+export function ResendBroadcastDialog({
+  broadcast,
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (val: boolean) => void
+  broadcast: BroadcastModel | null
+}) {
+  const t = useTranslations()
+  const router = useRouter()
+
+  const { execute, isPending } = useAction(
+    resendBroadcastAction.bind(
+      null,
+      broadcast?.chatbotId ?? "",
+      broadcast?.id ?? "",
+    ),
+    {
+      onSuccess: () => {
+        toast.success(t("messages.resendSuccess"))
+        onOpenChange(false)
+        router.refresh()
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
+  )
+
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+        <DialogHeader>
+          <DialogTitle>
+            {t("messages.resendFeature", {
+              feature: t("fields.broadcast.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("messages.resendFeatureDescription", {
+              feature: t("fields.broadcast.label"),
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="justify-end">
+          <DialogClose asChild>
+            <Button size="sm" type="button" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
+          </DialogClose>
+          <Button disabled={isPending} onClick={() => execute()} size="sm">
+            {isPending && <Loader2Icon className="animate-spin" />}
+            {t("actions.confirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

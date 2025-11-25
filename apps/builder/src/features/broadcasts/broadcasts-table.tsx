@@ -1,8 +1,10 @@
 "use client"
 
+import { BroadcastStatus } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Badge } from "@aha.chat/ui/components/ui/badge"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -11,16 +13,22 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
-import { formatDate } from "@aha.chat/ui/lib/format"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontalIcon, PlusIcon } from "lucide-react"
+import { format } from "date-fns"
+import {
+  MoreHorizontalIcon,
+  PencilIcon,
+  PlusIcon,
+  RotateCwIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
+import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResource } from "./schemas/get-broadcasts-schema"
 
 type BroadcastsTableProps = {
@@ -50,7 +58,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           <DataTableColumnHeader column={column} title="Channel" />
         ),
         cell: ({ row }) => (
-          <div>{t(`broadcasts.inboxType.${row.original.inboxType}`) ?? ""}</div>
+          <div>{t(`fields.${row.original.inboxType}.label`)}</div>
         ),
       },
       {
@@ -58,9 +66,16 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Status" />
         ),
-        cell: ({ row }) => (
-          <div>{t(`broadcasts.status.${row.original.status}`) ?? ""}</div>
-        ),
+        cell: ({ row }) =>
+          row.original.status === BroadcastStatus.scheduled ? (
+            <Badge variant="outline">
+              {t(`broadcasts.status.${row.original.status}`)}
+            </Badge>
+          ) : (
+            <Badge variant="default">
+              {t(`broadcasts.status.${row.original.status}`)}
+            </Badge>
+          ),
       },
       {
         accessorKey: "estimatedContacts",
@@ -72,9 +87,11 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       {
         accessorKey: "schedulesAt",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Date" />
+          <DataTableColumnHeader column={column} title="Schedules at" />
         ),
-        cell: ({ row }) => <div>{formatDate(row.original.schedulesAt)}</div>,
+        cell: ({ row }) => (
+          <div>{format(row.original.schedulesAt, "yyyy/MM/dd HH:mm")}</div>
+        ),
         enableSorting: false,
         enableHiding: false,
       },
@@ -93,12 +110,14 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "rename" })}
               >
-                Rename
+                <PencilIcon className="mr-2" />
+                {t("actions.rename")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "resend" })}
               >
-                Resend
+                <RotateCwIcon className="mr-2" />
+                {t("actions.resend")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -145,6 +164,12 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         broadcast={rowAction?.row.original || null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "rename"}
+      />
+
+      <ResendBroadcastDialog
+        broadcast={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "resend"}
       />
     </>
   )
