@@ -48,9 +48,9 @@ const StartExternalNodeStepEditor = ({
           allowClear
           label={t("fields.flow.label")}
           name={`${parentName}.flowId`}
-          onSelectChange={onFlowChange}
           options={flowOptions}
           required={true}
+          triggerValueChange={onFlowChange}
         />
 
         <SelectField
