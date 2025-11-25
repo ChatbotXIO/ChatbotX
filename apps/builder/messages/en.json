@@ -136,7 +136,9 @@
     "connectFeature": "Connect {feature}",
     "scanQRCode": "Scan me with your camera",
     "inviteFeature": "Invite {feature}",
-    "joinTheTeam": "Join the team"
+    "joinTheTeam": "Join the team",
+    "chooseChannel": "Choose Channel",
+    "chooseSubaction": "Choose Subaction"
   },
   "admins": {
     "title": "Admins"
@@ -222,7 +224,6 @@
     "title": "Billing"
   },
   "broadcasts": {
-    "scheduleSendMessage": "Schedule send message",
     "update": {
       "title": "Update Broadcast"
     },
@@ -234,7 +235,32 @@
     "status": {
       "scheduled": "Scheduled",
       "sent": "Sent"
-    }
+    },
+    "messengerList": {
+      "title": "Messenger List",
+      "description": "May contain promotions, and it will send only to people that subscribed to your Messenger list."
+    },
+    "messengerActiveContacts": {
+      "title": "Messenger Active Contacts",
+      "description": "May contain promotions and will only be sent to users who messaged your bot within the last 24h."
+    },
+    "messengerAccountUpdate": {
+      "title": "Messenger Account Update",
+      "description": "Notify the user of a non-recurring change to their application or account."
+    },
+    "messengerConfirmedEventUpdate": {
+      "title": "Messenger Confirmed Event Update",
+      "description": "Send the user reminders or updates for an event they have registered for (e.g., purchased tickets). This tag may be used for upcoming events and events in progress."
+    },
+    "messengerPostPurchaseUpdate": {
+      "title": "Messenger Post Purchase Update",
+      "description": "Notify the user of an update on a recent purchase. Confirmation of transaction, such as invoices or receipts, Notifications of shipment status, such as product in-transit, shipped, delivered, or delayed."
+    },
+    "allContacts": {
+      "title": "All Contacts",
+      "description": "Send a flow to all contacts."
+    },
+    "details": "Broadcast Details"
   },
   "condition": {
     "add": "Add Condition",
@@ -311,22 +337,6 @@
       "lastUserInput": "Last user input",
       "lastUserInputType": "Last user input type"
     },
-    "operators": {
-      "is": "Is",
-      "isNot": "Is not",
-      "hasAnyValue": "Has any value",
-      "hasNoValue": "Has no value",
-      "greaterThan": "Greater than",
-      "lessThan": "Less than",
-      "greaterThanOrEqualTo": "Greater than or equal to",
-      "lessThanOrEqualTo": "Less than or equal to",
-      "contains": "Contains",
-      "doesNotContain": "Does not contain",
-      "startsWith": "Starts with",
-      "endsWith": "Ends with",
-      "interval": "Interval",
-      "notInterval": "Not interval"
-    },
     "groups": {
       "instagram": "Instagram",
       "analysis": "Analysis",
@@ -391,6 +401,53 @@
     }
   },
   "fields": {
+    "matchAll": {
+      "label": "Match all the conditions below"
+    },
+    "matchAny": {
+      "label": "Match one of the conditions below"
+    },
+    "condition": {
+      "label": "Condition"
+    },
+    "operator": {
+      "label": "Operator",
+      "is": "Is",
+      "isNot": "Is not",
+      "hasAnyValue": "Has any value",
+      "hasNoValue": "Has no value",
+      "greaterThan": "Greater than",
+      "lessThan": "Less than",
+      "greaterThanOrEqualTo": "Greater than or equal to",
+      "lessThanOrEqualTo": "Less than or equal to",
+      "contains": "Contains",
+      "doesNotContain": "Does not contain",
+      "startsWith": "Starts with",
+      "endsWith": "Ends with",
+      "interval": "Interval",
+      "notInterval": "Not interval"
+    },
+    "contactFilter": {
+      "label": "Contact filter"
+    },
+    "chooseTime": {
+      "label": "Choose time"
+    },
+    "fullName": {
+      "label": "Full name"
+    },
+    "continent": {
+      "label": "Continent"
+    },
+    "subscribedToBroadcast": {
+      "label": "Subscribed to broadcast"
+    },
+    "createdAtMinutesAgo": {
+      "label": "Created at (minutes ago)"
+    },
+    "source": {
+      "label": "Source"
+    },
     "notificationType": {
       "label": "Notification Type",
       "notifyAdmin": "Notify Admin",
@@ -976,6 +1033,11 @@
     },
     "member": {
       "label": "Member"
+    },
+    "schedule": {
+      "label": "Schedule",
+      "now": "Now",
+      "scheduled": "Schedule for later"
     }
   },
   "flows": {

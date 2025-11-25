@@ -62,7 +62,7 @@ export const SpreadsheetGetRandomRowEditor = ({
         <div className="flex flex-col gap-4">
           <SpreadsheetSelect
             name="spreadsheetId"
-            onSelectChange={onChangeSpreadsheet}
+            triggerValueChange={onChangeSpreadsheet}
           />
           {spreadsheetId && (
             <WorksheetSelect name="sheetName" spreadsheetId={spreadsheetId} />

@@ -79,7 +79,11 @@ export function RenameBroadcastDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>{t("broadcasts.update.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.editFeature", {
+              feature: t("fields.broadcast.label"),
+            })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
