@@ -39,8 +39,7 @@
     "ioredis": "^5.8.2",
     "ky": "^1.14.0",
     "mammoth": "^1.11.0",
-    "pdf-parse": "^2.4.5",
-    "pdfjs-dist": "^5.4.296",
+    "pdf-parse-new": "^1.4.1",
     "remeda": "^2.32.0",
     "remove-markdown": "^0.6.2",
     "xlsx": "^0.18.5"

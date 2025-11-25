@@ -3,11 +3,10 @@ import { TextDecoder } from "node:util"
 import { uploader } from "@aha.chat/filesystem"
 import { htmlToText } from "html-to-text"
 import { extractRawText } from "mammoth"
-import { PDFParse } from "pdf-parse"
+import pdfParse from "pdf-parse-new"
 import removeMd from "remove-markdown"
 import { read, utils } from "xlsx"
 import { logger } from "../../lib/logger"
-import "pdfjs-dist/legacy/build/pdf.worker.mjs"
 
 function normalizeWhitespace(input: string): string {
   let out = ""
@@ -39,11 +38,9 @@ async function streamToBuffer(
 
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
-    const parser = new PDFParse({ data: buffer })
-    const { text } = await parser.getText()
-    await parser.destroy()
+    const parser = await pdfParse(buffer)
 
-    return text
+    return parser.text
   } catch (error) {
     logger.warn("PDF parsing failed, falling back to plain text", { error })
     throw new Error("PDF parsing failed")
