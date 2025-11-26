@@ -149,6 +149,9 @@ importers:
       countries-and-timezones:
         specifier: ^3.8.0
         version: 3.8.0
+      countries-list:
+        specifier: ^3.2.0
+        version: 3.2.0
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -4712,6 +4715,9 @@ packages:
   countries-and-timezones@3.8.0:
     resolution: {integrity: sha512-+Ze9h5f4dQpUwbzTm0DEkiPiZyim9VHV4/mSnT4zNYJnrnfwsKjAZPtnp7J5VzejCDgySs+2SSc6MDdCnD43GA==}
     engines: {node: '>=8.x', npm: '>=5.x'}
+
+  countries-list@3.2.0:
+    resolution: {integrity: sha512-HYHAo2fwEsG3TmbsNdVmIQPHizRlqeYMTtLEAl0IANG/3jRYX7p3NR6VapDqKP0n60TmsRy1dyRjVN5JbywDbA==}
 
   crc-32@1.2.2:
     resolution: {integrity: sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ==}
@@ -11396,6 +11402,8 @@ snapshots:
       vary: 1.1.2
 
   countries-and-timezones@3.8.0: {}
+
+  countries-list@3.2.0: {}
 
   crc-32@1.2.2: {}
 
