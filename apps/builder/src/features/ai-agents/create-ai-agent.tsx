@@ -138,7 +138,7 @@ export function CreateAIAgentDialog({
             models: [
               {
                 provider: "gemini",
-                model: "gemini-2.5-pro",
+                model: "gemini-3-pro-preview",
               },
               {
                 provider: "openAI",

@@ -1,4 +1,5 @@
 export const geminiModels = {
+  gemini3ProPreview: "gemini-3-pro-preview",
   gemini25Flash: "gemini-2.5-flash",
   gemini25Pro: "gemini-2.5-pro",
 } as const
