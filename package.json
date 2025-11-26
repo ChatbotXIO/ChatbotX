@@ -13,9 +13,9 @@
   "devDependencies": {
     "@biomejs/biome": "^2.3.7",
     "@types/node": "^24.10.1",
-    "knip": "^5.70.1",
+    "knip": "^5.70.2",
     "lefthook": "^2.0.4",
-    "prisma": "7.0.0",
+    "prisma": "7.0.1",
     "tsx": "^4.20.6",
     "turbo": "^2.6.1",
     "typescript": "5.9.3",

@@ -6,7 +6,10 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { type UpdateGeminiRequest, updateGeminiRequest } from "../schemas"
+import {
+  type UpdateGeminiRequest,
+  updateGeminiRequest,
+} from "../schemas/request"
 
 export const updateGeminiAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

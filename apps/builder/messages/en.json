@@ -139,7 +139,8 @@
     "joinTheTeam": "Join the team",
     "chooseChannel": "Choose Channel",
     "chooseSubaction": "Choose Subaction",
-    "resend": "Resend"
+    "resend": "Resend",
+    "publish": "Publish"
   },
   "admins": {
     "title": "Admins"
@@ -1281,7 +1282,10 @@
     "noAIIntegrationFound": "No AI integration found. Please connect an AI integration to use AI agents.",
     "resendFeature": "Resend {feature}",
     "resendFeatureDescription": "Resend the {feature} to the contacts that have not received it yet.",
-    "resendSuccess": "Resend successfully"
+    "resendSuccess": "Resend successfully",
+    "duplicateTitle": "Duplicate {feature}",
+    "duplicateDescription": "Are you sure you want to duplicate the {feature}?\nThis action cannot be undone.",
+    "duplicateSuccess": "{feature} duplicated successfully"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

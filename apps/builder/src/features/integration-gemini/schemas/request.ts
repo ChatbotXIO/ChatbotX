@@ -1,10 +1,11 @@
-import type { IntegrationGeminiModel } from "@aha.chat/database/types"
 import { z } from "zod"
-
-export type IntegrationGeminiResource = IntegrationGeminiModel
+import { geminiModels } from "@/features/integration-gemini/schemas/models"
 
 export const connectGeminiRequest = z.object({
   apiKey: z.string(),
+  model: z.enum(geminiModels).default(geminiModels.gemini25Flash),
+  temperature: z.number().min(0).max(1).default(0.4),
+  maxTokens: z.number().min(1).default(1024),
 })
 export type ConnectGeminiRequest = z.infer<typeof connectGeminiRequest>
 

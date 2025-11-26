@@ -505,8 +505,9 @@ model Integration {
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
-  openAI       IntegrationOpenAI?
-  googleSheets IntegrationGoogleSheets?
+  openAI            IntegrationOpenAI?
+  googleSheets      IntegrationGoogleSheets?
+  integrationGemini IntegrationGemini?
 
   @@index([chatbotId])
 }
@@ -708,11 +709,18 @@ model IntegrationGemini {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  auth      Json?
-  autoReply Boolean @default(false)
+  auth        Json
+  autoReply   Boolean @default(false)
+  prompt      String?
+  model       String
+  temperature Float
+  maxTokens   Int
 
   chatbotId String  @unique
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  integrationId String      @unique
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model IntegrationMessenger {

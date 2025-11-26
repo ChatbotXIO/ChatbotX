@@ -27,6 +27,7 @@ type DeleteFlowsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
+  successHandler?: () => void
 }
 
 export function DeleteFlowsDialog({
@@ -35,6 +36,7 @@ export function DeleteFlowsDialog({
   showTrigger = true,
   onSuccess,
   onOpenChange,
+  successHandler,
   ...props
 }: DeleteFlowsDialogProps) {
   const t = useTranslations()
@@ -50,7 +52,12 @@ export function DeleteFlowsDialog({
           }),
         )
         onOpenChange(false)
-        router.refresh()
+
+        if (successHandler) {
+          successHandler()
+        } else {
+          router.refresh()
+        }
       },
       onError: ({ error }) => {
         if (error.serverError) {

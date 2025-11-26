@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { SiWhatsapp, SiWhatsappHex } from "@icons-pack/react-simple-icons"
+import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -35,8 +36,10 @@ export default function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
         </p>
         <WhastappQRCodeDiaglog
           displayPhoneNumber={
-            (inbox.integrationWhatsapp?.auth as WhatsappAuthValue).metadata
-              .phoneNumber.display_phone_number ?? ""
+            parsePhoneNumberFromString(
+              (inbox.integrationWhatsapp?.auth as WhatsappAuthValue).metadata
+                .phoneNumber.display_phone_number ?? "",
+            )?.number.replace("+", "") ?? ""
           }
         />
       </CardContent>

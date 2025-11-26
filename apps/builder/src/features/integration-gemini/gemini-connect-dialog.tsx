@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { connectGeminiAction } from "./actions/connect.action"
-import { connectGeminiRequest } from "./schemas"
+import { connectGeminiRequest } from "./schemas/request"
 
 export const GeminiConnectDialog = () => {
   const [open, setOpen] = useState(false)
@@ -36,6 +36,11 @@ export const GeminiConnectDialog = () => {
     {
       actionProps: {
         onSuccess: () => {
+          toast.success(
+            t("messages.connectedSuccess", {
+              feature: t("fields.gemini.label"),
+            }),
+          )
           setOpen(false)
           router.refresh()
         },
@@ -72,7 +77,11 @@ export const GeminiConnectDialog = () => {
         </DialogHeader>
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("fields.apiKey.label")} name="apiKey" />
+            <InputField
+              label={t("fields.apiKey.label")}
+              name="apiKey"
+              required
+            />
 
             <DialogFooter>
               <DialogClose asChild>

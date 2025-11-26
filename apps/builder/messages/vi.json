@@ -139,7 +139,8 @@
     "copy": "Sao chép",
     "chooseChannel": "Chọn kênh",
     "chooseSubaction": "Chọn hành động phụ",
-    "resend": "Gửi lại"
+    "resend": "Gửi lại",
+    "publish": "Xuất bản"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -443,6 +444,21 @@
     },
     "chooseTime": {
       "label": "Chọn thời gian"
+    },
+    "fullName": {
+      "label": "Họ và tên"
+    },
+    "continent": {
+      "label": "Lục địa"
+    },
+    "subscribedToBroadcast": {
+      "label": "Đã đăng ký phát sóng"
+    },
+    "createdAtMinutesAgo": {
+      "label": "Tạo lúc (phút trước)"
+    },
+    "source": {
+      "label": "Nguồn"
     },
     "accessToken": {
       "label": "Token truy cập"
@@ -1267,7 +1283,10 @@
     "noAIIntegrationFound": "Không tìm thấy tích hợp AI. Vui lòng kết nối tích hợp AI để sử dụng AI agents.",
     "resendFeature": "Gửi lại {feature}",
     "resendFeatureDescription": "Gửi lại {feature} cho các liên hệ chưa nhận được.",
-    "resendSuccess": "Gửi lại thành công"
+    "resendSuccess": "Gửi lại thành công",
+    "duplicateTitle": "Nhân bản {feature}",
+    "duplicateDescription": "Bạn có chắc chắn muốn nhân bản {feature}?\nHành động này không thể hoàn tác.",
+    "duplicateSuccess": "Đã nhân bản {feature} thành công"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",

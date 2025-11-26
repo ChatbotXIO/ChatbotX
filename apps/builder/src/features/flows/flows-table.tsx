@@ -11,7 +11,7 @@ import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import { getFlowColumns } from "./flows-table-columns"
 import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
 import type { getFlows } from "./queries"
-import { RenameFlowDialog } from "./rename-flow-dialog"
+import { RenameFlowDialog } from "./react-flow/components/rename-flow"
 import type { FlowResource } from "./schemas/get-flows-schema"
 
 type FlowsTableProps = {

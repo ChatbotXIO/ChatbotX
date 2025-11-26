@@ -42,23 +42,23 @@ export const GeminiDisconnectDialog = () => {
           {t("actions.disconnect")}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("dialog.disconnect.title", {
               feature: t("fields.gemini.label"),
             })}
           </DialogTitle>
-          <DialogDescription />
+          <DialogDescription>
+            {t("dialog.disconnect.description", {
+              feature: t("fields.gemini.label"),
+            })}
+          </DialogDescription>
         </DialogHeader>
-
-        {t("dialog.disconnect.description", {
-          feature: t("fields.gemini.label"),
-        })}
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="secondary">
+            <Button size="sm" type="button" variant="ghost">
               {t("actions.cancel")}
             </Button>
           </DialogClose>
@@ -68,6 +68,7 @@ export const GeminiDisconnectDialog = () => {
             onClick={() => {
               execute()
             }}
+            size="sm"
             variant="destructive"
           >
             {isPending && <Loader2Icon className="animate-spin" />}

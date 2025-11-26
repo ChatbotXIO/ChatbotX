@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import type { IntegrationGeminiResource } from "../schemas"
+import type { IntegrationGeminiResource } from "../schemas/resource"
 
 export const findIntegrationGemini = async ({
   chatbotId,

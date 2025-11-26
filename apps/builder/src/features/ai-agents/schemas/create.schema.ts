@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { GEMINI_MODELS } from "@/features/gemini/models"
+import { geminiModels } from "@/features/integration-gemini/schemas/models"
 import { openAIModels } from "@/features/openai/models"
 
 export const createAIAgentRequest = z.object({
@@ -15,7 +15,7 @@ export const createAIAgentRequest = z.object({
     z.discriminatedUnion("provider", [
       z.object({
         provider: z.literal("gemini"),
-        model: z.enum(Object.keys(GEMINI_MODELS) as [string, ...string[]]),
+        model: z.enum(geminiModels),
       }),
       z.object({
         provider: z.literal("openAI"),
