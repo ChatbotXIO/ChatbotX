@@ -3,13 +3,15 @@ import { integrationQueue } from "@aha.chat/worker-config"
 import type { NextRequest } from "next/server"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"
+import { getDomainFromHeader } from "@/lib/domain"
 
 export const handleWebhook = async (
   integrationName: string,
   req: NextRequest,
 ) => {
+  const domain = await getDomainFromHeader()
   const organization = await findOrganization({
-    domain: req.nextUrl.hostname,
+    domain,
   })
   const organizationSettings =
     organization?.settings as unknown as OrganizationSettings

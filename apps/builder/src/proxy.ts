@@ -3,7 +3,13 @@ import { headers } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 
+const publicRoutes = ["/integrations"]
+
 export async function proxy(request: NextRequest) {
+  if (isPublicRoute(request.nextUrl.pathname)) {
+    return attachProxyUrl(request)
+  }
+
   const cookies = getSessionCookie(request)
 
   const fallbackSigninUrl = new URL("/signin", request.url)
@@ -21,6 +27,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(fallbackSigninUrl)
   }
 
+  return attachProxyUrl(request)
+}
+
+function attachProxyUrl(request: NextRequest): NextResponse {
   // Calculate proxy url
   const host =
     request.headers.get("x-forwarded-host") || request.headers.get("host")
@@ -37,8 +47,17 @@ export async function proxy(request: NextRequest) {
   })
 }
 
+function isPublicRoute(pathname: string) {
+  for (const route of publicRoutes) {
+    if (pathname.startsWith(route)) {
+      return true
+    }
+  }
+  return false
+}
+
 export const config = {
   matcher: [
-    "/((?!api|webchat|signin|integrations|zalo_verifier|pricing|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
+    "/((?!api|webchat|signin|zalo_verifier|pricing|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
   ],
 }

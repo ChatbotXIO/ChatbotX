@@ -1,5 +1,4 @@
 import { InboxType, type OrganizationSettings } from "@aha.chat/database/types"
-import { headers } from "next/headers"
 import { Suspense } from "react"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { MessengerConnect } from "@/features/integration-messenger/components/messenger-connect"
@@ -7,6 +6,7 @@ import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-
 import { ZaloConnect } from "@/features/integration-zalo/components/zalo-connect"
 import { findOrganizationSettings } from "@/features/organization/queries"
 import { SimpleCreateWebchat } from "@/features/webchat/simple-create-webchat"
+import { getDomainFromHeader } from "@/lib/domain"
 
 type CreateChannelPageProps = {
   searchParams: Promise<{
@@ -22,11 +22,9 @@ export default async function CreateChannelPage({
 }: CreateChannelPageProps) {
   const { channel: selectedChannel, chatbotId } = await searchParams
 
-  const headersList = await headers()
-  const baseUrl = new URL(headersList.get("x-url") ?? "")
-
+  const domain = await getDomainFromHeader()
   const settings: OrganizationSettings = await findOrganizationSettings({
-    domain: baseUrl.hostname,
+    domain,
   })
 
   return (
