@@ -16,13 +16,26 @@ import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import type { InboxResource } from "../schemas"
 
 export default function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
+  const formattedPhoneNumber = useMemo(() => {
+    const auth = inbox.integrationWhatsapp?.auth as
+      | WhatsappAuthValue
+      | undefined
+    const phoneNumber = auth?.metadata.phoneNumber.display_phone_number ?? ""
+
+    return (
+      parsePhoneNumberFromString(
+        phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`,
+      )?.number.replace("+", "") ?? ""
+    )
+  }, [inbox.integrationWhatsapp?.auth])
+
   return (
     <Card className="py-3" key={inbox.id}>
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
@@ -34,32 +47,25 @@ export default function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
         <p className="flex-1 truncate text-sm">
           {inbox.integrationWhatsapp?.name}
         </p>
-        <WhastappQRCodeDiaglog
-          displayPhoneNumber={
-            parsePhoneNumberFromString(
-              (inbox.integrationWhatsapp?.auth as WhatsappAuthValue).metadata
-                .phoneNumber.display_phone_number ?? "",
-            )?.number.replace("+", "") ?? ""
-          }
-        />
+
+        <WhatsappQRCodeDialog displayPhoneNumber={formattedPhoneNumber} />
       </CardContent>
     </Card>
   )
 }
 
-function WhastappQRCodeDiaglog({
+function WhatsappQRCodeDialog({
   displayPhoneNumber,
 }: {
   displayPhoneNumber: string
 }) {
   const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
+  const [, copy] = useCopyToClipboard()
 
-  const [wabaUrl, setWabaUrl] = useState<string>("")
-
-  useEffect(() => {
-    setWabaUrl(`https://wa.me/${displayPhoneNumber}`)
-  }, [displayPhoneNumber])
+  const wabaUrl = useMemo(
+    () => `https://wa.me/${displayPhoneNumber}`,
+    [displayPhoneNumber],
+  )
 
   const handleCopy = () => {
     copy(wabaUrl).then(() => {
@@ -96,6 +102,7 @@ function WhastappQRCodeDiaglog({
               {wabaUrl}
             </Link>
             <Button
+              aria-label={t("actions.copy")}
               onClick={handleCopy}
               size="icon"
               type="button"
