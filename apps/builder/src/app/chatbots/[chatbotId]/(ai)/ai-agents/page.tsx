@@ -7,6 +7,8 @@ import { getAIFiles } from "@/features/ai-files/queries"
 import { getAIFunctions } from "@/features/ai-functions/queries"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { getAIMcpServers } from "@/features/ai-mcp-servers/queries"
+import { listCustomFields } from "@/features/custom-fields/queries"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
 
 type AIAgentsPageProps = {
   params: Promise<{
@@ -23,6 +25,12 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
     getAIAgents({
       chatbotId,
       ...listAIAgentRequest.parse(searchParams),
+    }),
+    listCustomFields({
+      chatbotId,
+      ...listCustomFieldsSearchParams.parse({
+        perPage: "99999",
+      }),
     }),
   ])
 

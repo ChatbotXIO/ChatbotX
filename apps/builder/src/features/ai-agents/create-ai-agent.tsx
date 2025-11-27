@@ -46,8 +46,11 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/create.schema"
-import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openAIModelOptions } from "../openai/models"
+import {
+  geminiModelOptions,
+  geminiModels,
+} from "../integration-gemini/schemas/models"
+import { openAIModelOptions, openAIModels } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   files: AIFileModel[]
@@ -138,11 +141,11 @@ export function CreateAIAgentDialog({
             models: [
               {
                 provider: "gemini",
-                model: "gemini-3-pro-preview",
+                model: geminiModels.gemini25FlashLite,
               },
               {
                 provider: "openAI",
-                model: "gpt-4o-mini",
+                model: openAIModels.GPT4oMini,
               },
             ],
             temperature: 0.4,

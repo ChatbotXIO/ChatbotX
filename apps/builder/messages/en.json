@@ -855,7 +855,7 @@
       "label": "Prompt"
     },
     "promptMessages": {
-      "label": "Messages",
+      "label": "Prompt Messages",
       "role": {
         "assistant": "Assistant",
         "user": "User"
