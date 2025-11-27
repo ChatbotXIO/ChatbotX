@@ -18,14 +18,14 @@ const worker = new Worker(
   QueueName.integration,
   async (job: Job<IntegrationJobData>) => {
     switch (job.data.type) {
-      case IntegrationJobAction.RECEIVE_MESSAGE: {
+      case IntegrationJobAction.incomingMessage: {
         const { message } = await receiveMessage(job.data.data)
 
         if (message.content) {
           await integrationQueue.add(
-            IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
+            IntegrationJobAction.triggerAutomatedResponse,
             {
-              type: IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
+              type: IntegrationJobAction.triggerAutomatedResponse,
               data: {
                 message: message as OutgoingMessageEntity,
               },
@@ -34,16 +34,16 @@ const worker = new Worker(
         }
         return
       }
-      case IntegrationJobAction.SEND_FLOW: {
+      case IntegrationJobAction.sendFlow: {
         await sendFlowNode(job.data)
         return
       }
-      case IntegrationJobAction.SEND_FLOW_POSTBACK: {
+      case IntegrationJobAction.sendFlowPostback: {
         await sendFlowPostback(job.data.data)
         return
       }
 
-      case IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE: {
+      case IntegrationJobAction.triggerAutomatedResponse: {
         await triggerAutomatedResponse(job.data.data)
         return
       }

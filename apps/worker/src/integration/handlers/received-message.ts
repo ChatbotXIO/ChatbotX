@@ -22,11 +22,11 @@ import { logger } from "../../lib/logger"
 import { allIntegrations } from "../../shared/integrations"
 
 const getDBIntegration = async (
-  integrationName: string,
+  integrationType: string,
   // biome-ignore lint/suspicious/noExplicitAny: safe pass value
   payload: any,
 ) => {
-  switch (integrationName) {
+  switch (integrationType) {
     case InboxType.whatsapp:
       return await prisma.integrationWhatsapp.findFirstOrThrow({
         where: {
@@ -60,7 +60,7 @@ const getDBIntegration = async (
       })
     }
     default:
-      throw new Error(`Unsupported integration: ${integrationName}`)
+      throw new Error(`Unsupported integration: ${integrationType}`)
   }
 }
 
@@ -68,7 +68,7 @@ export const receiveMessage = async ({
   integrationType,
   payload,
 }: {
-  integrationType: IntegrationType
+  integrationType: string
   payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
 }): Promise<{
   message: MessageModel
@@ -86,7 +86,7 @@ export const receiveMessage = async ({
     uploader,
   }
   const parsedMessage = await allIntegrations[
-    integrationType
+    integrationType as IntegrationType
   ]?.actions.receiveMessage({
     ctx,
     data: payload,
@@ -207,8 +207,8 @@ export const receiveMessage = async ({
   })
 
   if (postbackAction) {
-    await integrationQueue.add(IntegrationJobAction.SEND_FLOW_POSTBACK, {
-      type: IntegrationJobAction.SEND_FLOW_POSTBACK,
+    await integrationQueue.add(IntegrationJobAction.sendFlowPostback, {
+      type: IntegrationJobAction.sendFlowPostback,
       data: {
         conversationId: result.conversation.id,
         flowVersionId: postbackAction.flowVersionId,
@@ -220,5 +220,5 @@ export const receiveMessage = async ({
   return result
 }
 
-const canGetUserProfileIfNeeded = (integrationName: string) =>
-  integrationName === InboxType.messenger
+const canGetUserProfileIfNeeded = (integrationType: string) =>
+  integrationType === InboxType.messenger

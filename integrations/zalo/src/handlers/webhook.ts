@@ -64,10 +64,10 @@ const handleWebhookEvent = async (
       throw new SdkException("Invalid webhook signature")
     }
 
-    await queue.add("RECEIVE_MESSAGE", {
-      type: "RECEIVE_MESSAGE",
+    await queue.add("incomingMessage", {
+      type: "incomingMessage",
       data: {
-        integrationName: "zalo",
+        integrationType: "zalo",
         payload: webhookData,
       },
     })

@@ -1,7 +1,7 @@
 import { findChatbot } from "@/features/chatbot/queries"
 import { findIntegrationZalo } from "@/features/integration-zalo/queries"
 import { ZaloManage } from "@/features/integration-zalo/zalo-manage"
-import { findOrganizationSettingsByKey } from "@/features/organization/queries"
+import { findOrganization } from "@/features/organization/queries"
 
 export default async function SettingChannelZaloPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -16,12 +16,9 @@ export default async function SettingChannelZaloPage(props: {
     findIntegrationZalo({
       chatbotId: params.chatbotId,
     }),
-    findOrganizationSettingsByKey(
-      {
-        id: chatbot.organizationId,
-      },
-      "zalo",
-    ),
+    findOrganization({
+      id: chatbot.organizationId,
+    }),
   ])
 
   return <ZaloManage promises={promises} />

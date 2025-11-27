@@ -415,8 +415,8 @@ const sendFlow = async (
     ({ sourceHandle }) => sourceHandle === nodeId,
   )
   if (foundEdge) {
-    await integrationQueue.add(IntegrationJobAction.SEND_FLOW, {
-      type: IntegrationJobAction.SEND_FLOW,
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
       data: {
         conversationId: conversation.id,
         flowVersionId,

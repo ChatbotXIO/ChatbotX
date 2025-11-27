@@ -1,6 +1,8 @@
 import { type Prisma, prisma } from "@aha.chat/database"
+import { InboxStatus } from "@aha.chat/database/enums"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type { InboxCollection } from "../schemas"
 import type { ListInboxesRequest } from "../schemas/list-inboxes.schema"
 
@@ -13,6 +15,7 @@ export async function listInboxes(
     async () => {
       const where: Prisma.InboxWhereInput = {
         chatbotId: input.chatbotId,
+        status: InboxStatus.connected,
       }
 
       const take = input.perPage || 10
@@ -39,9 +42,6 @@ export async function listInboxes(
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#inboxes`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#inboxes`]),
   )()
 }

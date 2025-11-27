@@ -13,8 +13,8 @@ export async function dispatchFlowStep({
   flowVersionId,
   step,
 }: FlowStepProps<SendTextStepSchema>) {
-  await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
-    type: ChatJobAction.SEND_FLOW_STEP,
+  await chatQueue.add(ChatJobAction.sendFlowMessage, {
+    type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId: conversation.id,
       flowVersionId,

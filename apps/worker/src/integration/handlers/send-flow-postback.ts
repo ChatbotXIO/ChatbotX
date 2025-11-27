@@ -46,8 +46,8 @@ export async function sendFlowPostback(
         foundedButton.steps[0].stepType === StepType.startAnotherNode &&
         foundedButton.steps[0].nodeId
       ) {
-        await integrationQueue.add(IntegrationJobAction.SEND_FLOW, {
-          type: IntegrationJobAction.SEND_FLOW,
+        await integrationQueue.add(IntegrationJobAction.sendFlow, {
+          type: IntegrationJobAction.sendFlow,
           data: {
             conversationId: conversation.id,
             flowVersionId: flowVersion.id,

@@ -1,6 +1,7 @@
 "use server"
 
 import { type Prisma, prisma } from "@aha.chat/database"
+import { InboxStatus } from "@aha.chat/database/enums"
 import { IntegrationType, type UserModel } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { exchangeAccessToken } from "@aha.chat/integration-whatsapp/api/auth"
@@ -136,7 +137,7 @@ export const connectWhatsappAction = authActionClient
               sourceId: foundPhoneNumber.id,
             },
             update: {
-              updatedAt: new Date(),
+              status: InboxStatus.connected,
             },
           })
 

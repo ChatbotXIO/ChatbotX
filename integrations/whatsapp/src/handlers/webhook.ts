@@ -51,8 +51,8 @@ export const webhookHandler = async (
       )
 
       if (result?.message) {
-        await props.queue?.add("RECEIVE_MESSAGE", {
-          type: "RECEIVE_MESSAGE",
+        await props.queue?.add("incomingMessage", {
+          type: "incomingMessage",
           data: {
             integrationType: "whatsapp",
             payload: {

@@ -2,6 +2,12 @@
 
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import FacebookLogin, {
   type InitParams,
 } from "@greatsumini/react-facebook-login"
@@ -44,35 +50,55 @@ export function MessengerConnect({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {pages.length === 0 && (
-        <div className="flex">
-          <FacebookLogin
-            appId={settings.clientId as string}
-            className="inline-flex h-8 items-center justify-start gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
-            initParams={{
-              version: (settings.version as InitParams["version"]) ?? "v18.0",
-            }}
-            onFail={(error) => {
-              console.log("error", error)
-              toast.error(t("messages.connectFailed", { feature: "Messenger" }))
-            }}
-            onSuccess={() => {
-              toast.success(
-                t("messages.connectSuccess", { feature: "Messenger" }),
-              )
-              onLoginSuccess()
-            }}
-            scope={MESSENGER_SCOPE.join(",")}
-          >
-            <SiMessenger className="size-4" fill={SiMessengerHex} />
-            {t("actions.connect")}
-          </FacebookLogin>
-        </div>
-      )}
-      {pages.length > 0 && (
-        <FacebookPages chatbotId={chatbotId} pages={pages} />
-      )}
-    </div>
+    <Card className="mx-auto mt-40 w-lg">
+      <CardHeader>
+        <CardTitle>
+          {t("actions.connectFeature", { feature: "Messenger" })}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {pages.length === 0 && (
+          <MessengerConnectButton
+            onLoginSuccess={onLoginSuccess}
+            settings={settings}
+          />
+        )}
+        {pages.length > 0 && (
+          <FacebookPages chatbotId={chatbotId} pages={pages} />
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+export function MessengerConnectButton({
+  settings,
+  onLoginSuccess,
+}: {
+  settings: NonNullable<OrganizationSettings["messenger"]>
+  onLoginSuccess: () => Promise<void>
+}) {
+  const t = useTranslations()
+
+  return (
+    <FacebookLogin
+      appId={settings.clientId as string}
+      className="inline-flex h-8 items-center justify-start gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
+      initParams={{
+        version: (settings.version as InitParams["version"]) ?? "v18.0",
+      }}
+      onFail={(error) => {
+        console.log("error", error)
+        toast.error(t("messages.connectFailed", { feature: "Messenger" }))
+      }}
+      onSuccess={() => {
+        toast.success(t("messages.connectSuccess", { feature: "Messenger" }))
+        onLoginSuccess()
+      }}
+      scope={MESSENGER_SCOPE.join(",")}
+    >
+      <SiMessenger className="size-4" fill={SiMessengerHex} />
+      {t("actions.connect")}
+    </FacebookLogin>
   )
 }

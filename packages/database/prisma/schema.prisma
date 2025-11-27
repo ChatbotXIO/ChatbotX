@@ -364,6 +364,7 @@ model Inbox {
 
   inboxType InboxType
   sourceId  String
+  status    String    @default("connected")
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)

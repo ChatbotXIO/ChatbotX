@@ -1,6 +1,7 @@
 "use server"
 
 import { type Prisma, prisma } from "@aha.chat/database"
+import { InboxStatus } from "@aha.chat/database/enums"
 import type { UserModel } from "@aha.chat/database/types"
 import { IntegrationType } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
@@ -89,7 +90,7 @@ export const selectPageAction = authActionClient
               },
             },
             update: {
-              updatedAt: new Date(),
+              status: InboxStatus.connected,
             },
             create: {
               chatbotId,
@@ -109,7 +110,14 @@ export const selectPageAction = authActionClient
           })
         })
 
-        revalidateCacheTags(`chatbots:${chatbotId}#messenger`)
+        revalidateCacheTags([
+          `chatbots:${chatbotId}#messenger`,
+          `chatbots:${chatbotId}#inboxes`,
+        ])
+
+        return {
+          chatbotId,
+        }
       } catch (error) {
         logger.error("Failed to select Facebook page", { error })
         throw new Error("Failed to select Facebook page")

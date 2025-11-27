@@ -187,15 +187,12 @@ export const createWebchatMessageAction = actionClient
       ]
       if (message.content) {
         promises.push(
-          integrationQueue.add(
-            IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
-            {
-              type: IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
-              data: {
-                message: message as OutgoingMessageEntity,
-              },
+          integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
+            type: IntegrationJobAction.triggerAutomatedResponse,
+            data: {
+              message: message as OutgoingMessageEntity,
             },
-          ),
+          }),
         )
       }
 

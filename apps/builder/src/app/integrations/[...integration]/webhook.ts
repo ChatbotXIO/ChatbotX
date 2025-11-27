@@ -1,22 +1,37 @@
-import type { OrganizationSettings } from "@aha.chat/database/types"
+import {
+  type OrganizationSettings,
+  organizationSettingsSchema,
+} from "@aha.chat/database/types"
 import { integrationQueue } from "@aha.chat/worker-config"
 import type { NextRequest } from "next/server"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"
 import { getDomainFromHeader } from "@/lib/domain"
+import { logger } from "@/lib/log"
 
 export const handleWebhook = async (
-  integrationName: string,
+  integrationType: string,
   req: NextRequest,
 ) => {
   const domain = await getDomainFromHeader()
   const organization = await findOrganization({
     domain,
   })
-  const organizationSettings =
-    organization?.settings as unknown as OrganizationSettings
 
-  const integration = integrations[integrationName as IntegrationKey]
+  // Verify organization settings
+  const orgSettings = organizationSettingsSchema.parse(organization?.settings)
+  if (!orgSettings?.[integrationType as keyof OrganizationSettings]) {
+    logger.warn(`Integration ${integrationType} is not configured`)
+    return new Response(
+      JSON.stringify({ message: "Integration is not configured" }),
+      {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      },
+    )
+  }
+
+  const integration = integrations[integrationType as IntegrationKey]
   if (!integration?.handleRequest) {
     return new Response(
       JSON.stringify({ message: "Method is not implemented" }),
@@ -32,8 +47,7 @@ export const handleWebhook = async (
     req.nextUrl,
   ).toString()
 
-  const settings =
-    organizationSettings[integration.name as keyof OrganizationSettings]
+  const settings = orgSettings[integration.name as keyof OrganizationSettings]
 
   if (!settings) {
     return new Response(

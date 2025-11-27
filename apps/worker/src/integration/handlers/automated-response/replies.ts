@@ -116,8 +116,8 @@ export async function replyByAutomatedResponse({
       for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
           case ReplyType.Message:
-            await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
-              type: ChatJobAction.SEND_FLOW_STEP,
+            await chatQueue.add(ChatJobAction.sendFlowMessage, {
+              type: ChatJobAction.sendFlowMessage,
               data: {
                 conversationId: message.conversationId,
                 flowVersionId: "",
@@ -136,8 +136,8 @@ export async function replyByAutomatedResponse({
               where: { id: reply.flowId },
             })
             if (flow?.currentVersionId) {
-              await integrationQueue.add(IntegrationJobAction.SEND_FLOW, {
-                type: IntegrationJobAction.SEND_FLOW,
+              await integrationQueue.add(IntegrationJobAction.sendFlow, {
+                type: IntegrationJobAction.sendFlow,
                 data: {
                   conversationId: message.conversationId,
                   flowVersionId: flow.currentVersionId,

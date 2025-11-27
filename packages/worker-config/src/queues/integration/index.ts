@@ -4,21 +4,24 @@ import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
 import { QueueName } from "../../lib/types"
 
 export const IntegrationJobAction = {
-  SEND_FLOW: "SEND_FLOW",
-  RECEIVE_MESSAGE: "RECEIVE_MESSAGE",
-  SEND_FLOW_POSTBACK: "SEND_FLOW_POSTBACK",
-  TRIGGER_AUTOMATED_RESPONSE: "TRIGGER_AUTOMATED_RESPONSE",
+  sendFlow: "sendFlow",
+  incomingMessage: "incomingMessage",
+  sendFlowPostback: "sendFlowPostback",
+  triggerAutomatedResponse: "triggerAutomatedResponse",
   sendBroadcast: "sendBroadcast",
 } as const
 
 export type IntegrationJobReceiveMessage = {
-  type: typeof IntegrationJobAction.RECEIVE_MESSAGE
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  data: any
+  type: typeof IntegrationJobAction.incomingMessage
+  data: {
+    integrationType: string
+    // biome-ignore lint/suspicious/noExplicitAny: wip
+    payload: any
+  }
 }
 
 export type IntegrationJobSendFlow = {
-  type: typeof IntegrationJobAction.SEND_FLOW
+  type: typeof IntegrationJobAction.sendFlow
   data: {
     conversationId: string
     flowId?: string
@@ -28,7 +31,7 @@ export type IntegrationJobSendFlow = {
 }
 
 export type IntegrationJobSendFlowPostback = {
-  type: typeof IntegrationJobAction.SEND_FLOW_POSTBACK
+  type: typeof IntegrationJobAction.sendFlowPostback
   data: {
     conversationId: string
     flowVersionId: string
@@ -37,7 +40,7 @@ export type IntegrationJobSendFlowPostback = {
 }
 
 export type IntegrationJobTriggerAutomatedResponse = {
-  type: typeof IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE
+  type: typeof IntegrationJobAction.triggerAutomatedResponse
   data: {
     message: OutgoingMessageEntity
   }

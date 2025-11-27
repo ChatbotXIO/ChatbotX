@@ -47,3 +47,9 @@ export const BroadcastInboxType = {
 } as const
 export type BroadcastInboxType =
   (typeof BroadcastInboxType)[keyof typeof BroadcastInboxType]
+
+export const InboxStatus = {
+  connected: "connected",
+  disconnected: "disconnected",
+} as const
+export type InboxStatus = (typeof InboxStatus)[keyof typeof InboxStatus]
