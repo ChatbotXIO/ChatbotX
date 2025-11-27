@@ -19,6 +19,7 @@ export function ChatRealtime() {
     host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
     room: chatbotId,
     party: "chatbots",
+    // protocol: "ws",
 
     query: async () => {
       const oneTimeToken = await authClient.oneTimeToken.generate()
@@ -40,7 +41,6 @@ export function ChatRealtime() {
             break
         }
       } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: wip
         console.error("Unable to parse realtime message", error)
       }
     },

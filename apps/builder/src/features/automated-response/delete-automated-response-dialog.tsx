@@ -45,7 +45,7 @@ export function DeleteAutomatedResponsesDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.automatedResponse.label"),
           }),
         )
@@ -72,7 +72,7 @@ export function DeleteAutomatedResponsesDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.deleteTitle", {
+            {t("messages.deleteFeature", {
               feature: t("fields.automatedResponse.label"),
             })}
           </DialogTitle>

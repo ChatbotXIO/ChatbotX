@@ -69,14 +69,18 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
           {t("actions.connect")}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("openAI.connect.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("fields.apiKey.label")} name="apiKey" />
+            <InputField
+              label={t("fields.apiKey.label")}
+              name="apiKey"
+              required={true}
+            />
 
             <Collapsible onOpenChange={setIsOpenOptions} open={isOpenOptions}>
               <div className="flex items-center justify-between space-x-4">

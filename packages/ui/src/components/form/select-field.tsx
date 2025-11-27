@@ -17,11 +17,11 @@ export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   label?: string
   placeholder?: string
   description?: string
-  options?: { value: string; label: string }[]
+  options?: { value: string; label: string; disabled?: boolean }[]
   fetchOptionsUrl?: string
   className?: string
   allowClear?: boolean
-  onSelectChange?: (value?: string) => void
+  triggerValueChange?: (value?: string) => void
 } & React.ComponentProps<typeof Select>
 
 function SelectClear({
@@ -49,12 +49,12 @@ export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
     options = [],
     fetchOptionsUrl,
     allowClear,
-    onSelectChange,
+    triggerValueChange,
     ...rest
   } = props
 
   const [stateOptions, setStateOptions] = useState<
-    { value: string; label: string }[]
+    { value: string; label: string; disabled?: boolean }[]
   >([])
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
           defaultValue={field.value}
           onValueChange={(value: string) => {
             field.onChange(value as T[FieldPath<T>])
-            onSelectChange?.(value)
+            triggerValueChange?.(value)
           }}
           {...rest}
           {...field}
@@ -102,7 +102,7 @@ export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
           <SelectContent>
             {allowClear && <SelectClear />}
             {stateOptions.map((option) => (
-              <SelectItem key={option.value} value={String(option.value)}>
+              <SelectItem key={option.value} value={String(option.value)} disabled={option.disabled ?? false}>
                 {option.label}
               </SelectItem>
             ))}

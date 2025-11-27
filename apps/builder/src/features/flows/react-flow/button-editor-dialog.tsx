@@ -39,7 +39,12 @@ import { getProperty, setProperty } from "dot-prop"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
-import { useFieldArray, useForm, useFormContext } from "react-hook-form"
+import {
+  useFieldArray,
+  useForm,
+  useFormContext,
+  useWatch,
+} from "react-hook-form"
 import { deleteProperty } from "@/lib/object-util"
 import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
 import { sendMessageEditorMenusWithButton } from "./nodes/send-message/menu"
@@ -232,8 +237,8 @@ export function ButtonEditorDialog() {
     defaultValues: data || {},
     mode: "onChange",
   })
-  const { formState, setValue, watch } = form
-  const [buttonType] = watch(["buttonType"])
+  const { formState, setValue, control } = form
+  const buttonType = useWatch({ control, name: "buttonType" })
 
   useEffect(() => {
     if (data) {

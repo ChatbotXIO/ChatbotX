@@ -1,11 +1,11 @@
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const enableLiveChatConversationAction = chatbotActionClient
@@ -31,9 +31,11 @@ export const enableLiveChatConversationAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#conversations`)
-      for (const id of parsedInput.ids) {
-        revalidateTag(`chatbots:${chatbotId}#conversations:${id}`)
-      }
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#conversations`,
+        ...parsedInput.ids.map(
+          (id) => `chatbots:${chatbotId}#conversations:${id}`,
+        ),
+      ])
     },
   )

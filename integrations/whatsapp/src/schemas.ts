@@ -8,7 +8,7 @@ import type {
   SendFlowStepProps,
   SendMessageProps,
 } from "@aha.chat/sdk"
-import type { OnMessageArgs } from "whatsapp-api-js/emitters"
+import type { ServerMessage } from "whatsapp-api-js/types"
 import type {
   ConversationalAutomation,
   WhatsappPhoneNumber,
@@ -24,6 +24,7 @@ export type WhatsappAuthValue = Oauth2AuthValue & {
     wabaId: string
     businessId: string
     phoneNumber: WhatsappPhoneNumber
+    webhookUrl: string
   }
 }
 
@@ -32,6 +33,25 @@ export type WhatsappPagination = {
     before: string
     after: string
   }
+}
+
+export type WhatsappWebhookEvent = {
+  /**
+   * The bot's phoneID
+   */
+  phoneID: string
+  /**
+   * The user's phone number
+   */
+  from: string
+  /**
+   * The messages object
+   */
+  message: ServerMessage
+  /**
+   * The username
+   */
+  name?: string
 }
 
 export type WhatsappActions = {
@@ -45,7 +65,7 @@ export type WhatsappActions = {
   receiveMessage: Handler<
     {
       ctx: Context<WhatsappAuthValue>
-      data: OnMessageArgs
+      data: WhatsappWebhookEvent
     },
     {
       message: MessageEntity

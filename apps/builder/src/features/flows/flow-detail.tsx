@@ -6,6 +6,7 @@ import type {
 } from "@aha.chat/database/types"
 import { type Node, ReactFlowProvider } from "@xyflow/react"
 import { use } from "react"
+import { reservedCustomFieldOptions } from "../custom-fields/lib/reserved-custom-field"
 import type { listCustomFields } from "../custom-fields/queries"
 import type { listFlowVersions } from "../flow-versions/queries/list-flow-versions"
 import type { getTags } from "../tags/queries"
@@ -38,11 +39,14 @@ export function FlowDetail({
   const [{ data: customFields }, { data: flowVersions }, { data: tags }] =
     use(promises)
 
-  const customFieldOptions = customFields.map((field) => ({
-    label: field.name,
-    value: field.id,
-    type: field.customFieldType,
-  }))
+  const customFieldOptions = {
+    ...reservedCustomFieldOptions,
+    ...customFields.map((field) => ({
+      label: field.name,
+      value: field.id,
+      type: field.customFieldType,
+    })),
+  }
 
   const flowOptions = flowVersions.map((fv) => ({
     label: fv.flow.name,

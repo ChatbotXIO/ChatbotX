@@ -14,6 +14,7 @@ import {
   PopoverTrigger,
 } from "@aha.chat/ui/components/ui/popover"
 import { cn } from "@aha.chat/ui/lib/utils"
+import type { PopoverContentProps } from "@radix-ui/react-popover"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { useState } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
@@ -26,9 +27,13 @@ interface SelectFieldProps<T extends FieldValues> {
   description?: string
   defaultValue?: string
   options: { value: string; label: string }[]
+  className?: string
+  side?: PopoverContentProps["side"]
+  triggerValueChange?: (value: string) => void
 }
 
 export function ComboboxField<T extends FieldValues>({
+  className,
   name,
   label,
   required,
@@ -36,6 +41,8 @@ export function ComboboxField<T extends FieldValues>({
   description,
   options,
   // ...props
+  side = "right",
+  triggerValueChange,
 }: SelectFieldProps<T>) {
   const [open, setOpen] = useState(false)
 
@@ -55,6 +62,7 @@ export function ComboboxField<T extends FieldValues>({
               aria-expanded={open}
               className={cn(
                 "justify-between w-full",
+                className,
                 !field.value && "text-muted-foreground",
               )}
             >
@@ -64,7 +72,7 @@ export function ComboboxField<T extends FieldValues>({
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0">
+          <PopoverContent className="w-[200px] p-0" align="start" side={side}>
             <Command>
               <CommandInput placeholder="Search..." className="h-9" />
               <CommandList>
@@ -76,6 +84,7 @@ export function ComboboxField<T extends FieldValues>({
                       key={option.value}
                       onSelect={() => {
                         field.onChange(option.value as T[FieldPath<T>])
+                        triggerValueChange?.(option.value)
                         setOpen(false)
                       }}
                     >

@@ -1,8 +1,8 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteWebchatAction = chatbotActionClient
@@ -21,5 +21,5 @@ export const deleteWebchatAction = chatbotActionClient
       },
     })
 
-    revalidateTag(`chatbots:${chatbotId}#webchats`)
+    revalidateCacheTags(`chatbots:${chatbotId}#webchats`)
   })

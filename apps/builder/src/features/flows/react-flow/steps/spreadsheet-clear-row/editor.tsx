@@ -7,7 +7,7 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useState } from "react"
-import { useForm, useFormContext } from "react-hook-form"
+import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { SpreadsheetDialog } from "../spreadsheet/components/dialog"
 import { SpreadsheetColumnFilter } from "../spreadsheet/components/spreadsheet-column-filter"
 import { SpreadsheetSelect } from "../spreadsheet/components/spreadsheet-select"
@@ -29,8 +29,8 @@ export const SpreadsheetClearRowEditor = ({
     mode: "onChange",
   })
 
-  const spreadsheetId = form.watch("spreadsheetId")
-  const sheetName = form.watch("sheetName")
+  const spreadsheetId = useWatch({ name: "spreadsheetId" })
+  const sheetName = useWatch({ name: "sheetName" })
 
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())

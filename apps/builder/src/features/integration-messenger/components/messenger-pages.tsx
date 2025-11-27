@@ -11,6 +11,7 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { selectPageAction } from "../actions/select-page.action"
 import { selectPageRequest } from "../schemas"
@@ -19,32 +20,37 @@ export function FacebookPages({
   chatbotId,
   pages,
 }: {
-  chatbotId: string
+  chatbotId?: string | null
   pages: FacebookPage[]
 }) {
   const t = useTranslations()
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    selectPageAction.bind(null, chatbotId),
+    selectPageAction,
     zodResolver(selectPageRequest),
     {
       formProps: {
         mode: "onChange",
         defaultValues: {
+          chatbotId,
           pageId: "",
           pageName: "",
           accessToken: "",
         },
       },
       actionProps: {
-        onSuccess: () => {
-          router.refresh()
+        onSuccess: ({ data }) => {
+          if (chatbotId) {
+            router.push(`/chatbots/${data.chatbotId}/dashboard`)
+          } else {
+            router.push("/")
+          }
         },
         onError: () => {
           toast.error(
             t("messages.createdFailed", {
-              feature: t("fields.messenger.label"),
+              feature: t("messenger.title"),
             }),
           )
         },
@@ -53,8 +59,8 @@ export function FacebookPages({
     },
   )
 
-  const { setValue, watch } = form
-  const watchedPageId = watch("pageId")
+  const { control, setValue } = form
+  const watchedPageId = useWatch({ control, name: "pageId" })
   useEffect(() => {
     const selectPage = pages.find((page) => page.id === watchedPageId)
 

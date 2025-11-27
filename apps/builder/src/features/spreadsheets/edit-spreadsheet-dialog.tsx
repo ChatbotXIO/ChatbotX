@@ -51,7 +51,7 @@ export function UpdateSpreadsheetDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("googleSheets.spreadsheet"),
             }),
           )

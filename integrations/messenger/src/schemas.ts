@@ -11,7 +11,7 @@ import type {
 } from "@aha.chat/sdk"
 import { z } from "zod"
 
-export const MESSENGER_MESSAGE_METADATA = "SENT_FROM_AHACHATAI"
+export const MESSENGER_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
 
 export type MessengerConfig = Oauth2Config & {
   verifyToken?: string

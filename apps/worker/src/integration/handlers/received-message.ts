@@ -10,7 +10,7 @@ import {
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
-import type { OnMessageArgs } from "@aha.chat/integration-whatsapp"
+import type { WhatsappWebhookEvent } from "@aha.chat/integration-whatsapp"
 import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import {
   broadcastToChatbotParty,
@@ -22,21 +22,21 @@ import { logger } from "../../lib/logger"
 import { allIntegrations } from "../../shared/integrations"
 
 const getDBIntegration = async (
-  integrationName: string,
+  integrationType: string,
   // biome-ignore lint/suspicious/noExplicitAny: safe pass value
   payload: any,
 ) => {
-  switch (integrationName) {
-    case InboxType.Whatsapp:
+  switch (integrationType) {
+    case InboxType.whatsapp:
       return await prisma.integrationWhatsapp.findFirstOrThrow({
         where: {
-          phoneNumberId: (payload as OnMessageArgs).phoneID,
+          phoneNumberId: (payload as WhatsappWebhookEvent).phoneID,
         },
         include: {
           chatbot: true,
         },
       })
-    case InboxType.Messenger:
+    case InboxType.messenger:
       return await prisma.integrationMessenger.findFirstOrThrow({
         where: {
           pageId: (payload as MessengerWebhookEvent).entry[0].id,
@@ -45,7 +45,7 @@ const getDBIntegration = async (
           chatbot: true,
         },
       })
-    case InboxType.Zalo: {
+    case InboxType.zalo: {
       const input = payload as ZaloWebhookEvent
 
       return await prisma.integrationZalo.findFirstOrThrow({
@@ -60,7 +60,7 @@ const getDBIntegration = async (
       })
     }
     default:
-      throw new Error(`Unsupported integration: ${integrationName}`)
+      throw new Error(`Unsupported integration: ${integrationType}`)
   }
 }
 
@@ -68,8 +68,8 @@ export const receiveMessage = async ({
   integrationType,
   payload,
 }: {
-  integrationType: IntegrationType
-  payload: OnMessageArgs | MessengerWebhookEvent | ZaloWebhookEvent
+  integrationType: string
+  payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel
@@ -86,7 +86,7 @@ export const receiveMessage = async ({
     uploader,
   }
   const parsedMessage = await allIntegrations[
-    integrationType
+    integrationType as IntegrationType
   ]?.actions.receiveMessage({
     ctx,
     data: payload,
@@ -207,8 +207,8 @@ export const receiveMessage = async ({
   })
 
   if (postbackAction) {
-    await integrationQueue.add(IntegrationJobAction.SEND_FLOW_POSTBACK, {
-      type: IntegrationJobAction.SEND_FLOW_POSTBACK,
+    await integrationQueue.add(IntegrationJobAction.sendFlowPostback, {
+      type: IntegrationJobAction.sendFlowPostback,
       data: {
         conversationId: result.conversation.id,
         flowVersionId: postbackAction.flowVersionId,
@@ -220,5 +220,5 @@ export const receiveMessage = async ({
   return result
 }
 
-const canGetUserProfileIfNeeded = (integrationName: string) =>
-  integrationName === InboxType.Messenger
+const canGetUserProfileIfNeeded = (integrationType: string) =>
+  integrationType === InboxType.messenger

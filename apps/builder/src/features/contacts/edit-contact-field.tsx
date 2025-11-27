@@ -44,7 +44,7 @@ export function EditContactField({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.updatedSuccessfully", {
+              t("messages.updatedSuccess", {
                 feature: t("fields.contact.label"),
               }),
             )

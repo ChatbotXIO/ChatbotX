@@ -46,7 +46,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/create.schema"
-import { GEMINI_MODEL_OPTIONS } from "../gemini/models"
+import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import { openAIModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
@@ -112,7 +112,7 @@ export function CreateAIAgentDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createSuccess", {
+              t("messages.createdSuccess", {
                 feature: t("fields.aiAgent.label"),
               }),
             )
@@ -130,6 +130,7 @@ export function CreateAIAgentDialog({
         formProps: {
           mode: "onChange",
           defaultValues: {
+            name: "",
             prompt: "",
             isDefault: false,
             models: [
@@ -247,7 +248,7 @@ export function CreateAIAgentDialog({
                   <SelectField
                     label={t("fields.geminiModel.label")}
                     name="models.0.model"
-                    options={GEMINI_MODEL_OPTIONS}
+                    options={geminiModelOptions}
                     required
                   />
 

@@ -8,4 +8,4 @@
  * if you ever need to explicitly add a source that's excluded by default,
  * you can always add it with the @source directive.
  */
-@source '../../node_modules/@aha.chat/ui';
+@source "../../node_modules/@aha.chat/ui";

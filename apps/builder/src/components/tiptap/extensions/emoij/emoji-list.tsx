@@ -75,7 +75,9 @@ export const EmojiList = ({ ref, ...props }: EmojiListProps) => {
             <img
               alt={item.name}
               className="align-absmiddle"
+              height={8}
               src={item.fallbackImage}
+              width={8}
             />
           ) : (
             item.emoji

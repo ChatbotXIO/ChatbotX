@@ -1,5 +1,6 @@
 import ky from "ky"
 import type * as Party from "partykit/server"
+import { env } from "../env"
 
 export type Session = {
   user: {
@@ -30,7 +31,11 @@ export const getAuthSession = async (
   }
 
   const headers = proxiedRequest.headers
-  const origin = headers.get("origin") ?? "https://example.com"
+  const origin =
+    env.NEXT_PUBLIC_PARTYSOCKET_AUTH_URL ??
+    headers.get("origin") ??
+    "https://example.com"
+
   const verificationUrl = new URL("/api/auth/one-time-token/verify", origin)
 
   const session: Session | null = await ky

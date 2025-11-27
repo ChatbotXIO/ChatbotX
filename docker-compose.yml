@@ -2,7 +2,7 @@ name: ahachat
 
 services:
   postgres:
-    image: postgres:16
+    image: timescale/timescaledb:latest-pg17
     ports:
       - "5432:5432"
     volumes:
@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-ahachat}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
       timeout: 60s
       retries: 5
@@ -59,6 +59,7 @@ services:
       sleep 10;
       /usr/bin/mc alias set minio http://minio:9000 ahachat nr541Kv59xB4f48bhZOy5wBz;
       /usr/bin/mc mb minio/ahachat;
+      /usr/bin/mc mb minio/ahachat/public;
       /usr/bin/mc anonymous set public minio/ahachat/public;
       exit 0;
       "

@@ -43,7 +43,7 @@ export function DeleteAITriggerDialog({
     {
       onSuccess() {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.aiTrigger.label"),
           }),
         )
@@ -69,7 +69,7 @@ export function DeleteAITriggerDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.deleteTitle", {
+            {t("messages.deleteFeature", {
               feature: t("fields.aiTrigger.label"),
             })}
           </DialogTitle>

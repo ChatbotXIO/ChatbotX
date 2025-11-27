@@ -12,7 +12,9 @@ export default async function CreateWebchatPage({
   const promises = Promise.all([
     getFlows({
       chatbotId,
-      ...listFlowsSearchParams.parse({}),
+      ...listFlowsSearchParams.parse({
+        active: "1",
+      }),
     }),
   ])
   return (

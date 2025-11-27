@@ -1,11 +1,11 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import { IntegrationType } from "@aha.chat/database/types"
-import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 import { findChatbot } from "@/features/chatbot/queries"
+import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
@@ -48,55 +48,30 @@ export const handleCallback = async (
   let authResult: BaseAuthValue
   let additionalIntegrationCreationData = {}
   switch (integrationType) {
-    case IntegrationType.Zalo: {
+    case IntegrationType.zalo: {
       if (!organizationSettings.zalo) {
         return notFound()
       }
 
-      const authValue = (await integrations.Zalo.handleRequest({
-        config: {
-          ...organizationSettings.zalo,
-          redirectUrl: new URL(
-            "/integrations/zalo/callback",
-            req.url,
-          ).toString(),
-          stateParams: {
-            chatbotId: stateParams.chatbotId,
-          },
-        },
+      await connectZaloHandler({
+        zaloSettings: organizationSettings.zalo,
+        chatbotId: stateParams.chatbotId,
         req,
-      })) as ZaloAuthValue
-
-      await prisma.$transaction(async (tx) => {
-        await tx.inbox.create({
-          data: {
-            chatbotId: stateParams.chatbotId,
-            inboxType: IntegrationType.Zalo,
-            sourceId: authValue.oaId,
-            integrationZalo: {
-              create: {
-                chatbotId: stateParams.chatbotId,
-                oaId: authValue.oaId,
-                auth: authValue as unknown as Prisma.InputJsonValue,
-                name: authValue.metadata.oaName,
-              },
-            },
-          },
-        })
       })
+
       return redirect(stateParams.referer)
     }
 
-    case IntegrationType.GoogleSheets: {
+    case IntegrationType.googleSheets: {
       if (!organizationSettings.googleSheets) {
         return notFound()
       }
 
-      authResult = (await integrations.GoogleSheets.handleRequest?.({
+      authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...organizationSettings.googleSheets,
           redirectUrl: new URL(
-            "/integrations/GoogleSheets/callback",
+            "/integrations/google-sheets/callback",
             req.url,
           ).toString(),
         },

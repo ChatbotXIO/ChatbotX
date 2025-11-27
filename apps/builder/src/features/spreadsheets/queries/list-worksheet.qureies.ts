@@ -30,7 +30,7 @@ export const listWorksheets = async (
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
   }
 
-  const sheets = await integrations.GoogleSheets.actions.listSheetNames({
+  const sheets = await integrations.googleSheets.actions.listSheetNames({
     ctx,
     props: {
       spreadsheetId: spreadsheet.spreadsheetId,
@@ -63,7 +63,7 @@ export const listWorksheetHeaders = async (
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
   }
 
-  const headers = await integrations.GoogleSheets.actions.listSheetHeaders({
+  const headers = await integrations.googleSheets.actions.listSheetHeaders({
     ctx,
     props: {
       spreadsheetId: spreadsheet.spreadsheetId,

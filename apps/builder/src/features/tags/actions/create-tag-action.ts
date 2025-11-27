@@ -2,8 +2,8 @@
 
 import { prisma } from "@aha.chat/database"
 import { FolderType, type UserModel } from "@aha.chat/database/types"
-import { revalidateTag } from "next/cache"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import {
@@ -56,10 +56,6 @@ export const createTagAction = authActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#tags`)
-
-      return {
-        successful: true,
-      }
+      revalidateCacheTags(`chatbots:${chatbotId}#tags`)
     },
   )

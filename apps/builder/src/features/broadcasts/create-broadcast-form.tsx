@@ -1,73 +1,143 @@
 "use client"
 
 import {
-  BroadcastSchedulesType,
+  type BroadcastInboxType,
   BroadcastSubaction,
-  type InboxType,
-} from "@aha.chat/database/types"
+} from "@aha.chat/database/enums"
+import { BroadcastSchedulesType, InboxType } from "@aha.chat/database/types"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import { Form } from "@aha.chat/ui/components/ui/form"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  SiMessenger,
+  SiMessengerHex,
+  SiWhatsapp,
+  SiWhatsappHex,
+  SiZalo,
+  SiZaloHex,
+} from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"
-import { Loader2Icon } from "lucide-react"
-import Link from "next/link"
+import { AtomIcon, Loader2Icon } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useState } from "react"
+import { useCallback, useMemo } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
-import { FlowSelect } from "../flows/flow-select"
-import type { listInboxes } from "../inboxes/queries"
-import { InboxTypeSelect } from "./components/inbox-type-select"
+import { ContactFilter } from "../contacts/components/contact-filter"
+import {
+  FlowStoreProvider,
+  useFlowStore,
+} from "../flows/provider/flow-store-context"
 
-export function CreateBroadcastForm({
-  chatbotId,
-  promises,
-}: {
-  chatbotId: string
-  promises: Promise<Awaited<ReturnType<typeof listInboxes>>>
-}) {
+const getConfigs = (t: ReturnType<typeof useTranslations>) => [
+  {
+    Icon: AtomIcon,
+    iconColor: "none",
+    name: t("omnichannel.title"),
+    value: "omnichannel",
+    description:
+      "Send a flow to all contacts. You can send messages or executes actions.",
+    subactions: [
+      {
+        value: BroadcastSubaction.allContacts,
+        name: t("broadcasts.allContacts.title"),
+        description: t("broadcasts.allContacts.description"),
+      },
+    ],
+  },
+  {
+    Icon: SiMessenger,
+    iconColor: SiMessengerHex,
+    name: t("messenger.title"),
+    value: InboxType.messenger,
+    description: "",
+    subactions: [
+      {
+        value: BroadcastSubaction.messengerList,
+        name: t("broadcasts.messengerList.title"),
+        description: t("broadcasts.messengerList.description"),
+      },
+      {
+        value: BroadcastSubaction.messengerActiveContacts,
+        name: t("broadcasts.messengerActiveContacts.title"),
+        description: t("broadcasts.messengerActiveContacts.description"),
+      },
+      {
+        value: BroadcastSubaction.messengerAccountUpdate,
+        name: t("broadcasts.messengerAccountUpdate.title"),
+        description: t("broadcasts.messengerAccountUpdate.description"),
+      },
+      {
+        value: BroadcastSubaction.messengerConfirmedEventUpdate,
+        name: t("broadcasts.messengerConfirmedEventUpdate.title"),
+        description: t("broadcasts.messengerConfirmedEventUpdate.description"),
+      },
+      {
+        value: BroadcastSubaction.messengerPostPurchaseUpdate,
+        name: t("broadcasts.messengerPostPurchaseUpdate.title"),
+        description: t("broadcasts.messengerPostPurchaseUpdate.description"),
+      },
+    ],
+  },
+  {
+    Icon: SiWhatsapp,
+    iconColor: SiWhatsappHex,
+    name: t("whatsapp.title"),
+    value: InboxType.whatsapp,
+    description: "",
+    subactions: [
+      {
+        value: BroadcastSubaction.allContacts,
+        name: t("broadcasts.allContacts.title"),
+        description: t("broadcasts.allContacts.description"),
+      },
+    ],
+  },
+  {
+    Icon: SiZalo,
+    iconColor: SiZaloHex,
+    name: t("zalo.title"),
+    value: InboxType.zalo,
+    description: "",
+    subactions: [
+      {
+        value: BroadcastSubaction.allContacts,
+        name: t("broadcasts.allContacts.title"),
+        description: t("broadcasts.allContacts.description"),
+      },
+    ],
+  },
+]
+
+export function CreateBroadcastForm({ chatbotId }: { chatbotId: string }) {
   const t = useTranslations()
+  const router = useRouter()
 
-  const [hasInboxType, setHasInboxType] = useState(false)
-  const [hasSubAction, setHasSubAction] = useState(false)
-  const [schedulesType, _setSchedulesType] =
-    useState<BroadcastSchedulesType | null>(null)
-
-  const { data } = use(promises)
-  const inboxTypes = data.map((inbox) => inbox.inboxType)
-  const schedulesOptions = [
-    {
-      value: "NOW",
-      label: "Now",
-    },
-    {
-      value: "FUTURE",
-      label: "Schedule for later (All simultaneously)",
-    },
-  ]
-
-  const {
-    form,
-    handleSubmitWithAction,
-    resetFormAndAction,
-    form: { setValue },
-  } = useHookFormAction(
+  const { form, handleSubmitWithAction } = useHookFormAction(
     createBroadcastAction.bind(null, chatbotId),
     zodResolver(createBroadcastRequest),
     {
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createSuccess", {
+            t("messages.createdSuccess", {
               feature: t("fields.broadcast.label"),
             }),
           )
-          resetFormAndAction()
+          router.push(`/chatbots/${chatbotId}/broadcasts`)
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -78,97 +148,281 @@ export function CreateBroadcastForm({
       formProps: {
         mode: "onChange",
         defaultValues: {
-          inboxType: null,
-          conditions: [],
+          inboxType: undefined,
+          flowId: undefined,
+          subaction: BroadcastSubaction.allContacts,
+          schedulesType: BroadcastSchedulesType.now,
+          schedulesAt: null,
+          contactFilter: {
+            operator: "and",
+            conditions: [],
+          },
         },
       },
       errorMapProps: {},
     },
   )
 
-  const onSelectInboxType = (inboxType: InboxType | null) => {
-    setHasInboxType(true)
-    setValue("inboxType", inboxType)
-
-    if (inboxType === null) {
-      setHasSubAction(true)
-      setValue("subaction", BroadcastSubaction.allContacts)
-    }
-  }
+  const watchedSubAction = useWatch({
+    control: form.control,
+    name: "subaction",
+  })
+  const watchedInboxType = useWatch({
+    control: form.control,
+    name: "inboxType",
+  })
 
   return (
-    <div className="flex justify-center">
-      <Card className="w-5/6" key={t.name}>
-        <CardContent className="py-4">
-          <Form {...form}>
-            <form
-              className="flex-1 space-y-4"
-              onSubmit={handleSubmitWithAction}
+    <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+      <div className="flex h-svh flex-col items-center justify-center">
+        <Form {...form}>
+          <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
+            {!watchedInboxType && <CreateBroadcastChooseChannel />}
+
+            {watchedInboxType && !watchedSubAction && (
+              <CreateBroadcastChooseSubaction inboxType={watchedInboxType} />
+            )}
+
+            {watchedInboxType && watchedSubAction && (
+              <CreateBroadcastChooseFlow />
+            )}
+          </form>
+        </Form>
+      </div>
+    </FlowStoreProvider>
+  )
+}
+
+function CreateBroadcastChooseChannel() {
+  const t = useTranslations()
+  const router = useRouter()
+
+  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const { setValue } = useFormContext()
+
+  const configs = useMemo(() => getConfigs(t), [t])
+
+  const handleChooseChannel = useCallback(
+    (inboxType: InboxType) => {
+      setValue("inboxType", inboxType)
+      if (inboxType !== InboxType.messenger) {
+        setValue("subaction", BroadcastSubaction.allContacts)
+      } else {
+        setValue("subaction", null)
+      }
+    },
+    [setValue],
+  )
+
+  const handleBack = useCallback(() => {
+    router.push(`/chatbots/${chatbotId}/broadcasts`)
+  }, [router, chatbotId])
+
+  return (
+    <Card className="mt-10 w-lg">
+      <CardHeader>
+        <CardTitle className="text-xl">{t("actions.chooseChannel")}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {configs.map((config) => (
+          <div className="flex w-full items-center gap-2" key={config.value}>
+            <span className="flex flex-1 gap-2">
+              <config.Icon fill={config.iconColor} />
+              {config.name}
+            </span>
+            <Button
+              onClick={() => handleChooseChannel(config.value as InboxType)}
+              type="button"
+              variant="secondary"
             >
-              {!hasInboxType && (
-                <InboxTypeSelect
-                  inboxTypes={inboxTypes}
-                  onSelectInboxType={onSelectInboxType}
-                />
+              {t("actions.continue")}
+            </Button>
+          </div>
+        ))}
+
+        <div className="mt-4 flex">
+          <Button onClick={handleBack} type="button" variant="outline">
+            {t("actions.back")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function CreateBroadcastChooseSubaction({
+  inboxType,
+}: {
+  inboxType: BroadcastInboxType
+}) {
+  const t = useTranslations()
+  const { setValue } = useFormContext()
+
+  const configs = useMemo(
+    () =>
+      getConfigs(t).find((config) => config.value === inboxType)?.subactions ??
+      [],
+    [t, inboxType],
+  )
+
+  const handleChooseSubaction = useCallback(
+    (val: BroadcastSubaction) => {
+      setValue("subaction", val)
+    },
+    [setValue],
+  )
+
+  const handleBack = useCallback(() => {
+    setValue("subaction", null)
+    setValue("inboxType", null)
+  }, [setValue])
+
+  return (
+    <Card className="mt-10 w-xl">
+      <CardHeader>
+        <CardTitle className="text-xl">
+          {t("actions.chooseSubaction")}
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-4">
+        {configs.map((subaction) => (
+          <div className="flex w-full items-center gap-2" key={subaction.value}>
+            <div className="flex flex-col gap-1">
+              <span className="flex flex-1 gap-2 font-semibold">
+                {subaction.name}
+              </span>
+              {subaction.description && (
+                <span className="text-gray-500 text-sm">
+                  {subaction.description}
+                </span>
               )}
+            </div>
+            <Button
+              onClick={() => handleChooseSubaction(subaction.value)}
+              type="button"
+              variant="secondary"
+            >
+              {t("actions.continue")}
+            </Button>
+          </div>
+        ))}
 
-              {hasInboxType && hasSubAction && (
-                <>
-                  <FlowSelect
-                    label={t("fields.flowToSend.label")}
-                    name="flowId"
-                    required={true}
-                  />
+        <div className="mt-4 flex">
+          <Button onClick={handleBack} type="button" variant="outline">
+            {t("actions.back")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
-                  <SelectField
-                    defaultValue="Now"
-                    label={t("broadcasts.scheduleSendMessage")}
-                    name="schedulesType"
-                    // onValueChange={(value) =>
-                    //   setSchedulesType(value as BroadcastSchedulesType)
-                    // }
-                    options={schedulesOptions}
-                  />
+function CreateBroadcastChooseFlow() {
+  const t = useTranslations()
+  const router = useRouter()
+  const { chatbotId } = useParams<{ chatbotId: string }>()
 
-                  {schedulesType === BroadcastSchedulesType.future && (
-                    <DateTimePicker
-                      displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-                      granularity="minute"
-                      onChange={(value) => {
-                        setValue(
-                          "schedulesAt",
-                          (value ?? new Date()).toISOString(),
-                        )
-                      }}
-                      value={add(new Date(), { minutes: 15 })}
-                    />
-                  )}
+  const schedulesOptions = useMemo(
+    () => [
+      {
+        value: BroadcastSchedulesType.now,
+        label: t("fields.schedule.now"),
+      },
+      {
+        value: BroadcastSchedulesType.future,
+        label: t("fields.schedule.scheduled"),
+      },
+    ],
+    [t],
+  )
 
-                  <div className="flex justify-end gap-2">
-                    <Button asChild variant="outline">
-                      <Link href={`/chatbots/${chatbotId}/broadcasts`}>
-                        {t("actions.cancel")}
-                      </Link>
-                    </Button>
+  const { flows } = useFlowStore((state) => state)
 
-                    <Button
-                      disabled={
-                        !form.formState.isValid || form.formState.isSubmitting
-                      }
-                      type="submit"
-                    >
-                      {form.formState.isSubmitting && (
-                        <Loader2Icon className="animate-spin" />
-                      )}
-                      {t("actions.confirm")}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+  const { control, setValue, formState } = useFormContext()
+  const watchedSchedulesType = useWatch({ control, name: "schedulesType" })
+
+  const handleCancel = useCallback(() => {
+    router.push(`/chatbots/${chatbotId}/broadcasts`)
+  }, [router, chatbotId])
+
+  const handleScheduleTypeChange = useCallback(
+    (value: BroadcastSchedulesType) => {
+      if (value === BroadcastSchedulesType.now) {
+        setValue("schedulesAt", null)
+      }
+    },
+    [setValue],
+  )
+
+  const handleDateTimeChange = useCallback(
+    (value: Date | null) => {
+      setValue("schedulesAt", (value ?? new Date()).toISOString())
+    },
+    [setValue],
+  )
+
+  const defaultDateTime = useMemo(() => add(new Date(), { minutes: 15 }), [])
+
+  return (
+    <Card className="mt-10 w-xl">
+      <CardHeader>
+        <CardTitle className="text-xl">{t("broadcasts.details")}</CardTitle>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-6">
+        <ComboboxField
+          label={t("fields.flowId.label")}
+          name="flowId"
+          options={flows.map((flow) => ({
+            label: flow.name,
+            value: flow.id,
+          }))}
+          required={true}
+        />
+
+        <SelectField
+          defaultValue={BroadcastSchedulesType.now}
+          label={t("fields.schedule.label")}
+          name="schedulesType"
+          options={schedulesOptions}
+          required
+          triggerValueChange={(value) =>
+            handleScheduleTypeChange(value as BroadcastSchedulesType)
+          }
+        />
+
+        {watchedSchedulesType === BroadcastSchedulesType.future && (
+          <div className="flex flex-col gap-2">
+            <Label>{t("fields.chooseTime.label")}</Label>
+            <DateTimePicker
+              disabled={{
+                before: new Date(),
+              }}
+              displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
+              granularity="minute"
+              onChange={(date) => handleDateTimeChange(date ?? null)}
+              value={defaultDateTime}
+            />
+          </div>
+        )}
+
+        <ContactFilter parentName="contactFilter" />
+
+        <div className="flex justify-end gap-2">
+          <Button onClick={handleCancel} type="button" variant="outline">
+            {t("actions.cancel")}
+          </Button>
+
+          <Button
+            disabled={!formState.isValid || formState.isSubmitting}
+            type="submit"
+          >
+            {formState.isSubmitting && <Loader2Icon className="animate-spin" />}
+            {t("actions.confirm")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

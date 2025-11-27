@@ -20,7 +20,8 @@ export const auth = betterAuth({
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         await sendMagicLinkMail(email, {
-          url,
+          brandName: "ChatbotX",
+          brandUrl: url,
         })
       },
     }),

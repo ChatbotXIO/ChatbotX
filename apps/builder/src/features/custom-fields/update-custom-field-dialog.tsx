@@ -48,7 +48,7 @@ export function UpdateCustomFieldDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.customField.label"),
             }),
           )

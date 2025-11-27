@@ -2,13 +2,13 @@
 
 import { prisma } from "@aha.chat/database"
 import type { UserModel } from "@aha.chat/database/types"
-import { revalidateTag } from "next/cache"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 
 export const deleteAIAgentAction = authActionClient
@@ -32,6 +32,6 @@ export const deleteAIAgentAction = authActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#aiAgents`)
+      revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)
     },
   )

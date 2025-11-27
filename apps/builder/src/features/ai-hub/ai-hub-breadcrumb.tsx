@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useParams, usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 
-export function AiHubBreadcrumb() {
+export function AIHubBreadcrumb() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
 

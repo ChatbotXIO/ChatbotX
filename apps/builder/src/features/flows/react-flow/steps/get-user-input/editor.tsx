@@ -26,7 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ClockIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
-import { useForm, useFormContext } from "react-hook-form"
+import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { useStepStore } from "../../stores/step-store-provider"
 import { BaseStepEditor } from "../base/editor"
 import DelayUnitSelect from "../wait/components/delay-unit-select"
@@ -68,7 +68,7 @@ const GetUserInputStepForm = ({
 
   const customFieldOptions = useStepStore((state) => state.customFieldOptions)
 
-  const autoSkip = form.watch("autoSkip")
+  const autoSkip = useWatch({ name: "autoSkip" })
 
   const handleCancel = () => {
     form.reset()

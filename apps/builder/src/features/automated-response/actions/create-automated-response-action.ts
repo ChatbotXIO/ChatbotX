@@ -1,13 +1,13 @@
 "use server"
 
 import { FolderType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
 import { ensureFolderIdExists } from "@/features/folders/queries"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateAutomatedResponseRequest,
@@ -47,9 +47,10 @@ export const createAutomatedResponseAction = chatbotActionClient
           ...parsedInput,
           chatbotId,
           status: true,
+          userMessages: parsedInput.userMessages.map((m) => m.value),
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#automatedResponses`)
+      revalidateCacheTags(`chatbots:${chatbotId}#automatedResponses`)
     },
   )

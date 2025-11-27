@@ -1,13 +1,13 @@
 "use server"
 
 import { FieldType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteFieldsAction = chatbotActionClient
@@ -31,6 +31,6 @@ export const deleteFieldsAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#customFields`)
+      revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
     },
   )

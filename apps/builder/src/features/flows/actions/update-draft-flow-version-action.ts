@@ -38,6 +38,6 @@ export const updateDraftFlowVersionAction = chatbotActionClient
         },
       })
 
-      // revalidateTag(`chatbots:${chatbotId}#flows:${id}`)
+      // revalidateCacheTags(`chatbots:${chatbotId}#flows:${id}`)
     },
   )

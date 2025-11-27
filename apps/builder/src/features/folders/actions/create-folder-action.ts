@@ -2,7 +2,6 @@
 
 import { prisma } from "@aha.chat/database"
 import type { FolderModel } from "@aha.chat/database/types"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -11,6 +10,7 @@ import {
   type CreateFolderSchema,
   createFolderSchema,
 } from "@/features/folders/schemas/create-folder-schema"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const createFolderAction = chatbotActionClient
@@ -45,6 +45,8 @@ export const createFolderAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#folders:${parsedInput.folderType}`)
+      revalidateCacheTags(
+        `chatbots:${chatbotId}#folders:${parsedInput.folderType}`,
+      )
     },
   )

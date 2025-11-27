@@ -1,6 +1,5 @@
 "use client"
 
-import type { AIFileModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { Badge } from "@aha.chat/ui/components/ui/badge"
@@ -24,23 +23,70 @@ import {
   TextIcon,
   Trash2Icon,
 } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
-import { use, useCallback, useMemo } from "react"
-import { toast } from "sonner"
+import { use, useCallback, useMemo, useState } from "react"
+import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
+import { DeleteAIFileDialog } from "./delete-ai-file-dialog"
 import type { getAIFiles } from "./queries"
+import type { AIFileWithProcessing } from "./schemas"
 
 type AIFilesTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getAIFiles>>]>
+}
+
+function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
+  const t = useTranslations()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="icon" variant="ghost">
+            <MoreHorizontalIcon className="h-4 w-4" />
+            <span className="sr-only">{t("actions.openMenu")}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={aiFile.url} rel="noopener" target="_blank">
+              <EyeIcon className="mr-2 h-4 w-4" />
+              {t("actions.view")}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={aiFile.url} rel="noopener" target="_blank">
+              <DownloadIcon className="mr-2 h-4 w-4" />
+              {t("actions.download")}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => setOpen(true)}
+          >
+            <Trash2Icon className="mr-2 h-4 w-4" />
+            {t("actions.delete")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DeleteAIFileDialog
+        aiFile={aiFile}
+        open={open}
+        setOpen={setOpen}
+        showTrigger={false}
+      />
+    </>
+  )
 }
 
 export default function AIFilesTable({ promises }: AIFilesTableProps) {
   const [{ data }] = use(promises)
 
   const t = useTranslations()
-  // const [rowAction, setRowAction] =
-  //   useState<DataTableRowAction<AIFileModel> | null>(null)
 
   const getFileIcon = useCallback((fileType: string) => {
     const extension = fileType.split("/").at(-1)
@@ -60,7 +106,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
     }
   }, [])
 
-  const columns = useMemo<ColumnDef<AIFileModel>[]>(
+  const columns = useMemo<ColumnDef<AIFileWithProcessing>[]>(
     () => [
       {
         id: "select",
@@ -138,6 +184,25 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         enableHiding: true,
       },
       {
+        id: "processingStatus",
+        accessorKey: "processingStatus",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.processingStatus.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <AIFileProcessingStatus
+            aiFileId={row.original.id}
+            chunksCount={row.original.chunksCount}
+            processingStatus={row.original.processingStatus}
+          />
+        ),
+        enableSorting: false,
+        enableHiding: true,
+      },
+      {
         id: "createdAt",
         accessorKey: "createdAt",
         header: ({ column }) => (
@@ -157,43 +222,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
       {
         id: "actions",
         header: t("actions.actions"),
-        cell: () => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">{t("actions.openMenu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  toast.info(t("messages.viewFileComingSoon"))
-                }}
-              >
-                <EyeIcon className="mr-2 h-4 w-4" />
-                {t("actions.view")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  toast.info(t("messages.downloadComingSoon"))
-                }}
-              >
-                <DownloadIcon className="mr-2 h-4 w-4" />
-                {t("actions.download")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => {
-                  toast.info(t("messages.deleteComingSoon"))
-                }}
-              >
-                <Trash2Icon className="mr-2 h-4 w-4" />
-                {t("actions.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
+        cell: ({ row }) => <RowActionCell aiFile={row.original} />,
         size: 50,
         enableSorting: false,
         enableHiding: false,

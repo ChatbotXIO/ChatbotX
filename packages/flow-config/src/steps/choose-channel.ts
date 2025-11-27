@@ -15,6 +15,6 @@ export const chooseChannelStepDefaultFn = (
 ): ChooseChannelStepSchema => ({
   id: createId(),
   stepType: StepType.chooseChannel,
-  channel: "Omnichannel",
+  channel: "omnichannel",
   ...props,
 })

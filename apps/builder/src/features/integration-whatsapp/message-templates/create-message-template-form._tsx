@@ -93,7 +93,7 @@ export function CreateMessageTemplateForm({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createSuccess", {
+            t("messages.createdSuccess", {
               feature: t("whatsapp.messageTemplate.label"),
             }),
           )

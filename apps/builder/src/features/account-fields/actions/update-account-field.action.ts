@@ -1,12 +1,12 @@
 "use server"
 
 import { FieldType, FolderType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateAccountFieldRequest,
@@ -50,7 +50,9 @@ export const updateAccountFieldAction = chatbotActionClient
         data: parsedInput,
       })
 
-      revalidateTag(`chatbots:${chatbotId}#accountFields`)
-      revalidateTag(`chatbots:${chatbotId}#accountFields:${id}`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#accountFields`,
+        `chatbots:${chatbotId}#accountFields:${id}`,
+      ])
     },
   )

@@ -3,7 +3,7 @@
 import { prisma } from "@aha.chat/database"
 import { z } from "zod"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { invalidateCacheTags } from "@/lib/cache-helper"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 const deleteAIFunctionRequest = z.object({
@@ -22,5 +22,5 @@ export const deleteAIFunctionAction = chatbotActionClient
         chatbotId,
       },
     })
-    invalidateCacheTags(`chatbots:${chatbotId}#aiFunctions`)
+    revalidateCacheTags(`chatbots:${chatbotId}#aiFunctions`)
   })

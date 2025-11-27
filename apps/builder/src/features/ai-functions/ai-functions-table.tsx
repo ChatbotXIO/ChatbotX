@@ -5,6 +5,7 @@ import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import { formatDate } from "@aha.chat/ui/lib/format"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
@@ -25,7 +26,6 @@ type AIFunctionsTableProps = {
 
 export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {
   const [{ data }, { data: flows }, { data: customFields }] = use(promises)
-
   const t = useTranslations()
 
   const columns = useMemo<ColumnDef<AIFunctionModel>[]>(
@@ -67,6 +67,25 @@ export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <span className="font-medium">{row.original.name}</span>
+          </div>
+        ),
+        enableSorting: true,
+        enableHiding: false,
+      },
+      {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.createdAt.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">
+              {formatDate(row.original.createdAt)}
+            </span>
           </div>
         ),
         enableSorting: true,

@@ -40,6 +40,10 @@ export async function getFlows(
         ]
       }
 
+      if (input.active) {
+        where.active = input.active
+      }
+
       const orderBy = input.sort
         ? input.sort.map((sortItem) => ({
             [sortItem.id]: sortItem.desc ? "desc" : "asc",

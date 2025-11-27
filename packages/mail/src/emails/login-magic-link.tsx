@@ -2,23 +2,23 @@ import { Button, Heading, Section, Text } from "@react-email/components"
 import BaseTempate from "./base-template"
 
 export type LoginMagicLinkEmailProps = {
-  // name: string;
-  url: string
+  brandName: string
+  brandUrl: string
 }
 
 export function LoginMagicLinkEmail({
-  // name,
-  url,
+  brandName,
+  brandUrl,
 }: LoginMagicLinkEmailProps) {
   return (
     <BaseTempate>
       <Heading>Magic link request</Heading>
       <Text>
         Hey! You asked us to send you a magic link for quickly signing into your
-        AhachatAI account.
+        {brandName} account.
       </Text>
       <Section>
-        <Button href={url}>Sign in to AhachatAI</Button>
+        <Button href={brandUrl}>Sign in to {brandName}</Button>
       </Section>
       <Text>
         The above link is a magic link, only meant for you. Please don't share
@@ -34,6 +34,6 @@ export function LoginMagicLinkEmail({
 }
 
 LoginMagicLinkEmail.PreviewProps = {
-  name: "Whoami",
-  url: "https://ahachat.ai",
+  brandName: "ChatbotX",
+  brandUrl: "https://example.com",
 } as LoginMagicLinkEmailProps

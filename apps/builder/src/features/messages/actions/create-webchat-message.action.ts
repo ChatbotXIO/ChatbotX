@@ -22,9 +22,9 @@ import {
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import imageSize from "image-size"
-import { revalidateTag } from "next/cache"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { BaseException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
@@ -44,7 +44,7 @@ export const createWebchatMessageAction = actionClient
       const inbox = await prisma.inbox.findFirst({
         where: {
           chatbotId: parsedInput.chatbotId,
-          inboxType: InboxType.Webchat,
+          inboxType: InboxType.webchat,
         },
       })
       if (!inbox) {
@@ -92,7 +92,7 @@ export const createWebchatMessageAction = actionClient
               chatbotId: parsedInput.chatbotId,
               sourceId,
               email: parsedInput.guestConversationId,
-              source: IntegrationType.Webchat,
+              source: IntegrationType.webchat,
               gender: Gender.unknown,
               firstName: "Guest",
               lastName: randomString(10),
@@ -198,21 +198,18 @@ export const createWebchatMessageAction = actionClient
       ]
       if (message.content) {
         promises.push(
-          integrationQueue.add(
-            IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
-            {
-              type: IntegrationJobAction.TRIGGER_AUTOMATED_RESPONSE,
-              data: {
-                message: message as OutgoingMessageEntity,
-              },
+          integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
+            type: IntegrationJobAction.triggerAutomatedResponse,
+            data: {
+              message: message as OutgoingMessageEntity,
             },
-          ),
+          }),
         )
       }
 
       // Broadcast and send
       await Promise.all(promises)
 
-      revalidateTag(`chatbots:${conversation.chatbotId}:conversations`)
+      revalidateCacheTags(`chatbots:${conversation.chatbotId}:conversations`)
     },
   )

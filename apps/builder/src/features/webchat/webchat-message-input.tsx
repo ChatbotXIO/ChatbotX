@@ -9,7 +9,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { createId } from "@paralleldrive/cuid2"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
 import { type KeyboardEvent, useEffect, useRef } from "react"
-import { Controller } from "react-hook-form"
+import { Controller, useWatch } from "react-hook-form"
 import { createWebchatMessageAction } from "../messages/actions/create-webchat-message.action"
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
@@ -33,7 +33,7 @@ export const WebchatMessageInput = ({
     form,
     handleSubmitWithAction,
     resetFormAndAction,
-    form: { setValue, reset },
+    form: { control, setValue, resetField },
   } = useHookFormAction(
     createWebchatMessageAction,
     zodResolver(createWebchatMessageRequest),
@@ -60,7 +60,7 @@ export const WebchatMessageInput = ({
             })
           }
 
-          reset()
+          resetField("content")
           textareaRef.current?.focus()
         },
         onSuccess: () => {
@@ -93,6 +93,14 @@ export const WebchatMessageInput = ({
       setValue("guestConversationId", guestConversationId)
     }
   }, [guestConversationId, setValue])
+
+  const files = useWatch({ control, name: "files" })
+
+  useEffect(() => {
+    if (files.length > 0) {
+      resetField("content")
+    }
+  }, [files, resetField])
 
   const onSelectEmoji = (emoji: string) => {
     const element = textareaRef.current
@@ -139,6 +147,7 @@ export const WebchatMessageInput = ({
                 <Textarea
                   autoComplete="off"
                   className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
+                  disabled={files.length > 0}
                   placeholder="Message..."
                   {...field}
                   onKeyDown={onKeyDown}

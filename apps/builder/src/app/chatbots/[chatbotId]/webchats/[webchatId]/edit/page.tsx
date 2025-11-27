@@ -19,7 +19,10 @@ export default async function WebchatEditPage({
   const promises = Promise.all([
     getFlows({
       chatbotId,
-      ...listFlowsSearchParams.parse({}),
+      ...listFlowsSearchParams.parse({
+        active: "1",
+        perPage: "1000",
+      }),
     }),
   ])
   return (

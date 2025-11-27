@@ -1,6 +1,6 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { prisma } from "@aha.chat/database"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 
@@ -11,11 +11,10 @@ export const disconnectGeminiAction = chatbotActionClient
       where: { chatbotId },
     })
 
-    await prisma.integrationGemini.update({
-      where: { id: integrationGemini.id },
-      data: {
-        auth: null as unknown as Prisma.NullableJsonNullValueInput,
-        autoReply: false,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.integration.delete({
+        where: { id: integrationGemini.integrationId },
+      })
     })
+    return
   })

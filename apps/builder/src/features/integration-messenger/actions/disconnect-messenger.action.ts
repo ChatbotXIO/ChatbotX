@@ -1,13 +1,14 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import { InboxStatus } from "@aha.chat/database/enums"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const disconnectMessengerAction = chatbotActionClient
@@ -35,8 +36,15 @@ export const disconnectMessengerAction = chatbotActionClient
         await tx.integrationMessenger.delete({
           where: { id: integrationMessenger.id },
         })
+        await tx.inbox.update({
+          where: { id: integrationMessenger.inboxId },
+          data: { status: InboxStatus.disconnected },
+        })
       })
 
-      revalidateTag(`chatbots:${chatbotId}#messenger`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#messenger`,
+        `chatbots:${chatbotId}#inboxes`,
+      ])
     },
   )

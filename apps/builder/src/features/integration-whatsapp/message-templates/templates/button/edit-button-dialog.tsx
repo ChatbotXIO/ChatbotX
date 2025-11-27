@@ -15,7 +15,7 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import { useForm, useFormContext } from "react-hook-form"
+import { useForm, useFormContext, useWatch } from "react-hook-form"
 import {
   ButtonActionType,
   type ButtonStepProps,
@@ -63,8 +63,8 @@ export function EditButtonDialog({
     [t],
   )
 
-  const { watch, formState, handleSubmit } = form
-  const type = watch("type")
+  const { formState, handleSubmit } = form
+  const type = useWatch({ name: "type" })
 
   const onSubmit = handleSubmit((data) => {
     setValueOriginEditor(parentName, data)

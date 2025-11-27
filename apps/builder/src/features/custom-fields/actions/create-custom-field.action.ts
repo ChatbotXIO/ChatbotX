@@ -1,12 +1,12 @@
 "use server"
 
 import { FieldType, FolderType, prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldSchema,
@@ -41,6 +41,6 @@ export const createCustomFieldAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#customFields`)
+      revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
     },
   )

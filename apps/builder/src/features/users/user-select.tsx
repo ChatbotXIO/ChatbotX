@@ -5,7 +5,7 @@ import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { callAPI } from "@/lib/swr"
-import type { ChatbotMemberCollection } from "../chatbot-members/schemas"
+import type { ChatbotMemberCollection } from "../chatbot-members/schemas/resource"
 
 type UserSelectProps = {
   name: string

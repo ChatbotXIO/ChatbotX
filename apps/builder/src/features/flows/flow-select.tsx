@@ -1,4 +1,4 @@
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { useParams } from "next/navigation"
 import { callAPI } from "@/lib/swr"
 import type { FlowCollection } from "./schemas/get-flows-schema"
@@ -11,7 +11,7 @@ type FlowSelectProps = {
 }
 
 export const FlowSelect = (props: FlowSelectProps) => {
-  const { name, label, required, className } = props
+  const { name, label, required } = props
 
   const params = useParams<{ chatbotId: string }>()
 
@@ -23,8 +23,7 @@ export const FlowSelect = (props: FlowSelectProps) => {
   }))
 
   return (
-    <SelectField
-      className={className}
+    <ComboboxField
       label={label}
       name={name}
       options={flowOptions}

@@ -37,7 +37,7 @@ export default function ArchiveConversationDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.updatedSuccessfully", {
+          t("messages.updatedSuccess", {
             feature: t("fields.conversation.label"),
           }),
         )

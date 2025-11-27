@@ -36,7 +36,6 @@ const WebchatWidgetContent = () => {
     }
 
     // TODO: Implement sendMessage functionality
-    // biome-ignore lint/suspicious/noConsole: Debug logging
     console.log("Sending message:", message.trim())
     setMessage("")
   }

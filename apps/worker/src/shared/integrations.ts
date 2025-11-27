@@ -10,11 +10,11 @@ export const allIntegrations: Record<
   // biome-ignore lint/suspicious/noExplicitAny: safe pass value
   Integration<IntegrationDefinition<any, any, any>> | undefined
 > = {
-  Gemini: undefined,
-  GoogleSheets: integrationGoogleSheets,
-  Messenger: integrationMessenger,
-  OpenAI: undefined,
-  Webchat: undefined,
-  Whatsapp: integrationWhatsapp,
-  Zalo: integrationZalo,
+  gemini: undefined,
+  googleSheets: integrationGoogleSheets,
+  messenger: integrationMessenger,
+  openai: undefined,
+  webchat: undefined,
+  whatsapp: integrationWhatsapp,
+  zalo: integrationZalo,
 }

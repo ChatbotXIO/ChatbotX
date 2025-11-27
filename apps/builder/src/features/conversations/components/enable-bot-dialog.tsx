@@ -36,7 +36,7 @@ export default function EnableBotDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.updatedSuccessfully", {
+          t("messages.updatedSuccess", {
             feature: t("fields.chatbot.label"),
           }),
         )

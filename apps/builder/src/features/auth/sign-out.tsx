@@ -3,6 +3,7 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -11,10 +12,12 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import { Loader2Icon, LogOutIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { authClient } from "@/lib/auth/auth-client"
 
 export function SignOut() {
+  const t = useTranslations()
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -22,15 +25,22 @@ export function SignOut() {
     <Dialog>
       <DialogTrigger className="relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0">
         <LogOutIcon />
-        Log Out
+        {t("actions.signOut")}
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>Are you sure you want to log out?</DialogTitle>
-          <DialogDescription />
+          <DialogTitle>{t("actions.signOut")}</DialogTitle>
+          <DialogDescription>
+            {t("messages.signOutConfirmation")}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2">
+          <DialogClose asChild>
+            <Button size="sm" type="button" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
+          </DialogClose>
           <Button
             disabled={isLoading}
             onClick={async () => {
@@ -44,10 +54,11 @@ export function SignOut() {
                 },
               })
             }}
-            variant="default"
+            size="sm"
+            variant="destructive"
           >
             {isLoading && <Loader2Icon className="animate-spin" />}
-            Sign Out
+            {t("actions.signOut")}
           </Button>
         </div>
       </DialogContent>

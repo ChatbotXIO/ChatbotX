@@ -7,7 +7,26 @@ import {
   type OrganizationWhereInput,
   organizationSettingsSchema,
 } from "@aha.chat/database/types"
+import { unstable_cache } from "next/cache"
+import { calcCacheTags } from "@/lib/cache-helper"
+import { getDomainFromHeader } from "@/lib/domain"
 import { BaseException } from "@/lib/errors/exception"
+import { logger } from "@/lib/log"
+
+export async function findOrganizationByDomain(): Promise<OrganizationModel | null> {
+  const domain = await getDomainFromHeader()
+
+  return await unstable_cache(
+    async () =>
+      await prisma.organization.findFirst({
+        where: {
+          domain,
+        },
+      }),
+    ["organization"],
+    calcCacheTags(`organizations:${domain}`),
+  )()
+}
 
 export async function findOrganization(
   where: OrganizationWhereInput,
@@ -27,15 +46,12 @@ export async function findOrganizationSettings(
   where: OrganizationWhereInput,
 ): Promise<OrganizationSettings> {
   const organization = await findOrganization(where)
-
-  const { data: settings } = organizationSettingsSchema.safeParse(
-    organization?.settings,
-  )
-  if (!settings) {
-    throw new Error("Organization settings is not valid")
+  if (!organization) {
+    logger.error("Organization not found", { where })
+    throw new BaseException("Organization not found")
   }
 
-  return settings
+  return verifyOrganizationSettings(organization)
 }
 
 export async function findOrganizationSettingsByKey<
@@ -52,4 +68,17 @@ export async function findOrganizationSettingsByKey<
   }
 
   return value as NonNullable<OrganizationSettings[K]>
+}
+
+export async function verifyOrganizationSettings(
+  organization: OrganizationModel,
+): Promise<OrganizationSettings> {
+  const { data: settings } = organizationSettingsSchema.safeParse(
+    organization?.settings,
+  )
+  if (!settings) {
+    throw new Error("Organization settings is not valid")
+  }
+
+  return await settings
 }

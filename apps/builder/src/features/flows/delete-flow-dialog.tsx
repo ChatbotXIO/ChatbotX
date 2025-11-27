@@ -27,6 +27,7 @@ type DeleteFlowsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
+  successHandler?: () => void
 }
 
 export function DeleteFlowsDialog({
@@ -35,6 +36,7 @@ export function DeleteFlowsDialog({
   showTrigger = true,
   onSuccess,
   onOpenChange,
+  successHandler,
   ...props
 }: DeleteFlowsDialogProps) {
   const t = useTranslations()
@@ -45,12 +47,17 @@ export function DeleteFlowsDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.deletedSuccessfully", {
+          t("messages.deletedSuccess", {
             feature: t("fields.flow.label"),
           }),
         )
         onOpenChange(false)
-        router.refresh()
+
+        if (successHandler) {
+          successHandler()
+        } else {
+          router.refresh()
+        }
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -73,7 +80,7 @@ export function DeleteFlowsDialog({
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.deleteTitle", { feature: t("fields.flow.label") })}
+            {t("messages.deleteFeature", { feature: t("fields.flow.label") })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("dialog.deleteConfirmation", {

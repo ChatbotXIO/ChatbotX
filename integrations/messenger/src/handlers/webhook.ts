@@ -74,10 +74,10 @@ const handleWebhookEvent = async (
       return
     }
 
-    await queue?.add("RECEIVE_MESSAGE", {
-      type: "RECEIVE_MESSAGE",
+    await queue?.add("incomingMessage", {
+      type: "incomingMessage",
       data: {
-        integrationName: "messenger",
+        integrationType: "messenger",
         payload: webhookData,
       },
     })

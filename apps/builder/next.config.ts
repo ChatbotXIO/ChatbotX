@@ -10,9 +10,6 @@ const withNextIntl = createNextIntlPlugin({
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   output: "standalone",
   images: {
     remotePatterns: [
@@ -67,11 +64,6 @@ const nextConfig: NextConfig = {
               source: "/manage/:path+",
               destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage/:path+`,
             },
-
-            // {
-            //   source: "/api/manage",
-            //   destination: `${env.NEXT_PUBLIC_BILLING_URL}/api/manage`,
-            // },
             {
               source: "/manage-static/:path+",
               destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage-static/:path+`,

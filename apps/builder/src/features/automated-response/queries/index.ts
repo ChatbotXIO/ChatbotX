@@ -1,5 +1,9 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
+import type {
+  AutomatedResponseModel,
+  AutomatedResponseWhereInput,
+} from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListAutomatedResponsesRequest } from "../schemas/get-automated-responses-schema"
@@ -45,4 +49,12 @@ export async function getAutomatedResponses(
       tags: [`chatbots:${input.chatbotId}#automatedResponses`],
     },
   )()
+}
+
+export async function findAutomatedResponse(
+  where: AutomatedResponseWhereInput,
+): Promise<AutomatedResponseModel | null> {
+  return await prisma.automatedResponse.findFirst({
+    where,
+  })
 }

@@ -43,7 +43,7 @@ const TemplateBodyComponent = ({ parentName }: { parentName: string }) => {
     let index = 1
     for (const match of variableMatches) {
       if (match === `{{${index}}}`) {
-        index++
+        index += 1
         newValues.push(values.length ? values.shift() : "")
       }
     }

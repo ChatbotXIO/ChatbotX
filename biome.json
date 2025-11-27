@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -58,9 +58,6 @@
         "noExcessiveLinesPerFunction": "off",
         "noExcessiveCognitiveComplexity": "off"
       },
-      "nursery": {
-        "useImageSize": "off"
-      },
       "performance": {
         "noBarrelFile": "off"
       }
@@ -73,5 +70,5 @@
       "trailingCommas": "all"
     }
   },
-  "extends": ["ultracite"]
+  "extends": ["ultracite/core", "ultracite/next"]
 }

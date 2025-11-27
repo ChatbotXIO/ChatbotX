@@ -1,11 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateInboxTeamRequest,
@@ -38,6 +38,6 @@ export const createInboxTeamAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#inboxTeams`)
+      revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
     },
   )

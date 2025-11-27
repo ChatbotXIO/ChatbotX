@@ -2,7 +2,6 @@
 
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { UserModel } from "@aha.chat/database/types"
-import { revalidateTag } from "next/cache"
 import { AITriggerException } from "@/features/ai-triggers/schemas/errors.schema"
 import {
   type UpdateAITriggerRequest,
@@ -12,6 +11,7 @@ import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const updateAITriggerAction = chatbotActionClient
@@ -55,6 +55,6 @@ export const updateAITriggerAction = chatbotActionClient
         },
       })
 
-      revalidateTag(`chatbots:${chatbotId}#aiTriggers`)
+      revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
     },
   )

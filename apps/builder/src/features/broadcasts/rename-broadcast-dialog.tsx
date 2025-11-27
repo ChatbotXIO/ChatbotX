@@ -16,6 +16,7 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
@@ -32,6 +33,7 @@ export function RenameBroadcastDialog({
   broadcast: BroadcastModel | null
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const {
     form,
@@ -49,12 +51,13 @@ export function RenameBroadcastDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.broadcast.label"),
             }),
           )
           resetFormAndAction()
           onOpenChange(false)
+          router.refresh()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -77,9 +80,13 @@ export function RenameBroadcastDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("broadcasts.update.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.editFeature", {
+              feature: t("fields.broadcast.label"),
+            })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -88,11 +95,11 @@ export function RenameBroadcastDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
-                  <Button size="sm" type="button" variant="secondary">
+                  <Button size="sm" type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>
                 </DialogClose>
@@ -100,6 +107,7 @@ export function RenameBroadcastDialog({
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  size="sm"
                   type="submit"
                 >
                   {form.formState.isSubmitting && (

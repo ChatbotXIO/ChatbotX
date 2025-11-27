@@ -12,13 +12,13 @@ import { sendFlowStep } from "./handlers/send-flow-step"
 import { sendMessageToExternal } from "./handlers/send-message"
 
 const worker = new Worker(
-  QueueName.CHAT,
+  QueueName.chat,
   async (job: Job<ChatJobData>) => {
     switch (job.data.type) {
-      case ChatJobAction.SEND_EXTERNAL_MESSAGE:
+      case ChatJobAction.sendExternalMessage:
         await sendMessageToExternal(job.data)
         return
-      case ChatJobAction.SEND_FLOW_STEP:
+      case ChatJobAction.sendFlowMessage:
         await sendFlowStep(job.data.data)
         return
       default:

@@ -112,12 +112,19 @@ export function getWebchatColumns({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Link
-                    href={`/chatbots/${webchat.chatbotId}/webchats/${webchat.id}/edit`}
+                <DropdownMenuItem asChild>
+                  <Button
+                    asChild
+                    className="w-full justify-start"
+                    size="sm"
+                    variant="ghost"
                   >
-                    {t("actions.edit")}
-                  </Link>
+                    <Link
+                      href={`/chatbots/${webchat.chatbotId}/webchats/${webchat.id}/edit`}
+                    >
+                      {t("actions.edit")}
+                    </Link>
+                  </Button>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"

@@ -51,7 +51,7 @@ export function UpdateAIAgentDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.updatedSuccessfully", {
+            t("messages.updatedSuccess", {
               feature: t("fields.aiAgent.label"),
             }),
           )

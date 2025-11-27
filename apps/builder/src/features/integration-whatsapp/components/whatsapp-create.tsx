@@ -28,7 +28,7 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
-import { useFormContext } from "react-hook-form"
+import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
 import { connectWhatsappAction } from "../actions/connect.action"
@@ -92,16 +92,19 @@ function usePhoneNumbers() {
   }
 }
 
+type WhatsappCreateProps = {
+  chatbotId?: string | null
+  settings: NonNullable<OrganizationSettings["whatsapp"]>
+}
+
 export default function WhatsappCreate({
   chatbotId,
   settings,
-}: {
-  chatbotId: string | null | undefined
-  settings: NonNullable<OrganizationSettings["whatsapp"]>
-}) {
+}: WhatsappCreateProps) {
   const t = useTranslations()
   const { visibility, updateVisibility } = useFormVisibility()
   const router = useRouter()
+
   // Form setup
   const { form, handleSubmitWithAction } = useHookFormAction(
     connectWhatsappAction,
@@ -173,10 +176,10 @@ export default function WhatsappCreate({
             setValue(FORM_FIELDS.BUSINESS_ID, "")
             setValue(FORM_FIELDS.WABA_ID, "")
             setValue(FORM_FIELDS.PHONE_NUMBER_ID, "")
+            toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
           }
         }
       } catch {
-        // biome-ignore lint/suspicious/noConsole: debug
         console.log("handle message event error: ", event)
       }
     }
@@ -188,7 +191,7 @@ export default function WhatsappCreate({
     return () => {
       window.removeEventListener("message", handleMessage)
     }
-  }, [setValue]) // Empty dependency array ensures the effect runs only once on mount and unmount
+  }, [setValue, t]) // Empty dependency array ensures the effect runs only once on mount and unmount
 
   // Form visibility effects
   useEffect(() => {
@@ -267,6 +270,7 @@ function SdkConnectSection({
     "flex items-center gap-2 flex-row-reverse justify-end"
 
   const finalSubmitRef = useRef<HTMLButtonElement>(null)
+  const watchCode = useWatch({ name: FORM_FIELDS.CODE })
 
   return (
     <>
@@ -325,7 +329,6 @@ function SdkConnectSection({
               } as any
             }
             onFail={(error) => {
-              // biome-ignore lint/suspicious/noConsole: debug
               console.log("error", error)
               toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
             }}
@@ -346,7 +349,7 @@ function SdkConnectSection({
           </FacebookLogin>
         )}
 
-        {watch(FORM_FIELDS.CODE) && (
+        {watchCode && (
           <div className="flex items-center justify-end gap-2">
             <Button
               disabled={formState.isSubmitting}

@@ -1,5 +1,7 @@
 "use client"
 
+import { organizationSettingsSchema } from "@aha.chat/database/types"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
@@ -18,11 +20,20 @@ export type ZaloManageProps = {
 }
 export function ZaloManage({ promises }: ZaloManageProps) {
   const t = useTranslations()
-
+  const { chatbotId } = useParams<{ chatbotId: string }>()
   const [integrationZalo, organization] = use(promises)
 
-  if (!organization) {
-    return <div>Organization not found</div>
+  const { data: settings } = organizationSettingsSchema.safeParse(
+    organization?.settings,
+  )
+  if (!(organization && settings?.zalo)) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-muted-foreground text-sm">
+          {t("messages.needToAddSettings")}
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -32,7 +43,7 @@ export function ZaloManage({ promises }: ZaloManageProps) {
           <ZaloDisconnect />
         </div>
       ) : (
-        <ZaloConnect organization={organization} />
+        <ZaloConnect chatbotId={chatbotId} settings={settings.zalo} />
       )}
     </SettingRow>
   )

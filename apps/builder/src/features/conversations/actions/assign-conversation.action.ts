@@ -1,7 +1,6 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { revalidateTag } from "next/cache"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -11,6 +10,7 @@ import {
   type AssignConversationSchema,
   assignConversationSchema,
 } from "@/features/conversations/schemas/assign-conversation.schema"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const assignConversationAction = chatbotActionClient
@@ -77,7 +77,9 @@ export const assignConversationAction = chatbotActionClient
         data: updatedData,
       })
 
-      revalidateTag(`chatbots:${chatbotId}#conversations`)
-      revalidateTag(`chatbots:${chatbotId}#contacts`)
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#conversations`,
+        `chatbots:${chatbotId}#contacts`,
+      ])
     },
   )

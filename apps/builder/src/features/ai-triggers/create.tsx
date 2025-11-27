@@ -50,7 +50,7 @@ export function CreateAITriggerDialog({
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.createSuccess", {
+            t("messages.createdSuccess", {
               feature: t("fields.aiTrigger.label"),
             }),
           )
