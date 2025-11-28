@@ -3,6 +3,7 @@ import type { AIAgentModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import type { ListAIAgentsRequest } from "@/features/ai-agents/schemas/list.schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 
 export async function getAIAgents(
   input: ListAIAgentsRequest,
@@ -41,9 +42,6 @@ export async function getAIAgents(
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#aiAgents`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#aiAgents`]),
   )()
 }

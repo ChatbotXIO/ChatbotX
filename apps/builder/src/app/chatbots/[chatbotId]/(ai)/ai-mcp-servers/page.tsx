@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 import AIMcpServersTable from "@/features/ai-mcp-servers/ai-mcp-servers-table"
 import { getAIMcpServers } from "@/features/ai-mcp-servers/queries"
@@ -22,7 +23,9 @@ export default async function AIMcpServersPage({
   return (
     <div className="space-y-6">
       <AIHubBreadcrumb />
-      <AIMcpServersTable promises={promises} />
+      <Suspense>
+        <AIMcpServersTable promises={promises} />
+      </Suspense>
     </div>
   )
 }

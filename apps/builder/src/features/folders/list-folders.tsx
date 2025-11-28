@@ -12,7 +12,9 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
 import { parseAsString, useQueryState } from "@aha.chat/ui/lib/nuqs"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Fragment, use, useState } from "react"
+import { CreateFolderDialog } from "./create-folder-dialog"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { EditFolderDialog } from "./edit-folder-dialog"
 import type { getCurrentFolder, getFolders } from "./queries"
@@ -29,10 +31,11 @@ type ListFoldersProps = {
 }
 
 const ListFolders = (props: ListFoldersProps) => {
-  const { chatbotId, promises } = props
+  const { chatbotId, folderType, promises } = props
+  const router = useRouter()
 
   const [{ folder, parents }, { data: folders }] = use(promises)
-  const [, setFolderId] = useQueryState(
+  const [_, setFolderId] = useQueryState(
     "folderId",
     parseAsString.withOptions({
       history: "push",
@@ -57,53 +60,65 @@ const ListFolders = (props: ListFoldersProps) => {
   return (
     <>
       {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList className="gap-1 sm:gap-1">
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Button
-                className="p-0 hover:bg-transparent"
-                onClick={() => setFolderId(null)}
-                variant="ghost"
-              >
-                Root
-              </Button>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          {parents.map((parentFolder: FolderModel) => (
-            <Fragment key={parentFolder.id}>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Button
-                    className="p-0 hover:bg-transparent"
-                    onClick={() => setFolderId(parentFolder.id)}
-                    variant="ghost"
-                  >
-                    {parentFolder.name}
-                  </Button>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-            </Fragment>
-          ))}
-          {folder && (
-            <>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Button
-                    className="p-0 hover:bg-transparent"
-                    disabled
-                    variant="ghost"
-                  >
-                    {folder?.name ?? "N/A"}
-                  </Button>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-            </>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
+
+      <div className="flex">
+        <Breadcrumb className="flex-1">
+          <BreadcrumbList className="gap-1 sm:gap-1">
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Button
+                  className="p-0 hover:bg-transparent"
+                  onClick={() => setFolderId(null)}
+                  variant="ghost"
+                >
+                  Root
+                </Button>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            {parents.map((parentFolder: FolderModel) => (
+              <Fragment key={parentFolder.id}>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Button
+                      className="p-0 hover:bg-transparent"
+                      onClick={() => setFolderId(parentFolder.id)}
+                      variant="ghost"
+                    >
+                      {parentFolder.name}
+                    </Button>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+            {folder && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Button
+                      className="p-0 hover:bg-transparent"
+                      disabled
+                      variant="ghost"
+                    >
+                      {folder?.name ?? "N/A"}
+                    </Button>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </>
+            )}
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <CreateFolderDialog
+          chatbotId={chatbotId}
+          folderType={folderType}
+          onSuccess={() => {
+            console.log("onSuccess")
+            router.refresh()
+          }}
+        />
+      </div>
 
       {/* Folders list */}
       <ScrollArea className="max-h-44" type="auto">

@@ -7,6 +7,7 @@ import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { formatDate } from "@aha.chat/ui/lib/format"
 import type { ColumnDef } from "@tanstack/react-table"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import type { listCustomFields } from "../custom-fields/queries"
@@ -27,6 +28,7 @@ type AIFunctionsTableProps = {
 export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {
   const [{ data }, { data: flows }, { data: customFields }] = use(promises)
   const t = useTranslations()
+  const router = useRouter()
 
   const columns = useMemo<ColumnDef<AIFunctionModel>[]>(
     () => [
@@ -116,7 +118,13 @@ export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {
             {t("aiFunctions.description")}
           </p>
         </div>
-        <AIFunctionsCreate customFields={customFields} flows={flows} />
+        <AIFunctionsCreate
+          customFields={customFields}
+          flows={flows}
+          onSuccess={() => {
+            router.refresh()
+          }}
+        />
       </div>
 
       <DataTable table={table}>

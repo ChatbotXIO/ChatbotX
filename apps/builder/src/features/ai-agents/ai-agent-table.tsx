@@ -4,7 +4,7 @@ import type { AIAgentModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import type { getAIAgents } from "@/features/ai-agents/actions/list.action"
@@ -37,33 +37,12 @@ export function AIAgentsTable({
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const t = useTranslations()
-  // const router = useRouter()
+  const router = useRouter()
 
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AIAgentModel> | null>(null)
 
-  // const { execute } = useAction(
-  //   duplicateAIAgentAction.bind(
-  //     null,
-  //     chatbotId,
-  //     rowAction?.row.original ? rowAction.row.original.id : "",
-  //   ),
-  // )
-
-  // useEffect(() => {
-  //   if (rowAction && rowAction.variant === "duplicate") {
-  //     execute()
-  //     setRowAction(null)
-  //     toast.success("Duplicate successfully!")
-  //     router.refresh()
-  //   }
-  // }, [rowAction, execute, router])
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
-  const columns = useMemo(
-    () => GetAIAgentsColumns({ setRowAction }),
-    [setRowAction],
-  )
+  const columns = useMemo(() => GetAIAgentsColumns({ setRowAction, t }), [t])
 
   const { table } = useDataTable({
     data,
@@ -87,10 +66,14 @@ export function AIAgentsTable({
             {t("aiAgent.description")}
           </p>
         </div>
+
         <CreateAIAgentDialog
           files={files}
           functions={functions}
           mcpServers={mcpServers}
+          onSuccess={() => {
+            router.refresh()
+          }}
         />
       </div>
 
@@ -100,7 +83,10 @@ export function AIAgentsTable({
         agents={rowAction?.row.original ? [rowAction?.row.original] : []}
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        onSuccess={() => {
+          rowAction?.row.toggleSelected(false)
+          router.refresh()
+        }}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
       />
@@ -109,6 +95,9 @@ export function AIAgentsTable({
         agent={rowAction?.row.original || null}
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={rowAction?.variant === "update"}
       />
     </div>

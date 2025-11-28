@@ -16,7 +16,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { parseAsString, useQueryState } from "nuqs"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createFolderAction } from "@/features/folders/actions/create-folder-action"
 import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema"
@@ -24,14 +25,16 @@ import { createFolderSchema } from "@/features/folders/schemas/create-folder-sch
 export function CreateFolderDialog({
   chatbotId,
   folderType,
-  parentId,
+  onSuccess,
 }: {
   chatbotId: string
   folderType: FolderType
-  parentId: string | null
+  onSuccess?: () => void
 }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
+
+  const [folderId] = useQueryState("folderId", parseAsString)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -47,6 +50,7 @@ export function CreateFolderDialog({
             )
             resetFormAndAction()
             setOpen(false)
+            onSuccess?.()
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -59,12 +63,18 @@ export function CreateFolderDialog({
           defaultValues: {
             name: "",
             folderType,
-            parentId: parentId === "" ? null : parentId,
+            parentId: folderId,
           },
         },
         errorMapProps: {},
       },
     )
+
+  const { setValue } = form
+
+  useEffect(() => {
+    setValue("parentId", folderId)
+  }, [folderId, setValue])
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>

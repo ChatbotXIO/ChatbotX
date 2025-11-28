@@ -7,7 +7,7 @@ export const createContactSchema = z.object({
     .min(10)
     .max(20)
     .regex(/\+?\d{10,20}/),
-  email: z.union([z.literal(""), z.string().max(100).email()]),
+  email: z.union([z.literal(""), z.email().max(100)]),
   firstName: z.optional(z.string().trim().max(100)),
   lastName: z.optional(z.string().trim().max(100)),
   gender: z.enum(Gender),

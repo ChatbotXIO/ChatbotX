@@ -53,8 +53,12 @@ export function CreateAutomatedResponseForm(
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Automated Response created successfully")
-          router.push(`/chatbots/${chatbotId}/automated-responses`)
+          toast.success(
+            t("messages.createdSuccess", {
+              feature: t("fields.automatedResponse.label"),
+            }),
+          )
+          router.back()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -144,10 +148,10 @@ export function CreateAutomatedResponseForm(
         {replies.map((reply, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <div className="flex w-full gap-2" key={index}>
-            <div className="flex w-1/2 items-center gap-2">
+            <div className="flex w-1/2 items-start gap-2">
               {reply.type === ReplyType.Message ? (
                 <>
-                  <MessageSquareMoreIcon />
+                  <MessageSquareMoreIcon className="mt-1.5" />
                   <InputField
                     className="flex-1"
                     name={`replies.${index}.message`}

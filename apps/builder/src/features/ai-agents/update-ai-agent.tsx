@@ -15,7 +15,6 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, XIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -31,14 +30,15 @@ export function UpdateAIAgentDialog({
   agent,
   open,
   onOpenChange,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
   agent: AIAgentModel | null
+  onSuccess?: () => void
 }) {
   const t = useTranslations()
-  const router = useRouter()
 
   const {
     form,
@@ -57,7 +57,7 @@ export function UpdateAIAgentDialog({
           )
 
           onOpenChange(false)
-          router.refresh()
+          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {

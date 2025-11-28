@@ -12,7 +12,6 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Loader, Trash2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
@@ -25,6 +24,7 @@ type DeleteAIFileDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   showTrigger?: boolean
   open: boolean
   setOpen: (open: boolean) => void
+  onSuccess?: () => void
 }
 
 export function DeleteAIFileDialog({
@@ -32,9 +32,9 @@ export function DeleteAIFileDialog({
   showTrigger = true,
   open,
   setOpen,
+  onSuccess,
 }: DeleteAIFileDialogProps) {
   const t = useTranslations()
-  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteAIFileAction.bind(null, aiFile.chatbotId, aiFile.id),
@@ -46,7 +46,7 @@ export function DeleteAIFileDialog({
           }),
         )
         setOpen(false)
-        router.refresh()
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {

@@ -3,6 +3,7 @@ import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 import { AutomatedResponsesTable } from "@/features/automated-response/automated-response-table"
 import { getAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schemas/get-automated-responses-schema"
@@ -50,11 +51,13 @@ export default async function AutomatedResponesPage(props: {
         </Button>
       </div>
 
-      <AutomatedResponsesTable
-        chatbotId={chatbotId}
-        flowPromises={flowPromises}
-        promises={promises}
-      />
+      <Suspense>
+        <AutomatedResponsesTable
+          chatbotId={chatbotId}
+          flowPromises={flowPromises}
+          promises={promises}
+        />
+      </Suspense>
     </>
   )
 }

@@ -987,10 +987,12 @@
       "label": "Luồng WhatsApp"
     },
     "shortText": {
-      "label": "Văn bản ngắn"
+      "label": "Văn bản ngắn",
+      "placeholder": "Nhập văn bản"
     },
     "number": {
-      "label": "Số"
+      "label": "Số",
+      "placeholder": "Nhập số"
     },
     "date": {
       "label": "Ngày"
@@ -999,7 +1001,10 @@
       "label": "Ngày giờ"
     },
     "boolean": {
-      "label": "Boolean"
+      "label": "Boolean",
+      "placeholder": "Chọn đúng hoặc sai",
+      "true": "Đúng",
+      "false": "Sai"
     },
     "longText": {
       "label": "Văn bản dài"

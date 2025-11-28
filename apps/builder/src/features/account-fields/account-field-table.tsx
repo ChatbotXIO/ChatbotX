@@ -22,9 +22,11 @@ import {
   TextIcon,
   Trash2Icon,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { useCopyToClipboard } from "usehooks-ts"
+import CustomFieldLabel from "../custom-fields/components/custom-field-label"
 import { AccountFieldToolbarActions } from "./account-field-table-toolbar"
 import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
 import type { listAccountFields } from "./queries/list-account-fields.query"
@@ -38,6 +40,7 @@ type FieldsTableProps = {
 
 export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
   const [{ data, pageCount }] = use(promises)
+  const router = useRouter()
 
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AccountFieldResource> | null>(null)
@@ -97,7 +100,9 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Type" />
         ),
-        cell: ({ row }) => <div>{row.original.customFieldType}</div>,
+        cell: ({ row }) => (
+          <CustomFieldLabel customFieldType={row.original.customFieldType} />
+        ),
         enableSorting: false,
       },
       {
@@ -112,41 +117,38 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
       {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "update" })}
-                >
-                  <PencilIcon />
-                  {t("actions.update")}
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem onClick={() => setRowAction({ row, variant: "move" })}>Change folder</DropdownMenuItem> */}
-                <DropdownMenuItem
-                  onClick={() => copyToClipboard(row.original.id)}
-                >
-                  <FingerprintIcon />
-                  {t("actions.getID")}
-                </DropdownMenuItem>
-                <Separator className="my-1" />
-                <DropdownMenuItem
-                  onClick={() => setRowAction({ row, variant: "delete" })}
-                  variant="destructive"
-                >
-                  <Trash2Icon />
-                  {t("actions.delete")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
-        },
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "update" })}
+              >
+                <PencilIcon />
+                {t("actions.update")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => copyToClipboard(row.original.id)}
+              >
+                <FingerprintIcon />
+                {t("actions.getID")}
+              </DropdownMenuItem>
+              <Separator className="my-1" />
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "delete" })}
+                variant="destructive"
+              >
+                <Trash2Icon />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
         size: 50,
         enableSorting: false,
         enableHiding: false,
@@ -179,7 +181,10 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
       <DeleteAccountFieldsDialog
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        onSuccess={() => {
+          rowAction?.row.toggleSelected(false)
+          router.refresh()
+        }}
         open={rowAction?.variant === "delete"}
         records={rowAction?.row.original ? [rowAction?.row.original] : []}
         showTrigger={false}
@@ -189,6 +194,9 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
         accountField={rowAction?.row.original || null}
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={rowAction?.variant === "update"}
       />
     </>

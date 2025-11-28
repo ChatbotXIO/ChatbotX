@@ -8,23 +8,30 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { EllipsisVerticalIcon, StarIcon } from "lucide-react"
+import {
+  EllipsisVerticalIcon,
+  PencilIcon,
+  StarIcon,
+  Trash2Icon,
+} from "lucide-react"
+import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 
 type GetAIAgentsColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<AIAgentModel> | null>
   >
+  t: ReturnType<typeof useTranslations>
 }
 
 export function GetAIAgentsColumns({
   setRowAction,
+  t,
 }: GetAIAgentsColumnsProps): ColumnDef<AIAgentModel>[] {
   return [
     {
@@ -105,20 +112,15 @@ export function GetAIAgentsColumns({
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "update" })}
             >
-              Edit
-              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+              <PencilIcon className="mr-2" />
+              {t("actions.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => setRowAction({ row, variant: "duplicate" })}
-            >
-              Duplicate
-              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem
+              className="text-destructive"
               onSelect={() => setRowAction({ row, variant: "delete" })}
             >
-              Delete
-              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+              <Trash2Icon className="mr-2" />
+              {t("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

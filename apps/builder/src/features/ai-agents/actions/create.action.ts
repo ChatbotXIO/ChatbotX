@@ -40,11 +40,25 @@ export const createAIAgentAction = chatbotActionClient
         )
       }
 
-      await prisma.aIAgent.create({
-        data: {
-          chatbotId,
-          ...parsedInput,
-        },
+      await prisma.$transaction(async (tx) => {
+        // Reset isDefault to false for all other agents
+        if (parsedInput.isDefault) {
+          await tx.aIAgent.updateMany({
+            where: {
+              chatbotId,
+            },
+            data: {
+              isDefault: false,
+            },
+          })
+        }
+
+        await tx.aIAgent.create({
+          data: {
+            chatbotId,
+            ...parsedInput,
+          },
+        })
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)

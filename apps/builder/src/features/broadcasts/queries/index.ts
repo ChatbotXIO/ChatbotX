@@ -2,6 +2,7 @@ import { type Prisma, prisma } from "@aha.chat/database"
 import type { BroadcastModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type { GetBroadcastsSchema } from "../schemas/get-broadcasts-schema"
 
 export async function listBroadcasts(
@@ -36,9 +37,6 @@ export async function listBroadcasts(
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#broadcasts`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#broadcasts`]),
   )()
 }

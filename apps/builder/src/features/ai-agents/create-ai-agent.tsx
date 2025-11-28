@@ -39,7 +39,7 @@ import {
   ServerIcon,
   TrashIcon,
 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -53,17 +53,18 @@ type CreateAIAgentDialogProps = {
   files: AIFileModel[]
   functions: AIFunctionModel[]
   mcpServers: AIMCPServerModel[]
+  onSuccess?: () => void
 }
 
 export function CreateAIAgentDialog({
   files,
   functions,
   mcpServers,
+  onSuccess,
 }: CreateAIAgentDialogProps) {
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
-  const router = useRouter()
   const t = useTranslations()
 
   const toolOptions = useMemo(
@@ -119,7 +120,7 @@ export function CreateAIAgentDialog({
 
             setOpen(false)
             resetFormAndAction()
-            router.refresh()
+            onSuccess?.()
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -133,6 +134,7 @@ export function CreateAIAgentDialog({
             name: "",
             prompt: "",
             isDefault: false,
+            messages: [],
             models: [
               {
                 provider: "gemini",

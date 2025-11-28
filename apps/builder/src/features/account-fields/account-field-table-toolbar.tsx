@@ -1,4 +1,5 @@
 import type { Table } from "@tanstack/react-table"
+import { useRouter } from "next/navigation"
 import { CreateAccountFieldDialog } from "./create-account-field-dialog"
 import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
 import type { AccountFieldResource } from "./schemas/types"
@@ -11,18 +12,28 @@ export function AccountFieldToolbarActions({
   folderId?: string | null
   table: Table<AccountFieldResource>
 }) {
+  const router = useRouter()
+
   return (
     <>
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <DeleteAccountFieldsDialog
           chatbotId={chatbotId}
+          onSuccess={() => {
+            router.refresh()
+          }}
           records={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}
         />
       ) : null}
 
-      <CreateAccountFieldDialog chatbotId={chatbotId} />
+      <CreateAccountFieldDialog
+        chatbotId={chatbotId}
+        onSuccess={() => {
+          router.refresh()
+        }}
+      />
     </>
   )
 }

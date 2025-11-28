@@ -26,12 +26,12 @@
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
-    "@ai-sdk/google": "^2.0.43",
-    "@ai-sdk/openai": "^2.0.72",
+    "@ai-sdk/google": "^2.0.44",
+    "@ai-sdk/openai": "^2.0.74",
     "@faker-js/faker": "^10.1.0",
     "@paralleldrive/cuid2": "^3.0.4",
-    "ai": "^5.0.102",
-    "bullmq": "^5.64.1",
+    "ai": "^5.0.104",
+    "bullmq": "^5.65.0",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
     "html-to-text": "^9.0.5",
@@ -50,7 +50,7 @@
     "@types/node": "^24.10.1",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
-    "tsdown": "^0.16.7",
+    "tsdown": "^0.16.8",
     "tsup": "^8.5.1"
   }
 }

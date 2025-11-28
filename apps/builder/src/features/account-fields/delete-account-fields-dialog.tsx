@@ -35,6 +35,7 @@ export function DeleteAccountFieldsDialog({
   records,
   showTrigger = true,
   onOpenChange,
+  onSuccess,
   ...props
 }: DeleteAccountFieldsDialogProps) {
   const t = useTranslations()
@@ -49,6 +50,7 @@ export function DeleteAccountFieldsDialog({
           }),
         )
         onOpenChange?.(false)
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -59,7 +61,7 @@ export function DeleteAccountFieldsDialog({
   )
 
   return (
-    <Dialog {...props}>
+    <Dialog {...props} onOpenChange={onOpenChange}>
       {showTrigger ? (
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">

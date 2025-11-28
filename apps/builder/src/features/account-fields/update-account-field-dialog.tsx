@@ -21,17 +21,21 @@ import { updateAccountFieldAction } from "./actions/update-account-field.action"
 import type { AccountFieldResource } from "./schemas/types"
 import { updateAccountFieldRequest } from "./schemas/update-account-field.schema"
 
+type UpdateAccountFieldDialogProps = {
+  chatbotId: string
+  accountField: AccountFieldResource | null
+  open: boolean
+  onOpenChange: (val: boolean) => void
+  onSuccess?: () => void
+}
+
 export function UpdateAccountFieldDialog({
   chatbotId,
   accountField,
   open,
   onOpenChange,
-}: {
-  open: boolean
-  onOpenChange: (val: boolean) => void
-  chatbotId: string
-  accountField: AccountFieldResource | null
-}) {
+  onSuccess,
+}: UpdateAccountFieldDialogProps) {
   const t = useTranslations()
 
   const {
@@ -52,6 +56,7 @@ export function UpdateAccountFieldDialog({
           )
           onOpenChange(false)
           resetFormAndAction()
+          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -76,7 +81,7 @@ export function UpdateAccountFieldDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("accountField.updateForm.title")}</DialogTitle>
           <DialogDescription />
@@ -87,18 +92,12 @@ export function UpdateAccountFieldDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <TextareaField
                 label={t("fields.description.label")}
                 name="description"
               />
-
-              {/* <TextareaField
-                name="value"
-                label={t("accountField.value.label")}
-                required={false}
-              /> */}
 
               <div className="flex justify-end gap-4">
                 <Button

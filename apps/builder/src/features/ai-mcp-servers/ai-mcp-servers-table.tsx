@@ -14,6 +14,7 @@ import {
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EyeIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { toast } from "sonner"
@@ -30,6 +31,7 @@ export default function AIMcpServersTable({
   const [{ data }] = use(promises)
 
   const t = useTranslations()
+  const router = useRouter()
   // const [rowAction, setRowAction] =
   //   useState<DataTableRowAction<AIMCPServerModel> | null>(null)
 
@@ -156,7 +158,11 @@ export default function AIMcpServersTable({
             {t("aiMcpServers.description")}
           </p>
         </div>
-        <AIMcpServersCreate />
+        <AIMcpServersCreate
+          onSuccess={() => {
+            router.refresh()
+          }}
+        />
       </div>
 
       <DataTable table={table}>

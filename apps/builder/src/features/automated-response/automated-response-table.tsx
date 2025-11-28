@@ -19,9 +19,10 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontalIcon } from "lucide-react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import React, { useMemo } from "react"
+import React, { use, useMemo } from "react"
 import { toast } from "sonner"
 import type { getFlows } from "../flows/queries"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
@@ -42,8 +43,11 @@ export function AutomatedResponsesTable({
   flowPromises,
 }: AutomatedResponseTableProps) {
   const t = useTranslations()
-  const [{ data, pageCount }] = React.use(promises)
-  const [{ data: allFlows }] = React.use(flowPromises)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const [{ data, pageCount }] = use(promises)
+  const [{ data: allFlows }] = use(flowPromises)
 
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AutomatedResponseResource> | null>(null)
@@ -88,7 +92,7 @@ export function AutomatedResponsesTable({
           const { id, userMessages } = row.original
           return (
             <Link
-              href={`/chatbots/${chatbotId}/automated-responses/${id}/edit`}
+              href={`/chatbots/${chatbotId}/automated-responses/${id}/edit?${searchParams.toString()}`}
             >
               {userMessages.join(",")}
             </Link>
@@ -173,12 +177,12 @@ export function AutomatedResponsesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}
                 variant="destructive"
               >
                 {t("actions.update")}
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
@@ -193,7 +197,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [chatbotId, t, allFlows],
+    [chatbotId, t, allFlows, searchParams.toString],
   )
 
   const { table } = useDataTable({
@@ -221,7 +225,9 @@ export function AutomatedResponsesTable({
         }
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
       />
