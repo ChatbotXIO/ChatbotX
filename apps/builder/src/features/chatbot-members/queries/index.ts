@@ -2,10 +2,8 @@
 
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
-import { unstable_cache } from "next/cache"
 import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { calcCacheTags } from "@/lib/cache-helper"
 import { getPaginationFromInput } from "@/lib/pagination"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members.request"
 import type {
@@ -20,39 +18,33 @@ export async function getAgents(
 
   const pagination = getPaginationFromInput(input)
 
-  return await unstable_cache(
-    async () => {
-      const where: Prisma.ChatbotMemberWhereInput = {
-        chatbotId: input.chatbotId,
-        user: input.keyword
-          ? {
-              name: {
-                contains: input.keyword,
-                mode: "insensitive",
-              },
-            }
-          : undefined,
-      }
-
-      const [data, total] = await prisma.$transaction([
-        prisma.chatbotMember.findMany({
-          ...pagination,
-          where,
-          include: {
-            user: true,
+  const where: Prisma.ChatbotMemberWhereInput = {
+    chatbotId: input.chatbotId,
+    user: input.keyword
+      ? {
+          name: {
+            contains: input.keyword,
+            mode: "insensitive",
           },
-        }),
-        prisma.chatbotMember.count({
-          where,
-        }),
-      ])
-      const pageCount = Math.ceil(total / (pagination.take ?? 10))
+        }
+      : undefined,
+  }
 
-      return { data: data as ChatbotMemberResource[], pageCount }
-    },
-    [JSON.stringify(input)],
-    calcCacheTags([`chatbots:${input.chatbotId}#chatbotMembers`]),
-  )()
+  const [data, total] = await prisma.$transaction([
+    prisma.chatbotMember.findMany({
+      ...pagination,
+      where,
+      include: {
+        user: true,
+      },
+    }),
+    prisma.chatbotMember.count({
+      where,
+    }),
+  ])
+  const pageCount = Math.ceil(total / (pagination.take ?? 10))
+
+  return { data: data as ChatbotMemberResource[], pageCount }
 }
 
 export const getAllChatbotMembers = async (

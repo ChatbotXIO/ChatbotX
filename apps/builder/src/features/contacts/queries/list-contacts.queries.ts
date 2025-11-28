@@ -1,8 +1,6 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
-import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { calcCacheTags } from "@/lib/cache-helper"
 import type { ContactCollection } from "../schemas"
 import type { ListContactsRequest } from "../schemas/get-contacts-schema"
 
@@ -11,36 +9,30 @@ export async function listContacts(
 ): Promise<ContactCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  return await unstable_cache(
-    async () => {
-      const where = generateWhere(input)
+  const where = generateWhere(input)
 
-      const take = input.perPage || 10
-      const skip = ((input.page ?? 1) - 1) * take
-      const [data, total] = await prisma.$transaction([
-        prisma.contact.findMany({
-          skip,
-          take,
-          where,
+  const take = input.perPage || 10
+  const skip = ((input.page ?? 1) - 1) * take
+  const [data, total] = await prisma.$transaction([
+    prisma.contact.findMany({
+      skip,
+      take,
+      where,
+      include: {
+        conversation: {
           include: {
-            conversation: {
-              include: {
-                assignedUser: true,
-                assignedInboxTeam: true,
-              },
-            },
+            assignedUser: true,
+            assignedInboxTeam: true,
           },
-        }),
-        prisma.contact.count({ where }),
-      ])
+        },
+      },
+    }),
+    prisma.contact.count({ where }),
+  ])
 
-      const pageCount = Math.ceil(total / take)
+  const pageCount = Math.ceil(total / take)
 
-      return { data, pageCount }
-    },
-    [JSON.stringify(input)],
-    calcCacheTags([`chatbots:${input.chatbotId}#contacts`]),
-  )()
+  return { data, pageCount }
 }
 
 export async function countContacts(
