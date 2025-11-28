@@ -13,17 +13,11 @@ import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
 import type { getAIFiles } from "../ai-files/queries"
 import type { getAIFunctions } from "../ai-functions/queries"
 import type { getAIMcpServers } from "../ai-mcp-servers/queries"
-import type { listCustomFields } from "../custom-fields/queries"
 import { CreateAIAgentDialog } from "./create-ai-agent"
 import { GetAIAgentsColumns } from "./table-columns"
 
 type AIAgentsTableProps = {
-  listPromises: Promise<
-    [
-      Awaited<ReturnType<typeof getAIAgents>>,
-      Awaited<ReturnType<typeof listCustomFields>>,
-    ]
-  >
+  listPromises: Promise<[Awaited<ReturnType<typeof getAIAgents>>]>
   createPromises: Promise<
     [
       Awaited<ReturnType<typeof getAIFiles>>,
@@ -37,7 +31,7 @@ export function AIAgentsTable({
   listPromises,
   createPromises,
 }: AIAgentsTableProps) {
-  const [{ data, pageCount }, { data: customFields }] = use(listPromises)
+  const [{ data, pageCount }] = use(listPromises)
   const [{ data: files }, { data: functions }, { data: mcpServers }] =
     use(createPromises)
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -100,7 +94,6 @@ export function AIAgentsTable({
       <UpdateAIAgentDialog
         agent={rowAction?.row.original || null}
         chatbotId={chatbotId}
-        customFields={customFields}
         files={files}
         functions={functions}
         mcpServers={mcpServers}

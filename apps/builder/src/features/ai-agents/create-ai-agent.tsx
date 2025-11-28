@@ -45,7 +45,7 @@ import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
-import { createAIAgentRequest } from "@/features/ai-agents/schemas/create.schema"
+import { createAIAgentRequest } from "@/features/ai-agents/schemas/create-ai-agent.request"
 import {
   geminiModelOptions,
   geminiModels,
@@ -145,7 +145,7 @@ export function CreateAIAgentDialog({
               },
               {
                 provider: "openAI",
-                model: openAIModels.GPT4oMini,
+                model: openAIModels.gpt4oMini,
               },
             ],
             temperature: 0.4,

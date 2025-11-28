@@ -3,7 +3,7 @@ import { geminiModels } from "@/features/integration-gemini/schemas/models"
 
 export const connectGeminiRequest = z.object({
   apiKey: z.string(),
-  model: z.enum(geminiModels).default(geminiModels.gemini3Pro),
+  model: z.enum(geminiModels).default(geminiModels.gemini25Flash),
   temperature: z.number().min(0).max(1).default(0.4),
   maxTokens: z.number().min(1).default(1024),
 })

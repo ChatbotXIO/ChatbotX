@@ -42,20 +42,16 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
-import {
-  type MessageSchema,
-  type ModelSchema,
-  updateAIAgentRequest,
-} from "@/features/ai-agents/schemas/update.schema"
-import type { CustomFieldResource } from "../custom-fields/schemas"
+import { updateAIAgentRequest } from "@/features/ai-agents/schemas/create-ai-agent.request"
+import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import { openAIModelOptions } from "../openai/models"
+import type { CreateAIAgentRequest } from "./schemas/create-ai-agent.request"
 
 export function UpdateAIAgentDialog({
   chatbotId,
   agent,
   open,
-  customFields,
   files,
   functions,
   mcpServers,
@@ -67,12 +63,12 @@ export function UpdateAIAgentDialog({
   chatbotId: string
   agent: AIAgentModel | null
   onSuccess?: () => void
-  customFields: CustomFieldResource[]
   files: AIFileModel[]
   functions: AIFunctionModel[]
   mcpServers: AIMCPServerModel[]
 }) {
   const t = useTranslations()
+  const { getCustomFieldSelectOptions } = useCustomFieldStore((state) => state)
 
   const {
     form,
@@ -120,13 +116,8 @@ export function UpdateAIAgentDialog({
   )
 
   const customFieldOptions = useMemo(
-    () =>
-      customFields.map((cf) => ({
-        label: cf.name,
-        value: cf.id,
-        type: cf.fieldType,
-      })),
-    [customFields],
+    () => getCustomFieldSelectOptions(),
+    [getCustomFieldSelectOptions],
   )
 
   const toolOptions = useMemo(
@@ -173,11 +164,11 @@ export function UpdateAIAgentDialog({
   useEffect(() => {
     if (agent) {
       setValue("name", agent.name)
-      setValue("prompt", agent.prompt)
-      setValue("models", agent.models as ModelSchema)
+      setValue("prompt", agent.prompt ?? "")
+      setValue("models", agent.models as CreateAIAgentRequest["models"])
       setValue("temperature", agent.temperature)
       setValue("maxTokens", agent.maxTokens)
-      setValue("messages", agent.messages as MessageSchema[])
+      setValue("messages", agent.messages as CreateAIAgentRequest["messages"])
       setValue("tools", agent.tools)
     }
   }, [agent, setValue])
@@ -246,7 +237,7 @@ export function UpdateAIAgentDialog({
                       </PopoverContent>
                     </Popover>
                   </div>
-                  <div className="rounded-md border border-1 border-input">
+                  <div className="rounded-md border border-input">
                     <div className="p-3">
                       <TiptapEditorField
                         customFields={customFieldOptions}
@@ -264,7 +255,7 @@ export function UpdateAIAgentDialog({
                   </div>
                   {fields.map((item, index) => (
                     <div
-                      className="relative rounded-md border border-1 border-input"
+                      className="relative rounded-md border border-input"
                       key={item.id}
                     >
                       <div className="absolute top-3 left-3">
