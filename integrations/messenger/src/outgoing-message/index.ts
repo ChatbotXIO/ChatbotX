@@ -9,11 +9,12 @@ import {
 } from "@aha.chat/sdk"
 import { sendMessage } from "../apis/page"
 import { logger } from "../lib/logger"
-import type {
-  FacebookMessage,
-  FacebookMessageAttachmentPayload,
-  FacebookSendMessageRequest,
-  MessengerAuthValue,
+import {
+  type FacebookMessage,
+  type FacebookMessageAttachmentPayload,
+  type FacebookSendMessageRequest,
+  MESSENGER_MESSAGE_METADATA,
+  type MessengerAuthValue,
 } from "../schemas"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepFile } from "./send-file"
@@ -101,7 +102,10 @@ const buildMessagePayload = (
 
   return {
     recipient: { id: recipientId },
-    message,
+    message: {
+      ...message,
+      metadata: MESSENGER_MESSAGE_METADATA,
+    },
     messaging_type: "MESSAGE_TAG",
     tag: "ACCOUNT_UPDATE",
   }

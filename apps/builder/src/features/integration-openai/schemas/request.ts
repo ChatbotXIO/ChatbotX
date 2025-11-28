@@ -11,3 +11,10 @@ export const connectOpenAISchema = z.object({
   maxTokens: z.coerce.number().int().min(1).max(8192),
 })
 export type ConnectOpenAISchema = z.infer<typeof connectOpenAISchema>
+
+export const updateOpenAIRequest = z
+  .object({
+    autoReply: z.boolean(),
+  })
+  .partial()
+export type UpdateOpenAIRequest = z.infer<typeof updateOpenAIRequest>

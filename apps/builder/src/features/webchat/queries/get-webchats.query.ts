@@ -4,6 +4,7 @@ import { type Prisma, prisma } from "@aha.chat/database"
 import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type { GetWebchatRequest } from "../schemas/webchat.schema"
 
 export async function getIntegationWebchats(parsedInputs: GetWebchatRequest) {
@@ -49,10 +50,7 @@ export async function getIntegationWebchats(parsedInputs: GetWebchatRequest) {
       }
     },
     [JSON.stringify(parsedInputs)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${parsedInputs.chatbotId}#webchats`],
-    },
+    calcCacheTags([`chatbots:${parsedInputs.chatbotId}#webchats`]),
   )()
 }
 

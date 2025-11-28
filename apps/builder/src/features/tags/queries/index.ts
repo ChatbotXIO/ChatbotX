@@ -2,6 +2,7 @@ import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type { TagCollection } from "../schemas"
 import type { GetTagsSchema } from "../schemas/get-tags-schema"
 
@@ -58,9 +59,6 @@ export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#tags`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#tags`]),
   )()
 }

@@ -2,6 +2,7 @@ import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type { ContactCollection } from "../schemas"
 import type { ListContactsRequest } from "../schemas/get-contacts-schema"
 
@@ -38,10 +39,7 @@ export async function listContacts(
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#contacts`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#contacts`]),
   )()
 }
 

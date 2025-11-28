@@ -5,6 +5,7 @@ import type {
   ListAITriggersRequest,
 } from "@/features/ai-triggers/schemas/get.schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 
 export const listAITriggers = async (
   input: ListAITriggersRequest,
@@ -49,9 +50,6 @@ export const listAITriggers = async (
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#aiTriggers`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#aiTriggers`]),
   )()
 }

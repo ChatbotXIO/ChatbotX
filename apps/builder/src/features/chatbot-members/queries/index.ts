@@ -5,6 +5,7 @@ import { prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import { getPaginationFromInput } from "@/lib/pagination"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members.request"
 import type {
@@ -50,10 +51,7 @@ export async function getAgents(
       return { data: data as ChatbotMemberResource[], pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#chatbotMembers`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#chatbotMembers`]),
   )()
 }
 

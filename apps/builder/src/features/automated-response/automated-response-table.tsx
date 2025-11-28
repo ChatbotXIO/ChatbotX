@@ -177,12 +177,13 @@ export function AutomatedResponsesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {/* <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "update" })}
-                variant="destructive"
-              >
-                {t("actions.update")}
-              </DropdownMenuItem> */}
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/chatbots/${chatbotId}/automated-responses/${row.original.id}/edit`}
+                >
+                  {t("actions.update")}
+                </Link>
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}

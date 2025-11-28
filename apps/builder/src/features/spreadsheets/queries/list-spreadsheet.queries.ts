@@ -1,6 +1,7 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import type { PaginationResponse } from "@/features/common/schemas/pagination"
+import { calcCacheTags } from "@/lib/cache-helper"
 import { getPaginationFromInput } from "@/lib/pagination"
 import type { ListSpreadsheetsRequest } from "../schemas/list-spreadsheets.request"
 import type { SpreadsheetResource } from "../schemas/resource"
@@ -32,9 +33,6 @@ export const listSpreadsheets = async (
       })
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#spreadsheets`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#spreadsheets`]),
   )()
 }

@@ -2,6 +2,7 @@ import { prisma } from "@aha.chat/database"
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
@@ -32,10 +33,7 @@ export const getFolders = async (
       return { data }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#folders#${input.folderType}`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#folders#${input.folderType}`]),
   )()
 }
 
@@ -83,13 +81,10 @@ export const getCurrentFolder = async (
       return { folder, parents }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [
-        `chatbots:${input.chatbotId}#folders`,
-        `chatbots:${input.chatbotId}#folders:${input.id}`,
-      ],
-    },
+    calcCacheTags([
+      `chatbots:${input.chatbotId}#folders`,
+      `chatbots:${input.chatbotId}#folders:${input.id}`,
+    ]),
   )()
 }
 

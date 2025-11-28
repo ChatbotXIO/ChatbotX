@@ -1,6 +1,7 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type { LogCollection } from "../schemas"
 import type { GetLogsSchema } from "../schemas/get-logs-schema"
 
@@ -48,9 +49,6 @@ export async function getLogs(input: GetLogsSchema): Promise<LogCollection> {
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#logs#${input.logType}`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#logs#${input.logType}`]),
   )()
 }

@@ -1,6 +1,7 @@
 import { FieldType, type Prisma, prisma } from "@aha.chat/database"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import type { CustomFieldCollection } from "../schemas"
 import type { ListCustomFieldsSearchParams } from "../schemas/list-custom-fields.schema"
 
@@ -64,9 +65,6 @@ export async function listCustomFields(
       }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#customFields`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#customFields`]),
   )()
 }

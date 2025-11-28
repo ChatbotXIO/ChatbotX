@@ -3,6 +3,7 @@ import { prisma } from "@aha.chat/database"
 import type { FlowModel } from "@aha.chat/database/types"
 import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { calcCacheTags } from "@/lib/cache-helper"
 import { FlowException } from "../schemas/exception"
 import type {
   FindFlowParams,
@@ -77,10 +78,7 @@ export async function getFlows(
       return { data, pageCount }
     },
     [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#flows`],
-    },
+    calcCacheTags([`chatbots:${input.chatbotId}#flows`]),
   )()
 }
 

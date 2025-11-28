@@ -189,9 +189,11 @@ export function FlowEditToolbar({
         chatbotId={chatbotId}
         flows={[flow]}
         onOpenChange={() => setAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={action === "delete"}
         showTrigger={false}
-        successHandler={() => router.push(`/chatbots/${chatbotId}/flows`)}
       />
     </div>
   )
