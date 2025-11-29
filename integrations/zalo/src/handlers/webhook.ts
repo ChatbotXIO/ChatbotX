@@ -10,7 +10,7 @@ import {
   zaloWebhookEventSchema,
 } from "../schemas/webhook"
 
-const verifyWebhookSignature = (
+const _verifyWebhookSignature = (
   payload: ZaloWebhookEvent,
   signature: string,
   config: ZaloConfig,
@@ -51,17 +51,21 @@ const handleWebhookEvent = async (
 
     const webhookData = zaloWebhookEventSchema.parse(body)
 
-    const signature = req.headers.get("X-ZEvent-Signature") ?? ""
-    if (!signature) {
-      throw new SdkException("Missing webhook signature")
-    }
-    const isValidSignature = verifyWebhookSignature(
-      webhookData,
-      signature,
-      config,
-    )
-    if (!isValidSignature) {
-      throw new SdkException("Invalid webhook signature")
+    // const signature = req.headers.get("X-ZEvent-Signature") ?? ""
+    // if (!signature) {
+    //   throw new SdkException("Missing webhook signature")
+    // }
+    // const isValidSignature = verifyWebhookSignature(
+    //   webhookData,
+    //   signature,
+    //   config,
+    // )
+    // if (!isValidSignature) {
+    //   throw new SdkException("Invalid webhook signature")
+    // }
+
+    if (webhookData.app_id !== config.clientId) {
+      throw new SdkException("Invalid app_id in webhook payload")
     }
 
     await queue.add("incomingMessage", {

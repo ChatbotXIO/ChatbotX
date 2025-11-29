@@ -98,7 +98,7 @@ export const handleCallback = async (
   }
 
   await prisma.$transaction(async (tx) => {
-    // create intergration
+    // create integration
     await tx.integration.create({
       data: {
         chatbotId: stateParams.chatbotId,
