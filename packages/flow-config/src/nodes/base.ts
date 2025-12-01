@@ -55,6 +55,7 @@ export type DefaultNodeFnProps<T extends BaseNodeProps> = {
   measured?: NodeMeasured
   name: string
   type: T["type"]
+  isStartNode?: boolean
   beforeStep?: T["data"]["beforeStep"] | undefined
   afterStep?: T["data"]["afterStep"] | undefined
   steps?: T["data"]["steps"] | undefined
@@ -62,7 +63,7 @@ export type DefaultNodeFnProps<T extends BaseNodeProps> = {
 
 export type NodeFnProps<T extends BaseNodeProps> = Pick<
   DefaultNodeFnProps<T>,
-  "name" | "position" | "measured"
+  "name" | "position" | "measured" | "isStartNode"
 >
 
 export const baseNodeDefaultFn = <T extends BaseNodeProps>(
@@ -74,6 +75,7 @@ export const baseNodeDefaultFn = <T extends BaseNodeProps>(
     beforeStep = null,
     afterStep = null,
     steps = null,
+    isStartNode = false,
     ...rest
   } = props
 
@@ -85,7 +87,7 @@ export const baseNodeDefaultFn = <T extends BaseNodeProps>(
     ...rest,
     data: {
       name: props.name,
-      isStartNode: false,
+      isStartNode,
       beforeStep,
       steps,
       afterStep,

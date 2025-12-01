@@ -1,9 +1,18 @@
 "use client"
 
-import { type AIAgentModel, AIMessageRole } from "@aha.chat/database/types"
+import {
+  type AIAgentModel,
+  type AIFileModel,
+  type AIFunctionModel,
+  type AIMCPServerModel,
+  AIMessageRole,
+} from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { SliderField } from "@aha.chat/ui/components/form/slider-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card } from "@aha.chat/ui/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -12,23 +21,40 @@ import {
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@aha.chat/ui/components/ui/popover"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon, XIcon } from "lucide-react"
+import {
+  FileIcon,
+  FunctionSquareIcon,
+  Loader2Icon,
+  ServerIcon,
+  SlidersHorizontalIcon,
+  XIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
-import {
-  type MessageSchema,
-  updateAIAgentRequest,
-} from "@/features/ai-agents/schemas/update.schema"
+import { updateAIAgentRequest } from "@/features/ai-agents/schemas/create-ai-agent.request"
+import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
+import { geminiModelOptions } from "../integration-gemini/schemas/models"
+import { openAIModelOptions } from "../openai/models"
+import type { CreateAIAgentRequest } from "./schemas/create-ai-agent.request"
 
 export function UpdateAIAgentDialog({
   chatbotId,
   agent,
   open,
+  files,
+  functions,
+  mcpServers,
   onOpenChange,
   onSuccess,
 }: {
@@ -37,13 +63,17 @@ export function UpdateAIAgentDialog({
   chatbotId: string
   agent: AIAgentModel | null
   onSuccess?: () => void
+  files: AIFileModel[]
+  functions: AIFunctionModel[]
+  mcpServers: AIMCPServerModel[]
 }) {
   const t = useTranslations()
+  const { getCustomFieldSelectOptions } = useCustomFieldStore((state) => state)
 
   const {
     form,
     handleSubmitWithAction,
-    form: { reset, control },
+    form: { setValue, control },
   } = useHookFormAction(
     updateAIAgentAction.bind(null, chatbotId, agent?.id ?? ""),
     zodResolver(updateAIAgentRequest),
@@ -67,28 +97,58 @@ export function UpdateAIAgentDialog({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          prompt: "",
-        },
       },
       errorMapProps: {},
     },
   )
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "messages",
   })
 
-  const onChangeRole = (index: number) => {
-    update(index, {
-      role:
-        fields[index]?.role === AIMessageRole.user
-          ? AIMessageRole.assistant
-          : AIMessageRole.user,
-      content: "",
-    })
-  }
+  const messageRoleOptions = useMemo(
+    () => [
+      { label: t("fields.promptMessages.role.user"), value: "user" },
+      { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
+    ],
+    [t],
+  )
+
+  const customFieldOptions = useMemo(
+    () => getCustomFieldSelectOptions(),
+    [getCustomFieldSelectOptions],
+  )
+
+  const toolOptions = useMemo(
+    () => [
+      {
+        heading: t("fields.file.label"),
+        options: files.map((file) => ({
+          label: file.name,
+          value: `file:${file.id}`,
+          icon: FileIcon,
+        })),
+      },
+      {
+        heading: t("fields.function.label"),
+        options: functions.map((fn) => ({
+          label: fn.name,
+          value: `fn:${fn.id}`,
+          icon: FunctionSquareIcon,
+        })),
+      },
+      {
+        heading: t("fields.mcpServer.label"),
+        options: mcpServers.map((mcpServer) => ({
+          label: mcpServer.name,
+          value: `mcp:${mcpServer.id}`,
+          icon: ServerIcon,
+        })),
+      },
+    ],
+    [files, functions, mcpServers, t],
+  )
 
   const addOptions = () => {
     const lastRole: string = fields.at(-1)?.role || AIMessageRole.assistant
@@ -103,13 +163,15 @@ export function UpdateAIAgentDialog({
 
   useEffect(() => {
     if (agent) {
-      const { messages, ...rest } = agent
-      reset({
-        ...rest,
-        messages: agent?.messages as MessageSchema[],
-      })
+      setValue("name", agent.name)
+      setValue("prompt", agent.prompt ?? "")
+      setValue("models", agent.models as CreateAIAgentRequest["models"])
+      setValue("temperature", agent.temperature)
+      setValue("maxTokens", agent.maxTokens)
+      setValue("messages", agent.messages as CreateAIAgentRequest["messages"])
+      setValue("tools", agent.tools)
     }
-  }, [agent, reset])
+  }, [agent, setValue])
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -129,43 +191,113 @@ export function UpdateAIAgentDialog({
             >
               <InputField label={t("fields.name.label")} name="name" />
 
-              <TextareaField label={t("fields.prompt.label")} name="prompt" />
+              <Card>
+                <div className="flex flex-col gap-4 px-5">
+                  <div className="flex items-center">
+                    <div className="flex-1 font-medium text-sm">
+                      {t("fields.instructions.label")}
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <SlidersHorizontalIcon
+                          className="cursor-pointer"
+                          size={20}
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent className="flex w-[340px] flex-col gap-6 p-4">
+                        <SelectField
+                          label={t("fields.geminiModel.label")}
+                          name="models.0.model"
+                          options={geminiModelOptions}
+                          required
+                        />
 
-              <div className="flex max-h-[300px] flex-col space-y-2 overflow-auto">
-                {fields.map((item, index) => (
-                  <div className="flex items-center space-x-2" key={item.id}>
-                    <div className="w-[100px]">
-                      <InputField name={`messages.${index}.role`} />
+                        <SelectField
+                          label={t("fields.openAIModel.label")}
+                          name="models.1.model"
+                          options={openAIModelOptions}
+                          required
+                        />
+
+                        <SliderField
+                          label={t("fields.temperature.label")}
+                          max={2}
+                          min={0}
+                          name="temperature"
+                          step={0.1}
+                        />
+
+                        <SliderField
+                          label={t("fields.maxTokens.label")}
+                          max={32_768}
+                          min={1}
+                          name="maxTokens"
+                          step={1}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="rounded-md border border-input">
+                    <div className="p-3">
+                      <TiptapEditorField
+                        customFields={customFieldOptions}
+                        name="prompt"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card>
+                <div className="flex flex-col gap-4 px-5">
+                  <div className="font-medium text-sm">
+                    {t("fields.promptMessages.label")}
+                  </div>
+                  {fields.map((item, index) => (
+                    <div
+                      className="relative rounded-md border border-input"
+                      key={item.id}
+                    >
+                      <div className="absolute top-3 left-3">
+                        <SelectField
+                          name={`messages.${index}.role`}
+                          options={messageRoleOptions}
+                        />
+                      </div>
+                      <div className="pt-14 pr-3 pb-3 pl-3">
+                        <TiptapEditorField
+                          customFields={customFieldOptions}
+                          name={`messages.${index}.content`}
+                        />
+                      </div>
                       <Button
-                        className="w-[100px] capitalize"
-                        onClick={() => onChangeRole(index)}
+                        className="absolute top-0 right-0"
+                        onClick={() => remove(index)}
+                        size="icon"
                         type="button"
-                        variant="secondary"
+                        variant="ghost"
                       >
-                        {item.role}
+                        <XIcon size={20} />
                       </Button>
                     </div>
-                    <div className="w-[calc(100%-160px)]">
-                      <InputField name={`messages.${index}.content`} />
-                    </div>
+                  ))}
+                  <div>
                     <Button
-                      className="w-[60px]"
-                      onClick={() => remove(index)}
-                      size="icon"
+                      className="w-full"
+                      onClick={addOptions}
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                     >
-                      <XIcon size={20} />
+                      {t("actions.addMore")}
                     </Button>
                   </div>
-                ))}
-              </div>
-
-              <div>
-                <Button onClick={addOptions} type="button">
-                  {t("actions.add")}
-                </Button>
-              </div>
+                </div>
+              </Card>
+              <MultiSelectField
+                label={t("fields.tools.label")}
+                name="tools"
+                options={toolOptions}
+              />
 
               <div className="flex justify-end gap-4">
                 <Button

@@ -94,6 +94,9 @@ export function AIAgentsTable({
       <UpdateAIAgentDialog
         agent={rowAction?.row.original || null}
         chatbotId={chatbotId}
+        files={files}
+        functions={functions}
+        mcpServers={mcpServers}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
           router.refresh()

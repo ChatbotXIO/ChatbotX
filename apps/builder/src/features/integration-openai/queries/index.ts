@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import type { IntegrationOpenAIResource } from "../schemas"
+import type { IntegrationOpenAIResource } from "../schemas/request"
 
 export const findIntegrationOpenAI = async ({
   chatbotId,
