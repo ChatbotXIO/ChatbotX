@@ -118,6 +118,7 @@
   }
 
   body {
+    pointer-events: auto !important;
     @apply bg-background text-foreground;
   }
 }
