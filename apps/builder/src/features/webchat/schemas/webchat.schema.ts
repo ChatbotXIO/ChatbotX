@@ -47,7 +47,7 @@ export const createWebchatRequest = z.object({
   welcomeFlowId: z.string().nullish(),
   authorizedDomains: z.array(
     z.object({
-      value: z.url(),
+      value: z.hostname(),
     }),
   ),
   conversationStarters: z.array(conversationStarterSchema),

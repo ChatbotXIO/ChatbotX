@@ -10,6 +10,9 @@ import type {
   MessageResource,
 } from "@/features/messages/schemas"
 import type { UserResource } from "@/features/users/schemas/resource"
+import type { PersistentMenuSchema } from "../../schemas/webchat.schema"
+
+export const GUEST_CONVERSATION_ID_KEY = "x-conversation-id" as const
 
 export type GuestSessionState = {
   // default state
@@ -35,16 +38,18 @@ export type GuestSessionActions = {
     perPage: number,
   ) => Promise<void>
   handleNewMessage: (message: MessageResource) => void
+
+  getMenus: () => PersistentMenuSchema[]
 }
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
 
-export const createGuestSessionStore = (config: IntegrationWebchatModel) => {
+export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
     user: null,
-    config,
+    config: props,
 
     // messages related state
     messages: [],
@@ -54,48 +59,62 @@ export const createGuestSessionStore = (config: IntegrationWebchatModel) => {
 
     initGuestSession: () => {
       const { guestConversationId } = get()
-
-      // Set guest user id if not set
-      if (!guestConversationId) {
-        const key = "x-conversation-id"
-        let guestId = localStorage.getItem(key)
-        if (!guestId) {
-          guestId = `${WEBCHAT_SOURCE_PREFIX}${createId()}`
-          localStorage.setItem(key, guestId)
-        }
-        set({ guestConversationId: guestId })
+      if (guestConversationId) {
+        return
       }
+
+      let guestId = localStorage.getItem(GUEST_CONVERSATION_ID_KEY)
+      if (!guestId) {
+        guestId = `${WEBCHAT_SOURCE_PREFIX}${createId()}`
+        localStorage.setItem(GUEST_CONVERSATION_ID_KEY, guestId)
+      }
+      set({ guestConversationId: guestId })
     },
 
-    setGuestUser: (user: UserResource) => set({ user }),
+    setGuestUser: (user: UserResource) => {
+      set({ user })
+    },
 
     loadMoreMessages: async (guestConversationId: string, perPage: number) => {
-      const { isLoadMoreMessage, hasNextMessagePage } = get()
+      const {
+        isLoadMoreMessage,
+        hasNextMessagePage,
+        nextCursorMessage,
+        messages,
+      } = get()
+
       if (isLoadMoreMessage || !hasNextMessagePage) {
         return
       }
 
-      const { nextCursorMessage, messages } = get()
       set({ isLoadMoreMessage: true })
 
-      const params = new URLSearchParams({
-        perPage: `${perPage}`,
-        cursor: nextCursorMessage ?? "",
-        guestConversationId,
-      })
-      const { data, nextCursor } = await ky
-        .get<MessageCollection>(`/api/guest/messages?${params.toString()}`)
-        .json()
+      try {
+        const params = new URLSearchParams({
+          perPage: `${perPage}`,
+          cursor: nextCursorMessage ?? "",
+          guestConversationId,
+        })
 
-      set({
-        messages: [...data.reverse(), ...messages],
-        nextCursorMessage: nextCursor,
-        isLoadMoreMessage: false,
-      })
+        const { data, nextCursor } = await ky
+          .get<MessageCollection>(`/api/guest/messages?${params.toString()}`)
+          .json()
+
+        set({
+          messages: [...data.reverse(), ...messages],
+          nextCursorMessage: nextCursor,
+          hasNextMessagePage: Boolean(nextCursor),
+          isLoadMoreMessage: false,
+        })
+      } catch (error) {
+        set({ isLoadMoreMessage: false })
+        console.error("Failed to load more messages:", error)
+        throw error
+      }
     },
 
     handleNewMessage: (message: MessageResource) => {
-      const { messages, appendMessage } = get()
+      const { messages } = get()
 
       // If the message contains the clientId, it can be sent from this tab itself.
       if (message.clientId) {
@@ -103,29 +122,32 @@ export const createGuestSessionStore = (config: IntegrationWebchatModel) => {
           (m) => m.clientId === message.clientId,
         )
 
-        // let replace the returned content if found
         if (messageIndex > -1) {
-          const newMessages = [...messages]
-          newMessages[messageIndex] = {
-            ...newMessages[messageIndex],
-            ...message,
-          }
+          // Replace the existing message with the updated one
           set({
-            messages: newMessages,
+            messages: messages.map((m, idx) =>
+              idx === messageIndex ? { ...m, ...message } : m,
+            ),
           })
-        } else {
-          appendMessage(message)
+          return
         }
-      } else {
-        // just append the messages to the end of messages list
-        appendMessage(message)
       }
+
+      // Append the message to the end of messages list
+      set((state) => ({
+        messages: [...state.messages, message],
+      }))
     },
 
     appendMessage: (message: MessageResource) => {
       set((state) => ({
         messages: [...state.messages, message],
       }))
+    },
+
+    getMenus: () => {
+      const { config } = get()
+      return (config.persistentMenus ?? []) as PersistentMenuSchema[]
     },
   }))
 }

@@ -160,7 +160,7 @@ export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
                     )}
                     <div
                       className={cn(
-                        "flex-1 break-all",
+                        "break-word flex-1",
                         // biome-ignore lint/suspicious/noExplicitAny: wip
                         (field as any).stepType === StepType.sendCarousel
                           ? "overflow-hidden"

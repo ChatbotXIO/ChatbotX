@@ -140,7 +140,7 @@ function ButtonSteps() {
 
       {fields.map((field, index) => (
         <div className="flex items-center gap-2" key={field.id}>
-          <div className="flex-1 break-all">
+          <div className="break-word flex-1">
             <DynamicStepEditor
               parentName={`steps.${index}`}
               // biome-ignore lint/suspicious/noExplicitAny: wip
