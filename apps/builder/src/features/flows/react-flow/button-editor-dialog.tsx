@@ -191,6 +191,7 @@ export function ButtonEditorDialog() {
     addNodes,
     screenToFlowPosition,
     addEdges,
+    setEdges,
     updateNodeData,
     deleteElements,
   } = useReactFlow()
@@ -327,6 +328,11 @@ export function ButtonEditorDialog() {
           target: newNode.id,
           sourceHandle: data.id,
           targetHandle: newNode.id,
+          data: {
+            onDelete: (edgeId: string) => {
+              setEdges((eds) => eds.filter((e) => e.id !== edgeId))
+            },
+          },
         })
       }
 
@@ -398,7 +404,13 @@ export function ButtonEditorDialog() {
         <div className="flex items-center space-x-4">
           <Form {...form}>
             <form className="flex w-full flex-col gap-3">
-              <InputField label={t("fields.name.label")} name="label" />
+              <InputField
+                label={t("fields.name.label")}
+                {...{
+                  maxLength: 20,
+                }}
+                name="label"
+              />
 
               <div className="mt-2 font-medium">
                 {t("fields.button.whenPressed")}
