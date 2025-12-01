@@ -30,7 +30,7 @@ export function CreateCustomFieldDialog({
   onSuccess,
 }: {
   chatbotId: string
-  folderId?: string | null
+  folderId: string | null
   triggerButton?: ReactNode
   onSuccess?: () => void
 }) {
@@ -121,7 +121,7 @@ export function CreateCustomFieldDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {
