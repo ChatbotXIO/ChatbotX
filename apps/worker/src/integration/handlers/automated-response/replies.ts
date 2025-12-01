@@ -16,7 +16,6 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import { logger } from "../../../lib/logger"
 import { AI_PROVIDERS, TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
@@ -64,11 +63,7 @@ async function replaceCustomFieldAttributes(
     )
 
     return processedMessage
-  } catch (error) {
-    logger.error("[automated-response] replaceCustomFieldAttributes failed", {
-      error,
-      conversationId,
-    })
+  } catch {
     return message
   }
 }
@@ -82,11 +77,7 @@ export async function listAllEnabledAutomatedResponses({
     return await prisma.automatedResponse.findMany({
       where: { chatbotId, status: true },
     })
-  } catch (error) {
-    logger.error(
-      "[automated-response] listAllEnabledAutomatedResponses failed",
-      { error, chatbotId },
-    )
+  } catch {
     return []
   }
 }
@@ -115,7 +106,12 @@ export async function replyByAutomatedResponse({
     if (matched) {
       for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
-          case ReplyType.Message:
+          case ReplyType.Message: {
+            const stepMessage = await replaceCustomFieldAttributes(
+              reply.message ?? "",
+              message.conversationId,
+            )
+
             await chatQueue.add(ChatJobAction.sendFlowMessage, {
               type: ChatJobAction.sendFlowMessage,
               data: {
@@ -123,7 +119,7 @@ export async function replyByAutomatedResponse({
                 flowVersionId: "",
                 step: {
                   id: createId(),
-                  message: reply.message ?? "",
+                  message: stepMessage,
                   stepType: StepType.sendText,
                   buttons: [],
                 },
@@ -131,9 +127,20 @@ export async function replyByAutomatedResponse({
             })
             replied = true
             break
+          }
           case ReplyType.Flow: {
             const flow = await prisma.flow.findFirst({
               where: { id: reply.flowId },
+              include: {
+                flowVersions: {
+                  where: {
+                    isDraft: false,
+                    isLatest: true,
+                  },
+                  orderBy: { createdAt: "desc" },
+                  take: 1,
+                },
+              },
             })
             if (flow?.currentVersionId) {
               await integrationQueue.add(IntegrationJobAction.sendFlow, {
@@ -143,6 +150,7 @@ export async function replyByAutomatedResponse({
                   flowVersionId: flow.currentVersionId,
                 },
               })
+              replied = true
             }
             break
           }
@@ -204,9 +212,15 @@ async function runAIReply(
       return false
     }
 
-    const clientFactory = cfg.createClient(
-      (integration.auth as SecretTextAuthValue | null)?.secretText || "",
-    )
+    const apiKey =
+      (integration.auth as SecretTextAuthValue | null)?.secretText || ""
+
+    if (!apiKey || apiKey.length === 0) {
+      return false
+    }
+
+    const clientFactory = cfg.createClient(apiKey)
+
     const selectedModel = (aiAgent.models as AIAgentProvider[]).find(
       (v) => v.provider === cfg.provider,
     )
@@ -238,29 +252,7 @@ async function runAIReply(
     })
 
     const toolCalls = await result.toolCalls
-    if (toolCalls && toolCalls.length > 0) {
-      try {
-        const planned = toolCalls.map((t) => t.toolName).join(", ")
-        logger.info(`[AI_TOOL] Planned tool calls: ${planned}`)
-      } catch {
-        // ignore
-      }
-    }
     const toolResults = await result.toolResults
-    if (toolResults && toolResults.length > 0) {
-      for (const r of toolResults) {
-        try {
-          const outputPreview =
-            typeof r.output === "string"
-              ? r.output.slice(0, 200)
-              : JSON.stringify(r.output).slice(0, 200)
-          logger.info(`[AI_TOOL] Result: ${r.toolName} -> ${outputPreview}`)
-        } catch {
-          // ignore
-        }
-      }
-    }
-
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,
       message.conversationId,
@@ -299,12 +291,7 @@ async function runAIReply(
         if (followUpMessageCount > 0) {
           return true
         }
-      } catch (error) {
-        logger.error("[automated-response] follow-up streamText failed", {
-          error,
-          provider: cfg.provider,
-          conversationId: message.conversationId,
-        })
+      } catch (_error) {
         return await cfg.onFollowUpError({
           conversationId: message.conversationId,
           toolResultsText,
@@ -316,12 +303,7 @@ async function runAIReply(
       return true
     }
     return false
-  } catch (error) {
-    logger.error("[automated-response] runAIReply failed", {
-      error,
-      provider: cfg.provider,
-      chatbotId: message.chatbotId,
-    })
+  } catch (_error) {
     return false
   }
 }

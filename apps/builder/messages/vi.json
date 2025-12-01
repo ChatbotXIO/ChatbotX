@@ -62,6 +62,7 @@
     "followConversation": "Theo dõi cuộc trò chuyện",
     "formatDate": "Định dạng ngày",
     "generateCode": "Tạo mã",
+    "generateText": "Tạo văn bản",
     "getDataFromJson": "Lấy dữ liệu từ JSON",
     "getEmbedCode": "Lấy mã nhúng",
     "getID": "Lấy ID",
@@ -193,6 +194,10 @@
     },
     "name": {
       "label": "Tên AI Trigger"
+    },
+    "setting": {
+      "description": "Mô tả AI Triggers",
+      "label": "AI Triggers"
     },
     "update": {
       "title": "Cập nhật AI Trigger"
@@ -373,7 +378,9 @@
     "placeholders": {
       "enterNumber": "Nhập số",
       "enterText": "Nhập văn bản",
-      "selectTrueFalse": "Chọn đúng/sai"
+      "loading": "Đang tải...",
+      "selectTrueFalse": "Chọn đúng/sai",
+      "selectTools": "Chọn công cụ"
     },
     "values": {
       "false": "Sai",
@@ -820,6 +827,12 @@
     "openAIModel": {
       "label": "Mô hình OpenAI"
     },
+    "claude": {
+      "label": "Claude"
+    },
+    "deepseek": {
+      "label": "DeepSeek"
+    },
     "operation": {
       "label": "Hoạt động"
     },
@@ -917,6 +930,9 @@
     },
     "team": {
       "label": "Nhóm"
+    },
+    "rememberConversation": {
+      "label": "Ghi nhớ cuộc trò chuyện"
     },
     "temperature": {
       "label": "Nhiệt độ"
@@ -1050,6 +1066,16 @@
       "label": "Lịch trình",
       "now": "Ngay bây giờ",
       "scheduled": "Lên lịch cho sau"
+    },
+    "placeholders": {
+      "loading": "Đang tải...",
+      "maxTokensHint": "Số lượng token tối đa để tạo",
+      "selectModelClaude": "Chọn mô hình Claude",
+      "selectModelDeepseek": "Chọn mô hình DeepSeek",
+      "selectModelGemini": "Chọn mô hình Gemini",
+      "selectModelOpenAI": "Chọn mô hình OpenAI",
+      "selectTools": "Chọn công cụ",
+      "temperatureHint": "Điều khiển độ ngẫu nhiên (0-2), cao hơn = sáng tạo hơn"
     }
   },
   "flows": {

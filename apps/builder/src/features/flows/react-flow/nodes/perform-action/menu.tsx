@@ -59,6 +59,62 @@ const sheetsMenus = (t: TranslationFn): MenuItem[] => [
 
 export const performActionMenus = (t: TranslationFn): MenuItem[] => [
   {
+    label: t("fields.openai.label"),
+    icon: BotIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("fields.flows.aiGenerateText.label", {
+          aiName: t("fields.openai.label"),
+        }),
+        icon: BotIcon,
+        stepType: StepType.openaiGenerateText,
+      },
+    ],
+  },
+  {
+    label: t("fields.gemini.label"),
+    icon: BotIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("fields.flows.aiGenerateText.label", {
+          aiName: t("fields.gemini.label"),
+        }),
+        icon: BotIcon,
+        stepType: StepType.geminiGenerateText,
+      },
+    ],
+  },
+  {
+    label: t("fields.claude.label"),
+    icon: BotIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("fields.flows.aiGenerateText.label", {
+          aiName: t("fields.claude.label"),
+        }),
+        icon: BotIcon,
+        stepType: StepType.claudeGenerateText,
+      },
+    ],
+  },
+  {
+    label: t("fields.deepseek.label"),
+    icon: BotIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("fields.flows.aiGenerateText.label", {
+          aiName: t("fields.deepseek.label"),
+        }),
+        icon: BotIcon,
+        stepType: StepType.deepseekGenerateText,
+      },
+    ],
+  },
+  {
     label: t("flows.actions.inboxActions"),
     icon: MessagesSquareIcon,
     stepType: null,

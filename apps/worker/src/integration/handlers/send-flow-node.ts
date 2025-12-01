@@ -29,6 +29,7 @@ import {
   unassignConversation,
   unfollowConversation,
 } from "./conversation-handler"
+import { handleAIGenerateText } from "./generate-text"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -70,11 +71,14 @@ const flowStepHandlers: Record<
   [StepType.markEmailVerified]: markEmailVerified,
   [StepType.notifyAgent]: undefined,
   [StepType.openWebsite]: undefined,
+  [StepType.openaiGenerateText]: handleAIGenerateText,
+  [StepType.geminiGenerateText]: handleAIGenerateText,
+  [StepType.claudeGenerateText]: handleAIGenerateText,
+  [StepType.deepseekGenerateText]: handleAIGenerateText,
   [StepType.aiAnalyzeImage]: undefined,
   [StepType.aiDeleteMessageHistory]: undefined,
   [StepType.aiGenerateImage]: undefined,
   [StepType.aiGenerateTextAgent]: undefined,
-  [StepType.aiGenerateText]: undefined,
   [StepType.aiSpeechToText]: undefined,
   [StepType.aiTextToSpeech]: undefined,
   [StepType.optInEmail]: optInEmail,
@@ -160,11 +164,34 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
   }
 
   // NOTES: process flow
-  const startNode = (flowVersion.nodes as unknown as FlowNode[]).find((n) =>
-    props.data.nodeId ? n.id === props.data.nodeId : n.data.isStartNode,
-  )
+  const nodes = flowVersion.nodes as unknown as FlowNode[]
+
+  // Find start node with priority:
+  // 1. If nodeId is provided, use that
+  // 2. Otherwise, use startNodeId from FlowVersion
+  // 3. Fallback to finding node with isStartNode flag
+  let startNode: FlowNode | undefined
+
+  if (props.data.nodeId) {
+    startNode = nodes.find((n) => n.id === props.data.nodeId)
+  }
+
+  if (!startNode && flowVersion.startNodeId) {
+    startNode = nodes.find((n) => n.id === flowVersion.startNodeId)
+  }
+
   if (!startNode) {
-    throw new SdkException("FlowVersion does not contain start node")
+    startNode = nodes.find((n) => n.data.isStartNode === true)
+  }
+
+  // Fallback: Use first node if start node not found
+  // This handles cases where startNodeId is out of sync with actual nodes
+  if (!startNode && nodes.length > 0) {
+    startNode = nodes[0]
+  }
+
+  if (!startNode) {
+    throw new SdkException("FlowVersion does not contain any nodes")
   }
 
   const gen = runFlowNode(conversation, flowVersion.id, startNode)
@@ -181,11 +208,17 @@ function* runFlowNode(
   node: FlowNode,
 ) {
   const steps = ("steps" in node.data ? node.data.steps : []) ?? []
+
   for (const step of steps) {
-    yield flowStepHandlers[step.stepType as StepType]?.({
-      conversation,
-      flowVersionId,
-      step,
-    })
+    const stepType = step.stepType as StepType
+    const handler = flowStepHandlers[stepType]
+
+    if (handler) {
+      yield handler({
+        conversation,
+        flowVersionId,
+        step,
+      })
+    }
   }
 }

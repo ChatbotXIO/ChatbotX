@@ -23,213 +23,230 @@ import { useTranslations } from "next-intl"
 import { memo, useEffect, useMemo } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { funnel } from "remeda"
+import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ErrorAlert } from "../steps/error-alert"
 import { allNodesConfig } from "./node-config"
 
-export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
-  const t = useTranslations()
-  const nodeConfig = activeNode.type
-    ? allNodesConfig[activeNode.type as NodeType]?.(t)
-    : null
-  const validator = nodeConfig?.validator
+export const NodeEditor = memo(
+  ({
+    activeNode,
+    flowVersion,
+  }: {
+    activeNode: FlowNode
+    flowVersion: FlowVersionResource
+  }) => {
+    const t = useTranslations()
+    const nodeConfig = activeNode.type
+      ? allNodesConfig[activeNode.type as NodeType]?.(t)
+      : null
+    const validator = nodeConfig?.validator
 
-  const { updateNodeData } = useReactFlow()
+    const { updateNodeData } = useReactFlow()
 
-  // biome-ignore lint/suspicious/noExplicitAny: wip - complex node data types
-  const form = useForm<any>({
-    // biome-ignore lint/suspicious/noExplicitAny: wip - validator can be undefined
-    resolver: validator ? zodResolver(validator as any) : undefined,
-    defaultValues: {
-      ...activeNode.data,
-    },
-    mode: "onBlur",
-  })
-  const { control, getValues } = form
+    // biome-ignore lint/suspicious/noExplicitAny: wip - complex node data types
+    const form = useForm<any>({
+      // biome-ignore lint/suspicious/noExplicitAny: wip - validator can be undefined
+      resolver: validator ? zodResolver(validator as any) : undefined,
+      defaultValues: {
+        ...activeNode.data,
+      },
+      mode: "onBlur",
+    })
+    const { control, getValues } = form
 
-  const allValues = useWatch({ control })
-  const debounceUpdateNodeData = useMemo(
-    () =>
-      funnel(
-        () => {
-          updateNodeData(activeNode.id, allValues)
-        },
-        { minQuietPeriodMs: 100 },
-      ),
-    [allValues, activeNode.id, updateNodeData],
-  )
+    const allValues = useWatch({ control })
+    const debounceUpdateNodeData = useMemo(
+      () =>
+        funnel(
+          () => {
+            updateNodeData(activeNode.id, allValues)
+          },
+          { minQuietPeriodMs: 100 },
+        ),
+      [allValues, activeNode.id, updateNodeData],
+    )
 
-  useEffect(() => {
-    debounceUpdateNodeData.call()
-  }, [debounceUpdateNodeData])
+    useEffect(() => {
+      debounceUpdateNodeData.call()
+    }, [debounceUpdateNodeData])
 
-  const { fields, append, move, remove, insert } = useFieldArray({
-    control,
-    name: "steps",
-  })
+    const { fields, append, move, remove, insert } = useFieldArray({
+      control,
+      name: "steps",
+    })
 
-  const onAddStep = (name: StepType) => {
-    const newStep = allSteps[name]?.defaultFn()
-    if (newStep) {
-      append(newStep)
-    }
-  }
-
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  const replaceIds = (data: any): any => {
-    if (typeof data === "object" && data !== null) {
-      if (Array.isArray(data)) {
-        return data.map((item) => replaceIds(item))
+    const onAddStep = (name: StepType) => {
+      const newStep = allSteps[name]?.defaultFn()
+      if (newStep) {
+        append(newStep)
       }
+    }
 
-      // biome-ignore lint/suspicious/noExplicitAny: wip
-      const newData: any = {}
-      for (const key in data) {
-        if (key === "id") {
-          newData[key] = createId()
-        } else {
-          newData[key] = replaceIds(data[key])
+    // biome-ignore lint/suspicious/noExplicitAny: wip
+    const replaceIds = (data: any): any => {
+      if (typeof data === "object" && data !== null) {
+        if (Array.isArray(data)) {
+          return data.map((item) => replaceIds(item))
         }
-      }
-      return newData
-    }
-    return data
-  }
 
-  const onCopyStep = (index: number) => {
-    // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
-    const values = getValues(`steps.${index}` as any)
-    if (values) {
-      insert(index + 1, replaceIds(values))
-    }
-  }
-
-  const onRemoveStep = (index: number) => {
-    remove(index)
-  }
-
-  return (
-    <Form {...form}>
-      {"beforeStep" in activeNode.data && activeNode.data.beforeStep && (
-        <DynamicStepEditor
-          parentName="beforeStep"
-          type={
-            (activeNode.data as { beforeStep: { stepType: StepType } })
-              .beforeStep.stepType
+        // biome-ignore lint/suspicious/noExplicitAny: wip
+        const newData: any = {}
+        for (const key in data) {
+          if (key === "id") {
+            newData[key] = createId()
+          } else {
+            newData[key] = replaceIds(data[key])
           }
-        />
-      )}
+        }
+        return newData
+      }
+      return data
+    }
 
-      <div className="my-2 flex flex-1 flex-col gap-2 overflow-y-auto">
-        <Sortable
-          getItemValue={(item) => item.id}
-          onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
-          value={fields}
-        >
-          <SortableContent asChild>
-            <div className="flex w-full flex-col gap-4">
-              {fields.map((field, index) => (
-                <SortableItem asChild key={field.id} value={field.id}>
-                  <div
-                    className={cn(
-                      "flex items-center gap-2",
-                      // biome-ignore lint/suspicious/noExplicitAny: wip
-                      (field as any).stepType === StepType.sendCarousel
-                        ? "relative"
-                        : "",
-                    )}
-                  >
-                    {/* biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors */}
-                    {(form.formState.errors as any).steps ? (
-                      <ErrorAlert
-                        message={
-                          JSON.stringify(form.formState.errors)
-                          // typeof form.formState.errors.steps?.[index]?.message ===
-                          //   "object"
-                          //   ? ((
-                          //     form.formState.errors.steps?.[index]?.message as {
-                          //       message: string
-                          //     }
-                          //   ).message as string)
-                          //   : ""
-                        }
-                      />
-                    ) : (
-                      <div className="w-4">{"\u00A0"}</div>
-                    )}
+    const onCopyStep = (index: number) => {
+      // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
+      const values = getValues(`steps.${index}` as any)
+      if (values) {
+        insert(index + 1, replaceIds(values))
+      }
+    }
+
+    const onRemoveStep = (index: number) => {
+      remove(index)
+    }
+
+    return (
+      <Form {...form}>
+        {"beforeStep" in activeNode.data && activeNode.data.beforeStep && (
+          <DynamicStepEditor
+            flowVersion={flowVersion}
+            parentName="beforeStep"
+            type={
+              (activeNode.data as { beforeStep: { stepType: StepType } })
+                .beforeStep.stepType
+            }
+          />
+        )}
+
+        <div className="my-2 flex flex-1 flex-col gap-2 overflow-y-auto">
+          <Sortable
+            getItemValue={(item) => item.id}
+            onMove={({ activeIndex, overIndex }) =>
+              move(activeIndex, overIndex)
+            }
+            value={fields}
+          >
+            <SortableContent asChild>
+              <div className="flex w-full flex-col gap-4">
+                {fields.map((field, index) => (
+                  <SortableItem asChild key={field.id} value={field.id}>
                     <div
                       className={cn(
-                        "flex-1 break-all",
+                        "flex items-center gap-2",
                         // biome-ignore lint/suspicious/noExplicitAny: wip
                         (field as any).stepType === StepType.sendCarousel
-                          ? "overflow-hidden"
+                          ? "relative"
                           : "",
                       )}
                     >
-                      <DynamicStepEditor
-                        key={field.id}
-                        parentName={`steps.${index}`}
-                        // biome-ignore lint/suspicious/noExplicitAny: wip
-                        type={(field as any).stepType}
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <Button
-                        className="size-8 shrink-0"
-                        onClick={() => onRemoveStep(index)}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
+                      {/* biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors */}
+                      {(form.formState.errors as any).steps ? (
+                        <ErrorAlert
+                          message={
+                            JSON.stringify(form.formState.errors)
+                            // typeof form.formState.errors.steps?.[index]?.message ===
+                            //   "object"
+                            //   ? ((
+                            //     form.formState.errors.steps?.[index]?.message as {
+                            //       message: string
+                            //     }
+                            //   ).message as string)
+                            //   : ""
+                          }
+                        />
+                      ) : (
+                        <div className="w-4">{"\u00A0"}</div>
+                      )}
+                      <div
+                        className={cn(
+                          "flex-1 break-all",
+                          // biome-ignore lint/suspicious/noExplicitAny: wip
+                          (field as any).stepType === StepType.sendCarousel
+                            ? "overflow-hidden"
+                            : "",
+                        )}
                       >
-                        <XIcon aria-hidden="true" className="size-4" />
-                      </Button>
-
-                      <SortableItemHandle asChild>
-                        <Button className="size-8" size="icon" variant="ghost">
-                          <MoveVerticalIcon className="h-4 w-4" />
-                        </Button>
-                      </SortableItemHandle>
-                      {!disabledCopyActionTypes.includes(
-                        // biome-ignore lint/suspicious/noExplicitAny: wip
-                        (field as any).stepType,
-                      ) && (
+                        <DynamicStepEditor
+                          flowVersion={flowVersion}
+                          key={field.id}
+                          parentName={`steps.${index}`}
+                          // biome-ignore lint/suspicious/noExplicitAny: wip
+                          type={(field as any).stepType}
+                        />
+                      </div>
+                      <div className="flex flex-col">
                         <Button
                           className="size-8 shrink-0"
-                          onClick={() => onCopyStep(index)}
+                          onClick={() => onRemoveStep(index)}
                           size="icon"
                           type="button"
                           variant="ghost"
                         >
-                          <CopyIcon aria-hidden="true" className="size-4" />
+                          <XIcon aria-hidden="true" className="size-4" />
                         </Button>
-                      )}
+
+                        <SortableItemHandle asChild>
+                          <Button
+                            className="size-8"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoveVerticalIcon className="h-4 w-4" />
+                          </Button>
+                        </SortableItemHandle>
+                        {!disabledCopyActionTypes.includes(
+                          // biome-ignore lint/suspicious/noExplicitAny: wip
+                          (field as any).stepType,
+                        ) && (
+                          <Button
+                            className="size-8 shrink-0"
+                            onClick={() => onCopyStep(index)}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <CopyIcon aria-hidden="true" className="size-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </SortableItem>
-              ))}
-            </div>
-          </SortableContent>
-        </Sortable>
-      </div>
+                  </SortableItem>
+                ))}
+              </div>
+            </SortableContent>
+          </Sortable>
+        </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            <PlusIcon />
-            {t("actions.create")}
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <PlusIcon />
+              {t("actions.create")}
+            </Button>
+          </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="w-full">
-          <RecursiveDropdownMenu
-            data={nodeConfig ? nodeConfig.menus(t) : []}
-            onClick={onAddStep}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <DropdownMenuContent className="w-full">
+            <RecursiveDropdownMenu
+              data={nodeConfig ? nodeConfig.menus(t) : []}
+              onClick={onAddStep}
+            />
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-      <TriggerFormInitially form={form} />
-    </Form>
-  )
-})
+        <TriggerFormInitially form={form} />
+      </Form>
+    )
+  },
+)

@@ -63,6 +63,7 @@
     "followConversation": "Follow Conversation",
     "formatDate": "Format Date",
     "generateCode": "Generate Code",
+    "generateText": "Generate Text",
     "getDataFromJson": "Get Data From JSON",
     "getEmbedCode": "Get Embed Code",
     "getID": "Get ID",
@@ -194,6 +195,10 @@
     "name": {
       "label": "AI Trigger name"
     },
+    "setting": {
+      "description": "AI Triggers description",
+      "label": "AI Triggers"
+    },
     "update": {
       "title": "Update AI Trigger"
     }
@@ -226,6 +231,7 @@
     "title": "Billing"
   },
   "broadcasts": {
+    "scheduleSendMessage": "Schedule send message",
     "update": {
       "title": "Update Broadcast"
     },
@@ -372,7 +378,9 @@
     "placeholders": {
       "enterNumber": "Enter number",
       "enterText": "Enter text",
-      "selectTrueFalse": "Select true/false"
+      "loading": "Loading...",
+      "selectTrueFalse": "Select true/false",
+      "selectTools": "Select tools"
     },
     "values": {
       "false": "False",
@@ -832,6 +840,12 @@
     "openAIModel": {
       "label": "OpenAI Model"
     },
+    "claude": {
+      "label": "Claude"
+    },
+    "deepseek": {
+      "label": "DeepSeek"
+    },
     "operation": {
       "label": "Operation"
     },
@@ -929,6 +943,9 @@
     },
     "team": {
       "label": "Team"
+    },
+    "rememberConversation": {
+      "label": "Remember Conversation"
     },
     "temperature": {
       "label": "Temperature"
@@ -1049,6 +1066,16 @@
       "label": "Schedule",
       "now": "Now",
       "scheduled": "Schedule for later"
+    },
+    "placeholders": {
+      "loading": "Loading...",
+      "maxTokensHint": "Maximum number of tokens to generate",
+      "selectModelClaude": "Select Claude model",
+      "selectModelDeepseek": "Select DeepSeek model",
+      "selectModelGemini": "Select Gemini model",
+      "selectModelOpenAI": "Select OpenAI model",
+      "selectTools": "Select tools",
+      "temperatureHint": "Controls randomness (0-2), higher = more creative"
     }
   },
   "flows": {

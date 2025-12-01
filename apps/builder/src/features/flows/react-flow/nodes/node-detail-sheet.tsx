@@ -9,12 +9,14 @@ import {
 } from "@aha.chat/ui/components/ui/sheet"
 import { type ReactFlowState, useStore } from "@xyflow/react"
 import { memo } from "react"
+import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 import { NodeEditor } from "./editor"
 import { NodeNameEditor } from "./node-name-editor"
 
 type NodeDetailSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  flowVersion: FlowVersionResource
 }
 
 // Select only the selected node from the store
@@ -38,13 +40,18 @@ const equalityFn = (a: FlowNode | null, b: FlowNode | null): boolean => {
   return a.id === b.id && a.data === b.data
 }
 
-export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
+export function NodeDetailSheet({
+  open,
+  onOpenChange,
+  flowVersion,
+}: NodeDetailSheetProps) {
   // Use store selector with custom equality function
   const activeNode = useStore(selectSelectedNode, equalityFn)
 
   return open && activeNode ? (
     <NodeDetailSheetContent
       activeNode={activeNode}
+      flowVersion={flowVersion}
       onOpenChange={onOpenChange}
       open={open}
     />
@@ -54,10 +61,12 @@ export function NodeDetailSheet({ open, onOpenChange }: NodeDetailSheetProps) {
 export const NodeDetailSheetContent = memo(
   ({
     activeNode,
+    flowVersion,
     open,
     onOpenChange,
   }: {
     activeNode: FlowNode
+    flowVersion: FlowVersionResource
     open: boolean
     onOpenChange: (open: boolean) => void
   }) => (
@@ -68,7 +77,7 @@ export const NodeDetailSheetContent = memo(
         </SheetTitle>
         <SheetDescription />
         <div className="flex flex-1 flex-col gap-4 overflow-hidden p-5">
-          <NodeEditor activeNode={activeNode} />
+          <NodeEditor activeNode={activeNode} flowVersion={flowVersion} />
         </div>
       </SheetContent>
     </Sheet>

@@ -32,6 +32,7 @@ export function ReactFlowFrame({ flow, flowVersion }: ReactFlowFrameProps) {
       />
 
       <NodeDetailSheet
+        flowVersion={flowVersion}
         onOpenChange={setOpenNodeDetailSheet}
         open={openNodeDetailSheet}
       />

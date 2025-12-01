@@ -3,6 +3,12 @@ import { memo } from "react"
 import { addContactNotesStep } from "./add-contact-notes"
 import { addContactTagStep } from "./add-contact-tag"
 import { addNotesStep } from "./add-notes"
+import {
+  claudeGenerateTextStep,
+  deepseekGenerateTextStep,
+  geminiGenerateTextStep,
+  openAIGenerateTextStep,
+} from "./ai-generate-text"
 import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
@@ -100,7 +106,10 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.filterContact]: undefined,
   [StepType.addNotes]: addNotesStep,
   [StepType.waitUserReply]: undefined,
-  [StepType.aiGenerateText]: undefined,
+  [StepType.openaiGenerateText]: openAIGenerateTextStep,
+  [StepType.geminiGenerateText]: geminiGenerateTextStep,
+  [StepType.claudeGenerateText]: claudeGenerateTextStep,
+  [StepType.deepseekGenerateText]: deepseekGenerateTextStep,
   [StepType.aiGenerateTextAgent]: undefined,
   [StepType.aiGenerateImage]: undefined,
   [StepType.aiAnalyzeImage]: undefined,
@@ -114,11 +123,24 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
 }
 
+import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
+
 export const DynamicStepEditor = memo(
-  ({ type, parentName, ...props }: { type: StepType; parentName: string }) => {
+  ({
+    type,
+    parentName,
+    flowVersion,
+    ...props
+  }: {
+    type: StepType
+    parentName: string
+    flowVersion: FlowVersionResource
+  }) => {
     const Element = allSteps[type]?.editor
 
-    return Element ? <Element parentName={parentName} {...props} /> : null
+    return Element ? (
+      <Element flowVersion={flowVersion} parentName={parentName} {...props} />
+    ) : null
   },
 )
 

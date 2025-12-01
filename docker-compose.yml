@@ -2,7 +2,8 @@ name: ahachat
 
 services:
   postgres:
-    image: timescale/timescaledb:latest-pg17
+    # Use Postgres image with pgvector extension for AI embeddings
+    image: pgvector/pgvector:pg16
     ports:
       - "5432:5432"
     volumes:
