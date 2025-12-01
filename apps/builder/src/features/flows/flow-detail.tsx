@@ -39,14 +39,14 @@ export function FlowDetail({
   const [{ data: customFields }, { data: flowVersions }, { data: tags }] =
     use(promises)
 
-  const customFieldOptions = {
+  const customFieldOptions = [
     ...reservedCustomFieldOptions,
     ...customFields.map((field) => ({
       label: field.name,
       value: field.id,
       type: field.customFieldType,
     })),
-  }
+  ]
 
   const flowOptions = flowVersions.map((fv) => ({
     label: fv.flow.name,

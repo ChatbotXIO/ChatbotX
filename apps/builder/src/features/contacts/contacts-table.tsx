@@ -7,6 +7,8 @@ import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { use, useMemo } from "react"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
@@ -19,6 +21,7 @@ type ContactsTableProps = {
 
 export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
   const [{ data, pageCount }] = use(promises)
+  const _router = useRouter()
 
   const columns = useMemo<ColumnDef<ContactResource>[]>(
     () => [
@@ -53,7 +56,15 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
-        cell: ({ row }) => <div>{row.original.fullName}</div>,
+        cell: ({ row }) => (
+          <Link
+            className="text-blue-500"
+            href={`/chatbots/${chatbotId}/inbox?conversationId=${row.original.conversation?.id}`}
+            target="_blank"
+          >
+            {row.original.fullName}
+          </Link>
+        ),
         meta: {
           label: "Name",
           placeholder: "Search name...",
@@ -109,7 +120,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd"),
       },
     ],
-    [],
+    [chatbotId],
   )
 
   const { table } = useDataTable({
