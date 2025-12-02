@@ -1,13 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { type Node, useEdges, useNodes } from "@xyflow/react"
-import { useOptimisticAction } from "next-safe-action/hooks"
 import { useCallback, useEffect } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { z } from "zod"
-import { updateDraftFlowVersionAction } from "@/features/flows/actions/update-draft-flow-version-action"
-import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 
 // Schema for AI model form (input)
 export const aiModelFormInputSchema = z.object({
@@ -36,76 +32,46 @@ export const aiModelFormOutputSchema = z.object({
 export type AIModelFormInputData = z.infer<typeof aiModelFormInputSchema>
 export type AIModelFormOutputData = z.infer<typeof aiModelFormOutputSchema>
 
+// Default values constants
+const DEFAULT_TEMPERATURE = 0.4
+const DEFAULT_MAX_TOKENS = 250
+
 type UseAIModelFormProps = {
   parentName: string
-  flowVersion: FlowVersionResource
 }
 
-export const useAIModelForm = ({
-  parentName,
-  flowVersion,
-}: UseAIModelFormProps) => {
-  const { getValues, setValue: setValueParent } = useFormContext()
-  const nodes = useNodes()
-  const edges = useEdges()
+// Helper function to normalize parent values to form input format
+const normalizeToFormInput = (
+  parentValues: Record<string, unknown>,
+): AIModelFormInputData => ({
+  ...parentValues,
+  rememberConversation: parentValues.rememberConversation ? ["1"] : [],
+  model: (parentValues.model as string) || "",
+  prompt: (parentValues.prompt as string) || "",
+  userMessage: (parentValues.userMessage as string) || "",
+  resultCustomFieldId: (parentValues.resultCustomFieldId as string) || "",
+  tools: (parentValues.tools as string[]) || [],
+  temperature: (parentValues.temperature as number) || DEFAULT_TEMPERATURE,
+  maxTokens: (parentValues.maxTokens as number) || DEFAULT_MAX_TOKENS,
+})
 
-  // Setup updateDraftFlowVersionAction
-  const { execute: savingDraft } = useOptimisticAction(
-    updateDraftFlowVersionAction.bind(
-      null,
-      flowVersion?.chatbotId || "",
-      flowVersion?.id || "",
-    ),
-    {
-      currentState: { flowVersion },
-      updateFn: (state, updatedData) => ({
-        flowVersion: {
-          ...state.flowVersion,
-          ...updatedData,
-        },
-      }),
-    },
-  )
+export const useAIModelForm = ({ parentName }: UseAIModelFormProps) => {
+  const { getValues, setValue: setValueParent } = useFormContext()
 
   const parentValues = getValues(parentName) || {}
-  const currentValues: AIModelFormInputData = {
-    ...parentValues,
-    rememberConversation: parentValues.rememberConversation ? ["1"] : [],
-  }
+  const currentValues = normalizeToFormInput(parentValues)
 
   const form = useForm<AIModelFormInputData>({
     resolver: zodResolver(aiModelFormInputSchema),
-    defaultValues: {
-      model: currentValues.model || "",
-      prompt: currentValues.prompt || "",
-      userMessage: currentValues.userMessage || "",
-      resultCustomFieldId: currentValues.resultCustomFieldId || "",
-      tools: currentValues.tools || [],
-      rememberConversation: currentValues.rememberConversation || [],
-      temperature: currentValues.temperature || 0.4,
-      maxTokens: currentValues.maxTokens || 250,
-    },
+    defaultValues: currentValues,
     mode: "all",
     shouldUseNativeValidation: false,
   })
 
   // Reset form when currentValues change
   useEffect(() => {
-    const newCurrentValues = {
-      ...parentValues,
-      rememberConversation: parentValues.rememberConversation ? ["1"] : [],
-    }
-
-    form.reset({
-      model: newCurrentValues.model || "",
-      prompt: newCurrentValues.prompt || "",
-      userMessage: newCurrentValues.userMessage || "",
-      resultCustomFieldId: newCurrentValues.resultCustomFieldId || "",
-      tools: newCurrentValues.tools || [],
-      rememberConversation: newCurrentValues.rememberConversation || [],
-      temperature: newCurrentValues.temperature || 0.4,
-      maxTokens: newCurrentValues.maxTokens || 250,
-    })
+    const newCurrentValues = normalizeToFormInput(parentValues)
+    form.reset(newCurrentValues)
   }, [parentValues, form])
 
   const onSubmit = useCallback(() => {
@@ -124,77 +90,30 @@ export const useAIModelForm = ({
     }
 
     // Update parent form with new values
-    setValueParent(`${parentName}.model`, convertedValues.model, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
-    setValueParent(`${parentName}.prompt`, convertedValues.prompt, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
-    setValueParent(`${parentName}.userMessage`, convertedValues.userMessage, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
-    setValueParent(
-      `${parentName}.resultCustomFieldId`,
-      convertedValues.resultCustomFieldId,
-      {
+    const formFields: (keyof AIModelFormOutputData)[] = [
+      "model",
+      "prompt",
+      "userMessage",
+      "resultCustomFieldId",
+      "tools",
+      "temperature",
+      "maxTokens",
+    ]
+
+    for (const field of formFields) {
+      setValueParent(`${parentName}.${field}`, convertedValues[field], {
         shouldValidate: true,
         shouldDirty: true,
-      },
-    )
-    setValueParent(`${parentName}.tools`, convertedValues.tools, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
+      })
+    }
+
+    // Handle rememberConversation separately (convert array to boolean)
     setValueParent(
       `${parentName}.rememberConversation`,
       (convertedValues.rememberConversation || []).includes("1"),
       { shouldValidate: true, shouldDirty: true },
     )
-    setValueParent(`${parentName}.temperature`, convertedValues.temperature, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
-    setValueParent(`${parentName}.maxTokens`, convertedValues.maxTokens, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
-
-    // Update the specific step in nodes
-    const updatedNodes: Node[] = nodes.map((node) => {
-      if (node.data.steps) {
-        const stepIndex = Number.parseInt(parentName.split(".")[1], 10)
-        const updatedSteps = [...(node.data.steps as unknown[])]
-        if (updatedSteps[stepIndex]) {
-          updatedSteps[stepIndex] = {
-            ...updatedSteps[stepIndex],
-            ...convertedValues,
-            rememberConversation: (
-              convertedValues.rememberConversation || []
-            ).includes("1"),
-          }
-        }
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            steps: updatedSteps,
-          },
-        }
-      }
-      return node
-    })
-
-    // Save to database immediately
-    savingDraft({
-      // biome-ignore lint/suspicious/noExplicitAny: Type conversion needed for API compatibility
-      nodes: updatedNodes as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Type conversion needed for API compatibility
-      edges: edges as any,
-    })
-  }, [form, setValueParent, parentName, nodes, edges, savingDraft])
+  }, [form, setValueParent, parentName])
 
   return {
     form,

@@ -19,9 +19,9 @@ export type GetChatbotMembersSchema = Awaited<
 
 export const listChatbotMembersRequest = z.object({
   chatbotId: z.cuid2(),
-  page: z.number().int().min(1).default(1),
-  perPage: z.number().int().min(1).default(10),
-  keyword: z.string().nullable(),
+  page: z.coerce.number().int().min(1).default(1),
+  perPage: z.coerce.number().int().min(1).default(10),
+  keyword: z.string().nullish(),
 })
 export type ListChatbotMembersRequest = z.infer<
   typeof listChatbotMembersRequest

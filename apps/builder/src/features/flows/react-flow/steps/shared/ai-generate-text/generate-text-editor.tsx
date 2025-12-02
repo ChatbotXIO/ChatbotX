@@ -4,7 +4,6 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 import { BaseStepEditor } from "../../base/editor"
 import { AIModelDialog } from "../ai-model-dialog"
 import { AIModelFormFields } from "../ai-model-form-fields"
@@ -13,17 +12,16 @@ import type { AIProviderConfig } from "./config"
 
 type GenerateTextEditorProps = {
   parentName: string
-  flowVersion: FlowVersionResource
   provider: "claude" | "openai" | "gemini" | "deepseek"
   config: AIProviderConfig
   ModelSelectComponent: React.ComponentType<{ name: string }>
 }
 
 export const GenerateTextEditor = (props: GenerateTextEditorProps) => {
-  const { parentName, flowVersion, config, ModelSelectComponent } = props
+  const { parentName, config, ModelSelectComponent } = props
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const { form, onSubmit } = useAIModelForm({ parentName, flowVersion })
+  const { form, onSubmit } = useAIModelForm({ parentName })
 
   const handleSubmit = () => {
     onSubmit()

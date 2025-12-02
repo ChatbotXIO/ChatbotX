@@ -1,3 +1,4 @@
+import { AIMessageRole } from "@aha.chat/database/types"
 import { z } from "zod"
 import { geminiModels } from "@/features/integration-gemini/schemas/models"
 import { openAIModels } from "@/features/openai/models"
@@ -7,7 +8,7 @@ export const createAIAgentRequest = z.object({
   prompt: z.string().trim().min(1).max(5000),
   messages: z.array(
     z.object({
-      role: z.enum(["user", "assistant"]),
+      role: z.enum(AIMessageRole),
       content: z.string().trim().min(1).max(255),
     }),
   ),
@@ -29,3 +30,6 @@ export const createAIAgentRequest = z.object({
   isDefault: z.boolean(),
 })
 export type CreateAIAgentRequest = z.infer<typeof createAIAgentRequest>
+
+export const updateAIAgentRequest = createAIAgentRequest.partial()
+export type UpdateAIAgentRequest = z.infer<typeof updateAIAgentRequest>

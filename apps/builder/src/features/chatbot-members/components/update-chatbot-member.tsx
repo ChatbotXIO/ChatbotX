@@ -146,6 +146,7 @@ export function UpdateChatbotMemberForm({
     control: form.control,
     name: "permissions.superAdmin",
   })
+
   useEffect(() => {
     if (isSuperAdmin) {
       setValue("permissions.analytics", true)

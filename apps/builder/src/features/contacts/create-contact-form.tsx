@@ -81,6 +81,7 @@ export function CreateContactForm({
           label={t("fields.phoneNumber.label")}
           name="phoneNumber"
           placeholder="090xxxxxxx"
+          required
         />
 
         <InputField

@@ -4,7 +4,6 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { getFolderTypeFromFeature } from "./_lib"
@@ -52,11 +51,6 @@ export default async function FoldersDetault(props: {
         <h3 className="flex-1 font-bold text-xl">
           {t("folders.heading.title")}
         </h3>
-        <CreateFolderDialog
-          chatbotId={params.chatbotId}
-          folderType={folderType}
-          parentId={folderId}
-        />
       </div>
 
       <Suspense>

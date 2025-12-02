@@ -21,6 +21,7 @@ export default async function AIFilesPage({ params }: AIFilesPageProps) {
   return (
     <div className="space-y-6">
       <AIHubBreadcrumb />
+
       <Suspense>
         <AIFilesTable promises={promises} />
       </Suspense>

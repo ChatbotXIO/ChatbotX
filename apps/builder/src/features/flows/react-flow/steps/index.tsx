@@ -123,24 +123,11 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
 }
 
-import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
-
 export const DynamicStepEditor = memo(
-  ({
-    type,
-    parentName,
-    flowVersion,
-    ...props
-  }: {
-    type: StepType
-    parentName: string
-    flowVersion: FlowVersionResource
-  }) => {
+  ({ type, parentName, ...props }: { type: StepType; parentName: string }) => {
     const Element = allSteps[type]?.editor
 
-    return Element ? (
-      <Element flowVersion={flowVersion} parentName={parentName} {...props} />
-    ) : null
+    return Element ? <Element parentName={parentName} {...props} /> : null
   },
 )
 

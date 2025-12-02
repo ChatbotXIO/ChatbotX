@@ -2,7 +2,7 @@ import { revalidateTag } from "next/cache"
 
 export function calcCacheTags(
   input: string | string[],
-  revalidate: number | false = 60 * 60,
+  revalidate: number | false = 0.5,
 ) {
   return {
     tags: Array.isArray(input) ? input : [input],

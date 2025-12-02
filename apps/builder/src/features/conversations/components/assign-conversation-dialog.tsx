@@ -39,11 +39,13 @@ import { assignConversationSchema } from "../schemas/assign-conversation.schema"
 type AssignConversationDialogProps = {
   trigger: ReactElement
   contactIds: string[]
+  onSuccess?: () => void
 }
 
 export default function AssignConversationDialog({
   trigger,
   contactIds,
+  onSuccess,
 }: AssignConversationDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -84,6 +86,7 @@ export default function AssignConversationDialog({
             }),
           )
           setOpen(false)
+          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -106,9 +109,9 @@ export default function AssignConversationDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>Assign Conversation</DialogTitle>
+          <DialogTitle>{t("actions.assignConversation")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 

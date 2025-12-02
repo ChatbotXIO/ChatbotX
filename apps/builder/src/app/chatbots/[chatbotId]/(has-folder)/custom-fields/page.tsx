@@ -27,12 +27,14 @@ export default async function CustomFieldsPage(props: {
     }),
   ])
   return (
-    <div className="flex items-center">
-      <h3 className="flex-1 font-bold">{t("fields.customField.label")}</h3>
-      <CreateCustomFieldDialog
-        chatbotId={params.chatbotId}
-        folderId={folderId}
-      />
+    <div className="flex flex-col gap-4">
+      <div className="flex">
+        <h3 className="flex-1 font-bold">{t("fields.customField.label")}</h3>
+        <CreateCustomFieldDialog
+          chatbotId={params.chatbotId}
+          folderId={folderId}
+        />
+      </div>
 
       <Suspense>
         <CustomFieldsTable chatbotId={params.chatbotId} promises={promises} />

@@ -62,7 +62,7 @@ export default function EditAutomatedResponseForm(
               feature: t("fields.automatedResponse.label"),
             }),
           )
-          router.push(`/chatbots/${chatbotId}/automated-responses`)
+          router.back()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -225,13 +225,7 @@ export default function EditAutomatedResponseForm(
           </Button>
         </div>
         <div className="flex justify-end gap-4">
-          <Button
-            onClick={() =>
-              router.push(`/chatbots/${chatbotId}/automated-responses`)
-            }
-            type="button"
-            variant="ghost"
-          >
+          <Button onClick={() => router.back()} type="button" variant="ghost">
             {t("actions.cancel")}
           </Button>
           <Button

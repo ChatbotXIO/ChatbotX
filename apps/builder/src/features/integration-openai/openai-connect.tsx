@@ -12,7 +12,6 @@ import {
   AlertDialogTrigger,
 } from "@aha.chat/ui/components/ui/alert-dialog"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -21,6 +20,7 @@ import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
+import ChangeAutoReply from "./components/change-auto-reply"
 import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
 
@@ -103,7 +103,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
             description={t("automatedResponse.setting.description")}
             label={t("automatedResponse.setting.label")}
           >
-            <Switch checked={integrationOpenAI.autoReply} disabled={true} />
+            <ChangeAutoReply integrationOpenAI={integrationOpenAI} />
           </SettingRow>
 
           <SettingRow

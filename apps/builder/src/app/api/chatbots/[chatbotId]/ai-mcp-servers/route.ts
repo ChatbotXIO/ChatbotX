@@ -1,18 +1,16 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { getAIMcpServers } from "@/features/ai-mcp-servers/queries"
+import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { chatbotId: string } },
+  _req: NextRequest,
+  { params }: { params: Promise<{ chatbotId: string }> },
 ) {
   try {
-    const chatbotId = params.chatbotId
+    const { chatbotId } = await params
     const result = await getAIMcpServers({ chatbotId })
     return NextResponse.json(result)
   } catch (error) {
-    return NextResponse.json(
-      { data: [], pageCount: 0, error: (error as Error).message },
-      { status: 500 },
-    )
+    return serverErrorHandler(error)
   }
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import AIFunctionsTable from "@/features/ai-functions/ai-functions-table"
 import { getAIFunctions } from "@/features/ai-functions/queries"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
@@ -38,7 +39,9 @@ export default async function AIFunctionsPage({
   return (
     <div className="space-y-6">
       <AIHubBreadcrumb />
-      <AIFunctionsTable promises={promises} />
+      <Suspense>
+        <AIFunctionsTable promises={promises} />
+      </Suspense>
     </div>
   )
 }

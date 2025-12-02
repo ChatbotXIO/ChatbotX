@@ -40,7 +40,6 @@ export default async function FoldersPage(props: {
         <CreateFolderDialog
           chatbotId={params.chatbotId}
           folderType={folderType}
-          parentId={folderId}
         />
       </div>
 

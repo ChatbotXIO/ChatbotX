@@ -15,7 +15,7 @@ import {
   XIcon,
   ZapIcon,
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -34,6 +34,9 @@ export function CreateAutomatedResponseForm(
   props: CreateAutomatedResponseFormProps,
 ) {
   const { chatbotId, folderId, promises } = props
+
+  const searchParams = useSearchParams()
+
   const t = useTranslations()
   const router = useRouter()
 
@@ -53,8 +56,14 @@ export function CreateAutomatedResponseForm(
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Automated Response created successfully")
-          router.push(`/chatbots/${chatbotId}/automated-responses`)
+          toast.success(
+            t("messages.createdSuccess", {
+              feature: t("fields.automatedResponse.label"),
+            }),
+          )
+          router.push(
+            `/chatbots/${chatbotId}/automated-responses?${searchParams.toString()}`,
+          )
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -144,10 +153,10 @@ export function CreateAutomatedResponseForm(
         {replies.map((reply, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <div className="flex w-full gap-2" key={index}>
-            <div className="flex w-1/2 items-center gap-2">
+            <div className="flex w-1/2 items-start gap-2">
               {reply.type === ReplyType.Message ? (
                 <>
-                  <MessageSquareMoreIcon />
+                  <MessageSquareMoreIcon className="mt-1.5" />
                   <InputField
                     className="flex-1"
                     name={`replies.${index}.message`}

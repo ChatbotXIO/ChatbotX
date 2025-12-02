@@ -163,13 +163,8 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     throw new SdkException("FlowVersion not found")
   }
 
-  // NOTES: process flow
   const nodes = flowVersion.nodes as unknown as FlowNode[]
 
-  // Find start node with priority:
-  // 1. If nodeId is provided, use that
-  // 2. Otherwise, use startNodeId from FlowVersion
-  // 3. Fallback to finding node with isStartNode flag
   let startNode: FlowNode | undefined
 
   if (props.data.nodeId) {
@@ -184,8 +179,6 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     startNode = nodes.find((n) => n.data.isStartNode === true)
   }
 
-  // Fallback: Use first node if start node not found
-  // This handles cases where startNodeId is out of sync with actual nodes
   if (!startNode && nodes.length > 0) {
     startNode = nodes[0]
   }

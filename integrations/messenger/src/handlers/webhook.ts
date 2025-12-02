@@ -68,8 +68,9 @@ const handleWebhookEvent = async (
 
     // Skip if this messsage is from our own bot
     if (
+      webhookData.entry[0].messaging[0].message?.is_echo === true &&
       webhookData.entry[0].messaging[0].message?.metadata ===
-      MESSENGER_MESSAGE_METADATA
+        MESSENGER_MESSAGE_METADATA
     ) {
       return
     }

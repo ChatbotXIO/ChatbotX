@@ -1,11 +1,9 @@
 import type { JSX } from "react"
 import type z from "zod"
 import type { ZodTypeAny } from "zod"
-import type { FlowVersionResource } from "@/features/flows/schemas/get-flows-schema"
 
 type StepEditorProps = {
   parentName: string
-  flowVersion: FlowVersionResource
 }
 
 export type StepDefinition<T extends z.infer<ZodTypeAny>> = {

@@ -1,11 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { AIAgentException } from "@/features/ai-agents/schemas/errors.schema"
 import {
   type UpdateAIAgentRequest,
   updateAIAgentRequest,
-} from "@/features/ai-agents/schemas/update.schema"
+} from "@/features/ai-agents/schemas/create-ai-agent.request"
+import { AIAgentException } from "@/features/ai-agents/schemas/errors.schema"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

@@ -8,14 +8,6 @@
       "title": "Update Account Field"
     }
   },
-  "accountFields": {
-    "create": {
-      "successMessage": "Account field created successfully"
-    },
-    "delete": {
-      "successMessage": "Account field deleted successfully"
-    }
-  },
   "actions": {
     "copy": "Copy",
     "actions": "Actions",
@@ -186,7 +178,6 @@
     },
     "delete": {
       "confirmDescription": "Are you sure you want to delete this AI Trigger?",
-      "successMessage": "AI Trigger deleted successfully",
       "title": "Delete AI Trigger"
     },
     "description": {
@@ -374,17 +365,6 @@
   "customField": {
     "heading": {
       "title": "Custom Fields"
-    },
-    "placeholders": {
-      "enterNumber": "Enter number",
-      "enterText": "Enter text",
-      "loading": "Loading...",
-      "selectTrueFalse": "Select true/false",
-      "selectTools": "Select tools"
-    },
-    "values": {
-      "false": "False",
-      "true": "True"
     }
   },
   "dialog": {
@@ -887,7 +867,7 @@
       "label": "Prompt"
     },
     "promptMessages": {
-      "label": "Messages",
+      "label": "Prompt Messages",
       "role": {
         "assistant": "Assistant",
         "user": "User"
@@ -945,7 +925,7 @@
       "label": "Team"
     },
     "rememberConversation": {
-      "label": "Remember Conversation"
+      "label": "Remember conversation"
     },
     "temperature": {
       "label": "Temperature"
@@ -1016,10 +996,12 @@
       "label": "WhatsApp Flow"
     },
     "shortText": {
-      "label": "Short Text"
+      "label": "Short Text",
+      "placeholder": "Enter text"
     },
     "number": {
-      "label": "Number"
+      "label": "Number",
+      "placeholder": "Enter number"
     },
     "date": {
       "label": "Date"
@@ -1028,7 +1010,10 @@
       "label": "Datetime"
     },
     "boolean": {
-      "label": "Boolean"
+      "label": "Boolean",
+      "placeholder": "Select true or false",
+      "true": "True",
+      "false": "False"
     },
     "longText": {
       "label": "Long Text"

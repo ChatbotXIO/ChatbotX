@@ -96,6 +96,7 @@ export const receiveMessage = async ({
   }
 
   const { message, conversation, postbackAction } = parsedMessage
+
   const result = await prisma.$transaction(async (tx) => {
     let newContact = await tx.contact.findUnique({
       where: {

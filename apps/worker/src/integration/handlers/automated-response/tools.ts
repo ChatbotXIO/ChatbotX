@@ -7,7 +7,7 @@ import { callMCPTool, cleanSchemaForGemini } from "./mcp"
 import { performFileSearch } from "./search"
 
 // Precompiled regex
-const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/
+export const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/
 
 type DataField = {
   type?: string
@@ -15,7 +15,7 @@ type DataField = {
   required?: boolean
 }
 
-function parseSelectedIdsFromTools(
+export function parseSelectedIdsFromTools(
   all: readonly string[],
   prefix: string,
 ): string[] {
@@ -25,20 +25,19 @@ function parseSelectedIdsFromTools(
     .filter((id) => Boolean(id))
 }
 
-async function getAIFileTools(aiAgent: AIAgentModel): Promise<ToolSet> {
+export async function getAIFileTools(
+  chatbotId: string,
+  selectedFileIds: string[],
+): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
 
-    const selectedFileIds = parseSelectedIdsFromTools(
-      aiAgent.tools,
-      TOOL_PREFIX.file,
-    )
     if (selectedFileIds.length === 0) {
       return tools
     }
 
     const allFiles = await prisma.aIFile.findMany({
-      where: { chatbotId: aiAgent.chatbotId, id: { in: selectedFileIds } },
+      where: { chatbotId, id: { in: selectedFileIds } },
     })
 
     if (allFiles.length > 0) {
@@ -56,7 +55,7 @@ async function getAIFileTools(aiAgent: AIAgentModel): Promise<ToolSet> {
         } as Parameters<typeof jsonSchema>[0]),
         execute: async (args: { query: string }) => {
           const config = {
-            chatbotId: aiAgent.chatbotId,
+            chatbotId,
             selectedFileIds,
             similarityThreshold: 0.7,
             maxResults: 5,
@@ -70,25 +69,25 @@ async function getAIFileTools(aiAgent: AIAgentModel): Promise<ToolSet> {
   } catch (error) {
     logger.error("[automated-response] getAIFileTools failed", {
       error,
-      chatbotId: aiAgent.chatbotId,
+      chatbotId,
     })
     return {}
   }
 }
 
-async function getAIFunctionTools(aiAgent: AIAgentModel): Promise<ToolSet> {
+export async function getAIFunctionTools(
+  chatbotId: string,
+  selectedFunctionIds: string[],
+): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
-    const selectedFunctionIds = parseSelectedIdsFromTools(
-      aiAgent.tools,
-      TOOL_PREFIX.fn,
-    )
+
     if (selectedFunctionIds.length === 0) {
       return tools
     }
 
     const aiFunctions = await prisma.aIFunction.findMany({
-      where: { chatbotId: aiAgent.chatbotId, id: { in: selectedFunctionIds } },
+      where: { chatbotId, id: { in: selectedFunctionIds } },
     })
 
     for (const aiFunction of aiFunctions) {
@@ -134,25 +133,34 @@ async function getAIFunctionTools(aiAgent: AIAgentModel): Promise<ToolSet> {
   } catch (error) {
     logger.error("[automated-response] getAIFunctionTools failed", {
       error,
-      chatbotId: aiAgent.chatbotId,
+      chatbotId,
     })
     return {}
   }
 }
 
-async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
+export async function getMCPServerTools(
+  chatbotId: string,
+  selectedMcpIds: string[],
+  mcpAuth?: {
+    type: "TOKEN"
+    token: string
+  } | {
+    type: "HEADERS"
+    headers: Array<{ header: string; value: string }>
+  } | {
+    type: "NONE"
+  },
+): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
-    const selectedMCPs = parseSelectedIdsFromTools(
-      aiAgent.tools,
-      TOOL_PREFIX.mcp,
-    )
-    if (selectedMCPs.length === 0) {
+
+    if (selectedMcpIds.length === 0) {
       return tools
     }
 
     const mcpServers = await prisma.aIMCPServer.findMany({
-      where: { chatbotId: aiAgent.chatbotId, id: { in: selectedMCPs } },
+      where: { chatbotId, id: { in: selectedMcpIds } },
     })
     if (mcpServers.length === 0) {
       return tools
@@ -185,13 +193,46 @@ async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
         const cleanedSchema = cleanSchemaForGemini(
           toolDef.inputSchema.jsonSchema,
         )
+
+        // Determine MCP auth type
+        let finalMcpAuth:
+          | { type: "TOKEN"; token: string }
+          | {
+              type: "HEADERS"
+              headers: Array<{ header: string; value: string }>
+            }
+          | { type: "NONE" }
+
+        if (mcpAuth) {
+          finalMcpAuth = mcpAuth
+        } else {
+          const auth = mcpServer.auth as {
+            type: string
+            token?: string
+            headers?: Array<{ header: string; value: string }>
+          } | null
+
+          if (auth?.type === "TOKEN") {
+            finalMcpAuth = { type: "TOKEN", token: auth.token || "" }
+          } else if (auth?.type === "HEADERS") {
+            finalMcpAuth = { type: "HEADERS", headers: auth.headers || [] }
+          } else {
+            finalMcpAuth = { type: "NONE" }
+          }
+        }
+
         tools[uniqueToolName] = tool({
           description: `${toolDef.description} (from ${mcpServer.name})`,
           inputSchema: jsonSchema(
             cleanedSchema as Parameters<typeof jsonSchema>[0],
           ),
           execute: async (args: Record<string, unknown>) => {
-            const result = await callMCPTool(mcpServer.url, toolName, args)
+            const result = await callMCPTool(
+              mcpServer.url,
+              toolName,
+              args,
+              finalMcpAuth,
+            )
             return (
               (result as unknown as { content?: unknown }).content ??
               (await Promise.resolve(result))
@@ -205,7 +246,7 @@ async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
   } catch (error) {
     logger.error("[automated-response] getMCPServerTools failed", {
       error,
-      chatbotId: aiAgent.chatbotId,
+      chatbotId,
     })
     return {}
   }
@@ -220,10 +261,23 @@ export async function getSelectedTools(aiAgent: AIAgentModel): Promise<{
   }
 }> {
   try {
+    const selectedFileIds = parseSelectedIdsFromTools(
+      aiAgent.tools,
+      TOOL_PREFIX.file,
+    )
+    const selectedFunctionIds = parseSelectedIdsFromTools(
+      aiAgent.tools,
+      TOOL_PREFIX.fn,
+    )
+    const selectedMcpIds = parseSelectedIdsFromTools(
+      aiAgent.tools,
+      TOOL_PREFIX.mcp,
+    )
+
     const [fileTools, functionTools, mcpTools] = await Promise.all([
-      getAIFileTools(aiAgent),
-      getAIFunctionTools(aiAgent),
-      getMCPServerTools(aiAgent),
+      getAIFileTools(aiAgent.chatbotId, selectedFileIds),
+      getAIFunctionTools(aiAgent.chatbotId, selectedFunctionIds),
+      getMCPServerTools(aiAgent.chatbotId, selectedMcpIds),
     ])
 
     const allTools = { ...fileTools, ...functionTools, ...mcpTools }

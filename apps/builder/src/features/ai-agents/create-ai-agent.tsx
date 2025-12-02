@@ -39,31 +39,35 @@ import {
   ServerIcon,
   TrashIcon,
 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
-import { createAIAgentRequest } from "@/features/ai-agents/schemas/create.schema"
-import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openAIModelOptions } from "../openai/models"
+import { createAIAgentRequest } from "@/features/ai-agents/schemas/create-ai-agent.request"
+import {
+  geminiModelOptions,
+  geminiModels,
+} from "../integration-gemini/schemas/models"
+import { openAIModelOptions, openAIModels } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   files: AIFileModel[]
   functions: AIFunctionModel[]
   mcpServers: AIMCPServerModel[]
+  onSuccess?: () => void
 }
 
 export function CreateAIAgentDialog({
   files,
   functions,
   mcpServers,
+  onSuccess,
 }: CreateAIAgentDialogProps) {
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
-  const router = useRouter()
   const t = useTranslations()
 
   const toolOptions = useMemo(
@@ -119,7 +123,7 @@ export function CreateAIAgentDialog({
 
             setOpen(false)
             resetFormAndAction()
-            router.refresh()
+            onSuccess?.()
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -133,14 +137,15 @@ export function CreateAIAgentDialog({
             name: "",
             prompt: "",
             isDefault: false,
+            messages: [],
             models: [
               {
                 provider: "gemini",
-                model: "gemini-2.5-pro",
+                model: geminiModels.gemini25FlashLite,
               },
               {
                 provider: "openAI",
-                model: "gpt-4o-mini",
+                model: openAIModels.gpt4oMini,
               },
             ],
             temperature: 0.4,
