@@ -48,21 +48,17 @@ export default function AssignConversationDialog({
     [contactIds],
   )
 
-  const successMessage = useMemo(
-    () =>
-      t("messages.updatedSuccess", {
-        feature: t("fields.conversation.label"),
-      }),
-    [t],
-  )
-
   const { form, handleSubmitWithAction } = useHookFormAction(
     assignConversationAction.bind(null, chatbotId),
     zodResolver(assignConversationSchema),
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(successMessage)
+          toast.success(
+            t("messages.updatedSuccess", {
+              feature: t("fields.conversation.label"),
+            }),
+          )
           form.reset(defaultValues)
           setOpen(false)
           onSuccess?.()
