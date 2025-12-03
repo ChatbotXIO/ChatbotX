@@ -1,7 +1,7 @@
 import { logger } from "@aha.chat/ui/lib/logger"
 import type { SelectProps } from "@radix-ui/react-select"
 import ky from "ky"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState, type ReactElement } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import {
   Select,
@@ -12,34 +12,51 @@ import {
 } from "../ui/select"
 import { FormFieldWrapper } from "./field-wrapper"
 
+export type SingleSelectOption = {
+  value: string
+  label: string
+  icon?: ReactElement
+  disabled?: boolean
+}
+
+export type SelectOption = SingleSelectOption & {
+  children?: SelectOption[]
+}
+
 export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   name: FieldPath<T>
   label?: string
   placeholder?: string
   description?: string
-  options?: { value: string; label: string; disabled?: boolean }[]
+  options?: SelectOption[]
   fetchOptionsUrl?: string
   className?: string
   allowClear?: boolean
   triggerValueChange?: (value?: string) => void
 } & React.ComponentProps<typeof Select>
 
-function SelectClear({
-  className,
+type SelectOptionItem = {
+  value: string
+  label: string
+  disabled?: boolean
+}
+
+const CLEAR_VALUE = "__clear__"
+
+const SelectClear = ({
   children,
-  value = null as unknown as string,
   ...props
-}: Omit<React.ComponentProps<typeof SelectItem>, "value"> & {
-  value?: string
-}) {
+}: Omit<React.ComponentProps<typeof SelectItem>, "value">) => {
   return (
-    <SelectItem className="opacity-50" key={"reset"} value={value} {...props}>
+    <SelectItem className="opacity-50" value={CLEAR_VALUE} {...props}>
       {children ?? "----"}
     </SelectItem>
   )
 }
 
-export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
+export const SelectField = <T extends FieldValues>(
+  props: SelectFieldProps<T>,
+) => {
   const {
     name,
     label,
@@ -53,31 +70,47 @@ export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
     ...rest
   } = props
 
-  const [stateOptions, setStateOptions] = useState<
-    { value: string; label: string; disabled?: boolean }[]
-  >([])
+  const [fetchedOptions, setFetchedOptions] = useState<SelectOptionItem[]>([])
+
+  const normalizedOptions = useMemo<SelectOptionItem[]>(() => {
+    if (options.length > 0) {
+      return options
+    }
+    return fetchedOptions
+  }, [options, fetchedOptions])
 
   useEffect(() => {
-    if (options && options.length > 0) {
-      setStateOptions(options)
-    } else if (fetchOptionsUrl) {
-      const fetchOptions = async () => {
-        try {
-          const body = await ky
-            .get<{ data: { id: string; name: string }[] }>(fetchOptionsUrl)
-            .json()
+    if (!fetchOptionsUrl || options.length > 0) {
+      return
+    }
 
-          setStateOptions(
+    let isCancelled = false
+
+    const fetchOptions = async () => {
+      try {
+        const body = await ky
+          .get<{ data: { id: string; name: string }[] }>(fetchOptionsUrl)
+          .json()
+
+        if (!isCancelled) {
+          setFetchedOptions(
             body.data.map((v) => ({ value: v.id, label: v.name })),
           )
-        } catch (error) {
+        }
+      } catch (error) {
+        if (!isCancelled) {
           logger.error("Error fetching options:", error)
+          setFetchedOptions([])
         }
       }
-
-      fetchOptions()
     }
-  }, [options, fetchOptionsUrl])
+
+    fetchOptions()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [fetchOptionsUrl, options.length])
 
   return (
     <FormFieldWrapper<T>
@@ -86,29 +119,47 @@ export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
       label={label}
       name={name}
     >
-      {(field) => (
-        <Select
-          defaultValue={field.value}
-          onValueChange={(value: string) => {
-            field.onChange(value as T[FieldPath<T>])
-            triggerValueChange?.(value)
-          }}
-          {...rest}
-          {...field}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {allowClear && <SelectClear />}
-            {stateOptions.map((option) => (
-              <SelectItem key={option.value} value={String(option.value)} disabled={option.disabled ?? false}>
+      {(field) => {
+        const handleSelectChange = (value: string) => {
+          if (value === CLEAR_VALUE) {
+            field.onChange(undefined as T[FieldPath<T>])
+            triggerValueChange?.(undefined)
+            return
+          }
+          field.onChange(value as T[FieldPath<T>])
+          triggerValueChange?.(value)
+        }
+
+        const optionItems = useMemo(
+          () =>
+            normalizedOptions.map((option) => (
+              <SelectItem
+                key={option.value}
+                value={String(option.value)}
+                disabled={option.disabled ?? false}
+              >
                 {option.label}
               </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+            )),
+          [normalizedOptions],
+        )
+
+        return (
+          <Select
+            value={field.value ?? ""}
+            onValueChange={handleSelectChange}
+            {...rest}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {allowClear && <SelectClear />}
+              {optionItems}
+            </SelectContent>
+          </Select>
+        )
+      }}
     </FormFieldWrapper>
   )
 }

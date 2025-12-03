@@ -1,6 +1,6 @@
 import type { LogModel } from "@aha.chat/database/types"
 import type { ContactResource } from "@/features/contacts/schemas"
-import type { UserResource } from "@/features/users/schemas"
+import type { UserResource } from "@/features/users/schemas/resource"
 
 export type LogResource = LogModel & {
   user?: UserResource | null

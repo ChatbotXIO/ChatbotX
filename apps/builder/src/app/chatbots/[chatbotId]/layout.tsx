@@ -25,6 +25,7 @@ export default async function ChatbotLayout({
   params: Promise<{ chatbotId: string }>
 }) {
   const userId = await getCurrentUserId()
+
   const { chatbotId } = await params
   const headersList = await headers()
 

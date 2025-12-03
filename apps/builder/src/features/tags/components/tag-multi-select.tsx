@@ -5,7 +5,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { type FieldValues, useFormContext } from "react-hook-form"
 import { callAPI } from "@/lib/swr"
-import type { TagCollection } from "../schemas"
+import type { TagCollection } from "../schemas/resource"
 
 type TagMultiSelectProps = {
   name: string

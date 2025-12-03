@@ -12,7 +12,6 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
 import { parseAsString, useQueryState } from "@aha.chat/ui/lib/nuqs"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { Fragment, use, useState } from "react"
 import { CreateFolderDialog } from "./create-folder-dialog"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
@@ -32,7 +31,6 @@ type ListFoldersProps = {
 
 const ListFolders = (props: ListFoldersProps) => {
   const { chatbotId, folderType, promises } = props
-  const router = useRouter()
 
   const [{ folder, parents }, { data: folders }] = use(promises)
   const [_, setFolderId] = useQueryState(
@@ -110,14 +108,7 @@ const ListFolders = (props: ListFoldersProps) => {
           </BreadcrumbList>
         </Breadcrumb>
 
-        <CreateFolderDialog
-          chatbotId={chatbotId}
-          folderType={folderType}
-          onSuccess={() => {
-            console.log("onSuccess")
-            router.refresh()
-          }}
-        />
+        <CreateFolderDialog chatbotId={chatbotId} folderType={folderType} />
       </div>
 
       {/* Folders list */}

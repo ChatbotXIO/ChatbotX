@@ -403,6 +403,9 @@
     "condition": {
       "label": "Condition"
     },
+    "assignedId": {
+      "label": "Assign To"
+    },
     "operator": {
       "label": "Operator",
       "is": "Is",

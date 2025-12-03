@@ -28,6 +28,7 @@ export default async function TagsPage(props: {
           folderId={search.folderId}
         />
       </div>
+
       <Suspense>
         <TagsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
