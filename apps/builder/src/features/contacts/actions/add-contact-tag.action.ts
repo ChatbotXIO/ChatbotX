@@ -38,44 +38,37 @@ export const addContactTagAction = chatbotActionClient
         return
       }
 
-      const existingTags = await prisma.tag.findMany({
-        where: {
-          chatbotId,
-          name: { in: parsedInput.tags },
-        },
-      })
-      const existingTagNames = new Set(existingTags.map((tag) => tag.name))
-      const newTagNames = parsedInput.tags.filter(
-        (name) => !existingTagNames.has(name),
-      )
-
       await prisma.$transaction(async (tx) => {
-        let createdTags: typeof existingTags = []
-        if (newTagNames.length > 0) {
-          createdTags = await tx.tag.createManyAndReturn({
-            data: newTagNames.map((name) => ({
-              name,
-              chatbotId,
-            })),
-            skipDuplicates: true,
+        // Create new tags if they don't exist
+        await tx.tag.createMany({
+          data: parsedInput.tags.map((t) => ({
+            name: t,
+            chatbotId,
+          })),
+          skipDuplicates: true,
+        })
+
+        const allTags = await tx.tag.findMany({
+          where: {
+            name: { in: parsedInput.tags },
+          },
+          select: {
+            id: true,
+          },
+        })
+
+        for (const contact of contacts) {
+          await tx.contact.update({
+            data: {
+              tags: {
+                connect: allTags,
+              },
+            },
+            where: {
+              id: contact.id,
+            },
           })
         }
-
-        const allTags = [...existingTags, ...createdTags]
-        await prisma.$transaction(async () => {
-          for (const contact of contacts) {
-            await tx.contact.update({
-              data: {
-                tags: {
-                  connect: allTags.map((tag) => ({ id: tag.id })),
-                },
-              },
-              where: {
-                id: contact.id,
-              },
-            })
-          }
-        })
       })
 
       revalidateCacheTags([

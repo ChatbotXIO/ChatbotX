@@ -8,7 +8,6 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { use, useMemo } from "react"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
@@ -21,7 +20,6 @@ type ContactsTableProps = {
 
 export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
   const [{ data, pageCount }] = use(promises)
-  const _router = useRouter()
 
   const columns = useMemo<ColumnDef<ContactResource>[]>(
     () => [

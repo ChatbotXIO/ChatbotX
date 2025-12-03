@@ -1,23 +1,27 @@
 "use client"
 
-import { TagInputField } from "@aha.chat/ui/components/form/tag-input-field"
+import { TagsInputField } from "@aha.chat/ui/components/muhammada86/tags-input-field"
 import { TagIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useStepStore } from "../../stores/step-store-provider"
+import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { BaseStepEditor } from "../base/editor"
 
-const AddContactTagStepEditor = ({ parentName }: { parentName: string }) => {
-  const t = useTranslations()
+type AddContactTagStepEditorProps = {
+  parentName: string
+}
 
-  const { tagOptions } = useStepStore((state) => state)
+const AddContactTagStepEditor = ({
+  parentName,
+}: AddContactTagStepEditorProps) => {
+  const t = useTranslations()
+  const tagOptions = useTagOptions()
 
   return (
     <BaseStepEditor icon={TagIcon} title={t("flows.actions.addContactTag")}>
-      <TagInputField
-        autocompleteOptions={tagOptions}
+      <TagsInputField
         label={t("fields.tag.label")}
         name={`${parentName}.tags`}
-        required
+        suggestions={tagOptions}
       />
     </BaseStepEditor>
   )

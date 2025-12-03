@@ -26,6 +26,7 @@ import {
   UserIcon,
   UserRoundXIcon,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
@@ -45,6 +46,8 @@ type ContactListActionProps = {
 
 export function ContactListAction({ table }: ContactListActionProps) {
   const t = useTranslations()
+  const router = useRouter()
+
   const rows = table.getFilteredSelectedRowModel().rows
 
   return (
@@ -58,6 +61,9 @@ export function ContactListAction({ table }: ContactListActionProps) {
       <DropdownMenuContent className="w-56">
         <AssignConversationDialog
           contactIds={rows.map((r) => r.id)}
+          onSuccess={() => {
+            router.refresh()
+          }}
           trigger={
             <DropdownMenuItem
               disabled={rows.length === 0}
@@ -120,7 +126,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <ListIcon size={16} />
+            <ListIcon className="mr-2" size={16} />
             {t("actions.more")}
           </DropdownMenuSubTrigger>
 

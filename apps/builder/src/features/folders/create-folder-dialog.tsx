@@ -15,6 +15,7 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { parseAsString, useQueryState } from "nuqs"
 import { useEffect, useState } from "react"
@@ -25,13 +26,13 @@ import { createFolderSchema } from "@/features/folders/schemas/create-folder-sch
 export function CreateFolderDialog({
   chatbotId,
   folderType,
-  onSuccess,
 }: {
   chatbotId: string
   folderType: FolderType
-  onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const router = useRouter()
+
   const [open, setOpen] = useState(false)
 
   const [folderId] = useQueryState("folderId", parseAsString)
@@ -50,7 +51,7 @@ export function CreateFolderDialog({
             )
             resetFormAndAction()
             setOpen(false)
-            onSuccess?.()
+            router.refresh()
           },
           onError: ({ error }) => {
             if (error.serverError) {

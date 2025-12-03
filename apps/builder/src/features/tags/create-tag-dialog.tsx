@@ -3,8 +3,10 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -24,21 +26,23 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { toast } from "sonner"
 import { createTagAction } from "./actions/create-tag-action"
 import { createTagSchema } from "./schemas/create-tag-schema"
 
-export function CreateTagDialog({
-  chatbotId,
-  folderId,
-}: {
+type CreateTagDialogProps = {
   chatbotId: string
   folderId: string | null
-}) {
+}
+
+export const CreateTagDialog = ({
+  chatbotId,
+  folderId,
+}: CreateTagDialogProps) => {
   const t = useTranslations()
-  const [open, setOpen] = useState(false)
   const router = useRouter()
+  const [open, setOpen] = useState(false)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -48,16 +52,13 @@ export function CreateTagDialog({
         actionProps: {
           onSuccess: () => {
             toast.success(
-              t("messages.createdSuccess", {
-                feature: t("fields.tag.label"),
-              }),
+              t("messages.createdSuccess", { feature: t("fields.tag.label") }),
             )
-
             setOpen(false)
             resetFormAndAction()
             router.refresh()
           },
-          onError: ({ error }) => {
+          onError: ({ error }: { error: { serverError?: string } }) => {
             if (error.serverError) {
               toast.error(error.serverError)
             }
@@ -74,82 +75,86 @@ export function CreateTagDialog({
       },
     )
 
+  const handleOpenChange = useCallback(
+    (isOpen: boolean) => {
+      setOpen(isOpen)
+      if (!isOpen) {
+        resetFormAndAction()
+      }
+    },
+    [resetFormAndAction],
+  )
+
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.add")}
+          {t("messages.createFeature", { feature: t("fields.tag.label") })}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", { feature: t("fields.tag.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
-        <div className="flex items-center space-x-2">
-          <Form {...form}>
-            <form
-              className="flex-1 space-y-4"
-              onSubmit={handleSubmitWithAction}
-            >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("fields.name.label")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("fields.name.label")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <Form {...form}>
+          <form className="space-y-6" onSubmit={handleSubmitWithAction}>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("fields.name.label")}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t("fields.name.label")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="syncToMessenger"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <FormLabel>{t("fields.syncToMessenger.label")}</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        className="mt-0!"
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="syncToMessenger"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2">
+                  <FormLabel>{t("fields.syncToMessenger.label")}</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      className="mt-0!"
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  onClick={() => setOpen(false)}
-                  type="button"
-                  variant="ghost"
-                >
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button size="sm" type="button" variant="ghost">
                   {t("actions.cancel")}
                 </Button>
-                <Button
-                  disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
-                  }
-                  type="submit"
-                >
-                  {form.formState.isSubmitting && (
-                    <Loader2Icon className="animate-spin" />
-                  )}
-                  {t("actions.confirm")}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
+              </DialogClose>
+              <Button
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+                size="sm"
+                type="submit"
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2Icon className="animate-spin" />
+                )}
+                {t("actions.confirm")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

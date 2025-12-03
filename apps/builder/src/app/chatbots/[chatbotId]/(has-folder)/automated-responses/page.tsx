@@ -1,10 +1,8 @@
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { PlusIcon } from "lucide-react"
-import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AutomatedResponsesTable } from "@/features/automated-response/automated-response-table"
+import { AddAutomatedResponseButton } from "@/features/automated-response/components/add-automated-response-button"
 import { getAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schemas/get-automated-responses-schema"
 import { getFlows } from "@/features/flows/queries"
@@ -41,14 +39,7 @@ export default async function AutomatedResponesPage(props: {
         <h4 className="flex-1 font-bold">
           {t("automatedResponse.heading.title")}
         </h4>
-        <Button asChild size={"sm"}>
-          <Link href={`/chatbots/${chatbotId}/automated-responses/create`}>
-            <PlusIcon />
-            {t("actions.createFeature", {
-              feature: t("fields.automatedResponse.label"),
-            })}
-          </Link>
-        </Button>
+        <AddAutomatedResponseButton />
       </div>
 
       <Suspense>

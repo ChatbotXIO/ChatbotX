@@ -1,5 +1,6 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { PlusCircleIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
 
 type ContactCustomFieldManageProps = {
@@ -9,9 +10,12 @@ type ContactCustomFieldManageProps = {
 export function ContactCustomFieldManage({
   chatbotId,
 }: ContactCustomFieldManageProps) {
+  const t = useTranslations()
+
   return (
     <CreateCustomFieldDialog
       chatbotId={chatbotId}
+      folderId={null}
       onSuccess={() => {
         // mutate(customFieldsUrl)
       }}
@@ -21,7 +25,7 @@ export function ContactCustomFieldManage({
           variant="link"
         >
           <PlusCircleIcon />
-          Add new field
+          {t("actions.addFeature", { feature: t("fields.customField.label") })}
         </Button>
       }
     />

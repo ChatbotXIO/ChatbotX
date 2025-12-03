@@ -12,6 +12,7 @@ import {
   getOutgoers,
   MiniMap,
   type Node,
+  type OnConnectStartParams,
   Panel,
   ReactFlow,
   useEdgesState,
@@ -19,7 +20,14 @@ import {
   useReactFlow,
 } from "@xyflow/react"
 import { useOptimisticAction } from "next-safe-action/hooks"
-import { type MouseEvent, useCallback, useEffect, useRef } from "react"
+
+import {
+  type MouseEvent as ReactMouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react"
+
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
 import { NodeViewer } from "./nodes/viewer"
@@ -148,7 +156,7 @@ export function ReactFlowWrapper({
   )
 
   const onNodeMouseEnter = useCallback(
-    (_: MouseEvent, node: Node) => {
+    (_: ReactMouseEvent, node: Node) => {
       setNodes((nds) =>
         nds.map((n) =>
           n.id === node.id
@@ -179,7 +187,7 @@ export function ReactFlowWrapper({
   )
 
   const onNodeMouseLeave = useCallback(
-    (_: MouseEvent, node: Node) => {
+    (_: ReactMouseEvent, node: Node) => {
       setNodes((nds) =>
         nds.map((n) =>
           n.id === node.id
@@ -192,9 +200,9 @@ export function ReactFlowWrapper({
   )
 
   const onConnectStart = useCallback(
-    (_event: MouseEvent | React.MouseEvent, params: { nodeId: string }) => {
+    (_: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
       connectNodeRef.current = {
-        nodeId: params.nodeId,
+        nodeId: params.nodeId || "",
       }
     },
     [],

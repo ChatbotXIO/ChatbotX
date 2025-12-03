@@ -1,5 +1,5 @@
 "use client"
-import { Card } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { Separator } from "@aha.chat/ui/components/ui/separator"
 import Link from "next/link"
 import { useParams } from "next/navigation"
@@ -19,23 +19,26 @@ export default function FolderableLayout({
   return (
     <>
       <Card>
-        <div className="flex items-center gap-8 px-8">
-          <Link className="text-gray-600" href={`/chatbots/${chatbotId}/tags`}>
+        <CardContent className="flex items-center gap-8">
+          <Link
+            className="font-medium text-sm"
+            href={`/chatbots/${chatbotId}/tags`}
+          >
             {t("tags.heading.title")}
           </Link>
           <Link
-            className="text-gray-600"
+            className="font-medium text-sm"
             href={`/chatbots/${chatbotId}/custom-fields`}
           >
             {t("customField.heading.title")}
           </Link>
           <Link
-            className="text-gray-600"
+            className="font-medium text-sm"
             href={`/chatbots/${chatbotId}/error-logs`}
           >
             {t("errorLog.heading.title")}
           </Link>
-        </div>
+        </CardContent>
       </Card>
       <Card className="px-8">
         {folders}

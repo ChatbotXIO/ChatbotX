@@ -1,10 +1,10 @@
 import ky from "ky"
 import { type RefObject, useRef } from "react"
-import useSWR from "swr"
+import useSWRImmutable from "swr/immutable"
 
 export const callAPI = <T>(url: string) => {
   const random = useRef(Date.now())
-  const { data, error, isLoading } = useSWR<
+  const { data, error, isLoading } = useSWRImmutable<
     T,
     // biome-ignore lint/suspicious/noExplicitAny: wip
     any,

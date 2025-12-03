@@ -2,6 +2,7 @@
 
 import Emoji, { gitHubEmojis } from "@tiptap/extension-emoji"
 import Mention from "@tiptap/extension-mention"
+import Placeholder from "@tiptap/extension-placeholder"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import emojiSuggestion from "./extensions/emoij/suggestion"
@@ -19,6 +20,7 @@ import { useState } from "react"
 
 type TiptapEditorProps = {
   defaultValue?: string
+  placeholder?: string
   onChange?: (content: string) => void
   customFields: { label: string; value: string; type: string }[]
 }
@@ -27,6 +29,7 @@ export const TiptapEditor = ({
   defaultValue,
   onChange,
   customFields,
+  placeholder = "Type a message...",
 }: TiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
@@ -45,7 +48,13 @@ export const TiptapEditor = ({
         enableEmoticons: true,
         suggestion: emojiSuggestion,
       }),
+      Placeholder.configure({
+        placeholder,
+      }),
     ],
+    parseOptions: {
+      preserveWhitespace: true,
+    },
     content: defaultValue,
     // Don't render immediately on the server to avoid SSR issues
     immediatelyRender: false,

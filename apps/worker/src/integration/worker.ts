@@ -1,3 +1,4 @@
+import { SenderType } from "@aha.chat/database"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import {
   defaultWorkerOptions,
@@ -21,7 +22,8 @@ const worker = new Worker(
       case IntegrationJobAction.incomingMessage: {
         const { message } = await receiveMessage(job.data.data)
 
-        if (message.content) {
+        // Trigger automated response if the message is from a user
+        if (message.content && message.senderType === SenderType.contact) {
           await integrationQueue.add(
             IntegrationJobAction.triggerAutomatedResponse,
             {

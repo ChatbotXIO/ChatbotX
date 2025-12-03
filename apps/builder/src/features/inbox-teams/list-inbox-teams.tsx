@@ -23,7 +23,7 @@ import {
 import { useTranslations } from "next-intl"
 import { use, useState } from "react"
 import type { getUsers } from "../users/queries"
-import type { UserResource } from "../users/schemas"
+import type { UserResource } from "../users/schemas/resource"
 import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
 import { DeleteInboxTeamDialog } from "./delete-inbox-team-dialog"

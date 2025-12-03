@@ -9,7 +9,9 @@ import { use } from "react"
 import { reservedCustomFieldOptions } from "../custom-fields/lib/reserved-custom-field"
 import type { listCustomFields } from "../custom-fields/queries"
 import type { listFlowVersions } from "../flow-versions/queries/list-flow-versions"
+import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import type { getTags } from "../tags/queries"
+import { UserStoreProvider } from "../users/provider/user-store-context"
 import { ReactFlowFrame } from "./react-flow/frame"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
 import type {
@@ -70,7 +72,14 @@ export function FlowDetail({
             organization.settings as unknown as OrganizationSettings,
         }}
       >
-        <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
+        <TagStoreProvider autoInitialize={true} chatbotId={flow.chatbotId}>
+          <UserStoreProvider
+            autoInitializeAgentsAndInboxTeams={true}
+            chatbotId={flow.chatbotId}
+          >
+            <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
+          </UserStoreProvider>
+        </TagStoreProvider>
       </StepStoreProvider>
     </ReactFlowProvider>
   )

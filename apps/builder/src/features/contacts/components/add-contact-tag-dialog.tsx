@@ -1,5 +1,6 @@
 "use client"
 
+import { TagsInputField } from "@aha.chat/ui/components/muhammada86/tags-input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -19,7 +20,7 @@ import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
-import { TagMultiSelect } from "@/features/tags/components/tag-multi-select"
+import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { addContactTagAction } from "../actions/add-contact-tag.action"
 import { addContactTagRequest } from "../schemas/add-contact-tag.request"
 
@@ -35,6 +36,8 @@ export default function AddContactTagDialog({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
+
+  const tagOptions = useTagOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     addContactTagAction.bind(null, chatbotId),
@@ -70,7 +73,9 @@ export default function AddContactTagDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent
+        className={"flex h-96 max-h-screen max-w-xl flex-col overflow-y-scroll"}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("messages.addFeature", { feature: t("fields.tag.label") })}
@@ -80,13 +85,13 @@ export default function AddContactTagDialog({
 
         <Form {...form}>
           <form
-            className="flex flex-col gap-2"
+            className="flex flex-1 flex-col gap-2"
             onSubmit={handleSubmitWithAction}
           >
-            <TagMultiSelect
+            <TagsInputField
               label={t("fields.tag.label")}
               name="tags"
-              required
+              suggestions={tagOptions}
             />
 
             <DialogFooter>

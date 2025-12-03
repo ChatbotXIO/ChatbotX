@@ -15,8 +15,6 @@ export const listMessages = async (
 ): Promise<MessageCollection> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
-  // return await unstable_cache(
-  //   async () => {
   const perPage = (input.perPage || 10) + 1
   const where: Prisma.MessageWhereInput = {
     chatbotId,
@@ -53,13 +51,6 @@ export const listMessages = async (
   }
 
   return { data: messages, nextCursor, prevCursor }
-  //   },
-  //   [JSON.stringify(input)],
-  //   {
-  //     revalidate: 3600,
-  //     tags: [`u${userId}#c${input.chatbotId}#conversations`],
-  //   },
-  // )()
 }
 
 export const findMessage = async (

@@ -1,3 +1,4 @@
+import { Separator } from "@aha.chat/ui/components/ui/separator"
 import type { ReactNode } from "react"
 
 export default function TagsLayout({
@@ -10,6 +11,7 @@ export default function TagsLayout({
   return (
     <>
       {folders}
+      <Separator />
       {children}
     </>
   )

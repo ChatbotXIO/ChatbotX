@@ -1,6 +1,6 @@
 "use client"
 
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { TagsInputField } from "@aha.chat/ui/components/muhammada86/tags-input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -20,8 +20,7 @@ import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
-import type { TagCollection } from "@/features/tags/schemas"
-import { callAPI } from "@/lib/swr"
+import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { removeContactTagAction } from "../actions/remove-contact-tag.action"
 import { removeContactTagRequest } from "../schemas/remove-contact-tag.request"
 
@@ -38,53 +37,49 @@ export default function RemoveContactTagDialog({
   const [open, setOpen] = useState(false)
 
   const { chatbotId } = useParams<{ chatbotId: string }>()
+  const tagOptions = useTagOptions()
 
-  // Get tags list
-  const { data: tagsData } = callAPI<TagCollection>(
-    `/api/chatbots/${chatbotId}/tags?perPage=9999`,
-  )
-  const tagOptions = (tagsData?.data ?? []).map((v) => ({
-    label: v.name,
-    value: v.id,
-  }))
-
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    removeContactTagAction.bind(null, chatbotId),
-    zodResolver(removeContactTagRequest),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success(
-            t("messages.updatedSuccess", {
-              feature: t("fields.contact.label"),
-            }),
-          )
-          setOpen(false)
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      removeContactTagAction.bind(null, chatbotId),
+      zodResolver(removeContactTagRequest),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(
+              t("messages.updatedSuccess", {
+                feature: t("fields.contact.label"),
+              }),
+            )
+            resetFormAndAction()
+            setOpen(false)
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            ids,
+            tags: [],
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          ids,
-          tagId: "",
-        },
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>Add Tag</DialogTitle>
+          <DialogTitle>
+            {t("messages.deleteFeature", { feature: t("fields.tag.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
@@ -93,21 +88,24 @@ export default function RemoveContactTagDialog({
             className="flex flex-col gap-2"
             onSubmit={handleSubmitWithAction}
           >
-            <SelectField
+            <TagsInputField
               label={t("fields.tag.label")}
-              name="tagId"
-              options={tagOptions}
+              name="tags"
+              suggestions={tagOptions}
             />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
+                <Button size="sm" type="button" variant="ghost">
+                  {t("actions.cancel")}
+                </Button>
               </DialogClose>
 
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                size="sm"
                 type="submit"
               >
                 {form.formState.isSubmitting && (

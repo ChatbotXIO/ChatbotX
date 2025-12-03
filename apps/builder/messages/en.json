@@ -404,6 +404,9 @@
     "condition": {
       "label": "Condition"
     },
+    "assignedId": {
+      "label": "Assign To"
+    },
     "operator": {
       "label": "Operator",
       "is": "Is",
@@ -861,7 +864,7 @@
       "label": "Prompt"
     },
     "promptMessages": {
-      "label": "Messages",
+      "label": "Prompt Messages",
       "role": {
         "assistant": "Assistant",
         "user": "User"

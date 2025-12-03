@@ -410,6 +410,7 @@ export function ButtonEditorDialog() {
                   maxLength: 20,
                 }}
                 name="label"
+                required
               />
 
               <div className="mt-2 font-medium">
