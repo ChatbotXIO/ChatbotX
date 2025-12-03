@@ -26,7 +26,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useState } from "react"
 import { toast } from "sonner"
 import { createTagAction } from "./actions/create-tag-action"
 import { createTagSchema } from "./schemas/create-tag-schema"
@@ -44,45 +44,36 @@ export const CreateTagDialog = ({
   const router = useRouter()
   const [open, setOpen] = useState(false)
 
-  const boundAction = useMemo(
-    () => createTagAction.bind(null, chatbotId, folderId),
-    [chatbotId, folderId],
-  )
-
-  const tagLabel = useMemo(() => t("fields.tag.label"), [t])
-  const createFeatureLabel = useMemo(
-    () => t("messages.createFeature", { feature: tagLabel }),
-    [t, tagLabel],
-  )
-  const createdSuccessMessage = useMemo(
-    () => t("messages.createdSuccess", { feature: tagLabel }),
-    [t, tagLabel],
-  )
-
   const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(boundAction, zodResolver(createTagSchema), {
-      actionProps: {
-        onSuccess: () => {
-          toast.success(createdSuccessMessage)
-          setOpen(false)
-          resetFormAndAction()
-          router.refresh()
+    useHookFormAction(
+      createTagAction.bind(null, chatbotId, folderId),
+      zodResolver(createTagSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(
+              t("messages.createdSuccess", { feature: t("fields.tag.label") }),
+            )
+            setOpen(false)
+            resetFormAndAction()
+            router.refresh()
+          },
+          onError: ({ error }: { error: { serverError?: string } }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
         },
-        onError: ({ error }: { error: { serverError?: string } }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: "",
+            syncToMessenger: false,
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: "",
-          syncToMessenger: false,
-        },
-      },
-      errorMapProps: {},
-    })
+    )
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -99,12 +90,14 @@ export const CreateTagDialog = ({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {createFeatureLabel}
+          {t("messages.createFeature", { feature: t("fields.tag.label") })}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-screen max-w-xl overflow-y-scroll">
         <DialogHeader>
-          <DialogTitle>{createFeatureLabel}</DialogTitle>
+          <DialogTitle>
+            {t("messages.createFeature", { feature: t("fields.tag.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>

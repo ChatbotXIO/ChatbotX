@@ -17,9 +17,9 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactElement, useMemo, useState } from "react"
+import { type ReactElement, useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { useUserStore } from "@/features/users/provider/user-store-context"
+import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
 import { assignConversationAction } from "../actions/assign-conversation.action"
 import { assignConversationSchema } from "../schemas/assign-conversation.schema"
 
@@ -38,13 +38,7 @@ export default function AssignConversationDialog({
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
-  const getContactAssigneeOptions = useUserStore(
-    (state) => state.getContactAssigneeOptions,
-  )
-  const contactAssigneeOptions = useMemo(
-    () => getContactAssigneeOptions(),
-    [getContactAssigneeOptions],
-  )
+  const contactAssigneeOptions = useContactAssigneeOptions()
 
   const defaultValues = useMemo(
     () => ({
@@ -54,17 +48,21 @@ export default function AssignConversationDialog({
     [contactIds],
   )
 
+  const successMessage = useMemo(
+    () =>
+      t("messages.updatedSuccess", {
+        feature: t("fields.conversation.label"),
+      }),
+    [t],
+  )
+
   const { form, handleSubmitWithAction } = useHookFormAction(
     assignConversationAction.bind(null, chatbotId),
     zodResolver(assignConversationSchema),
     {
       actionProps: {
         onSuccess: () => {
-          toast.success(
-            t("messages.updatedSuccess", {
-              feature: t("fields.conversation.label"),
-            }),
-          )
+          toast.success(successMessage)
           form.reset(defaultValues)
           setOpen(false)
           onSuccess?.()
@@ -85,18 +83,21 @@ export default function AssignConversationDialog({
 
   const { isValid, isSubmitting } = form.formState
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
-    if (!newOpen) {
-      form.reset(defaultValues)
-    }
-  }
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen)
+      if (!newOpen) {
+        form.reset(defaultValues)
+      }
+    },
+    [defaultValues, form],
+  )
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
+      <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("actions.assignConversation")}</DialogTitle>
         </DialogHeader>
@@ -125,7 +126,9 @@ export default function AssignConversationDialog({
                 size="sm"
                 type="submit"
               >
-                {isSubmitting && <Loader2Icon className="animate-spin" />}
+                {isSubmitting && (
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 {t("actions.confirm")}
               </Button>
             </DialogFooter>

@@ -1,8 +1,9 @@
 "use client"
 
+import { TagsInputField } from "@aha.chat/ui/components/muhammada86/tags-input-field"
 import { OctagonXIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { TagMultiSelect } from "@/features/tags/components/tag-multi-select"
+import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { BaseStepEditor } from "../base/editor"
 
 type RemoveContactTagStepEditorProps = {
@@ -12,16 +13,17 @@ type RemoveContactTagStepEditorProps = {
 const RemoveContactTagStepEditor = (props: RemoveContactTagStepEditorProps) => {
   const t = useTranslations()
   const { parentName } = props
+  const tagOptions = useTagOptions()
 
   return (
     <BaseStepEditor
       icon={OctagonXIcon}
       title={t("flows.actions.removeContactTag")}
     >
-      <TagMultiSelect
+      <TagsInputField
         label={t("fields.tag.label")}
         name={`${parentName}.tags`}
-        required
+        suggestions={tagOptions}
       />
     </BaseStepEditor>
   )

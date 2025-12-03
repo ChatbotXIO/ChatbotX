@@ -19,7 +19,7 @@ export type ButtonType = (typeof ButtonType)[keyof typeof ButtonType]
 export const buttonStepSchema = z
   .object({
     id: z.cuid2(),
-    label: z.string().min(1).max(100),
+    label: z.string().min(1).max(20),
   })
   .and(
     z.discriminatedUnion("buttonType", [

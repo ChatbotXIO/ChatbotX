@@ -1,6 +1,6 @@
 "use client"
 
-import { TagsInputField } from "@aha.chat/ui/components/muhammada86/shadcn-tags-input/tags-input-field"
+import { TagsInputField } from "@aha.chat/ui/components/muhammada86/tags-input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,

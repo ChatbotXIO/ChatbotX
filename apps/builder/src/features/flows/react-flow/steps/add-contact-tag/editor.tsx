@@ -1,6 +1,6 @@
 "use client"
 
-import { TagsInputField } from "@aha.chat/ui/components/muhammada86/shadcn-tags-input/tags-input-field"
+import { TagsInputField } from "@aha.chat/ui/components/muhammada86/tags-input-field"
 import { TagIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"

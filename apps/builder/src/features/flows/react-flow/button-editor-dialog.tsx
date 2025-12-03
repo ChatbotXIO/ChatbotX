@@ -406,10 +406,8 @@ export function ButtonEditorDialog() {
             <form className="flex w-full flex-col gap-3">
               <InputField
                 label={t("fields.name.label")}
-                {...{
-                  maxLength: 20,
-                }}
                 name="label"
+                required
               />
 
               <div className="mt-2 font-medium">

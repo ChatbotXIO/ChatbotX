@@ -1,4 +1,3 @@
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type {
@@ -25,7 +24,6 @@ export type UserActions = {
   initializeAgentsAndInboxTeams: () => Promise<void>
   getAllChatbotMembers: (chatbotId: string) => Promise<void>
   getAllInboxTeams: (chatbotId: string) => Promise<void>
-  getContactAssigneeOptions: () => SelectOption[]
 }
 
 export type UserStore = UserState & UserActions
@@ -99,28 +97,5 @@ export const createUserStore = (props: Partial<UserState>) =>
         )
         .json()
       set({ inboxTeams: data })
-    },
-
-    getContactAssigneeOptions: (): SelectOption[] => {
-      const { chatbotMembers, inboxTeams } = get()
-
-      return [
-        {
-          label: "Agents",
-          value: "agents",
-          children: chatbotMembers.map((v) => ({
-            label: v.user?.name ?? "--",
-            value: `u_${v.user?.id}`,
-          })),
-        },
-        {
-          label: "Inbox Teams",
-          value: "inbox-teams",
-          children: inboxTeams.map((v) => ({
-            label: v.name,
-            value: `t_${v.id}`,
-          })),
-        },
-      ]
     },
   }))
