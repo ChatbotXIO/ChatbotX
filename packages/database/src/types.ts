@@ -11,6 +11,8 @@ export const FieldOperationType = {
   set: "O01",
   append: "O02",
   prepend: "O03",
+  increase: "O04",
+  decrease: "O05",
 } as const
 
 export const ReplyType = {

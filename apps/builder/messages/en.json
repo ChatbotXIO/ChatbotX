@@ -132,15 +132,17 @@
     "chooseChannel": "Choose Channel",
     "chooseSubaction": "Choose Subaction",
     "resend": "Resend",
-    "publish": "Publish"
+    "publish": "Publish",
+    "setAsDefaultAgent": "Set as Default Agent",
+    "unsetDefaultAgent": "Unset Default Agent"
   },
   "admins": {
     "title": "Admins"
   },
   "aiAgent": {
+    "defaultAgent": "Default Agent",
     "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses.",
     "setting": {
-      "description": "AI Agents description",
       "label": "AI Agents"
     },
     "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
@@ -167,7 +169,6 @@
   },
   "aiTrigger": {
     "setting": {
-      "description": "AI Triggers description",
       "label": "AI Triggers"
     }
   },
@@ -598,7 +599,12 @@
       "label": "Custom CSS"
     },
     "customField": {
-      "label": "Custom Field"
+      "label": "Custom Field",
+      "set_value": "Set value",
+      "append": "Append to the end",
+      "prepend": "Prepend to the beginning",
+      "increase": "Increase by",
+      "decrease": "Decrease by"
     },
     "dataCollect": {
       "label": "Data Collect",

@@ -14,7 +14,6 @@ import {
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { Loader2Icon } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -50,11 +49,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
         label={t("openAI.connect.title")}
       >
         {integrationOpenAI ? (
-          <div className="flex flex-col gap-2">
-            <Button size="sm" variant="secondary">
-              <Link href="../google-sheets">{t("actions.manage")}</Link>
-            </Button>
-
+          <div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="destructive">
@@ -104,24 +99,6 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
             label={t("automatedResponse.setting.label")}
           >
             <Switch checked={integrationOpenAI.autoReply} disabled={true} />
-          </SettingRow>
-
-          <SettingRow
-            description={t("aiAgent.setting.description")}
-            label={t("aiAgent.setting.label")}
-          >
-            <Button asChild size="sm" variant="secondary">
-              <Link href="../ai-agents">{t("actions.manage")}</Link>
-            </Button>
-          </SettingRow>
-
-          <SettingRow
-            description={t("aiTrigger.setting.description")}
-            label={t("aiTrigger.setting.label")}
-          >
-            <Button size="sm" variant="secondary">
-              <Link href="../ai-triggers">{t("actions.manage")}</Link>
-            </Button>
           </SettingRow>
         </div>
       )}

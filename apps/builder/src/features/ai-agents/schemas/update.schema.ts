@@ -13,3 +13,8 @@ export const updateAIAgentRequest = z.object({
   messages: z.array(messageSchema),
 })
 export type UpdateAIAgentRequest = z.infer<typeof updateAIAgentRequest>
+
+export const setDefaultAIAgentRequest = z.object({
+  defaultAgentId: z.string().nullable(),
+})
+export type SetDefaultAIAgentRequest = z.infer<typeof setDefaultAIAgentRequest>
