@@ -49,44 +49,42 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
         label={t("openAI.connect.title")}
       >
         {integrationOpenAI ? (
-          <div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="sm" variant="destructive">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="destructive">
+                {t("actions.disconnect")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {t("dialog.disconnect.title", {
+                    feature: t("fields.openai.label"),
+                  })}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("dialog.disconnect.description", {
+                    feature: t("fields.openai.label"),
+                  })}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={isPendingDisconnect}
+                  onClick={async (e) => {
+                    e.preventDefault()
+                    await onDisconnect()
+                  }}
+                >
+                  {isPendingDisconnect && (
+                    <Loader2Icon className="animate-spin" />
+                  )}
                   {t("actions.disconnect")}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("dialog.disconnect.title", {
-                      feature: t("fields.openai.label"),
-                    })}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("dialog.disconnect.description", {
-                      feature: t("fields.openai.label"),
-                    })}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={isPendingDisconnect}
-                    onClick={async (e) => {
-                      e.preventDefault()
-                      await onDisconnect()
-                    }}
-                  >
-                    {isPendingDisconnect && (
-                      <Loader2Icon className="animate-spin" />
-                    )}
-                    {t("actions.disconnect")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : (
           <OpenAIConnectDialog chatbotId={chatbotId} />
         )}

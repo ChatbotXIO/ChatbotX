@@ -20,14 +20,12 @@ import {
   useReactFlow,
 } from "@xyflow/react"
 import { useOptimisticAction } from "next-safe-action/hooks"
-
 import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
   useRef,
 } from "react"
-
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
 import { NodeViewer } from "./nodes/viewer"
