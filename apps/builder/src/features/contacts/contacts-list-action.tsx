@@ -33,6 +33,7 @@ import AssignConversationDialog from "../conversations/components/assign-convers
 import DisableBotDialog from "../conversations/components/disable-bot-dialog"
 import EnableBotDialog from "../conversations/components/enable-bot-dialog"
 import AddContactTagDialog from "./components/add-contact-tag-dialog"
+import AddContactCustomFieldDialog from "./components/add-custom-field-dialog"
 import ClearContactCustomFieldDialog from "./components/clear-contact-custom-field-dialog"
 import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
@@ -87,10 +88,18 @@ export function ContactListAction({ table }: ContactListActionProps) {
           }
         />
 
-        <DropdownMenuItem disabled={rows.length === 0}>
-          <SaveIcon />
-          {t("actions.setCustomField")}
-        </DropdownMenuItem>
+        <AddContactCustomFieldDialog
+          ids={rows.map((r) => r.id)}
+          trigger={
+            <DropdownMenuItem
+              disabled={rows.length === 0}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <SaveIcon />
+              {t("actions.setCustomField")}
+            </DropdownMenuItem>
+          }
+        />
 
         <DeleteContactDialog
           ids={rows.map((r) => r.id)}

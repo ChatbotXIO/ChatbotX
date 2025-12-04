@@ -4,9 +4,11 @@ import type { AIAgentModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
+import ky from "ky"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useMemo, useState } from "react"
+import { use, useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
 import type { getAIAgents } from "@/features/ai-agents/actions/list.action"
 import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
@@ -35,6 +37,9 @@ export function AIAgentsTable({
   const [{ data: files }, { data: functions }, { data: mcpServers }] =
     use(createPromises)
   const { chatbotId } = useParams<{ chatbotId: string }>()
+  const [currentDefaultAgentId, setCurrentDefaultAgentId] = useState<
+    string | null
+  >(data.find((agent) => agent.isDefault)?.id || null)
 
   const t = useTranslations()
   const router = useRouter()
@@ -42,7 +47,39 @@ export function AIAgentsTable({
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AIAgentModel> | null>(null)
 
-  const columns = useMemo(() => GetAIAgentsColumns({ setRowAction, t }), [t])
+  const setAIAgentDefault = useCallback(
+    async (defaultAgentId = "") => {
+      try {
+        await ky
+          .put<Record<string, unknown>[]>(
+            `/api/chatbots/${chatbotId}/ai-agent/set-default`,
+            {
+              json: {
+                defaultAgentId,
+              },
+            },
+          )
+          .json()
+        setCurrentDefaultAgentId(defaultAgentId || null)
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : t("messages.unknownError"),
+        )
+      }
+    },
+    [chatbotId, t],
+  )
+
+  const columns = useMemo(
+    () =>
+      GetAIAgentsColumns({
+        setRowAction,
+        setAIAgentDefault,
+        t,
+        currentDefaultAgentId,
+      }),
+    [setAIAgentDefault, t, currentDefaultAgentId],
+  )
 
   const { table } = useDataTable({
     data,
