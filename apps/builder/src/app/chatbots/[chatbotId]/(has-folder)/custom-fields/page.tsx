@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field-dialog"
+import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field"
 import { CustomFieldsTable } from "@/features/custom-fields/custom-field-table"
 import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"

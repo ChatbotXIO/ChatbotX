@@ -19,7 +19,7 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowRight, CodeIcon } from "lucide-react"
+import { ArrowRight, CodeIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
@@ -48,13 +48,13 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
     mode: "onChange",
   })
 
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "mapping",
   })
 
   const onSubmit = (data: GetDataFromJsonStepSchema) => {
-    setValue(`${parentName}.inputCustomFieldId`, data.inputCustomFieldId)
+    setValue(`${parentName}.inputCfId`, data.inputCfId)
     setValue(`${parentName}.mapping`, data.mapping)
     setOpen(false)
   }
@@ -81,52 +81,69 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
           >
             <CustomFieldSelect
               label={t("fields.inputCustomField.label")}
-              name="inputCustomFieldId"
+              name="inputCfId"
               required
             />
 
             <div>
-              <div className="flex w-full justify-between">
-                <Label>{t("fields.outputCustomField.label")}</Label>
-                <Button
-                  className="text-destructive text-sm"
-                  onClick={() =>
-                    append({ jsonPath: "", outputCustomFieldId: "" })
-                  }
-                  size="sm"
-                  variant="link"
-                >
-                  {t("actions.add")}
-                </Button>
-              </div>
+              <Label className="mb-2">
+                {t("fields.outputCustomField.label")}
+              </Label>
               <div className="flex w-full flex-col gap-y-4">
                 {fields.map((field, index) => (
                   <div className="flex w-full gap-x-2" key={field.id}>
                     <div className="w-[45%]">
-                      <InputField name={`mapping.${index}.jsonPath`} />
+                      <InputField
+                        name={`mapping.${index}.jsonPath`}
+                        placeholder={t("fields.jsonPath.placeholder")}
+                      />
                     </div>
                     <div className="flex h-[36px] items-center justify-center">
                       <ArrowRight size={24} />
                     </div>
                     <div className="w-[45%]">
                       <CustomFieldSelect
-                        name={`mapping.${index}.outputCustomFieldId`}
+                        label=""
+                        name={`mapping.${index}.outputCfId`}
                       />
                     </div>
+                    <Button
+                      className="text-destructive text-sm"
+                      onClick={() => remove(index)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
+                <div className="flex w-full justify-between">
+                  <Button
+                    className="w-full"
+                    onClick={() => append({ jsonPath: "", outputCfId: "" })}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    {t("actions.add")}
+                  </Button>
+                </div>
               </div>
             </div>
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
+                <Button size="sm" variant="ghost">
+                  {t("actions.cancel")}
+                </Button>
               </DialogClose>
 
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                size="sm"
                 type="submit"
               >
                 {t("actions.save")}

@@ -11,11 +11,12 @@ import {
   SelectValue,
 } from "../ui/select"
 import { FormFieldWrapper } from "./field-wrapper"
+import type { LucideIcon } from "lucide-react"
 
 export type SingleSelectOption = {
   value: string
   label: string
-  icon?: ReactElement
+  Icon?: LucideIcon
   disabled?: boolean
 }
 

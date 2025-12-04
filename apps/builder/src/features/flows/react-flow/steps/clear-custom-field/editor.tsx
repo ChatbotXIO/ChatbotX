@@ -18,7 +18,10 @@ const ClearCustomFieldStepEditor = (props: ClearCustomFieldStepEditorProps) => {
       icon={SaveOffIcon}
       title={t("flows.actions.clearCustomField")}
     >
-      <CustomFieldSelect name={`${parentName}.customFieldId`} />
+      <CustomFieldSelect
+        includeReserved={false}
+        name={`${parentName}.inputCfId`}
+      />
     </BaseStepEditor>
   )
 }

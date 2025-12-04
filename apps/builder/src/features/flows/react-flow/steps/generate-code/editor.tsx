@@ -54,7 +54,7 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
     setValue(`${parentName}.type`, data.type)
     setValue(`${parentName}.min`, data.min)
     setValue(`${parentName}.max`, data.max)
-    setValue(`${parentName}.outputCustomFieldId`, data.outputCustomFieldId)
+    setValue(`${parentName}.outputCfId`, data.outputCfId)
     setOpen(false)
   }
 
@@ -105,7 +105,7 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
             <CustomFieldSelect
               allowCreate={true}
               label={t("fields.customField.label")}
-              name="outputCustomFieldId"
+              name="outputCfId"
               required
             />
 

@@ -30,6 +30,7 @@ const OptionItem = ({ option, selectedValue, onSelect }: OptionItemProps) => {
   const isSelected = option.value === selectedValue
   return (
     <CommandItem value={option.value} onSelect={onSelect}>
+      {option.Icon && <option.Icon className="h-4 w-4" />}
       {option.label}
       <Check
         className={cn(

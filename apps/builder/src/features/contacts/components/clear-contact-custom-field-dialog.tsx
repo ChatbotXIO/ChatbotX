@@ -1,5 +1,6 @@
 "use client"
 
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -19,7 +20,7 @@ import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
 import { clearContactCustomFieldAction } from "../actions/clear-contact-custom-field.action"
 import { clearContactCustomFieldRequest } from "../schemas/clear-contact-custom-field.request"
 
@@ -34,6 +35,7 @@ export default function ClearContactCustomFieldDialog({
 }: ClearContactCustomFieldDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
+  const customFieldSelectOptions = useCustomFieldSelectOptions({})
 
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
@@ -82,9 +84,10 @@ export default function ClearContactCustomFieldDialog({
             className="flex flex-col gap-2"
             onSubmit={handleSubmitWithAction}
           >
-            <CustomFieldSelect
+            <ComboboxField
               label={t("fields.customField.label")}
               name="customFieldId"
+              options={customFieldSelectOptions}
             />
 
             <DialogFooter>

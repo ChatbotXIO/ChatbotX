@@ -16,7 +16,7 @@ export async function countCharacters({
   conversation,
   step,
 }: FlowStepProps<CountCharactersStepSchema>) {
-  const customFieldIds = [step.inputCustomFieldId, step.outputCustomFieldId]
+  const customFieldIds = [step.inputCfId, step.outputCfId]
   const customFieldsCount = await prisma.field.count({
     where: {
       fieldType: FieldType.customField,
@@ -32,7 +32,7 @@ export async function countCharacters({
   // Find target contact custom field
   const targetContactCustomField = await prisma.contactCustomField.findFirst({
     where: {
-      customFieldId: step.inputCustomFieldId,
+      customFieldId: step.inputCfId,
     },
   })
   if (!targetContactCustomField) {
@@ -45,7 +45,7 @@ export async function countCharacters({
     where: {
       contactId_customFieldId: {
         contactId: conversation.contactId,
-        customFieldId: step.outputCustomFieldId,
+        customFieldId: step.outputCfId,
       },
     },
     update: {
@@ -54,7 +54,7 @@ export async function countCharacters({
     create: {
       value,
       contactId: conversation.contactId,
-      customFieldId: step.outputCustomFieldId,
+      customFieldId: step.outputCfId,
     },
   })
 }
@@ -65,7 +65,7 @@ export async function formatDate({
 }: FlowStepProps<FormatDateStepSchema>) {
   const inputContactCustomField = await prisma.contactCustomField.findFirst({
     where: {
-      customFieldId: step.inputCustomFieldId,
+      customFieldId: step.inputCfId,
       contactId: conversation.contactId,
     },
   })
@@ -79,7 +79,7 @@ export async function formatDate({
     where: {
       contactId_customFieldId: {
         contactId: conversation.contactId,
-        customFieldId: step.outputCustomFieldId,
+        customFieldId: step.outputCfId,
       },
     },
     update: {
@@ -87,7 +87,7 @@ export async function formatDate({
     },
     create: {
       contactId: conversation.contactId,
-      customFieldId: step.outputCustomFieldId,
+      customFieldId: step.outputCfId,
       value: newValue,
     },
   })
@@ -122,7 +122,7 @@ export async function generateCode({
       where: {
         contactId_customFieldId: {
           contactId: conversation.contactId,
-          customFieldId: step.outputCustomFieldId,
+          customFieldId: step.outputCfId,
         },
       },
       update: {
@@ -130,7 +130,7 @@ export async function generateCode({
       },
       create: {
         contactId: conversation.contactId,
-        customFieldId: step.outputCustomFieldId,
+        customFieldId: step.outputCfId,
         value,
       },
     })
@@ -144,7 +144,7 @@ export async function getDataFromJSON({
   const inputValue = await prisma.contactCustomField.findFirst({
     where: {
       contactId: conversation.contactId,
-      customFieldId: step.inputCustomFieldId,
+      customFieldId: step.inputCfId,
     },
   })
   if (!inputValue) {
@@ -154,7 +154,7 @@ export async function getDataFromJSON({
   const dataJSON = JSON.parse(inputValue.value)
   const mapping = step.mapping as {
     jsonPath: string
-    outputCustomFieldId: string
+    outputCfId: string
   }[]
 
   // Find valid custom fields
@@ -163,7 +163,7 @@ export async function getDataFromJSON({
       fieldType: FieldType.customField,
       chatbotId: conversation.chatbotId,
       id: {
-        in: mapping.map((m) => m.outputCustomFieldId),
+        in: mapping.map((m) => m.outputCfId),
       },
     },
     select: {
@@ -174,7 +174,7 @@ export async function getDataFromJSON({
 
   await prisma.$transaction(async (tx) => {
     for (const data of mapping) {
-      if (validCustomFieldIds.includes(data.outputCustomFieldId)) {
+      if (validCustomFieldIds.includes(data.outputCfId)) {
         const value = getProperty(dataJSON, data.jsonPath)
 
         if (value) {
@@ -183,7 +183,7 @@ export async function getDataFromJSON({
             where: {
               contactId_customFieldId: {
                 contactId: conversation.contactId,
-                customFieldId: data.outputCustomFieldId,
+                customFieldId: data.outputCfId,
               },
             },
             update: {
@@ -191,7 +191,7 @@ export async function getDataFromJSON({
             },
             create: {
               contactId: conversation.contactId,
-              customFieldId: data.outputCustomFieldId,
+              customFieldId: data.outputCfId,
               value: encodedValue,
             },
           })

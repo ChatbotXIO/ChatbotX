@@ -132,7 +132,8 @@
     "chooseChannel": "Choose Channel",
     "chooseSubaction": "Choose Subaction",
     "resend": "Resend",
-    "publish": "Publish"
+    "publish": "Publish",
+    "randomRow": "Random Row"
   },
   "admins": {
     "title": "Admins"
@@ -1039,6 +1040,19 @@
       "label": "Schedule",
       "now": "Now",
       "scheduled": "Schedule for later"
+    },
+    "inputCfId": {
+      "label": "Input Custom Field"
+    },
+    "outputCfId": {
+      "label": "Save result to a custom field"
+    },
+    "jsonPath": {
+      "label": "JSON Path",
+      "placeholder": "Enter JSON path"
+    },
+    "spreadsheets": {
+      "label": "Spreadsheets"
     }
   },
   "flows": {
