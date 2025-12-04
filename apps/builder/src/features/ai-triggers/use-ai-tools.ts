@@ -1,21 +1,9 @@
 "use client"
 
-import type {
-  AIFileModel,
-  AIFunctionModel,
-  AIMCPServerModel,
-} from "@aha.chat/database/types"
-import { useParams } from "next/navigation"
+import { FileIcon, FunctionSquareIcon, ServerIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useMemo, useState } from "react"
-
-//
-
-type AIToolsData = {
-  files: AIFileModel[]
-  functions: AIFunctionModel[]
-  mcpServers: AIMCPServerModel[]
-}
+import { useMemo } from "react"
+import { useAIToolsStore } from "./provider/ai-tools-store-context"
 
 type AIToolsOptions = Array<{
   heading: string
@@ -28,78 +16,52 @@ type AIToolsOptions = Array<{
 
 export function useAITools() {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
-  const [toolsData, setToolsData] = useState<AIToolsData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-
-  const fetchTools = async () => {
-    if (!chatbotId || toolsData) {
-      return // Already loaded or no chatbotId
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const [filesResp, functionsResp, mcpServersResp] = await Promise.all([
-        fetch(`/api/chatbots/${chatbotId}/ai-files`).then((r) => r.json()),
-        fetch(`/api/chatbots/${chatbotId}/ai-functions`).then((r) => r.json()),
-        fetch(`/api/chatbots/${chatbotId}/ai-mcp-servers`).then((r) =>
-          r.json(),
-        ),
-      ])
-
-      setToolsData({
-        files: (filesResp?.data as AIFileModel[]) || [],
-        functions: (functionsResp?.data as AIFunctionModel[]) || [],
-        mcpServers: (mcpServersResp?.data as AIMCPServerModel[]) || [],
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch tools"))
-    } finally {
-      setLoading(false)
-    }
-  }
+  const files = useAIToolsStore((store) => store.files)
+  const functions = useAIToolsStore((store) => store.functions)
+  const mcpServers = useAIToolsStore((store) => store.mcpServers)
+  const loading = useAIToolsStore((store) => store.loading)
+  const error = useAIToolsStore((store) => store.error)
+  const fetchTools = useAIToolsStore((store) => store.refetch)
+  const initialized = useAIToolsStore((store) => store.initialized)
 
   const toolOptions: AIToolsOptions = useMemo(() => {
-    if (!toolsData) {
+    if (!initialized) {
       return []
     }
 
     return [
       {
         heading: t("fields.file.label"),
-        options: toolsData.files.map((file) => ({
+        options: files.map((file) => ({
           label: file.name,
           value: `file:${file.id}`,
-          icon: (() => null) as React.ComponentType, // Will be set by the component
+          icon: FileIcon,
         })),
       },
       {
         heading: t("fields.function.label"),
-        options: toolsData.functions.map((fn) => ({
+        options: functions.map((fn) => ({
           label: fn.name,
           value: `fn:${fn.id}`,
-          icon: (() => null) as React.ComponentType, // Will be set by the component
+          icon: FunctionSquareIcon,
         })),
       },
       {
         heading: t("fields.mcpServer.label"),
-        options: toolsData.mcpServers.map((mcpServer) => ({
+        options: mcpServers.map((mcpServer) => ({
           label: mcpServer.name,
           value: `mcp:${mcpServer.id}`,
-          icon: (() => null) as React.ComponentType, // Will be set by the component
+          icon: ServerIcon,
         })),
       },
     ]
-  }, [toolsData, t])
+  }, [files, functions, mcpServers, initialized, t])
 
   return {
     toolOptions,
     loading,
-    error,
+    error: error ? new Error(error) : null,
     fetchTools,
-    hasData: !!toolsData,
+    hasData: initialized,
   }
 }

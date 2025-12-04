@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import type { UserResource } from "../users/schemas"
+import type { UserResource } from "../users/schemas/resource"
 import { createInboxTeamAction } from "./actions/create-inbox-team.action"
 import { createInboxTeamRequest } from "./schemas/create-inbox-team.request"
 

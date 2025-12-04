@@ -1,4 +1,4 @@
-import { FieldOperationType } from "@aha.chat/database/types"
+import { FieldOperationType } from "@aha.chat/flow-config"
 import { z } from "zod"
 
 export const addContactCustomFieldRequest = z.object({

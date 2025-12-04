@@ -1,38 +1,25 @@
 "use client"
 
-import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@aha.chat/ui/components/ui/select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactElement, useState } from "react"
-import type { FieldValues } from "react-hook-form"
+import { type ReactElement, useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
-import type { ChatbotMemberCollection } from "@/features/chatbot-members/schemas/resource"
-import type { InboxTeamCollection } from "@/features/inbox-teams/schemas/types"
-import { callAPI } from "@/lib/swr"
+import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
 import { assignConversationAction } from "../actions/assign-conversation.action"
 import { assignConversationSchema } from "../schemas/assign-conversation.schema"
 
@@ -49,32 +36,19 @@ export default function AssignConversationDialog({
 }: AssignConversationDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
-  // Get agent lists
-  const { data: agentsData } = callAPI<ChatbotMemberCollection>(
-    `/api/chatbots/${chatbotId}/agents?perPage=9999`,
-  )
-  const agentOptions = (agentsData?.data ?? []).map((v) => ({
-    label: v.user?.name,
-    value: `u_${v.user?.id}`,
-  }))
+  const contactAssigneeOptions = useContactAssigneeOptions()
 
-  // Get agent lists
-  const { data: inboxTeamsData } = callAPI<InboxTeamCollection>(
-    `/api/chatbots/${chatbotId}/inbox-teams?perPage=9999`,
+  const defaultValues = useMemo(
+    () => ({
+      contactIds,
+      assignedId: "",
+    }),
+    [contactIds],
   )
-  const inboxTeamOptions = (inboxTeamsData?.data ?? []).map((v) => ({
-    label: v.name,
-    value: `t_${v.id}`,
-  }))
 
-  const {
-    form,
-    handleSubmitWithAction,
-    form: { setValue },
-  } = useHookFormAction(
+  const { form, handleSubmitWithAction } = useHookFormAction(
     assignConversationAction.bind(null, chatbotId),
     zodResolver(assignConversationSchema),
     {
@@ -85,6 +59,7 @@ export default function AssignConversationDialog({
               feature: t("fields.conversation.label"),
             }),
           )
+          form.reset(defaultValues)
           setOpen(false)
           onSuccess?.()
         },
@@ -96,95 +71,59 @@ export default function AssignConversationDialog({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          contactIds,
-          assignedId: "",
-        },
+        defaultValues,
       },
       errorMapProps: {},
     },
   )
 
+  const { isValid, isSubmitting } = form.formState
+
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen)
+      if (!newOpen) {
+        form.reset(defaultValues)
+      }
+    },
+    [defaultValues, form],
+  )
+
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("actions.assignConversation")}</DialogTitle>
-          <DialogDescription />
         </DialogHeader>
 
         <Form {...form}>
           <form
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-6"
             onSubmit={handleSubmitWithAction}
           >
-            <FormFieldWrapper<FieldValues>
-              label="Assign To"
+            <ComboboxField
+              label={t("fields.assignedId.label")}
               name="assignedId"
-              required={true}
-            >
-              {(field) => (
-                <Select
-                  defaultValue={field.value}
-                  onValueChange={field.onChange}
-                  {...field}
-                >
-                  <SelectTrigger
-                    className="w-full"
-                    onReset={() => setValue("assignedId", "")}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <Button
-                      className="w-full px-2"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setValue("assignedId", "")
-                      }}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      Clear selection
-                    </Button>
-
-                    <SelectGroup>
-                      <SelectLabel>Agent</SelectLabel>
-                      {agentOptions.map((i) => (
-                        <SelectItem key={i.value} value={i.value}>
-                          {i.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-
-                    <SelectGroup>
-                      <SelectLabel>Inbox Team</SelectLabel>
-                      {inboxTeamOptions.map((i) => (
-                        <SelectItem key={i.value} value={i.value}>
-                          {i.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            </FormFieldWrapper>
+              options={contactAssigneeOptions}
+              required
+            />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
+                <Button size="sm" type="button" variant="ghost">
+                  {t("actions.cancel")}
+                </Button>
               </DialogClose>
 
               <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
+                disabled={!isValid || isSubmitting}
+                size="sm"
                 type="submit"
               >
-                {form.formState.isSubmitting && (
-                  <Loader2Icon className="animate-spin" />
+                {isSubmitting && (
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 {t("actions.confirm")}
               </Button>

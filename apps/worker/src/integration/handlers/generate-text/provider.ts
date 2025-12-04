@@ -1,6 +1,5 @@
 import { prisma } from "@aha.chat/database"
 import { AI_PROVIDERS } from "@aha.chat/database/types"
-import { StepType } from "@aha.chat/flow-config"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
@@ -8,15 +7,21 @@ import type { LanguageModel } from "ai"
 import { logger } from "../../../lib/logger"
 import type { AIGenerateTextStep, AIProviderConfig } from "./types"
 
-// Get AI provider configuration based on step type
 export async function getAIProviderConfig(
   step: AIGenerateTextStep,
   chatbotId: string,
 ): Promise<AIProviderConfig | null> {
-  const stepType = step.stepType
+  const provider = (step as { provider?: string }).provider
 
-  switch (stepType) {
-    case StepType.openaiGenerateText: {
+  if (!provider) {
+    logger.error("[ai-generate-text] Provider not specified", {
+      stepId: step.id,
+    })
+    return null
+  }
+
+  switch (provider) {
+    case "openai": {
       const integration = await prisma.integrationOpenAI.findFirst({
         where: { chatbotId },
       })
@@ -56,7 +61,7 @@ export async function getAIProviderConfig(
       }
     }
 
-    case StepType.geminiGenerateText: {
+    case "gemini": {
       const integration = await prisma.integrationGemini.findFirst({
         where: { chatbotId },
       })
@@ -93,12 +98,12 @@ export async function getAIProviderConfig(
       }
     }
 
-    case StepType.claudeGenerateText: {
+    case "claude": {
       logger.warn("[ai-generate-text] Claude integration not yet implemented")
       return null
     }
 
-    case StepType.deepseekGenerateText: {
+    case "deepseek": {
       logger.warn("[ai-generate-text] DeepSeek integration not yet implemented")
       return null
     }
@@ -108,7 +113,6 @@ export async function getAIProviderConfig(
   }
 }
 
-// Create AI model based on provider configuration
 export function createAIModel(
   config: AIProviderConfig,
   modelName: string,

@@ -12,6 +12,9 @@ import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 
+const INBOX_PAGE_REGEX =
+  /\/chatbots\/[a-z0-9]+\/inbox(?:\?conversationId=[a-z0-9]+)?$/
+
 export default async function ChatbotLayout({
   children,
   breadcrumb,
@@ -22,14 +25,11 @@ export default async function ChatbotLayout({
   params: Promise<{ chatbotId: string }>
 }) {
   const userId = await getCurrentUserId()
-  const allParams = await params
 
+  const { chatbotId } = await params
   const headersList = await headers()
-  const chatbotId = allParams.chatbotId
 
-  const isInboxPage = (headersList.get("x-url") ?? "")
-    .split("/")
-    .includes("inbox")
+  const isInboxPage = INBOX_PAGE_REGEX.test(headersList.get("x-url") ?? "")
   const requiredPadding = isInboxPage ? "" : "p-8"
 
   const allChatbotsPromise = getAllChatbotMembers(userId)

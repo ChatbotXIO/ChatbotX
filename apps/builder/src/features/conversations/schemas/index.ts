@@ -4,7 +4,7 @@ import type { ContactResource } from "@/features/contacts/schemas"
 import type { InboxTeamResource } from "@/features/inbox-teams/schemas/types"
 import type { InboxResource } from "@/features/inboxes/schemas"
 import type { MessageResource } from "@/features/messages/schemas"
-import type { UserResource } from "@/features/users/schemas"
+import type { UserResource } from "@/features/users/schemas/resource"
 
 export type ConversationResource = ConversationModel & {
   messages?: MessageResource[]

@@ -39,7 +39,8 @@ export const addContactTagAction = chatbotActionClient
       }
 
       await prisma.$transaction(async (tx) => {
-        const tags = await tx.tag.createManyAndReturn({
+        // Create new tags if they don't exist
+        await tx.tag.createMany({
           data: parsedInput.tags.map((t) => ({
             name: t,
             chatbotId,
@@ -47,11 +48,20 @@ export const addContactTagAction = chatbotActionClient
           skipDuplicates: true,
         })
 
+        const allTags = await tx.tag.findMany({
+          where: {
+            name: { in: parsedInput.tags },
+          },
+          select: {
+            id: true,
+          },
+        })
+
         for (const contact of contacts) {
           await tx.contact.update({
             data: {
               tags: {
-                connect: tags.map((t) => ({ id: t.id })),
+                connect: allTags,
               },
             },
             where: {

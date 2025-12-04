@@ -3,12 +3,7 @@ import { memo } from "react"
 import { addContactNotesStep } from "./add-contact-notes"
 import { addContactTagStep } from "./add-contact-tag"
 import { addNotesStep } from "./add-notes"
-import {
-  claudeGenerateTextStep,
-  deepseekGenerateTextStep,
-  geminiGenerateTextStep,
-  openAIGenerateTextStep,
-} from "./ai-generate-text"
+import { openAIGenerateTextStep } from "./ai-generate-text"
 import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
@@ -106,10 +101,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.filterContact]: undefined,
   [StepType.addNotes]: addNotesStep,
   [StepType.waitUserReply]: undefined,
-  [StepType.openaiGenerateText]: openAIGenerateTextStep,
-  [StepType.geminiGenerateText]: geminiGenerateTextStep,
-  [StepType.claudeGenerateText]: claudeGenerateTextStep,
-  [StepType.deepseekGenerateText]: deepseekGenerateTextStep,
+  [StepType.aiGenerateText]: openAIGenerateTextStep,
   [StepType.aiGenerateTextAgent]: undefined,
   [StepType.aiGenerateImage]: undefined,
   [StepType.aiAnalyzeImage]: undefined,

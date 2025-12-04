@@ -1,8 +1,8 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { TagCollection } from "../schemas"
 import type { GetTagsSchema } from "../schemas/get-tags-schema"
+import type { TagCollection } from "../schemas/resource"
 
 export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)

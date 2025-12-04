@@ -88,13 +88,23 @@ export const createChatStore = () => {
         },
       )
 
-      // set active conversationId
+      const urlParams = new URLSearchParams(window.location.search)
+      const queryConversationId = urlParams.get("conversationId")
       if (!activeConversationId && newConversations.length > 0) {
-        const firstConversation =
-          newConversations[0] as ClientConversationResource
-        firstConversation.isActive = true
+        if (queryConversationId) {
+          const found = newConversations.find(
+            (c) => c.id === queryConversationId,
+          )
+          if (found) {
+            set({ activeConversationId: queryConversationId })
+          }
+        } else {
+          const firstConversation =
+            newConversations[0] as ClientConversationResource
+          firstConversation.isActive = true
 
-        set({ activeConversationId: firstConversation.id })
+          set({ activeConversationId: firstConversation.id })
+        }
       }
 
       set({

@@ -9,7 +9,7 @@ import type {
   MessageCollection,
   MessageResource,
 } from "@/features/messages/schemas"
-import type { UserResource } from "@/features/users/schemas"
+import type { UserResource } from "@/features/users/schemas/resource"
 
 export type GuestSessionState = {
   // default state

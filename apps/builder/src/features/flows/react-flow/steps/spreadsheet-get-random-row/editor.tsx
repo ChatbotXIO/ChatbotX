@@ -3,6 +3,7 @@
 import { spreadsheetGetRandomRowSchema } from "@aha.chat/flow-config"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
 import { useCallback, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { SpreadsheetDialog } from "@/features/flows/react-flow/steps/spreadsheet/components/dialog"
@@ -18,6 +19,8 @@ type SpreadsheetGetRandomRowEditorProps = {
 export const SpreadsheetGetRandomRowEditor = ({
   parentName,
 }: SpreadsheetGetRandomRowEditorProps) => {
+  const t = useTranslations()
+
   const { getValues, setValue: setValueParent } = useFormContext()
   const [open, setOpen] = useState(false)
 
@@ -54,7 +57,7 @@ export const SpreadsheetGetRandomRowEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="googleSheets.randomRow"
+        name={t("actions.randomRow")}
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}
@@ -62,6 +65,7 @@ export const SpreadsheetGetRandomRowEditor = ({
         <div className="flex flex-col gap-4">
           <SpreadsheetSelect
             name="spreadsheetId"
+            required
             triggerValueChange={onChangeSpreadsheet}
           />
           {spreadsheetId && (

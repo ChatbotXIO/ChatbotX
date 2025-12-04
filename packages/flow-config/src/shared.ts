@@ -1,5 +1,6 @@
 import { addContactTagStepSchema } from "./steps/add-contact-tag"
 import { addNotesStepSchema } from "./steps/add-notes"
+import { aiGenerateTextSchema } from "./steps/ai-actions"
 import { archiveConversationStepSchema } from "./steps/archive-conversation"
 import { assignConversationStepSchema } from "./steps/assign-conversation"
 import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversation"
@@ -26,6 +27,11 @@ import { unarchiveConversationStepSchema } from "./steps/unarchive-conversation"
 import { unassignConversationStepSchema } from "./steps/unassign-conversation"
 import { unfollowConversationStepSchema } from "./steps/unfollow-conversation"
 import { unsubscribeBroadcastStepSchema } from "./steps/unsubscribe-broadcast"
+
+/**
+ * Maximum value for a 32-bit signed integer (2^31 - 1) = 2,147,483,647
+ */
+export const MAX_32_BIT_SIGNED_INTEGER = 2_147_483_647
 
 const inboxSteps = [
   enableBotStepSchema,
@@ -73,6 +79,8 @@ const flowSteps = [
   startExternalNodeStepSchema,
 ]
 
+const aiSteps = [aiGenerateTextSchema]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -80,4 +88,5 @@ export const actionSteps = [
   ...toolSteps,
   ...emailSteps,
   ...flowSteps,
+  ...aiSteps,
 ]

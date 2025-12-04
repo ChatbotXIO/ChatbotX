@@ -133,7 +133,8 @@
     "chooseChannel": "Choose Channel",
     "chooseSubaction": "Choose Subaction",
     "resend": "Resend",
-    "publish": "Publish"
+    "publish": "Publish",
+    "randomRow": "Random Row"
   },
   "admins": {
     "title": "Admins"
@@ -408,6 +409,9 @@
     },
     "condition": {
       "label": "Condition"
+    },
+    "assignedId": {
+      "label": "Assign To"
     },
     "operator": {
       "label": "Operator",
@@ -1061,6 +1065,19 @@
       "selectModelOpenAI": "Select OpenAI model",
       "selectTools": "Select tools",
       "temperatureHint": "Controls randomness (0-2), higher = more creative"
+    },
+    "inputCfId": {
+      "label": "Input Custom Field"
+    },
+    "outputCfId": {
+      "label": "Save result to a custom field"
+    },
+    "jsonPath": {
+      "label": "JSON Path",
+      "placeholder": "Enter JSON path"
+    },
+    "spreadsheets": {
+      "label": "Spreadsheets"
     }
   },
   "flows": {
@@ -1491,5 +1508,10 @@
   },
   "inboxTeams": {
     "title": "Inbox Teams"
+  },
+  "errorLog": {
+    "heading": {
+      "title": "Error Logs"
+    }
   }
 }

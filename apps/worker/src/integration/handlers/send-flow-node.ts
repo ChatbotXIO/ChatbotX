@@ -71,10 +71,7 @@ const flowStepHandlers: Record<
   [StepType.markEmailVerified]: markEmailVerified,
   [StepType.notifyAgent]: undefined,
   [StepType.openWebsite]: undefined,
-  [StepType.openaiGenerateText]: handleAIGenerateText,
-  [StepType.geminiGenerateText]: handleAIGenerateText,
-  [StepType.claudeGenerateText]: handleAIGenerateText,
-  [StepType.deepseekGenerateText]: handleAIGenerateText,
+  [StepType.aiGenerateText]: handleAIGenerateText,
   [StepType.aiAnalyzeImage]: undefined,
   [StepType.aiDeleteMessageHistory]: undefined,
   [StepType.aiGenerateImage]: undefined,
@@ -163,28 +160,12 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     throw new SdkException("FlowVersion not found")
   }
 
-  const nodes = flowVersion.nodes as unknown as FlowNode[]
-
-  let startNode: FlowNode | undefined
-
-  if (props.data.nodeId) {
-    startNode = nodes.find((n) => n.id === props.data.nodeId)
-  }
-
-  if (!startNode && flowVersion.startNodeId) {
-    startNode = nodes.find((n) => n.id === flowVersion.startNodeId)
-  }
-
+  // NOTES: process flow
+  const startNode = (flowVersion.nodes as unknown as FlowNode[]).find((n) =>
+    props.data.nodeId ? n.id === props.data.nodeId : n.data.isStartNode,
+  )
   if (!startNode) {
-    startNode = nodes.find((n) => n.data.isStartNode === true)
-  }
-
-  if (!startNode && nodes.length > 0) {
-    startNode = nodes[0]
-  }
-
-  if (!startNode) {
-    throw new SdkException("FlowVersion does not contain any nodes")
+    throw new SdkException("FlowVersion does not contain start node")
   }
 
   const gen = runFlowNode(conversation, flowVersion.id, startNode)
@@ -201,17 +182,11 @@ function* runFlowNode(
   node: FlowNode,
 ) {
   const steps = ("steps" in node.data ? node.data.steps : []) ?? []
-
   for (const step of steps) {
-    const stepType = step.stepType as StepType
-    const handler = flowStepHandlers[stepType]
-
-    if (handler) {
-      yield handler({
-        conversation,
-        flowVersionId,
-        step,
-      })
-    }
+    yield flowStepHandlers[step.stepType as StepType]?.({
+      conversation,
+      flowVersionId,
+      step,
+    })
   }
 }

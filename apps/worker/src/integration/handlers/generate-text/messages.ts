@@ -1,10 +1,10 @@
 import { prisma } from "@aha.chat/database"
-import { SenderType } from "@aha.chat/database/types"
+import { AIMessageRole, SenderType } from "@aha.chat/database/types"
 import {
   DEFAULT_USER_MESSAGES,
   MAX_CONVERSATION_HISTORY,
 } from "../automated-response/constants"
-import type { AIMessage, AIGenerateTextStep } from "./types"
+import type { AIGenerateTextStep, AIMessage } from "./types"
 
 // Build messages array from conversation history and step config
 export async function buildAIMessages(
@@ -27,12 +27,12 @@ export async function buildAIMessages(
       }
 
       if (msg.senderType === SenderType.contact) {
-        messages.push({ role: "user", content: msg.content })
+        messages.push({ role: AIMessageRole.user, content: msg.content })
       } else if (
         msg.senderType === SenderType.user ||
         msg.senderType === SenderType.bot
       ) {
-        messages.push({ role: "assistant", content: msg.content })
+        messages.push({ role: AIMessageRole.assistant, content: msg.content })
       }
     }
 
@@ -43,7 +43,7 @@ export async function buildAIMessages(
   // Add current user message if provided
   if (step.userMessage) {
     messages.push({
-      role: "user",
+      role: AIMessageRole.user,
       content: step.userMessage,
     })
   }
@@ -55,11 +55,10 @@ export async function buildAIMessages(
       : DEFAULT_USER_MESSAGES.withoutPrompt
 
     messages.push({
-      role: "user",
+      role: AIMessageRole.user,
       content: defaultMessage,
     })
   }
 
   return messages
 }
-

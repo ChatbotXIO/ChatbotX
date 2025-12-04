@@ -1,5 +1,6 @@
 "use client"
 
+import { CustomFieldType } from "@aha.chat/database/types"
 import {
   type FormatDateStepSchema,
   FormatTimezone,
@@ -51,9 +52,9 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
   })
 
   const onSubmit = (data: FormatDateStepSchema) => {
-    setValue(`${parentName}.inputCustomFieldId`, data.inputCustomFieldId)
+    setValue(`${parentName}.inputCfId`, data.inputCfId)
     setValue(`${parentName}.format`, data.format)
-    setValue(`${parentName}.outputCustomFieldId`, data.outputCustomFieldId)
+    setValue(`${parentName}.outputCfId`, data.outputCfId)
     setValue(`${parentName}.timezone`, data.timezone)
     setOpen(false)
   }
@@ -67,7 +68,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("flows.actions.formatDate")}</DialogTitle>
           <DialogDescription />
@@ -79,8 +80,12 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
+              customFieldTypes={[
+                CustomFieldType.date,
+                CustomFieldType.datetime,
+              ]}
               label={t("fields.inputCustomField.label")}
-              name="inputCustomFieldId"
+              name="inputCfId"
               required
             />
 
@@ -93,7 +98,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             <CustomFieldSelect
               allowCreate={true}
               label={t("fields.outputCustomField.label")}
-              name="outputCustomFieldId"
+              name="outputCfId"
               required
             />
 
@@ -103,11 +108,11 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
               options={[
                 {
                   label: t("flows.formatTimezone.contactTimezone"),
-                  value: FormatTimezone.CONTACT,
+                  value: FormatTimezone.contact,
                 },
                 {
                   label: t("flows.formatTimezone.accountTimezone"),
-                  value: FormatTimezone.ACCOUNT,
+                  value: FormatTimezone.chatbot,
                 },
               ]}
               required

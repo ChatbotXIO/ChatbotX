@@ -22,7 +22,10 @@ export default function RecursiveDropdownMenu({
   onClick,
 }: {
   data: MenuItem[]
-  onClick: (name: StepType) => void
+  onClick: (
+    name: StepType,
+    provider?: "openai" | "gemini" | "claude" | "deepseek",
+  ) => void
 }) {
   return (
     <>
@@ -45,7 +48,9 @@ export default function RecursiveDropdownMenu({
         ) : (
           <DropdownMenuItem
             key={menuItem.stepType}
-            onClick={() => menuItem.stepType && onClick(menuItem.stepType)}
+            onClick={() =>
+              menuItem.stepType && onClick(menuItem.stepType, menuItem.provider)
+            }
           >
             <MenuRow menuItem={menuItem} />
           </DropdownMenuItem>

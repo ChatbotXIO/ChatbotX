@@ -1,6 +1,7 @@
 import type { FieldType } from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { maxPerPageString } from "@/lib/shared-request"
 import type { CustomFieldCollection, CustomFieldResource } from "../schemas"
 
 export type CustomFieldSelectOption = {
@@ -66,17 +67,52 @@ export const createCustomFieldStore = () =>
     },
 
     getAllCustomFields: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: "9999999",
-        active: "true",
-      })
-      const { data } = await ky
-        .get<CustomFieldCollection>(
-          `/api/chatbots/${chatbotId}/custom-fields?${searchParams.toString()}`,
-        )
-        .json()
+      const {
+        initialized,
+        chatbotId: currentChatbotId,
+        loading: isLoading,
+      } = get()
 
-      set({ customFields: data })
+      // Skip if already initialized for the same chatbotId or currently loading
+      if (
+        (initialized && currentChatbotId === chatbotId) ||
+        isLoading ||
+        !chatbotId
+      ) {
+        return
+      }
+
+      set({ loading: true, error: null, chatbotId })
+
+      try {
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+        })
+        const { data } = await ky
+          .get<CustomFieldCollection>(
+            `/api/chatbots/${chatbotId}/custom-fields?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({
+          customFields: data,
+          loading: false,
+          initialized: true,
+        })
+      } catch (error: unknown) {
+        if (error instanceof HTTPError) {
+          set({
+            error: error.message,
+            loading: false,
+          })
+        } else {
+          set({
+            error: "Failed to fetch custom fields",
+            loading: false,
+          })
+        }
+        throw error
+      }
     },
 
     getCustomFieldSelectOptions: () => {

@@ -142,15 +142,18 @@ export async function getAIFunctionTools(
 export async function getMCPServerTools(
   chatbotId: string,
   selectedMcpIds: string[],
-  mcpAuth?: {
-    type: "TOKEN"
-    token: string
-  } | {
-    type: "HEADERS"
-    headers: Array<{ header: string; value: string }>
-  } | {
-    type: "NONE"
-  },
+  mcpAuth?:
+    | {
+        type: "TOKEN"
+        token: string
+      }
+    | {
+        type: "HEADERS"
+        headers: Array<{ header: string; value: string }>
+      }
+    | {
+        type: "NONE"
+      },
 ): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}

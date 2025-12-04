@@ -1,7 +1,7 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { PlusCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { CreateCustomFieldDialog } from "./create-custom-field-dialog"
+import { CreateCustomFieldDialog } from "./create-custom-field"
 
 type ContactCustomFieldManageProps = {
   chatbotId: string

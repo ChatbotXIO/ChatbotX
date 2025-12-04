@@ -17,7 +17,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import type { UserResource } from "../users/schemas"
+import type { UserResource } from "../users/schemas/resource"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
 import { addInboxTeamMemberRequest } from "./schemas/add-inbox-team-member.request"
 

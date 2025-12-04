@@ -141,7 +141,8 @@
     "chooseChannel": "Chọn kênh",
     "chooseSubaction": "Chọn hành động phụ",
     "resend": "Gửi lại",
-    "publish": "Xuất bản"
+    "publish": "Xuất bản",
+    "randomRow": "Hàng ngẫu nhiên"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -1081,6 +1082,19 @@
       "selectModelOpenAI": "Chọn mô hình OpenAI",
       "selectTools": "Chọn công cụ",
       "temperatureHint": "Điều khiển độ ngẫu nhiên (0-2), cao hơn = sáng tạo hơn"
+    },
+    "inputCfId": {
+      "label": "Trường tùy chỉnh đầu vào"
+    },
+    "outputCfId": {
+      "label": "Lưu kết quả vào trường tùy chỉnh"
+    },
+    "jsonPath": {
+      "label": "Đường dẫn JSON",
+      "placeholder": "Nhập đường dẫn JSON"
+    },
+    "spreadsheets": {
+      "label": "Bảng tính"
     }
   },
   "flows": {
@@ -1511,5 +1525,10 @@
   },
   "inboxTeams": {
     "title": "Nhóm hộp thư"
+  },
+  "errorLog": {
+    "heading": {
+      "title": "Nhật ký lỗi"
+    }
   }
 }

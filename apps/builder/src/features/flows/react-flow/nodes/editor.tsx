@@ -69,10 +69,21 @@ export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
     name: "steps",
   })
 
-  const onAddStep = (name: StepType) => {
-    const newStep = allSteps[name]?.defaultFn()
-    if (newStep) {
-      append(newStep)
+  const onAddStep = (
+    name: StepType,
+    provider?: "openai" | "gemini" | "claude" | "deepseek",
+  ) => {
+    if (name === StepType.aiGenerateText && provider) {
+      const step = allSteps[name]?.defaultFn()
+      if (step) {
+        // Set provider field for aiGenerateText step
+        append({ ...step, provider })
+      }
+    } else {
+      const newStep = allSteps[name]?.defaultFn()
+      if (newStep) {
+        append(newStep)
+      }
     }
   }
 

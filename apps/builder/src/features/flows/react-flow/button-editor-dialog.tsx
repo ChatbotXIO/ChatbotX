@@ -48,7 +48,7 @@ import {
 import { deleteProperty } from "@/lib/object-util"
 import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
 import { sendMessageEditorMenusWithButton } from "./nodes/send-message/menu"
-import { DynamicStepEditor } from "./steps"
+import { allSteps, DynamicStepEditor } from "./steps"
 import { allButtonsConfig } from "./steps/button-config"
 import { useStepStore } from "./stores/step-store-provider"
 
@@ -129,9 +129,15 @@ function ButtonSteps() {
   })
 
   const onAddAction = (action: StepType) => {
-    append({
-      stepType: action,
-    })
+    const stepDefinition = allSteps[action]
+    if (stepDefinition?.defaultFn) {
+      const newStep = stepDefinition.defaultFn()
+      append(newStep)
+    } else {
+      append({
+        stepType: action,
+      })
+    }
   }
 
   return (
@@ -191,6 +197,7 @@ export function ButtonEditorDialog() {
     addNodes,
     screenToFlowPosition,
     addEdges,
+    setEdges,
     updateNodeData,
     deleteElements,
   } = useReactFlow()
@@ -327,6 +334,11 @@ export function ButtonEditorDialog() {
           target: newNode.id,
           sourceHandle: data.id,
           targetHandle: newNode.id,
+          data: {
+            onDelete: (edgeId: string) => {
+              setEdges((eds) => eds.filter((e) => e.id !== edgeId))
+            },
+          },
         })
       }
 
@@ -398,7 +410,11 @@ export function ButtonEditorDialog() {
         <div className="flex items-center space-x-4">
           <Form {...form}>
             <form className="flex w-full flex-col gap-3">
-              <InputField label={t("fields.name.label")} name="label" />
+              <InputField
+                label={t("fields.name.label")}
+                name="label"
+                required
+              />
 
               <div className="mt-2 font-medium">
                 {t("fields.button.whenPressed")}

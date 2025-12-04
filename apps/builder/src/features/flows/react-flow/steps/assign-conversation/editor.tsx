@@ -1,8 +1,9 @@
 "use client"
 
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { MessageCirclePlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { UserSelect } from "@/features/users/user-select"
+import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
 import { BaseStepEditor } from "../base/editor"
 
 type AssignConversationStepEditorProps = {
@@ -13,14 +14,17 @@ const AssignConversationStepEditor = (
   props: AssignConversationStepEditorProps,
 ) => {
   const t = useTranslations()
+  const contactAssigneeOptions = useContactAssigneeOptions()
+
   return (
     <BaseStepEditor
       icon={MessageCirclePlusIcon}
       title={t("flows.actions.assignConversation")}
     >
-      <UserSelect
+      <ComboboxField
         label={t("fields.agent.label")}
         name={`${props.parentName}.assignedId`}
+        options={contactAssigneeOptions}
       />
     </BaseStepEditor>
   )

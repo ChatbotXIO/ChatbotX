@@ -2,7 +2,6 @@ import { type FolderModel, FolderType } from "@aha.chat/database/types"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { CreateFolderDialog } from "@/features/folders/create-folder-dialog"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
@@ -35,13 +34,7 @@ export default async function FoldersPage(props: {
 
   return (
     <>
-      <div className="flex">
-        <h3 className="flex-1 font-bold">{t("tags.heading.title")}</h3>
-        <CreateFolderDialog
-          chatbotId={params.chatbotId}
-          folderType={folderType}
-        />
-      </div>
+      <h3 className="font-medium">{t("tags.heading.title")}</h3>
 
       <Suspense>
         <ListFolders

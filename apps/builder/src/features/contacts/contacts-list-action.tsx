@@ -117,7 +117,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <ListIcon size={16} />
+            <ListIcon className="mr-2" size={16} />
             {t("actions.more")}
           </DropdownMenuSubTrigger>
 

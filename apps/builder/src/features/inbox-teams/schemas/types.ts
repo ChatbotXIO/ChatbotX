@@ -2,7 +2,7 @@ import type {
   InboxTeamMemberModel,
   InboxTeamModel,
 } from "@aha.chat/database/types"
-import type { UserResource } from "@/features/users/schemas"
+import type { UserResource } from "@/features/users/schemas/resource"
 
 export type InboxTeamResource = InboxTeamModel & {
   _count?: {

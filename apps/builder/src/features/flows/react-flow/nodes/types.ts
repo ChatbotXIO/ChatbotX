@@ -7,6 +7,7 @@ export type MenuItem = {
   icon: LucideIcon
   stepType: StepType | null
   children?: MenuItem[]
+  provider?: "openai" | "gemini" | "claude" | "deepseek"
 }
 
 export type TranslationFn = ReturnType<typeof useTranslations>

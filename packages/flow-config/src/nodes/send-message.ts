@@ -1,12 +1,6 @@
 import { z } from "zod"
 import { actionSteps } from "../shared"
 import {
-  claudeGenerateTextSchema,
-  deepseekGenerateTextSchema,
-  geminiGenerateTextSchema,
-  openAIGenerateTextSchema,
-} from "../steps/ai-actions"
-import {
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
 } from "../steps/choose-channel"
@@ -46,10 +40,6 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
         getUserInputStepSchema,
         sendGifStepSchema,
         ...actionSteps,
-        openAIGenerateTextSchema,
-        geminiGenerateTextSchema,
-        claudeGenerateTextSchema,
-        deepseekGenerateTextSchema,
       ]),
     ),
   }),

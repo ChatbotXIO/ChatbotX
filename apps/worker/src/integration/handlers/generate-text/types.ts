@@ -11,7 +11,7 @@ export type AIGenerateTextStep = {
   model?: string
   prompt?: string
   userMessage?: string
-  resultCustomFieldId?: string
+  outputCfId?: string
   tools?: string[]
   rememberConversation?: boolean
   temperature?: number
@@ -24,4 +24,3 @@ export type AIProviderConfig = {
   apiKey: string
   baseURL?: string
 }
-

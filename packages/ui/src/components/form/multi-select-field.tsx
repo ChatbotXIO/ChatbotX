@@ -1,5 +1,5 @@
 import type { FieldPath, FieldValues } from "react-hook-form"
-import { MultiSelect, type MultiSelectProps } from "../ui/multi-select"
+import { MultiSelect, type MultiSelectProps } from "../sersavan/multi-select"
 import { FormFieldWrapper } from "./field-wrapper"
 
 type MultiSelectFieldProps<T extends FieldValues> = Omit<

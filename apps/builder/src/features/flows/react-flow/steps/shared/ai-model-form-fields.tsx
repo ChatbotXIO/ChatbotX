@@ -26,8 +26,9 @@ export const AIModelFormFields = ({
 
       <CustomFieldSelect
         allowCreate={true}
-        label={t("fields.ouputCfId.label")}
-        name="resultCustomFieldId"
+        includeReserved={true}
+        label={t("fields.outputCfId.label")}
+        name="outputCfId"
       />
 
       <AIToolMultiSelect name="tools" />

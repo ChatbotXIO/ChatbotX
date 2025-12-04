@@ -45,10 +45,7 @@ export const StepType = {
   notifyAgent: "I10",
 
   // AI/OpenAI Operations (A_)
-  openaiGenerateText: "A0101",
-  geminiGenerateText: "A0102",
-  claudeGenerateText: "A0103",
-  deepseekGenerateText: "A0104",
+  aiGenerateText: "A01",
   aiGenerateTextAgent: "A02",
   aiAnalyzeImage: "A03",
   aiGenerateImage: "A04",
