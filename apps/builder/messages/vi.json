@@ -140,7 +140,8 @@
     "chooseChannel": "Chọn kênh",
     "chooseSubaction": "Chọn hành động phụ",
     "resend": "Gửi lại",
-    "publish": "Xuất bản"
+    "publish": "Xuất bản",
+    "randomRow": "Hàng ngẫu nhiên"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -1055,6 +1056,19 @@
       "label": "Lịch trình",
       "now": "Ngay bây giờ",
       "scheduled": "Lên lịch cho sau"
+    },
+    "inputCfId": {
+      "label": "Trường tùy chỉnh đầu vào"
+    },
+    "outputCfId": {
+      "label": "Lưu kết quả vào trường tùy chỉnh"
+    },
+    "jsonPath": {
+      "label": "Đường dẫn JSON",
+      "placeholder": "Nhập đường dẫn JSON"
+    },
+    "spreadsheets": {
+      "label": "Bảng tính"
     }
   },
   "flows": {
@@ -1485,5 +1499,10 @@
   },
   "inboxTeams": {
     "title": "Nhóm hộp thư"
+  },
+  "errorLog": {
+    "heading": {
+      "title": "Nhật ký lỗi"
+    }
   }
 }

@@ -1,7 +1,7 @@
 "use client"
 
-import { FieldOperationType } from "@aha.chat/database/types"
 import {
+  FieldOperationType,
   type SetCustomFieldStepSchema,
   setCustomFieldStepSchema,
 } from "@aha.chat/flow-config"
@@ -41,7 +41,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
   })
 
   function onSubmit(values: SetCustomFieldStepSchema) {
-    setValue(`${parentName}.outputCfId`, values.outputCfId)
+    setValue(`${parentName}.inputCfId`, values.inputCfId)
     setValue(`${parentName}.operation`, values.operation)
     setValue(`${parentName}.value`, values.value)
 
@@ -55,20 +55,21 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
           {t("flows.actions.setCustomField")}
         </div>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("flows.actions.setCustomField")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...customFieldForm}>
           <form
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-6"
             onSubmit={customFieldForm.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
               allowCreate={true}
               label={t("fields.customField.label")}
-              name="customFieldId"
+              name="inputCfId"
+              required
             />
             <SelectField
               label={t("fields.operation.label")}
@@ -78,7 +79,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
             />
             <InputField label={t("fields.value.label")} name="value" />
 
-            <div className="flex w-full items-center justify-center gap-2">
+            <div className="flex w-full items-center justify-end gap-2">
               <Button
                 onClick={() => setOpen(false)}
                 size={"sm"}
@@ -93,6 +94,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
                   customFieldForm.formState.isSubmitting
                 }
                 size={"sm"}
+                type="submit"
               >
                 {t("actions.save")}
               </Button>

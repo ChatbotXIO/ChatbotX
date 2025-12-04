@@ -1,6 +1,7 @@
 import type { FieldType } from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { maxPerPageString } from "@/lib/shared-request"
 import type { CustomFieldCollection, CustomFieldResource } from "../schemas"
 
 export type CustomFieldSelectOption = {
@@ -67,8 +68,7 @@ export const createCustomFieldStore = () =>
 
     getAllCustomFields: async (chatbotId: string) => {
       const searchParams = new URLSearchParams({
-        perPage: "9999999",
-        active: "true",
+        perPage: maxPerPageString,
       })
       const { data } = await ky
         .get<CustomFieldCollection>(

@@ -36,7 +36,7 @@ export const SpreadsheetDialog = ({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogTrigger asChild>
-        <div className="flex flex-col items-center rounded-md border-2 border-transparent bg-slate-200 p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
+        <div className="flex flex-col items-center rounded-md border-2 border-transparent p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
           <div className="flex items-center justify-center gap-2">
             <FileSpreadsheetIcon className="text-gray-500" size={20} />
             <p className="font-medium text-sm">Google Sheets</p>

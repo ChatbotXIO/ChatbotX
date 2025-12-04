@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation"
 import { findChatbot } from "@/features/chatbot/queries"
-import { listCustomFields } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
 import { listFlowVersions } from "@/features/flow-versions/queries/list-flow-versions"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { findFlow } from "@/features/flows/queries"
@@ -39,10 +37,6 @@ export default async function FlowPage(props: {
   }
 
   const promises = Promise.all([
-    listCustomFields({
-      chatbotId: params.chatbotId,
-      ...listCustomFieldsSearchParams.parse({}),
-    }),
     listFlowVersions({
       where: {
         chatbotId: params.chatbotId,

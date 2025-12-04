@@ -1,8 +1,9 @@
 "use client"
 
-import { CustomFieldType, FieldOperationType } from "@aha.chat/database/types"
+import { CustomFieldType } from "@aha.chat/database/types"
+import { FieldOperationType } from "@aha.chat/flow-config"
+import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -16,18 +17,20 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactElement, useEffect, useMemo, useState } from "react"
+import { type ReactElement, useMemo, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { reservedCustomFieldOptions } from "@/features/custom-fields/lib/reserved-custom-field"
-import type { CustomFieldCollection } from "@/features/custom-fields/schemas"
-import { callAPI } from "@/lib/swr"
+import {
+  CustomFieldOperationSelect,
+  CustomFieldSelect,
+} from "@/features/custom-fields/custom-field-select"
+import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { addContactCustomFieldAction } from "../actions/add-contact-custom-field.action"
 import { addContactCustomFieldRequest } from "../schemas/add-contact-custom-field.request"
 
@@ -44,6 +47,8 @@ export default function AddContactCustomFieldDialog({
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
+  const customFields = useCustomFieldStore((state) => state.customFields)
+
   const { form, handleSubmitWithAction } = useHookFormAction(
     addContactCustomFieldAction.bind(null, chatbotId),
     zodResolver(addContactCustomFieldRequest),
@@ -55,6 +60,7 @@ export default function AddContactCustomFieldDialog({
               feature: t("fields.contact.label"),
             }),
           )
+          form.reset()
           setOpen(false)
         },
         onError: ({ error }) => {
@@ -67,7 +73,7 @@ export default function AddContactCustomFieldDialog({
         mode: "onChange",
         defaultValues: {
           ids,
-          customFieldName: "",
+          customFieldId: "",
           operation: FieldOperationType.set,
           value: "",
         },
@@ -76,83 +82,33 @@ export default function AddContactCustomFieldDialog({
     },
   )
 
-  const customFieldsUrl = `/api/chatbots/${chatbotId}/custom-fields?perPage=9999`
-  const { data } = callAPI<CustomFieldCollection>(customFieldsUrl)
-
-  const customFieldOptions = [
-    ...reservedCustomFieldOptions,
-    ...(data?.data ?? []).map((field) => ({
-      label: field.name,
-      value: field.id,
-      type: field.customFieldType,
-    })),
-  ]
-
-  const watchCustomFieldName = useWatch({
+  const watchCustomFieldId = useWatch({
     control: form.control,
-    name: "customFieldName",
+    name: "customFieldId",
   })
-  const customFieldType = customFieldOptions.find(
-    (field) => field.value === watchCustomFieldName,
-  )?.type
 
-  const { setValue } = form
-  useEffect(() => {
-    if (watchCustomFieldName) {
-      setValue("operation", FieldOperationType.set)
-      setValue("value", "")
+  const selectedCustomFieldType = useMemo(() => {
+    if (!watchCustomFieldId) {
+      return null
     }
-  }, [watchCustomFieldName, setValue])
+    const selectedCustomField = customFields.find(
+      (field) => field.id === watchCustomFieldId,
+    )
+    return selectedCustomField?.customFieldType ?? null
+  }, [watchCustomFieldId, customFields])
 
-  const operatorOptions = useMemo(() => {
-    if (
-      customFieldType === CustomFieldType.shortText ||
-      customFieldType === CustomFieldType.longText
-    ) {
-      return [
-        {
-          label: t("fields.customField.set_value"),
-          value: FieldOperationType.set,
-        },
-        {
-          label: t("fields.customField.append"),
-          value: FieldOperationType.append,
-        },
-        {
-          label: t("fields.customField.prepend"),
-          value: FieldOperationType.prepend,
-        },
-      ]
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    if (!isOpen) {
+      form.reset()
     }
-    if (customFieldType === CustomFieldType.number) {
-      return [
-        {
-          label: t("fields.customField.set_value"),
-          value: FieldOperationType.set,
-        },
-        {
-          label: t("fields.customField.increase"),
-          value: FieldOperationType.increase,
-        },
-        {
-          label: t("fields.customField.decrease"),
-          value: FieldOperationType.decrease,
-        },
-      ]
-    }
-    return [
-      {
-        label: t("fields.customField.set_value"),
-        value: FieldOperationType.set,
-      },
-    ]
-  }, [customFieldType, t])
+  }
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("actions.setCustomField")}</DialogTitle>
           <DialogDescription />
@@ -160,29 +116,43 @@ export default function AddContactCustomFieldDialog({
 
         <Form {...form}>
           <form
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-6"
             onSubmit={handleSubmitWithAction}
           >
-            <CustomFieldSelect name={"customFieldName"} />
+            <CustomFieldSelect name="customFieldId" />
 
-            <SelectField
-              label={t("fields.operation.label")}
+            <CustomFieldOperationSelect
+              customFieldType={selectedCustomFieldType}
               name="operation"
-              options={operatorOptions}
-              required
             />
 
-            {customFieldType === CustomFieldType.longText && (
-              <TextareaField label="Value" name="value" />
-            )}
+            <div className="flex flex-col gap-2">
+              <Label>{t("fields.value.label")}</Label>
 
-            {customFieldType === CustomFieldType.shortText && (
-              <InputField label="Value" name="value" type="number" />
-            )}
+              {selectedCustomFieldType === CustomFieldType.longText && (
+                <TextareaField name="value" />
+              )}
 
-            {customFieldType === CustomFieldType.number && (
-              <InputField label="Value" name="value" type="number" />
-            )}
+              {selectedCustomFieldType === CustomFieldType.shortText && (
+                <InputField name="value" />
+              )}
+
+              {selectedCustomFieldType === CustomFieldType.number && (
+                <InputField name="value" type="number" />
+              )}
+
+              {selectedCustomFieldType === CustomFieldType.date && (
+                <DateTimePickerField
+                  dateTimeFormat="yyyy-MM-dd"
+                  granularity="day"
+                  name="value"
+                />
+              )}
+
+              {selectedCustomFieldType === CustomFieldType.datetime && (
+                <DateTimePickerField name="value" />
+              )}
+            </div>
 
             <DialogFooter>
               <DialogClose asChild>

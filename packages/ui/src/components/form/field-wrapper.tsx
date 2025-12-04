@@ -1,3 +1,4 @@
+import { cn } from "@aha.chat/ui/lib/utils"
 import type { ReactNode } from "react"
 import {
   type FieldPath,
@@ -12,7 +13,6 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form"
-import { cn } from "@aha.chat/ui/lib/utils"
 
 type FormFieldWrapperProps<T extends FieldValues> = {
   name: FieldPath<T>

@@ -1,5 +1,6 @@
 "use client"
 
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -24,8 +25,8 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAITriggerAction } from "@/features/ai-triggers/actions/create.action"
 import { createAITriggerRequest } from "@/features/ai-triggers/schemas/create.schema"
-import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { FlowSelect } from "@/features/flows/flow-select"
+import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
 
 type CreateAITriggerDialogProps = {
   chatbotId: string
@@ -35,8 +36,11 @@ export function CreateAITriggerDialog({
   chatbotId,
 }: CreateAITriggerDialogProps) {
   const t = useTranslations()
-  const [open, setOpen] = useState(false)
   const router = useRouter()
+
+  const customFieldSelectOptions = useCustomFieldSelectOptions({})
+
+  const [open, setOpen] = useState(false)
 
   const {
     form,
@@ -132,7 +136,10 @@ export function CreateAITriggerDialog({
                     </div>
 
                     <div className="basis-5/12">
-                      <CustomFieldSelect name={`questions.${i}.fieldId`} />
+                      <ComboboxField
+                        name={`questions.${i}.fieldId`}
+                        options={customFieldSelectOptions}
+                      />
                     </div>
 
                     <div className="basis-1/12">

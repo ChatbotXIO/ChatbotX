@@ -1,5 +1,6 @@
 "use client"
 
+import { CustomFieldType } from "@aha.chat/database/types"
 import {
   type CountCharactersStepSchema,
   countCharactersStepSchema,
@@ -39,6 +40,7 @@ const CountCharactersStepEditor = ({ parentName }: { parentName: string }) => {
 
 function CountCharactersDialog({ parentName }: { parentName: string }) {
   const t = useTranslations()
+
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
@@ -51,8 +53,8 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
   })
 
   const onSubmit = (data: CountCharactersStepSchema) => {
-    setValue(`${parentName}.inputCustomFieldId`, data.inputCustomFieldId)
-    setValue(`${parentName}.outputCustomFieldId`, data.outputCustomFieldId)
+    setValue(`${parentName}.inputCfId`, data.inputCfId)
+    setValue(`${parentName}.outputCfId`, data.outputCfId)
     setOpen(false)
   }
 
@@ -65,7 +67,7 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("flows.actions.countCharacters")}</DialogTitle>
           <DialogDescription />
@@ -77,15 +79,16 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
-              label={t("fields.customField.label")}
-              name="inputCustomFieldId"
+              label={t("fields.inputCfId.label")}
+              name="inputCfId"
               required
             />
 
             <CustomFieldSelect
               allowCreate={true}
-              label={t("fields.customField.label")}
-              name="outputCustomFieldId"
+              customFieldTypes={[CustomFieldType.number]}
+              label={t("fields.outputCfId.label")}
+              name="outputCfId"
               required
             />
 

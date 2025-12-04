@@ -36,10 +36,10 @@ export function InputField<T extends FieldValues>({
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
+      formItemClassName={formItemClassName}
       label={label}
       name={name}
-      formItemClassName={formItemClassName}
+      required={required}
     >
       {(field) => (
         <Input placeholder={placeholder} type={type} {...props} {...field} />

@@ -17,7 +17,7 @@ import {
   SidebarMenuSubItem,
 } from "../ui/sidebar"
 
-export interface NavItem {
+export type NavItem = {
   title: string
   url: string
   icon?: LucideIcon
@@ -25,7 +25,7 @@ export interface NavItem {
   items?: NavItem[]
 }
 
-export interface NavMainProps {
+export type NavMainProps = {
   title: string
   items: NavItem[]
 }
@@ -38,10 +38,10 @@ export function NavMain({ title, items }: NavMainProps) {
         {items.map((item) =>
           item.items?.length ? (
             <Collapsible
-              key={item.title}
               asChild
-              defaultOpen={item.isActive}
               className="group/collapsible"
+              defaultOpen={item.isActive}
+              key={item.title}
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>

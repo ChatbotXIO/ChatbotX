@@ -5,8 +5,8 @@ import { StepType } from "./step-action"
 export const countCharactersStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.countCharacters),
-  inputCustomFieldId: z.cuid2(),
-  outputCustomFieldId: z.cuid2(),
+  inputCfId: z.cuid2(),
+  outputCfId: z.cuid2(),
 })
 export type CountCharactersStepSchema = z.infer<
   typeof countCharactersStepSchema
@@ -17,7 +17,7 @@ export const countCharactersStepDefaultFn = (
 ): CountCharactersStepSchema => ({
   id: createId(),
   stepType: StepType.countCharacters,
-  inputCustomFieldId: "",
-  outputCustomFieldId: "",
+  inputCfId: "",
+  outputCfId: "",
   ...props,
 })

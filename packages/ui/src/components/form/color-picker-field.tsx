@@ -25,9 +25,9 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
       label={label}
       name={name}
+      required={required}
     >
       {(field) => (
         <Popover onOpenChange={setOpen} open={open}>

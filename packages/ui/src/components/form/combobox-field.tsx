@@ -16,11 +16,11 @@ import {
 import { cn } from "@aha.chat/ui/lib/utils"
 import type { PopoverContentProps } from "@radix-ui/react-popover"
 import { Check, ChevronsUpDown } from "lucide-react"
-import { useMemo, useState, type ReactElement } from "react"
+import { useMemo, useState } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import type { SelectOption } from "./select-field"
 
-interface OptionItemProps {
+type OptionItemProps = {
   option: SelectOption
   selectedValue: string | undefined
   onSelect: (value: string) => void
@@ -29,7 +29,8 @@ interface OptionItemProps {
 const OptionItem = ({ option, selectedValue, onSelect }: OptionItemProps) => {
   const isSelected = option.value === selectedValue
   return (
-    <CommandItem value={option.value} onSelect={onSelect}>
+    <CommandItem onSelect={onSelect} value={option.value}>
+      {option.Icon && <option.Icon className="h-4 w-4" />}
       {option.label}
       <Check
         className={cn(
@@ -41,7 +42,7 @@ const OptionItem = ({ option, selectedValue, onSelect }: OptionItemProps) => {
   )
 }
 
-interface ComboboxFieldProps<T extends FieldValues> {
+type ComboboxFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   required?: boolean
@@ -79,10 +80,10 @@ export function ComboboxField<T extends FieldValues>({
 
   return (
     <FormFieldWrapper<T>
-      name={name}
-      label={label}
-      required={required}
       description={description}
+      label={label}
+      name={name}
+      required={required}
     >
       {(field) => {
         const selectedLabel = field.value ? optionMap.get(field.value) : null
@@ -94,11 +95,9 @@ export function ComboboxField<T extends FieldValues>({
         }
 
         return (
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover onOpenChange={setOpen} open={open}>
             <PopoverTrigger asChild>
               <Button
-                variant="outline"
-                role="combobox"
                 aria-expanded={open}
                 aria-label={label || "Select option"}
                 className={cn(
@@ -106,34 +105,36 @@ export function ComboboxField<T extends FieldValues>({
                   className,
                   !field.value && "text-muted-foreground",
                 )}
+                role="combobox"
+                variant="outline"
               >
                 {selectedLabel || placeholder || "Please select..."}
                 <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="start" side={side}>
+            <PopoverContent align="start" className="w-[200px] p-0" side={side}>
               <Command>
-                <CommandInput placeholder="Search..." className="h-9" />
+                <CommandInput className="h-9" placeholder="Search..." />
                 <CommandList>
                   <CommandEmpty>No record found.</CommandEmpty>
                   {options.map((option) =>
                     option.children ? (
-                      <CommandGroup key={option.value} heading={option.label}>
+                      <CommandGroup heading={option.label} key={option.value}>
                         {option.children.map((child) => (
                           <OptionItem
                             key={child.value}
+                            onSelect={handleSelect}
                             option={child}
                             selectedValue={field.value}
-                            onSelect={handleSelect}
                           />
                         ))}
                       </CommandGroup>
                     ) : (
                       <OptionItem
                         key={option.value}
+                        onSelect={handleSelect}
                         option={option}
                         selectedValue={field.value}
-                        onSelect={handleSelect}
                       />
                     ),
                   )}

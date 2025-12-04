@@ -134,7 +134,8 @@
     "resend": "Resend",
     "publish": "Publish",
     "setAsDefaultAgent": "Set as Default Agent",
-    "unsetDefaultAgent": "Unset Default Agent"
+    "unsetDefaultAgent": "Unset Default Agent",
+    "randomRow": "Random Row"
   },
   "admins": {
     "title": "Admins"
@@ -1045,6 +1046,19 @@
       "label": "Schedule",
       "now": "Now",
       "scheduled": "Schedule for later"
+    },
+    "inputCfId": {
+      "label": "Input Custom Field"
+    },
+    "outputCfId": {
+      "label": "Save result to a custom field"
+    },
+    "jsonPath": {
+      "label": "JSON Path",
+      "placeholder": "Enter JSON path"
+    },
+    "spreadsheets": {
+      "label": "Spreadsheets"
     }
   },
   "flows": {
