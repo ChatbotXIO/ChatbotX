@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
   BrainIcon,
@@ -23,20 +23,28 @@ import {
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 
+export type AIAgentDataTableRowAction<TData> = {
+  row: Row<TData>
+  variant:
+    | "update"
+    | "delete"
+    | "duplicate"
+    | "rename"
+    | "resend"
+    | "enable"
+    | "toggleDefault"
+}
+
 type GetAIAgentsColumnsProps = {
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<AIAgentModel> | null>
   >
-  setAIAgentDefault: (defaultAgentId: string) => Promise<void>
   t: ReturnType<typeof useTranslations>
-  currentDefaultAgentId?: string | null
 }
 
-export function GetAIAgentsColumns({
+export function getAIAgentsColumns({
   setRowAction,
-  setAIAgentDefault,
   t,
-  currentDefaultAgentId,
 }: GetAIAgentsColumnsProps): ColumnDef<AIAgentModel>[] {
   return [
     {
@@ -84,11 +92,8 @@ export function GetAIAgentsColumns({
         <DataTableColumnHeader column={column} title="" />
       ),
       cell: ({ row }) =>
-        row.original.id === currentDefaultAgentId && (
-          <Badge className="cursor-pointer" variant="secondary">
-            <BrainIcon className="fill-gray-700" size={10} />
-            {t("aiAgent.defaultAgent")}
-          </Badge>
+        row.original.isDefault && (
+          <Badge className="cursor-pointer">{t("aiAgent.defaultAgent")}</Badge>
         ),
       size: 150,
       enableSorting: false,
@@ -126,16 +131,10 @@ export function GetAIAgentsColumns({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem
-              onSelect={() => {
-                setAIAgentDefault(
-                  currentDefaultAgentId === row.original.id
-                    ? ""
-                    : row.original.id,
-                )
-              }}
+              onSelect={() => setRowAction({ row, variant: "toggleDefault" })}
             >
               <BrainIcon className="mr-2" />
-              {currentDefaultAgentId === row.original.id
+              {row.original.isDefault
                 ? t("actions.unsetDefaultAgent")
                 : t("actions.setAsDefaultAgent")}
             </DropdownMenuItem>

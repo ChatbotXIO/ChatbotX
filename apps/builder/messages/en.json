@@ -133,8 +133,8 @@
     "chooseSubaction": "Choose Subaction",
     "resend": "Resend",
     "publish": "Publish",
-    "setAsDefaultAgent": "Set as Default Agent",
-    "unsetDefaultAgent": "Unset Default Agent",
+    "setAsDefaultAgent": "Set as Default",
+    "unsetDefaultAgent": "Unset Default",
     "randomRow": "Random Row"
   },
   "admins": {
@@ -1295,7 +1295,10 @@
     "resendSuccess": "Resend successfully",
     "duplicateTitle": "Duplicate {feature}",
     "duplicateDescription": "Are you sure you want to duplicate the {feature}?\nThis action cannot be undone.",
-    "duplicateSuccess": "{feature} duplicated successfully"
+    "duplicateSuccess": "{feature} duplicated successfully",
+    "changeDefault": "Change Default",
+    "changeDefaultDescription": "Are you sure you want to change the default AI agent?",
+    "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

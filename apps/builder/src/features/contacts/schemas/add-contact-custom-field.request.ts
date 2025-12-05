@@ -3,7 +3,7 @@ import { z } from "zod"
 
 export const addContactCustomFieldRequest = z.object({
   ids: z.array(z.cuid2()),
-  customFieldId: z.string(),
+  customFieldId: z.cuid2(),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),
 })

@@ -141,12 +141,15 @@
     "chooseSubaction": "Chọn hành động phụ",
     "resend": "Gửi lại",
     "publish": "Xuất bản",
+    "setAsDefaultAgent": "Đặt làm Agent mặc định",
+    "unsetDefaultAgent": "Bỏ đặt Agent mặc định",
     "randomRow": "Hàng ngẫu nhiên"
   },
   "admins": {
     "title": "Quản trị viên"
   },
   "aiAgent": {
+    "defaultAgent": "Agent mặc định",
     "description": "Quản lý và cấu hình AI Agents để nâng cao khả năng chatbot của bạn với tự động hóa và phản hồi thông minh.",
     "setting": {
       "description": "Mô tả AI Agents",
@@ -423,6 +426,9 @@
     "condition": {
       "label": "Điều kiện"
     },
+    "assignedId": {
+      "label": "Gán cho"
+    },
     "operator": {
       "label": "Toán tử",
       "is": "Là",
@@ -605,7 +611,12 @@
       "label": "CSS tùy chỉnh"
     },
     "customField": {
-      "label": "Trường tùy chỉnh"
+      "label": "Trường tùy chỉnh",
+      "set_value": "Thiết lập giá trị",
+      "append": "Thêm vào cuối",
+      "prepend": "Thêm vào đầu",
+      "increase": "Tăng thêm",
+      "decrease": "Giảm đi"
     },
     "dataCollect": {
       "label": "Thu thập dữ liệu",
@@ -1305,7 +1316,10 @@
     "resendSuccess": "Gửi lại thành công",
     "duplicateTitle": "Nhân bản {feature}",
     "duplicateDescription": "Bạn có chắc chắn muốn nhân bản {feature}?\nHành động này không thể hoàn tác.",
-    "duplicateSuccess": "Đã nhân bản {feature} thành công"
+    "duplicateSuccess": "Đã nhân bản {feature} thành công",
+    "changeDefault": "Thay đổi mặc định",
+    "changeDefaultDescription": "Bạn có chắc chắn muốn thay đổi AI agent mặc định?",
+    "unsetDefaultDescription": "Bạn có chắc chắn muốn bỏ đặt AI agent mặc định?"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
