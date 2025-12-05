@@ -2,7 +2,7 @@
 
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { AIAgentModel } from "@aha.chat/database/types"
-import type { ListAIAgentsRequest } from "@/features/ai-agents/schemas/list.schema"
+import type { ListAIAgentsRequest } from "@/features/ai-agents/schemas/query"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 

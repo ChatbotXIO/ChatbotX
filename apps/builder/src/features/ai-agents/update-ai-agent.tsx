@@ -42,11 +42,11 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
-import { updateAIAgentRequest } from "@/features/ai-agents/schemas/create-ai-agent.request"
+import { updateAIAgentRequest } from "@/features/ai-agents/schemas/request"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import { openAIModelOptions } from "../openai/models"
-import type { CreateAIAgentRequest } from "./schemas/create-ai-agent.request"
+import type { CreateAIAgentRequest } from "./schemas/request"
 
 export function UpdateAIAgentDialog({
   chatbotId,

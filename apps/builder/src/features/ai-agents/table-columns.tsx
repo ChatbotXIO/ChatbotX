@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
@@ -37,7 +36,7 @@ export type AIAgentDataTableRowAction<TData> = {
 
 type GetAIAgentsColumnsProps = {
   setRowAction: Dispatch<
-    SetStateAction<DataTableRowAction<AIAgentModel> | null>
+    SetStateAction<AIAgentDataTableRowAction<AIAgentModel> | null>
   >
   t: ReturnType<typeof useTranslations>
 }
