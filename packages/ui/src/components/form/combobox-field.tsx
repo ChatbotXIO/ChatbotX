@@ -26,7 +26,11 @@ type OptionItemProps = {
   onSelect: (value: string) => void
 }
 
-const OptionItem = ({ option, selectedValue, onSelect }: OptionItemProps) => {
+export const OptionItem = ({
+  option,
+  selectedValue,
+  onSelect,
+}: OptionItemProps) => {
   const isSelected = option.value === selectedValue
   return (
     <CommandItem onSelect={onSelect} value={option.value}>

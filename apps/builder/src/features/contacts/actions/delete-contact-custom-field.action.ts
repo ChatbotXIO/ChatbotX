@@ -8,20 +8,20 @@ import {
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type ClearContactCustomFieldRequest,
-  clearContactCustomFieldRequest,
-} from "../schemas/clear-contact-custom-field.request"
+  type DeleteContactCustomFieldRequest,
+  deleteContactCustomFieldRequest,
+} from "../schemas/contact-custom-field"
 
-export const clearContactCustomFieldAction = chatbotActionClient
+export const deleteContactCustomFieldAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
-  .inputSchema(clearContactCustomFieldRequest)
+  .inputSchema(deleteContactCustomFieldRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: ClearContactCustomFieldRequest
+      parsedInput: DeleteContactCustomFieldRequest
     }) => {
       const customField = await prisma.field.findFirstOrThrow({
         where: {

@@ -18,7 +18,7 @@ import {
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
-import type { ContactResource } from "../contacts/schemas"
+import type { ContactResource } from "../contacts/schemas/resource"
 import type { MessageResource } from "../messages/schemas"
 import type { ConversationResource } from "./schemas"
 

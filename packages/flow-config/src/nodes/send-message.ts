@@ -54,4 +54,5 @@ export const sendMessageNodeDefaultFn = (
     ...props,
     type: NodeType.sendMessage,
     beforeStep: chooseChannelStepDefaultFn(),
+    steps: [],
   })

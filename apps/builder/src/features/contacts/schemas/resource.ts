@@ -1,7 +1,9 @@
 import type {
   ContactCustomFieldModel,
   ContactModel,
+  CustomFieldType,
 } from "@aha.chat/database/types"
+import type { LucideIcon } from "lucide-react"
 import type { ConversationResource } from "@/features/conversations/schemas"
 import { BaseException } from "@/lib/errors/exception"
 
@@ -17,4 +19,12 @@ export type ContactResource = ContactModel & {
 export type ContactCollection = {
   data: ContactResource[]
   pageCount: number
+}
+
+export type ContactEditableField = {
+  key: string
+  icon: LucideIcon
+  label: string
+  value: string | null | undefined
+  customFieldType: CustomFieldType
 }

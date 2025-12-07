@@ -1,10 +1,11 @@
+import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { type Ref, useEffect, useImperativeHandle, useState } from "react"
-import type { PromptVariable, PromptVariableListRef } from "./definition"
+import type { PromptVariableListRef } from "./definition"
 
 export type VariableListProps = {
   ref: Ref<PromptVariableListRef>
-  items: PromptVariable[]
+  items: SelectOption[]
   command: ({ id }: { id: string }) => void
 }
 
@@ -15,7 +16,7 @@ export const VariableList = ({
   ref: React.Ref<{
     onKeyDown: ({ event }: { event: KeyboardEvent }) => boolean
   }>
-  items: PromptVariable[]
+  items: SelectOption[]
   command: ({ id }: { id: string }) => void
 }) => {
   const t = useTranslations()

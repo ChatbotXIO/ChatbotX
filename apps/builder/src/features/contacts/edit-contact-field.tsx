@@ -1,4 +1,4 @@
-import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { CustomFieldType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -11,34 +11,44 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { isCuid } from "@paralleldrive/cuid2"
+import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
+import { useEffect } from "react"
 import { toast } from "sonner"
+import { AccountFieldValueInput } from "../account-fields/account-field-value-input"
+import { deleteContactCustomFieldAction } from "./actions/delete-contact-custom-field.action"
 import { updateContactAction } from "./actions/update-contact.action"
-import type { ContactResource } from "./schemas"
-import { updateContactRequest } from "./schemas/update-contact.request"
+import { updateContactRequest } from "./schemas/action"
+import type { ContactEditableField } from "./schemas/resource"
 
 type EditContactField = {
   chatbotId: string
-  id: string
+  contactId: string
   open: boolean
   onOpenChange: (open: boolean) => void
-  contact: ContactResource
-  selectedField: string | null
+  targetField: ContactEditableField | null
+  onUpdated?: (key: string, value: string) => void
+  onDeleted?: (key: string) => void
 }
 
-export function EditContactField({
-  chatbotId,
-  id,
-  open,
-  onOpenChange,
-  // contact,
-  selectedField,
-}: EditContactField) {
+export function EditContactField(props: EditContactField) {
+  const {
+    chatbotId,
+    contactId,
+    open,
+    onOpenChange,
+    targetField,
+    onUpdated,
+    onDeleted,
+  } = props
+
   const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateContactAction.bind(null, chatbotId, id),
+      updateContactAction.bind(null, chatbotId, contactId),
       zodResolver(updateContactRequest),
       {
         actionProps: {
@@ -49,6 +59,10 @@ export function EditContactField({
               }),
             )
             onOpenChange(false)
+            onUpdated?.(
+              targetField?.key ?? "",
+              form.getValues(targetField?.key ?? ""),
+            )
             resetFormAndAction()
           },
           onError: ({ error }) => {
@@ -65,6 +79,30 @@ export function EditContactField({
       },
     )
 
+  useEffect(() => {
+    if (targetField) {
+      form.setValue(targetField.key ?? "", targetField.value ?? "")
+    }
+  }, [targetField, form])
+
+  const { execute: executeDelete, isPending: isDeleting } = useAction(
+    deleteContactCustomFieldAction.bind(null, chatbotId),
+    {
+      onSuccess: () => {
+        toast.success(
+          t("messages.deletedSuccess", { feature: t("fields.contact.label") }),
+        )
+        onOpenChange(false)
+        onDeleted?.(targetField?.key ?? "")
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
+  )
+
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
@@ -75,21 +113,55 @@ export function EditContactField({
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={handleSubmitWithAction}>
-            <InputField
-              label={`contact.fields.${selectedField || ""}`}
-              name={selectedField || ""}
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmitWithAction}
+          >
+            <AccountFieldValueInput
+              customFieldType={
+                targetField?.customFieldType ?? CustomFieldType.shortText
+              }
+              name={targetField?.key ?? ""}
             />
 
-            <DialogFooter className="mt-4">
+            <DialogFooter className="mt-4 justify-start">
+              <div className="flex-1">
+                {isCuid(targetField?.key ?? "") && (
+                  <Button
+                    disabled={isDeleting}
+                    onClick={() => {
+                      executeDelete({
+                        ids: [contactId],
+                        customFieldId: targetField?.key ?? "",
+                      })
+                    }}
+                    size="sm"
+                    variant="destructive"
+                  >
+                    {isDeleting && <Loader2Icon className="animate-spin" />}
+                    {t("actions.delete")}
+                  </Button>
+                )}
+              </div>
               <Button
                 onClick={() => onOpenChange(false)}
                 size="sm"
-                variant="outline"
+                variant="ghost"
               >
                 {t("actions.cancel")}
               </Button>
-              <Button size="sm" type="submit">
+              <Button
+                disabled={
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting ||
+                  isDeleting
+                }
+                size="sm"
+                type="submit"
+              >
+                {(form.formState.isSubmitting || isDeleting) && (
+                  <Loader2Icon className="animate-spin" />
+                )}
                 {t("actions.confirm")}
               </Button>
             </DialogFooter>

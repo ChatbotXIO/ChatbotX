@@ -17,30 +17,30 @@ import {
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { CodeXml, Smile } from "lucide-react"
 import { useState } from "react"
+import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
 
 type TiptapEditorProps = {
   defaultValue?: string
   placeholder?: string
   onChange?: (content: string) => void
-  customFields: { label: string; value: string; type: string }[]
 }
 
 export const TiptapEditor = ({
   defaultValue,
   onChange,
-  customFields,
   placeholder = "Type a message...",
 }: TiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
   const [isOpenCustomField, setIsOpenCustomField] = useState(false)
+  const customFieldSelectOptions = useCustomFieldSelectOptions({})
 
   const tiptapEditor = useEditor({
     extensions: [
       StarterKit,
       Mention.configure({
         suggestion: variableInjectionSuggestion({
-          listOfPromptVariables: customFields,
+          listOfPromptVariables: customFieldSelectOptions,
         }),
       }),
       Emoji.configure({
@@ -106,14 +106,14 @@ export const TiptapEditor = ({
             </div>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
-            {customFields.length > 0 && (
+            {customFieldSelectOptions.length > 0 && (
               <div className="max-h-60 w-50 overflow-y-auto">
-                {customFields.map((field) => (
+                {customFieldSelectOptions.map((field) => (
                   <Button
                     className="w-full cursor-pointer justify-start rounded-none p-2"
                     key={field.value}
                     onClick={() => {
-                      setEditorValue(`{{${field.label}}}`)
+                      setEditorValue(`{{${field.value}}}`)
                       setIsOpenCustomField(false)
                     }}
                     variant="ghost"

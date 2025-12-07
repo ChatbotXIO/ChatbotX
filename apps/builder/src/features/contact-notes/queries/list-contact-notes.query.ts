@@ -1,7 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListContactNotesRequest } from "../schemas/list-contact-notes.request"
-import type { ContactNoteCollection } from "../schemas/types"
+import type { ListContactNotesRequest } from "../schemas/query"
+import type { ContactNoteCollection } from "../schemas/resource"
 
 export async function listContactNotes(
   input: ListContactNotesRequest,

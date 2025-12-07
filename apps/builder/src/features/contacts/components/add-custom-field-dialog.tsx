@@ -32,7 +32,7 @@ import {
 } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { addContactCustomFieldAction } from "../actions/add-contact-custom-field.action"
-import { addContactCustomFieldRequest } from "../schemas/add-contact-custom-field.request"
+import { addContactCustomFieldRequest } from "../schemas/contact-custom-field"
 
 type AddContactCustomFieldDialogProps = {
   trigger: ReactElement

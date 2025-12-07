@@ -11,7 +11,7 @@ import Link from "next/link"
 import { use, useMemo } from "react"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
-import type { ContactResource } from "./schemas"
+import type { ContactResource } from "./schemas/resource"
 
 type ContactsTableProps = {
   chatbotId: string

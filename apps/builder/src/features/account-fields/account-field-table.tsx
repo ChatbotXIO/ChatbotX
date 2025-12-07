@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { useCopyToClipboard } from "usehooks-ts"
-import CustomFieldLabel from "../custom-fields/components/custom-field-label"
+import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label"
 import { AccountFieldToolbarActions } from "./account-field-table-toolbar"
 import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
 import type { listAccountFields } from "./queries/list-account-fields.query"
@@ -101,7 +101,9 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
           <DataTableColumnHeader column={column} title="Type" />
         ),
         cell: ({ row }) => (
-          <CustomFieldLabel customFieldType={row.original.customFieldType} />
+          <CustomFieldTypeLabel
+            customFieldType={row.original.customFieldType}
+          />
         ),
         enableSorting: false,
       },

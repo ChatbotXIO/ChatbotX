@@ -22,7 +22,7 @@ import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { addContactTagAction } from "../actions/add-contact-tag.action"
-import { addContactTagRequest } from "../schemas/add-contact-tag.request"
+import { addContactTagRequest } from "../schemas/contact-tag"
 
 type AddContactTagDialogProps = {
   trigger: ReactElement

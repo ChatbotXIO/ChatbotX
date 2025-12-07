@@ -4,7 +4,8 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
-import type { ContactNoteCollection } from "./schemas/types"
+import { useTranslations } from "next-intl"
+import type { ContactNoteCollection } from "./schemas/resource"
 
 // interface ContactNotesListProps {
 //   chatbotId: string,
@@ -12,13 +13,14 @@ import type { ContactNoteCollection } from "./schemas/types"
 // }
 
 export function ContactNotesList() {
+  const t = useTranslations()
   const listContactNotes: ContactNoteCollection = { data: [] }
 
   return (
     <div className="flex w-full flex-col">
       <div className="flex w-full">
         <Label className="flex-1 text-medium">
-          Notes ({listContactNotes.data.length})
+          {t("fields.notes.label")} ({listContactNotes.data.length})
         </Label>
         <Button size="icon" variant="ghost">
           <PlusIcon />

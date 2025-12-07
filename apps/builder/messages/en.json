@@ -135,7 +135,8 @@
     "publish": "Publish",
     "setAsDefaultAgent": "Set as Default",
     "unsetDefaultAgent": "Unset Default",
-    "randomRow": "Random Row"
+    "randomRow": "Random Row",
+    "clickToEdit": "Click to edit"
   },
   "admins": {
     "title": "Admins"
@@ -1014,6 +1015,7 @@
       "label": "Long Text"
     },
     "replyFormat": {
+      "label": "Reply Format",
       "number": "Number",
       "text": "Text",
       "email": "Email",
@@ -1059,6 +1061,21 @@
     },
     "spreadsheets": {
       "label": "Spreadsheets"
+    },
+    "retryMessage": {
+      "label": "Retry Message"
+    },
+    "skipButtonLabel": {
+      "label": "Skip Button Label"
+    },
+    "autoSkipTime": {
+      "label": "Auto Skip Time"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Auto Skip Fail Attempts"
+    },
+    "autoSkip": {
+      "label": "Auto Skip"
     }
   },
   "flows": {

@@ -11,7 +11,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type AddContactCustomFieldRequest,
   addContactCustomFieldRequest,
-} from "../schemas/add-contact-custom-field.request"
+} from "../schemas/contact-custom-field"
 
 export const addContactCustomFieldAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

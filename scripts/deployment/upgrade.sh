@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # pull new images
 docker compose -f docker-compose.prod.yml pull builder worker realtime
 

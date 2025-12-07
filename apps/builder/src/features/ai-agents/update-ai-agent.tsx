@@ -43,7 +43,6 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
 import { updateAIAgentRequest } from "@/features/ai-agents/schemas/request"
-import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import { openAIModelOptions } from "../openai/models"
 import type { CreateAIAgentRequest } from "./schemas/request"
@@ -68,7 +67,6 @@ export function UpdateAIAgentDialog({
   mcpServers: AIMCPServerModel[]
 }) {
   const t = useTranslations()
-  const { getCustomFieldSelectOptions } = useCustomFieldStore((state) => state)
 
   const {
     form,
@@ -113,11 +111,6 @@ export function UpdateAIAgentDialog({
       { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
     ],
     [t],
-  )
-
-  const customFieldOptions = useMemo(
-    () => getCustomFieldSelectOptions(),
-    [getCustomFieldSelectOptions],
   )
 
   const toolOptions = useMemo(
@@ -239,10 +232,7 @@ export function UpdateAIAgentDialog({
                   </div>
                   <div className="rounded-md border border-input">
                     <div className="p-3">
-                      <TiptapEditorField
-                        customFields={customFieldOptions}
-                        name="prompt"
-                      />
+                      <TiptapEditorField name="prompt" />
                     </div>
                   </div>
                 </div>
@@ -265,10 +255,7 @@ export function UpdateAIAgentDialog({
                         />
                       </div>
                       <div className="pt-14 pr-3 pb-3 pl-3">
-                        <TiptapEditorField
-                          customFields={customFieldOptions}
-                          name={`messages.${index}.content`}
-                        />
+                        <TiptapEditorField name={`messages.${index}.content`} />
                       </div>
                       <Button
                         className="absolute top-0 right-0"

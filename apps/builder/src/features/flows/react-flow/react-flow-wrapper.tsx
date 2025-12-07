@@ -1,4 +1,8 @@
-import { type FlowNode, NodeType } from "@aha.chat/flow-config"
+import {
+  type FlowNode,
+  NodeType,
+  sendMessageNodeDefaultFn,
+} from "@aha.chat/flow-config"
 import { useDebouncedCallback } from "@aha.chat/ui/hooks/use-debounced-callback"
 import {
   addEdge,
@@ -35,9 +39,7 @@ import ZoomInButton from "./panel-buttons/zoom-in-button"
 import ZoomOutButton from "./panel-buttons/zoom-out-button"
 import "./react-flow-wrapper.css"
 import { createId } from "@paralleldrive/cuid2"
-import { useTranslations } from "next-intl"
 import DeleteEdge from "./edges/delete-edge"
-import { allNodesConfig } from "./nodes/node-config"
 
 const nodeTypes = {
   [NodeType.sendMessage]: NodeViewer,
@@ -60,7 +62,6 @@ export function ReactFlowWrapper({
   flowVersion,
   setOpenNodeDetailSheet,
 }: ReactFlowFrameProps) {
-  const t = useTranslations()
   const reactFlow = useReactFlow()
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
@@ -231,30 +232,24 @@ export function ReactFlowWrapper({
           }
         }
 
-        const targetNodeConfig = allNodesConfig[NodeType.sendMessage]?.(t)
-        if (targetNodeConfig) {
-          const newNode = targetNodeConfig.defaultFn?.({
-            name: `${targetNodeConfig.label} ${labelVersion}`,
-            position,
-          })
-          if (newNode) {
-            const id = createId()
-            addNodes([newNode])
-            addEdges({
-              id,
-              source: connectNodeRef.current.nodeId,
-              target: newNode.id,
-              sourceHandle: fromHandle?.id,
-              targetHandle: newNode.id,
-              type: "delete",
-              data: {
-                onDelete: (edgeId: string) => {
-                  setEdges((eds) => eds.filter((e) => e.id !== edgeId))
-                },
-              },
-            })
-          }
-        }
+        const newNode = sendMessageNodeDefaultFn({
+          name: `Send Message #${labelVersion}`,
+          position,
+        })
+        addNodes([newNode])
+        addEdges({
+          id: createId(),
+          source: connectNodeRef.current.nodeId,
+          target: newNode.id,
+          sourceHandle: fromHandle?.id,
+          targetHandle: newNode.id,
+          type: "delete",
+          data: {
+            onDelete: (edgeId: string) => {
+              setEdges((eds) => eds.filter((e) => e.id !== edgeId))
+            },
+          },
+        })
       } else {
         const existingEdges = getEdges()
         const updatedEdges = existingEdges.map((edge) => {
@@ -278,7 +273,7 @@ export function ReactFlowWrapper({
       }
       connectNodeRef.current = null
     },
-    [t, reactFlow, setEdges],
+    [reactFlow, setEdges],
   )
 
   return (
