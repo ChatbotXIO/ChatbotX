@@ -16,6 +16,11 @@ export const ButtonType = {
 } as const
 export type ButtonType = (typeof ButtonType)[keyof typeof ButtonType]
 
+export const ignoreToDelete: ButtonType[] = [
+  ButtonType.OpenWebsite,
+  ButtonType.StartExternalFlow,
+]
+
 export const buttonStepSchema = z
   .object({
     id: z.cuid2(),

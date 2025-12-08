@@ -1,6 +1,6 @@
 import type { ButtonStepProps } from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Handle, Position } from "@xyflow/react"
+import { Handle, Position, useReactFlow } from "@xyflow/react"
 
 type ButtonStepViewerProps = {
   data: ButtonStepProps
@@ -8,6 +8,8 @@ type ButtonStepViewerProps = {
 
 export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
   const { data } = props
+  const { getEdges } = useReactFlow()
+  const isConnected = getEdges().some((edge) => edge.sourceHandle === data.id)
 
   return (
     <div className="relative">
@@ -17,6 +19,7 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
       <Handle
         className="right-3!"
         id={data.id}
+        isConnectable={!isConnected}
         position={Position.Right}
         type="source"
       />
