@@ -27,8 +27,6 @@
         csmChatWidget.webchatUrl,
       ).toString()
 
-      console.log("csmChatWidget.webchatUrl", csmChatWidget.webchatUrl)
-
       const url = new URL("/webchat", csmChatWidget.webchatUrl)
 
       if (config.chatbotId) {

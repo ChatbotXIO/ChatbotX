@@ -244,11 +244,6 @@ export function UpdateWebchatForm({
           name="brandColor"
           required
         />
-        {/* <ColorPickerField
-          label={t("fields.brandColor.label")}
-          name="brandColor"
-          required
-        /> */}
         <SwitchField
           label={t("fields.hideHeader.label")}
           name="hideHeader"
