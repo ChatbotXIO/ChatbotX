@@ -1,4 +1,8 @@
-import { CustomFieldType } from "@aha.chat/database/types"
+import {
+  CustomFieldType,
+  type FillableContactKeys,
+  fillableContactKeys,
+} from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -11,7 +15,6 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { isCuid } from "@paralleldrive/cuid2"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -126,7 +129,9 @@ export function EditContactField(props: EditContactField) {
 
             <DialogFooter className="mt-4 justify-start">
               <div className="flex-1">
-                {isCuid(targetField?.key ?? "") && (
+                {!fillableContactKeys.includes(
+                  targetField?.key as FillableContactKeys,
+                ) && (
                   <Button
                     disabled={isDeleting}
                     onClick={() => {
@@ -136,6 +141,7 @@ export function EditContactField(props: EditContactField) {
                       })
                     }}
                     size="sm"
+                    type="button"
                     variant="destructive"
                   >
                     {isDeleting && <Loader2Icon className="animate-spin" />}

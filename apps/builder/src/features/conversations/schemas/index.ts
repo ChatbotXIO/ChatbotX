@@ -8,10 +8,7 @@ import type { UserResource } from "@/features/users/schemas/resource"
 
 export type ConversationResource = ConversationModel & {
   messages?: MessageResource[]
-  contact?: ContactResource & {
-    fullName: string
-    avatarUrl: string | null
-  }
+  contact?: ContactResource
   inbox?: InboxResource
   assignedUser?: UserResource | null
   assignedInboxTeam?: InboxTeamResource | null

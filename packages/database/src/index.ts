@@ -33,47 +33,6 @@ export const prisma =
         }
       : undefined,
     result: {
-      contact: {
-        fullName: {
-          needs: { firstName: true, lastName: true, phoneNumber: true },
-          compute(contact) {
-            if (contact.firstName || contact.lastName) {
-              return [contact.firstName, contact.lastName]
-                .filter((v) => Boolean(v))
-                .join(" ")
-            }
-
-            return contact.phoneNumber || "-"
-          },
-        },
-        avatarUrl: {
-          needs: { avatar: true },
-          compute(contact) {
-            return contact.avatar
-              ? new URL(contact.avatar, env.NEXT_PUBLIC_ASSET_URL).toString()
-              : null
-          },
-        },
-      },
-      conversation: {
-        assignedId: {
-          needs: {
-            assignedUserId: true,
-            assignedInboxTeamId: true,
-          },
-          compute(item) {
-            if (item.assignedUserId) {
-              return `u_${item.assignedUserId}`
-            }
-
-            if (item.assignedInboxTeamId) {
-              return `t_${item.assignedUserId}`
-            }
-
-            return null
-          },
-        },
-      },
       attachment: {
         url: {
           needs: { originPath: true },

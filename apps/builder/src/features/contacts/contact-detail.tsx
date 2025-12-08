@@ -17,6 +17,7 @@ import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
 import type { ContactEditableField, ContactResource } from "./schemas/resource"
+import { getAvatarUrl } from "./utils"
 
 export const ContactDetail = () => {
   const t = useTranslations()
@@ -111,7 +112,7 @@ export const ContactDetail = () => {
           <AvatarImage
             alt={contact.firstName ?? ""}
             className="object-cover"
-            src={contact.avatarUrl ?? ""}
+            src={getAvatarUrl(contact)}
           />
           <AvatarFallback>NA</AvatarFallback>
         </Avatar>

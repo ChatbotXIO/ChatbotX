@@ -177,3 +177,12 @@ export const chatbotMemberNotificationChannelsSchema = z.object({
 export type ChatbotMemberNotificationChannels = z.infer<
   typeof chatbotMemberNotificationChannelsSchema
 >
+
+export const fillableContactKeys = [
+  "phoneNumber",
+  "email",
+  "firstName",
+  "lastName",
+  "gender",
+] as const
+export type FillableContactKeys = (typeof fillableContactKeys)[number]

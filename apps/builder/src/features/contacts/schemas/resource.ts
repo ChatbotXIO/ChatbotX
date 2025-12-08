@@ -10,8 +10,6 @@ import { BaseException } from "@/lib/errors/exception"
 export class ContactException extends BaseException {}
 
 export type ContactResource = ContactModel & {
-  fullName?: string
-  avatarUrl?: string | null
   contactCustomFields?: ContactCustomFieldModel[]
   conversation?: ConversationResource | null
 }

@@ -1,7 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import type { ContactModel } from "@aha.chat/database/types"
+import {
+  type ContactModel,
+  type FillableContactKeys,
+  fillableContactKeys,
+} from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -49,18 +53,11 @@ export const updateContactAction = chatbotActionClient
       )
 
       // Prepare data
-      const fillableFields = [
-        "phoneNumber",
-        "email",
-        "firstName",
-        "lastName",
-        "gender",
-      ]
       const contactFields: Partial<ContactModel> = {}
       const customFields: Record<string, unknown> = {}
 
       for (const [key, value] of Object.entries(parsedInput)) {
-        if (fillableFields.includes(key)) {
+        if (fillableContactKeys.includes(key as FillableContactKeys)) {
           // biome-ignore lint/suspicious/noExplicitAny: we know the key is a valid field
           ;(contactFields as any)[key] = value
         } else if (allCustomFieldsMap.has(key)) {

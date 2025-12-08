@@ -21,17 +21,6 @@ export const AccountFieldValueInput = ({
   const t = useTranslations()
   const { setValue } = useFormContext()
 
-  // const getDateValue = (formatString: string): Date => {
-  //   if (!watchValue) {
-  //     return new Date()
-  //   }
-  //   try {
-  //     return parse(watchValue, formatString, new Date())
-  //   } catch {
-  //     return new Date()
-  //   }
-  // }
-
   switch (customFieldType) {
     case CustomFieldType.number:
       return (

@@ -10,6 +10,7 @@ import { BaseException } from "./errors/exception"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
+    console.error("Error ->", error)
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         return `Unique constraint failed on ${error.meta?.target ?? ""}`

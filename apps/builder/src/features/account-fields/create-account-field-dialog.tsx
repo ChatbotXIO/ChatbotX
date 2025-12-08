@@ -26,6 +26,7 @@ import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCustomFieldTypeLabels } from "../shared-fields/shared"
 import { AccountFieldValueInput } from "./account-field-value-input"
@@ -83,11 +84,11 @@ export function CreateAccountFieldDialog({
       },
     )
 
-  const { watch } = form
-  const watchCustomFieldType = watch(
-    "customFieldType",
-    CustomFieldType.shortText,
-  )
+  const { control } = form
+  const watchCustomFieldType = useWatch({
+    control,
+    name: "customFieldType",
+  })
 
   const handleClose = () => {
     setOpen(false)
