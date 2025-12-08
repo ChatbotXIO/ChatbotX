@@ -162,7 +162,7 @@ export const WebchatMessageInput = ({
           </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
-              <WebchatMessageMenu />
+              <WebchatMessageMenu chatbotId={chatbotId} />
             </div>
             <div className="message-toolbar flex items-center">
               <Button

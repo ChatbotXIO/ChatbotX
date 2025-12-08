@@ -1,13 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { HexColorPicker } from "react-colorful"
-import { useFormContext } from "react-hook-form"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { FormFieldWrapper } from "./field-wrapper"
 import InputColor from "../ui/vatsalpipalava/input-color"
+import { FormFieldWrapper } from "./field-wrapper"
 
 type ColorPickerFieldProps = {
   name: string
@@ -27,12 +21,7 @@ export const ColorPickerField = (props: ColorPickerFieldProps) => {
       required={required}
     >
       {(field) => (
-        <InputColor
-          alpha={true}
-          className="mt-0"
-          label=""
-          {...field}
-        />
+        <InputColor alpha={true} className="mt-0" label="" {...field} />
       )}
     </FormFieldWrapper>
   )

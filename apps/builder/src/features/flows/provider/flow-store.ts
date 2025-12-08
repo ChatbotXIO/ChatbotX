@@ -14,7 +14,6 @@ export type FlowState = {
 export type FlowActions = {
   initialize: () => Promise<void>
   getAllActiveFlows: (chatbotId: string) => Promise<void>
-  getFlowOptions: () => { label: string; value: string }[]
 }
 
 export type FlowStore = FlowState & FlowActions
@@ -71,10 +70,4 @@ export const createFlowStore = () =>
 
       set({ flows: data })
     },
-
-    getFlowOptions: () =>
-      get().flows.map((flow) => ({
-        label: flow.name,
-        value: flow.id,
-      })),
   }))

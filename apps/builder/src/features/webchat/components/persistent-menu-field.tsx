@@ -1,7 +1,7 @@
 import { PersistentMenuType } from "@aha.chat/database/types"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import {
   Accordion,
   AccordionContent,
@@ -21,7 +21,7 @@ import { PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useMemo } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
-import { useFlowStore } from "@/features/flows/provider/flow-store-context"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 
 type PersistentMenuTypeOption = {
   value: PersistentMenuType
@@ -58,10 +58,11 @@ const PersistentMenuItem = memo(
         />
 
         {menuType === PersistentMenuType.flow && (
-          <SelectField
+          <ComboboxField
             label={t("fields.flowId.label")}
             name={`persistentMenus.${index}.flowId`}
             options={flowOptions}
+            required
           />
         )}
 
@@ -69,6 +70,7 @@ const PersistentMenuItem = memo(
           <InputField
             label={t("fields.url.label")}
             name={`persistentMenus.${index}.url`}
+            required
           />
         )}
       </div>
@@ -81,7 +83,7 @@ PersistentMenuItem.displayName = "PersistentMenuItem"
 export default function PersistentMenuField() {
   const t = useTranslations()
   const { control } = useFormContext()
-  const getFlowOptions = useFlowStore((state) => state.getFlowOptions)
+  const flowOptions = useFlowSelectOptions()
 
   const persistentMenuTypeOptions: PersistentMenuTypeOption[] = useMemo(
     () => [
@@ -96,8 +98,6 @@ export default function PersistentMenuField() {
     ],
     [t],
   )
-
-  const flowOptions = useMemo(() => getFlowOptions(), [getFlowOptions])
 
   const {
     fields: persistentMenus,
@@ -117,32 +117,9 @@ export default function PersistentMenuField() {
       label: "",
       type: PersistentMenuType.flow,
       flowId: "",
+      url: "",
     })
   }, [appendPersistentMenus])
-
-  // if (persistentMenus.length === 0) {
-  //   return (
-  //     <div className="space-y-2">
-  //       <Label htmlFor="persistentMenus">
-  //         {t("fields.persistentMenu.label", { plural: 1 })}
-  //       </Label>
-  //       <p className="text-muted-foreground text-sm">
-  //         {t("fields.persistentMenu.description")}
-  //       </p>
-  //       <Button
-  //         onClick={handleAppend}
-  //         size="sm"
-  //         type="button"
-  //         variant="outline"
-  //       >
-  //         <PlusIcon className="h-4 w-4" />
-  //         {t("actions.addFeature", {
-  //           feature: t("fields.persistentMenu.label", { plural: 0 }),
-  //         })}
-  //       </Button>
-  //     </div>
-  //   )
-  // }
 
   return (
     <Card>

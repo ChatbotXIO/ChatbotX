@@ -27,10 +27,10 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { useFlowStore } from "@/features/flows/provider/flow-store-context"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { updateWebchatAction } from "../actions/update-webchat.action"
 import {
   type ConversationStarterSchema,
@@ -51,13 +51,7 @@ export function UpdateWebchatForm({
   const t = useTranslations()
   const router = useRouter()
 
-  const [flowOptions, setFlowOptions] = useState<
-    { label: string; value: string }[]
-  >([])
-  const { getFlowOptions } = useFlowStore((state) => state)
-  useEffect(() => {
-    setFlowOptions(getFlowOptions())
-  }, [getFlowOptions])
+  const flowOptions = useFlowSelectOptions()
 
   const conversationStarterTypeOptions: {
     value: ConversationStarterType

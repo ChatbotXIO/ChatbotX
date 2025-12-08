@@ -73,7 +73,6 @@ const nextConfig: NextConfig = {
     ]
   },
   headers() {
-    console.log("headers")
     return [
       {
         source: "/chat-widget/:path*",

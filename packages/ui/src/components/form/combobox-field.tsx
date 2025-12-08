@@ -66,7 +66,7 @@ export function ComboboxField<T extends FieldValues>({
   placeholder,
   description,
   options,
-  side = "right",
+  side,
   triggerValueChange,
 }: ComboboxFieldProps<T>) {
   const [open, setOpen] = useState(false)
