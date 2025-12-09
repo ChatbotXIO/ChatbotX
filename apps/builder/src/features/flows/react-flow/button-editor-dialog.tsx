@@ -4,7 +4,6 @@ import type {
   OpenWebsiteStepSchema,
   StartAnotherNodeStepSchema,
   StartExternalNodeStepSchema,
-  StepType,
 } from "@aha.chat/flow-config"
 import {
   type ButtonStepProps,
@@ -12,6 +11,7 @@ import {
   buttonStepSchema,
   openWebsiteStepDefaultFn,
   performActionNodeDefaultFn,
+  type StepType,
   sendMessageNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
   startExternalNodeStepDefaultFn,
@@ -39,6 +39,7 @@ import { getProperty, setProperty } from "dot-prop"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import type { Resolver } from "react-hook-form"
 import {
   useFieldArray,
   useForm,
@@ -240,8 +241,8 @@ export function ButtonEditorDialog() {
   }, [buttonPath])
 
   const form = useForm<ButtonStepProps>({
-    resolver: zodResolver(buttonStepSchema),
-    defaultValues: data || {},
+    resolver: zodResolver(buttonStepSchema) as Resolver<ButtonStepProps>,
+    defaultValues: data || ({} as ButtonStepProps),
     mode: "onChange",
   })
   const { formState, setValue, control } = form

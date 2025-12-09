@@ -7,12 +7,6 @@ export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
 
-export const FieldOperationType = {
-  set: "O01",
-  append: "O02",
-  prepend: "O03",
-} as const
-
 export const ReplyType = {
   Message: "R01",
   Flow: "R02",
@@ -102,15 +96,6 @@ export const organizationSettingsSchema = z.object({
     .optional(),
 })
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
-
-export const AI_PROVIDERS = {
-  OPENAI: "openai",
-  GEMINI: "gemini",
-  CLAUDE: "claude",
-  DEEPSEEK: "deepseek",
-} as const
-
-export type AIProvider = (typeof AI_PROVIDERS)[keyof typeof AI_PROVIDERS]
 
 export type AIAgentProvider = {
   provider: "openAI" | "gemini"

@@ -1,20 +1,26 @@
 "use client"
 
+import { aiGenerateTextDefaultFn } from "@aha.chat/flow-config"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useEffect } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { z } from "zod"
 
-// Schema for AI model form (input)
+// Get default values from schema default function to ensure consistency
+const defaultStep = aiGenerateTextDefaultFn("openai")
+const DEFAULT_TEMPERATURE = defaultStep.temperature
+const DEFAULT_MAX_TOKENS = defaultStep.maxTokens
+
+// Schema for AI model form (input) - derived from aiGenerateTextSchema with UI-specific transformations
 export const aiModelFormInputSchema = z.object({
   model: z.string().optional(),
   prompt: z.string().optional(),
   userMessage: z.string().optional(),
   outputCfId: z.string().optional(),
   tools: z.array(z.string()).optional(),
-  rememberConversation: z.array(z.string()).optional(),
-  temperature: z.union([z.number(), z.string()]).optional(),
-  maxTokens: z.union([z.number(), z.string()]).optional(),
+  rememberConversation: z.array(z.string()).optional(), // UI: checkbox array
+  temperature: z.union([z.number(), z.string()]).optional(), // UI: can be string from input
+  maxTokens: z.union([z.number(), z.string()]).optional(), // UI: can be string from input
 })
 
 // Schema for AI model form (output)
@@ -31,10 +37,6 @@ export const aiModelFormOutputSchema = z.object({
 
 export type AIModelFormInputData = z.infer<typeof aiModelFormInputSchema>
 export type AIModelFormOutputData = z.infer<typeof aiModelFormOutputSchema>
-
-// Default values constants
-const DEFAULT_TEMPERATURE = 0.4
-const DEFAULT_MAX_TOKENS = 250
 
 type UseAIModelFormProps = {
   parentName: string

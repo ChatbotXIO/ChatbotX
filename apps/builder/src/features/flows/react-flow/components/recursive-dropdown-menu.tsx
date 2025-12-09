@@ -1,4 +1,7 @@
-import type { StepType } from "@aha.chat/flow-config"
+import type {
+  AIGenerateTextProviderType,
+  StepType,
+} from "@aha.chat/flow-config"
 import {
   DropdownMenuItem,
   DropdownMenuPortal,
@@ -22,10 +25,7 @@ export default function RecursiveDropdownMenu({
   onClick,
 }: {
   data: MenuItem[]
-  onClick: (
-    name: StepType,
-    provider?: "openai" | "gemini" | "claude" | "deepseek",
-  ) => void
+  onClick: (name: StepType, provider?: AIGenerateTextProviderType) => void
 }) {
   return (
     <>

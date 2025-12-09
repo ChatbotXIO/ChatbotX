@@ -1,5 +1,13 @@
-import type { FlowNode, NodeType } from "@aha.chat/flow-config"
-import { disabledCopyActionTypes, StepType } from "@aha.chat/flow-config"
+import type {
+  AIGenerateTextProviderType,
+  FlowNode,
+  NodeType,
+} from "@aha.chat/flow-config"
+import {
+  aiGenerateTextDefaultFn,
+  disabledCopyActionTypes,
+  StepType,
+} from "@aha.chat/flow-config"
 import { TriggerFormInitially } from "@aha.chat/ui/components/form/form-trigger-initially"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -69,16 +77,10 @@ export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
     name: "steps",
   })
 
-  const onAddStep = (
-    name: StepType,
-    provider?: "openai" | "gemini" | "claude" | "deepseek",
-  ) => {
+  const onAddStep = (name: StepType, provider?: AIGenerateTextProviderType) => {
     if (name === StepType.aiGenerateText && provider) {
-      const step = allSteps[name]?.defaultFn()
-      if (step) {
-        // Set provider field for aiGenerateText step
-        append({ ...step, provider })
-      }
+      const step = aiGenerateTextDefaultFn(provider)
+      append(step)
     } else {
       const newStep = allSteps[name]?.defaultFn()
       if (newStep) {

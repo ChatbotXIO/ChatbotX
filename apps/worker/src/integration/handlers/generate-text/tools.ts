@@ -1,5 +1,4 @@
 import type { ToolSet } from "ai"
-import { logger } from "../../../lib/logger"
 import { TOOL_PREFIX } from "../automated-response/constants"
 import {
   getAIFileTools,
@@ -8,12 +7,10 @@ import {
   parseSelectedIdsFromTools,
 } from "../automated-response/tools"
 
-// Parse tool IDs from step config (wrapper for consistency)
 export function parseToolIds(toolIds: string[], prefix: string): string[] {
   return parseSelectedIdsFromTools(toolIds, prefix)
 }
 
-// Load AI tools from database based on tool IDs in step config
 export async function getToolsFromStepConfig(
   chatbotId: string,
   tools: string[],
@@ -30,11 +27,7 @@ export async function getToolsFromStepConfig(
     ])
 
     return { ...fileTools, ...functionTools, ...mcpTools }
-  } catch (error) {
-    logger.error("[ai-generate-text] getToolsFromStepConfig failed", {
-      error,
-      chatbotId,
-    })
+  } catch {
     return {}
   }
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@aha.chat/database"
-import { AI_PROVIDERS, AIMessageRole } from "@aha.chat/database/types"
+import { AIMessageRole } from "@aha.chat/database/types"
+import { AI_PROVIDERS } from "@aha.chat/flow-config"
 import { type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
 import {

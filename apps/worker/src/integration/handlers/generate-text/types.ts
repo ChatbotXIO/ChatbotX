@@ -1,7 +1,16 @@
-import type { AIProvider } from "@aha.chat/database/types"
+import type { AIProvider } from "@aha.chat/flow-config"
+
+export const AIMessageRoleForAI = {
+  user: "user" as const,
+  assistant: "assistant" as const,
+  system: "system" as const,
+} as const
+
+export type AIMessageRoleForAI =
+  (typeof AIMessageRoleForAI)[keyof typeof AIMessageRoleForAI]
 
 export type AIMessage = {
-  role: "user" | "assistant" | "system"
+  role: AIMessageRoleForAI
   content: string
 }
 
@@ -16,6 +25,7 @@ export type AIGenerateTextStep = {
   rememberConversation?: boolean
   temperature?: number
   maxTokens?: number
+  provider?: string
 }
 
 export type AIProviderConfig = {
