@@ -55,7 +55,7 @@ const updateStepOnEdgeConnect = (
   return step
 }
 
-export function useCustomFlow() {
+export function useNodeData() {
   const { getNode, getEdge, updateNodeData, setEdges } = useReactFlow()
 
   const getNodeOnEdgeDelete = useCallback(

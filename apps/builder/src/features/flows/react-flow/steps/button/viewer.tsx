@@ -1,7 +1,7 @@
 import type { ButtonStepProps } from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Handle, Position, useReactFlow } from "@xyflow/react"
-import { useCustomFlow } from "../../libs/use-custom-flow"
+import { useNodeData } from "../../libs/use-node-data"
 
 type ButtonStepViewerProps = {
   data: ButtonStepProps
@@ -9,7 +9,7 @@ type ButtonStepViewerProps = {
 
 export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
   const { data } = props
-  const { updateNodeDataOnEdgeConnect } = useCustomFlow()
+  const { updateNodeDataOnEdgeConnect } = useNodeData()
   const { getEdges } = useReactFlow()
   const isConnected = getEdges().some((edge) => edge.sourceHandle === data.id)
 
