@@ -1,13 +1,12 @@
-import type { FieldPath, FieldValues } from "react-hook-form"
-import { Input } from "../ui/input"
-import { FormFieldWrapper } from "./field-wrapper"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { FormControl } from "../ui/form"
-import { Button } from "../ui/button"
 import { cn } from "@aha.chat/ui/lib/utils"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
+import type { FieldPath, FieldValues } from "react-hook-form"
+import { Button } from "../ui/button"
 import { Calendar } from "../ui/calendar"
+import { FormControl } from "../ui/form"
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
+import { FormFieldWrapper } from "./field-wrapper"
 
 type CalendarFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
@@ -30,27 +29,25 @@ export function CalendarField<T extends FieldValues>({
   placeholder,
   description,
   formItemClassName,
-  min,
-  max,
 }: CalendarFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
+      formItemClassName={formItemClassName}
       label={label}
       name={name}
-      formItemClassName={formItemClassName}
+      required={required}
     >
       {(field) => (
         <Popover>
           <PopoverTrigger asChild>
             <FormControl>
               <Button
-                variant={"outline"}
                 className={cn(
                   "w-[240px] pl-3 text-left font-normal",
-                  !field.value && "text-muted-foreground"
+                  !field.value && "text-muted-foreground",
                 )}
+                variant={"outline"}
               >
                 {field.value ? (
                   format(field.value, "PPP")
@@ -61,12 +58,13 @@ export function CalendarField<T extends FieldValues>({
               </Button>
             </FormControl>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent align="start" className="w-auto p-0">
             <Calendar
-              mode="single"
-              selected={field.value}
-              onSelect={(date) => field.onChange((date ?? undefined) as any)}
               captionLayout="dropdown"
+              mode="single"
+              // biome-ignore lint/suspicious/noExplicitAny: safe ignore
+              onSelect={(date) => field.onChange((date ?? undefined) as any)}
+              selected={field.value}
             />
           </PopoverContent>
         </Popover>

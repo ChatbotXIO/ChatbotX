@@ -1,8 +1,8 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ContactCollection } from "../schemas"
-import type { ListContactsRequest } from "../schemas/get-contacts-schema"
+import type { ListContactsRequest } from "../schemas/query"
+import type { ContactCollection } from "../schemas/resource"
 
 export async function listContacts(
   input: ListContactsRequest,

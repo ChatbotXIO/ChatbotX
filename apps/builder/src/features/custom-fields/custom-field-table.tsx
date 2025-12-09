@@ -19,7 +19,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
-import CustomFieldLabel from "./components/custom-field-label"
+import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 import type { listCustomFields } from "./queries"
@@ -95,7 +95,9 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
           <DataTableColumnHeader column={column} title="Type" />
         ),
         cell: ({ row }) => (
-          <CustomFieldLabel customFieldType={row.original.customFieldType} />
+          <CustomFieldTypeLabel
+            customFieldType={row.original.customFieldType}
+          />
         ),
         enableSorting: true,
         enableHiding: false,

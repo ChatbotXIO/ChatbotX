@@ -1,5 +1,5 @@
 import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
-import type { MultiSelectGroup } from "@aha.chat/ui/components/sersavan/multi-select"
+import type { MultiSelectGroup } from "@aha.chat/ui/components/ui/sersavan/multi-select"
 import { useMemo } from "react"
 import { useUserStore } from "./user-store-context"
 

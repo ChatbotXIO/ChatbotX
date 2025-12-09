@@ -26,9 +26,9 @@ export function InputNumberField<T extends FieldValues>({
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
       label={label}
       name={name}
+      required={required}
     >
       {(field) => (
         <NumberInput placeholder={placeholder} {...props} {...field} />

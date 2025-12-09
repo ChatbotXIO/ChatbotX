@@ -33,6 +33,7 @@ import { toast } from "sonner"
 import type { getFlows } from "@/features/flows/queries"
 import { createWebchatAction } from "../actions/create-webchat.action"
 import { createWebchatRequest } from "../schemas/webchat.schema"
+import AuthorizedDomainField from "./authorized-domain-field"
 
 type CreateWebchatFormProps = {
   promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
@@ -123,15 +124,6 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
   )
 
   const {
-    fields: authorizedDomains,
-    append: appendAuthorizedDomains,
-    remove: removeAuthorizedDomains,
-  } = useFieldArray({
-    control: form.control,
-    name: "authorizedDomains",
-  })
-
-  const {
     fields: conversationStarters,
     append: appendConversationStarters,
     remove: removeConversationStarters,
@@ -163,36 +155,7 @@ export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
 
         <Separator />
 
-        <div className="space-y-2">
-          <Label htmlFor="authorizedDomains">
-            {t("fields.authorizedDomain.label", { plural: 1 })}
-          </Label>
-          <p className="text-muted-foreground text-sm">
-            {t("fields.authorizedDomain.description")}
-          </p>
-          {authorizedDomains.map((_, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: wip
-            <div className="flex gap-2" key={index}>
-              <InputField name={`authorizedDomains.${index}.value`} />
-              <Button
-                onClick={() => removeAuthorizedDomains(index)}
-                variant="outline"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            onClick={() => appendAuthorizedDomains({ value: "" })}
-            size="sm"
-            variant="outline"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.authorizedDomain.label", { plural: 0 }),
-            })}
-          </Button>
-        </div>
+        <AuthorizedDomainField />
 
         <Separator />
 

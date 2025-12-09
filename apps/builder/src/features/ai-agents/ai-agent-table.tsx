@@ -3,7 +3,6 @@
 import type { AIAgentModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
@@ -13,8 +12,12 @@ import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
 import type { getAIFiles } from "../ai-files/queries"
 import type { getAIFunctions } from "../ai-functions/queries"
 import type { getAIMcpServers } from "../ai-mcp-servers/queries"
+import { ChangeDefault } from "./components/change-default"
 import { CreateAIAgentDialog } from "./create-ai-agent"
-import { GetAIAgentsColumns } from "./table-columns"
+import {
+  type AIAgentDataTableRowAction,
+  getAIAgentsColumns,
+} from "./table-columns"
 
 type AIAgentsTableProps = {
   listPromises: Promise<[Awaited<ReturnType<typeof getAIAgents>>]>
@@ -40,9 +43,16 @@ export function AIAgentsTable({
   const router = useRouter()
 
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<AIAgentModel> | null>(null)
+    useState<AIAgentDataTableRowAction<AIAgentModel> | null>(null)
 
-  const columns = useMemo(() => GetAIAgentsColumns({ setRowAction, t }), [t])
+  const columns = useMemo(
+    () =>
+      getAIAgentsColumns({
+        setRowAction,
+        t,
+      }),
+    [t],
+  )
 
   const { table } = useDataTable({
     data,
@@ -102,6 +112,15 @@ export function AIAgentsTable({
           router.refresh()
         }}
         open={rowAction?.variant === "update"}
+      />
+
+      <ChangeDefault
+        aiAgent={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "toggleDefault"}
       />
     </div>
   )

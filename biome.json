@@ -12,7 +12,12 @@
       "!**/.next",
       "!**/.turbo",
       "!**/packages/database/src/generated/prisma",
-      "!**/packages/ui",
+      "!**/packages/ui/src/components/data-table",
+      "!**/packages/ui/src/components/ui",
+      "!**/packages/ui/src/lib",
+      "!**/packages/ui/src/hooks",
+      "!**/packages/ui/src/components/carousel-snap.tsx",
+      "!**/packages/ui/src/types/data-table.ts",
       "!**/apps/builder/src/components/node-header.tsx",
       "!**/apps/builder/src/components/file-dropzone.tsx",
       "!**/dist"

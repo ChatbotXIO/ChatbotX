@@ -1,6 +1,5 @@
 "use client"
 
-import { TagsInputField } from "@aha.chat/ui/components/muhammada86/tags-input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -13,6 +12,7 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
+import { TagsInputField } from "@aha.chat/ui/components/ui/muhammada86/tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -22,7 +22,7 @@ import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { removeContactTagAction } from "../actions/remove-contact-tag.action"
-import { removeContactTagRequest } from "../schemas/remove-contact-tag.request"
+import { removeContactTagRequest } from "../schemas/contact-tag"
 
 type RemoveContactTagDialogProps = {
   trigger: ReactElement

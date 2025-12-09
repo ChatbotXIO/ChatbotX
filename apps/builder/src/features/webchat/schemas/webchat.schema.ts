@@ -36,7 +36,7 @@ const persistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
     type: z.literal(PersistentMenuType.website),
-    websiteUrl: z.url(),
+    url: z.url(),
   }),
 ])
 export type PersistentMenuSchema = z.infer<typeof persistentMenuSchema>
@@ -47,7 +47,7 @@ export const createWebchatRequest = z.object({
   welcomeFlowId: z.string().nullish(),
   authorizedDomains: z.array(
     z.object({
-      value: z.url(),
+      value: z.hostname(),
     }),
   ),
   conversationStarters: z.array(conversationStarterSchema),

@@ -142,8 +142,8 @@ export const createWebchatMessageAction = actionClient
           },
         })
 
-        // create attachment if path exists
         if (path && "files" in parsedInput && parsedInput.files?.[0]) {
+          // create attachment if path exists
           const file = parsedInput.files[0]
           const mimeType = file.type as string
           const attachment = await tx.attachment.create({
@@ -161,6 +161,29 @@ export const createWebchatMessageAction = actionClient
           })
 
           newMessage.attachments = [attachment as AttachmentResource]
+        }
+
+        if ("flowId" in parsedInput && parsedInput.flowId) {
+          const flow = await tx.flow.findFirst({
+            where: {
+              chatbotId: conversation.chatbotId,
+              id: parsedInput.flowId,
+            },
+          })
+
+          if (flow?.currentVersionId) {
+            try {
+              await integrationQueue.add(IntegrationJobAction.sendFlow, {
+                type: IntegrationJobAction.sendFlow,
+                data: {
+                  conversationId: conversation.id,
+                  flowVersionId: flow.currentVersionId,
+                },
+              })
+            } catch (error) {
+              console.error("Error sending flow", error)
+            }
+          }
         }
 
         await tx.conversation.update({

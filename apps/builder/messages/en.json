@@ -134,15 +134,18 @@
     "chooseSubaction": "Choose Subaction",
     "resend": "Resend",
     "publish": "Publish",
-    "randomRow": "Random Row"
+    "setAsDefaultAgent": "Set as Default",
+    "unsetDefaultAgent": "Unset Default",
+    "randomRow": "Random Row",
+    "clickToEdit": "Click to edit"
   },
   "admins": {
     "title": "Admins"
   },
   "aiAgent": {
+    "defaultAgent": "Default Agent",
     "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses.",
     "setting": {
-      "description": "AI Agents description",
       "label": "AI Agents"
     },
     "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
@@ -169,7 +172,6 @@
   },
   "aiTrigger": {
     "setting": {
-      "description": "AI Triggers description",
       "label": "AI Triggers"
     }
   },
@@ -608,7 +610,12 @@
       "label": "Custom CSS"
     },
     "customField": {
-      "label": "Custom Field"
+      "label": "Custom Field",
+      "set_value": "Set value",
+      "append": "Append to the end",
+      "prepend": "Prepend to the beginning",
+      "increase": "Increase by",
+      "decrease": "Decrease by"
     },
     "dataCollect": {
       "label": "Data Collect",
@@ -1023,6 +1030,7 @@
       "label": "Long Text"
     },
     "replyFormat": {
+      "label": "Reply Format",
       "number": "Number",
       "text": "Text",
       "email": "Email",
@@ -1078,6 +1086,21 @@
     },
     "spreadsheets": {
       "label": "Spreadsheets"
+    },
+    "retryMessage": {
+      "label": "Retry Message"
+    },
+    "skipButtonLabel": {
+      "label": "Skip Button Label"
+    },
+    "autoSkipTime": {
+      "label": "Auto Skip Time"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Auto Skip Fail Attempts"
+    },
+    "autoSkip": {
+      "label": "Auto Skip"
     }
   },
   "flows": {
@@ -1314,7 +1337,10 @@
     "resendSuccess": "Resend successfully",
     "duplicateTitle": "Duplicate {feature}",
     "duplicateDescription": "Are you sure you want to duplicate the {feature}?\nThis action cannot be undone.",
-    "duplicateSuccess": "{feature} duplicated successfully"
+    "duplicateSuccess": "{feature} duplicated successfully",
+    "changeDefault": "Change Default",
+    "changeDefaultDescription": "Are you sure you want to change the default AI agent?",
+    "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

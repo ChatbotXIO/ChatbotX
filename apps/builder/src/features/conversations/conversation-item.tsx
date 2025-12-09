@@ -18,7 +18,8 @@ import {
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
-import type { ContactResource } from "../contacts/schemas"
+import type { ContactResource } from "../contacts/schemas/resource"
+import { getAvatarUrl, getFullName } from "../contacts/utils"
 import type { MessageResource } from "../messages/schemas"
 import type { ConversationResource } from "./schemas"
 
@@ -80,7 +81,7 @@ export default function ConversationItem({
   )
 
   const contactFullName = useMemo(
-    () => conversation.contact?.fullName ?? "",
+    () => getFullName(conversation.contact),
     [conversation.contact],
   )
 
@@ -88,12 +89,12 @@ export default function ConversationItem({
     () => (
       <Avatar className="h-12 w-12">
         <AvatarImage
-          alt={conversation.contact?.fullName}
+          alt={getFullName(conversation.contact)}
           className="object-cover"
-          src={conversation.contact?.avatarUrl ?? ""}
+          src={getAvatarUrl(conversation.contact)}
         />
         <AvatarFallback className="bg-zinc-500">
-          {conversation.contact?.fullName.charAt(0)}
+          {getFullName(conversation.contact).charAt(0)}
         </AvatarFallback>
       </Avatar>
     ),

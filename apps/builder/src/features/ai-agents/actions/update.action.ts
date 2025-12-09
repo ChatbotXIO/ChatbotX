@@ -4,8 +4,8 @@ import { prisma } from "@aha.chat/database"
 import {
   type UpdateAIAgentRequest,
   updateAIAgentRequest,
-} from "@/features/ai-agents/schemas/create-ai-agent.request"
-import { AIAgentException } from "@/features/ai-agents/schemas/errors.schema"
+} from "@/features/ai-agents/schemas/request"
+import { AIAgentException } from "@/features/ai-agents/schemas/resource"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -24,30 +24,45 @@ export const updateAIAgentAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAIAgentRequest
     }) => {
-      const existingAIAgent = await prisma.aIAgent.findFirst({
-        select: {
-          id: true,
-        },
-        where: {
-          name: parsedInput.name,
-          chatbotId,
-          id: {
-            not: agentId,
+      // Verify if the name is already taken
+      if (parsedInput.name) {
+        const existingAIAgent = await prisma.aIAgent.findFirst({
+          select: {
+            id: true,
           },
-        },
-      })
+          where: {
+            name: parsedInput.name,
+            chatbotId,
+            id: {
+              not: agentId,
+            },
+          },
+        })
 
-      if (existingAIAgent) {
-        throw new AIAgentException(
-          `AIAgent with the name "${parsedInput.name}" already exists.`,
-        )
+        if (existingAIAgent) {
+          throw new AIAgentException(
+            `AIAgent with the name "${parsedInput.name}" already exists.`,
+          )
+        }
       }
 
-      await prisma.aIAgent.update({
-        where: {
-          id: agentId,
-        },
-        data: parsedInput,
+      await prisma.$transaction(async (tx) => {
+        // make all other agents not default
+        if (parsedInput.isDefault) {
+          await tx.aIAgent.updateMany({
+            where: {
+              chatbotId,
+            },
+            data: { isDefault: false },
+          })
+        }
+
+        await tx.aIAgent.update({
+          where: {
+            id: agentId,
+          },
+          data: parsedInput,
+        })
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)

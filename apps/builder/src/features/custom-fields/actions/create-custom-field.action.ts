@@ -1,6 +1,7 @@
 "use server"
 
-import { FieldType, FolderType, prisma } from "@aha.chat/database"
+import { FieldType, FolderType, Prisma, prisma } from "@aha.chat/database"
+import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -32,15 +33,28 @@ export const createCustomFieldAction = chatbotActionClient
         )
       }
 
-      await prisma.field.create({
-        data: {
-          chatbotId,
-          fieldType: FieldType.customField,
-          showInInbox: true,
-          ...parsedInput,
-        },
-      })
+      try {
+        await prisma.field.create({
+          data: {
+            chatbotId,
+            fieldType: FieldType.customField,
+            showInInbox: true,
+            ...parsedInput,
+          },
+        })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+        revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          return returnValidationErrors(createCustomFieldSchema, {
+            _errors: ["Validation Exception"],
+            name: { _errors: ["Name is already taken"] },
+          })
+        }
+        throw new Error("Failed to create custom field")
+      }
     },
   )

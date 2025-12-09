@@ -21,8 +21,8 @@ import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
-import { clearContactCustomFieldAction } from "../actions/clear-contact-custom-field.action"
-import { clearContactCustomFieldRequest } from "../schemas/clear-contact-custom-field.request"
+import { deleteContactCustomFieldAction } from "../actions/delete-contact-custom-field.action"
+import { deleteContactCustomFieldRequest } from "../schemas/contact-custom-field"
 
 type ClearContactCustomFieldDialogProps = {
   trigger: ReactElement
@@ -40,8 +40,8 @@ export default function ClearContactCustomFieldDialog({
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    clearContactCustomFieldAction.bind(null, chatbotId),
-    zodResolver(clearContactCustomFieldRequest),
+    deleteContactCustomFieldAction.bind(null, chatbotId),
+    zodResolver(deleteContactCustomFieldRequest),
     {
       actionProps: {
         onSuccess: () => {

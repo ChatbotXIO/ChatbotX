@@ -1,5 +1,6 @@
 "use client"
 
+import { CustomFieldType } from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -8,78 +9,101 @@ import {
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
-import { callAPI } from "@/lib/swr"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
-import type { CustomFieldCollection } from "../custom-fields/schemas"
+import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
+import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
-import type { ContactResource } from "./schemas"
+import type { ContactEditableField, ContactResource } from "./schemas/resource"
+import { getAvatarUrl } from "./utils"
 
 export const ContactDetail = () => {
+  const t = useTranslations()
+
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const { activeConversationId, conversations } = useChatStore((state) => state)
 
   const [contact, setContact] = useState<ContactResource | null>(null)
-  const [selectedField, setSelectedField] = useState<string | null>(null)
+  const [selectedField, setSelectedField] =
+    useState<ContactEditableField | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
+  const { customFields, initialized: initializedCustomFields } =
+    useCustomFieldStore((state) => state)
+
+  const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
+
   useEffect(() => {
-    if (activeConversationId) {
+    if (activeConversationId && initializedCustomFields) {
       const conversation = conversations.find(
         (item) => item.id === activeConversationId,
       )
-      setContact(conversation?.contact ?? null)
+
+      if (conversation?.contact) {
+        setContact(conversation.contact)
+
+        const tmpContactFields: ContactEditableField[] = [
+          {
+            key: "email",
+            icon: AtSignIcon,
+            label: "Email",
+            value: conversation.contact.email,
+            customFieldType: CustomFieldType.shortText,
+          },
+          {
+            key: "firstName",
+            icon: TextIcon,
+            label: "First Name",
+            value: conversation.contact.firstName,
+            customFieldType: CustomFieldType.shortText,
+          },
+          {
+            key: "lastName",
+            icon: TextIcon,
+            label: "Last Name",
+            value: conversation.contact.lastName,
+            customFieldType: CustomFieldType.shortText,
+          },
+          {
+            key: "phoneNumber",
+            icon: PhoneIcon,
+            label: "Phone Number",
+            value: conversation.contact.phoneNumber,
+            customFieldType: CustomFieldType.shortText,
+          },
+        ]
+
+        for (const cc of conversation?.contact.contactCustomFields || []) {
+          const targetCustomField = customFields.find(
+            (c) => c.id === cc.customFieldId,
+          )
+          if (targetCustomField) {
+            tmpContactFields.push({
+              key: cc.customFieldId,
+              icon: customFieldIconsMap[targetCustomField.customFieldType],
+              label: targetCustomField.name,
+              value: cc.value,
+              customFieldType: targetCustomField.customFieldType,
+            })
+          }
+        }
+
+        setContactFields(tmpContactFields)
+      } else {
+        setContact(null)
+        setContactFields([])
+      }
     } else {
       setContact(null)
+      setContactFields([])
     }
-  }, [activeConversationId])
-
-  // Get all custom fields
-  const customFieldsUrl = `/api/chatbots/${chatbotId}/custom-fields?perPage=9999`
-  const { data } = callAPI<CustomFieldCollection>(customFieldsUrl)
-  const allCustomFields = data?.data || []
-
-  const editableData = [
-    {
-      key: "email",
-      icon: AtSignIcon,
-      label: "Email",
-      value: contact?.email,
-    },
-    {
-      key: "firstName",
-      icon: TextIcon,
-      label: "First Name",
-      value: contact?.firstName,
-    },
-    {
-      key: "lastName",
-      icon: TextIcon,
-      label: "Last Name",
-      value: contact?.lastName,
-    },
-    {
-      key: "phoneNumber",
-      icon: PhoneIcon,
-      label: "Phone Number",
-      value: contact?.phoneNumber,
-    },
-  ]
-
-  for (const cc of contact?.contactCustomFields || []) {
-    const targetCustomField = allCustomFields.find(
-      (c) => c.id === cc.customFieldId,
-    )
-    if (targetCustomField) {
-      editableData.push({
-        key: cc.customFieldId,
-        icon: TextIcon,
-        label: targetCustomField.name,
-        value: cc.value,
-      })
-    }
-  }
+  }, [
+    activeConversationId,
+    initializedCustomFields,
+    conversations,
+    customFields,
+  ])
 
   return contact ? (
     <div className="flex flex-col">
@@ -88,13 +112,13 @@ export const ContactDetail = () => {
           <AvatarImage
             alt={contact.firstName ?? ""}
             className="object-cover"
-            src={contact.avatarUrl ?? ""}
+            src={getAvatarUrl(contact)}
           />
           <AvatarFallback>NA</AvatarFallback>
         </Avatar>
       </div>
       <div className="flex flex-col gap-1 font-medium text-[12px] text-gray-600">
-        {editableData.map((editable) => (
+        {contactFields.map((editable) => (
           <div className="flex w-full items-center gap-1" key={editable.key}>
             <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
               <editable.icon className="size-4" />
@@ -103,25 +127,63 @@ export const ContactDetail = () => {
 
             <Button
               className="flex-1 justify-start truncate text-[12px]"
-              onClick={() => setSelectedField(editable.key)}
+              onClick={() => setSelectedField(editable)}
               size="sm"
               variant="ghost"
             >
-              {editable.value ?? "-- Click to edit --"}
+              {editable.value && editable.value.length > 0 ? (
+                <span className="truncate">{editable.value}</span>
+              ) : (
+                <span className="italic">-- {t("actions.clickToEdit")} --</span>
+              )}
             </Button>
           </div>
         ))}
+        <ContactCustomFieldManage
+          chatbotId={chatbotId}
+          disabledIds={contactFields.map((c) => c.key)}
+          onChooseCustomField={(customFieldId) => {
+            const targetCustomField = customFields.find(
+              (c) => c.id === customFieldId,
+            )
 
-        <ContactCustomFieldManage chatbotId={chatbotId} />
+            if (targetCustomField) {
+              setContactFields([
+                ...contactFields,
+                {
+                  key: customFieldId,
+                  icon: customFieldIconsMap[targetCustomField.customFieldType],
+                  label: targetCustomField.name,
+                  value: "",
+                  customFieldType: targetCustomField.customFieldType,
+                },
+              ])
+            }
+          }}
+        />
       </div>
 
       <EditContactField
         chatbotId={chatbotId}
-        contact={contact}
-        id={contact.id}
+        contactId={contact.id}
+        onDeleted={(key) => {
+          const updatedContactFields = contactFields.filter(
+            (field) => field.key !== key,
+          )
+          setContactFields(updatedContactFields)
+        }}
         onOpenChange={() => setSelectedField(null)}
+        onUpdated={(key, value) => {
+          const updatedContactFields = contactFields.map((field) => {
+            if (field.key === key) {
+              return { ...field, value }
+            }
+            return field
+          })
+          setContactFields(updatedContactFields)
+        }}
         open={Boolean(selectedField)}
-        selectedField={selectedField}
+        targetField={selectedField}
       />
     </div>
   ) : null

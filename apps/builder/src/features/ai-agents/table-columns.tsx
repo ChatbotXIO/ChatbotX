@@ -2,6 +2,7 @@
 
 import type { AIAgentModel } from "@aha.chat/database/types"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { Badge } from "@aha.chat/ui/components/ui/badge"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
@@ -10,26 +11,37 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
+  BrainIcon,
   EllipsisVerticalIcon,
   PencilIcon,
-  StarIcon,
   Trash2Icon,
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 
+export type AIAgentDataTableRowAction<TData> = {
+  row: Row<TData>
+  variant:
+    | "update"
+    | "delete"
+    | "duplicate"
+    | "rename"
+    | "resend"
+    | "enable"
+    | "toggleDefault"
+}
+
 type GetAIAgentsColumnsProps = {
   setRowAction: Dispatch<
-    SetStateAction<DataTableRowAction<AIAgentModel> | null>
+    SetStateAction<AIAgentDataTableRowAction<AIAgentModel> | null>
   >
   t: ReturnType<typeof useTranslations>
 }
 
-export function GetAIAgentsColumns({
+export function getAIAgentsColumns({
   setRowAction,
   t,
 }: GetAIAgentsColumnsProps): ColumnDef<AIAgentModel>[] {
@@ -67,15 +79,23 @@ export function GetAIAgentsColumns({
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          {row.original.name}{" "}
-          {row.original.isDefault && (
-            <StarIcon className="size-4" fill="red" stroke="red" />
-          )}
-        </div>
+        <div className="flex items-center gap-2">{row.original.name}</div>
       ),
       size: 300,
       enableSorting: true,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "isDefault",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="" />
+      ),
+      cell: ({ row }) =>
+        row.original.isDefault && (
+          <Badge className="cursor-pointer">{t("aiAgent.defaultAgent")}</Badge>
+        ),
+      size: 150,
+      enableSorting: false,
       enableHiding: false,
     },
     {
@@ -109,6 +129,14 @@ export function GetAIAgentsColumns({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "toggleDefault" })}
+            >
+              <BrainIcon className="mr-2" />
+              {row.original.isDefault
+                ? t("actions.unsetDefaultAgent")
+                : t("actions.setAsDefaultAgent")}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "update" })}
             >

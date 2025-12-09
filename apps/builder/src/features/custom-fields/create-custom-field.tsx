@@ -16,24 +16,32 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
 import { createCustomFieldSchema } from "./schemas/create-custom-field.schema"
 
-export function CreateCustomFieldDialog({
-  chatbotId,
-  folderId,
-  triggerButton,
-  onSuccess,
-}: {
+type CreateCustomFieldDialogProps = {
   chatbotId: string
   folderId: string | null
   triggerButton?: ReactNode
   onSuccess?: () => void
-}) {
+}
+
+export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
+  const router = useRouter()
   const t = useTranslations()
+
+  const {
+    chatbotId,
+    folderId,
+    triggerButton,
+    onSuccess = () => {
+      router.refresh()
+    },
+  } = props
 
   const [open, setOpen] = useState(false)
 
@@ -65,7 +73,10 @@ export function CreateCustomFieldDialog({
           chatbotId={chatbotId}
           folderId={folderId}
           onClose={() => setOpen(false)}
-          onSuccess={onSuccess}
+          onSuccess={() => {
+            setOpen(false)
+            onSuccess()
+          }}
         />
       </DialogContent>
     </Dialog>

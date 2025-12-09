@@ -10,12 +10,12 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateContactRequest,
-  createContactSchema,
-} from "../schemas/create-contact-schema"
+  createContactRequest,
+} from "../schemas/action"
 
 export const createContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
-  .inputSchema(createContactSchema)
+  .inputSchema(createContactRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
@@ -31,7 +31,7 @@ export const createContactAction = chatbotActionClient
         },
       })
       if (existedContact) {
-        return returnValidationErrors(createContactSchema, {
+        return returnValidationErrors(createContactRequest, {
           _errors: ["Validation Exception"],
           phoneNumber: {
             _errors: ["Phone number is exists"],
@@ -52,7 +52,7 @@ export const createContactAction = chatbotActionClient
         where: { chatbotId },
       })
       if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
-        return returnValidationErrors(createContactSchema, {
+        return returnValidationErrors(createContactRequest, {
           _errors: ["Validation Exception"],
           phoneNumber: {
             _errors: ["Max contacts reached"],

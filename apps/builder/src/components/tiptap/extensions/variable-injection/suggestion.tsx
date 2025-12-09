@@ -1,12 +1,13 @@
+import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
 import type { MentionOptions } from "@tiptap/extension-mention"
 import { ReactRenderer } from "@tiptap/react"
 import tippy from "tippy.js"
-import type { PromptVariable, PromptVariableListRef } from "./definition"
+import type { PromptVariableListRef } from "./definition"
 import VariableList from "./variable-list"
 
 const getFilteredMentions = (
   query: string,
-  listOfPromptVariables: PromptVariable[],
+  listOfPromptVariables: SelectOption[],
 ) =>
   listOfPromptVariables.filter((item) =>
     item.label.toLowerCase().includes(query.toLowerCase()),
@@ -15,7 +16,7 @@ const getFilteredMentions = (
 const suggestion = ({
   listOfPromptVariables,
 }: {
-  listOfPromptVariables: PromptVariable[]
+  listOfPromptVariables: SelectOption[]
 }): MentionOptions["suggestion"] => ({
   char: "{{",
   allowedPrefixes: null,

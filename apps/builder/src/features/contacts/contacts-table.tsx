@@ -11,7 +11,8 @@ import Link from "next/link"
 import { use, useMemo } from "react"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
-import type { ContactResource } from "./schemas"
+import type { ContactResource } from "./schemas/resource"
+import { getFullName } from "./utils"
 
 type ContactsTableProps = {
   chatbotId: string
@@ -60,7 +61,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
             href={`/chatbots/${chatbotId}/inbox?conversationId=${row.original.conversation?.id}`}
             target="_blank"
           >
-            {row.original.fullName}
+            {getFullName(row.original)}
           </Link>
         ),
         meta: {

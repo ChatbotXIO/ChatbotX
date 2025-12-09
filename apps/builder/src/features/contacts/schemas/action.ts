@@ -1,7 +1,7 @@
 import { Gender } from "@aha.chat/database/types"
 import { z } from "zod"
 
-export const createContactSchema = z.object({
+export const createContactRequest = z.object({
   phoneNumber: z
     .string()
     .min(10)
@@ -12,4 +12,7 @@ export const createContactSchema = z.object({
   lastName: z.optional(z.string().trim().max(100)),
   gender: z.enum(Gender),
 })
-export type CreateContactRequest = z.infer<typeof createContactSchema>
+export type CreateContactRequest = z.infer<typeof createContactRequest>
+
+export const updateContactRequest = z.record(z.string(), z.string())
+export type UpdateContactRequest = z.infer<typeof updateContactRequest>

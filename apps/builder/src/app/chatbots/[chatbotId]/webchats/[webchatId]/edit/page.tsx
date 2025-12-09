@@ -1,6 +1,5 @@
 import { Suspense } from "react"
-import { getFlows } from "@/features/flows/queries"
-import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
+import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { UpdateWebchatForm } from "@/features/webchat/components/update-webchat-form"
 import { findIntegrationWebchat } from "@/features/webchat/queries/get-webchats.query"
 
@@ -16,21 +15,11 @@ export default async function WebchatEditPage({
     chatbotId,
   })
 
-  const promises = Promise.all([
-    getFlows({
-      chatbotId,
-      ...listFlowsSearchParams.parse({
-        active: "1",
-        perPage: "1000",
-      }),
-    }),
-  ])
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <UpdateWebchatForm
-        integrationWebchat={integrationWebchat}
-        promises={promises}
-      />
-    </Suspense>
+    <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+      <Suspense fallback={<div>Loading...</div>}>
+        <UpdateWebchatForm integrationWebchat={integrationWebchat} />
+      </Suspense>
+    </FlowStoreProvider>
   )
 }

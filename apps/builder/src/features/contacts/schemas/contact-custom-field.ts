@@ -10,3 +10,11 @@ export const addContactCustomFieldRequest = z.object({
 export type AddContactCustomFieldRequest = z.infer<
   typeof addContactCustomFieldRequest
 >
+
+export const deleteContactCustomFieldRequest = z.object({
+  ids: z.array(z.cuid2()),
+  customFieldId: z.cuid2(),
+})
+export type DeleteContactCustomFieldRequest = z.infer<
+  typeof deleteContactCustomFieldRequest
+>

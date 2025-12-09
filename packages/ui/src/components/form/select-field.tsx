@@ -1,7 +1,8 @@
 import { logger } from "@aha.chat/ui/lib/logger"
 import type { SelectProps } from "@radix-ui/react-select"
 import ky from "ky"
-import { useEffect, useMemo, useState, type ReactElement } from "react"
+import type { LucideIcon } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import {
   Select,
@@ -11,7 +12,6 @@ import {
   SelectValue,
 } from "../ui/select"
 import { FormFieldWrapper } from "./field-wrapper"
-import type { LucideIcon } from "lucide-react"
 
 export type SingleSelectOption = {
   value: string
@@ -47,13 +47,11 @@ const CLEAR_VALUE = "__clear__"
 const SelectClear = ({
   children,
   ...props
-}: Omit<React.ComponentProps<typeof SelectItem>, "value">) => {
-  return (
-    <SelectItem className="opacity-50" value={CLEAR_VALUE} {...props}>
-      {children ?? "----"}
-    </SelectItem>
-  )
-}
+}: Omit<React.ComponentProps<typeof SelectItem>, "value">) => (
+  <SelectItem className="opacity-50" value={CLEAR_VALUE} {...props}>
+    {children ?? "----"}
+  </SelectItem>
+)
 
 export const SelectField = <T extends FieldValues>(
   props: SelectFieldProps<T>,
@@ -73,12 +71,24 @@ export const SelectField = <T extends FieldValues>(
 
   const [fetchedOptions, setFetchedOptions] = useState<SelectOptionItem[]>([])
 
-  const normalizedOptions = useMemo<SelectOptionItem[]>(() => {
-    if (options.length > 0) {
-      return options
-    }
-    return fetchedOptions
-  }, [options, fetchedOptions])
+  const normalizedOptions = useMemo<SelectOptionItem[]>(
+    () => (options.length > 0 ? options : fetchedOptions),
+    [options, fetchedOptions],
+  )
+
+  const optionItems = useMemo(
+    () =>
+      normalizedOptions.map((option) => (
+        <SelectItem
+          disabled={option.disabled ?? false}
+          key={option.value}
+          value={option.value}
+        >
+          {option.label}
+        </SelectItem>
+      )),
+    [normalizedOptions],
+  )
 
   useEffect(() => {
     if (!fetchOptionsUrl || options.length > 0) {
@@ -116,9 +126,9 @@ export const SelectField = <T extends FieldValues>(
   return (
     <FormFieldWrapper<T>
       description={description}
-      required={required}
       label={label}
       name={name}
+      required={required}
     >
       {(field) => {
         const handleSelectChange = (value: string) => {
@@ -131,24 +141,10 @@ export const SelectField = <T extends FieldValues>(
           triggerValueChange?.(value)
         }
 
-        const optionItems = useMemo(
-          () =>
-            normalizedOptions.map((option) => (
-              <SelectItem
-                key={option.value}
-                value={String(option.value)}
-                disabled={option.disabled ?? false}
-              >
-                {option.label}
-              </SelectItem>
-            )),
-          [normalizedOptions],
-        )
-
         return (
           <Select
-            value={field.value ?? ""}
             onValueChange={handleSelectChange}
+            value={field.value ?? ""}
             {...rest}
           >
             <SelectTrigger className="w-full">

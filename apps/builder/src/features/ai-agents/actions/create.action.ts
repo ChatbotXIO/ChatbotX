@@ -4,8 +4,8 @@ import { prisma } from "@aha.chat/database"
 import {
   type CreateAIAgentRequest,
   createAIAgentRequest,
-} from "@/features/ai-agents/schemas/create-ai-agent.request"
-import { AIAgentException } from "@/features/ai-agents/schemas/errors.schema"
+} from "@/features/ai-agents/schemas/request"
+import { AIAgentException } from "@/features/ai-agents/schemas/resource"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

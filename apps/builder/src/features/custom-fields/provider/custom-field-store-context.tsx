@@ -37,9 +37,9 @@ export const CustomFieldStoreProvider = ({
 
   useEffect(() => {
     if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().getAllCustomFields(chatbotId)
+      storeRef.current.getState().initialize(chatbotId)
     }
-  }, [chatbotId, autoInitialize])
+  }, [autoInitialize, chatbotId])
 
   return (
     <CustomFieldStoreContext.Provider value={storeRef.current}>

@@ -1,5 +1,5 @@
 import type { FieldPath, FieldValues } from "react-hook-form"
-import { MultiSelect, type MultiSelectProps } from "../sersavan/multi-select"
+import { MultiSelect, type MultiSelectProps } from "../ui/sersavan/multi-select"
 import { FormFieldWrapper } from "./field-wrapper"
 
 type MultiSelectFieldProps<T extends FieldValues> = Omit<
@@ -24,9 +24,9 @@ export function MultiSelectField<T extends FieldValues>({
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
       label={label}
       name={name}
+      required={required}
     >
       {(field) => (
         <MultiSelect

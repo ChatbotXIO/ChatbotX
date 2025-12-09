@@ -5,7 +5,6 @@ import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -21,25 +20,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@aha.chat/ui/components/ui/form"
-import { Input } from "@aha.chat/ui/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@aha.chat/ui/components/ui/select"
-import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { format, parse } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useMemo, useState } from "react"
-import { Controller, useWatch } from "react-hook-form"
+import { useState } from "react"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCustomFieldTypeLabels } from "../shared-fields/shared"
+import { AccountFieldValueInput } from "./account-field-value-input"
 import { createAccountFieldAction } from "./actions/create-account-field.action"
 import { createAccountFieldRequest } from "./schemas/create-account-field.schema"
 
@@ -94,101 +84,15 @@ export function CreateAccountFieldDialog({
       },
     )
 
-  const { control, watch, register, setValue } = form
-  const watchCustomFieldType = watch(
-    "customFieldType",
-    CustomFieldType.shortText,
-  )
-  const watchValue = useWatch({ control, name: "value" })
+  const { control } = form
+  const watchCustomFieldType = useWatch({
+    control,
+    name: "customFieldType",
+  })
 
   const handleClose = () => {
     setOpen(false)
   }
-
-  const valueInput = useMemo(() => {
-    const getDateValue = (formatString: string): Date => {
-      if (!watchValue) {
-        return new Date()
-      }
-      try {
-        return parse(watchValue, formatString, new Date())
-      } catch {
-        return new Date()
-      }
-    }
-
-    switch (watchCustomFieldType) {
-      case CustomFieldType.number:
-        return (
-          <Input
-            placeholder={t("fields.number.placeholder")}
-            type="number"
-            {...register("value")}
-          />
-        )
-      case CustomFieldType.boolean:
-        return (
-          <Controller
-            control={control}
-            name="value"
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("fields.boolean.placeholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">
-                    {t("fields.boolean.true")}
-                  </SelectItem>
-                  <SelectItem value="false">
-                    {t("fields.boolean.false")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        )
-      case CustomFieldType.date: {
-        const dateFormat = "yyyy-MM-dd"
-        return (
-          <DateTimePicker
-            displayFormat={{ hour24: dateFormat }}
-            granularity="day"
-            onChange={(value) => {
-              setValue("value", format(value ?? new Date(), dateFormat))
-            }}
-            value={getDateValue(dateFormat)}
-          />
-        )
-      }
-      case CustomFieldType.datetime: {
-        const dateTimeFormat = "yyyy-MM-dd HH:mm"
-        return (
-          <DateTimePicker
-            displayFormat={{ hour24: dateTimeFormat }}
-            onChange={(value) => {
-              setValue("value", format(value ?? new Date(), dateTimeFormat))
-            }}
-            value={getDateValue(dateTimeFormat)}
-          />
-        )
-      }
-      case CustomFieldType.longText:
-        return (
-          <Textarea
-            placeholder={t("fields.shortText.placeholder")}
-            {...register("value")}
-          />
-        )
-      default:
-        return (
-          <Input
-            placeholder={t("fields.shortText.placeholder")}
-            {...register("value")}
-          />
-        )
-    }
-  }, [watchCustomFieldType, watchValue, control, register, setValue, t])
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
@@ -222,7 +126,9 @@ export function CreateAccountFieldDialog({
               render={() => (
                 <FormItem>
                   <FormLabel>{t("fields.value.label")}</FormLabel>
-                  {valueInput}
+                  <AccountFieldValueInput
+                    customFieldType={watchCustomFieldType}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

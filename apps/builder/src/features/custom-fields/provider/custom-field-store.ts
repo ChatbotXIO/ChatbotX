@@ -20,7 +20,7 @@ export type CustomFieldState = {
 }
 
 export type CustomFieldActions = {
-  initialize: () => Promise<void>
+  initialize: (chatbotId: string) => Promise<void>
   getAllCustomFields: (chatbotId: string) => Promise<void>
   getCustomFieldSelectOptions: () => CustomFieldSelectOption[]
 }
@@ -36,7 +36,7 @@ export const createCustomFieldStore = () =>
     chatbotId: "",
     customFields: [],
 
-    initialize: async () => {
+    initialize: async (chatbotId: string) => {
       const { initialized } = get()
 
       if (initialized) {
@@ -46,7 +46,7 @@ export const createCustomFieldStore = () =>
       set({ loading: true, error: null })
 
       try {
-        await get().getAllCustomFields(get().chatbotId)
+        await get().getAllCustomFields(chatbotId)
         set({
           loading: false,
           initialized: true,

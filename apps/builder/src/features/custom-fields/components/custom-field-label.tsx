@@ -21,7 +21,7 @@ const getTranslationKey = (fieldType: CustomFieldType): string => {
   }
 }
 
-export default function CustomFieldLabel({
+export default function CustomFieldTypeLabel({
   customFieldType,
 }: {
   customFieldType: CustomFieldType

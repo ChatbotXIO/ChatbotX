@@ -10,7 +10,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type AddContactTagRequest,
   addContactTagRequest,
-} from "../schemas/add-contact-tag.request"
+} from "../schemas/contact-tag"
 
 export const addContactTagAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

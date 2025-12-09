@@ -1,6 +1,7 @@
 "use client"
 
 import { useChatStore } from "../chat/store/chat-store-provider"
+import { getFullName } from "../contacts/utils"
 
 export default function MessageHead() {
   const { conversations, activeConversationId } = useChatStore((state) => state)
@@ -14,7 +15,7 @@ export default function MessageHead() {
       <div className="flex items-center gap-2 border-b px-3 pb-3">
         <div className="flex-1">
           <div className="truncate font-medium text-semibold">
-            {activeConversation?.contact?.fullName}
+            {getFullName(activeConversation?.contact)}
           </div>
         </div>
       </div>

@@ -64,7 +64,7 @@ export function InviteChatbotMemberDialog() {
           <DialogDescription />
         </DialogHeader>
         {invitationUrl && (
-          <div className="flex flex-col gap-2 break-all">
+          <div className="break-word flex flex-col gap-2">
             <p>{t("messages.copyInvitationUrlSuccess")}</p>
             <Link
               className="text-blue-500"

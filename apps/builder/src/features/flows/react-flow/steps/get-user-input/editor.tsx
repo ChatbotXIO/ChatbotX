@@ -6,6 +6,7 @@ import {
   getUserInputStepSchema,
   ReplyFormat,
 } from "@aha.chat/flow-config"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -27,7 +28,7 @@ import { ClockIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
-import { useStepStore } from "../../stores/step-store-provider"
+import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
 import { BaseStepEditor } from "../base/editor"
 import DelayUnitSelect from "../wait/components/delay-unit-select"
 
@@ -66,7 +67,7 @@ const GetUserInputStepForm = ({
     [t],
   )
 
-  const customFieldOptions = useStepStore((state) => state.customFieldOptions)
+  const customFieldOptions = useCustomFieldSelectOptions({})
 
   const autoSkip = useWatch({ name: "autoSkip" })
 
@@ -83,29 +84,36 @@ const GetUserInputStepForm = ({
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-6"
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <InputField label="Message" name="message" required />
         <SelectField
-          label="Reply Format"
+          label={t("fields.replyFormat.label")}
           name="replyFormat"
           options={replyFormatOptions}
           required
         />
-        <SelectField
-          label="Output CF ID"
+        <ComboboxField
+          label={t("fields.outputCustomField.label")}
           name="outputCfId"
           options={customFieldOptions}
           required
         />
-        <TextareaField label="Retry Message" name="retryMessage" rows={3} />
-        <InputField label="Skip Button Label" name="skipButtonLabel" />
-        <SwitchField label="Auto Skip" name="autoSkip" />
+        <TextareaField
+          label={t("fields.retryMessage.label")}
+          name="retryMessage"
+          rows={3}
+        />
+        <InputField
+          label={t("fields.skipButtonLabel.label")}
+          name="skipButtonLabel"
+        />
+        <SwitchField label={t("fields.autoSkip.label")} name="autoSkip" />
         {typeof autoSkip === "boolean" && autoSkip && (
           <>
             <div className="flex flex-col justify-between gap-2">
-              <Label>Auto Skip Time</Label>
+              <Label>{t("fields.autoSkipTime.label")}</Label>
               <div className="flex justify-between gap-2">
                 <InputNumberField
                   max={100}
@@ -118,7 +126,7 @@ const GetUserInputStepForm = ({
               </div>
             </div>
             <InputNumberField
-              label="Auto Skip Fail Attempts"
+              label={t("fields.autoSkipFailAttempts.label")}
               max={100}
               min={1}
               name="autoSkipFailAttempts"
@@ -129,14 +137,19 @@ const GetUserInputStepForm = ({
         )}
 
         <div className="flex justify-end gap-2">
-          <Button onClick={handleCancel} type="button" variant="outline">
+          <Button
+            onClick={handleCancel}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
             {t("actions.cancel")}
           </Button>
-          <Button disabled={!form.formState.isValid} type="submit">
+          <Button disabled={!form.formState.isValid} size="sm" type="submit">
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />
             )}
-            {t("actions.save")}
+            {t("actions.confirm")}
           </Button>
         </div>
       </form>

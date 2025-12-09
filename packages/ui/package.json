@@ -24,6 +24,7 @@
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.17",
+    "@types/color": "^4.2.0",
     "@types/node": "^24.10.1",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
@@ -70,6 +71,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
+    "color": "^5.0.3",
     "date-fns": "^4.1.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
@@ -80,6 +82,7 @@
     "lucide-react": "^0.555.0",
     "next-themes": "^0.4.6",
     "nuqs": "^2.8.1",
+    "radix-ui": "^1.4.3",
     "react": "19.2.0",
     "react-colorful": "^5.6.1",
     "react-day-picker": "^9.11.2",
