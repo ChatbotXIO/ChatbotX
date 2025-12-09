@@ -1,8 +1,4 @@
-import {
-  type ButtonStepProps,
-  ButtonType,
-  type StepsProps,
-} from "@aha.chat/flow-config"
+import type { ButtonStepProps, StepsProps } from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { createId } from "@paralleldrive/cuid2"
 import { type Node, useNodes, useReactFlow } from "@xyflow/react"
@@ -12,54 +8,28 @@ import { type MouseEvent, useCallback } from "react"
 export function DuplicateNode() {
   const nodes = useNodes()
   const reactFlow = useReactFlow()
-  const { addNodes, setEdges, addEdges } = reactFlow
+  const { addNodes } = reactFlow
 
   const cloneButtons = useCallback(
-    ({
-      newNodeId,
-      step,
-    }: {
-      newNodeId: string
-      step: { buttons: ButtonStepProps[] }
-    }) => {
-      {
-        const buttons = step.buttons.map((button) => ({
-          ...button,
-          id: createId(),
-        }))
-        const sendMessageButtons = step.buttons.filter(
-          (btn: ButtonStepProps) => btn.buttonType === ButtonType.SendMessage,
-        )
-        for (const btn of sendMessageButtons) {
-          addEdges({
-            id: btn.id,
-            source: newNodeId,
-            target: btn.beforeStep.nodeId as string,
-            sourceHandle: btn.id,
-            targetHandle: btn.beforeStep.nodeId,
-            type: "delete",
-            data: {
-              onDelete: (edgeId: string) => {
-                setEdges((eds) => eds.filter((e) => e.id !== edgeId))
-              },
-            },
-          })
-        }
-        return buttons
-      }
-    },
-    [setEdges, addEdges],
+    (buttons: ButtonStepProps[]) =>
+      buttons.map((button) => ({
+        ...button,
+        id: createId(),
+        beforeStep: null,
+        buttonType: null,
+      })),
+    [],
   )
 
   const cloneSteps = useCallback(
-    ({ newNodeId, node }: { newNodeId: string; node: Node }) => {
+    ({ node }: { node: Node }) => {
       const steps = (("steps" in node.data ? node.data.steps : []) ??
         []) as StepsProps
       if (steps) {
         return steps.map((step) => {
           const hasButtons = "buttons" in step && Array.isArray(step.buttons)
           if (hasButtons) {
-            step.buttons = cloneButtons({ step, newNodeId })
+            step.buttons = cloneButtons(step.buttons)
           }
           return { ...step, id: createId() }
         })
@@ -70,16 +40,13 @@ export function DuplicateNode() {
 
   const duplicateNode = useCallback(
     (node: Node) => {
-      const newNodeId = createId()
       const newNode = {
         data: {
           ...node.data,
-          beforeStep: null,
-          afterStep: null,
           isStartNode: false,
-          steps: cloneSteps({ newNodeId, node }),
+          steps: cloneSteps({ node }),
         },
-        id: newNodeId,
+        id: createId(),
         type: node.type,
         position: {
           x: node.position.x + 100,

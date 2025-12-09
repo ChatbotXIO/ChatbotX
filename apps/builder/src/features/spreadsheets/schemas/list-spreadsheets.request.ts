@@ -2,8 +2,8 @@ import { z } from "zod"
 
 export const listSpreadsheetsRequest = z.object({
   chatbotId: z.cuid2(),
-  page: z.number().optional(),
-  perPage: z.number().optional(),
+  page: z.coerce.number().optional(),
+  perPage: z.coerce.number().optional(),
   name: z.string().optional(),
 })
 
