@@ -5,9 +5,12 @@ import type { ConversationModel, MessageModel } from "@aha.chat/database/types"
 import type {
   FindConversationSchema,
   ListConversationsRequest,
-} from "@/features/conversations/schemas/list-conversations.request"
+} from "@/features/conversations/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ConversationCollection, ConversationResource } from "../schemas"
+import type {
+  ConversationCollection,
+  ConversationResource,
+} from "../schemas/resource"
 
 export const listConversations = async (
   chatbotId: string,

@@ -17,34 +17,28 @@ import {
 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import type { getFlows } from "../flows/queries"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
 import { createAutomatedResponseRequest } from "./schemas/create-automated-responses-schema"
 
 type CreateAutomatedResponseFormProps = {
   chatbotId: string
   folderId: string | null
-  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export function CreateAutomatedResponseForm(
   props: CreateAutomatedResponseFormProps,
 ) {
-  const { chatbotId, folderId, promises } = props
+  const { chatbotId, folderId } = props
 
   const searchParams = useSearchParams()
 
   const t = useTranslations()
   const router = useRouter()
 
-  const [{ data: flows }] = use(promises)
-  const flowOptions = flows.map((flow) => ({
-    label: flow.name,
-    value: flow.id,
-  }))
+  const flowOptions = useFlowSelectOptions()
 
   const {
     form,

@@ -244,11 +244,6 @@ export function ReactFlowWrapper({
           sourceHandle: fromHandle?.id,
           targetHandle: newNode.id,
           type: "delete",
-          data: {
-            onDelete: (edgeId: string) => {
-              setEdges((eds) => eds.filter((e) => e.id !== edgeId))
-            },
-          },
         })
       } else {
         const existingEdges = getEdges()
@@ -276,6 +271,22 @@ export function ReactFlowWrapper({
     [reactFlow, setEdges],
   )
 
+  const onEdgeMouseEnter = (_: ReactMouseEvent, edge: Edge) => {
+    const edgeId = edge.id
+
+    // Updates edge
+    reactFlow.updateEdge(edgeId, (oldEdge) => ({
+      data: { ...oldEdge.data, isHovered: true },
+    }))
+  }
+
+  const onEdgeMouseLeave = (_: ReactMouseEvent, edge: Edge) => {
+    const edgeId = edge.id
+    reactFlow.updateEdge(edgeId, (oldEdge) => ({
+      data: { ...oldEdge.data, isHovered: false },
+    }))
+  }
+
   return (
     <ReactFlow
       defaultEdgeOptions={{
@@ -293,6 +304,8 @@ export function ReactFlowWrapper({
       onConnect={onConnect}
       onConnectEnd={onConnectEnd}
       onConnectStart={onConnectStart}
+      onEdgeMouseEnter={onEdgeMouseEnter}
+      onEdgeMouseLeave={onEdgeMouseLeave}
       onEdgesChange={onEdgesChange}
       onNodeClick={handleNodeClick}
       onNodeMouseEnter={onNodeMouseEnter}

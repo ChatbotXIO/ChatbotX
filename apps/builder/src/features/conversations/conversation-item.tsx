@@ -21,7 +21,7 @@ import { useMemo, useState } from "react"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
 import type { MessageResource } from "../messages/schemas"
-import type { ConversationResource } from "./schemas"
+import type { ConversationResource } from "./schemas/resource"
 
 type ConversationItemProps = {
   conversation: ConversationResource

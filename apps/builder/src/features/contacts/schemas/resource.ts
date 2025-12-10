@@ -4,7 +4,7 @@ import type {
   CustomFieldType,
 } from "@aha.chat/database/types"
 import type { LucideIcon } from "lucide-react"
-import type { ConversationResource } from "@/features/conversations/schemas"
+import type { ConversationResource } from "@/features/conversations/schemas/resource"
 import { BaseException } from "@/lib/errors/exception"
 
 export class ContactException extends BaseException {}

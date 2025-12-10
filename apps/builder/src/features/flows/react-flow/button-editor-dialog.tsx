@@ -191,7 +191,6 @@ export function ButtonEditorDialog() {
     addNodes,
     screenToFlowPosition,
     addEdges,
-    setEdges,
     updateNodeData,
     deleteElements,
   } = useReactFlow()
@@ -328,11 +327,7 @@ export function ButtonEditorDialog() {
           target: newNode.id,
           sourceHandle: data.id,
           targetHandle: newNode.id,
-          data: {
-            onDelete: (edgeId: string) => {
-              setEdges((eds) => eds.filter((e) => e.id !== edgeId))
-            },
-          },
+          type: "delete",
         })
       }
 

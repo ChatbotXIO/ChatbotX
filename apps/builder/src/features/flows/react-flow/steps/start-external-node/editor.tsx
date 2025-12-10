@@ -1,10 +1,12 @@
 "use client"
 
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import type { FlowNode } from "@aha.chat/flow-config"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { ExternalLink } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { useStepStore } from "../../stores/step-store-provider"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useFlowStore } from "@/features/flows/provider/flow-store-context"
 import { BaseStepEditor } from "../base/editor"
 
 const StartExternalNodeStepEditor = ({
@@ -17,7 +19,8 @@ const StartExternalNodeStepEditor = ({
     { value: string; label: string }[]
   >([])
 
-  const { flowOptions } = useStepStore((state) => state)
+  const flowOptions = useFlowSelectOptions()
+  const { flows } = useFlowStore((state) => state)
 
   const onFlowChange = (value?: string) => {
     if (!value) {
@@ -25,10 +28,12 @@ const StartExternalNodeStepEditor = ({
       return
     }
 
-    const flow = flowOptions.find((f) => f.value === value)
-    if (flow) {
+    const targetFlow = flows.find((f) => f.id === value)
+    if (targetFlow) {
       setNodeOptions(
-        flow.nodes.map((node) => ({
+        (
+          (targetFlow.flowVersions?.[0]?.nodes || []) as unknown as FlowNode[]
+        ).map((node) => ({
           value: node.id,
           label: node.data.name as string,
         })),
@@ -44,8 +49,7 @@ const StartExternalNodeStepEditor = ({
       title={t("flows.actions.sendExternalNode")}
     >
       <div className="flex flex-col gap-4">
-        <SelectField
-          allowClear
+        <ComboboxField
           label={t("fields.flow.label")}
           name={`${parentName}.flowId`}
           options={flowOptions}
@@ -53,7 +57,7 @@ const StartExternalNodeStepEditor = ({
           triggerValueChange={onFlowChange}
         />
 
-        <SelectField
+        <ComboboxField
           label={t("fields.node.label")}
           name={`${parentName}.nodeId`}
           options={nodeOptions}

@@ -1,8 +1,8 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { InboxStatus } from "@aha.chat/database/enums"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { InboxCollection } from "../schemas"
-import type { ListInboxesRequest } from "../schemas/list-inboxes.schema"
+import type { ListInboxesRequest } from "../schemas/query"
+import type { InboxCollection } from "../schemas/resource"
 
 export async function listInboxes(
   input: ListInboxesRequest,
@@ -15,7 +15,7 @@ export async function listInboxes(
   }
 
   const take = input.perPage || 10
-  const skip = (input.page ?? 1 - 1) * take
+  const skip = ((input.page ?? 1) - 1) * take
   const [data, total] = await prisma.$transaction([
     prisma.inbox.findMany({
       skip,

@@ -3,7 +3,7 @@ import { createStore } from "zustand/vanilla"
 import type {
   ConversationCollection,
   ConversationResource,
-} from "@/features/conversations/schemas"
+} from "@/features/conversations/schemas/resource"
 import type {
   MessageCollection,
   MessageResource,

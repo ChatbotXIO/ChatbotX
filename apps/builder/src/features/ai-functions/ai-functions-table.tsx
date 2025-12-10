@@ -10,23 +10,15 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
-import type { listCustomFields } from "../custom-fields/queries"
-import type { getFlows } from "../flows/queries"
 import { AIFunctionsCreate } from "./ai-functions-create"
 import type { getAIFunctions } from "./queries"
 
 type AIFunctionsTableProps = {
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof getAIFunctions>>,
-      Awaited<ReturnType<typeof getFlows>>,
-      Awaited<ReturnType<typeof listCustomFields>>,
-    ]
-  >
+  promises: Promise<[Awaited<ReturnType<typeof getAIFunctions>>]>
 }
 
 export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {
-  const [{ data }, { data: flows }, { data: customFields }] = use(promises)
+  const [{ data }] = use(promises)
   const t = useTranslations()
   const router = useRouter()
 
@@ -119,8 +111,6 @@ export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {
           </p>
         </div>
         <AIFunctionsCreate
-          customFields={customFields}
-          flows={flows}
           onSuccess={() => {
             router.refresh()
           }}

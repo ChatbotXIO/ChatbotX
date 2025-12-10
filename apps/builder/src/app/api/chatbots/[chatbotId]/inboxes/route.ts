@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { listInboxes } from "@/features/inboxes/queries"
-import { listInboxesNuqs } from "@/features/inboxes/schemas/list-inboxes.schema"
+import { listInboxesNuqs } from "@/features/inboxes/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 

@@ -24,7 +24,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import React, { use, useMemo } from "react"
 import { toast } from "sonner"
-import type { getFlows } from "../flows/queries"
+import { useFlowStore } from "../flows/provider/flow-store-context"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
@@ -34,20 +34,18 @@ import type { AutomatedResponseResource } from "./schemas/types"
 type AutomatedResponseTableProps = {
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof getAutomatedResponses>>]>
-  flowPromises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export function AutomatedResponsesTable({
   chatbotId,
   promises,
-  flowPromises,
 }: AutomatedResponseTableProps) {
   const t = useTranslations()
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [{ data, pageCount }] = use(promises)
-  const [{ data: allFlows }] = use(flowPromises)
+  const { flows: allFlows } = useFlowStore((state) => state)
 
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AutomatedResponseResource> | null>(null)

@@ -27,28 +27,21 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useMemo } from "react"
+import { useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import type { getFlows } from "@/features/flows/queries"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { createWebchatAction } from "../actions/create-webchat.action"
 import { createWebchatRequest } from "../schemas/webchat.schema"
 import AuthorizedDomainField from "./authorized-domain-field"
 
-type CreateWebchatFormProps = {
-  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
-}
-
-export function CreateWebchatForm({ promises }: CreateWebchatFormProps) {
+export function CreateWebchatForm() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
+
   const t = useTranslations()
   const router = useRouter()
 
-  const [{ data: allFlows }] = use(promises)
-  const flowOptions = allFlows.map((flow) => ({
-    label: flow.name,
-    value: flow.id,
-  }))
+  const flowOptions = useFlowSelectOptions()
 
   const conversationStarterTypeOptions: {
     value: ConversationStarterType

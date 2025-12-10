@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { listConversations } from "@/features/conversations/queries/list-conversations.query"
-import { listConversationsRequest } from "@/features/conversations/schemas/list-conversations.request"
+import { listConversationsRequest } from "@/features/conversations/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 

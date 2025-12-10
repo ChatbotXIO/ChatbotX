@@ -21,31 +21,26 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useEffect } from "react"
+import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import type { getFlows } from "../flows/queries"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { updateAutomatedResponseRequest } from "./schemas/update-automated-responses-schema"
 
 type EditAutomatedResponseFormProps = {
   chatbotId: string
   automatedResponse: AutomatedResponseModel
-  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export default function EditAutomatedResponseForm(
   props: EditAutomatedResponseFormProps,
 ) {
-  const { chatbotId, automatedResponse, promises } = props
+  const { chatbotId, automatedResponse } = props
   const t = useTranslations()
   const router = useRouter()
 
-  const [{ data: flows }] = use(promises)
-  const flowOptions = flows.map((flow) => ({
-    label: flow.name,
-    value: flow.id,
-  }))
+  const flowOptions = useFlowSelectOptions()
 
   const {
     form,

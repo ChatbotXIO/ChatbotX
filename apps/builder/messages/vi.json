@@ -143,7 +143,8 @@
     "publish": "Xuất bản",
     "setAsDefaultAgent": "Đặt làm Agent mặc định",
     "unsetDefaultAgent": "Bỏ đặt Agent mặc định",
-    "randomRow": "Hàng ngẫu nhiên"
+    "randomRow": "Hàng ngẫu nhiên",
+    "clickToEdit": "Nhấp để chỉnh sửa"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -1022,6 +1023,7 @@
       "label": "Văn bản dài"
     },
     "replyFormat": {
+      "label": "Định dạng trả lời",
       "number": "Số",
       "text": "Văn bản",
       "email": "Email",
@@ -1080,6 +1082,21 @@
     },
     "spreadsheets": {
       "label": "Bảng tính"
+    },
+    "retryMessage": {
+      "label": "Thử lại tin nhắn"
+    },
+    "skipButtonLabel": {
+      "label": "Nhãn nút bỏ qua"
+    },
+    "autoSkipTime": {
+      "label": "Thời gian tự động bỏ qua"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Số lần thất bại tự động bỏ qua"
+    },
+    "autoSkip": {
+      "label": "Tự động bỏ qua"
     }
   },
   "flows": {
@@ -1266,8 +1283,8 @@
     "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm khóa API GIPHY trong cài đặt tổ chức.",
     "actionCompleted": "Hành động hoàn tất thành công",
     "actionFailed": "Hành động thất bại. Vui lòng thử lại.",
-    "archivedSuccessfully": "Đã lưu trữ {feature} thành công",
-    "connectedSuccessfully": "{feature} đã được kết nối thành công",
+    "archivedSuccess": "Đã lưu trữ {feature} thành công",
+    "connectedSuccess": "{feature} đã được kết nối thành công",
     "connectFailed": "Không thể kết nối {feature}",
     "connectSuccess": "Đã kết nối {feature} thành công",
     "success": "Thành công",
@@ -1279,8 +1296,8 @@
     "deleteComingSoon": "Chức năng xóa sẽ sớm có",
     "deletedSuccess": "{feature} đã được xóa thành công",
     "deleteFileComingSoon": "Chức năng xóa tệp sẽ sớm có",
-    "disabledSuccessfully": "Đã tắt {feature} thành công",
-    "disconnectedSuccessfully": "Đã ngắt kết nối {feature} thành công",
+    "disabledSuccess": "Đã tắt {feature} thành công",
+    "disconnectedSuccess": "Đã ngắt kết nối {feature} thành công",
     "downloadComingSoon": "Chức năng tải xuống sẽ sớm có",
     "enabledSuccessfully": "Đã bật {feature} thành công",
     "failedToCopy": "Sao chép thất bại",
@@ -1295,7 +1312,7 @@
     "processingRequest": "Đang xử lý yêu cầu của bạn...",
     "savedSuccessfully": "Đã lưu thành công",
     "signedInSuccessfully": "Đăng nhập thành công",
-    "unarchivedSuccessfully": "Đã bỏ lưu trữ {feature} thành công",
+    "unarchivedSuccess": "Đã bỏ lưu trữ {feature} thành công",
     "unknownError": "Lỗi không xác định",
     "updatedSuccess": "{feature} đã được cập nhật thành công",
     "updateFileComingSoon": "Chức năng cập nhật tệp sẽ sớm có",

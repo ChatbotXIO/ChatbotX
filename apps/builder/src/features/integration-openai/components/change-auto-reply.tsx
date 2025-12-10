@@ -22,6 +22,7 @@ export default function ChangeAutoReply({
     {
       onSuccess: ({ data }) => {
         setAutoReply(data.autoReply)
+        integrationOpenAI.autoReply = data.autoReply
 
         toast.success(
           t("messages.updatedSuccess", {

@@ -1,32 +1,32 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { FlowCollection, FlowResource } from "../schemas/get-flows-schema"
+import type { InboxCollection, InboxResource } from "../schemas/resource"
 
-export type FlowState = {
+export type InboxState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
   chatbotId: string
-  flows: FlowResource[]
+  inboxes: InboxResource[]
 }
 
-export type FlowActions = {
+export type InboxActions = {
   initialize: (chatbotId: string) => Promise<void>
-  getAllActiveFlows: (chatbotId: string) => Promise<void>
+  getAllInboxes: (chatbotId: string) => Promise<void>
 }
 
-export type FlowStore = FlowState & FlowActions
+export type InboxStore = InboxState & InboxActions
 
-export const createFlowStore = () =>
-  createStore<FlowStore>((set, get) => ({
+export const createInboxStore = () =>
+  createStore<InboxStore>((set, get) => ({
     loading: false,
     error: null,
     initialized: false,
 
     chatbotId: "",
-    flows: [],
+    inboxes: [],
 
     initialize: async (chatbotId: string) => {
       const { initialized } = get()
@@ -36,8 +36,9 @@ export const createFlowStore = () =>
       }
 
       set({ loading: true, error: null })
+
       try {
-        await get().getAllActiveFlows(chatbotId)
+        await get().getAllInboxes(chatbotId)
         set({
           loading: false,
           initialized: true,
@@ -50,24 +51,23 @@ export const createFlowStore = () =>
           })
         } else {
           set({
-            error: "Failed to fetch flows",
+            error: "Failed to fetch inboxes",
             loading: false,
           })
         }
       }
     },
 
-    getAllActiveFlows: async (chatbotId: string) => {
+    getAllInboxes: async (chatbotId: string) => {
       const searchParams = new URLSearchParams({
         perPage: maxPerPageString,
-        active: "true",
       })
       const { data } = await ky
-        .get<FlowCollection>(
-          `/api/chatbots/${chatbotId}/flows?${searchParams.toString()}`,
+        .get<InboxCollection>(
+          `/api/chatbots/${chatbotId}/inboxes?${searchParams.toString()}`,
         )
         .json()
 
-      set({ flows: data })
+      set({ inboxes: data })
     },
   }))

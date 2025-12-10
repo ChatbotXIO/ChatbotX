@@ -1,11 +1,13 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { cn } from "@aha.chat/ui/lib/utils"
 import {
   BaseEdge,
   EdgeLabelRenderer,
   type EdgeProps,
   getBezierPath,
+  useReactFlow,
 } from "@xyflow/react"
-import { TrashIcon } from "lucide-react"
+import { XIcon } from "lucide-react"
 import { memo } from "react"
 
 export default memo((props: EdgeProps) => {
@@ -25,37 +27,51 @@ export default memo((props: EdgeProps) => {
     pathOptions,
     ...rest
   } = props
+  const { deleteElements } = useReactFlow()
 
-  const onDelete = () => {
-    const handler = (data as { onDelete?: (edgeId: string) => void }).onDelete
-    if (handler) {
-      handler(id)
-    }
+  const onDelete = async () => {
+    await deleteElements({
+      edges: [
+        {
+          id,
+        },
+      ],
+    })
   }
 
-  const [path] = getBezierPath({ sourceX, sourceY, targetX, targetY })
-
-  const midX = (sourceX + targetX) / 2
-  const midY = (sourceY + targetY) / 2
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  })
 
   return (
     <>
-      <BaseEdge {...rest} path={path} />
+      <BaseEdge {...rest} path={edgePath} />
       <EdgeLabelRenderer>
         <Button
           aria-label="Delete edge"
-          className="-translate-x-1/2 -translate-y-1/2 pointer-events-auto absolute z-10 cursor-pointer rounded bg-white px-2 py-1 text-xs shadow hover:bg-red-100"
+          className={cn(
+            "nodrag nopan pointer-events-auto absolute hidden hover:bg-color-none",
+            (data as { isHovered?: boolean })?.isHovered && "inline-flex",
+          )}
           onClick={onDelete}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               onDelete()
             }
           }}
-          style={{ left: midX, top: midY }}
+          size="sm"
+          style={{
+            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+          }}
           type="button"
-          variant="ghost"
+          variant="destructive"
         >
-          <TrashIcon />
+          <XIcon />
         </Button>
       </EdgeLabelRenderer>
     </>
