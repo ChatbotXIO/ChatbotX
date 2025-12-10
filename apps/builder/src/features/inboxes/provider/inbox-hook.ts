@@ -57,8 +57,6 @@ export const useConfiguredInboxTypeOptions: () => SelectOption[] = () => {
     setInboxTypes(Array.from(setOfInboxTypes))
   }, [inboxes])
 
-  console.log("inboxTypes", inboxTypes)
-
   return useMemo(
     () =>
       inboxTypes.map(
