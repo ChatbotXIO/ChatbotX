@@ -6,24 +6,21 @@ import { useCallback, useEffect } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { z } from "zod"
 
-// Get default values from schema default function to ensure consistency
 const defaultStep = aiGenerateTextDefaultFn("openai")
 const DEFAULT_TEMPERATURE = defaultStep.temperature
 const DEFAULT_MAX_TOKENS = defaultStep.maxTokens
 
-// Schema for AI model form (input) - derived from aiGenerateTextSchema with UI-specific transformations
 export const aiModelFormInputSchema = z.object({
   model: z.string().optional(),
   prompt: z.string().optional(),
   userMessage: z.string().optional(),
   outputCfId: z.string().optional(),
   tools: z.array(z.string()).optional(),
-  rememberConversation: z.array(z.string()).optional(), // UI: checkbox array
-  temperature: z.union([z.number(), z.string()]).optional(), // UI: can be string from input
-  maxTokens: z.union([z.number(), z.string()]).optional(), // UI: can be string from input
+  rememberConversation: z.array(z.string()).optional(),
+  temperature: z.union([z.number(), z.string()]).optional(),
+  maxTokens: z.union([z.number(), z.string()]).optional(),
 })
 
-// Schema for AI model form (output)
 export const aiModelFormOutputSchema = z.object({
   model: z.string().optional(),
   prompt: z.string().optional(),
@@ -42,7 +39,16 @@ type UseAIModelFormProps = {
   parentName: string
 }
 
-// Helper function to normalize parent values to form input format
+const FORM_FIELDS: (keyof AIModelFormOutputData)[] = [
+  "model",
+  "prompt",
+  "userMessage",
+  "outputCfId",
+  "tools",
+  "temperature",
+  "maxTokens",
+]
+
 const normalizeToFormInput = (
   parentValues: Record<string, unknown>,
 ): AIModelFormInputData => ({
@@ -70,7 +76,6 @@ export const useAIModelForm = ({ parentName }: UseAIModelFormProps) => {
     shouldUseNativeValidation: false,
   })
 
-  // Reset form when currentValues change
   useEffect(() => {
     const newCurrentValues = normalizeToFormInput(parentValues)
     form.reset(newCurrentValues)
@@ -78,7 +83,6 @@ export const useAIModelForm = ({ parentName }: UseAIModelFormProps) => {
 
   const onSubmit = useCallback(() => {
     const values = form.getValues()
-    // Convert input data to output data
     const convertedValues: AIModelFormOutputData = {
       ...values,
       temperature:
@@ -91,25 +95,13 @@ export const useAIModelForm = ({ parentName }: UseAIModelFormProps) => {
           : values.maxTokens,
     }
 
-    // Update parent form with new values
-    const formFields: (keyof AIModelFormOutputData)[] = [
-      "model",
-      "prompt",
-      "userMessage",
-      "outputCfId",
-      "tools",
-      "temperature",
-      "maxTokens",
-    ]
-
-    for (const field of formFields) {
+    for (const field of FORM_FIELDS) {
       setValueParent(`${parentName}.${field}`, convertedValues[field], {
         shouldValidate: true,
         shouldDirty: true,
       })
     }
 
-    // Handle rememberConversation separately (convert array to boolean)
     setValueParent(
       `${parentName}.rememberConversation`,
       (convertedValues.rememberConversation || []).includes("1"),

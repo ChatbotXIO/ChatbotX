@@ -1,5 +1,10 @@
 import { prisma } from "@aha.chat/database"
-import { AIMessageRole } from "@aha.chat/database/types"
+import {
+  AIMessageRole,
+  FieldType,
+  type Gender,
+  reservedCustomFieldNames,
+} from "@aha.chat/database/types"
 import { AI_PROVIDERS } from "@aha.chat/flow-config"
 import { type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
@@ -102,12 +107,13 @@ export async function handleAIGenerateText({
         temperature,
       })
     } else {
-      await saveResultToCustomField(
-        conversation.contactId,
-        stepConfig.outputCfId,
+      await saveResultToCustomField({
+        contactId: conversation.contactId,
+        customFieldId: stepConfig.outputCfId,
         fullText,
         messageCount,
-      )
+        chatbotId: conversation.chatbotId,
+      })
     }
   } catch (error) {
     logger.error("[ai-generate-text] Step failed", {
@@ -172,12 +178,13 @@ async function handleToolCallsFollowUp({
         sendParts: true,
       })
 
-    await saveResultToCustomField(
-      conversation.contactId,
-      stepConfig.outputCfId,
-      followUpFullText,
-      followUpMessageCount,
-    )
+    await saveResultToCustomField({
+      contactId: conversation.contactId,
+      customFieldId: stepConfig.outputCfId,
+      fullText: followUpFullText,
+      messageCount: followUpMessageCount,
+      chatbotId: conversation.chatbotId,
+    })
   } catch (followUpError) {
     logger.error("[ai-generate-text] Follow-up request failed", {
       error: followUpError,
@@ -185,22 +192,29 @@ async function handleToolCallsFollowUp({
       stepId: stepConfig.id,
     })
 
-    await saveResultToCustomField(
-      conversation.contactId,
-      stepConfig.outputCfId,
+    await saveResultToCustomField({
+      contactId: conversation.contactId,
+      customFieldId: stepConfig.outputCfId,
       fullText,
-      MAGIC_NUMBERS.ZERO_MESSAGE_COUNT,
-    )
+      messageCount: MAGIC_NUMBERS.ZERO_MESSAGE_COUNT,
+      chatbotId: conversation.chatbotId,
+    })
   }
 }
 
-// Save result to custom field if specified
-async function saveResultToCustomField(
-  contactId: string | null,
-  customFieldId: string | undefined,
-  fullText: string,
-  messageCount: number,
-): Promise<void> {
+async function saveResultToCustomField({
+  contactId,
+  customFieldId,
+  fullText,
+  messageCount,
+  chatbotId,
+}: {
+  contactId: string | null
+  customFieldId: string | undefined
+  fullText: string
+  messageCount: number
+  chatbotId: string
+}): Promise<void> {
   if (!contactId) {
     return
   }
@@ -211,6 +225,90 @@ async function saveResultToCustomField(
     return
   }
   if (!fullText) {
+    return
+  }
+
+  const isReservedField = Object.values(reservedCustomFieldNames).includes(
+    customFieldId as (typeof reservedCustomFieldNames)[keyof typeof reservedCustomFieldNames],
+  )
+
+  if (isReservedField) {
+    const updateData: Partial<{
+      firstName: string
+      lastName: string
+      email: string
+      phoneNumber: string
+      avatar: string
+      gender: Gender
+    }> = {}
+
+    switch (customFieldId) {
+      case reservedCustomFieldNames.first_name:
+        updateData.firstName = fullText
+        break
+      case reservedCustomFieldNames.last_name:
+        updateData.lastName = fullText
+        break
+      case reservedCustomFieldNames.full_name: {
+        const trimmedName = fullText.trim()
+        const spaceIndex = trimmedName.indexOf(" ")
+        if (spaceIndex > 0) {
+          updateData.firstName = trimmedName.substring(0, spaceIndex)
+          updateData.lastName = trimmedName.substring(spaceIndex + 1).trim()
+        } else if (trimmedName.length > 0) {
+          updateData.firstName = trimmedName
+        }
+        break
+      }
+      case reservedCustomFieldNames.email:
+        updateData.email = fullText
+        break
+      case reservedCustomFieldNames.phone_number:
+        updateData.phoneNumber = fullText
+        break
+      case reservedCustomFieldNames.avatar:
+        updateData.avatar = fullText
+        break
+      case reservedCustomFieldNames.gender:
+        if (
+          fullText === "male" ||
+          fullText === "female" ||
+          fullText === "unknown"
+        ) {
+          updateData.gender = fullText as Gender
+        }
+        break
+      default:
+        logger.warn(
+          "[ai-generate-text] Reserved field not supported for Contact table",
+          {
+            customFieldId,
+            chatbotId,
+          },
+        )
+        return
+    }
+
+    await prisma.contact.update({
+      where: { id: contactId },
+      data: updateData,
+    })
+    return
+  }
+
+  const customField = await prisma.field.findFirst({
+    where: {
+      id: customFieldId,
+      fieldType: FieldType.customField,
+      chatbotId,
+    },
+  })
+
+  if (!customField) {
+    logger.warn("[ai-generate-text] Custom field not found", {
+      customFieldId,
+      chatbotId,
+    })
     return
   }
 
