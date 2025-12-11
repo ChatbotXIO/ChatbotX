@@ -430,6 +430,9 @@
     "contactFilter": {
       "label": "Contact filter"
     },
+    "contactNote": {
+      "label": "Contact Note"
+    },
     "chooseTime": {
       "label": "Choose time"
     },

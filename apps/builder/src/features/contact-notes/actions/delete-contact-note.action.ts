@@ -1,3 +1,5 @@
+"use server"
+
 import { prisma } from "@aha.chat/database"
 import {
   type ChatbotIdRequestParams,
@@ -6,33 +8,27 @@ import {
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type AddContactNotesRequest,
-  addContactNotesRequest,
+  type DeleteContactNoteRequest,
+  deleteContactNoteRequest,
 } from "../schemas/action"
 
-export const createContactNotesAction = chatbotActionClient
+export const deleteContactNoteAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
-  .inputSchema(addContactNotesRequest)
+  .inputSchema(deleteContactNoteRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: AddContactNotesRequest
+      parsedInput: DeleteContactNoteRequest
     }) => {
       assertCurrentUserCanAccessChatbot(chatbotId)
 
-      // Make sure contact exists in the chatbot
-      await prisma.contact.findFirstOrThrow({
+      return await prisma.contactNote.delete({
         where: {
-          chatbotId,
-          id: parsedInput.contactId,
+          id: parsedInput.id,
         },
-      })
-
-      await prisma.contactNote.create({
-        data: parsedInput,
       })
     },
   )
