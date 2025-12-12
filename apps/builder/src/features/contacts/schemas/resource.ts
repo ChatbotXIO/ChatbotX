@@ -13,8 +13,8 @@ export class ContactException extends BaseException {}
 
 export type ContactResource = ContactModel & {
   contactCustomFields?: ContactCustomFieldModel[]
-  tags: TagModel[]
-  contactNotes: ContactNoteModel[]
+  tags?: TagModel[]
+  contactNotes?: ContactNoteModel[]
   conversation?: ConversationResource | null
 }
 
