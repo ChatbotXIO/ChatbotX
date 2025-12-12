@@ -8,7 +8,7 @@ import {
 import {
   type EditFolderSchema,
   editFolderSchema,
-} from "@/features/folders/schemas/edit-folder-schema"
+} from "@/features/folders/schemas/action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 

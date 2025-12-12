@@ -5,7 +5,7 @@ import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-
 import { CustomFieldsTable } from "@/features/custom-fields/custom-field-table"
 import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
-import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
+import { listFoldersSearchParams } from "@/features/folders/schemas/query"
 
 export default async function CustomFieldsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -26,6 +26,7 @@ export default async function CustomFieldsPage(props: {
       folderId,
     }),
   ])
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex">

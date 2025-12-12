@@ -93,7 +93,7 @@ export function RenameFlowDialog({
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
-                  <Button size="sm" type="button" variant="secondary">
+                  <Button size="sm" type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>
                 </DialogClose>

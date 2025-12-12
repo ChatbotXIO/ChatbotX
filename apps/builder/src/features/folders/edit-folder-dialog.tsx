@@ -18,7 +18,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
-import { editFolderSchema } from "@/features/folders/schemas/edit-folder-schema"
+import { editFolderSchema } from "@/features/folders/schemas/action"
 
 export function EditFolderDialog({
   open,

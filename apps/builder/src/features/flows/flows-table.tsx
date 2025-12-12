@@ -1,13 +1,15 @@
 "use client"
 
+import { FolderType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import React, { useMemo, useState } from "react"
+import { use, useMemo, useState } from "react"
 import type { getCurrentFolder } from "@/features/folders/queries"
+import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import { getFlowColumns } from "./flows-table-columns"
 import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
@@ -27,11 +29,12 @@ type FlowsTableProps = {
 
 export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
   const t = useTranslations()
-  const [_, { data, pageCount }] = React.use(promises)
-  const [rowAction, setRowAction] =
-    useState<DataTableRowAction<FlowResource> | null>(null)
   const router = useRouter()
 
+  const [_, { data, pageCount }] = use(promises)
+
+  const [rowAction, setRowAction] =
+    useState<DataTableRowAction<FlowResource> | null>(null)
   const columns = useMemo(() => getFlowColumns({ t, setRowAction }), [t])
 
   const { table } = useDataTable({
@@ -75,6 +78,15 @@ export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
         flow={rowAction?.row.original || null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "rename"}
+      />
+
+      <ChangeFolderDialog
+        chatbotId={chatbotId}
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType={FolderType.flow}
+        modelId={rowAction?.row.original?.id || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
       />
     </>
   )

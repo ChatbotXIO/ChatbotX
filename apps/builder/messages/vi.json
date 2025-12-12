@@ -144,7 +144,8 @@
     "setAsDefaultAgent": "Đặt làm Agent mặc định",
     "unsetDefaultAgent": "Bỏ đặt Agent mặc định",
     "randomRow": "Hàng ngẫu nhiên",
-    "clickToEdit": "Nhấp để chỉnh sửa"
+    "clickToEdit": "Nhấp để chỉnh sửa",
+    "move": "Di chuyển"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -1279,6 +1280,7 @@
     "title": "Tích hợp"
   },
   "messages": {
+    "moveFeature": "Di chuyển {feature}",
     "poweredBy": "Được cung cấp bởi {name}",
     "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm khóa API GIPHY trong cài đặt tổ chức.",
     "actionCompleted": "Hành động hoàn tất thành công",

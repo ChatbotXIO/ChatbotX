@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
+import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
 import { getFolderTypeFromFeature } from "./_lib"
 
@@ -54,11 +55,17 @@ export default async function FoldersDetault(props: {
       </div>
 
       <Suspense>
-        <ListFolders
+        <FolderStoreProvider
+          autoInitialize={true}
           chatbotId={params.chatbotId}
           folderType={folderType}
-          promises={promises}
-        />
+        >
+          <ListFolders
+            chatbotId={params.chatbotId}
+            folderType={folderType}
+            promises={promises}
+          />
+        </FolderStoreProvider>
       </Suspense>
     </>
   )

@@ -14,7 +14,7 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { deleteFolderAction } from "@/features/folders/actions/delete-folder-action"
+import { deleteFolderAction } from "@/features/folders/actions/delete-folder.action"
 
 export function DeleteFolderDialog({
   open,

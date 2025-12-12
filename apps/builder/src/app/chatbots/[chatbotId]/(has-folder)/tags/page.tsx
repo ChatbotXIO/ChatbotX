@@ -21,7 +21,7 @@ export default async function TagsPage(props: {
   ])
 
   return (
-    <div>
+    <>
       <div className="mb-4 flex w-full justify-end">
         <CreateTagDialog
           chatbotId={params.chatbotId}
@@ -32,6 +32,6 @@ export default async function TagsPage(props: {
       <Suspense>
         <TagsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>
-    </div>
+    </>
   )
 }

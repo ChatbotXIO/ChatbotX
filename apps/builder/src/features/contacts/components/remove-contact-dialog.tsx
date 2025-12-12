@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Loader2Icon } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type ReactElement, useState } from "react"
@@ -29,6 +29,8 @@ export default function DeleteContactDialog({
   ids,
 }: DeleteContactDialogProps) {
   const t = useTranslations()
+  const router = useRouter()
+
   const [open, setOpen] = useState(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
@@ -37,11 +39,12 @@ export default function DeleteContactDialog({
     {
       onSuccess: () => {
         toast.success(
-          t("messages.updatedSuccess", {
+          t("messages.deletedSuccess", {
             feature: t("fields.contact.label"),
           }),
         )
         setOpen(false)
+        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -55,14 +58,14 @@ export default function DeleteContactDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", {
               feature: t("fields.contact.label"),
             })}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("messages.deleteConfirmation", {
               feature: t("fields.contact.label"),
             })}

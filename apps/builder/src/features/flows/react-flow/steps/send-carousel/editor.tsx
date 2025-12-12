@@ -109,6 +109,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
           <Button
             className="size-6 cursor-pointer rounded-full"
             data-slot="carousel-add"
+            disabled={fields.length >= 10}
             onClick={insertCard}
             type="button"
           >
@@ -119,7 +120,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
           <Button
             className="size-6 cursor-pointer rounded-full"
             data-slot="carousel-remove"
-            disabled={selectedSnap >= snapCount - 1}
+            disabled={fields.length <= 1}
             onClick={removeCard}
             type="button"
             variant="destructive"

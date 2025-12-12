@@ -1,10 +1,11 @@
 "use client"
+import { FolderType } from "@aha.chat/database/types"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
+import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 
 export default function FolderableLayout({
   children,
@@ -17,7 +18,11 @@ export default function FolderableLayout({
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   return (
-    <>
+    <FolderStoreProvider
+      autoInitialize={true}
+      chatbotId={chatbotId}
+      folderType={FolderType.flow}
+    >
       <Card>
         <CardContent className="flex items-center gap-8">
           <Link
@@ -40,11 +45,10 @@ export default function FolderableLayout({
           </Link>
         </CardContent>
       </Card>
-      <Card className="px-8">
-        {folders}
-        <Separator className="my-4" />
-        {children}
-      </Card>
-    </>
+
+      <Card className="px-8">{folders}</Card>
+
+      <Card className="px-8">{children}</Card>
+    </FolderStoreProvider>
   )
 }
