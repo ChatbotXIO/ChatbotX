@@ -141,6 +141,12 @@
   "admins": {
     "title": "Admins"
   },
+  "assignAdmin": {
+    "designateConversation": "Designate the conversation",
+    "assignedToMe": "Assigned to me",
+    "assignedTo": "Assigned to {name}",
+    "removeAssigner": "Remove assigner"
+  },
   "aiAgent": {
     "defaultAgent": "Default Agent",
     "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses.",

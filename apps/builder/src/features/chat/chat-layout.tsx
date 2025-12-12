@@ -5,6 +5,8 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@aha.chat/ui/components/ui/resizable"
+import { use } from "react"
+import type { getAgents } from "../chatbot-members/queries"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
 import { MessageInput } from "../messages/components/message-input"
@@ -15,10 +17,12 @@ import { ChatStoreProvider } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
   layout?: [number, number, number]
+  promises: Promise<[Awaited<ReturnType<typeof getAgents>>]>
 }
 
 export const ChatLayout = (props: ChatLayoutProps) => {
   const { layout = [25, 50, 25] } = props
+  const [{ data: agents }] = use(props.promises)
 
   return (
     <ChatStoreProvider>
@@ -41,7 +45,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {/* MESSAGE LIST */}
         <ResizablePanel className="pt-3" defaultSize={layout[1] ?? 50}>
           <div className="flex h-full w-full flex-col">
-            <MessageHead />
+            <MessageHead agents={agents} />
             <MessageList />
             <MessageInput />
           </div>
