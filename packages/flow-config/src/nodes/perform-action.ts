@@ -1,29 +1,36 @@
 import { z } from "zod"
 import { actionSteps } from "../shared"
 import {
-  baseNodeDefaultFn,
+  baseNodeDataSchema,
   baseNodeSchema,
-  type NodeFnProps,
+  type DefaultNodeProps,
+  defaultNodeData,
   NodeType,
 } from "./base"
 
 export const performActionNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.performAction),
-  data: z.object({
-    name: z.string().trim().min(1).max(255),
-    isStartNode: z.boolean(),
-    beforeStep: z.null(),
-    afterStep: z.null(),
-    steps: z.array(z.union(actionSteps)),
+  data: baseNodeDataSchema.extend({
+    details: z.object({
+      steps: z.array(z.union(actionSteps)),
+    }),
   }),
 })
-export type PerformActionNodeSchema = typeof performActionNodeSchema
-export type PerformActionNodeProps = z.infer<typeof performActionNodeSchema>
+export type PerformActionNodeSchema = z.infer<typeof performActionNodeSchema>
 
 export const performActionNodeDefaultFn = (
-  props: NodeFnProps<PerformActionNodeProps>,
-): PerformActionNodeProps =>
-  baseNodeDefaultFn<PerformActionNodeProps>({
-    ...props,
-    type: NodeType.performAction,
-  })
+  props: DefaultNodeProps,
+): PerformActionNodeSchema => ({
+  ...defaultNodeData(),
+  type: NodeType.performAction,
+  ...props.nodeProps,
+  data: {
+    name: "Perform Action",
+    isStartNode: false,
+    ...props.dataProps,
+    details: {
+      steps: [],
+      ...props.detailProps,
+    },
+  },
+})

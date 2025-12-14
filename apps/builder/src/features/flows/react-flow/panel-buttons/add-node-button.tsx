@@ -63,7 +63,7 @@ export function addNewNode(
   nodeType: NodeType,
   t: TranslationFn,
 ): string | null {
-  const { screenToFlowPosition, addNodes, getNodes } = reactFlow
+  const { addNodes, getNodes, screenToFlowPosition } = reactFlow
 
   const allNodes = getNodes()
 
@@ -79,11 +79,15 @@ export function addNewNode(
     return null
   }
   const newNode = targetNodeConfig.defaultFn?.({
-    name: `${targetNodeConfig.label} ${labelVersion}`,
-    position: screenToFlowPosition({
-      x: window.innerWidth - 400,
-      y: 50,
-    }),
+    dataProps: {
+      name: `${targetNodeConfig.label} ${labelVersion}`,
+    },
+    nodeProps: {
+      position: screenToFlowPosition({
+        x: window.innerWidth - 400,
+        y: 100,
+      }),
+    },
   })
   if (newNode) {
     addNodes([newNode])

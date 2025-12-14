@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
@@ -76,6 +77,13 @@ export function CreateAutomatedResponseForm(
       errorMapProps: {},
     },
   )
+
+  const { setValue } = form
+  useEffect(() => {
+    if (folderId) {
+      setValue("folderId", folderId)
+    }
+  }, [setValue, folderId])
 
   const {
     fields: replies,

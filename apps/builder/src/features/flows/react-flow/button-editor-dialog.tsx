@@ -1,4 +1,5 @@
 "use client"
+
 import type {
   FlowNode,
   OpenWebsiteStepSchema,
@@ -35,7 +36,7 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNodes, useReactFlow } from "@xyflow/react"
-import { getProperty, setProperty } from "dot-prop"
+import { getProperty } from "dot-prop"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
@@ -45,7 +46,7 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
-import { deleteProperty } from "@/lib/object-util"
+import { deleteProperty, setProperty } from "@/lib/object-util"
 import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
 import { sendMessageEditorMenusWithButton } from "./nodes/send-message/menu"
 import { DynamicStepEditor } from "./steps"
@@ -180,35 +181,24 @@ function ButtonSteps() {
 export function ButtonEditorDialog() {
   const [openDialog, setOpenDialog] = useState<boolean>(false)
   const [data, setData] = useState<ButtonStepProps | null>(null)
-  const [originData, setOriginData] = useState<ButtonStepProps | null>(null)
+  const [_originData, setOriginData] = useState<ButtonStepProps | null>(null)
   const [activeNode, setActiveNode] = useState<FlowNode | null>(null)
-  const [needReconnectEdges, setNeedReconnectEdges] = useState<boolean>(false)
+  const [_needReconnectEdges, setNeedReconnectEdges] = useState<boolean>(false)
 
   const nodes = useNodes() as FlowNode[]
   const t = useTranslations()
 
-  const {
-    addNodes,
-    screenToFlowPosition,
-    addEdges,
-    updateNodeData,
-    deleteElements,
-  } = useReactFlow()
+  const { addNodes, addEdges, updateNodeData, deleteElements } = useReactFlow()
   const { buttonPath, setButtonPath, setOpenNodeDetailSheet } = useStepStore(
     (state) => state,
   )
+  const { screenToFlowPosition } = useReactFlow()
 
   const onOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       setButtonPath(null)
     }
   }
-
-  const calcPosition = () =>
-    screenToFlowPosition({
-      x: window.innerWidth - 400,
-      y: 100,
-    })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
@@ -246,11 +236,15 @@ export function ButtonEditorDialog() {
     }
   }, [data, form])
 
-  // const activeButtonType = watch("buttonType")
   const onChooseButton = (selectedButtonType: ButtonType | null) => {
     setValue("buttonType", selectedButtonType)
     setValue("steps", [])
     setValue("beforeStep", null)
+
+    const position = screenToFlowPosition({
+      x: window.innerWidth - 400,
+      y: 100,
+    })
 
     let newNode: FlowNode | null = null
     let beforeStep:
@@ -261,20 +255,28 @@ export function ButtonEditorDialog() {
     switch (selectedButtonType) {
       case ButtonType.SendMessage: {
         newNode = sendMessageNodeDefaultFn({
-          name: `${t("actions.sendMessage")} #${nodes.length + 1}`,
-          position: calcPosition(),
+          nodeProps: {
+            position,
+          },
+          dataProps: {
+            name: `${t("actions.sendMessage")} #${nodes.length + 1}`,
+          },
         })
         beforeStep = startAnotherNodeStepDefaultFn({
           nodeId: newNode.id,
           viewOnly: true,
         })
-        setNeedReconnectEdges(true)
+        // setNeedReconnectEdges(true)
         break
       }
       case ButtonType.PerformAction: {
         newNode = performActionNodeDefaultFn({
-          name: `${t("flows.actions.performAction")} #${nodes.length + 1}`,
-          position: calcPosition(),
+          nodeProps: {
+            position,
+          },
+          dataProps: {
+            name: `${t("flows.actions.performAction")} #${nodes.length + 1}`,
+          },
         })
         beforeStep = startAnotherNodeStepDefaultFn({
           nodeId: newNode.id,
@@ -285,8 +287,12 @@ export function ButtonEditorDialog() {
       }
       case ButtonType.StartExternalFlow: {
         newNode = startFlowNodeDefaultFn({
-          name: `${t("flows.actions.startExternalFlow")} #${nodes.length + 1}`,
-          position: calcPosition(),
+          nodeProps: {
+            position,
+          },
+          dataProps: {
+            name: `${t("flows.actions.startExternalFlow")} #${nodes.length + 1}`,
+          },
         })
         beforeStep = startAnotherNodeStepDefaultFn({
           nodeId: newNode.id,
@@ -327,7 +333,7 @@ export function ButtonEditorDialog() {
           target: newNode.id,
           sourceHandle: data.id,
           targetHandle: newNode.id,
-          type: "delete",
+          type: "buttonedge",
         })
       }
 
@@ -364,21 +370,10 @@ export function ButtonEditorDialog() {
   }
 
   const onSave = () => {
-    // Re-connect edges if needed
-    if (needReconnectEdges && originData) {
-      deleteElements({
-        edges: [
-          {
-            id: originData.id,
-          },
-        ],
-      })
-    }
-
     if (activeNode && buttonPath) {
       setProperty(activeNode, buttonPath, form.getValues())
 
-      updateNodeData(activeNode.id, activeNode.data)
+      // updateNodeData(activeNode.id, activeNode.data)
 
       setOpenDialog(false)
 

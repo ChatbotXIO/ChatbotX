@@ -11,12 +11,9 @@ import {
   Controls,
   type Edge,
   type FinalConnectionState,
-  getConnectedEdges,
-  getIncomers,
-  getOutgoers,
+  MarkerType,
   MiniMap,
   type Node,
-  type OnConnectStartParams,
   Panel,
   ReactFlow,
   useEdgesState,
@@ -28,7 +25,6 @@ import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
-  useRef,
 } from "react"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 import type { FlowVersionResource } from "../schemas/get-flows-schema"
@@ -39,7 +35,7 @@ import ZoomInButton from "./panel-buttons/zoom-in-button"
 import ZoomOutButton from "./panel-buttons/zoom-out-button"
 import "./react-flow-wrapper.css"
 import { createId } from "@paralleldrive/cuid2"
-import DeleteEdge from "./edges/delete-edge"
+import ButtonEdge from "./edges/button-edge"
 
 const nodeTypes = {
   [NodeType.sendMessage]: NodeViewer,
@@ -50,7 +46,7 @@ const nodeTypes = {
 }
 
 const edgeTypes = {
-  delete: DeleteEdge,
+  buttonedge: ButtonEdge,
 }
 
 type ReactFlowFrameProps = {
@@ -63,23 +59,29 @@ export function ReactFlowWrapper({
   setOpenNodeDetailSheet,
 }: ReactFlowFrameProps) {
   const reactFlow = useReactFlow()
+  const {
+    addNodes,
+    getNodes,
+    updateNodeData,
+    addEdges,
+    updateEdge,
+    getEdges,
+    deleteElements,
+  } = reactFlow
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(
+  const [nodes, _setNodes, onNodesChange] = useNodesState(
     flowVersion.nodes as unknown as FlowNode[],
   )
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     (flowVersion.edges as unknown as Edge[]).map((edge) => ({
       ...edge,
-      type: "delete",
-      data: {
-        ...edge.data,
-        onDelete: (edgeId: string) => {
-          setEdges((eds) => eds.filter((e) => e.id !== edgeId))
-        },
+      type: "buttonedge",
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
       },
+      // data: edge.data,
     })),
   )
-  const connectNodeRef = useRef<{ nodeId: string } | null>(null)
 
   const { execute: savingDraft } = useOptimisticAction(
     updateDraftFlowVersionAction.bind(
@@ -119,65 +121,27 @@ export function ReactFlowWrapper({
     setOpenNodeDetailSheet(false)
   }, [setOpenNodeDetailSheet])
 
-  const onNodesDelete = useCallback(
-    (deleted: Node[]) => {
-      setEdges((prevEdges) => {
-        const nextEdges = deleted.reduce<typeof prevEdges>((acc, node) => {
-          const incomers = getIncomers(node, nodes, prevEdges)
-          const outgoers = getOutgoers(node, nodes, prevEdges)
-          const connectedEdges = getConnectedEdges([node], prevEdges)
-
-          const remainingEdges = acc.filter(
-            (edge) => !connectedEdges.some((e) => e.id === edge.id),
-          )
-
-          const createdEdges = incomers.flatMap(({ id: source }) =>
-            outgoers.map(({ id: target }) => ({
-              id: `${source}->${target}`,
-              source,
-              target,
-              type: "delete",
-              data: {
-                onDelete: (edgeId: string) => {
-                  setEdges((eds) => eds.filter((e) => e.id !== edgeId))
-                },
-              },
-            })),
-          )
-
-          return [...remainingEdges, ...createdEdges]
-        }, prevEdges)
-
-        return nextEdges
-      })
-    },
-    [nodes, setEdges],
-  )
-
   const onNodeMouseEnter = useCallback(
-    (_: ReactMouseEvent, node: Node) => {
-      setNodes((nds) =>
-        nds.map((n) =>
-          n.id === node.id
-            ? { ...n, data: { ...n.data, forceToolbarVisible: true } }
-            : n,
-        ),
-      )
+    (_event: ReactMouseEvent, node: Node) => {
+      updateNodeData(node.id, { forceToolbarVisible: true })
     },
-    [setNodes],
+    [updateNodeData],
   )
+
+  const onNodeMouseLeave = useCallback(
+    (_event: ReactMouseEvent, node: Node) => {
+      updateNodeData(node.id, { forceToolbarVisible: false })
+    },
+    [updateNodeData],
+  )
+
   const onConnect = useCallback(
     (params: Connection) =>
       setEdges((eds) =>
         addEdge(
           {
             ...params,
-            type: "delete",
-            data: {
-              onDelete: (edgeId: string) => {
-                setEdges((items) => items.filter((e) => e.id !== edgeId))
-              },
-            },
+            type: "buttonedge",
           },
           eds,
         ),
@@ -185,113 +149,101 @@ export function ReactFlowWrapper({
     [setEdges],
   )
 
-  const onNodeMouseLeave = useCallback(
-    (_: ReactMouseEvent, node: Node) => {
-      setNodes((nds) =>
-        nds.map((n) =>
-          n.id === node.id
-            ? { ...n, data: { ...n.data, forceToolbarVisible: false } }
-            : n,
-        ),
-      )
-    },
-    [setNodes],
-  )
-
-  const onConnectStart = useCallback(
-    (_: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
-      connectNodeRef.current = {
-        nodeId: params.nodeId || "",
-      }
-    },
-    [],
-  )
-
   const onConnectEnd = useCallback(
     (
-      event: MouseEvent | TouchEvent,
+      _event: MouseEvent | TouchEvent,
       connectionState: FinalConnectionState,
     ): void => {
-      const { addNodes, getNodes, getEdges, addEdges } = reactFlow
-      const { fromHandle, toNode } = connectionState
-      if (connectNodeRef.current && !toNode) {
-        const allNodes = getNodes()
-        const yBuffer = 30 // from top to handler
-        const position = reactFlow.screenToFlowPosition({
-          x: "touches" in event ? event.touches[0].clientX : event.clientX,
-          y:
-            "touches" in event
-              ? event.touches[0].clientY
-              : event.clientY - yBuffer,
-        })
+      // Each source handle just can connect to one target handle
+      // Remove the existing edges that have the same source handle
+      if (connectionState.fromNode && connectionState.fromHandle) {
+        const allEdges = getEdges()
 
-        let labelVersion = 1
-        for (const node of allNodes) {
-          if (node.type === NodeType.sendMessage) {
-            labelVersion += 1
-          }
+        const connectedEdges = allEdges.filter(
+          (edge) => edge.sourceHandle === connectionState.fromHandle?.id,
+        )
+
+        // Skip if the user drop to the same node
+        if (
+          connectedEdges.length === 0 ||
+          connectedEdges.some(
+            (edge) => edge.targetHandle === connectionState.toHandle?.id,
+          )
+        ) {
+          return
         }
 
+        deleteElements({
+          edges: connectedEdges.map((edge) => ({
+            id: edge.id,
+          })),
+        })
+      }
+
+      // Create new sendMessage node if the user drop to empty space
+      if (
+        !(connectionState.toNode || connectionState.toHandle) &&
+        connectionState.fromNode &&
+        connectionState.fromHandle
+      ) {
+        const allNodes = getNodes()
+        const messageNodesLength = allNodes.filter(
+          (node) => node.type === NodeType.sendMessage,
+        ).length
+
         const newNode = sendMessageNodeDefaultFn({
-          name: `Send Message #${labelVersion}`,
-          position,
+          nodeProps: {
+            position: connectionState.to ?? {
+              x: 300,
+              y: 300,
+            },
+          },
+          dataProps: {
+            name: `Send Message #${messageNodesLength + 1}`,
+          },
         })
         addNodes([newNode])
+
         addEdges({
           id: createId(),
-          source: connectNodeRef.current.nodeId,
+          source: connectionState.fromNode.id,
           target: newNode.id,
-          sourceHandle: fromHandle?.id,
+          sourceHandle: connectionState.fromHandle.id,
           targetHandle: newNode.id,
-          type: "delete",
+          // type: "buttonedge",
         })
-      } else {
-        const existingEdges = getEdges()
-        const updatedEdges = existingEdges.map((edge) => {
-          if (
-            edge.source === connectionState.fromNode?.id &&
-            edge.target === connectionState.toNode?.id
-          ) {
-            return {
-              ...edge,
-              data: {
-                ...edge.data,
-                onDelete: (edgeId: string) => {
-                  setEdges((eds) => eds.filter((e) => e.id !== edgeId))
-                },
-              },
-            }
-          }
-          return edge
-        })
-        reactFlow.setEdges(updatedEdges)
       }
-      connectNodeRef.current = null
     },
-    [reactFlow, setEdges],
+    [addNodes, addEdges, getNodes, deleteElements, getEdges],
   )
 
-  const onEdgeMouseEnter = (_: ReactMouseEvent, edge: Edge) => {
-    const edgeId = edge.id
+  const onEdgeMouseEnter = useCallback(
+    (_event: ReactMouseEvent, edge: Edge) => {
+      const edgeId = edge.id
 
-    // Updates edge
-    reactFlow.updateEdge(edgeId, (oldEdge) => ({
-      data: { ...oldEdge.data, isHovered: true },
-    }))
-  }
+      // Updates edge
+      updateEdge(edgeId, (oldEdge) => ({
+        data: { ...oldEdge.data, isHovered: true },
+      }))
+    },
+    [updateEdge],
+  )
 
-  const onEdgeMouseLeave = (_: ReactMouseEvent, edge: Edge) => {
-    const edgeId = edge.id
-    reactFlow.updateEdge(edgeId, (oldEdge) => ({
-      data: { ...oldEdge.data, isHovered: false },
-    }))
-  }
+  const onEdgeMouseLeave = useCallback(
+    (_event: ReactMouseEvent, edge: Edge) => {
+      const edgeId = edge.id
+      updateEdge(edgeId, (oldEdge) => ({
+        data: { ...oldEdge.data, isHovered: false },
+      }))
+    },
+    [updateEdge],
+  )
 
   return (
     <ReactFlow
       defaultEdgeOptions={{
         markerEnd: {
-          type: "arrowclosed",
+          type: MarkerType.ArrowClosed,
         },
         style: {
           strokeWidth: 2,
@@ -303,7 +255,6 @@ export function ReactFlowWrapper({
       nodeTypes={nodeTypes}
       onConnect={onConnect}
       onConnectEnd={onConnectEnd}
-      onConnectStart={onConnectStart}
       onEdgeMouseEnter={onEdgeMouseEnter}
       onEdgeMouseLeave={onEdgeMouseLeave}
       onEdgesChange={onEdgesChange}
@@ -311,7 +262,6 @@ export function ReactFlowWrapper({
       onNodeMouseEnter={onNodeMouseEnter}
       onNodeMouseLeave={onNodeMouseLeave}
       onNodesChange={onNodesChange}
-      onNodesDelete={onNodesDelete}
       onPaneClick={handlePaneClick}
       proOptions={{ hideAttribution: true }}
     >

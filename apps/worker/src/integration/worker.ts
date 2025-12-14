@@ -20,10 +20,14 @@ const worker = new Worker(
   async (job: Job<IntegrationJobData>) => {
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
-        const { message } = await receiveMessage(job.data.data)
+        const { message, postbackAction } = await receiveMessage(job.data.data)
 
         // Trigger automated response if the message is from a user
-        if (message.content && message.senderType === SenderType.contact) {
+        if (
+          !postbackAction &&
+          message.content &&
+          message.senderType === SenderType.contact
+        ) {
           await integrationQueue.add(
             IntegrationJobAction.triggerAutomatedResponse,
             {
@@ -44,7 +48,6 @@ const worker = new Worker(
         await sendFlowPostback(job.data.data)
         return
       }
-
       case IntegrationJobAction.triggerAutomatedResponse: {
         await triggerAutomatedResponse(job.data.data)
         return

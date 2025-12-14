@@ -29,6 +29,7 @@ const MESSENGER_SCOPE = [
   "pages_manage_engagement",
   "pages_messaging",
   "pages_show_list",
+  "business_management",
 ]
 
 export type MessengerConnectProps = {

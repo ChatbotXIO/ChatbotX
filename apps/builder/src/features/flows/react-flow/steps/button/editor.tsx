@@ -27,7 +27,7 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
       <Button
         className="w-full hover:text-blue-500"
         onClick={() => {
-          setButtonPath(`data.${parentName}`)
+          setButtonPath(`data.details.${parentName}`)
         }}
         type="button"
         variant="secondary"

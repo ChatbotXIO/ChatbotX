@@ -73,6 +73,7 @@ export const receiveMessage = async ({
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel
+  postbackAction: { flowVersionId: string; buttonId: string } | null
 }> => {
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
@@ -218,7 +219,11 @@ export const receiveMessage = async ({
     })
   }
 
-  return result
+  return {
+    message: result.message,
+    conversation: result.conversation,
+    postbackAction,
+  }
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>

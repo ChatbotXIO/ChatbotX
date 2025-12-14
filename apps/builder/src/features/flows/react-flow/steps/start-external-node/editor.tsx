@@ -35,7 +35,7 @@ const StartExternalNodeStepEditor = ({
           (targetFlow.flowVersions?.[0]?.nodes || []) as unknown as FlowNode[]
         ).map((node) => ({
           value: node.id,
-          label: node.data.name as string,
+          label: node.data.name,
         })),
       )
     } else {

@@ -8,6 +8,8 @@ import { findOrganizationSettings } from "@/features/organization/queries"
 import { SimpleCreateWebchat } from "@/features/webchat/simple-create-webchat"
 import { getDomainFromHeader } from "@/lib/domain"
 
+export const dynamic = "force-dynamic"
+
 type CreateChannelPageProps = {
   searchParams: Promise<{
     channel?: string | null
