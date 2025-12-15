@@ -12,13 +12,12 @@ export const BaseHandle = (
 
   return (
     <Handle
-      ref={ref}
-      {...rest}
       className={cn(
         "h-[11px] w-[11px] rounded-full border border-slate-300 bg-slate-100 transition dark:border-secondary dark:bg-secondary",
         className,
       )}
       {...rest}
+      ref={ref}
     >
       {children}
     </Handle>

@@ -12,18 +12,21 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
-    "@types/node": "^24.10.1",
-    "knip": "^5.70.2",
-    "lefthook": "^2.0.4",
-    "prisma": "7.0.1",
-    "tsx": "^4.20.6",
-    "turbo": "^2.6.1",
+    "@types/node": "^24.10.4",
+    "knip": "^5.73.4",
+    "lefthook": "^2.0.11",
+    "prisma": "7.1.0",
+    "tsx": "^4.21.0",
+    "turbo": "^2.6.3",
     "typescript": "5.9.3",
-    "ultracite": "6.3.7"
+    "ultracite": "6.4.0"
   },
   "packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501",
   "engines": {
     "node": ">=24"
+  },
+  "overrides": {
+    "@types/node": "24.x"
   },
   "workspaces": [
     "apps/*",
