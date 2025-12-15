@@ -22,7 +22,13 @@ export function GetNodeId() {
   }
 
   return (
-    <Button className="size-8" onClick={onClick} size="icon" variant="ghost">
+    <Button
+      className="size-8"
+      onClick={onClick}
+      size="icon"
+      type="button"
+      variant="ghost"
+    >
       <FingerprintIcon />
     </Button>
   )

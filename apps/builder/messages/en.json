@@ -141,7 +141,8 @@
     "setAsDefaultAgent": "Set as Default",
     "unsetDefaultAgent": "Unset Default",
     "randomRow": "Random Row",
-    "clickToEdit": "Click to edit"
+    "clickToEdit": "Click to edit",
+    "move": "Move"
   },
   "admins": {
     "title": "Admins"
@@ -1276,6 +1277,7 @@
     "title": "Integrations"
   },
   "messages": {
+    "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
     "noGiphyApiKey": "No GIPHY API key found. Please add a GIPHY API key in the organization settings.",
     "actionCompleted": "Action completed successfully",

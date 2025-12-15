@@ -65,6 +65,9 @@
       },
       "performance": {
         "noBarrelFile": "off"
+      },
+      "nursery": {
+        "noLeakedRender": "off"
       }
     }
   },

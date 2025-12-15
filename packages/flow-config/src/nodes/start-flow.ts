@@ -4,31 +4,36 @@ import {
   startExternalFlowStepSchema,
 } from "../steps/start-external-flow"
 import {
-  baseNodeDefaultFn,
+  baseNodeDataSchema,
   baseNodeSchema,
-  type NodeFnProps,
+  type DefaultNodeProps,
+  defaultNodeData,
   NodeType,
 } from "./base"
 
 export const startFlowNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.startFlow),
-  data: z.object({
-    name: z.string().trim().min(1).max(255),
-    isStartNode: z.boolean(),
-    beforeStep: startExternalFlowStepSchema,
-    steps: z.null(),
-    afterStep: z.null(),
+  data: baseNodeDataSchema.extend({
+    details: z.object({
+      beforeStep: startExternalFlowStepSchema,
+    }),
   }),
 })
-
-export type StartFlowNodeSchema = typeof startFlowNodeSchema
-export type StartFlowNodeProps = z.infer<typeof startFlowNodeSchema>
+export type StartFlowNodeSchema = z.infer<typeof startFlowNodeSchema>
 
 export const startFlowNodeDefaultFn = (
-  props: NodeFnProps<StartFlowNodeProps>,
-): StartFlowNodeProps =>
-  baseNodeDefaultFn<StartFlowNodeProps>({
-    ...props,
-    type: NodeType.startFlow,
-    beforeStep: startExternalFlowStepDefaultFn(),
-  })
+  props: DefaultNodeProps,
+): StartFlowNodeSchema => ({
+  ...defaultNodeData(),
+  type: NodeType.startFlow,
+  ...props.nodeProps,
+  data: {
+    name: "Start Flow",
+    isStartNode: false,
+    ...props.dataProps,
+    details: {
+      beforeStep: startExternalFlowStepDefaultFn(),
+      ...props.detailProps,
+    },
+  },
+})

@@ -1,6 +1,6 @@
 "use client"
 
-import { ReplyType } from "@aha.chat/database/types"
+import { FolderType, ReplyType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -17,7 +17,12 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { MoreHorizontalIcon } from "lucide-react"
+import {
+  FolderUpIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -25,6 +30,7 @@ import { useAction } from "next-safe-action/hooks"
 import React, { use, useMemo } from "react"
 import { toast } from "sonner"
 import { useFlowStore } from "../flows/provider/flow-store-context"
+import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
@@ -117,7 +123,9 @@ export function AutomatedResponsesTable({
               displayData.push(`Message: ${reply.message}`)
             } else {
               const flow = allFlows.find((f) => f.id === reply.flowId)
-              displayData.push(`Flow: ${flow?.name}`)
+              if (flow) {
+                displayData.push(`Flow: ${flow.name}`)
+              }
             }
           }
 
@@ -179,14 +187,22 @@ export function AutomatedResponsesTable({
                 <Link
                   href={`/chatbots/${chatbotId}/automated-responses/${row.original.id}/edit`}
                 >
+                  <PencilIcon />
                   {t("actions.update")}
                 </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setRowAction({ row, variant: "move" })}
+              >
+                <FolderUpIcon />
+                {t("actions.move")}
               </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
                 variant="destructive"
               >
+                <Trash2Icon />
                 {t("actions.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -229,6 +245,15 @@ export function AutomatedResponsesTable({
         }}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
+      />
+
+      <ChangeFolderDialog
+        chatbotId={chatbotId}
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType={FolderType.automatedResponse}
+        modelId={rowAction?.row.original?.id || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
       />
     </>
   )

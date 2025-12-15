@@ -34,8 +34,10 @@ export const createFlowAction = chatbotActionClient
       }
 
       const defaultNode = sendMessageNodeDefaultFn({
-        name: "Send Message #1",
-        isStartNode: true,
+        dataProps: {
+          name: "Send Message #1",
+          isStartNode: true,
+        },
       })
 
       await prisma.$transaction(async (tx) => {

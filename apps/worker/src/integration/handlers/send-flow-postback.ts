@@ -1,11 +1,9 @@
 import { prisma } from "@aha.chat/database"
-import { ButtonType, type FlowNode, StepType } from "@aha.chat/flow-config"
+import type { FlowNode, StepType } from "@aha.chat/flow-config"
 import { SdkException } from "@aha.chat/sdk"
-import {
-  IntegrationJobAction,
-  type IntegrationJobSendFlowPostback,
-  integrationQueue,
-} from "@aha.chat/worker-config"
+import type { IntegrationJobSendFlowPostback } from "@aha.chat/worker-config"
+import { generateRunFlowNode } from "./send-flow-node"
+import { flowStepHandlers } from "./step-handler"
 
 export async function sendFlowPostback(
   data: IntegrationJobSendFlowPostback["data"],
@@ -30,8 +28,13 @@ export async function sendFlowPostback(
   }
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
+
   const foundedButton = nodes
-    .flatMap((n) => n.data.steps)
+    .flatMap((n) =>
+      "steps" in n.data.details && n.data.details.steps
+        ? n.data.details.steps
+        : [],
+    )
     .flatMap((s) => ("buttons" in s ? s.buttons : []))
     .find((b) => b.id === data.buttonId)
 
@@ -39,25 +42,15 @@ export async function sendFlowPostback(
     return
   }
 
-  switch (foundedButton.buttonType) {
-    case ButtonType.SendMessage: {
-      if (
-        foundedButton.steps[0] &&
-        foundedButton.steps[0].stepType === StepType.startAnotherNode &&
-        foundedButton.steps[0].nodeId
-      ) {
-        await integrationQueue.add(IntegrationJobAction.sendFlow, {
-          type: IntegrationJobAction.sendFlow,
-          data: {
-            conversationId: conversation.id,
-            flowVersionId: flowVersion.id,
-            nodeId: foundedButton.steps[0].nodeId,
-          },
-        })
-      }
-      break
-    }
-    default:
-      break
+  if (foundedButton.beforeStep) {
+    await flowStepHandlers[foundedButton.beforeStep.stepType as StepType]?.({
+      conversation,
+      flowVersionId: flowVersion.id,
+      step: foundedButton.beforeStep,
+    })
+  }
+
+  if ("steps" in foundedButton && foundedButton.steps) {
+    await generateRunFlowNode(conversation, flowVersion.id, foundedButton.steps)
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import type { FlowNode } from "@aha.chat/flow-config"
+import type { FlowNode, NodeType } from "@aha.chat/flow-config"
 import {
   Sheet,
   SheetContent,
@@ -68,7 +68,11 @@ export const NodeDetailSheetContent = memo(
         </SheetTitle>
         <SheetDescription />
         <div className="flex flex-1 flex-col gap-4 overflow-hidden p-5">
-          <NodeEditor activeNode={activeNode} />
+          <NodeEditor
+            nodeDetails={activeNode.data.details}
+            nodeId={activeNode.id}
+            nodeType={activeNode.type as NodeType}
+          />
         </div>
       </SheetContent>
     </Sheet>

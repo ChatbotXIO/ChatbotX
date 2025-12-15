@@ -23,8 +23,9 @@ export async function getAutomatedResponses(
     }
   }
 
-  if (input.folderId && input.folderId.length > 0) {
-    where.folderId = input.folderId
+  if (input.folderId !== undefined) {
+    where.folderId =
+      input.folderId === null || input.folderId === "0" ? null : input.folderId
   }
 
   const [data, total] = await prisma.$transaction([

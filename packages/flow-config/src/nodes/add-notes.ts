@@ -1,28 +1,36 @@
 import { z } from "zod"
 import { addNotesStepDefaultFn, addNotesStepSchema } from "../steps/add-notes"
 import {
-  baseNodeDefaultFn,
+  baseNodeDataSchema,
   baseNodeSchema,
-  type NodeFnProps,
+  type DefaultNodeProps,
+  defaultNodeData,
   NodeType,
 } from "./base"
 
 export const addNotesNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.addNotes),
-  data: z.object({
-    name: z.string().trim().min(1).max(255),
-    isStartNode: z.boolean(),
-    beforeStep: addNotesStepSchema,
-    afterStep: z.null(),
-    steps: z.null(),
+  data: baseNodeDataSchema.extend({
+    details: z.object({
+      beforeStep: addNotesStepSchema,
+    }),
   }),
 })
-
 export type AddNotesNodeSchema = z.input<typeof addNotesNodeSchema>
 
-export const addNotesNodeDefaultFn = (props: NodeFnProps<AddNotesNodeSchema>) =>
-  baseNodeDefaultFn<AddNotesNodeSchema>({
-    ...props,
-    type: NodeType.addNotes,
-    beforeStep: addNotesStepDefaultFn(),
-  })
+export const addNotesNodeDefaultFn = (
+  props: DefaultNodeProps,
+): AddNotesNodeSchema => ({
+  ...defaultNodeData(),
+  type: NodeType.addNotes,
+  ...props.nodeProps,
+  data: {
+    name: "Add Notes",
+    ...props.dataProps,
+    isStartNode: false,
+    details: {
+      beforeStep: addNotesStepDefaultFn(),
+      ...props.detailProps,
+    },
+  },
+})

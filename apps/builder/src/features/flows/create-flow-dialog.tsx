@@ -18,7 +18,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createFlowAction } from "./actions/create-flow-action"
 import { createFlowSchema } from "./schemas/create-flow-schema"
@@ -68,6 +68,12 @@ export function CreateFlowDialog({
         errorMapProps: {},
       },
     )
+
+  const { setValue } = form
+
+  useEffect(() => {
+    setValue("folderId", folderId)
+  }, [folderId, setValue])
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>

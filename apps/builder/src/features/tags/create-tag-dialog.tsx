@@ -26,7 +26,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createTagAction } from "./actions/create-tag-action"
 import { createTagSchema } from "./schemas/create-tag-schema"
@@ -46,7 +46,7 @@ export const CreateTagDialog = ({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createTagAction.bind(null, chatbotId, folderId),
+      createTagAction.bind(null, chatbotId),
       zodResolver(createTagSchema),
       {
         actionProps: {
@@ -68,12 +68,19 @@ export const CreateTagDialog = ({
           mode: "onChange",
           defaultValues: {
             name: "",
+            folderId,
             syncToMessenger: false,
           },
         },
         errorMapProps: {},
       },
     )
+
+  const { setValue } = form
+
+  useEffect(() => {
+    setValue("folderId", folderId)
+  }, [folderId, setValue])
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {

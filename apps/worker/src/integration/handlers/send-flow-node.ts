@@ -3,116 +3,10 @@ import type {
   ConversationModel,
   FlowVersionModel,
 } from "@aha.chat/database/types"
-import { type FlowNode, StepType } from "@aha.chat/flow-config"
+import type { FlowNode, StepType } from "@aha.chat/flow-config"
 import { SdkException } from "@aha.chat/sdk"
 import type { IntegrationJobSendFlow } from "@aha.chat/worker-config"
-import {
-  addContactNotes,
-  addContactTag,
-  blockContact,
-  clearContactCustomField,
-  deleteContact,
-  markEmailVerified,
-  optInEmail,
-  optOutEmail,
-  removeContactTag,
-  setContactCustomField,
-} from "./contact-handler"
-import {
-  archiveConversation,
-  assignConversation,
-  autoAssignConversation,
-  disableBot,
-  enableBot,
-  followConversation,
-  unarchiveConversation,
-  unassignConversation,
-  unfollowConversation,
-} from "./conversation-handler"
-import {
-  clearSpreadsheetRow,
-  getSpreadsheetRandomRow,
-  getSpreadsheetRow,
-  sendSpreadsheetData,
-  updateSpreadsheetRow,
-} from "./spreadsheet-handler"
-import { dispatchFlowStep, type FlowStepProps } from "./step-handler"
-import {
-  countCharacters,
-  formatDate,
-  generateCode,
-  getDataFromJSON,
-} from "./tool-handler"
-
-const flowStepHandlers: Record<
-  StepType,
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  ((props: FlowStepProps<any>) => Promise<void>) | undefined
-> = {
-  [StepType.addContactNotes]: addContactNotes,
-  [StepType.addContactTag]: addContactTag,
-  [StepType.archiveConversation]: archiveConversation,
-  [StepType.assignConversation]: assignConversation,
-  [StepType.autoAssignConversation]: autoAssignConversation,
-  [StepType.blockContact]: blockContact,
-  [StepType.callApi]: undefined,
-  [StepType.cancelContactInput]: undefined,
-  [StepType.clearCustomField]: clearContactCustomField,
-  [StepType.countCharacters]: countCharacters,
-  [StepType.deleteContact]: deleteContact,
-  [StepType.disableBot]: disableBot,
-  [StepType.enableBot]: enableBot,
-  [StepType.followConversation]: followConversation,
-  [StepType.formatDate]: formatDate,
-  [StepType.generateCode]: generateCode,
-  [StepType.getDataFromJson]: getDataFromJSON,
-  [StepType.landingPage]: undefined,
-  [StepType.markEmailVerified]: markEmailVerified,
-  [StepType.notifyAgent]: undefined,
-  [StepType.openWebsite]: undefined,
-  [StepType.aiAnalyzeImage]: undefined,
-  [StepType.aiDeleteMessageHistory]: undefined,
-  [StepType.aiGenerateImage]: undefined,
-  [StepType.aiGenerateTextAgent]: undefined,
-  [StepType.aiGenerateText]: undefined,
-  [StepType.aiSpeechToText]: undefined,
-  [StepType.aiTextToSpeech]: undefined,
-  [StepType.optInEmail]: optInEmail,
-  [StepType.optOutEmail]: optOutEmail,
-  [StepType.performAction]: undefined,
-  [StepType.removeContactTag]: removeContactTag,
-  [StepType.sendAudio]: dispatchFlowStep,
-  [StepType.sendCard]: undefined,
-  [StepType.sendCarousel]: undefined,
-  [StepType.sendFile]: dispatchFlowStep,
-  [StepType.sendGif]: dispatchFlowStep,
-  [StepType.sendImage]: dispatchFlowStep,
-  [StepType.sendMessengerOtn]: undefined,
-  [StepType.sendText]: dispatchFlowStep,
-  [StepType.sendVideo]: dispatchFlowStep,
-  [StepType.setCustomField]: setContactCustomField,
-  [StepType.setDebounce]: undefined,
-  [StepType.unarchiveConversation]: unarchiveConversation,
-  [StepType.unassignConversation]: unassignConversation,
-  [StepType.unfollowConversation]: unfollowConversation,
-  [StepType.getUserInput]: undefined,
-  [StepType.wait]: undefined,
-  [StepType.startExternalFlow]: undefined,
-  [StepType.chooseChannel]: undefined,
-  [StepType.filterContact]: undefined,
-  [StepType.subscribeBroadcast]: undefined,
-  [StepType.unsubscribeBroadcast]: undefined,
-  [StepType.splitTraffic]: undefined,
-  [StepType.startAnotherNode]: undefined,
-  [StepType.startExternalNode]: undefined,
-  [StepType.addNotes]: undefined,
-  [StepType.spreadsheetGetRow]: getSpreadsheetRow,
-  [StepType.spreadsheetClearRow]: clearSpreadsheetRow,
-  [StepType.spreadsheetGetRandomRow]: getSpreadsheetRandomRow,
-  [StepType.spreadsheetSendData]: sendSpreadsheetData,
-  [StepType.spreadsheetUpdateRow]: updateSpreadsheetRow,
-  [StepType.waitUserReply]: undefined,
-}
+import { flowStepHandlers } from "./step-handler"
 
 export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
   if (!(props.data.flowId || props.data.flowVersionId)) {
@@ -167,7 +61,22 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     throw new SdkException("FlowVersion does not contain start node")
   }
 
-  const gen = runFlowNode(conversation, flowVersion.id, startNode)
+  if ("steps" in startNode.data.details && startNode.data.details.steps) {
+    generateRunFlowNode(
+      conversation,
+      flowVersion.id,
+      startNode.data.details.steps,
+    )
+  }
+}
+
+export async function generateRunFlowNode(
+  conversation: ConversationModel,
+  flowVersionId: string,
+  // biome-ignore lint/suspicious/noExplicitAny: wip
+  steps: any[],
+) {
+  const gen = runFlowNode(conversation, flowVersionId, steps)
   let result = await gen.next()
 
   while (!result.done) {
@@ -178,9 +87,9 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
 function* runFlowNode(
   conversation: ConversationModel,
   flowVersionId: string,
-  node: FlowNode,
+  // biome-ignore lint/suspicious/noExplicitAny: wip
+  steps: any[],
 ) {
-  const steps = ("steps" in node.data ? node.data.steps : []) ?? []
   for (const step of steps) {
     yield flowStepHandlers[step.stepType as StepType]?.({
       conversation,

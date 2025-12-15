@@ -31,66 +31,26 @@ export const baseNodeSchema = z.object({
     width: z.number(),
     height: z.number(),
   }),
-  data: z.object({
-    name: z.string().trim().min(1).max(255),
-    isStartNode: z.boolean(),
-    beforeStep: z.any().nullish(),
-    afterStep: z.any().nullish(),
-    steps: z.array(z.any()).nullish(),
-  }),
 })
+export type BaseNodeSchema = z.infer<typeof baseNodeSchema>
 
-export type BaseNodeSchema = typeof baseNodeSchema
-export type BaseNodeProps = z.infer<typeof baseNodeSchema> & {
-  type: NodeType
+export const baseNodeDataSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  isStartNode: z.boolean(),
+  status: z.boolean().nullish(),
+  log: z.string().nullish(),
+})
+export type BaseNodeDataSchema = z.infer<typeof baseNodeDataSchema>
+
+export type DefaultNodeProps = {
+  nodeProps?: Partial<Pick<BaseNodeSchema, "id" | "position" | "measured">>
+  dataProps?: Partial<Pick<BaseNodeDataSchema, "isStartNode" | "name">>
+  // biome-ignore lint/suspicious/noExplicitAny: safe pass beforeStep
+  detailProps?: Partial<{ beforeStep: any }>
 }
 
-export type NodePosition = { x: number; y: number }
-
-export type NodeMeasured = { width: number; height: number }
-
-export type DefaultNodeFnProps<T extends BaseNodeProps> = {
-  id?: string
-  position?: NodePosition
-  measured?: NodeMeasured
-  name: string
-  type: T["type"]
-  isStartNode?: boolean
-  beforeStep?: T["data"]["beforeStep"] | undefined
-  afterStep?: T["data"]["afterStep"] | undefined
-  steps?: T["data"]["steps"] | undefined
-}
-
-export type NodeFnProps<T extends BaseNodeProps> = Pick<
-  DefaultNodeFnProps<T>,
-  "name" | "position" | "measured" | "isStartNode"
->
-
-export const baseNodeDefaultFn = <T extends BaseNodeProps>(
-  props: DefaultNodeFnProps<T>,
-): T => {
-  const {
-    name,
-    type,
-    beforeStep = null,
-    afterStep = null,
-    steps = null,
-    isStartNode = false,
-    ...rest
-  } = props
-
-  return {
-    id: createId(),
-    type: props.type,
-    position: { x: 100, y: 100 },
-    measured: { width: 288, height: 100 },
-    ...rest,
-    data: {
-      name: props.name,
-      isStartNode,
-      beforeStep,
-      steps,
-      afterStep,
-    },
-  } as T
-}
+export const defaultNodeData = () => ({
+  id: createId(),
+  position: { x: 100, y: 300 },
+  measured: { width: 288, height: 100 },
+})
