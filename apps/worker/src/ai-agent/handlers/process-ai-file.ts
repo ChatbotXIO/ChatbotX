@@ -50,7 +50,11 @@ export async function processAIFile(
     throw new Error("AI file not found")
   }
 
-  const text = await extractTextFromFile(aiFile.path, aiFile.mimeType)
+  const text = await extractTextFromFile(
+    aiFile.path,
+    aiFile.mimeType,
+    aiFile.name,
+  )
 
   const chunks: TextChunk[] = splitTextIntoChunks(
     text,
