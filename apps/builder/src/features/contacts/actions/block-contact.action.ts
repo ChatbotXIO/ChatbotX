@@ -2,7 +2,6 @@
 
 import { prisma } from "@aha.chat/database"
 import {
-  bulkUpdateIdsRequest,
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
@@ -11,7 +10,6 @@ import { chatbotActionClient } from "@/lib/safe-action"
 
 export const blockContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],

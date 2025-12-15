@@ -1,7 +1,16 @@
 "use server"
 
 import { type Prisma, prisma } from "@aha.chat/database"
-import type { ConversationModel, MessageModel } from "@aha.chat/database/types"
+import {
+  AssignerFilterType,
+  ConversationStatus,
+  ConversationType,
+} from "@aha.chat/database/enums"
+import type {
+  ConversationModel,
+  InboxType,
+  MessageModel,
+} from "@aha.chat/database/types"
 import type {
   FindConversationSchema,
   ListConversationsRequest,
@@ -12,6 +21,111 @@ import type {
   ConversationResource,
 } from "../schemas/resource"
 
+const getQueryDefault = ({
+  chatbotId,
+  input,
+}: {
+  chatbotId: string
+  input: ListConversationsRequest
+}): Prisma.ConversationWhereInput => ({
+  chatbotId,
+  liveChatEnabled:
+    input.conversationType !== undefined &&
+    input.conversationType !== ConversationType.all
+      ? input.conversationType === ConversationType.human
+      : undefined,
+})
+
+const getAssignedUserQuery = (
+  value?: string | null,
+): Prisma.ConversationWhereInput => {
+  if (value === undefined || value === AssignerFilterType.all) {
+    return {}
+  }
+  if (value === AssignerFilterType.unassigned) {
+    return { assignedUserId: null }
+  }
+  return { assignedUserId: value }
+}
+
+const getInboxTypeQuery = (value?: string): Prisma.ConversationWhereInput => {
+  if (!value || value === "all") {
+    return {}
+  }
+  return { inbox: { inboxType: value as InboxType } }
+}
+
+const getConversationStatusQuery = (
+  value?: string,
+): Prisma.ConversationWhereInput => {
+  if (!value || value.length === 0) {
+    return {}
+  }
+  const statusQueries = (value.split(",") as ConversationStatus[]).map(
+    (status) => {
+      switch (status) {
+        case ConversationStatus.archived:
+          return {
+            archivedAt: { not: null },
+          }
+        case ConversationStatus.followUp:
+          return {
+            followed: true,
+          }
+        case ConversationStatus.blocked:
+          return {
+            contact: {
+              blockedAt: { not: null },
+            },
+          }
+        case ConversationStatus.noAdminReply: {
+          return {
+            hasAdminReplied: false,
+          }
+        }
+
+        case ConversationStatus.unread:
+          return {
+            hasAdminSeen: false,
+          }
+        default:
+          return {}
+      }
+    },
+  )
+  return { OR: statusQueries }
+}
+
+const getSearchQuery = (value?: string): Prisma.ConversationWhereInput => {
+  if (!value) {
+    return {}
+  }
+  return {
+    OR: [
+      {
+        contact: {
+          firstName: { contains: value, mode: "insensitive" },
+        },
+      },
+      {
+        contact: {
+          lastName: { contains: value, mode: "insensitive" },
+        },
+      },
+      {
+        contact: {
+          email: { contains: value, mode: "insensitive" },
+        },
+      },
+      {
+        contact: {
+          phoneNumber: { contains: value, mode: "insensitive" },
+        },
+      },
+    ],
+  }
+}
+
 export const listConversations = async (
   chatbotId: string,
   input: ListConversationsRequest,
@@ -20,7 +134,11 @@ export const listConversations = async (
 
   const perPage = (input.perPage || 10) + 1
   const where: Prisma.ConversationWhereInput = {
-    chatbotId,
+    ...getQueryDefault({ chatbotId, input }),
+    ...getAssignedUserQuery(input.assignedUserId),
+    ...getInboxTypeQuery(input.inboxType),
+    ...getConversationStatusQuery(input.status),
+    ...getSearchQuery(input.searchText),
   }
 
   const params: Prisma.ConversationFindManyArgs = {

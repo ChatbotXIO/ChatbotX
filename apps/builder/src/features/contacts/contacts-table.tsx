@@ -8,6 +8,7 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
@@ -20,6 +21,7 @@ type ContactsTableProps = {
 }
 
 export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
+  const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
 
   const columns = useMemo<ColumnDef<ContactResource>[]>(
@@ -76,8 +78,10 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         header: ({ column }: { column: Column<ContactResource, unknown> }) => (
           <DataTableColumnHeader column={column} title="Source" />
         ),
-        cell: ({ cell }) => (
-          <div>{cell.getValue<ContactResource["source"]>()}</div>
+        cell: ({ row }) => (
+          <div>
+            {t(`fields.${row.original.conversation?.inbox?.inboxType}.label`)}
+          </div>
         ),
         enableSorting: false,
       },
@@ -88,9 +92,10 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         ),
         cell: ({ row }) => (
           <div>
-            {row.original.conversation?.assignedUser?.name ||
-              row.original.conversation?.assignedInboxTeam?.name ||
-              "Unassigned"}
+            {row.original.conversation?.assignedUser
+              ? row.original.conversation?.assignedUser?.name ||
+                row.original.conversation?.assignedUser?.email
+              : t("assignAdmin.unAssigned")}
           </div>
         ),
         enableSorting: false,
@@ -119,7 +124,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd"),
       },
     ],
-    [chatbotId],
+    [chatbotId, t],
   )
 
   const { table } = useDataTable({

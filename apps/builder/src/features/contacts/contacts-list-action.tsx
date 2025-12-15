@@ -159,7 +159,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
               />
 
               <DisableBotDialog
-                ids={rows.map((r) => r.id)}
+                ids={rows.map((r) => r.original.conversation?.id || "")}
                 trigger={
                   <DropdownMenuItem
                     disabled={rows.length === 0}
@@ -172,7 +172,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
               />
 
               <EnableBotDialog
-                ids={rows.map((r) => r.id)}
+                ids={rows.map((r) => r.original.conversation?.id || "")}
                 trigger={
                   <DropdownMenuItem
                     disabled={rows.length === 0}
@@ -185,7 +185,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
               />
 
               <ArchiveConversationDialog
-                ids={rows.map((r) => r.id)}
+                ids={rows.map((r) => r.original.conversation?.id || "")}
                 trigger={
                   <DropdownMenuItem
                     disabled={rows.length === 0}

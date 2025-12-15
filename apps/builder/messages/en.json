@@ -20,13 +20,18 @@
     "addTag": "Add Tag",
     "addTextReply": "Add text reply",
     "appendToEnd": "Append to the end",
+    "markAsFollowUp": "Mark as Follow Up",
+    "removeFromFollowUp": "Remove from Follow Up",
+    "markAsUnread": "Mark as Unread",
     "archive": "Archive",
+    "unarchive": "Unarchive",
     "archiveConversation": "Archive Conversation",
     "assign": "Assign",
     "assignConversation": "Assign Conversation",
     "autoAssignConversation": "Auto Assign Conversation",
     "back": "Back",
     "blockContact": "Block Contact",
+    "unblockContact": "Unblock Contact",
     "broadcastActions": "Broadcast",
     "cancel": "Cancel",
     "clearCustomField": "Clear Custom Field",
@@ -142,10 +147,12 @@
     "title": "Admins"
   },
   "assignAdmin": {
-    "designateConversation": "Designate the conversation",
+    "assignConversation": "Assign conversation",
     "assignedToMe": "Assigned to me",
     "assignedTo": "Assigned to {name}",
-    "removeAssigner": "Remove assigner"
+    "removeAssigner": "Remove assigner",
+    "assignedAndUnassigned": "Assigned and Unassigned",
+    "unAssigned": "Unassigned"
   },
   "aiAgent": {
     "defaultAgent": "Default Agent",
@@ -337,7 +344,11 @@
       "shoppingCartIsEmpty": "Shopping cart is empty",
       "shoppingCartContainsItems": "Shopping cart contains items",
       "lastUserInput": "Last user input",
-      "lastUserInputType": "Last user input type"
+      "lastUserInputType": "Last user input type",
+      "followUp": "Follow up",
+      "unread": "Unread",
+      "archived": "Archived",
+      "blocked": "Blocked"
     },
     "groups": {
       "instagram": "Instagram",
@@ -355,7 +366,8 @@
     "label": "Channel"
   },
   "channels": {
-    "title": "Channels"
+    "title": "Channels",
+    "allChannels": "All Channels"
   },
   "chatbots": {
     "create": {
@@ -1321,7 +1333,8 @@
     "duplicateSuccess": "{feature} duplicated successfully",
     "changeDefault": "Change Default",
     "changeDefaultDescription": "Are you sure you want to change the default AI agent?",
-    "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?"
+    "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?",
+    "botIsActive": "Bot is active"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

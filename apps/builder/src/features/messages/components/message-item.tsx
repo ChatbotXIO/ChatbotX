@@ -9,11 +9,12 @@ import { MessageBubble } from "./message-bubble"
 
 type MessageItemProps = {
   message: MessageResource
+  isFirst: boolean
   guestDisplay?: boolean
 }
 
 export const MessageItem = (props: MessageItemProps) => {
-  const { message, guestDisplay = false } = props
+  const { message, isFirst, guestDisplay = false } = props
 
   const variants: Record<"left" | "right" | "full", string> = {
     left: "px-4 py-3 rounded-xl bg-secondary text-secondary-foreground",
@@ -39,7 +40,12 @@ export const MessageItem = (props: MessageItemProps) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
-      <div className="mx-3 flex max-w-[70%] flex-col gap-1">
+      <div
+        className={cn(
+          "mx-3 flex max-w-[70%] flex-col gap-1",
+          isFirst && "mt-3",
+        )}
+      >
         {message.content && message.content.length > 0 && (
           <div className={cn("text-sm", variants[variant])}>
             <pre className="break-word whitespace-pre-line font-sans">

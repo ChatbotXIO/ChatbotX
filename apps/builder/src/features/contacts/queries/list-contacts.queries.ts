@@ -23,6 +23,7 @@ export async function listContacts(
           include: {
             assignedUser: true,
             assignedInboxTeam: true,
+            inbox: true,
           },
         },
       },

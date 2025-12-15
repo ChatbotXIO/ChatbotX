@@ -1,6 +1,8 @@
 "use client"
 
+import { ConversationType } from "@aha.chat/database/enums"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -9,24 +11,44 @@ import {
   SelectValue,
 } from "@aha.chat/ui/components/ui/select"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import { FilterIcon, UserPlusIcon } from "lucide-react"
+import { SearchIcon, UserPlusIcon } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
+import { useCallback, useEffect, useState } from "react"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
+import { useDebouncedCallback } from "use-debounce"
 import { useChatStore } from "../chat/store/chat-store-provider"
+import type { ChatbotMemberResource } from "../chatbot-members/schemas/resource"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
+import type { InboxResource } from "../inboxes/schemas/resource"
+import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
 
-export default function ConversationList() {
+type ConversationListProps = {
+  agents: ChatbotMemberResource[]
+  inboxes: InboxResource[]
+}
+
+export default function ConversationList({
+  agents,
+  inboxes,
+}: ConversationListProps) {
+  const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const {
     conversations,
     loadMoreConversations,
+    filters,
+    setFilters,
+    resetState,
     nextCursorConversation,
     isLoadingConversation,
     activeConversationId,
     setActiveConversationId,
   } = useChatStore((state) => state)
+
+  const [showSearchInput, setShowSearchInput] = useState(false)
+  const [searchText, setSearchText] = useState("")
 
   // Check if there are more pages to load
   const hasNextPage =
@@ -45,19 +67,62 @@ export default function ConversationList() {
     }
   }
 
+  const handleChange = useDebouncedCallback((value: string) => {
+    resetState()
+    setFilters({
+      ...filters,
+      searchText: value,
+    })
+    loadMoreConversations(chatbotId)
+  }, 300)
+
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchText(e.target.value)
+      handleChange(e.target.value)
+    },
+    [handleChange],
+  )
+
+  const handleChangeType = useCallback(
+    (value: string) => {
+      resetState()
+      setFilters({
+        ...filters,
+        conversationType: value,
+      })
+      loadMoreConversations(chatbotId)
+    },
+    [filters, resetState, setFilters, loadMoreConversations, chatbotId],
+  )
+
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-center gap-1">
-        <Select defaultValue="2" name="liveChatEnabled">
+        <Select
+          defaultValue={ConversationType.all}
+          onValueChange={handleChangeType}
+        >
           <SelectTrigger className="h-8 w-[180px] text-xs">
             <SelectValue placeholder="" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">Human</SelectItem>
-            <SelectItem value="0">Bot</SelectItem>
-            <SelectItem value="2">All</SelectItem>
+            <SelectItem value={ConversationType.human}>Human</SelectItem>
+            <SelectItem value={ConversationType.bot}>Bot</SelectItem>
+            <SelectItem value={ConversationType.all}>All</SelectItem>
           </SelectContent>
         </Select>
+
+        <Button
+          className="px-2"
+          onClick={() => {
+            setShowSearchInput(!showSearchInput)
+          }}
+          size="sm"
+          variant="outline"
+        >
+          <SearchIcon className={searchText ? "text-primary" : ""} />
+        </Button>
 
         <CreateContactDialog
           chatbotId={chatbotId}
@@ -68,12 +133,29 @@ export default function ConversationList() {
           }
         />
 
-        <Button className="px-2" size="sm" variant="outline">
-          <FilterIcon />
-        </Button>
+        <ConversationFilter
+          agents={agents}
+          inboxes={inboxes}
+          onChange={(value) => {
+            resetState()
+            setFilters({
+              ...filters,
+              ...value,
+            })
+            loadMoreConversations(chatbotId)
+          }}
+        />
       </div>
 
       <div className="flex-1">
+        {showSearchInput && (
+          <Input
+            className="mb-2"
+            onChange={handleTextChange}
+            placeholder={t("actions.search")}
+            value={searchText}
+          />
+        )}
         <Virtuoso
           components={{
             List: ConversationListList,

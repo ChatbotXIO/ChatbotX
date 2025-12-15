@@ -27,13 +27,18 @@
     "addTag": "Thêm thẻ",
     "addTextReply": "Thêm phản hồi văn bản",
     "appendToEnd": "Thêm vào cuối",
+    "markAsFollowUp": "Đánh dấu theo dõi",
+    "removeFromFollowUp": "Xóa khỏi theo dõi",
+    "markAsUnread": "Đánh dấu chưa đọc",
     "archive": "Lưu trữ",
+    "unarchive": "Bỏ lưu trữ",
     "archiveConversation": "Lưu trữ cuộc trò chuyện",
     "assign": "Gán",
     "assignConversation": "Gán cuộc trò chuyện",
     "autoAssignConversation": "Tự động gán cuộc trò chuyện",
     "back": "Quay lại",
     "blockContact": "Chặn liên hệ",
+    "unblockContact": "Bỏ chặn liên hệ",
     "broadcastActions": "Phát sóng",
     "cancel": "Hủy",
     "clearCustomField": "Xóa trường tùy chỉnh",
@@ -148,6 +153,14 @@
   },
   "admins": {
     "title": "Quản trị viên"
+  },
+  "assignAdmin": {
+    "assignConversation": "Gán cuộc trò chuyện",
+    "assignedToMe": "Đã gán cho tôi",
+    "assignedTo": "Đã gán cho {name}",
+    "removeAssigner": "Xóa người gán",
+    "assignedAndUnassigned": "Đã gán và Chưa gán",
+    "unAssigned": "Chưa gán"
   },
   "aiAgent": {
     "defaultAgent": "Agent mặc định",
@@ -343,7 +356,11 @@
       "shoppingCartIsEmpty": "Giỏ hàng trống",
       "shoppingCartContainsItems": "Giỏ hàng chứa mặt hàng",
       "lastUserInput": "Đầu vào người dùng cuối",
-      "lastUserInputType": "Loại đầu vào người dùng cuối"
+      "lastUserInputType": "Loại đầu vào người dùng cuối",
+      "followUp": "Theo dõi",
+      "unread": "Chưa đọc",
+      "archived": "Đã lưu trữ",
+      "blocked": "Đã chặn"
     },
     "groups": {
       "instagram": "Instagram",
@@ -361,7 +378,8 @@
     "label": "Kênh"
   },
   "channels": {
-    "title": "Kênh"
+    "title": "Kênh",
+    "allChannels": "Tất cả kênh"
   },
   "chatbots": {
     "create": {
@@ -1336,7 +1354,8 @@
     "duplicateSuccess": "Đã nhân bản {feature} thành công",
     "changeDefault": "Thay đổi mặc định",
     "changeDefaultDescription": "Bạn có chắc chắn muốn thay đổi AI agent mặc định?",
-    "unsetDefaultDescription": "Bạn có chắc chắn muốn bỏ đặt AI agent mặc định?"
+    "unsetDefaultDescription": "Bạn có chắc chắn muốn bỏ đặt AI agent mặc định?",
+    "botIsActive": "Bot đang hoạt động"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",

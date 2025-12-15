@@ -159,6 +159,8 @@ export const receiveMessage = async ({
       },
       update: {
         updatedAt: new Date(),
+        hasAdminReplied: false,
+        hasAdminSeen: false,
       },
     })
 

@@ -1,3 +1,4 @@
+import type { UserModel } from "@aha.chat/database/types"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type {
@@ -13,13 +14,23 @@ export type ClientConversationResource = ConversationResource & {
   isActive: boolean
 }
 
+export type ConversationFilters = {
+  assignedUserId?: string
+  inboxType?: string
+  status?: string
+  searchText?: string
+  conversationType?: string
+}
+
 export type ChatState = {
   // conversation list
+  isFirstLoadConversation: boolean
   conversations: ClientConversationResource[]
   nextCursorConversation: string | null
   isLoadingConversation: boolean
   activeConversationId: string | null
   hasNextConversationPage: boolean
+  filters: ConversationFilters
 
   // message list
   messages: MessageResource[]
@@ -32,6 +43,14 @@ export type ChatActions = {
   prependConversation: (newConversation: ClientConversationResource) => void
   loadMoreConversations: (chatbotId: string) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
+  resetState: () => void
+  setAssignedUser: (user: UserModel | null) => void
+  setFilters: (filters: ConversationFilters) => void
+  deleteConversation: (conversationId: string) => void
+  unreadConversation: (conversationId: string) => void
+  seenConversation: (conversationId: string) => void
+  followConversation: (conversationId: string) => void
+  unfollowConversation: (conversationId: string) => void
   appendMessage: (message: MessageResource) => void
   loadMoreMessages: (chatbotId: string, perPage: number) => Promise<void>
   updateConversationViaMessage: (message: MessageResource) => void
@@ -43,11 +62,13 @@ export type ChatStore = ChatState & ChatActions
 export const createChatStore = () => {
   return createStore<ChatStore>((set, get) => ({
     // default conversation state
+    isFirstLoadConversation: true,
     conversations: [],
     nextCursorConversation: null,
     isLoadingConversation: false,
     hasNextConversationPage: true,
     activeConversationId: null,
+    filters: {},
 
     // default message state
     messages: [],
@@ -67,17 +88,23 @@ export const createChatStore = () => {
       }
 
       // fetch next conversation list
-      const { conversations, nextCursorConversation, activeConversationId } =
-        get()
+      const {
+        conversations,
+        nextCursorConversation,
+        activeConversationId,
+        filters,
+      } = get()
       set({ isLoadingConversation: true })
 
-      const params = new URLSearchParams({
+      const searchParams = new URLSearchParams({
         perPage: "20",
         cursor: nextCursorConversation ?? "",
+        ...filters,
       })
       const { data, nextCursor } = await ky
         .get<ConversationCollection>(
-          `/api/chatbots/${chatbotId}/conversations?${params.toString()}`,
+          `/api/chatbots/${chatbotId}/conversations`,
+          { searchParams },
         )
         .json()
 
@@ -111,6 +138,7 @@ export const createChatStore = () => {
         conversations: [...conversations, ...newConversations],
         nextCursorConversation: nextCursor,
         isLoadingConversation: false,
+        isFirstLoadConversation: false,
       })
     },
 
@@ -118,6 +146,123 @@ export const createChatStore = () => {
       const { activeConversationId: oldActiveConversationId } = get()
       if (oldActiveConversationId !== activeConversationId) {
         set({ activeConversationId, messages: [], nextCursorMessage: null })
+      }
+    },
+
+    deleteConversation: (conversationId: string) => {
+      const { conversations, activeConversationId } = get()
+      const updatedConversations = conversations.filter(
+        (c) => c.id !== conversationId,
+      )
+      let newActiveConversationId = activeConversationId
+      if (activeConversationId === conversationId) {
+        newActiveConversationId =
+          updatedConversations.length > 0 ? updatedConversations[0].id : null
+      }
+      set({
+        conversations: updatedConversations,
+        activeConversationId: newActiveConversationId,
+      })
+    },
+
+    unreadConversation: (conversationId: string) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+        conversation.hasAdminSeen = false
+
+        updatedConversations[conversationIndex] = conversation
+        set({ conversations: updatedConversations, activeConversationId: null })
+      }
+    },
+
+    seenConversation: (conversationId: string) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+        conversation.hasAdminSeen = true
+
+        updatedConversations[conversationIndex] = conversation
+        set({ conversations: updatedConversations })
+      }
+    },
+
+    followConversation: (conversationId: string) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+        conversation.followed = true
+
+        updatedConversations[conversationIndex] = conversation
+        set({ conversations: updatedConversations })
+      }
+    },
+
+    unfollowConversation: (conversationId: string) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+        conversation.followed = false
+
+        updatedConversations[conversationIndex] = conversation
+        set({ conversations: updatedConversations })
+      }
+    },
+
+    resetState: () => {
+      set({
+        isFirstLoadConversation: true,
+        conversations: [],
+        nextCursorConversation: null,
+        isLoadingConversation: false,
+        hasNextConversationPage: true,
+        activeConversationId: null,
+
+        messages: [],
+        nextCursorMessage: null,
+        isLoadMoreMessage: false,
+        hasNextMessagePage: true,
+      })
+    },
+
+    setFilters: (filters: ConversationFilters) => {
+      set({ filters })
+    },
+
+    setAssignedUser: (user: UserModel | null) => {
+      const { conversations, activeConversationId } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === activeConversationId,
+      )
+
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+        conversation.assignedUserId = user ? user.id : null
+        conversation.assignedUser = user
+
+        updatedConversations[conversationIndex] = conversation
+        set({ conversations: updatedConversations })
       }
     },
 
@@ -136,15 +281,15 @@ export const createChatStore = () => {
       const { nextCursorMessage, messages, activeConversationId } = get()
       set({ isLoadMoreMessage: true })
 
-      const params = new URLSearchParams({
+      const searchParams = new URLSearchParams({
         perPage: `${perPage}`,
         cursor: nextCursorMessage ?? "",
         conversationId: activeConversationId ?? "",
       })
       const { data, nextCursor } = await ky
-        .get<MessageCollection>(
-          `/api/chatbots/${chatbotId}/messages?${params.toString()}`,
-        )
+        .get<MessageCollection>(`/api/chatbots/${chatbotId}/messages`, {
+          searchParams,
+        })
         .json()
       set({
         messages: [...data.reverse(), ...messages],

@@ -6,6 +6,11 @@ import {
   AvatarImage,
 } from "@aha.chat/ui/components/ui/avatar"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { cn } from "@aha.chat/ui/lib/utils"
 import {
   SiInstagram,
@@ -16,11 +21,16 @@ import {
   SiWhatsappHex,
 } from "@icons-pack/react-simple-icons"
 import { formatDistanceToNowStrict } from "date-fns"
-import { GlobeIcon, UsersRoundIcon } from "lucide-react"
-import { useMemo, useState } from "react"
+import { GlobeIcon, StarIcon, UsersRoundIcon } from "lucide-react"
+import { useParams } from "next/navigation"
+import { useAction } from "next-safe-action/hooks"
+import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { useChatStore } from "../chat/store/chat-store-provider"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
 import type { MessageResource } from "../messages/schemas"
+import { seenConversationAction } from "./actions/seen-conversation.action"
 import type { ConversationResource } from "./schemas/resource"
 
 type ConversationItemProps = {
@@ -34,9 +44,19 @@ const assignedIcon = (conversation: ConversationResource) => {
     return (
       <Avatar className="h-4 w-4">
         <AvatarImage src={conversation.assignedUser?.image ?? ""} />
-        <AvatarFallback>
-          {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
-        </AvatarFallback>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AvatarFallback className="text-xs">
+              {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
+            </AvatarFallback>
+          </TooltipTrigger>
+          <TooltipContent align="center" side="bottom">
+            {conversation.assignedUser?.name ||
+              conversation.assignedUser?.email ||
+              "User"}
+          </TooltipContent>
+        </Tooltip>
       </Avatar>
     )
   }
@@ -72,13 +92,11 @@ export default function ConversationItem({
   isActive,
   onSelect,
 }: ConversationItemProps) {
+  const { chatbotId } = useParams<{ chatbotId: string }>()
   const [lastMessage, _setLastMessage] = useState<MessageResource | undefined>(
     conversation.messages?.[0],
   )
-  const [isSeen, _setIsSeen] = useState(
-    (conversation.agentLastSeenAt ?? new Date()) >=
-      (lastMessage?.createdAt ?? new Date()),
-  )
+  const { seenConversation } = useChatStore((state) => state)
 
   const contactFullName = useMemo(
     () => getFullName(conversation.contact),
@@ -101,6 +119,27 @@ export default function ConversationItem({
     [conversation.contact],
   )
 
+  const { execute } = useAction(
+    seenConversationAction.bind(null, chatbotId, conversation.id),
+    {
+      onSuccess: () => {
+        seenConversation(conversation.id)
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
+  )
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
+  useEffect(() => {
+    if (isActive) {
+      execute()
+    }
+  }, [conversation.id, isActive])
+
   return (
     <div className="w-full">
       <Button
@@ -117,6 +156,11 @@ export default function ConversationItem({
             {/* biome-ignore lint/style/noNonNullAssertion: wip */}
             {sourceIcon(conversation.contact!)}
           </div>
+          {conversation.followed && (
+            <div className="absolute bottom-0 left-0 transform">
+              <StarIcon className="fill-yellow-400 text-yellow-400" />
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-hidden">
@@ -127,8 +171,8 @@ export default function ConversationItem({
           </div>
           <p
             className={cn(
-              "w-full truncate text-left text-gray-600 text-sm",
-              isSeen ? "font-semibold" : "",
+              "w-full truncate text-left text-sm",
+              conversation.hasAdminSeen ? "text-gray-500" : "font-semibold",
             )}
           >
             {conversation.messages?.[0]?.content ?? " "}

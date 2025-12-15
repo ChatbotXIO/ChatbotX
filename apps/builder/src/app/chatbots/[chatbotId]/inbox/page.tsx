@@ -1,7 +1,9 @@
 import { cookies } from "next/headers"
 import { ChatLayout } from "@/features/chat/chat-layout"
+import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
 import { getAgents } from "@/features/chatbot-members/queries"
 import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members.request"
+import { listInboxes } from "@/features/inboxes/queries"
 
 export default async function InboxPage({
   params,
@@ -17,7 +19,15 @@ export default async function InboxPage({
       chatbotId,
       ...getChatbotMembersSearchParamsCache.parse({}),
     }),
+    listInboxes({
+      chatbotId,
+      includes: ["integration"],
+    }),
   ])
 
-  return <ChatLayout layout={savedLayout} promises={promises} />
+  return (
+    <ChatStoreProvider>
+      <ChatLayout layout={savedLayout} promises={promises} />
+    </ChatStoreProvider>
+  )
 }

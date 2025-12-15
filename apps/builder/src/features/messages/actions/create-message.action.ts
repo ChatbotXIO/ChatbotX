@@ -122,6 +122,8 @@ export const createMessageAction = chatbotActionClient
           data: {
             agentLastSeenAt: new Date(),
             lastActivityAt: new Date(),
+            hasAdminReplied: true,
+            hasAdminSeen: true,
           },
         })
 

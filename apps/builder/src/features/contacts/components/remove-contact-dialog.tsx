@@ -22,11 +22,13 @@ import { deleteContactAction } from "../actions/delete-contact.action"
 type DeleteContactDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function DeleteContactDialog({
   trigger,
   ids,
+  onSuccess,
 }: DeleteContactDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -42,6 +44,7 @@ export default function DeleteContactDialog({
           }),
         )
         setOpen(false)
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {
