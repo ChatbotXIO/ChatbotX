@@ -50,7 +50,7 @@ export const buttonStepSchema = z
       }),
       z.object({
         buttonType: z.literal(ButtonType.StartAnotherNode),
-        beforeStep: startExternalNodeStepSchema,
+        beforeStep: startAnotherNodeStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({

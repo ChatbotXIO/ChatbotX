@@ -1,7 +1,8 @@
 import type { ButtonStepProps } from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Handle, Position, useReactFlow } from "@xyflow/react"
-import { useNodeData } from "../../libs/use-node-data"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { Position } from "@xyflow/react"
+import { BaseHandle } from "@/components/base-handle"
 
 type ButtonStepViewerProps = {
   data: ButtonStepProps
@@ -9,20 +10,15 @@ type ButtonStepViewerProps = {
 
 export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
   const { data } = props
-  const { updateNodeDataOnEdgeConnect } = useNodeData()
-  const { getEdges } = useReactFlow()
-  const isConnected = getEdges().some((edge) => edge.sourceHandle === data.id)
 
   return (
     <div className="relative">
       <Button className="w-full" disabled type="button" variant="secondary">
         {data.label}
       </Button>
-      <Handle
-        className="right-3!"
+      <BaseHandle
+        className={cn("right-3!", !!data.buttonType && "bg-red-300")}
         id={data.id}
-        isConnectable={!isConnected}
-        onConnect={updateNodeDataOnEdgeConnect}
         position={Position.Right}
         type="source"
       />

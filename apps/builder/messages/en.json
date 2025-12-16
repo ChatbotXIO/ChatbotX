@@ -1077,6 +1077,9 @@
     },
     "autoSkip": {
       "label": "Auto Skip"
+    },
+    "spreadsheet": {
+      "label": "Spreadsheet"
     }
   },
   "flows": {
@@ -1203,9 +1206,6 @@
     "title": "General"
   },
   "googleSheets": {
-    "delete": {
-      "dialog_title": "Delete Spreadsheet"
-    },
     "spreadsheet": "Spreadsheet",
     "name": "Spreadsheet Name",
     "link": "Spreadsheet Link",

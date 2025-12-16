@@ -1,8 +1,6 @@
 import {
   ButtonType,
   type StartAnotherNodeStepSchema,
-  type StepProps,
-  type StepsProps,
   startAnotherNodeStepDefaultFn,
 } from "@aha.chat/flow-config"
 import {

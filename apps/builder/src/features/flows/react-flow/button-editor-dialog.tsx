@@ -376,7 +376,6 @@ export function ButtonEditorDialog() {
       // updateNodeData(activeNode.id, activeNode.data)
 
       setOpenDialog(false)
-
       setOpenNodeDetailSheet(false)
     }
   }
