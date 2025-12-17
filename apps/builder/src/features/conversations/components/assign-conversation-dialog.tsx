@@ -25,13 +25,17 @@ import { assignConversationSchema } from "../schemas/action"
 
 type AssignConversationDialogProps = {
   trigger: ReactElement
+  assignedId?: string
   contactIds: string[]
-  onSuccess?: () => void
+  showRemove?: boolean
+  onSuccess?: (value: string | null) => void
 }
 
 export default function AssignConversationDialog({
   trigger,
+  assignedId,
   contactIds,
+  showRemove,
   onSuccess,
 }: AssignConversationDialogProps) {
   const t = useTranslations()
@@ -43,9 +47,9 @@ export default function AssignConversationDialog({
   const defaultValues = useMemo(
     () => ({
       contactIds,
-      assignedId: "",
+      assignedId,
     }),
-    [contactIds],
+    [contactIds, assignedId],
   )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -59,9 +63,9 @@ export default function AssignConversationDialog({
               feature: t("fields.conversation.label"),
             }),
           )
+          onSuccess?.(form.getValues("assignedId"))
           form.reset(defaultValues)
           setOpen(false)
-          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -82,9 +86,7 @@ export default function AssignConversationDialog({
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       setOpen(newOpen)
-      if (!newOpen) {
-        form.reset(defaultValues)
-      }
+      form.reset(defaultValues)
     },
     [defaultValues, form],
   )
@@ -111,22 +113,47 @@ export default function AssignConversationDialog({
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <div className="flex w-full items-center gap-4">
+                <div className="flex-1">
+                  {showRemove && (
+                    <Button
+                      disabled={
+                        !isValid ||
+                        isSubmitting ||
+                        !form.getValues("assignedId")
+                      }
+                      onClick={() => {
+                        form.setValue("assignedId", null)
+                        handleSubmitWithAction()
+                      }}
+                      size="sm"
+                      type="button"
+                      variant="destructive"
+                    >
+                      {isSubmitting && (
+                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      {t("actions.remove")}
+                    </Button>
+                  )}
+                </div>
+                <DialogClose asChild>
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                </DialogClose>
 
-              <Button
-                disabled={!isValid || isSubmitting}
-                size="sm"
-                type="submit"
-              >
-                {isSubmitting && (
-                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {t("actions.confirm")}
-              </Button>
+                <Button
+                  disabled={!isValid || isSubmitting}
+                  size="sm"
+                  type="submit"
+                >
+                  {isSubmitting && (
+                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {t("actions.confirm")}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

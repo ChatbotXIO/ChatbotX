@@ -49,13 +49,8 @@ export function WebchatMessageList() {
         data={messages}
         followOutput
         initialTopMostItemIndex={messages.length - 1}
-        itemContent={(index, message) => (
-          <MessageItem
-            guestDisplay={true}
-            isFirst={index === 0}
-            key={message.id}
-            message={message}
-          />
+        itemContent={(_, message) => (
+          <MessageItem guestDisplay={true} key={message.id} message={message} />
         )}
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {

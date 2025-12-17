@@ -8,7 +8,7 @@ import {
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 
-export const seenConversationAction = chatbotActionClient
+export const readConversationAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
@@ -16,12 +16,12 @@ export const seenConversationAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.$transaction(async (tx) => {
-        await assertCurrentUserCanAccessChatbot(chatbotId)
+      await assertCurrentUserCanAccessChatbot(chatbotId)
 
+      await prisma.$transaction(async (tx) => {
         await tx.conversation.update({
           where: { id },
-          data: { hasAdminSeen: true },
+          data: { agentLastSeenAt: new Date() },
         })
       })
     },

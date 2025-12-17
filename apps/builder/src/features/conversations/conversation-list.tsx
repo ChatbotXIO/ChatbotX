@@ -18,21 +18,16 @@ import { useCallback, useEffect, useState } from "react"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useDebouncedCallback } from "use-debounce"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import type { ChatbotMemberResource } from "../chatbot-members/schemas/resource"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
 import type { InboxResource } from "../inboxes/schemas/resource"
 import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
 
 type ConversationListProps = {
-  agents: ChatbotMemberResource[]
   inboxes: InboxResource[]
 }
 
-export default function ConversationList({
-  agents,
-  inboxes,
-}: ConversationListProps) {
+export default function ConversationList({ inboxes }: ConversationListProps) {
   const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const {
@@ -134,7 +129,6 @@ export default function ConversationList({
         />
 
         <ConversationFilter
-          agents={agents}
           inboxes={inboxes}
           onChange={(value) => {
             resetState()

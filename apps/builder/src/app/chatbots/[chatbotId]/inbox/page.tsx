@@ -1,9 +1,8 @@
 import { cookies } from "next/headers"
 import { ChatLayout } from "@/features/chat/chat-layout"
 import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
-import { getAgents } from "@/features/chatbot-members/queries"
-import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members.request"
-import { listInboxes } from "@/features/inboxes/queries"
+import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
+import { UserStoreProvider } from "@/features/users/provider/user-store-context"
 
 export default async function InboxPage({
   params,
@@ -14,20 +13,16 @@ export default async function InboxPage({
   const savedLayout = layout ? JSON.parse(layout.value) : [25, 50, 25]
   const { chatbotId } = await params
 
-  const promises = Promise.all([
-    getAgents({
-      chatbotId,
-      ...getChatbotMembersSearchParamsCache.parse({}),
-    }),
-    listInboxes({
-      chatbotId,
-      includes: ["integration"],
-    }),
-  ])
-
   return (
     <ChatStoreProvider>
-      <ChatLayout layout={savedLayout} promises={promises} />
+      <InboxStoreProvider chatbotId={chatbotId}>
+        <UserStoreProvider
+          autoInitializeAgentsAndInboxTeams={true}
+          chatbotId={chatbotId}
+        >
+          <ChatLayout layout={savedLayout} />
+        </UserStoreProvider>
+      </InboxStoreProvider>
     </ChatStoreProvider>
   )
 }

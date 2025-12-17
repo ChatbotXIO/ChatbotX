@@ -4,6 +4,7 @@ import {
   AssignerFilterType,
   ConversationStatus,
 } from "@aha.chat/database/enums"
+import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Popover,
@@ -21,19 +22,18 @@ import { MultiSelect } from "@aha.chat/ui/components/ui/sersavan/multi-select"
 import { FilterIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { flatMap } from "remeda"
 import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import type { ChatbotMemberResource } from "../chatbot-members/schemas/resource"
 import type { InboxResource } from "../inboxes/schemas/resource"
+import { useContactAssigneeOptions } from "../users/provider/user-hook"
 
 type UpdateConversationAssignerProps = {
-  agents: ChatbotMemberResource[]
   inboxes: InboxResource[]
   onChange: (value: ConversationFilters) => void
 }
 
 export function ConversationFilter({
-  agents,
   inboxes,
   onChange,
 }: UpdateConversationAssignerProps) {
@@ -45,6 +45,11 @@ export function ConversationFilter({
       (filters.assignedUserId && filters.assignedUserId !== "all") ||
       filters.status,
   )
+  const contactAssigneeOptions = useContactAssigneeOptions()
+  const assigneeOptions = flatMap(
+    contactAssigneeOptions,
+    (option) => option.children,
+  ).filter((v) => v) as SelectOption[]
 
   const conversationStatusOptions = [
     {
@@ -121,9 +126,9 @@ export function ConversationFilter({
               <SelectItem value={AssignerFilterType.unassigned}>
                 {t("assignAdmin.unAssigned")}
               </SelectItem>
-              {agents.map((agent) => (
-                <SelectItem key={agent.user?.id} value={agent.user?.id || ""}>
-                  {agent.user?.name || agent.user?.email || "Unknown"}
+              {assigneeOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

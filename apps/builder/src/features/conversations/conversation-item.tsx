@@ -20,7 +20,7 @@ import {
   SiWhatsapp,
   SiWhatsappHex,
 } from "@icons-pack/react-simple-icons"
-import { formatDistanceToNowStrict } from "date-fns"
+import { formatDistanceToNowStrict, isAfter } from "date-fns"
 import { GlobeIcon, StarIcon, UsersRoundIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useAction } from "next-safe-action/hooks"
@@ -30,7 +30,7 @@ import { useChatStore } from "../chat/store/chat-store-provider"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
 import type { MessageResource } from "../messages/schemas"
-import { seenConversationAction } from "./actions/seen-conversation.action"
+import { readConversationAction } from "./actions/read-conversation.action"
 import type { ConversationResource } from "./schemas/resource"
 
 type ConversationItemProps = {
@@ -96,7 +96,7 @@ export default function ConversationItem({
   const [lastMessage, _setLastMessage] = useState<MessageResource | undefined>(
     conversation.messages?.[0],
   )
-  const { seenConversation } = useChatStore((state) => state)
+  const { readConversation } = useChatStore((state) => state)
 
   const contactFullName = useMemo(
     () => getFullName(conversation.contact),
@@ -120,10 +120,10 @@ export default function ConversationItem({
   )
 
   const { execute } = useAction(
-    seenConversationAction.bind(null, chatbotId, conversation.id),
+    readConversationAction.bind(null, chatbotId, conversation.id),
     {
       onSuccess: () => {
-        seenConversation(conversation.id)
+        readConversation(conversation.id)
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -149,7 +149,7 @@ export default function ConversationItem({
       >
         <div className="relative">
           {contactAvatar}
-          <div className="-translate-x-1/2 absolute bottom-0 left-1/2 translate-y-1/2 transform">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 transform">
             {assignedIcon(conversation)}
           </div>
           <div className="absolute right-0 bottom-0 transform">
@@ -172,7 +172,17 @@ export default function ConversationItem({
           <p
             className={cn(
               "w-full truncate text-left text-sm",
-              conversation.hasAdminSeen ? "text-gray-500" : "font-semibold",
+              !(
+                conversation.agentLastSeenAt && conversation.contactLastSeenAt
+              ) ||
+                (conversation.agentLastSeenAt &&
+                  conversation.contactLastSeenAt &&
+                  isAfter(
+                    conversation.agentLastSeenAt,
+                    conversation.contactLastSeenAt,
+                  ))
+                ? "text-gray-500"
+                : "font-semibold",
             )}
           >
             {conversation.messages?.[0]?.content ?? " "}

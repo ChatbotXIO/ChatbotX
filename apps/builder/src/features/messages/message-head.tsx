@@ -1,15 +1,12 @@
 "use client"
 
 import { useChatStore } from "../chat/store/chat-store-provider"
-import type { ChatbotMemberResource } from "../chatbot-members/schemas/resource"
 import { getFullName } from "../contacts/utils"
 import { ConversationAction } from "../conversations/conversation-action"
 import { UpdateConversationAssigner } from "../conversations/update-conversation-assigner"
 
-export default function MessageHead(props: {
-  agents: ChatbotMemberResource[]
-}) {
-  const { conversations, activeConversationId, setAssignedUser } = useChatStore(
+export default function MessageHead() {
+  const { conversations, activeConversationId, setAssignee } = useChatStore(
     (state) => state,
   )
 
@@ -25,9 +22,8 @@ export default function MessageHead(props: {
             {getFullName(activeConversation?.contact)}
           </div>
           <UpdateConversationAssigner
-            agents={props.agents}
             conversation={activeConversation}
-            onChange={setAssignedUser}
+            onChange={setAssignee}
           />
         </div>
         <ConversationAction conversation={activeConversation} />

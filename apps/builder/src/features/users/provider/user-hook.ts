@@ -51,3 +51,21 @@ export const useContactAssigneeMultiSelectOptions = (): MultiSelectGroup[] => {
     [chatbotMembers, inboxTeams],
   )
 }
+
+export const useContactAssigneeSingleSelectOptions = (): SelectOption[] => {
+  const { chatbotMembers, inboxTeams } = useUserStore((state) => state)
+
+  return useMemo(
+    () => [
+      ...chatbotMembers.map((v) => ({
+        label: v.user?.name ?? "--",
+        value: `u_${v.user?.id}`,
+      })),
+      ...inboxTeams.map((v) => ({
+        label: v.name,
+        value: `t_${v.id}`,
+      })),
+    ],
+    [chatbotMembers, inboxTeams],
+  )
+}

@@ -193,8 +193,8 @@ export const createWebchatMessageAction = actionClient
           data: {
             agentLastSeenAt: new Date(),
             lastActivityAt: new Date(),
-            hasAdminReplied: false,
-            hasAdminSeen: false,
+            contactRepliedAt: new Date(),
+            contactLastSeenAt: new Date(),
           },
         })
 

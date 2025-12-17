@@ -32,8 +32,17 @@ export const assignConversationAction = chatbotActionClient
         assignedInboxTeamId: null,
       }
 
-      // Verify again assigned
-      if (parsedInput.assignedId.startsWith("u_")) {
+      if (!parsedInput.assignedId) {
+        await prisma.conversation.updateMany({
+          where: {
+            chatbotId,
+            contactId: {
+              in: parsedInput.contactIds,
+            },
+          },
+          data: updatedData,
+        })
+      } else if (parsedInput.assignedId.startsWith("u_")) {
         const userId = parsedInput.assignedId.substring(2)
         const chatbotMember = await prisma.chatbotMember.findFirst({
           where: {

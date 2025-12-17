@@ -10,6 +10,7 @@ import { format, formatDistance } from "date-fns"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
+import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ContactResource } from "./schemas/resource"
@@ -23,6 +24,7 @@ type ContactsTableProps = {
 export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
+  const channelOptions = useConfiguredInboxTypeOptions()
 
   const columns = useMemo<ColumnDef<ContactResource>[]>(
     () => [
@@ -78,11 +80,12 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         header: ({ column }: { column: Column<ContactResource, unknown> }) => (
           <DataTableColumnHeader column={column} title="Source" />
         ),
-        cell: ({ row }) => (
-          <div>
-            {t(`fields.${row.original.conversation?.inbox?.inboxType}.label`)}
-          </div>
-        ),
+        cell: ({ row }) => {
+          const channel = channelOptions.find(
+            (option) => option.value === row.original.source,
+          )
+          return <div>{channel ? channel.label : ""}</div>
+        },
         enableSorting: false,
       },
       {
@@ -124,7 +127,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd"),
       },
     ],
-    [chatbotId, t],
+    [chatbotId, t, channelOptions],
   )
 
   const { table } = useDataTable({

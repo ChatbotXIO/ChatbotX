@@ -49,7 +49,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   const [isArchived, setIsArchived] = useState(!!conversation.archivedAt)
   const [isBlocked, setIsBlocked] = useState(!!conversation.contact?.blockedAt)
 
-  const { execute: followUpFn } = useAction(
+  const { execute: followUpFn, isExecuting: isFollowingUp } = useAction(
     followConversationAction.bind(null, chatbotId, conversation.id),
     {
       onSuccess: () => {
@@ -64,22 +64,23 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     },
   )
 
-  const { execute: removeFollowUpFn } = useAction(
-    unfollowConversationAction.bind(null, chatbotId, conversation.id),
-    {
-      onSuccess: () => {
-        unfollowConversation(conversation.id)
-        setIsFollowedUp(false)
+  const { execute: removeFollowUpFn, isExecuting: isRemovingFollowUp } =
+    useAction(
+      unfollowConversationAction.bind(null, chatbotId, conversation.id),
+      {
+        onSuccess: () => {
+          unfollowConversation(conversation.id)
+          setIsFollowedUp(false)
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
+        },
       },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
+    )
 
-  const { execute: unReadFn } = useAction(
+  const { execute: unReadFn, isExecuting: isMarkingUnread } = useAction(
     unreadConversationAction.bind(null, chatbotId, conversation.id),
     {
       onSuccess: () => {
@@ -93,7 +94,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     },
   )
 
-  const { execute: archiveFn } = useAction(
+  const { execute: archiveFn, isExecuting: isArchiving } = useAction(
     archiveConversationAction.bind(null, chatbotId),
     {
       onSuccess: () => {
@@ -107,7 +108,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     },
   )
 
-  const { execute: unarchiveFn } = useAction(
+  const { execute: unarchiveFn, isExecuting: isUnarchiving } = useAction(
     unarchiveConversationAction.bind(null, chatbotId),
     {
       onSuccess: () => {
@@ -122,7 +123,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     },
   )
 
-  const { execute: blockContactFn } = useAction(
+  const { execute: blockContactFn, isExecuting: isBlockingContact } = useAction(
     blockContactAction.bind(null, chatbotId, conversation.contact?.id || ""),
     {
       onSuccess: () => {
@@ -170,22 +171,32 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
         {isFollowedUp ? (
-          <DropdownMenuItem onSelect={() => removeFollowUpFn()}>
+          <DropdownMenuItem
+            disabled={isRemovingFollowUp}
+            onSelect={() => removeFollowUpFn()}
+          >
             <StarIcon />
             {t("actions.removeFromFollowUp")}
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem onSelect={() => followUpFn()}>
+          <DropdownMenuItem
+            disabled={isFollowingUp}
+            onSelect={() => followUpFn()}
+          >
             <StarIcon />
             {t("actions.markAsFollowUp")}
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onSelect={() => unReadFn()}>
+        <DropdownMenuItem
+          disabled={isMarkingUnread}
+          onSelect={() => unReadFn()}
+        >
           <MailIcon />
           {t("actions.markAsUnread")}
         </DropdownMenuItem>
         {isArchived ? (
           <DropdownMenuItem
+            disabled={isUnarchiving}
             onSelect={() => unarchiveFn({ ids: [conversation.id] })}
           >
             <ArchiveIcon />
@@ -193,6 +204,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
+            disabled={isArchiving}
             onSelect={() => archiveFn({ ids: [conversation.id] })}
           >
             <ArchiveIcon />
@@ -205,7 +217,10 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             {t("actions.unblockContact")}
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem onSelect={() => blockContactFn()}>
+          <DropdownMenuItem
+            disabled={isBlockingContact}
+            onSelect={() => blockContactFn()}
+          >
             <UserLockIcon />
             {t("actions.blockContact")}
           </DropdownMenuItem>

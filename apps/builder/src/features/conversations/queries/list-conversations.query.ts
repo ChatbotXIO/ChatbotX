@@ -39,13 +39,15 @@ const getQueryDefault = ({
 const getAssignedUserQuery = (
   value?: string | null,
 ): Prisma.ConversationWhereInput => {
-  if (value === undefined || value === AssignerFilterType.all) {
-    return {}
-  }
   if (value === AssignerFilterType.unassigned) {
-    return { assignedUserId: null }
+    return { assignedUserId: null, assignedInboxTeamId: null }
   }
-  return { assignedUserId: value }
+  if (value && value !== AssignerFilterType.all) {
+    return value.startsWith("u_")
+      ? { assignedUserId: value.substring(2) }
+      : { assignedInboxTeamId: value.substring(2) }
+  }
+  return {}
 }
 
 const getInboxTypeQuery = (value?: string): Prisma.ConversationWhereInput => {
@@ -80,13 +82,16 @@ const getConversationStatusQuery = (
           }
         case ConversationStatus.noAdminReply: {
           return {
-            hasAdminReplied: false,
+            adminRepliedAt: {
+              lt: prisma.conversation.fields.contactRepliedAt,
+            },
           }
         }
-
         case ConversationStatus.unread:
           return {
-            hasAdminSeen: false,
+            agentLastSeenAt: {
+              lt: prisma.conversation.fields.contactLastSeenAt,
+            },
           }
         default:
           return {}

@@ -1,4 +1,3 @@
-import type { UserModel } from "@aha.chat/database/types"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type {
@@ -44,11 +43,11 @@ export type ChatActions = {
   loadMoreConversations: (chatbotId: string) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
   resetState: () => void
-  setAssignedUser: (user: UserModel | null) => void
+  setAssignee: (value: string | null) => void
   setFilters: (filters: ConversationFilters) => void
   deleteConversation: (conversationId: string) => void
   unreadConversation: (conversationId: string) => void
-  seenConversation: (conversationId: string) => void
+  readConversation: (conversationId: string) => void
   followConversation: (conversationId: string) => void
   unfollowConversation: (conversationId: string) => void
   appendMessage: (message: MessageResource) => void
@@ -174,14 +173,17 @@ export const createChatStore = () => {
       if (conversationIndex > -1) {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
-        conversation.hasAdminSeen = false
+        const lastMessage = (conversation.messages ?? []).at(-1)
+        conversation.agentLastSeenAt = lastMessage
+          ? new Date(lastMessage.createdAt)
+          : null
 
         updatedConversations[conversationIndex] = conversation
         set({ conversations: updatedConversations, activeConversationId: null })
       }
     },
 
-    seenConversation: (conversationId: string) => {
+    readConversation: (conversationId: string) => {
       const { conversations } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.id === conversationId,
@@ -190,7 +192,7 @@ export const createChatStore = () => {
       if (conversationIndex > -1) {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
-        conversation.hasAdminSeen = true
+        conversation.agentLastSeenAt = new Date()
 
         updatedConversations[conversationIndex] = conversation
         set({ conversations: updatedConversations })
@@ -249,7 +251,7 @@ export const createChatStore = () => {
       set({ filters })
     },
 
-    setAssignedUser: (user: UserModel | null) => {
+    setAssignee: (value: string | null) => {
       const { conversations, activeConversationId } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.id === activeConversationId,
@@ -258,8 +260,21 @@ export const createChatStore = () => {
       if (conversationIndex > -1) {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
-        conversation.assignedUserId = user ? user.id : null
-        conversation.assignedUser = user
+
+        if (value === null) {
+          conversation.assignedUser = null
+          conversation.assignedUserId = null
+          conversation.assignedInboxTeam = null
+          conversation.assignedInboxTeamId = null
+        } else if (value.startsWith("u_")) {
+          const userId = value.substring(2)
+          conversation.assignedUserId = userId
+          conversation.assignedInboxTeamId = null
+        } else if (value.startsWith("t_")) {
+          const inboxTeamId = value.substring(2)
+          conversation.assignedInboxTeamId = inboxTeamId
+          conversation.assignedUserId = null
+        }
 
         updatedConversations[conversationIndex] = conversation
         set({ conversations: updatedConversations })

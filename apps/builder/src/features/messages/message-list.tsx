@@ -48,12 +48,8 @@ export function MessageList() {
         data={messages}
         followOutput
         initialTopMostItemIndex={messages.length - 1}
-        itemContent={(index, message) => (
-          <MessageItem
-            isFirst={index === 0}
-            key={message.id}
-            message={message}
-          />
+        itemContent={(_, message) => (
+          <MessageItem key={message.id} message={message} />
         )}
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {
@@ -79,7 +75,10 @@ const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
-  <div {...props} className="virtuoso-item-list flex flex-col gap-1.5">
+  <div
+    {...props}
+    className="virtuoso-item-list flex flex-col gap-1.5 [&>div:first-child]:mt-3"
+  >
     {children}
   </div>
 )

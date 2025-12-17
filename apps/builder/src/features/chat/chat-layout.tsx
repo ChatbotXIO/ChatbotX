@@ -7,11 +7,9 @@ import {
 } from "@aha.chat/ui/components/ui/resizable"
 import { BotIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { use } from "react"
-import type { getAgents } from "../chatbot-members/queries"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
-import type { listInboxes } from "../inboxes/queries"
+import { useInboxStore } from "../inboxes/provider/inbox-store-context"
 import { MessageInput } from "../messages/components/message-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
@@ -20,18 +18,12 @@ import { useChatStore } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
   layout?: [number, number, number]
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof getAgents>>,
-      Awaited<ReturnType<typeof listInboxes>>,
-    ]
-  >
 }
 
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
   const { layout = [25, 50, 25] } = props
-  const [{ data: agents }, { data: inboxes }] = use(props.promises)
+  const inboxes = useInboxStore((state) => state.inboxes)
 
   const {
     conversations,
@@ -55,7 +47,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         maxSize={30}
         minSize={20}
       >
-        <ConversationList agents={agents} inboxes={inboxes} />
+        <ConversationList inboxes={inboxes} />
       </ResizablePanel>
 
       <ResizableHandle withHandle />
@@ -68,7 +60,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {activeConversation && (
           <>
             <div className="flex h-full w-full flex-col">
-              <MessageHead agents={agents} />
+              <MessageHead />
               {!activeConversation?.liveChatEnabled && (
                 <div className="flex items-center justify-center gap-2 bg-secondary py-1.5 align-center text-sm">
                   <BotIcon />

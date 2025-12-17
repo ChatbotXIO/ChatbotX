@@ -16,12 +16,20 @@ export const unreadConversationAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
+      await assertCurrentUserCanAccessChatbot(chatbotId)
+
       await prisma.$transaction(async (tx) => {
-        await assertCurrentUserCanAccessChatbot(chatbotId)
+        const conversation = await tx.conversation.findUniqueOrThrow({
+          where: { id },
+          include: { messages: true },
+        })
+        const lastMessage = conversation.messages.at(-1)
 
         await tx.conversation.update({
           where: { id },
-          data: { hasAdminSeen: false },
+          data: {
+            agentLastSeenAt: lastMessage ? lastMessage.createdAt : null,
+          },
         })
       })
     },
