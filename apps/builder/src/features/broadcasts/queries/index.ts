@@ -12,6 +12,17 @@ export async function listBroadcasts(
     chatbotId: input.chatbotId,
   }
 
+  if (input.name) {
+    where.AND = [
+      {
+        name: {
+          contains: input.name,
+          mode: "insensitive",
+        },
+      },
+    ]
+  }
+
   const [data, total] = await prisma.$transaction([
     prisma.broadcast.findMany({
       skip: (input.page - 1) * input.perPage,

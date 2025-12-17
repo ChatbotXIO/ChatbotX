@@ -14,14 +14,17 @@ import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { EllipsisIcon, UserRoundIcon } from "lucide-react"
+import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 import type { LogResource } from "./schemas"
 
 type GetColumnsProps = {
+  t: ReturnType<typeof useTranslations>
   setRowAction: Dispatch<SetStateAction<DataTableRowAction<LogResource> | null>>
 }
 
 export function getColumns({
+  t,
   setRowAction,
 }: GetColumnsProps): ColumnDef<LogResource>[] {
   return [
@@ -53,14 +56,20 @@ export function getColumns({
       enableHiding: false,
     },
     {
-      accessorKey: "action",
+      id: "action",
+      accessorKey: "type",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Type" />
       ),
       cell: ({ row }) => <div>{row.original.action}</div>,
       size: 50,
+      meta: {
+        label: t("fields.type.label"),
+        placeholder: t("fields.type.placeholder"),
+        variant: "text",
+      },
+      enableColumnFilter: true,
       enableSorting: true,
-      enableHiding: false,
     },
     {
       accessorKey: "detail",
@@ -68,21 +77,26 @@ export function getColumns({
         <DataTableColumnHeader column={column} title="Description" />
       ),
       cell: ({ row }) => <div>{row.original.detail}</div>,
+      meta: {
+        label: t("fields.description.label"),
+      },
       size: 400,
       enableSorting: true,
-      enableHiding: false,
     },
     {
-      accessorKey: "executorType",
+      id: "contact",
+      accessorKey: "contact",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Contact" />
       ),
       cell: ({ row }) => (
         <div>{row.original.userId ? <UserRoundIcon size={16} /> : null}</div>
       ),
+      meta: {
+        label: t("fields.contact.label"),
+      },
       size: 50,
       enableSorting: false,
-      enableHiding: false,
     },
     {
       accessorKey: "createdAt",
@@ -91,8 +105,10 @@ export function getColumns({
       ),
       cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd HH:mm"),
       size: 100,
+      meta: {
+        label: t("fields.date.label"),
+      },
       enableSorting: true,
-      enableHiding: false,
     },
     {
       id: "actions",

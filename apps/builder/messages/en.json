@@ -802,7 +802,8 @@
     },
     "name": {
       "label": "Name",
-      "placeholder": "Enter name"
+      "placeholder": "Enter name",
+      "searchPlaceholder": "Search name..."
     },
     "node": {
       "label": "Node"
@@ -951,7 +952,26 @@
     },
     "type": {
       "label": "Type",
-      "placeholder": "Select type"
+      "placeholder": "Select type",
+      "searchPlaceholder": "Search type..."
+    },
+    "lastSeen": {
+      "label": "Last Seen"
+    },
+    "assignee": {
+      "label": "Assignee"
+    },
+    "modified": {
+      "label": "Modified"
+    },
+    "estimatedContacts": {
+      "label": "Estimated Contacts"
+    },
+    "scheduledAt": {
+      "label": "Scheduled At"
+    },
+    "channel": {
+      "label": "Channel"
     },
     "updatedAt": {
       "label": "Updated At"
