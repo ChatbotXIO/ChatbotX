@@ -11,7 +11,7 @@ import {
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { ConversationEntity } from "@aha.chat/sdk"
+import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
 import type { ChatJobSendFlowStep } from "@aha.chat/worker-config"
 import { sendFlowStepToExternal } from "./send-message"
 
@@ -28,6 +28,8 @@ export async function sendFlowStep({
     return
   }
 
+  const attachmentData = (step as { attachment?: AttachmentEntity }).attachment
+
   const message = await prisma.message.create({
     data: {
       inboxId: conversation.inboxId,
@@ -38,31 +40,22 @@ export async function sendFlowStep({
       senderType: SenderType.bot,
       sourceId: null,
       content: step.stepType === StepType.sendText ? step.message : null,
+      attachments: attachmentData
+        ? {
+            create: (({ url, ...meta }) => ({
+              ...meta,
+              chatbotId: conversation.chatbotId,
+              conversationId: conversation.id,
+              sourceId: meta.sourceId ?? null,
+              name: meta.name ?? undefined,
+            }))(attachmentData),
+          }
+        : undefined,
+    },
+    include: {
+      attachments: true,
     },
   })
-
-  // If this is an image step, persist attachment linked to the message
-  // if (step.stepType === StepType.sendImage && step.attachment) {
-  //   const createdAttachment = await prisma.attachment.create({
-  //     data: {
-  //       chatbotId: conversation.chatbotId,
-  //       conversationId: conversation.id,
-  //       messageId: message.id,
-  //       originPath: step.attachment.originPath,
-  //       name: step.attachment.name ?? undefined,
-  //       mimeType: step.attachment.mimeType,
-  //       size: step.attachment.size,
-  //       width: step.attachment.width,
-  //       height: step.attachment.height,
-  //       fileType: step.attachment.fileType,
-  //       sourceId: null,
-  //     },
-  //   })
-  //   // Attach to message for broadcasting so UI can render immediately
-  //   ;(
-  //     message as unknown as { attachments?: (typeof createdAttachment)[] }
-  //   ).attachments = [createdAttachment]
-  // }
 
   const promises: Promise<unknown>[] = [
     broadcastToChatbotParty(conversation.chatbotId, {
@@ -86,37 +79,6 @@ export async function sendFlowStep({
       }),
     )
   }
-  // else if (step.stepType === StepType.sendText) {
-  //   // Only SEND_TEXT and SEND_IMAGE are supported for external at this layer
-  //   promises.push(
-  //     sendFlowStepToExternal({
-  //       conversation: conversation as ConversationEntity,
-  //       flowVersionId,
-  //       step: {
-  //         id: step.id,
-  //         stepType: StepType.sendText,
-  //         message: step.message,
-  //         buttons: step.buttons,
-  //       },
-  //     }),
-  //   )
-  // } else if (step.stepType === StepType.sendImage) {
-  //   promises.push(
-  //     sendFlowStepToExternal({
-  //       conversation: conversation as ConversationEntity,
-  //       flowVersionId,
-  //       step: {
-  //         id: step.id,
-  //         stepType: StepType.sendImage,
-  //         mode: step.mode,
-  //         url: step.url,
-  //         buttons: step.buttons,
-  //         // attachment is optional in schema
-  //         attachment: step.attachment,
-  //       },
-  //     }),
-  //   )
-  // }
 
   await Promise.all(promises)
 }
