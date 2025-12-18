@@ -34,12 +34,10 @@ const CSV_MIME_KEYWORDS = ["csv"]
 const HTML_MIME_KEYWORDS = ["html", "xhtml", "htm"]
 
 const MARKDOWN_MIME_KEYWORDS = ["markdown", "md", "mdx"]
-const MARKDOWN_EXTENSIONS = ["md", "mdx", "markdown"]
 
 const RTF_MIME_KEYWORDS = ["rtf"]
 
 const XML_MIME_KEYWORDS = ["xml"]
-const XML_EXTENSIONS = ["xml"]
 
 const EMAIL_MIME_KEYWORDS = [
   "eml",
@@ -47,13 +45,10 @@ const EMAIL_MIME_KEYWORDS = [
   "application/vnd.ms-outlook",
   "msg",
 ]
-const EMAIL_EXTENSIONS = ["eml", "msg"]
 
 const VTT_MIME_KEYWORDS = ["vtt"]
-const VTT_EXTENSIONS = ["vtt"]
 
 const PROPERTIES_MIME_KEYWORDS = ["properties"]
-const PROPERTIES_EXTENSIONS = ["properties"]
 
 const decodeUtf8 = (buffer: Buffer): string => UTF8_DECODER.decode(buffer)
 
@@ -62,9 +57,6 @@ const decodeUtf8NonFatal = (buffer: Buffer): string =>
 
 const mimeIncludesAny = (mime: string, keywords: string[]): boolean =>
   keywords.some((keyword) => mime.includes(keyword))
-
-const extensionMatchesAny = (extension: string, allowed: string[]): boolean =>
-  allowed.includes(extension)
 
 function normalizeWhitespace(input: string): string {
   let out = ""
@@ -259,14 +251,8 @@ function extractTextFromXml(buffer: Buffer): string {
 export async function extractTextFromFile(
   remotePath: string,
   mimeType: string,
-  filename?: string,
 ): Promise<string> {
   const lowerMimeType = (mimeType || "").toLowerCase()
-
-  // Extract extension from filename if mimeType is unclear
-  const extension = filename
-    ? filename.split(".").pop()?.toLowerCase() || ""
-    : ""
 
   const fileStream = await uploader.getObjectStream(remotePath)
   const buffer = await streamToBuffer(fileStream)
@@ -291,10 +277,7 @@ export async function extractTextFromFile(
     return await extractTextFromHtml(buffer)
   }
 
-  if (
-    mimeIncludesAny(lowerMimeType, MARKDOWN_MIME_KEYWORDS) ||
-    extensionMatchesAny(extension, MARKDOWN_EXTENSIONS)
-  ) {
+  if (mimeIncludesAny(lowerMimeType, MARKDOWN_MIME_KEYWORDS)) {
     return await extractTextFromMarkdown(buffer)
   }
 
@@ -302,31 +285,19 @@ export async function extractTextFromFile(
     return extractTextFromRtf(buffer)
   }
 
-  if (
-    mimeIncludesAny(lowerMimeType, XML_MIME_KEYWORDS) ||
-    extensionMatchesAny(extension, XML_EXTENSIONS)
-  ) {
+  if (mimeIncludesAny(lowerMimeType, XML_MIME_KEYWORDS)) {
     return extractTextFromXml(buffer)
   }
 
-  if (
-    mimeIncludesAny(lowerMimeType, EMAIL_MIME_KEYWORDS) ||
-    extensionMatchesAny(extension, EMAIL_EXTENSIONS)
-  ) {
+  if (mimeIncludesAny(lowerMimeType, EMAIL_MIME_KEYWORDS)) {
     return await extractTextFromEmail(buffer)
   }
 
-  if (
-    mimeIncludesAny(lowerMimeType, VTT_MIME_KEYWORDS) ||
-    extensionMatchesAny(extension, VTT_EXTENSIONS)
-  ) {
+  if (mimeIncludesAny(lowerMimeType, VTT_MIME_KEYWORDS)) {
     return normalizeWhitespace(decodeUtf8(buffer))
   }
 
-  if (
-    mimeIncludesAny(lowerMimeType, PROPERTIES_MIME_KEYWORDS) ||
-    extensionMatchesAny(extension, PROPERTIES_EXTENSIONS)
-  ) {
+  if (mimeIncludesAny(lowerMimeType, PROPERTIES_MIME_KEYWORDS)) {
     return normalizeWhitespace(decodeUtf8(buffer))
   }
 
