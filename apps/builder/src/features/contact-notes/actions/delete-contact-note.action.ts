@@ -2,10 +2,9 @@
 
 import { prisma } from "@aha.chat/database"
 import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type DeleteContactNoteRequest,
@@ -13,21 +12,27 @@ import {
 } from "../schemas/action"
 
 export const deleteContactNoteAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(deleteContactNoteRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: DeleteContactNoteRequest
     }) => {
-      assertCurrentUserCanAccessChatbot(chatbotId)
+      const contact = await prisma.contact.findFirstOrThrow({
+        where: {
+          chatbotId,
+          id,
+        },
+      })
 
       return await prisma.contactNote.delete({
         where: {
           id: parsedInput.id,
+          contactId: contact.id,
         },
       })
     },

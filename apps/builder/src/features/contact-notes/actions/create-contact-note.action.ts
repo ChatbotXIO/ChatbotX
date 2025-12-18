@@ -1,14 +1,11 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import type { UserModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import {
-  assertCurrentUserCanAccessChatbot,
-  getCurrentUserId,
-} from "@/lib/auth/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type AddContactNoteRequest,
@@ -20,14 +17,14 @@ export const createContactNoteAction = chatbotActionClient
   .inputSchema(addContactNoteRequest)
   .action(
     async ({
+      ctx,
       bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
     }: {
+      ctx: { user: UserModel }
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: AddContactNoteRequest
     }) => {
-      assertCurrentUserCanAccessChatbot(chatbotId)
-
       // Make sure contact exists in the chatbot
       await prisma.contact.findFirstOrThrow({
         where: {
@@ -36,13 +33,11 @@ export const createContactNoteAction = chatbotActionClient
         },
       })
 
-      const userId = await getCurrentUserId()
-
       return await prisma.contactNote.create({
         data: {
           contactId: id,
           content: parsedInput.content,
-          createdById: userId,
+          createdById: ctx.user.id,
         },
       })
     },

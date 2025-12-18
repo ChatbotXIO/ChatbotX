@@ -73,6 +73,7 @@ export const ContactInboxPanel = () => {
         <CustomFieldStoreProvider chatbotId={chatbotId}>
           <ContactDetail />
         </CustomFieldStoreProvider>
+
         <ContactNotesManage contactNotes={contactNotes} />
 
         <Accordion className="w-full" collapsible type="single">
@@ -82,7 +83,7 @@ export const ContactInboxPanel = () => {
               key={module.keyName}
               value={module.keyName}
             >
-              <AccordionTrigger className="rounded-none border-t transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
+              <AccordionTrigger className="rounded-none border-t p-2 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
                 <div className="flex items-center gap-2">{module.keyName}</div>
               </AccordionTrigger>
               <AccordionContent>{module.content}</AccordionContent>

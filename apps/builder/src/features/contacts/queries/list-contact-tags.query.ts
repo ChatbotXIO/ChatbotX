@@ -5,19 +5,23 @@ import type { ListContactTagsRequest } from "../schemas/contact-tag"
 
 export async function listContactTags(
   input: ListContactTagsRequest,
-): Promise<TagModel[]> {
+): Promise<{ data: TagModel[] }> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const [data] = await prisma.$transaction([
-    prisma.contact.findFirst({
+    prisma.tag.findMany({
       where: {
-        id: input.contactId,
-      },
-      include: {
-        tags: true,
+        chatbotId: input.chatbotId,
+        contacts: {
+          some: {
+            id: input.contactId,
+          },
+        },
       },
     }),
   ])
 
-  return data?.tags || []
+  return {
+    data,
+  }
 }

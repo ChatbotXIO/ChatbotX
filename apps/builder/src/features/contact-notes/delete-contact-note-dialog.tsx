@@ -20,20 +20,24 @@ import { deleteContactNoteAction } from "./actions/delete-contact-note.action"
 
 type DeleteDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
+  contactId: string
   contactNoteId: string
+  onCancel?: () => void
   onSuccess: (data: ContactNoteModel) => void
 }
 
 export function DeleteContactNoteDialog({
   chatbotId,
+  contactId,
   contactNoteId,
   onSuccess,
+  onCancel,
   ...props
 }: DeleteDialogProps) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteContactNoteAction.bind(null, chatbotId),
+    deleteContactNoteAction.bind(null, chatbotId, contactId),
     {
       onSuccess: ({ data }) => {
         toast.success(
@@ -69,7 +73,7 @@ export function DeleteContactNoteDialog({
 
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button size="sm" variant="ghost">
+            <Button onClick={onCancel} size="sm" variant="ghost">
               {t("actions.cancel")}
             </Button>
           </DialogClose>
@@ -80,9 +84,9 @@ export function DeleteContactNoteDialog({
             size="sm"
             variant="destructive"
           >
-            {isPending && (
+            {isPending ? (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
-            )}
+            ) : null}
             {t("actions.delete")}
           </Button>
         </DialogFooter>

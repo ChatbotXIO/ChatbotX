@@ -28,7 +28,11 @@ export function ContactNoteList({
                 <TooltipTrigger asChild>
                   <div className="flex flex-1 items-center gap-2 text-sm">
                     <CircleUserRound />
-                    <div>{formatDate(contactNote.updatedAt)}</div>
+                    <div>
+                      {formatDate(contactNote.updatedAt, {
+                        month: "short",
+                      })}
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -44,6 +48,7 @@ export function ContactNoteList({
               <PencilIcon />
             </Button>
             <Button
+              className="text-destructive"
               onClick={() => onDelete(contactNote)}
               size="sm"
               variant="ghost"

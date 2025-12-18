@@ -50,7 +50,6 @@ export function EditContactForm({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            id: contactNote.id,
             content: contactNote.content,
           },
         },

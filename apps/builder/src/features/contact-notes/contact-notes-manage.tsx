@@ -13,12 +13,12 @@ import { DeleteContactNoteDialog } from "./delete-contact-note-dialog"
 import { EditContactForm } from "./edit-contact-note-form"
 import type { ContactNoteResource } from "./schemas/resource"
 
-const contactNoteActions = {
-  LIST: 1,
-  ADD: 2,
-  EDIT: 3,
-  DELETE: 4,
-}
+const contactNoteModes = {
+  list: "list",
+  add: "add",
+  edit: "edit",
+  delete: "delete",
+} as const
 
 export function ContactNotesManage({
   contactNotes,
@@ -28,9 +28,10 @@ export function ContactNotesManage({
   const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
-  const [contactNoteAction, setContactNoteAction] = useState(
-    contactNoteActions.LIST,
+  const [mode, setMode] = useState<keyof typeof contactNoteModes>(
+    contactNoteModes.list,
   )
+
   const { activeConversationId, conversations } = useChatStore((state) => state)
   const [allContactNotes, setAllContactNotes] =
     useState<ContactNoteResource[]>(contactNotes)
@@ -56,7 +57,7 @@ export function ContactNotesManage({
   }, [activeConversationId, conversations])
 
   const resetAction = () => {
-    setContactNoteAction(contactNoteActions.LIST)
+    setMode(contactNoteModes.list)
   }
 
   return (
@@ -66,44 +67,47 @@ export function ContactNotesManage({
           {t("fields.notes.label")} ({allContactNotes.length})
         </Label>
         <Button
-          onClick={() => setContactNoteAction(contactNoteActions.ADD)}
+          onClick={() => setMode(contactNoteModes.add)}
           size="icon"
           variant="ghost"
         >
           <PlusIcon />
         </Button>
       </div>
-      {contactNoteAction === contactNoteActions.ADD && (
+
+      {mode === contactNoteModes.add && (
         <AddContactForm
           chatbotId={chatbotId}
           contactId={contact?.id ?? ""}
-          onCancel={() => setContactNoteAction(contactNoteActions.LIST)}
+          onCancel={() => setMode(contactNoteModes.list)}
           onSuccess={(value: ContactNoteModel) => {
             setAllContactNotes([value, ...allContactNotes])
             resetAction()
           }}
         />
       )}
-      {contactNote && contactNoteAction === contactNoteActions.EDIT && (
+      {!!contactNote && mode === contactNoteModes.edit && (
         <EditContactForm
           chatbotId={chatbotId}
           contactId={contact?.id ?? ""}
           contactNote={contactNote}
-          onCancel={() => setContactNoteAction(contactNoteActions.LIST)}
-          onSuccess={(value: ContactNoteModel) => {
+          onCancel={() => setMode(contactNoteModes.list)}
+          onSuccess={(value: ContactNoteResource) => {
             setAllContactNotes(
               allContactNotes.map((note) =>
-                note.id === value.id ? value : note,
+                note.id === value.id ? value : (note as ContactNoteResource),
               ),
             )
             resetAction()
           }}
         />
       )}
-      {contactNoteAction === contactNoteActions.DELETE && (
+      {mode === contactNoteModes.delete && (
         <DeleteContactNoteDialog
           chatbotId={chatbotId}
+          contactId={contact?.id ?? ""}
           contactNoteId={contactNote?.id ?? ""}
+          onCancel={() => setMode(contactNoteModes.list)}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
               setContactNote(null)
@@ -120,16 +124,16 @@ export function ContactNotesManage({
           open={Boolean(contactNote)}
         />
       )}
-      {contactNoteAction === contactNoteActions.LIST && (
+      {mode === contactNoteModes.list && (
         <ContactNoteList
           allContactNotes={allContactNotes}
           onDelete={(value: ContactNoteModel) => {
             setContactNote(value)
-            setContactNoteAction(contactNoteActions.DELETE)
+            setMode(contactNoteModes.delete)
           }}
           onEdit={(value: ContactNoteModel) => {
             setContactNote(value)
-            setContactNoteAction(contactNoteActions.EDIT)
+            setMode(contactNoteModes.edit)
           }}
         />
       )}

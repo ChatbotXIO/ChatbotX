@@ -5,7 +5,6 @@ import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateContactNoteRequest,
@@ -23,9 +22,10 @@ export const editContactNoteAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateContactNoteRequest
     }) => {
-      assertCurrentUserCanAccessChatbot(chatbotId)
-
-      await prisma.contact.findFirstOrThrow({
+      const contact = await prisma.contact.findFirstOrThrow({
+        select: {
+          id: true,
+        },
         where: {
           chatbotId,
           id,
@@ -34,7 +34,8 @@ export const editContactNoteAction = chatbotActionClient
 
       return await prisma.contactNote.update({
         where: {
-          id: parsedInput.id,
+          id: parsedInput.contactNoteId,
+          contactId: contact.id,
         },
         data: {
           content: parsedInput.content,

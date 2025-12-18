@@ -53,7 +53,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
 
         {/* CONTACT DETAIL */}
         <ResizablePanel
-          className="px-4 py-3"
+          className="overflow-y-auto! h-screen px-4 py-3"
           defaultSize={layout[2] ?? 25}
           maxSize={30}
           minSize={20}

@@ -34,7 +34,7 @@ export default function UpdateContactTagField({
     zodResolver(updateContactTagRequest),
     {
       actionProps: {
-        onSuccess: ({ data: { tags: updatedTags } }) => {
+        onSuccess: ({ data: updatedTags }) => {
           onSuccess(updatedTags)
         },
         onError: ({ error }) => {

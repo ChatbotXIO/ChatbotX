@@ -23,47 +23,33 @@ export const updateContactTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateContactTagRequest
     }) => {
-      await prisma.contact.findFirstOrThrow({
+      const contact = await prisma.contact.findFirstOrThrow({
         where: {
           id: parsedInput.contactId,
         },
       })
 
-      const tagConnections = await Promise.all(
-        parsedInput.tags.map(async (tagName) => {
-          const existingTag = await prisma.tag.findFirst({
-            where: {
-              name: tagName,
-              chatbotId,
+      const returnedTags = await prisma.$transaction(async (tx) => {
+        const tags = await tx.tag.createManyAndReturn({
+          data: parsedInput.tags.map((t) => ({
+            name: t,
+            chatbotId,
+          })),
+          skipDuplicates: true,
+        })
+
+        await tx.contact.update({
+          data: {
+            tags: {
+              connect: tags.map((t) => ({ id: t.id })),
             },
-          })
-
-          if (existingTag) {
-            return { id: existingTag.id }
-          }
-
-          const newTag = await prisma.tag.create({
-            data: {
-              name: tagName,
-              chatbotId,
-              syncToMessenger: false,
-            },
-          })
-
-          return { id: newTag.id }
-        }),
-      )
-
-      const updatedContact = await prisma.contact.update({
-        where: { id: parsedInput.contactId },
-        data: {
-          tags: {
-            set: tagConnections,
           },
-        },
-        include: {
-          tags: true,
-        },
+          where: {
+            id: contact.id,
+          },
+        })
+
+        return tags
       })
 
       revalidateCacheTags([
@@ -72,6 +58,6 @@ export const updateContactTagAction = chatbotActionClient
         `chatbots:${chatbotId}#tags`,
       ])
 
-      return updatedContact
+      return returnedTags
     },
   )
