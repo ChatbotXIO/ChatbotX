@@ -18,7 +18,9 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
   const { parentName, ...rest } = props
 
   const { getValues } = useFormContext()
-  const setButtonPath = useStepStore((state) => state.setButtonPath)
+  const { setButtonPath, setOpenButtonEditorDialog } = useStepStore(
+    (state) => state,
+  )
 
   const buttonData = getValues(`${parentName}`)
 
@@ -28,6 +30,7 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
         className="w-full hover:text-blue-500"
         onClick={() => {
           setButtonPath(`data.details.${parentName}`)
+          setOpenButtonEditorDialog(true)
         }}
         type="button"
         variant="secondary"

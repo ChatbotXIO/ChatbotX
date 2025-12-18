@@ -1,5 +1,5 @@
+import { addContactNotesStepSchema } from "./steps/add-contact-notes"
 import { addContactTagStepSchema } from "./steps/add-contact-tag"
-import { addNotesStepSchema } from "./steps/add-notes"
 import { archiveConversationStepSchema } from "./steps/archive-conversation"
 import { assignConversationStepSchema } from "./steps/assign-conversation"
 import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversation"
@@ -45,7 +45,7 @@ const inboxSteps = [
 ]
 
 const contactSteps = [
-  addNotesStepSchema,
+  addContactNotesStepSchema,
   blockContactStepSchema,
   addContactTagStepSchema,
   removeContactTagStepSchema,

@@ -63,7 +63,7 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="flex justify-center">
-          <Button size="sm" variant="outline">
+          <Button size="sm" type="button" variant="outline">
             {t("actions.update")}
           </Button>
         </div>

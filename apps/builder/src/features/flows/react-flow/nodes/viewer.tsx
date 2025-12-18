@@ -43,7 +43,12 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
 
       <Card className="w-72 gap-0 bg-white/75 p-0 hover:border-blue-500">
         <CardHeader className="relative p-4">
-          <BaseHandle id={id} position={Position.Left} type="target" />
+          <BaseHandle
+            id={id}
+            isConnectableStart={false}
+            position={Position.Left}
+            type="target"
+          />
           <CardTitle className="flex items-center gap-1">
             {nodeConfig?.icon ? <nodeConfig.icon className="size-5" /> : " "}
             {data.name}

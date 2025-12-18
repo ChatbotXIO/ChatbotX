@@ -24,16 +24,18 @@ type OptionItemProps = {
   option: SelectOption
   selectedValue: string | undefined
   onSelect: (value: string) => void
+  disabled?: boolean
 }
 
 export const OptionItem = ({
   option,
   selectedValue,
   onSelect,
+  disabled,
 }: OptionItemProps) => {
   const isSelected = option.value === selectedValue
   return (
-    <CommandItem onSelect={onSelect} value={option.value}>
+    <CommandItem disabled={disabled} onSelect={onSelect} value={option.value}>
       {option.Icon && <option.Icon className="h-4 w-4" />}
       {option.label}
       <Check
@@ -56,6 +58,7 @@ type ComboboxFieldProps<T extends FieldValues> = {
   className?: string
   side?: PopoverContentProps["side"]
   triggerValueChange?: (value: string) => void
+  disableValues?: string[]
 }
 
 export function ComboboxField<T extends FieldValues>({
@@ -68,6 +71,7 @@ export function ComboboxField<T extends FieldValues>({
   options,
   side,
   triggerValueChange,
+  disableValues,
 }: ComboboxFieldProps<T>) {
   const [open, setOpen] = useState(false)
 
@@ -126,6 +130,7 @@ export function ComboboxField<T extends FieldValues>({
                       <CommandGroup heading={option.label} key={option.value}>
                         {option.children.map((child) => (
                           <OptionItem
+                            disabled={disableValues?.includes(child.value)}
                             key={child.value}
                             onSelect={handleSelect}
                             option={child}
@@ -135,6 +140,7 @@ export function ComboboxField<T extends FieldValues>({
                       </CommandGroup>
                     ) : (
                       <OptionItem
+                        disabled={disableValues?.includes(option.value)}
                         key={option.value}
                         onSelect={handleSelect}
                         option={option}

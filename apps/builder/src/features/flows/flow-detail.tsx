@@ -34,6 +34,7 @@ export function FlowDetail({
         initialState={{
           organizationSetings:
             organization.settings as unknown as OrganizationSettings,
+          activeFlowId: flow.id,
         }}
       >
         <InboxStoreProvider autoInitialize={true} chatbotId={flow.chatbotId}>

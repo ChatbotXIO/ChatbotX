@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { useFlowStore } from "@/features/flows/provider/flow-store-context"
+import { useStepStore } from "../../stores/step-store-provider"
 import { BaseStepEditor } from "../base/editor"
 
 const StartExternalNodeStepEditor = ({
@@ -21,6 +22,7 @@ const StartExternalNodeStepEditor = ({
 
   const flowOptions = useFlowSelectOptions()
   const { flows } = useFlowStore((state) => state)
+  const { activeFlowId } = useStepStore((state) => state)
 
   const onFlowChange = (value?: string) => {
     if (!value) {
@@ -50,6 +52,7 @@ const StartExternalNodeStepEditor = ({
     >
       <div className="flex flex-col gap-4">
         <ComboboxField
+          disableValues={activeFlowId ? [activeFlowId] : undefined}
           label={t("fields.flow.label")}
           name={`${parentName}.flowId`}
           options={flowOptions}

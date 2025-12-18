@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import { useEdges, useNodes } from "@xyflow/react"
+import { useReactFlow } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
   CopyIcon,
@@ -67,8 +67,8 @@ export function FlowEditToolbar({
     })
   }
 
-  const nodes = useNodes()
-  const edges = useEdges()
+  // NOTES: DO NOT use useNodes & useEdges, it makes component re-render when node or edge is changed
+  const { getNodes, getEdges } = useReactFlow()
 
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
     publishFlowAction.bind(null, chatbotId, flow.id),
@@ -83,6 +83,8 @@ export function FlowEditToolbar({
     setIsValidating(true)
 
     // validate nodes & edges
+    const nodes = getNodes()
+    const edges = getEdges()
     const { success, error } = updateFlowVersionSchema.safeParse({
       nodes,
       edges,

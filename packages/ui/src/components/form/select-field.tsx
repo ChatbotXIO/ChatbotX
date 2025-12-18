@@ -34,6 +34,7 @@ export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   className?: string
   allowClear?: boolean
   triggerValueChange?: (value?: string) => void
+  disableValues?: string[]
 } & React.ComponentProps<typeof Select>
 
 type SelectOptionItem = {
@@ -66,6 +67,7 @@ export const SelectField = <T extends FieldValues>(
     fetchOptionsUrl,
     allowClear,
     triggerValueChange,
+    disableValues,
     ...rest
   } = props
 
@@ -80,14 +82,14 @@ export const SelectField = <T extends FieldValues>(
     () =>
       normalizedOptions.map((option) => (
         <SelectItem
-          disabled={option.disabled ?? false}
+          disabled={option.disabled ?? disableValues?.includes(option.value)}
           key={option.value}
           value={option.value}
         >
           {option.label}
         </SelectItem>
       )),
-    [normalizedOptions],
+    [normalizedOptions, disableValues],
   )
 
   useEffect(() => {

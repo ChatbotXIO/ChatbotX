@@ -45,15 +45,18 @@ export async function getFlows(
       }))
     : [{ updatedAt: "desc" }]
 
-  const [data, total] = await prisma.$transaction([
-    prisma.flow.findMany({
+  const [data, total] = await prisma.$transaction(async (tx) => {
+    const flows = await tx.flow.findMany({
       skip: (input.page - 1) * input.perPage,
       take: input.perPage,
       where,
       orderBy,
-    }),
-    prisma.flow.count({ where }),
-  ])
+    })
+
+    const count = await tx.flow.count({ where })
+
+    return [flows, count]
+  })
 
   const pageCount = Math.ceil(total / input.perPage)
 

@@ -235,6 +235,7 @@ export function ReactFlowWrapper({
             // if the handle is from button, update the button data
             if (connectionState.fromHandle.id !== connectionState.fromNode.id) {
               const data = connectionState.fromNode.data as FlowNode["data"]
+
               if (data.details && "steps" in data.details) {
                 // biome-ignore lint/style/useForOf: safe to use for of
                 for (
@@ -266,6 +267,7 @@ export function ReactFlowWrapper({
                       ;(data.details.steps[stepIndex] as any).buttons[
                         buttonIndex
                       ] = targetButton
+
                       updateNodeData(connectionState.fromNode.id, data)
 
                       break

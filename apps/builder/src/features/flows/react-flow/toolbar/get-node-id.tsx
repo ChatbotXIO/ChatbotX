@@ -1,5 +1,5 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { useNodes } from "@xyflow/react"
+import { useReactFlow } from "@xyflow/react"
 import { FingerprintIcon } from "lucide-react"
 import type { MouseEvent } from "react"
 import { toast } from "sonner"
@@ -7,13 +7,14 @@ import { useCopyToClipboard } from "usehooks-ts"
 
 export function GetNodeId() {
   const [_, copy] = useCopyToClipboard()
-  const nodes = useNodes()
+  const { getNodes } = useReactFlow()
 
   const onClick = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    const activeNode = nodes.find((n) => n.data.forceToolbarVisible)
+    const allNodes = getNodes()
+    const activeNode = allNodes.find((n) => n.data.forceToolbarVisible)
     if (activeNode) {
       copy(activeNode.id).then(() => {
         toast.success("Copied Node ID")
