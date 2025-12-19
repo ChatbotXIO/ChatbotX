@@ -155,7 +155,7 @@ export function getFlowColumns({
       enableSorting: false,
     },
     {
-      accessorKey: "modified",
+      accessorKey: "createdAt",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -164,7 +164,7 @@ export function getFlowColumns({
       ),
       cell: ({ row }) => <div>{formatDate(row.original.updatedAt)}</div>,
       size: 50,
-      enableSorting: false,
+      enableSorting: true,
       meta: {
         label: t("fields.modified.label"),
       },

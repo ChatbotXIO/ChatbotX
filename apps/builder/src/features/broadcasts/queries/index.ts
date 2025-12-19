@@ -22,12 +22,25 @@ export async function listBroadcasts(
       },
     ]
   }
+  const orderBy = input.sort.map((sortItem) => {
+    if ((sortItem.id as string) === "estimatedContacts") {
+      return {
+        contacts: {
+          _count: sortItem.desc ? "desc" : "asc",
+        },
+      } as Prisma.BroadcastOrderByWithRelationInput
+    }
+    return {
+      [sortItem.id]: sortItem.desc ? "desc" : "asc",
+    } as Prisma.BroadcastOrderByWithRelationInput
+  })
 
   const [data, total] = await prisma.$transaction([
     prisma.broadcast.findMany({
       skip: (input.page - 1) * input.perPage,
       take: input.perPage,
       where,
+      orderBy,
       include: {
         _count: {
           select: {

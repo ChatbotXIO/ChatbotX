@@ -166,6 +166,7 @@ export function AutomatedResponsesTable({
             id={row.original.id}
           />
         ),
+        enableSorting: false,
         meta: {
           label: t("fields.status.label"),
         },

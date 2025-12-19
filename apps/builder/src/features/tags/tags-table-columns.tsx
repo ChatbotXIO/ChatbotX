@@ -85,7 +85,8 @@ export function getTagColumns({
       enableSorting: true,
     },
     {
-      accessorKey: "Contacts",
+      id: "contacts",
+      accessorKey: "contacts",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -94,7 +95,6 @@ export function getTagColumns({
       ),
       cell: ({ row }) => <div>{row.original._count?.contacts ?? 0}</div>,
       size: 50,
-      enableSorting: false,
       meta: {
         label: t("fields.contacts.label"),
       },

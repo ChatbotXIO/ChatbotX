@@ -10,6 +10,16 @@ export async function listContacts(
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const where = generateWhere(input)
+  const orderBy = input.sort.map((sortItem) => {
+    if ((sortItem.id as string) === "keyword") {
+      return {
+        firstName: sortItem.desc ? "desc" : "asc",
+      } as Prisma.ContactOrderByWithRelationInput
+    }
+    return {
+      [sortItem.id]: sortItem.desc ? "desc" : "asc",
+    } as Prisma.ContactOrderByWithRelationInput
+  })
 
   const take = input.perPage || 10
   const skip = ((input.page ?? 1) - 1) * take
@@ -18,6 +28,7 @@ export async function listContacts(
       skip,
       take,
       where,
+      orderBy,
       include: {
         conversation: {
           include: {
@@ -66,6 +77,11 @@ const generateWhere = (
         lastName: {
           contains: input.keyword,
           mode: "insensitive",
+        },
+      },
+      {
+        email: {
+          contains: input.keyword,
         },
       },
       {

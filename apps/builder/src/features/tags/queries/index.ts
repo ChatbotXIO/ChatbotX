@@ -27,9 +27,18 @@ export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
     ]
   }
 
-  const orderBy = input.sort.map((sortItem) => ({
-    [sortItem.id]: sortItem.desc ? "desc" : "asc",
-  }))
+  const orderBy = input.sort.map((sortItem) => {
+    if ((sortItem.id as string) === "contacts") {
+      return {
+        contacts: {
+          _count: sortItem.desc ? "desc" : "asc",
+        },
+      } as Prisma.TagOrderByWithRelationInput
+    }
+    return {
+      [sortItem.id]: sortItem.desc ? "desc" : "asc",
+    } as Prisma.TagOrderByWithRelationInput
+  })
 
   const [data, total] = await prisma.$transaction([
     prisma.tag.findMany({

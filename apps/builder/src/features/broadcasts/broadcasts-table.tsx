@@ -65,8 +65,8 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         enableColumnFilter: true,
       },
       {
-        id: "channel",
-        accessorKey: "channel",
+        id: "inboxType",
+        accessorKey: "inboxType",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -99,6 +99,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
               {t(`broadcasts.status.${row.original.status}`)}
             </Badge>
           ),
+        enableSorting: false,
         meta: {
           label: t("fields.status.label"),
         },
@@ -127,7 +128,6 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         cell: ({ row }) => (
           <div>{format(row.original.schedulesAt, "yyyy/MM/dd HH:mm")}</div>
         ),
-        enableSorting: false,
         meta: {
           label: t("fields.scheduledAt.label"),
         },

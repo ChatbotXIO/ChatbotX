@@ -1,4 +1,5 @@
 import type { BroadcastModel, FlowModel } from "@aha.chat/database/types"
+import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -9,6 +10,9 @@ export const getBroadcastsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   name: parseAsString,
+  sort: getSortingStateParser<BroadcastModel>().withDefault([
+    { id: "createdAt", desc: true },
+  ]),
 })
 
 export type GetBroadcastsSchema = Awaited<

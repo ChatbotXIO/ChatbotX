@@ -113,6 +113,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         enableSorting: false,
       },
       {
+        id: "lastSeenAt",
         accessorKey: "lastSeenAt",
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -132,7 +133,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         meta: {
           label: t("fields.lastSeen.label"),
         },
-        enableSorting: false,
+        enableSorting: true,
       },
       {
         accessorKey: "createdAt",
