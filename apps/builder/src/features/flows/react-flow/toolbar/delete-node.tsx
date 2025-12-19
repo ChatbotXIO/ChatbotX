@@ -1,32 +1,33 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { useReactFlow } from "@xyflow/react"
 import { TrashIcon } from "lucide-react"
-import { type MouseEvent, useCallback } from "react"
+import type { MouseEvent } from "react"
 
 export function DeleteNode() {
-  const { setNodes, getNodes, getEdges, setEdges } = useReactFlow()
+  const { deleteElements, getNodes } = useReactFlow()
 
-  const nodes = getNodes()
-  const edges = getEdges()
-  const startNode = nodes.find((n) => n.data.isStartNode)
-  const targetNode = nodes.find((n) => n.data.forceToolbarVisible)
-
-  const deleteNode = useCallback(() => {
-    setTimeout(() => {
-      setNodes(nodes.filter((node) => !node.data.forceToolbarVisible))
-      setEdges(edges.filter((edge) => edge.target !== targetNode?.id))
-    })
-  }, [setNodes, nodes, edges, setEdges, targetNode?.id])
-
-  const onClick = (e: MouseEvent) => {
+  const onDelete = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    deleteNode()
+    const allNodes = getNodes()
+    const targetNode = allNodes.find((n) => n.data.forceToolbarVisible)
+
+    if (targetNode) {
+      deleteElements({
+        nodes: [{ id: targetNode.id }],
+      })
+    }
   }
 
-  return startNode?.id === targetNode?.id ? null : (
-    <Button className="size-8" onClick={onClick} size="icon" variant="ghost">
+  return (
+    <Button
+      className="size-8 text-destructive hover:text-destructive"
+      onClick={onDelete}
+      size="icon"
+      type="button"
+      variant="ghost"
+    >
       <TrashIcon />
     </Button>
   )

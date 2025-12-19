@@ -10,7 +10,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type RemoveContactTagRequest,
   removeContactTagRequest,
-} from "../schemas/remove-contact-tag.request"
+} from "../schemas/contact-tag"
 
 export const removeContactTagAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
@@ -39,13 +39,23 @@ export const removeContactTagAction = chatbotActionClient
       }
 
       await prisma.$transaction(async (tx) => {
+        const allTags = await tx.tag.findMany({
+          where: {
+            chatbotId,
+            name: {
+              in: parsedInput.tags,
+            },
+          },
+          select: {
+            id: true,
+          },
+        })
+
         for (const contact of contacts) {
           await tx.contact.update({
             data: {
               tags: {
-                disconnect: {
-                  id: parsedInput.tagId,
-                },
+                disconnect: allTags,
               },
             },
             where: {

@@ -12,7 +12,7 @@ export default async function Dashboard({
   const inboxesPromise = Promise.all([
     listInboxes({
       chatbotId,
-      includes: ["intergration"],
+      includes: ["integration"],
     }),
   ])
 

@@ -105,10 +105,11 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
           ))}
         </CarouselContent>
 
-        <div className="-translate-y-1/2 -right-3 absolute top-1/2 flex flex-col gap-2">
+        <div className="absolute top-1/2 -right-3 flex -translate-y-1/2 flex-col gap-2">
           <Button
             className="size-6 cursor-pointer rounded-full"
             data-slot="carousel-add"
+            disabled={fields.length >= 10}
             onClick={insertCard}
             type="button"
           >
@@ -119,7 +120,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
           <Button
             className="size-6 cursor-pointer rounded-full"
             data-slot="carousel-remove"
-            disabled={selectedSnap >= snapCount - 1}
+            disabled={fields.length <= 1}
             onClick={removeCard}
             type="button"
             variant="destructive"

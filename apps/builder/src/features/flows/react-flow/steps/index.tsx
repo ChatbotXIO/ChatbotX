@@ -25,7 +25,6 @@ import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
-import { sendCardStep } from "./send-card"
 import { sendCarouselStep } from "./send-carousel"
 import sendFileStep from "./send-file"
 import sendGifStep from "./send-gif"
@@ -51,7 +50,7 @@ import { unsubscribeBroadcastStep } from "./unsubscribe-broadcast"
 export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.sendText]: sendTextStep,
   [StepType.sendImage]: sendImageStep,
-  [StepType.sendCard]: sendCardStep,
+  [StepType.sendCard]: sendCarouselStep,
   [StepType.sendCarousel]: sendCarouselStep,
   [StepType.getUserInput]: waitUserReplyStep,
   [StepType.sendVideo]: sendVideoStep,

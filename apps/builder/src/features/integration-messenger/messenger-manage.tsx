@@ -1,12 +1,13 @@
 "use client"
 
 import type { OrganizationSettings } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
 import type { findOrganization } from "../organization/queries"
-import { MessengerConnect } from "./components/messenger-connect"
 import { MessengerDisconnect } from "./components/messenger-disconnect"
 import type { findIntegrationMessenger } from "./queries"
 
@@ -42,7 +43,13 @@ export function MessengerManage({ promises }: MessengerManageProps) {
           <MessengerDisconnect />
         </div>
       ) : (
-        <MessengerConnect chatbotId={chatbotId} settings={messengerSettings} />
+        <Button asChild size="sm">
+          <Link
+            href={`/channels/create?chatbotId=${chatbotId}&channel=messenger`}
+          >
+            {t("actions.connect")}
+          </Link>
+        </Button>
       )}
     </SettingRow>
   )

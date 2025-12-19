@@ -54,7 +54,7 @@ export const SpreadsheetUpdateRowEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="googleSheets.updateRow"
+        name="flows.actions.spreadsheetUpdateRow"
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}

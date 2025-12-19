@@ -14,7 +14,6 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { Loader, Trash } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
@@ -38,7 +37,6 @@ export function DeleteFlowsDialog({
   ...props
 }: DeleteFlowsDialogProps) {
   const t = useTranslations()
-  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteFlowAction.bind(null, chatbotId),
@@ -50,7 +48,7 @@ export function DeleteFlowsDialog({
           }),
         )
         onOpenChange(false)
-        router.refresh()
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {

@@ -25,9 +25,9 @@ export function CheckboxGroupField<T extends FieldValues>({
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
       label={label}
       name={name}
+      required={required}
     >
       {() => (
         <Controller

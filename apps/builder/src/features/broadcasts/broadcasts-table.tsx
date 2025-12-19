@@ -23,7 +23,7 @@ import {
   RotateCwIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
@@ -37,8 +37,10 @@ type BroadcastsTableProps = {
 
 export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
+
+  const t = useTranslations()
+  const router = useRouter()
 
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<BroadcastResource> | null>(null)
@@ -163,6 +165,9 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       <RenameBroadcastDialog
         broadcast={rowAction?.row.original || null}
         onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={rowAction?.variant === "rename"}
       />
 

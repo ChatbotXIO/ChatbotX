@@ -1,5 +1,6 @@
 "use client"
 
+import type { FlowModel } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -9,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
-import { useEdges, useNodes } from "@xyflow/react"
+import { useReactFlow } from "@xyflow/react"
 import {
   ChartNoAxesCombinedIcon,
   CopyIcon,
@@ -23,27 +24,54 @@ import {
   Trash2Icon,
   TypeIcon,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useCopyToClipboard } from "usehooks-ts"
 import { publishFlowAction } from "../actions/publish-flow-action"
+import { DeleteFlowsDialog } from "../delete-flow-dialog"
 import { updateFlowVersionSchema } from "../schemas/update-flow-schema"
+import { DuplicateFlowDialog } from "./components/duplicate-flow"
+import { RenameFlowDialog } from "./components/rename-flow"
 
 export function FlowEditToolbar({
   chatbotId,
-  flowId,
+  flow,
 }: {
   chatbotId: string
-  flowId: string
+  flow: FlowModel
 }) {
   const t = useTranslations()
+  const router = useRouter()
+
   const [isValidating, setIsValidating] = useState<boolean>(false)
-  const nodes = useNodes()
-  const edges = useEdges()
+  const [action, setAction] = useState<
+    | "publish"
+    | "rename"
+    | "duplicate"
+    | "getDraftLink"
+    | "getPublishedLink"
+    | "analytics"
+    | "flowVersions"
+    | "delete"
+    | "revertToPublished"
+    | null
+  >(null)
+
+  const [_, copy] = useCopyToClipboard()
+  const handleCopy = (text: string) => {
+    copy(text).then(() => {
+      toast.success(t("messages.copiedToClipboard"))
+    })
+  }
+
+  // NOTES: DO NOT use useNodes & useEdges, it makes component re-render when node or edge is changed
+  const { getNodes, getEdges } = useReactFlow()
 
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
-    publishFlowAction.bind(null, chatbotId, flowId),
+    publishFlowAction.bind(null, chatbotId, flow.id),
     {
       onSuccess: () => {
         toast.success("A new version has been published")
@@ -55,6 +83,8 @@ export function FlowEditToolbar({
     setIsValidating(true)
 
     // validate nodes & edges
+    const nodes = getNodes()
+    const edges = getEdges()
     const { success, error } = updateFlowVersionSchema.safeParse({
       nodes,
       edges,
@@ -88,7 +118,7 @@ export function FlowEditToolbar({
         {(isValidating || isPendingPublish) && (
           <Loader2Icon className="animate-spin" />
         )}
-        Publish
+        {t("actions.publish")}
       </Button>
 
       <DropdownMenu>
@@ -97,44 +127,76 @@ export function FlowEditToolbar({
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuGroup>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setAction("rename")}>
               <TypeIcon />
               {t("actions.rename")}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setAction("duplicate")}>
               <CopyIcon />
               {t("actions.duplicate")}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                handleCopy(
+                  `${window.location.origin}/chatbots/${chatbotId}/flows/${flow.id}`,
+                )
+              }
+            >
               <LinkIcon />
               {t("actions.getDraftLink")}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem disabled>
               <LinkIcon />
               {t("actions.getPublishedLink")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem>
+            <DropdownMenuItem disabled>
               <ChartNoAxesCombinedIcon />
               {t("actions.analytics")}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem disabled>
               <HistoryIcon />
               {t("actions.flowVersions")}
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Trash2Icon />
-              {t("actions.delete")}
-            </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem disabled>
               <RefreshCcwIcon />
               {t("actions.revertToPublished")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setAction("delete")}
+              variant="destructive"
+            >
+              <Trash2Icon />
+              {t("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <RenameFlowDialog
+        flow={flow}
+        onOpenChange={() => setAction(null)}
+        open={action === "rename"}
+      />
+
+      <DuplicateFlowDialog
+        flow={flow}
+        onOpenChange={() => setAction(null)}
+        open={action === "duplicate"}
+      />
+
+      <DeleteFlowsDialog
+        chatbotId={chatbotId}
+        flows={[flow]}
+        onOpenChange={() => setAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={action === "delete"}
+        showTrigger={false}
+      />
     </div>
   )
 }

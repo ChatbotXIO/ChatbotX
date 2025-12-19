@@ -1,7 +1,6 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
 import type { FlowModel } from "@aha.chat/database/types"
-import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { FlowException } from "../schemas/exception"
 import type {
@@ -16,72 +15,52 @@ export async function getFlows(
 ): Promise<FlowCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  return await unstable_cache(
-    async () => {
-      const where: Prisma.FlowWhereInput = {
-        chatbotId: input.chatbotId,
-      }
+  const where: Prisma.FlowWhereInput = {
+    chatbotId: input.chatbotId,
+  }
 
-      if (input.folderId !== undefined) {
-        where.folderId =
-          input.folderId === null || input.folderId === "0"
-            ? null
-            : input.folderId
-      }
+  if (input.folderId !== undefined) {
+    where.folderId =
+      input.folderId === null || input.folderId === "0" ? null : input.folderId
+  }
 
-      if (input.name) {
-        where.AND = [
-          {
-            name: {
-              contains: input.name,
-              mode: "insensitive",
-            },
-          },
-        ]
-      }
+  if (input.name) {
+    where.AND = [
+      {
+        name: {
+          contains: input.name,
+          mode: "insensitive",
+        },
+      },
+    ]
+  }
 
-      if (input.active) {
-        where.active = input.active
-      }
+  if (input.active) {
+    where.active = input.active
+  }
 
-      const orderBy = input.sort
-        ? input.sort.map((sortItem) => ({
-            [sortItem.id]: sortItem.desc ? "desc" : "asc",
-          }))
-        : [{ updatedAt: "desc" }]
+  const orderBy = input.sort
+    ? input.sort.map((sortItem) => ({
+        [sortItem.id]: sortItem.desc ? "desc" : "asc",
+      }))
+    : [{ updatedAt: "desc" }]
 
-      const [data, total] = await prisma.$transaction([
-        prisma.flow.findMany({
-          skip: (input.page - 1) * input.perPage,
-          take: input.perPage,
-          where,
-          orderBy,
-          // include: {
-          //   _count: {
-          //     select: {
-          // contacts: true
-          // flowVersions: {
-          //   where: {
-          //     isDraft: true,
-          //   },
-          // },
-          //   },
-          // },
-          // },
-        }),
-        prisma.flow.count({ where }),
-      ])
+  const [data, total] = await prisma.$transaction(async (tx) => {
+    const flows = await tx.flow.findMany({
+      skip: (input.page - 1) * input.perPage,
+      take: input.perPage,
+      where,
+      orderBy,
+    })
 
-      const pageCount = Math.ceil(total / input.perPage)
+    const count = await tx.flow.count({ where })
 
-      return { data, pageCount }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#flows`],
-    },
-  )()
+    return [flows, count]
+  })
+
+  const pageCount = Math.ceil(total / input.perPage)
+
+  return { data, pageCount }
 }
 
 export const findFlow = async (
@@ -89,8 +68,6 @@ export const findFlow = async (
 ): Promise<{ data: FlowResource | null }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  // return await unstable_cache(
-  //   async () => {
   const flow = await prisma.flow.findFirst({
     where: {
       ...input,
@@ -101,13 +78,6 @@ export const findFlow = async (
   })
 
   return { data: flow }
-  //   },
-  //   [JSON.stringify(input)],
-  //   {
-  //     revalidate: 3600,
-  //     tags: [`chatbots:${input.chatbotId}#flows:${input.id}`],
-  //   },
-  // )()
 }
 
 export const ensureFlowIdIsExists = async (

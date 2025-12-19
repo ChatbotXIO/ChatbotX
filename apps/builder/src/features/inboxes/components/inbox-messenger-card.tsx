@@ -18,7 +18,7 @@ import { useEffect, useState } from "react"
 import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
-import type { InboxResource } from "../schemas"
+import type { InboxResource } from "../schemas/resource"
 
 export default function InboxMessengerCard({
   inbox,

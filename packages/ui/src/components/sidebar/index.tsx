@@ -17,7 +17,7 @@ import {
   SidebarMenuSubItem,
 } from "../ui/sidebar"
 
-export interface NavItem {
+export type NavItem = {
   title: string
   url: string
   icon?: LucideIcon
@@ -25,7 +25,7 @@ export interface NavItem {
   items?: NavItem[]
 }
 
-export interface NavMainProps {
+export type NavMainProps = {
   title: string
   items: NavItem[]
 }
@@ -38,15 +38,15 @@ export function NavMain({ title, items }: NavMainProps) {
         {items.map((item) =>
           item.items?.length ? (
             <Collapsible
-              key={item.title}
               asChild
-              defaultOpen={item.isActive}
               className="group/collapsible"
+              defaultOpen={item.isActive}
+              key={item.title}
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton tooltip={item.title}>
-                    {item.icon && <item.icon />}
+                    {item.icon ? <item.icon /> : null}
                     <span>{item.title}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
@@ -70,7 +70,7 @@ export function NavMain({ title, items }: NavMainProps) {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuSubButton asChild>
                 <a href={item.url}>
-                  {item.icon && <item.icon />}
+                  {item.icon ? <item.icon /> : null}
                   <span>{item.title}</span>
                 </a>
               </SidebarMenuSubButton>

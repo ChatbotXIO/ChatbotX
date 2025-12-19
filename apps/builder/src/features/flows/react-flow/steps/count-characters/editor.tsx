@@ -1,5 +1,6 @@
 "use client"
 
+import { CustomFieldType } from "@aha.chat/database/types"
 import {
   type CountCharactersStepSchema,
   countCharactersStepSchema,
@@ -39,6 +40,7 @@ const CountCharactersStepEditor = ({ parentName }: { parentName: string }) => {
 
 function CountCharactersDialog({ parentName }: { parentName: string }) {
   const t = useTranslations()
+
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
@@ -51,8 +53,8 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
   })
 
   const onSubmit = (data: CountCharactersStepSchema) => {
-    setValue(`${parentName}.inputCustomFieldId`, data.inputCustomFieldId)
-    setValue(`${parentName}.outputCustomFieldId`, data.outputCustomFieldId)
+    setValue(`${parentName}.inputCfId`, data.inputCfId)
+    setValue(`${parentName}.outputCfId`, data.outputCfId)
     setOpen(false)
   }
 
@@ -60,12 +62,12 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="flex justify-center">
-          <Button size="sm" variant="outline">
+          <Button size="sm" type="button" variant="outline">
             {t("actions.update")}
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>{t("flows.actions.countCharacters")}</DialogTitle>
           <DialogDescription />
@@ -77,27 +79,31 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
-              label={t("fields.customField.label")}
-              name="inputCustomFieldId"
+              label={t("fields.inputCfId.label")}
+              name="inputCfId"
               required
             />
 
             <CustomFieldSelect
               allowCreate={true}
-              label={t("fields.customField.label")}
-              name="outputCustomFieldId"
+              customFieldTypes={[CustomFieldType.number]}
+              label={t("fields.outputCfId.label")}
+              name="outputCfId"
               required
             />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">{t("actions.cancel")}</Button>
+                <Button size="sm" variant="ghost">
+                  {t("actions.cancel")}
+                </Button>
               </DialogClose>
 
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                size="sm"
                 type="submit"
               >
                 {t("actions.save")}

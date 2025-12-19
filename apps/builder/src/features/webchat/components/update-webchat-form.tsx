@@ -3,7 +3,6 @@
 import {
   ConversationStarterType,
   type IntegrationWebchatModel,
-  PersistentMenuType,
 } from "@aha.chat/database/types"
 import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
@@ -28,35 +27,31 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useEffect, useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import type { getFlows } from "@/features/flows/queries"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { updateWebchatAction } from "../actions/update-webchat.action"
 import {
   type ConversationStarterSchema,
   type PersistentMenuSchema,
   updateWebchatRequest,
 } from "../schemas/webchat.schema"
+import AuthorizedDomainField from "./authorized-domain-field"
+import PersistentMenuField from "./persistent-menu-field"
 
 type UpdateWebchatFormProps = {
   integrationWebchat: IntegrationWebchatModel | null
-  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export function UpdateWebchatForm({
   integrationWebchat,
-  promises,
 }: UpdateWebchatFormProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
   const router = useRouter()
 
-  const [{ data: allFlows }] = use(promises)
-  const flowOptions = allFlows.map((flow) => ({
-    label: flow.name,
-    value: flow.id,
-  }))
+  const flowOptions = useFlowSelectOptions()
 
   const conversationStarterTypeOptions: {
     value: ConversationStarterType
@@ -74,23 +69,6 @@ export function UpdateWebchatForm({
       {
         value: ConversationStarterType.message,
         label: t("fields.conversationStarter.type.sendText"),
-      },
-    ],
-    [t],
-  )
-
-  const persistentMenuTypeOptions: {
-    value: PersistentMenuType
-    label: string
-  }[] = useMemo(
-    () => [
-      {
-        value: PersistentMenuType.flow,
-        label: t("fields.persistentMenu.type.sendFlow"),
-      },
-      {
-        value: PersistentMenuType.website,
-        label: t("fields.persistentMenu.type.openWebsite"),
       },
     ],
     [t],
@@ -154,15 +132,6 @@ export function UpdateWebchatForm({
   }, [integrationWebchat, form])
 
   const {
-    fields: authorizedDomains,
-    append: appendAuthorizedDomains,
-    remove: removeAuthorizedDomains,
-  } = useFieldArray({
-    control: form.control,
-    name: "authorizedDomains",
-  })
-
-  const {
     fields: conversationStarters,
     append: appendConversationStarters,
     remove: removeConversationStarters,
@@ -171,20 +140,10 @@ export function UpdateWebchatForm({
     name: "conversationStarters",
   })
 
-  const {
-    fields: persistentMenus,
-    append: appendPersistentMenus,
-    remove: removePersistentMenus,
-  } = useFieldArray({
-    control: form.control,
-    name: "persistentMenus",
-  })
-
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <InputField label="Name" name="name" required />
-
         <ComboboxField
           description={t("fields.welcomeFlowId.description")}
           label={t("fields.welcomeFlowId.label")}
@@ -194,40 +153,7 @@ export function UpdateWebchatForm({
 
         <Separator />
 
-        <div className="space-y-2">
-          <Label htmlFor="authorizedDomains">
-            {t("fields.authorizedDomain.label", { plural: 1 })}
-          </Label>
-          <p className="text-muted-foreground text-sm">
-            {t("fields.authorizedDomain.description")}
-          </p>
-          {authorizedDomains.map((_, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: wip
-            <div className="flex gap-2" key={index}>
-              <InputField name={`authorizedDomains.${index}.value`} />
-              <Button
-                onClick={() => removeAuthorizedDomains(index)}
-                variant="outline"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            onClick={() =>
-              appendAuthorizedDomains({
-                value: "",
-              })
-            }
-            size="sm"
-            variant="outline"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.authorizedDomain.label", { plural: 0 }),
-            })}
-          </Button>
-        </div>
+        <AuthorizedDomainField />
 
         <Separator />
 
@@ -309,85 +235,7 @@ export function UpdateWebchatForm({
           </Button>
         </div>
 
-        <Separator />
-
-        <div className="space-y-2">
-          <Label htmlFor="persistentMenus">
-            {t("fields.persistentMenu.label", { plural: 1 })}
-          </Label>
-          <p className="text-muted-foreground text-sm">
-            {t("fields.persistentMenu.description")}
-          </p>
-          <Accordion className="w-full" collapsible type="single">
-            {persistentMenus.map((_, index) => (
-              <AccordionItem
-                className="flex flex-col gap-2"
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                key={index}
-                value={`persistentMenu-${index}`}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <AccordionTrigger>
-                    {t("fields.persistentMenu.label", { plural: 0 })} #
-                    {index + 1}
-                  </AccordionTrigger>
-                  <Button
-                    onClick={() => removePersistentMenus(index)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <TrashIcon className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <AccordionContent className="flex flex-col gap-4">
-                  <InputField
-                    label={t("fields.buttonLabel.label")}
-                    name={`persistentMenus.${index}.label`}
-                  />
-
-                  <RadioGroupField
-                    name={`persistentMenus.${index}.type`}
-                    options={persistentMenuTypeOptions}
-                  />
-
-                  {form.watch(`persistentMenus.${index}.type`) ===
-                    PersistentMenuType.flow && (
-                    <SelectField
-                      label={t("fields.flowId.label")}
-                      name={`persistentMenus.${index}.flowId`}
-                      options={flowOptions}
-                    />
-                  )}
-
-                  {form.watch(`persistentMenus.${index}.type`) ===
-                    PersistentMenuType.website && (
-                    <InputField
-                      label={t("fields.url.label")}
-                      name={`persistentMenus.${index}.url`}
-                    />
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-
-          <Button
-            onClick={() =>
-              appendPersistentMenus({
-                label: "",
-                type: PersistentMenuType.flow,
-                flowId: "",
-              })
-            }
-            size="sm"
-            variant="outline"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.persistentMenu.label", { plural: 0 }),
-            })}
-          </Button>
-        </div>
+        <PersistentMenuField />
 
         <Separator />
 
@@ -396,31 +244,26 @@ export function UpdateWebchatForm({
           name="brandColor"
           required
         />
-
         <SwitchField
           label={t("fields.hideHeader.label")}
           name="hideHeader"
           required
         />
-
         <SwitchField
           label={t("fields.showLogo.label")}
           name="showLogo"
           required
         />
-
         <SwitchField
           label={t("fields.hideMessageInput.label")}
           name="hideMessageInput"
           required
         />
-
         <TextareaField
           label={t("fields.customCss.label")}
           name="customCss"
           placeholder="body { background-color: #000; }"
         />
-
         <DialogFooter>
           <Button
             onClick={() => router.push(`/chatbots/${chatbotId}/webchats`)}

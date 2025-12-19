@@ -34,7 +34,7 @@ export function FrameHeader({ flow }: { flow: FlowResource }) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <FlowEditToolbar chatbotId={flow.chatbotId} flowId={flow.id} />
+      <FlowEditToolbar chatbotId={flow.chatbotId} flow={flow} />
     </header>
   )
 }

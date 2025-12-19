@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { countContacts } from "@/features/contacts/queries/list-contacts.queries"
-import { listContactsRequest } from "@/features/contacts/schemas/get-contacts-schema"
+import { listContactsRequest } from "@/features/contacts/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 

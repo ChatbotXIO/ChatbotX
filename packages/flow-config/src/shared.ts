@@ -1,5 +1,5 @@
+import { addContactNotesStepSchema } from "./steps/add-contact-notes"
 import { addContactTagStepSchema } from "./steps/add-contact-tag"
-import { addNotesStepSchema } from "./steps/add-notes"
 import { archiveConversationStepSchema } from "./steps/archive-conversation"
 import { assignConversationStepSchema } from "./steps/assign-conversation"
 import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversation"
@@ -18,6 +18,11 @@ import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
+import { spreadsheetClearRowSchema } from "./steps/spreadsheet-clear-row"
+import { spreadsheetGetRowSchema } from "./steps/spreadsheet-get-row"
+import { spreadsheetGetRandomRowSchema } from "./steps/spreadsheet-random-row"
+import { spreadsheetSendDataSchema } from "./steps/spreadsheet-send-data"
+import { spreadsheetUpdateRowSchema } from "./steps/spreadsheet-update-row"
 import { startAnotherNodeStepSchema } from "./steps/start-another-node"
 import { startExternalFlowStepSchema } from "./steps/start-external-flow"
 import { startExternalNodeStepSchema } from "./steps/start-external-node"
@@ -40,7 +45,7 @@ const inboxSteps = [
 ]
 
 const contactSteps = [
-  addNotesStepSchema,
+  addContactNotesStepSchema,
   blockContactStepSchema,
   addContactTagStepSchema,
   removeContactTagStepSchema,
@@ -73,6 +78,14 @@ const flowSteps = [
   startExternalNodeStepSchema,
 ]
 
+const googleSheetStep = [
+  spreadsheetGetRowSchema,
+  spreadsheetClearRowSchema,
+  spreadsheetGetRandomRowSchema,
+  spreadsheetSendDataSchema,
+  spreadsheetUpdateRowSchema,
+]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -80,4 +93,5 @@ export const actionSteps = [
   ...toolSteps,
   ...emailSteps,
   ...flowSteps,
+  ...googleSheetStep,
 ]

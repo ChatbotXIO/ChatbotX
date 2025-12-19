@@ -7,10 +7,12 @@ import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
+import Link from "next/link"
 import { use, useMemo } from "react"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
-import type { ContactResource } from "./schemas"
+import type { ContactResource } from "./schemas/resource"
+import { getFullName } from "./utils"
 
 type ContactsTableProps = {
   chatbotId: string
@@ -53,7 +55,15 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Name" />
         ),
-        cell: ({ row }) => <div>{row.original.fullName}</div>,
+        cell: ({ row }) => (
+          <Link
+            className="text-blue-500"
+            href={`/chatbots/${chatbotId}/inbox?conversationId=${row.original.conversation?.id}`}
+            target="_blank"
+          >
+            {getFullName(row.original)}
+          </Link>
+        ),
         meta: {
           label: "Name",
           placeholder: "Search name...",
@@ -109,7 +119,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd"),
       },
     ],
-    [],
+    [chatbotId],
   )
 
   const { table } = useDataTable({

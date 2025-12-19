@@ -1,7 +1,8 @@
 import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
 import { getAIAgents } from "@/features/ai-agents/actions/list.action"
 import { AIAgentsTable } from "@/features/ai-agents/ai-agent-table"
-import { listAIAgentRequest } from "@/features/ai-agents/schemas/list.schema"
+import { listAIAgentRequest } from "@/features/ai-agents/schemas/query"
 import { getAIFiles } from "@/features/ai-files/queries"
 import { getAIFunctions } from "@/features/ai-functions/queries"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
@@ -40,10 +41,13 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
   return (
     <div className="space-y-6">
       <AIHubBreadcrumb />
-      <AIAgentsTable
-        createPromises={aiCreatePromises}
-        listPromises={aiAgentPromises}
-      />
+
+      <Suspense>
+        <AIAgentsTable
+          createPromises={aiCreatePromises}
+          listPromises={aiAgentPromises}
+        />
+      </Suspense>
     </div>
   )
 }

@@ -7,40 +7,26 @@ import {
   type OrganizationWhereInput,
   organizationSettingsSchema,
 } from "@aha.chat/database/types"
-import { unstable_cache } from "next/cache"
-import { headers } from "next/headers"
-import { calcCacheTags } from "@/lib/cache-helper"
+import { getDomainFromHeader } from "@/lib/domain"
 import { BaseException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 
 export async function findOrganizationByDomain(): Promise<OrganizationModel | null> {
-  const headersList = await headers()
-  const domain = new URL(headersList.get("x-url") ?? "")
+  const domain = await getDomainFromHeader()
 
-  return await unstable_cache(
-    async () =>
-      await prisma.organization.findFirst({
-        where: {
-          domain: domain.hostname,
-        },
-      }),
-    ["organization"],
-    calcCacheTags(`organizations:${domain.hostname}`),
-  )()
+  return await prisma.organization.findFirst({
+    where: {
+      domain,
+    },
+  })
 }
 
 export async function findOrganization(
   where: OrganizationWhereInput,
 ): Promise<OrganizationModel | null> {
-  // return await unstable_cache(
-  //   async () => {
   return await prisma.organization.findFirst({
     where,
   })
-  //   },
-  //   [JSON.stringify(where)],
-  //   calcCacheTags("organizations"),
-  // )()
 }
 
 export async function findOrganizationSettings(
@@ -77,8 +63,6 @@ export async function verifyOrganizationSettings(
   const { data: settings } = organizationSettingsSchema.safeParse(
     organization?.settings,
   )
-  logger.info("Organization settings", { settings })
-
   if (!settings) {
     throw new Error("Organization settings is not valid")
   }

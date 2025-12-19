@@ -13,7 +13,12 @@ import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { formatDate } from "@aha.chat/ui/lib/format"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
+import {
+  EllipsisVerticalIcon,
+  FolderUpIcon,
+  TextIcon,
+  Trash,
+} from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -161,14 +166,20 @@ export function getFlowColumns({
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "rename" })}
             >
-              <TextIcon className="mr-2" />
+              <TextIcon />
               {t("actions.rename")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "move" })}
+            >
+              <FolderUpIcon />
+              {t("actions.move")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "delete" })}
               variant="destructive"
             >
-              <Trash className="mr-2" />
+              <Trash />
               {t("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>

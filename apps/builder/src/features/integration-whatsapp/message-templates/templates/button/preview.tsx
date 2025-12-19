@@ -40,7 +40,7 @@ const ButtonItem = memo(
         </Button>
         {index >= min && (
           <XIcon
-            className="-translate-y-1/2 absolute top-1/2 right-2 h-4 w-4 cursor-pointer hover:text-red-500"
+            className="absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 cursor-pointer hover:text-red-500"
             onClick={() => onRemove(index)}
           />
         )}

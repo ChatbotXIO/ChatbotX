@@ -19,7 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import ky from "ky"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -27,11 +27,10 @@ import { toast } from "sonner"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
 import { createAIMcpServerRequest } from "./schemas"
 
-export function AIMcpServersCreate() {
+export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const t = useTranslations()
-  const router = useRouter()
 
   const [isMcpServerValidating, setIsMcpServerValidating] =
     useState<boolean>(false)
@@ -80,7 +79,7 @@ export function AIMcpServersCreate() {
             setAllTools([])
             setIsMcpServerValidated(false)
             setIsOpen(false)
-            router.refresh()
+            onSuccess?.()
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -133,7 +132,7 @@ export function AIMcpServersCreate() {
           })}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {

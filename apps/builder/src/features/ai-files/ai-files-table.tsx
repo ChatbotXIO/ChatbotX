@@ -24,6 +24,7 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
 import { use, useCallback, useMemo, useState } from "react"
@@ -40,6 +41,7 @@ type AIFilesTableProps = {
 function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   return (
     <>
@@ -75,6 +77,9 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
 
       <DeleteAIFileDialog
         aiFile={aiFile}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={open}
         setOpen={setOpen}
         showTrigger={false}
@@ -86,6 +91,7 @@ function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
 export default function AIFilesTable({ promises }: AIFilesTableProps) {
   const [{ data }] = use(promises)
 
+  const router = useRouter()
   const t = useTranslations()
 
   const getFileIcon = useCallback((fileType: string) => {
@@ -253,7 +259,11 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
             {t("aiFiles.description")}
           </p>
         </div>
-        <AIFilesCreate />
+        <AIFilesCreate
+          onSuccess={() => {
+            router.refresh()
+          }}
+        />
       </div>
 
       <DataTable table={table}>

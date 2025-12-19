@@ -15,33 +15,31 @@ import {
   XIcon,
   ZapIcon,
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use } from "react"
+import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import type { getFlows } from "../flows/queries"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
 import { createAutomatedResponseRequest } from "./schemas/create-automated-responses-schema"
 
 type CreateAutomatedResponseFormProps = {
   chatbotId: string
   folderId: string | null
-  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export function CreateAutomatedResponseForm(
   props: CreateAutomatedResponseFormProps,
 ) {
-  const { chatbotId, folderId, promises } = props
+  const { chatbotId, folderId } = props
+
+  const searchParams = useSearchParams()
+
   const t = useTranslations()
   const router = useRouter()
 
-  const [{ data: flows }] = use(promises)
-  const flowOptions = flows.map((flow) => ({
-    label: flow.name,
-    value: flow.id,
-  }))
+  const flowOptions = useFlowSelectOptions()
 
   const {
     form,
@@ -53,8 +51,14 @@ export function CreateAutomatedResponseForm(
     {
       actionProps: {
         onSuccess: () => {
-          toast.success("Automated Response created successfully")
-          router.push(`/chatbots/${chatbotId}/automated-responses`)
+          toast.success(
+            t("messages.createdSuccess", {
+              feature: t("fields.automatedResponse.label"),
+            }),
+          )
+          router.push(
+            `/chatbots/${chatbotId}/automated-responses?${searchParams.toString()}`,
+          )
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -73,6 +77,13 @@ export function CreateAutomatedResponseForm(
       errorMapProps: {},
     },
   )
+
+  const { setValue } = form
+  useEffect(() => {
+    if (folderId) {
+      setValue("folderId", folderId)
+    }
+  }, [setValue, folderId])
 
   const {
     fields: replies,
@@ -144,10 +155,10 @@ export function CreateAutomatedResponseForm(
         {replies.map((reply, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <div className="flex w-full gap-2" key={index}>
-            <div className="flex w-1/2 items-center gap-2">
+            <div className="flex w-1/2 items-start gap-2">
               {reply.type === ReplyType.Message ? (
                 <>
-                  <MessageSquareMoreIcon />
+                  <MessageSquareMoreIcon className="mt-1.5" />
                   <InputField
                     className="flex-1"
                     name={`replies.${index}.message`}

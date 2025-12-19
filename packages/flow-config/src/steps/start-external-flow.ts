@@ -5,7 +5,7 @@ import { StepType } from "./step-action"
 export const startExternalFlowStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.startExternalFlow),
-  flowId: z.cuid2().nullable(),
+  flowId: z.cuid2(),
 })
 
 export type StartExternalFlowStepSchema = z.infer<
@@ -17,6 +17,6 @@ export const startExternalFlowStepDefaultFn = (
 ): StartExternalFlowStepSchema => ({
   id: createId(),
   stepType: StepType.startExternalFlow,
-  flowId: null,
+  flowId: "",
   ...props,
 })

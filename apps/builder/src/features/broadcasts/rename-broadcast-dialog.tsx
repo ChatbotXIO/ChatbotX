@@ -16,7 +16,6 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
@@ -27,13 +26,14 @@ export function RenameBroadcastDialog({
   broadcast,
   open,
   onOpenChange,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
   broadcast: BroadcastModel | null
+  onSuccess?: () => void
 }) {
   const t = useTranslations()
-  const router = useRouter()
 
   const {
     form,
@@ -57,7 +57,7 @@ export function RenameBroadcastDialog({
           )
           resetFormAndAction()
           onOpenChange(false)
-          router.refresh()
+          onSuccess?.()
         },
         onError: ({ error }) => {
           if (error.serverError) {

@@ -139,12 +139,19 @@
     "copy": "Sao chép",
     "chooseChannel": "Chọn kênh",
     "chooseSubaction": "Chọn hành động phụ",
-    "resend": "Gửi lại"
+    "resend": "Gửi lại",
+    "publish": "Xuất bản",
+    "setAsDefaultAgent": "Đặt làm Agent mặc định",
+    "unsetDefaultAgent": "Bỏ đặt Agent mặc định",
+    "randomRow": "Hàng ngẫu nhiên",
+    "clickToEdit": "Nhấp để chỉnh sửa",
+    "move": "Di chuyển"
   },
   "admins": {
     "title": "Quản trị viên"
   },
   "aiAgent": {
+    "defaultAgent": "Agent mặc định",
     "description": "Quản lý và cấu hình AI Agents để nâng cao khả năng chatbot của bạn với tự động hóa và phản hồi thông minh.",
     "setting": {
       "description": "Mô tả AI Agents",
@@ -421,6 +428,9 @@
     "condition": {
       "label": "Điều kiện"
     },
+    "assignedId": {
+      "label": "Gán cho"
+    },
     "operator": {
       "label": "Toán tử",
       "is": "Là",
@@ -443,6 +453,21 @@
     },
     "chooseTime": {
       "label": "Chọn thời gian"
+    },
+    "fullName": {
+      "label": "Họ và tên"
+    },
+    "continent": {
+      "label": "Lục địa"
+    },
+    "subscribedToBroadcast": {
+      "label": "Đã đăng ký phát sóng"
+    },
+    "createdAtMinutesAgo": {
+      "label": "Tạo lúc (phút trước)"
+    },
+    "source": {
+      "label": "Nguồn"
     },
     "accessToken": {
       "label": "Token truy cập"
@@ -588,7 +613,12 @@
       "label": "CSS tùy chỉnh"
     },
     "customField": {
-      "label": "Trường tùy chỉnh"
+      "label": "Trường tùy chỉnh",
+      "set_value": "Thiết lập giá trị",
+      "append": "Thêm vào cuối",
+      "prepend": "Thêm vào đầu",
+      "increase": "Tăng thêm",
+      "decrease": "Giảm đi"
     },
     "dataCollect": {
       "label": "Thu thập dữ liệu",
@@ -971,10 +1001,12 @@
       "label": "Luồng WhatsApp"
     },
     "shortText": {
-      "label": "Văn bản ngắn"
+      "label": "Văn bản ngắn",
+      "placeholder": "Nhập văn bản"
     },
     "number": {
-      "label": "Số"
+      "label": "Số",
+      "placeholder": "Nhập số"
     },
     "date": {
       "label": "Ngày"
@@ -983,12 +1015,16 @@
       "label": "Ngày giờ"
     },
     "boolean": {
-      "label": "Boolean"
+      "label": "Boolean",
+      "placeholder": "Chọn đúng hoặc sai",
+      "true": "Đúng",
+      "false": "Sai"
     },
     "longText": {
       "label": "Văn bản dài"
     },
     "replyFormat": {
+      "label": "Định dạng trả lời",
       "number": "Số",
       "text": "Văn bản",
       "email": "Email",
@@ -1034,6 +1070,34 @@
       "label": "Lịch trình",
       "now": "Ngay bây giờ",
       "scheduled": "Lên lịch cho sau"
+    },
+    "inputCfId": {
+      "label": "Trường tùy chỉnh đầu vào"
+    },
+    "outputCfId": {
+      "label": "Lưu kết quả vào trường tùy chỉnh"
+    },
+    "jsonPath": {
+      "label": "Đường dẫn JSON",
+      "placeholder": "Nhập đường dẫn JSON"
+    },
+    "spreadsheets": {
+      "label": "Bảng tính"
+    },
+    "retryMessage": {
+      "label": "Thử lại tin nhắn"
+    },
+    "skipButtonLabel": {
+      "label": "Nhãn nút bỏ qua"
+    },
+    "autoSkipTime": {
+      "label": "Thời gian tự động bỏ qua"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Số lần thất bại tự động bỏ qua"
+    },
+    "autoSkip": {
+      "label": "Tự động bỏ qua"
     }
   },
   "flows": {
@@ -1216,12 +1280,13 @@
     "title": "Tích hợp"
   },
   "messages": {
+    "moveFeature": "Di chuyển {feature}",
     "poweredBy": "Được cung cấp bởi {name}",
     "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm khóa API GIPHY trong cài đặt tổ chức.",
     "actionCompleted": "Hành động hoàn tất thành công",
     "actionFailed": "Hành động thất bại. Vui lòng thử lại.",
-    "archivedSuccessfully": "Đã lưu trữ {feature} thành công",
-    "connectedSuccessfully": "{feature} đã được kết nối thành công",
+    "archivedSuccess": "Đã lưu trữ {feature} thành công",
+    "connectedSuccess": "{feature} đã được kết nối thành công",
     "connectFailed": "Không thể kết nối {feature}",
     "connectSuccess": "Đã kết nối {feature} thành công",
     "success": "Thành công",
@@ -1233,8 +1298,8 @@
     "deleteComingSoon": "Chức năng xóa sẽ sớm có",
     "deletedSuccess": "{feature} đã được xóa thành công",
     "deleteFileComingSoon": "Chức năng xóa tệp sẽ sớm có",
-    "disabledSuccessfully": "Đã tắt {feature} thành công",
-    "disconnectedSuccessfully": "Đã ngắt kết nối {feature} thành công",
+    "disabledSuccess": "Đã tắt {feature} thành công",
+    "disconnectedSuccess": "Đã ngắt kết nối {feature} thành công",
     "downloadComingSoon": "Chức năng tải xuống sẽ sớm có",
     "enabledSuccessfully": "Đã bật {feature} thành công",
     "failedToCopy": "Sao chép thất bại",
@@ -1249,7 +1314,7 @@
     "processingRequest": "Đang xử lý yêu cầu của bạn...",
     "savedSuccessfully": "Đã lưu thành công",
     "signedInSuccessfully": "Đăng nhập thành công",
-    "unarchivedSuccessfully": "Đã bỏ lưu trữ {feature} thành công",
+    "unarchivedSuccess": "Đã bỏ lưu trữ {feature} thành công",
     "unknownError": "Lỗi không xác định",
     "updatedSuccess": "{feature} đã được cập nhật thành công",
     "updateFileComingSoon": "Chức năng cập nhật tệp sẽ sớm có",
@@ -1267,7 +1332,13 @@
     "noAIIntegrationFound": "Không tìm thấy tích hợp AI. Vui lòng kết nối tích hợp AI để sử dụng AI agents.",
     "resendFeature": "Gửi lại {feature}",
     "resendFeatureDescription": "Gửi lại {feature} cho các liên hệ chưa nhận được.",
-    "resendSuccess": "Gửi lại thành công"
+    "resendSuccess": "Gửi lại thành công",
+    "duplicateTitle": "Nhân bản {feature}",
+    "duplicateDescription": "Bạn có chắc chắn muốn nhân bản {feature}?\nHành động này không thể hoàn tác.",
+    "duplicateSuccess": "Đã nhân bản {feature} thành công",
+    "changeDefault": "Thay đổi mặc định",
+    "changeDefaultDescription": "Bạn có chắc chắn muốn thay đổi AI agent mặc định?",
+    "unsetDefaultDescription": "Bạn có chắc chắn muốn bỏ đặt AI agent mặc định?"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1461,5 +1532,10 @@
   },
   "inboxTeams": {
     "title": "Nhóm hộp thư"
+  },
+  "errorLog": {
+    "heading": {
+      "title": "Nhật ký lỗi"
+    }
   }
 }

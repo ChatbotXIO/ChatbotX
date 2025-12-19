@@ -40,15 +40,17 @@ export function FacebookPages({
         },
       },
       actionProps: {
-        onSuccess: () => {
-          router.refresh()
+        onSuccess: ({ data }) => {
+          if (chatbotId) {
+            router.push(`/chatbots/${data.chatbotId}/dashboard`)
+          } else {
+            router.push("/")
+          }
         },
-        onError: () => {
-          toast.error(
-            t("messages.createdFailed", {
-              feature: t("messenger.title"),
-            }),
-          )
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       errorMapProps: {},

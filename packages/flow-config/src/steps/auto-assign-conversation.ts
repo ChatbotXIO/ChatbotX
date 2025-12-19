@@ -12,7 +12,7 @@ export const AutoAssignConversationRule = {
 export const autoAssignConversationStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.autoAssignConversation),
-  assignedIds: z.array(z.cuid2()),
+  assignedIds: z.array(z.string()),
   rule: z.enum(AutoAssignConversationRule),
 })
 

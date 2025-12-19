@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
-import { FlowSelect } from "@/features/flows/flow-select"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateChatbotAdvancedAction } from "./actions/update-chatbot-action"
 import {
   allCountryOptions,
@@ -28,6 +28,7 @@ export function UpdateChatbotAdvancedForm({
   chatbot: ChatbotResource
 }) {
   const t = useTranslations()
+  const flowOptions = useFlowSelectOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateChatbotAdvancedAction.bind(null, chatbot.id),
@@ -69,7 +70,7 @@ export function UpdateChatbotAdvancedForm({
           description={t("fields.defaultReply.description")}
           label={t("fields.defaultReply.label")}
         >
-          <FlowSelect name="defaultReply" />
+          <ComboboxField name="defaultReply" options={flowOptions} />
         </SettingRow>
 
         <SettingRow

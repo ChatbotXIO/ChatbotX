@@ -12,15 +12,15 @@ import {
   AlertDialogTrigger,
 } from "@aha.chat/ui/components/ui/alert-dialog"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { Loader2Icon } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
+import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
+import ChangeAutoReply from "./components/change-auto-reply"
 import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
 
@@ -41,6 +41,11 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
       onSuccess: () => {
         router.refresh()
       },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
     })
 
   return (
@@ -50,48 +55,42 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
         label={t("openAI.connect.title")}
       >
         {integrationOpenAI ? (
-          <div className="flex flex-col gap-2">
-            <Button size="sm" variant="secondary">
-              <Link href="../google-sheets">{t("actions.manage")}</Link>
-            </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="sm" variant="destructive">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="destructive">
+                {t("actions.disconnect")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {t("dialog.disconnect.title", {
+                    feature: t("fields.openai.label"),
+                  })}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("dialog.disconnect.description", {
+                    feature: t("fields.openai.label"),
+                  })}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={isPendingDisconnect}
+                  onClick={async (e) => {
+                    e.preventDefault()
+                    await onDisconnect()
+                  }}
+                >
+                  {isPendingDisconnect && (
+                    <Loader2Icon className="animate-spin" />
+                  )}
                   {t("actions.disconnect")}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("dialog.disconnect.title", {
-                      feature: t("fields.openai.label"),
-                    })}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("dialog.disconnect.description", {
-                      feature: t("fields.openai.label"),
-                    })}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={isPendingDisconnect}
-                    onClick={async (e) => {
-                      e.preventDefault()
-                      await onDisconnect()
-                    }}
-                  >
-                    {isPendingDisconnect && (
-                      <Loader2Icon className="animate-spin" />
-                    )}
-                    {t("actions.disconnect")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : (
           <OpenAIConnectDialog chatbotId={chatbotId} />
         )}
@@ -103,25 +102,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
             description={t("automatedResponse.setting.description")}
             label={t("automatedResponse.setting.label")}
           >
-            <Switch checked={integrationOpenAI.autoReply} disabled={true} />
-          </SettingRow>
-
-          <SettingRow
-            description={t("aiAgent.setting.description")}
-            label={t("aiAgent.setting.label")}
-          >
-            <Button asChild size="sm" variant="secondary">
-              <Link href="../ai-agents">{t("actions.manage")}</Link>
-            </Button>
-          </SettingRow>
-
-          <SettingRow
-            description={t("aiTrigger.setting.description")}
-            label={t("aiTrigger.setting.label")}
-          >
-            <Button size="sm" variant="secondary">
-              <Link href="../ai-triggers">{t("actions.manage")}</Link>
-            </Button>
+            <ChangeAutoReply integrationOpenAI={integrationOpenAI} />
           </SettingRow>
         </div>
       )}

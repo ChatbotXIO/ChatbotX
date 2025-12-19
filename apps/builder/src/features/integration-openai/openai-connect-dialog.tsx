@@ -27,7 +27,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { connectOpenAIAction } from "./actions/connect.action"
-import { connectOpenAISchema } from "./schemas"
+import { connectOpenAISchema } from "./schemas/request"
 
 export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
   const [open, setOpen] = useState(false)

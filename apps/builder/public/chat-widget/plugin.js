@@ -4,29 +4,30 @@
     return
   }
 
-  const loadStylesheet = (href) =>
-    new Promise((resolve, reject) => {
-      const link = document.createElement("link")
-      link.rel = "stylesheet"
-      link.href = href
-      link.onload = resolve
-      link.onerror = reject
-      document.head.appendChild(link)
-    })
-
-  const iconUrl = new URL("/brand/logo.svg", window.location.href).toString()
-  const cssUrl = new URL(
-    "/chat-widget/plugin.css",
-    window.location.href,
-  ).toString()
-
-  loadStylesheet(cssUrl)
-
   const csmChatWidget = {
+    webchatUrl: null,
     floatButton: null,
     floatHtml: null,
     init(config) {
-      const url = new URL("/webchat", window.location.href ?? config.url)
+      csmChatWidget.webchatUrl = getCurrentScriptURL()
+      if (!csmChatWidget.webchatUrl) {
+        return
+      }
+
+      // Load stylesheet
+      const cssUrl = new URL(
+        "/chat-widget/plugin.css",
+        csmChatWidget.webchatUrl,
+      ).toString()
+      loadStylesheet(cssUrl)
+
+      // Load icon
+      const iconUrl = new URL(
+        "/brand/logo.svg",
+        csmChatWidget.webchatUrl,
+      ).toString()
+
+      const url = new URL("/webchat", csmChatWidget.webchatUrl)
 
       if (config.chatbotId) {
         url.searchParams.set("chatbotId", config.chatbotId)
@@ -55,6 +56,52 @@
       appendHtml(document.body, csmChatWidget.floatButton)
       appendHtml(document.body, csmChatWidget.floatHtml)
     },
+  }
+
+  function getCurrentScriptURL() {
+    // Method 1: currentScript (best for synchronous scripts)
+    if (document.currentScript) {
+      return document.currentScript.src
+    }
+
+    if (typeof import.meta !== "undefined" && import.meta.url) {
+      // Method 2: import.meta.url (for ES modules)
+      return import.meta.url
+    }
+
+    // Method 3: From scripts collection (fallback)
+    const scripts = document.scripts
+    if (scripts.length > 0) {
+      return scripts.at(-1).src
+    }
+
+    // Method 4: Stack trace (last resort)
+    try {
+      throw new Error("Fake error")
+    } catch (e) {
+      const stack = e.stack || e.stacktrace
+      const lines = stack.split("\n")
+      for (const line of lines) {
+        // biome-ignore lint/performance/useTopLevelRegex: safe ifnore
+        const match = line.match(/(http[s]?:\/\/[^)]+)/)
+        if (match && !match[0].includes("getCurrentScriptURL")) {
+          return match[0]
+        }
+      }
+    }
+
+    return null
+  }
+
+  function loadStylesheet(href) {
+    new Promise((resolve, reject) => {
+      const link = document.createElement("link")
+      link.rel = "stylesheet"
+      link.href = href
+      link.onload = resolve
+      link.onerror = reject
+      document.head.appendChild(link)
+    })
   }
 
   window.csmChatWidget = csmChatWidget

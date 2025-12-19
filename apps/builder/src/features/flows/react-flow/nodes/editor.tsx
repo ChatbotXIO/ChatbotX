@@ -26,48 +26,98 @@ import { funnel } from "remeda"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ErrorAlert } from "../steps/error-alert"
+import { useStepStore } from "../stores/step-store-provider"
 import { allNodesConfig } from "./node-config"
 
-export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
-  const t = useTranslations()
-  const nodeConfig = activeNode.type
-    ? allNodesConfig[activeNode.type as NodeType]?.(t)
-    : null
-  const validator = nodeConfig?.validator
+type NodeEditorProps = {
+  nodeId: string
+  nodeType: NodeType
+  nodeDetails: FlowNode["data"]["details"]
+}
 
-  const { updateNodeData } = useReactFlow()
+export const NodeEditor = memo((props: NodeEditorProps) => {
+  const { nodeId, nodeType, nodeDetails } = props
+
+  const t = useTranslations()
+  const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
+  const validator = nodeConfig?.validator.shape.data.shape.details
+
+  const { getNodes, updateNodeData } = useReactFlow()
+  const { updatedButtonData, onChangeButtonData } = useStepStore(
+    (state) => state,
+  )
+
+  const targetNode = useMemo(() => {
+    const allNodes = getNodes()
+    return allNodes.find((node) => node.id === nodeId)
+  }, [nodeId, getNodes])
 
   // biome-ignore lint/suspicious/noExplicitAny: wip - complex node data types
   const form = useForm<any>({
     // biome-ignore lint/suspicious/noExplicitAny: wip - validator can be undefined
     resolver: validator ? zodResolver(validator as any) : undefined,
     defaultValues: {
-      ...activeNode.data,
+      ...nodeDetails,
     },
-    mode: "onBlur",
+    mode: "onChange",
   })
-  const { control, getValues } = form
+  const { control, getValues, setValue } = form
+  const { fields, append, move, remove, insert } = useFieldArray({
+    control,
+    name: "steps",
+  })
 
   const allValues = useWatch({ control })
   const debounceUpdateNodeData = useMemo(
     () =>
       funnel(
         () => {
-          updateNodeData(activeNode.id, allValues)
+          if (nodeId && targetNode) {
+            updateNodeData(nodeId, {
+              ...targetNode.data,
+              details: allValues,
+            })
+          }
         },
         { minQuietPeriodMs: 100 },
       ),
-    [allValues, activeNode.id, updateNodeData],
+    [allValues, nodeId, updateNodeData, targetNode],
   )
 
   useEffect(() => {
     debounceUpdateNodeData.call()
   }, [debounceUpdateNodeData])
 
-  const { fields, append, move, remove, insert } = useFieldArray({
-    control,
-    name: "steps",
-  })
+  useEffect(() => {
+    if (updatedButtonData) {
+      const targetButtonPath = updatedButtonData.path.replace(
+        "data.details.",
+        "",
+      )
+      if (updatedButtonData.data) {
+        setValue(targetButtonPath, updatedButtonData.data)
+      } else {
+        const parts = targetButtonPath.split(".")
+        const position = parts.pop()
+        const buttonGroupPath = parts.join(".")
+
+        if (position) {
+          const buttons = getValues(buttonGroupPath)
+          buttons.splice(Number.parseInt(position, 10), 1)
+          setValue(buttonGroupPath, Object.values(buttons))
+        }
+      }
+
+      // reset updatedButtonData
+      onChangeButtonData(null)
+      //   setOpenNodeDetailSheet(false)
+    }
+  }, [
+    updatedButtonData,
+    setValue,
+    getValues, // reset updatedButtonData
+    onChangeButtonData,
+  ])
 
   const onAddStep = (name: StepType) => {
     const newStep = allSteps[name]?.defaultFn()
@@ -99,7 +149,7 @@ export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
 
   const onCopyStep = (index: number) => {
     // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
-    const values = getValues(`steps.${index}` as any)
+    const values = getValues(`details.steps.${index}` as any)
     if (values) {
       insert(index + 1, replaceIds(values))
     }
@@ -111,12 +161,15 @@ export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
 
   return (
     <Form {...form}>
-      {"beforeStep" in activeNode.data && activeNode.data.beforeStep && (
+      {"beforeStep" in nodeDetails && nodeDetails.beforeStep && (
         <DynamicStepEditor
           parentName="beforeStep"
           type={
-            (activeNode.data as { beforeStep: { stepType: StepType } })
-              .beforeStep.stepType
+            (
+              nodeDetails as {
+                beforeStep: { stepType: StepType }
+              }
+            ).beforeStep.stepType
           }
         />
       )}
@@ -160,7 +213,7 @@ export const NodeEditor = memo(({ activeNode }: { activeNode: FlowNode }) => {
                     )}
                     <div
                       className={cn(
-                        "flex-1 break-all",
+                        "break-word flex-1",
                         // biome-ignore lint/suspicious/noExplicitAny: wip
                         (field as any).stepType === StepType.sendCarousel
                           ? "overflow-hidden"

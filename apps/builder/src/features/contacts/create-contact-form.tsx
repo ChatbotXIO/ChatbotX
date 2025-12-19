@@ -11,7 +11,7 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { createContactAction } from "./actions/create-contact.action"
-import { createContactSchema } from "./schemas/create-contact-schema"
+import { createContactRequest } from "./schemas/action"
 
 export function CreateContactForm({
   chatbotId,
@@ -27,7 +27,7 @@ export function CreateContactForm({
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
       createContactAction.bind(null, chatbotId),
-      zodResolver(createContactSchema),
+      zodResolver(createContactRequest),
       {
         actionProps: {
           onSuccess: () => {
@@ -81,6 +81,7 @@ export function CreateContactForm({
           label={t("fields.phoneNumber.label")}
           name="phoneNumber"
           placeholder="090xxxxxxx"
+          required
         />
 
         <InputField

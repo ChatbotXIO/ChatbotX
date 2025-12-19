@@ -34,25 +34,30 @@ export const createFlowAction = chatbotActionClient
       }
 
       const defaultNode = sendMessageNodeDefaultFn({
-        name: "Send Message #1",
+        dataProps: {
+          name: "Send Message #1",
+          isStartNode: true,
+        },
       })
 
-      await prisma.flow.create({
-        data: {
-          ...parsedInput,
-          chatbotId,
-          flowVersions: {
-            create: [
-              {
-                chatbotId,
-                nodes: [defaultNode as Prisma.InputJsonObject],
-                edges: [],
-                isDraft: true,
-                startNodeId: defaultNode.id,
-              },
-            ],
+      await prisma.$transaction(async (tx) => {
+        await tx.flow.create({
+          data: {
+            ...parsedInput,
+            chatbotId,
+            flowVersions: {
+              create: [
+                {
+                  chatbotId,
+                  nodes: [defaultNode as Prisma.InputJsonObject],
+                  edges: [],
+                  isDraft: true,
+                  startNodeId: defaultNode.id,
+                },
+              ],
+            },
           },
-        },
+        })
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#flows`)

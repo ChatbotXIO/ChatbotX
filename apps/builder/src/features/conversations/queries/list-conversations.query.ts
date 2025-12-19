@@ -2,13 +2,15 @@
 
 import { type Prisma, prisma } from "@aha.chat/database"
 import type { ConversationModel, MessageModel } from "@aha.chat/database/types"
-import { unstable_cache } from "next/cache"
 import type {
   FindConversationSchema,
   ListConversationsRequest,
-} from "@/features/conversations/schemas/list-conversations.request"
+} from "@/features/conversations/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ConversationCollection, ConversationResource } from "../schemas"
+import type {
+  ConversationCollection,
+  ConversationResource,
+} from "../schemas/resource"
 
 export const listConversations = async (
   chatbotId: string,
@@ -16,8 +18,6 @@ export const listConversations = async (
 ): Promise<ConversationCollection> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
-  // return await unstable_cache(
-  //   async () => {
   const perPage = (input.perPage || 10) + 1
   const where: Prisma.ConversationWhereInput = {
     chatbotId,
@@ -28,6 +28,12 @@ export const listConversations = async (
       contact: {
         include: {
           contactCustomFields: true,
+          contactNotes: {
+            include: {
+              createdBy: true,
+            },
+          },
+          tags: true,
         },
       },
       inbox: true,
@@ -90,13 +96,6 @@ export const listConversations = async (
   }
 
   return { data: conversations, nextCursor, prevCursor }
-  //   },
-  //   [JSON.stringify(input)],
-  //   {
-  //     revalidate: 3600,
-  //     tags: [`u${userId}#c${input.chatbotId}#conversations`],
-  //   },
-  // )()
 }
 
 export const findConversation = async (
@@ -106,25 +105,13 @@ export const findConversation = async (
 }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  return await unstable_cache(
-    async () => {
-      const conversation = await prisma.conversation.findFirstOrThrow({
-        include: {
-          contact: true,
-          inbox: true,
-        },
-        where: input,
-      })
+  const conversation = await prisma.conversation.findFirstOrThrow({
+    include: {
+      contact: true,
+      inbox: true,
+    },
+    where: input,
+  })
 
-      return { data: conversation as ConversationResource }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 1,
-      tags: [
-        `chatbots:${input.chatbotId}#conversations`,
-        `chatbots:${input.chatbotId}#conversations:${input.id}`,
-      ],
-    },
-  )()
+  return { data: conversation as ConversationResource }
 }

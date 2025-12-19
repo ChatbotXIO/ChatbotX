@@ -1,42 +1,33 @@
 import { prisma } from "@aha.chat/database"
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
-import { unstable_cache } from "next/cache"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
-} from "../schemas/list-folders-schema"
-import { FolderException } from "../schemas/types"
+} from "../schemas/query"
+import { FolderException } from "../schemas/resource"
 
 export const getFolders = async (
   input: ListFoldersSearchParams,
 ): Promise<{ data: FolderModel[] }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const { folderId, ...others } = input
+  const { folderId, ...rest } = input
 
-  return await unstable_cache(
-    async () => {
-      const data = await prisma.folder.findMany({
-        where: {
-          ...others,
-          parentId: !folderId || input.folderId === "" ? null : input.folderId,
-        },
-        orderBy: [
-          {
-            createdAt: "asc",
-          },
-        ],
-      })
+  const data = await prisma.folder.findMany({
+    where: {
+      ...rest,
+      folderType: rest.folderType as FolderType,
+      parentId: !folderId || input.folderId === "" ? null : input.folderId,
+    },
+    orderBy: [
+      {
+        createdAt: "asc",
+      },
+    ],
+  })
 
-      return { data }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [`chatbots:${input.chatbotId}#folders#${input.folderType}`],
-    },
-  )()
+  return { data }
 }
 
 export const getCurrentFolder = async (
@@ -51,46 +42,32 @@ export const getCurrentFolder = async (
     return { folder: null, parents: [] }
   }
 
-  return await unstable_cache(
-    async () => {
-      let parents: FolderModel[] = []
-      if (folder.paths.length > 0) {
-        const tempParents = await prisma.folder.findMany({
-          where: {
-            id: { in: folder.paths },
-          },
-        })
+  let parents: FolderModel[] = []
+  if (folder.paths.length > 0) {
+    const tempParents = await prisma.folder.findMany({
+      where: {
+        id: { in: folder.paths },
+      },
+    })
 
-        // Sort by path's order
-        const orderedPaths = folder.paths.reduce(
-          (result, value) => {
-            result[value] = null
-            return result
-          },
-          {} as Record<string, FolderModel | null>,
-        )
+    // Sort by path's order
+    const orderedPaths = folder.paths.reduce(
+      (result, value) => {
+        result[value] = null
+        return result
+      },
+      {} as Record<string, FolderModel | null>,
+    )
 
-        for (const temp of tempParents) {
-          orderedPaths[temp.id] = temp
-        }
+    for (const temp of tempParents) {
+      orderedPaths[temp.id] = temp
+    }
 
-        // Remove null value
-        parents = Object.values(orderedPaths).filter(
-          (v) => v?.id,
-        ) as FolderModel[]
-      }
+    // Remove null value
+    parents = Object.values(orderedPaths).filter((v) => v?.id) as FolderModel[]
+  }
 
-      return { folder, parents }
-    },
-    [JSON.stringify(input)],
-    {
-      revalidate: 3600,
-      tags: [
-        `chatbots:${input.chatbotId}#folders`,
-        `chatbots:${input.chatbotId}#folders:${input.id}`,
-      ],
-    },
-  )()
+  return { folder, parents }
 }
 
 export const ensureFolderIdExists = async (

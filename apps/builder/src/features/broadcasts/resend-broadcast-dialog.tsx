@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Loader2Icon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -28,7 +27,6 @@ export function ResendBroadcastDialog({
   broadcast: BroadcastModel | null
 }) {
   const t = useTranslations()
-  const router = useRouter()
 
   const { execute, isPending } = useAction(
     resendBroadcastAction.bind(
@@ -40,7 +38,6 @@ export function ResendBroadcastDialog({
       onSuccess: () => {
         toast.success(t("messages.resendSuccess"))
         onOpenChange(false)
-        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {

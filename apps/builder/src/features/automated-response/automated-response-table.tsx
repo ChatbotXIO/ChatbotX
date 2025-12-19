@@ -1,6 +1,6 @@
 "use client"
 
-import { ReplyType } from "@aha.chat/database/types"
+import { FolderType, ReplyType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -17,13 +17,20 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { MoreHorizontalIcon } from "lucide-react"
+import {
+  FolderUpIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import React, { useMemo } from "react"
+import React, { use, useMemo } from "react"
 import { toast } from "sonner"
-import type { getFlows } from "../flows/queries"
+import { useFlowStore } from "../flows/provider/flow-store-context"
+import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { getAutomatedResponses } from "./queries"
@@ -33,17 +40,18 @@ import type { AutomatedResponseResource } from "./schemas/types"
 type AutomatedResponseTableProps = {
   chatbotId: string
   promises: Promise<[Awaited<ReturnType<typeof getAutomatedResponses>>]>
-  flowPromises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
 }
 
 export function AutomatedResponsesTable({
   chatbotId,
   promises,
-  flowPromises,
 }: AutomatedResponseTableProps) {
   const t = useTranslations()
-  const [{ data, pageCount }] = React.use(promises)
-  const [{ data: allFlows }] = React.use(flowPromises)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const [{ data, pageCount }] = use(promises)
+  const { flows: allFlows } = useFlowStore((state) => state)
 
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AutomatedResponseResource> | null>(null)
@@ -88,7 +96,7 @@ export function AutomatedResponsesTable({
           const { id, userMessages } = row.original
           return (
             <Link
-              href={`/chatbots/${chatbotId}/automated-responses/${id}/edit`}
+              href={`/chatbots/${chatbotId}/automated-responses/${id}/edit?${searchParams.toString()}`}
             >
               {userMessages.join(",")}
             </Link>
@@ -115,7 +123,9 @@ export function AutomatedResponsesTable({
               displayData.push(`Message: ${reply.message}`)
             } else {
               const flow = allFlows.find((f) => f.id === reply.flowId)
-              displayData.push(`Flow: ${flow?.name}`)
+              if (flow) {
+                displayData.push(`Flow: ${flow.name}`)
+              }
             }
           }
 
@@ -173,17 +183,26 @@ export function AutomatedResponsesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/chatbots/${chatbotId}/automated-responses/${row.original.id}/edit`}
+                >
+                  <PencilIcon />
+                  {t("actions.update")}
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "update" })}
-                variant="destructive"
+                onSelect={() => setRowAction({ row, variant: "move" })}
               >
-                {t("actions.update")}
+                <FolderUpIcon />
+                {t("actions.move")}
               </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
                 variant="destructive"
               >
+                <Trash2Icon />
                 {t("actions.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -193,7 +212,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [chatbotId, t, allFlows],
+    [chatbotId, t, allFlows, searchParams.toString],
   )
 
   const { table } = useDataTable({
@@ -221,9 +240,20 @@ export function AutomatedResponsesTable({
         }
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
-        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
+      />
+
+      <ChangeFolderDialog
+        chatbotId={chatbotId}
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType={FolderType.automatedResponse}
+        modelId={rowAction?.row.original?.id || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
       />
     </>
   )

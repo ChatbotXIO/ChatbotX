@@ -12,12 +12,12 @@ import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
 import { QueueName } from "../../lib/types"
 
 export const ChatJobAction = {
-  SEND_EXTERNAL_MESSAGE: "SEND_EXTERNAL_MESSAGE",
-  SEND_FLOW_STEP: "SEND_FLOW_STEP",
+  sendExternalMessage: "sendExternalMessage",
+  sendFlowMessage: "sendFlowMessage",
 } as const
 
 export type ChatJobSendMessage = {
-  type: typeof ChatJobAction.SEND_EXTERNAL_MESSAGE
+  type: typeof ChatJobAction.sendExternalMessage
   data: {
     conversation: ConversationEntity
     message: MessageEntity
@@ -25,7 +25,7 @@ export type ChatJobSendMessage = {
 }
 
 export type ChatJobSendFlowStep = {
-  type: typeof ChatJobAction.SEND_FLOW_STEP
+  type: typeof ChatJobAction.sendFlowMessage
   data: {
     conversationId: string
     flowVersionId: string

@@ -14,6 +14,7 @@ import { createWebchatMessageAction } from "../messages/actions/create-webchat-m
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
 import { createWebchatMessageRequest } from "../messages/schemas/create-message.schema"
+import WebchatMessageMenu from "./components/webchat-message-menu"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
@@ -159,7 +160,10 @@ export const WebchatMessageInput = ({
           <div className="5 px-2">
             <FileUploadPreview ref={fileUploadRef} />
           </div>
-          <div className="flex w-full items-center justify-end pl-2.5">
+          <div className="flex w-full items-center pl-2.5">
+            <div className="flex-1">
+              <WebchatMessageMenu chatbotId={chatbotId} />
+            </div>
             <div className="message-toolbar flex items-center">
               <Button
                 className="px-2 py-1.5 [&_svg]:size-5"

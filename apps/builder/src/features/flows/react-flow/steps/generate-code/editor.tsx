@@ -54,7 +54,7 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
     setValue(`${parentName}.type`, data.type)
     setValue(`${parentName}.min`, data.min)
     setValue(`${parentName}.max`, data.max)
-    setValue(`${parentName}.outputCustomFieldId`, data.outputCustomFieldId)
+    setValue(`${parentName}.outputCfId`, data.outputCfId)
     setOpen(false)
   }
 
@@ -62,7 +62,7 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <div className="flex justify-center">
-          <Button size="sm" variant="outline">
+          <Button size="sm" type="button" variant="outline">
             {t("actions.update")}
           </Button>
         </div>
@@ -105,19 +105,22 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
             <CustomFieldSelect
               allowCreate={true}
               label={t("fields.customField.label")}
-              name="outputCustomFieldId"
+              name="outputCfId"
               required
             />
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">{t("actions.cancel")}</Button>
+                <Button size="sm" variant="ghost">
+                  {t("actions.cancel")}
+                </Button>
               </DialogClose>
 
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                size="sm"
                 type="submit"
               >
                 {t("actions.save")}

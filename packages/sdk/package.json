@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.4",
     "zod": "^4.1.13"
   },
   "exports": {

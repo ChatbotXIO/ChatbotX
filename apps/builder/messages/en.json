@@ -8,14 +8,6 @@
       "title": "Update Account Field"
     }
   },
-  "accountFields": {
-    "create": {
-      "successMessage": "Account field created successfully"
-    },
-    "delete": {
-      "successMessage": "Account field deleted successfully"
-    }
-  },
   "actions": {
     "copy": "Copy",
     "actions": "Actions",
@@ -139,15 +131,21 @@
     "joinTheTeam": "Join the team",
     "chooseChannel": "Choose Channel",
     "chooseSubaction": "Choose Subaction",
-    "resend": "Resend"
+    "resend": "Resend",
+    "publish": "Publish",
+    "setAsDefaultAgent": "Set as Default",
+    "unsetDefaultAgent": "Unset Default",
+    "randomRow": "Random Row",
+    "clickToEdit": "Click to edit",
+    "move": "Move"
   },
   "admins": {
     "title": "Admins"
   },
   "aiAgent": {
+    "defaultAgent": "Default Agent",
     "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses.",
     "setting": {
-      "description": "AI Agents description",
       "label": "AI Agents"
     },
     "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
@@ -174,7 +172,6 @@
   },
   "aiTrigger": {
     "setting": {
-      "description": "AI Triggers description",
       "label": "AI Triggers"
     }
   },
@@ -184,7 +181,6 @@
     },
     "delete": {
       "confirmDescription": "Are you sure you want to delete this AI Trigger?",
-      "successMessage": "AI Trigger deleted successfully",
       "title": "Delete AI Trigger"
     },
     "description": {
@@ -320,15 +316,6 @@
   "customField": {
     "heading": {
       "title": "Custom Fields"
-    },
-    "placeholders": {
-      "enterNumber": "Enter number",
-      "enterText": "Enter text",
-      "selectTrueFalse": "Select true/false"
-    },
-    "values": {
-      "false": "False",
-      "true": "True"
     }
   },
   "dialog": {
@@ -373,6 +360,9 @@
     "condition": {
       "label": "Condition"
     },
+    "assignedId": {
+      "label": "Assign To"
+    },
     "operator": {
       "label": "Operator",
       "is": "Is",
@@ -392,6 +382,9 @@
     },
     "contactFilter": {
       "label": "Contact filter"
+    },
+    "contactNote": {
+      "label": "Contact Note"
     },
     "chooseTime": {
       "label": "Choose time"
@@ -553,7 +546,12 @@
       "label": "Custom CSS"
     },
     "customField": {
-      "label": "Custom Field"
+      "label": "Custom Field",
+      "set_value": "Set value",
+      "append": "Append to the end",
+      "prepend": "Prepend to the beginning",
+      "increase": "Increase by",
+      "decrease": "Decrease by"
     },
     "dataCollect": {
       "label": "Data Collect",
@@ -810,7 +808,7 @@
       "label": "Prompt"
     },
     "promptMessages": {
-      "label": "Messages",
+      "label": "Prompt Messages",
       "role": {
         "assistant": "Assistant",
         "user": "User"
@@ -936,10 +934,12 @@
       "label": "WhatsApp Flow"
     },
     "shortText": {
-      "label": "Short Text"
+      "label": "Short Text",
+      "placeholder": "Enter text"
     },
     "number": {
-      "label": "Number"
+      "label": "Number",
+      "placeholder": "Enter number"
     },
     "date": {
       "label": "Date"
@@ -948,12 +948,16 @@
       "label": "Datetime"
     },
     "boolean": {
-      "label": "Boolean"
+      "label": "Boolean",
+      "placeholder": "Select true or false",
+      "true": "True",
+      "false": "False"
     },
     "longText": {
       "label": "Long Text"
     },
     "replyFormat": {
+      "label": "Reply Format",
       "number": "Number",
       "text": "Text",
       "email": "Email",
@@ -986,6 +990,37 @@
       "label": "Schedule",
       "now": "Now",
       "scheduled": "Schedule for later"
+    },
+    "inputCfId": {
+      "label": "Input Custom Field"
+    },
+    "outputCfId": {
+      "label": "Save result to a custom field"
+    },
+    "jsonPath": {
+      "label": "JSON Path",
+      "placeholder": "Enter JSON path"
+    },
+    "spreadsheets": {
+      "label": "Spreadsheets"
+    },
+    "retryMessage": {
+      "label": "Retry Message"
+    },
+    "skipButtonLabel": {
+      "label": "Skip Button Label"
+    },
+    "autoSkipTime": {
+      "label": "Auto Skip Time"
+    },
+    "autoSkipFailAttempts": {
+      "label": "Auto Skip Fail Attempts"
+    },
+    "autoSkip": {
+      "label": "Auto Skip"
+    },
+    "spreadsheet": {
+      "label": "Spreadsheet"
     }
   },
   "flows": {
@@ -1112,9 +1147,6 @@
     "title": "General"
   },
   "googleSheets": {
-    "delete": {
-      "dialog_title": "Delete Spreadsheet"
-    },
     "spreadsheet": "Spreadsheet",
     "name": "Spreadsheet Name",
     "link": "Spreadsheet Link",
@@ -1168,12 +1200,13 @@
     "title": "Integrations"
   },
   "messages": {
+    "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
     "noGiphyApiKey": "No GIPHY API key found. Please add a GIPHY API key in the organization settings.",
     "actionCompleted": "Action completed successfully",
     "actionFailed": "Action failed. Please try again.",
-    "archivedSuccessfully": "{feature} archived successfully",
-    "connectedSuccessfully": "{feature} connected successfully",
+    "archivedSuccess": "{feature} archived successfully",
+    "connectedSuccess": "{feature} connected successfully",
     "connectFailed": "Failed to connect {feature}",
     "connectSuccess": "Connected {feature} successfully",
     "success": "Success",
@@ -1183,8 +1216,8 @@
     "deleteComingSoon": "Delete functionality coming soon",
     "deletedSuccess": "{feature} deleted successfully",
     "deleteFileComingSoon": "Delete file functionality coming soon",
-    "disabledSuccessfully": "{feature} disabled successfully",
-    "disconnectedSuccessfully": "{feature} disconnected successfully",
+    "disabledSuccess": "{feature} disabled successfully",
+    "disconnectedSuccess": "{feature} disconnected successfully",
     "downloadComingSoon": "Download functionality coming soon",
     "enabledSuccessfully": "{feature} enabled successfully",
     "failedToCopy": "Failed to copy",
@@ -1199,7 +1232,7 @@
     "processingRequest": "Processing your request...",
     "savedSuccessfully": "Saved successfully",
     "signedInSuccessfully": "Signed in successfully",
-    "unarchivedSuccessfully": "{feature} unarchived successfully",
+    "unarchivedSuccess": "{feature} unarchived successfully",
     "unknownError": "Unknown error",
     "updatedSuccess": "{feature} updated successfully",
     "updateFileComingSoon": "Update file functionality coming soon",
@@ -1219,7 +1252,13 @@
     "noAIIntegrationFound": "No AI integration found. Please connect an AI integration to use AI agents.",
     "resendFeature": "Resend {feature}",
     "resendFeatureDescription": "Resend the {feature} to the contacts that have not received it yet.",
-    "resendSuccess": "Resend successfully"
+    "resendSuccess": "Resend successfully",
+    "duplicateTitle": "Duplicate {feature}",
+    "duplicateDescription": "Are you sure you want to duplicate the {feature}?\nThis action cannot be undone.",
+    "duplicateSuccess": "{feature} duplicated successfully",
+    "changeDefault": "Change Default",
+    "changeDefaultDescription": "Are you sure you want to change the default AI agent?",
+    "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1413,5 +1452,10 @@
   },
   "inboxTeams": {
     "title": "Inbox Teams"
+  },
+  "errorLog": {
+    "heading": {
+      "title": "Error Logs"
+    }
   }
 }

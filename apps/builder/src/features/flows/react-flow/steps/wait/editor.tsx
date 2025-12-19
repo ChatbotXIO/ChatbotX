@@ -98,7 +98,7 @@ const WaitStepEditor = (props: WaitStepEditorProps) => {
       )}
       {delayType === DelayType.customField && (
         <CustomFieldSelect
-          customFieldType={CustomFieldType.datetime}
+          customFieldTypes={[CustomFieldType.datetime]}
           label={t("flows.wait.datetimeTooltip")}
           name={`${parentName}.customFieldId`}
         />

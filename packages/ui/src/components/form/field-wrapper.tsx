@@ -1,3 +1,4 @@
+import { cn } from "@aha.chat/ui/lib/utils"
 import type { ReactNode } from "react"
 import {
   type FieldPath,
@@ -12,7 +13,6 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form"
-import { cn } from "@aha.chat/ui/lib/utils"
 
 type FormFieldWrapperProps<T extends FieldValues> = {
   name: FieldPath<T>
@@ -47,7 +47,7 @@ export function FormFieldWrapper<T extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem className={cn("w-full", formItemClassName)}>
-          {label && (
+          {label ? (
             <FormLabel className="flex gap-1">
               {label}
               {!required && (
@@ -56,9 +56,11 @@ export function FormFieldWrapper<T extends FieldValues>({
                 </span>
               )}
             </FormLabel>
-          )}
+          ) : null}
           <FormControl>{children(field)}</FormControl>
-          {description && <FormDescription>{description}</FormDescription>}
+          {description ? (
+            <FormDescription>{description}</FormDescription>
+          ) : null}
           <FormMessage />
         </FormItem>
       )}

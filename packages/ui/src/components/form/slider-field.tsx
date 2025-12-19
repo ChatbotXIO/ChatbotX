@@ -14,9 +14,9 @@ export function SliderField<T extends FieldValues>(props: SliderFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
       label={label}
       name={name}
+      required={required}
     >
       {(field) => (
         <div className="flex items-center gap-4">

@@ -11,7 +11,12 @@ export default async function SpreadsheetsPage(props: {
 }) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const search = listSpreadsheetsRequest.parse(searchParams)
+  const search = listSpreadsheetsRequest.parse({
+    ...searchParams,
+    ...{
+      chatbotId: params.chatbotId,
+    },
+  })
 
   const promises = Promise.all([
     listSpreadsheets({

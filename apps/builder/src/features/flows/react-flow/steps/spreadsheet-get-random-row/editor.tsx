@@ -54,7 +54,7 @@ export const SpreadsheetGetRandomRowEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="googleSheets.randomRow"
+        name="flows.actions.spreadsheetGetRandomRow"
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}
@@ -62,6 +62,7 @@ export const SpreadsheetGetRandomRowEditor = ({
         <div className="flex flex-col gap-4">
           <SpreadsheetSelect
             name="spreadsheetId"
+            required
             triggerValueChange={onChangeSpreadsheet}
           />
           {spreadsheetId && (

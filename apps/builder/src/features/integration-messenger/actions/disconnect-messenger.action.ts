@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import { InboxStatus } from "@aha.chat/database/enums"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
 import {
@@ -34,6 +35,10 @@ export const disconnectMessengerAction = chatbotActionClient
 
         await tx.integrationMessenger.delete({
           where: { id: integrationMessenger.id },
+        })
+        await tx.inbox.update({
+          where: { id: integrationMessenger.inboxId },
+          data: { status: InboxStatus.disconnected },
         })
       })
 

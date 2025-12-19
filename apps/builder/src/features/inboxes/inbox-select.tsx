@@ -1,7 +1,7 @@
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
 import { callAPI } from "@/lib/swr"
-import type { InboxCollection } from "./schemas"
+import type { InboxCollection } from "./schemas/resource"
 
 export function InboxSelect({ name }: { name: string }) {
   const params = useParams<{ chatbotId: string }>()

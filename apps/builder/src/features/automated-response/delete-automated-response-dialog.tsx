@@ -50,6 +50,7 @@ export function DeleteAutomatedResponsesDialog({
           }),
         )
         onOpenChange(false)
+        onSuccess?.()
       },
       onError: ({ error }) => {
         if (error.serverError) {

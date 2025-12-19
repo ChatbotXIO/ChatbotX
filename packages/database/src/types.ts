@@ -7,12 +7,6 @@ export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
 
-export const FieldOperationType = {
-  set: "O01",
-  append: "O02",
-  prepend: "O03",
-} as const
-
 export const ReplyType = {
   Message: "R01",
   Flow: "R02",
@@ -183,3 +177,12 @@ export const chatbotMemberNotificationChannelsSchema = z.object({
 export type ChatbotMemberNotificationChannels = z.infer<
   typeof chatbotMemberNotificationChannelsSchema
 >
+
+export const fillableContactKeys = [
+  "phoneNumber",
+  "email",
+  "firstName",
+  "lastName",
+  "gender",
+] as const
+export type FillableContactKeys = (typeof fillableContactKeys)[number]

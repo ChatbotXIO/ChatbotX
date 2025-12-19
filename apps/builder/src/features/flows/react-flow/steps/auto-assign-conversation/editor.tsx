@@ -1,10 +1,11 @@
 "use client"
 
 import { AutoAssignConversationRule } from "@aha.chat/flow-config"
+import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { MessageCirclePlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { UserMultipleSelect } from "@/features/users/user-select"
+import { useContactAssigneeMultiSelectOptions } from "@/features/users/provider/user-hook"
 import { BaseStepEditor } from "../base/editor"
 
 const AutoAssignConversationStepEditor = ({
@@ -13,6 +14,7 @@ const AutoAssignConversationStepEditor = ({
   parentName: string
 }) => {
   const t = useTranslations()
+  const contactAssigneeOptions = useContactAssigneeMultiSelectOptions()
 
   const ruleOptions = [
     {
@@ -44,9 +46,10 @@ const AutoAssignConversationStepEditor = ({
           name={`${parentName}.rule`}
           options={ruleOptions}
         />
-        <UserMultipleSelect
+        <MultiSelectField
           label={t("autoAssignConversation.users.label")}
-          name={`${parentName}.userIds`}
+          name={`${parentName}.assignedIds`}
+          options={contactAssigneeOptions}
         />
       </div>
     </BaseStepEditor>

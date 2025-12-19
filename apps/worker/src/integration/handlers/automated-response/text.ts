@@ -69,8 +69,8 @@ export async function downloadAndUploadImage(
       ContentLength: buffer.length,
     })
 
-    await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
-      type: ChatJobAction.SEND_FLOW_STEP,
+    await chatQueue.add(ChatJobAction.sendFlowMessage, {
+      type: ChatJobAction.sendFlowMessage,
       data: {
         conversationId,
         flowVersionId: "",
@@ -195,8 +195,8 @@ export async function sendMessageWithRender(
     }
   }
 
-  await chatQueue.add(ChatJobAction.SEND_FLOW_STEP, {
-    type: ChatJobAction.SEND_FLOW_STEP,
+  await chatQueue.add(ChatJobAction.sendFlowMessage, {
+    type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId,
       flowVersionId: "",

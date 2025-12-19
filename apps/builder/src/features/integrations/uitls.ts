@@ -1,16 +1,14 @@
 import type { ChatbotModel, OrganizationModel } from "@aha.chat/database/types"
-import { headers } from "next/headers"
+import { getDomainFromHeader } from "@/lib/domain"
 import { findChatbot } from "../chatbot/queries"
 import { findOrganization } from "../organization/queries"
 
 export async function identifyChatbotAndOrganizationFromRequest(
   chatbotId?: string | null,
 ): Promise<{ chatbot?: ChatbotModel; organization: OrganizationModel }> {
-  const headersList = await headers()
-  const baseUrl = new URL(headersList.get("x-url") ?? "")
-
+  const domain = await getDomainFromHeader()
   const organization = await findOrganization({
-    domain: baseUrl.hostname,
+    domain,
   })
   if (!organization) {
     throw new Error("Organization not found")

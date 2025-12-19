@@ -18,6 +18,7 @@ const AddContactNotesStepEditor = (props: AddContactNotesStepEditorProps) => {
       <InputField
         label={t("fields.notes.label")}
         name={`${parentName}.content`}
+        required
       />
     </BaseStepEditor>
   )

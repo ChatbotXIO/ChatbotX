@@ -5,7 +5,6 @@ import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -21,177 +20,78 @@ import {
   FormLabel,
   FormMessage,
 } from "@aha.chat/ui/components/ui/form"
-import { Input } from "@aha.chat/ui/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@aha.chat/ui/components/ui/select"
-import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { format } from "date-fns"
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { Controller } from "react-hook-form"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { useCustomFieldTypeLabels } from "../shared-fields/shared"
+import { AccountFieldValueInput } from "./account-field-value-input"
 import { createAccountFieldAction } from "./actions/create-account-field.action"
 import { createAccountFieldRequest } from "./schemas/create-account-field.schema"
 
 type CreateAccountFieldDialogProps = {
   chatbotId: string
+  onSuccess?: () => void
 }
 
 export function CreateAccountFieldDialog({
   chatbotId,
+  onSuccess,
 }: CreateAccountFieldDialogProps) {
   const t = useTranslations()
-
-  const [open, setOpen] = useState(false)
   const searchParams = useSearchParams()
 
-  const customFieldTypeLabels = [
-    {
-      value: CustomFieldType.shortText,
-      label: t("fields.shortText.label"),
-    },
-    {
-      value: CustomFieldType.number,
-      label: t("fields.number.label"),
-    },
-    {
-      value: CustomFieldType.date,
-      label: t("fields.date.label"),
-    },
-    {
-      value: CustomFieldType.datetime,
-      label: t("fields.datetime.label"),
-    },
-    {
-      value: CustomFieldType.boolean,
-      label: t("fields.boolean.label"),
-    },
-    {
-      value: CustomFieldType.longText,
-      label: t("fields.longText.label"),
-    },
-  ]
+  const [open, setOpen] = useState(false)
+  const customFieldTypeLabels = useCustomFieldTypeLabels()
 
-  const {
-    form,
-    handleSubmitWithAction,
-    resetFormAndAction,
-    form: { control, watch, register, setValue },
-  } = useHookFormAction(
-    createAccountFieldAction.bind(null, chatbotId),
-    zodResolver(createAccountFieldRequest),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success(t("accountFields.create.successMessage"))
-          setOpen(false)
-          resetFormAndAction()
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      createAccountFieldAction.bind(null, chatbotId),
+      zodResolver(createAccountFieldRequest),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(
+              t("messages.createdSuccess", {
+                feature: t("fields.accountField.label"),
+              }),
+            )
+            setOpen(false)
+            resetFormAndAction()
+            onSuccess?.()
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            name: "",
+            customFieldType: CustomFieldType.shortText,
+            value: "",
+            description: "",
+            folderId: searchParams.get("folderId"),
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          name: "",
-          customFieldType: CustomFieldType.shortText,
-          value: "",
-          description: "",
-          folderId: searchParams.get("folderId"),
-        },
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
-  const watchCustomFieldType = watch(
-    "customFieldType",
-    CustomFieldType.shortText,
-  )
+  const { control } = form
+  const watchCustomFieldType = useWatch({
+    control,
+    name: "customFieldType",
+  })
 
-  const renderValueInput = () => {
-    switch (watchCustomFieldType) {
-      case CustomFieldType.number:
-        return (
-          <Input
-            placeholder={t("customField.placeholders.enterNumber")}
-            type="number"
-            {...register("value")}
-          />
-        )
-      case CustomFieldType.boolean:
-        return (
-          <Controller
-            control={control}
-            name="value"
-            render={({ field }) => (
-              <Select onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={t("customField.placeholders.selectTrueFalse")}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">
-                    {t("customField.values.true")}
-                  </SelectItem>
-                  <SelectItem value="false">
-                    {t("customField.values.false")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        )
-      case CustomFieldType.date:
-        return (
-          <DateTimePicker
-            displayFormat={{ hour24: "yyyy-MM-dd" }}
-            granularity="day"
-            onChange={(value) => {
-              setValue("value", format(value ?? new Date(), "yyyy-MM-dd"))
-            }}
-            value={new Date()}
-          />
-        )
-
-      case CustomFieldType.datetime:
-        return (
-          <DateTimePicker
-            displayFormat={{ hour24: "yyyy-MM-dd hh:mm" }}
-            onChange={(value) => {
-              setValue("value", format(value ?? new Date(), "yyyy-MM-dd hh:mm"))
-            }}
-            value={new Date()}
-          />
-        )
-      case CustomFieldType.longText:
-        return (
-          <Textarea
-            placeholder={t("customField.placeholders.enterText")}
-            {...register("value")}
-          />
-        )
-      default:
-        return (
-          <Input
-            placeholder={t("customField.placeholders.enterText")}
-            {...register("value")}
-          />
-        )
-    }
+  const handleClose = () => {
+    setOpen(false)
   }
 
   return (
@@ -204,19 +104,20 @@ export function CreateAccountFieldDialog({
           })}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>{t("accountField.createDialog.title")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField label={t("fields.name.label")} name="name" />
+            <InputField label={t("fields.name.label")} name="name" required />
 
             <SelectField
               label={t("fields.type.label")}
               name="customFieldType"
               options={customFieldTypeLabels}
+              required
             />
 
             <FormField
@@ -225,7 +126,9 @@ export function CreateAccountFieldDialog({
               render={() => (
                 <FormItem>
                   <FormLabel>{t("fields.value.label")}</FormLabel>
-                  {renderValueInput()}
+                  <AccountFieldValueInput
+                    customFieldType={watchCustomFieldType}
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -238,7 +141,8 @@ export function CreateAccountFieldDialog({
 
             <div className="flex justify-end space-x-2">
               <Button
-                onClick={() => setOpen(false)}
+                onClick={handleClose}
+                size="sm"
                 type="button"
                 variant="ghost"
               >
@@ -248,6 +152,7 @@ export function CreateAccountFieldDialog({
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                size="sm"
                 type="submit"
               >
                 {form.formState.isSubmitting && (

@@ -1,13 +1,13 @@
 "use server"
 
 import { type Prisma, prisma } from "@aha.chat/database"
+import { InboxStatus } from "@aha.chat/database/enums"
 import { IntegrationType, type UserModel } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { exchangeAccessToken } from "@aha.chat/integration-whatsapp/api/auth"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@aha.chat/integration-whatsapp/api/phone-number"
 import { subscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
 import { AuthType } from "@aha.chat/sdk"
-import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { headers } from "next/headers"
 import { env } from "@/env"
 import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
@@ -97,13 +97,7 @@ export const connectWhatsappAction = authActionClient
           },
           metadata: {
             wabaId: parsedInput.wabaId,
-            phoneNumber: {
-              ...foundPhoneNumber,
-              display_phone_number:
-                parsePhoneNumberFromString(
-                  foundPhoneNumber.display_phone_number,
-                )?.number.replace("+", "") ?? "",
-            },
+            phoneNumber: foundPhoneNumber,
             businessId: parsedInput.businessId,
             webhookUrl: `${proxyUrl}/integrations/whatsapp/webhook`,
           },
@@ -143,7 +137,7 @@ export const connectWhatsappAction = authActionClient
               sourceId: foundPhoneNumber.id,
             },
             update: {
-              updatedAt: new Date(),
+              status: InboxStatus.connected,
             },
           })
 

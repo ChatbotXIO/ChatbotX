@@ -26,16 +26,18 @@ import {
   UserIcon,
   UserRoundXIcon,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
 import DisableBotDialog from "../conversations/components/disable-bot-dialog"
 import EnableBotDialog from "../conversations/components/enable-bot-dialog"
 import AddContactTagDialog from "./components/add-contact-tag-dialog"
-import ClearContactCustomFieldDialog from "./components/clear-contact-custom-field-dialog"
+import AddContactCustomFieldDialog from "./components/add-custom-field-dialog"
+import ClearContactCustomFieldDialog from "./components/delete-contact-custom-field"
 import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
-import type { ContactResource } from "./schemas"
+import type { ContactResource } from "./schemas/resource"
 
 type ContactListActionProps = {
   chatbotId: string
@@ -44,6 +46,8 @@ type ContactListActionProps = {
 
 export function ContactListAction({ table }: ContactListActionProps) {
   const t = useTranslations()
+  const router = useRouter()
+
   const rows = table.getFilteredSelectedRowModel().rows
 
   return (
@@ -57,6 +61,9 @@ export function ContactListAction({ table }: ContactListActionProps) {
       <DropdownMenuContent className="w-56">
         <AssignConversationDialog
           contactIds={rows.map((r) => r.id)}
+          onSuccess={() => {
+            router.refresh()
+          }}
           trigger={
             <DropdownMenuItem
               disabled={rows.length === 0}
@@ -81,10 +88,18 @@ export function ContactListAction({ table }: ContactListActionProps) {
           }
         />
 
-        <DropdownMenuItem disabled={rows.length === 0}>
-          <SaveIcon />
-          {t("actions.setCustomField")}
-        </DropdownMenuItem>
+        <AddContactCustomFieldDialog
+          ids={rows.map((r) => r.id)}
+          trigger={
+            <DropdownMenuItem
+              disabled={rows.length === 0}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <SaveIcon />
+              {t("actions.setCustomField")}
+            </DropdownMenuItem>
+          }
+        />
 
         <DeleteContactDialog
           ids={rows.map((r) => r.id)}
@@ -111,7 +126,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <ListIcon size={16} />
+            <ListIcon className="mr-2" size={16} />
             {t("actions.more")}
           </DropdownMenuSubTrigger>
 

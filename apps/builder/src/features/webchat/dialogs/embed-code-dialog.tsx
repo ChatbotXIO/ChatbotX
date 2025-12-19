@@ -35,13 +35,13 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
   type="module" onload="window.csmChatWidget?.init({
     webchatId: '${webchat.id}',
     chatbotId: '${webchat.chatbotId}',
-    brandColor: '#${webchat.brandColor}',
+    brandColor: '${webchat.brandColor}',
     hideHeader: ${webchat.hideHeader},
     showLogo: ${webchat.showLogo},
     hideMessageInput: true
   });"></script>`
 
-  const handleCopy = (text: string) => () => {
+  const handleCopy = (text: string) => {
     copyToClipboard(text)
       .then(() => {
         toast.success(t("messages.copiedToClipboard"))
@@ -69,7 +69,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
               <Button
                 className="gap-2"
                 onClick={() => handleCopy(embedCode)}
-                size="sm"
+                size="icon"
                 variant="outline"
               >
                 <CopyIcon className="h-4 w-4" />

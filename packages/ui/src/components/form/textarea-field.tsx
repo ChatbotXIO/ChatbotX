@@ -25,9 +25,9 @@ export function TextareaField<T extends FieldValues>(
   return (
     <FormFieldWrapper
       description={description}
-      required={required}
       label={label}
       name={name}
+      required={required}
     >
       {(field) => <Textarea placeholder={placeholder} {...rest} {...field} />}
     </FormFieldWrapper>
