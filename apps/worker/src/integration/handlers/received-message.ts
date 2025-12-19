@@ -227,4 +227,4 @@ export const receiveMessage = async ({
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === InboxType.messenger
+  integrationType === InboxType.messenger || integrationType === InboxType.zalo

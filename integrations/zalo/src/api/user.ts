@@ -20,17 +20,17 @@ export type ZaloUserProfileResponse = {
 
 export const getUserProfile = ({
   ctx,
-  uid,
+  psid,
 }: {
   ctx: Context<ZaloAuthValue>
-  uid: string
+  psid: string
 }): Promise<ContactEntity> =>
   handleZaloError("Get user profile", async () => {
     const client = ZaloHttpClient.createAuthenticatedClient(
       ctx.auth.tokens.accessToken,
     )
 
-    const queryData = encodeURIComponent(JSON.stringify({ user_id: uid }))
+    const queryData = encodeURIComponent(JSON.stringify({ user_id: psid }))
     const response = await client.get<ZaloUserProfileResponse>(
       `${ZALO_API_ENDPOINTS.OA.GET_USER_PROFILE}?data=${queryData}`,
     )
@@ -40,7 +40,7 @@ export const getUserProfile = ({
     }
 
     const result: ContactEntity = {
-      sourceId: uid,
+      sourceId: psid,
       firstName: response.data?.display_name || "",
       phoneNumber: response.data?.shared_info?.phone || "",
     }
