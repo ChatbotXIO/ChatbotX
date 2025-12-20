@@ -13,7 +13,10 @@ import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { receiveMessage } from "./handlers/received-message"
 import { sendFlowNode } from "./handlers/send-flow-node"
-import { sendFlowPostback } from "./handlers/send-flow-postback"
+import {
+  sendFlowPostback,
+  sendFlowQuickReply,
+} from "./handlers/send-flow-postback"
 
 const worker = new Worker(
   QueueName.integration,
@@ -46,6 +49,10 @@ const worker = new Worker(
       }
       case IntegrationJobAction.sendFlowPostback: {
         await sendFlowPostback(job.data.data)
+        return
+      }
+      case IntegrationJobAction.sendFlowQuickReply: {
+        await sendFlowQuickReply(job.data.data)
         return
       }
       case IntegrationJobAction.triggerAutomatedResponse: {

@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl"
 import { memo } from "react"
 import { BaseHandle } from "@/components/base-handle"
 import { DynamicStepViewer } from "../steps"
+import { ButtonStepViewer } from "../steps/button/viewer"
 import { FlowNodeToolbar } from "../toolbar/node-toolbar"
 import { allNodesConfig } from "./node-config"
 
@@ -54,6 +55,7 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
             {data.name}
           </CardTitle>
         </CardHeader>
+
         <CardContent className="flex flex-col gap-4 p-4 pt-0">
           {"steps" in data.details &&
             data.details.steps &&
@@ -65,6 +67,14 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
                 type={stepItem.stepType}
               />
             ))}
+
+          {"quickReplies" in data.details &&
+            data.details.quickReplies &&
+            data.details.quickReplies.length > 0 &&
+            data.details.quickReplies.map((quickReplyItem) => (
+              <ButtonStepViewer data={quickReplyItem} key={quickReplyItem.id} />
+            ))}
+
           <div className="relative w-full text-right">
             <span className="mr-4">{t("actions.continue")}</span>
             <BaseHandle id={id} position={Position.Right} type="source" />

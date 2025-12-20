@@ -3,7 +3,7 @@ import type {
   ConversationModel,
   FlowVersionModel,
 } from "@aha.chat/database/types"
-import type { FlowNode, StepType } from "@aha.chat/flow-config"
+import { type FlowNode, StepType } from "@aha.chat/flow-config"
 import { SdkException } from "@aha.chat/sdk"
 import type { IntegrationJobSendFlow } from "@aha.chat/worker-config"
 import { flowStepHandlers } from "./step-handler"
@@ -62,11 +62,28 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
   }
 
   if ("steps" in startNode.data.details && startNode.data.details.steps) {
-    generateRunFlowNode(
+    await generateRunFlowNode(
       conversation,
       flowVersion.id,
       startNode.data.details.steps,
     )
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  if (
+    "quickReplies" in startNode.data.details &&
+    startNode.data.details.quickReplies.length > 0
+  ) {
+    await flowStepHandlers[StepType.sendQuickReply]?.({
+      conversation,
+      flowVersionId: flowVersion.id,
+      step: {
+        stepType: StepType.sendQuickReply,
+        message: "Please select an option",
+        buttons: startNode.data.details.quickReplies,
+      },
+    })
   }
 }
 

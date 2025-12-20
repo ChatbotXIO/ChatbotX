@@ -7,6 +7,7 @@ export const IntegrationJobAction = {
   sendFlow: "sendFlow",
   incomingMessage: "incomingMessage",
   sendFlowPostback: "sendFlowPostback",
+  sendFlowQuickReply: "sendFlowQuickReply",
   triggerAutomatedResponse: "triggerAutomatedResponse",
   sendBroadcast: "sendBroadcast",
 } as const
@@ -39,6 +40,15 @@ export type IntegrationJobSendFlowPostback = {
   }
 }
 
+export type IntegrationJobSendFlowQuickReply = {
+  type: typeof IntegrationJobAction.sendFlowQuickReply
+  data: {
+    conversationId: string
+    flowVersionId: string
+    buttonId: string
+  }
+}
+
 export type IntegrationJobTriggerAutomatedResponse = {
   type: typeof IntegrationJobAction.triggerAutomatedResponse
   data: {
@@ -57,6 +67,7 @@ export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobSendFlow
   | IntegrationJobSendFlowPostback
+  | IntegrationJobSendFlowQuickReply
   | IntegrationJobTriggerAutomatedResponse
   | IntegrationJobSendBroadcast
 

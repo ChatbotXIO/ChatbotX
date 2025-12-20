@@ -3,6 +3,7 @@ import type {
   SendFileStepSchema,
   SendGifStepSchema,
   SendImageStepSchema,
+  SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
 } from "@aha.chat/flow-config"
@@ -22,6 +23,7 @@ export type SendFlowStepData =
   | SendAudioStepSchema
   | SendVideoStepSchema
   | SendFileStepSchema
+  | SendQuickReplyStepSchema
 
 export type SendFlowStepProps<TAuth extends BaseAuthValue> = {
   ctx: Context<TAuth>

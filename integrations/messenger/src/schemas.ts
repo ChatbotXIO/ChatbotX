@@ -39,6 +39,7 @@ export type MessengerActions = {
       message: MessageEntity
       conversation: ConversationEntity
       postbackAction?: { flowVersionId: string; buttonId: string } | null
+      quickReplyAction?: { flowVersionId: string; buttonId: string } | null
     }
   >
   sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
@@ -74,6 +75,11 @@ export const messengerMessageSchema = z.object({
   is_echo: z.boolean().optional(),
   attachments: z.array(messengerAttachmentSchema).optional(),
   metadata: z.string().optional(),
+  quick_reply: z
+    .object({
+      payload: z.string(),
+    })
+    .optional(),
 })
 export type MessengerMessage = z.infer<typeof messengerMessageSchema>
 

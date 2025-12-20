@@ -111,6 +111,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.spreadsheetUpdateRow]: spreadsheetUpdateRowStep,
   [StepType.spreadsheetClearRow]: spreadsheetClearRowStep,
   [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
+  [StepType.sendQuickReply]: undefined,
 }
 
 export const DynamicStepEditor = memo(

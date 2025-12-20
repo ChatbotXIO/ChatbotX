@@ -67,10 +67,10 @@ export const parseIncomingMessage = async ({
   }
 
   const sourceId = entry.id
-  const message = await getMessageEntity(ctx, messaging)
-
-  const postbackAction: { flowVersionId: string; buttonId: string } | null =
-    getPostbackAction(messaging)
+  const { message, postbackAction, quickReplyAction } = await getMessageEntity(
+    ctx,
+    messaging,
+  )
 
   const conversation: ConversationEntity = {
     sourceId,
@@ -82,15 +82,28 @@ export const parseIncomingMessage = async ({
     },
   }
 
-  return Promise.resolve({ message, conversation, postbackAction })
+  return Promise.resolve({
+    message,
+    conversation,
+    postbackAction,
+    quickReplyAction,
+  })
 }
 
 const getMessageEntity = async (
   ctx: Context<MessengerAuthValue>,
   messaging: MessengerMessagingEvent,
-): Promise<MessageEntity> => {
+): Promise<{
+  message: MessageEntity
+  postbackAction: { flowVersionId: string; buttonId: string } | null
+  quickReplyAction: { flowVersionId: string; buttonId: string } | null
+}> => {
+  let message: MessageEntity | null = null
+  let postbackAction: { flowVersionId: string; buttonId: string } | null = null
+  let quickReplyAction: { flowVersionId: string; buttonId: string } | null =
+    null
   if (messaging.message) {
-    return {
+    message = {
       sourceId: messaging.message.mid,
       messageType: messaging.message.is_echo
         ? MessageType.outgoing
@@ -99,20 +112,45 @@ const getMessageEntity = async (
       contentType: ContentType.text,
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
+
+    // calculate quick reply action
+    const quickReplyPayload: string[] = (
+      messaging.message.quick_reply?.payload ?? ""
+    ).split("_")
+    if (quickReplyPayload.length === 2) {
+      quickReplyAction = {
+        flowVersionId: quickReplyPayload[0],
+        buttonId: quickReplyPayload[1],
+      }
+    }
   }
   if (messaging.postback) {
-    return {
+    message = {
       sourceId: messaging.postback.mid,
       messageType: MessageType.incoming,
       content: messaging.postback.title,
       contentType: ContentType.text,
       attachments: [],
     }
+
+    // calculate postback action
+    const postbackPayload: string[] = messaging.postback.payload.split("_")
+    if (postbackPayload.length === 2) {
+      postbackAction = {
+        flowVersionId: postbackPayload[0],
+        buttonId: postbackPayload[1],
+      }
+    }
   }
+
+  if (message) {
+    return { message, postbackAction, quickReplyAction }
+  }
+
   throw new MessengerException("No message found")
 }
 
-const getPostbackAction = (
+const _getPostbackAction = (
   messaging: MessengerMessagingEvent,
 ): { flowVersionId: string; buttonId: string } | null => {
   if (messaging.postback) {
