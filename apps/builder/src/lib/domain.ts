@@ -9,7 +9,5 @@ export async function getDomainFromHeader() {
 
   logger.debug("requested domain", baseUrl.hostname)
 
-  return "builder.example.com"
-
-  // return baseUrl.hostname
+  return baseUrl.hostname
 }
