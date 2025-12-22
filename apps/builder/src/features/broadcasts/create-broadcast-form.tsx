@@ -31,19 +31,19 @@ import { add } from "date-fns"
 import { AtomIcon, Loader2Icon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useCallback, useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import { ContactFilter } from "../contacts/components/contact-filter"
-import type { listCustomFields } from "../custom-fields/queries"
-import type { listFlowVersions } from "../flow-versions/queries/list-flow-versions"
+import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import {
   FlowStoreProvider,
   useFlowStore,
 } from "../flows/provider/flow-store-context"
-import type { getTags } from "../tags/queries"
+import { useTagSelectOptions } from "../tags/provider/tag-hook"
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   {
@@ -127,50 +127,14 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
 
 type CreateBroadcastFormProps = {
   chatbotId: string
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof listCustomFields>>,
-      Awaited<ReturnType<typeof listFlowVersions>>,
-      Awaited<ReturnType<typeof getTags>>,
-    ]
-  >
 }
 
-export function CreateBroadcastForm({
-  chatbotId,
-  promises,
-}: CreateBroadcastFormProps) {
-  const [{ data: customFields }, { data: flowVersions }, { data: tags }] =
-    use(promises)
+export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
-
-  const customFieldOptions = useMemo(
-    () =>
-      customFields.map((field) => ({
-        label: field.name,
-        value: field.id,
-      })),
-    [customFields],
-  )
-
-  const flowVersionOptions = useMemo(
-    () =>
-      flowVersions.map((fv) => ({
-        label: fv.flow.name,
-        value: fv.flow.id,
-      })),
-    [flowVersions],
-  )
-
-  const tagOptions = useMemo(
-    () =>
-      tags.map((tag) => ({
-        label: tag.name,
-        value: tag.id,
-      })),
-    [tags],
-  )
+  const flowOptions = useFlowSelectOptions()
+  const customFieldOptions = useCustomFieldSelectOptions({})
+  const tagOptions = useTagSelectOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     createBroadcastAction.bind(null, chatbotId),
@@ -232,7 +196,7 @@ export function CreateBroadcastForm({
             {watchedInboxType && watchedSubAction && (
               <CreateBroadcastChooseFlow
                 customFieldOptions={customFieldOptions}
-                flowVersionOptions={flowVersionOptions}
+                flowVersionOptions={flowOptions}
                 tagOptions={tagOptions}
               />
             )}

@@ -1,9 +1,7 @@
 import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form"
-import { listCustomFields } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
-import { listFlowVersions } from "@/features/flow-versions/queries/list-flow-versions"
-import { getTags } from "@/features/tags/queries"
-import { getTagsSearchParamsCache } from "@/features/tags/schemas/get-tags-schema"
+import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 
 export default async function CreateBroadcastPage({
   params,
@@ -12,22 +10,13 @@ export default async function CreateBroadcastPage({
 }) {
   const { chatbotId } = await params
 
-  const promises = Promise.all([
-    listCustomFields({
-      chatbotId,
-      ...listCustomFieldsSearchParams.parse({}),
-    }),
-    listFlowVersions({
-      where: {
-        chatbotId,
-        isLatest: true,
-      },
-    }),
-    getTags({
-      chatbotId,
-      ...getTagsSearchParamsCache.parse({}),
-    }),
-  ])
-
-  return <CreateBroadcastForm chatbotId={chatbotId} promises={promises} />
+  return (
+    <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+      <CustomFieldStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+        <TagStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+          <CreateBroadcastForm chatbotId={chatbotId} />
+        </TagStoreProvider>
+      </CustomFieldStoreProvider>
+    </FlowStoreProvider>
+  )
 }
