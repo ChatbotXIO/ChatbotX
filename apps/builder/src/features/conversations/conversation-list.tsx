@@ -25,7 +25,6 @@ export default function ConversationList() {
   const {
     conversations,
     loadMoreConversations,
-    prevCursorConversation,
     nextCursorConversation,
     isLoadingConversation,
     activeConversationId,
