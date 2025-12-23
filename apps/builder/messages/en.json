@@ -747,6 +747,9 @@
     "inboxTeam": {
       "label": "Inbox Team"
     },
+    "teamMembers": {
+      "label": "Team Members"
+    },
     "inboxTeamMember": {
       "label": "Inbox Team Member"
     },

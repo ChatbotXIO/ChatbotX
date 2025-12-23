@@ -123,10 +123,14 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         ),
         cell: ({ row }) => (
           <div>
-            {row.original.lastSeenAt
-              ? formatDistance(new Date(), row.original.lastSeenAt, {
-                  addSuffix: true,
-                })
+            {row.original.conversation?.contactLastSeenAt
+              ? formatDistance(
+                  new Date(),
+                  row.original.conversation.contactLastSeenAt,
+                  {
+                    addSuffix: true,
+                  },
+                )
               : null}
           </div>
         ),

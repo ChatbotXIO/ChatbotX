@@ -16,7 +16,7 @@ export const fetchAndReuploadImage = async ({
     },
   })
   if (response.ok && response.body) {
-    const originPath = `public/chatbots/zalo/${ctx.auth.oaId}/${createId()}`
+    const originPath = `public/chatbots/${ctx.chatbot?.id}/zalo/${ctx.auth.oaId}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
 

@@ -28,6 +28,16 @@ export const acceptInvitationAction = authActionClient
     }
 
     if (invitation.chatbotId) {
+      const existingMember = await prisma.chatbotMember.findFirst({
+        where: {
+          chatbotId: invitation.chatbotId,
+          userId: ctx.user.id,
+        },
+      })
+      if (existingMember) {
+        throw new BaseException("You are already a member of this chatbot")
+      }
+
       await prisma.chatbotMember.create({
         data: {
           chatbotId: invitation.chatbotId,
