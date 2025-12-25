@@ -10,6 +10,7 @@ import { format, formatDistance } from "date-fns"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
+import { ContactFilterDialog } from "./contact-filter-dialog"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ContactResource } from "./schemas/resource"
@@ -167,10 +168,13 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
   })
 
   return (
-    <DataTable table={table}>
-      <DataTableToolbar className="flex gap-1.5" table={table}>
-        <ContactListAction chatbotId={chatbotId} table={table} />
-      </DataTableToolbar>
-    </DataTable>
+    <div className="flex flex-col gap-4">
+      <DataTable table={table}>
+        <DataTableToolbar className="flex gap-1.5" table={table}>
+          <ContactFilterDialog />
+          <ContactListAction chatbotId={chatbotId} table={table} />
+        </DataTableToolbar>
+      </DataTable>
+    </div>
   )
 }

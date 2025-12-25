@@ -61,6 +61,10 @@
     "getTools": "Get Tools",
     "import": "Import",
     "inboxActions": "Inbox",
+    "selectOptions": "Select options",
+    "exportContacts": "Export Contacts",
+    "filter": "Filter",
+    "selectFile": "Select file",
     "insertLink": "Insert link",
     "loginWithMagicLink": "Login with Magic Link",
     "manage": "Manage",
@@ -679,6 +683,12 @@
     "firstName": {
       "label": "First name",
       "placeholder": "Enter first name"
+    },
+    "countryCode": {
+      "label": "Country Code"
+    },
+    "contactId": {
+      "label": "Contact ID / Subscriber ID / PSID"
     },
     "flow": {
       "label": "Flow"
