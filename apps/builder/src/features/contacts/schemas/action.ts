@@ -1,3 +1,4 @@
+import { Operator } from "@aha.chat/database/enums"
 import { gender } from "@aha.chat/database/schema"
 import { z } from "zod"
 
@@ -23,3 +24,17 @@ export const updateContactFieldRequest = z.record(z.string(), z.string())
 export type UpdateContactFieldRequest = z.infer<
   typeof updateContactFieldRequest
 >
+
+export const filterContactRequest = z.object({
+  filters: z.object({
+    operator: z.enum(["and", "or"]),
+    conditions: z.array(
+      z.object({
+        field: z.string().trim(),
+        operator: z.enum(Operator),
+        value: z.union([z.string(), z.array(z.string())]),
+      }),
+    ),
+  }),
+})
+export type FilterContactRequest = z.infer<typeof filterContactRequest>

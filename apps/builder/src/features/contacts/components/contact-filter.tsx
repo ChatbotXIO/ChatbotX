@@ -657,6 +657,7 @@ function ContactFilterCondition({
 
   const handleReset = useCallback(() => {
     form.reset()
+    setOpen(false)
   }, [form])
 
   useEffect(() => {
