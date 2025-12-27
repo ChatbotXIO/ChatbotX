@@ -2,7 +2,7 @@
 
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
 import { useTranslations } from "next-intl"
-import { AI_PROVIDER_CONFIGS } from "../shared/ai-generate-text/config"
+import { AI_PROVIDER_CONFIGS } from "./config"
 
 type AIGenerateTextViewerProps = {
   data: AIGenerateTextSchema

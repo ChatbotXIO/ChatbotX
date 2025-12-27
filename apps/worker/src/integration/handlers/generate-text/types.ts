@@ -19,11 +19,11 @@ export type AIGenerateTextStep = {
   stepType: string
   model?: string
   prompt?: string
-  userMessage?: string
-  outputCfId?: string
+  userMessage: string
+  outputCfId: string
   tools?: string[]
-  rememberConversation?: boolean
-  temperature?: number
+  rememberConversation: boolean
+  temperature: number
   maxTokens?: number
   provider?: string
 }

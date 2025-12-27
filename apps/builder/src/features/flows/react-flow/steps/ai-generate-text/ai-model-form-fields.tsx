@@ -22,13 +22,18 @@ export const AIModelFormFields = ({
 
       <TextareaField label={t("fields.prompt.label")} name="prompt" />
 
-      <InputField label={t("fields.userMessage.label")} name="userMessage" />
+      <InputField
+        label={t("fields.userMessage.label")}
+        name="userMessage"
+        required
+      />
 
       <CustomFieldSelect
         allowCreate={true}
         includeReserved={true}
         label={t("fields.outputCfId.label")}
         name="outputCfId"
+        required
       />
 
       <AIToolMultiSelect name="tools" />
@@ -44,6 +49,7 @@ export const AIModelFormFields = ({
         label={t("fields.temperature.label")}
         name="temperature"
         placeholder={t("fields.placeholders.temperatureHint")}
+        required
         type="number"
       />
 

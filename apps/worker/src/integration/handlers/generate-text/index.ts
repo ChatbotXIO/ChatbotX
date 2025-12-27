@@ -10,7 +10,6 @@ import { type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
 import {
   DEFAULT_MAX_TOKENS,
-  DEFAULT_TEMPERATURE,
   EMPTY_STRING,
   GEMINI_MIN_TOKENS,
   MAGIC_NUMBERS,
@@ -59,10 +58,7 @@ export async function handleAIGenerateText({
       typeof stepConfig.maxTokens === "number"
         ? stepConfig.maxTokens
         : DEFAULT_MAX_TOKENS
-    const temperature =
-      typeof stepConfig.temperature === "number"
-        ? stepConfig.temperature
-        : DEFAULT_TEMPERATURE
+    const temperature = stepConfig.temperature
 
     const finalMaxOutputTokens =
       aiConfig.provider === AI_PROVIDERS.GEMINI &&
@@ -210,7 +206,7 @@ async function saveResultToCustomField({
   chatbotId,
 }: {
   contactId: string | null
-  customFieldId: string | undefined
+  customFieldId: string
   fullText: string
   messageCount: number
   chatbotId: string
@@ -218,7 +214,7 @@ async function saveResultToCustomField({
   if (!contactId) {
     return
   }
-  if (!customFieldId) {
+  if (!customFieldId.trim()) {
     return
   }
   if (messageCount === 0) {
@@ -279,13 +275,6 @@ async function saveResultToCustomField({
         }
         break
       default:
-        logger.warn(
-          "[ai-generate-text] Reserved field not supported for Contact table",
-          {
-            customFieldId,
-            chatbotId,
-          },
-        )
         return
     }
 
@@ -305,10 +294,6 @@ async function saveResultToCustomField({
   })
 
   if (!customField) {
-    logger.warn("[ai-generate-text] Custom field not found", {
-      customFieldId,
-      chatbotId,
-    })
     return
   }
 

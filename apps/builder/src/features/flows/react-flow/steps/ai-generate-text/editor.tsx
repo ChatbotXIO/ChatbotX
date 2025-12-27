@@ -7,11 +7,11 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { BaseStepEditor } from "../base/editor"
-import { AI_PROVIDER_CONFIGS } from "../shared/ai-generate-text/config"
-import { AIModelDialog } from "../shared/ai-model-dialog"
-import { AIModelFormFields } from "../shared/ai-model-form-fields"
-import { useAIModelForm } from "../shared/use-ai-model-form"
+import { AIModelDialog } from "./ai-model-dialog"
+import { AIModelFormFields } from "./ai-model-form-fields"
+import { AI_PROVIDER_CONFIGS } from "./config"
 import { ModelSelect } from "./model-select"
+import { useAIModelForm } from "./use-ai-model-form"
 
 type AIGenerateTextEditorProps = {
   parentName: string

@@ -13,23 +13,29 @@ const DEFAULT_MAX_TOKENS = defaultStep.maxTokens
 export const aiModelFormInputSchema = z.object({
   model: z.string().optional(),
   prompt: z.string().optional(),
-  userMessage: z.string().optional(),
-  outputCfId: z.string().optional(),
+  userMessage: z.string().min(1, "User Message is required"),
+  outputCfId: z.string().min(1, "Save result to a custom field is required"),
   tools: z.array(z.string()).optional(),
   rememberConversation: z.array(z.string()).optional(),
-  temperature: z.union([z.number(), z.string()]).optional(),
+  temperature: z.union([z.number(), z.string()]).refine(
+    (val) => {
+      const num = typeof val === "string" ? Number.parseFloat(val) : val
+      return !Number.isNaN(num) && num >= 0 && num <= 2
+    },
+    { message: "Temperature is required and must be between 0 and 2" },
+  ),
   maxTokens: z.union([z.number(), z.string()]).optional(),
 })
 
 export const aiModelFormOutputSchema = z.object({
   model: z.string().optional(),
   prompt: z.string().optional(),
-  userMessage: z.string().optional(),
-  outputCfId: z.string().optional(),
+  userMessage: z.string().min(1),
+  outputCfId: z.string().min(1),
   tools: z.array(z.string()).optional(),
   rememberConversation: z.array(z.string()).optional(),
-  temperature: z.number().optional(),
-  maxTokens: z.number().optional(),
+  temperature: z.number().min(0).max(2),
+  maxTokens: z.number(),
 })
 
 export type AIModelFormInputData = z.infer<typeof aiModelFormInputSchema>
@@ -91,8 +97,8 @@ export const useAIModelForm = ({ parentName }: UseAIModelFormProps) => {
           : values.temperature,
       maxTokens:
         typeof values.maxTokens === "string"
-          ? Number.parseInt(values.maxTokens, 10)
-          : values.maxTokens,
+          ? Number.parseInt(values.maxTokens, 10) || DEFAULT_MAX_TOKENS
+          : (values.maxTokens ?? DEFAULT_MAX_TOKENS),
     }
 
     for (const field of FORM_FIELDS) {

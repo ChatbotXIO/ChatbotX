@@ -92,19 +92,8 @@ export const SUPPORTED_IMAGE_EXTENSIONS = [
 ] as const
 
 export const DEFAULT_MAX_TOKENS = 250
-export const DEFAULT_TEMPERATURE = 1
 export const GEMINI_MIN_TOKENS = 500
 export const MAX_CONVERSATION_HISTORY = 100
-
-export const DEFAULT_USER_MESSAGES = {
-  withPrompt: "Please answer based on the instructions provided.",
-  withoutPrompt: "Hello, can you help me?",
-} as const
-
-export const ERROR_MESSAGE_PATTERNS = {
-  EMPTY_MESSAGES: "messages must not be empty",
-  INVALID_PROMPT: "Invalid prompt",
-} as const
 
 export const TOOL_CHOICE = {
   AUTO: "auto",
@@ -114,12 +103,6 @@ export const EMPTY_STRING = ""
 
 export const TOOL_RESULT_PREFIX = "Tool "
 export const TOOL_RESULT_SUFFIX = " result: "
-
-export const ERROR_CONTEXT_MESSAGES = {
-  INVALID_PROMPT:
-    "Please ensure you have either a userMessage in the step config or enable rememberConversation to include conversation history.",
-  AI_GENERATION_FAILED: "AI generation failed:",
-} as const
 
 export const MAGIC_NUMBERS = {
   ZERO_MESSAGE_COUNT: 0,

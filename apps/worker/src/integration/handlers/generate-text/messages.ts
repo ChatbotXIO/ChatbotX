@@ -1,9 +1,6 @@
 import { prisma } from "@aha.chat/database"
 import { AIMessageRole, SenderType } from "@aha.chat/database/types"
-import {
-  DEFAULT_USER_MESSAGES,
-  MAX_CONVERSATION_HISTORY,
-} from "../automated-response/constants"
+import { MAX_CONVERSATION_HISTORY } from "../automated-response/constants"
 import type { AIGenerateTextStep, AIMessage, AIMessageRoleForAI } from "./types"
 
 export async function buildAIMessages(
@@ -43,21 +40,10 @@ export async function buildAIMessages(
     messages.reverse()
   }
 
-  if (step.userMessage) {
+  if (step.userMessage?.trim()) {
     messages.push({
       role: AIMessageRole.user as AIMessageRoleForAI,
-      content: step.userMessage,
-    })
-  }
-
-  if (messages.length === 0) {
-    const defaultMessage = step.prompt
-      ? DEFAULT_USER_MESSAGES.withPrompt
-      : DEFAULT_USER_MESSAGES.withoutPrompt
-
-    messages.push({
-      role: AIMessageRole.user as AIMessageRoleForAI,
-      content: defaultMessage,
+      content: step.userMessage.trim(),
     })
   }
 
