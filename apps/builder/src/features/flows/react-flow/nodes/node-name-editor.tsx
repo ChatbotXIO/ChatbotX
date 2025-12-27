@@ -48,15 +48,18 @@ export function NodeNameEditor({ activeNode }: { activeNode: FlowNode }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Name</DialogTitle>
+          <DialogTitle>
+            {t("messages.editFeature", { feature: t("fields.name.label") })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
           <form
-            className="flex w-full flex-col gap-3"
+            className="flex w-full flex-col gap-6"
             onSubmit={form.handleSubmit(onSubmit)}
           >
-            <InputField label="Name" name="name" />
+            <InputField label="Name" name="name" required />
+
             <DialogFooter>
               <Button
                 onClick={() => setOpen(false)}

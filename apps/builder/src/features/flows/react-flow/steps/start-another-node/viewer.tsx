@@ -1,7 +1,8 @@
 "use client"
 
 import type { StartAnotherNodeStepSchema } from "@aha.chat/flow-config"
-import { useNodes } from "@xyflow/react"
+import { useReactFlow } from "@xyflow/react"
+import { useMemo } from "react"
 
 type SendNodeStepViewerProps = {
   data: StartAnotherNodeStepSchema
@@ -9,8 +10,12 @@ type SendNodeStepViewerProps = {
 
 const SendNodeStepViewer = (props: SendNodeStepViewerProps) => {
   const { data } = props
-  const nodes = useNodes()
-  const targetNode = nodes.find((n) => n.id === data.nodeId)
+
+  const { getNodes } = useReactFlow()
+  const targetNode = useMemo(() => {
+    const nodes = getNodes()
+    return nodes.find((n) => n.id === data.nodeId)
+  }, [getNodes, data.nodeId])
 
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">

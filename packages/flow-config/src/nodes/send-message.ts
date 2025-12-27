@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { actionSteps } from "../shared"
+import { buttonStepSchema } from "../steps/button"
 import {
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
@@ -14,45 +15,54 @@ import { sendImageStepSchema } from "../steps/send-image"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
 import {
-  baseNodeDefaultFn,
+  baseNodeDataSchema,
   baseNodeSchema,
-  type NodeFnProps,
+  type DefaultNodeProps,
+  defaultNodeData,
   NodeType,
 } from "./base"
 
 export const sendMessageNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.sendMessage),
-  data: z.object({
-    name: z.string().trim().min(1).max(255),
-    isStartNode: z.boolean(),
-    beforeStep: chooseChannelStepSchema,
-    afterStep: z.null(),
-    steps: z.array(
-      z.union([
-        sendAudioStepSchema,
-        sendFileStepSchema,
-        sendFileStepSchema,
-        sendImageStepSchema,
-        sendTextStepSchema,
-        sendVideoStepSchema,
-        sendCardStepSchema,
-        sendCarouselStepSchema,
-        getUserInputStepSchema,
-        sendGifStepSchema,
-        ...actionSteps,
-      ]),
-    ),
+  data: baseNodeDataSchema.extend({
+    details: z.object({
+      beforeStep: chooseChannelStepSchema,
+      steps: z.array(
+        z.union([
+          sendAudioStepSchema,
+          sendFileStepSchema,
+          sendFileStepSchema,
+          sendImageStepSchema,
+          sendTextStepSchema,
+          sendVideoStepSchema,
+          sendCardStepSchema,
+          sendCarouselStepSchema,
+          getUserInputStepSchema,
+          sendGifStepSchema,
+          ...actionSteps,
+        ]),
+      ),
+      quickReplies: z.array(buttonStepSchema),
+    }),
   }),
 })
-export type SendMessageNodeSchema = typeof sendMessageNodeSchema
-export type SendMessageNodeProps = z.infer<typeof sendMessageNodeSchema>
+export type SendMessageNodeSchema = z.infer<typeof sendMessageNodeSchema>
 
 export const sendMessageNodeDefaultFn = (
-  props: NodeFnProps<SendMessageNodeProps>,
-): SendMessageNodeProps =>
-  baseNodeDefaultFn<SendMessageNodeProps>({
-    ...props,
-    type: NodeType.sendMessage,
-    beforeStep: chooseChannelStepDefaultFn(),
-    steps: [],
-  })
+  props: DefaultNodeProps,
+): SendMessageNodeSchema => ({
+  ...defaultNodeData(),
+  type: NodeType.sendMessage,
+  ...props.nodeProps,
+  data: {
+    name: "Send Message",
+    isStartNode: false,
+    ...props.dataProps,
+    details: {
+      beforeStep: chooseChannelStepDefaultFn(),
+      steps: [],
+      quickReplies: [],
+      ...props.detailProps,
+    },
+  },
+})

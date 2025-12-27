@@ -90,7 +90,7 @@ export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
                   size="sm"
                   type="submit"
                 >
-                  {form.formState.isSubmitting && (
+                  {!!form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
                   {t("actions.createFeature", {

@@ -21,7 +21,7 @@ export const SpreadsheetCustomFieldMapping = ({
 }: ISpreadsheetCustomFieldMappingProps) => {
   const t = useTranslations()
   const params = useParams<{ chatbotId: string }>()
-  const { control, setValue } = useFormContext()
+  const { control, setValue, getValues } = useFormContext()
   const spreadsheetId = useWatch({
     control,
     name: "spreadsheetId",
@@ -30,17 +30,20 @@ export const SpreadsheetCustomFieldMapping = ({
     control,
     name: "sheetName",
   })
+  const map = getValues("map")
 
   const worksheetHeadersUrl = `/api/chatbots/${params.chatbotId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
   const { data: headersData } = callAPI<{ data: string[] }>(worksheetHeadersUrl)
   const headers = headersData?.data ?? []
 
   useEffect(() => {
-    setValue(
-      "map",
-      headers.map((obj) => spreadsheetMappingDefaultFn(obj)),
-    )
-  }, [headers, setValue])
+    if (!map.length || map.every(({ header }: { header: string }) => !header)) {
+      setValue(
+        "map",
+        headers.map((obj) => spreadsheetMappingDefaultFn(obj)),
+      )
+    }
+  }, [map, headers, setValue])
 
   return (
     <div className="flex flex-col gap-2">

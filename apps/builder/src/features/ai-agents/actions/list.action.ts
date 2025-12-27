@@ -4,13 +4,10 @@ import { type Prisma, prisma } from "@aha.chat/database"
 import type { AIAgentModel } from "@aha.chat/database/types"
 import type { ListAIAgentsRequest } from "@/features/ai-agents/schemas/query"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export async function getAIAgents(
   input: ListAIAgentsRequest,
 ): Promise<PaginatedResponse<AIAgentModel>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
-
   const where: Prisma.AIAgentWhereInput = {
     chatbotId: input.chatbotId,
   }

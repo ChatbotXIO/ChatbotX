@@ -14,7 +14,7 @@ export const ZALO_API_ENDPOINTS = {
   },
   OA: {
     GET_PROFILE: "v2.0/oa/getoa",
-    GET_USER_PROFILE: "v2.0/oa/getprofile",
+    GET_USER_PROFILE: "v3.0/oa/user/detail",
     SEND_MESSAGE: "v3.0/oa/message/cs",
     UPLOAD_IMAGE: "v2.0/oa/upload/image",
     UPLOAD_FILE: "v2.0/oa/upload/file",

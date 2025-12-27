@@ -73,6 +73,8 @@ export const receiveMessage = async ({
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel
+  postbackAction: { flowVersionId: string; buttonId: string } | null
+  quickReplyAction: { flowVersionId: string; buttonId: string } | null
 }> => {
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
@@ -95,7 +97,8 @@ export const receiveMessage = async ({
     throw new Error("Unable to parse received message")
   }
 
-  const { message, conversation, postbackAction } = parsedMessage
+  const { message, conversation, postbackAction, quickReplyAction } =
+    parsedMessage
 
   const result = await prisma.$transaction(async (tx) => {
     let newContact = await tx.contact.findUnique({
@@ -218,8 +221,24 @@ export const receiveMessage = async ({
     })
   }
 
-  return result
+  if (quickReplyAction) {
+    await integrationQueue.add(IntegrationJobAction.sendFlowQuickReply, {
+      type: IntegrationJobAction.sendFlowQuickReply,
+      data: {
+        conversationId: result.conversation.id,
+        flowVersionId: quickReplyAction.flowVersionId,
+        buttonId: quickReplyAction.buttonId,
+      },
+    })
+  }
+
+  return {
+    message: result.message,
+    conversation: result.conversation,
+    postbackAction,
+    quickReplyAction,
+  }
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === InboxType.messenger
+  integrationType === InboxType.messenger || integrationType === InboxType.zalo

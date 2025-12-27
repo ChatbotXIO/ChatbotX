@@ -1,8 +1,7 @@
 "use client"
 
-import type { FieldModel, FlowModel } from "@aha.chat/database/types"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -21,44 +20,29 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAIFunctionAction } from "./actions/create-ai-function.action"
 import { createAIFunctionRequest } from "./schemas"
 
 type AIFunctionsCreateProps = {
-  flows: FlowModel[]
-  customFields: FieldModel[]
   onSuccess?: () => void
 }
 
-export function AIFunctionsCreate({
-  flows,
-  customFields,
-  onSuccess,
-}: AIFunctionsCreateProps) {
+export function AIFunctionsCreate({ onSuccess }: AIFunctionsCreateProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const t = useTranslations()
 
   const [isOpen, setIsOpen] = useState(false)
 
-  const flowOptions = useMemo(() => {
-    const options = flows.map((flow) => ({
-      label: flow.name,
-      value: flow.id,
-    }))
-    return options
-  }, [flows])
-
-  const customFieldOptions = useMemo(() => {
-    const options = customFields.map((field) => ({
-      label: field.name,
-      value: field.id,
-    }))
-    return options
-  }, [customFields])
+  const flowOptions = useFlowSelectOptions()
+  const customFieldOptions = useCustomFieldSelectOptions({
+    includeReserved: false,
+  })
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -148,7 +132,7 @@ export function AIFunctionsCreate({
                     placeholder="Attribute"
                   />
                   <MoveRightIcon className="size-10" />
-                  <SelectField
+                  <ComboboxField
                     name={`dataCollect.${index}.to`}
                     options={customFieldOptions}
                   />
@@ -170,7 +154,7 @@ export function AIFunctionsCreate({
               name="outputMessage"
               placeholder={t("fields.outputMessage.placeholder")}
             />
-            <SelectField
+            <ComboboxField
               label={t("fields.triggerFlowId.label")}
               name="triggerFlowId"
               options={flowOptions}

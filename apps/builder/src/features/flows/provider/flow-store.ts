@@ -1,5 +1,6 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { maxPerPageString } from "@/lib/shared-request"
 import type { FlowCollection, FlowResource } from "../schemas/get-flows-schema"
 
 export type FlowState = {
@@ -12,7 +13,7 @@ export type FlowState = {
 }
 
 export type FlowActions = {
-  initialize: () => Promise<void>
+  initialize: (chatbotId: string) => Promise<void>
   getAllActiveFlows: (chatbotId: string) => Promise<void>
 }
 
@@ -27,7 +28,7 @@ export const createFlowStore = () =>
     chatbotId: "",
     flows: [],
 
-    initialize: async () => {
+    initialize: async (chatbotId: string) => {
       const { initialized } = get()
 
       if (initialized) {
@@ -35,9 +36,8 @@ export const createFlowStore = () =>
       }
 
       set({ loading: true, error: null })
-
       try {
-        await get().getAllActiveFlows(get().chatbotId)
+        await get().getAllActiveFlows(chatbotId)
         set({
           loading: false,
           initialized: true,
@@ -59,7 +59,7 @@ export const createFlowStore = () =>
 
     getAllActiveFlows: async (chatbotId: string) => {
       const searchParams = new URLSearchParams({
-        perPage: "9999999",
+        perPage: maxPerPageString,
         active: "true",
       })
       const { data } = await ky

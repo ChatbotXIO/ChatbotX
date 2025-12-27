@@ -10,7 +10,7 @@ import {
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EllipsisVerticalIcon, TextIcon, Trash } from "lucide-react"
+import { EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
@@ -44,7 +44,7 @@ export function getSpreadsheetColumns({
         <DataTableColumnHeader column={column} title={t("googleSheets.link")} />
       ),
       cell: ({ row }) => (
-        <Link href={row.original.url} target="_black">
+        <Link className="truncate" href={row.original.url} target="_black">
           {row.original.url}
         </Link>
       ),
@@ -70,13 +70,14 @@ export function getSpreadsheetColumns({
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "update" })}
             >
-              <TextIcon className="mr-2" />
+              <PencilIcon />
               {t("actions.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem
+              className="text-destructive"
               onSelect={() => setRowAction({ row, variant: "delete" })}
             >
-              <Trash className="mr-2" />
+              <Trash2Icon className="text-destructive" />
               {t("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>

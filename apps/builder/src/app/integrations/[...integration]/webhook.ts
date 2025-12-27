@@ -17,6 +17,12 @@ export const handleWebhook = async (
   const organization = await findOrganization({
     domain,
   })
+  if (!organization) {
+    return new Response(JSON.stringify({ message: "Organization not found" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
 
   // Verify organization settings
   const orgSettings = organizationSettingsSchema.parse(organization?.settings)

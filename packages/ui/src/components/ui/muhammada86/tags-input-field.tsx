@@ -40,6 +40,7 @@ interface TagsInputFieldProps<TFieldValues extends FieldValues> {
   suggestions?: string[];
   variant?: "default" | "enterprise" | "minimal";
   tagVariant?: "default" | "secondary" | "outline" | "destructive";
+  onSelect?: (tags: string[]) => void;
 }
 
 const TagsInputFieldBase = <TFieldValues extends FieldValues>({
@@ -59,6 +60,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
   suggestions = [],
   variant = "enterprise",
   tagVariant = "default",
+  onSelect,
 }: TagsInputFieldProps<TFieldValues>) => {
   const { control } = useFormContext();
   const [inputValue, setInputValue] = useState("");
@@ -101,6 +103,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
     onChange([...currentTags, trimmedTag]);
     setInputValue("");
     setShowSuggestions(false);
+    onSelect && onSelect([...currentTags, trimmedTag])
   };
 
   const removeTag = (
@@ -110,6 +113,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
   ) => {
     const newTags = currentTags.filter((_, i) => i !== index);
     onChange(newTags);
+    onSelect && onSelect(newTags)
   };
 
   const handleKeyDown = (

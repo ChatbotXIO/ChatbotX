@@ -5,7 +5,7 @@ import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { GlobeIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import type { InboxResource } from "../schemas"
+import type { InboxResource } from "../schemas/resource"
 
 export default function InboxWebchatCard({ inbox }: { inbox: InboxResource }) {
   const t = useTranslations()

@@ -18,7 +18,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
 import { createCustomFieldSchema } from "./schemas/create-custom-field.schema"
@@ -157,6 +157,12 @@ function CreateCustomFieldForm({
         errorMapProps: {},
       },
     )
+
+  const { setValue } = form
+
+  useEffect(() => {
+    setValue("folderId", folderId)
+  }, [folderId, setValue])
 
   return (
     <Form {...form}>

@@ -6,7 +6,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, getFolders } from "@/features/folders/queries"
-import { listFoldersSearchParams } from "@/features/folders/schemas/list-folders-schema"
+import { listFoldersSearchParams } from "@/features/folders/schemas/query"
 
 export default async function SharedFolderSlot(props: {
   chatbotId: string

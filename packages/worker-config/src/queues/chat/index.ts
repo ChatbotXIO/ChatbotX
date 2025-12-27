@@ -3,6 +3,7 @@ import type {
   SendCardStepSchema,
   SendCarouselStepSchema,
   SendImageStepSchema,
+  SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
 } from "@aha.chat/flow-config"
@@ -36,6 +37,7 @@ export type ChatJobSendFlowStep = {
       | SendAudioStepSchema
       | SendCardStepSchema
       | SendCarouselStepSchema
+      | SendQuickReplyStepSchema
   }
 }
 

@@ -1,7 +1,7 @@
 import { InboxType } from "@aha.chat/database/types"
 import { use } from "react"
 import type { listInboxes } from "../queries"
-import type { InboxResource } from "../schemas"
+import type { InboxResource } from "../schemas/resource"
 import InboxMessengerCard from "./inbox-messenger-card"
 import InboxNewCard from "./inbox-new-card"
 import InboxWebchatCard from "./inbox-webchat-card"

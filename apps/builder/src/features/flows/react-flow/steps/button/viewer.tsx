@@ -1,6 +1,8 @@
 import type { ButtonStepProps } from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Handle, Position } from "@xyflow/react"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { Position } from "@xyflow/react"
+import { BaseHandle } from "@/components/base-handle"
 
 type ButtonStepViewerProps = {
   data: ButtonStepProps
@@ -14,8 +16,8 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
       <Button className="w-full" disabled type="button" variant="secondary">
         {data.label}
       </Button>
-      <Handle
-        className="right-3!"
+      <BaseHandle
+        className={cn("right-3!", !!data.buttonType && "bg-red-300")}
         id={data.id}
         position={Position.Right}
         type="source"

@@ -21,7 +21,7 @@ import { type ReactElement, useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
 import { assignConversationAction } from "../actions/assign-conversation.action"
-import { assignConversationSchema } from "../schemas/assign-conversation.schema"
+import { assignConversationSchema } from "../schemas/action"
 
 type AssignConversationDialogProps = {
   trigger: ReactElement

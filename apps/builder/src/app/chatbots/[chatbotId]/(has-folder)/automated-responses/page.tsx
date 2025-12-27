@@ -5,8 +5,6 @@ import { AutomatedResponsesTable } from "@/features/automated-response/automated
 import { AddAutomatedResponseButton } from "@/features/automated-response/components/add-automated-response-button"
 import { getAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schemas/get-automated-responses-schema"
-import { getFlows } from "@/features/flows/queries"
-import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
 
 export default async function AutomatedResponesPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -23,15 +21,6 @@ export default async function AutomatedResponesPage(props: {
       chatbotId,
     }),
   ])
-  const flowPromises = Promise.all([
-    getFlows({
-      chatbotId,
-      ...listFlowsSearchParams.parse({
-        active: "1",
-        perPage: "1000",
-      }),
-    }),
-  ])
 
   return (
     <>
@@ -43,11 +32,7 @@ export default async function AutomatedResponesPage(props: {
       </div>
 
       <Suspense>
-        <AutomatedResponsesTable
-          chatbotId={chatbotId}
-          flowPromises={flowPromises}
-          promises={promises}
-        />
+        <AutomatedResponsesTable chatbotId={chatbotId} promises={promises} />
       </Suspense>
     </>
   )

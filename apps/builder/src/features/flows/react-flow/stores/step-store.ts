@@ -1,72 +1,59 @@
 import type { OrganizationSettings } from "@aha.chat/database/types"
-import type { Node } from "@xyflow/react"
+import type { ButtonStepProps } from "@aha.chat/flow-config"
 import { createStore } from "zustand"
 
-type SelectOption = {
-  value: string
-  label: string
-}
-
-type FlowOption = {
-  value: string
-  label: string
-  nodes: Node[]
-}
-
-type TagOption = {
-  id: string
-  text: string
+type UpdatedButtonData = {
+  path: string
+  data: ButtonStepProps | null
 }
 
 export type StepState = {
-  isOpenDialog: boolean
+  activeFlowId: string | null
+
   buttonPath: string | null
+  updatedButtonData: UpdatedButtonData | null
+  openButtonEditorDialog: boolean
+
   openNodeDetailSheet: boolean
-  flowOptions: FlowOption[]
-  channelOptions: SelectOption[]
-  tagOptions: TagOption[]
   organizationSetings: OrganizationSettings | null
 }
 
 export type StepStore = StepState & {
-  setIsOpenDialog: (isOpen: boolean) => void
+  setActiveFlowId: (activeFlowId: string | null) => void
+
+  setOpenButtonEditorDialog: (open: boolean) => void
   setButtonPath: (buttonPath: string | null) => void
   setOpenNodeDetailSheet: (openNodeDetailSheet: boolean) => void
-  setFlowOptions: (flowOptions: FlowOption[]) => void
-  setChannelOptions: (channelOptions: SelectOption[]) => void
-  setTagOptions: (tagOptions: TagOption[]) => void
   setOrganizationSetings: (
     organizationSetings: OrganizationSettings | null,
   ) => void
+  onChangeButtonData: (updatedButtonData: UpdatedButtonData | null) => void
 }
 
 export const createStepStore = (initState?: Partial<StepState>) => {
   const defaultProps = {
-    isOpenDialog: false,
     buttonPath: null,
+    updatedButtonData: null,
+    openButtonEditorDialog: false,
+
     openNodeDetailSheet: false,
-    flowOptions: [],
-    channelOptions: [
-      {
-        value: "omnichannel",
-        label: "Omnichannel",
-      },
-    ],
-    tagOptions: [],
     organizationSetings: null,
+    activeFlowId: null,
   }
 
   return createStore<StepStore>()((set) => ({
     ...defaultProps,
     ...initState,
-    setIsOpenDialog: (isOpenDialog) => set({ isOpenDialog }),
+    setOpenButtonEditorDialog: (openButtonEditorDialog) =>
+      set({ openButtonEditorDialog }),
     setButtonPath: (buttonPath) => set({ buttonPath }),
     setOpenNodeDetailSheet: (openNodeDetailSheet) =>
       set({ openNodeDetailSheet }),
-    setFlowOptions: (flowOptions) => set({ flowOptions }),
-    setChannelOptions: (channelOptions) => set({ channelOptions }),
-    setTagOptions: (tagOptions) => set({ tagOptions }),
     setOrganizationSetings: (organizationSetings) =>
       set({ organizationSetings }),
+    onChangeButtonData: (updatedButtonData: UpdatedButtonData | null) => {
+      set({ updatedButtonData })
+    },
+    setActiveFlowId: (activeFlowId) => set({ activeFlowId }),
   }))
 }

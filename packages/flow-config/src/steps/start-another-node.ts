@@ -5,7 +5,7 @@ import { StepType } from "./step-action"
 export const startAnotherNodeStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.startAnotherNode),
-  nodeId: z.cuid2().nullable(),
+  nodeId: z.cuid2(),
   viewOnly: z.boolean().optional(),
 })
 
@@ -18,6 +18,6 @@ export const startAnotherNodeStepDefaultFn = (
 ): StartAnotherNodeStepSchema => ({
   id: createId(),
   stepType: StepType.startAnotherNode,
-  nodeId: null,
+  nodeId: "",
   ...props,
 })

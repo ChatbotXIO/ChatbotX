@@ -9,7 +9,7 @@ import {
 import {
   type CreateFolderSchema,
   createFolderSchema,
-} from "@/features/folders/schemas/create-folder-schema"
+} from "@/features/folders/schemas/action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 

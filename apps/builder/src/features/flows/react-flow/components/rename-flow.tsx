@@ -89,11 +89,11 @@ export function RenameFlowDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("fields.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
-                  <Button size="sm" type="button" variant="secondary">
+                  <Button size="sm" type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>
                 </DialogClose>

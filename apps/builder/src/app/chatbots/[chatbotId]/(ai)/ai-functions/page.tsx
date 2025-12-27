@@ -2,10 +2,8 @@ import { Suspense } from "react"
 import AIFunctionsTable from "@/features/ai-functions/ai-functions-table"
 import { getAIFunctions } from "@/features/ai-functions/queries"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
-import { listCustomFields } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
-import { getFlows } from "@/features/flows/queries"
-import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
+import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 type AIFunctionsPageProps = {
   params: Promise<{
@@ -22,25 +20,17 @@ export default async function AIFunctionsPage({
     getAIFunctions({
       chatbotId,
     }),
-    getFlows({
-      chatbotId,
-      ...listFlowsSearchParams.parse({
-        perPage: "99999",
-      }),
-    }),
-    listCustomFields({
-      chatbotId,
-      ...listCustomFieldsSearchParams.parse({
-        perPage: "99999",
-      }),
-    }),
   ])
 
   return (
     <div className="space-y-6">
       <AIHubBreadcrumb />
       <Suspense>
-        <AIFunctionsTable promises={promises} />
+        <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+          <CustomFieldStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+            <AIFunctionsTable promises={promises} />
+          </CustomFieldStoreProvider>
+        </FlowStoreProvider>
       </Suspense>
     </div>
   )

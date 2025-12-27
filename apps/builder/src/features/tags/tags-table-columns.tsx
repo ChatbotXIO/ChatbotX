@@ -13,7 +13,14 @@ import {
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EllipsisVerticalIcon } from "lucide-react"
+import {
+  EllipsisVerticalIcon,
+  FingerprintIcon,
+  FolderUpIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
+import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 
 type TagWithContacts = TagModel & {
@@ -25,11 +32,13 @@ type TagWithContacts = TagModel & {
 type GetColumnsProps = {
   setRowAction: Dispatch<SetStateAction<DataTableRowAction<TagModel> | null>>
   handleCopy: (id: string) => void
+  t: ReturnType<typeof useTranslations>
 }
 
 export function getTagColumns({
   setRowAction,
   handleCopy,
+  t,
 }: GetColumnsProps): ColumnDef<TagWithContacts>[] {
   return [
     {
@@ -60,24 +69,35 @@ export function getTagColumns({
       enableHiding: false,
     },
     {
+      id: "name",
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => <div>{row.original.name}</div>,
       size: 300,
+      meta: {
+        label: t("fields.name.label"),
+        placeholder: t("fields.name.searchPlaceholder"),
+        variant: "text",
+      },
+      enableColumnFilter: true,
       enableSorting: true,
-      enableHiding: false,
     },
     {
-      accessorKey: "contactsCount",
+      id: "contacts",
+      accessorKey: "contacts",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Contacts" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.contacts.label")}
+        />
       ),
       cell: ({ row }) => <div>{row.original._count?.contacts ?? 0}</div>,
       size: 50,
-      enableSorting: false,
-      enableHiding: false,
+      meta: {
+        label: t("fields.contacts.label"),
+      },
     },
     {
       id: "actions",
@@ -97,18 +117,26 @@ export function getTagColumns({
             <DropdownMenuItem
               onSelect={() => setRowAction({ row, variant: "update" })}
             >
-              Update
-              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCopy(`${row.original.id}`)}>
-              Get id
+              <PencilIcon />
+              {t("actions.update")}
               <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem
+              onClick={() => setRowAction({ row, variant: "move" })}
+            >
+              <FolderUpIcon />
+              {t("actions.move")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleCopy(`${row.original.id}`)}>
+              <FingerprintIcon />
+              {t("actions.getID")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
               onSelect={() => setRowAction({ row, variant: "delete" })}
             >
-              Delete
-              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+              <Trash2Icon className="text-destructive" />
+              {t("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

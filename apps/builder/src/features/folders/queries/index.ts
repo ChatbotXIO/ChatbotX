@@ -4,19 +4,20 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
-} from "../schemas/list-folders-schema"
-import { FolderException } from "../schemas/types"
+} from "../schemas/query"
+import { FolderException } from "../schemas/resource"
 
 export const getFolders = async (
   input: ListFoldersSearchParams,
 ): Promise<{ data: FolderModel[] }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const { folderId, ...others } = input
+  const { folderId, ...rest } = input
 
   const data = await prisma.folder.findMany({
     where: {
-      ...others,
+      ...rest,
+      folderType: rest.folderType as FolderType,
       parentId: !folderId || input.folderId === "" ? null : input.folderId,
     },
     orderBy: [

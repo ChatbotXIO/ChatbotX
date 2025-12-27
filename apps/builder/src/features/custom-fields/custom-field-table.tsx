@@ -1,6 +1,10 @@
 "use client"
 
-import { type FieldModel, FieldType } from "@aha.chat/database/types"
+import {
+  type FieldModel,
+  FieldType,
+  FolderType,
+} from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -16,9 +20,15 @@ import { Switch } from "@aha.chat/ui/components/ui/switch"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontalIcon } from "lucide-react"
+import {
+  FolderUpIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { ChangeFolderDialog } from "../folders/change-folder"
 import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
@@ -76,9 +86,13 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         enableHiding: false,
       },
       {
+        id: "name",
         accessorKey: "name",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.name.label")}
+          />
         ),
         cell: ({ row }) => (
           <div>
@@ -86,30 +100,48 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
             <div className="text-gray-400">{row.original.description}</div>
           </div>
         ),
+        meta: {
+          label: t("fields.name.label"),
+          placeholder: t("fields.name.searchPlaceholder"),
+          variant: "text",
+        },
+        enableColumnFilter: true,
         enableSorting: true,
-        enableHiding: false,
       },
       {
+        id: "Type",
         accessorKey: "customFieldType",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Type" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.type.label")}
+          />
         ),
         cell: ({ row }) => (
           <CustomFieldTypeLabel
             customFieldType={row.original.customFieldType}
           />
         ),
-        enableSorting: true,
-        enableHiding: false,
+        meta: {
+          label: t("fields.type.label"),
+        },
+        size: 100,
+        enableSorting: false,
       },
       {
+        id: "Inbox",
         accessorKey: "showInInbox",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Inbox" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.inbox.label")}
+          />
         ),
         cell: ({ row }) => <Switch checked={row.original.showInInbox} />,
-        enableSorting: true,
-        enableHiding: false,
+        enableSorting: false,
+        meta: {
+          label: t("fields.inbox.label"),
+        },
       },
       {
         id: "actions",
@@ -126,12 +158,20 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}
               >
+                <PencilIcon />
                 {t("actions.edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setRowAction({ row, variant: "move" })}
+              >
+                <FolderUpIcon />
+                {t("actions.move")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
                 variant="destructive"
               >
+                <Trash2Icon />
                 {t("actions.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -185,6 +225,15 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         customField={rowAction?.row.original || null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "update"}
+      />
+
+      <ChangeFolderDialog
+        chatbotId={chatbotId}
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType={FolderType.customField}
+        modelId={rowAction?.row.original?.id || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
       />
     </>
   )

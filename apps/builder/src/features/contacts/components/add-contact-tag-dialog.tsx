@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
+import { useTagStore } from "@/features/tags/provider/tag-store-context"
 import { addContactTagAction } from "../actions/add-contact-tag.action"
 import { addContactTagRequest } from "../schemas/contact-tag"
 
@@ -38,36 +39,40 @@ export default function AddContactTagDialog({
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const tagOptions = useTagOptions()
+  const { getAllActiveTags } = useTagStore((state) => state)
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    addContactTagAction.bind(null, chatbotId),
-    zodResolver(addContactTagRequest),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success(
-            t("messages.updatedSuccess", {
-              feature: t("fields.contact.label"),
-            }),
-          )
-          setOpen(false)
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      addContactTagAction.bind(null, chatbotId),
+      zodResolver(addContactTagRequest),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(
+              t("messages.updatedSuccess", {
+                feature: t("fields.contact.label"),
+              }),
+            )
+            getAllActiveTags(chatbotId)
+            setOpen(false)
+            resetFormAndAction()
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            ids,
+            tags: [],
+          },
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          ids,
-          tags: [],
-        },
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>

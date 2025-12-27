@@ -34,9 +34,9 @@ export const FlowStoreProvider = ({
 
   useEffect(() => {
     if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().getAllActiveFlows(chatbotId)
+      storeRef.current.getState().initialize(chatbotId)
     }
-  }, [chatbotId, autoInitialize])
+  }, [autoInitialize, chatbotId])
 
   return (
     <FlowStoreContext.Provider value={storeRef.current}>

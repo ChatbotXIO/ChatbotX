@@ -3,7 +3,8 @@
 import type { StartExternalNodeStepSchema } from "@aha.chat/flow-config"
 import { ExternalLinkIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useStepStore } from "../../stores/step-store-provider"
+import { useMemo } from "react"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { BaseStepViewer } from "../base/viewer"
 
 const StartExternalNodeStepViewer = ({
@@ -12,18 +13,23 @@ const StartExternalNodeStepViewer = ({
   data: StartExternalNodeStepSchema
 }) => {
   const t = useTranslations()
+  const flowOptions = useFlowSelectOptions()
 
-  const { flowOptions } = useStepStore((state) => state)
-  const flow = flowOptions.find((fl) => fl.value === data.flowId)
+  const targetFlow = useMemo(
+    () => flowOptions.find((v) => v.value === data.flowId),
+    [flowOptions, data.flowId],
+  )
 
   return (
     <BaseStepViewer
       icon={ExternalLinkIcon}
       title={t("flows.actions.sendExternalFlow")}
     >
-      <div className="flex flex-col">
-        {flow && <div>Flow: {flow.label}</div>}
-      </div>
+      {targetFlow && (
+        <div className="flex flex-col">
+          <div>Flow: {targetFlow.label}</div>
+        </div>
+      )}
     </BaseStepViewer>
   )
 }

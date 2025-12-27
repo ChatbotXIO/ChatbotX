@@ -9,7 +9,7 @@ import {
 import {
   type AssignConversationSchema,
   assignConversationSchema,
-} from "@/features/conversations/schemas/assign-conversation.schema"
+} from "@/features/conversations/schemas/action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 

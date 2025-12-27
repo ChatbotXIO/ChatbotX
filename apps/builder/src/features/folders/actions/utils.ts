@@ -1,5 +1,5 @@
 import { type FolderType, prisma } from "@aha.chat/database"
-import { FolderException } from "../schemas/types"
+import { FolderException } from "../schemas/resource"
 
 export const ensureFolderIdIsExists = async (
   id: string,

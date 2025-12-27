@@ -20,6 +20,7 @@ import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
+import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
 export const sendOutgoingMessage = async (
@@ -93,6 +94,7 @@ export function* convertMessageToFacebookMessage(
 const buildMessagePayload = (
   conversation: ConversationEntity,
   message: FacebookMessageAttachmentPayload | FacebookMessage,
+  messagingType: "MESSAGE_TAG" | "RESPONSE" = "MESSAGE_TAG",
 ): FacebookSendMessageRequest => {
   const recipientId = conversation.contact?.sourceId
 
@@ -106,8 +108,8 @@ const buildMessagePayload = (
       ...message,
       metadata: MESSENGER_MESSAGE_METADATA,
     },
-    messaging_type: "MESSAGE_TAG",
-    tag: "ACCOUNT_UPDATE",
+    messaging_type: messagingType,
+    tag: messagingType === "MESSAGE_TAG" ? "ACCOUNT_UPDATE" : undefined,
   }
 }
 
@@ -133,6 +135,12 @@ export async function* convertFlowStepToFacebookMessage(
     case StepType.sendGif:
       yield* convertFlowStepGif(step.url) as Generator<FacebookMessage>
       break
+    case StepType.sendQuickReply:
+      yield* convertFlowStepQuickReply(
+        flowVersionId,
+        step,
+      ) as Generator<FacebookMessage>
+      break
     default:
       break
   }
@@ -152,7 +160,13 @@ export const sendFlowStep = async (
     )) {
       await sendMessage(
         ctx.auth,
-        buildMessagePayload(conversation, facebookMessage),
+        buildMessagePayload(
+          conversation,
+          facebookMessage,
+          step.stepType === StepType.sendQuickReply
+            ? "RESPONSE"
+            : "MESSAGE_TAG",
+        ),
       )
       logger.info(`Message sent for PSID: ${conversation.sourceId}`)
     }

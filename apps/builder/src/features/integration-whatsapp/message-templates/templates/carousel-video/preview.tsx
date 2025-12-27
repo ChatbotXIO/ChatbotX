@@ -166,7 +166,7 @@ const TemplateCarouselVideoPreviewComponent = (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="-translate-y-1/2 absolute top-1/2 right-0 size-8 shrink-0"
+                    className="absolute top-1/2 right-0 size-8 shrink-0 -translate-y-1/2"
                     disabled={current === fields.length - 1}
                     onClick={onNext}
                     type="button"
@@ -185,7 +185,7 @@ const TemplateCarouselVideoPreviewComponent = (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    className="-left-0 -translate-y-1/2 absolute top-1/2 size-8 shrink-0"
+                    className="absolute top-1/2 -left-0 size-8 shrink-0 -translate-y-1/2"
                     disabled={current === 0}
                     onClick={onPrev}
                     type="button"

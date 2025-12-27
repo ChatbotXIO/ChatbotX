@@ -47,12 +47,10 @@ export function FacebookPages({
             router.push("/")
           }
         },
-        onError: () => {
-          toast.error(
-            t("messages.createdFailed", {
-              feature: t("messenger.title"),
-            }),
-          )
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
       errorMapProps: {},

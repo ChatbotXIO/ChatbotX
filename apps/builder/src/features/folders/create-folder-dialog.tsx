@@ -20,8 +20,9 @@ import { useTranslations } from "next-intl"
 import { parseAsString, useQueryState } from "nuqs"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { createFolderAction } from "@/features/folders/actions/create-folder-action"
-import { createFolderSchema } from "@/features/folders/schemas/create-folder-schema"
+import { createFolderAction } from "@/features/folders/actions/create-folder.action"
+import { createFolderSchema } from "@/features/folders/schemas/action"
+import { useFolderStore } from "./provider/folder-store-context"
 
 export function CreateFolderDialog({
   chatbotId,
@@ -36,6 +37,7 @@ export function CreateFolderDialog({
   const [open, setOpen] = useState(false)
 
   const [folderId] = useQueryState("folderId", parseAsString)
+  const { getAllFolders } = useFolderStore((state) => state)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -51,6 +53,7 @@ export function CreateFolderDialog({
             )
             resetFormAndAction()
             setOpen(false)
+            getAllFolders()
             router.refresh()
           },
           onError: ({ error }) => {

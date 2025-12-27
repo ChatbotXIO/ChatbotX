@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
+import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import { disconnectOpenAIAction } from "./actions/disconnect.action"
 import ChangeAutoReply from "./components/change-auto-reply"
@@ -39,6 +40,11 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
     useAction(disconnectOpenAIAction.bind(null, chatbotId), {
       onSuccess: () => {
         router.refresh()
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     })
 

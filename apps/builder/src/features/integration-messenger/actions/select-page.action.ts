@@ -1,6 +1,6 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { Prisma, prisma } from "@aha.chat/database"
 import { InboxStatus } from "@aha.chat/database/enums"
 import type { UserModel } from "@aha.chat/database/types"
 import { IntegrationType } from "@aha.chat/database/types"
@@ -119,8 +119,15 @@ export const selectPageAction = authActionClient
           chatbotId,
         }
       } catch (error) {
-        logger.error("Failed to select Facebook page", { error })
-        throw new Error("Failed to select Facebook page")
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          throw new BaseException("Page already connected")
+        }
+
+        logger.error("Failed to connect Facebook page", { error })
+        throw new BaseException("Failed to connect Facebook page")
       }
     },
   )

@@ -13,17 +13,24 @@ import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { receiveMessage } from "./handlers/received-message"
 import { sendFlowNode } from "./handlers/send-flow-node"
-import { sendFlowPostback } from "./handlers/send-flow-postback"
+import {
+  sendFlowPostback,
+  sendFlowQuickReply,
+} from "./handlers/send-flow-postback"
 
 const worker = new Worker(
   QueueName.integration,
   async (job: Job<IntegrationJobData>) => {
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
-        const { message } = await receiveMessage(job.data.data)
+        const { message, postbackAction } = await receiveMessage(job.data.data)
 
         // Trigger automated response if the message is from a user
-        if (message.content && message.senderType === SenderType.contact) {
+        if (
+          !postbackAction &&
+          message.content &&
+          message.senderType === SenderType.contact
+        ) {
           await integrationQueue.add(
             IntegrationJobAction.triggerAutomatedResponse,
             {
@@ -44,7 +51,10 @@ const worker = new Worker(
         await sendFlowPostback(job.data.data)
         return
       }
-
+      case IntegrationJobAction.sendFlowQuickReply: {
+        await sendFlowQuickReply(job.data.data)
+        return
+      }
       case IntegrationJobAction.triggerAutomatedResponse: {
         await triggerAutomatedResponse(job.data.data)
         return

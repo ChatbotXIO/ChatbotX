@@ -4,31 +4,37 @@ import {
   splitTrafficStepSchema,
 } from "../steps/split-traffic"
 import {
-  baseNodeDefaultFn,
+  baseNodeDataSchema,
   baseNodeSchema,
-  type NodePosition,
+  type DefaultNodeProps,
+  defaultNodeData,
   NodeType,
 } from "./base"
 
 export const splitTrafficNodeSchema = baseNodeSchema.extend({
   type: z.literal(NodeType.splitTraffic),
-  data: z.object({
-    name: z.string().trim().min(1).max(255),
-    isStartNode: z.boolean(),
-    beforeStep: splitTrafficStepSchema,
-    steps: z.null(),
-    afterStep: z.null(),
+  data: baseNodeDataSchema.extend({
+    details: z.object({
+      beforeStep: splitTrafficStepSchema,
+    }),
   }),
 })
 
 export type SplitTrafficNodeSchema = z.input<typeof splitTrafficNodeSchema>
 
-export const splitTrafficNodeDefaultFn = (props: {
-  name: string
-  position: NodePosition
-}): SplitTrafficNodeSchema =>
-  baseNodeDefaultFn<SplitTrafficNodeSchema>({
-    ...props,
-    type: NodeType.splitTraffic,
-    beforeStep: splitTrafficStepDefaultFn(),
-  })
+export const splitTrafficNodeDefaultFn = (
+  props: DefaultNodeProps,
+): SplitTrafficNodeSchema => ({
+  ...defaultNodeData(),
+  type: NodeType.splitTraffic,
+  ...props.nodeProps,
+  data: {
+    name: "Split Traffic",
+    isStartNode: false,
+    ...props.dataProps,
+    details: {
+      beforeStep: splitTrafficStepDefaultFn(),
+      ...props.detailProps,
+    },
+  },
+})
