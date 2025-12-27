@@ -1,6 +1,10 @@
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import { Queue } from "bullmq"
-import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
+import {
+  defaultJobOptions,
+  fakeQueue,
+  getRedisConnection,
+} from "../../lib/connection"
 import { QueueName } from "../../lib/types"
 
 export const IntegrationJobAction = {
@@ -71,10 +75,10 @@ export type IntegrationJobData =
   | IntegrationJobTriggerAutomatedResponse
   | IntegrationJobSendBroadcast
 
-export const integrationQueue = new Queue<IntegrationJobData>(
-  QueueName.integration,
-  {
-    connection: getRedisConnection(),
-    defaultJobOptions,
-  },
-)
+export const integrationQueue =
+  process.env.NEXT_PHASE !== "phase-production-build"
+    ? new Queue<IntegrationJobData>(QueueName.integration, {
+        connection: getRedisConnection(),
+        defaultJobOptions,
+      })
+    : fakeQueue
