@@ -13,6 +13,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@aha.chat/worker-config"
+import { handleAIGenerateImage } from "./ai-generate-image/index"
 import {
   addContactNotes,
   addContactTag,
@@ -36,7 +37,7 @@ import {
   unassignConversation,
   unfollowConversation,
 } from "./conversation-handler"
-import { handleAIGenerateText } from "./generate-text"
+import { handleAIGenerateText } from "./generate-text/index"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -157,7 +158,7 @@ export const flowStepHandlers: Record<
   [StepType.openWebsite]: undefined,
   [StepType.aiAnalyzeImage]: undefined,
   [StepType.aiDeleteMessageHistory]: undefined,
-  [StepType.aiGenerateImage]: undefined,
+  [StepType.aiGenerateImage]: handleAIGenerateImage,
   [StepType.aiGenerateTextAgent]: undefined,
   [StepType.aiGenerateText]: handleAIGenerateText,
   [StepType.aiSpeechToText]: undefined,

@@ -71,6 +71,14 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         stepType: StepType.aiGenerateText,
         provider: "openai",
       },
+      {
+        label: t("fields.flows.aiGenerateImage.label", {
+          aiName: t("fields.openai.label"),
+        }),
+        icon: BotIcon,
+        stepType: StepType.aiGenerateImage,
+        provider: "openai",
+      },
     ],
   },
   {
@@ -84,6 +92,14 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         }),
         icon: BotIcon,
         stepType: StepType.aiGenerateText,
+        provider: "gemini",
+      },
+      {
+        label: t("fields.flows.aiGenerateImage.label", {
+          aiName: t("fields.gemini.label"),
+        }),
+        icon: BotIcon,
+        stepType: StepType.aiGenerateImage,
         provider: "gemini",
       },
     ],

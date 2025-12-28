@@ -2,7 +2,11 @@ import {
   addNotesNodeSchema,
   edgeSchema,
   flowVersionSchema,
+  performActionNodeSchema,
   sendMessageNodeSchema,
+  splitTrafficNodeSchema,
+  startFlowNodeSchema,
+  waitNodeSchema,
 } from "@aha.chat/flow-config"
 import { z } from "zod"
 
@@ -29,7 +33,14 @@ export type PublishFlowSchema = z.infer<typeof publishFlowSchema>
 
 export const updateFlowVersionSchema = z.object({
   nodes: z.array(
-    z.discriminatedUnion("type", [sendMessageNodeSchema, addNotesNodeSchema]),
+    z.discriminatedUnion("type", [
+      sendMessageNodeSchema,
+      addNotesNodeSchema,
+      performActionNodeSchema,
+      startFlowNodeSchema,
+      splitTrafficNodeSchema,
+      waitNodeSchema,
+    ]),
   ),
   edges: z.array(
     z.object({

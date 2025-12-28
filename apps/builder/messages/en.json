@@ -55,6 +55,7 @@
     "followConversation": "Follow Conversation",
     "formatDate": "Format Date",
     "generateCode": "Generate Code",
+    "generateImage": "Generate Image",
     "generateText": "Generate Text",
     "getDataFromJson": "Get Data From JSON",
     "getEmbedCode": "Get Embed Code",
@@ -696,6 +697,9 @@
       "label": "Flow Node"
     },
     "flows": {
+      "aiGenerateImage": {
+        "label": "{aiName}: Generate Image"
+      },
       "aiGenerateText": {
         "label": "{aiName}: Generate Text"
       },
@@ -882,6 +886,24 @@
     "prompt": {
       "label": "Prompt"
     },
+    "quality": {
+      "label": "Quality",
+      "options": {
+        "auto": "Auto",
+        "hd": "High (HD)",
+        "md": "Medium",
+        "ld": "Low"
+      }
+    },
+    "size": {
+      "label": "Size",
+      "options": {
+        "auto": "Auto",
+        "s256": "256x256",
+        "s512": "512x512",
+        "s1024": "1024x1024"
+      }
+    },
     "promptMessages": {
       "label": "Prompt Messages",
       "role": {
@@ -908,9 +930,6 @@
     },
     "showLogo": {
       "label": "Show Personal Logo"
-    },
-    "size": {
-      "label": "Size"
     },
     "sort": {
       "label": "Sort",

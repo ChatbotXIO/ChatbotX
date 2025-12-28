@@ -1,13 +1,7 @@
-import { prisma } from "@aha.chat/database"
-import {
-  AIMessageRole,
-  FieldType,
-  type Gender,
-  reservedCustomFieldNames,
-} from "@aha.chat/database/types"
 import { AI_PROVIDERS } from "@aha.chat/flow-config"
 import { type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
+import { saveResultToCustomField } from "../ai-shared-utils"
 import {
   DEFAULT_MAX_TOKENS,
   EMPTY_STRING,
@@ -151,11 +145,11 @@ async function handleToolCallsFollowUp({
   const followUpMessages: ModelMessage[] = [
     ...messages,
     {
-      role: AIMessageRole.assistant,
+      role: "assistant",
       content: fullText || TEXT.assistantFoundPrefix,
     },
     {
-      role: AIMessageRole.user,
+      role: "user",
       content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
     },
   ]
@@ -196,121 +190,4 @@ async function handleToolCallsFollowUp({
       chatbotId: conversation.chatbotId,
     })
   }
-}
-
-async function saveResultToCustomField({
-  contactId,
-  customFieldId,
-  fullText,
-  messageCount,
-  chatbotId,
-}: {
-  contactId: string | null
-  customFieldId: string
-  fullText: string
-  messageCount: number
-  chatbotId: string
-}): Promise<void> {
-  if (!contactId) {
-    return
-  }
-  if (!customFieldId.trim()) {
-    return
-  }
-  if (messageCount === 0) {
-    return
-  }
-  if (!fullText) {
-    return
-  }
-
-  const isReservedField = Object.values(reservedCustomFieldNames).includes(
-    customFieldId as (typeof reservedCustomFieldNames)[keyof typeof reservedCustomFieldNames],
-  )
-
-  if (isReservedField) {
-    const updateData: Partial<{
-      firstName: string
-      lastName: string
-      email: string
-      phoneNumber: string
-      avatar: string
-      gender: Gender
-    }> = {}
-
-    switch (customFieldId) {
-      case reservedCustomFieldNames.first_name:
-        updateData.firstName = fullText
-        break
-      case reservedCustomFieldNames.last_name:
-        updateData.lastName = fullText
-        break
-      case reservedCustomFieldNames.full_name: {
-        const trimmedName = fullText.trim()
-        const spaceIndex = trimmedName.indexOf(" ")
-        if (spaceIndex > 0) {
-          updateData.firstName = trimmedName.substring(0, spaceIndex)
-          updateData.lastName = trimmedName.substring(spaceIndex + 1).trim()
-        } else if (trimmedName.length > 0) {
-          updateData.firstName = trimmedName
-        }
-        break
-      }
-      case reservedCustomFieldNames.email:
-        updateData.email = fullText
-        break
-      case reservedCustomFieldNames.phone_number:
-        updateData.phoneNumber = fullText
-        break
-      case reservedCustomFieldNames.avatar:
-        updateData.avatar = fullText
-        break
-      case reservedCustomFieldNames.gender:
-        if (
-          fullText === "male" ||
-          fullText === "female" ||
-          fullText === "unknown"
-        ) {
-          updateData.gender = fullText as Gender
-        }
-        break
-      default:
-        return
-    }
-
-    await prisma.contact.update({
-      where: { id: contactId },
-      data: updateData,
-    })
-    return
-  }
-
-  const customField = await prisma.field.findFirst({
-    where: {
-      id: customFieldId,
-      fieldType: FieldType.customField,
-      chatbotId,
-    },
-  })
-
-  if (!customField) {
-    return
-  }
-
-  await prisma.contactCustomField.upsert({
-    where: {
-      contactId_customFieldId: {
-        contactId,
-        customFieldId,
-      },
-    },
-    update: {
-      value: fullText,
-    },
-    create: {
-      contactId,
-      customFieldId,
-      value: fullText,
-    },
-  })
 }

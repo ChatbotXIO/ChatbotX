@@ -1,71 +1,20 @@
-import { prisma } from "@aha.chat/database"
-import { AI_PROVIDERS, AIGenerateTextProvider } from "@aha.chat/flow-config"
+import { AI_PROVIDERS } from "@aha.chat/flow-config"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import type { LanguageModel } from "ai"
+import { fetchAIProviderConfig } from "../ai-shared-utils"
 import type { AIGenerateTextStep, AIProviderConfig } from "./types"
 
 export async function getAIProviderConfig(
   step: AIGenerateTextStep,
   chatbotId: string,
 ): Promise<AIProviderConfig | null> {
-  const provider = (step as { provider?: string }).provider
-
-  if (provider === undefined || step.model === undefined) {
-    return null
-  }
-
-  switch (provider) {
-    case AIGenerateTextProvider.OPENAI: {
-      const integration = await prisma.integrationOpenAI.findFirst({
-        where: { chatbotId },
-      })
-
-      if (!integration?.autoReply) {
-        return null
-      }
-
-      const auth = integration.auth as { secretText?: string } | undefined
-      const apiKey = auth?.secretText
-
-      if (!apiKey?.trim()) {
-        return null
-      }
-
-      return {
-        provider: AI_PROVIDERS.OPENAI,
-        model: step.model,
-        apiKey,
-      }
-    }
-
-    case AIGenerateTextProvider.GEMINI: {
-      const integration = await prisma.integrationGemini.findFirst({
-        where: { chatbotId },
-      })
-
-      if (!integration?.autoReply) {
-        return null
-      }
-
-      const auth = integration.auth as { secretText?: string } | undefined
-      const apiKey = auth?.secretText
-
-      if (!apiKey?.trim()) {
-        return null
-      }
-
-      return {
-        provider: AI_PROVIDERS.GEMINI,
-        model: step.model,
-        apiKey,
-      }
-    }
-
-    default:
-      return null
-  }
+  return (await fetchAIProviderConfig(
+    chatbotId,
+    step.provider,
+    step.model,
+  )) as AIProviderConfig | null
 }
 
 export function createAIModel(

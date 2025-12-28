@@ -62,6 +62,7 @@
     "followConversation": "Theo dõi cuộc trò chuyện",
     "formatDate": "Định dạng ngày",
     "generateCode": "Tạo mã",
+    "generateImage": "Tạo hình ảnh",
     "generateText": "Tạo văn bản",
     "getDataFromJson": "Lấy dữ liệu từ JSON",
     "getEmbedCode": "Lấy mã nhúng",
@@ -702,6 +703,9 @@
       "label": "Nút luồng"
     },
     "flows": {
+      "aiGenerateImage": {
+        "label": "{aiName}: Tạo hình ảnh"
+      },
       "aiGenerateText": {
         "label": "{aiName}: Tạo văn bản"
       },
@@ -887,6 +891,24 @@
     "prompt": {
       "label": "Prompt"
     },
+    "quality": {
+      "label": "Chất lượng",
+      "options": {
+        "auto": "Tự động",
+        "hd": "Cao (HD)",
+        "md": "Trung bình",
+        "ld": "Thấp"
+      }
+    },
+    "size": {
+      "label": "Kích thước",
+      "options": {
+        "auto": "Tự động",
+        "s256": "256x256",
+        "s512": "512x512",
+        "s1024": "1024x1024"
+      }
+    },
     "promptMessages": {
       "label": "Tin nhắn prompt",
       "role": {
@@ -913,9 +935,6 @@
     },
     "showLogo": {
       "label": "Hiển thị logo cá nhân"
-    },
-    "size": {
-      "label": "Kích thước"
     },
     "sort": {
       "label": "Sắp xếp",

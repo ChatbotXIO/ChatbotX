@@ -16,57 +16,10 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
+import { replaceCustomFieldAttributes } from "../ai-shared-utils"
 import { AI_PROVIDERS, TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
-
-async function replaceCustomFieldAttributes(
-  message: string,
-  conversationId: string,
-): Promise<string> {
-  try {
-    const conversation = await prisma.conversation.findFirst({
-      where: { id: conversationId },
-      include: {
-        contact: {
-          include: {
-            contactCustomFields: {
-              include: {
-                customField: true,
-              },
-            },
-          },
-        },
-      },
-    })
-
-    if (!conversation?.contact) {
-      return message
-    }
-
-    const fieldMap = new Map<string, string>()
-    for (const customField of conversation.contact.contactCustomFields) {
-      if (customField.customField?.name && customField.value) {
-        fieldMap.set(customField.customField.name, customField.value)
-      }
-    }
-
-    let processedMessage = message
-    const attributeRegex = /\{\{(\w+)\}\}/g
-
-    processedMessage = processedMessage.replace(
-      attributeRegex,
-      (match, fieldName) => {
-        const value = fieldMap.get(fieldName)
-        return value || match
-      },
-    )
-
-    return processedMessage
-  } catch {
-    return message
-  }
-}
 
 export async function listAllEnabledAutomatedResponses({
   chatbotId,

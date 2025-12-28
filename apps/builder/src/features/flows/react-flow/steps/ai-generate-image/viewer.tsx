@@ -1,15 +1,31 @@
 "use client"
 
-import { BotIcon } from "lucide-react"
+import {
+  AIGenerateImageProvider,
+  type AIGenerateImageSchema,
+} from "@aha.chat/flow-config"
 import { useTranslations } from "next-intl"
+import { AI_PROVIDER_CONFIGS } from "./config"
 
-const AIGenerateImageViewer = () => {
+type AIGenerateImageViewerProps = {
+  data: AIGenerateImageSchema
+}
+
+const AIGenerateImageViewer = (props: AIGenerateImageViewerProps) => {
+  const { data } = props
+  const provider = data.provider || AIGenerateImageProvider.OPENAI
   const t = useTranslations()
+  const config =
+    AI_PROVIDER_CONFIGS[provider as keyof typeof AI_PROVIDER_CONFIGS] ||
+    AI_PROVIDER_CONFIGS[AIGenerateImageProvider.OPENAI]
+  const Icon = config.icon
 
   return (
     <div className="flex w-full items-center justify-center gap-2 py-4 text-center font-bold">
-      <BotIcon className="text-yellow-500" size={18} />
-      {t("flows.actions.aiGenerateImage")}
+      <Icon className={config.iconColor} size={18} />
+      {t("fields.flows.aiGenerateImage.label", {
+        aiName: t(config.modelLabelKey),
+      })}
     </div>
   )
 }

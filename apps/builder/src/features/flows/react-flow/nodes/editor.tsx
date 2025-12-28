@@ -1,9 +1,11 @@
 import type {
+  AIGenerateImageProviderType,
   AIGenerateTextProviderType,
   FlowNode,
   NodeType,
 } from "@aha.chat/flow-config"
 import {
+  aiGenerateImageDefaultFn,
   aiGenerateTextDefaultFn,
   buttonStepDefaultFn,
   disabledCopyActionTypes,
@@ -240,6 +242,11 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     (name: StepType, provider?: AIGenerateTextProviderType) => {
       if (name === StepType.aiGenerateText && provider) {
         const step = aiGenerateTextDefaultFn(provider)
+        appendStep(step)
+      } else if (name === StepType.aiGenerateImage && provider) {
+        const step = aiGenerateImageDefaultFn({
+          provider: provider as AIGenerateImageProviderType,
+        })
         appendStep(step)
       } else {
         const newStep = allSteps[name]?.defaultFn()
