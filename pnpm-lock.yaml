@@ -400,6 +400,9 @@ importers:
       mammoth:
         specifier: ^1.11.0
         version: 1.11.0
+      mime-types:
+        specifier: ^3.0.2
+        version: 3.0.2
       pdf-parse-new:
         specifier: ^2.0.0
         version: 2.0.0
@@ -422,6 +425,9 @@ importers:
       '@types/mailparser':
         specifier: ^3.4.6
         version: 3.4.6
+      '@types/mime-types':
+        specifier: ^3.0.1
+        version: 3.0.1
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.4

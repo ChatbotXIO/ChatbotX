@@ -1,9 +1,23 @@
 import type { Readable } from "node:stream"
 import { TextDecoder } from "node:util"
 import { uploader } from "@aha.chat/filesystem"
+import {
+  CSV_MIME_TYPES,
+  DOCX_MIME_TYPES,
+  EMAIL_MIME_TYPES,
+  HTML_MIME_TYPES,
+  MARKDOWN_MIME_TYPES,
+  PDF_MIME_TYPES,
+  PROPERTIES_MIME_TYPES,
+  RTF_MIME_TYPES,
+  SPREADSHEET_MIME_TYPES,
+  VTT_MIME_TYPES,
+  XML_MIME_TYPES,
+} from "@aha.chat/sdk"
 import { htmlToText } from "html-to-text"
 import { simpleParser } from "mailparser"
 import { extractRawText } from "mammoth"
+import { lookup } from "mime-types"
 import pdfParse from "pdf-parse-new"
 import removeMd from "remove-markdown"
 import { read, utils } from "xlsx"
@@ -13,50 +27,22 @@ const PRINTABLE_CHAR_REGEX = /[\x20-\x7E\n\r\t]/
 const UTF8_DECODER = new TextDecoder("utf-8")
 const UTF8_NON_FATAL_DECODER = new TextDecoder("utf-8", { fatal: false })
 
-const PDF_MIME_KEYWORDS = ["pdf"]
-
-const DOCX_MIME_KEYWORDS = [
-  "word",
-  "docx",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]
-
-const SPREADSHEET_MIME_KEYWORDS = [
-  "spreadsheet",
-  "xlsx",
-  "xls",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-]
-
-const CSV_MIME_KEYWORDS = ["csv"]
-
-const HTML_MIME_KEYWORDS = ["html", "xhtml", "htm"]
-
-const MARKDOWN_MIME_KEYWORDS = ["markdown", "md", "mdx"]
-
-const RTF_MIME_KEYWORDS = ["rtf"]
-
-const XML_MIME_KEYWORDS = ["xml"]
-
-const EMAIL_MIME_KEYWORDS = [
-  "eml",
-  "message/rfc822",
-  "application/vnd.ms-outlook",
-  "msg",
-]
-
-const VTT_MIME_KEYWORDS = ["vtt"]
-
-const PROPERTIES_MIME_KEYWORDS = ["properties"]
-
 const decodeUtf8 = (buffer: Buffer): string => UTF8_DECODER.decode(buffer)
 
 const decodeUtf8NonFatal = (buffer: Buffer): string =>
   UTF8_NON_FATAL_DECODER.decode(buffer)
 
-const mimeIncludesAny = (mime: string, keywords: string[]): boolean =>
-  keywords.some((keyword) => mime.includes(keyword))
+const normalizeMimeType = (mimeType: string): string => {
+  return mimeType.toLowerCase().split(";")[0]?.trim() || ""
+}
+
+const isMimeType = (
+  mimeType: string,
+  allowedTypes: readonly string[],
+): boolean => {
+  const normalized = normalizeMimeType(mimeType)
+  return allowedTypes.includes(normalized)
+}
 
 function normalizeWhitespace(input: string): string {
   let out = ""
@@ -252,52 +238,63 @@ export async function extractTextFromFile(
   remotePath: string,
   mimeType: string,
 ): Promise<string> {
-  const lowerMimeType = (mimeType || "").toLowerCase()
+  const normalizedMimeType = normalizeMimeType(mimeType || "")
+
+  let finalMimeType = normalizedMimeType
+  if (!finalMimeType) {
+    const extension = remotePath.split(".").pop()?.toLowerCase()
+    if (extension) {
+      const lookedUpMime = lookup(extension)
+      if (lookedUpMime) {
+        finalMimeType = normalizeMimeType(lookedUpMime)
+      }
+    }
+  }
 
   const fileStream = await uploader.getObjectStream(remotePath)
   const buffer = await streamToBuffer(fileStream)
 
-  if (mimeIncludesAny(lowerMimeType, PDF_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, PDF_MIME_TYPES)) {
     return await extractTextFromPdf(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, DOCX_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, DOCX_MIME_TYPES)) {
     return extractTextFromDocx(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, SPREADSHEET_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, SPREADSHEET_MIME_TYPES)) {
     return await extractTextFromXlsx(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, CSV_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, CSV_MIME_TYPES)) {
     return extractTextFromCsv(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, HTML_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, HTML_MIME_TYPES)) {
     return await extractTextFromHtml(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, MARKDOWN_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, MARKDOWN_MIME_TYPES)) {
     return await extractTextFromMarkdown(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, RTF_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, RTF_MIME_TYPES)) {
     return extractTextFromRtf(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, XML_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, XML_MIME_TYPES)) {
     return extractTextFromXml(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, EMAIL_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, EMAIL_MIME_TYPES)) {
     return await extractTextFromEmail(buffer)
   }
 
-  if (mimeIncludesAny(lowerMimeType, VTT_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, VTT_MIME_TYPES)) {
     return normalizeWhitespace(decodeUtf8(buffer))
   }
 
-  if (mimeIncludesAny(lowerMimeType, PROPERTIES_MIME_KEYWORDS)) {
+  if (isMimeType(finalMimeType, PROPERTIES_MIME_TYPES)) {
     return normalizeWhitespace(decodeUtf8(buffer))
   }
 
