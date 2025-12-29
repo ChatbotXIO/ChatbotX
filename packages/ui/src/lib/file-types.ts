@@ -16,5 +16,3 @@ export const getMimeTypeFromFile = (file: File): string => {
 
   return fallbackMimeType
 }
-
-

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { createAIFileAction } from "./actions/create-ai-file.action"
-import { AI_FILE_ACCEPT } from "./constants"
+import { getAIFileExtensionsAccept } from "./constants"
 
 export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -35,7 +35,7 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <DirectUploadButton
-      accept={AI_FILE_ACCEPT}
+      accept={getAIFileExtensionsAccept()}
       disabled={isPending}
       maxSize={26_214_400} // 25MB
       multiple={false}

@@ -1,6 +1,6 @@
 import { extension as getExtensionFromMime } from "mime-types"
 
-export const AI_FILE_MIME_TYPES = [
+const allAIFileMimeTypes = [
   "application/pdf",
   "text/markdown",
   "text/x-markdown",
@@ -20,37 +20,39 @@ export const AI_FILE_MIME_TYPES = [
   "application/vnd.ms-outlook",
 ] as const
 
-const EXTENSION_OVERRIDES: Partial<
-  Record<(typeof AI_FILE_MIME_TYPES)[number], string | string[]>
+const extensionOverrides: Partial<
+  Record<(typeof allAIFileMimeTypes)[number], string | string[]>
 > = {
   "text/x-java-properties": "properties",
   "text/markdown": ["md", "markdown"],
   "text/x-markdown": ["md", "mkd"],
 }
 
-const aiFileExtensionsSet = new Set<string>()
+export const getAIFileExtensions = (): string[] => {
+  const aiFileExtensionsSet = new Set<string>()
 
-for (const mimeType of AI_FILE_MIME_TYPES) {
-  const mimeExtension = getExtensionFromMime(mimeType)
-  const override = EXTENSION_OVERRIDES[mimeType]
+  for (const mimeType of allAIFileMimeTypes) {
+    const mimeExtension = getExtensionFromMime(mimeType)
+    const override = extensionOverrides[mimeType]
 
-  const primary =
-    mimeExtension || (typeof override === "string" ? override : null)
-  if (primary) {
-    aiFileExtensionsSet.add(primary)
-  }
+    const primary =
+      mimeExtension || (typeof override === "string" ? override : null)
+    if (primary) {
+      aiFileExtensionsSet.add(primary)
+    }
 
-  if (Array.isArray(override)) {
-    for (const ext of override) {
-      aiFileExtensionsSet.add(ext)
+    if (Array.isArray(override)) {
+      for (const ext of override) {
+        aiFileExtensionsSet.add(ext)
+      }
     }
   }
+
+  return Array.from(aiFileExtensionsSet)
 }
 
-export const AI_FILE_EXTENSIONS = Array.from(
-  aiFileExtensionsSet,
-) as readonly string[]
-
-export const AI_FILE_ACCEPT = AI_FILE_EXTENSIONS.map(
-  (extension) => `.${extension}`,
-).join(",")
+export const getAIFileExtensionsAccept = () => {
+  return getAIFileExtensions()
+    .map((extension) => `.${extension}`)
+    .join(",")
+}
