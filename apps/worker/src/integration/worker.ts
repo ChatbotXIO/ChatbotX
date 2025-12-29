@@ -6,17 +6,21 @@ import {
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
-  QueueName,
+  queueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { receiveMessage } from "./handlers/received-message"
+import { sendBroadcast } from "./handlers/send-broadcast"
 import { sendFlowNode } from "./handlers/send-flow-node"
-import { sendFlowPostback } from "./handlers/send-flow-postback"
+import {
+  sendFlowPostback,
+  sendFlowQuickReply,
+} from "./handlers/send-flow-postback"
 
 const worker = new Worker(
-  QueueName.integration,
+  queueName.integration,
   async (job: Job<IntegrationJobData>) => {
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
@@ -48,8 +52,16 @@ const worker = new Worker(
         await sendFlowPostback(job.data.data)
         return
       }
+      case IntegrationJobAction.sendFlowQuickReply: {
+        await sendFlowQuickReply(job.data.data)
+        return
+      }
       case IntegrationJobAction.triggerAutomatedResponse: {
         await triggerAutomatedResponse(job.data.data)
+        return
+      }
+      case IntegrationJobAction.sendBroadcast: {
+        await sendBroadcast(job.data.data.broadcastId)
         return
       }
       default:

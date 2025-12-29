@@ -8,7 +8,6 @@
   "files": {
     "ignoreUnknown": false,
     "includes": [
-      "**",
       "!**/.next",
       "!**/.turbo",
       "!**/packages/database/src/generated/prisma",
@@ -53,7 +52,8 @@
       },
       "style": {
         "useNodejsImportProtocol": "off",
-        "noMagicNumbers": "off"
+        "noMagicNumbers": "off",
+        "useConsistentTypeDefinitions": "off"
       },
       "suspicious": {
         "noUnknownAtRules": "off",

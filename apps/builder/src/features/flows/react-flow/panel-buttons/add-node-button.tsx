@@ -80,7 +80,7 @@ export function addNewNode(
   }
   const newNode = targetNodeConfig.defaultFn?.({
     dataProps: {
-      name: `${targetNodeConfig.label} ${labelVersion}`,
+      name: `${targetNodeConfig.label} #${labelVersion}`,
     },
     nodeProps: {
       position: screenToFlowPosition({

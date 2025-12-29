@@ -10,11 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@t3-oss/env-nextjs": "^0.13.9",
+    "@t3-oss/env-nextjs": "^0.13.10",
     "@types/node": "^24.10.4",
-    "ky": "^1.14.1",
+    "ky": "^1.14.2",
     "partykit": "0.0.115",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

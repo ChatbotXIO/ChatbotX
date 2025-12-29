@@ -22,6 +22,9 @@ export async function getAutomatedResponses(
       has: input.keyword,
     }
   }
+  const orderBy = input.sort.map((sortItem) => ({
+    [sortItem.id]: sortItem.desc ? "desc" : "asc",
+  }))
 
   if (input.folderId !== undefined) {
     where.folderId =
@@ -33,6 +36,7 @@ export async function getAutomatedResponses(
       skip: (input.page - 1) * input.perPage,
       take: input.perPage,
       where,
+      orderBy,
     }),
     prisma.automatedResponse.count({ where }),
   ])

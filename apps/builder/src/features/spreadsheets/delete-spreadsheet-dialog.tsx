@@ -42,7 +42,11 @@ export function DeleteSpreadsheetsDialog({
     deleteSpreadsheetAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        toast.success(t("googleSheets.deleted"))
+        toast.success(
+          t("messages.deleteSuccess", {
+            feature: t("fields.googleSheets.label"),
+          }),
+        )
         onOpenChange(false)
       },
       onError: ({ error }) => {
@@ -59,37 +63,44 @@ export function DeleteSpreadsheetsDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("common.deleteBtn")} ({spreadsheets.length})
+            {t("actions.delete")} ({spreadsheets.length})
           </Button>
         </DialogTrigger>
       ) : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.deleteFeature", { feature: t("googleSheets.label") })}
+            {t("messages.deleteFeature", {
+              feature: t("fields.googleSheets.label"),
+            })}
           </DialogTitle>
           <DialogDescription>
             {t("messages.deleteConfirmation", {
-              feature: t("googleSheets.label"),
+              feature: t("fields.spreadsheet.label"),
             })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
-            <Button onClick={() => onOpenChange(false)} variant="outline">
-              {t("common.cancelBtn")}
+            <Button
+              onClick={() => onOpenChange(false)}
+              size="sm"
+              variant="ghost"
+            >
+              {t("actions.cancel")}
             </Button>
           </DialogClose>
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
             onClick={() => execute({ ids: spreadsheets.map((f) => f.id) })}
+            size="sm"
             variant="destructive"
           >
             {isPending && (
               <Loader aria-hidden="true" className="mr-2 size-4 animate-spin" />
             )}
-            {t("common.deleteBtn")}
+            {t("actions.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

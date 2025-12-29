@@ -1,5 +1,9 @@
 import type { FlowNode, NodeType } from "@aha.chat/flow-config"
-import { disabledCopyActionTypes, StepType } from "@aha.chat/flow-config"
+import {
+  buttonStepDefaultFn,
+  disabledCopyActionTypes,
+  StepType,
+} from "@aha.chat/flow-config"
 import { TriggerFormInitially } from "@aha.chat/ui/components/form/form-trigger-initially"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -20,19 +24,117 @@ import { createId } from "@paralleldrive/cuid2"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon, MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { memo, useEffect, useMemo } from "react"
-import { useFieldArray, useForm, useWatch } from "react-hook-form"
+import { memo, useCallback, useEffect, useMemo, useState } from "react"
+import {
+  useFieldArray,
+  useForm,
+  useFormContext,
+  useWatch,
+} from "react-hook-form"
 import { funnel } from "remeda"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
+import { ButtonStepEditor } from "../steps/button/editor"
 import { ErrorAlert } from "../steps/error-alert"
+import { useStepStore } from "../stores/step-store-provider"
 import { allNodesConfig } from "./node-config"
+import type { MenuItem } from "./types"
 
 type NodeEditorProps = {
   nodeId: string
   nodeType: NodeType
   nodeDetails: FlowNode["data"]["details"]
 }
+
+const NodeEditorQuickReplies = () => {
+  const t = useTranslations()
+  const { control } = useFormContext()
+
+  const {
+    fields: quickReplies,
+    append: appendQuickReply,
+    move: moveQuickReply,
+  } = useFieldArray({
+    control,
+    name: "quickReplies",
+  })
+
+  return (
+    <div className="flex gap-2">
+      <Sortable
+        getItemValue={(item) => item.id}
+        onMove={({ activeIndex, overIndex }) =>
+          moveQuickReply(activeIndex, overIndex)
+        }
+        value={quickReplies}
+      >
+        <SortableContent asChild>
+          <div className="flex gap-2">
+            {quickReplies.map((field, index) => (
+              <SortableItem asChild key={field.id} value={field.id}>
+                <ButtonStepEditor parentName={`quickReplies.${index}`} />
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContent>
+      </Sortable>
+      <Button
+        onClick={() =>
+          appendQuickReply(
+            buttonStepDefaultFn({
+              label: `${t("fields.quickReply.label")} #${quickReplies.length + 1}`,
+            }),
+          )
+        }
+        type="button"
+        variant="secondary"
+      >
+        <PlusIcon />
+        {t("fields.quickReply.label")}
+      </Button>
+    </div>
+  )
+}
+
+const NodeEditorMenu = memo(
+  ({
+    nodeType,
+    onClick,
+  }: {
+    nodeType: NodeType
+    onClick: (stepType: StepType) => void
+  }) => {
+    const t = useTranslations()
+
+    const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
+
+    useEffect(() => {
+      const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
+      if (nodeConfig) {
+        setNodeMenus(nodeConfig.menus(t))
+      } else {
+        setNodeMenus([])
+      }
+    }, [nodeType, t])
+
+    return (
+      nodeMenus.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <PlusIcon />
+              {t("actions.create")}
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent className="w-full">
+            <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    )
+  },
+)
 
 export const NodeEditor = memo((props: NodeEditorProps) => {
   const { nodeId, nodeType, nodeDetails } = props
@@ -42,8 +144,14 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   const validator = nodeConfig?.validator.shape.data.shape.details
 
   const { getNodes, updateNodeData } = useReactFlow()
-  const nodes = getNodes()
-  const targetNode = nodes.find((node) => node.id === nodeId)
+  const { updatedButtonData, onChangeButtonData } = useStepStore(
+    (state) => state,
+  )
+
+  const targetNode = useMemo(() => {
+    const allNodes = getNodes()
+    return allNodes.find((node) => node.id === nodeId)
+  }, [nodeId, getNodes])
 
   // biome-ignore lint/suspicious/noExplicitAny: wip - complex node data types
   const form = useForm<any>({
@@ -52,42 +160,86 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     defaultValues: {
       ...nodeDetails,
     },
-    mode: "onBlur",
+    mode: "onChange",
   })
-  const { control, getValues } = form
+
+  const { control, getValues, setValue } = form
+  const {
+    fields: stepFields,
+    append: appendStep,
+    move: moveStep,
+    remove: removeStep,
+    insert: insertStep,
+  } = useFieldArray({
+    control,
+    name: "steps",
+  })
 
   const allValues = useWatch({ control })
   const debounceUpdateNodeData = useMemo(
     () =>
       funnel(
         () => {
-          if (targetNode) {
+          if (nodeId && targetNode) {
             updateNodeData(nodeId, {
               ...targetNode.data,
               details: allValues,
             })
           }
         },
-        { minQuietPeriodMs: 100 },
+        { minQuietPeriodMs: 500 },
       ),
-    [allValues, nodeId, updateNodeData, targetNode],
+    [updateNodeData, nodeId, targetNode, allValues],
   )
 
   useEffect(() => {
     debounceUpdateNodeData.call()
   }, [debounceUpdateNodeData])
 
-  const { fields, append, move, remove, insert } = useFieldArray({
-    control,
-    name: "steps",
-  })
+  // useEffect(() => {
+  // if (nodeId && targetNode) {
+  //   updateNodeData(nodeId, {
+  //     ...targetNode.data,
+  //     details: debouncedValue,
+  //   })
+  // }
+  // }, [debouncedValue, nodeId, targetNode, updateNodeData])
 
-  const onAddStep = (name: StepType) => {
-    const newStep = allSteps[name]?.defaultFn()
-    if (newStep) {
-      append(newStep)
+  useEffect(() => {
+    if (updatedButtonData) {
+      const targetButtonPath = updatedButtonData.path.replace(
+        "data.details.",
+        "",
+      )
+      if (updatedButtonData.data) {
+        setValue(targetButtonPath, updatedButtonData.data)
+      } else {
+        const parts = targetButtonPath.split(".")
+        const position = parts.pop()
+        const buttonGroupPath = parts.join(".")
+
+        if (position) {
+          const buttons = getValues(buttonGroupPath)
+          buttons.splice(Number.parseInt(position, 10), 1)
+          setValue(buttonGroupPath, Object.values(buttons))
+        }
+      }
+
+      // reset updatedButtonData
+      onChangeButtonData(null)
+      //   setOpenNodeDetailSheet(false)
     }
-  }
+  }, [updatedButtonData, getValues, onChangeButtonData, setValue])
+
+  const onAddStep = useCallback(
+    (name: StepType) => {
+      const newStep = allSteps[name]?.defaultFn()
+      if (newStep) {
+        appendStep(newStep)
+      }
+    },
+    [appendStep],
+  )
 
   // biome-ignore lint/suspicious/noExplicitAny: wip
   const replaceIds = (data: any): any => {
@@ -114,12 +266,12 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
     const values = getValues(`details.steps.${index}` as any)
     if (values) {
-      insert(index + 1, replaceIds(values))
+      insertStep(index + 1, replaceIds(values))
     }
   }
 
   const onRemoveStep = (index: number) => {
-    remove(index)
+    removeStep(index)
   }
 
   return (
@@ -140,12 +292,14 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
       <div className="my-2 flex flex-1 flex-col gap-2 overflow-y-auto">
         <Sortable
           getItemValue={(item) => item.id}
-          onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
-          value={fields}
+          onMove={({ activeIndex, overIndex }) =>
+            moveStep(activeIndex, overIndex)
+          }
+          value={stepFields}
         >
           <SortableContent asChild>
             <div className="flex w-full flex-col gap-4">
-              {fields.map((field, index) => (
+              {stepFields.map((field, index) => (
                 <SortableItem asChild key={field.id} value={field.id}>
                   <div
                     className={cn(
@@ -229,21 +383,11 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
         </Sortable>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            <PlusIcon />
-            {t("actions.create")}
-          </Button>
-        </DropdownMenuTrigger>
+      {"quickReplies" in nodeDetails && nodeDetails.quickReplies && (
+        <NodeEditorQuickReplies />
+      )}
 
-        <DropdownMenuContent className="w-full">
-          <RecursiveDropdownMenu
-            data={nodeConfig ? nodeConfig.menus(t) : []}
-            onClick={onAddStep}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <NodeEditorMenu nodeType={nodeType} onClick={onAddStep} />
 
       <TriggerFormInitially form={form} />
     </Form>

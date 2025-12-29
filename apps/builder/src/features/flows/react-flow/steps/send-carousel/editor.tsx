@@ -105,7 +105,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
           ))}
         </CarouselContent>
 
-        <div className="-translate-y-1/2 -right-3 absolute top-1/2 flex flex-col gap-2">
+        <div className="absolute top-1/2 -right-3 flex -translate-y-1/2 flex-col gap-2">
           <Button
             className="size-6 cursor-pointer rounded-full"
             data-slot="carousel-add"

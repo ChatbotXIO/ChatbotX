@@ -40,7 +40,7 @@ export const SpreadsheetClearRowEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="googleSheets.clearRow"
+        name="flows.actions.spreadsheetClearRow"
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}

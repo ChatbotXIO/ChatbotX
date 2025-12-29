@@ -20,7 +20,7 @@ export const WebchatWrapper = () => {
       <WebchatHeader />
       <WebchatMessageList />
       <WebchatMessageInput chatbotId={config.chatbotId} />
-      {guestConversationId && (
+      {!!guestConversationId && (
         <WebchatRealtime guestConversationId={guestConversationId} />
       )}
     </div>

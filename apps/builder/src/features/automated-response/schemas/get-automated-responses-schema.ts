@@ -1,3 +1,5 @@
+import type { AutomatedResponseModel } from "@aha.chat/database/types"
+import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -9,6 +11,9 @@ export const listAutomatedResponsesSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   keyword: parseAsString,
+  sort: getSortingStateParser<AutomatedResponseModel>().withDefault([
+    { id: "createdAt", desc: true },
+  ]),
 })
 
 export type ListAutomatedResponsesRequest = Awaited<

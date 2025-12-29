@@ -2,7 +2,6 @@
 
 import { ChatbotMemberRole, prisma } from "@aha.chat/database"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { BaseException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
@@ -11,8 +10,6 @@ export const deleteChatbotMemberAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(async ({ ctx, bindArgsParsedInputs }) => {
     const [chatbotId, id] = bindArgsParsedInputs
-    await assertCurrentUserCanAccessChatbot(chatbotId)
-
     const chatbotMember = await prisma.chatbotMember.findFirstOrThrow({
       where: { id, chatbotId },
     })

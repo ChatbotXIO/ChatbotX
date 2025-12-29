@@ -1,11 +1,18 @@
 import { Queue } from "bullmq"
-import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
-import { QueueName } from "../../lib/types"
-
-export const aiAgentQueue = new Queue(QueueName.aiAgent, {
-  connection: getRedisConnection(),
+import {
   defaultJobOptions,
-})
+  fakeQueue,
+  getRedisConnection,
+} from "../../lib/connection"
+import { queueName } from "../../lib/types"
+
+export const aiAgentQueue =
+  process.env.NEXT_PHASE !== "phase-production-build"
+    ? new Queue(queueName.aiAgent, {
+        connection: getRedisConnection(),
+        defaultJobOptions,
+      })
+    : fakeQueue
 
 export const AI_FILES_DEFAULT_CHUNK_SIZE = 1000
 export const AI_FILES_DEFAULT_OVERLAP_SIZE = 200

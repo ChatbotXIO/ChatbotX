@@ -49,24 +49,45 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
     () => [
       {
         id: "name",
+        accessorKey: "name",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.name.label")}
+          />
         ),
         cell: ({ row }) => <div>{row.original.name ?? ""}</div>,
+        meta: {
+          label: t("fields.name.label"),
+          placeholder: t("fields.name.placeholder"),
+          variant: "text",
+        },
+        enableColumnFilter: true,
       },
       {
-        id: "channel",
+        id: "inboxType",
+        accessorKey: "inboxType",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Channel" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.channel.label")}
+          />
         ),
         cell: ({ row }) => (
           <div>{t(`fields.${row.original.inboxType}.label`)}</div>
         ),
+        meta: {
+          label: t("fields.channel.label"),
+        },
       },
       {
         id: "status",
+        accessorKey: "status",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Status" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.status.label")}
+          />
         ),
         cell: ({ row }) =>
           row.original.status === BroadcastStatus.scheduled ? (
@@ -78,24 +99,38 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
               {t(`broadcasts.status.${row.original.status}`)}
             </Badge>
           ),
+        enableSorting: false,
+        meta: {
+          label: t("fields.status.label"),
+        },
       },
       {
         accessorKey: "estimatedContacts",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Estimated contact" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.estimatedContacts.label")}
+          />
         ),
         cell: ({ row }) => <div>{row.original._count?.contacts ?? 0}</div>,
+        meta: {
+          label: t("fields.estimatedContacts.label"),
+        },
       },
       {
         accessorKey: "schedulesAt",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Schedules at" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.scheduledAt.label")}
+          />
         ),
         cell: ({ row }) => (
           <div>{format(row.original.schedulesAt, "yyyy/MM/dd HH:mm")}</div>
         ),
-        enableSorting: false,
-        enableHiding: false,
+        meta: {
+          label: t("fields.scheduledAt.label"),
+        },
       },
       {
         id: "actions",

@@ -43,7 +43,11 @@ export function CreateSpreadsheetDialog({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success("Spreadsheet created successfully")
+            toast.success(
+              t("messages.createSuccess", {
+                feature: t("fields.spreadsheet.label"),
+              }),
+            )
 
             setOpen(false)
             resetFormAndAction()
@@ -79,13 +83,15 @@ export function CreateSpreadsheetDialog({
         ) : (
           <Button size="sm">
             <PlusIcon />
-            {t("googleSheets.add.title")}
+            {t("actions.addFeature", {
+              feature: t("fields.spreadsheet.label"),
+            })}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("googleSheets.add.title")}</DialogTitle>
+          <DialogTitle>{t("actions.add")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
@@ -94,17 +100,18 @@ export function CreateSpreadsheetDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label={t("googleSheets.name")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <InputField
-                label={t("googleSheets.link")}
+                label={t("fields.url.label")}
                 name="url"
-                placeholder="https://docs.google.com/spreadsheets/d/1WqW6HDKgHNGXtDmmq5mqx_iMda1bVjtKYjU23uRCFgE/edit"
+                placeholder="https://docs.google.com/spreadsheets/d/xyz/edit"
+                required
               />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
-                  <Button type="button" variant="link">
+                  <Button size="sm" type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>
                 </DialogClose>
@@ -113,6 +120,7 @@ export function CreateSpreadsheetDialog({
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  size="sm"
                   type="submit"
                 >
                   {form.formState.isSubmitting && (

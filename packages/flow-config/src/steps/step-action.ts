@@ -14,6 +14,7 @@ export const StepType = {
   sendMessengerOtn: "S07", // One time notification
   sendAudio: "S08",
   sendFile: "S09",
+  sendQuickReply: "S10",
 
   // Wait/Timing (W_)
   waitUserReply: "W01",

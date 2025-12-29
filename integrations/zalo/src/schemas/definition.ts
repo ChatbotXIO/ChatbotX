@@ -40,7 +40,7 @@ export type ZaloActions = {
   sendMessage: (props: SendMessageProps<ZaloAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<ZaloAuthValue>
-    uid: string
+    psid: string
   }) => Promise<ContactEntity>
 }
 

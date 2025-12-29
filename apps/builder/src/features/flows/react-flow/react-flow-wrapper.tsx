@@ -1,7 +1,9 @@
 import {
+  ButtonType,
   type FlowNode,
   NodeType,
   sendMessageNodeDefaultFn,
+  startAnotherNodeStepDefaultFn,
 } from "@aha.chat/flow-config"
 import { useDebouncedCallback } from "@aha.chat/ui/hooks/use-debounced-callback"
 import {
@@ -35,6 +37,7 @@ import ZoomInButton from "./panel-buttons/zoom-in-button"
 import ZoomOutButton from "./panel-buttons/zoom-out-button"
 import "./react-flow-wrapper.css"
 import { createId } from "@paralleldrive/cuid2"
+import type { ButtonProps } from "react-day-picker"
 import ButtonEdge from "./edges/button-edge"
 
 const nodeTypes = {
@@ -154,67 +157,135 @@ export function ReactFlowWrapper({
       _event: MouseEvent | TouchEvent,
       connectionState: FinalConnectionState,
     ): void => {
-      // Each source handle just can connect to one target handle
-      // Remove the existing edges that have the same source handle
-      if (connectionState.fromNode && connectionState.fromHandle) {
-        const allEdges = getEdges()
+      // cases:
+      // 1. From node to empty space: create new sendMessage node
+      // 2. From node to node: create new buttonedge
+      // 3.
 
-        const connectedEdges = allEdges.filter(
-          (edge) => edge.sourceHandle === connectionState.fromHandle?.id,
-        )
+      // if from handle or from node is not set, return
+      if (!(connectionState.fromHandle && connectionState.fromNode)) {
+        return
+      }
 
-        // Skip if the user drop to the same node
-        if (
-          connectedEdges.length === 0 ||
-          connectedEdges.some(
-            (edge) => edge.targetHandle === connectionState.toHandle?.id,
-          )
-        ) {
+      // handle case of dragging from source handle
+      if (connectionState.fromHandle.type === "source") {
+        if (!(connectionState.toHandle && connectionState.toNode)) {
+          const allNodes = getNodes()
+          const messageNodesLength = allNodes.filter(
+            (node) => node.type === NodeType.sendMessage,
+          ).length
+
+          const newNode = sendMessageNodeDefaultFn({
+            nodeProps: {
+              position: connectionState.to ?? {
+                x: 300,
+                y: 300,
+              },
+            },
+            dataProps: {
+              name: `Send Message #${messageNodesLength + 1}`,
+            },
+          })
+          addNodes([newNode])
+
+          addEdges({
+            id: createId(),
+            source: connectionState.fromNode.id,
+            target: newNode.id,
+            sourceHandle: connectionState.fromHandle.id,
+            targetHandle: newNode.id,
+            type: "buttonedge",
+          })
+
           return
         }
 
-        deleteElements({
-          edges: connectedEdges.map((edge) => ({
-            id: edge.id,
-          })),
-        })
-      }
+        if (connectionState.toHandle && connectionState.toNode) {
+          // if to node is the same as from node, return
+          if (connectionState.toNode.id === connectionState.fromNode.id) {
+            return
+          }
 
-      // Create new sendMessage node if the user drop to empty space
-      if (
-        !(connectionState.toNode || connectionState.toHandle) &&
-        connectionState.fromNode &&
-        connectionState.fromHandle
-      ) {
-        const allNodes = getNodes()
-        const messageNodesLength = allNodes.filter(
-          (node) => node.type === NodeType.sendMessage,
-        ).length
+          const allEdges = getEdges()
 
-        const newNode = sendMessageNodeDefaultFn({
-          nodeProps: {
-            position: connectionState.to ?? {
-              x: 300,
-              y: 300,
-            },
-          },
-          dataProps: {
-            name: `Send Message #${messageNodesLength + 1}`,
-          },
-        })
-        addNodes([newNode])
+          // if it's already connected, return
+          const isConnected = allEdges.some(
+            (edge) =>
+              edge.sourceHandle === connectionState.fromHandle?.id &&
+              edge.targetHandle === connectionState.toHandle?.id,
+          )
+          if (isConnected) {
+            return
+          }
 
-        addEdges({
-          id: createId(),
-          source: connectionState.fromNode.id,
-          target: newNode.id,
-          sourceHandle: connectionState.fromHandle.id,
-          targetHandle: newNode.id,
-          // type: "buttonedge",
-        })
+          // this connection is from node to node, so we need to create a new buttonedge
+          if (connectionState.toHandle.id === connectionState.toNode.id) {
+            // Each source handle just can connect to one target handle
+            // Remove the existing edges that have the same source handle
+            const connectedEdges = allEdges.filter(
+              (edge) => edge.sourceHandle === connectionState.fromHandle?.id,
+            )
+
+            deleteElements({
+              edges: connectedEdges.map((edge) => ({
+                id: edge.id,
+              })),
+            })
+
+            // if the handle is from button, update the button data
+            if (connectionState.fromHandle.id !== connectionState.fromNode.id) {
+              const data = connectionState.fromNode.data as FlowNode["data"]
+
+              if (data.details && "steps" in data.details) {
+                // biome-ignore lint/style/useForOf: safe to use for of
+                for (
+                  let stepIndex = 0;
+                  stepIndex < data.details.steps.length;
+                  stepIndex++
+                ) {
+                  if ("buttons" in data.details.steps[stepIndex]) {
+                    const buttonIndex =
+                      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+                      (data.details.steps[stepIndex] as any).buttons.findIndex(
+                        (button: ButtonProps) =>
+                          button.id === connectionState.fromHandle?.id,
+                      )
+
+                    if (buttonIndex !== -1) {
+                      const targetButton =
+                        // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+                        (data.details.steps[stepIndex] as any).buttons[
+                          buttonIndex
+                        ]
+                      targetButton.buttonType = ButtonType.StartAnotherNode
+                      targetButton.beforeStep = startAnotherNodeStepDefaultFn({
+                        nodeId: connectionState.toNode.id,
+                        viewOnly: true,
+                      })
+
+                      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+                      ;(data.details.steps[stepIndex] as any).buttons[
+                        buttonIndex
+                      ] = targetButton
+
+                      updateNodeData(connectionState.fromNode.id, data)
+
+                      break
+                    }
+                  }
+                }
+              }
+            }
+            return
+          }
+
+          return
+        }
+
+        return
       }
     },
-    [addNodes, addEdges, getNodes, deleteElements, getEdges],
+    [addNodes, addEdges, getNodes, deleteElements, getEdges, updateNodeData],
   )
 
   const onEdgeMouseEnter = useCallback(

@@ -1,14 +1,16 @@
 import { z } from "zod"
 
-export const addContactNotesRequest = z.object({
-  contactId: z.cuid2(),
+export const addContactNoteRequest = z.object({
   content: z.string().trim().min(1).max(1000),
 })
-export type AddContactNotesRequest = z.infer<typeof addContactNotesRequest>
+export type AddContactNoteRequest = z.infer<typeof addContactNoteRequest>
 
-export const updateContactNotesRequest = z.object({
-  content: z.string().trim().min(1).max(1000),
+export const updateContactNoteRequest = addContactNoteRequest.partial().extend({
+  contactNoteId: z.cuid2(),
 })
-export type UpdateContactNotesRequest = z.infer<
-  typeof updateContactNotesRequest
->
+export type UpdateContactNoteRequest = z.infer<typeof updateContactNoteRequest>
+
+export const deleteContactNoteRequest = z.object({
+  id: z.cuid2(),
+})
+export type DeleteContactNoteRequest = z.infer<typeof deleteContactNoteRequest>

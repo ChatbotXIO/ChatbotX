@@ -24,6 +24,7 @@ type ContactsTableProps = {
 export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
+
   const channelOptions = useConfiguredInboxTypeOptions()
 
   const columns = useMemo<ColumnDef<ContactResource>[]>(
@@ -57,7 +58,10 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         id: "keyword",
         accessorKey: "keyword",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.name.label")}
+          />
         ),
         cell: ({ row }) => (
           <Link
@@ -69,8 +73,8 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           </Link>
         ),
         meta: {
-          label: "Name",
-          placeholder: "Search name...",
+          label: t("fields.name.label"),
+          placeholder: t("fields.name.placeholder"),
           variant: "text",
         },
         enableColumnFilter: true,
@@ -78,7 +82,10 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
       {
         accessorKey: "source",
         header: ({ column }: { column: Column<ContactResource, unknown> }) => (
-          <DataTableColumnHeader column={column} title="Source" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.source.label")}
+          />
         ),
         cell: ({ row }) => {
           const channel = channelOptions.find(
@@ -87,11 +94,17 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           return <div>{channel ? channel.label : ""}</div>
         },
         enableSorting: false,
+        meta: {
+          label: t("fields.source.label"),
+        },
       },
       {
         accessorKey: "assignee",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Assignee" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.assignee.label")}
+          />
         ),
         cell: ({ row }) => (
           <div>
@@ -101,12 +114,19 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
               : t("assignAdmin.unAssigned")}
           </div>
         ),
+        meta: {
+          label: t("fields.assignee.label"),
+        },
         enableSorting: false,
       },
       {
+        id: "lastSeenAt",
         accessorKey: "lastSeenAt",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Last seen" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.lastSeen.label")}
+          />
         ),
         cell: ({ row }) => (
           <div>
@@ -117,14 +137,24 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
               : null}
           </div>
         ),
-        enableSorting: false,
+        meta: {
+          label: t("fields.lastSeen.label"),
+        },
+        enableSorting: true,
       },
       {
         accessorKey: "createdAt",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Created" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.createdAt.label")}
+          />
         ),
         cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd"),
+        meta: {
+          label: t("fields.createdAt.label"),
+        },
+        enableSorting: true,
       },
     ],
     [chatbotId, t, channelOptions],

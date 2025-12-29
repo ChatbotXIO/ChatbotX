@@ -1,12 +1,17 @@
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import { Queue } from "bullmq"
-import { defaultJobOptions, getRedisConnection } from "../../lib/connection"
-import { QueueName } from "../../lib/types"
+import {
+  defaultJobOptions,
+  fakeQueue,
+  getRedisConnection,
+} from "../../lib/connection"
+import { queueName } from "../../lib/types"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
   incomingMessage: "incomingMessage",
   sendFlowPostback: "sendFlowPostback",
+  sendFlowQuickReply: "sendFlowQuickReply",
   triggerAutomatedResponse: "triggerAutomatedResponse",
   sendBroadcast: "sendBroadcast",
 } as const
@@ -39,6 +44,15 @@ export type IntegrationJobSendFlowPostback = {
   }
 }
 
+export type IntegrationJobSendFlowQuickReply = {
+  type: typeof IntegrationJobAction.sendFlowQuickReply
+  data: {
+    conversationId: string
+    flowVersionId: string
+    buttonId: string
+  }
+}
+
 export type IntegrationJobTriggerAutomatedResponse = {
   type: typeof IntegrationJobAction.triggerAutomatedResponse
   data: {
@@ -57,13 +71,14 @@ export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobSendFlow
   | IntegrationJobSendFlowPostback
+  | IntegrationJobSendFlowQuickReply
   | IntegrationJobTriggerAutomatedResponse
   | IntegrationJobSendBroadcast
 
-export const integrationQueue = new Queue<IntegrationJobData>(
-  QueueName.integration,
-  {
-    connection: getRedisConnection(),
-    defaultJobOptions,
-  },
-)
+export const integrationQueue =
+  process.env.NEXT_PHASE !== "phase-production-build"
+    ? new Queue<IntegrationJobData>(queueName.integration, {
+        connection: getRedisConnection(),
+        defaultJobOptions,
+      })
+    : fakeQueue

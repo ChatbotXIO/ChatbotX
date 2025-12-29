@@ -151,6 +151,12 @@ export const listConversations = async (
       contact: {
         include: {
           contactCustomFields: true,
+          contactNotes: {
+            include: {
+              createdBy: true,
+            },
+          },
+          tags: true,
         },
       },
       inbox: true,

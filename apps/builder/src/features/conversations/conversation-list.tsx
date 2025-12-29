@@ -10,8 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@aha.chat/ui/components/ui/select"
+import { useSidebar } from "@aha.chat/ui/components/ui/sidebar"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import { SearchIcon, UserPlusIcon } from "lucide-react"
+import { PanelLeftClose, SearchIcon, UserPlusIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
@@ -41,6 +42,7 @@ export default function ConversationList({ inboxes }: ConversationListProps) {
     activeConversationId,
     setActiveConversationId,
   } = useChatStore((state) => state)
+  const { toggleSidebar, open } = useSidebar()
 
   const [showSearchInput, setShowSearchInput] = useState(false)
   const [searchText, setSearchText] = useState("")
@@ -94,6 +96,21 @@ export default function ConversationList({ inboxes }: ConversationListProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-center gap-1">
+        <Button
+          data-sidebar="trigger"
+          data-slot="sidebar-trigger"
+          onClick={() => {
+            toggleSidebar()
+          }}
+          size="icon"
+          variant="ghost"
+        >
+          {open ? (
+            <PanelLeftClose />
+          ) : (
+            <PanelLeftClose className="rotate-180" />
+          )}
+        </Button>
         <Select
           defaultValue={ConversationType.all}
           onValueChange={handleChangeType}
