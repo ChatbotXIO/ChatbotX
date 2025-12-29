@@ -14,7 +14,7 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { QueueName } from "../../lib/types"
+import { queueName } from "../../lib/types"
 
 export const ChatJobAction = {
   sendExternalMessage: "sendExternalMessage",
@@ -49,7 +49,7 @@ export type ChatJobData = ChatJobSendMessage | ChatJobSendFlowStep
 
 export const chatQueue =
   process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<ChatJobData>(QueueName.chat, {
+    ? new Queue<ChatJobData>(queueName.chat, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
