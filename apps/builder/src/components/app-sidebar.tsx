@@ -13,6 +13,7 @@ import {
   MessageCircleMoreIcon,
   RadioIcon,
   SlidersHorizontalIcon,
+  ToolCaseIcon,
   UsersIcon,
   WorkflowIcon,
 } from "lucide-react"
@@ -86,6 +87,11 @@ export function AppSidebar({
       //   url: `/chatbots/${chatbotId}/tools`,
       //   icon: WrenchIcon,
       // },
+      {
+        title: t("fields.tools.label"),
+        url: `/chatbots/${chatbotId}/tools`,
+        icon: ToolCaseIcon,
+      },
       {
         title: t("fields.settings.label"),
         url: `/chatbots/${chatbotId}/settings/general`,
