@@ -166,6 +166,7 @@ model Chatbot {
   chatbotUsage             ChatbotUsage?
 
   invitations Invitation[]
+  refLinks    RefLink[]
 }
 
 model ChatbotMember {
@@ -353,6 +354,7 @@ model Field {
   folder   Folder? @relation(fields: [folderId], references: [id])
 
   contactCustomFields ContactCustomField[]
+  refLinks            RefLink[]
 
   @@unique([chatbotId, fieldType, name])
 }
@@ -670,6 +672,26 @@ model AIMCPServer {
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
+model RefLink {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+
+  flowId String
+  flow   Flow   @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  fieldId String?
+  field   Field?  @relation(fields: [fieldId], references: [id])
+
+  @@unique([name, flowId])
+  @@index([chatbotId])
+}
+
 model IntegrationGoogleSheets {
   id        String   @id @default(cuid(2))
   createdAt DateTime @default(now())
@@ -870,6 +892,7 @@ model Flow {
   integrationWebchats   IntegrationWebchat[]
   integrationMessengers IntegrationMessenger[]
   integrationZalos      IntegrationZalo[]
+  refLinks              RefLink[]
 }
 
 model FlowVersion {

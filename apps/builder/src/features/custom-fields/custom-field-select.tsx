@@ -1,17 +1,14 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
-import { FieldOperationType } from "@aha.chat/flow-config"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import {
-  SelectField,
-  type SelectOption,
-} from "@aha.chat/ui/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
+import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useCallback, useMemo } from "react"
+import { useCallback } from "react"
 import { CreateCustomFieldDialog } from "./create-custom-field"
 import { useCustomFieldSelectOptions } from "./provider/custom-field-hook"
 import { useCustomFieldStore } from "./provider/custom-field-store-context"
@@ -24,6 +21,7 @@ type CustomFieldSelectProps = {
   customFieldTypes?: CustomFieldType[]
   includeReserved?: boolean
   placeholder?: string
+  helpLink?: string
 }
 
 export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
@@ -35,6 +33,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     customFieldTypes,
     includeReserved = false,
     placeholder,
+    helpLink,
   } = props
 
   const t = useTranslations()
@@ -63,6 +62,16 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
               <span className="self-start font-normal text-xxs">
                 (optional)
               </span>
+            )}
+            {helpLink && (
+              <Link
+                className="text-primary underline"
+                href={helpLink}
+                rel="noreferrer"
+                target="_blank"
+              >
+                ({t("fields.learnMore.label")})
+              </Link>
             )}
           </FormLabel>
 

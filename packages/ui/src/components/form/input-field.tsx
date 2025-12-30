@@ -11,6 +11,7 @@ type InputFieldProps<T extends FieldValues> = {
   defaultValue?: string
   disabled?: boolean
   className?: string
+  pattern?: string
   formItemClassName?: string
   type?:
     | "text"
