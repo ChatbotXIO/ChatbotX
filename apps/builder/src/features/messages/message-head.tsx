@@ -2,8 +2,8 @@
 
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getFullName } from "../contacts/utils"
+import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
 import { ConversationAction } from "../conversations/conversation-action"
-import { UpdateConversationAssigner } from "../conversations/update-conversation-assigner"
 
 export default function MessageHead() {
   const { conversations, activeConversationId, setAssignee } = useChatStore(
@@ -21,7 +21,7 @@ export default function MessageHead() {
           <div className="truncate font-medium text-semibold">
             {getFullName(activeConversation?.contact)}
           </div>
-          <UpdateConversationAssigner
+          <UpdateConversationAssignee
             conversation={activeConversation}
             onChange={setAssignee}
           />

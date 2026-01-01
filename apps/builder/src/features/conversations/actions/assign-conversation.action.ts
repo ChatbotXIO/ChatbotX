@@ -32,8 +32,52 @@ export const assignConversationAction = chatbotActionClient
         assignedInboxTeamId: null,
       }
 
-      if (!parsedInput.assignedId) {
-        await prisma.conversation.updateMany({
+      await prisma.$transaction(async (tx) => {
+        if (parsedInput.assignedId?.startsWith("u_")) {
+          const userId = parsedInput.assignedId.substring(2)
+          const chatbotMember = await tx.chatbotMember.findFirst({
+            where: {
+              chatbotId,
+              userId,
+            },
+          })
+          if (!chatbotMember) {
+            returnValidationErrors(assignConversationSchema, {
+              assignedId: {
+                _errors: ["User is not valid"],
+              },
+            })
+          }
+          updatedData.assignedUserId = chatbotMember.userId
+        } else if (parsedInput.assignedId?.startsWith("t_")) {
+          const inboxteamId = parsedInput.assignedId.substring(2)
+          const inboxTeam = await tx.inboxTeam.findFirst({
+            where: {
+              chatbotId,
+              id: inboxteamId,
+            },
+          })
+          if (!inboxTeam) {
+            returnValidationErrors(assignConversationSchema, {
+              assignedId: {
+                _errors: ["Inbox Team is not valid"],
+              },
+            })
+          }
+          updatedData.assignedInboxTeamId = inboxTeam.id
+        } else {
+          await tx.conversation.updateMany({
+            where: {
+              chatbotId,
+              contactId: {
+                in: parsedInput.contactIds,
+              },
+            },
+            data: updatedData,
+          })
+        }
+
+        await tx.conversation.updateMany({
           where: {
             chatbotId,
             contactId: {
@@ -42,53 +86,11 @@ export const assignConversationAction = chatbotActionClient
           },
           data: updatedData,
         })
-      } else if (parsedInput.assignedId.startsWith("u_")) {
-        const userId = parsedInput.assignedId.substring(2)
-        const chatbotMember = await prisma.chatbotMember.findFirst({
-          where: {
-            chatbotId,
-            userId,
-          },
-        })
-        if (!chatbotMember) {
-          returnValidationErrors(assignConversationSchema, {
-            assignedId: {
-              _errors: ["User is not valid"],
-            },
-          })
-        }
-        updatedData.assignedUserId = chatbotMember.userId
-      } else if (parsedInput.assignedId.startsWith("t_")) {
-        const inboxteamId = parsedInput.assignedId.substring(2)
-        const inboxTeam = await prisma.inboxTeam.findFirst({
-          where: {
-            chatbotId,
-            id: inboxteamId,
-          },
-        })
-        if (!inboxTeam) {
-          returnValidationErrors(assignConversationSchema, {
-            assignedId: {
-              _errors: ["Inbox Team is not valid"],
-            },
-          })
-        }
-        updatedData.assignedInboxTeamId = inboxTeam.id
-      }
 
-      await prisma.conversation.updateMany({
-        where: {
-          chatbotId,
-          contactId: {
-            in: parsedInput.contactIds,
-          },
-        },
-        data: updatedData,
+        revalidateCacheTags([
+          `chatbots:${chatbotId}#conversations`,
+          `chatbots:${chatbotId}#contacts`,
+        ])
       })
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#conversations`,
-        `chatbots:${chatbotId}#contacts`,
-      ])
     },
   )

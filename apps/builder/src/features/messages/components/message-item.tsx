@@ -39,7 +39,7 @@ export const MessageItem = (props: MessageItemProps) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
-      <div className={"mx-3 flex max-w-[70%] flex-col gap-1"}>
+      <div className="mx-3 flex max-w-[70%] flex-col gap-1">
         {message.content && message.content.length > 0 && (
           <div className={cn("text-sm", variants[variant])}>
             <pre className="break-word whitespace-pre-line font-sans">

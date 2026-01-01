@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -34,6 +35,10 @@ import {
   useWatch,
 } from "react-hook-form"
 import z from "zod"
+import {
+  type ContactFilterRequest,
+  contactFilterRequest,
+} from "../schemas/query"
 
 type ContactFilterProps = {
   parentName: string
@@ -309,6 +314,82 @@ const getConditionOptions = (t: (key: string) => string): ConditionOption[] => [
     disabled: true,
   },
 ]
+
+export function ContactFilterDialog() {
+  const t = useTranslations()
+  const [open, setOpen] = useState(false)
+
+  const { getValues: getParentValues, setValue: setParentValue } =
+    useFormContext()
+
+  const contactFilterForm = useForm({
+    resolver: zodResolver(contactFilterRequest),
+    defaultValues: {
+      contactFilter: {
+        operator: "and",
+        conditions: [],
+      },
+    },
+  })
+
+  useEffect(() => {
+    if (open) {
+      contactFilterForm.reset({
+        contactFilter: getParentValues("contactFilter"),
+      })
+    }
+  }, [open, getParentValues, contactFilterForm])
+
+  const handleSubmit = (data: ContactFilterRequest) => {
+    setParentValue("contactFilter", data.contactFilter)
+    setOpen(false)
+  }
+
+  return (
+    <Dialog onOpenChange={setOpen} open={open}>
+      <DialogTrigger asChild>
+        <Button>
+          {t("actions.addFeature", {
+            feature: t("fields.contactFilter.label"),
+          })}
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("actions.addFeature", {
+              feature: t("fields.contactFilter.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription />
+        </DialogHeader>
+
+        <Form {...contactFilterForm}>
+          <form
+            className="flex flex-col gap-6"
+            onSubmit={contactFilterForm.handleSubmit(handleSubmit)}
+          >
+            <ContactFilter parentName="contactFilter" />
+
+            <DialogFooter>
+              <Button size="sm" variant="ghost">
+                {t("actions.cancel")}
+              </Button>
+              <Button
+                disabled={!contactFilterForm.formState.isValid}
+                size="sm"
+                type="submit"
+              >
+                {t("actions.continue")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export function ContactFilter({ parentName }: ContactFilterProps) {
   const t = useTranslations()

@@ -1122,6 +1122,9 @@
     },
     "spreadsheet": {
       "label": "Spreadsheet"
+    },
+    "conversationType": {
+      "label": "Conversation Type"
     }
   },
   "flows": {

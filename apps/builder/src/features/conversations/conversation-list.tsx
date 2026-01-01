@@ -1,34 +1,27 @@
 "use client"
 
-import { ConversationType } from "@aha.chat/database/enums"
+import { AssignerFilterType, ConversationType } from "@aha.chat/database/enums"
+import { Omnichannel } from "@aha.chat/database/types"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { Input } from "@aha.chat/ui/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@aha.chat/ui/components/ui/select"
 import { useSidebar } from "@aha.chat/ui/components/ui/sidebar"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { PanelLeftClose, SearchIcon, UserPlusIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useDebouncedCallback } from "use-debounce"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
-import type { InboxResource } from "../inboxes/schemas/resource"
 import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
+import type { ListConversationsRequest } from "./schemas/query"
 
-type ConversationListProps = {
-  inboxes: InboxResource[]
-}
-
-export default function ConversationList({ inboxes }: ConversationListProps) {
+export default function ConversationList() {
   const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const {
@@ -81,113 +74,115 @@ export default function ConversationList({ inboxes }: ConversationListProps) {
     [handleChange],
   )
 
-  const handleChangeType = useCallback(
-    (value: string) => {
-      resetState()
-      setFilters({
-        ...filters,
-        conversationType: value,
-      })
-      loadMoreConversations(chatbotId)
+  const form = useForm<ListConversationsRequest>({
+    defaultValues: {
+      conversationType: ConversationType.all,
+      inboxType: Omnichannel,
+      assignedUserId: AssignerFilterType.all,
+      contactFilter: {
+        operator: "and",
+        conditions: [],
+      },
     },
-    [filters, resetState, setFilters, loadMoreConversations, chatbotId],
-  )
+  })
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-2 flex items-center gap-1">
-        <Button
-          data-sidebar="trigger"
-          data-slot="sidebar-trigger"
-          onClick={() => {
-            toggleSidebar()
-          }}
-          size="icon"
-          variant="ghost"
-        >
-          {open ? (
-            <PanelLeftClose />
-          ) : (
-            <PanelLeftClose className="rotate-180" />
-          )}
-        </Button>
-        <Select
-          defaultValue={ConversationType.all}
-          onValueChange={handleChangeType}
-        >
-          <SelectTrigger className="h-8 w-[180px] text-xs">
-            <SelectValue placeholder="" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ConversationType.human}>Human</SelectItem>
-            <SelectItem value={ConversationType.bot}>Bot</SelectItem>
-            <SelectItem value={ConversationType.all}>All</SelectItem>
-          </SelectContent>
-        </Select>
+    <Form {...form}>
+      <form className="flex h-full flex-col">
+        <div className="mb-2 flex items-center gap-1">
+          <Button
+            data-sidebar="trigger"
+            data-slot="sidebar-trigger"
+            onClick={() => {
+              toggleSidebar()
+            }}
+            size="icon"
+            variant="ghost"
+          >
+            {open ? (
+              <PanelLeftClose />
+            ) : (
+              <PanelLeftClose className="rotate-180" />
+            )}
+          </Button>
 
-        <Button
-          className="px-2"
-          onClick={() => {
-            setShowSearchInput(!showSearchInput)
-          }}
-          size="sm"
-          variant="outline"
-        >
-          <SearchIcon className={searchText ? "text-primary" : ""} />
-        </Button>
-
-        <CreateContactDialog
-          chatbotId={chatbotId}
-          trigger={
-            <Button className="px-2" size="sm" variant="outline">
-              <UserPlusIcon />
-            </Button>
-          }
-        />
-
-        <ConversationFilter
-          inboxes={inboxes}
-          onChange={(value) => {
-            resetState()
-            setFilters({
-              ...filters,
-              ...value,
-            })
-            loadMoreConversations(chatbotId)
-          }}
-        />
-      </div>
-
-      <div className="flex-1">
-        {showSearchInput && (
-          <Input
-            className="mb-2"
-            onChange={handleTextChange}
-            placeholder={t("actions.search")}
-            value={searchText}
+          <SelectField
+            name="conversationType"
+            options={[
+              { label: "Human", value: ConversationType.human },
+              { label: "Bot", value: ConversationType.bot },
+              { label: "All", value: ConversationType.all },
+            ]}
           />
-        )}
-        <Virtuoso
-          components={{
-            List: ConversationListList,
-            Footer: ConversationListFooter,
-          }}
-          data={conversations}
-          itemContent={(_, item) => (
-            <ConversationItem
-              conversation={item}
-              isActive={item.id === activeConversationId}
-              onSelect={() => setActiveConversationId(item.id)}
+          {/* <Select
+            defaultValue={ConversationType.all}
+            onValueChange={handleChangeType}
+          >
+            <SelectTrigger className="h-8 w-[180px] text-xs">
+              <SelectValue placeholder="" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ConversationType.human}>Human</SelectItem>
+              <SelectItem value={ConversationType.bot}>Bot</SelectItem>
+              <SelectItem value={ConversationType.all}>All</SelectItem>
+            </SelectContent>
+          </Select> */}
+
+          <Button
+            className="px-2"
+            onClick={() => {
+              setShowSearchInput(!showSearchInput)
+            }}
+            size="sm"
+            variant="outline"
+          >
+            <SearchIcon className={searchText ? "text-primary" : ""} />
+          </Button>
+
+          <CreateContactDialog
+            chatbotId={chatbotId}
+            trigger={
+              <Button className="px-2" size="sm" variant="outline">
+                <UserPlusIcon />
+              </Button>
+            }
+          />
+
+          <ConversationFilter />
+        </div>
+
+        <div className="flex-1">
+          {showSearchInput && (
+            <Input
+              className="mb-2"
+              onChange={handleTextChange}
+              placeholder={t("actions.search")}
+              value={searchText}
             />
           )}
-          rangeChanged={({ endIndex }) => {
-            if (endIndex >= conversations.length - 5) {
-              loadMoreItems()
-            }
-          }}
-        />
+          <Virtuoso
+            components={{
+              List: ConversationListList,
+              Footer: ConversationListFooter,
+            }}
+            data={conversations}
+            itemContent={(_, item) => (
+              <ConversationItem
+                conversation={item}
+                isActive={item.id === activeConversationId}
+                onSelect={() => {
+                  setActiveConversationId(item.id)
+                }}
+              />
+            )}
+            rangeChanged={({ endIndex }) => {
+              if (endIndex >= conversations.length - 5) {
+                loadMoreItems()
+              }
+            }}
+          />
 
-        {/* <InfiniteLoader
+          {/* <InfiniteLoader
           itemCount={
             hasNextPage ? conversations.length + 1 : conversations.length
           }
@@ -211,8 +206,9 @@ export default function ConversationList({ inboxes }: ConversationListProps) {
             </AutoSizer>
           )}
         </InfiniteLoader> */}
-      </div>
-    </div>
+        </div>
+      </form>
+    </Form>
   )
 }
 

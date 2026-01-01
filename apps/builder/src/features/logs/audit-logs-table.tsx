@@ -4,7 +4,7 @@ import type { LogModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
-import React from "react"
+import React, { useMemo } from "react"
 import { getAuditColumns } from "./audit-logs-table-columns"
 import type { getLogs } from "./queries"
 
@@ -17,8 +17,7 @@ export function AuditLogsTable({ promises }: LogsTableProps) {
   const [_rowAction, setRowAction] =
     React.useState<DataTableRowAction<LogModel> | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
-  const columns = React.useMemo(() => getAuditColumns(), [setRowAction])
+  const columns = useMemo(() => getAuditColumns(), [setRowAction])
 
   const { table } = useDataTable({
     data,

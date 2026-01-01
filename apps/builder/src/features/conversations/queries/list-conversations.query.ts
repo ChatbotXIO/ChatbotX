@@ -30,10 +30,12 @@ const getQueryDefault = ({
 }): Prisma.ConversationWhereInput => ({
   chatbotId,
   liveChatEnabled:
-    input.conversationType !== undefined &&
-    input.conversationType !== ConversationType.all
-      ? input.conversationType === ConversationType.human
-      : undefined,
+    input.conversationType === ConversationType.human
+      ? true
+      : // biome-ignore lint/style/noNestedTernary: safe to use
+        input.conversationType === ConversationType.bot
+        ? false
+        : undefined,
 })
 
 const getAssignedUserQuery = (

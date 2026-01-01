@@ -1,10 +1,10 @@
 import {
   BroadcastInboxType,
   BroadcastSubaction,
-  Operator,
 } from "@aha.chat/database/enums"
 import { BroadcastSchedulesType } from "@aha.chat/database/types"
 import { z } from "zod"
+import { contactFilterRequest } from "@/features/contacts/schemas/query"
 
 export const createBroadcastRequest = z.object({
   inboxType: z.enum(BroadcastInboxType),
@@ -25,15 +25,6 @@ export const createBroadcastRequest = z.object({
       },
     )
     .nullable(),
-  contactFilter: z.object({
-    operator: z.enum(["and", "or"]),
-    conditions: z.array(
-      z.object({
-        field: z.string().trim(),
-        operator: z.enum(Operator),
-        value: z.union([z.string(), z.array(z.string())]),
-      }),
-    ),
-  }),
+  contactFilter: contactFilterRequest.shape.contactFilter,
 })
 export type CreateBroadcastRequest = z.infer<typeof createBroadcastRequest>

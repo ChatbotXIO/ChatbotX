@@ -1,10 +1,9 @@
 "use client"
 
-import {
-  AssignerFilterType,
-  ConversationStatus,
-} from "@aha.chat/database/enums"
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+import { ConversationStatus } from "@aha.chat/database/enums"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Popover,
@@ -12,79 +11,64 @@ import {
   PopoverTrigger,
 } from "@aha.chat/ui/components/ui/popover"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@aha.chat/ui/components/ui/select"
-import { MultiSelect } from "@aha.chat/ui/components/ui/sersavan/multi-select"
-import { FilterIcon } from "lucide-react"
+  ArchiveIcon,
+  CornerUpLeftIcon,
+  FilterIcon,
+  MailIcon,
+  StarIcon,
+  UserLockIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { flatMap } from "remeda"
-import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import type { InboxResource } from "../inboxes/schemas/resource"
+import { ContactFilterDialog } from "../contacts/components/contact-filter"
+import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
 
-type UpdateConversationAssignerProps = {
-  inboxes: InboxResource[]
-  onChange: (value: ConversationFilters) => void
-}
-
-export function ConversationFilter({
-  inboxes,
-  onChange,
-}: UpdateConversationAssignerProps) {
+export function ConversationFilter() {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { filters } = useChatStore((state) => state)
+
+  const inboxOptions = useConfiguredInboxTypeOptions()
+
   const hasFilter = Boolean(
-    (filters.inboxType && filters.inboxType !== "all") ||
-      (filters.assignedUserId && filters.assignedUserId !== "all") ||
+    (filters.inboxType && filters.inboxType !== "omnichannel") ||
+      (filters.assignedUserId && filters.assignedUserId !== "omnichannel") ||
       filters.status,
   )
-  const contactAssigneeOptions = useContactAssigneeOptions()
-  const assigneeOptions = flatMap(
-    contactAssigneeOptions,
-    (option) => option.children,
-  ).filter((v) => v) as SelectOption[]
+  const contactAssigneeOptions = useContactAssigneeOptions({
+    includeAll: true,
+    includeUnassigned: true,
+  })
 
   const conversationStatusOptions = [
     {
       label: t("condition.fields.noAdminReply"),
       value: ConversationStatus.noAdminReply,
+      icon: CornerUpLeftIcon,
     },
     {
       label: t("condition.fields.unread"),
       value: ConversationStatus.unread,
+      icon: MailIcon,
     },
     {
       label: t("condition.fields.followUp"),
       value: ConversationStatus.followUp,
+      icon: StarIcon,
     },
     {
       label: t("condition.fields.archived"),
       value: ConversationStatus.archived,
+      icon: ArchiveIcon,
     },
     {
       label: t("condition.fields.blocked"),
       value: ConversationStatus.blocked,
+      icon: UserLockIcon,
     },
   ]
-
-  const onChangeAssigner = (value: string) => {
-    onChange({ assignedUserId: value })
-  }
-
-  const onChangeInboxType = (value: string) => {
-    onChange({ inboxType: value })
-  }
-
-  const onChangeStatus = (value: string[]) => {
-    onChange({ status: value.join(",") })
-  }
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
@@ -95,52 +79,29 @@ export function ConversationFilter({
       </PopoverTrigger>
       <PopoverContent>
         <div className="flex flex-col gap-4">
-          <Select
-            defaultValue={filters.inboxType || "all"}
-            onValueChange={onChangeInboxType}
-          >
-            <SelectTrigger className="h-8 w-full">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("channels.allChannels")}</SelectItem>
-              {inboxes.map((inbox) => (
-                <SelectItem key={inbox.inboxType} value={inbox.inboxType}>
-                  {t(`fields.${inbox.inboxType}.label`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectField
+            label={t("fields.channel.label")}
+            name="inboxType"
+            options={inboxOptions}
+            required
+          />
 
-          <Select
-            defaultValue={filters.assignedUserId || "all"}
-            onValueChange={onChangeAssigner}
-          >
-            <SelectTrigger className="h-8 w-full">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={AssignerFilterType.all}>
-                {t("assignAdmin.assignedAndUnassigned")}
-              </SelectItem>
-              <SelectItem value={AssignerFilterType.unassigned}>
-                {t("assignAdmin.unAssigned")}
-              </SelectItem>
-              {assigneeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ComboboxField
+            label={t("fields.assignedId.label")}
+            name="assignedUserId"
+            options={contactAssigneeOptions}
+            required
+          />
 
-          <MultiSelect
-            defaultValue={filters.status ? filters.status.split(",") : []}
-            modalPopover={true}
-            onValueChange={onChangeStatus}
+          <MultiSelectField
+            label={t("fields.status.label")}
+            name="status"
             options={conversationStatusOptions}
             placeholder={`${t("condition.fields.unread")}, ${t("condition.fields.followUp")}, ... `}
+            required
           />
+
+          <ContactFilterDialog />
         </div>
       </PopoverContent>
     </Popover>

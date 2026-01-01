@@ -4,24 +4,23 @@ import { ChevronDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { authClient } from "@/lib/auth/auth-client"
-import type { ClientConversationResource } from "../chat/store/chat-store"
-import { useContactAssigneeSingleSelectOptions } from "../users/provider/user-hook"
-import AssignConversationDialog from "./components/assign-conversation-dialog"
+import { useContactAssigneeOptions } from "../../users/provider/user-hook"
+import type { ConversationResource } from "../schemas/resource"
+import AssignConversationDialog from "./assign-conversation-dialog"
 
-type UpdateConversationAssignerProps = {
-  conversation: ClientConversationResource
+type UpdateConversationAssigneeProps = {
+  conversation: ConversationResource
   onChange: (user: string | null) => void
 }
 
-export function UpdateConversationAssigner({
+export function UpdateConversationAssignee({
   conversation,
   onChange,
-}: UpdateConversationAssignerProps) {
+}: UpdateConversationAssigneeProps) {
   const t = useTranslations()
-  const options = useContactAssigneeSingleSelectOptions()
+  const options = useContactAssigneeOptions({ autoGroup: false })
 
   const { data: session } = authClient.useSession()
-
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const onSelectAssignee = useCallback(

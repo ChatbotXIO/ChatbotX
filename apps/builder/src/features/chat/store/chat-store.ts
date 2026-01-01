@@ -1,3 +1,4 @@
+import type { ConversationType } from "@aha.chat/database/enums"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type {
@@ -9,22 +10,18 @@ import type {
   MessageResource,
 } from "@/features/messages/schemas"
 
-export type ClientConversationResource = ConversationResource & {
-  isActive: boolean
-}
-
 export type ConversationFilters = {
   assignedUserId?: string
   inboxType?: string
   status?: string
   searchText?: string
-  conversationType?: string
+  conversationType?: ConversationType
 }
 
 export type ChatState = {
   // conversation list
   isFirstLoadConversation: boolean
-  conversations: ClientConversationResource[]
+  conversations: ConversationResource[]
   nextCursorConversation: string | null
   isLoadingConversation: boolean
   activeConversationId: string | null
@@ -39,7 +36,7 @@ export type ChatState = {
 }
 
 export type ChatActions = {
-  prependConversation: (newConversation: ClientConversationResource) => void
+  prependConversation: (newConversation: ConversationResource) => void
   loadMoreConversations: (chatbotId: string) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
   resetState: () => void
@@ -75,7 +72,7 @@ export const createChatStore = () => {
     isLoadMoreMessage: false,
     hasNextMessagePage: true,
 
-    prependConversation: (newConversation: ClientConversationResource) =>
+    prependConversation: (newConversation: ConversationResource) =>
       set((state) => ({
         conversations: [newConversation, ...state.conversations],
       })),
@@ -100,19 +97,12 @@ export const createChatStore = () => {
         cursor: nextCursorConversation ?? "",
         ...filters,
       })
-      const { data, nextCursor } = await ky
+      const { data: newConversations, nextCursor } = await ky
         .get<ConversationCollection>(
           `/api/chatbots/${chatbotId}/conversations`,
           { searchParams },
         )
         .json()
-
-      const newConversations = (data as ClientConversationResource[]).map(
-        (conversation) => {
-          conversation.isActive = false
-          return conversation
-        },
-      )
 
       const urlParams = new URLSearchParams(window.location.search)
       const queryConversationId = urlParams.get("conversationId")
@@ -125,11 +115,9 @@ export const createChatStore = () => {
             set({ activeConversationId: queryConversationId })
           }
         } else {
-          const firstConversation =
-            newConversations[0] as ClientConversationResource
-          firstConversation.isActive = true
-
-          set({ activeConversationId: firstConversation.id })
+          set({
+            activeConversationId: newConversations[0].id,
+          })
         }
       }
 
@@ -350,7 +338,7 @@ export const createChatStore = () => {
           )
           .json()
         newConversation.data.messages = [message]
-        prependConversation({ ...newConversation.data, isActive: true })
+        prependConversation(newConversation.data)
       }
     },
 

@@ -26,7 +26,6 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AITriggerModel> | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   const columns = useMemo(
     () => getAITriggersColumns({ setRowAction }),
     [setRowAction],

@@ -5,7 +5,6 @@ import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const readConversationAction = chatbotActionClient
@@ -16,13 +15,16 @@ export const readConversationAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await assertCurrentUserCanAccessChatbot(chatbotId)
+      await prisma.conversation.findFirstOrThrow({
+        where: { id, chatbotId },
+        select: {
+          id: true,
+        },
+      })
 
-      await prisma.$transaction(async (tx) => {
-        await tx.conversation.update({
-          where: { id },
-          data: { agentLastSeenAt: new Date() },
-        })
+      await prisma.conversation.update({
+        where: { id },
+        data: { agentLastSeenAt: new Date() },
       })
     },
   )

@@ -133,12 +133,11 @@ export default function ConversationItem({
     },
   )
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
     if (isActive) {
       execute()
     }
-  }, [conversation.id, isActive])
+  }, [isActive, execute])
 
   return (
     <div className="w-full">

@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -52,34 +53,35 @@ export default function AssignConversationDialog({
     [contactIds, assignedId],
   )
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    assignConversationAction.bind(null, chatbotId),
-    zodResolver(assignConversationSchema),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success(
-            t("messages.updatedSuccess", {
-              feature: t("fields.conversation.label"),
-            }),
-          )
-          onSuccess?.(form.getValues("assignedId"))
-          form.reset(defaultValues)
-          setOpen(false)
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      assignConversationAction.bind(null, chatbotId),
+      zodResolver(assignConversationSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(
+              t("messages.updatedSuccess", {
+                feature: t("fields.conversation.label"),
+              }),
+            )
+            onSuccess?.(form.getValues("assignedId"))
+            resetFormAndAction()
+            setOpen(false)
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues,
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues,
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
   const { isValid, isSubmitting } = form.formState
 
@@ -98,6 +100,7 @@ export default function AssignConversationDialog({
       <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("actions.assignConversation")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
 
         <Form {...form}>

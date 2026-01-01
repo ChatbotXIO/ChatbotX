@@ -44,7 +44,7 @@ import {
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   {
-    Icon: AtomIcon,
+    icon: AtomIcon,
     iconColor: "none",
     name: t("omnichannel.title"),
     value: "omnichannel",
@@ -59,7 +59,7 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    Icon: SiMessenger,
+    icon: SiMessenger,
     iconColor: SiMessengerHex,
     name: t("messenger.title"),
     value: InboxType.messenger,
@@ -93,7 +93,7 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    Icon: SiWhatsapp,
+    icon: SiWhatsapp,
     iconColor: SiWhatsappHex,
     name: t("whatsapp.title"),
     value: InboxType.whatsapp,
@@ -107,7 +107,7 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    Icon: SiZalo,
+    icon: SiZalo,
     iconColor: SiZaloHex,
     name: t("zalo.title"),
     value: InboxType.zalo,
@@ -227,7 +227,7 @@ function CreateBroadcastChooseChannel() {
         {configs.map((config) => (
           <div className="flex w-full items-center gap-2" key={config.value}>
             <span className="flex flex-1 gap-2">
-              <config.Icon fill={config.iconColor} />
+              <config.icon fill={config.iconColor} />
               {config.name}
             </span>
             <Button

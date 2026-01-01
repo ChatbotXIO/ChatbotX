@@ -162,7 +162,7 @@ export function ContactListAction({ table }: ContactListActionProps) {
                 ids={
                   rows
                     .map((r) => r.original.conversation?.id || null)
-                    .filter((v) => v) as string[]
+                    .filter(Boolean) as string[]
                 }
                 trigger={
                   <DropdownMenuItem
