@@ -17,17 +17,14 @@ import { format } from "date-fns"
 import {
   DownloadIcon,
   EyeIcon,
-  FileIcon,
   MoreHorizontalIcon,
-  SheetIcon,
-  TextIcon,
   Trash2Icon,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import prettyBytes from "pretty-bytes"
-import { use, useCallback, useMemo, useState } from "react"
+import { use, useMemo, useState } from "react"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
 import { DeleteAIFileDialog } from "./delete-ai-file-dialog"
@@ -94,24 +91,6 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
   const router = useRouter()
   const t = useTranslations()
 
-  const getFileIcon = useCallback((fileType: string) => {
-    const extension = fileType.split("/").at(-1)
-    switch (extension) {
-      case "md":
-      case "doc":
-      case "docx":
-      case "txt":
-      case "csv":
-      case "xls":
-      case "pdf":
-        return <TextIcon className="h-4 w-4" />
-      case "xlsx":
-        return <SheetIcon className="h-4 w-4" />
-      default:
-        return <FileIcon className="h-4 w-4" />
-    }
-  }, [])
-
   const columns = useMemo<ColumnDef<AIFileWithProcessing>[]>(
     () => [
       {
@@ -149,10 +128,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            {getFileIcon(row.original.mimeType)}
-            <span className="font-medium">{row.original.name}</span>
-          </div>
+          <span className="font-medium">{row.original.name}</span>
         ),
         enableSorting: true,
         enableHiding: false,
@@ -234,7 +210,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         enableHiding: false,
       },
     ],
-    [t, getFileIcon],
+    [t],
   )
 
   const { table } = useDataTable({

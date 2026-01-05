@@ -11,6 +11,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
+import { readMessage } from "./handlers/read-message"
 import { receiveMessage } from "./handlers/received-message"
 import { sendBroadcast } from "./handlers/send-broadcast"
 import { sendFlowNode } from "./handlers/send-flow-node"
@@ -58,6 +59,10 @@ const worker = new Worker(
       }
       case IntegrationJobAction.triggerAutomatedResponse: {
         await triggerAutomatedResponse(job.data.data)
+        return
+      }
+      case IntegrationJobAction.readMessage: {
+        await readMessage(job.data.data)
         return
       }
       case IntegrationJobAction.sendBroadcast: {

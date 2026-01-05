@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Loader } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
@@ -33,6 +34,7 @@ export function DeleteInboxTeamMembersDialog({
   ...props
 }: DeleteMembersDialogProps) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteTeamMembersAction.bind(
@@ -48,6 +50,7 @@ export function DeleteInboxTeamMembersDialog({
           }),
         )
         onOpenChange(false)
+        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -58,7 +61,7 @@ export function DeleteInboxTeamMembersDialog({
   )
 
   return (
-    <Dialog {...props}>
+    <Dialog {...props} onOpenChange={onOpenChange}>
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
@@ -75,7 +78,11 @@ export function DeleteInboxTeamMembersDialog({
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button size="sm" variant="ghost">
+            <Button
+              onClick={() => onOpenChange(false)}
+              size="sm"
+              variant="ghost"
+            >
               {t("actions.cancel")}
             </Button>
           </DialogClose>

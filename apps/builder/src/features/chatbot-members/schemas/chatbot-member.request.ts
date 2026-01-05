@@ -25,16 +25,21 @@ export const chatbotMemberNotificationChannels = {
 } as const
 
 export const inviteChatbotMemberRequest = z.object({
-  permissions: z.object({
-    superAdmin: z.boolean(),
-    analytics: z.boolean(),
-    flows: z.boolean(),
-    contacts: z.boolean(),
-    onlyAssignedContacts: z.boolean(),
-    emailAndPhone: z.boolean(),
-    broadcast: z.boolean(),
-    ecommerce: z.boolean(),
-  }),
+  permissions: z
+    .object({
+      superAdmin: z.boolean(),
+      analytics: z.boolean(),
+      flows: z.boolean(),
+      contacts: z.boolean(),
+      onlyAssignedContacts: z.boolean(),
+      emailAndPhone: z.boolean(),
+      broadcast: z.boolean(),
+      ecommerce: z.boolean(),
+    })
+    .refine((val) => Object.values(val).some(Boolean), {
+      message: "At least one permission must be selected.",
+      path: ["permissions"],
+    }),
 })
 export type InviteChatbotMemberRequest = z.infer<
   typeof inviteChatbotMemberRequest

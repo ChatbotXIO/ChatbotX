@@ -60,7 +60,7 @@ export const createMessageAction = chatbotActionClient
       let imageDimensions: { width: number; height: number } | null = null
       if ("files" in parsedInput && parsedInput.files.length > 0) {
         const file = parsedInput.files[0] as File
-        path = `public/conversations/${conversationId}/${createId()}`
+        path = `public/chatbots/${chatbotId}/conversations/${conversationId}/${createId()}`
 
         const buffer = (await file.arrayBuffer()) as unknown as Buffer
         await uploader.putObject(path, buffer, {

@@ -108,7 +108,7 @@ export const createWebchatMessageAction = actionClient
       let imageDimensions: { width: number; height: number } | null = null
       if ("files" in parsedInput && parsedInput.files.length > 0) {
         const file = parsedInput.files[0] as File
-        path = `public/conversations/${conversation.id}/${createId()}`
+        path = `public/chatbots/${parsedInput.chatbotId}/conversations/${conversation.id}/${createId()}`
 
         const buffer = (await file.arrayBuffer()) as unknown as Buffer
         await uploader.putObject(path, buffer, {

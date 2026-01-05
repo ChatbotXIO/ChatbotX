@@ -15,6 +15,7 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import type { UserResource } from "../users/schemas/resource"
@@ -35,6 +36,7 @@ export function AddInboxTeamMemberDialog({
   listUsers: UserResource[]
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     addInboxTeamMemberAction.bind(null, chatbotId, inboxTeam?.id ?? ""),
@@ -48,6 +50,7 @@ export function AddInboxTeamMemberDialog({
             }),
           )
           onOpenChange(false)
+          router.refresh()
         },
         onError: ({ error }) => {
           if (error.serverError) {

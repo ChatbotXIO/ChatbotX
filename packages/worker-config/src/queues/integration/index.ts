@@ -14,6 +14,7 @@ export const IntegrationJobAction = {
   sendFlowQuickReply: "sendFlowQuickReply",
   triggerAutomatedResponse: "triggerAutomatedResponse",
   sendBroadcast: "sendBroadcast",
+  readMessage: "readMessage",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -67,6 +68,15 @@ export type IntegrationJobSendBroadcast = {
   }
 }
 
+export type IntegrationJobReadMessage = {
+  type: typeof IntegrationJobAction.readMessage
+  data: {
+    integrationType: string
+    // biome-ignore lint/suspicious/noExplicitAny: wip
+    payload: any
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobSendFlow
@@ -74,6 +84,7 @@ export type IntegrationJobData =
   | IntegrationJobSendFlowQuickReply
   | IntegrationJobTriggerAutomatedResponse
   | IntegrationJobSendBroadcast
+  | IntegrationJobReadMessage
 
 export const integrationQueue =
   process.env.NEXT_PHASE !== "phase-production-build"
