@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -28,6 +29,7 @@ export function DeleteInboxTeamDialog({
   inboxTeam: InboxTeamModel | null
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteInboxTeamAction.bind(null, chatbotId),
@@ -39,6 +41,7 @@ export function DeleteInboxTeamDialog({
           }),
         )
         onOpenChange(false)
+        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {

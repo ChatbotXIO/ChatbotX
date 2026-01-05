@@ -72,11 +72,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.7.0 # Use the latest version
-        with:
-          redis-version: 7
-
       - name: Build and push builder image
         uses: docker/build-push-action@v6
         with:

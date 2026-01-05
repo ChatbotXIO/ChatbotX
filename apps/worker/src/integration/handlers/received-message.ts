@@ -19,50 +19,7 @@ import {
 import type { AttachmentEntity, AuthValue, Context } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
-import { allIntegrations } from "../../shared/integrations"
-
-const getDBIntegration = async (
-  integrationType: string,
-  // biome-ignore lint/suspicious/noExplicitAny: safe pass value
-  payload: any,
-) => {
-  switch (integrationType) {
-    case InboxType.whatsapp:
-      return await prisma.integrationWhatsapp.findFirstOrThrow({
-        where: {
-          phoneNumberId: (payload as WhatsappWebhookEvent).phoneID,
-        },
-        include: {
-          chatbot: true,
-        },
-      })
-    case InboxType.messenger:
-      return await prisma.integrationMessenger.findFirstOrThrow({
-        where: {
-          pageId: (payload as MessengerWebhookEvent).entry[0].id,
-        },
-        include: {
-          chatbot: true,
-        },
-      })
-    case InboxType.zalo: {
-      const input = payload as ZaloWebhookEvent
-
-      return await prisma.integrationZalo.findFirstOrThrow({
-        where: {
-          oaId: input.event_name.includes("user_send")
-            ? input.recipient.id
-            : input.sender.id,
-        },
-        include: {
-          chatbot: true,
-        },
-      })
-    }
-    default:
-      throw new Error(`Unsupported integration: ${integrationType}`)
-  }
-}
+import { allIntegrations, getDBIntegration } from "../../shared/integrations"
 
 export const receiveMessage = async ({
   integrationType,
@@ -74,6 +31,7 @@ export const receiveMessage = async ({
   message: MessageModel
   conversation: ConversationModel
   postbackAction: { flowVersionId: string; buttonId: string } | null
+  quickReplyAction: { flowVersionId: string; buttonId: string } | null
 }> => {
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
@@ -96,7 +54,8 @@ export const receiveMessage = async ({
     throw new Error("Unable to parse received message")
   }
 
-  const { message, conversation, postbackAction } = parsedMessage
+  const { message, conversation, postbackAction, quickReplyAction } =
+    parsedMessage
 
   const result = await prisma.$transaction(async (tx) => {
     let newContact = await tx.contact.findUnique({
@@ -219,10 +178,22 @@ export const receiveMessage = async ({
     })
   }
 
+  if (quickReplyAction) {
+    await integrationQueue.add(IntegrationJobAction.sendFlowQuickReply, {
+      type: IntegrationJobAction.sendFlowQuickReply,
+      data: {
+        conversationId: result.conversation.id,
+        flowVersionId: quickReplyAction.flowVersionId,
+        buttonId: quickReplyAction.buttonId,
+      },
+    })
+  }
+
   return {
     message: result.message,
     conversation: result.conversation,
     postbackAction,
+    quickReplyAction,
   }
 }
 

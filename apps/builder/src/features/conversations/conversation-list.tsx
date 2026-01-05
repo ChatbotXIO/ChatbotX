@@ -11,7 +11,7 @@ import {
 import { useSidebar } from "@aha.chat/ui/components/ui/sidebar"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { FilterIcon, PanelLeftClose, UserPlusIcon } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useChatStore } from "../chat/store/chat-store-provider"
@@ -20,6 +20,8 @@ import ConversationItem from "./conversation-item"
 
 export default function ConversationList() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const {
     conversations,
     loadMoreConversations,
@@ -101,7 +103,14 @@ export default function ConversationList() {
             <ConversationItem
               conversation={item}
               isActive={item.id === activeConversationId}
-              onSelect={() => setActiveConversationId(item.id)}
+              onSelect={() => {
+                setActiveConversationId(item.id)
+
+                // Update the URL with the selected conversation ID
+                const params = new URLSearchParams(searchParams.toString())
+                params.set("conversationId", item.id)
+                router.replace(`?${params.toString()}`)
+              }}
             />
           )}
           rangeChanged={({ endIndex }) => {

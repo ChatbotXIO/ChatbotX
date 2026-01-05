@@ -68,13 +68,23 @@ const handleWebhookEvent = async (
       throw new SdkException("Invalid app_id in webhook payload")
     }
 
-    await queue.add("incomingMessage", {
-      type: "incomingMessage",
-      data: {
-        integrationType: "zalo",
-        payload: webhookData,
-      },
-    })
+    if (webhookData.event_name === "user_seen_message") {
+      await queue.add("readMessage", {
+        type: "readMessage",
+        data: {
+          integrationType: "zalo",
+          payload: webhookData,
+        },
+      })
+    } else {
+      await queue.add("incomingMessage", {
+        type: "incomingMessage",
+        data: {
+          integrationType: "zalo",
+          payload: webhookData,
+        },
+      })
+    }
   } catch (error) {
     const errorMessage =
       error instanceof Error

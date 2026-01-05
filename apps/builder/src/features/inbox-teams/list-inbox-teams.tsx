@@ -1,12 +1,5 @@
 "use client"
 
-// import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@aha.chat/ui/components/ui/accordion"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@aha.chat/ui/components/ui/accordion"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -15,6 +8,16 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@aha.chat/ui/components/ui/table"
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -55,7 +58,6 @@ function ListInboxTeamsDetail({
   allUsers: UserResource[]
 }) {
   const t = useTranslations()
-
   const [renameInboxTeam, setRenameInboxTeam] =
     useState<InboxTeamResource | null>(null)
   const [deleteInboxTeam, setDeleteInboxTeam] =
@@ -64,73 +66,145 @@ function ListInboxTeamsDetail({
     useState<InboxTeamResource | null>(null)
   const [deleteInboxTeamMember, setDeleteInboxTeamMember] =
     useState<InboxTeamMemberResource | null>(null)
+  const [openTeams, setOpenTeams] = useState<Record<string, boolean>>({})
+
+  const rows: Array<{ showMembers: boolean; team: InboxTeamResource }> = []
+  for (const team of allInboxTeams) {
+    rows.push({ showMembers: true, team })
+    if (openTeams[team.id]) {
+      rows.push({ showMembers: false, team })
+    }
+  }
 
   return (
     <>
-      <Accordion className="w-full" collapsible type="single">
-        {allInboxTeams.map((team) => (
-          <AccordionItem key={team.id} value={team.id}>
-            <div className="flex w-full items-center">
-              <AccordionTrigger className="flex-1 gap-2 text-left">
-                <span className="flex-1 text-left">{team.name}</span>
-              </AccordionTrigger>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost">
-                    <MoreHorizontalIcon className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="flex flex-col gap-1 p-3">
-                  <DropdownMenuItem
-                    className="cursor-pointer text-sm"
-                    onClick={() => setRenameInboxTeam(team)}
-                  >
-                    <PencilIcon />
-                    {t("actions.rename")}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    className="cursor-pointer text-sm"
-                    onClick={() => setAddInboxTeamMember(team)}
-                  >
-                    <PlusIcon />
-                    {t("actions.addFeature", {
-                      feature: t("fields.member.label"),
-                    })}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    className="cursor-pointer text-destructive text-sm"
-                    onClick={() => setDeleteInboxTeam(team)}
-                  >
-                    <Trash2Icon />
-                    {t("actions.delete")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <AccordionContent>
-              {(team.inboxTeamMembers || []).map((member) => (
-                <div
-                  className="flex w-full items-center"
-                  key={`${team.id}-${member.id}`}
-                >
-                  <span className="flex-1 gap-1">{member.user?.name}</span>
-                  <Button
-                    className="size-6"
-                    onClick={() => setDeleteInboxTeamMember(member)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <Trash2Icon className="text-destructive" />
-                  </Button>
-                </div>
-              ))}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      <div className="overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-2.5" />
+              <TableHead>{t("fields.team.label")}</TableHead>
+              <TableHead>{t("fields.teamMembers.label")}</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length ? (
+              rows.map((row, _index) => {
+                if (row.showMembers) {
+                  return (
+                    <TableRow key={row.team.id}>
+                      <TableCell>
+                        <Button
+                          className="cursor-pointer"
+                          onClick={() =>
+                            setOpenTeams((prev) => ({
+                              ...prev,
+                              [row.team.id]: !prev[row.team.id],
+                            }))
+                          }
+                          type="button"
+                          variant="ghost"
+                        >
+                          {openTeams[row.team.id] ? (
+                            <ChevronDownIcon size={16} />
+                          ) : (
+                            <ChevronRightIcon size={16} />
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          className="cursor-pointer"
+                          onClick={() =>
+                            setOpenTeams((prev) => ({
+                              ...prev,
+                              [row.team.id]: !prev[row.team.id],
+                            }))
+                          }
+                          type="button"
+                          variant="ghost"
+                        >
+                          {row.team.name}
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        {row.team.inboxTeamMembers?.length || 0}
+                      </TableCell>
+                      <TableCell className="w-1">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost">
+                              <MoreHorizontalIcon className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="flex flex-col gap-1 p-3">
+                            <DropdownMenuItem
+                              className="cursor-pointer text-sm"
+                              onClick={() => setRenameInboxTeam(row.team)}
+                            >
+                              <PencilIcon />
+                              {t("actions.rename")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer text-sm"
+                              onClick={() => setAddInboxTeamMember(row.team)}
+                            >
+                              <PlusIcon />
+                              {t("actions.addFeature", {
+                                feature: t("fields.member.label"),
+                              })}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer text-destructive text-sm"
+                              onClick={() => setDeleteInboxTeam(row.team)}
+                            >
+                              <Trash2Icon />
+                              {t("actions.delete")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )
+                }
+                return (
+                  <TableRow key={`${row.team.id}-members`}>
+                    <TableCell />
+                    <TableCell colSpan={4}>
+                      <ul className="pl-2">
+                        {(row.team.inboxTeamMembers || []).map((member) => (
+                          <li
+                            className="flex items-center justify-between border-b py-2 last:border-b-0"
+                            key={member.id}
+                          >
+                            <span>{member.user?.name}</span>
+                            <Button
+                              className="size-6 px-4"
+                              onClick={() => setDeleteInboxTeamMember(member)}
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <Trash2Icon className="text-destructive" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            ) : (
+              <TableRow>
+                <TableCell className="h-24 text-center" colSpan={3}>
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <RenameInboxTeamDialog
         chatbotId={chatbotId}

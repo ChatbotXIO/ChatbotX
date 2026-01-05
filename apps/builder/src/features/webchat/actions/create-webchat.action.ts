@@ -53,4 +53,8 @@ export const createWebchatAction = authActionClient
     })
 
     revalidateCacheTags(`chatbots:${chatbotId}#webchats`)
+
+    return {
+      chatbotId,
+    }
   })

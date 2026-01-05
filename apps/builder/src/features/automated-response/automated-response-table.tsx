@@ -85,6 +85,7 @@ export function AutomatedResponsesTable({
       },
       {
         id: "userMessages",
+        accessorKey: "userMessages",
         size: 100,
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -101,6 +102,9 @@ export function AutomatedResponsesTable({
               {userMessages.join(",")}
             </Link>
           )
+        },
+        meta: {
+          label: t("fields.userMessage.label"),
         },
       },
       {
@@ -141,13 +145,19 @@ export function AutomatedResponsesTable({
           )
         },
         enableSorting: false,
-        enableHiding: false,
+        meta: {
+          label: t("fields.botResponse.label"),
+        },
       },
       {
+        id: "status",
         accessorKey: "status",
         size: 10,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Status" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.status.label")}
+          />
         ),
         cell: ({ cell, row }) => (
           <AutomatedResponseStatusCell
@@ -157,16 +167,26 @@ export function AutomatedResponsesTable({
           />
         ),
         enableSorting: false,
-        enableHiding: false,
+        meta: {
+          label: t("fields.status.label"),
+        },
       },
       {
         id: "createdAt",
+        accessorKey: "createdAt",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Created" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.createdAt.label")}
+          />
         ),
         cell: ({ row }) => (
           <div>{format(row.original.createdAt, "yyyy/MM/dd HH:mm")}</div>
         ),
+        meta: {
+          label: t("fields.createdAt.label"),
+        },
+        enableSorting: true,
       },
       {
         id: "action",

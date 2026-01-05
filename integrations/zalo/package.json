@@ -11,9 +11,9 @@
     "@paralleldrive/cuid2": "^3.1.0",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
-    "ky": "^1.14.1",
+    "ky": "^1.14.2",
     "remeda": "^2.32.0",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

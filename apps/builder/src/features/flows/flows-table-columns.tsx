@@ -66,9 +66,10 @@ export function getFlowColumns({
       enableHiding: false,
     },
     {
-      accessorKey: "title",
+      id: "name",
+      accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Title" />
+        <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
         <Link
@@ -77,14 +78,22 @@ export function getFlowColumns({
           {row.original.name}
         </Link>
       ),
+      meta: {
+        label: t("fields.name.label"),
+        placeholder: t("fields.name.placeholder"),
+        variant: "text",
+      },
+      enableColumnFilter: true,
       size: 300,
       enableSorting: true,
-      enableHiding: false,
     },
     {
-      accessorKey: "active",
+      accessorKey: "status",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.status.label")}
+        />
       ),
       cell: ({ row }) => {
         const { execute, isPending } = useAction(
@@ -105,14 +114,19 @@ export function getFlowColumns({
           />
         )
       },
+      meta: {
+        label: t("fields.status.label"),
+      },
       size: 50,
       enableSorting: false,
-      enableHiding: false,
     },
     {
-      accessorKey: "enableInInbox",
+      accessorKey: "inbox",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Inbox" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.inbox.label")}
+        />
       ),
       cell: ({ row }) => {
         const { execute, isPending } = useAction(
@@ -134,19 +148,26 @@ export function getFlowColumns({
           />
         )
       },
+      meta: {
+        label: t("fields.inbox.label"),
+      },
       size: 50,
       enableSorting: false,
-      enableHiding: false,
     },
     {
-      accessorKey: "modified",
+      accessorKey: "createdAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Modified" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.modified.label")}
+        />
       ),
       cell: ({ row }) => <div>{formatDate(row.original.updatedAt)}</div>,
       size: 50,
-      enableSorting: false,
-      enableHiding: false,
+      enableSorting: true,
+      meta: {
+        label: t("fields.modified.label"),
+      },
     },
     {
       id: "actions",
