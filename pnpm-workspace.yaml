@@ -4,8 +4,8 @@ packages:
   - integrations/*
 
 onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
+  - "@prisma/client"
+  - "@prisma/engines"
   - core-js-pure
   - esbuild
   - lefthook

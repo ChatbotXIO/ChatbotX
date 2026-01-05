@@ -8,15 +8,15 @@
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^7.0.4",
     "@types/react": "19.2.7",
-    "react-email": "5.0.8",
+    "react-email": "5.1.0",
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@react-email/components": "1.0.1",
-    "@t3-oss/env-nextjs": "^0.13.9",
-    "nodemailer": "^7.0.11",
+    "@react-email/components": "1.0.2",
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "nodemailer": "^7.0.12",
     "react": "19.2.3",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "exports": {
     ".": "./src/index.tsx",

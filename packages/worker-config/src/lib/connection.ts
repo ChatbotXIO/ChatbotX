@@ -43,3 +43,8 @@ export const defaultWorkerOptions = {
   removeOnComplete: { count: 1000 },
   removeOnFail: { count: 5000 },
 }
+
+// Queue is required Redis connection, so we need to provide a fake queue for the production build
+export const fakeQueue = {
+  add: () => Promise.resolve(""),
+}

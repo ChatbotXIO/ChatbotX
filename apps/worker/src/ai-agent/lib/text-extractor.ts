@@ -1,12 +1,48 @@
 import type { Readable } from "node:stream"
 import { TextDecoder } from "node:util"
 import { uploader } from "@aha.chat/filesystem"
+import {
+  CSV_MIME_TYPES,
+  DOCX_MIME_TYPES,
+  EMAIL_MIME_TYPES,
+  HTML_MIME_TYPES,
+  MARKDOWN_MIME_TYPES,
+  PDF_MIME_TYPES,
+  PROPERTIES_MIME_TYPES,
+  RTF_MIME_TYPES,
+  SPREADSHEET_MIME_TYPES,
+  VTT_MIME_TYPES,
+  XML_MIME_TYPES,
+} from "@aha.chat/sdk"
 import { htmlToText } from "html-to-text"
+import { simpleParser } from "mailparser"
 import { extractRawText } from "mammoth"
+import { lookup } from "mime-types"
 import pdfParse from "pdf-parse-new"
 import removeMd from "remove-markdown"
 import { read, utils } from "xlsx"
 import { logger } from "../../lib/logger"
+
+const PRINTABLE_CHAR_REGEX = /[\x20-\x7E\n\r\t]/
+const UTF8_DECODER = new TextDecoder("utf-8")
+const UTF8_NON_FATAL_DECODER = new TextDecoder("utf-8", { fatal: false })
+
+const decodeUtf8 = (buffer: Buffer): string => UTF8_DECODER.decode(buffer)
+
+const decodeUtf8NonFatal = (buffer: Buffer): string =>
+  UTF8_NON_FATAL_DECODER.decode(buffer)
+
+const normalizeMimeType = (mimeType: string): string => {
+  return mimeType.toLowerCase().split(";")[0]?.trim() || ""
+}
+
+const isMimeType = (
+  mimeType: string,
+  allowedTypes: readonly string[],
+): boolean => {
+  const normalized = normalizeMimeType(mimeType)
+  return allowedTypes.includes(normalized)
+}
 
 function normalizeWhitespace(input: string): string {
   let out = ""
@@ -73,21 +109,21 @@ async function extractTextFromXlsx(buffer: Buffer): Promise<string> {
     }
     return await normalizeWhitespace(texts.join("\n"))
   } catch (error) {
-    logger.warn("XLSX parsing failed, falling back to plain text", { error })
-    throw new Error("XLSX parsing failed")
+    logger.warn("XLSX/XLS parsing failed, falling back to plain text", {
+      error,
+    })
+    throw new Error("XLSX/XLS parsing failed")
   }
 }
 
 function extractTextFromCsv(buffer: Buffer): string {
   // Simple fallback: treat as UTF-8 text
-  const decoder = new TextDecoder("utf-8")
-  return normalizeWhitespace(decoder.decode(buffer))
+  return normalizeWhitespace(decodeUtf8(buffer))
 }
 
 async function extractTextFromHtml(buffer: Buffer): Promise<string> {
   try {
-    const decoder = new TextDecoder("utf-8")
-    const html = decoder.decode(buffer)
+    const html = decodeUtf8(buffer)
     return await normalizeWhitespace(htmlToText(html, { wordwrap: false }))
   } catch (error) {
     logger.warn("HTML parsing failed, falling back to plain text", { error })
@@ -97,8 +133,7 @@ async function extractTextFromHtml(buffer: Buffer): Promise<string> {
 
 async function extractTextFromMarkdown(buffer: Buffer): Promise<string> {
   try {
-    const decoder = new TextDecoder("utf-8")
-    const md = decoder.decode(buffer)
+    const md = decodeUtf8(buffer)
     const plain = removeMd(md, {
       stripListLeaders: true,
       gfm: true,
@@ -109,14 +144,12 @@ async function extractTextFromMarkdown(buffer: Buffer): Promise<string> {
     logger.warn("Markdown parsing failed, falling back to plain text", {
       error,
     })
-    const decoder = new TextDecoder("utf-8")
-    return normalizeWhitespace(decoder.decode(buffer))
+    return normalizeWhitespace(decodeUtf8(buffer))
   }
 }
 
 function extractTextFromRtf(buffer: Buffer): string {
-  const decoder = new TextDecoder("utf-8")
-  const rtf = decoder.decode(buffer)
+  const rtf = decodeUtf8(buffer)
   // Very basic RTF to text: remove groups, control words, keep plain text
   // 1) Remove escaped hex like \'hh
   let text = rtf.replace(/\\'[0-9a-fA-F]{2}/g, " ")
@@ -130,64 +163,141 @@ function extractTextFromRtf(buffer: Buffer): string {
   return normalizeWhitespace(text)
 }
 
-async function extractAsPlainText(
-  stream: AsyncIterable<Uint8Array> | Readable,
-): Promise<string> {
-  const decoder = new TextDecoder("utf-8")
-  let out = ""
-  for await (const part of stream as AsyncIterable<Uint8Array>) {
-    out += decoder.decode(part, { stream: true })
+async function extractTextFromEmail(buffer: Buffer): Promise<string> {
+  try {
+    const parsed = await simpleParser(buffer)
+    const parts: string[] = []
+
+    if (parsed.subject) {
+      parts.push(`Subject: ${parsed.subject}`)
+    }
+    if (parsed.from) {
+      const fromText = Array.isArray(parsed.from)
+        ? parsed.from.map((f) => f.text).join(", ")
+        : parsed.from.text
+      if (fromText) {
+        parts.push(`From: ${fromText}`)
+      }
+    }
+    if (parsed.to) {
+      const toText = Array.isArray(parsed.to)
+        ? parsed.to.map((t) => t.text).join(", ")
+        : parsed.to.text
+      if (toText) {
+        parts.push(`To: ${toText}`)
+      }
+    }
+    if (parsed.text) {
+      parts.push(parsed.text)
+    }
+    if (parsed.html) {
+      const htmlText = await htmlToText(parsed.html, { wordwrap: false })
+      parts.push(htmlText)
+    }
+
+    const result = normalizeWhitespace(parts.join("\n\n"))
+    if (!result || result.trim().length === 0) {
+      return normalizeWhitespace(decodeUtf8NonFatal(buffer))
+    }
+    return result
+  } catch (_error) {
+    const decoded = decodeUtf8NonFatal(buffer)
+    const printableRatio =
+      decoded
+        .split("")
+        .filter((character) => PRINTABLE_CHAR_REGEX.test(character)).length /
+      decoded.length
+    if (printableRatio < 0.5) {
+      return normalizeWhitespace(
+        `[Outlook MSG file - content extraction may be limited]\n\n${decoded.slice(0, 1000)}`,
+      )
+    }
+    return normalizeWhitespace(decoded)
   }
-  return normalizeWhitespace(out)
+}
+
+function extractTextFromXml(buffer: Buffer): string {
+  try {
+    const xml = decodeUtf8(buffer)
+    const text = xml
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, " ")
+
+    return normalizeWhitespace(text)
+  } catch (_error) {
+    return normalizeWhitespace(decodeUtf8(buffer))
+  }
 }
 
 export async function extractTextFromFile(
   remotePath: string,
   mimeType: string,
 ): Promise<string> {
-  const lower = (mimeType || "").toLowerCase()
+  const normalizedMimeType = normalizeMimeType(mimeType || "")
+
+  let finalMimeType = normalizedMimeType
+  if (!finalMimeType) {
+    const extension = remotePath.split(".").pop()?.toLowerCase()
+    if (extension) {
+      const lookedUpMime = lookup(extension)
+      if (lookedUpMime) {
+        finalMimeType = normalizeMimeType(lookedUpMime)
+      }
+    }
+  }
 
   const fileStream = await uploader.getObjectStream(remotePath)
   const buffer = await streamToBuffer(fileStream)
 
-  if (lower.includes("pdf")) {
+  if (isMimeType(finalMimeType, PDF_MIME_TYPES)) {
     return await extractTextFromPdf(buffer)
   }
 
-  if (
-    lower.includes("word") ||
-    lower.includes("docx") ||
-    lower.includes(
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    )
-  ) {
+  if (isMimeType(finalMimeType, DOCX_MIME_TYPES)) {
     return extractTextFromDocx(buffer)
   }
 
-  if (
-    lower.includes("spreadsheet") ||
-    lower.includes("xlsx") ||
-    lower.includes(
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-  ) {
+  if (isMimeType(finalMimeType, SPREADSHEET_MIME_TYPES)) {
     return await extractTextFromXlsx(buffer)
   }
 
-  if (lower.includes("csv")) {
+  if (isMimeType(finalMimeType, CSV_MIME_TYPES)) {
     return extractTextFromCsv(buffer)
   }
 
-  if (lower.includes("html") || lower.includes("xhtml")) {
+  if (isMimeType(finalMimeType, HTML_MIME_TYPES)) {
     return await extractTextFromHtml(buffer)
   }
-  if (lower.includes("markdown") || lower.includes("md")) {
+
+  if (isMimeType(finalMimeType, MARKDOWN_MIME_TYPES)) {
     return await extractTextFromMarkdown(buffer)
   }
-  if (lower.includes("rtf")) {
+
+  if (isMimeType(finalMimeType, RTF_MIME_TYPES)) {
     return extractTextFromRtf(buffer)
   }
 
+  if (isMimeType(finalMimeType, XML_MIME_TYPES)) {
+    return extractTextFromXml(buffer)
+  }
+
+  if (isMimeType(finalMimeType, EMAIL_MIME_TYPES)) {
+    return await extractTextFromEmail(buffer)
+  }
+
+  if (isMimeType(finalMimeType, VTT_MIME_TYPES)) {
+    return normalizeWhitespace(decodeUtf8(buffer))
+  }
+
+  if (isMimeType(finalMimeType, PROPERTIES_MIME_TYPES)) {
+    return normalizeWhitespace(decodeUtf8(buffer))
+  }
+
   // default: treat as utf-8 text stream
-  return extractAsPlainText(fileStream)
+  return normalizeWhitespace(decodeUtf8(buffer))
 }
