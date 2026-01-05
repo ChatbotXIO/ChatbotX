@@ -1,6 +1,11 @@
-import type { ConversationType } from "@aha.chat/database/enums"
+import type {
+  ConversationStatus,
+  ConversationType,
+} from "@aha.chat/database/enums"
+import type { InboxType } from "@aha.chat/database/types"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
+import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
 import type {
   ConversationCollection,
   ConversationResource,
@@ -12,10 +17,11 @@ import type {
 
 export type ConversationFilters = {
   assignedUserId?: string
-  inboxType?: string
-  status?: string
+  inboxType?: InboxType | "omnichannel"
+  status?: ConversationStatus[]
   searchText?: string
   conversationType?: ConversationType
+  contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
 export type ChatState = {
@@ -92,15 +98,15 @@ export const createChatStore = () => {
       } = get()
       set({ isLoadingConversation: true })
 
-      const searchParams = new URLSearchParams({
+      const searchParams = {
         perPage: "20",
         cursor: nextCursorConversation ?? "",
         ...filters,
-      })
+      }
       const { data: newConversations, nextCursor } = await ky
-        .get<ConversationCollection>(
-          `/api/chatbots/${chatbotId}/conversations`,
-          { searchParams },
+        .post<ConversationCollection>(
+          `/api/chatbots/${chatbotId}/conversations/list`,
+          { json: searchParams },
         )
         .json()
 

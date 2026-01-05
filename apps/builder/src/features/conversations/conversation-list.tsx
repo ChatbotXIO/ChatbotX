@@ -2,24 +2,24 @@
 
 import { AssignerFilterType, ConversationType } from "@aha.chat/database/enums"
 import { Omnichannel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import { Input } from "@aha.chat/ui/components/ui/input"
 import { useSidebar } from "@aha.chat/ui/components/ui/sidebar"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { PanelLeftClose, SearchIcon, UserPlusIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useDebouncedCallback } from "use-debounce"
+import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
 import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
-import type { ListConversationsRequest } from "./schemas/query"
 
 export default function ConversationList() {
   const t = useTranslations()
@@ -32,13 +32,11 @@ export default function ConversationList() {
     resetState,
     nextCursorConversation,
     isLoadingConversation,
-    activeConversationId,
     setActiveConversationId,
   } = useChatStore((state) => state)
   const { toggleSidebar, open } = useSidebar()
 
   const [showSearchInput, setShowSearchInput] = useState(false)
-  const [searchText, setSearchText] = useState("")
 
   // Check if there are more pages to load
   const hasNextPage =
@@ -57,34 +55,32 @@ export default function ConversationList() {
     }
   }
 
-  const handleChange = useDebouncedCallback((value: string) => {
+  const handleChange = useDebouncedCallback(() => {
     resetState()
-    setFilters({
-      ...filters,
-      searchText: value,
-    })
     loadMoreConversations(chatbotId)
   }, 300)
 
-  const handleTextChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchText(e.target.value)
-      handleChange(e.target.value)
-    },
-    [handleChange],
-  )
-
-  const form = useForm<ListConversationsRequest>({
+  const form = useForm<ConversationFilters>({
     defaultValues: {
+      searchText: "",
       conversationType: ConversationType.all,
       inboxType: Omnichannel,
       assignedUserId: AssignerFilterType.all,
+      status: [],
       contactFilter: {
         operator: "and",
         conditions: [],
       },
     },
   })
+
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      setFilters(values as ConversationFilters)
+      handleChange()
+    })
+    return () => subscription.unsubscribe()
+  }, [form, handleChange, setFilters])
 
   return (
     <Form {...form}>
@@ -97,6 +93,7 @@ export default function ConversationList() {
               toggleSidebar()
             }}
             size="icon"
+            type="button"
             variant="ghost"
           >
             {open ? (
@@ -134,9 +131,10 @@ export default function ConversationList() {
               setShowSearchInput(!showSearchInput)
             }}
             size="sm"
+            type="button"
             variant="outline"
           >
-            <SearchIcon className={searchText ? "text-primary" : ""} />
+            <SearchIcon className={filters.searchText ? "text-primary" : ""} />
           </Button>
 
           <CreateContactDialog
@@ -153,11 +151,17 @@ export default function ConversationList() {
 
         <div className="flex-1">
           {showSearchInput && (
-            <Input
+            <InputField
               className="mb-2"
-              onChange={handleTextChange}
+              name="searchText"
               placeholder={t("actions.search")}
-              value={searchText}
+              {...{
+                onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault()
+                  }
+                },
+              }}
             />
           )}
           <Virtuoso
@@ -169,7 +173,6 @@ export default function ConversationList() {
             itemContent={(_, item) => (
               <ConversationItem
                 conversation={item}
-                isActive={item.id === activeConversationId}
                 onSelect={() => {
                   setActiveConversationId(item.id)
                 }}

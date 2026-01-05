@@ -35,7 +35,6 @@ import type { ConversationResource } from "./schemas/resource"
 
 type ConversationItemProps = {
   conversation: ConversationResource
-  isActive: boolean
   onSelect: () => void
 }
 
@@ -89,14 +88,16 @@ const sourceIcon = (contact: ContactResource) => {
 
 export default function ConversationItem({
   conversation,
-  isActive,
   onSelect,
 }: ConversationItemProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const [lastMessage, _setLastMessage] = useState<MessageResource | undefined>(
     conversation.messages?.[0],
   )
-  const { readConversation } = useChatStore((state) => state)
+  const { activeConversationId, readConversation } = useChatStore(
+    (state) => state,
+  )
+  const isActive = conversation.id === activeConversationId
 
   const contactFullName = useMemo(
     () => getFullName(conversation.contact),
@@ -144,6 +145,7 @@ export default function ConversationItem({
       <Button
         className="h-auto w-full justify-center px-3 py-2 font-normal"
         onClick={() => onSelect()}
+        type="button"
         variant={isActive ? "secondary" : "ghost"}
       >
         <div className="relative">

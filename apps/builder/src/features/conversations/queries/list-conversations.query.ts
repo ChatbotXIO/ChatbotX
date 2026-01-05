@@ -53,53 +53,51 @@ const getAssignedUserQuery = (
 }
 
 const getInboxTypeQuery = (value?: string): Prisma.ConversationWhereInput => {
-  if (!value || value === "all") {
+  if (!value || value === "omnichannel") {
     return {}
   }
   return { inbox: { inboxType: value as InboxType } }
 }
 
 const getConversationStatusQuery = (
-  value?: string,
+  value?: ConversationStatus[],
 ): Prisma.ConversationWhereInput => {
   if (!value || value.length === 0) {
     return {}
   }
-  const statusQueries = (value.split(",") as ConversationStatus[]).map(
-    (status) => {
-      switch (status) {
-        case ConversationStatus.archived:
-          return {
-            archivedAt: { not: null },
-          }
-        case ConversationStatus.followUp:
-          return {
-            followed: true,
-          }
-        case ConversationStatus.blocked:
-          return {
-            contact: {
-              blockedAt: { not: null },
-            },
-          }
-        case ConversationStatus.noAdminReply: {
-          return {
-            adminRepliedAt: {
-              lt: prisma.conversation.fields.contactRepliedAt,
-            },
-          }
+  const statusQueries = value.map((status) => {
+    switch (status) {
+      case ConversationStatus.archived:
+        return {
+          archivedAt: { not: null },
         }
-        case ConversationStatus.unread:
-          return {
-            agentLastSeenAt: {
-              lt: prisma.conversation.fields.contactLastSeenAt,
-            },
-          }
-        default:
-          return {}
+      case ConversationStatus.followUp:
+        return {
+          followed: true,
+        }
+      case ConversationStatus.blocked:
+        return {
+          contact: {
+            blockedAt: { not: null },
+          },
+        }
+      case ConversationStatus.noAdminReply: {
+        return {
+          adminRepliedAt: {
+            lt: prisma.conversation.fields.contactRepliedAt,
+          },
+        }
       }
-    },
-  )
+      case ConversationStatus.unread:
+        return {
+          agentLastSeenAt: {
+            lt: prisma.conversation.fields.contactLastSeenAt,
+          },
+        }
+      default:
+        return {}
+    }
+  })
   return { OR: statusQueries }
 }
 

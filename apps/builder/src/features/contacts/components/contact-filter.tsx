@@ -373,7 +373,12 @@ export function ContactFilterDialog() {
             <ContactFilter parentName="contactFilter" />
 
             <DialogFooter>
-              <Button size="sm" variant="ghost">
+              <Button
+                onClick={() => setOpen(false)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
                 {t("actions.cancel")}
               </Button>
               <Button
