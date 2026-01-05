@@ -64,6 +64,7 @@ const worker = new Worker(
       case IntegrationJobAction.readMessage: {
         await readMessage(job.data.data)
         return
+      }
       case IntegrationJobAction.sendBroadcast: {
         await sendBroadcast(job.data.data.broadcastId)
         return
