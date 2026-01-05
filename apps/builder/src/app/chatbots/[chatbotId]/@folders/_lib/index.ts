@@ -17,6 +17,8 @@ export function getFolderTypeFromFeature(
       return "customField"
     case "tags":
       return "tag"
+    case "triggers":
+      return "trigger"
     default:
       return null
   }

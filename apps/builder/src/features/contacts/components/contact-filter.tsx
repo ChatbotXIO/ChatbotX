@@ -6,6 +6,7 @@ import {
   ConditionType,
   Operator,
 } from "@aha.chat/database/enums"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
@@ -72,7 +73,7 @@ type FieldConfig = {
   options?: SelectOption[]
 }
 
-const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
+export const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
   [ConditionType.multiSelect]: [
     Operator.is,
     Operator.isNot,
@@ -116,6 +117,22 @@ const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
     Operator.interval,
     Operator.notInterval,
   ],
+}
+
+export const convertCustomFieldTypeToConditionType = (
+  type?: CustomFieldType,
+): ConditionType => {
+  switch (type) {
+    case "number":
+      return ConditionType.number
+    case "date":
+    case "datetime":
+      return ConditionType.datetime
+    case "boolean":
+      return ConditionType.boolean
+    default:
+      return ConditionType.text
+  }
 }
 
 const contactFilterRowSchema = z.object({
@@ -334,7 +351,9 @@ const getFieldConfigs = ({
   },
 ]
 
-const getConditionOptions = (t: (key: string) => string): ConditionOption[] => [
+export const getConditionOptions = (
+  t: (key: string) => string,
+): ConditionOption[] => [
   {
     value: Operator.is,
     label: t("fields.operator.is"),

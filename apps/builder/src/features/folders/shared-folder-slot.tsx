@@ -41,6 +41,9 @@ export default async function SharedFolderSlot(props: {
     case "tags":
       folderType = "tag"
       break
+    case "triggers":
+      folderType = FolderType.trigger
+      break
     default:
       break
   }

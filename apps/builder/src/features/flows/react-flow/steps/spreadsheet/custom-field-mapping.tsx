@@ -5,7 +5,7 @@ import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { callAPI } from "@/lib/swr"
@@ -13,24 +13,38 @@ import { callAPI } from "@/lib/swr"
 type FieldAction = "get" | "update"
 
 type ISpreadsheetCustomFieldMappingProps = {
+  parentName?: string
   type: FieldAction
 }
 
 export const SpreadsheetCustomFieldMapping = ({
+  parentName,
   type,
 }: ISpreadsheetCustomFieldMappingProps) => {
   const t = useTranslations()
   const params = useParams<{ chatbotId: string }>()
+
+  const getFieldName = useCallback(
+    (field: string) => {
+      if (!parentName) {
+        return field
+      }
+      return `${parentName}.${field}`
+    },
+    [parentName],
+  )
+
   const { control, setValue, getValues } = useFormContext()
+
   const spreadsheetId = useWatch({
     control,
-    name: "spreadsheetId",
+    name: getFieldName("spreadsheetId"),
   })
   const sheetName = useWatch({
     control,
-    name: "sheetName",
+    name: getFieldName("sheetName"),
   })
-  const map = getValues("map")
+  const map = getValues(getFieldName("map"))
 
   const worksheetHeadersUrl = `/api/chatbots/${params.chatbotId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
   const { data: headersData } = callAPI<{ data: string[] }>(worksheetHeadersUrl)
@@ -39,11 +53,11 @@ export const SpreadsheetCustomFieldMapping = ({
   useEffect(() => {
     if (!map.length || map.every(({ header }: { header: string }) => !header)) {
       setValue(
-        "map",
+        getFieldName("map"),
         headers.map((obj) => spreadsheetMappingDefaultFn(obj)),
       )
     }
-  }, [map, headers, setValue])
+  }, [map, headers, setValue, getFieldName])
 
   return (
     <div className="flex flex-col gap-2">
@@ -58,7 +72,10 @@ export const SpreadsheetCustomFieldMapping = ({
           key={`${spreadsheetId}-${sheetName}-${index}`}
         >
           <div className="w-full">
-            <CustomFieldSelect label="" name={`map.${index}.customFieldId`} />
+            <CustomFieldSelect
+              label=""
+              name={getFieldName(`map.${index}.customFieldId`)}
+            />
           </div>
           <div className="w-[10%]">
             {type === "update" ? <ArrowRightIcon /> : <ArrowLeftIcon />}
@@ -66,7 +83,7 @@ export const SpreadsheetCustomFieldMapping = ({
           <InputField
             className="w-full"
             disabled
-            name={`map.${index}.header`}
+            name={getFieldName(`map.${index}.header`)}
           />
         </div>
       ))}
