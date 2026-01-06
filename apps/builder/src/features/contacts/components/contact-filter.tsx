@@ -8,12 +8,12 @@ import {
 } from "@aha.chat/database/enums"
 import { IntegrationType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,6 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
@@ -668,14 +667,11 @@ function ContactFilterCondition({
                   <MultiSelectField name="value" options={valueOptions} />
                 )}
                 {valueType === ConditionType.datetime && (
-                  <DateTimePicker
-                    displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-                    onChange={(value) => {
-                      setValue(
-                        "value",
-                        format(value ?? new Date(), "yyyy-MM-dd hh:mm"),
-                      )
-                    }}
+                  <DateTimePickerField
+                    dateTimeFormat="yyyy-MM-dd HH:mm"
+                    granularity="minute"
+                    name="value"
+                    required
                   />
                 )}
                 {!valueType && <div> </div>}
