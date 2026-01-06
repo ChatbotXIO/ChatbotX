@@ -36,6 +36,7 @@ import {
   unassignConversation,
   unfollowConversation,
 } from "./conversation-handler"
+import { addMailchimpMember } from "./mailchimp-handler"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -195,6 +196,7 @@ export const flowStepHandlers: Record<
   [StepType.spreadsheetGetRandomRow]: getSpreadsheetRandomRow,
   [StepType.spreadsheetSendData]: sendSpreadsheetData,
   [StepType.spreadsheetUpdateRow]: updateSpreadsheetRow,
+  [StepType.mailchimpAddMember]: addMailchimpMember,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }

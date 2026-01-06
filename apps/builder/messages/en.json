@@ -1176,7 +1176,8 @@
       "spreadsheetUpdateRow": "Update Row",
       "spreadsheetSendData": "Send Data",
       "spreadsheetGetRandomRow": "Get Random Row",
-      "spreadsheetClearRow": "Clear Row"
+      "spreadsheetClearRow": "Clear Row",
+      "mailchimpAddMember": "Add Contact to Mailchimp"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1250,6 +1251,32 @@
     },
     "header": "Column Header",
     "title": "Google Sheets"
+  },
+  "mailchimp": {
+    "title": "Mailchimp",
+    "connected": "Mailchimp connected successfully",
+    "disconnected": "Mailchimp disconnected",
+    "notConnected": "Mailchimp not connected",
+    "setting": {
+      "label": "Mailchimp",
+      "description": "Connect your chatbot with Mailchimp to manage email lists."
+    },
+    "dialog": {
+      "title": "Mailchimp Configuration"
+    },
+    "fields": {
+      "apiKey": "API Key",
+      "server": "Server (dc)",
+      "list": "Mailchimp List",
+      "listPlaceholder": "Nothing selected",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom Field which contains the user's email to identify MailChimp contacts.",
+      "doubleOptIn": "Double Opt-In",
+      "doubleOptInTooltip": "If yes, a confirmation email will be sent to the email before add the contact to your list.",
+      "tags": "Tags",
+      "tagsPlaceholder": "Select tags",
+      "customFieldsMapping": "Custom Fields in Mailchimp"
+    }
   },
   "inboxTeam": {
     "updateAction": {
@@ -1542,5 +1569,9 @@
     "heading": {
       "title": "Error Logs"
     }
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No"
   }
 }

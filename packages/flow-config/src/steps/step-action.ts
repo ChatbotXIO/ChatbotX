@@ -87,6 +87,9 @@ export const StepType = {
   spreadsheetGetRandomRow: "G03",
   spreadsheetUpdateRow: "G04",
   spreadsheetClearRow: "G05",
+
+  // Mailchimp Operations (M_)
+  mailchimpAddMember: "M01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

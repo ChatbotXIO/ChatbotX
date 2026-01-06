@@ -4,6 +4,7 @@ import { IntegrationType } from "@aha.chat/database/types"
 import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
+import { env } from "@/env"
 import { findChatbot } from "@/features/chatbot/queries"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { findOrganization } from "@/features/organization/queries"
@@ -59,7 +60,10 @@ export const handleCallback = async (
         req,
       })
 
-      return redirect(stateParams.referer)
+      const redirectUrl = new URL(stateParams.referer)
+      redirectUrl.searchParams.set("integration", integrationType)
+
+      return redirect(redirectUrl.toString())
     }
 
     case IntegrationType.googleSheets: {
@@ -89,6 +93,37 @@ export const handleCallback = async (
       break
     }
 
+    case IntegrationType.mailchimp: {
+      if (!(env.MAILCHIMP_CLIENT_ID && env.MAILCHIMP_CLIENT_SECRET)) {
+        logger.error(
+          "MAILCHIMP_CLIENT_ID or MAILCHIMP_CLIENT_SECRET is missing",
+        )
+        return notFound()
+      }
+
+      authResult = (await integrations.mailchimp.handleRequest?.({
+        config: {
+          clientId: env.MAILCHIMP_CLIENT_ID,
+          clientSecret: env.MAILCHIMP_CLIENT_SECRET,
+          redirectUrl: new URL(
+            "/integrations/mailchimp/callback",
+            req.url,
+          ).toString(),
+        },
+        req,
+      })) as unknown as Oauth2AuthValue
+
+      additionalIntegrationCreationData = {
+        mailchimp: {
+          create: {
+            chatbotId: stateParams.chatbotId,
+            auth: authResult,
+          },
+        },
+      }
+      break
+    }
+
     default:
       return notFound()
   }
@@ -108,5 +143,8 @@ export const handleCallback = async (
     })
   })
 
-  return redirect(stateParams.referer)
+  const redirectUrl = new URL(stateParams.referer)
+  redirectUrl.searchParams.set("integration", integrationType)
+
+  return redirect(redirectUrl.toString())
 }

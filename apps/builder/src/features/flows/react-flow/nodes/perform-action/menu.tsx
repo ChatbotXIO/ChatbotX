@@ -217,6 +217,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: ZapIcon,
         stepType: StepType.startExternalNode,
       },
+      {
+        label: t("flows.actions.mailchimpAddMember"),
+        icon: MailIcon,
+        stepType: StepType.mailchimpAddMember,
+      },
     ],
   },
   {

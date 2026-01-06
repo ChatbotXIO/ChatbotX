@@ -29,6 +29,7 @@ export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   label?: string
   placeholder?: string
   description?: string
+  tooltip?: string
   options?: SelectOption[]
   fetchOptionsUrl?: string
   className?: string
@@ -63,6 +64,7 @@ export const SelectField = <T extends FieldValues>(
     required,
     placeholder,
     description,
+    tooltip,
     options = [],
     fetchOptionsUrl,
     allowClear,
@@ -131,6 +133,7 @@ export const SelectField = <T extends FieldValues>(
       label={label}
       name={name}
       required={required}
+      tooltip={tooltip}
     >
       {(field) => {
         const handleSelectChange = (value: string) => {

@@ -1,0 +1,21 @@
+{
+  "name": "@aha.chat/integration-mailchimp",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "AI Assistant",
+  "dependencies": {
+    "@aha.chat/sdk": "workspace:*",
+    "@mailchimp/mailchimp_marketing": "^3.0.80"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "@types/mailchimp__mailchimp_marketing": "^3.0.20",
+    "typescript": "5.9.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./**/*": "./src/**/*.ts"
+  }
+}

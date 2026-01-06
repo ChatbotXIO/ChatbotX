@@ -13,6 +13,7 @@ import { followConversationStepSchema } from "./steps/follow-conversation"
 import { formatDateStepSchema } from "./steps/format-date"
 import { generateCodeStepSchema } from "./steps/generate-code"
 import { getDataFromJsonStepSchema } from "./steps/get-data-from-json"
+import { mailchimpAddMemberStepSchema } from "./steps/mailchimp-add-member"
 import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
@@ -86,6 +87,8 @@ const googleSheetStep = [
   spreadsheetUpdateRowSchema,
 ]
 
+const mailchimpSteps = [mailchimpAddMemberStepSchema]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -94,4 +97,5 @@ export const actionSteps = [
   ...emailSteps,
   ...flowSteps,
   ...googleSheetStep,
+  ...mailchimpSteps,
 ]

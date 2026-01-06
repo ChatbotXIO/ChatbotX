@@ -19,6 +19,7 @@ import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
 import { waitUserReplyStep } from "./get-user-input"
+import { mailchimpAddMemberStep } from "./mailchimp-add-member"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
@@ -111,6 +112,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.spreadsheetUpdateRow]: spreadsheetUpdateRowStep,
   [StepType.spreadsheetClearRow]: spreadsheetClearRowStep,
   [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
+  [StepType.mailchimpAddMember]: mailchimpAddMemberStep,
   [StepType.sendQuickReply]: undefined,
 }
 

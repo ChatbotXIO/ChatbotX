@@ -9,6 +9,12 @@ import {
 } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
+import { HelpCircleIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
@@ -21,9 +27,11 @@ type CustomFieldSelectProps = {
   label?: string
   required?: boolean
   allowCreate?: boolean
+  allowClear?: boolean
   customFieldTypes?: CustomFieldType[]
   includeReserved?: boolean
   placeholder?: string
+  tooltip?: string
 }
 
 export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
@@ -32,9 +40,11 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     label = "Select Custom Field",
     required,
     allowCreate,
+    allowClear,
     customFieldTypes,
     includeReserved = false,
     placeholder,
+    tooltip,
   } = props
 
   const t = useTranslations()
@@ -43,6 +53,14 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     customFieldTypes,
     includeReserved,
   })
+
+  const options = useMemo(() => {
+    if (!allowClear) {
+      return customFieldSelectOptions
+    }
+    return [{ label: "---", value: "" }, ...customFieldSelectOptions]
+  }, [allowClear, customFieldSelectOptions])
+
   const getAllCustomFields = useCustomFieldStore(
     (state) => state.getAllCustomFields,
   )
@@ -58,7 +76,19 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
       {showLabel && (
         <div className="flex items-center">
           <FormLabel className="flex flex-1 items-center gap-1">
-            {label}
+            <div className="flex items-center gap-1">
+              {label}
+              {tooltip && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircleIcon className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[300px]">
+                    {tooltip}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
             {!required && (
               <span className="self-start font-normal text-xxs">
                 (optional)
@@ -85,7 +115,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
       )}
       <ComboboxField
         name={name}
-        options={customFieldSelectOptions}
+        options={options}
         placeholder={placeholder || "Please select"}
       />
     </FormItem>

@@ -1168,7 +1168,8 @@
       "spreadsheetUpdateRow": "Cập nhật hàng",
       "spreadsheetSendData": "Gửi dữ liệu",
       "spreadsheetGetRandomRow": "Lấy hàng ngẫu nhiên",
-      "spreadsheetClearRow": "Xóa hàng"
+      "spreadsheetClearRow": "Xóa hàng",
+      "mailchimpAddMember": "Thêm liên hệ vào Mailchimp"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1245,6 +1246,32 @@
     },
     "header": "Tiêu đề cột",
     "title": "Google Sheets"
+  },
+  "mailchimp": {
+    "title": "Mailchimp",
+    "connected": "Đã kết nối Mailchimp thành công",
+    "disconnected": "Đã ngắt kết nối Mailchimp",
+    "notConnected": "Mailchimp chưa được kết nối",
+    "setting": {
+      "label": "Mailchimp",
+      "description": "Kết nối chatbot của bạn với Mailchimp để quản lý danh sách email."
+    },
+    "dialog": {
+      "title": "Cấu hình Mailchimp"
+    },
+    "fields": {
+      "apiKey": "API Key",
+      "server": "Server (dc)",
+      "list": "Danh sách Mailchimp",
+      "listPlaceholder": "Chưa chọn danh sách",
+      "emailField": "Trường Email",
+      "emailFieldTooltip": "Trường tùy chỉnh chứa email của người dùng để xác định liên hệ trong Mailchimp.",
+      "doubleOptIn": "Xác nhận đăng ký kép (Double Opt-In)",
+      "doubleOptInTooltip": "Nếu chọn có, một email xác nhận sẽ được gửi đến email của người dùng trước khi thêm họ vào danh sách của bạn.",
+      "tags": "Thẻ",
+      "tagsPlaceholder": "Chọn thẻ",
+      "customFieldsMapping": "Ánh xạ trường tùy chỉnh"
+    }
   },
   "inboxTeam": {
     "updateAction": {
@@ -1537,5 +1564,9 @@
     "heading": {
       "title": "Nhật ký lỗi"
     }
+  },
+  "common": {
+    "yes": "Có",
+    "no": "Không"
   }
 }

@@ -1,6 +1,7 @@
 import { InboxType, prisma } from "@aha.chat/database"
 import type { IntegrationType } from "@aha.chat/database/types"
 import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
+import { integration as integrationMailchimp } from "@aha.chat/integration-mailchimp"
 import {
   integration as integrationMessenger,
   type MessengerWebhookEvent,
@@ -27,6 +28,7 @@ export const allIntegrations: Record<
   webchat: undefined,
   whatsapp: integrationWhatsapp,
   zalo: integrationZalo,
+  mailchimp: integrationMailchimp,
 }
 
 export const getDBIntegration = async (
