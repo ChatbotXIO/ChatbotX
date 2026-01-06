@@ -1,9 +1,11 @@
 import { DirectUploadButton } from "@aha.chat/ui/components/uploader/direct-upload-button"
+import { getMimeTypeFromFile } from "@aha.chat/ui/lib/file-types"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { createAIFileAction } from "./actions/create-ai-file.action"
+import { getAIFileExtensionsAccept } from "./constants"
 
 export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -33,7 +35,7 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <DirectUploadButton
-      accept=".pdf,.md,.docx,.txt,.csv,.xlsx"
+      accept={getAIFileExtensionsAccept()}
       disabled={isPending}
       maxSize={26_214_400} // 25MB
       multiple={false}
@@ -43,10 +45,12 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
         })
       }}
       onUploadSuccess={(filePath, file) => {
+        const mimeType = getMimeTypeFromFile(file)
+
         execute({
           name: file.name,
           path: filePath,
-          mimeType: file.type,
+          mimeType,
           size: file.size,
         })
       }}

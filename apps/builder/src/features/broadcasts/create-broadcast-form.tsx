@@ -6,6 +6,7 @@ import {
 } from "@aha.chat/database/enums"
 import { BroadcastSchedulesType, InboxType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -14,9 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   SiMessenger,
@@ -37,10 +36,13 @@ import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import { ContactFilter } from "../contacts/components/contact-filter"
+import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import {
   FlowStoreProvider,
   useFlowStore,
 } from "../flows/provider/flow-store-context"
+import { useTagSelectOptions } from "../tags/provider/tag-hook"
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   {
@@ -122,7 +124,11 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   },
 ]
 
-export function CreateBroadcastForm({ chatbotId }: { chatbotId: string }) {
+type CreateBroadcastFormProps = {
+  chatbotId: string
+}
+
+export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -323,6 +329,10 @@ function CreateBroadcastChooseFlow() {
   const router = useRouter()
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
+  const flowVersionOptions = useFlowSelectOptions()
+  const customFieldOptions = useCustomFieldSelectOptions({})
+  const tagOptions = useTagSelectOptions()
+
   const schedulesOptions = useMemo(
     () => [
       {
@@ -351,13 +361,6 @@ function CreateBroadcastChooseFlow() {
       if (value === BroadcastSchedulesType.now) {
         setValue("schedulesAt", null)
       }
-    },
-    [setValue],
-  )
-
-  const handleDateTimeChange = useCallback(
-    (value: Date | null) => {
-      setValue("schedulesAt", (value ?? new Date()).toISOString())
     },
     [setValue],
   )
@@ -393,21 +396,25 @@ function CreateBroadcastChooseFlow() {
         />
 
         {watchedSchedulesType === BroadcastSchedulesType.future && (
-          <div className="flex flex-col gap-2">
-            <Label>{t("fields.chooseTime.label")}</Label>
-            <DateTimePicker
-              disabled={{
-                before: new Date(),
-              }}
-              displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-              granularity="minute"
-              onChange={(date) => handleDateTimeChange(date ?? null)}
-              value={defaultDateTime}
-            />
-          </div>
+          <DateTimePickerField
+            disabled={{
+              before: new Date(),
+            }}
+            displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
+            granularity="minute"
+            label={t("fields.chooseTime.label")}
+            name="schedulesAt"
+            required
+            value={defaultDateTime}
+          />
         )}
 
-        <ContactFilter parentName="contactFilter" />
+        <ContactFilter
+          customFieldOptions={customFieldOptions}
+          flowVersionOptions={flowVersionOptions}
+          parentName="contactFilter"
+          tagOptions={tagOptions}
+        />
 
         <div className="flex justify-end gap-2">
           <Button onClick={handleCancel} type="button" variant="outline">

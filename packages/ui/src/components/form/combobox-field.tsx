@@ -103,7 +103,7 @@ export function ComboboxField<T extends FieldValues>({
         }
 
         return (
-          <Popover onOpenChange={setOpen} open={open}>
+          <Popover modal={true} onOpenChange={setOpen} open={open}>
             <PopoverTrigger asChild>
               <Button
                 aria-expanded={open}
@@ -120,7 +120,12 @@ export function ComboboxField<T extends FieldValues>({
                 <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-[200px] p-0" side={side}>
+            <PopoverContent
+              align="start"
+              className="w-[200px] p-0"
+              portal={false}
+              side={side}
+            >
               <Command>
                 <CommandInput className="h-9" placeholder="Search..." />
                 <CommandList>

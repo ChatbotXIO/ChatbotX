@@ -84,6 +84,9 @@ const getMessageEntity = async (
   ctx: Context<ZaloAuthValue>,
   event: ZaloWebhookEvent,
 ): Promise<MessageEntity> => {
+  if (!event.message.msg_id) {
+    throw new ZaloException("Missing msg_id in message event")
+  }
   const baseMessage = {
     sourceId: event.message.msg_id,
     messageType: event.event_name.includes("user_send")

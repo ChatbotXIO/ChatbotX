@@ -22,16 +22,13 @@ export const ChatLayout = (props: ChatLayoutProps) => {
 
   return (
     <ChatStoreProvider>
-      <ResizablePanelGroup
-        className="h-full items-stretch"
-        direction="horizontal"
-      >
+      <ResizablePanelGroup className="h-full items-stretch">
         {/* CONVERSATION LIST */}
         <ResizablePanel
           className="p-3"
-          defaultSize={layout[0] ?? 25}
-          maxSize={30}
-          minSize={20}
+          defaultSize={`${layout[0] ?? 25}%`}
+          maxSize={"30%"}
+          minSize={"20%"}
         >
           <ConversationList />
         </ResizablePanel>
@@ -39,7 +36,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         <ResizableHandle withHandle />
 
         {/* MESSAGE LIST */}
-        <ResizablePanel className="pt-3" defaultSize={layout[1] ?? 50}>
+        <ResizablePanel className="pt-3" defaultSize={`${layout[1] ?? 50}%`}>
           <div className="flex h-full w-full flex-col">
             <MessageHead />
             <MessageList />
@@ -54,9 +51,9 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {/* CONTACT DETAIL */}
         <ResizablePanel
           className="overflow-y-auto! h-screen px-4 py-3"
-          defaultSize={layout[2] ?? 25}
-          maxSize={30}
-          minSize={20}
+          defaultSize={`${layout[2] ?? 25}%`}
+          maxSize={"30%"}
+          minSize={"20%"}
         >
           <ContactInboxPanel />
         </ResizablePanel>

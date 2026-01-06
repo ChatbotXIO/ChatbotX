@@ -1,4 +1,5 @@
 import { getAllCountries, getAllTimezones } from "countries-and-timezones"
+import { continents } from "countries-list"
 
 export const UNKNOWN_COUNTRY = "unknown"
 export const allCountryCodes = [
@@ -28,3 +29,10 @@ export const allTimezoneOptions = Object.values(getAllTimezones()).map(
   }),
 )
 export const allTimezoneCodes = Object.keys(getAllTimezones())
+
+export const allContinentOptions = Object.entries(continents).map(
+  ([code, name]) => ({
+    value: code,
+    label: name,
+  }),
+)

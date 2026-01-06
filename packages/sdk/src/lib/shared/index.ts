@@ -2,6 +2,7 @@ import type { ContextQueue } from "./context"
 
 export * from "./context"
 export * from "./message"
+export * from "./mime-types"
 
 export type Handler<I, O> = (props: I) => Promise<O>
 
