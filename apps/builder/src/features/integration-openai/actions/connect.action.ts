@@ -36,7 +36,7 @@ export const connectOpenAIAction = authActionClient
           await tx.integrationOpenAI.update({
             where: { id: integrationOpenAI.id },
             data: {
-              model: openAIModels.gpt4oMini,
+              model: "openai/gpt-4o-mini",
               auth: {
                 authType: AuthType.secretText,
                 secretText: parsedInput.apiKey,

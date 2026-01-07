@@ -44,7 +44,7 @@ import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
 import { updateAIAgentRequest } from "@/features/ai-agents/schemas/request"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openAIModelOptions } from "../openai/models"
+import { openAIChatModelOptions } from "../openai/models"
 import type { CreateAIAgentRequest } from "./schemas/request"
 
 export function UpdateAIAgentDialog({
@@ -208,7 +208,7 @@ export function UpdateAIAgentDialog({
                         <SelectField
                           label={t("fields.openAIModel.label")}
                           name="models.1.model"
-                          options={openAIModelOptions}
+                          options={openAIChatModelOptions}
                           required
                         />
 

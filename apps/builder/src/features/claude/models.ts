@@ -1,9 +1,9 @@
 export const claudeModels = {
-  claude35Sonnet: "claude-3-5-sonnet-20241022",
-  claude35Haiku: "claude-3-5-haiku-20241022",
-  claude3Opus: "claude-3-opus-20240229",
-  claude3Sonnet: "claude-3-sonnet-20240229",
-  claude3Haiku: "claude-3-haiku-20240307",
+  claude35Sonnet: "anthropic/claude-3-5-sonnet-20241022",
+  claude35Haiku: "anthropic/claude-3-5-haiku-20241022",
+  claude3Opus: "anthropic/claude-3-opus-20240229",
+  claude3Sonnet: "anthropic/claude-3-sonnet-20240229",
+  claude3Haiku: "anthropic/claude-3-haiku-20240307",
 } as const
 
 export const claudeModelOptions = [

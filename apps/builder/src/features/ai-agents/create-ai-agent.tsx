@@ -46,11 +46,8 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/request"
-import {
-  geminiModelOptions,
-  geminiModels,
-} from "../integration-gemini/schemas/models"
-import { openAIModelOptions, openAIModels } from "../openai/models"
+import { geminiModelOptions } from "../integration-gemini/schemas/models"
+import { openAIChatModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   files: AIFileModel[]
@@ -141,11 +138,11 @@ export function CreateAIAgentDialog({
             models: [
               {
                 provider: "gemini",
-                model: geminiModels.gemini25FlashLite,
+                model: "gemini/gemini-2.5-flash-lite",
               },
               {
                 provider: "openAI",
-                model: openAIModels.gpt4oMini,
+                model: "openai/gpt-4o-mini",
               },
             ],
             temperature: 0.4,
@@ -260,7 +257,7 @@ export function CreateAIAgentDialog({
                   <SelectField
                     label={t("fields.openAIModel.label")}
                     name="models.1.model"
-                    options={openAIModelOptions}
+                    options={openAIChatModelOptions}
                     required
                   />
 

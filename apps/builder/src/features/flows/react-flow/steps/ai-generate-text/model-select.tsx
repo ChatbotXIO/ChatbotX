@@ -7,14 +7,14 @@ import { useMemo } from "react"
 import { claudeModelOptions } from "@/features/claude/models"
 import { deepseekModelOptions } from "@/features/deepseek/models"
 import { geminiModelOptions } from "@/features/gemini/models"
-import { openAIModelOptions } from "@/features/openai/models"
+import { openAIChatModelOptions } from "@/features/openai/models"
 import { AI_PROVIDER_CONFIGS } from "./config"
 
 const MODEL_OPTIONS_MAP: Record<
   AIGenerateTextProviderType,
   Array<{ label: string; value: string }>
 > = {
-  openai: openAIModelOptions,
+  openai: openAIChatModelOptions,
   claude: claudeModelOptions,
   gemini: geminiModelOptions,
   deepseek: deepseekModelOptions,

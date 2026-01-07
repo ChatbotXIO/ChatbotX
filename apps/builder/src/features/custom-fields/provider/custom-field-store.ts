@@ -21,8 +21,7 @@ export type CustomFieldState = {
 
 export type CustomFieldActions = {
   initialize: (chatbotId: string) => Promise<void>
-  getAllCustomFields: (chatbotId: string) => Promise<void>
-  getCustomFieldSelectOptions: () => CustomFieldSelectOption[]
+  getAllCustomFields: () => Promise<void>
 }
 
 export type CustomFieldStore = CustomFieldState & CustomFieldActions
@@ -43,10 +42,10 @@ export const createCustomFieldStore = () =>
         return
       }
 
-      set({ loading: true, error: null })
+      set({ loading: true, error: null, chatbotId })
 
       try {
-        await get().getAllCustomFields(chatbotId)
+        await get().getAllCustomFields()
         set({
           loading: false,
           initialized: true,
@@ -66,19 +65,11 @@ export const createCustomFieldStore = () =>
       }
     },
 
-    getAllCustomFields: async (chatbotId: string) => {
-      const {
-        initialized,
-        chatbotId: currentChatbotId,
-        loading: isLoading,
-      } = get()
+    getAllCustomFields: async () => {
+      const { chatbotId, loading } = get()
 
       // Skip if already initialized for the same chatbotId or currently loading
-      if (
-        (initialized && currentChatbotId === chatbotId) ||
-        isLoading ||
-        !chatbotId
-      ) {
+      if (loading || !chatbotId) {
         return
       }
 
@@ -113,15 +104,5 @@ export const createCustomFieldStore = () =>
         }
         throw error
       }
-    },
-
-    getCustomFieldSelectOptions: () => {
-      const { customFields } = get()
-
-      return customFields.map((customField) => ({
-        label: customField.name,
-        value: customField.id,
-        type: customField.fieldType,
-      }))
     },
   }))

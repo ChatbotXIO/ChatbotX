@@ -2,9 +2,10 @@
 
 import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { useTranslations } from "next-intl"
-import { AIToolMultiSelect } from "@/features/ai-triggers/ai-tool-multi-select"
+import { useAIToolOptions } from "@/features/ai-triggers/use-ai-tools"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 
 type AIModelFormFieldsProps = {
@@ -15,6 +16,7 @@ export const AIModelFormFields = ({
   modelSelectComponent: ModelSelectComponent,
 }: AIModelFormFieldsProps) => {
   const t = useTranslations()
+  const toolOptions = useAIToolOptions()
 
   return (
     <div className="space-y-4">
@@ -36,7 +38,11 @@ export const AIModelFormFields = ({
         required
       />
 
-      <AIToolMultiSelect name="tools" />
+      <MultiSelectField
+        label={t("fields.tools.label")}
+        name="tools"
+        options={toolOptions}
+      />
 
       <CheckboxGroupField
         name="rememberConversation"

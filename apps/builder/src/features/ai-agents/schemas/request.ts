@@ -1,7 +1,7 @@
 import { AIMessageRole } from "@aha.chat/database/types"
 import { z } from "zod"
 import { geminiModels } from "@/features/integration-gemini/schemas/models"
-import { openAIModels } from "@/features/openai/models"
+import { openAIChatModels } from "@/features/openai/models"
 
 export const createAIAgentRequest = z.object({
   name: z.string().trim().min(1).max(255),
@@ -20,7 +20,7 @@ export const createAIAgentRequest = z.object({
       }),
       z.object({
         provider: z.literal("openAI"),
-        model: z.enum(openAIModels),
+        model: z.enum(openAIChatModels),
       }),
     ]),
   ),

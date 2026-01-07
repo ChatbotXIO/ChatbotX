@@ -5,63 +5,41 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useAIToolsStore } from "./provider/ai-tools-store-context"
 
-type AIToolsOptions = Array<{
-  heading: string
-  options: Array<{
-    label: string
-    value: string
-    icon: React.ComponentType
-  }>
-}>
-
-export function useAITools() {
+export const useAIToolOptions = () => {
   const t = useTranslations()
-  const files = useAIToolsStore((store) => store.files)
-  const functions = useAIToolsStore((store) => store.functions)
-  const mcpServers = useAIToolsStore((store) => store.mcpServers)
-  const loading = useAIToolsStore((store) => store.loading)
-  const error = useAIToolsStore((store) => store.error)
-  const fetchTools = useAIToolsStore((store) => store.refetch)
-  const initialized = useAIToolsStore((store) => store.initialized)
 
-  const toolOptions: AIToolsOptions = useMemo(() => {
-    if (!initialized) {
-      return []
-    }
+  const { files, functions, mcpServers } = useAIToolsStore((store) => store)
 
-    return [
+  return useMemo(
+    () => [
       {
-        heading: t("fields.file.label"),
-        options: files.map((file) => ({
+        label: "File",
+        value: "file",
+        children: files.map((file) => ({
           label: file.name,
           value: `file:${file.id}`,
           icon: FileIcon,
         })),
       },
       {
-        heading: t("fields.function.label"),
-        options: functions.map((fn) => ({
+        label: t("fields.function.label"),
+        value: "function",
+        children: functions.map((fn) => ({
           label: fn.name,
           value: `fn:${fn.id}`,
           icon: FunctionSquareIcon,
         })),
       },
       {
-        heading: t("fields.mcpServer.label"),
-        options: mcpServers.map((mcpServer) => ({
+        label: t("fields.mcpServer.label"),
+        value: "mcp",
+        children: mcpServers.map((mcpServer) => ({
           label: mcpServer.name,
           value: `mcp:${mcpServer.id}`,
           icon: ServerIcon,
         })),
       },
-    ]
-  }, [files, functions, mcpServers, initialized, t])
-
-  return {
-    toolOptions,
-    loading,
-    error: error ? new Error(error) : null,
-    fetchTools,
-    hasData: initialized,
-  }
+    ],
+    [files, functions, mcpServers, t],
+  )
 }
