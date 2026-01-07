@@ -22,9 +22,19 @@ import {
   updateTriggerSchema,
 } from "./schemas/update-trigger-schema"
 
+type TriggerWithConditions = TriggerModel & {
+  triggerConditions?: Array<{
+    id: string
+    type: number
+    sourceId: string | null
+    operator: string | null
+    value: unknown
+  }>
+}
+
 type UpdateTriggerFormProps = {
   chatbotId: string
-  trigger: TriggerModel
+  trigger: TriggerWithConditions
 }
 
 export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
@@ -47,7 +57,6 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
               feature: t("fields.trigger.label"),
             }),
           )
-          router.back()
           setTimeout(() => router.refresh())
         },
         onError: ({ error }) => {
@@ -59,7 +68,13 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
       formProps: {
         mode: "onChange",
         defaultValues: {
-          conditions: trigger.conditions as UpdateTriggerSchema["conditions"],
+          conditions: (trigger.triggerConditions || []).map((tc) => ({
+            id: tc.id,
+            type: tc.type,
+            sourceId: tc.sourceId || undefined,
+            operator: tc.operator || undefined,
+            value: tc.value ? tc.value : undefined,
+          })) as UpdateTriggerSchema["conditions"],
           actions: trigger.actions as UpdateTriggerSchema["actions"],
         },
       },

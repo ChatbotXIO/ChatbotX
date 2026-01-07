@@ -31,10 +31,24 @@ export const createTriggerAction = chatbotActionClient
         )
       }
 
+      const { conditions, actions, ...triggerData } = parsedInput
+
       return await prisma.trigger.create({
         data: {
-          ...parsedInput,
+          ...triggerData,
           chatbotId,
+          actions,
+          triggerConditions: {
+            create: conditions.map((c) => ({
+              type: c.type,
+              sourceId: "sourceId" in c ? c.sourceId : null,
+              operator: "operator" in c ? c.operator : null,
+              value: "value" in c && c.value !== null ? c.value : undefined,
+            })),
+          },
+        },
+        include: {
+          triggerConditions: true,
         },
       })
     },

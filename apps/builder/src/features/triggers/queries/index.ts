@@ -48,6 +48,9 @@ export async function getTriggers(
       take: input.perPage,
       where,
       orderBy,
+      include: {
+        triggerConditions: true,
+      },
     }),
     prisma.trigger.count({ where }),
   ])
@@ -62,5 +65,8 @@ export async function findTrigger(
 ): Promise<TriggerModel | null> {
   return await prisma.trigger.findFirst({
     where,
+    include: {
+      triggerConditions: true,
+    },
   })
 }

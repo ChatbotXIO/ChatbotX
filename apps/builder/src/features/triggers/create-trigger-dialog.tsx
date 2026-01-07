@@ -64,6 +64,8 @@ export function CreateTriggerDialog({
         defaultValues: {
           name: "",
           folderId,
+          conditions: [],
+          actions: [],
         },
       },
       errorMapProps: {},

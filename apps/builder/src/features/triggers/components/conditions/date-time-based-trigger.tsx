@@ -35,15 +35,15 @@ export const DateTimeBasedTrigger = ({
           {t("trigger.triggerGoesOff")}
         </div>
         <SelectField
-          name={`${parentName}.triggerType`}
+          name={`${parentName}.value.triggerType`}
           options={triggerTypeOptions}
         />
-        {form.watch(`${parentName}.triggerType`) !==
+        {form.watch(`${parentName}.value.triggerType`) !==
           DateTimeTriggerType.atTheDayOf && (
           <>
-            <InputField name={`${parentName}.timeValue`} type="number" />
+            <InputField name={`${parentName}.value.timeValue`} type="number" />
             <SelectField
-              name={`${parentName}.timeType`}
+              name={`${parentName}.value.timeType`}
               options={timeTypeOptions}
             />
           </>
@@ -53,14 +53,14 @@ export const DateTimeBasedTrigger = ({
       <CustomFieldSelect
         customFieldTypes={[CustomFieldType.datetime, CustomFieldType.date]}
         label=""
-        name={`${parentName}.customFieldId`}
+        name={`${parentName}.sourceId`}
       />
 
-      {form.watch(`${parentName}.triggerType`) ===
+      {form.watch(`${parentName}.value.triggerType`) ===
         DateTimeTriggerType.atTheDayOf && (
         <div className="flex items-center gap-2">
           <div>{t("trigger.at")}</div>
-          <SelectField name={`${parentName}.at`} options={atOptions} />
+          <SelectField name={`${parentName}.value.at`} options={atOptions} />
         </div>
       )}
     </div>

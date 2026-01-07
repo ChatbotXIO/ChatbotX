@@ -1,26 +1,49 @@
-import { DateTimeTriggerType, TriggerCondition } from "@aha.chat/database/enums"
+import {
+  DateTimeTriggerType,
+  Operator,
+  TriggerCondition,
+} from "@aha.chat/database/enums"
 import z from "zod"
 
 export const dateTimeBasedTrigger = z
   .object({
+    id: z.string().optional(),
     type: z.literal(TriggerCondition.dateTimeBasedTrigger),
-    triggerType: z.enum(DateTimeTriggerType),
-    customFieldId: z.cuid2(),
-    timeValue: z.number().min(1).optional(),
-    timeType: z.enum(["minutes", "hours", "days"]).optional(),
-    at: z.string().optional(),
+    sourceId: z.string().optional(),
+    operator: z.string(),
+    value: z.object({
+      triggerType: z.enum(DateTimeTriggerType),
+      timeValue: z.coerce.number().min(1).optional(),
+      timeType: z.enum(["minutes", "hours", "days"]).optional(),
+      at: z.string().optional(),
+    }),
   })
   .superRefine((data, ctx) => {
-    if (data.triggerType === DateTimeTriggerType.atTheDayOf) {
-      if (!data.at) {
+    if (!data.sourceId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Custom field is required",
+        path: ["sourceId"],
+      })
+    }
+    if (!data.value) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Value configuration is required",
+        path: ["value"],
+      })
+      return
+    }
+    if (data.value.triggerType === DateTimeTriggerType.atTheDayOf) {
+      if (!data.value.at) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
             'The "at" field is required when triggerType is "atTheDayOf"',
-          path: ["at"],
+          path: ["value", "at"],
         })
       }
-    } else if (!(data.timeValue && data.timeType)) {
+    } else if (!(data.value.timeValue && data.value.timeType)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
@@ -32,8 +55,12 @@ export type DateTimeBasedTrigger = z.infer<typeof dateTimeBasedTrigger>
 
 export const defaultFn = (): DateTimeBasedTrigger => ({
   type: TriggerCondition.dateTimeBasedTrigger,
-  triggerType: DateTimeTriggerType.before,
-  customFieldId: "",
-  timeValue: 1,
-  timeType: "hours",
+  sourceId: "",
+  operator: Operator.is,
+  value: {
+    triggerType: DateTimeTriggerType.before,
+    timeValue: 1,
+    timeType: "hours",
+    at: "",
+  },
 })
