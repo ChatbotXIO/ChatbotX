@@ -262,6 +262,8 @@
   "condition": {
     "add": "Add Condition",
     "title": "Condition",
+    "yes": "Yes",
+    "no": "No",
     "fields": {
       "language": "Language",
       "fullName": "Full name",
@@ -275,64 +277,15 @@
       "conversationTransferredToHuman": "Conversation transferred to human",
       "interactedInLast24H": "Interacted in last 24 hours",
       "existingContact": "Existing contact",
-      "isGuestUser": "Is guest user",
       "currentChannel": "Current channel",
       "timezone": "Time zone",
-      "hasOpportunity": "Has opportunity",
-      "hasOpenOpportunity": "Has open opportunity",
-      "hasWonOpportunity": "Has won opportunity",
-      "hasLostOpportunity": "Has lost opportunity",
-      "followsBusinessOnInstagram": "Follows business on Instagram",
-      "businessFollowsUserOnInstagram": "Business follows user on Instagram",
-      "verifiedAccountOnInstagram": "Verified account on Instagram",
-      "followerCountOnInstagram": "Follower count on Instagram",
-      "lastSent": "Last sent",
-      "lastDelivered": "Last delivered",
-      "lastSeen": "Last seen",
-      "lastSeenMinutesAgo": "Last seen (minutes ago)",
-      "lastInteraction": "Last interaction",
-      "lastInteractionMinutesAgo": "Last interaction (minutes ago)",
-      "noAdminReply": "No admin reply",
       "tags": "Tags",
-      "getDataFromJSON": "Get data from JSON",
-      "messengerList": "Messenger list",
-      "subscribedToDripCampaign": "Subscribed to drip campaign",
-      "conversationAssigned": "Conversation assigned",
-      "emptyPointsLinks": "Empty points links",
-      "sentMessage": "Sent message",
-      "automatedResponseReceived": "Automated response received",
-      "executedFlow": "Executed flow",
-      "executedStep": "Executed step",
-      "questionnaireStarted": "Questionnaire started",
-      "questionnaireInProgress": "Questionnaire in progress",
-      "questionnaireFinished": "Questionnaire finished",
-      "votedOnThePoll": "Voted on the poll",
-      "commentedOnThePost": "Commented on the post",
+      "customFields": "Custom fields",
       "phone": "Phone",
-      "phoneWasVerified": "Phone was verified",
-      "optedInForSMS": "Opted in for SMS",
-      "broadcastSent": "Broadcast sent",
-      "broadcastDelivered": "Broadcast delivered",
-      "broadcastSeen": "Broadcast seen",
-      "broadcastClicked": "Broadcast clicked",
-      "broadcastFailed": "Broadcast failed",
+      "executedFlow": "Executed flow",
       "email": "Email",
-      "emailWasVerified": "Email was verified",
-      "optedInForEmail": "Opted in for email",
-      "emailSent": "Email sent",
-      "emailDelivered": "Email delivered",
-      "emailOpened": "Email opened",
-      "emailClicked": "Email clicked",
-      "bought": "Bought",
-      "boughtTheItems": "Bought the items",
-      "totalSpent": "Total spent",
-      "numberOfOrders": "Number of orders",
-      "shoppingCartTotal": "Shopping cart total",
-      "shoppingCartSubTotal": "Shopping cart subtotal",
-      "shoppingCartIsEmpty": "Shopping cart is empty",
-      "shoppingCartContainsItems": "Shopping cart contains items",
-      "lastUserInput": "Last user input",
-      "lastUserInputType": "Last user input type"
+      "archived": "Archived",
+      "blocked": "Blocked"
     },
     "groups": {
       "instagram": "Instagram",
@@ -435,21 +388,6 @@
     },
     "chooseTime": {
       "label": "Choose time"
-    },
-    "fullName": {
-      "label": "Full name"
-    },
-    "continent": {
-      "label": "Continent"
-    },
-    "subscribedToBroadcast": {
-      "label": "Subscribed to broadcast"
-    },
-    "createdAtMinutesAgo": {
-      "label": "Created at (minutes ago)"
-    },
-    "source": {
-      "label": "Source"
     },
     "notificationType": {
       "label": "Notification Type",

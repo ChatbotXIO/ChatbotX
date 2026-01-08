@@ -2,7 +2,10 @@
 
 import { CustomFieldType } from "@aha.chat/database/types"
 import { FieldOperationType } from "@aha.chat/flow-config"
-import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
+import {
+  DatePickerField,
+  DateTimePickerField,
+} from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -108,7 +111,7 @@ export default function AddContactCustomFieldDialog({
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
+      <DialogContent className="max-h-screen max-w-xl">
         <DialogHeader>
           <DialogTitle>{t("actions.setCustomField")}</DialogTitle>
           <DialogDescription />
@@ -119,11 +122,12 @@ export default function AddContactCustomFieldDialog({
             className="flex flex-col gap-6"
             onSubmit={handleSubmitWithAction}
           >
-            <CustomFieldSelect name="customFieldId" />
+            <CustomFieldSelect name="customFieldId" required />
 
             <CustomFieldOperationSelect
               customFieldType={selectedCustomFieldType}
               name="operation"
+              required
             />
 
             <div className="flex flex-col gap-2">
@@ -142,11 +146,7 @@ export default function AddContactCustomFieldDialog({
               )}
 
               {selectedCustomFieldType === CustomFieldType.date && (
-                <DateTimePickerField
-                  dateTimeFormat="yyyy-MM-dd"
-                  granularity="day"
-                  name="value"
-                />
+                <DatePickerField name="value" />
               )}
 
               {selectedCustomFieldType === CustomFieldType.datetime && (

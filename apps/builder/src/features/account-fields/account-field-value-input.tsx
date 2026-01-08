@@ -1,13 +1,14 @@
 "use client"
 
 import { CustomFieldType } from "@aha.chat/database/types"
+import {
+  DatePickerField,
+  DateTimePickerField,
+} from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
-import { format } from "date-fns"
 import { useTranslations } from "next-intl"
-import { useFormContext } from "react-hook-form"
 
 type AccountFieldValueInputProps = {
   name?: string
@@ -19,7 +20,6 @@ export const AccountFieldValueInput = ({
   customFieldType,
 }: AccountFieldValueInputProps) => {
   const t = useTranslations()
-  const { setValue } = useFormContext()
 
   switch (customFieldType) {
     case CustomFieldType.number:
@@ -42,29 +42,11 @@ export const AccountFieldValueInput = ({
         />
       )
     case CustomFieldType.date: {
-      const dateFormat = "yyyy-MM-dd"
-      return (
-        <DateTimePicker
-          displayFormat={{ hour24: dateFormat }}
-          granularity="day"
-          onChange={(value) => {
-            setValue("value", format(value ?? new Date(), dateFormat))
-          }}
-          value={new Date()}
-        />
-      )
+      return <DatePickerField name={name} />
     }
     case CustomFieldType.datetime: {
       const dateTimeFormat = "yyyy-MM-dd HH:mm"
-      return (
-        <DateTimePicker
-          displayFormat={{ hour24: dateTimeFormat }}
-          onChange={(value) => {
-            setValue("value", format(value ?? new Date(), dateTimeFormat))
-          }}
-          value={new Date()}
-        />
-      )
+      return <DateTimePickerField dateTimeFormat={dateTimeFormat} name={name} />
     }
     case CustomFieldType.longText:
       return (

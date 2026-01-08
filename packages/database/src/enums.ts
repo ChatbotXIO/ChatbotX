@@ -10,6 +10,34 @@ export const BroadcastSubaction = {
 export type BroadcastSubaction =
   (typeof BroadcastSubaction)[keyof typeof BroadcastSubaction]
 
+export const ConditionField = {
+  language: "language",
+  fullName: "fullName",
+  country: "country",
+  continent: "continent",
+  gender: "gender",
+  subscribedToBroadcast: "subscribedToBroadcast",
+  contactCreatedDate: "contactCreatedDate",
+  contactCreatedDateMinutesAgo: "contactCreatedDateMinutesAgo",
+  source: "source",
+  conversationTransferredToHuman: "conversationTransferredToHuman",
+  interactedInLast24H: "interactedInLast24H",
+  archived: "archived",
+  blocked: "blocked",
+  existingContact: "existingContact",
+  isGuestUser: "isGuestUser",
+  currentChannel: "currentChannel",
+  timezone: "timezone",
+  tags: "tags",
+  customFields: "customFields",
+  phone: "phone",
+  email: "email",
+  executedFlow: "executedFlow",
+}
+
+export type ConditionFieldType =
+  (typeof ConditionField)[keyof typeof ConditionField]
+
 export const Operator = {
   is: "is",
   isNot: "isNot",
