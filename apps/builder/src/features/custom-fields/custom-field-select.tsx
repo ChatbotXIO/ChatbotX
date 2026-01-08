@@ -32,6 +32,7 @@ type CustomFieldSelectProps = {
   includeReserved?: boolean
   placeholder?: string
   tooltip?: string
+  portal?: boolean
 }
 
 export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
@@ -45,6 +46,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     includeReserved = false,
     placeholder,
     tooltip,
+    portal,
   } = props
 
   const t = useTranslations()
@@ -117,6 +119,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
         name={name}
         options={options}
         placeholder={placeholder || "Please select"}
+        portal={portal}
       />
     </FormItem>
   )

@@ -3,7 +3,7 @@
 import { prisma } from "@aha.chat/database"
 import {
   integration as integrationMailchimp,
-  type MailchimpAuthValue,
+  mailchimpAuthValueSchema,
 } from "@aha.chat/integration-mailchimp"
 import { revalidatePath } from "next/cache"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
@@ -25,7 +25,7 @@ export const disconnectMailchimp = chatbotActionClient
     try {
       if (integrationMailchimp.disconnect) {
         await integrationMailchimp.disconnect(
-          mailchimp.auth as MailchimpAuthValue,
+          mailchimpAuthValueSchema.parse(mailchimp.auth),
         )
       }
     } catch (_error) {

@@ -1,12 +1,14 @@
 import { AuthType, SdkException } from "@aha.chat/sdk"
 import mailchimp from "@mailchimp/mailchimp_marketing"
+import ky, { HTTPError } from "ky"
+import { z } from "zod"
 import { MAILCHIMP_API_ENDPOINTS } from "./constants"
 import type { MailchimpAuthValue, MailchimpConfig } from "./schemas"
 
 export const getMailchimpClient = (auth: MailchimpAuthValue) => {
   mailchimp.setConfig({
-    apiKey: auth.tokens.accessToken,
-    server: auth.server,
+    apiKey: auth.secretText,
+    server: auth.metadata.server,
   })
   return mailchimp
 }
@@ -31,50 +33,56 @@ export const exchangeCode = async (
   config: MailchimpConfig,
   code: string,
 ): Promise<MailchimpAuthValue> => {
-  const response = await fetch(MAILCHIMP_API_ENDPOINTS.TOKEN, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      redirect_uri: config.redirectUrl,
-      code,
-    }),
-  })
+  try {
+    const data = await ky
+      .post(MAILCHIMP_API_ENDPOINTS.TOKEN, {
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          client_id: config.clientId,
+          client_secret: config.clientSecret,
+          redirect_uri: config.redirectUrl,
+          code,
+        }),
+      })
+      .json()
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new SdkException(
-      `Failed to exchange Mailchimp code: ${JSON.stringify(error)}`,
-    )
-  }
+    const accessToken = z
+      .object({ access_token: z.string() })
+      .parse(data).access_token
 
-  const data = (await response.json()) as { access_token: string }
-  const accessToken = data.access_token
+    const metadataResponse = await ky
+      .get(MAILCHIMP_API_ENDPOINTS.METADATA, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+      .json()
 
-  const metadataResponse = await fetch(MAILCHIMP_API_ENDPOINTS.METADATA, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
+    const metadata = z.object({ dc: z.string() }).parse(metadataResponse)
 
-  if (!metadataResponse.ok) {
-    throw new SdkException("Failed to fetch Mailchimp metadata")
-  }
+    return {
+      authType: AuthType.secretText,
+      secretText: accessToken,
+      metadata: {
+        server: metadata.dc,
+      },
+    }
+  } catch (error: unknown) {
+    if (error instanceof HTTPError) {
+      const errorData = (await error.response
+        .json()
+        .catch(() => ({}))) as Record<string, unknown>
+      throw new SdkException(
+        `Failed to exchange Mailchimp code: ${JSON.stringify(errorData)}`,
+      )
+    }
 
-  const metadata = (await metadataResponse.json()) as { dc: string }
+    if (error instanceof z.ZodError) {
+      throw new SdkException(
+        `Failed to parse Mailchimp response: ${error.message}`,
+      )
+    }
 
-  return {
-    authType: AuthType.oauth2,
-    clientId: config.clientId,
-    clientSecret: config.clientSecret,
-    redirectUrl: config.redirectUrl,
-    tokens: {
-      accessToken,
-    },
-    server: metadata.dc,
+    throw error
   }
 }

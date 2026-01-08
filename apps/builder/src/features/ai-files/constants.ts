@@ -34,7 +34,8 @@ export const getAIFileExtensions = (): string[] => {
   return Array.from(aiFileExtensionsSet)
 }
 
-export const getAIFileExtensionsAccept = () =>
-  getAIFileExtensions()
+export const getAIFileExtensionsAccept = () => {
+  return getAIFileExtensions()
     .map((extension) => `.${extension}`)
     .join(",")
+}

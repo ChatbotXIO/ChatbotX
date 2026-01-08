@@ -35,19 +35,11 @@ const authEnv = {
   },
 }
 
-const mailchimpEnv = {
-  server: {
-    MAILCHIMP_CLIENT_ID: z.string().optional(),
-    MAILCHIMP_CLIENT_SECRET: z.string().optional(),
-  },
-}
-
 export const env = createEnv({
   extends: [partysocket(), database(), mail()],
   server: {
     ...googleAuthEnv.server,
     ...authEnv.server,
-    ...mailchimpEnv.server,
   },
   client: {
     ...baseEnv.client,
