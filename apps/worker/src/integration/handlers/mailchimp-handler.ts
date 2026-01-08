@@ -45,10 +45,12 @@ export const addMailchimpMember = async ({
     // Pre-process all fields into a single lookup map (Priority: Default Fields < System Fields < Contact Fields)
     const fieldMap: Record<string, string> = {
       ...Object.fromEntries(
-        chatbotFields.flatMap((f) => [
-          [f.id, f.value || ""],
-          [f.name, f.value || ""],
-        ]),
+        chatbotFields.flatMap(
+          (f: { id: string; name: string; value: string | null }) => [
+            [f.id, f.value || ""],
+            [f.name, f.value || ""],
+          ],
+        ),
       ),
       email: contact.email || "",
       phone_number: contact.phoneNumber || "",
@@ -61,7 +63,12 @@ export const addMailchimpMember = async ({
       firstName: contact.firstName || "",
       lastName: contact.lastName || "",
       ...Object.fromEntries(
-        contactCustomFields.map((cf) => [cf.customFieldId, cf.value || ""]),
+        contactCustomFields.map(
+          (cf: { customFieldId: string; value: string | null }) => [
+            cf.customFieldId,
+            cf.value || "",
+          ],
+        ),
       ),
     }
 
