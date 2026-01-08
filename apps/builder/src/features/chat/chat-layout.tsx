@@ -25,7 +25,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
       <ResizablePanelGroup className="h-full items-stretch">
         {/* CONVERSATION LIST */}
         <ResizablePanel
-          className="p-3"
+          className="px-4 py-3"
           defaultSize={`${layout[0] ?? 25}%`}
           maxSize={"30%"}
           minSize={"20%"}

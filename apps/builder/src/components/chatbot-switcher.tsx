@@ -44,7 +44,7 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="flex h-12 items-center justify-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
@@ -56,7 +56,7 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
                   alt={activeChatbot?.name}
                   src={activeChatbot?.logo ?? ""}
                 />
-                <AvatarFallback className="rounded">
+                <AvatarFallback className="rounded font-medium">
                   {activeChatbot?.name?.slice(0, 2) || "  "}
                 </AvatarFallback>
               </Avatar>
@@ -92,8 +92,8 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
                 <Link href={`/chatbots/${chatbot.id}/dashboard`}>
                   <Avatar className="rounded-lg border">
                     <AvatarImage alt={chatbot.name} src={chatbot.logo ?? ""} />
-                    <AvatarFallback className="rounded">
-                      {chatbot.name.charAt(0)}
+                    <AvatarFallback className="rounded font-medium">
+                      {chatbot.name.slice(0, 2) || "  "}
                     </AvatarFallback>
                   </Avatar>
                   {chatbot.name}
