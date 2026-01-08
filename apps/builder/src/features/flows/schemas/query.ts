@@ -1,4 +1,4 @@
-import type { FlowModel, FlowVersionModel } from "@aha.chat/database/types"
+import type { FlowModel } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
@@ -26,18 +26,4 @@ export type ListFlowsParams = Awaited<
 export type FindFlowParams = {
   id: string
   chatbotId: string
-}
-
-export type FlowVersionResource = FlowVersionModel
-
-export type FlowResource = FlowModel & {
-  _count?: {
-    contacts?: number
-  }
-  flowVersions?: FlowVersionResource[]
-}
-
-export type FlowCollection = {
-  data: FlowResource[]
-  pageCount: number
 }

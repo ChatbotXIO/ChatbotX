@@ -1,3 +1,4 @@
+import { rootFolderId } from "@aha.chat/database/enums"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateTagDialog } from "@/features/tags/create-tag-dialog"
@@ -12,10 +13,12 @@ export default async function TagsPage(props: {
   const params = await props.params
   const searchParams = await props.searchParams
   const search = getTagsSearchParamsCache.parse(searchParams)
+  const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
     getTags({
       ...search,
+      folderId,
       chatbotId: params.chatbotId,
     }),
   ])

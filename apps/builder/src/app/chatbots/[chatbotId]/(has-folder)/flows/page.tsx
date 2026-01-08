@@ -1,13 +1,11 @@
-import type { FolderModel } from "@aha.chat/database/types"
+import { rootFolderId } from "@aha.chat/database/enums"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateFlowDialog } from "@/features/flows/create-flow-dialog"
 import { FlowsTable } from "@/features/flows/flows-table"
 import { getFlows } from "@/features/flows/queries"
-import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
-import { getCurrentFolder } from "@/features/folders/queries"
-import { listFoldersSearchParams } from "@/features/folders/schemas/query"
+import { listFlowsSearchParams } from "@/features/flows/schemas/query"
 
 export default async function FlowsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -17,20 +15,14 @@ export default async function FlowsPage(props: {
   const searchParams = await props.searchParams
   const t = await getTranslations()
 
-  const search = listFlowsSearchParams.parse(searchParams)
-  const { folderId } = listFoldersSearchParams.parse(searchParams)
+  const search = await listFlowsSearchParams.parse(searchParams)
+  const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
-    search.folderId
-      ? getCurrentFolder({
-          id: search.folderId,
-          chatbotId: params.chatbotId,
-        })
-      : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     getFlows({
       ...search,
-      chatbotId: params.chatbotId,
       folderId,
+      chatbotId: params.chatbotId,
     }),
   ])
 

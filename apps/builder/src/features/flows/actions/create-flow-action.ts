@@ -9,10 +9,7 @@ import {
 import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  type CreateFlowSchema,
-  createFlowSchema,
-} from "../schemas/create-flow-schema"
+import { type CreateFlowSchema, createFlowSchema } from "../schemas/action"
 
 export const createFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

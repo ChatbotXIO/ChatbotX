@@ -1,3 +1,5 @@
+export const rootFolderId = "0"
+
 export const BroadcastSubaction = {
   allContacts: "BS00",
 

@@ -1,12 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getFlows } from "@/features/flows/queries"
-import { listFlowsSearchParams } from "@/features/flows/schemas/get-flows-schema"
+import { listFlowsSearchParams } from "@/features/flows/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ chatbotId: string }> },
+  {
+    params,
+  }: {
+    params: Promise<{ chatbotId: string }>
+  },
 ) {
   try {
     const { chatbotId } = await params
@@ -17,7 +21,7 @@ export async function GET(
 
     const allFlows = await getFlows({
       ...search,
-      chatbotId: (await params).chatbotId,
+      chatbotId,
     })
 
     return NextResponse.json(allFlows)

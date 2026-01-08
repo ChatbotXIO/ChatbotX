@@ -32,7 +32,7 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
-import { updateFlowVersionSchema } from "../schemas/update-flow-schema"
+import { updateFlowVersionSchema } from "../schemas/action"
 import { DuplicateFlowDialog } from "./components/duplicate-flow"
 import { RenameFlowDialog } from "./components/rename-flow"
 

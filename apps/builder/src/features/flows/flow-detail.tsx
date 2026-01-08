@@ -12,10 +12,7 @@ import { UserStoreProvider } from "../users/provider/user-store-context"
 import { FlowStoreProvider } from "./provider/flow-store-context"
 import { ReactFlowFrame } from "./react-flow/frame"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
-import type {
-  FlowResource,
-  FlowVersionResource,
-} from "./schemas/get-flows-schema"
+import type { FlowResource, FlowVersionResource } from "./schemas/resource"
 
 type FlowDetailProps = {
   flow: FlowResource
