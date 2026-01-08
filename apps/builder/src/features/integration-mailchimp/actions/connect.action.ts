@@ -3,8 +3,8 @@
 import { HandleRequestType } from "@aha.chat/sdk"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-import { env } from "@/env"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
+import { findOrganizationSettings } from "@/features/organization/queries"
 import { integrations } from "@/integration"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { connectMailchimpSchema } from "../schemas"
@@ -17,6 +17,14 @@ export const connectMailchimp = chatbotActionClient
     const { chatbot } = ctx
     const { referer } = parsedInput
 
+    const organizationSettings = await findOrganizationSettings({
+      id: chatbot.organizationId,
+    })
+
+    if (!organizationSettings.mailchimp) {
+      throw new Error("Mailchimp credentials are not configured")
+    }
+
     const callbackUrl = new URL(
       "/integrations/mailchimp/callback",
       referer,
@@ -24,14 +32,10 @@ export const connectMailchimp = chatbotActionClient
 
     const authBaseUrl = headersList.get("x-url") ?? referer
 
-    if (!(env.MAILCHIMP_CLIENT_ID && env.MAILCHIMP_CLIENT_SECRET)) {
-      throw new Error("Mailchimp credentials are not configured")
-    }
-
     const redirectUrl = await integrations.mailchimp.handleRequest?.({
       config: {
-        clientId: env.MAILCHIMP_CLIENT_ID,
-        clientSecret: env.MAILCHIMP_CLIENT_SECRET,
+        clientId: organizationSettings.mailchimp.clientId,
+        clientSecret: organizationSettings.mailchimp.clientSecret,
         redirectUrl: callbackUrl,
         stateParams: {
           chatbotId: chatbot.id,

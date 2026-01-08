@@ -11,7 +11,7 @@ export type IntegrationDefinition<
   actions: IActions
   handleRequest: Handler<
     HandleRequestProps<IConfig>,
-    Oauth2AuthValue | string | number
+    IAuth | Oauth2AuthValue | string | number
   >
   disconnect: Handler<IAuth, void>
 }

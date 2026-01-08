@@ -52,20 +52,18 @@ export function FormFieldWrapper<T extends FieldValues>({
       render={({ field }) => (
         <FormItem className={cn("w-full", formItemClassName)}>
           {label ? (
-            <FormLabel className="flex gap-1">
-              <div className="flex items-center gap-1">
-                {label}
-                {tooltip && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircleIcon className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-[300px]">
-                      {tooltip}
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
+            <FormLabel className="flex items-center gap-1">
+              {label}
+              {tooltip && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircleIcon className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[300px]">
+                    {tooltip}
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {!required && (
                 <span className="self-start font-normal text-xxs">
                   (optional)

@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import type { MailchimpAuthValue } from "@aha.chat/integration-mailchimp"
+import { mailchimpAuthValueSchema } from "@aha.chat/integration-mailchimp"
 import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
 
@@ -33,7 +33,7 @@ export async function GET(
       )
     }
 
-    const auth = mailchimpIntegration.auth as unknown as MailchimpAuthValue
+    const auth = mailchimpAuthValueSchema.parse(mailchimpIntegration.auth)
 
     switch (query.action) {
       case "lists": {

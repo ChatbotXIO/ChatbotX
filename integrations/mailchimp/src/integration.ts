@@ -5,20 +5,22 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@aha.chat/sdk"
+import { z } from "zod"
 import { generateAuthUrl, getMailchimpClient } from "./client"
 import {
   MAILCHIMP_DEFAULT_PAGE_SIZE,
   MAILCHIMP_INTEGRATION_NAME,
 } from "./constants"
 import { callbackHandler } from "./handlers/callback"
-import type {
-  MailchimpActions,
-  MailchimpAudienceResource,
-  MailchimpAuthValue,
-  MailchimpConfig,
-  MailchimpMemberResource,
-  MailchimpMergeFieldResource,
-  MailchimpTagResource,
+import {
+  type MailchimpActions,
+  type MailchimpAudienceResource,
+  type MailchimpAuthValue,
+  type MailchimpConfig,
+  type MailchimpMemberResource,
+  type MailchimpMergeFieldResource,
+  type MailchimpTagResource,
+  mailchimpMemberResourceSchema,
 } from "./schemas"
 
 const config: IntegrationDefinition<
@@ -35,7 +37,7 @@ const config: IntegrationDefinition<
         .update(props.email.toLowerCase())
         .digest("hex")
 
-      const result = (await client.lists.setListMember(
+      const response = await client.lists.setListMember(
         props.listId,
         subscriberHash,
         {
@@ -46,7 +48,9 @@ const config: IntegrationDefinition<
         {
           skipMergeValidation: props.skipMergeValidation,
         },
-      )) as unknown as MailchimpMemberResource
+      )
+
+      const result = mailchimpMemberResourceSchema.parse(response)
 
       if (props.tags && props.tags.length > 0) {
         await client.lists.updateListMemberTags(props.listId, subscriberHash, {
@@ -58,27 +62,47 @@ const config: IntegrationDefinition<
     },
     listAudiences: async ({ ctx }): Promise<MailchimpAudienceResource[]> => {
       const client = getMailchimpClient(ctx.auth)
-      const response = (await client.lists.getAllLists()) as {
-        lists?: MailchimpAudienceResource[]
-      }
-      return (response.lists || []).map((list) => ({
+      const response = await client.lists.getAllLists()
+      const { lists } = z
+        .object({
+          lists: z
+            .array(
+              z.object({
+                id: z.string(),
+                name: z.string(),
+              }),
+            )
+            .optional(),
+        })
+        .parse(response)
+
+      return (lists || []).map((list) => ({
         id: list.id,
         name: list.name,
       }))
     },
     listTags: async ({ ctx, props }): Promise<MailchimpTagResource[]> => {
       const client = getMailchimpClient(ctx.auth)
-      const listsClient = client.lists as unknown as {
-        listSegments: (
-          listId: string,
-          options: { type: string; count: number },
-        ) => Promise<{ segments?: MailchimpTagResource[] }>
-      }
+      // biome-ignore lint/suspicious/noExplicitAny: Mailchimp SDK type is incomplete
+      const listsClient = client.lists as any
       const response = await listsClient.listSegments(props.listId, {
         type: "static",
         count: MAILCHIMP_DEFAULT_PAGE_SIZE,
       })
-      return (response.segments || []).map((segment) => ({
+      const { segments } = z
+        .object({
+          segments: z
+            .array(
+              z.object({
+                id: z.number(),
+                name: z.string(),
+              }),
+            )
+            .optional(),
+        })
+        .parse(response)
+
+      return (segments || []).map((segment) => ({
         id: segment.id,
         name: segment.name,
       }))
@@ -88,12 +112,24 @@ const config: IntegrationDefinition<
       props,
     }): Promise<MailchimpMergeFieldResource[]> => {
       const client = getMailchimpClient(ctx.auth)
-      const response = (await client.lists.getListMergeFields(props.listId, {
+      const response = await client.lists.getListMergeFields(props.listId, {
         count: MAILCHIMP_DEFAULT_PAGE_SIZE,
-      })) as {
-        merge_fields?: MailchimpMergeFieldResource[]
-      }
-      return (response.merge_fields || []).map((field) => ({
+      })
+      const { merge_fields } = z
+        .object({
+          merge_fields: z
+            .array(
+              z.object({
+                tag: z.string(),
+                name: z.string(),
+                type: z.string(),
+              }),
+            )
+            .optional(),
+        })
+        .parse(response)
+
+      return (merge_fields || []).map((field) => ({
         tag: field.tag,
         name: field.name,
         type: field.type,

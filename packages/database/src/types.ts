@@ -94,6 +94,12 @@ export const organizationSettingsSchema = z.object({
       apiKey: z.string(),
     })
     .optional(),
+  mailchimp: z
+    .object({
+      clientId: z.string(),
+      clientSecret: z.string(),
+    })
+    .optional(),
 })
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
 

@@ -11,7 +11,9 @@ export const mailchimpAddMemberStepSchema = mailchimpSchema.extend({
   mergeFields: z.array(
     z.object({
       chatbotField: z.string(),
-      mailchimpTag: z.string().min(1),
+      mailchimpName: z.string().min(1),
+      mailchimpTag: z.string().optional(),
+      mailchimpType: z.string().optional(),
     }),
   ),
 })
@@ -27,10 +29,5 @@ export const mailchimpAddMemberDefaultFn = (): MailchimpAddMemberSchema => ({
   doubleOptIn: false,
   tags: [],
   status: "subscribed",
-  mergeFields: [
-    { chatbotField: "", mailchimpTag: "Address" },
-    { chatbotField: "", mailchimpTag: "Birthday" },
-    { chatbotField: "", mailchimpTag: "Company" },
-    { chatbotField: "", mailchimpTag: "Phone Number" },
-  ],
+  mergeFields: [],
 })

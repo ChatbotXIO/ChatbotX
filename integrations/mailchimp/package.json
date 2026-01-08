@@ -3,15 +3,17 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "author": "AI Assistant",
+  "author": "Truc Nguyen",
   "dependencies": {
     "@aha.chat/sdk": "workspace:*",
-    "@mailchimp/mailchimp_marketing": "^3.0.80"
+    "@mailchimp/mailchimp_marketing": "^3.0.80",
+    "ky": "^1.14.2",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^24.10.4",
     "@types/mailchimp__mailchimp_marketing": "^3.0.20",
+    "@types/node": "^24.10.4",
     "typescript": "5.9.3"
   },
   "exports": {

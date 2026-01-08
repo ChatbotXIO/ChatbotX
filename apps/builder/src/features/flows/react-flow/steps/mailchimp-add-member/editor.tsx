@@ -23,7 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowRightIcon, Loader2Icon, MailIcon, TrashIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import {
   useFieldArray,
   useForm,
@@ -40,178 +40,216 @@ type MailchimpAddMemberStepFormProps = {
   onCancel?: () => void
 }
 
-const MailchimpAddMemberStepForm = ({
-  parentName,
-  onSuccess,
-  onCancel,
-}: MailchimpAddMemberStepFormProps) => {
-  const t = useTranslations()
-  const params = useParams<{ chatbotId: string }>()
-  const { getValues: getParentValues, setValue: setParentValue } =
-    useFormContext()
+const MailchimpAddMemberStepForm = memo(
+  ({ parentName, onSuccess, onCancel }: MailchimpAddMemberStepFormProps) => {
+    const t = useTranslations()
+    const { chatbotId } = useParams<{ chatbotId: string }>()
+    const { getValues: getParentValues, setValue: setParentValue } =
+      useFormContext()
 
-  const form = useForm<MailchimpAddMemberSchema>({
-    resolver: zodResolver(mailchimpAddMemberStepSchema),
-    defaultValues: mailchimpAddMemberDefaultFn(),
-    mode: "onChange",
-  })
+    const form = useForm<MailchimpAddMemberSchema>({
+      resolver: zodResolver(mailchimpAddMemberStepSchema),
+      defaultValues:
+        getParentValues(parentName) ?? mailchimpAddMemberDefaultFn(),
+      mode: "onChange",
+    })
 
-  const { fields, remove } = useFieldArray({
-    control: form.control,
-    name: "mergeFields",
-  })
+    const { fields, remove, replace } = useFieldArray({
+      control: form.control,
+      name: "mergeFields",
+    })
 
-  useEffect(() => {
-    const parentValues = getParentValues(parentName)
-    if (parentValues) {
-      form.reset(parentValues)
+    const listId = useWatch({
+      control: form.control,
+      name: "listId",
+    })
+
+    const lists = useMailchimpStore((s) => s.lists)
+    const tagsByListId = useMailchimpStore((s) => s.tagsByListId)
+    const mergeFieldsByListId = useMailchimpStore((s) => s.mergeFieldsByListId)
+    const fetchLists = useMailchimpStore((s) => s.fetchLists)
+    const fetchTags = useMailchimpStore((s) => s.fetchTags)
+    const fetchMergeFields = useMailchimpStore((s) => s.fetchMergeFields)
+
+    useEffect(() => {
+      if (chatbotId) {
+        fetchLists(chatbotId)
+      }
+    }, [fetchLists, chatbotId])
+
+    useEffect(() => {
+      if (listId && chatbotId) {
+        fetchTags(chatbotId, listId)
+        fetchMergeFields(chatbotId, listId)
+      }
+    }, [listId, fetchTags, fetchMergeFields, chatbotId])
+
+    useEffect(() => {
+      const availableMergeFields = mergeFieldsByListId[listId]
+      if (!availableMergeFields || availableMergeFields.length === 0) {
+        return
+      }
+
+      const currentMergeFields = form.getValues("mergeFields")
+
+      if (currentMergeFields.length === 0) {
+        replace(
+          availableMergeFields.map((f) => ({
+            chatbotField: "",
+            mailchimpTag: f.tag,
+            mailchimpName: f.name,
+            mailchimpType: f.type,
+          })),
+        )
+        return
+      }
+
+      const nameToFieldMap = new Map(
+        currentMergeFields
+          .filter((f) => f.mailchimpName && f.chatbotField)
+          .map((f) => [f.mailchimpName, f.chatbotField]),
+      )
+
+      const updatedFields = availableMergeFields.map((af) => {
+        const existingChatbotField = nameToFieldMap.get(af.name) || ""
+        return {
+          chatbotField: existingChatbotField,
+          mailchimpTag: af.tag,
+          mailchimpName: af.name,
+          mailchimpType: af.type,
+        }
+      })
+
+      replace(updatedFields)
+    }, [listId, mergeFieldsByListId, form, replace])
+
+    const listOptions = useMemo(
+      () => (lists ?? []).map((v) => ({ label: v.name, value: v.id })),
+      [lists],
+    )
+
+    const tagOptions = useMemo(
+      () =>
+        (tagsByListId[listId] ?? []).map((v) => ({
+          label: v.name,
+          value: v.name,
+        })),
+      [tagsByListId, listId],
+    )
+
+    const handleCancel = () => {
+      form.reset()
+      onCancel?.()
     }
-  }, [form, getParentValues, parentName])
 
-  const listId = useWatch({
-    control: form.control,
-    name: "listId",
-  })
-
-  const { lists, tagsByListId, fetchLists, fetchTags } = useMailchimpStore(
-    (s) => s,
-  )
-
-  useEffect(() => {
-    fetchLists(params.chatbotId)
-  }, [fetchLists, params.chatbotId])
-
-  useEffect(() => {
-    if (listId) {
-      fetchTags(params.chatbotId, listId)
+    const onSubmit = (data: MailchimpAddMemberSchema) => {
+      setParentValue(parentName, data)
+      onSuccess?.()
     }
-  }, [listId, fetchTags, params.chatbotId])
 
-  const listOptions = useMemo(
-    () => (lists ?? []).map((v) => ({ label: v.name, value: v.id })),
-    [lists],
-  )
+    return (
+      <Form {...form}>
+        <form
+          className="flex flex-col gap-6"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <ComboboxField
+            label={t("mailchimp.fields.list")}
+            name="listId"
+            options={listOptions}
+            placeholder={t("mailchimp.fields.listPlaceholder")}
+            required
+          />
 
-  const tagOptions = useMemo(
-    () =>
-      (tagsByListId[listId] ?? []).map((v) => ({
-        label: v.name,
-        value: v.name,
-      })),
-    [tagsByListId, listId],
-  )
+          {listId && (
+            <>
+              <CustomFieldSelect
+                includeReserved={true}
+                label={t("mailchimp.fields.emailField")}
+                name="emailField"
+                required
+                tooltip={t("mailchimp.fields.emailFieldTooltip")}
+              />
 
-  const handleCancel = () => {
-    form.reset()
-    onCancel?.()
-  }
+              <SwitchField
+                description={t("mailchimp.fields.doubleOptInTooltip")}
+                label={t("mailchimp.fields.doubleOptIn")}
+                name="doubleOptIn"
+              />
 
-  const onSubmit = (data: MailchimpAddMemberSchema) => {
-    setParentValue(parentName, data)
-    onSuccess?.()
-  }
+              <MultiSelectField
+                label={t("mailchimp.fields.tags")}
+                name="tags"
+                options={tagOptions}
+                placeholder={t("mailchimp.fields.tagsPlaceholder")}
+              />
 
-  return (
-    <Form {...form}>
-      <form
-        className="flex flex-col gap-6"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
-        <ComboboxField
-          label={t("mailchimp.fields.list")}
-          name="listId"
-          options={listOptions}
-          placeholder={t("mailchimp.fields.listPlaceholder")}
-          required
-        />
-
-        {listId && (
-          <>
-            <CustomFieldSelect
-              includeReserved={true}
-              label={t("mailchimp.fields.emailField")}
-              name="emailField"
-              required
-              tooltip={t("mailchimp.fields.emailFieldTooltip")}
-            />
-
-            <SwitchField
-              description={t("mailchimp.fields.doubleOptInTooltip")}
-              label={t("mailchimp.fields.doubleOptIn")}
-              name="doubleOptIn"
-            />
-
-            <MultiSelectField
-              label={t("mailchimp.fields.tags")}
-              name="tags"
-              options={tagOptions}
-              placeholder={t("mailchimp.fields.tagsPlaceholder")}
-            />
-
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-sm">
-                    {t("mailchimp.fields.customFieldsMapping")}
-                  </span>
-                  <span className="self-start font-normal text-xxs">
-                    (optional)
-                  </span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium text-sm">
+                      {t("mailchimp.fields.customFieldsMapping")}
+                    </span>
+                    <span className="self-start font-normal text-xxs">
+                      (optional)
+                    </span>
+                  </div>
                 </div>
+                {fields.map((field, index) => (
+                  <div className="flex items-center gap-2" key={field.id}>
+                    <div className="flex-1">
+                      <CustomFieldSelect
+                        allowClear={true}
+                        includeReserved={true}
+                        label=""
+                        name={`mergeFields.${index}.chatbotField`}
+                        placeholder="---"
+                      />
+                    </div>
+                    <ArrowRightIcon className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex-1">
+                      <InputField
+                        disabled
+                        name={`mergeFields.${index}.mailchimpName`}
+                      />
+                    </div>
+                    <Button
+                      className="h-8 w-8 p-0"
+                      onClick={() => remove(index)}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-              {fields.map((field, index) => (
-                <div className="flex items-center gap-2" key={field.id}>
-                  <div className="flex-1">
-                    <CustomFieldSelect
-                      allowClear={true}
-                      includeReserved={true}
-                      label=""
-                      name={`mergeFields.${index}.chatbotField`}
-                      placeholder="---"
-                    />
-                  </div>
-                  <ArrowRightIcon className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1">
-                    <InputField
-                      name={`mergeFields.${index}.mailchimpTag`}
-                      placeholder="Mailchimp Tag"
-                    />
-                  </div>
-                  <Button
-                    className="h-8 w-8 p-0"
-                    onClick={() => remove(index)}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        <div className="flex justify-end gap-2">
-          <Button
-            onClick={handleCancel}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            {t("actions.cancel")}
-          </Button>
-          <Button disabled={!form.formState.isValid} size="sm" type="submit">
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="animate-spin" />
-            )}
-            {t("actions.confirm")}
-          </Button>
-        </div>
-      </form>
-    </Form>
-  )
-}
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={handleCancel}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              {t("actions.cancel")}
+            </Button>
+            <Button disabled={!form.formState.isValid} size="sm" type="submit">
+              {form.formState.isSubmitting && (
+                <Loader2Icon className="animate-spin" />
+              )}
+              {t("actions.confirm")}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    )
+  },
+)
+MailchimpAddMemberStepForm.displayName = "MailchimpAddMemberStepForm"
 
 const MailchimpAddMemberStepEditor = ({
   parentName,
@@ -221,13 +259,25 @@ const MailchimpAddMemberStepEditor = ({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
 
+  const handleOpenChange = useCallback((v: boolean) => {
+    setOpen(v)
+  }, [])
+
+  const handleSuccess = useCallback(() => {
+    setOpen(false)
+  }, [])
+
+  const handleCancel = useCallback(() => {
+    setOpen(false)
+  }, [])
+
   return (
     <BaseStepEditor
       icon={MailIcon}
       title={t("flows.actions.mailchimpAddMember")}
     >
       <div className="flex flex-col gap-3">
-        <Dialog onOpenChange={setOpen} open={open}>
+        <Dialog onOpenChange={handleOpenChange} open={open}>
           <DialogTrigger asChild>
             <div className="flex justify-center">
               <Button size="sm" variant="outline">
@@ -242,8 +292,8 @@ const MailchimpAddMemberStepEditor = ({
             </DialogHeader>
 
             <MailchimpAddMemberStepForm
-              onCancel={() => setOpen(false)}
-              onSuccess={() => setOpen(false)}
+              onCancel={handleCancel}
+              onSuccess={handleSuccess}
               parentName={parentName}
             />
           </DialogContent>

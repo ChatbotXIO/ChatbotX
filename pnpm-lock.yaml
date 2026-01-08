@@ -424,6 +424,9 @@ importers:
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5
+      zod:
+        specifier: ^4.2.1
+        version: 4.2.1
     devDependencies:
       '@aha.chat/typescript-config':
         specifier: workspace:*
@@ -483,6 +486,12 @@ importers:
       '@mailchimp/mailchimp_marketing':
         specifier: ^3.0.80
         version: 3.0.80
+      ky:
+        specifier: ^1.14.2
+        version: 1.14.2
+      zod:
+        specifier: ^4.2.1
+        version: 4.2.1
     devDependencies:
       '@aha.chat/typescript-config':
         specifier: workspace:*
