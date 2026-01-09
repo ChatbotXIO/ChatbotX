@@ -56,16 +56,17 @@ export const AIMessageRole = {
 } as const
 export type AIMessageRole = (typeof AIMessageRole)[keyof typeof AIMessageRole]
 
+export const whatsappAppSchema = z.object({
+  clientId: z.string(),
+  clientSecret: z.string(),
+  verifyToken: z.string(),
+  version: z.string(),
+  configId: z.string(),
+})
+export type WhatsappAppSchema = z.infer<typeof whatsappAppSchema>
+
 export const organizationSettingsSchema = z.object({
-  whatsapp: z
-    .object({
-      clientId: z.string(),
-      clientSecret: z.string(),
-      verifyToken: z.string(),
-      version: z.string(),
-      configId: z.string(),
-    })
-    .optional(),
+  whatsapp: whatsappAppSchema.optional(),
   googleSheets: z
     .object({
       clientId: z.string(),
