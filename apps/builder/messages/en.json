@@ -670,6 +670,9 @@
     "googleSheets": {
       "label": "Google Sheets"
     },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
     "hideHeader": {
       "label": "Show Header"
     },
@@ -1169,6 +1172,29 @@
   },
   "general": {
     "title": "General"
+  },
+  "activeCampaign": {
+    "title": "ActiveCampaign",
+    "setting": {
+      "label": "ActiveCampaign",
+      "description": "This integration lets you save customers сontacts from your bot to ActiveCampaign."
+    },
+    "dialog": {
+      "title": "Connect ActiveCampaign",
+      "description": "Enter the API URL and API Key from your ActiveCampaign account (Settings > Developer)."
+    },
+    "apiUrl": {
+      "label": "API URL",
+      "placeholder": "Enter your API URL"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Enter your API Key"
+    },
+    "error": {
+      "invalidCredentials": "Invalid ActiveCampaign API URL or API Key",
+      "webhookNotSupported": "ActiveCampaign does not support webhooks/callbacks yet via this handler."
+    }
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

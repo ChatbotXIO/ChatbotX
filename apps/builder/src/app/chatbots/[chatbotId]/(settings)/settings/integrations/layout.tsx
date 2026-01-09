@@ -16,6 +16,7 @@ type SettingIntegrationLayoutProps = {
   gemini: ReactNode
   googleSheets: ReactNode
   mailchimp: ReactNode
+  activeCampaign: ReactNode
 }
 
 function SettingIntegrationLayoutContent({
@@ -23,6 +24,7 @@ function SettingIntegrationLayoutContent({
   gemini,
   googleSheets,
   mailchimp,
+  activeCampaign,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
   const searchParams = useSearchParams()
@@ -52,6 +54,12 @@ function SettingIntegrationLayoutContent({
       keyName: t("mailchimp.title"),
       icon: MailIcon,
       content: mailchimp,
+    },
+    {
+      id: "activeCampaign",
+      keyName: t("activeCampaign.title"),
+      icon: MailIcon,
+      content: activeCampaign,
     },
   ]
 

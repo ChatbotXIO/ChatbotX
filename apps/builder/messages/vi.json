@@ -737,6 +737,9 @@
     "googleSheets": {
       "label": "Google Sheets"
     },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
     "hideHeader": {
       "label": "Hiển thị tiêu đề"
     },
@@ -1223,6 +1226,29 @@
   },
   "general": {
     "title": "Chung"
+  },
+  "activeCampaign": {
+    "title": "ActiveCampaign",
+    "setting": {
+      "label": "ActiveCampaign",
+      "description": "Tích hợp này cho phép bạn lưu thông tin liên hệ của khách hàng từ bot vào ActiveCampaign."
+    },
+    "dialog": {
+      "title": "Kết nối ActiveCampaign",
+      "description": "Nhập API URL và API Key từ tài khoản ActiveCampaign của bạn (Settings > Developer)."
+    },
+    "apiUrl": {
+      "label": "API URL",
+      "placeholder": "Nhập API URL của bạn"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Nhập API Key của bạn"
+    },
+    "error": {
+      "invalidCredentials": "API URL hoặc API Key không hợp lệ",
+      "webhookNotSupported": "ActiveCampaign chưa hỗ trợ webhook qua handler này."
+    }
   },
   "googleSheets": {
     "delete": {
