@@ -23,7 +23,7 @@
 
       // Load icon
       const iconUrl = new URL(
-        "/brand/logo.svg",
+        "/brand/icon_black.svg",
         csmChatWidget.webchatUrl,
       ).toString()
 
