@@ -1,5 +1,6 @@
 "use client"
 
+import type { TriggerModel } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -10,36 +11,48 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
-import { useTranslations } from "next-intl"
-import "react-day-picker/style.css"
 import { useRouter } from "next/navigation"
-import { type ReactElement, useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
+import { useEffect } from "react"
 import { toast } from "sonner"
-import { createTriggerAction } from "./actions/create-trigger-action"
-import { createTriggerSchema } from "./schemas/create-trigger-schema"
+import { z } from "zod"
 
-export function CreateTriggerDialog({
-  chatbotId,
-  folderId,
+import { updateTriggerSettingsAction } from "../actions/update-trigger-settings-action"
+
+const updateTriggerSettingsSchema = z.object({
+  name: z.optional(z.string().trim().min(1).max(255)),
+  active: z.optional(z.boolean()),
+})
+
+export function RenameTriggerDialog({
   trigger,
+  open,
+  onOpenChange,
 }: {
-  chatbotId: string
-  folderId: string | null
-  trigger: ReactElement
+  open: boolean
+  onOpenChange: (val: boolean) => void
+  trigger: TriggerModel | null
 }) {
   const t = useTranslations()
   const router = useRouter()
 
-  const [open, onOpenChange] = useState(false)
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    createTriggerAction.bind(null, chatbotId),
-    zodResolver(createTriggerSchema),
+  const {
+    form,
+    handleSubmitWithAction,
+    resetFormAndAction,
+    form: { setValue },
+  } = useHookFormAction(
+    updateTriggerSettingsAction.bind(
+      null,
+      trigger?.chatbotId ?? "",
+      trigger?.id ?? "",
+    ),
+    zodResolver(updateTriggerSettingsSchema),
     {
       actionProps: {
         onSuccess: () => {
@@ -48,9 +61,8 @@ export function CreateTriggerDialog({
               feature: t("fields.trigger.label"),
             }),
           )
-
+          resetFormAndAction()
           onOpenChange(false)
-          form.reset()
           router.refresh()
         },
         onError: ({ error }) => {
@@ -61,31 +73,23 @@ export function CreateTriggerDialog({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          name: "",
-          folderId,
-        },
       },
       errorMapProps: {},
     },
   )
 
-  const { setValue } = form
-
   useEffect(() => {
-    setValue("folderId", folderId)
-  }, [folderId, setValue])
+    if (trigger) {
+      setValue("name", trigger.name)
+    }
+  }, [trigger, setValue])
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.createFeature", {
-              feature: t("fields.trigger.label"),
-            })}
+            {t("messages.editFeature", { feature: t("fields.trigger.label") })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
@@ -95,11 +99,11 @@ export function CreateTriggerDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label="Name" name="name" required />
+              <InputField label={t("fields.name.label")} name="name" required />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>
-                  <Button type="button" variant="secondary">
+                  <Button size="sm" type="button" variant="ghost">
                     {t("actions.cancel")}
                   </Button>
                 </DialogClose>
@@ -112,7 +116,7 @@ export function CreateTriggerDialog({
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
-                  {t("actions.create")}
+                  {t("actions.confirm")}
                 </Button>
               </DialogFooter>
             </form>

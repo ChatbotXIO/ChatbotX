@@ -86,6 +86,8 @@ function findResourceModel(folderType: string) {
       return customFieldModel
     case "automatedResponse":
       return automatedResponseModel
+    case "trigger":
+      return triggerModel
     default:
       throw new ChatbotXException("Invalid folder type")
   }

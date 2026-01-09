@@ -28,6 +28,7 @@ CREATE TABLE "TriggerCondition" (
     CONSTRAINT "TriggerCondition_pkey" PRIMARY KEY ("id")
 );
 
+CREATE UNIQUE INDEX "Trigger_chatbotId_name_key" ON "Trigger"("chatbotId", "name");
 CREATE INDEX "Trigger_chatbotId_idx" ON "Trigger"("chatbotId");
 CREATE INDEX "Trigger_folderId_idx" ON "Trigger"("folderId");
 CREATE INDEX "Trigger_chatbotId_active_idx" ON "Trigger"("chatbotId", "active");

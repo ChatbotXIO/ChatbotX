@@ -1,19 +1,29 @@
 "use client"
 
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuShortcut,
+  DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { Switch } from "@aha.chat/ui/components/ui/switch"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
+import {
+  FolderUpIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  TextIcon,
+  Trash2Icon,
+} from "lucide-react"
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
+import { updateTriggerSettingsAction } from "./actions/update-trigger-settings-action"
 import type { TriggerResource } from "./schemas"
 
 type GetColumnsProps = {
@@ -68,7 +78,7 @@ export function getColumns({
           {row.original.name}
         </Link>
       ),
-      size: 50,
+      size: 400,
       meta: {
         label: t("fields.name.label"),
         placeholder: t("fields.name.placeholder"),
@@ -86,37 +96,79 @@ export function getColumns({
           title={t("fields.status.label")}
         />
       ),
-      cell: ({ row }) => (
-        <Switch
-          checked={row.original.active}
-          onCheckedChange={(_value) => {
-            // TODO
-          }}
-        />
-      ),
+      cell: ({ row }) => {
+        const { execute, isPending } = useAction(
+          updateTriggerSettingsAction.bind(
+            null,
+            row.original.chatbotId,
+            row.original.id,
+          ),
+          {
+            onSuccess: () => {
+              row.original.active = !row.original.active
+            },
+          },
+        )
+        return (
+          <Switch
+            checked={row.original.active}
+            disabled={isPending}
+            onCheckedChange={(value) => {
+              execute({ active: value })
+            }}
+          />
+        )
+      },
       meta: {
         label: t("fields.status.label"),
       },
-      size: 400,
+      size: 30,
       enableSorting: true,
     },
 
     {
-      id: "actions",
+      id: "action",
+      size: 10,
       header: "Actions",
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <MoreHorizontalIcon className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/chatbots/${chatbotId}/triggers/${row.original.id}/edit`}
+              >
+                <PencilIcon />
+                {t("actions.update")}
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => setRowAction({ row, variant: "delete" })}
+              onSelect={() => setRowAction({ row, variant: "rename" })}
             >
-              Delete
-              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+              <TextIcon />
+              {t("actions.rename")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setRowAction({ row, variant: "move" })}
+            >
+              <FolderUpIcon />
+              {t("actions.move")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setRowAction({ row, variant: "delete" })}
+              variant="destructive"
+            >
+              <Trash2Icon />
+              {t("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
-      size: 50,
       enableSorting: false,
       enableHiding: false,
     },

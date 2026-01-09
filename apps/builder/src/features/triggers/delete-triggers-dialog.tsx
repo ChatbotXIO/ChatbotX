@@ -25,6 +25,7 @@ type DeleteTriggersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   triggers: Row<TriggerModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
+  onOpenChange: (val: boolean) => void
 }
 
 export function DeleteTriggersDialog({
@@ -32,6 +33,7 @@ export function DeleteTriggersDialog({
   triggers,
   showTrigger = true,
   onSuccess,
+  onOpenChange,
   ...props
 }: DeleteTriggersDialogProps) {
   const t = useTranslations()
@@ -45,6 +47,7 @@ export function DeleteTriggersDialog({
             feature: t("fields.trigger.label"),
           }),
         )
+        onOpenChange(false)
         onSuccess?.()
       },
       onError: ({ error }) => {

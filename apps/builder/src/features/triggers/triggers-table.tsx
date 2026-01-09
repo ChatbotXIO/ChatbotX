@@ -1,6 +1,7 @@
 "use client"
 
 import type { TriggerModel } from "@aha.chat/database/types"
+import { FolderType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
@@ -8,6 +9,8 @@ import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { ChangeFolderDialog } from "../folders/change-folder"
+import { RenameTriggerDialog } from "./components/rename-trigger-dialog"
 import { DeleteTriggersDialog } from "./delete-triggers-dialog"
 import type { getTriggers } from "./queries"
 import { getColumns } from "./triggers-table-columns"
@@ -37,7 +40,7 @@ export function TriggersTable({ promises, chatbotId }: TriggersTableProps) {
     pageCount,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
-      columnPinning: { right: ["actions"] },
+      columnPinning: { right: ["action"] },
     },
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
@@ -48,9 +51,19 @@ export function TriggersTable({ promises, chatbotId }: TriggersTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
-          <TriggersTableToolbarActions chatbotId={chatbotId} table={table} />
+          <TriggersTableToolbarActions
+            chatbotId={chatbotId}
+            setRowAction={setRowAction}
+            table={table}
+          />
         </DataTableToolbar>
       </DataTable>
+
+      <RenameTriggerDialog
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "rename"}
+        trigger={rowAction?.row.original || null}
+      />
 
       <DeleteTriggersDialog
         chatbotId={chatbotId}
@@ -59,6 +72,15 @@ export function TriggersTable({ promises, chatbotId }: TriggersTableProps) {
         open={rowAction?.variant === "delete"}
         showTrigger={false}
         triggers={rowAction?.row.original ? [rowAction?.row.original] : []}
+      />
+
+      <ChangeFolderDialog
+        chatbotId={chatbotId}
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType={FolderType.trigger}
+        modelId={rowAction?.row.original?.id || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
       />
     </>
   )
