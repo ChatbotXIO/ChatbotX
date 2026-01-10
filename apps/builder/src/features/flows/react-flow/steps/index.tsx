@@ -1,5 +1,6 @@
 import { StepType } from "@aha.chat/flow-config"
 import { memo } from "react"
+import { activeCampaignStep } from "./active-campaign"
 import { addContactNotesStep } from "./add-contact-notes"
 import { addContactTagStep } from "./add-contact-tag"
 import { addNotesStep } from "./add-notes"
@@ -113,6 +114,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.spreadsheetClearRow]: spreadsheetClearRowStep,
   [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
   [StepType.mailchimpAddMember]: mailchimpAddMemberStep,
+  [StepType.activeCampaign]: activeCampaignStep,
   [StepType.sendQuickReply]: undefined,
 }
 

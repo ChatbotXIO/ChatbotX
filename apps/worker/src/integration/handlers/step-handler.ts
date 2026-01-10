@@ -13,6 +13,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@aha.chat/worker-config"
+import { handleActiveCampaignStep } from "./active-campaign-handler"
 import {
   addContactNotes,
   addContactTag,
@@ -197,6 +198,7 @@ export const flowStepHandlers: Record<
   [StepType.spreadsheetSendData]: sendSpreadsheetData,
   [StepType.spreadsheetUpdateRow]: updateSpreadsheetRow,
   [StepType.mailchimpAddMember]: addMailchimpMember,
+  [StepType.activeCampaign]: handleActiveCampaignStep,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }

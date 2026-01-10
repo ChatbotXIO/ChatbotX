@@ -1,6 +1,12 @@
 import { SdkException } from "@aha.chat/sdk"
 import ky, { HTTPError, type Options } from "ky"
-import type { ActiveCampaignAuthValue } from "./schemas"
+import type {
+  ActiveCampaignAuthValue,
+  ActiveCampaignAutomation,
+  ActiveCampaignCustomField,
+  ActiveCampaignList,
+  ActiveCampaignTag,
+} from "./schemas"
 
 const TRAILING_SLASH_REGEX = /\/$/
 const LEADING_SLASH_REGEX = /^\//
@@ -57,5 +63,98 @@ export class ActiveCampaignClient {
     } catch (_error) {
       return false
     }
+  }
+
+  async getLists(): Promise<ActiveCampaignList[]> {
+    const response = await this.request<{ lists: ActiveCampaignList[] }>(
+      "lists",
+      {
+        method: "GET",
+      },
+    )
+    return response.lists
+  }
+
+  async getTags(): Promise<ActiveCampaignTag[]> {
+    const response = await this.request<{ tags: ActiveCampaignTag[] }>("tags", {
+      method: "GET",
+    })
+    return response.tags
+  }
+
+  async getCustomFields(): Promise<ActiveCampaignCustomField[]> {
+    const response = await this.request<{
+      fields: ActiveCampaignCustomField[]
+    }>("fields", { method: "GET" })
+    return response.fields
+  }
+
+  async getAutomations(): Promise<ActiveCampaignAutomation[]> {
+    const response = await this.request<{
+      automations: ActiveCampaignAutomation[]
+    }>("automations", { method: "GET" })
+    return response.automations
+  }
+
+  async syncContact(props: {
+    email: string
+    firstName?: string
+    lastName?: string
+    phone?: string
+    fieldValues?: { field: string; value: string }[]
+  }): Promise<{ contact: { id: string } }> {
+    return await this.request<{ contact: { id: string } }>("contact/sync", {
+      method: "POST",
+      json: {
+        contact: props,
+      },
+    })
+  }
+
+  async addContactToAutomation(props: {
+    contactId: string
+    automationId: string
+  }): Promise<unknown> {
+    return await this.request("contactAutomations", {
+      method: "POST",
+      json: {
+        contactAutomation: {
+          contact: props.contactId,
+          automation: props.automationId,
+        },
+      },
+    })
+  }
+
+  async updateContactList(props: {
+    contactId: string
+    listId: string
+    status: number
+  }): Promise<unknown> {
+    return await this.request("contactLists", {
+      method: "POST",
+      json: {
+        contactList: {
+          list: props.listId,
+          contact: props.contactId,
+          status: props.status,
+        },
+      },
+    })
+  }
+
+  async addContactTag(props: {
+    contactId: string
+    tagId: string
+  }): Promise<unknown> {
+    return await this.request("contactTags", {
+      method: "POST",
+      json: {
+        contactTag: {
+          contact: props.contactId,
+          tag: props.tagId,
+        },
+      },
+    })
   }
 }

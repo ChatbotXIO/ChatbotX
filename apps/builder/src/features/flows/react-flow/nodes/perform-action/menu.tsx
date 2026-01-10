@@ -222,6 +222,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: MailIcon,
         stepType: StepType.mailchimpAddMember,
       },
+      {
+        label: t("flows.actions.activeCampaign"),
+        icon: MailIcon,
+        stepType: StepType.activeCampaign,
+      },
     ],
   },
   {

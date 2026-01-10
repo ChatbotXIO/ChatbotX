@@ -56,6 +56,7 @@ type ComboboxFieldProps<T extends FieldValues> = {
   description?: string
   options: SelectOption[]
   className?: string
+  contentClassName?: string
   side?: PopoverContentProps["side"]
   triggerValueChange?: (value: string) => void
   disableValues?: string[]
@@ -63,6 +64,7 @@ type ComboboxFieldProps<T extends FieldValues> = {
 
 export function ComboboxField<T extends FieldValues>({
   className,
+  contentClassName,
   name,
   label,
   required,
@@ -122,7 +124,7 @@ export function ComboboxField<T extends FieldValues>({
             </PopoverTrigger>
             <PopoverContent
               align="start"
-              className="w-[200px] p-0"
+              className={cn("w-[200px] p-0", contentClassName)}
               portal={false}
               side={side}
             >

@@ -1,3 +1,4 @@
+import { activeCampaignStepSchema } from "./steps/active-campaign"
 import { addContactNotesStepSchema } from "./steps/add-contact-notes"
 import { addContactTagStepSchema } from "./steps/add-contact-tag"
 import { archiveConversationStepSchema } from "./steps/archive-conversation"
@@ -89,6 +90,8 @@ const googleSheetStep = [
 
 const mailchimpSteps = [mailchimpAddMemberStepSchema]
 
+const activeCampaignSteps = [activeCampaignStepSchema]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -98,4 +101,5 @@ export const actionSteps = [
   ...flowSteps,
   ...googleSheetStep,
   ...mailchimpSteps,
+  ...activeCampaignSteps,
 ]

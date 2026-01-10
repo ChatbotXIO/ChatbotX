@@ -1172,7 +1172,8 @@
       "spreadsheetSendData": "Gửi dữ liệu",
       "spreadsheetGetRandomRow": "Lấy hàng ngẫu nhiên",
       "spreadsheetClearRow": "Xóa hàng",
-      "mailchimpAddMember": "Thêm liên hệ vào Mailchimp"
+      "mailchimpAddMember": "Thêm liên hệ vào Mailchimp",
+      "activeCampaign": "Thêm liên hệ vào ActiveCampaign"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1248,6 +1249,23 @@
     "error": {
       "invalidCredentials": "API URL hoặc API Key không hợp lệ",
       "webhookNotSupported": "ActiveCampaign chưa hỗ trợ webhook qua handler này."
+    },
+    "operations": {
+      "createOrUpdate": "Tạo hoặc cập nhật liên hệ",
+      "addToAutomation": "Thêm liên hệ vào tự động hóa"
+    },
+    "fields": {
+      "operation": "Hành động",
+      "emailField": "Trường Email",
+      "emailFieldTooltip": "Trường tùy chỉnh chứa email của người dùng để xác định liên hệ trong ActiveCampaign.",
+      "phoneField": "Trường số điện thoại",
+      "list": "Danh sách",
+      "listPlaceholder": "Chọn danh sách",
+      "tags": "Thẻ",
+      "tagsPlaceholder": "Chọn thẻ",
+      "customFieldsMapping": "Ánh xạ trường tùy chỉnh",
+      "automation": "Tự động hóa",
+      "automationPlaceholder": "Chọn tự động hóa"
     }
   },
   "googleSheets": {

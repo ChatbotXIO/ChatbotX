@@ -15,6 +15,7 @@ export * from "./nodes/wait"
 export * from "./shared"
 
 // Export all steps
+export * from "./steps/active-campaign"
 export * from "./steps/add-contact-notes"
 export * from "./steps/add-contact-tag"
 export * from "./steps/add-notes"

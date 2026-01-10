@@ -26,6 +26,38 @@ const config: IntegrationDefinition<
         success,
       }
     },
+    getLists: async ({ ctx }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.getLists()
+    },
+    getTags: async ({ ctx }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.getTags()
+    },
+    getCustomFields: async ({ ctx }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.getCustomFields()
+    },
+    getAutomations: async ({ ctx }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.getAutomations()
+    },
+    syncContact: async ({ ctx, props }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.syncContact(props)
+    },
+    addContactToAutomation: async ({ ctx, props }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.addContactToAutomation(props)
+    },
+    updateContactLists: async ({ ctx, props }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.updateContactList(props)
+    },
+    updateContactTags: async ({ ctx, props }) => {
+      const client = new ActiveCampaignClient(ctx.auth)
+      return await client.addContactTag(props)
+    },
   },
   handleRequest: () => {
     return Promise.reject(

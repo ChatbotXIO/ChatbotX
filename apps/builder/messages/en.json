@@ -1118,7 +1118,8 @@
       "spreadsheetSendData": "Send Data",
       "spreadsheetGetRandomRow": "Get Random Row",
       "spreadsheetClearRow": "Clear Row",
-      "mailchimpAddMember": "Add Contact to Mailchimp"
+      "mailchimpAddMember": "Add Contact to Mailchimp",
+      "activeCampaign": "Add Contact to ActiveCampaign"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1194,6 +1195,23 @@
     "error": {
       "invalidCredentials": "Invalid ActiveCampaign API URL or API Key",
       "webhookNotSupported": "ActiveCampaign does not support webhooks/callbacks yet via this handler."
+    },
+    "operations": {
+      "createOrUpdate": "Create or Update Contact",
+      "addToAutomation": "Add Contact to Automation"
+    },
+    "fields": {
+      "operation": "Operation",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom Field which contains the user's email to identify ActiveCampaign contacts.",
+      "phoneField": "Phone Field",
+      "list": "List",
+      "listPlaceholder": "Select List",
+      "tags": "Tags",
+      "tagsPlaceholder": "Select Tags",
+      "customFieldsMapping": "Custom Fields Mapping",
+      "automation": "Automation",
+      "automationPlaceholder": "Select Automation"
     }
   },
   "googleSheets": {

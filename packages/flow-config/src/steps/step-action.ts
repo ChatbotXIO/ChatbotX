@@ -90,6 +90,9 @@ export const StepType = {
 
   // Mailchimp Operations (M_)
   mailchimpAddMember: "M01",
+
+  // ActiveCampaign Operations (AC_)
+  activeCampaign: "AC01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]
