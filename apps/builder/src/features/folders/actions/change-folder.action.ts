@@ -1,6 +1,7 @@
 "use server"
 
 import { FolderType, prisma } from "@aha.chat/database"
+import { rootFolderId } from "@aha.chat/database/enums"
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { BaseException } from "@/lib/errors/exception"
@@ -30,7 +31,7 @@ export const changeFolderAction = chatbotActionClient
 
     let newFolderId: string | null = null
     const inputNewFolderId =
-      parsedInput.newFolderId === "0" ? null : parsedInput.newFolderId
+      parsedInput.newFolderId === rootFolderId ? null : parsedInput.newFolderId
     if (inputNewFolderId) {
       const targetFolder = await prisma.folder.findFirst({
         where: {

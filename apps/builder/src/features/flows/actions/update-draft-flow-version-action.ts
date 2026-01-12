@@ -9,7 +9,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateDraftFlowVersionSchema,
   updateDraftFlowVersionSchema,
-} from "../schemas/update-flow-schema"
+} from "../schemas/action"
 
 export const updateDraftFlowVersionAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

@@ -8,22 +8,16 @@ import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
-import type { getCurrentFolder } from "@/features/folders/queries"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import { getFlowColumns } from "./flows-table-columns"
 import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
 import type { getFlows } from "./queries"
 import { RenameFlowDialog } from "./react-flow/components/rename-flow"
-import type { FlowResource } from "./schemas/get-flows-schema"
+import type { FlowResource } from "./schemas/resource"
 
 type FlowsTableProps = {
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof getCurrentFolder>>,
-      Awaited<ReturnType<typeof getFlows>>,
-    ]
-  >
+  promises: Promise<[Awaited<ReturnType<typeof getFlows>>]>
   chatbotId: string
 }
 
@@ -31,7 +25,7 @@ export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
-  const [_, { data, pageCount }] = use(promises)
+  const [{ data, pageCount }] = use(promises)
 
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<FlowResource> | null>(null)

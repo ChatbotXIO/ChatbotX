@@ -1,3 +1,4 @@
+import { prisma } from "@aha.chat/database"
 import { FileType } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import { StepType } from "@aha.chat/flow-config"
@@ -62,7 +63,12 @@ export async function downloadAndUploadImage(
       detectedHeight = dims.height
     }
 
-    const path = `public/conversations/${conversationId}/${createId()}`
+    const conversation = await prisma.conversation.findFirstOrThrow({
+      where: { id: conversationId },
+      select: { chatbotId: true },
+    })
+
+    const path = `public/chatbots/${conversation.chatbotId}/conversations/${conversationId}/${createId()}`
     await uploader.putObject(path, buffer, {
       ACL: "public-read",
       ContentType: contentType,

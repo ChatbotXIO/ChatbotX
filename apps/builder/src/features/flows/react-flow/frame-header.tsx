@@ -9,7 +9,7 @@ import {
   BreadcrumbSeparator,
 } from "@aha.chat/ui/components/ui/breadcrumb"
 import { useTranslations } from "next-intl"
-import type { FlowResource } from "../schemas/get-flows-schema"
+import type { FlowResource } from "../schemas/resource"
 import { FlowEditToolbar } from "./flow-edit-toolbar"
 
 export function FrameHeader({ flow }: { flow: FlowResource }) {

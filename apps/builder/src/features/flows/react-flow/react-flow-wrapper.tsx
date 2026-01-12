@@ -29,7 +29,7 @@ import {
   useEffect,
 } from "react"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
-import type { FlowVersionResource } from "../schemas/get-flows-schema"
+import type { FlowVersionResource } from "../schemas/resource"
 import { NodeViewer } from "./nodes/viewer"
 import AddNodeButton from "./panel-buttons/add-node-button"
 import FocusButton from "./panel-buttons/focus-button"

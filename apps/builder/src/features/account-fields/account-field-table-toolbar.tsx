@@ -6,10 +6,11 @@ import type { AccountFieldResource } from "./schemas/types"
 
 export function AccountFieldToolbarActions({
   chatbotId,
+  folderId,
   table,
 }: {
   chatbotId: string
-  folderId?: string | null
+  folderId: string | null
   table: Table<AccountFieldResource>
 }) {
   const router = useRouter()
@@ -30,6 +31,7 @@ export function AccountFieldToolbarActions({
 
       <CreateAccountFieldDialog
         chatbotId={chatbotId}
+        folderId={folderId}
         onSuccess={() => {
           router.refresh()
         }}

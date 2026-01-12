@@ -1,38 +1,31 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
+import { rootFolderId } from "@aha.chat/database/enums"
 import type { FlowModel } from "@aha.chat/database/types"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { FlowException } from "../schemas/exception"
-import type {
-  FindFlowParams,
-  FlowCollection,
-  FlowResource,
-  ListFlowsParams,
-} from "../schemas/get-flows-schema"
+import type { FindFlowParams, ListFlowsParams } from "../schemas/query"
+import type { FlowResource } from "../schemas/resource"
 
 export async function getFlows(
   input: ListFlowsParams,
-): Promise<FlowCollection> {
+): Promise<PaginatedResponse<FlowResource>> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const where: Prisma.FlowWhereInput = {
     chatbotId: input.chatbotId,
   }
 
-  if (input.folderId !== undefined) {
-    where.folderId =
-      input.folderId === null || input.folderId === "0" ? null : input.folderId
+  if (input.folderId) {
+    where.folderId = input.folderId === rootFolderId ? null : input.folderId
   }
 
   if (input.name) {
-    where.AND = [
-      {
-        name: {
-          contains: input.name,
-          mode: "insensitive",
-        },
-      },
-    ]
+    where.name = {
+      contains: input.name,
+      mode: "insensitive",
+    }
   }
 
   if (input.active) {

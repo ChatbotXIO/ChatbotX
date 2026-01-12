@@ -35,10 +35,15 @@ import { UpdateAccountFieldDialog } from "./update-account-field-dialog"
 
 type FieldsTableProps = {
   chatbotId: string
+  folderId: string | null
   promises: Promise<[Awaited<ReturnType<typeof listAccountFields>>]>
 }
 
-export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
+export function AccountFieldsTable({
+  chatbotId,
+  folderId,
+  promises,
+}: FieldsTableProps) {
   const [{ data, pageCount }] = use(promises)
   const router = useRouter()
 
@@ -176,7 +181,11 @@ export function AccountFieldsTable({ chatbotId, promises }: FieldsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
-          <AccountFieldToolbarActions chatbotId={chatbotId} table={table} />
+          <AccountFieldToolbarActions
+            chatbotId={chatbotId}
+            folderId={folderId}
+            table={table}
+          />
         </DataTableToolbar>
       </DataTable>
 

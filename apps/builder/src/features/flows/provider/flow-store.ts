@@ -1,7 +1,8 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { FlowCollection, FlowResource } from "../schemas/get-flows-schema"
+import type { FlowResource } from "../schemas/resource"
 
 export type FlowState = {
   loading: boolean
@@ -63,7 +64,7 @@ export const createFlowStore = () =>
         active: "true",
       })
       const { data } = await ky
-        .get<FlowCollection>(
+        .get<PaginatedResponse<FlowResource>>(
           `/api/chatbots/${chatbotId}/flows?${searchParams.toString()}`,
         )
         .json()
