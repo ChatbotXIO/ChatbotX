@@ -25,6 +25,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
 import { DeleteRefLinksDialog } from "./delete-ref-links-dialog"
+import { GetQRCodeDialog } from "./get-qr-code-dialog"
 import GetRefLinkDialog from "./get-ref-link-dialog"
 import type { getRefLinks } from "./queries"
 import { RefLinksTableToolbarActions } from "./ref-links-table-toolbar-actions"
@@ -39,6 +40,7 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
   const t = useTranslations()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [qrCodeText, setQRCodeText] = React.useState<string | null>(null)
 
   const [{ data, pageCount }] = use(promises)
 
@@ -134,11 +136,12 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
             <DropdownMenuContent align="end">
               <GetRefLinkDialog
                 chatbotId={chatbotId}
+                onOpenQRCode={setQRCodeText}
                 refLink={row.original}
                 trigger={
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <LinkIcon />
-                    {t("actions.getLink")}
+                    {t("actions.getLinkOrQRCode")}
                   </DropdownMenuItem>
                 }
               />
@@ -188,6 +191,12 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
           <RefLinksTableToolbarActions chatbotId={chatbotId} table={table} />
         </DataTableToolbar>
       </DataTable>
+
+      <GetQRCodeDialog
+        onOpenChange={() => setQRCodeText(null)}
+        open={Boolean(qrCodeText)}
+        text={qrCodeText}
+      />
 
       <DeleteRefLinksDialog
         chatbotId={chatbotId}

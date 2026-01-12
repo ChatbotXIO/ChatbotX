@@ -23,12 +23,14 @@ type DeleteRefLinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
   refLink: Row<RefLinkResource>["original"]
   trigger: ReactElement
+  onOpenQRCode: (text: string) => void
 }
 
 export default function GetRefLinkDialog({
   chatbotId,
   refLink,
   trigger,
+  onOpenQRCode,
 }: DeleteRefLinkDialogProps) {
   const t = useTranslations()
   const [_, copyToClipboard] = useCopyToClipboard()
@@ -48,6 +50,16 @@ export default function GetRefLinkDialog({
     handleCopy(link)
   }
 
+  const getQRCode = (inboxType: InboxType) => {
+    const link = getInboxLink({
+      inboxType,
+      inboxes,
+      refId: `r_${refLink.id}`,
+      chatbotId,
+    })
+    onOpenQRCode(link)
+  }
+
   const handleCopy = (text: string) => {
     copyToClipboard(text)
       .then(() => {
@@ -63,7 +75,7 @@ export default function GetRefLinkDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("actions.getLink")}</DialogTitle>
+          <DialogTitle>{t("actions.getLinkOrQRCode")}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           {channelOptionsFiltered.map((c) => (
@@ -75,8 +87,16 @@ export default function GetRefLinkDialog({
               <Button
                 onClick={() => handleChooseChannel(c.value as InboxType)}
                 type="button"
+                variant="outline"
               >
-                {t("actions.copy")}
+                {t("actions.copyLink")}
+              </Button>
+              <Button
+                onClick={() => getQRCode(c.value as InboxType)}
+                type="button"
+                variant="outline"
+              >
+                QR Code
               </Button>
             </div>
           ))}

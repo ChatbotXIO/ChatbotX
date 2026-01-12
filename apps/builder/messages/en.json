@@ -10,6 +10,7 @@
   },
   "actions": {
     "copy": "Copy",
+    "copyLink": "Copy Link",
     "actions": "Actions",
     "add": "Add",
     "addContactNotes": "Add Contact Notes",
@@ -138,7 +139,7 @@
     "randomRow": "Random Row",
     "clickToEdit": "Click to edit",
     "move": "Move",
-    "getLink": "Get Link"
+    "getLinkOrQRCode": "Get Link / QR Code"
   },
   "admins": {
     "title": "Admins"
@@ -850,6 +851,9 @@
     },
     "size": {
       "label": "Size"
+    },
+    "imageSize": {
+      "label": "Image Size"
     },
     "sort": {
       "label": "Sort",
