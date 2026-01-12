@@ -1,5 +1,4 @@
 import { InboxType } from "@aha.chat/database/types"
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
 import {
   SiMessenger,
   SiMessengerHex,
@@ -45,7 +44,7 @@ export const allInboxConfigs = {
   },
 } as const
 
-export const useConfiguredInboxTypeOptions: () => SelectOption[] = () => {
+export const useConfiguredInboxTypeOptions = () => {
   const [inboxTypes, setInboxTypes] = useState<string[]>([])
   const inboxes = useInboxStore((state) => state.inboxes)
 
