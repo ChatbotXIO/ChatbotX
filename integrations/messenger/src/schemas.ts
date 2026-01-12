@@ -40,6 +40,7 @@ export type MessengerActions = {
       conversation: ConversationEntity
       postbackAction?: { flowVersionId: string; buttonId: string } | null
       quickReplyAction?: { flowVersionId: string; buttonId: string } | null
+      ref?: string | null
     }
   >
   sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
@@ -101,6 +102,13 @@ export const messengerPostbackSchema = z.object({
 })
 export type MessengerPostback = z.infer<typeof messengerPostbackSchema>
 
+export const messengerReferralSchema = z.object({
+  ref: z.string(),
+  source: z.string(),
+  type: z.string(),
+})
+export type MessengerReferral = z.infer<typeof messengerReferralSchema>
+
 export const messengerSenderSchema = idSchema
 export type MessengerSender = z.infer<typeof messengerSenderSchema>
 
@@ -115,6 +123,7 @@ export const messengerMessagingEventSchema = z.object({
   delivery: messengerDeliverySchema.optional(),
   read: messengerReadSchema.optional(),
   postback: messengerPostbackSchema.optional(),
+  referral: messengerReferralSchema.optional(),
 })
 export type MessengerMessagingEvent = z.infer<
   typeof messengerMessagingEventSchema

@@ -18,6 +18,7 @@ export async function GET(
     const allInboxes = await listInboxes({
       ...search,
       chatbotId: (await params).chatbotId,
+      includes: ["integration"],
     })
 
     return NextResponse.json(allInboxes)

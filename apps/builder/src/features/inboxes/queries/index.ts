@@ -1,14 +1,11 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { InboxStatus } from "@aha.chat/database/enums"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListInboxesRequest } from "../schemas/query"
 import type { InboxCollection } from "../schemas/resource"
 
 export async function listInboxes(
   input: ListInboxesRequest,
 ): Promise<InboxCollection> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
-
   const where: Prisma.InboxWhereInput = {
     chatbotId: input.chatbotId,
     status: InboxStatus.connected,

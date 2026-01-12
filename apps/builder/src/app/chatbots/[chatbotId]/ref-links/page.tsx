@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
+import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { AddRefLinkButton } from "@/features/ref-links/components/add-automated-response-button"
 import { getRefLinks } from "@/features/ref-links/queries"
 import { RefLinksTable } from "@/features/ref-links/ref-links-table"
@@ -30,7 +31,9 @@ export default async function RefLinksPage({
         <h4 className="flex-1 font-bold">{t("fields.refLink.label")}</h4>
         <AddRefLinkButton />
       </div>
-      <RefLinksTable chatbotId={chatbotId} promises={promises} />
+      <InboxStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+        <RefLinksTable chatbotId={chatbotId} promises={promises} />
+      </InboxStoreProvider>
     </div>
   )
 }

@@ -1,14 +1,30 @@
 "use client"
 
+import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { GlobeIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { getInboxLink } from "@/features/ref-links/helpers"
 import type { InboxResource } from "../schemas/resource"
 
-export default function InboxWebchatCard({ inbox }: { inbox: InboxResource }) {
+export default function InboxWebchatCard({
+  inbox,
+  actionLabel,
+  refId,
+}: {
+  inbox: InboxResource
+  actionLabel?: string
+  refId?: string
+}) {
   const t = useTranslations()
+  const link = getInboxLink({
+    inboxType: InboxType.webchat,
+    inboxes: [inbox],
+    chatbotId: inbox.chatbotId,
+    refId,
+  })
 
   return (
     <Card className="py-3" key={inbox.id}>
@@ -18,12 +34,8 @@ export default function InboxWebchatCard({ inbox }: { inbox: InboxResource }) {
           {inbox.integrationWebchat?.name}
         </p>
         <Button size="sm" type="button" variant="secondary">
-          <Link
-            href={`/webchat?chatbotId=${inbox.chatbotId}&webchatId=${inbox.integrationWebchat?.id}`}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {t("actions.testNow")}
+          <Link href={link} rel="noopener noreferrer" target="_blank">
+            {actionLabel ?? t("actions.testNow")}
           </Link>
         </Button>
       </CardContent>

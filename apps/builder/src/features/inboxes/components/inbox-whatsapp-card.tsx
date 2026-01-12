@@ -1,6 +1,6 @@
 "use client"
 
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
@@ -12,29 +12,30 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { SiWhatsapp, SiWhatsappHex } from "@icons-pack/react-simple-icons"
-import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useMemo } from "react"
 import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { getInboxLink } from "@/features/ref-links/helpers"
 import type { InboxResource } from "../schemas/resource"
 
-export default function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
-  const formattedPhoneNumber = useMemo(() => {
-    const auth = inbox.integrationWhatsapp?.auth as
-      | WhatsappAuthValue
-      | undefined
-    const phoneNumber = auth?.metadata.phoneNumber.display_phone_number ?? ""
-
-    return (
-      parsePhoneNumberFromString(
-        phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`,
-      )?.number.replace("+", "") ?? ""
-    )
-  }, [inbox.integrationWhatsapp?.auth])
+export default function InboxWhatsappCard({
+  inbox,
+  actionLabel,
+  refId,
+}: {
+  inbox: InboxResource
+  actionLabel?: string
+  refId?: string
+}) {
+  const link = getInboxLink({
+    inboxType: InboxType.whatsapp,
+    inboxes: [inbox],
+    chatbotId: inbox.chatbotId,
+    refId,
+  })
 
   return (
     <Card className="py-3" key={inbox.id}>
@@ -48,27 +49,24 @@ export default function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
           {inbox.integrationWhatsapp?.name}
         </p>
 
-        <WhatsappQRCodeDialog displayPhoneNumber={formattedPhoneNumber} />
+        <WhatsappQRCodeDialog actionLabel={actionLabel} link={link} />
       </CardContent>
     </Card>
   )
 }
 
 function WhatsappQRCodeDialog({
-  displayPhoneNumber,
+  link,
+  actionLabel,
 }: {
-  displayPhoneNumber: string
+  link: string
+  actionLabel?: string
 }) {
   const t = useTranslations()
   const [, copy] = useCopyToClipboard()
 
-  const wabaUrl = useMemo(
-    () => `https://wa.me/${displayPhoneNumber}`,
-    [displayPhoneNumber],
-  )
-
   const handleCopy = () => {
-    copy(wabaUrl).then(() => {
+    copy(link).then(() => {
       toast.success(t("messages.copiedToClipboard"))
     })
   }
@@ -77,7 +75,7 @@ function WhatsappQRCodeDialog({
     <Dialog>
       <DialogTrigger asChild>
         <Button size="sm" type="button" variant="secondary">
-          {t("actions.testNow")}
+          {actionLabel ?? t("actions.testNow")}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -91,15 +89,15 @@ function WhatsappQRCodeDialog({
         </DialogHeader>
         <div className="flex flex-col items-center justify-center gap-2">
           <p>{t("actions.scanQRCode")}</p>
-          <QRCode value={wabaUrl} />
+          <QRCode value={link} />
 
           <p>{t("texts.or")}</p>
           <div className="-mt-2 flex items-center justify-center gap-2">
             <Link
               className="text-sky-600 no-underline hover:underline dark:text-sky-400"
-              href={wabaUrl}
+              href={link}
             >
-              {wabaUrl}
+              {link}
             </Link>
             <Button
               aria-label={t("actions.copy")}

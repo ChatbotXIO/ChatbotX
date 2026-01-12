@@ -8,19 +8,15 @@ export default async function Dashboard({
   params: Promise<{ chatbotId: string }>
 }) {
   const { chatbotId } = await params
-
-  const inboxesPromise = Promise.all([
-    listInboxes({
-      chatbotId,
-      includes: ["integration"],
-    }),
-  ])
+  const { data: inboxes } = await listInboxes({
+    chatbotId,
+    includes: ["integration"],
+    perPage: 1000,
+  })
 
   return (
     <div className="flex flex-col gap-4">
-      <InboxCardList chatbotId={chatbotId} inboxesPromise={inboxesPromise} />
-
-      <div />
+      <InboxCardList chatbotId={chatbotId} inboxes={inboxes} />
 
       <InboxStatsList />
     </div>

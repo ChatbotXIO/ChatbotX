@@ -17,6 +17,7 @@ import {
   sendFlowPostback,
   sendFlowQuickReply,
 } from "./handlers/send-flow-postback"
+import { sendFlowRef } from "./handlers/send-flow-ref"
 
 const worker = new Worker(
   QueueName.integration,
@@ -53,6 +54,10 @@ const worker = new Worker(
       }
       case IntegrationJobAction.sendFlowQuickReply: {
         await sendFlowQuickReply(job.data.data)
+        return
+      }
+      case IntegrationJobAction.sendFlowRef: {
+        await sendFlowRef(job.data.data)
         return
       }
       case IntegrationJobAction.triggerAutomatedResponse: {

@@ -13,6 +13,7 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { Loader, Trash } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
@@ -25,10 +26,10 @@ type DeleteRefLinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   refLinks: Row<RefLinkResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
-  onOpenChange: (val: boolean) => void
+  onOpenChange?: (val: boolean) => void
 }
 
-export function DeleteRefLinkDialog({
+export function DeleteRefLinksDialog({
   chatbotId,
   refLinks,
   showTrigger = true,
@@ -37,6 +38,7 @@ export function DeleteRefLinkDialog({
   ...props
 }: DeleteRefLinkDialogProps) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteRefLinkAction.bind(null, chatbotId),
@@ -47,8 +49,9 @@ export function DeleteRefLinkDialog({
             feature: t("fields.refLink.label"),
           }),
         )
-        onOpenChange(false)
+        onOpenChange?.(false)
         onSuccess?.()
+        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -85,7 +88,7 @@ export function DeleteRefLinkDialog({
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
             <Button
-              onClick={() => onOpenChange(false)}
+              onClick={() => onOpenChange?.(false)}
               size="sm"
               variant="ghost"
             >

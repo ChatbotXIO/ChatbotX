@@ -4,6 +4,7 @@ import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,8 +24,10 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
-import { DeleteRefLinkDialog } from "./delete-ref-link-dialog"
+import { DeleteRefLinksDialog } from "./delete-ref-links-dialog"
+import GetRefLinkDialog from "./get-ref-link-dialog"
 import type { getRefLinks } from "./queries"
+import { RefLinksTableToolbarActions } from "./ref-links-table-toolbar-actions"
 import type { RefLinkResource } from "./schemas/types"
 
 type RefLinksTableProps = {
@@ -41,8 +44,37 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
 
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<RefLinkResource> | null>(null)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: we need to memoize the columns
   const columns = useMemo<ColumnDef<RefLinkResource>[]>(
     () => [
+      {
+        id: "select",
+        header: ({ table: tableData }) => (
+          <Checkbox
+            aria-label="Select all"
+            checked={
+              tableData.getIsAllPageRowsSelected() ||
+              (tableData.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            className="translate-y-0.5"
+            onCheckedChange={(value) =>
+              tableData.toggleAllPageRowsSelected(Boolean(value))
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label="Select row"
+            checked={row.getIsSelected()}
+            className="translate-y-0.5"
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          />
+        ),
+        size: 50,
+        enableSorting: false,
+        enableHiding: false,
+      },
       {
         id: "name",
         accessorKey: "name",
@@ -100,10 +132,17 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <LinkIcon />
-                {t("actions.copy")}
-              </DropdownMenuItem>
+              <GetRefLinkDialog
+                chatbotId={chatbotId}
+                refLink={row.original}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <LinkIcon />
+                    {t("actions.getLink")}
+                  </DropdownMenuItem>
+                }
+              />
+
               <DropdownMenuItem asChild>
                 <Link
                   href={`/chatbots/${chatbotId}/ref-links/${row.original.id}/edit`}
@@ -126,7 +165,7 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
         enableHiding: false,
       },
     ],
-    [chatbotId, t, searchParams.toString],
+    [],
   )
 
   const { table } = useDataTable({
@@ -145,10 +184,12 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
   return (
     <>
       <DataTable table={table}>
-        <DataTableToolbar table={table} />
+        <DataTableToolbar table={table}>
+          <RefLinksTableToolbarActions chatbotId={chatbotId} table={table} />
+        </DataTableToolbar>
       </DataTable>
 
-      <DeleteRefLinkDialog
+      <DeleteRefLinksDialog
         chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {

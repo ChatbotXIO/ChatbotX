@@ -73,11 +73,12 @@ export default function EditRefLinkForm(props: EditRefLinkFormProps) {
         <Card className="m-auto max-w-[600px]">
           <CardContent>
             <div className="flex flex-col gap-4">
-              <InputField label={t("fields.name.label")} name="name" />
+              <InputField label={t("fields.name.label")} name="name" required />
               <ComboboxField
                 label={t("fields.flow.label")}
                 name="flowId"
                 options={flowOptions}
+                required
               />
               <CustomFieldSelect
                 helpLink=""

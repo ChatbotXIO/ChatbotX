@@ -67,11 +67,13 @@ export default function CreateRefLinkForm(props: CreateRefLinkFormProps) {
                 label={t("fields.name.label")}
                 name="name"
                 pattern="^[a-zA-Z0-9]*$"
+                required
               />
               <ComboboxField
                 label={t("fields.flow.label")}
                 name="flowId"
                 options={flowOptions}
+                required
               />
               <CustomFieldSelect
                 helpLink="https://example.com/help/custom-fields"

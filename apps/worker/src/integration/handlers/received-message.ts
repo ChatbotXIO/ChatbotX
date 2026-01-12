@@ -97,7 +97,7 @@ export const receiveMessage = async ({
     throw new Error("Unable to parse received message")
   }
 
-  const { message, conversation, postbackAction, quickReplyAction } =
+  const { message, conversation, postbackAction, quickReplyAction, ref } =
     parsedMessage
 
   const result = await prisma.$transaction(async (tx) => {
@@ -228,6 +228,17 @@ export const receiveMessage = async ({
         conversationId: result.conversation.id,
         flowVersionId: quickReplyAction.flowVersionId,
         buttonId: quickReplyAction.buttonId,
+      },
+    })
+  }
+
+  if (ref) {
+    await integrationQueue.add(IntegrationJobAction.sendFlowRef, {
+      type: IntegrationJobAction.sendFlowRef,
+      data: {
+        conversationId: result.conversation.id,
+        contactId: result.conversation.contactId,
+        ref,
       },
     })
   }

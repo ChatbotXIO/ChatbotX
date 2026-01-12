@@ -62,15 +62,13 @@ export const parseIncomingMessage = async ({
   }
 
   const messaging = entry.messaging[0]
-  if (!(messaging.message || messaging.postback)) {
+  if (!(messaging.message || messaging.postback || messaging.referral)) {
     throw new MessengerException("No message found")
   }
 
   const sourceId = entry.id
-  const { message, postbackAction, quickReplyAction } = await getMessageEntity(
-    ctx,
-    messaging,
-  )
+  const { message, postbackAction, quickReplyAction, ref } =
+    await getMessageEntity(ctx, messaging)
 
   const conversation: ConversationEntity = {
     sourceId,
@@ -87,6 +85,7 @@ export const parseIncomingMessage = async ({
     conversation,
     postbackAction,
     quickReplyAction,
+    ref,
   })
 }
 
@@ -97,11 +96,13 @@ const getMessageEntity = async (
   message: MessageEntity
   postbackAction: { flowVersionId: string; buttonId: string } | null
   quickReplyAction: { flowVersionId: string; buttonId: string } | null
+  ref: string | null
 }> => {
   let message: MessageEntity | null = null
   let postbackAction: { flowVersionId: string; buttonId: string } | null = null
   let quickReplyAction: { flowVersionId: string; buttonId: string } | null =
     null
+  let ref: string | null = null
   if (messaging.message) {
     message = {
       sourceId: messaging.message.mid,
@@ -142,9 +143,19 @@ const getMessageEntity = async (
       }
     }
   }
+  if (messaging.referral) {
+    message = {
+      sourceId: messaging.referral.source,
+      messageType: MessageType.incoming,
+      content: "",
+      contentType: ContentType.text,
+      attachments: [],
+    }
+    ref = messaging.referral.ref
+  }
 
   if (message) {
-    return { message, postbackAction, quickReplyAction }
+    return { message, postbackAction, quickReplyAction, ref }
   }
 
   throw new MessengerException("No message found")

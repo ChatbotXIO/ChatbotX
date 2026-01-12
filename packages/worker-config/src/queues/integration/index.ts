@@ -8,6 +8,7 @@ export const IntegrationJobAction = {
   incomingMessage: "incomingMessage",
   sendFlowPostback: "sendFlowPostback",
   sendFlowQuickReply: "sendFlowQuickReply",
+  sendFlowRef: "sendFlowRef",
   triggerAutomatedResponse: "triggerAutomatedResponse",
   sendBroadcast: "sendBroadcast",
 } as const
@@ -49,6 +50,15 @@ export type IntegrationJobSendFlowQuickReply = {
   }
 }
 
+export type IntegrationJobSendFlowRef = {
+  type: typeof IntegrationJobAction.sendFlowRef
+  data: {
+    conversationId: string
+    contactId: string
+    ref: string
+  }
+}
+
 export type IntegrationJobTriggerAutomatedResponse = {
   type: typeof IntegrationJobAction.triggerAutomatedResponse
   data: {
@@ -70,6 +80,7 @@ export type IntegrationJobData =
   | IntegrationJobSendFlowQuickReply
   | IntegrationJobTriggerAutomatedResponse
   | IntegrationJobSendBroadcast
+  | IntegrationJobSendFlowRef
 
 export const integrationQueue = new Queue<IntegrationJobData>(
   QueueName.integration,
