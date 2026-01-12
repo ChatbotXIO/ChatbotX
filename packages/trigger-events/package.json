@@ -1,0 +1,17 @@
+{
+  "name": "@aha.chat/trigger-events",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts"
+  },
+  "dependencies": {
+    "@aha.chat/worker-config": "workspace:*",
+    "@aha.chat/database": "workspace:*"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "typescript": "5.9.3"
+  }
+}

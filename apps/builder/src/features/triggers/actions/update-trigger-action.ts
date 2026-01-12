@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import { updateTriggerCache } from "@aha.chat/trigger-events"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -88,10 +89,15 @@ export const updateTriggerAction = chatbotActionClient
           })
         }
 
-        return await tx.trigger.findUnique({
+        const result = await tx.trigger.findUnique({
           where: { id },
-          include: { triggerConditions: true },
         })
+
+        if (result) {
+          await updateTriggerCache(chatbotId)
+        }
+
+        return result
       })
     },
   )

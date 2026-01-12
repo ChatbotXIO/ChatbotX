@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import { removeTriggerCache } from "@aha.chat/trigger-events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -28,5 +29,7 @@ export const deleteTriggersAction = chatbotActionClient
           },
         },
       })
+
+      await removeTriggerCache(chatbotId)
     },
   )

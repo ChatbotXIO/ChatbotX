@@ -1550,7 +1550,8 @@
     "minLength": "Minimum length is {min} characters",
     "minValue": "Minimum value is {min}",
     "passwordMismatch": "Passwords do not match",
-    "required": "This field is required"
+    "required": "This field is required",
+    "maxItemsReached": "Maximum {max} {feature} allowed per chatbot"
   },
   "webchat": {
     "description": "Let your customers get instant automated responses from your business directly from your website",

@@ -1,3 +1,5 @@
+export const loopableItemsCount = 1000
+
 export * from "./lib/connection"
 export * from "./lib/types"
 export * from "./queues/ai-agent"
@@ -5,5 +7,4 @@ export * from "./queues/chat"
 export * from "./queues/default"
 export * from "./queues/integration"
 export * from "./queues/schedule"
-
-export const loopableItemsCount = 1000
+export * from "./queues/trigger"

@@ -1463,7 +1463,8 @@
     "minLength": "Độ dài tối thiểu là {min} ký tự",
     "minValue": "Giá trị tối thiểu là {min}",
     "passwordMismatch": "Mật khẩu không khớp",
-    "required": "Trường này là bắt buộc"
+    "required": "Trường này là bắt buộc",
+    "maxItemsReached": "Tối đa {max} {feature} cho mỗi chatbot"
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",

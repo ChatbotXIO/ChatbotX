@@ -4,4 +4,5 @@ export const queueName = {
   aiAgent: "aiAgent",
   schedule: "schedule",
   default: "default",
+  trigger: "trigger",
 } as const
