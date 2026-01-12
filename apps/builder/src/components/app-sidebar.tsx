@@ -13,9 +13,9 @@ import {
   MessageCircleMoreIcon,
   RadioIcon,
   SlidersHorizontalIcon,
-  ToolCaseIcon,
   UsersIcon,
   WorkflowIcon,
+  WrenchIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -82,15 +82,10 @@ export function AppSidebar({
         url: `/chatbots/${chatbotId}/broadcasts`,
         icon: RadioIcon,
       },
-      // {
-      //   title: t("fields.tools.label"),
-      //   url: `/chatbots/${chatbotId}/tools`,
-      //   icon: WrenchIcon,
-      // },
       {
         title: t("fields.tools.label"),
         url: `/chatbots/${chatbotId}/tools`,
-        icon: ToolCaseIcon,
+        icon: WrenchIcon,
       },
       {
         title: t("fields.settings.label"),
