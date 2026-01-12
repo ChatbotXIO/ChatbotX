@@ -10,13 +10,18 @@ import { convertFacebookButtons } from "./send-button"
 
 export async function* convertFlowStepMedia(
   auth: MessengerAuthValue,
+  flowId: string,
   flowVersionId: string,
   payload: SendImageStepSchema | SendVideoStepSchema,
 ) {
   try {
     const media_type = convertMediaType(payload.stepType)
     const attachment = await uploadAttachment(auth, payload.url, media_type)
-    const buttons = convertFacebookButtons(flowVersionId, payload.buttons)
+    const buttons = convertFacebookButtons(
+      flowId,
+      flowVersionId,
+      payload.buttons,
+    )
     yield {
       attachment: {
         type: "template" as const,

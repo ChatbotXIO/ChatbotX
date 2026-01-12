@@ -23,8 +23,14 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
     },
-    sendFlowStep: async ({ ctx, flowVersionId, step, conversation }) => {
-      await sendFlowStep(ctx, conversation, flowVersionId, step)
+    sendFlowStep: async ({
+      ctx,
+      flowId,
+      flowVersionId,
+      step,
+      conversation,
+    }) => {
+      await sendFlowStep(ctx, conversation, flowId, flowVersionId, step)
     },
     getUserProfile: async ({ ctx, psid }) =>
       await getUserProfile({ ctx, psid }),

@@ -49,11 +49,13 @@ export async function sendMessageToExternal(data: ChatJobSendMessage) {
 
 export async function sendFlowStepToExternal({
   conversation,
+  flowId,
   flowVersionId,
   step,
 }: {
   conversation: ConversationEntity
-  flowVersionId: string
+  flowId: string
+  flowVersionId?: string
   step: SendFlowStepData
 }) {
   // Find integration auth
@@ -84,6 +86,7 @@ export async function sendFlowStepToExternal({
       auth: integrationAuth as any,
     },
     conversation,
+    flowId,
     flowVersionId,
     step,
   })

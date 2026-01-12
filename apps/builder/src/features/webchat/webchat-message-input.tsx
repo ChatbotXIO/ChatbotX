@@ -1,6 +1,5 @@
 "use client"
 
-import { ContentType, MessageType, SenderType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
@@ -24,7 +23,7 @@ type WebchatMessageInputProps = {
 export const WebchatMessageInput = ({
   chatbotId,
 }: WebchatMessageInputProps) => {
-  const { appendMessage, guestConversationId } = useGuestSessionStore(
+  const { sendMessage, guestConversationId } = useGuestSessionStore(
     (state) => state,
   )
 
@@ -43,22 +42,7 @@ export const WebchatMessageInput = ({
         onExecute: ({ input }) => {
           // try to push raw message to store
           if ("content" in input && input.content) {
-            appendMessage({
-              content: input.content as string,
-              id: createId(),
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              chatbotId: "",
-              inboxId: "",
-              sourceId: null,
-              conversationId: "",
-              contentAttributes: null,
-              messageType: MessageType.incoming,
-              contentType: ContentType.text,
-              senderType: SenderType.contact,
-              senderId: "",
-              clientId: input.clientId,
-            })
+            sendMessage(input.content)
           }
 
           resetField("content")

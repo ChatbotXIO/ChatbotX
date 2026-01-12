@@ -11,6 +11,7 @@ import { convertZaloButtons } from "./send-button"
 
 export async function* convertFlowStepImage(
   auth: ZaloAuthValue,
+  flowId: string,
   flowVersionId: string,
   payload: SendImageStepSchema | SendGifStepSchema,
 ): AsyncGenerator<MessageTemplate> {
@@ -31,6 +32,7 @@ export async function* convertFlowStepImage(
     const buttons =
       payload.stepType === StepType.sendImage
         ? await convertZaloButtons(
+            flowId,
             flowVersionId,
             (payload as SendImageStepSchema).buttons,
           )

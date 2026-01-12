@@ -29,6 +29,7 @@ export const createWebchatMessageRequest = z
   .union([
     z.object({
       content: z.string().trim().min(1).max(1000),
+      postback: z.string().trim().optional(),
       flowId: z.cuid2().optional(),
     }),
     z.object({

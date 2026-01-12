@@ -1,22 +1,32 @@
 import {
   ContentType,
   MessageType,
+  type Prisma,
   prisma,
   SenderType,
 } from "@aha.chat/database"
 import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
-import { StepType } from "@aha.chat/flow-config"
+import {
+  ButtonType,
+  encodeButtonPayload,
+  StepType,
+} from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { ConversationEntity } from "@aha.chat/sdk"
+import type {
+  ConversationEntity,
+  MessageTemplateEntity,
+  SendFlowStepData,
+} from "@aha.chat/sdk"
 import type { ChatJobSendFlowStep } from "@aha.chat/worker-config"
 import { sendFlowStepToExternal } from "./send-message"
 
 export async function sendFlowStep({
   conversationId,
+  flowId,
   flowVersionId,
   step,
 }: ChatJobSendFlowStep["data"]) {
@@ -28,17 +38,47 @@ export async function sendFlowStep({
     return
   }
 
+  const messageData: Prisma.MessageUncheckedCreateInput = {
+    inboxId: conversation.inboxId,
+    chatbotId: conversation.chatbotId,
+    conversationId: conversation.id,
+    messageType: MessageType.outgoing,
+    contentType: ContentType.text,
+    senderType: SenderType.bot,
+    sourceId: null,
+    content: step.stepType === StepType.sendText ? step.message : null,
+  }
+  if ("buttons" in step && step.buttons.length > 0) {
+    messageData.contentAttributes = {
+      type: "template",
+      payload: {
+        templateType: "button",
+        buttons: step.buttons.map((button) => {
+          if (button.buttonType === ButtonType.OpenWebsite) {
+            return {
+              id: button.id,
+              label: button.label,
+              buttonType: "url",
+              url: button.beforeStep.url,
+            }
+          }
+
+          return {
+            id: button.id,
+            buttonType: "postback",
+            label: button.label,
+            postback: encodeButtonPayload({
+              flowId,
+              flowVersionId,
+              buttonId: button.id,
+            }),
+          }
+        }),
+      },
+    } satisfies MessageTemplateEntity
+  }
   const message = await prisma.message.create({
-    data: {
-      inboxId: conversation.inboxId,
-      chatbotId: conversation.chatbotId,
-      conversationId: conversation.id,
-      messageType: MessageType.outgoing,
-      contentType: ContentType.text,
-      senderType: SenderType.bot,
-      sourceId: null,
-      content: step.stepType === StepType.sendText ? step.message : null,
-    },
+    data: messageData,
   })
 
   // If this is an image step, persist attachment linked to the message
@@ -81,8 +121,9 @@ export async function sendFlowStep({
     promises.push(
       sendFlowStepToExternal({
         conversation: conversation as ConversationEntity,
+        flowId,
         flowVersionId,
-        step,
+        step: step as SendFlowStepData,
       }),
     )
   }

@@ -28,6 +28,7 @@ export type SendFlowStepData =
 export type SendFlowStepProps<TAuth extends BaseAuthValue> = {
   ctx: Context<TAuth>
   conversation: ConversationEntity
+  flowId: string
   flowVersionId: string
   step: SendFlowStepData
 }

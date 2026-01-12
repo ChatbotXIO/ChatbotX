@@ -38,8 +38,8 @@ export type MessengerActions = {
     {
       message: MessageEntity
       conversation: ConversationEntity
-      postbackAction?: { flowVersionId: string; buttonId: string } | null
-      quickReplyAction?: { flowVersionId: string; buttonId: string } | null
+      postbackAction: string | null
+      quickReplyAction: string | null
     }
   >
   sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>

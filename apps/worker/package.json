@@ -6,7 +6,6 @@
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
     "worker:ai-agent": "dotenv -e ../../.env -- tsx --watch src/ai-agent/worker.ts",
-    "worker:schedule": "dotenv -e ../../.env -- tsx --watch src/schedule/worker.ts",
     "dev": "concurrently pnpm:worker:*",
     "https": "pnpm dev",
     "build": "tsdown",
@@ -45,7 +44,8 @@
     "pdf-parse-new": "^2.0.0",
     "remeda": "^2.32.0",
     "remove-markdown": "^0.6.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

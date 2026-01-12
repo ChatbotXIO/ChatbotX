@@ -52,12 +52,14 @@ import {
 
 export type FlowStepProps<T> = {
   conversation: ConversationModel
+  flowId: string
   flowVersionId: string
   step: T
 }
 
 export async function sendFlowMessage({
   conversation,
+  flowId,
   flowVersionId,
   step,
 }: FlowStepProps<SendTextStepSchema>) {
@@ -65,6 +67,7 @@ export async function sendFlowMessage({
     type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId: conversation.id,
+      flowId,
       flowVersionId,
       step,
     },
@@ -73,6 +76,7 @@ export async function sendFlowMessage({
 
 export async function sendQuickReply({
   conversation,
+  flowId,
   flowVersionId,
   step,
 }: FlowStepProps<SendQuickReplyStepSchema>) {
@@ -80,6 +84,7 @@ export async function sendQuickReply({
     type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId: conversation.id,
+      flowId,
       flowVersionId,
       step,
     },
@@ -88,6 +93,7 @@ export async function sendQuickReply({
 
 async function startAnotherNode({
   conversation,
+  flowId,
   flowVersionId,
   step,
 }: FlowStepProps<StartAnotherNodeStepSchema>) {
@@ -95,6 +101,7 @@ async function startAnotherNode({
     type: IntegrationJobAction.sendFlow,
     data: {
       conversationId: conversation.id,
+      flowId,
       flowVersionId,
       nodeId: step.nodeId,
     },

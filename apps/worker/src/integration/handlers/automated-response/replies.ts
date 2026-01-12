@@ -73,7 +73,7 @@ async function replaceCustomFieldAttributes(
   }
 }
 
-export async function listAllEnabledAutomatedResponses({
+async function listAllEnabledAutomatedResponses({
   chatbotId,
 }: {
   chatbotId: string
@@ -109,9 +109,10 @@ export async function replyByAutomatedResponse({
   }
 
   for (const automatedResponse of allAutomatedResponses) {
-    const matched = automatedResponse.userMessages.some((v) =>
-      (message.content ?? "").includes(v),
-    )
+    const matched = automatedResponse.userMessages
+      .map((v) => v.toLowerCase())
+      .some((v) => (message.content ?? "").toLowerCase().includes(v))
+
     if (matched) {
       for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
@@ -120,6 +121,7 @@ export async function replyByAutomatedResponse({
               type: ChatJobAction.sendFlowMessage,
               data: {
                 conversationId: message.conversationId,
+                flowId: "",
                 flowVersionId: "",
                 step: {
                   id: createId(),
@@ -140,9 +142,10 @@ export async function replyByAutomatedResponse({
                 type: IntegrationJobAction.sendFlow,
                 data: {
                   conversationId: message.conversationId,
-                  flowVersionId: flow.currentVersionId,
+                  flowId: flow.id,
                 },
               })
+              replied = true
             }
             break
           }

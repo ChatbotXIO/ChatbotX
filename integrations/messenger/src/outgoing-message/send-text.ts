@@ -3,6 +3,7 @@ import type { FacebookMessage, FacebookMessageAttachment } from "../schemas"
 import { convertFacebookButtons } from "./send-button"
 
 export function* convertFlowStepText(
+  flowId: string,
   flowVersionId: string,
   payload: SendTextStepSchema,
 ): Generator<FacebookMessageAttachment | FacebookMessage> {
@@ -11,7 +12,11 @@ export function* convertFlowStepText(
       text: payload.message,
     }
   } else {
-    const buttons = convertFacebookButtons(flowVersionId, payload.buttons)
+    const buttons = convertFacebookButtons(
+      flowId,
+      flowVersionId,
+      payload.buttons,
+    )
 
     yield {
       attachment: {

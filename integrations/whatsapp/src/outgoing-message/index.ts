@@ -49,15 +49,16 @@ export function* convertMessageToWhatsappMessage(
 }
 
 export function* convertFlowStepToWhatsappMessage(
+  flowId: string,
   flowVersionId: string,
   step: SendFlowStepData,
 ) {
   switch (step.stepType) {
     case StepType.sendText:
-      yield* convertFlowStepText(flowVersionId, step)
+      yield* convertFlowStepText(flowId, flowVersionId, step)
       break
     case StepType.sendImage:
-      yield* convertFlowStepImage(flowVersionId, step)
+      yield* convertFlowStepImage(flowId, flowVersionId, step)
       break
     default:
       break
@@ -117,6 +118,7 @@ export const sendOutgoingMessage = async (
 export const sendFlowStep = async (
   ctx: Context<WhatsappAuthValue>,
   conversation: ConversationEntity,
+  flowId: string,
   flowVersionId: string,
   step: SendFlowStepData,
 ) => {
@@ -124,6 +126,7 @@ export const sendFlowStep = async (
 
   try {
     for (const whatsappMessage of convertFlowStepToWhatsappMessage(
+      flowId,
       flowVersionId,
       step,
     )) {

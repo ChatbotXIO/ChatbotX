@@ -95,13 +95,12 @@ const getMessageEntity = async (
   messaging: MessengerMessagingEvent,
 ): Promise<{
   message: MessageEntity
-  postbackAction: { flowVersionId: string; buttonId: string } | null
-  quickReplyAction: { flowVersionId: string; buttonId: string } | null
+  postbackAction: string | null
+  quickReplyAction: string | null
 }> => {
   let message: MessageEntity | null = null
-  let postbackAction: { flowVersionId: string; buttonId: string } | null = null
-  let quickReplyAction: { flowVersionId: string; buttonId: string } | null =
-    null
+  let postbackAction: string | null = null
+  let quickReplyAction: string | null = null
   if (messaging.message) {
     message = {
       sourceId: messaging.message.mid,
@@ -112,35 +111,17 @@ const getMessageEntity = async (
       contentType: ContentType.text,
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
-
-    // calculate quick reply action
-    const quickReplyPayload: string[] = (
-      messaging.message.quick_reply?.payload ?? ""
-    ).split("_")
-    if (quickReplyPayload.length === 2) {
-      quickReplyAction = {
-        flowVersionId: quickReplyPayload[0],
-        buttonId: quickReplyPayload[1],
-      }
-    }
+    quickReplyAction = messaging.message.quick_reply?.payload ?? null
   }
+
   if (messaging.postback) {
     message = {
       sourceId: messaging.postback.mid,
       messageType: MessageType.incoming,
       content: messaging.postback.title,
       contentType: ContentType.text,
-      attachments: [],
     }
-
-    // calculate postback action
-    const postbackPayload: string[] = messaging.postback.payload.split("_")
-    if (postbackPayload.length === 2) {
-      postbackAction = {
-        flowVersionId: postbackPayload[0],
-        buttonId: postbackPayload[1],
-      }
-    }
+    postbackAction = messaging.postback.payload
   }
 
   if (message) {
@@ -148,19 +129,4 @@ const getMessageEntity = async (
   }
 
   throw new MessengerException("No message found")
-}
-
-const _getPostbackAction = (
-  messaging: MessengerMessagingEvent,
-): { flowVersionId: string; buttonId: string } | null => {
-  if (messaging.postback) {
-    const postbackPayload: string[] = messaging.postback.payload.split("_")
-    if (postbackPayload.length === 2) {
-      return {
-        flowVersionId: postbackPayload[0],
-        buttonId: postbackPayload[1],
-      }
-    }
-  }
-  return null
 }

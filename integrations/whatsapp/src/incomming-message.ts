@@ -47,7 +47,7 @@ export const parseIncomingMessage = async (
       firstName: props.name,
     },
   }
-  let postbackAction: { flowVersionId: string; buttonId: string } | null = null
+  let postbackAction: string | null = null
 
   switch (props.message.type) {
     case "text":
@@ -148,10 +148,7 @@ export const parseIncomingMessage = async (
       switch (props.message.interactive.type) {
         case "button_reply": {
           message.content = props.message.interactive.button_reply.title
-          const arr = props.message.interactive.button_reply.id.split("_")
-          if (arr.length > 1) {
-            postbackAction = { flowVersionId: arr[0], buttonId: arr[1] }
-          }
+          postbackAction = props.message.interactive.button_reply.id
           break
         }
         case "list_reply":

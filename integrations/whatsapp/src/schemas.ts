@@ -70,7 +70,7 @@ export type WhatsappActions = {
     {
       message: MessageEntity
       conversation: ConversationEntity
-      postbackAction?: { flowVersionId: string; buttonId: string } | null
+      postbackAction: string | null
     }
   >
   sendMessage: (props: SendMessageProps<WhatsappAuthValue>) => Promise<void>

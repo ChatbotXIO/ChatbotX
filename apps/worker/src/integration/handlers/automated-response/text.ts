@@ -79,6 +79,7 @@ export async function downloadAndUploadImage(
       type: ChatJobAction.sendFlowMessage,
       data: {
         conversationId,
+        flowId: "",
         flowVersionId: "",
         step: {
           id: createId(),
@@ -205,6 +206,7 @@ export async function sendMessageWithRender(
     type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId,
+      flowId: "",
       flowVersionId: "",
       step: {
         id: createId(),

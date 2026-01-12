@@ -3,7 +3,13 @@ import type {
   ConversationModel,
   FlowVersionModel,
 } from "@aha.chat/database/types"
-import { type FlowNode, StepType } from "@aha.chat/flow-config"
+import {
+  type BaseStepSchema,
+  type ButtonStepProps,
+  type EdgeSchema,
+  type FlowNode,
+  StepType,
+} from "@aha.chat/flow-config"
 import { SdkException } from "@aha.chat/sdk"
 import type { IntegrationJobSendFlow } from "@aha.chat/worker-config"
 import { flowStepHandlers } from "./step-handler"
@@ -61,39 +67,95 @@ export const sendFlowNode = async (props: IntegrationJobSendFlow) => {
     throw new SdkException("FlowVersion does not contain start node")
   }
 
-  if ("steps" in startNode.data.details && startNode.data.details.steps) {
-    await generateRunFlowNode(
-      conversation,
-      flowVersion.id,
-      startNode.data.details.steps,
-    )
+  await runStepsAndQuickReplies(
+    conversation,
+    flowVersion,
+    startNode.data.details,
+    startNode.id,
+  )
+}
+
+export async function runStepsAndQuickReplies(
+  conversation: ConversationModel,
+  flowVersion: FlowVersionModel,
+  flowDetail: {
+    beforeStep?: BaseStepSchema | null
+    steps?: BaseStepSchema[] | null
+    quickReplies?: ButtonStepProps[] | null
+  },
+  nodeIdOrButtonId: string,
+  triggerNextNode = true,
+) {
+  // run before step
+  if (flowDetail.beforeStep) {
+    await generateRunFlowNode(conversation, flowVersion, [
+      flowDetail.beforeStep,
+    ])
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
+  // run steps
+  if ("steps" in flowDetail && flowDetail.steps) {
+    await generateRunFlowNode(conversation, flowVersion, flowDetail.steps)
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 500))
 
   if (
-    "quickReplies" in startNode.data.details &&
-    startNode.data.details.quickReplies.length > 0
+    "quickReplies" in flowDetail &&
+    flowDetail.quickReplies &&
+    flowDetail.quickReplies.length > 0
   ) {
     await flowStepHandlers[StepType.sendQuickReply]?.({
       conversation,
+      flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
       step: {
         stepType: StepType.sendQuickReply,
         message: "Please select an option",
-        buttons: startNode.data.details.quickReplies,
+        buttons: flowDetail.quickReplies,
       },
     })
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
+  if (!triggerNextNode) {
+    return
+  }
+
+  // send next node if exists
+  const relatedEdge = (flowVersion.edges as EdgeSchema[]).find(
+    (edge) => edge.sourceHandle === nodeIdOrButtonId,
+  )
+
+  if (relatedEdge) {
+    const nextNode = (flowVersion.nodes as unknown as FlowNode[]).find(
+      (node) => node.id === relatedEdge?.target,
+    )
+    if (nextNode) {
+      await runStepsAndQuickReplies(
+        conversation,
+        flowVersion,
+        nextNode.data.details,
+        relatedEdge.target,
+      )
+    }
   }
 }
 
 export async function generateRunFlowNode(
   conversation: ConversationModel,
-  flowVersionId: string,
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  steps: any[],
+  flowVersion: FlowVersionModel,
+  steps: BaseStepSchema[],
 ) {
-  const gen = runFlowNode(conversation, flowVersionId, steps)
+  const gen = runFlowNode({
+    conversation,
+    flowId: flowVersion.flowId,
+    flowVersionId: flowVersion.id,
+    steps,
+  })
   let result = await gen.next()
 
   while (!result.done) {
@@ -101,16 +163,17 @@ export async function generateRunFlowNode(
   }
 }
 
-function* runFlowNode(
-  conversation: ConversationModel,
-  flowVersionId: string,
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  steps: any[],
-) {
-  for (const step of steps) {
+function* runFlowNode(props: {
+  conversation: ConversationModel
+  flowId: string
+  flowVersionId: string
+  steps: BaseStepSchema[]
+}) {
+  for (const step of props.steps) {
     yield flowStepHandlers[step.stepType as StepType]?.({
-      conversation,
-      flowVersionId,
+      conversation: props.conversation,
+      flowId: props.flowId,
+      flowVersionId: props.flowVersionId,
       step,
     })
   }

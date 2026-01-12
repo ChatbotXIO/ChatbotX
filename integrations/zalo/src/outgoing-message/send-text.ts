@@ -3,6 +3,7 @@ import type { ButtonPayload, MessageTemplate } from "../schemas/webhook"
 import { convertZaloButtons } from "./send-button"
 
 export function* convertFlowStepText(
+  flowId: string,
   flowVersionId: string,
   payload: SendTextStepSchema,
 ): Generator<MessageTemplate> {
@@ -12,6 +13,7 @@ export function* convertFlowStepText(
     }
   } else {
     const buttons: ButtonPayload[] | undefined = convertZaloButtons(
+      flowId,
       flowVersionId,
       payload.buttons,
     )

@@ -1,9 +1,14 @@
-import { type ButtonStepProps, ButtonType } from "@aha.chat/flow-config"
+import {
+  type ButtonStepProps,
+  ButtonType,
+  encodeButtonPayload,
+} from "@aha.chat/flow-config"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../constants"
 import type { ButtonPayload } from "../schemas/webhook"
 
 export function getButtonTemplate(
+  flowId: string,
   flowVersionId: string,
   button: ButtonStepProps,
 ): ButtonPayload {
@@ -20,17 +25,24 @@ export function getButtonTemplate(
       return {
         type: "oa.query.hide",
         title: button.label,
-        payload: `postback_${flowVersionId}_${button.id}`,
+        payload: encodeButtonPayload({
+          flowId,
+          flowVersionId,
+          buttonId: button.id,
+        }),
       }
   }
 }
 
 export function convertZaloButtons(
+  flowId: string,
   flowVersionId: string,
   buttons: ButtonStepProps[],
 ): ButtonPayload[] | undefined {
   const chunks = chunk(buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {
-    return chunks[0].map((button) => getButtonTemplate(flowVersionId, button))
+    return chunks[0].map((button) =>
+      getButtonTemplate(flowId, flowVersionId, button),
+    )
   }
 }

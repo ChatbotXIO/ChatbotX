@@ -115,18 +115,19 @@ const buildMessagePayload = (
 
 export async function* convertFlowStepToFacebookMessage(
   auth: MessengerAuthValue,
+  flowId: string,
   flowVersionId: string,
   step: SendFlowStepData,
 ): AsyncGenerator<FacebookMessageAttachmentPayload | FacebookMessage> {
   switch (step.stepType) {
     case StepType.sendText:
-      yield* convertFlowStepText(flowVersionId, step) as Generator<
+      yield* convertFlowStepText(flowId, flowVersionId, step) as Generator<
         FacebookMessageAttachmentPayload | FacebookMessage
       >
       break
     case StepType.sendImage:
     case StepType.sendVideo:
-      await (yield* convertFlowStepMedia(auth, flowVersionId, step))
+      await (yield* convertFlowStepMedia(auth, flowId, flowVersionId, step))
       break
     case StepType.sendAudio:
     case StepType.sendFile:
@@ -149,12 +150,14 @@ export async function* convertFlowStepToFacebookMessage(
 export const sendFlowStep = async (
   ctx: Context<MessengerAuthValue>,
   conversation: ConversationEntity,
+  flowId: string,
   flowVersionId: string,
   step: SendFlowStepData,
 ) => {
   try {
     for await (const facebookMessage of convertFlowStepToFacebookMessage(
       ctx.auth,
+      flowId,
       flowVersionId,
       step,
     )) {

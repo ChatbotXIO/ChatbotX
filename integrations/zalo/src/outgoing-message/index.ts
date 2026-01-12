@@ -106,16 +106,17 @@ const buildMessagePayload = (
 
 export async function* convertFlowStepToZaloMessage(
   auth: ZaloAuthValue,
+  flowId: string,
   flowVersionId: string,
   step: SendFlowStepData,
 ): AsyncGenerator<MessageTemplate> {
   switch (step.stepType) {
     case StepType.sendText:
-      yield* convertFlowStepText(flowVersionId, step)
+      yield* convertFlowStepText(flowId, flowVersionId, step)
       break
     case StepType.sendImage:
     case StepType.sendGif:
-      yield* await convertFlowStepImage(auth, flowVersionId, step)
+      yield* await convertFlowStepImage(auth, flowId, flowVersionId, step)
       break
     case StepType.sendFile:
       yield* await convertFlowStepFile(auth, step)
@@ -128,12 +129,14 @@ export async function* convertFlowStepToZaloMessage(
 export const sendFlowStep = async (
   ctx: Context<ZaloAuthValue>,
   conversation: ConversationEntity,
+  flowId: string,
   flowVersionId: string,
   step: SendFlowStepData,
 ) => {
   try {
     for await (const zaloMessage of convertFlowStepToZaloMessage(
       ctx.auth,
+      flowId,
       flowVersionId,
       step,
     )) {

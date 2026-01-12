@@ -57,8 +57,9 @@ export const parseIncomingMessage = async ({
     return null
   }
 
-  const message: MessageEntity = await getMessageEntity(ctx, data)
+  const { message, postbackAction } = await getMessageEntity(ctx, data)
 
+  // Calculate conversation
   const sourceId = data.event_name.includes("user_send")
     ? data.sender.id
     : data.recipient.id
@@ -70,9 +71,6 @@ export const parseIncomingMessage = async ({
     },
   }
 
-  const postbackAction: { flowVersionId: string; buttonId: string } | null =
-    getPostbackAction(message)
-
   return Promise.resolve({
     message,
     conversation,
@@ -83,11 +81,11 @@ export const parseIncomingMessage = async ({
 const getMessageEntity = async (
   ctx: Context<ZaloAuthValue>,
   event: ZaloWebhookEvent,
-): Promise<MessageEntity> => {
+): Promise<{ message: MessageEntity; postbackAction: string | null }> => {
   if (!event.message.msg_id) {
     throw new ZaloException("Missing msg_id in message event")
   }
-  const baseMessage = {
+  let message: MessageEntity = {
     sourceId: event.message.msg_id,
     messageType: event.event_name.includes("user_send")
       ? MessageType.incoming
@@ -96,6 +94,7 @@ const getMessageEntity = async (
     contentType: ContentType.text,
     attachments: [],
   }
+
   switch (event.event_name) {
     case "user_send_text":
     case "oa_send_text":
@@ -106,14 +105,12 @@ const getMessageEntity = async (
     case "user_send_file":
     case "oa_send_file":
     case "user_send_audio":
-      return {
-        ...baseMessage,
-        attachments: await getMessageAttachments(ctx, event.message),
-      }
+      message.attachments = await getMessageAttachments(ctx, event.message)
+      break
     case "user_send_location": {
       const attachment = event.message?.attachments?.[0]
-      return {
-        ...baseMessage,
+      message = {
+        ...message,
         content: attachment?.payload?.coordinates
           ? `https://www.google.com/maps/search/?api=1&query=${attachment.payload.coordinates.latitude},${attachment.payload.coordinates.longitude}`
           : "Location",
@@ -124,25 +121,21 @@ const getMessageEntity = async (
           longitude: attachment?.payload.coordinates?.longitude,
         },
       }
+      break
     }
     default:
       break
   }
 
-  throw new ZaloException(`No message found ${event.event_name}`)
-}
-
-const getPostbackAction = (
-  message: MessageEntity,
-): { flowVersionId: string; buttonId: string } | null => {
-  if (message.content?.startsWith("postback_")) {
-    const postbackPayload: string[] = message.content.split("_")
-    if (postbackPayload.length === 3) {
-      return {
-        flowVersionId: postbackPayload[1],
-        buttonId: postbackPayload[2],
-      }
-    }
+  if (!message.content) {
+    throw new ZaloException(`No content found in message ${event.event_name}`)
   }
-  return null
+
+  // Detect postback action
+  let postbackAction: string | null = null
+  if (message.content.startsWith("postback_")) {
+    postbackAction = message.content.replace("postback_", "")
+  }
+
+  return { message, postbackAction }
 }

@@ -1,9 +1,12 @@
 import { FileType, MessageType } from "@aha.chat/database/types"
+import type { MessageTemplateEntity } from "@aha.chat/sdk"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { cn } from "@aha.chat/ui/lib/utils"
 import { format } from "date-fns"
-import { PaperclipIcon } from "lucide-react"
+import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useGuestSessionStore } from "@/features/webchat/providers/store/guest-session-provider"
 import type { MessageResource } from "../schemas"
 import { MessageBubble } from "./message-bubble"
 
@@ -39,23 +42,24 @@ export const MessageItem = (props: MessageItemProps) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
-      <div className="mx-3 flex max-w-[70%] flex-col gap-1">
+      <div className="mx-3 flex min-h-11 max-w-[70%] flex-col gap-1">
         {message.content && message.content.length > 0 && (
           <div className={cn("text-sm", variants[variant])}>
             <pre className="break-word whitespace-pre-line font-sans">
               {message.content}
             </pre>
+            {RenderContentAttributes({ message })}
           </div>
         )}
         {message.attachments &&
           message.attachments.length > 0 &&
-          renderAttachments({ message })}
+          RenderAttachments({ message })}
       </div>
     </MessageBubble>
   )
 }
 
-const renderAttachments = (props: { message: MessageResource }) => {
+const RenderAttachments = (props: { message: MessageResource }) => {
   const { message } = props
 
   return (
@@ -106,4 +110,51 @@ const renderAttachments = (props: { message: MessageResource }) => {
       })}
     </div>
   )
+}
+
+const RenderContentAttributes = (props: { message: MessageResource }) => {
+  const { message } = props
+  const { sendPostback } = useGuestSessionStore((state) => state)
+  const contentAttributes = message.contentAttributes as
+    | MessageTemplateEntity
+    | undefined
+
+  if (!contentAttributes) {
+    return null
+  }
+
+  switch (contentAttributes.type) {
+    case "template":
+      return (
+        <div className="mt-1 flex flex-col gap-1">
+          {contentAttributes.payload.buttons.map((button) => {
+            if (button.buttonType === "url") {
+              return (
+                <Button asChild key={button.id} size="sm" variant="outline">
+                  <Link href={button.url} target="_blank">
+                    <ExternalLinkIcon />
+                    {button.label}
+                  </Link>
+                </Button>
+              )
+            }
+            return (
+              <Button
+                className="min-w-60"
+                key={button.id}
+                onClick={() => {
+                  sendPostback(button)
+                }}
+                size="sm"
+                variant="outline"
+              >
+                {button.label}
+              </Button>
+            )
+          })}
+        </div>
+      )
+    default:
+      return null
+  }
 }

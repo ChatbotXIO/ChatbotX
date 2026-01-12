@@ -33,7 +33,7 @@ export type ZaloActions = {
     {
       message: MessageEntity
       conversation: ConversationEntity
-      postbackAction?: { flowVersionId: string; buttonId: string } | null
+      postbackAction: string | null
     } | null
   >
   sendFlowStep: (props: SendFlowStepProps<ZaloAuthValue>) => Promise<void>
