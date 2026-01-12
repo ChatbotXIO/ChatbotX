@@ -15,6 +15,7 @@ import type {
   MessageModel,
 } from "@aha.chat/database/types"
 import { getPublicUrl } from "@aha.chat/database/utils"
+import { emitContactCreated } from "@aha.chat/events"
 import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
@@ -82,6 +83,7 @@ export const receiveMessage = async (
       },
     })
 
+    let isNewContact = false
     if (!newContact) {
       if (canGetUserProfileIfNeeded(integrationType)) {
         const integration = allIntegrations[integrationType]
@@ -123,6 +125,8 @@ export const receiveMessage = async (
         })
         .returning()
         .then((result) => result[0])
+
+      isNewContact = true
     }
 
     if (!newContact) {
@@ -207,8 +211,35 @@ export const receiveMessage = async (
       logger.warn(error, "Unable to emit realtime message")
     }
 
-    return { message: newMessage, conversation: newConversation }
+    return {
+      message: newMessage,
+      conversation: newConversation,
+      isNewContact,
+      contactId: newContact.id,
+      contactData: isNewContact
+        ? {
+            name: newContact.firstName,
+            phone: newContact.phoneNumber,
+            email: newContact.email,
+          }
+        : undefined,
+    }
   })
+
+  // Emit contact created event if new contact
+  if (result.isNewContact && result.contactData) {
+    try {
+      await emitContactCreated(
+        chatbotId,
+        result.contactId,
+        result.contactData.name || undefined,
+        result.contactData.phone || undefined,
+        result.contactData.email || undefined,
+      )
+    } catch (error) {
+      console.error("Failed to emit contactCreated event:", error)
+    }
+  }
 
   if (postbackAction) {
     await integrationQueue.add(IntegrationJobAction.runFlowPostback, {

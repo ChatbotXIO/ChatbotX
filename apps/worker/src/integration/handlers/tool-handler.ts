@@ -3,6 +3,7 @@ import {
   contactCustomFieldModel,
   customFieldModel,
 } from "@aha.chat/database/schema"
+import { emitCustomFieldChanged } from "@aha.chat/events"
 import {
   type CountCharactersStepSchema,
   type FormatDateStepSchema,
@@ -10,6 +11,7 @@ import {
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
 } from "@aha.chat/flow-config"
+import { TriggerEventEmitter } from "@aha.chat/trigger-events"
 import { faker } from "@faker-js/faker"
 import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"
@@ -42,6 +44,20 @@ export async function countCharacters({
 
   const value = `${`${targetContactCustomField.value}`.length}`
 
+  // Get existing value and custom field name
+  const existing = await db.query.contactCustomFieldModel.findFirst({
+    where: {
+      contactId: conversation.contactId,
+      customFieldId: step.outputCfId,
+    },
+    columns: { value: true },
+  })
+
+  const customField = await db.query.customFieldModel.findFirst({
+    where: { id: step.outputCfId },
+    columns: { name: true },
+  })
+
   await db
     .insert(contactCustomFieldModel)
     .values({
@@ -59,6 +75,20 @@ export async function countCharacters({
         value,
       },
     })
+
+  // Emit custom field changed event
+  try {
+    await emitCustomFieldChanged(
+      conversation.chatbotId,
+      conversation.contactId,
+      step.outputCfId,
+      customField?.name || step.outputCfId,
+      existing?.value || null,
+      value,
+    )
+  } catch (error) {
+    console.error("Failed to emit customFieldChanged event:", error)
+  }
 }
 
 export async function formatDate({
@@ -78,6 +108,20 @@ export async function formatDate({
 
   const newValue = format(new Date(inputContactCustomField.value), step.format)
 
+  // Get existing value and custom field name
+  const existing = await db.query.contactCustomFieldModel.findFirst({
+    where: {
+      contactId: conversation.contactId,
+      customFieldId: step.outputCfId,
+    },
+    columns: { value: true },
+  })
+
+  const customField = await db.query.customFieldModel.findFirst({
+    where: { id: step.outputCfId },
+    columns: { name: true },
+  })
+
   await db
     .insert(contactCustomFieldModel)
     .values({
@@ -95,6 +139,20 @@ export async function formatDate({
         value: newValue,
       },
     })
+
+  // Emit custom field changed event
+  try {
+    await emitCustomFieldChanged(
+      conversation.chatbotId,
+      conversation.contactId,
+      step.outputCfId,
+      customField?.name || step.outputCfId,
+      existing?.value || null,
+      newValue,
+    )
+  } catch (error) {
+    console.error("Failed to emit customFieldChanged event:", error)
+  }
 }
 
 export async function generateCode({
@@ -122,6 +180,20 @@ export async function generateCode({
   }
 
   if (value) {
+    // Get existing value and custom field name
+    const existing = await db.query.contactCustomFieldModel.findFirst({
+      where: {
+        contactId: conversation.contactId,
+        customFieldId: step.outputCfId,
+      },
+      columns: { value: true },
+    })
+
+    const customField = await db.query.customFieldModel.findFirst({
+      where: { id: step.outputCfId },
+      columns: { name: true },
+    })
+
     await db
       .insert(contactCustomFieldModel)
       .values({
@@ -139,6 +211,20 @@ export async function generateCode({
           value,
         },
       })
+
+    // Emit custom field changed event
+    try {
+      await emitCustomFieldChanged(
+        conversation.chatbotId,
+        conversation.contactId,
+        step.outputCfId,
+        customField?.name || step.outputCfId,
+        existing?.value || null,
+        value,
+      )
+    } catch (error) {
+      console.error("Failed to emit customFieldChanged event:", error)
+    }
   }
 }
 
@@ -172,17 +258,37 @@ export async function getDataFromJSON({
     },
     columns: {
       id: true,
+      name: true,
     },
   })
   const validCustomFieldIds = validCustomFields.map((v) => v.id)
 
-  await db.transaction(async (tx) => {
+  const customFieldMap = new Map(validCustomFields.map((f) => [f.id, f.name]))
+
+  const updatedFields = await db.transaction(async (tx) => {
+    const updated: Array<{
+      customFieldId: string
+      customFieldName: string
+      oldValue: string | null
+      newValue: string
+    }> = []
+
     for (const data of mapping) {
       if (validCustomFieldIds.includes(data.outputCfId)) {
         const value = getProperty(dataJSON, data.jsonPath)
 
         if (value) {
           const encodedValue = JSON.stringify(value)
+
+          // Get existing value
+          const existing = await tx.query.contactCustomFieldModel.findFirst({
+            where: {
+              contactId: conversation.contactId,
+              customFieldId: data.outputCfId,
+            },
+            columns: { value: true },
+          })
+
           await tx
             .insert(contactCustomFieldModel)
             .values({
@@ -200,8 +306,32 @@ export async function getDataFromJSON({
                 value: encodedValue,
               },
             })
+
+          updated.push({
+            customFieldId: data.outputCfId,
+            customFieldName:
+              customFieldMap.get(data.outputCfId) || data.outputCfId,
+            oldValue: existing?.value || null,
+            newValue: encodedValue,
+          })
         }
       }
     }
+
+    return updated
   })
+
+  for (const field of updatedFields) {
+    try {
+      await TriggerEventEmitter.customFieldChanged(
+        conversation.chatbotId,
+        conversation.contactId,
+        field.customFieldId,
+        field.oldValue,
+        field.newValue,
+      )
+    } catch (error) {
+      console.error("Failed to emit customFieldChanged event:", error)
+    }
+  }
 }

@@ -8,6 +8,7 @@ import {
   inboxModel,
 } from "@aha.chat/database/schema"
 import type { ChatbotUsageModel, InboxModel } from "@aha.chat/database/types"
+import { emitContactCreated } from "@aha.chat/events"
 import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -109,6 +110,19 @@ export const createContact = async ({
 
     return newContact
   })
+
+  // Emit contact created event
+  try {
+    await emitContactCreated(
+      chatbotId,
+      contact.id,
+      contact.firstName || undefined,
+      contact.phoneNumber || undefined,
+      contact.email || undefined,
+    )
+  } catch (error) {
+    console.error("Failed to emit contactCreated event:", error)
+  }
 
   revalidateCacheTags([
     `chatbots:${chatbotId}#contacts`,

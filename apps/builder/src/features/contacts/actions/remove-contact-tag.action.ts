@@ -2,6 +2,7 @@
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { contactsToTagsModel } from "@aha.chat/database/schema"
+import { emitTagRemoved } from "@aha.chat/events"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -54,7 +55,7 @@ export const removeContactTags = async ({
     return
   }
 
-  await db.transaction(async (tx) => {
+  const allTags = await db.transaction(async (tx) => {
     const allTags = await tx.query.tagModel.findMany({
       where: {
         chatbotId,
@@ -88,7 +89,20 @@ export const removeContactTags = async ({
           ),
         )
     }
+
+    return allTags
   })
+
+  // Emit tag removed events for all contacts and tags
+  for (const contact of contacts) {
+    for (const tag of allTags) {
+      try {
+        await emitTagRemoved(chatbotId, contact.id, tag.id)
+      } catch (error) {
+        console.error("Failed to emit tagRemoved event:", error)
+      }
+    }
+  }
 
   revalidateCacheTags([
     `chatbots:${chatbotId}#contacts`,
