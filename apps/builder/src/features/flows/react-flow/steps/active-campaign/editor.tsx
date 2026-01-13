@@ -3,7 +3,6 @@
 import {
   ActiveCampaignOperation,
   type ActiveCampaignStepSchema,
-  ActiveCampaignSystemFields,
   activeCampaignDefaultFn,
   activeCampaignStepSchema,
 } from "@aha.chat/flow-config"
@@ -70,10 +69,12 @@ const ActiveCampaignStepForm = memo(
 
     const lists = useActiveCampaignStore((s) => s.lists)
     const tags = useActiveCampaignStore((s) => s.tags)
+    const fields = useActiveCampaignStore((s) => s.fields)
     const automations = useActiveCampaignStore((s) => s.automations)
 
     const fetchLists = useActiveCampaignStore((s) => s.fetchLists)
     const fetchTags = useActiveCampaignStore((s) => s.fetchTags)
+    const fetchFields = useActiveCampaignStore((s) => s.fetchFields)
     const fetchAutomations = useActiveCampaignStore((s) => s.fetchAutomations)
 
     useEffect(() => {
@@ -81,30 +82,45 @@ const ActiveCampaignStepForm = memo(
         if (operation === ActiveCampaignOperation.createOrUpdate) {
           fetchLists(chatbotId)
           fetchTags(chatbotId)
+          fetchFields(chatbotId)
         } else if (operation === ActiveCampaignOperation.addToAutomation) {
           fetchAutomations(chatbotId)
         }
       }
-    }, [chatbotId, operation, fetchLists, fetchTags, fetchAutomations])
+    }, [
+      chatbotId,
+      operation,
+      fetchLists,
+      fetchTags,
+      fetchFields,
+      fetchAutomations,
+    ])
 
     useEffect(() => {
-      if (operation === ActiveCampaignOperation.createOrUpdate) {
+      if (
+        operation === ActiveCampaignOperation.createOrUpdate &&
+        fields.length > 0
+      ) {
         const values = form.getValues()
         const currentFields =
           "mergeFields" in values ? (values.mergeFields ?? []) : []
-        const hasPreferredLanguage = currentFields.some(
-          (f) =>
-            f.activeCampaignField ===
-            ActiveCampaignSystemFields.preferredLanguage,
+
+        const existingFieldTitles = new Set(
+          currentFields.map((f) => f.activeCampaignField),
         )
-        if (!hasPreferredLanguage) {
+
+        const newFields = fields.filter(
+          (field) => !existingFieldTitles.has(field.title),
+        )
+
+        for (const field of newFields) {
           append({
             chatbotField: "",
-            activeCampaignField: ActiveCampaignSystemFields.preferredLanguage,
+            activeCampaignField: field.title,
           })
         }
       }
-    }, [operation, append, form])
+    }, [operation, fields, form, append])
 
     const operationOptions = [
       {
