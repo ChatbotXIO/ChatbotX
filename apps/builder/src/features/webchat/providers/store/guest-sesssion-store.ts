@@ -163,14 +163,14 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
 
       try {
         if (button.buttonType === "postback") {
-          await ky.post<CreateWebchatMessageRequest>("/api/guest/messages", {
+          await ky.post("/api/guest/messages", {
             json: {
               content: button.label,
               postback: button.postback,
               chatbotId: config.chatbotId,
               guestConversationId,
               clientId: newMessage.clientId,
-            },
+            } as CreateWebchatMessageRequest,
           })
         }
       } catch (error) {

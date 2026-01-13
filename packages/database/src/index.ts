@@ -61,3 +61,7 @@ if (env.NODE_ENV !== "production") {
 
 export { Prisma } from "./generated/prisma/client"
 export * from "./generated/prisma/enums"
+
+export type PrismaTransactionalClient = Parameters<
+  Parameters<PrismaClient["$transaction"]>[0]
+>[0]

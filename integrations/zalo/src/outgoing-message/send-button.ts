@@ -25,11 +25,11 @@ export function getButtonTemplate(
       return {
         type: "oa.query.hide",
         title: button.label,
-        payload: encodeButtonPayload({
+        payload: `postback_${encodeButtonPayload({
           flowId,
           flowVersionId,
           buttonId: button.id,
-        }),
+        })}`,
       }
   }
 }

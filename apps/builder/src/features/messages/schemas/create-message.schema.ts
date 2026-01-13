@@ -46,6 +46,7 @@ export const createWebchatMessageRequest = z
     z.object({
       clientId: z.cuid2(),
       chatbotId: z.cuid2(),
+      webchatId: z.cuid2(),
       guestConversationId: z
         .string()
         .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {

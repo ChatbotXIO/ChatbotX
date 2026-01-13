@@ -93,14 +93,14 @@ export async function runStepsAndQuickReplies(
     ])
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  await new Promise((resolve) => setTimeout(resolve, 200))
 
   // run steps
   if ("steps" in flowDetail && flowDetail.steps) {
     await generateRunFlowNode(conversation, flowVersion, flowDetail.steps)
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  await new Promise((resolve) => setTimeout(resolve, 200))
 
   if (
     "quickReplies" in flowDetail &&
@@ -119,7 +119,7 @@ export async function runStepsAndQuickReplies(
     })
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  await new Promise((resolve) => setTimeout(resolve, 200))
 
   if (!triggerNextNode) {
     return

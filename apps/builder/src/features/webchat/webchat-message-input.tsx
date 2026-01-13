@@ -18,10 +18,12 @@ import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
   chatbotId: string
+  webchatId: string
 }
 
 export const WebchatMessageInput = ({
   chatbotId,
+  webchatId,
 }: WebchatMessageInputProps) => {
   const { sendMessage, guestConversationId } = useGuestSessionStore(
     (state) => state,
@@ -54,6 +56,7 @@ export const WebchatMessageInput = ({
 
           setValue("clientId", createId())
           setValue("chatbotId", chatbotId)
+          setValue("webchatId", webchatId)
           setValue(
             "guestConversationId",
             localStorage.getItem("x-conversation-id") ?? "",
@@ -65,7 +68,8 @@ export const WebchatMessageInput = ({
           content: "",
           files: [],
           clientId: createId(),
-          chatbotId: chatbotId ?? "",
+          chatbotId,
+          webchatId,
           guestConversationId: guestConversationId ?? "",
         },
       },
@@ -146,7 +150,7 @@ export const WebchatMessageInput = ({
           </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
-              <WebchatMessageMenu chatbotId={chatbotId} />
+              <WebchatMessageMenu chatbotId={chatbotId} webchatId={webchatId} />
             </div>
             <div className="message-toolbar flex items-center">
               <Button

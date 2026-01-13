@@ -19,7 +19,7 @@ export const WebchatWrapper = () => {
     <div className="flex h-screen w-screen flex-col">
       <WebchatHeader />
       <WebchatMessageList />
-      <WebchatMessageInput chatbotId={config.chatbotId} />
+      <WebchatMessageInput chatbotId={config.chatbotId} webchatId={config.id} />
       {!!guestConversationId && (
         <WebchatRealtime guestConversationId={guestConversationId} />
       )}

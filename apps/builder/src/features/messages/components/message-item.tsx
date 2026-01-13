@@ -1,18 +1,21 @@
 import { FileType, MessageType } from "@aha.chat/database/types"
-import type { MessageTemplateEntity } from "@aha.chat/sdk"
+import type {
+  MessageButtonTemplate,
+  MessageTemplateEntity,
+} from "@aha.chat/sdk"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { cn } from "@aha.chat/ui/lib/utils"
 import { format } from "date-fns"
 import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useGuestSessionStore } from "@/features/webchat/providers/store/guest-session-provider"
 import type { MessageResource } from "../schemas"
 import { MessageBubble } from "./message-bubble"
 
 type MessageItemProps = {
   message: MessageResource
   guestDisplay?: boolean
+  onPostback?: (button: MessageButtonTemplate) => void
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -112,9 +115,8 @@ const RenderAttachments = (props: { message: MessageResource }) => {
   )
 }
 
-const RenderContentAttributes = (props: { message: MessageResource }) => {
-  const { message } = props
-  const { sendPostback } = useGuestSessionStore((state) => state)
+const RenderContentAttributes = (props: MessageItemProps) => {
+  const { message, onPostback } = props
   const contentAttributes = message.contentAttributes as
     | MessageTemplateEntity
     | undefined
@@ -141,9 +143,10 @@ const RenderContentAttributes = (props: { message: MessageResource }) => {
             return (
               <Button
                 className="min-w-60"
+                disabled={!onPostback}
                 key={button.id}
                 onClick={() => {
-                  sendPostback(button)
+                  onPostback?.(button)
                 }}
                 size="sm"
                 variant="outline"

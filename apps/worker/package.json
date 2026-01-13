@@ -6,6 +6,7 @@
     "worker:integration": "dotenv -e ../../.env -- tsx --watch src/integration/worker.ts",
     "worker:chat": "dotenv -e ../../.env -- tsx --watch src/chat/worker.ts",
     "worker:ai-agent": "dotenv -e ../../.env -- tsx --watch src/ai-agent/worker.ts",
+    "worker:schedule": "dotenv -e ../../.env -- tsx --watch src/schedule/worker.ts",
     "dev": "concurrently pnpm:worker:*",
     "https": "pnpm dev",
     "build": "tsdown",
