@@ -3,7 +3,6 @@
 import {
   ActiveCampaignOperation,
   type ActiveCampaignStepSchema,
-  ActiveCampaignSystemFields,
   activeCampaignDefaultFn,
   activeCampaignStepSchema,
 } from "@aha.chat/flow-config"
@@ -57,7 +56,7 @@ const ActiveCampaignStepForm = memo(
     const {
       fields: mappingFields,
       remove,
-      append,
+      replace,
     } = useFieldArray({
       control: form.control,
       name: "mergeFields" as const,
@@ -70,10 +69,12 @@ const ActiveCampaignStepForm = memo(
 
     const lists = useActiveCampaignStore((s) => s.lists)
     const tags = useActiveCampaignStore((s) => s.tags)
+    const fields = useActiveCampaignStore((s) => s.fields)
     const automations = useActiveCampaignStore((s) => s.automations)
 
     const fetchLists = useActiveCampaignStore((s) => s.fetchLists)
     const fetchTags = useActiveCampaignStore((s) => s.fetchTags)
+    const fetchFields = useActiveCampaignStore((s) => s.fetchFields)
     const fetchAutomations = useActiveCampaignStore((s) => s.fetchAutomations)
 
     useEffect(() => {
@@ -81,30 +82,39 @@ const ActiveCampaignStepForm = memo(
         if (operation === ActiveCampaignOperation.createOrUpdate) {
           fetchLists(chatbotId)
           fetchTags(chatbotId)
+          fetchFields(chatbotId)
         } else if (operation === ActiveCampaignOperation.addToAutomation) {
           fetchAutomations(chatbotId)
         }
       }
-    }, [chatbotId, operation, fetchLists, fetchTags, fetchAutomations])
+    }, [
+      chatbotId,
+      operation,
+      fetchLists,
+      fetchTags,
+      fetchFields,
+      fetchAutomations,
+    ])
 
     useEffect(() => {
-      if (operation === ActiveCampaignOperation.createOrUpdate) {
-        const values = form.getValues()
-        const currentFields =
-          "mergeFields" in values ? (values.mergeFields ?? []) : []
-        const hasPreferredLanguage = currentFields.some(
-          (f) =>
-            f.activeCampaignField ===
-            ActiveCampaignSystemFields.preferredLanguage,
-        )
-        if (!hasPreferredLanguage) {
-          append({
-            chatbotField: "",
-            activeCampaignField: ActiveCampaignSystemFields.preferredLanguage,
-          })
-        }
+      if (
+        operation !== ActiveCampaignOperation.createOrUpdate ||
+        fields.length === 0
+      ) {
+        return
       }
-    }, [operation, append, form])
+
+      const currentFields = form.getValues("mergeFields") ?? []
+
+      if (currentFields.length === 0) {
+        replace(
+          fields.map((field) => ({
+            chatbotField: "",
+            activeCampaignField: field.title,
+          })),
+        )
+      }
+    }, [operation, fields, form, replace])
 
     const operationOptions = [
       {

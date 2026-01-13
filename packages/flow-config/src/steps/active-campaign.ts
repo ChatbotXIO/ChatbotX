@@ -7,13 +7,6 @@ export const ActiveCampaignOperation = {
   addToAutomation: "add_to_automation",
 } as const
 
-export const ActiveCampaignSystemFields = {
-  preferredLanguage: "Preferred Language",
-} as const
-
-export type ActiveCampaignSystemFields =
-  (typeof ActiveCampaignSystemFields)[keyof typeof ActiveCampaignSystemFields]
-
 const baseSchema = z.object({
   id: z.cuid2(),
   successNodeId: z.string().optional(),
@@ -55,10 +48,5 @@ export const activeCampaignDefaultFn = (): ActiveCampaignStepSchema => ({
   phoneField: "",
   listId: "",
   tags: [],
-  mergeFields: [
-    {
-      chatbotField: "",
-      activeCampaignField: ActiveCampaignSystemFields.preferredLanguage,
-    },
-  ],
+  mergeFields: [],
 })
