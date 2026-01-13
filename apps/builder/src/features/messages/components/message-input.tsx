@@ -200,7 +200,7 @@ export const MessageInput = () => {
                 <Textarea
                   aria-label="Type your message"
                   autoComplete="off"
-                  className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
+                  className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
                   placeholder="Message..."
                   {...field}
                   onKeyDown={onKeyDown}

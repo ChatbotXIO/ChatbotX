@@ -14,6 +14,8 @@ import {
   SiMessengerHex,
   SiWhatsapp,
   SiWhatsappHex,
+  SiZalo,
+  SiZaloHex,
 } from "@icons-pack/react-simple-icons"
 import { formatDistanceToNowStrict } from "date-fns"
 import { GlobeIcon, UsersRoundIcon } from "lucide-react"
@@ -30,11 +32,12 @@ type ConversationItemProps = {
 }
 
 const assignedIcon = (conversation: ConversationResource) => {
+  console.log(conversation)
   if (conversation.assignedUserId) {
     return (
-      <Avatar className="h-4 w-4">
+      <Avatar className="size-4">
         <AvatarImage src={conversation.assignedUser?.image ?? ""} />
-        <AvatarFallback>
+        <AvatarFallback className="text-[9px]">
           {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
         </AvatarFallback>
       </Avatar>
@@ -58,10 +61,12 @@ const sourceIcon = (contact: ContactResource) => {
       return <SiInstagram fill={SiInstagramHex} />
     case "Messenger":
       return <SiMessenger fill={SiMessengerHex} />
+    case "Zalo":
+      return <SiZalo fill={SiZaloHex} />
     default:
       return (
-        <div className="rounded-full bg-white">
-          <GlobeIcon />
+        <div className="rounded-full">
+          <GlobeIcon className="fill-white stroke-zinc-800" />
         </div>
       )
   }
@@ -93,8 +98,8 @@ export default function ConversationItem({
           className="object-cover"
           src={getAvatarUrl(conversation.contact)}
         />
-        <AvatarFallback className="bg-zinc-500">
-          {getFullName(conversation.contact).charAt(0)}
+        <AvatarFallback className="bg-gray-300 dark:bg-zinc-100 dark:text-zinc-800">
+          {getFullName(conversation.contact).slice(0, 2)}
         </AvatarFallback>
       </Avatar>
     ),
@@ -104,13 +109,16 @@ export default function ConversationItem({
   return (
     <div className="w-full">
       <Button
-        className="h-auto w-full justify-center px-3 py-2 font-normal"
+        className={cn(
+          "h-auto w-full justify-center px-3 py-2 font-normal hover:bg-zinc-200 hover:text-foreground dark:hover:bg-muted",
+          isActive ? "bg-zinc-200 dark:bg-muted!" : "",
+        )}
         onClick={() => onSelect()}
-        variant={isActive ? "secondary" : "ghost"}
+        variant={"ghost"}
       >
         <div className="relative">
           {contactAvatar}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 transform">
+          <div className="absolute bottom-0 left-0 transform">
             {assignedIcon(conversation)}
           </div>
           <div className="absolute right-0 bottom-0 transform">
@@ -120,20 +128,18 @@ export default function ConversationItem({
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="flex justify-between">
-            <span className="truncate text-left font-semibold">
-              {contactFullName}
-            </span>
+          <div className="truncate text-left font-medium">
+            {contactFullName}
           </div>
-          <p
+          <div
             className={cn(
-              "w-full truncate text-left text-gray-600 text-sm",
-              isSeen ? "font-semibold" : "",
+              "w-full truncate text-left text-neutral-400 text-sm",
+              isSeen ? "font-medium" : "",
             )}
           >
             {conversation.messages?.[0]?.content ?? " "}
-          </p>
-          <p className="text-right text-xs">
+          </div>
+          <p className="text-right text-neutral-400 text-xs">
             <span>
               {formatDistanceToNowStrict(
                 lastMessage?.createdAt ? lastMessage.createdAt : new Date(),

@@ -37,6 +37,8 @@ export const listConversations = async (
         },
       },
       inbox: true,
+      assignedUser: true,
+      assignedInboxTeam: true,
     },
     take: perPage,
     where,

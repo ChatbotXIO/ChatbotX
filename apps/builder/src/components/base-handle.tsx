@@ -19,9 +19,9 @@ export const BaseHandle = (
   return (
     <Handle
       className={cn(
-        "h-[11px] w-[11px] rounded-full border border-slate-300 bg-slate-100 transition dark:border-secondary dark:bg-secondary",
+        "h-[11px] w-[11px] rounded-full border border-slate-300 bg-slate-400 transition dark:border-secondary dark:bg-white",
         className,
-        connections.length > 0 && "bg-zinc-700!",
+        connections.length > 0 && "bg-zinc-700! dark:bg-neutral-700!",
       )}
       {...rest}
       ref={ref}

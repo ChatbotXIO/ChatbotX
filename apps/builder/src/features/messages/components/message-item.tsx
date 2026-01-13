@@ -22,7 +22,7 @@ export const MessageItem = (props: MessageItemProps) => {
   const { message, guestDisplay = false } = props
 
   const variants: Record<"left" | "right" | "full", string> = {
-    left: "px-4 py-3 rounded-xl bg-secondary text-secondary-foreground",
+    left: "px-4 py-3 rounded-xl bg-secondary",
     right: "px-4 py-3 rounded-xl bg-primary text-primary-foreground",
     full: "text-center w-full text-muted-foreground",
   }
@@ -51,7 +51,7 @@ export const MessageItem = (props: MessageItemProps) => {
             <pre className="break-word whitespace-pre-line font-sans">
               {message.content}
             </pre>
-            {RenderContentAttributes({ message })}
+            {RenderContentAttributes(props)}
           </div>
         )}
         {message.attachments &&
@@ -132,7 +132,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
           {contentAttributes.payload.buttons.map((button) => {
             if (button.buttonType === "url") {
               return (
-                <Button asChild key={button.id} size="sm" variant="outline">
+                <Button asChild key={button.id} size="sm" variant="secondary">
                   <Link href={button.url} target="_blank">
                     <ExternalLinkIcon />
                     {button.label}
@@ -142,7 +142,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
             }
             return (
               <Button
-                className="min-w-60"
+                className="min-w-60 bg-secondary text-secondary-foreground disabled:bg-muted disabled:text-muted-foreground dark:bg-secondary dark:text-secondary-foreground dark:disabled:bg-muted dark:disabled:text-muted-foreground"
                 disabled={!onPostback}
                 key={button.id}
                 onClick={() => {
