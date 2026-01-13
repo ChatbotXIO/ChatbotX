@@ -83,6 +83,7 @@
     "react-hook-form": "^7.71.2",
     "react-qr-code": "^2.0.18",
     "react-virtuoso": "^4.18.1",
+    "recharts": "3.6.0",
     "remeda": "^2.33.6",
     "sonner": "^2.0.7",
     "swr": "^2.4.1",

@@ -12,6 +12,7 @@
     "copy": "Copy",
     "copyUrl": "Copy URL",
     "actions": "Actions",
+    "clear": "Clear",
     "add": "Add",
     "addContactNotes": "Add Contact Notes",
     "addContactTag": "Add Contact Tag",
@@ -1231,6 +1232,15 @@
     },
     "accountFields": {
       "label": "Account Fields"
+    },
+    "today": {
+      "label": "Today"
+    },
+    "yesterday": {
+      "label": "Yesterday"
+    },
+    "last7days": {
+      "label": "Last 7 days"
     }
   },
   "flows": {
