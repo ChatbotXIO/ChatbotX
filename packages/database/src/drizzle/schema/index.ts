@@ -33,6 +33,8 @@ export const folderType = pgEnum("FolderType", [
   "flow",
   "customField",
   "automatedResponse",
+  "trigger",
+  "webhook",
 ])
 export const chatbotMemberRole = pgEnum("ChatbotMemberRole", ["owner", "agent"])
 export const gender = pgEnum("Gender", ["male", "female", "unknown"])
@@ -1631,6 +1633,278 @@ export const reflinkModel = pgTable(
       "btree",
       table.chatbotId.asc().nullsLast().op("text_ops"),
       table.name.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)
+
+export const triggerModel = pgTable(
+  "Trigger",
+  {
+    id: text().primaryKey(),
+    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+    updatedAt: timestamp({ precision: 3 })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    name: text().notNull(),
+    active: boolean().notNull().default(true),
+    folderId: text().references(() => folderModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+      name: "Trigger_folderId_fkey",
+    }),
+    actions: jsonb().notNull().default(sql`'[]'`),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "Trigger_chatbotId_fkey",
+      }),
+  },
+  (table) => [
+    uniqueIndex("Trigger_chatbotId_name_key").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
+    ),
+    index("Trigger_chatbotId_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Trigger_folderId_idx").using(
+      "btree",
+      table.folderId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Trigger_chatbotId_active_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.active.asc().nullsLast().op("bool_ops"),
+    ),
+  ],
+)
+
+export const webhookModel = pgTable(
+  "Webhook",
+  {
+    id: text().primaryKey(),
+    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+    updatedAt: timestamp({ precision: 3 })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    name: text().notNull(),
+    active: boolean().notNull().default(true),
+    folderId: text().references(() => folderModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+      name: "Webhook_folderId_fkey",
+    }),
+    url: text().notNull(),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "Webhook_chatbotId_fkey",
+      }),
+  },
+  (table) => [
+    index("Webhook_chatbotId_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Webhook_folderId_idx").using(
+      "btree",
+      table.folderId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Webhook_chatbotId_active_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.active.asc().nullsLast().op("bool_ops"),
+    ),
+  ],
+)
+
+export const conditionModel = pgTable(
+  "Condition",
+  {
+    id: text().primaryKey(),
+    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+    triggerId: text().references(() => triggerModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+      name: "Condition_triggerId_fkey",
+    }),
+    webhookId: text().references(() => webhookModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+      name: "Condition_webhookId_fkey",
+    }),
+    type: integer().notNull(),
+    sourceId: text(),
+    operator: varchar({ length: 255 }),
+    value: jsonb(),
+  },
+  (table) => [
+    index("Condition_type_sourceId_idx").using(
+      "btree",
+      table.type.asc().nullsLast().op("int4_ops"),
+      table.sourceId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Condition_triggerId_idx").using(
+      "btree",
+      table.triggerId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Condition_webhookId_idx").using(
+      "btree",
+      table.webhookId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Condition_type_sourceId_triggerId_idx").using(
+      "btree",
+      table.type.asc().nullsLast().op("int4_ops"),
+      table.sourceId.asc().nullsLast().op("text_ops"),
+      table.triggerId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Condition_type_sourceId_webhookId_idx").using(
+      "btree",
+      table.type.asc().nullsLast().op("int4_ops"),
+      table.sourceId.asc().nullsLast().op("text_ops"),
+      table.webhookId.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)
+
+export const triggerStatsModel = pgTable(
+  "TriggerStats",
+  {
+    id: text().primaryKey(),
+    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+    triggerId: text()
+      .notNull()
+      .references(() => triggerModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerStats_triggerId_fkey",
+      }),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerStats_chatbotId_fkey",
+      }),
+    date: timestamp({ precision: 3 }).notNull(),
+    totalContacts: integer().notNull().default(0),
+    successCount: integer().notNull().default(0),
+    failureCount: integer().notNull().default(0),
+    totalExecutions: integer().notNull().default(0),
+  },
+  (table) => [
+    uniqueIndex("TriggerStats_triggerId_date_key").using(
+      "btree",
+      table.triggerId.asc().nullsLast().op("text_ops"),
+      table.date.asc().nullsLast().op("timestamp_ops"),
+    ),
+    index("TriggerStats_triggerId_date_idx").using(
+      "btree",
+      table.triggerId.asc().nullsLast().op("text_ops"),
+      table.date.asc().nullsLast().op("timestamp_ops"),
+    ),
+    index("TriggerStats_chatbotId_date_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.date.asc().nullsLast().op("timestamp_ops"),
+    ),
+  ],
+)
+
+export const triggerContactHistoryModel = pgTable(
+  "TriggerContactHistory",
+  {
+    id: text().notNull(),
+    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+    triggerId: text()
+      .notNull()
+      .references(() => triggerModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerContactHistory_triggerId_fkey",
+      }),
+    contactId: text()
+      .notNull()
+      .references(() => contactModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerContactHistory_contactId_fkey",
+      }),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerContactHistory_chatbotId_fkey",
+      }),
+    firstEnteredAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.id, table.contactId],
+      name: "TriggerContactHistory_pkey",
+    }),
+    index("TriggerContactHistory_triggerId_contactId_idx").using(
+      "btree",
+      table.triggerId.asc().nullsLast().op("text_ops"),
+      table.contactId.asc().nullsLast().op("text_ops"),
+    ),
+    index("TriggerContactHistory_contactId_idx").using(
+      "btree",
+      table.contactId.asc().nullsLast().op("text_ops"),
+    ),
+    index("TriggerContactHistory_chatbotId_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)
+
+export const triggerExecutionModel = pgTable(
+  "TriggerExecution",
+  {
+    id: text().primaryKey(),
+    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+    executedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+    triggerId: text()
+      .notNull()
+      .references(() => triggerModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerExecution_triggerId_fkey",
+      }),
+    contactId: text()
+      .notNull()
+      .references(() => contactModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerExecution_contactId_fkey",
+      }),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "TriggerExecution_chatbotId_fkey",
+      }),
+  },
+  (table) => [
+    index("TriggerExecution_triggerId_contactId_idx").using(
+      "btree",
+      table.triggerId.asc().nullsLast().op("text_ops"),
+      table.contactId.asc().nullsLast().op("text_ops"),
+    ),
+    index("TriggerExecution_chatbotId_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
     ),
   ],
 )

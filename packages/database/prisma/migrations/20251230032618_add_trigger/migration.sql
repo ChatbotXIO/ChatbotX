@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS "TriggerCondition";
 DROP TABLE IF EXISTS "TriggerStats";
 DROP TABLE IF EXISTS "TriggerContactHistory";
+DROP TABLE IF EXISTS "TriggerExecution";
 DROP TABLE IF EXISTS "Trigger";
 
 CREATE TABLE "Trigger" (
@@ -87,3 +88,25 @@ ALTER TABLE "TriggerStats" ADD CONSTRAINT "TriggerStats_chatbotId_fkey" FOREIGN 
 ALTER TABLE "TriggerContactHistory" ADD CONSTRAINT "TriggerContactHistory_triggerId_fkey" FOREIGN KEY ("triggerId") REFERENCES "Trigger"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "TriggerContactHistory" ADD CONSTRAINT "TriggerContactHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "TriggerContactHistory" ADD CONSTRAINT "TriggerContactHistory_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE "TriggerExecution" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "executedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "triggerId" TEXT NOT NULL,
+    "contactId" TEXT NOT NULL,
+    "chatbotId" TEXT NOT NULL,
+
+    CONSTRAINT "TriggerExecution_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "TriggerExecution_triggerId_contactId_key" ON "TriggerExecution"("triggerId", "contactId");
+CREATE INDEX "TriggerExecution_triggerId_contactId_idx" ON "TriggerExecution"("triggerId", "contactId");
+CREATE INDEX "TriggerExecution_chatbotId_idx" ON "TriggerExecution"("chatbotId");
+
+ALTER TABLE "TriggerExecution" ADD CONSTRAINT "TriggerExecution_triggerId_fkey" FOREIGN KEY ("triggerId") REFERENCES "Trigger"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TriggerExecution" ADD CONSTRAINT "TriggerExecution_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TriggerExecution" ADD CONSTRAINT "TriggerExecution_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Add index for ContactCustomField.customFieldId to optimize datetime trigger scanning
+CREATE INDEX IF NOT EXISTS "ContactCustomField_customFieldId_idx" ON "ContactCustomField"("customFieldId");

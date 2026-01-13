@@ -164,6 +164,12 @@ export const TriggerAction = {
   clearCustomField: "A06",
   transferConversationToHuman: "A07",
   runGoogleSheet: "A08",
+  archiveConversation: "A09",
+  unarchiveConversation: "A10",
+  assignConversation: "A11",
+  unassignConversation: "A12",
+  disableBot: "A13",
+  enableBot: "A14",
 } as const
 export type TriggerAction = (typeof TriggerAction)[keyof typeof TriggerAction]
 

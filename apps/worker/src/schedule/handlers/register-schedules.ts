@@ -21,4 +21,18 @@ export const registerSchedules = async () => {
       },
     },
   )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.evaluateTriggers,
+    {
+      every: 5000,
+    },
+    {
+      name: ScheduleJobData.evaluateTriggers,
+      data: {
+        type: ScheduleJobData.evaluateTriggers,
+        data: {},
+      },
+    },
+  )
 }
