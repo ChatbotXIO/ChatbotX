@@ -4,6 +4,8 @@ DROP TABLE IF EXISTS "TriggerContactHistory";
 DROP TABLE IF EXISTS "TriggerExecution";
 DROP TABLE IF EXISTS "Trigger";
 
+ALTER TYPE "FolderType" ADD VALUE 'trigger';
+
 CREATE TABLE "Trigger" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
