@@ -740,6 +740,9 @@
     "activeCampaign": {
       "label": "ActiveCampaign"
     },
+    "drip": {
+      "label": "Drip"
+    },
     "hideHeader": {
       "label": "Hiển thị tiêu đề"
     },
@@ -1173,7 +1176,8 @@
       "spreadsheetGetRandomRow": "Lấy hàng ngẫu nhiên",
       "spreadsheetClearRow": "Xóa hàng",
       "mailchimpAddMember": "Thêm liên hệ vào Mailchimp",
-      "activeCampaign": "Thêm liên hệ vào ActiveCampaign"
+      "activeCampaign": "Thêm liên hệ vào ActiveCampaign",
+      "drip": "Thêm liên hệ vào Drip"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1284,8 +1288,21 @@
     },
     "error": {
       "invalidCredentials": "API Token không hợp lệ hoặc không có quyền truy cập",
-      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin."
-    }
+      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin.",
+      "fetch_accounts": "Không thể tải danh sách tài khoản Drip",
+      "fetch_tags": "Không thể tải danh sách thẻ Drip",
+      "fetch_fields": "Không thể tải danh sách trường tùy chỉnh Drip"
+    },
+    "fields": {
+      "account": "Account",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom Field which contains the user's email to identify Drip contacts.",
+      "phoneField": "Phone Field",
+      "tags": "Tags",
+      "tagsPlaceholder": "Select options",
+      "customFieldsMapping": "Custom Fields in Drip"
+    },
+    "notConnected": "Drip chưa được kết nối"
   },
   "googleSheets": {
     "delete": {

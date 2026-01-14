@@ -673,6 +673,9 @@
     "activeCampaign": {
       "label": "ActiveCampaign"
     },
+    "drip": {
+      "label": "Drip"
+    },
     "hideHeader": {
       "label": "Show Header"
     },
@@ -1119,7 +1122,8 @@
       "spreadsheetGetRandomRow": "Get Random Row",
       "spreadsheetClearRow": "Clear Row",
       "mailchimpAddMember": "Add Contact to Mailchimp",
-      "activeCampaign": "Add Contact to ActiveCampaign"
+      "activeCampaign": "Add Contact to ActiveCampaign",
+      "drip": "Add Contact to Drip"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1230,8 +1234,21 @@
     },
     "error": {
       "invalidCredentials": "Invalid API Token or no access to accounts",
-      "connectionFailed": "Connection failed. Please check your information."
-    }
+      "connectionFailed": "Connection failed. Please check your information.",
+      "fetch_accounts": "Failed to fetch Drip accounts",
+      "fetch_tags": "Failed to fetch Drip tags",
+      "fetch_fields": "Failed to fetch Drip custom fields"
+    },
+    "fields": {
+      "account": "Account",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom Field which contains the user's email to identify Drip contacts.",
+      "phoneField": "Phone Field",
+      "tags": "Tags",
+      "tagsPlaceholder": "Select options",
+      "customFieldsMapping": "Custom Fields in Drip"
+    },
+    "notConnected": "Drip not connected"
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

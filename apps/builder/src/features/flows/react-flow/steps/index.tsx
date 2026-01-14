@@ -14,6 +14,7 @@ import { countCharactersStep } from "./count-characters"
 import type { StepDefinition } from "./definition"
 import { deleteContactStep } from "./delete-contact"
 import { disableBotStep } from "./disable-bot"
+import { dripStep } from "./drip"
 import { enableBotStep } from "./enable-bot"
 import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
@@ -115,6 +116,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
   [StepType.mailchimpAddMember]: mailchimpAddMemberStep,
   [StepType.activeCampaign]: activeCampaignStep,
+  [StepType.drip]: dripStep,
   [StepType.sendQuickReply]: undefined,
 }
 

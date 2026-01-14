@@ -5,3 +5,9 @@ export const connectDripSchema = z.object({
 })
 
 export type ConnectDripSchema = z.infer<typeof connectDripSchema>
+
+export const dripQuerySchema = z.object({
+  action: z.enum(["accounts", "tags", "fields"]),
+})
+
+export type DripQuerySchema = z.infer<typeof dripQuerySchema>

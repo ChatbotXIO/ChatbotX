@@ -227,6 +227,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: MailIcon,
         stepType: StepType.activeCampaign,
       },
+      {
+        label: t("flows.actions.drip"),
+        icon: MailIcon,
+        stepType: StepType.drip,
+      },
     ],
   },
   {

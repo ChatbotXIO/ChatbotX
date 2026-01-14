@@ -93,6 +93,9 @@ export const StepType = {
 
   // ActiveCampaign Operations (AC_)
   activeCampaign: "AC01",
+
+  // Drip Operations (DR_)
+  drip: "DR01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]
