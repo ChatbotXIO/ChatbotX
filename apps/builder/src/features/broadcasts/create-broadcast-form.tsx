@@ -4,7 +4,11 @@ import {
   type BroadcastInboxType,
   BroadcastSubaction,
 } from "@aha.chat/database/enums"
-import { BroadcastSchedulesType, InboxType } from "@aha.chat/database/types"
+import {
+  BroadcastSchedulesType,
+  InboxType,
+  Omnichannel,
+} from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -17,17 +21,9 @@ import {
 } from "@aha.chat/ui/components/ui/card"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  SiMessenger,
-  SiMessengerHex,
-  SiWhatsapp,
-  SiWhatsappHex,
-  SiZalo,
-  SiZaloHex,
-} from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"
-import { AtomIcon, Loader2Icon } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
@@ -42,14 +38,12 @@ import {
   FlowStoreProvider,
   useFlowStore,
 } from "../flows/provider/flow-store-context"
+import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useTagSelectOptions } from "../tags/provider/tag-hook"
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   {
-    Icon: AtomIcon,
-    iconColor: "none",
-    name: t("omnichannel.title"),
-    value: "omnichannel",
+    value: Omnichannel,
     description:
       "Send a flow to all contacts. You can send messages or executes actions.",
     subactions: [
@@ -61,9 +55,6 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    Icon: SiMessenger,
-    iconColor: SiMessengerHex,
-    name: t("messenger.title"),
     value: InboxType.messenger,
     description: "",
     subactions: [
@@ -95,9 +86,6 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    Icon: SiWhatsapp,
-    iconColor: SiWhatsappHex,
-    name: t("whatsapp.title"),
     value: InboxType.whatsapp,
     description: "",
     subactions: [
@@ -109,9 +97,6 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    Icon: SiZalo,
-    iconColor: SiZaloHex,
-    name: t("zalo.title"),
     value: InboxType.zalo,
     description: "",
     subactions: [
@@ -232,10 +217,11 @@ function CreateBroadcastChooseChannel() {
       <CardContent className="flex flex-col gap-4">
         {configs.map((config) => (
           <div className="flex w-full items-center gap-2" key={config.value}>
-            <span className="flex flex-1 gap-2">
-              <config.Icon fill={config.iconColor} />
-              {config.name}
-            </span>
+            <InboxIcon
+              iconClassName="size-5"
+              inboxType={config.value as InboxType}
+              wrapperClassName="flex-1 gap-2"
+            />
             <Button
               onClick={() => handleChooseChannel(config.value as InboxType)}
               type="button"

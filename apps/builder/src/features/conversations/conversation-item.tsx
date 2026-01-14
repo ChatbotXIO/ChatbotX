@@ -1,5 +1,6 @@
 "use client"
 
+import { Omnichannel } from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -7,21 +8,11 @@ import {
 } from "@aha.chat/ui/components/ui/avatar"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { cn } from "@aha.chat/ui/lib/utils"
-import {
-  SiInstagram,
-  SiInstagramHex,
-  SiMessenger,
-  SiMessengerHex,
-  SiWhatsapp,
-  SiWhatsappHex,
-  SiZalo,
-  SiZaloHex,
-} from "@icons-pack/react-simple-icons"
 import { formatDistanceToNowStrict } from "date-fns"
-import { GlobeIcon, UsersRoundIcon } from "lucide-react"
+import { UsersRoundIcon } from "lucide-react"
 import { useMemo, useState } from "react"
-import type { ContactResource } from "../contacts/schemas/resource"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
+import { InboxIcon } from "../inboxes/components/inbox-icon"
 import type { MessageResource } from "../messages/schemas"
 import type { ConversationResource } from "./schemas/resource"
 
@@ -32,7 +23,6 @@ type ConversationItemProps = {
 }
 
 const assignedIcon = (conversation: ConversationResource) => {
-  console.log(conversation)
   if (conversation.assignedUserId) {
     return (
       <Avatar className="size-4">
@@ -51,25 +41,6 @@ const assignedIcon = (conversation: ConversationResource) => {
     )
   }
   return
-}
-
-const sourceIcon = (contact: ContactResource) => {
-  switch (contact.source) {
-    case "Whatsapp":
-      return <SiWhatsapp fill={SiWhatsappHex} />
-    case "Instagram":
-      return <SiInstagram fill={SiInstagramHex} />
-    case "Messenger":
-      return <SiMessenger fill={SiMessengerHex} />
-    case "Zalo":
-      return <SiZalo fill={SiZaloHex} />
-    default:
-      return (
-        <div className="rounded-full">
-          <GlobeIcon className="fill-white stroke-zinc-800" />
-        </div>
-      )
-  }
 }
 
 export default function ConversationItem({
@@ -122,8 +93,10 @@ export default function ConversationItem({
             {assignedIcon(conversation)}
           </div>
           <div className="absolute right-0 bottom-0 transform">
-            {/* biome-ignore lint/style/noNonNullAssertion: wip */}
-            {sourceIcon(conversation.contact!)}
+            <InboxIcon
+              inboxType={conversation.inbox?.inboxType ?? Omnichannel}
+              showLabel={false}
+            />
           </div>
         </div>
 

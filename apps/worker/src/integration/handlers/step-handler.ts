@@ -1,7 +1,6 @@
 import type { ConversationModel } from "@aha.chat/database/types"
 import {
   type SendQuickReplyStepSchema,
-  type SendTextStepSchema,
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
@@ -9,6 +8,7 @@ import {
 } from "@aha.chat/flow-config"
 import {
   ChatJobAction,
+  type ChatJobSendFlowStep,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
@@ -62,7 +62,7 @@ export async function sendFlowMessage({
   flowId,
   flowVersionId,
   step,
-}: FlowStepProps<SendTextStepSchema>) {
+}: FlowStepProps<ChatJobSendFlowStep["data"]["step"]>) {
   await chatQueue.add(ChatJobAction.sendFlowMessage, {
     type: ChatJobAction.sendFlowMessage,
     data: {
@@ -173,8 +173,8 @@ export const flowStepHandlers: Record<
   [StepType.performAction]: undefined,
   [StepType.removeContactTag]: removeContactTag,
   [StepType.sendAudio]: sendFlowMessage,
-  [StepType.sendCard]: undefined,
-  [StepType.sendCarousel]: undefined,
+  [StepType.sendCard]: sendFlowMessage,
+  [StepType.sendCarousel]: sendFlowMessage,
   [StepType.sendFile]: sendFlowMessage,
   [StepType.sendGif]: sendFlowMessage,
   [StepType.sendImage]: sendFlowMessage,

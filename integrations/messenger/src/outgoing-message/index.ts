@@ -17,6 +17,7 @@ import {
   type MessengerAuthValue,
 } from "../schemas"
 import { getAttachmentTemplate } from "./send-attachment"
+import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
@@ -138,6 +139,13 @@ export async function* convertFlowStepToFacebookMessage(
       break
     case StepType.sendQuickReply:
       yield* convertFlowStepQuickReply(
+        flowVersionId,
+        step,
+      ) as Generator<FacebookMessage>
+      break
+    case StepType.sendCarousel:
+      yield* convertFlowStepCarousel(
+        flowId,
         flowVersionId,
         step,
       ) as Generator<FacebookMessage>

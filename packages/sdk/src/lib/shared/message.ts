@@ -88,12 +88,25 @@ export type MessageButtonTemplate = {
     }
 )
 
+export type MessageCardTemplate = {
+  id: string
+  title: string
+  subtitle?: string
+  imageUrl?: string
+  buttons?: MessageButtonTemplate[]
+}
+
 export type MessageTemplateEntity = {
   type: "template"
-  payload: {
-    templateType: "button"
-    buttons: MessageButtonTemplate[]
-  }
+  payload:
+    | {
+        templateType: "button"
+        buttons: MessageButtonTemplate[]
+      }
+    | {
+        templateType: "carousel"
+        cards: MessageCardTemplate[]
+      }
 }
 
 export const ContentType = {

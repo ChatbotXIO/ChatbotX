@@ -17,7 +17,7 @@ const SendCardStepViewer = (props: SendCardStepViewerProps) => {
     <Card className="overflow-hidden p-0">
       <CardContent className="p-0">
         <div className="mb-3 flex flex-col gap-1">
-          {data.image?.url ? (
+          {"image" in data && data.image?.url ? (
             <div className="relative h-[150px]">
               <Image
                 alt={data.title}
@@ -34,9 +34,15 @@ const SendCardStepViewer = (props: SendCardStepViewerProps) => {
           <div className="px-2 font-medium text-sm">
             {data.title || "--title--"}
           </div>
-          <div className="px-2 text-sm">{data.subtitle || "--subtitle--"}</div>
+          <div className="px-2 text-sm">
+            {"subtitle" in data
+              ? data.subtitle || "--subtitle--"
+              : "--subtitle--"}
+          </div>
         </div>
-        {data.buttons.length > 0 && <ButtonGroupViewer data={data.buttons} />}
+        {"buttons" in data && data.buttons.length > 0 && (
+          <ButtonGroupViewer data={data.buttons} />
+        )}
       </CardContent>
     </Card>
   )

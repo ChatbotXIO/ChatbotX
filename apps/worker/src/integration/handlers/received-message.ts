@@ -122,6 +122,8 @@ export const receiveMessage = async ({
       },
     })
 
+    const now = new Date()
+
     const newMessage = await tx.message.upsert({
       where: {
         chatbotId_sourceId: {
@@ -134,25 +136,33 @@ export const receiveMessage = async ({
         inboxId,
         senderType: SenderType.contact,
         chatbotId,
+        sourceId: message.sourceId ?? "",
         senderId: newContact.id,
         messageType: message.messageType,
         content: message.content,
         contentType: message.contentType as ContentType,
         contentAttributes: message.contentAttributes as Prisma.InputJsonValue,
-        attachments: message.attachments
-          ? {
-              create: message.attachments.map(
-                (attachment: AttachmentEntity) => ({
-                  chatbotId: newConversation.chatbotId,
-                  conversationId: newConversation.id,
-                  ...attachment,
-                }),
-              ),
-            }
-          : undefined,
+        createdAt: now,
+        updatedAt: now,
       },
-      update: {},
+      update: {
+        updatedAt: now,
+      },
     })
+
+    if (
+      message.attachments &&
+      newMessage.createdAt.getTime() === now.getTime()
+    ) {
+      await tx.attachment.createMany({
+        data: message.attachments.map((attachment: AttachmentEntity) => ({
+          ...attachment,
+          messageId: newMessage.id,
+          chatbotId: newConversation.chatbotId,
+          conversationId: newConversation.id,
+        })),
+      })
+    }
 
     // emit new message to socket
     try {

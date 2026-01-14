@@ -7,8 +7,10 @@ import {
 } from "@aha.chat/database"
 import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import {
+  type ButtonStepProps,
   ButtonType,
   encodeButtonPayload,
+  type SendCardStepSchema,
   StepType,
 } from "@aha.chat/flow-config"
 import {
@@ -18,11 +20,65 @@ import {
 } from "@aha.chat/partysocket-config"
 import type {
   ConversationEntity,
+  MessageButtonTemplate,
+  MessageCardTemplate,
   MessageTemplateEntity,
   SendFlowStepData,
 } from "@aha.chat/sdk"
 import type { ChatJobSendFlowStep } from "@aha.chat/worker-config"
 import { sendFlowStepToExternal } from "./send-message"
+
+const convertButtonsToTemplate = (props: {
+  flowId: string
+  flowVersionId?: string
+  buttons: ButtonStepProps[]
+}): MessageButtonTemplate[] => {
+  const { flowId, flowVersionId, buttons } = props
+  return buttons.map((button) => {
+    if (button.buttonType === ButtonType.OpenWebsite) {
+      return {
+        id: button.id,
+        label: button.label,
+        buttonType: "url",
+        url: button.beforeStep.url,
+      }
+    }
+
+    return {
+      id: button.id,
+      buttonType: "postback",
+      label: button.label,
+      postback: encodeButtonPayload({
+        flowId,
+        flowVersionId,
+        buttonId: button.id,
+      }),
+    }
+  })
+}
+
+const convertCardsToTemplate = (props: {
+  flowId: string
+  flowVersionId?: string
+  cards: SendCardStepSchema[]
+}): MessageCardTemplate[] => {
+  const { flowId, flowVersionId, cards } = props
+
+  return cards.map((card) => ({
+    id: card.id,
+    title: card.title,
+    subtitle: "subtitle" in card ? card.subtitle : undefined,
+    imageUrl: "image" in card ? card.image?.url : undefined,
+    buttons:
+      "buttons" in card
+        ? convertButtonsToTemplate({
+            flowId,
+            flowVersionId,
+            buttons: card.buttons,
+          })
+        : undefined,
+  }))
+}
 
 export async function sendFlowStep({
   conversationId,
@@ -53,26 +109,23 @@ export async function sendFlowStep({
       type: "template",
       payload: {
         templateType: "button",
-        buttons: step.buttons.map((button) => {
-          if (button.buttonType === ButtonType.OpenWebsite) {
-            return {
-              id: button.id,
-              label: button.label,
-              buttonType: "url",
-              url: button.beforeStep.url,
-            }
-          }
-
-          return {
-            id: button.id,
-            buttonType: "postback",
-            label: button.label,
-            postback: encodeButtonPayload({
-              flowId,
-              flowVersionId,
-              buttonId: button.id,
-            }),
-          }
+        buttons: convertButtonsToTemplate({
+          flowId,
+          flowVersionId,
+          buttons: step.buttons,
+        }),
+      },
+    } satisfies MessageTemplateEntity
+  }
+  if ("cards" in step && step.cards.length > 0) {
+    messageData.contentAttributes = {
+      type: "template",
+      payload: {
+        templateType: "carousel",
+        cards: convertCardsToTemplate({
+          flowId,
+          flowVersionId,
+          cards: step.cards,
         }),
       },
     } satisfies MessageTemplateEntity
