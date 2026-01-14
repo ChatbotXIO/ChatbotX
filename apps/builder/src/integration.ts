@@ -1,4 +1,5 @@
 import { integration as integrationActiveCampaign } from "@aha.chat/integration-active-campaign"
+import { integration as integrationDrip } from "@aha.chat/integration-drip"
 import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
 import { integration as integrationMailchimp } from "@aha.chat/integration-mailchimp"
 import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
@@ -12,6 +13,7 @@ export const integrations = {
   mailchimp: integrationMailchimp,
   zalo: integrationZalo,
   activeCampaign: integrationActiveCampaign,
+  drip: integrationDrip,
 }
 
 export type IntegrationKey = keyof typeof integrations

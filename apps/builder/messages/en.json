@@ -1214,6 +1214,25 @@
       "automationPlaceholder": "Select Automation"
     }
   },
+  "drip": {
+    "title": "Drip",
+    "setting": {
+      "label": "Drip",
+      "description": "This integration lets you save customers сontacts from your bot to Drip"
+    },
+    "dialog": {
+      "title": "Connect Drip",
+      "description": "Enter your API Token from your Drip account (Settings > API Tokens)"
+    },
+    "apiToken": {
+      "label": "API Token",
+      "placeholder": "Enter your API Token"
+    },
+    "error": {
+      "invalidCredentials": "Invalid API Token or no access to accounts",
+      "connectionFailed": "Connection failed. Please check your information."
+    }
+  },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",
     "name": "Spreadsheet Name",

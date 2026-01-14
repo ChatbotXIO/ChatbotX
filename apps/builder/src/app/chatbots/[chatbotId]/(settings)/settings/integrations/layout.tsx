@@ -17,6 +17,7 @@ type SettingIntegrationLayoutProps = {
   googleSheets: ReactNode
   mailchimp: ReactNode
   activeCampaign: ReactNode
+  drip: ReactNode
 }
 
 function SettingIntegrationLayoutContent({
@@ -25,6 +26,7 @@ function SettingIntegrationLayoutContent({
   googleSheets,
   mailchimp,
   activeCampaign,
+  drip,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
   const searchParams = useSearchParams()
@@ -60,6 +62,12 @@ function SettingIntegrationLayoutContent({
       keyName: t("activeCampaign.title"),
       icon: MailIcon,
       content: activeCampaign,
+    },
+    {
+      id: "drip",
+      keyName: t("drip.title"),
+      icon: MailIcon,
+      content: drip,
     },
   ]
 

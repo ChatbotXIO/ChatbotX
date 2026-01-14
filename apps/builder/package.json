@@ -16,6 +16,7 @@
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/integration-active-campaign": "workspace:*",
+    "@aha.chat/integration-drip": "workspace:*",
     "@aha.chat/integration-google-sheets": "workspace:*",
     "@aha.chat/integration-mailchimp": "workspace:*",
     "@aha.chat/integration-messenger": "workspace:*",

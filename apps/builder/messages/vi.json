@@ -1268,6 +1268,25 @@
       "automationPlaceholder": "Chọn tự động hóa"
     }
   },
+  "drip": {
+    "title": "Drip",
+    "setting": {
+      "label": "Drip",
+      "description": "Tích hợp này cho phép bạn lưu thông tin liên hệ của khách hàng từ bot vào Drip"
+    },
+    "dialog": {
+      "title": "Kết nối Drip",
+      "description": "Nhập API Token từ tài khoản Drip của bạn (Settings > API Tokens)"
+    },
+    "apiToken": {
+      "label": "API Token",
+      "placeholder": "Nhập API Token của bạn"
+    },
+    "error": {
+      "invalidCredentials": "API Token không hợp lệ hoặc không có quyền truy cập",
+      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin."
+    }
+  },
   "googleSheets": {
     "delete": {
       "dialog_title": "Xóa bảng tính"
