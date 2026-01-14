@@ -349,6 +349,9 @@ importers:
       '@aha.chat/integration-active-campaign':
         specifier: workspace:*
         version: link:../../integrations/active-campaign
+      '@aha.chat/integration-drip':
+        specifier: workspace:*
+        version: link:../../integrations/drip
       '@aha.chat/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets

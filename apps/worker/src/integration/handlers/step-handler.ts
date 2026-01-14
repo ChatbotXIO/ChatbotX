@@ -37,6 +37,7 @@ import {
   unassignConversation,
   unfollowConversation,
 } from "./conversation-handler"
+import { handleDripStep } from "./drip-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import {
   clearSpreadsheetRow,
@@ -199,6 +200,7 @@ export const flowStepHandlers: Record<
   [StepType.spreadsheetUpdateRow]: updateSpreadsheetRow,
   [StepType.mailchimpAddMember]: addMailchimpMember,
   [StepType.activeCampaign]: handleActiveCampaignStep,
+  [StepType.drip]: handleDripStep,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }
