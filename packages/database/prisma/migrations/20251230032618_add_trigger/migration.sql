@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS "TriggerContactHistory";
 DROP TABLE IF EXISTS "TriggerExecution";
 DROP TABLE IF EXISTS "Trigger";
 
-ALTER TYPE "FolderType" ADD VALUE 'trigger';
+ALTER TYPE "FolderType" ADD VALUE IF NOT EXISTS 'trigger';
 
 CREATE TABLE "Trigger" (
     "id" TEXT NOT NULL,
