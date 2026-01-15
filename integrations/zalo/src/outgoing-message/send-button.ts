@@ -7,11 +7,12 @@ import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../constants"
 import type { ButtonPayload } from "../schemas/webhook"
 
-export function getButtonTemplate(
-  flowId: string,
-  flowVersionId: string,
-  button: ButtonStepProps,
-): ButtonPayload {
+export function getButtonTemplate(props: {
+  flowId: string
+  flowVersionId?: string
+  button: ButtonStepProps
+}): ButtonPayload {
+  const { button } = props
   switch (button.buttonType) {
     case ButtonType.OpenWebsite:
       return {
@@ -26,23 +27,27 @@ export function getButtonTemplate(
         type: "oa.query.hide",
         title: button.label,
         payload: `postback_${encodeButtonPayload({
-          flowId,
-          flowVersionId,
+          flowId: props.flowId,
+          flowVersionId: props.flowVersionId,
           buttonId: button.id,
         })}`,
       }
   }
 }
 
-export function convertZaloButtons(
-  flowId: string,
-  flowVersionId: string,
-  buttons: ButtonStepProps[],
-): ButtonPayload[] | undefined {
-  const chunks = chunk(buttons, MAX_BUTTONS)
+export function convertZaloButtons(props: {
+  flowId: string
+  flowVersionId?: string
+  buttons: ButtonStepProps[]
+}): ButtonPayload[] | undefined {
+  const chunks = chunk(props.buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {
     return chunks[0].map((button) =>
-      getButtonTemplate(flowId, flowVersionId, button),
+      getButtonTemplate({
+        flowId: props.flowId,
+        flowVersionId: props.flowVersionId,
+        button,
+      }),
     )
   }
 }

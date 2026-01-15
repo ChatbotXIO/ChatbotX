@@ -1,11 +1,20 @@
-import { StepType } from "@aha.chat/flow-config"
+import {
+  type SendAudioStepSchema,
+  type SendCarouselStepSchema,
+  type SendFileStepSchema,
+  type SendImageStepSchema,
+  type SendQuickReplyStepSchema,
+  type SendTextStepSchema,
+  type SendVideoStepSchema,
+  StepType,
+} from "@aha.chat/flow-config"
 import {
   ContentType,
   type Context,
   type ConversationEntity,
   FileType,
   type MessageEntity,
-  type SendFlowStepData,
+  type SendFlowStepProps,
 } from "@aha.chat/sdk"
 import { sendMessage } from "../apis/page"
 import { logger } from "../lib/logger"
@@ -115,39 +124,48 @@ const buildMessagePayload = (
 }
 
 export async function* convertFlowStepToFacebookMessage(
-  auth: MessengerAuthValue,
-  flowId: string,
-  flowVersionId: string,
-  step: SendFlowStepData,
+  props: SendFlowStepProps<MessengerAuthValue>,
 ): AsyncGenerator<FacebookMessageAttachmentPayload | FacebookMessage> {
+  const { step } = props
+
   switch (step.stepType) {
     case StepType.sendText:
-      yield* convertFlowStepText(flowId, flowVersionId, step) as Generator<
-        FacebookMessageAttachmentPayload | FacebookMessage
-      >
+      yield* convertFlowStepText(
+        props as SendFlowStepProps<MessengerAuthValue, SendTextStepSchema>,
+      ) as Generator<FacebookMessageAttachmentPayload | FacebookMessage>
       break
     case StepType.sendImage:
     case StepType.sendVideo:
-      await (yield* convertFlowStepMedia(auth, flowId, flowVersionId, step))
+      await (yield* convertFlowStepMedia(
+        props as SendFlowStepProps<
+          MessengerAuthValue,
+          SendImageStepSchema | SendVideoStepSchema
+        >,
+      ))
       break
     case StepType.sendAudio:
     case StepType.sendFile:
-      await (yield* convertFlowStepFile(auth, step))
+      await (yield* convertFlowStepFile(
+        props as SendFlowStepProps<
+          MessengerAuthValue,
+          SendAudioStepSchema | SendFileStepSchema
+        >,
+      ))
       break
     case StepType.sendGif:
       yield* convertFlowStepGif(step.url) as Generator<FacebookMessage>
       break
     case StepType.sendQuickReply:
       yield* convertFlowStepQuickReply(
-        flowVersionId,
-        step,
+        props as SendFlowStepProps<
+          MessengerAuthValue,
+          SendQuickReplyStepSchema
+        >,
       ) as Generator<FacebookMessage>
       break
     case StepType.sendCarousel:
       yield* convertFlowStepCarousel(
-        flowId,
-        flowVersionId,
-        step,
+        props as SendFlowStepProps<MessengerAuthValue, SendCarouselStepSchema>,
       ) as Generator<FacebookMessage>
       break
     default:
@@ -156,18 +174,12 @@ export async function* convertFlowStepToFacebookMessage(
 }
 
 export const sendFlowStep = async (
-  ctx: Context<MessengerAuthValue>,
-  conversation: ConversationEntity,
-  flowId: string,
-  flowVersionId: string,
-  step: SendFlowStepData,
+  props: SendFlowStepProps<MessengerAuthValue>,
 ) => {
+  const { ctx, conversation, step } = props
   try {
     for await (const facebookMessage of convertFlowStepToFacebookMessage(
-      ctx.auth,
-      flowId,
-      flowVersionId,
-      step,
+      props,
     )) {
       await sendMessage(
         ctx.auth,

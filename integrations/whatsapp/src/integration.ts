@@ -36,14 +36,8 @@ const config: IntegrationDefinition<
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
     },
-    sendFlowStep: async ({
-      ctx,
-      flowId,
-      flowVersionId,
-      step,
-      conversation,
-    }) => {
-      await sendFlowStep(ctx, conversation, flowId, flowVersionId, step)
+    sendFlowStep: async (props) => {
+      await sendFlowStep(props)
     },
     listMessageTemplates: async ({ ctx }) =>
       await listMessageTemplates(ctx.auth),

@@ -2,6 +2,7 @@ import {
   encodeButtonPayload,
   type SendTextStepSchema,
 } from "@aha.chat/flow-config"
+import type { SendFlowStepProps } from "@aha.chat/sdk"
 import { chunk } from "remeda"
 import {
   ActionButtons,
@@ -10,23 +11,23 @@ import {
   Interactive,
   Text,
 } from "whatsapp-api-js/messages"
+import type { WhatsappAuthValue } from "../schemas"
 import { MAX_BUTTONS } from "./shared"
 
 export function* convertFlowStepText(
-  flowId: string,
-  flowVersionId: string,
-  payload: SendTextStepSchema,
+  props: SendFlowStepProps<WhatsappAuthValue, SendTextStepSchema>,
 ) {
-  if (payload.buttons.length === 0) {
-    yield new Text(payload.message)
+  const { step } = props
+  if (step.buttons.length === 0) {
+    yield new Text(step.message)
   } else {
-    const chunks = chunk(payload.buttons, MAX_BUTTONS)
+    const chunks = chunk(step.buttons, MAX_BUTTONS)
 
     for (const c1 of chunks) {
       const buttons = c1.map((button) => {
         const buttonId = encodeButtonPayload({
-          flowId,
-          flowVersionId,
+          flowId: props.flowId,
+          flowVersionId: props.flowVersionId,
           buttonId: button.id,
         })
         return new Button(buttonId, button.label)
@@ -34,7 +35,7 @@ export function* convertFlowStepText(
 
       yield new Interactive(
         new ActionButtons(...(buttons as [Button, ...Button[]])),
-        new Body(payload.message),
+        new Body(step.message),
       )
     }
   }

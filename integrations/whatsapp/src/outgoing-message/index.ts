@@ -1,11 +1,15 @@
-import { StepType } from "@aha.chat/flow-config"
+import {
+  type SendImageStepSchema,
+  type SendTextStepSchema,
+  StepType,
+} from "@aha.chat/flow-config"
 import {
   ContentType,
   type Context,
   type ConversationEntity,
   FileType,
   type MessageEntity,
-  type SendFlowStepData,
+  type SendFlowStepProps,
 } from "@aha.chat/sdk"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
 import type {
@@ -49,16 +53,19 @@ export function* convertMessageToWhatsappMessage(
 }
 
 export function* convertFlowStepToWhatsappMessage(
-  flowId: string,
-  flowVersionId: string,
-  step: SendFlowStepData,
+  props: SendFlowStepProps<WhatsappAuthValue>,
 ) {
+  const { step } = props
   switch (step.stepType) {
     case StepType.sendText:
-      yield* convertFlowStepText(flowId, flowVersionId, step)
+      yield* convertFlowStepText(
+        props as SendFlowStepProps<WhatsappAuthValue, SendTextStepSchema>,
+      )
       break
     case StepType.sendImage:
-      yield* convertFlowStepImage(flowId, flowVersionId, step)
+      yield* convertFlowStepImage(
+        props as SendFlowStepProps<WhatsappAuthValue, SendImageStepSchema>,
+      )
       break
     default:
       break
@@ -116,20 +123,13 @@ export const sendOutgoingMessage = async (
 }
 
 export const sendFlowStep = async (
-  ctx: Context<WhatsappAuthValue>,
-  conversation: ConversationEntity,
-  flowId: string,
-  flowVersionId: string,
-  step: SendFlowStepData,
+  props: SendFlowStepProps<WhatsappAuthValue>,
 ) => {
+  const { ctx, conversation, step } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   try {
-    for (const whatsappMessage of convertFlowStepToWhatsappMessage(
-      flowId,
-      flowVersionId,
-      step,
-    )) {
+    for (const whatsappMessage of convertFlowStepToWhatsappMessage(props)) {
       if (!whatsappMessage) {
         logger.error("Unable to parse outgoing message", step)
         continue

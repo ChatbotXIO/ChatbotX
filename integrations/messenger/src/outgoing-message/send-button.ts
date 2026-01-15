@@ -36,11 +36,15 @@ export function getButtonTemplate(props: {
   }
 }
 
-export function convertFacebookButtons(
-  flowId: string,
-  flowVersionId: string,
-  buttons: ButtonStepProps[],
-): FacebookButton[] | undefined {
+export function convertFacebookButtons({
+  flowId,
+  flowVersionId,
+  buttons,
+}: {
+  flowId: string
+  flowVersionId?: string
+  buttons: ButtonStepProps[]
+}): FacebookButton[] | undefined {
   const chunks = chunk(buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {
     return chunks[0].map((button) =>

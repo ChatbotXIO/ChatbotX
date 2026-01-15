@@ -1,15 +1,17 @@
 import type { SendCarouselStepSchema } from "@aha.chat/flow-config"
+import type { SendFlowStepProps } from "@aha.chat/sdk"
 import { chunk } from "remeda"
+import type { MessengerAuthValue } from "../schemas"
 import { getButtonTemplate } from "./send-button"
 
 const MAX_CAROUSEL_ELEMENTS = 10
 
 export function* convertFlowStepCarousel(
-  flowId: string,
-  flowVersionId: string,
-  payload: SendCarouselStepSchema,
+  props: SendFlowStepProps<MessengerAuthValue, SendCarouselStepSchema>,
 ) {
-  const chunks = chunk(payload.cards, MAX_CAROUSEL_ELEMENTS)
+  const { step } = props
+
+  const chunks = chunk(step.cards, MAX_CAROUSEL_ELEMENTS)
   for (const chunk of chunks) {
     yield {
       attachment: {
@@ -23,7 +25,11 @@ export function* convertFlowStepCarousel(
             buttons:
               "buttons" in card && card.buttons.length > 0
                 ? card.buttons.map((button) =>
-                    getButtonTemplate({ flowId, flowVersionId, button }),
+                    getButtonTemplate({
+                      flowId: props.flowId,
+                      flowVersionId: props.flowVersionId,
+                      button,
+                    }),
                   )
                 : undefined,
           })),

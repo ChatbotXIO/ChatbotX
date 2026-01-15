@@ -76,9 +76,10 @@ export const parseIncomingMessage = async ({
     sourceId,
     conversationAttributes: {},
     contact: {
-      sourceId: messaging.message?.is_echo
-        ? messaging.recipient.id
-        : messaging.sender.id,
+      sourceId:
+        message.messageType === MessageType.outgoing
+          ? messaging.recipient.id
+          : messaging.sender.id,
     },
   }
 
@@ -104,9 +105,10 @@ const getMessageEntity = async (
   if (messaging.message) {
     message = {
       sourceId: messaging.message.mid,
-      messageType: messaging.message.is_echo
-        ? MessageType.outgoing
-        : MessageType.incoming,
+      messageType:
+        messaging.sender.id === ctx.auth.metadata.pageId
+          ? MessageType.outgoing
+          : MessageType.incoming,
       content: messaging.message.text,
       contentType: ContentType.text,
       attachments: await getMessageAttachments(ctx, messaging.message),

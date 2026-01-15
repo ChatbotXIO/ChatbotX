@@ -2,6 +2,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  type SendFlowStepProps,
 } from "@aha.chat/sdk"
 import { getUserProfile } from "./apis/user"
 import { MessengerAPIException } from "./exception"
@@ -26,14 +27,8 @@ const config: IntegrationDefinition<
     sendMessage: async ({ ctx, message, conversation }) => {
       await sendOutgoingMessage(ctx, conversation, message)
     },
-    sendFlowStep: async ({
-      ctx,
-      flowId,
-      flowVersionId,
-      step,
-      conversation,
-    }) => {
-      await sendFlowStep(ctx, conversation, flowId, flowVersionId, step)
+    sendFlowStep: async (props: SendFlowStepProps<MessengerAuthValue>) => {
+      await sendFlowStep(props)
     },
     getUserProfile: async ({ ctx, psid }) =>
       await getUserProfile({ ctx, psid }),

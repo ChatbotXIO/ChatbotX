@@ -6,6 +6,7 @@ import {
   InboxType,
   type IntegrationType,
   type MessageModel,
+  MessageType,
   SenderType,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
@@ -44,6 +45,7 @@ export const receiveMessage = async ({
     auth: auth as AuthValue,
     uploader,
   }
+
   const parsedMessage = await allIntegrations[
     integrationType as IntegrationType
   ]?.actions.receiveMessage({
@@ -134,10 +136,14 @@ export const receiveMessage = async ({
       create: {
         conversationId: newConversation.id,
         inboxId,
-        senderType: SenderType.contact,
+        senderType:
+          message.messageType === MessageType.outgoing
+            ? SenderType.user
+            : SenderType.contact,
         chatbotId,
         sourceId: message.sourceId ?? "",
-        senderId: newContact.id,
+        senderId:
+          message.messageType === MessageType.outgoing ? null : newContact.id,
         messageType: message.messageType,
         content: message.content,
         contentType: message.contentType as ContentType,
