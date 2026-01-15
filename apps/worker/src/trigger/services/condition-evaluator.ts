@@ -2,6 +2,8 @@ import { prisma } from "@aha.chat/database"
 import { TriggerCondition as TriggerConditionEnum } from "@aha.chat/database/enums"
 import type { ConditionEvaluationContext } from "../types"
 
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
+
 export class ConditionEvaluator {
   async evaluate(context: ConditionEvaluationContext): Promise<boolean> {
     const { condition, eventData, chatbotId, contactId } = context
@@ -154,34 +156,70 @@ export class ConditionEvaluator {
       return false
     }
 
-    const fieldValue = contactCustomField.value
+    const customFieldValue = contactCustomField.value as string
 
     const config = triggerConfig as {
       triggerType?: string
       timeValue?: number
       timeType?: string
+      at?: string
     }
 
-    const { triggerType, timeValue, timeType } = config
+    const { triggerType, timeValue, timeType, at } = config
 
-    if (!(triggerType && timeValue && timeType)) {
+    if (!triggerType) {
       return false
     }
 
-    const targetDate = new Date(fieldValue as string)
-    const now = new Date()
-    let triggerTime = targetDate
+    const isDateOnly = DATE_ONLY_REGEX.test(customFieldValue.trim())
+    let targetDate: Date
 
-    const timeInMs = this.convertToMilliseconds(timeValue, timeType)
-
-    if (triggerType === "before") {
-      triggerTime = new Date(targetDate.getTime() - timeInMs)
-    } else if (triggerType === "after") {
-      triggerTime = new Date(targetDate.getTime() + timeInMs)
+    if (isDateOnly) {
+      targetDate = new Date(customFieldValue)
+      targetDate.setHours(23, 59, 59, 999)
+    } else {
+      targetDate = new Date(customFieldValue)
     }
 
-    const diff = Math.abs(now.getTime() - triggerTime.getTime())
-    return diff < 60_000
+    const now = new Date()
+
+    if (triggerType === "before") {
+      if (!(timeValue && timeType)) {
+        return false
+      }
+      const timeInMs = this.convertToMilliseconds(timeValue, timeType)
+      const triggerTime = new Date(targetDate.getTime() - timeInMs)
+      return now <= triggerTime
+    }
+
+    if (triggerType === "after") {
+      if (!(timeValue && timeType)) {
+        return false
+      }
+      const timeInMs = this.convertToMilliseconds(timeValue, timeType)
+      const triggerTime = new Date(targetDate.getTime() + timeInMs)
+      return now >= triggerTime
+    }
+
+    if (triggerType === "atTheDayOf") {
+      const isSameDay =
+        now.getFullYear() === targetDate.getFullYear() &&
+        now.getMonth() === targetDate.getMonth() &&
+        now.getDate() === targetDate.getDate()
+
+      if (!isSameDay) {
+        return false
+      }
+
+      const targetHour = at ? Number.parseInt(at, 10) : 9
+      const currentMinutes = now.getHours() * 60 + now.getMinutes()
+      const targetMinutes = targetHour * 60
+      const diffInMinutes = Math.abs(currentMinutes - targetMinutes)
+
+      return diffInMinutes <= 30
+    }
+
+    return false
   }
 
   private convertToMilliseconds(value: number, type: string): number {

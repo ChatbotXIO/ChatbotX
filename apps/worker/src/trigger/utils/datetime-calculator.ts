@@ -79,8 +79,8 @@ export function matchesDateTimeCondition(
 
       const toleranceByUnit = {
         minutes: 1,
-        hours: 30,
-        days: 60 * 2,
+        hours: 5,
+        days: 30,
       }
 
       const tolerance = toleranceByUnit[condition.unit] || 1
