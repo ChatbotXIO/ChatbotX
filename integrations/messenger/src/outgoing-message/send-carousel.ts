@@ -23,7 +23,7 @@ export function* convertFlowStepCarousel(
             buttons:
               "buttons" in card && card.buttons.length > 0
                 ? card.buttons.map((button) =>
-                    getButtonTemplate(flowId, flowVersionId, button),
+                    getButtonTemplate({ flowId, flowVersionId, button }),
                   )
                 : undefined,
           })),

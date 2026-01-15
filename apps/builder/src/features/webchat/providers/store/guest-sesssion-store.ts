@@ -170,6 +170,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
               chatbotId: config.chatbotId,
               guestConversationId,
               clientId: newMessage.clientId,
+              webchatId: config.id,
             } as CreateWebchatMessageRequest,
           })
         }

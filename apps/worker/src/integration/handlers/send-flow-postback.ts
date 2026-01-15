@@ -91,13 +91,14 @@ export async function sendFlowPostback(
     return
   }
 
-  await runStepsAndQuickReplies(
+  await runStepsAndQuickReplies({
     conversation,
     flowVersion,
-    foundedButton,
-    foundedButton.id,
-    false,
-  )
+    useLatestFlowVersion: true,
+    nodeDetail: foundedButton,
+    nodeIdOrButtonId: foundedButton.id,
+    triggerNextNode: false,
+  })
 }
 
 export async function sendFlowQuickReply(
@@ -129,10 +130,12 @@ export async function sendFlowQuickReply(
     return
   }
 
-  await runStepsAndQuickReplies(
+  await runStepsAndQuickReplies({
     conversation,
     flowVersion,
-    foundedButton,
-    foundedButton.id,
-  )
+    useLatestFlowVersion: true,
+    nodeDetail: foundedButton,
+    nodeIdOrButtonId: foundedButton.id,
+    triggerNextNode: false,
+  })
 }

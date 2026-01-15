@@ -375,17 +375,17 @@ const sendFlow = async (
   >,
   isSuccess: boolean,
 ) => {
-  const currentFlow = await prisma.flowVersion.findFirst({
+  const currentFlowVersion = await prisma.flowVersion.findFirst({
     where: {
       id: flowVersionId,
       chatbotId: conversation.chatbotId,
     },
   })
-  if (!currentFlow) {
+  if (!currentFlowVersion) {
     throw new SdkException("FlowVersion not found")
   }
 
-  const edges = currentFlow.edges || []
+  const edges = currentFlowVersion.edges || []
   const nodeId: string | undefined = isSuccess
     ? step.successNodeId
     : step.errorNodeId
@@ -398,8 +398,8 @@ const sendFlow = async (
       type: IntegrationJobAction.sendFlow,
       data: {
         conversationId: conversation.id,
-        flowId: currentFlow.id,
-        flowVersionId,
+        flowId: currentFlowVersion.flowId,
+        flowVersionId: currentFlowVersion.id,
         nodeId: foundEdge.target,
       },
     })
