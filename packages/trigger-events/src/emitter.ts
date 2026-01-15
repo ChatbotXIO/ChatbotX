@@ -1,6 +1,7 @@
 import { TriggerCondition } from "@aha.chat/database/enums"
 import { triggerQueue } from "@aha.chat/worker-config"
 import { hasActiveTriggers } from "./cache"
+import { isWorkerContext } from "./context"
 import type { TriggerEventType } from "./types"
 
 const SUPPORTED_EVENT_TYPES: Set<TriggerEventType> = new Set([
@@ -28,8 +29,14 @@ export async function emit(
   },
 ) {
   const { chatbotId, contactId, metadata = {} } = data
+  console.log({ chatbotId, contactId, metadata, eventType })
 
   if (!(chatbotId && contactId)) {
+    return
+  }
+
+  if (isWorkerContext()) {
+    console.log("Skipping emit from worker context to prevent loop")
     return
   }
 
@@ -40,6 +47,8 @@ export async function emit(
   const sourceId = metadata.sourceId as string | undefined
   const shouldEmit = await hasActiveTriggers(chatbotId, [eventType], sourceId)
 
+  console.log({ shouldEmit })
+
   if (!shouldEmit) {
     return
   }
@@ -47,7 +56,7 @@ export async function emit(
   await triggerQueue.add(
     "evaluate-triggers",
     {
-      type: "evaluateTriggers",
+      type: "evaluateTriggers" as const,
       data: {
         chatbotId,
         contactId,

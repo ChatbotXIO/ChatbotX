@@ -34,6 +34,8 @@ export class ConditionEvaluator {
       case TriggerConditionEnum.conversationUnassigned:
       case TriggerConditionEnum.subscribedToSequence:
       case TriggerConditionEnum.unsubscribedFromSequence:
+      case TriggerConditionEnum.contactReferredANewContact:
+      case TriggerConditionEnum.contactReferredExistingContact:
         return true
 
       case TriggerConditionEnum.dateTimeBasedTrigger:
@@ -98,30 +100,33 @@ export class ConditionEvaluator {
         : expectedValue
 
     switch (operator) {
-      case "1": // is
+      case "is":
         return actualValue === expected
-      case "2": // isNot
+      case "isNot":
         return actualValue !== expected
-      case "3": // hasAnyValue
+      case "hasAnyValue":
         return actualValue != null && actualValue !== ""
-      case "4": // hasNoValue
+      case "hasNoValue":
         return actualValue == null || actualValue === ""
-      case "5": // greaterThan
+      case "gt":
         return Number(actualValue) > Number(expected)
-      case "6": // lessThan
+      case "lt":
         return Number(actualValue) < Number(expected)
-      case "7": // greaterThanOrEqualTo
+      case "gte":
         return Number(actualValue) >= Number(expected)
-      case "8": // lessThanOrEqualTo
+      case "lte":
         return Number(actualValue) <= Number(expected)
-      case "9": // contains
+      case "contains":
         return String(actualValue).includes(String(expected))
-      case "10": // doesNotContain
+      case "doesNotContain":
         return !String(actualValue).includes(String(expected))
-      case "11": // startsWith
+      case "startsWith":
         return String(actualValue).startsWith(String(expected))
-      case "12": // endsWith
+      case "endsWith":
         return String(actualValue).endsWith(String(expected))
+      case "interval":
+      case "notInterval":
+        return false
       default:
         return false
     }

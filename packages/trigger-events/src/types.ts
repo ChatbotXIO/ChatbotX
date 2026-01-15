@@ -8,4 +8,5 @@ export type TriggerEventData = {
   eventType: TriggerEventType
   metadata: Record<string, unknown>
   timestamp: Date
+  source?: string
 }

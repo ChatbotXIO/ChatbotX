@@ -10,6 +10,7 @@ export type TriggerEventData = {
   eventType: number
   eventData: Record<string, unknown>
   timestamp: Date
+  source?: string
 }
 
 export type ConditionEvaluationContext = {

@@ -17,6 +17,7 @@ export type TriggerEvent = {
   eventType: number
   eventData: Record<string, unknown>
   timestamp: Date
+  source?: string
 }
 
 export type TriggerJobExecute = {

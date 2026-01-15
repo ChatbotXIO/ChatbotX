@@ -80,7 +80,6 @@ END $$;
 CREATE UNIQUE INDEX "TriggerStats_triggerId_date_key" ON "TriggerStats"("triggerId", "date");
 CREATE INDEX "TriggerStats_triggerId_date_idx" ON "TriggerStats"("triggerId", "date");
 CREATE INDEX "TriggerStats_chatbotId_date_idx" ON "TriggerStats"("chatbotId", "date");
-CREATE UNIQUE INDEX "TriggerContactHistory_triggerId_contactId_key" ON "TriggerContactHistory"("triggerId", "contactId");
 CREATE INDEX "TriggerContactHistory_triggerId_contactId_idx" ON "TriggerContactHistory"("triggerId", "contactId");
 CREATE INDEX "TriggerContactHistory_contactId_idx" ON "TriggerContactHistory"("contactId");
 CREATE INDEX "TriggerContactHistory_chatbotId_idx" ON "TriggerContactHistory"("chatbotId");
@@ -102,7 +101,6 @@ CREATE TABLE "TriggerExecution" (
     CONSTRAINT "TriggerExecution_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "TriggerExecution_triggerId_contactId_key" ON "TriggerExecution"("triggerId", "contactId");
 CREATE INDEX "TriggerExecution_triggerId_contactId_idx" ON "TriggerExecution"("triggerId", "contactId");
 CREATE INDEX "TriggerExecution_chatbotId_idx" ON "TriggerExecution"("chatbotId");
 
