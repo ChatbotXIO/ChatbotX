@@ -81,7 +81,7 @@ const RenderAttachments = (props: { message: MessageResource }) => {
             return (
               <Image
                 alt={attachment.name || "Attachment"}
-                className="rounded-xl"
+                className="max-w-80 rounded-xl"
                 height={attachment.height || 0}
                 key={attachment.id}
                 src={attachment.url}

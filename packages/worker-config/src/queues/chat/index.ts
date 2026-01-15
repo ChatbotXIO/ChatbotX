@@ -2,6 +2,8 @@ import type {
   SendAudioStepSchema,
   SendCardStepSchema,
   SendCarouselStepSchema,
+  SendFileStepSchema,
+  SendGifStepSchema,
   SendImageStepSchema,
   SendQuickReplyStepSchema,
   SendTextStepSchema,
@@ -38,6 +40,8 @@ export type ChatJobSendFlowStep = {
     step:
       | SendTextStepSchema
       | SendImageStepSchema
+      | SendGifStepSchema
+      | SendFileStepSchema
       | SendVideoStepSchema
       | SendAudioStepSchema
       | SendCardStepSchema

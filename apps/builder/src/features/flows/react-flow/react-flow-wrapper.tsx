@@ -14,7 +14,6 @@ import {
   type Edge,
   type FinalConnectionState,
   MarkerType,
-  MiniMap,
   type Node,
   Panel,
   ReactFlow,
@@ -336,7 +335,7 @@ export function ReactFlowWrapper({
       onPaneClick={handlePaneClick}
       proOptions={{ hideAttribution: true }}
     >
-      <MiniMap />
+      {/* <MiniMap /> */}
       <Background />
       <Panel position="bottom-center">
         <Controls

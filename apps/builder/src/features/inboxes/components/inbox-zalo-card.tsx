@@ -76,6 +76,8 @@ function ZaloQRCodeDiaglog({ oaId }: { oaId: string }) {
             <Link
               className="text-sky-600 no-underline hover:underline dark:text-sky-400"
               href={zaloUrl}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {zaloUrl}
             </Link>

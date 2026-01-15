@@ -83,6 +83,8 @@ function MessengerQRCodeDiaglog({ pageId }: { pageId: string }) {
             <Link
               className="text-sky-600 no-underline hover:underline dark:text-sky-400"
               href={messengerUrl}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {messengerUrl}
             </Link>

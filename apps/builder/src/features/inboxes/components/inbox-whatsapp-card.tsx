@@ -96,6 +96,8 @@ function WhatsappQRCodeDialog({
             <Link
               className="text-sky-600 no-underline hover:underline dark:text-sky-400"
               href={wabaUrl}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {wabaUrl}
             </Link>
