@@ -5,10 +5,10 @@ export type DateTimeOperator = "before" | "after" | "atTheDayOf"
 export type DateTimeUnit = "minutes" | "hours" | "days"
 
 export interface DateTimeCondition {
-  operator: DateTimeOperator
-  value?: number
-  unit?: DateTimeUnit
-  at?: string // Hour of day (0-23) for atTheDayOf
+  triggerType: DateTimeOperator
+  timeValue?: number
+  timeType?: DateTimeUnit
+  at?: string
   customFieldId: string
 }
 
@@ -20,32 +20,32 @@ export type DateTimeTriggerValue = {
 }
 
 export function calculateTargetDateTime(
-  operator: DateTimeOperator,
-  value: number,
-  unit: DateTimeUnit,
+  triggerType: DateTimeOperator,
+  timeValue: number,
+  timeType: DateTimeUnit,
   referenceDate: Date = new Date(),
 ): Date {
-  if (operator === "atTheDayOf") {
+  if (triggerType === "atTheDayOf") {
     return referenceDate
   }
 
-  const absValue = Math.abs(value)
+  const absValue = Math.abs(timeValue)
 
-  if (operator === "before") {
-    if (unit === "minutes") {
+  if (triggerType === "before") {
+    if (timeType === "minutes") {
       return subHours(referenceDate, absValue / 60)
     }
-    if (unit === "hours") {
+    if (timeType === "hours") {
       return subHours(referenceDate, absValue)
     }
     return subDays(referenceDate, absValue)
   }
 
-  if (operator === "after") {
-    if (unit === "minutes") {
+  if (triggerType === "after") {
+    if (timeType === "minutes") {
       return addHours(referenceDate, absValue / 60)
     }
-    if (unit === "hours") {
+    if (timeType === "hours") {
       return addHours(referenceDate, absValue)
     }
     return addDays(referenceDate, absValue)
@@ -57,25 +57,27 @@ export function calculateTargetDateTime(
 export function matchesDateTimeCondition(
   datetimeValue: Date,
   condition: DateTimeCondition,
+  params: { startOfMinute: number },
+  timezone = "UTC",
 ): boolean {
-  const now = new Date()
+  const nowUTC = new Date(params.startOfMinute)
+  const now = new Date(nowUTC.toLocaleString("en-US", { timeZone: timezone }))
 
-  switch (condition.operator) {
+  switch (condition.triggerType) {
     case "before":
     case "after": {
-      if (!(condition.value && condition.unit)) {
+      if (!(condition.timeValue && condition.timeType)) {
         return false
       }
 
       const targetDate = calculateTargetDateTime(
-        condition.operator,
-        condition.value,
-        condition.unit,
+        condition.triggerType,
+        condition.timeValue,
+        condition.timeType,
         datetimeValue,
       )
 
-      const diffInMinutes =
-        Math.abs(now.getTime() - targetDate.getTime()) / (1000 * 60)
+      const diffInMinutes = (now.getTime() - targetDate.getTime()) / (1000 * 60)
 
       const toleranceByUnit = {
         minutes: 1,
@@ -83,11 +85,22 @@ export function matchesDateTimeCondition(
         days: 30,
       }
 
-      const tolerance = toleranceByUnit[condition.unit] || 1
+      const tolerance = toleranceByUnit[condition.timeType] || 1
+
       return diffInMinutes <= tolerance
     }
     case "atTheDayOf": {
-      const targetHour = condition.at ? Number.parseInt(condition.at, 10) : 9
+      let at = condition.at || ""
+
+      if (
+        condition.at === "" ||
+        condition.at === null ||
+        condition.at === undefined
+      ) {
+        at = datetimeValue.getHours().toString()
+      }
+
+      const targetHour = Number.parseInt(at, 10)
 
       const isSameDay =
         now.getFullYear() === datetimeValue.getFullYear() &&
@@ -98,21 +111,20 @@ export function matchesDateTimeCondition(
         return false
       }
 
-      const currentMinutes = now.getHours() * 60 + now.getMinutes()
-      const targetMinutes = targetHour * 60
-      const diffInMinutes = Math.abs(currentMinutes - targetMinutes)
-
-      return diffInMinutes <= 30
+      const currentHour = now.getHours()
+      return currentHour === targetHour
     }
     default:
       return false
   }
 }
 
-const TIMEZONE_REGEX = /Z|[+-]\d{2}:\d{2}$/
 const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
-export function parseDateTimeValue(value: unknown): Date | null {
+export function parseDateTimeValue(
+  value: unknown,
+  timezone = "UTC",
+): Date | null {
   if (!value) {
     return null
   }
@@ -122,18 +134,22 @@ export function parseDateTimeValue(value: unknown): Date | null {
   }
 
   if (typeof value === "string") {
-    let dateString = value.trim()
+    const dateString = value.trim()
 
-    if (!TIMEZONE_REGEX.test(dateString)) {
-      if (DATE_ONLY_REGEX.test(dateString)) {
-        dateString = `${dateString}T00:00:00Z`
-      } else if (!dateString.endsWith("Z")) {
-        dateString = `${dateString}Z`
-      }
+    if (DATE_ONLY_REGEX.test(dateString)) {
+      const dateTimeStr = `${dateString} 00:00:00`
+      return new Date(
+        new Date(dateTimeStr).toLocaleString("en-US", {
+          timeZone: timezone,
+        }),
+      )
     }
 
-    const parsed = new Date(dateString)
-    return Number.isNaN(parsed.getTime()) ? null : parsed
+    return new Date(
+      new Date(dateString).toLocaleString("en-US", {
+        timeZone: timezone,
+      }),
+    )
   }
 
   if (typeof value === "number") {

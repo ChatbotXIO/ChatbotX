@@ -1,5 +1,6 @@
 import { prisma } from "@aha.chat/database"
 import { TriggerCondition as TriggerConditionEnum } from "@aha.chat/database/enums"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import type { TriggerEventData, TriggerWithConditions } from "../types"
 import { ConditionEvaluator } from "./condition-evaluator"
 
@@ -38,12 +39,22 @@ export class TriggerMatcherService {
       },
     })
 
-    if (triggers.length === 0) {
+    const chatbot = await prisma.chatbot.findUnique({
+      where: {
+        id: chatbotId,
+      },
+    })
+
+    if (triggers.length === 0 || !chatbot) {
       return []
     }
 
     const evaluationPromises = triggers.map(async (trigger) => {
-      const isMatch = await this.evaluateTriggerConditions(trigger, eventData)
+      const isMatch = await this.evaluateTriggerConditions(
+        trigger,
+        eventData,
+        chatbot,
+      )
       return isMatch ? trigger : null
     })
 
@@ -55,6 +66,7 @@ export class TriggerMatcherService {
   private async evaluateTriggerConditions(
     trigger: TriggerWithConditions,
     eventData: TriggerEventData,
+    chatbot: ChatbotModel,
   ): Promise<boolean> {
     const { conditions } = trigger
 
@@ -68,6 +80,7 @@ export class TriggerMatcherService {
         eventData,
         chatbotId: trigger.chatbotId,
         contactId: eventData.contactId,
+        chatbot,
       })
 
       if (!isMatch) {

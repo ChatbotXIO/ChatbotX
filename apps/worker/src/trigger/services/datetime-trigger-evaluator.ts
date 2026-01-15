@@ -24,6 +24,7 @@ interface TriggerMap {
     chatbotId: string
     actions: unknown
     conditions: DateTimeCondition[]
+    timezone: string
   }
 }
 
@@ -46,6 +47,7 @@ async function fetchTriggerChunk(
           type: TriggerCondition.dateTimeBasedTrigger,
         },
       },
+      chatbot: true,
     },
     take: chunkSize,
     ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
@@ -68,9 +70,9 @@ async function fetchTriggerChunk(
       }
 
       conditions.push({
-        operator: triggerValue.triggerType as DateTimeOperator,
-        value: triggerValue.timeValue,
-        unit: triggerValue.timeType,
+        triggerType: triggerValue.triggerType as DateTimeOperator,
+        timeValue: triggerValue.timeValue,
+        timeType: triggerValue.timeType,
         at: triggerValue.at,
         customFieldId: condition.sourceId,
       })
@@ -82,6 +84,7 @@ async function fetchTriggerChunk(
         chatbotId: trigger.chatbotId,
         actions: trigger.actions,
         conditions,
+        timezone: trigger.chatbot?.accountTimezone || "UTC",
       }
     }
   }
@@ -152,16 +155,27 @@ function filterContactsWithAllCustomFields(
 function evaluateContactForTrigger(
   triggerInfo: TriggerMap[string],
   customFieldValues: Map<string, unknown>,
+  params: {
+    startOfMinute: number
+  },
 ): boolean {
+  const timezone = triggerInfo.timezone
+
   for (const condition of triggerInfo.conditions) {
     const customFieldValue = customFieldValues.get(condition.customFieldId)
 
-    const datetimeValue = parseDateTimeValue(customFieldValue)
+    const datetimeValue = parseDateTimeValue(customFieldValue, timezone)
+    console.log({ datetimeValue, triggerId: triggerInfo.triggerId })
     if (!datetimeValue) {
       return false
     }
 
-    const matches = matchesDateTimeCondition(datetimeValue, condition)
+    const matches = matchesDateTimeCondition(
+      datetimeValue,
+      condition,
+      params,
+      timezone,
+    )
     if (!matches) {
       return false
     }
@@ -233,6 +247,9 @@ async function processContactBatch(
   allCustomFieldIds: Set<string>,
   skip: number,
   batchSize: number,
+  params: {
+    startOfMinute: number
+  },
 ): Promise<{ results: DateTimeTriggerResult[]; hasMore: boolean }> {
   const contactCustomFields = await prisma.contactCustomField.findMany({
     where: {
@@ -280,6 +297,9 @@ async function processContactBatch(
       const allConditionsMatch = evaluateContactForTrigger(
         triggerInfo,
         customFieldValues,
+        {
+          startOfMinute: params.startOfMinute,
+        },
       )
 
       if (allConditionsMatch) {
@@ -298,6 +318,9 @@ async function processContactBatch(
 
 async function processTriggerChunk(
   triggerMap: TriggerMap,
+  params: {
+    startOfMinute: number
+  },
 ): Promise<DateTimeTriggerResult[]> {
   const triggerIds = Object.keys(triggerMap)
   const allCustomFieldIds = extractCustomFieldIds(triggerMap)
@@ -314,6 +337,7 @@ async function processTriggerChunk(
       allCustomFieldIds,
       skip,
       CONTACT_BATCH_SIZE,
+      params,
     )
 
     results.push(...batchResults)
@@ -324,9 +348,9 @@ async function processTriggerChunk(
   return results
 }
 
-export async function evaluateDateTimeTriggers(): Promise<
-  DateTimeTriggerResult[]
-> {
+export async function evaluateDateTimeTriggers(params: {
+  startOfMinute: number
+}): Promise<DateTimeTriggerResult[]> {
   const TRIGGER_CHUNK_SIZE = 100
   const allResults: DateTimeTriggerResult[] = []
   let triggerCursor: string | undefined
@@ -348,7 +372,7 @@ export async function evaluateDateTimeTriggers(): Promise<
       `Processing ${triggerIds.length} triggers (total: ${triggerCount})`,
     )
 
-    const results = await processTriggerChunk(triggerMap)
+    const results = await processTriggerChunk(triggerMap, params)
     allResults.push(...results)
 
     if (!nextCursor) {

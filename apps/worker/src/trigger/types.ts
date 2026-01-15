@@ -1,4 +1,5 @@
 import type { Prisma } from "@aha.chat/database"
+import type { ChatbotModel } from "@aha.chat/database/types"
 
 export type TriggerWithConditions = Prisma.TriggerGetPayload<{
   include: { conditions: true }
@@ -18,6 +19,7 @@ export type ConditionEvaluationContext = {
   eventData: TriggerEventData
   chatbotId: string
   contactId: string
+  chatbot: ChatbotModel
 }
 
 export type ActionExecutionContext = {

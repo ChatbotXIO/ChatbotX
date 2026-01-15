@@ -1,12 +1,13 @@
 import { prisma } from "@aha.chat/database"
 import { TriggerCondition as TriggerConditionEnum } from "@aha.chat/database/enums"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import type { ConditionEvaluationContext } from "../types"
 
 const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
 export class ConditionEvaluator {
   async evaluate(context: ConditionEvaluationContext): Promise<boolean> {
-    const { condition, eventData, chatbotId, contactId } = context
+    const { condition, eventData, chatbotId, contactId, chatbot } = context
     const { type, sourceId, operator, value } = condition
 
     switch (type) {
@@ -46,6 +47,7 @@ export class ConditionEvaluator {
           value,
           chatbotId,
           contactId,
+          chatbot,
         )
 
       default:
@@ -139,6 +141,7 @@ export class ConditionEvaluator {
     triggerConfig: unknown,
     _chatbotId: string,
     contactId: string,
+    chatbot: ChatbotModel,
   ): Promise<boolean> {
     if (!(customFieldId && triggerConfig)) {
       return false
@@ -171,17 +174,32 @@ export class ConditionEvaluator {
       return false
     }
 
+    const timezone = chatbot?.accountTimezone || "UTC"
+
     const isDateOnly = DATE_ONLY_REGEX.test(customFieldValue.trim())
     let targetDate: Date
 
     if (isDateOnly) {
-      targetDate = new Date(customFieldValue)
-      targetDate.setHours(23, 59, 59, 999)
+      const dateTimeStr = `${customFieldValue} 23:59:59.999`
+      targetDate = new Date(
+        new Date(dateTimeStr).toLocaleString("en-US", {
+          timeZone: timezone,
+        }),
+      )
     } else {
-      targetDate = new Date(customFieldValue)
+      targetDate = new Date(
+        new Date(customFieldValue).toLocaleString("en-US", {
+          timeZone: timezone,
+        }),
+      )
     }
 
-    const now = new Date()
+    const nowUTC = new Date()
+    const nowInTimezone = new Date(
+      nowUTC.toLocaleString("en-US", { timeZone: timezone }),
+    )
+
+    const now = nowInTimezone
 
     if (triggerType === "before") {
       if (!(timeValue && timeType)) {
@@ -189,6 +207,7 @@ export class ConditionEvaluator {
       }
       const timeInMs = this.convertToMilliseconds(timeValue, timeType)
       const triggerTime = new Date(targetDate.getTime() - timeInMs)
+
       return now <= triggerTime
     }
 
@@ -198,10 +217,17 @@ export class ConditionEvaluator {
       }
       const timeInMs = this.convertToMilliseconds(timeValue, timeType)
       const triggerTime = new Date(targetDate.getTime() + timeInMs)
+
       return now >= triggerTime
     }
 
     if (triggerType === "atTheDayOf") {
+      let targetAt = at || ""
+
+      if (targetAt === "" || targetAt === null || targetAt === undefined) {
+        targetAt = targetDate.getHours().toString()
+      }
+
       const isSameDay =
         now.getFullYear() === targetDate.getFullYear() &&
         now.getMonth() === targetDate.getMonth() &&
@@ -211,12 +237,10 @@ export class ConditionEvaluator {
         return false
       }
 
-      const targetHour = at ? Number.parseInt(at, 10) : 9
-      const currentMinutes = now.getHours() * 60 + now.getMinutes()
-      const targetMinutes = targetHour * 60
-      const diffInMinutes = Math.abs(currentMinutes - targetMinutes)
+      const targetHour = Number.parseInt(targetAt, 10)
+      const currentHour = now.getHours()
 
-      return diffInMinutes <= 30
+      return currentHour === targetHour
     }
 
     return false
