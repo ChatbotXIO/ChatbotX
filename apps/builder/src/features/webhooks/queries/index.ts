@@ -1,15 +1,15 @@
 import { type Prisma, prisma } from "@aha.chat/database"
-import type { TriggerModel, TriggerWhereInput } from "@aha.chat/database/types"
+import type { WebhookModel, WebhookWhereInput } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { TriggerCollection } from "../schemas"
-import type { GetTriggersSchema } from "../schemas/get-trigger-schema"
+import type { WebhookCollection } from "../schemas"
+import type { GetWebhooksSchema } from "../schemas/get-webhook-schema"
 
-export async function getTriggers(
-  input: GetTriggersSchema,
-): Promise<TriggerCollection> {
+export async function getWebhooks(
+  input: GetWebhooksSchema,
+): Promise<WebhookCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.TriggerWhereInput = {
+  const where: Prisma.WebhookWhereInput = {
     chatbotId: input.chatbotId,
   }
 
@@ -35,15 +35,15 @@ export async function getTriggers(
         contacts: {
           _count: sortItem.desc ? "desc" : "asc",
         },
-      } as Prisma.TriggerOrderByWithRelationInput
+      } as Prisma.WebhookOrderByWithRelationInput
     }
     return {
       [sortItem.id]: sortItem.desc ? "desc" : "asc",
-    } as Prisma.TriggerOrderByWithRelationInput
+    } as Prisma.WebhookOrderByWithRelationInput
   })
 
   const [data, total] = await prisma.$transaction([
-    prisma.trigger.findMany({
+    prisma.webhook.findMany({
       skip: (input.page - 1) * input.perPage,
       take: input.perPage,
       where,
@@ -52,7 +52,7 @@ export async function getTriggers(
         conditions: true,
       },
     }),
-    prisma.trigger.count({ where }),
+    prisma.webhook.count({ where }),
   ])
 
   const pageCount = Math.ceil(total / input.perPage)
@@ -60,10 +60,10 @@ export async function getTriggers(
   return { data, pageCount }
 }
 
-export async function findTrigger(
-  where: TriggerWhereInput,
-): Promise<TriggerModel | null> {
-  return await prisma.trigger.findFirst({
+export async function findWebhook(
+  where: WebhookWhereInput,
+): Promise<WebhookModel | null> {
+  return await prisma.webhook.findFirst({
     where,
     include: {
       conditions: true,

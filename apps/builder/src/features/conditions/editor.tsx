@@ -1,4 +1,5 @@
 import { TriggerCondition } from "@aha.chat/database/enums"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useFormContext } from "react-hook-form"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
@@ -29,11 +30,17 @@ export const ConditionEditor = ({
     default:
       return (
         <>
-          <input type="hidden" {...form.register(`${parentName}.id`)} />
-          <input type="hidden" {...form.register(`${parentName}.type`)} />
-          <input type="hidden" {...form.register(`${parentName}.sourceId`)} />
-          <input type="hidden" {...form.register(`${parentName}.operator`)} />
-          <input type="hidden" {...form.register(`${parentName}.value`)} />
+          <InputField type="hidden" {...form.register(`${parentName}.id`)} />
+          <InputField type="hidden" {...form.register(`${parentName}.type`)} />
+          <InputField
+            type="hidden"
+            {...form.register(`${parentName}.sourceId`)}
+          />
+          <InputField
+            type="hidden"
+            {...form.register(`${parentName}.operator`)}
+          />
+          <InputField type="hidden" {...form.register(`${parentName}.value`)} />
         </>
       )
   }

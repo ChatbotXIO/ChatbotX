@@ -90,7 +90,7 @@ async function buildCacheData(
       active: true,
     },
     select: {
-      triggerConditions: {
+      conditions: {
         select: {
           type: true,
           sourceId: true,
@@ -102,7 +102,7 @@ async function buildCacheData(
   const chatbotMap: Record<number, string[]> = {}
 
   for (const trigger of triggers) {
-    for (const condition of trigger.triggerConditions) {
+    for (const condition of trigger.conditions) {
       if (!chatbotMap[condition.type]) {
         chatbotMap[condition.type] = []
       }

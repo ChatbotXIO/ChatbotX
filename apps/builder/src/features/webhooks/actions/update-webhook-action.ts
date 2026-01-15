@@ -1,33 +1,32 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import { updateTriggerCache } from "@aha.chat/trigger-events"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type UpdateTriggerSchema,
-  updateTriggerSchema,
-} from "../schemas/update-trigger-schema"
+  type UpdateWebhookSchema,
+  updateWebhookSchema,
+} from "../schemas/update-webhook-schema"
 
-export const updateTriggerAction = chatbotActionClient
+export const updateWebhookAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .inputSchema(updateTriggerSchema)
+  .inputSchema(updateWebhookSchema)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateTriggerSchema
+      parsedInput: UpdateWebhookSchema
     }) => {
-      const { conditions, actions } = parsedInput
+      const { conditions, url } = parsedInput
 
       return await prisma.$transaction(async (tx) => {
         const existingConditions = await tx.condition.findMany({
-          where: { triggerId: id },
+          where: { webhookId: id },
         })
 
         const existingIds = new Set(existingConditions.map((c) => c.id))
@@ -49,9 +48,9 @@ export const updateTriggerAction = chatbotActionClient
           (c) => !("id" in c && c.id),
         )
 
-        await tx.trigger.update({
+        await tx.webhook.update({
           where: { chatbotId, id },
-          data: { actions },
+          data: { url },
         })
 
         if (conditionsToDelete.length > 0) {
@@ -80,7 +79,7 @@ export const updateTriggerAction = chatbotActionClient
         if (conditionsToCreate.length > 0) {
           await tx.condition.createMany({
             data: conditionsToCreate.map((c) => ({
-              triggerId: id,
+              webhookId: id,
               type: c.type,
               sourceId: "sourceId" in c ? c.sourceId : null,
               operator: "operator" in c ? c.operator : null,
@@ -89,13 +88,9 @@ export const updateTriggerAction = chatbotActionClient
           })
         }
 
-        const result = await tx.trigger.findUnique({
+        const result = await tx.webhook.findUnique({
           where: { id },
         })
-
-        if (result) {
-          await updateTriggerCache(chatbotId)
-        }
 
         return result
       })

@@ -1,6 +1,7 @@
 "use client"
 
-import type { TriggerModel } from "@aha.chat/database/types"
+import type { WebhookModel } from "@aha.chat/database/types"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
@@ -12,17 +13,15 @@ import { useTranslations } from "next-intl"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { ConditionEditor } from "../conditions/editor"
-import { updateTriggerAction } from "./actions/update-trigger-action"
-import { AddAction } from "./add-action"
+import { updateWebhookAction } from "./actions/update-webhook-action"
 import { AddCondition } from "./add-condition"
 import { BaseEditor } from "./base-editor"
-import { ActionEditor } from "./components/actions/editor"
 import {
-  type UpdateTriggerSchema,
-  updateTriggerSchema,
-} from "./schemas/update-trigger-schema"
+  type UpdateWebhookSchema,
+  updateWebhookSchema,
+} from "./schemas/update-webhook-schema"
 
-type TriggerWithConditions = TriggerModel & {
+type WebhookWithConditions = WebhookModel & {
   conditions?: Array<{
     id: string
     type: number
@@ -32,13 +31,13 @@ type TriggerWithConditions = TriggerModel & {
   }>
 }
 
-type UpdateTriggerFormProps = {
+type UpdateWebhookFormProps = {
   chatbotId: string
-  trigger: TriggerWithConditions
+  webhook: WebhookWithConditions
 }
 
-export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
-  const { chatbotId, trigger } = props
+export default function UpdateWebhookForm(props: UpdateWebhookFormProps) {
+  const { chatbotId, webhook } = props
   const t = useTranslations()
   const router = useRouter()
 
@@ -47,14 +46,14 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
     handleSubmitWithAction,
     form: { control },
   } = useHookFormAction(
-    updateTriggerAction.bind(null, chatbotId, trigger.id),
-    zodResolver(updateTriggerSchema),
+    updateWebhookAction.bind(null, chatbotId, webhook.id),
+    zodResolver(updateWebhookSchema),
     {
       actionProps: {
         onSuccess: () => {
           toast.success(
             t("messages.updatedSuccess", {
-              feature: t("fields.trigger.label"),
+              feature: t("fields.webhook.label"),
             }),
           )
           setTimeout(() => router.refresh())
@@ -68,14 +67,14 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
       formProps: {
         mode: "onChange",
         defaultValues: {
-          conditions: (trigger.conditions || []).map((tc) => ({
+          conditions: (webhook.conditions || []).map((tc) => ({
             id: tc.id,
             type: tc.type,
             sourceId: tc.sourceId || undefined,
             operator: tc.operator || undefined,
             value: tc.value ? tc.value : undefined,
-          })) as UpdateTriggerSchema["conditions"],
-          actions: trigger.actions as UpdateTriggerSchema["actions"],
+          })) as UpdateWebhookSchema["conditions"],
+          url: webhook.url,
         },
       },
       errorMapProps: {},
@@ -89,15 +88,6 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
   } = useFieldArray({
     control,
     name: "conditions",
-  })
-
-  const {
-    fields: actions,
-    append: appendActions,
-    remove: removeActions,
-  } = useFieldArray({
-    control,
-    name: "actions",
   })
 
   return (
@@ -124,35 +114,17 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
             <AddCondition
               onAdd={(option) => {
                 const condition =
-                  option.defaultFn() as UpdateTriggerSchema["conditions"][number]
+                  option.defaultFn() as UpdateWebhookSchema["conditions"][number]
                 appendConditions(condition)
               }}
             />
           </div>
 
-          {/* actions block */}
           <div className="flex flex-1 flex-col gap-4">
-            <Label htmlFor="actions">{t("fields.actions.label")}</Label>
-            {actions.map((action, index) => (
-              <BaseEditor
-                actionType={action.type}
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                key={index}
-                onRemove={() => removeActions(index)}
-              >
-                <ActionEditor
-                  parentName={`actions.${index}`}
-                  type={action.type}
-                />
-              </BaseEditor>
-            ))}
-            <FormMessage />
-            <AddAction
-              onAdd={(option) => {
-                const action =
-                  option.defaultFn() as UpdateTriggerSchema["actions"][number]
-                appendActions(action)
-              }}
+            <Label>URL</Label>
+            <TextareaField
+              name="url"
+              placeholder={t("fields.url.placeholder")}
             />
           </div>
         </div>

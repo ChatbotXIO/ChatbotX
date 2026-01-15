@@ -1,6 +1,6 @@
 import z from "zod"
+import { allConditions } from "../../conditions/schemas"
 import { allActions } from "../components/actions/schemas"
-import { allConditions } from "../components/conditions/schemas"
 
 export const updateTriggerSchema = z.object({
   conditions: z.array(z.union(Object.values(allConditions))),

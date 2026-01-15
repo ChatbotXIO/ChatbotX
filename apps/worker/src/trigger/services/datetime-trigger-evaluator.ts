@@ -34,14 +34,14 @@ async function fetchTriggerChunk(
   const triggers = await prisma.trigger.findMany({
     where: {
       active: true,
-      triggerConditions: {
+      conditions: {
         some: {
           type: TriggerCondition.dateTimeBasedTrigger,
         },
       },
     },
     include: {
-      triggerConditions: {
+      conditions: {
         where: {
           type: TriggerCondition.dateTimeBasedTrigger,
         },
@@ -57,7 +57,7 @@ async function fetchTriggerChunk(
   for (const trigger of triggers) {
     const conditions: DateTimeCondition[] = []
 
-    for (const condition of trigger.triggerConditions) {
+    for (const condition of trigger.conditions) {
       if (!condition?.sourceId) {
         continue
       }

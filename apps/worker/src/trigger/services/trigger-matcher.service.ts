@@ -26,7 +26,7 @@ export class TriggerMatcherService {
       where: {
         chatbotId,
         active: true,
-        triggerConditions: {
+        conditions: {
           some: {
             type: { in: conditionTypes },
             ...(sourceId ? { sourceId } : {}),
@@ -34,7 +34,7 @@ export class TriggerMatcherService {
         },
       },
       include: {
-        triggerConditions: true,
+        conditions: true,
       },
     })
 
@@ -56,13 +56,13 @@ export class TriggerMatcherService {
     trigger: TriggerWithConditions,
     eventData: TriggerEventData,
   ): Promise<boolean> {
-    const { triggerConditions } = trigger
+    const { conditions } = trigger
 
-    if (triggerConditions.length === 0) {
+    if (conditions.length === 0) {
       return false
     }
 
-    for (const condition of triggerConditions) {
+    for (const condition of conditions) {
       const isMatch = await this.conditionEvaluator.evaluate({
         condition,
         eventData,

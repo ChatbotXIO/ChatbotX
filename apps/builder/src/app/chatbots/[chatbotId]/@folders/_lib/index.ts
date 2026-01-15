@@ -19,6 +19,8 @@ export function getFolderTypeFromFeature(
       return "tag"
     case "triggers":
       return "trigger"
+    case "webhooks":
+      return "webhook"
     default:
       return null
   }

@@ -1,0 +1,1 @@
+export const MAX_WEBHOOKS_PER_CHATBOT = 10
