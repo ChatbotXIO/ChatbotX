@@ -1,5 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import { TriggerCondition } from "@aha.chat/database/enums"
+import { getRedisConnection } from "@aha.chat/worker-config"
+import { logger } from "../../lib/logger"
 import type {
   DateTimeCondition,
   DateTimeOperator,
@@ -207,17 +209,36 @@ async function executeAndMarkTrigger(
   contactId: string,
 ): Promise<DateTimeTriggerResult> {
   try {
+    const redis = getRedisConnection()
+    const cacheKey = `trigger:executed:${triggerInfo.triggerId}:${contactId}`
+
+    const cached = await redis.get(cacheKey)
+    if (cached) {
+      return {
+        triggerId: triggerInfo.triggerId,
+        contactId,
+        matched: false,
+      }
+    }
+
     const actions = Array.isArray(triggerInfo.actions)
       ? triggerInfo.actions
       : []
     const executor = new ActionExecutor()
 
     for (const action of actions) {
-      await executor.execute({
-        action,
-        contactId,
-        chatbotId: triggerInfo.chatbotId,
-      })
+      try {
+        await executor.execute({
+          action,
+          contactId,
+          chatbotId: triggerInfo.chatbotId,
+        })
+      } catch (error) {
+        logger.error(
+          `Failed to execute action for trigger ${triggerInfo.triggerId} for contact ${contactId}`,
+          error,
+        )
+      }
     }
 
     await prisma.$executeRaw`
@@ -225,6 +246,8 @@ async function executeAndMarkTrigger(
       VALUES (gen_random_uuid(), ${triggerInfo.triggerId}, ${contactId}, ${triggerInfo.chatbotId}, NOW(), NOW())
       ON CONFLICT ("triggerId", "contactId") DO NOTHING
     `
+
+    await redis.setex(cacheKey, 86_400 * 90, "1")
 
     return {
       triggerId: triggerInfo.triggerId,

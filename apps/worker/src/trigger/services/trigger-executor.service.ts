@@ -23,11 +23,18 @@ export class TriggerExecutorService {
       const actionsArray = Array.isArray(actions) ? actions : []
 
       for (const action of actionsArray) {
-        await this.actionExecutor.execute({
-          action: action as Record<string, unknown>,
-          contactId,
-          chatbotId,
-        })
+        try {
+          await this.actionExecutor.execute({
+            action: action as Record<string, unknown>,
+            contactId,
+            chatbotId,
+          })
+        } catch (err) {
+          logger.error(
+            `Failed to execute action for trigger ${triggerId} for contact ${contactId}`,
+            err,
+          )
+        }
       }
 
       await prisma.triggerContactHistory.create({
