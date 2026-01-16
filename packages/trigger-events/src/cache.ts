@@ -8,7 +8,7 @@ const ramCache = new LRUCache<
   { data: Record<number, string[]>; timestamp: number }
 >(50_000)
 
-const RAM_TTL = 10_000
+const RAM_TTL = 5000
 const REDIS_PREFIX = "trigger:cache:"
 const REDIS_TTL = 3600
 
@@ -121,6 +121,7 @@ export async function updateTriggerCache(chatbotId: string): Promise<void> {
     const chatbotMap = await buildCacheData(chatbotId)
 
     if (Object.keys(chatbotMap).length === 0) {
+      await removeTriggerCache(chatbotId)
       return
     }
 

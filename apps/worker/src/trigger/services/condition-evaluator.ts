@@ -20,11 +20,12 @@ export class ConditionEvaluator {
         )
 
       case TriggerConditionEnum.customFieldValueChanged:
-        return this.evaluateCustomFieldCondition(
+        return await this.evaluateCustomFieldCondition(
           sourceId,
           operator,
           value,
           eventData.eventData,
+          contactId,
         )
 
       case TriggerConditionEnum.conversationTransferredToHuman:
@@ -66,22 +67,40 @@ export class ConditionEvaluator {
     return expectedTagId === actualTagId
   }
 
-  private evaluateCustomFieldCondition(
+  private async evaluateCustomFieldCondition(
     customFieldId: string | null,
     operator: string | null,
     expectedValue: unknown,
     metadata: Record<string, unknown>,
-  ): boolean {
+    contactId: string,
+  ): Promise<boolean> {
     if (!customFieldId) {
       return false
     }
 
     const actualCustomFieldId = metadata.customFieldId as string
-    const actualValue = metadata.newValue
+    let actualValue: unknown
 
-    if (customFieldId !== actualCustomFieldId) {
-      return false
+    if (customFieldId === actualCustomFieldId) {
+      actualValue = metadata.newValue
+    } else {
+      const contactCustomField = await prisma.contactCustomField.findFirst({
+        where: {
+          contactId,
+          customFieldId,
+        },
+        select: { value: true },
+      })
+      actualValue = contactCustomField?.value
     }
+
+    console.log({
+      customFieldId,
+      actualCustomFieldId,
+      expectedValue,
+      actualValue,
+      operator,
+    })
 
     if (!operator) {
       return true
@@ -111,7 +130,9 @@ export class ConditionEvaluator {
       case "hasAnyValue":
         return actualValue != null && actualValue !== ""
       case "hasNoValue":
-        return actualValue == null || actualValue === ""
+        return (
+          actualValue == null || actualValue === "" || actualValue === undefined
+        )
       case "gt":
         return Number(actualValue) > Number(expected)
       case "lt":
@@ -128,11 +149,58 @@ export class ConditionEvaluator {
         return String(actualValue).startsWith(String(expected))
       case "endsWith":
         return String(actualValue).endsWith(String(expected))
-      case "interval":
-      case "notInterval":
-        return false
+      case "interval": {
+        if (!(actualValue && expected)) {
+          return false
+        }
+        const interval = this.parseInterval(expected)
+        if (!interval) {
+          return false
+        }
+        const value = new Date(actualValue as string).getTime()
+        return value >= interval.start && value <= interval.end
+      }
+      case "notInterval": {
+        if (!(actualValue && expected)) {
+          return false
+        }
+        const interval = this.parseInterval(expected)
+        if (!interval) {
+          return false
+        }
+        const value = new Date(actualValue as string).getTime()
+        return value < interval.start || value > interval.end
+      }
       default:
         return false
+    }
+  }
+
+  private parseInterval(value: unknown): { start: number; end: number } | null {
+    try {
+      if (typeof value === "object" && value !== null) {
+        const obj = value as Record<string, unknown>
+        const start = obj.start || obj.from || obj.startDate
+        const end = obj.end || obj.to || obj.endDate
+
+        if (start && end) {
+          return {
+            start: new Date(start as string).getTime(),
+            end: new Date(end as string).getTime(),
+          }
+        }
+      }
+
+      if (Array.isArray(value) && value.length === 2) {
+        return {
+          start: new Date(value[0] as string).getTime(),
+          end: new Date(value[1] as string).getTime(),
+        }
+      }
+
+      return null
+    } catch {
+      return null
     }
   }
 

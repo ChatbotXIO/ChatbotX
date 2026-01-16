@@ -1,7 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import { updateTriggerCache } from "@aha.chat/trigger-events"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { conditionModel, triggerModel } from "@aha.chat/database/schema"
+import { updateTriggerCache } from "@aha.chat/events"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -25,9 +27,11 @@ export const updateTriggerAction = chatbotActionClient
     }) => {
       const { conditions, actions } = parsedInput
 
-      return await prisma.$transaction(async (tx) => {
-        const existingConditions = await tx.condition.findMany({
-          where: { triggerId: id },
+      const result = await db.transaction(async (tx) => {
+        const existingConditions = await tx.query.conditionModel.findMany({
+          where: {
+            triggerId: id,
+          },
         })
 
         const existingIds = new Set(existingConditions.map((c) => c.id))
@@ -49,55 +53,59 @@ export const updateTriggerAction = chatbotActionClient
           (c) => !("id" in c && c.id),
         )
 
-        await tx.trigger.update({
-          where: { chatbotId, id },
-          data: { actions },
-        })
+        await tx
+          .update(triggerModel)
+          .set({ actions })
+          .where(
+            and(eq(triggerModel.chatbotId, chatbotId), eq(triggerModel.id, id)),
+          )
 
         if (conditionsToDelete.length > 0) {
-          await tx.condition.deleteMany({
-            where: {
-              id: { in: conditionsToDelete.map((c) => c.id) },
-            },
-          })
+          await tx.delete(conditionModel).where(
+            inArray(
+              conditionModel.id,
+              conditionsToDelete.map((c) => c.id),
+            ),
+          )
         }
 
         for (const condition of conditionsToUpdate) {
-          await tx.condition.update({
-            where: { id: condition.id as string },
-            data: {
+          await tx
+            .update(conditionModel)
+            .set({
               type: condition.type,
               sourceId: "sourceId" in condition ? condition.sourceId : null,
               operator: "operator" in condition ? condition.operator : null,
               value:
                 "value" in condition && condition.value !== null
                   ? condition.value
-                  : undefined,
-            },
-          })
+                  : null,
+            })
+            .where(eq(conditionModel.id, condition.id as string))
         }
 
         if (conditionsToCreate.length > 0) {
-          await tx.condition.createMany({
-            data: conditionsToCreate.map((c) => ({
+          await tx.insert(conditionModel).values(
+            conditionsToCreate.map((c) => ({
+              id: createId(),
               triggerId: id,
               type: c.type,
               sourceId: "sourceId" in c ? c.sourceId : null,
               operator: "operator" in c ? c.operator : null,
-              value: "value" in c && c.value !== null ? c.value : undefined,
+              value: "value" in c && c.value !== null ? c.value : null,
             })),
-          })
+          )
         }
 
-        const result = await tx.trigger.findUnique({
-          where: { id },
+        return await tx.query.triggerModel.findFirst({
+          where: {
+            id,
+          },
         })
-
-        if (result) {
-          await updateTriggerCache(chatbotId)
-        }
-
-        return result
       })
+
+      await updateTriggerCache(chatbotId)
+
+      return result
     },
   )
