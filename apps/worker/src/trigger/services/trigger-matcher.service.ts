@@ -83,6 +83,8 @@ export class TriggerMatcherService {
         chatbot,
       })
 
+      // console.log({ condition, isMatch })
+
       if (!isMatch) {
         return false
       }

@@ -167,7 +167,9 @@ function evaluateContactForTrigger(
     const customFieldValue = customFieldValues.get(condition.customFieldId)
 
     const datetimeValue = parseDateTimeValue(customFieldValue, timezone)
-    console.log({ datetimeValue, triggerId: triggerInfo.triggerId })
+
+    // console.log({ datetimeValue, triggerId: triggerInfo.triggerId })
+
     if (!datetimeValue) {
       return false
     }

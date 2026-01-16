@@ -102,15 +102,6 @@ export class ConditionEvaluator {
       select: { customFieldType: true },
     })
 
-    console.log({
-      customFieldId,
-      actualCustomFieldId,
-      expectedValue,
-      actualValue,
-      operator,
-      customFieldType: customField?.customFieldType,
-    })
-
     if (!operator) {
       return true
     }
@@ -129,99 +120,138 @@ export class ConditionEvaluator {
     actualValue: unknown,
     expectedValue: unknown,
     customFieldType?: string,
-    _timezone?: string,
+    timezone?: string,
   ): boolean {
-    const expected =
-      typeof expectedValue === "object" && expectedValue !== null
-        ? (expectedValue as Record<string, unknown>).text ||
-          (expectedValue as Record<string, unknown>).number ||
-          (expectedValue as Record<string, unknown>).date ||
-          expectedValue
-        : expectedValue
+    if (operator === "hasAnyValue") {
+      return actualValue != null && actualValue !== ""
+    }
 
+    if (operator === "hasNoValue") {
+      return (
+        actualValue == null || actualValue === "" || actualValue === undefined
+      )
+    }
+
+    const expected = this.extractExpectedValue(expectedValue)
     const isDateField =
       customFieldType === "date" || customFieldType === "datetime"
 
-    if (isDateField) {
-      switch (operator) {
-        case "hasAnyValue":
-          return actualValue != null && actualValue !== ""
-        case "hasNoValue":
-          return (
-            actualValue == null ||
-            actualValue === "" ||
-            actualValue === undefined
-          )
-        case "interval": {
-          if (!(actualValue && expected)) {
-            return false
-          }
-          const interval = this.parseInterval(expected)
-          if (!interval) {
-            return false
-          }
-          const value = new Date(actualValue as string).getTime()
-          return value >= interval.start && value <= interval.end
-        }
-        case "notInterval": {
-          if (!(actualValue && expected)) {
-            return false
-          }
-          const interval = this.parseInterval(expected)
-          if (!interval) {
-            return false
-          }
-          const value = new Date(actualValue as string).getTime()
-          return value < interval.start || value > interval.end
-        }
-        default:
-          break
-      }
-
-      if (actualValue && expected) {
-        const timezone = _timezone || "UTC"
-        const actualDateObj = parseDateTimeValue(actualValue, timezone)
-        const expectedDateObj = parseDateTimeValue(expected, timezone)
-
-        if (!(actualDateObj && expectedDateObj)) {
-          return false
-        }
-
-        const actualDate = actualDateObj.getTime()
-        const expectedDate = expectedDateObj.getTime()
-
-        console.log({ actualDate, expectedDate, operator, timezone })
-
-        switch (operator) {
-          case "is":
-            return actualDate === expectedDate
-          case "isNot":
-            return actualDate !== expectedDate
-          case "gt":
-            return actualDate > expectedDate
-          case "lt":
-            return actualDate < expectedDate
-          case "gte":
-            return actualDate >= expectedDate
-          case "lte":
-            return actualDate <= expectedDate
-          default:
-            break
-        }
-      }
+    if (operator === "interval" || operator === "notInterval") {
+      return this.evaluateIntervalOperator(
+        operator,
+        actualValue,
+        expected,
+        isDateField,
+        timezone,
+      )
     }
 
+    if (isDateField) {
+      return this.evaluateDateOperator(
+        operator,
+        actualValue,
+        expected,
+        timezone || "UTC",
+      )
+    }
+
+    return this.evaluateStandardOperator(operator, actualValue, expected)
+  }
+
+  private extractExpectedValue(expectedValue: unknown): unknown {
+    if (typeof expectedValue === "object" && expectedValue !== null) {
+      const obj = expectedValue as Record<string, unknown>
+      return obj.text || obj.number || obj.date || expectedValue
+    }
+    return expectedValue
+  }
+
+  private evaluateDateOperator(
+    operator: string,
+    actualValue: unknown,
+    expected: unknown,
+    timezone: string,
+  ): boolean {
+    if (!(actualValue && expected)) {
+      return false
+    }
+
+    const actualDateObj = parseDateTimeValue(actualValue, timezone)
+    const expectedDateObj = parseDateTimeValue(expected, timezone)
+
+    if (!(actualDateObj && expectedDateObj)) {
+      return false
+    }
+
+    const actualDate = actualDateObj.getTime()
+    const expectedDate = expectedDateObj.getTime()
+
+    switch (operator) {
+      case "is":
+        return actualDate === expectedDate
+      case "isNot":
+        return actualDate !== expectedDate
+      case "gt":
+        return actualDate > expectedDate
+      case "lt":
+        return actualDate < expectedDate
+      case "gte":
+        return actualDate >= expectedDate
+      case "lte":
+        return actualDate <= expectedDate
+      default:
+        return false
+    }
+  }
+
+  private evaluateIntervalOperator(
+    operator: string,
+    actualValue: unknown,
+    expected: unknown,
+    isDateField: boolean,
+    timezone?: string,
+  ): boolean {
+    if (!(actualValue && expected)) {
+      return false
+    }
+
+    const interval = this.parseInterval(
+      expected,
+      isDateField ? timezone : undefined,
+    )
+    if (!interval) {
+      return false
+    }
+
+    let valueTimestamp: number
+
+    if (isDateField && timezone) {
+      const dateObj = parseDateTimeValue(actualValue, timezone)
+      if (!dateObj) {
+        return false
+      }
+      valueTimestamp = dateObj.getTime()
+    } else {
+      valueTimestamp = new Date(actualValue as string).getTime()
+    }
+
+    if (operator === "interval") {
+      return valueTimestamp >= interval.start && valueTimestamp <= interval.end
+    }
+
+    return valueTimestamp < interval.start || valueTimestamp > interval.end
+  }
+
+  private evaluateStandardOperator(
+    operator: string,
+    actualValue: unknown,
+    expected: unknown,
+  ): boolean {
     switch (operator) {
       case "is":
         return actualValue === expected
       case "isNot":
         return actualValue !== expected
-      case "hasAnyValue":
-        return actualValue != null && actualValue !== ""
-      case "hasNoValue":
-        return (
-          actualValue == null || actualValue === "" || actualValue === undefined
-        )
       case "gt":
         return Number(actualValue) > Number(expected)
       case "lt":
@@ -238,34 +268,15 @@ export class ConditionEvaluator {
         return String(actualValue).startsWith(String(expected))
       case "endsWith":
         return String(actualValue).endsWith(String(expected))
-      case "interval": {
-        if (!(actualValue && expected)) {
-          return false
-        }
-        const interval = this.parseInterval(expected)
-        if (!interval) {
-          return false
-        }
-        const value = new Date(actualValue as string).getTime()
-        return value >= interval.start && value <= interval.end
-      }
-      case "notInterval": {
-        if (!(actualValue && expected)) {
-          return false
-        }
-        const interval = this.parseInterval(expected)
-        if (!interval) {
-          return false
-        }
-        const value = new Date(actualValue as string).getTime()
-        return value < interval.start || value > interval.end
-      }
       default:
         return false
     }
   }
 
-  private parseInterval(value: unknown): { start: number; end: number } | null {
+  private parseInterval(
+    value: unknown,
+    timezone?: string,
+  ): { start: number; end: number } | null {
     try {
       if (typeof value === "object" && value !== null) {
         const obj = value as Record<string, unknown>
@@ -273,6 +284,16 @@ export class ConditionEvaluator {
         const end = obj.end || obj.to || obj.endDate
 
         if (start && end) {
+          if (timezone) {
+            const startDate = parseDateTimeValue(start, timezone)
+            const endDate = parseDateTimeValue(end, timezone)
+            if (startDate && endDate) {
+              return {
+                start: startDate.getTime(),
+                end: endDate.getTime(),
+              }
+            }
+          }
           return {
             start: new Date(start as string).getTime(),
             end: new Date(end as string).getTime(),
@@ -281,6 +302,16 @@ export class ConditionEvaluator {
       }
 
       if (Array.isArray(value) && value.length === 2) {
+        if (timezone) {
+          const startDate = parseDateTimeValue(value[0], timezone)
+          const endDate = parseDateTimeValue(value[1], timezone)
+          if (startDate && endDate) {
+            return {
+              start: startDate.getTime(),
+              end: endDate.getTime(),
+            }
+          }
+        }
         return {
           start: new Date(value[0] as string).getTime(),
           end: new Date(value[1] as string).getTime(),
@@ -351,12 +382,9 @@ export class ConditionEvaluator {
       )
     }
 
-    const nowUTC = new Date()
-    const nowInTimezone = new Date(
-      nowUTC.toLocaleString("en-US", { timeZone: timezone }),
+    const now = new Date(
+      new Date().toLocaleString("en-US", { timeZone: timezone }),
     )
-
-    const now = nowInTimezone
 
     if (triggerType === "before") {
       if (!(timeValue && timeType)) {
