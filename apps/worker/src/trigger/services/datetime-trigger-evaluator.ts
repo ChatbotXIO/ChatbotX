@@ -206,55 +206,111 @@ async function getExecutedTriggers(
   return new Set(executions.map((e) => `${e.triggerId}:${e.contactId}`))
 }
 
+async function checkExecutionCache(
+  redis: ReturnType<typeof getRedisConnection>,
+  triggerId: string,
+  contactId: string,
+): Promise<boolean> {
+  const cacheKey = `trigger:executed:${triggerId}:${contactId}`
+  const cached = await redis.get(cacheKey)
+  return !!cached
+}
+
+async function acquireExecutionLock(
+  redis: ReturnType<typeof getRedisConnection>,
+  triggerId: string,
+  contactId: string,
+): Promise<boolean> {
+  const lockKey = `trigger:lock:${triggerId}:${contactId}`
+  const lockAcquired = await redis.set(lockKey, "1", "EX", 30, "NX")
+  return !!lockAcquired
+}
+
+async function releaseExecutionLock(
+  redis: ReturnType<typeof getRedisConnection>,
+  triggerId: string,
+  contactId: string,
+): Promise<void> {
+  const lockKey = `trigger:lock:${triggerId}:${contactId}`
+  await redis.del(lockKey)
+}
+
+async function executeActions(
+  triggerInfo: TriggerMap[string],
+  contactId: string,
+): Promise<void> {
+  const actions = Array.isArray(triggerInfo.actions) ? triggerInfo.actions : []
+  const executor = new ActionExecutor()
+
+  for (const action of actions) {
+    try {
+      await executor.execute({
+        action,
+        contactId,
+        chatbotId: triggerInfo.chatbotId,
+      })
+    } catch (error) {
+      logger.error(
+        `Failed to execute action for trigger ${triggerInfo.triggerId} for contact ${contactId}`,
+        error,
+      )
+    }
+  }
+}
+
+async function markTriggerExecuted(
+  redis: ReturnType<typeof getRedisConnection>,
+  triggerInfo: TriggerMap[string],
+  contactId: string,
+): Promise<void> {
+  await prisma.$executeRaw`
+    INSERT INTO "TriggerExecution" ("id", "triggerId", "contactId", "chatbotId", "createdAt", "executedAt")
+    VALUES (gen_random_uuid(), ${triggerInfo.triggerId}, ${contactId}, ${triggerInfo.chatbotId}, NOW(), NOW())
+    ON CONFLICT ("triggerId", "contactId") DO NOTHING
+  `
+
+  const cacheKey = `trigger:executed:${triggerInfo.triggerId}:${contactId}`
+  await redis.setex(cacheKey, 86_400 * 90, "1")
+}
+
 async function executeAndMarkTrigger(
   triggerInfo: TriggerMap[string],
   contactId: string,
 ): Promise<DateTimeTriggerResult> {
+  const notExecutedResult = {
+    triggerId: triggerInfo.triggerId,
+    contactId,
+    matched: false,
+  }
+
   try {
     const redis = getRedisConnection()
-    const cacheKey = `trigger:executed:${triggerInfo.triggerId}:${contactId}`
 
-    const cached = await redis.get(cacheKey)
-    if (cached) {
+    if (await checkExecutionCache(redis, triggerInfo.triggerId, contactId)) {
+      return notExecutedResult
+    }
+
+    if (
+      !(await acquireExecutionLock(redis, triggerInfo.triggerId, contactId))
+    ) {
+      return notExecutedResult
+    }
+
+    try {
+      if (await checkExecutionCache(redis, triggerInfo.triggerId, contactId)) {
+        return notExecutedResult
+      }
+
+      await executeActions(triggerInfo, contactId)
+      await markTriggerExecuted(redis, triggerInfo, contactId)
+
       return {
         triggerId: triggerInfo.triggerId,
         contactId,
-        matched: false,
+        matched: true,
       }
-    }
-
-    const actions = Array.isArray(triggerInfo.actions)
-      ? triggerInfo.actions
-      : []
-    const executor = new ActionExecutor()
-
-    for (const action of actions) {
-      try {
-        await executor.execute({
-          action,
-          contactId,
-          chatbotId: triggerInfo.chatbotId,
-        })
-      } catch (error) {
-        logger.error(
-          `Failed to execute action for trigger ${triggerInfo.triggerId} for contact ${contactId}`,
-          error,
-        )
-      }
-    }
-
-    await prisma.$executeRaw`
-      INSERT INTO "TriggerExecution" ("id", "triggerId", "contactId", "chatbotId", "createdAt", "executedAt")
-      VALUES (gen_random_uuid(), ${triggerInfo.triggerId}, ${contactId}, ${triggerInfo.chatbotId}, NOW(), NOW())
-      ON CONFLICT ("triggerId", "contactId") DO NOTHING
-    `
-
-    await redis.setex(cacheKey, 86_400 * 90, "1")
-
-    return {
-      triggerId: triggerInfo.triggerId,
-      contactId,
-      matched: true,
+    } finally {
+      await releaseExecutionLock(redis, triggerInfo.triggerId, contactId)
     }
   } catch (error) {
     return {
