@@ -151,6 +151,53 @@ export function ReactFlowWrapper({
     [setEdges],
   )
 
+  const connectButtonToNode = useCallback(
+    (connectionState: FinalConnectionState, toNodeId: string) => {
+      if (!connectionState.fromNode) {
+        return
+      }
+
+      const data = connectionState.fromNode.data as FlowNode["data"]
+
+      if (data.details && "steps" in data.details) {
+        // biome-ignore lint/style/useForOf: safe to use for of
+        for (
+          let stepIndex = 0;
+          stepIndex < data.details.steps.length;
+          stepIndex++
+        ) {
+          if ("buttons" in data.details.steps[stepIndex]) {
+            const buttonIndex =
+              // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+              (data.details.steps[stepIndex] as any).buttons.findIndex(
+                (button: ButtonProps) =>
+                  button.id === connectionState.fromHandle?.id,
+              )
+
+            if (buttonIndex !== -1) {
+              // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+              const targetButton = (data.details.steps[stepIndex] as any)
+                .buttons[buttonIndex]
+              targetButton.buttonType = ButtonType.StartAnotherNode
+              targetButton.beforeStep = startAnotherNodeStepDefaultFn({
+                nodeId: toNodeId,
+                viewOnly: true,
+              })
+              // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+              ;(data.details.steps[stepIndex] as any).buttons[buttonIndex] =
+                targetButton
+
+              updateNodeData(connectionState.fromNode.id, data)
+
+              break
+            }
+          }
+        }
+      }
+    },
+    [updateNodeData],
+  )
+
   const onConnectEnd = useCallback(
     (
       _event: MouseEvent | TouchEvent,
@@ -168,6 +215,7 @@ export function ReactFlowWrapper({
 
       // handle case of dragging from source handle
       if (connectionState.fromHandle.type === "source") {
+        // drop connection to empty space
         if (!(connectionState.toHandle && connectionState.toNode)) {
           const allNodes = getNodes()
           const messageNodesLength = allNodes.filter(
@@ -195,6 +243,11 @@ export function ReactFlowWrapper({
             targetHandle: newNode.id,
             type: "buttonedge",
           })
+
+          // if the source is button, update the button data
+          if (connectionState.fromHandle.id !== connectionState.fromNode.id) {
+            connectButtonToNode(connectionState, newNode.id)
+          }
 
           return
         }
@@ -233,47 +286,7 @@ export function ReactFlowWrapper({
 
             // if the handle is from button, update the button data
             if (connectionState.fromHandle.id !== connectionState.fromNode.id) {
-              const data = connectionState.fromNode.data as FlowNode["data"]
-
-              if (data.details && "steps" in data.details) {
-                // biome-ignore lint/style/useForOf: safe to use for of
-                for (
-                  let stepIndex = 0;
-                  stepIndex < data.details.steps.length;
-                  stepIndex++
-                ) {
-                  if ("buttons" in data.details.steps[stepIndex]) {
-                    const buttonIndex =
-                      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-                      (data.details.steps[stepIndex] as any).buttons.findIndex(
-                        (button: ButtonProps) =>
-                          button.id === connectionState.fromHandle?.id,
-                      )
-
-                    if (buttonIndex !== -1) {
-                      const targetButton =
-                        // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-                        (data.details.steps[stepIndex] as any).buttons[
-                          buttonIndex
-                        ]
-                      targetButton.buttonType = ButtonType.StartAnotherNode
-                      targetButton.beforeStep = startAnotherNodeStepDefaultFn({
-                        nodeId: connectionState.toNode.id,
-                        viewOnly: true,
-                      })
-
-                      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-                      ;(data.details.steps[stepIndex] as any).buttons[
-                        buttonIndex
-                      ] = targetButton
-
-                      updateNodeData(connectionState.fromNode.id, data)
-
-                      break
-                    }
-                  }
-                }
-              }
+              connectButtonToNode(connectionState, connectionState.toNode.id)
             }
             return
           }
@@ -284,7 +297,14 @@ export function ReactFlowWrapper({
         return
       }
     },
-    [addNodes, addEdges, getNodes, deleteElements, getEdges, updateNodeData],
+    [
+      addNodes,
+      addEdges,
+      getNodes,
+      deleteElements,
+      getEdges,
+      connectButtonToNode,
+    ],
   )
 
   const onEdgeMouseEnter = useCallback(
@@ -309,6 +329,47 @@ export function ReactFlowWrapper({
     [updateEdge],
   )
 
+  const onEdgesDelete = useCallback(
+    (edges: Edge[]) => {
+      for (const edge of edges) {
+        // if the edge is from node to node, do nothing
+        if (edge.source === edge.sourceHandle) {
+          continue
+        }
+
+        // the edge is from button to node, we need to update the button data
+        const foundedNode = getNodes().find((node) => node.id === edge.source)
+        if (!foundedNode) {
+          continue
+        }
+
+        const data = foundedNode.data as FlowNode["data"]
+        if (data.details && "steps" in data.details) {
+          const stepIndex = data.details.steps.findIndex(
+            (step) =>
+              "buttons" in step &&
+              step.buttons.some((button) => button.id === edge.sourceHandle),
+          )
+          if (stepIndex !== -1 && "buttons" in data.details.steps[stepIndex]) {
+            const buttonIndex = data.details.steps[stepIndex].buttons.findIndex(
+              (button: ButtonProps) => button.id === edge.sourceHandle,
+            )
+            if (buttonIndex !== -1) {
+              data.details.steps[stepIndex].buttons[buttonIndex].beforeStep =
+                null
+              data.details.steps[stepIndex].buttons[buttonIndex].buttonType =
+                null
+
+              // update the node data
+              updateNodeData(foundedNode.id, data)
+            }
+          }
+        }
+      }
+    },
+    [getNodes, updateNodeData],
+  )
+
   return (
     <ReactFlow
       defaultEdgeOptions={{
@@ -328,6 +389,7 @@ export function ReactFlowWrapper({
       onEdgeMouseEnter={onEdgeMouseEnter}
       onEdgeMouseLeave={onEdgeMouseLeave}
       onEdgesChange={onEdgesChange}
+      onEdgesDelete={onEdgesDelete}
       onNodeClick={handleNodeClick}
       onNodeMouseEnter={onNodeMouseEnter}
       onNodeMouseLeave={onNodeMouseLeave}
@@ -337,9 +399,9 @@ export function ReactFlowWrapper({
     >
       {/* <MiniMap /> */}
       <Background />
-      <Panel position="bottom-center">
+      <Panel className="w-[254px]" position="bottom-center">
         <Controls
-          className="overflow-hidden rounded-md"
+          className="overflow-hidden rounded-md shadow-none!"
           orientation="horizontal"
           showFitView={false}
           showInteractive={false}

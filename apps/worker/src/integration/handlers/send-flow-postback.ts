@@ -9,7 +9,6 @@ import type {
   IntegrationJobSendFlowPostback,
   IntegrationJobSendFlowQuickReply,
 } from "@aha.chat/worker-config"
-import { logger } from "../../lib/logger"
 import { runStepsAndQuickReplies } from "./send-flow-node"
 
 async function findConversationAndFlowAndFlowVersion(props: {
@@ -76,15 +75,6 @@ export async function sendFlowPostback(
       flowId: parsedAction.flowId,
       flowVersionId: parsedAction.flowVersionId,
     })
-
-  logger.debug(
-    "sendFlowPostback",
-    JSON.stringify({
-      conversation,
-      flowVersion,
-      parsedAction,
-    }),
-  )
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
 

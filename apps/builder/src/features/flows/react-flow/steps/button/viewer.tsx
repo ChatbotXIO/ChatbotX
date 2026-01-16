@@ -23,6 +23,7 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
       </Button>
       {(data.buttonType === ButtonType.SendMessage ||
         data.buttonType === ButtonType.PerformAction ||
+        data.buttonType === ButtonType.StartAnotherNode ||
         data.buttonType === null) && (
         <BaseHandle
           className={cn("right-3!", !!data.buttonType && "bg-red-300")}

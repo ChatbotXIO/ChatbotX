@@ -11,7 +11,9 @@ export function DeleteNode() {
     e.stopPropagation()
 
     const allNodes = getNodes()
-    const targetNode = allNodes.find((n) => n.data.forceToolbarVisible)
+    const targetNode = allNodes.find(
+      (n) => n.data.forceToolbarVisible && !n.data.isStartNode,
+    )
 
     if (targetNode) {
       deleteElements({
