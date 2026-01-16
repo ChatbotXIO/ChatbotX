@@ -91,7 +91,11 @@ export const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
     Operator.startsWith,
     Operator.endsWith,
   ],
-  [ConditionType.boolean]: [Operator.is, Operator.hasNoValue],
+  [ConditionType.boolean]: [
+    Operator.is,
+    Operator.hasNoValue,
+    Operator.hasAnyValue,
+  ],
   [ConditionType.datetime]: [
     Operator.is,
     Operator.isNot,

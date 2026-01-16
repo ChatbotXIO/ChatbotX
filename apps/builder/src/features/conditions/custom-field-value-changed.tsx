@@ -1,3 +1,4 @@
+import { Operator } from "@aha.chat/database/enums"
 import { CustomFieldType } from "@aha.chat/database/types"
 import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import { Input } from "@aha.chat/ui/components/ui/input"
@@ -172,6 +173,32 @@ export const CustomFieldValueChanged = ({
               )}
             />
           )}
+
+          {customFieldType === CustomFieldType.boolean &&
+            form.getValues(`${parentName}.operator`) === Operator.is && (
+              <Controller
+                control={form.control}
+                name={`${parentName}.value`}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange({
+                        text: value === "true" ? "true" : "false",
+                      })
+                    }
+                    value={field.value?.text || ""}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select value" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">True</SelectItem>
+                      <SelectItem value="false">False</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
         </>
       )}
     </div>
