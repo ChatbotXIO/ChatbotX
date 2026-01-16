@@ -24,7 +24,7 @@ import type { DateRange } from "react-day-picker"
 import { useForm } from "react-hook-form"
 import { useAnalysisStore } from "./provider/analysis-store-context"
 
-type PresetOption = "today" | "yesterday" | "last7" | "custom"
+type PresetOption = "today" | "yesterday" | "last7" | "last30" | "custom"
 
 type DateRangeResult = {
   from: number
@@ -85,6 +85,14 @@ function getLast7DaysRange(): DateRangeResult {
   return { from: startOfDayTimestamp(start), to: endOfDayTimestamp(now) }
 }
 
+function getLast30DaysRange(): DateRangeResult {
+  // Includes today; from is start of day 29 days ago, to is end of today
+  const now = new Date()
+  const start = new Date(now)
+  start.setDate(now.getDate() - 29)
+  return { from: startOfDayTimestamp(start), to: endOfDayTimestamp(now) }
+}
+
 export default function AnalysisFilterForm({
   initialFrom,
   initialTo,
@@ -120,6 +128,8 @@ export default function AnalysisFilterForm({
         return getYesterdayRange()
       case "last7":
         return getLast7DaysRange()
+      case "last30":
+        return getLast30DaysRange()
       default:
         return null
     }
@@ -171,6 +181,10 @@ export default function AnalysisFilterForm({
     }
     if (value === "last7") {
       applyRange(getLast7DaysRange())
+      return
+    }
+    if (value === "last30") {
+      applyRange(getLast30DaysRange())
     }
   }
 
@@ -211,6 +225,7 @@ export default function AnalysisFilterForm({
               {preset === "today" && t("fields.today.label")}
               {preset === "yesterday" && t("fields.yesterday.label")}
               {preset === "last7" && t("fields.last7days.label")}
+              {preset === "last30" && t("fields.last30days.label")}
               {preset === "custom" && rangeText}
             </Button>
           </DropdownMenuTrigger>
@@ -224,6 +239,9 @@ export default function AnalysisFilterForm({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handlePresetChange("last7")}>
                 {t("fields.last7days.label")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePresetChange("last30")}>
+                {t("fields.last30days.label")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handlePresetChange("custom")}>
                 {t("fields.customRange.label")}

@@ -1,7 +1,8 @@
+import AverageResponseTime from "@/features/analysis/components/average-response-time"
+import NewContacts from "@/features/analysis/components/new-contact"
+import TotalContacts from "@/features/analysis/components/total-contacts"
 import AnalysisFilterForm from "@/features/analysis/filter-form"
 import { AnalysisStoreProvider } from "@/features/analysis/provider/analysis-store-context"
-import NewContacts from "@/features/contacts/components/new-contact"
-import TotalContacts from "@/features/contacts/components/total-contacts"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import InboxStatsList from "@/features/inboxes/components/inbox-stats-list"
 import { listInboxes } from "@/features/inboxes/queries"
@@ -29,6 +30,7 @@ export default async function Dashboard({
         <div className="grid grid-cols-2 gap-4">
           <TotalContacts />
           <NewContacts />
+          <AverageResponseTime />
         </div>
       </AnalysisStoreProvider>
     </div>
