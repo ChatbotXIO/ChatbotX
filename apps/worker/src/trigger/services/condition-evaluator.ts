@@ -2,6 +2,7 @@ import { prisma } from "@aha.chat/database"
 import { TriggerCondition as TriggerConditionEnum } from "@aha.chat/database/enums"
 import type { ChatbotModel } from "@aha.chat/database/types"
 import type { ConditionEvaluationContext } from "../types"
+import { parseDateTimeValue } from "../utils/datetime-calculator"
 
 const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
@@ -26,6 +27,7 @@ export class ConditionEvaluator {
           value,
           eventData.eventData,
           contactId,
+          chatbot,
         )
 
       case TriggerConditionEnum.conversationTransferredToHuman:
@@ -73,6 +75,7 @@ export class ConditionEvaluator {
     expectedValue: unknown,
     metadata: Record<string, unknown>,
     contactId: string,
+    chatbot: ChatbotModel,
   ): Promise<boolean> {
     if (!customFieldId) {
       return false
@@ -94,25 +97,39 @@ export class ConditionEvaluator {
       actualValue = contactCustomField?.value
     }
 
+    const customField = await prisma.field.findUnique({
+      where: { id: customFieldId },
+      select: { customFieldType: true },
+    })
+
     console.log({
       customFieldId,
       actualCustomFieldId,
       expectedValue,
       actualValue,
       operator,
+      customFieldType: customField?.customFieldType,
     })
 
     if (!operator) {
       return true
     }
 
-    return this.evaluateOperator(operator, actualValue, expectedValue)
+    return this.evaluateOperator(
+      operator,
+      actualValue,
+      expectedValue,
+      customField?.customFieldType,
+      chatbot.accountTimezone || "UTC",
+    )
   }
 
   private evaluateOperator(
     operator: string,
     actualValue: unknown,
     expectedValue: unknown,
+    customFieldType?: string,
+    _timezone?: string,
   ): boolean {
     const expected =
       typeof expectedValue === "object" && expectedValue !== null
@@ -121,6 +138,78 @@ export class ConditionEvaluator {
           (expectedValue as Record<string, unknown>).date ||
           expectedValue
         : expectedValue
+
+    const isDateField =
+      customFieldType === "date" || customFieldType === "datetime"
+
+    if (isDateField) {
+      switch (operator) {
+        case "hasAnyValue":
+          return actualValue != null && actualValue !== ""
+        case "hasNoValue":
+          return (
+            actualValue == null ||
+            actualValue === "" ||
+            actualValue === undefined
+          )
+        case "interval": {
+          if (!(actualValue && expected)) {
+            return false
+          }
+          const interval = this.parseInterval(expected)
+          if (!interval) {
+            return false
+          }
+          const value = new Date(actualValue as string).getTime()
+          return value >= interval.start && value <= interval.end
+        }
+        case "notInterval": {
+          if (!(actualValue && expected)) {
+            return false
+          }
+          const interval = this.parseInterval(expected)
+          if (!interval) {
+            return false
+          }
+          const value = new Date(actualValue as string).getTime()
+          return value < interval.start || value > interval.end
+        }
+        default:
+          break
+      }
+
+      if (actualValue && expected) {
+        const timezone = _timezone || "UTC"
+        const actualDateObj = parseDateTimeValue(actualValue, timezone)
+        const expectedDateObj = parseDateTimeValue(expected, timezone)
+
+        if (!(actualDateObj && expectedDateObj)) {
+          return false
+        }
+
+        const actualDate = actualDateObj.getTime()
+        const expectedDate = expectedDateObj.getTime()
+
+        console.log({ actualDate, expectedDate, operator, timezone })
+
+        switch (operator) {
+          case "is":
+            return actualDate === expectedDate
+          case "isNot":
+            return actualDate !== expectedDate
+          case "gt":
+            return actualDate > expectedDate
+          case "lt":
+            return actualDate < expectedDate
+          case "gte":
+            return actualDate >= expectedDate
+          case "lte":
+            return actualDate <= expectedDate
+          default:
+            break
+        }
+      }
+    }
 
     switch (operator) {
       case "is":
