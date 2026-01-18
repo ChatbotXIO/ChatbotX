@@ -232,6 +232,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: MailIcon,
         stepType: StepType.drip,
       },
+      {
+        label: t("flows.actions.klaviyo"),
+        icon: MailIcon,
+        stepType: StepType.klaviyo,
+      },
     ],
   },
   {

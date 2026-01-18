@@ -1304,6 +1304,44 @@
     },
     "notConnected": "Drip chưa được kết nối"
   },
+  "klaviyo": {
+    "title": "Klaviyo",
+    "setting": {
+      "label": "Klaviyo",
+      "description": "Tích hợp này cho phép bạn lưu thông tin liên hệ của khách hàng từ bot vào Klaviyo"
+    },
+    "dialog": {
+      "title": "Kết nối Klaviyo",
+      "description": "Nhập API Key từ tài khoản Klaviyo của bạn (Settings > API Keys)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Nhập API Key của bạn"
+    },
+    "error": {
+      "invalidCredentials": "API Key không hợp lệ hoặc không có quyền truy cập",
+      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin.",
+      "fetch_lists": "Không thể tải danh sách Klaviyo",
+      "fetch_tags": "Không thể tải danh sách thẻ Klaviyo",
+      "fetch_fields": "Không thể tải danh sách trường tùy chỉnh Klaviyo"
+    },
+    "fields": {
+      "list": "Danh sách",
+      "listPlaceholder": "Chọn danh sách",
+      "emailField": "Trường Email",
+      "emailFieldTooltip": "Trường tùy chỉnh chứa email của người dùng để xác định liên hệ trong Klaviyo.",
+      "phoneField": "Trường số điện thoại",
+      "phonePlaceholder": "Chọn trường số điện thoại",
+      "titleField": "Chức danh",
+      "titlePlaceholder": "Chọn trường chức danh",
+      "orgField": "Tổ chức",
+      "orgPlaceholder": "Chọn trường tổ chức",
+      "tags": "Thẻ",
+      "tagsPlaceholder": "Chọn thẻ",
+      "customFieldsMapping": "Ánh xạ trường tùy chỉnh"
+    },
+    "notConnected": "Klaviyo chưa được kết nối"
+  },
   "googleSheets": {
     "delete": {
       "dialog_title": "Xóa bảng tính"

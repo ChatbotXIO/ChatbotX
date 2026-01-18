@@ -1123,7 +1123,8 @@
       "spreadsheetClearRow": "Clear Row",
       "mailchimpAddMember": "Add Contact to Mailchimp",
       "activeCampaign": "Add Contact to ActiveCampaign",
-      "drip": "Add Contact to Drip"
+      "drip": "Add Contact to Drip",
+      "klaviyo": "Add Contact to Klaviyo"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1249,6 +1250,44 @@
       "customFieldsMapping": "Custom Fields in Drip"
     },
     "notConnected": "Drip not connected"
+  },
+  "klaviyo": {
+    "title": "Klaviyo",
+    "setting": {
+      "label": "Klaviyo",
+      "description": "This integration lets you save customers сontacts from your bot to Klaviyo"
+    },
+    "dialog": {
+      "title": "Connect Klaviyo",
+      "description": "Enter your API Key from your Klaviyo account (Settings > API Keys)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Enter your API Key"
+    },
+    "error": {
+      "invalidCredentials": "Invalid API Key or no access to account",
+      "connectionFailed": "Connection failed. Please check your information.",
+      "fetch_lists": "Failed to fetch Klaviyo lists",
+      "fetch_tags": "Failed to fetch Klaviyo tags",
+      "fetch_fields": "Failed to fetch Klaviyo custom fields"
+    },
+    "fields": {
+      "list": "List",
+      "listPlaceholder": "Select list",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom Field which contains the user's email to identify Klaviyo contacts.",
+      "phoneField": "Phone Field",
+      "phonePlaceholder": "Select phone field",
+      "titleField": "Title",
+      "titlePlaceholder": "Select title field",
+      "orgField": "Organization",
+      "orgPlaceholder": "Select organization field",
+      "tags": "Tags",
+      "tagsPlaceholder": "Select tags",
+      "customFieldsMapping": "Custom Fields Mapping"
+    },
+    "notConnected": "Klaviyo not connected"
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

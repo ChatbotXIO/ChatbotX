@@ -18,6 +18,7 @@ type SettingIntegrationLayoutProps = {
   mailchimp: ReactNode
   activeCampaign: ReactNode
   drip: ReactNode
+  klaviyo: ReactNode
 }
 
 function SettingIntegrationLayoutContent({
@@ -27,6 +28,7 @@ function SettingIntegrationLayoutContent({
   mailchimp,
   activeCampaign,
   drip,
+  klaviyo,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
   const searchParams = useSearchParams()
@@ -68,6 +70,12 @@ function SettingIntegrationLayoutContent({
       keyName: t("drip.title"),
       icon: MailIcon,
       content: drip,
+    },
+    {
+      id: "klaviyo",
+      keyName: t("klaviyo.title"),
+      icon: MailIcon,
+      content: klaviyo,
     },
   ]
 

@@ -38,6 +38,7 @@ import {
   unfollowConversation,
 } from "./conversation-handler"
 import { handleDripStep } from "./drip-handler"
+import { handleKlaviyoStep } from "./klaviyo-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import {
   clearSpreadsheetRow,
@@ -201,6 +202,7 @@ export const flowStepHandlers: Record<
   [StepType.mailchimpAddMember]: addMailchimpMember,
   [StepType.activeCampaign]: handleActiveCampaignStep,
   [StepType.drip]: handleDripStep,
+  [StepType.klaviyo]: handleKlaviyoStep,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }

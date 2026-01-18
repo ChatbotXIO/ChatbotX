@@ -9,6 +9,7 @@ import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field
 import { InboxStoreProvider } from "../inboxes/provider/inbox-store-context"
 import { ActiveCampaignStoreProvider } from "../integration-active-campaign/provider/active-campaign-store-context"
 import { DripStoreProvider } from "../integration-drip/provider/drip-store-context"
+import { KlaviyoStoreProvider } from "../integration-klaviyo/provider/klaviyo-store-context"
 import { MailchimpStoreProvider } from "../integration-mailchimp/provider/mailchimp-store-context"
 import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import { UserStoreProvider } from "../users/provider/user-store-context"
@@ -43,29 +44,34 @@ export function FlowDetail({
         <InboxStoreProvider autoInitialize={true} chatbotId={flow.chatbotId}>
           <ActiveCampaignStoreProvider>
             <DripStoreProvider>
-              <MailchimpStoreProvider>
-                <FlowStoreProvider
-                  autoInitialize={true}
-                  chatbotId={flow.chatbotId}
-                >
-                  <TagStoreProvider
+              <KlaviyoStoreProvider>
+                <MailchimpStoreProvider>
+                  <FlowStoreProvider
                     autoInitialize={true}
                     chatbotId={flow.chatbotId}
                   >
-                    <UserStoreProvider
-                      autoInitializeAgentsAndInboxTeams={true}
+                    <TagStoreProvider
+                      autoInitialize={true}
                       chatbotId={flow.chatbotId}
                     >
-                      <CustomFieldStoreProvider
-                        autoInitialize={true}
+                      <UserStoreProvider
+                        autoInitializeAgentsAndInboxTeams={true}
                         chatbotId={flow.chatbotId}
                       >
-                        <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
-                      </CustomFieldStoreProvider>
-                    </UserStoreProvider>
-                  </TagStoreProvider>
-                </FlowStoreProvider>
-              </MailchimpStoreProvider>
+                        <CustomFieldStoreProvider
+                          autoInitialize={true}
+                          chatbotId={flow.chatbotId}
+                        >
+                          <ReactFlowFrame
+                            flow={flow}
+                            flowVersion={flowVersion}
+                          />
+                        </CustomFieldStoreProvider>
+                      </UserStoreProvider>
+                    </TagStoreProvider>
+                  </FlowStoreProvider>
+                </MailchimpStoreProvider>
+              </KlaviyoStoreProvider>
             </DripStoreProvider>
           </ActiveCampaignStoreProvider>
         </InboxStoreProvider>

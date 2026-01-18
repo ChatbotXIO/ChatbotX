@@ -96,6 +96,9 @@ export const StepType = {
 
   // Drip Operations (DR_)
   drip: "DR01",
+
+  // Klaviyo Operations (KL_)
+  klaviyo: "KL01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

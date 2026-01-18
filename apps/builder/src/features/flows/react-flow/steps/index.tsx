@@ -21,6 +21,7 @@ import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
 import { waitUserReplyStep } from "./get-user-input"
+import { klaviyoStep } from "./klaviyo"
 import { mailchimpAddMemberStep } from "./mailchimp-add-member"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { openWebsiteStep } from "./open-website"
@@ -117,6 +118,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.mailchimpAddMember]: mailchimpAddMemberStep,
   [StepType.activeCampaign]: activeCampaignStep,
   [StepType.drip]: dripStep,
+  [StepType.klaviyo]: klaviyoStep,
   [StepType.sendQuickReply]: undefined,
 }
 
