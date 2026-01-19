@@ -1177,7 +1177,8 @@
       "spreadsheetClearRow": "Xóa hàng",
       "mailchimpAddMember": "Thêm liên hệ vào Mailchimp",
       "activeCampaign": "Thêm liên hệ vào ActiveCampaign",
-      "drip": "Thêm liên hệ vào Drip"
+      "drip": "Thêm liên hệ vào Drip",
+      "sendgrid": "Add Contact to SendGrid"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1303,6 +1304,39 @@
       "customFieldsMapping": "Custom Fields in Drip"
     },
     "notConnected": "Drip chưa được kết nối"
+  },
+  "sendgrid": {
+    "title": "SendGrid",
+    "setting": {
+      "label": "SendGrid",
+      "description": "Tích hợp này cho phép bạn lưu thông tin liên hệ của khách hàng từ bot vào SendGrid"
+    },
+    "dialog": {
+      "title": "Kết nối SendGrid",
+      "description": "Nhập API Key từ tài khoản SendGrid của bạn (Settings > API Keys)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Nhập API Key của bạn"
+    },
+    "error": {
+      "invalidCredentials": "API Key không hợp lệ hoặc không có quyền truy cập",
+      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin.",
+      "fetch_lists": "Không thể tải danh sách SendGrid",
+      "fetch_fields": "Không thể tải danh sách trường tùy chỉnh SendGrid"
+    },
+    "fields": {
+      "list": "SendGrid Danh sách",
+      "listPlaceholder": "Chọn danh sách",
+      "emailField": "Trường Email",
+      "emailFieldTooltip": "Trường tùy chỉnh chứa email của Khách hàng để xác định SendGrid địa chỉ Khách hàng.",
+      "phoneField": "Số điện thoại",
+      "phoneFieldOptional": "Tùy chọn",
+      "customFieldsMapping": "Trường Tùy chỉnh (Custom Field) trong SendGrid",
+      "chatbotField": "Trường trong Chatbot",
+      "sendgridField": "Trường trong SendGrid"
+    },
+    "notConnected": "SendGrid chưa được kết nối"
   },
   "googleSheets": {
     "delete": {

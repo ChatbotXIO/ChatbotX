@@ -1123,7 +1123,8 @@
       "spreadsheetClearRow": "Clear Row",
       "mailchimpAddMember": "Add Contact to Mailchimp",
       "activeCampaign": "Add Contact to ActiveCampaign",
-      "drip": "Add Contact to Drip"
+      "drip": "Add Contact to Drip",
+      "sendgrid": "Add Contact to SendGrid"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1249,6 +1250,39 @@
       "customFieldsMapping": "Custom Fields in Drip"
     },
     "notConnected": "Drip not connected"
+  },
+  "sendgrid": {
+    "title": "SendGrid",
+    "setting": {
+      "label": "SendGrid",
+      "description": "This integration allows you to save customer contact information from your bot to SendGrid"
+    },
+    "dialog": {
+      "title": "Connect SendGrid",
+      "description": "Enter the API Key from your SendGrid account (Settings > API Keys)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Enter your API Key"
+    },
+    "error": {
+      "invalidCredentials": "Invalid API Key or no access to account",
+      "connectionFailed": "Connection failed. Please check your information.",
+      "fetch_lists": "Unable to load SendGrid lists",
+      "fetch_fields": "Unable to load SendGrid custom fields"
+    },
+    "fields": {
+      "list": "SendGrid List",
+      "listPlaceholder": "Select a list",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom field that contains the customer's email to identify SendGrid contact address.",
+      "phoneField": "Phone Number",
+      "phoneFieldOptional": "Optional",
+      "customFieldsMapping": "Custom Fields in SendGrid",
+      "chatbotField": "Field in Chatbot",
+      "sendgridField": "Field in SendGrid"
+    },
+    "notConnected": "SendGrid not connected"
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

@@ -20,6 +20,7 @@
     "@aha.chat/integration-google-sheets": "workspace:*",
     "@aha.chat/integration-mailchimp": "workspace:*",
     "@aha.chat/integration-messenger": "workspace:*",
+    "@aha.chat/integration-sendgrid": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
     "@aha.chat/integration-zalo": "workspace:*",
     "@aha.chat/logger": "workspace:*",

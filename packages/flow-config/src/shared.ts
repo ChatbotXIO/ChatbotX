@@ -20,6 +20,7 @@ import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
+import { sendGridStepSchema } from "./steps/sendgrid"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
 import { spreadsheetClearRowSchema } from "./steps/spreadsheet-clear-row"
 import { spreadsheetGetRowSchema } from "./steps/spreadsheet-get-row"
@@ -95,6 +96,8 @@ const activeCampaignSteps = [activeCampaignStepSchema]
 
 const dripSteps = [dripStepSchema]
 
+const sendGridSteps = [sendGridStepSchema]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -106,4 +109,5 @@ export const actionSteps = [
   ...mailchimpSteps,
   ...activeCampaignSteps,
   ...dripSteps,
+  ...sendGridSteps,
 ]

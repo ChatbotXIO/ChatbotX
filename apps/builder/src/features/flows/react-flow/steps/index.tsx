@@ -34,6 +34,7 @@ import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
+import { sendGridStep } from "./sendgrid"
 import { setCustomFieldStep } from "./set-custom-field"
 import { spreadsheetClearRowStep } from "./spreadsheet-clear-row"
 import { spreadsheetGetRandomRowStep } from "./spreadsheet-get-random-row"
@@ -117,6 +118,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.mailchimpAddMember]: mailchimpAddMemberStep,
   [StepType.activeCampaign]: activeCampaignStep,
   [StepType.drip]: dripStep,
+  [StepType.sendgrid]: sendGridStep,
   [StepType.sendQuickReply]: undefined,
 }
 
