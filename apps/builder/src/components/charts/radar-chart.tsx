@@ -23,10 +23,10 @@ type RadarData = {
 }
 
 export interface CustomRadarChartProps {
-  name: string
-  valueLabel: string
   data: Array<{ name: string; value: number }>
   helpMessage?: string
+  name: string
+  valueLabel: string
 }
 
 export function RadarChart({

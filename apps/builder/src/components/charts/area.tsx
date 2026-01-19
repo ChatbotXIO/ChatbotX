@@ -6,27 +6,25 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@aha.chat/ui/components/ui/chart"
-import { Area, AreaChart, XAxis, YAxis } from "recharts"
+import { AreaChart as AC, Area, XAxis, YAxis } from "recharts"
 
-export default function TotalContacts() {
+type AreaChartProps = {
+  name: string
+  valueLabel: string
+  data: Array<{ name: string; value: number }>
+}
+
+export default function AreaChart(props: AreaChartProps) {
   return (
     <Card className="flex-1">
-      <CardHeader>Total Contacts</CardHeader>
+      <CardHeader>{props.name}</CardHeader>
       <CardContent>
         <ChartContainer
           config={{
-            value: { label: "Total" },
+            value: { label: props.valueLabel },
           }}
         >
-          <AreaChart
-            data={[
-              { name: "Jan", value: 1200 },
-              { name: "Feb", value: 2100 },
-              { name: "Mar", value: 2800 },
-              { name: "Apr", value: 3600 },
-              { name: "May", value: 4900 },
-            ]}
-          >
+          <AC data={props.data}>
             <XAxis dataKey="name" />
             <YAxis width="auto" />
             <Area
@@ -36,7 +34,7 @@ export default function TotalContacts() {
               type="monotone"
             />
             <ChartTooltip content={<ChartTooltipContent />} />
-          </AreaChart>
+          </AC>
         </ChartContainer>
       </CardContent>
     </Card>

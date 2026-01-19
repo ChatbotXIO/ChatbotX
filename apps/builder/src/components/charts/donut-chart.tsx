@@ -12,10 +12,10 @@ import ChartHeader from "./chart-header"
 import { COLORS } from "./constants"
 
 export interface DonutChartProps {
-  name: string
-  valueLabel: string
   data: Array<{ name: string; value: number; color?: string }>
   helpMessage?: string
+  name: string
+  valueLabel: string
 }
 
 export function DonutChart({
@@ -24,6 +24,9 @@ export function DonutChart({
   data,
   helpMessage,
 }: DonutChartProps) {
+  const chartData =
+    data.length === 0 ? [{ name: "No data", value: 1, color: "#e5e7eb" }] : data
+
   return (
     <Card className="flex-1">
       <ChartHeader helpMessage={helpMessage} name={name} />
@@ -34,13 +37,13 @@ export function DonutChart({
               <Pie
                 cx="50%"
                 cy="50%"
-                data={data}
+                data={chartData}
                 dataKey="value"
                 innerRadius={60}
                 nameKey="name"
                 outerRadius={100}
               >
-                {data.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell
                     fill={entry.color || COLORS[index % COLORS.length]}
                     key={`cell-${

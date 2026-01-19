@@ -8,14 +8,14 @@ import {
 } from "@aha.chat/ui/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis } from "recharts"
 
-export default function NewContacts() {
+export default function AverageDurationOfConversation() {
   return (
     <Card className="flex-1">
-      <CardHeader>New Contacts</CardHeader>
+      <CardHeader>Average duration of a conversation (Minutes)</CardHeader>
       <CardContent>
         <ChartContainer
           config={{
-            value: { label: "Contacts" },
+            value: { label: "Minutes" },
           }}
         >
           <BarChart
