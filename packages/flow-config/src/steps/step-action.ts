@@ -99,6 +99,9 @@ export const StepType = {
 
   // SendGrid Operations (SG_)
   sendgrid: "SG01",
+
+  // MailerLite Operations (ML_)
+  mailerLite: "ML01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

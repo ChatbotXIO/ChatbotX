@@ -1124,7 +1124,8 @@
       "mailchimpAddMember": "Add Contact to Mailchimp",
       "activeCampaign": "Add Contact to ActiveCampaign",
       "drip": "Add Contact to Drip",
-      "sendgrid": "Add Contact to SendGrid"
+      "sendgrid": "Add Contact to SendGrid",
+      "mailerlite": "Add Contact to MailerLite"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1283,6 +1284,49 @@
       "sendgridField": "Field in SendGrid"
     },
     "notConnected": "SendGrid not connected"
+  },
+  "mailerlite": {
+    "title": "MailerLite",
+    "setting": {
+      "label": "MailerLite",
+      "description": "This integration allows you to save customer contact information from your bot to MailerLite"
+    },
+    "dialog": {
+      "title": "Connect MailerLite",
+      "description": "Enter the API Key from your MailerLite account (Account settings > API)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Enter your API Key"
+    },
+    "error": {
+      "invalidCredentials": "Invalid API Key or no access to account",
+      "connectionFailed": "Connection failed. Please check your information.",
+      "fetch_groups": "Unable to load MailerLite groups",
+      "fetch_fields": "Unable to load MailerLite custom fields"
+    },
+    "fields": {
+      "group": "MailerLite Group",
+      "groupPlaceholder": "Select a group",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom field that contains the customer's email to identify MailerLite contact address.",
+      "phoneField": "Phone Number",
+      "phoneFieldOptional": "Optional",
+      "customFieldsMapping": "Custom Fields in MailerLite",
+      "chatbotField": "Field in Chatbot",
+      "mailerliteField": "Field in MailerLite",
+      "types": {
+        "subscribed": "Subscribed",
+        "active": "Active",
+        "unconfirmed": "Unconfirmed"
+      },
+      "group": "Group",
+      "groupPlaceholder": "Select a group",
+      "autoresponders": "Autoresponders",
+      "autorespondersTooltip": "If enabled, the group's autoresponder emails will be sent to the new contact.",
+      "type": "Type"
+    },
+    "notConnected": "MailerLite not connected"
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

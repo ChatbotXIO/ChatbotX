@@ -39,6 +39,7 @@ import {
 } from "./conversation-handler"
 import { handleDripStep } from "./drip-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
+import { handleMailerLiteStep } from "./mailer-lite-handler"
 import { handleSendGridStep } from "./sendgrid-handler"
 import {
   clearSpreadsheetRow,
@@ -203,6 +204,7 @@ export const flowStepHandlers: Record<
   [StepType.activeCampaign]: handleActiveCampaignStep,
   [StepType.drip]: handleDripStep,
   [StepType.sendgrid]: handleSendGridStep,
+  [StepType.mailerLite]: handleMailerLiteStep,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }

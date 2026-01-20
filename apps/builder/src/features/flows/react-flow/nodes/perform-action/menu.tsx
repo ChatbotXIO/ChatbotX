@@ -237,6 +237,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: MailIcon,
         stepType: StepType.sendgrid,
       },
+      {
+        label: t("flows.actions.mailerlite"),
+        icon: MailIcon,
+        stepType: StepType.mailerLite,
+      },
     ],
   },
   {

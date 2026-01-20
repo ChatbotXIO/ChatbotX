@@ -22,6 +22,7 @@ import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
 import { waitUserReplyStep } from "./get-user-input"
 import { mailchimpAddMemberStep } from "./mailchimp-add-member"
+import { mailerLiteStep } from "./mailer-lite"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
@@ -119,6 +120,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.activeCampaign]: activeCampaignStep,
   [StepType.drip]: dripStep,
   [StepType.sendgrid]: sendGridStep,
+  [StepType.mailerLite]: mailerLiteStep,
   [StepType.sendQuickReply]: undefined,
 }
 
