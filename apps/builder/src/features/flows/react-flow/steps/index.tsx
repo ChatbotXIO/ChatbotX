@@ -20,6 +20,7 @@ import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
 import { getDataFromJsonStep } from "./get-data-from-json"
+import { getResponseStep } from "./get-response"
 import { waitUserReplyStep } from "./get-user-input"
 import { mailchimpAddMemberStep } from "./mailchimp-add-member"
 import { mailerLiteStep } from "./mailer-lite"
@@ -121,6 +122,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.drip]: dripStep,
   [StepType.sendgrid]: sendGridStep,
   [StepType.mailerLite]: mailerLiteStep,
+  [StepType.getResponse]: getResponseStep,
   [StepType.sendQuickReply]: undefined,
 }
 

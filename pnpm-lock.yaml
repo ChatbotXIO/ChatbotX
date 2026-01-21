@@ -53,6 +53,9 @@ importers:
       '@aha.chat/integration-drip':
         specifier: workspace:*
         version: link:../../integrations/drip
+      '@aha.chat/integration-get-response':
+        specifier: workspace:*
+        version: link:../../integrations/get-response
       '@aha.chat/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets
@@ -358,6 +361,9 @@ importers:
       '@aha.chat/integration-drip':
         specifier: workspace:*
         version: link:../../integrations/drip
+      '@aha.chat/integration-get-response':
+        specifier: workspace:*
+        version: link:../../integrations/get-response
       '@aha.chat/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets
@@ -503,6 +509,28 @@ importers:
         version: 5.7.2
 
   integrations/drip:
+    dependencies:
+      '@aha.chat/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      ky:
+        specifier: ^1.14.2
+        version: 1.14.2
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@aha.chat/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.3
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+
+  integrations/get-response:
     dependencies:
       '@aha.chat/sdk':
         specifier: workspace:*

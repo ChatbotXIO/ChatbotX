@@ -1179,7 +1179,8 @@
       "activeCampaign": "Thêm liên hệ vào ActiveCampaign",
       "drip": "Thêm liên hệ vào Drip",
       "sendgrid": "Add Contact to SendGrid",
-      "mailerlite": "Thêm liên hệ vào MailerLite"
+      "mailerlite": "Thêm liên hệ vào MailerLite",
+      "getResponse": "Thêm liên hệ vào GetResponse"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1374,13 +1375,47 @@
         "active": "Active",
         "unconfirmed": "Unconfirmed"
       },
-      "group": "Nhóm",
-      "groupPlaceholder": "Chọn nhóm",
       "autoresponders": "Tự động phản hồi (Autoresponders)",
       "autorespondersTooltip": "Nếu chọn có, các email tự động phản hồi của nhóm sẽ được gửi đến liên hệ mới.",
       "type": "Loại (Type)"
     },
     "notConnected": "MailerLite chưa được kết nối"
+  },
+  "getResponse": {
+    "title": "GetResponse",
+    "setting": {
+      "label": "GetResponse",
+      "description": "Tích hợp này cho phép bạn lưu thông tin liên hệ của khách hàng từ bot vào GetResponse"
+    },
+    "dialog": {
+      "title": "Kết nối GetResponse",
+      "description": "Nhập API Key từ tài khoản GetResponse của bạn (Account Settings > API & OAuth)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Nhập API Key của bạn"
+    },
+    "error": {
+      "invalidCredentials": "API Key không hợp lệ hoặc không có quyền truy cập",
+      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin.",
+      "fetch_campaigns": "Không thể tải danh sách campaigns GetResponse",
+      "fetch_tags": "Không thể tải danh sách tags GetResponse"
+    },
+    "fields": {
+      "list": "List",
+      "listPlaceholder": "Chọn list",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom Field chứa email người dùng để nhận diện contacts trong GetResponse",
+      "nameField": "Name Field",
+      "tags": "Tags",
+      "tagsPlaceholder": "Chọn tags",
+      "dayOfCycle": "Day of Autoresponder Cycle",
+      "dayOfCyclePlaceholder": "0",
+      "dayOfCycleTooltip": "Move a contact to a specific day in your autoresponder cycle. Enter 0 to add them to the start day of the cycle.",
+      "customFieldsMapping": "Custom Fields trong GetResponse",
+      "noCustomFields": "Không có custom fields nào trong GetResponse của bạn"
+    },
+    "notConnected": "GetResponse chưa được kết nối"
   },
   "googleSheets": {
     "delete": {

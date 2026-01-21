@@ -1125,7 +1125,8 @@
       "activeCampaign": "Add Contact to ActiveCampaign",
       "drip": "Add Contact to Drip",
       "sendgrid": "Add Contact to SendGrid",
-      "mailerlite": "Add Contact to MailerLite"
+      "mailerlite": "Add Contact to MailerLite",
+      "getResponse": "Add Contact to GetResponse"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1320,13 +1321,47 @@
         "active": "Active",
         "unconfirmed": "Unconfirmed"
       },
-      "group": "Group",
-      "groupPlaceholder": "Select a group",
       "autoresponders": "Autoresponders",
       "autorespondersTooltip": "If enabled, the group's autoresponder emails will be sent to the new contact.",
       "type": "Type"
     },
     "notConnected": "MailerLite not connected"
+  },
+  "getResponse": {
+    "title": "GetResponse",
+    "setting": {
+      "label": "GetResponse",
+      "description": "This integration allows you to save customer contact information from your bot to GetResponse"
+    },
+    "dialog": {
+      "title": "Connect GetResponse",
+      "description": "Enter the API Key from your GetResponse account (Account Settings > API & OAuth)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Enter your API Key"
+    },
+    "error": {
+      "invalidCredentials": "Invalid API Key or no access to account",
+      "connectionFailed": "Connection failed. Please check your information.",
+      "fetch_campaigns": "Unable to load GetResponse campaigns",
+      "fetch_tags": "Unable to load GetResponse tags"
+    },
+    "fields": {
+      "list": "List",
+      "listPlaceholder": "Select a list",
+      "emailField": "Email Field",
+      "emailFieldTooltip": "Custom field that contains the user's email to identify contacts in GetResponse",
+      "nameField": "Name Field",
+      "tags": "Tags",
+      "tagsPlaceholder": "Select tags",
+      "dayOfCycle": "Day of Autoresponder Cycle",
+      "dayOfCyclePlaceholder": "0",
+      "dayOfCycleTooltip": "Move a contact to a specific day in your autoresponder cycle. Enter 0 to add them to the start day of the cycle.",
+      "customFieldsMapping": "Custom Fields in GetResponse",
+      "noCustomFields": "No custom fields available in your GetResponse account"
+    },
+    "notConnected": "GetResponse not connected"
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

@@ -20,6 +20,7 @@ type SettingIntegrationLayoutProps = {
   drip: ReactNode
   sendgrid: ReactNode
   mailerLite: ReactNode
+  getResponse: ReactNode
 }
 
 function SettingIntegrationLayoutContent({
@@ -31,6 +32,7 @@ function SettingIntegrationLayoutContent({
   drip,
   sendgrid,
   mailerLite,
+  getResponse,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
   const searchParams = useSearchParams()
@@ -84,6 +86,12 @@ function SettingIntegrationLayoutContent({
       keyName: t("mailerlite.title"),
       icon: MailIcon,
       content: mailerLite,
+    },
+    {
+      id: "getResponse",
+      keyName: t("getResponse.title"),
+      icon: MailIcon,
+      content: getResponse,
     },
   ]
 

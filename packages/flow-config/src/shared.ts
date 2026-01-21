@@ -15,6 +15,7 @@ import { followConversationStepSchema } from "./steps/follow-conversation"
 import { formatDateStepSchema } from "./steps/format-date"
 import { generateCodeStepSchema } from "./steps/generate-code"
 import { getDataFromJsonStepSchema } from "./steps/get-data-from-json"
+import { getResponseStepSchema } from "./steps/get-response"
 import { mailchimpAddMemberStepSchema } from "./steps/mailchimp-add-member"
 import { mailerLiteStepSchema } from "./steps/mailer-lite"
 import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
@@ -101,6 +102,8 @@ const sendGridSteps = [sendGridStepSchema]
 
 const mailerLiteSteps = [mailerLiteStepSchema]
 
+const getResponseSteps = [getResponseStepSchema]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -114,4 +117,5 @@ export const actionSteps = [
   ...dripSteps,
   ...sendGridSteps,
   ...mailerLiteSteps,
+  ...getResponseSteps,
 ]

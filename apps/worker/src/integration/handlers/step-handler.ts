@@ -38,6 +38,7 @@ import {
   unfollowConversation,
 } from "./conversation-handler"
 import { handleDripStep } from "./drip-handler"
+import { handleGetResponseStep } from "./get-response-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { handleMailerLiteStep } from "./mailer-lite-handler"
 import { handleSendGridStep } from "./sendgrid-handler"
@@ -205,6 +206,7 @@ export const flowStepHandlers: Record<
   [StepType.drip]: handleDripStep,
   [StepType.sendgrid]: handleSendGridStep,
   [StepType.mailerLite]: handleMailerLiteStep,
+  [StepType.getResponse]: handleGetResponseStep,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }

@@ -9,6 +9,7 @@ import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field
 import { InboxStoreProvider } from "../inboxes/provider/inbox-store-context"
 import { ActiveCampaignStoreProvider } from "../integration-active-campaign/provider/active-campaign-store-context"
 import { DripStoreProvider } from "../integration-drip/provider/drip-store-context"
+import { GetResponseStoreProvider } from "../integration-get-response/provider/get-response-store-context"
 import { MailchimpStoreProvider } from "../integration-mailchimp/provider/mailchimp-store-context"
 import { MailerLiteStoreProvider } from "../integration-mailer-lite/provider/mailer-lite-store-context"
 import { SendGridStoreProvider } from "../integration-sendgrid/provider/sendgrid-store-context"
@@ -46,34 +47,36 @@ export function FlowDetail({
           <MailerLiteStoreProvider>
             <ActiveCampaignStoreProvider>
               <DripStoreProvider>
-                <SendGridStoreProvider>
-                  <MailchimpStoreProvider>
-                    <FlowStoreProvider
-                      autoInitialize={true}
-                      chatbotId={flow.chatbotId}
-                    >
-                      <TagStoreProvider
+                <GetResponseStoreProvider>
+                  <SendGridStoreProvider>
+                    <MailchimpStoreProvider>
+                      <FlowStoreProvider
                         autoInitialize={true}
                         chatbotId={flow.chatbotId}
                       >
-                        <UserStoreProvider
-                          autoInitializeAgentsAndInboxTeams={true}
+                        <TagStoreProvider
+                          autoInitialize={true}
                           chatbotId={flow.chatbotId}
                         >
-                          <CustomFieldStoreProvider
-                            autoInitialize={true}
+                          <UserStoreProvider
+                            autoInitializeAgentsAndInboxTeams={true}
                             chatbotId={flow.chatbotId}
                           >
-                            <ReactFlowFrame
-                              flow={flow}
-                              flowVersion={flowVersion}
-                            />
-                          </CustomFieldStoreProvider>
-                        </UserStoreProvider>
-                      </TagStoreProvider>
-                    </FlowStoreProvider>
-                  </MailchimpStoreProvider>
-                </SendGridStoreProvider>
+                            <CustomFieldStoreProvider
+                              autoInitialize={true}
+                              chatbotId={flow.chatbotId}
+                            >
+                              <ReactFlowFrame
+                                flow={flow}
+                                flowVersion={flowVersion}
+                              />
+                            </CustomFieldStoreProvider>
+                          </UserStoreProvider>
+                        </TagStoreProvider>
+                      </FlowStoreProvider>
+                    </MailchimpStoreProvider>
+                  </SendGridStoreProvider>
+                </GetResponseStoreProvider>
               </DripStoreProvider>
             </ActiveCampaignStoreProvider>
           </MailerLiteStoreProvider>

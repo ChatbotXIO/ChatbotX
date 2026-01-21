@@ -102,6 +102,9 @@ export const StepType = {
 
   // MailerLite Operations (ML_)
   mailerLite: "ML01",
+
+  // GetResponse Operations (GR_)
+  getResponse: "GR01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]
