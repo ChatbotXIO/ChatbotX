@@ -2,11 +2,8 @@
   "extends": "@aha.chat/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "paths": {
-      "@aha.chat/worker-config": ["../../worker-config/src/index.ts"]
-    }
+    "rootDir": "src"
   },
-  "include": ["src"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

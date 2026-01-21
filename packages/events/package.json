@@ -1,14 +1,14 @@
 {
-  "name": "@aha.chat/trigger-events",
+  "name": "@aha.chat/events",
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./types": "./src/types.ts"
+    ".": "./src/index.ts"
   },
   "dependencies": {
     "@aha.chat/worker-config": "workspace:*",
-    "@aha.chat/database": "workspace:*"
+    "@aha.chat/database": "workspace:*",
+    "lru-cache": "^11.0.2"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
