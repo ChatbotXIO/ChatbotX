@@ -15,7 +15,7 @@ const SendImageStepViewer = (props: SendImageStepViewerProps) => {
   return (
     <Card className="overflow-hidden p-0">
       <CardContent className="p-0">
-        {data.url && (
+        {data.url?.startsWith("https") && (
           <div className="relative h-[150px]">
             <Image
               alt={data.id}

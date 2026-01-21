@@ -17,7 +17,7 @@ const SendCardStepViewer = (props: SendCardStepViewerProps) => {
     <Card className="overflow-hidden p-0">
       <CardContent className="p-0">
         <div className="mb-3 flex flex-col gap-1">
-          {"image" in data && data.image?.url ? (
+          {"image" in data && data.image?.url.startsWith("https") ? (
             <div className="relative h-[150px]">
               <Image
                 alt={data.title}

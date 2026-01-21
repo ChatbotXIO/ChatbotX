@@ -12,7 +12,7 @@ export const SendGifStepViewer = (props: SendGifStepViewerProps) => {
 
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
-      {data.url && (
+      {data.url?.startsWith("https") && (
         <div className="relative h-[150px]">
           <Image
             alt={data.id}
