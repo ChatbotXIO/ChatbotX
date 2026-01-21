@@ -133,6 +133,8 @@
     "chooseSubaction": "Choose Subaction",
     "resend": "Resend",
     "publish": "Publish",
+    "setStartNode": "Set as Start Node",
+    "getNodeId": "Get Node ID",
     "setAsDefaultAgent": "Set as Default",
     "unsetDefaultAgent": "Unset Default",
     "randomRow": "Random Row",

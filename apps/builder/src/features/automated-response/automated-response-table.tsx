@@ -271,7 +271,7 @@ export function AutomatedResponsesTable({
         chatbotId={chatbotId}
         currentFolderId={rowAction?.row.original?.folderId || null}
         folderType={FolderType.automatedResponse}
-        modelId={rowAction?.row.original?.id || null}
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "move"}
       />

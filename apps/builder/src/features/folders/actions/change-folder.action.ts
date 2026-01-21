@@ -16,16 +16,18 @@ export const changeFolderAction = chatbotActionClient
     const [chatbotId] = bindArgsParsedInputs
 
     const resourceModel = findResourceModel(parsedInput.folderType)
-    const resource = await resourceModel.findFirst({
+    const resources = await resourceModel.findMany({
       where: {
         chatbotId,
-        id: parsedInput.modelId,
+        id: {
+          in: parsedInput.modelIds,
+        },
       },
       select: {
         id: true,
       },
     })
-    if (!resource) {
+    if (!resources || resources.length === 0) {
       throw new BaseException("Resource not found")
     }
 
@@ -54,10 +56,13 @@ export const changeFolderAction = chatbotActionClient
       newFolderId = targetFolder.id
     }
 
-    // Try to find the folder
-    await resourceModel.update({
+    // Update all resources
+    await resourceModel.updateMany({
       where: {
-        id: resource.id,
+        id: {
+          in: parsedInput.modelIds,
+        },
+        chatbotId,
       },
       data: {
         folderId: newFolderId,
