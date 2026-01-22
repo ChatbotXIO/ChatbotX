@@ -1,4 +1,4 @@
-import { TriggerAction, TriggerCondition } from "@aha.chat/database/enums"
+import { Condition, TriggerAction } from "@aha.chat/database/enums"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Card,
@@ -16,7 +16,7 @@ export const BaseEditor = ({
   onRemove,
   children,
 }: {
-  conditionType?: TriggerCondition
+  conditionType?: Condition
   actionType?: TriggerAction
   children: ReactNode
   onRemove: () => void
@@ -25,77 +25,77 @@ export const BaseEditor = ({
 
   const conditionLabel = useMemo(() => {
     switch (conditionType) {
-      case TriggerCondition.tagApplied:
+      case Condition.tagApplied:
         return t("trigger.conditions.tagApplied")
-      case TriggerCondition.tagRemoved:
+      case Condition.tagRemoved:
         return t("trigger.conditions.tagRemoved")
-      case TriggerCondition.customFieldValueChanged:
+      case Condition.customFieldValueChanged:
         return t("trigger.conditions.customFieldValueChanged")
-      case TriggerCondition.dateTimeBasedTrigger:
+      case Condition.dateTimeBasedTrigger:
         return t("trigger.conditions.dateTimeBasedTrigger")
-      case TriggerCondition.conversationTransferredToHuman:
+      case Condition.conversationTransferredToHuman:
         return t("trigger.conditions.conversationTransferredToHuman")
-      case TriggerCondition.conversationTransferredToBot:
+      case Condition.conversationTransferredToBot:
         return t("trigger.conditions.conversationTransferredToBot")
-      case TriggerCondition.newContact:
+      case Condition.newContact:
         return t("trigger.conditions.newContact")
-      case TriggerCondition.contactUnsubscribedFormBroadcast:
+      case Condition.contactUnsubscribedFormBroadcast:
         return t("trigger.conditions.contactUnsubscribedFormBroadcast")
-      case TriggerCondition.archived:
+      case Condition.archived:
         return t("trigger.conditions.archived")
-      case TriggerCondition.followUp:
+      case Condition.followUp:
         return t("trigger.conditions.followUp")
-      case TriggerCondition.conversationAssigned:
+      case Condition.conversationAssigned:
         return t("trigger.conditions.conversationAssigned")
-      case TriggerCondition.conversationUnassigned:
+      case Condition.conversationUnassigned:
         return t("trigger.conditions.conversationUnassigned")
-      case TriggerCondition.incomingCall:
+      case Condition.incomingCall:
         return t("trigger.conditions.incomingCall")
-      case TriggerCondition.missedAudioCall:
+      case Condition.missedAudioCall:
         return t("trigger.conditions.missedAudioCall")
-      case TriggerCondition.callEnded:
+      case Condition.callEnded:
         return t("trigger.conditions.callEnded")
-      case TriggerCondition.ticketCreated:
+      case Condition.ticketCreated:
         return t("trigger.conditions.ticketCreated")
-      case TriggerCondition.ticketMovedToStage:
+      case Condition.ticketMovedToStage:
         return t("trigger.conditions.ticketMovedToStage")
-      case TriggerCondition.ticketValueChanged:
+      case Condition.ticketValueChanged:
         return t("trigger.conditions.ticketValueChanged")
-      case TriggerCondition.ticketStatusChanged:
+      case Condition.ticketStatusChanged:
         return t("trigger.conditions.ticketStatusChanged")
-      case TriggerCondition.ticketPriorityChanged:
+      case Condition.ticketPriorityChanged:
         return t("trigger.conditions.ticketPriorityChanged")
-      case TriggerCondition.subscribedToSequence:
+      case Condition.subscribedToSequence:
         return t("trigger.conditions.subscribedToSequence")
-      case TriggerCondition.unsubscribedFromSequence:
+      case Condition.unsubscribedFromSequence:
         return t("trigger.conditions.unsubscribedFromSequence")
-      case TriggerCondition.WhatsappShoppingCartSent:
+      case Condition.WhatsappShoppingCartSent:
         return t("trigger.conditions.WhatsappShoppingCartSent")
-      case TriggerCondition.userAskedAboutProduct:
+      case Condition.userAskedAboutProduct:
         return t("trigger.conditions.userAskedAboutProduct")
-      case TriggerCondition.cartAbandoned:
+      case Condition.cartAbandoned:
         return t("trigger.conditions.cartAbandoned")
-      case TriggerCondition.newOrder:
+      case Condition.newOrder:
         return t("trigger.conditions.newOrder")
-      case TriggerCondition.orderAccepted:
+      case Condition.orderAccepted:
         return t("trigger.conditions.orderAccepted")
-      case TriggerCondition.orderShipped:
+      case Condition.orderShipped:
         return t("trigger.conditions.orderShipped")
-      case TriggerCondition.orderConcluded:
+      case Condition.orderConcluded:
         return t("trigger.conditions.orderConcluded")
-      case TriggerCondition.orderCancelled:
+      case Condition.orderCancelled:
         return t("trigger.conditions.orderCancelled")
-      case TriggerCondition.categoryAddedToCart:
+      case Condition.categoryAddedToCart:
         return t("trigger.conditions.categoryAddedToCart")
-      case TriggerCondition.productAddedToCart:
+      case Condition.productAddedToCart:
         return t("trigger.conditions.productAddedToCart")
-      case TriggerCondition.productRemovedFromCart:
+      case Condition.productRemovedFromCart:
         return t("trigger.conditions.productRemovedFromCart")
-      case TriggerCondition.productOrdered:
+      case Condition.productOrdered:
         return t("trigger.conditions.productOrdered")
-      case TriggerCondition.contactReferredANewContact:
+      case Condition.contactReferredANewContact:
         return t("trigger.conditions.contactReferredANewContact")
-      case TriggerCondition.contactReferredExistingContact:
+      case Condition.contactReferredExistingContact:
         return t("trigger.conditions.contactReferredExistingContact")
       default:
         break

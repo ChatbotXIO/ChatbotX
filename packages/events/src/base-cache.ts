@@ -1,4 +1,3 @@
-import { prisma } from "@aha.chat/database"
 import { getRedisConnection } from "@aha.chat/worker-config"
 import { LRUCache } from "lru-cache"
 
@@ -11,7 +10,14 @@ export abstract class BaseCache {
   protected abstract cachePrefix: string
   protected abstract redisTTL: number
   protected abstract ramTTL: number
-  protected abstract tableName: "trigger" | "webhook"
+  protected abstract getTable(): {
+    findMany: (args: {
+      where: { chatbotId: string; active: true }
+      select: { conditions: { select: { type: true; sourceId: true } } }
+    }) => Promise<
+      Array<{ conditions: Array<{ type: number; sourceId: string | null }> }>
+    >
+  }
 
   private _ramCache?: LRUCache<string, CacheEntry>
 
@@ -31,23 +37,23 @@ export abstract class BaseCache {
   protected async getCachedData(
     chatbotId: string,
   ): Promise<Record<number, string[]> | null> {
-    const cached = this.ramCache.get(chatbotId)
+    const cacheKey = this.getCacheKey(chatbotId)
+    const cached = this.ramCache.get(cacheKey)
     if (cached && Date.now() - cached.timestamp < this.ramTTL) {
       return cached.data
     }
 
     try {
       const redis = getRedisConnection()
-      const key = this.getCacheKey(chatbotId)
-      const data = await redis.get(key)
+      const data = await redis.get(cacheKey)
 
       if (data) {
         const parsed = JSON.parse(data) as Record<number, string[]>
-        this.ramCache.set(chatbotId, { data: parsed, timestamp: Date.now() })
+        this.ramCache.set(cacheKey, { data: parsed, timestamp: Date.now() })
         return parsed
       }
     } catch (error) {
-      console.error(`Redis get error (${this.tableName}):`, error)
+      console.error("Redis get error (cache):", error)
     }
 
     return null
@@ -56,7 +62,7 @@ export abstract class BaseCache {
   protected async buildCacheData(
     chatbotId: string,
   ): Promise<Record<number, string[]>> {
-    const table = this.tableName === "trigger" ? prisma.trigger : prisma.webhook
+    const table = this.getTable()
 
     const items = await table.findMany({
       where: {
@@ -127,14 +133,14 @@ export abstract class BaseCache {
         return false
       }
 
-      this.ramCache.set(chatbotId, { data: chatbotMap, timestamp: Date.now() })
+      const cacheKey = this.getCacheKey(chatbotId)
+      this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       try {
         const redis = getRedisConnection()
-        const key = this.getCacheKey(chatbotId)
-        await redis.setex(key, this.redisTTL, JSON.stringify(chatbotMap))
+        await redis.setex(cacheKey, this.redisTTL, JSON.stringify(chatbotMap))
       } catch (error) {
-        console.error(`Redis setex error (${this.tableName}):`, error)
+        console.error("Redis setex error (cache):", error)
       }
 
       return this.checkEventTypes(chatbotMap, eventTypes, sourceId)
@@ -152,26 +158,25 @@ export abstract class BaseCache {
         return
       }
 
-      this.ramCache.set(chatbotId, { data: chatbotMap, timestamp: Date.now() })
+      const cacheKey = this.getCacheKey(chatbotId)
+      this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       const redis = getRedisConnection()
-      const key = this.getCacheKey(chatbotId)
-
-      await redis.setex(key, this.redisTTL, JSON.stringify(chatbotMap))
+      await redis.setex(cacheKey, this.redisTTL, JSON.stringify(chatbotMap))
     } catch (error) {
-      console.error(`Update cache error (${this.tableName}):`, error)
+      console.error("Update cache error (cache):", error)
     }
   }
 
   async removeCache(chatbotId: string): Promise<void> {
     try {
-      this.ramCache.delete(chatbotId)
+      const cacheKey = this.getCacheKey(chatbotId)
+      this.ramCache.delete(cacheKey)
 
       const redis = getRedisConnection()
-      const key = this.getCacheKey(chatbotId)
-      await redis.del(key)
+      await redis.del(cacheKey)
     } catch (error) {
-      console.error(`Remove cache error (${this.tableName}):`, error)
+      console.error("Remove cache error (cache):", error)
     }
   }
 
@@ -185,14 +190,14 @@ export abstract class BaseCache {
     const chatbotMap = await this.buildCacheData(chatbotId)
 
     if (Object.keys(chatbotMap).length > 0) {
-      this.ramCache.set(chatbotId, { data: chatbotMap, timestamp: Date.now() })
+      const cacheKey = this.getCacheKey(chatbotId)
+      this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       try {
         const redis = getRedisConnection()
-        const key = this.getCacheKey(chatbotId)
-        await redis.setex(key, this.redisTTL, JSON.stringify(chatbotMap))
+        await redis.setex(cacheKey, this.redisTTL, JSON.stringify(chatbotMap))
       } catch (error) {
-        console.error(`Redis cache error (${this.tableName}):`, error)
+        console.error("Redis cache error (cache):", error)
       }
     }
 
@@ -202,9 +207,9 @@ export abstract class BaseCache {
   cleanupExpiredCache(): void {
     const now = Date.now()
 
-    for (const [chatbotId, entry] of Array.from(this.ramCache.entries())) {
+    for (const [cacheKey, entry] of Array.from(this.ramCache.entries())) {
       if (now - entry.timestamp >= this.ramTTL) {
-        this.ramCache.delete(chatbotId)
+        this.ramCache.delete(cacheKey)
       }
     }
   }

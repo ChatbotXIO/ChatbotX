@@ -9,6 +9,7 @@
     "worker:default": "dotenv -e ../../.env -- tsx --watch src/default/worker.ts",
     "schedule": "dotenv -e ../../.env -- tsx --watch src/schedule/worker.ts",
     "worker:trigger": "dotenv -e ../../.env -- tsx --watch src/trigger/worker.ts",
+    "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts",
     "dev": "concurrently pnpm:worker:*",
     "https": "pnpm dev",
     "build": "tsdown",
@@ -19,6 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@aha.chat/database": "workspace:*",
+    "@aha.chat/events": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/integration-chatbotx": "workspace:*",
@@ -29,7 +31,6 @@
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
-    "@aha.chat/trigger-events": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.50",
     "@ai-sdk/deepseek": "^2.0.21",

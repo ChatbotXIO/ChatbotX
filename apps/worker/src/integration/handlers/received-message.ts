@@ -15,7 +15,10 @@ import type {
   MessageModel,
 } from "@aha.chat/database/types"
 import { getPublicUrl } from "@aha.chat/database/utils"
-import { emitContactCreated } from "@aha.chat/events"
+import {
+  emitContactCreated,
+  setWebhookExecutionContext,
+} from "@aha.chat/events"
 import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
@@ -46,6 +49,8 @@ export const receiveMessage = async (
   ref?: string | null
 }> => {
   const { integrationType, integrationIdentifier } = props
+
+  setWebhookExecutionContext({ source: "webhook" })
 
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)

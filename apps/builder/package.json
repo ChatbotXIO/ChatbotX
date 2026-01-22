@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@aha.chat/database": "workspace:*",
+    "@aha.chat/events": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/integration-chatbotx": "workspace:*",

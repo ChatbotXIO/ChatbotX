@@ -5,4 +5,5 @@ export const queueName = {
   schedule: "schedule",
   default: "default",
   trigger: "trigger",
+  webhook: "webhook",
 } as const

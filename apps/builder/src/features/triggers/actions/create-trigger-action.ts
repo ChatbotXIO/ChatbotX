@@ -1,7 +1,7 @@
 "use server"
 
 import { FolderType, prisma } from "@aha.chat/database"
-import { updateTriggerCache } from "@aha.chat/trigger-events"
+import { updateTriggerCache } from "@aha.chat/events"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,

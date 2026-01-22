@@ -1,14 +1,14 @@
 import {
+  Condition,
   DateTimeTriggerType,
   Operator,
-  TriggerCondition,
 } from "@aha.chat/database/enums"
 import z from "zod"
 
 export const dateTimeBasedTrigger = z
   .object({
     id: z.string().optional(),
-    type: z.literal(TriggerCondition.dateTimeBasedTrigger),
+    type: z.literal(Condition.dateTimeBasedTrigger),
     sourceId: z.string().optional(),
     operator: z.string(),
     value: z.object({
@@ -54,7 +54,7 @@ export const dateTimeBasedTrigger = z
 export type DateTimeBasedTrigger = z.infer<typeof dateTimeBasedTrigger>
 
 export const defaultFn = (): DateTimeBasedTrigger => ({
-  type: TriggerCondition.dateTimeBasedTrigger,
+  type: Condition.dateTimeBasedTrigger,
   sourceId: "",
   operator: Operator.is,
   value: {

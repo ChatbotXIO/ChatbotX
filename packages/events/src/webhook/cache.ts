@@ -1,10 +1,13 @@
+import { prisma } from "@aha.chat/database"
 import { BaseCache } from "../base-cache"
 
 class WebhookCache extends BaseCache {
   protected cachePrefix = "webhook:active:"
   protected redisTTL = 3600
   protected ramTTL = 60_000
-  protected tableName = "webhook" as const
+  protected getTable() {
+    return prisma.webhook
+  }
 }
 
 const webhookCache = new WebhookCache()

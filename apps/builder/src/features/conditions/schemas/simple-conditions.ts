@@ -1,8 +1,8 @@
-import { TriggerCondition } from "@aha.chat/database/enums"
+import { Condition } from "@aha.chat/database/enums"
 import z from "zod"
 
 // Simple conditions without additional fields
-const createSimpleCondition = (type: TriggerCondition) =>
+const createSimpleCondition = (type: Condition) =>
   z.object({
     id: z.string().optional(),
     type: z.literal(type),
@@ -10,32 +10,32 @@ const createSimpleCondition = (type: TriggerCondition) =>
 
 // Simple conditions
 export const conversationTransferredToHuman = createSimpleCondition(
-  TriggerCondition.conversationTransferredToHuman,
+  Condition.conversationTransferredToHuman,
 )
 export const conversationTransferredToBot = createSimpleCondition(
-  TriggerCondition.conversationTransferredToBot,
+  Condition.conversationTransferredToBot,
 )
-export const newContact = createSimpleCondition(TriggerCondition.newContact)
+export const newContact = createSimpleCondition(Condition.newContact)
 export const contactUnsubscribedFormBroadcast = createSimpleCondition(
-  TriggerCondition.contactUnsubscribedFormBroadcast,
+  Condition.contactUnsubscribedFormBroadcast,
 )
-export const archived = createSimpleCondition(TriggerCondition.archived)
-export const followUp = createSimpleCondition(TriggerCondition.followUp)
+export const archived = createSimpleCondition(Condition.archived)
+export const followUp = createSimpleCondition(Condition.followUp)
 export const conversationAssigned = createSimpleCondition(
-  TriggerCondition.conversationAssigned,
+  Condition.conversationAssigned,
 )
 export const conversationUnassigned = createSimpleCondition(
-  TriggerCondition.conversationUnassigned,
+  Condition.conversationUnassigned,
 )
 export const contactReferredANewContact = createSimpleCondition(
-  TriggerCondition.contactReferredANewContact,
+  Condition.contactReferredANewContact,
 )
 export const contactReferredExistingContact = createSimpleCondition(
-  TriggerCondition.contactReferredExistingContact,
+  Condition.contactReferredExistingContact,
 )
 
 // Conditions with sourceId
-const createConditionWithSourceId = (type: TriggerCondition) =>
+const createConditionWithSourceId = (type: Condition) =>
   z.object({
     id: z.string().optional(),
     type: z.literal(type),
@@ -43,17 +43,17 @@ const createConditionWithSourceId = (type: TriggerCondition) =>
   })
 
 export const subscribedToSequence = createConditionWithSourceId(
-  TriggerCondition.subscribedToSequence,
+  Condition.subscribedToSequence,
 )
 export const unsubscribedFromSequence = createConditionWithSourceId(
-  TriggerCondition.unsubscribedFromSequence,
+  Condition.unsubscribedFromSequence,
 )
 
 // Default functions
 export const createDefaultFn =
-  <T extends TriggerCondition>(type: T) =>
+  <T extends Condition>(type: T) =>
   () => ({ type })
 
 export const createDefaultFnWithSourceId =
-  <T extends TriggerCondition>(type: T) =>
+  <T extends Condition>(type: T) =>
   () => ({ type, sourceId: "" })

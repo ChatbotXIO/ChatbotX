@@ -11,7 +11,6 @@ import {
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
 } from "@aha.chat/flow-config"
-import { TriggerEventEmitter } from "@aha.chat/trigger-events"
 import { faker } from "@faker-js/faker"
 import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"
@@ -323,7 +322,7 @@ export async function getDataFromJSON({
 
   for (const field of updatedFields) {
     try {
-      await TriggerEventEmitter.customFieldChanged(
+      await emitCustomFieldChanged(
         conversation.chatbotId,
         conversation.contactId,
         field.customFieldId,

@@ -1,21 +1,22 @@
 // Main unified emitters
-export * from "./emitters"
+export * from "./event-dispatcher"
+
+// Trigger events
 export * from "./trigger/cache"
 export {
-  getExecutionContext as getTriggerExecutionContext,
+  getTriggerExecutionContext,
   isWorkerContext,
-  setExecutionContext as setTriggerExecutionContext,
-  setExecutionContext, // Backward compatibility
+  setTriggerExecutionContext,
 } from "./trigger/context"
-// Trigger events
 export * as TriggerEventEmitter from "./trigger/emitter"
 export type { TriggerEventType } from "./trigger/types"
+
+// Webhook events
 export * from "./webhook/cache"
 export {
-  getExecutionContext as getWebhookExecutionContext,
+  getWebhookExecutionContext,
   isWebhookContext,
-  setExecutionContext as setWebhookExecutionContext,
+  setWebhookExecutionContext,
 } from "./webhook/context"
-// Webhook events
 export * as WebhookEventEmitter from "./webhook/emitter"
 export type { WebhookEventType } from "./webhook/types"

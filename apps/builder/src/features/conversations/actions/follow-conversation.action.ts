@@ -4,7 +4,6 @@ import { and, db, eq } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
 import type { UserModel } from "@aha.chat/database/types"
 import { emitConversationFollowUp } from "@aha.chat/events"
-import { TriggerEventEmitter } from "@aha.chat/trigger-events"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -51,10 +50,7 @@ export const followConversationAction = chatbotActionClient
         )
 
       try {
-        await TriggerEventEmitter.conversationFollowUp(
-          chatbotId,
-          conversation.contactId,
-        )
+        await emitConversationFollowUp(chatbotId, conversation.contactId)
       } catch (error) {
         console.error("Failed to emit conversationFollowUp event:", error)
       }

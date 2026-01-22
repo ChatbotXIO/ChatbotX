@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import { TriggerCondition as TriggerConditionEnum } from "@aha.chat/database/enums"
+import { Condition as ConditionEnum } from "@aha.chat/database/enums"
 import type { ChatbotModel } from "@aha.chat/database/types"
 import type { ConditionEvaluationContext } from "../types"
 import { parseDateTimeValue } from "../utils/datetime-calculator"
@@ -12,15 +12,15 @@ export class ConditionEvaluator {
     const { type, sourceId, operator, value } = condition
 
     switch (type) {
-      case TriggerConditionEnum.tagApplied:
-      case TriggerConditionEnum.tagRemoved:
+      case ConditionEnum.tagApplied:
+      case ConditionEnum.tagRemoved:
         return this.evaluateTagCondition(
           type,
           sourceId,
           eventData.eventData.tagId as string,
         )
 
-      case TriggerConditionEnum.customFieldValueChanged:
+      case ConditionEnum.customFieldValueChanged:
         return await this.evaluateCustomFieldCondition(
           sourceId,
           operator,
@@ -30,21 +30,21 @@ export class ConditionEvaluator {
           chatbot,
         )
 
-      case TriggerConditionEnum.conversationTransferredToHuman:
-      case TriggerConditionEnum.conversationTransferredToBot:
-      case TriggerConditionEnum.newContact:
-      case TriggerConditionEnum.contactUnsubscribedFormBroadcast:
-      case TriggerConditionEnum.archived:
-      case TriggerConditionEnum.followUp:
-      case TriggerConditionEnum.conversationAssigned:
-      case TriggerConditionEnum.conversationUnassigned:
-      case TriggerConditionEnum.subscribedToSequence:
-      case TriggerConditionEnum.unsubscribedFromSequence:
-      case TriggerConditionEnum.contactReferredANewContact:
-      case TriggerConditionEnum.contactReferredExistingContact:
+      case ConditionEnum.conversationTransferredToHuman:
+      case ConditionEnum.conversationTransferredToBot:
+      case ConditionEnum.newContact:
+      case ConditionEnum.contactUnsubscribedFormBroadcast:
+      case ConditionEnum.archived:
+      case ConditionEnum.followUp:
+      case ConditionEnum.conversationAssigned:
+      case ConditionEnum.conversationUnassigned:
+      case ConditionEnum.subscribedToSequence:
+      case ConditionEnum.unsubscribedFromSequence:
+      case ConditionEnum.contactReferredANewContact:
+      case ConditionEnum.contactReferredExistingContact:
         return true
 
-      case TriggerConditionEnum.dateTimeBasedTrigger:
+      case ConditionEnum.dateTimeBasedTrigger:
         return await this.evaluateDateTimeCondition(
           sourceId,
           value,

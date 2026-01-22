@@ -1,29 +1,31 @@
 import { prisma } from "@aha.chat/database"
 import { Condition as ConditionEnum } from "@aha.chat/database/enums"
 import type { ChatbotModel } from "@aha.chat/database/types"
-import type { TriggerEventData, TriggerWithConditions } from "../types"
-import { ConditionEvaluator } from "./condition-evaluator"
+import { logger } from "../../lib/logger"
+import { ConditionEvaluator } from "../../trigger/services/condition-evaluator"
+import type { WebhookEventData, WebhookWithConditions } from "../types"
+import { WebhookExecutor } from "./webhook-executor.service"
 
-export class TriggerMatcherService {
+export class WebhookMatcherService {
   private readonly conditionEvaluator: ConditionEvaluator
+  private readonly webhookExecutor: WebhookExecutor
 
   constructor() {
     this.conditionEvaluator = new ConditionEvaluator()
+    this.webhookExecutor = new WebhookExecutor()
   }
 
-  async findMatchingTriggers(
-    eventData: TriggerEventData,
-  ): Promise<TriggerWithConditions[]> {
+  async findAndExecuteWebhooks(eventData: WebhookEventData): Promise<void> {
     const { chatbotId, eventType, eventData: metadata } = eventData
 
     const conditionTypes = this.mapEventTypeToConditionTypes(eventType)
     if (conditionTypes.length === 0) {
-      return []
+      return
     }
 
     const sourceId = metadata.sourceId as string | undefined
 
-    const triggers = await prisma.trigger.findMany({
+    const webhooks = await prisma.webhook.findMany({
       where: {
         chatbotId,
         active: true,
@@ -39,36 +41,49 @@ export class TriggerMatcherService {
       },
     })
 
+    if (webhooks.length === 0) {
+      return
+    }
+
     const chatbot = await prisma.chatbot.findUnique({
       where: {
         id: chatbotId,
       },
     })
 
-    if (triggers.length === 0 || !chatbot) {
-      return []
+    if (!chatbot) {
+      return
     }
 
-    const evaluationPromises = triggers.map(async (trigger) => {
-      const isMatch = await this.evaluateTriggerConditions(
-        trigger,
+    for (const webhook of webhooks) {
+      const isMatch = await this.evaluateWebhookConditions(
+        webhook,
         eventData,
         chatbot,
       )
-      return isMatch ? trigger : null
-    })
 
-    const results = await Promise.all(evaluationPromises)
-
-    return results.filter((t): t is TriggerWithConditions => t !== null)
+      if (isMatch) {
+        try {
+          await this.webhookExecutor.execute({
+            webhook,
+            eventData,
+          })
+        } catch (error) {
+          logger.error(
+            `Failed to execute webhook ${webhook.id} for chatbot ${chatbotId}`,
+            error,
+          )
+        }
+      }
+    }
   }
 
-  private async evaluateTriggerConditions(
-    trigger: TriggerWithConditions,
-    eventData: TriggerEventData,
+  private async evaluateWebhookConditions(
+    webhook: WebhookWithConditions,
+    eventData: WebhookEventData,
     chatbot: ChatbotModel,
   ): Promise<boolean> {
-    const { conditions } = trigger
+    const { conditions } = webhook
 
     if (conditions.length === 0) {
       return false
@@ -77,13 +92,17 @@ export class TriggerMatcherService {
     for (const condition of conditions) {
       const isMatch = await this.conditionEvaluator.evaluate({
         condition,
-        eventData,
-        chatbotId: trigger.chatbotId,
+        eventData: {
+          chatbotId: webhook.chatbotId,
+          contactId: eventData.contactId,
+          eventType: eventData.eventType,
+          eventData: eventData.eventData,
+          timestamp: eventData.timestamp,
+        },
+        chatbotId: webhook.chatbotId,
         contactId: eventData.contactId,
         chatbot,
       })
-
-      // console.log({ condition, isMatch })
 
       if (!isMatch) {
         return false

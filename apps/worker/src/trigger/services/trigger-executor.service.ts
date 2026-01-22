@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import { setExecutionContext } from "@aha.chat/trigger-events"
+import { setTriggerExecutionContext } from "@aha.chat/events"
 import { logger } from "../../lib/logger"
 import type { TriggerWithConditions } from "../types"
 import { ActionExecutor } from "./action-executor"
@@ -18,7 +18,7 @@ export class TriggerExecutorService {
     const { id: triggerId, chatbotId, actions } = trigger
 
     try {
-      setExecutionContext({ source: "worker" })
+      setTriggerExecutionContext({ source: "worker" })
 
       const actionsArray = Array.isArray(actions) ? actions : []
 

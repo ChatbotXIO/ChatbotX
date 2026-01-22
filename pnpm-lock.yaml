@@ -38,6 +38,9 @@ importers:
       '@aha.chat/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@aha.chat/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
@@ -74,9 +77,6 @@ importers:
       '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@aha.chat/trigger-events':
-        specifier: workspace:*
-        version: link:../../packages/trigger-events
       '@aha.chat/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -426,6 +426,9 @@ importers:
       '@aha.chat/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@aha.chat/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
@@ -456,9 +459,6 @@ importers:
       '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@aha.chat/trigger-events':
-        specifier: workspace:*
-        version: link:../../packages/trigger-events
       '@aha.chat/worker-config':
         specifier: workspace:*
         version: link:../../packages/worker-config
@@ -811,6 +811,25 @@ importers:
         specifier: 1.0.0-beta.15-859cf75
         version: 1.0.0-beta.15-859cf75
 
+  packages/events:
+    dependencies:
+      '@aha.chat/database':
+        specifier: workspace:*
+        version: link:../database
+      '@aha.chat/worker-config':
+        specifier: workspace:*
+        version: link:../worker-config
+      lru-cache:
+        specifier: ^11.0.2
+        version: 11.2.4
+    devDependencies:
+      '@aha.chat/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/filesystem:
     dependencies:
       '@aha.chat/logger':
@@ -1005,22 +1024,6 @@ importers:
       zod:
         specifier: ^4.3.6
         version: 4.3.6
-    devDependencies:
-      '@aha.chat/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-
-  packages/trigger-events:
-    dependencies:
-      '@aha.chat/database':
-        specifier: workspace:*
-        version: link:../database
-      '@aha.chat/worker-config':
-        specifier: workspace:*
-        version: link:../worker-config
     devDependencies:
       '@aha.chat/typescript-config':
         specifier: workspace:*

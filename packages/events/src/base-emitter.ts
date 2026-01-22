@@ -1,18 +1,18 @@
-import { TriggerCondition } from "@aha.chat/database"
+import { Condition } from "@aha.chat/database/enums"
 
 /**
  * Base event emitter class with common functionality
  */
 export abstract class BaseEventEmitter {
-  protected abstract supportedEventTypes: Set<TriggerCondition>
+  protected abstract supportedEventTypes: Set<Condition>
   protected abstract shouldEmitEvent(
-    eventType: TriggerCondition,
+    eventType: Condition,
     chatbotId: string,
     sourceId?: string,
   ): Promise<boolean>
 
   protected abstract emitToQueue(
-    eventType: TriggerCondition,
+    eventType: Condition,
     data: {
       chatbotId: string
       contactId: string
@@ -21,7 +21,7 @@ export abstract class BaseEventEmitter {
   ): Promise<void>
 
   async emit(
-    eventType: TriggerCondition,
+    eventType: Condition,
     data: {
       chatbotId: string
       contactId: string
@@ -45,6 +45,14 @@ export abstract class BaseEventEmitter {
       sourceId,
     )
 
+    console.log({
+      emitter: this.constructor.name,
+      shouldEmit,
+      eventType,
+      chatbotId,
+      sourceId,
+    })
+
     if (!shouldEmit) {
       return
     }
@@ -57,7 +65,7 @@ export abstract class BaseEventEmitter {
     contactId: string,
     tagId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.tagApplied, {
+    await this.emit(Condition.tagApplied, {
       chatbotId,
       contactId,
       metadata: { sourceId: tagId, tagId },
@@ -69,7 +77,7 @@ export abstract class BaseEventEmitter {
     contactId: string,
     tagId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.tagRemoved, {
+    await this.emit(Condition.tagRemoved, {
       chatbotId,
       contactId,
       metadata: { sourceId: tagId, tagId },
@@ -83,7 +91,7 @@ export abstract class BaseEventEmitter {
     oldValue: unknown,
     newValue: unknown,
   ): Promise<void> {
-    await this.emit(TriggerCondition.customFieldValueChanged, {
+    await this.emit(Condition.customFieldValueChanged, {
       chatbotId,
       contactId,
       metadata: {
@@ -99,7 +107,7 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.conversationTransferredToHuman, {
+    await this.emit(Condition.conversationTransferredToHuman, {
       chatbotId,
       contactId,
     })
@@ -109,14 +117,14 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.conversationTransferredToBot, {
+    await this.emit(Condition.conversationTransferredToBot, {
       chatbotId,
       contactId,
     })
   }
 
   async contactCreated(chatbotId: string, contactId: string): Promise<void> {
-    await this.emit(TriggerCondition.newContact, {
+    await this.emit(Condition.newContact, {
       chatbotId,
       contactId,
     })
@@ -126,7 +134,7 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.contactUnsubscribedFormBroadcast, {
+    await this.emit(Condition.contactUnsubscribedFormBroadcast, {
       chatbotId,
       contactId,
     })
@@ -136,7 +144,7 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.archived, {
+    await this.emit(Condition.archived, {
       chatbotId,
       contactId,
     })
@@ -146,7 +154,7 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.followUp, {
+    await this.emit(Condition.followUp, {
       chatbotId,
       contactId,
     })
@@ -156,7 +164,7 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.conversationAssigned, {
+    await this.emit(Condition.conversationAssigned, {
       chatbotId,
       contactId,
     })
@@ -166,7 +174,7 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.conversationUnassigned, {
+    await this.emit(Condition.conversationUnassigned, {
       chatbotId,
       contactId,
     })
@@ -177,7 +185,7 @@ export abstract class BaseEventEmitter {
     contactId: string,
     sequenceId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.subscribedToSequence, {
+    await this.emit(Condition.subscribedToSequence, {
       chatbotId,
       contactId,
       metadata: { sourceId: sequenceId, sequenceId },
@@ -189,7 +197,7 @@ export abstract class BaseEventEmitter {
     contactId: string,
     sequenceId: string,
   ): Promise<void> {
-    await this.emit(TriggerCondition.unsubscribedFromSequence, {
+    await this.emit(Condition.unsubscribedFromSequence, {
       chatbotId,
       contactId,
       metadata: { sourceId: sequenceId, sequenceId },

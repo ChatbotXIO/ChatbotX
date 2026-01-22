@@ -1,20 +1,20 @@
 import { AsyncLocalStorage } from "node:async_hooks"
 
 type ExecutionContext = {
-  source?: string
+  source?: "worker"
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<ExecutionContext>()
 
-export function setExecutionContext(context: ExecutionContext) {
+export function setTriggerExecutionContext(context: ExecutionContext) {
   return asyncLocalStorage.enterWith(context)
 }
 
-export function getExecutionContext(): ExecutionContext | undefined {
+export function getTriggerExecutionContext(): ExecutionContext | undefined {
   return asyncLocalStorage.getStore()
 }
 
 export function isWorkerContext(): boolean {
-  const context = getExecutionContext()
+  const context = getTriggerExecutionContext()
   return context?.source === "worker"
 }

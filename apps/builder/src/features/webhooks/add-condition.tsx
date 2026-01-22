@@ -1,6 +1,6 @@
 "use client"
 
-import { TriggerCondition } from "@aha.chat/database/enums"
+import { Condition } from "@aha.chat/database/enums"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -24,7 +24,7 @@ import { defaultFn as addTagRemovedCondition } from "../conditions/schemas/tag-r
 
 type ConditionOption = {
   label: string
-  value: TriggerCondition
+  value: Condition
   defaultFn: () => unknown
 }
 
@@ -41,12 +41,12 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.tagApplied"),
-            value: TriggerCondition.tagApplied,
+            value: Condition.tagApplied,
             defaultFn: addTagAppliedCondition,
           },
           {
             label: t("trigger.conditions.tagRemoved"),
-            value: TriggerCondition.tagRemoved,
+            value: Condition.tagRemoved,
             defaultFn: addTagRemovedCondition,
           },
         ],
@@ -56,59 +56,57 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.customFieldValueChanged"),
-            value: TriggerCondition.customFieldValueChanged,
+            value: Condition.customFieldValueChanged,
             defaultFn: addCustomFieldValueChangedCondition,
           },
           {
             label: t("trigger.conditions.dateTimeBasedTrigger"),
-            value: TriggerCondition.dateTimeBasedTrigger,
+            value: Condition.dateTimeBasedTrigger,
             defaultFn: addDateTimeBaseTriggerCondition,
           },
           {
             label: t("trigger.conditions.conversationTransferredToHuman"),
-            value: TriggerCondition.conversationTransferredToHuman,
+            value: Condition.conversationTransferredToHuman,
             defaultFn: createDefaultFn(
-              TriggerCondition.conversationTransferredToHuman,
+              Condition.conversationTransferredToHuman,
             ),
           },
           {
             label: t("trigger.conditions.conversationTransferredToBot"),
-            value: TriggerCondition.conversationTransferredToBot,
-            defaultFn: createDefaultFn(
-              TriggerCondition.conversationTransferredToBot,
-            ),
+            value: Condition.conversationTransferredToBot,
+            defaultFn: createDefaultFn(Condition.conversationTransferredToBot),
           },
           {
             label: t("trigger.conditions.newContact"),
-            value: TriggerCondition.newContact,
-            defaultFn: createDefaultFn(TriggerCondition.newContact),
+            value: Condition.newContact,
+            defaultFn: createDefaultFn(Condition.newContact),
           },
           {
             label: t("trigger.conditions.contactUnsubscribedFormBroadcast"),
-            value: TriggerCondition.contactUnsubscribedFormBroadcast,
+            value: Condition.contactUnsubscribedFormBroadcast,
             defaultFn: createDefaultFn(
-              TriggerCondition.contactUnsubscribedFormBroadcast,
+              Condition.contactUnsubscribedFormBroadcast,
             ),
           },
           {
             label: t("trigger.conditions.archived"),
-            value: TriggerCondition.archived,
-            defaultFn: createDefaultFn(TriggerCondition.archived),
+            value: Condition.archived,
+            defaultFn: createDefaultFn(Condition.archived),
           },
           {
             label: t("trigger.conditions.followUp"),
-            value: TriggerCondition.followUp,
-            defaultFn: createDefaultFn(TriggerCondition.followUp),
+            value: Condition.followUp,
+            defaultFn: createDefaultFn(Condition.followUp),
           },
           {
             label: t("trigger.conditions.conversationAssigned"),
-            value: TriggerCondition.conversationAssigned,
-            defaultFn: createDefaultFn(TriggerCondition.conversationAssigned),
+            value: Condition.conversationAssigned,
+            defaultFn: createDefaultFn(Condition.conversationAssigned),
           },
           {
             label: t("trigger.conditions.conversationUnassigned"),
-            value: TriggerCondition.conversationUnassigned,
-            defaultFn: createDefaultFn(TriggerCondition.conversationUnassigned),
+            value: Condition.conversationUnassigned,
+            defaultFn: createDefaultFn(Condition.conversationUnassigned),
           },
         ],
       },
@@ -118,23 +116,23 @@ export function AddCondition({
       //   children: [
       //     {
       //       label: t("trigger.conditions.incomingCall"),
-      //       value: TriggerCondition.incomingCall,
+      //       value: Condition.incomingCall,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.incomingCall,
+      //         type: Condition.incomingCall,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.missedAudioCall"),
-      //       value: TriggerCondition.missedAudioCall,
+      //       value: Condition.missedAudioCall,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.missedAudioCall,
+      //         type: Condition.missedAudioCall,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.callEnded"),
-      //       value: TriggerCondition.callEnded,
+      //       value: Condition.callEnded,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.callEnded,
+      //         type: Condition.callEnded,
       //       }),
       //     },
       //   ],
@@ -145,37 +143,37 @@ export function AddCondition({
       //   children: [
       //     {
       //       label: t("trigger.conditions.ticketCreated"),
-      //       value: TriggerCondition.ticketCreated,
+      //       value: Condition.ticketCreated,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.ticketCreated,
+      //         type: Condition.ticketCreated,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketMovedToStage"),
-      //       value: TriggerCondition.ticketMovedToStage,
+      //       value: Condition.ticketMovedToStage,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.ticketMovedToStage,
+      //         type: Condition.ticketMovedToStage,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketValueChanged"),
-      //       value: TriggerCondition.ticketValueChanged,
+      //       value: Condition.ticketValueChanged,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.ticketValueChanged,
+      //         type: Condition.ticketValueChanged,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketStatusChanged"),
-      //       value: TriggerCondition.ticketStatusChanged,
+      //       value: Condition.ticketStatusChanged,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.ticketStatusChanged,
+      //         type: Condition.ticketStatusChanged,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketPriorityChanged"),
-      //       value: TriggerCondition.ticketPriorityChanged,
+      //       value: Condition.ticketPriorityChanged,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.ticketPriorityChanged,
+      //         type: Condition.ticketPriorityChanged,
       //       }),
       //     },
       //   ],
@@ -186,16 +184,16 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.subscribedToSequence"),
-            value: TriggerCondition.subscribedToSequence,
+            value: Condition.subscribedToSequence,
             defaultFn: createDefaultFnWithSourceId(
-              TriggerCondition.subscribedToSequence,
+              Condition.subscribedToSequence,
             ),
           },
           {
             label: t("trigger.conditions.unsubscribedFromSequence"),
-            value: TriggerCondition.unsubscribedFromSequence,
+            value: Condition.unsubscribedFromSequence,
             defaultFn: createDefaultFnWithSourceId(
-              TriggerCondition.unsubscribedFromSequence,
+              Condition.unsubscribedFromSequence,
             ),
           },
         ],
@@ -206,86 +204,86 @@ export function AddCondition({
       //   children: [
       //     {
       //       label: t("trigger.conditions.WhatsappShoppingCartSent"),
-      //       value: TriggerCondition.WhatsappShoppingCartSent,
+      //       value: Condition.WhatsappShoppingCartSent,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.WhatsappShoppingCartSent,
+      //         type: Condition.WhatsappShoppingCartSent,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.userAskedAboutProduct"),
-      //       value: TriggerCondition.userAskedAboutProduct,
+      //       value: Condition.userAskedAboutProduct,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.userAskedAboutProduct,
+      //         type: Condition.userAskedAboutProduct,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.cartAbandoned"),
-      //       value: TriggerCondition.cartAbandoned,
+      //       value: Condition.cartAbandoned,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.cartAbandoned,
+      //         type: Condition.cartAbandoned,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.newOrder"),
-      //       value: TriggerCondition.newOrder,
+      //       value: Condition.newOrder,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.newOrder,
+      //         type: Condition.newOrder,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderAccepted"),
-      //       value: TriggerCondition.orderAccepted,
+      //       value: Condition.orderAccepted,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.orderAccepted,
+      //         type: Condition.orderAccepted,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderShipped"),
-      //       value: TriggerCondition.orderShipped,
+      //       value: Condition.orderShipped,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.orderShipped,
+      //         type: Condition.orderShipped,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderConcluded"),
-      //       value: TriggerCondition.orderConcluded,
+      //       value: Condition.orderConcluded,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.orderConcluded,
+      //         type: Condition.orderConcluded,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderCancelled"),
-      //       value: TriggerCondition.orderCancelled,
+      //       value: Condition.orderCancelled,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.orderCancelled,
+      //         type: Condition.orderCancelled,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.categoryAddedToCart"),
-      //       value: TriggerCondition.categoryAddedToCart,
+      //       value: Condition.categoryAddedToCart,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.categoryAddedToCart,
+      //         type: Condition.categoryAddedToCart,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.productAddedToCart"),
-      //       value: TriggerCondition.productAddedToCart,
+      //       value: Condition.productAddedToCart,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.productAddedToCart,
+      //         type: Condition.productAddedToCart,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.productRemovedFromCart"),
-      //       value: TriggerCondition.productRemovedFromCart,
+      //       value: Condition.productRemovedFromCart,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.productRemovedFromCart,
+      //         type: Condition.productRemovedFromCart,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.productOrdered"),
-      //       value: TriggerCondition.productOrdered,
+      //       value: Condition.productOrdered,
       //       defaultFn: () => ({
-      //         type: TriggerCondition.productOrdered,
+      //         type: Condition.productOrdered,
       //       }),
       //     },
       //   ],
@@ -296,16 +294,14 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.contactReferredANewContact"),
-            value: TriggerCondition.contactReferredANewContact,
-            defaultFn: createDefaultFn(
-              TriggerCondition.contactReferredANewContact,
-            ),
+            value: Condition.contactReferredANewContact,
+            defaultFn: createDefaultFn(Condition.contactReferredANewContact),
           },
           {
             label: t("trigger.conditions.contactReferredExistingContact"),
-            value: TriggerCondition.contactReferredExistingContact,
+            value: Condition.contactReferredExistingContact,
             defaultFn: createDefaultFn(
-              TriggerCondition.contactReferredExistingContact,
+              Condition.contactReferredExistingContact,
             ),
           },
         ],

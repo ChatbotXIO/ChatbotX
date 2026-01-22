@@ -1,3 +1,3 @@
-import type { TriggerCondition } from "@aha.chat/database/enums"
+import type { Condition } from "@aha.chat/database/enums"
 
-export type WebhookEventType = TriggerCondition
+export type WebhookEventType = Condition

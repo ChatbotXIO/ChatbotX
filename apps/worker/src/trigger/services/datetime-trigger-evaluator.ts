@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import { TriggerCondition } from "@aha.chat/database/enums"
+import { Condition } from "@aha.chat/database/enums"
 import { getRedisConnection } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
 import type {
@@ -39,14 +39,14 @@ async function fetchTriggerChunk(
       active: true,
       conditions: {
         some: {
-          type: TriggerCondition.dateTimeBasedTrigger,
+          type: Condition.dateTimeBasedTrigger,
         },
       },
     },
     include: {
       conditions: {
         where: {
-          type: TriggerCondition.dateTimeBasedTrigger,
+          type: Condition.dateTimeBasedTrigger,
         },
       },
       chatbot: true,
