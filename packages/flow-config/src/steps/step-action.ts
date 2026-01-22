@@ -105,6 +105,9 @@ export const StepType = {
 
   // GetResponse Operations (GR_)
   getResponse: "GR01",
+
+  // SendFox Operations (SF_)
+  sendFox: "SF01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

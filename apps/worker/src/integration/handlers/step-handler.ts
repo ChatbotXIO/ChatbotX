@@ -41,6 +41,7 @@ import { handleDripStep } from "./drip-handler"
 import { handleGetResponseStep } from "./get-response-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { handleMailerLiteStep } from "./mailer-lite-handler"
+import { handleSendFoxStep } from "./send-fox-handler"
 import { handleSendGridStep } from "./sendgrid-handler"
 import {
   clearSpreadsheetRow,
@@ -207,6 +208,7 @@ export const flowStepHandlers: Record<
   [StepType.sendgrid]: handleSendGridStep,
   [StepType.mailerLite]: handleMailerLiteStep,
   [StepType.getResponse]: handleGetResponseStep,
+  [StepType.sendFox]: handleSendFoxStep,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }

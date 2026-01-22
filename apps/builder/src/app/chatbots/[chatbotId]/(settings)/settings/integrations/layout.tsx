@@ -21,6 +21,7 @@ type SettingIntegrationLayoutProps = {
   sendgrid: ReactNode
   mailerLite: ReactNode
   getResponse: ReactNode
+  sendFox: ReactNode
 }
 
 function SettingIntegrationLayoutContent({
@@ -33,6 +34,7 @@ function SettingIntegrationLayoutContent({
   sendgrid,
   mailerLite,
   getResponse,
+  sendFox,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
   const searchParams = useSearchParams()
@@ -92,6 +94,12 @@ function SettingIntegrationLayoutContent({
       keyName: t("getResponse.title"),
       icon: MailIcon,
       content: getResponse,
+    },
+    {
+      id: "sendFox",
+      keyName: t("sendFox.title"),
+      icon: MailIcon,
+      content: sendFox,
     },
   ]
 

@@ -21,6 +21,7 @@
     "@aha.chat/integration-google-sheets": "workspace:*",
     "@aha.chat/integration-mailchimp": "workspace:*",
     "@aha.chat/integration-mailer-lite": "workspace:*",
+    "@aha.chat/integration-send-fox": "workspace:*",
     "@aha.chat/integration-messenger": "workspace:*",
     "@aha.chat/integration-sendgrid": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",

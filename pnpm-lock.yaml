@@ -68,6 +68,9 @@ importers:
       '@aha.chat/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger
+      '@aha.chat/integration-send-fox':
+        specifier: workspace:*
+        version: link:../../integrations/send-fox
       '@aha.chat/integration-sendgrid':
         specifier: workspace:*
         version: link:../../integrations/sendgrid
@@ -376,6 +379,9 @@ importers:
       '@aha.chat/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger
+      '@aha.chat/integration-send-fox':
+        specifier: workspace:*
+        version: link:../../integrations/send-fox
       '@aha.chat/integration-sendgrid':
         specifier: workspace:*
         version: link:../../integrations/sendgrid
@@ -685,6 +691,28 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+
+  integrations/send-fox:
+    dependencies:
+      '@aha.chat/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      ky:
+        specifier: ^1.14.2
+        version: 1.14.2
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@aha.chat/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.3
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
 
   integrations/sendgrid:
     dependencies:

@@ -158,6 +158,7 @@ model Chatbot {
   integrationGetResponses    IntegrationGetResponse[]
   integrationWhatsapps       IntegrationWhatsapp[]
   integrationActiveCampaigns IntegrationActiveCampaign[]
+  integrationSendFoxs        IntegrationSendFox[]
   logs                       Log[]
   messages                   Message[]
   spreadsheets               Spreadsheet[]
@@ -521,6 +522,7 @@ model Integration {
   sendgrid          IntegrationSendGrid?
   mailerLite        IntegrationMailerLite?
   getResponse       IntegrationGetResponse?
+  sendFox           IntegrationSendFox?
 
   @@index([chatbotId])
 }
@@ -774,6 +776,20 @@ model IntegrationGetResponse {
   updatedAt DateTime @updatedAt
 
   apiKey String
+
+  chatbotId String
+  chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  integrationId String      @unique
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model IntegrationSendFox {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accessToken String
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -1183,6 +1199,7 @@ enum IntegrationType {
   sendgrid
   mailerLite
   getResponse
+  sendFox
 }
 
 enum InboxType {

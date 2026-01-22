@@ -22,6 +22,7 @@ import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
+import { sendFoxStepSchema } from "./steps/send-fox"
 import { sendGridStepSchema } from "./steps/sendgrid"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
 import { spreadsheetClearRowSchema } from "./steps/spreadsheet-clear-row"
@@ -104,6 +105,8 @@ const mailerLiteSteps = [mailerLiteStepSchema]
 
 const getResponseSteps = [getResponseStepSchema]
 
+const sendFoxSteps = [sendFoxStepSchema]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -118,4 +121,5 @@ export const actionSteps = [
   ...sendGridSteps,
   ...mailerLiteSteps,
   ...getResponseSteps,
+  ...sendFoxSteps,
 ]

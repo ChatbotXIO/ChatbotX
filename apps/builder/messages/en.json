@@ -1126,7 +1126,8 @@
       "drip": "Add Contact to Drip",
       "sendgrid": "Add Contact to SendGrid",
       "mailerlite": "Add Contact to MailerLite",
-      "getResponse": "Add Contact to GetResponse"
+      "getResponse": "Add Contact to GetResponse",
+      "sendFox": "Add Contact to SendFox"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1362,6 +1363,35 @@
       "noCustomFields": "No custom fields available in your GetResponse account"
     },
     "notConnected": "GetResponse not connected"
+  },
+  "sendFox": {
+    "title": "SendFox",
+    "setting": {
+      "label": "SendFox",
+      "description": "This integration allows you to save customer contact information from your bot to SendFox"
+    },
+    "dialog": {
+      "title": "Connect SendFox",
+      "description": "Enter your Personal Access Token from your SendFox account (Settings > API)"
+    },
+    "apiKey": {
+      "label": "Access Token",
+      "placeholder": "Enter your Access Token"
+    },
+    "connectedSuccess": "Connected to SendFox successfully",
+    "error": {
+      "invalidCredentials": "Invalid Access Token or no access to account",
+      "connectionFailed": "Connection failed. Please check your information.",
+      "fetch_lists": "Unable to load SendFox lists"
+    },
+    "fields": {
+      "list": "List",
+      "listPlaceholder": "Select a list",
+      "emailField": "Email Field",
+      "firstNameField": "First Name Field",
+      "lastNameField": "Last Name Field"
+    },
+    "notConnected": "SendFox not connected"
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

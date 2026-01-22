@@ -32,6 +32,7 @@ import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
 import { sendCarouselStep } from "./send-carousel"
 import sendFileStep from "./send-file"
+import { sendFoxStep } from "./send-fox"
 import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
@@ -123,6 +124,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.sendgrid]: sendGridStep,
   [StepType.mailerLite]: mailerLiteStep,
   [StepType.getResponse]: getResponseStep,
+  [StepType.sendFox]: sendFoxStep,
   [StepType.sendQuickReply]: undefined,
 }
 

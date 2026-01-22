@@ -1180,7 +1180,8 @@
       "drip": "Thêm liên hệ vào Drip",
       "sendgrid": "Add Contact to SendGrid",
       "mailerlite": "Thêm liên hệ vào MailerLite",
-      "getResponse": "Thêm liên hệ vào GetResponse"
+      "getResponse": "Thêm liên hệ vào GetResponse",
+      "sendFox": "Thêm liên hệ vào SendFox"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1416,6 +1417,35 @@
       "noCustomFields": "Không có custom fields nào trong GetResponse của bạn"
     },
     "notConnected": "GetResponse chưa được kết nối"
+  },
+  "sendFox": {
+    "title": "SendFox",
+    "setting": {
+      "label": "SendFox",
+      "description": "Tích hợp này cho phép bạn lưu thông tin liên hệ của khách hàng từ bot vào SendFox"
+    },
+    "dialog": {
+      "title": "Kết nối SendFox",
+      "description": "Nhập Personal Access Token từ tài khoản SendFox của bạn (Settings > API)"
+    },
+    "apiKey": {
+      "label": "Access Token",
+      "placeholder": "Nhập Access Token của bạn"
+    },
+    "connectedSuccess": "Đã kết nối SendFox thành công",
+    "error": {
+      "invalidCredentials": "Access Token không hợp lệ hoặc không có quyền truy cập",
+      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin.",
+      "fetch_lists": "Không thể tải danh sách list SendFox"
+    },
+    "fields": {
+      "list": "List",
+      "listPlaceholder": "Chọn list",
+      "emailField": "Trường Email",
+      "firstNameField": "Trường Tên",
+      "lastNameField": "Trường Họ"
+    },
+    "notConnected": "SendFox chưa được kết nối"
   },
   "googleSheets": {
     "delete": {
