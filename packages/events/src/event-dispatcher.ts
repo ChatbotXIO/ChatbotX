@@ -25,82 +25,173 @@ async function emitToAllEmitters(
 }
 
 // Contact events
-export const emitContactCreated = (chatbotId: string, contactId: string) =>
-  emitToAllEmitters("contactCreated", chatbotId, contactId)
+export const emitContactCreated = async (
+  chatbotId: string,
+  contactId: string,
+  name?: string,
+  phone?: string,
+  email?: string,
+  customFields?: Record<string, unknown>,
+) =>
+  await emitToAllEmitters(
+    "contactCreated",
+    chatbotId,
+    contactId,
+    name,
+    phone,
+    email,
+    customFields,
+  )
 
 // Tag events
-export const emitTagApplied = (
+export const emitTagApplied = async (
   chatbotId: string,
   contactId: string,
   tagId: string,
-) => emitToAllEmitters("tagApplied", chatbotId, contactId, tagId)
+) => await emitToAllEmitters("tagApplied", chatbotId, contactId, tagId)
 
-export const emitTagRemoved = (
+export const emitTagRemoved = async (
   chatbotId: string,
   contactId: string,
   tagId: string,
-) => emitToAllEmitters("tagRemoved", chatbotId, contactId, tagId)
+) => await emitToAllEmitters("tagRemoved", chatbotId, contactId, tagId)
 
 // Custom field events
-export const emitCustomFieldChanged = (
+export const emitCustomFieldChanged = async (
   chatbotId: string,
   contactId: string,
   customFieldId: string,
+  customFieldName: string,
   oldValue: unknown,
   newValue: unknown,
 ) =>
-  emitToAllEmitters(
+  await emitToAllEmitters(
     "customFieldChanged",
     chatbotId,
     contactId,
     customFieldId,
+    customFieldName,
     oldValue,
     newValue,
   )
 
 // Conversation events
-export const emitConversationTransferredToHuman = (
+export const emitConversationTransferredToHuman = async (
   chatbotId: string,
   contactId: string,
-) => emitToAllEmitters("conversationTransferredToHuman", chatbotId, contactId)
+  conversationId: string,
+  transferredBy?: string,
+) =>
+  await emitToAllEmitters(
+    "conversationTransferredToHuman",
+    chatbotId,
+    contactId,
+    conversationId,
+    transferredBy,
+  )
 
-export const emitConversationTransferredToBot = (
+export const emitConversationTransferredToBot = async (
   chatbotId: string,
   contactId: string,
-) => emitToAllEmitters("conversationTransferredToBot", chatbotId, contactId)
+  conversationId: string,
+  transferredBy?: string,
+) =>
+  await emitToAllEmitters(
+    "conversationTransferredToBot",
+    chatbotId,
+    contactId,
+    conversationId,
+    transferredBy,
+  )
 
-export const emitContactUnsubscribed = (chatbotId: string, contactId: string) =>
-  emitToAllEmitters("contactUnsubscribed", chatbotId, contactId)
-
-export const emitConversationArchived = (
+export const emitContactUnsubscribed = async (
   chatbotId: string,
   contactId: string,
-) => emitToAllEmitters("conversationArchived", chatbotId, contactId)
+) => await emitToAllEmitters("contactUnsubscribed", chatbotId, contactId)
 
-export const emitConversationFollowUp = (
+export const emitConversationArchived = async (
   chatbotId: string,
   contactId: string,
-) => emitToAllEmitters("conversationFollowUp", chatbotId, contactId)
+  conversationId: string,
+  archivedBy?: string,
+) =>
+  await emitToAllEmitters(
+    "conversationArchived",
+    chatbotId,
+    contactId,
+    conversationId,
+    archivedBy,
+  )
 
-export const emitConversationAssigned = (
+export const emitConversationFollowUp = async (
   chatbotId: string,
   contactId: string,
-) => emitToAllEmitters("conversationAssigned", chatbotId, contactId)
+  conversationId: string,
+  markedBy?: string,
+) =>
+  await emitToAllEmitters(
+    "conversationFollowUp",
+    chatbotId,
+    contactId,
+    conversationId,
+    markedBy,
+  )
 
-export const emitConversationUnassigned = (
+export const emitConversationAssigned = async (
   chatbotId: string,
   contactId: string,
-) => emitToAllEmitters("conversationUnassigned", chatbotId, contactId)
+  conversationId: string,
+  assignedTo: string,
+  assignedBy?: string,
+) =>
+  await emitToAllEmitters(
+    "conversationAssigned",
+    chatbotId,
+    contactId,
+    conversationId,
+    assignedTo,
+    assignedBy,
+  )
+
+export const emitConversationUnassigned = async (
+  chatbotId: string,
+  contactId: string,
+  conversationId: string,
+  unassignedBy?: string,
+) =>
+  await emitToAllEmitters(
+    "conversationUnassigned",
+    chatbotId,
+    contactId,
+    conversationId,
+    unassignedBy,
+  )
 
 // Sequence events
-export const emitSequenceSubscribed = (
+export const emitSequenceSubscribed = async (
   chatbotId: string,
   contactId: string,
   sequenceId: string,
-) => emitToAllEmitters("sequenceSubscribed", chatbotId, contactId, sequenceId)
+  sequenceName: string,
+) =>
+  await emitToAllEmitters(
+    "sequenceSubscribed",
+    chatbotId,
+    contactId,
+    sequenceId,
+    sequenceName,
+  )
 
-export const emitSequenceUnsubscribed = (
+export const emitSequenceUnsubscribed = async (
   chatbotId: string,
   contactId: string,
   sequenceId: string,
-) => emitToAllEmitters("sequenceUnsubscribed", chatbotId, contactId, sequenceId)
+  sequenceName: string,
+) =>
+  await emitToAllEmitters(
+    "sequenceUnsubscribed",
+    chatbotId,
+    contactId,
+    sequenceId,
+    sequenceName,
+  )

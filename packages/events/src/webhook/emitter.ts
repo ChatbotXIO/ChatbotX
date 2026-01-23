@@ -29,9 +29,9 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
     chatbotId: string,
     sourceId?: string,
   ): Promise<boolean> {
-    console.log("shouldEmitWebhookEvent", {
-      isWebhookContext: isWebhookContext(),
-    })
+    // console.log("shouldEmitWebhookEvent", {
+    //   isWebhookContext: isWebhookContext(),
+    // })
     if (!isWebhookContext()) {
       return false
     }

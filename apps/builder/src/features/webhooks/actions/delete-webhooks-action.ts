@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import { removeWebhookCache } from "@aha.chat/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -28,5 +29,7 @@ export const deleteWebhooksAction = chatbotActionClient
           },
         },
       })
+
+      await removeWebhookCache(chatbotId)
     },
   )

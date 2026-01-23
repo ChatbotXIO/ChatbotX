@@ -261,7 +261,6 @@ export async function getDataFromJSON({
     },
   })
   const validCustomFieldIds = validCustomFields.map((v) => v.id)
-
   const customFieldMap = new Map(validCustomFields.map((f) => [f.id, f.name]))
 
   const updatedFields = await db.transaction(async (tx) => {
@@ -326,6 +325,7 @@ export async function getDataFromJSON({
         conversation.chatbotId,
         conversation.contactId,
         field.customFieldId,
+        field.customFieldName,
         field.oldValue,
         field.newValue,
       )

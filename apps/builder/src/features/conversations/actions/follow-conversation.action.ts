@@ -50,7 +50,12 @@ export const followConversationAction = chatbotActionClient
         )
 
       try {
-        await emitConversationFollowUp(chatbotId, conversation.contactId)
+        await emitConversationFollowUp(
+          chatbotId,
+          conversation.contactId,
+          conversation.id,
+          ctx.user.id,
+        )
       } catch (error) {
         console.error("Failed to emit conversationFollowUp event:", error)
       }

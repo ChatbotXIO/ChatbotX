@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import { updateWebhookCache } from "@aha.chat/events"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -24,7 +25,7 @@ export const updateWebhookAction = chatbotActionClient
     }) => {
       const { conditions, url } = parsedInput
 
-      return await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx) => {
         const existingConditions = await tx.condition.findMany({
           where: { webhookId: id },
         })
@@ -94,5 +95,9 @@ export const updateWebhookAction = chatbotActionClient
 
         return result
       })
+
+      await updateWebhookCache(chatbotId)
+
+      return result
     },
   )

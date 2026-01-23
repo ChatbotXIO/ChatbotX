@@ -1,6 +1,7 @@
 "use server"
 
 import { FolderType, prisma } from "@aha.chat/database"
+import { updateWebhookCache } from "@aha.chat/events"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,
@@ -58,6 +59,8 @@ export const createWebhookAction = chatbotActionClient
           url: "",
         },
       })
+
+      await updateWebhookCache(chatbotId)
 
       return result
     },

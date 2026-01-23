@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import { updateWebhookCache } from "@aha.chat/events"
 import { z } from "zod"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -39,5 +40,7 @@ export const updateWebhookSettingsAction = chatbotActionClient
         },
         data: parsedInput,
       })
+
+      await updateWebhookCache(chatbotId)
     },
   )

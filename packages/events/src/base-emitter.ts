@@ -45,13 +45,13 @@ export abstract class BaseEventEmitter {
       sourceId,
     )
 
-    console.log({
-      emitter: this.constructor.name,
-      shouldEmit,
-      eventType,
-      chatbotId,
-      sourceId,
-    })
+    // console.log({
+    //   emitter: this.constructor.name,
+    //   shouldEmit,
+    //   eventType,
+    //   chatbotId,
+    //   sourceId,
+    // })
 
     if (!shouldEmit) {
       return
@@ -88,6 +88,7 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
     customFieldId: string,
+    customFieldName: string,
     oldValue: unknown,
     newValue: unknown,
   ): Promise<void> {
@@ -97,6 +98,7 @@ export abstract class BaseEventEmitter {
       metadata: {
         sourceId: customFieldId,
         customFieldId,
+        customFieldName,
         oldValue,
         newValue,
       },
@@ -106,27 +108,52 @@ export abstract class BaseEventEmitter {
   async conversationTransferredToHuman(
     chatbotId: string,
     contactId: string,
+    conversationId: string,
+    transferredBy?: string,
   ): Promise<void> {
     await this.emit(Condition.conversationTransferredToHuman, {
       chatbotId,
       contactId,
+      metadata: {
+        conversationId,
+        transferredBy,
+      },
     })
   }
 
   async conversationTransferredToBot(
     chatbotId: string,
     contactId: string,
+    conversationId: string,
+    transferredBy?: string,
   ): Promise<void> {
     await this.emit(Condition.conversationTransferredToBot, {
       chatbotId,
       contactId,
+      metadata: {
+        conversationId,
+        transferredBy,
+      },
     })
   }
 
-  async contactCreated(chatbotId: string, contactId: string): Promise<void> {
+  async contactCreated(
+    chatbotId: string,
+    contactId: string,
+    name?: string,
+    phone?: string,
+    email?: string,
+    customFields?: Record<string, unknown>,
+  ): Promise<void> {
     await this.emit(Condition.newContact, {
       chatbotId,
       contactId,
+      metadata: {
+        name,
+        phone,
+        email,
+        customFields,
+      },
     })
   }
 
@@ -143,40 +170,66 @@ export abstract class BaseEventEmitter {
   async conversationArchived(
     chatbotId: string,
     contactId: string,
+    conversationId: string,
+    archivedBy?: string,
   ): Promise<void> {
     await this.emit(Condition.archived, {
       chatbotId,
       contactId,
+      metadata: {
+        conversationId,
+        archivedBy,
+      },
     })
   }
 
   async conversationFollowUp(
     chatbotId: string,
     contactId: string,
+    conversationId: string,
+    markedBy?: string,
   ): Promise<void> {
     await this.emit(Condition.followUp, {
       chatbotId,
       contactId,
+      metadata: {
+        conversationId,
+        markedBy,
+      },
     })
   }
 
   async conversationAssigned(
     chatbotId: string,
     contactId: string,
+    conversationId: string,
+    assignedTo: string,
+    assignedBy?: string,
   ): Promise<void> {
     await this.emit(Condition.conversationAssigned, {
       chatbotId,
       contactId,
+      metadata: {
+        conversationId,
+        assignedTo,
+        assignedBy,
+      },
     })
   }
 
   async conversationUnassigned(
     chatbotId: string,
     contactId: string,
+    conversationId: string,
+    unassignedBy?: string,
   ): Promise<void> {
     await this.emit(Condition.conversationUnassigned, {
       chatbotId,
       contactId,
+      metadata: {
+        conversationId,
+        unassignedBy,
+      },
     })
   }
 
@@ -184,11 +237,12 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
     sequenceId: string,
+    sequenceName: string,
   ): Promise<void> {
     await this.emit(Condition.subscribedToSequence, {
       chatbotId,
       contactId,
-      metadata: { sourceId: sequenceId, sequenceId },
+      metadata: { sourceId: sequenceId, sequenceId, sequenceName },
     })
   }
 
@@ -196,11 +250,12 @@ export abstract class BaseEventEmitter {
     chatbotId: string,
     contactId: string,
     sequenceId: string,
+    sequenceName: string,
   ): Promise<void> {
     await this.emit(Condition.unsubscribedFromSequence, {
       chatbotId,
       contactId,
-      metadata: { sourceId: sequenceId, sequenceId },
+      metadata: { sourceId: sequenceId, sequenceId, sequenceName },
     })
   }
 }
