@@ -240,7 +240,54 @@
     }
   },
   "analytics": {
-    "title": "Analytics"
+    "title": "Analytics",
+    "contacts": "Contacts",
+    "newContacts": "New Contacts",
+    "activeContacts": "Active Contacts",
+    "responseTime": "Response Time",
+    "firstResponseTime": "First Response Time",
+    "totalContacts": "Total Contacts",
+    "averageResponseTime": "Average Response Time (Minutes)",
+    "averageResponseTimeHelp": "The average time a human agent takes to reply to a customer's message.",
+    "averageFirstResponseTimeByAdmin": "Average first response time by admins (Minutes)",
+    "averageFirstResponseTimeByAdminHelp": "The average time a human agent takes to provide the initial reply to a customer's message.",
+    "averageResponseTimeByAdmin": "Average response time by admins (Minutes)",
+    "averageResponseTimeByAdminHelp": "The average time a human agent takes",
+    "averageDurationOfConversation": "Average duration of a conversation (Minutes)",
+    "averageDurationOfConversationHelp": "It is the average time a conversation has been handled by a human before being moved to the bot.",
+    "success": "Success",
+    "fallbackFlow": "Fallback flow",
+    "admins": "Admins",
+    "name": "Name",
+    "messages": "Messages",
+    "conversations": "Conversations",
+    "messagesSent": "Messages Sent",
+    "averageResponseTimeShort": "Avg. Response Time(mins)",
+    "averageFirstResponseTimeByAdminShort": "Avg. First Response Time (mins)",
+    "assignedConversations": "Assigned Conversations",
+    "messagesReceivedByTheBot": "Messages received by the bot",
+    "messagesReceivedByTheBotHelp": "Messages sent by your contacts that your bot successful understood or failed to understand. It doesn't include messages when live chat is enabled.",
+    "messagesSentByHumanOrBot": "Messages sent by Human/bot",
+    "human": "Human",
+    "bot": "Bot",
+    "conversationsMovedToHumanOrBot": "Conversations moved to Human/Bot",
+    "uniqueConversationsByAdmins": "Unique conversations by admins",
+    "uniqueConversationsByAdminsHelp": "Number of contacts that an admin sent at least a single message.",
+    "messagesSentByAdmins": "Messages sent by admins",
+    "messagesSentByAdminsHelp": "Messages sent from the inbox.",
+    "allContactsByChannel": "All contacts by channel",
+    "newContactsByChannel": "New contacts by channel",
+    "newContactsBySource": "New contacts by source",
+    "newContactsBySourceHelp": "How your contacts are reaching your bot.",
+    "assignedConversationsByAdmins": "Assigned conversations by admins",
+    "assignedConversationsByAdminsHelp": "Conversations assigned from the inbox or by the bot.",
+    "followUpConversations": "Follow up conversations",
+    "followUpConversationsHelp": "Conversations marked as follow-up from the inbox or by the bot.",
+    "archivedConversations": "Archived conversations",
+    "blockedConversations": "Blocked conversations",
+    "blockedConversationsHelp": "Conversations that your account blocked.",
+    "allContactsByCountry": "All contacts by country",
+    "newContactsByCountry": "New contacts by country"
   },
   "autoAssignConversation": {
     "rule": {
@@ -1241,6 +1288,21 @@
     },
     "last7days": {
       "label": "Last 7 days"
+    },
+    "last30days": {
+      "label": "Last 30 days"
+    },
+    "thisMonth": {
+      "label": "This Month"
+    },
+    "lastMonth": {
+      "label": "Last Month"
+    },
+    "lifeTime": {
+      "label": "Life Time"
+    },
+    "customRange": {
+      "label": "Custom Range"
     }
   },
   "flows": {

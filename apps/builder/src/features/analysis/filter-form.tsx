@@ -24,7 +24,15 @@ import type { DateRange } from "react-day-picker"
 import { useForm } from "react-hook-form"
 import { useAnalysisStore } from "./provider/analysis-store-context"
 
-type PresetOption = "today" | "yesterday" | "last7" | "last30" | "custom"
+type PresetOption =
+  | "today"
+  | "yesterday"
+  | "last7"
+  | "last30"
+  | "thisMonth"
+  | "lastMonth"
+  | "lifeTime"
+  | "custom"
 
 type DateRangeResult = {
   from: number
@@ -93,6 +101,25 @@ function getLast30DaysRange(): DateRangeResult {
   return { from: startOfDayTimestamp(start), to: endOfDayTimestamp(now) }
 }
 
+function getThisMonthRange(): DateRangeResult {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  return { from: startOfDayTimestamp(start), to: endOfDayTimestamp(now) }
+}
+
+function getLastMonthRange(): DateRangeResult {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const end = new Date(now.getFullYear(), now.getMonth(), 0) // Last day of previous month
+  return { from: startOfDayTimestamp(start), to: endOfDayTimestamp(end) }
+}
+
+function getLifeTimeRange(): DateRangeResult {
+  const start = new Date(2000, 0, 1)
+  const now = new Date()
+  return { from: startOfDayTimestamp(start), to: endOfDayTimestamp(now) }
+}
+
 export default function AnalysisFilterForm({
   initialFrom,
   initialTo,
@@ -130,6 +157,12 @@ export default function AnalysisFilterForm({
         return getLast7DaysRange()
       case "last30":
         return getLast30DaysRange()
+      case "thisMonth":
+        return getThisMonthRange()
+      case "lastMonth":
+        return getLastMonthRange()
+      case "lifeTime":
+        return getLifeTimeRange()
       default:
         return null
     }
@@ -186,6 +219,15 @@ export default function AnalysisFilterForm({
     if (value === "last30") {
       applyRange(getLast30DaysRange())
     }
+    if (value === "thisMonth") {
+      applyRange(getThisMonthRange())
+    }
+    if (value === "lastMonth") {
+      applyRange(getLastMonthRange())
+    }
+    if (value === "lifeTime") {
+      applyRange(getLifeTimeRange())
+    }
   }
 
   const canApplyCustom = !!(customRange?.from && customRange?.to)
@@ -226,6 +268,9 @@ export default function AnalysisFilterForm({
               {preset === "yesterday" && t("fields.yesterday.label")}
               {preset === "last7" && t("fields.last7days.label")}
               {preset === "last30" && t("fields.last30days.label")}
+              {preset === "thisMonth" && t("fields.thisMonth.label")}
+              {preset === "lastMonth" && t("fields.lastMonth.label")}
+              {preset === "lifeTime" && t("fields.lifeTime.label")}
               {preset === "custom" && rangeText}
             </Button>
           </DropdownMenuTrigger>
@@ -242,6 +287,15 @@ export default function AnalysisFilterForm({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handlePresetChange("last30")}>
                 {t("fields.last30days.label")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePresetChange("thisMonth")}>
+                {t("fields.thisMonth.label")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePresetChange("lastMonth")}>
+                {t("fields.lastMonth.label")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePresetChange("lifeTime")}>
+                {t("fields.lifeTime.label")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handlePresetChange("custom")}>
                 {t("fields.customRange.label")}

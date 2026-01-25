@@ -2,9 +2,10 @@
 
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
-import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import type { ChatbotMemberResource } from "@/features/chatbot-members/schemas/resource"
 import type { UserResource } from "@/features/users/schemas/resource"
@@ -17,7 +18,9 @@ type ChatBotMemberAnalysis = ChatbotMemberResource & {
   assignedConversations: number
 }
 
-export function AdminsAnalysis() {
+export function ChatbotMemberAnalysis() {
+  const t = useTranslations()
+
   const data = [
     {
       id: "1",
@@ -77,6 +80,7 @@ export function AdminsAnalysis() {
           <DataTableColumnHeader column={column} title="Messages Sent" />
         ),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         id: "contacts",
@@ -85,6 +89,7 @@ export function AdminsAnalysis() {
           <DataTableColumnHeader column={column} title="Contacts" />
         ),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         id: "responseTime",
@@ -96,6 +101,7 @@ export function AdminsAnalysis() {
           />
         ),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         id: "firstResponseTime",
@@ -107,6 +113,7 @@ export function AdminsAnalysis() {
           />
         ),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         id: "assignedConversations",
@@ -118,6 +125,7 @@ export function AdminsAnalysis() {
           />
         ),
         enableSorting: true,
+        enableHiding: false,
       },
     ],
     [],
@@ -137,10 +145,11 @@ export function AdminsAnalysis() {
   })
 
   return (
-    <div className="w-full">
-      <DataTable table={table}>
-        <DataTableToolbar table={table} />
-      </DataTable>
-    </div>
+    <Card className="w-full">
+      <CardHeader>{t("analytics.admins")}</CardHeader>
+      <CardContent>
+        <DataTable table={table} />
+      </CardContent>
+    </Card>
   )
 }

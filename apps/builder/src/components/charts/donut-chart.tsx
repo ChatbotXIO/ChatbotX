@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -12,28 +12,32 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts"
+import ChartHeader from "./chart-header"
 
 export interface DonutChartProps {
   name: string
   valueLabel: string
   data: Array<{ name: string; value: number; color?: string }>
+  helpMessage?: string
 }
 
 const COLORS = [
-  "var(--color-primary)",
+  "var(--color-chart-1)",
   "var(--color-chart-2)",
   "var(--color-chart-3)",
   "var(--color-chart-4)",
   "var(--color-chart-5)",
-  "var(--color-chart-6)",
-  "var(--color-chart-7)",
-  "var(--color-chart-8)",
 ]
 
-export function DonutChart({ name, valueLabel, data }: DonutChartProps) {
+export function DonutChart({
+  name,
+  valueLabel,
+  data,
+  helpMessage,
+}: DonutChartProps) {
   return (
     <Card className="flex-1">
-      <CardHeader>{name}</CardHeader>
+      <ChartHeader helpMessage={helpMessage} name={name} />
       <CardContent>
         <ChartContainer config={{ value: { label: valueLabel } }}>
           <ResponsiveContainer height={300} width="100%">
@@ -43,7 +47,6 @@ export function DonutChart({ name, valueLabel, data }: DonutChartProps) {
                 cy="50%"
                 data={data}
                 dataKey="value"
-                fill="var(--color-primary)"
                 innerRadius={60}
                 label
                 nameKey="name"

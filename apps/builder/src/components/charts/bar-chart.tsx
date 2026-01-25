@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   ChartContainer,
   ChartLegend,
@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
 } from "@aha.chat/ui/components/ui/chart"
 import { Bar, BarChart as BC, CartesianGrid, XAxis, YAxis } from "recharts"
+import ChartHeader from "./chart-header"
 
 type BarValue = {
   label: string
@@ -24,9 +25,10 @@ type DataItem = {
 type BarChartProps = {
   name: string
   data: DataItem[]
+  helpMessage?: string
 }
 
-export default function BarChart({ name, data }: BarChartProps) {
+export default function BarChart({ name, data, helpMessage }: BarChartProps) {
   const barLabels = Array.from(
     new Set(data.flatMap((item) => item.value.map((v) => v.label))),
   )
@@ -48,7 +50,8 @@ export default function BarChart({ name, data }: BarChartProps) {
 
   return (
     <Card className="flex-1">
-      <CardHeader>{name}</CardHeader>
+      <ChartHeader helpMessage={helpMessage} name={name} />
+
       <CardContent>
         <ChartContainer
           config={Object.fromEntries(barLabels.map((l) => [l, { label: l }]))}

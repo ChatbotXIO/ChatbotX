@@ -1,30 +1,38 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@aha.chat/ui/components/ui/chart"
 import { AreaChart as AC, Area, XAxis, YAxis } from "recharts"
+import ChartHeader from "./chart-header"
 
 type AreaChartProps = {
   name: string
   valueLabel: string
   data: Array<{ name: string; value: number }>
+  helpMessage?: string
 }
 
-export default function AreaChart(props: AreaChartProps) {
+export default function AreaChart({
+  name,
+  valueLabel,
+  data,
+  helpMessage,
+}: AreaChartProps) {
   return (
     <Card className="flex-1">
-      <CardHeader>{props.name}</CardHeader>
+      <ChartHeader helpMessage={helpMessage} name={name} />
+
       <CardContent>
         <ChartContainer
           config={{
-            value: { label: props.valueLabel },
+            value: { label: valueLabel },
           }}
         >
-          <AC data={props.data}>
+          <AC data={data}>
             <XAxis dataKey="name" />
             <YAxis width="auto" />
             <Area

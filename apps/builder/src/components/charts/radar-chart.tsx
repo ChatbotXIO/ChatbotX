@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   ChartContainer,
   ChartTooltip,
@@ -13,6 +13,7 @@ import {
   Radar,
   RadarChart as RC,
 } from "recharts"
+import ChartHeader from "./chart-header"
 
 type RadarData = {
   name: string
@@ -24,9 +25,15 @@ export interface CustomRadarChartProps {
   name: string
   valueLabel: string
   data: Array<{ name: string; value: number }>
+  helpMessage?: string
 }
 
-export function RadarChart({ name, valueLabel, data }: CustomRadarChartProps) {
+export function RadarChart({
+  name,
+  valueLabel,
+  data,
+  helpMessage,
+}: CustomRadarChartProps) {
   const maxValue = data.reduce(
     (max, item) => (item.value > max ? item.value : max),
     0,
@@ -38,7 +45,7 @@ export function RadarChart({ name, valueLabel, data }: CustomRadarChartProps) {
 
   return (
     <Card className="flex-1">
-      <CardHeader>{name}</CardHeader>
+      <ChartHeader helpMessage={helpMessage} name={name} />
       <CardContent>
         <ChartContainer
           config={{
