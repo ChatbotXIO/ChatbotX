@@ -16,7 +16,7 @@ export const changeFolderAction = chatbotActionClient
     const [chatbotId] = bindArgsParsedInputs
 
     const resourceModel = findResourceModel(parsedInput.folderType)
-    const resources = await resourceModel.findMany({
+    const resources: { id: string }[] = await resourceModel.findMany({
       where: {
         chatbotId,
         id: {
@@ -60,7 +60,7 @@ export const changeFolderAction = chatbotActionClient
     await resourceModel.updateMany({
       where: {
         id: {
-          in: parsedInput.modelIds,
+          in: resources.map((resource) => resource.id),
         },
         chatbotId,
       },

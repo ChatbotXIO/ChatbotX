@@ -2,7 +2,6 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@aha.chat/ui/components/ui/tooltip"
 import { useReactFlow } from "@xyflow/react"
@@ -30,23 +29,21 @@ export function DeleteNode() {
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            className="size-8 text-destructive hover:text-destructive"
-            onClick={onDelete}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <TrashIcon />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{t("actions.delete")}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          className="size-8 text-destructive hover:text-destructive"
+          onClick={onDelete}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <TrashIcon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{t("actions.delete")}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }

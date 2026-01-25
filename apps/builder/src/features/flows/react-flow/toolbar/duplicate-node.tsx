@@ -3,7 +3,6 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@aha.chat/ui/components/ui/tooltip"
 import { createId } from "@paralleldrive/cuid2"
@@ -68,22 +67,20 @@ export function DuplicateNode() {
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            className="size-8"
-            onClick={onClick}
-            size="icon"
-            variant="ghost"
-          >
-            <CopyIcon />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{t("actions.duplicate")}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          className="size-8"
+          onClick={onClick}
+          size="icon"
+          variant="ghost"
+        >
+          <CopyIcon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{t("actions.duplicate")}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }
