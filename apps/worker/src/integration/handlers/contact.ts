@@ -10,22 +10,22 @@ import type {
   OptOutEmailStepSchema,
   SetCustomFieldStepSchema,
 } from "@aha.chat/flow-config"
-import type { FlowStepProps } from "./step-handler"
+import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
   conversation,
   step,
-}: FlowStepProps<SetCustomFieldStepSchema>) {
+}: ExecuteStepProps<SetCustomFieldStepSchema>) {
   await prisma.contactCustomField.upsert({
     create: {
       contactId: conversation.contactId,
-      customFieldId: step.outputCfId,
+      customFieldId: step.inputCfId,
       value: step.value,
     },
     where: {
       contactId_customFieldId: {
         contactId: conversation.contactId,
-        customFieldId: step.outputCfId,
+        customFieldId: step.inputCfId,
       },
     },
     update: {
@@ -37,7 +37,7 @@ export async function setContactCustomField({
 export async function clearContactCustomField({
   conversation,
   step,
-}: FlowStepProps<ClearCustomFieldStepSchema>) {
+}: ExecuteStepProps<ClearCustomFieldStepSchema>) {
   await prisma.contactCustomField.deleteMany({
     where: {
       contactId: conversation.contactId,
@@ -49,7 +49,7 @@ export async function clearContactCustomField({
 export async function addContactNotes({
   conversation,
   step,
-}: FlowStepProps<AddNotesStepSchema>) {
+}: ExecuteStepProps<AddNotesStepSchema>) {
   await prisma.contactNote.create({
     data: {
       contactId: conversation.contactId,
@@ -60,7 +60,7 @@ export async function addContactNotes({
 
 export async function blockContact({
   conversation,
-}: FlowStepProps<BlockContactStepSchema>) {
+}: ExecuteStepProps<BlockContactStepSchema>) {
   await prisma.contact.update({
     where: { id: conversation.contactId },
     data: { blockedAt: new Date() },
@@ -69,7 +69,7 @@ export async function blockContact({
 
 export async function markEmailVerified({
   conversation,
-}: FlowStepProps<MarkEmailVerifiedStepSchema>) {
+}: ExecuteStepProps<MarkEmailVerifiedStepSchema>) {
   await prisma.contact.update({
     where: { id: conversation.contactId },
     data: { emailVerified: true },
@@ -78,7 +78,7 @@ export async function markEmailVerified({
 
 export async function optInEmail({
   conversation,
-}: FlowStepProps<OptInEmailStepSchema>) {
+}: ExecuteStepProps<OptInEmailStepSchema>) {
   await prisma.contact.update({
     where: { id: conversation.contactId },
     data: { emailOptIn: true },
@@ -87,7 +87,7 @@ export async function optInEmail({
 
 export async function optOutEmail({
   conversation,
-}: FlowStepProps<OptOutEmailStepSchema>) {
+}: ExecuteStepProps<OptOutEmailStepSchema>) {
   await prisma.contact.update({
     where: { id: conversation.contactId },
     data: { emailOptIn: false },
@@ -97,7 +97,7 @@ export async function optOutEmail({
 export async function addContactTag({
   conversation,
   step,
-}: FlowStepProps<AddContactTagStepSchema>) {
+}: ExecuteStepProps<AddContactTagStepSchema>) {
   await prisma.$transaction(async (tx) => {
     const tags = await tx.tag.createManyAndReturn({
       data: step.tags.map((t) => ({
@@ -123,7 +123,7 @@ export async function addContactTag({
 export async function removeContactTag({
   conversation,
   step,
-}: FlowStepProps<AddContactTagStepSchema>) {
+}: ExecuteStepProps<AddContactTagStepSchema>) {
   const tags = await prisma.tag.findMany({
     where: {
       chatbotId: conversation.id,
@@ -155,7 +155,7 @@ export async function removeContactTag({
 
 export async function deleteContact({
   conversation,
-}: FlowStepProps<DeleteContactStepSchema>) {
+}: ExecuteStepProps<DeleteContactStepSchema>) {
   await prisma.$transaction(async (tx) => {
     await tx.conversation.delete({
       where: {

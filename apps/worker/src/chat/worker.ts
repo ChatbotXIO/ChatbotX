@@ -8,7 +8,7 @@ import {
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
-import { sendFlowStep } from "./handlers/send-flow-step"
+import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import { sendMessageToExternal } from "./handlers/send-message"
 
 const worker = new Worker(
@@ -16,10 +16,13 @@ const worker = new Worker(
   async (job: Job<ChatJobData>) => {
     switch (job.data.type) {
       case ChatJobAction.sendExternalMessage:
-        await sendMessageToExternal(job.data)
+        await sendMessageToExternal(job.data.data)
         return
       case ChatJobAction.sendFlowMessage:
         await sendFlowStep(job.data.data)
+        return
+      case ChatJobAction.sendChatMessage:
+        await sendChatMessage(job.data.data)
         return
       default:
         throw new SdkException("ChatJobAction action is not defined")

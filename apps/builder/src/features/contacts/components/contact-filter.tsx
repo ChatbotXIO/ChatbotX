@@ -12,7 +12,10 @@ import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-fi
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import {
+  SelectField,
+  type SelectOption,
+} from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -48,9 +51,9 @@ import {
 
 type ContactFilterProps = {
   parentName: string
-  customFieldOptions: Array<{ label: string; value: string }>
-  flowVersionOptions: Array<{ label: string; value: string }>
-  tagOptions: Array<{ label: string; value: string }>
+  customFieldOptions: SelectOption[]
+  flowVersionOptions: SelectOption[]
+  tagOptions: SelectOption[]
 }
 
 type ConditionOption = {
@@ -62,7 +65,7 @@ type ConditionOption = {
 type FieldConfig = {
   name: ConditionFieldType
   conditionType: ConditionType
-  options?: Array<{ label: string; value: string }>
+  options?: SelectOption[]
 }
 
 const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
@@ -125,9 +128,9 @@ const getFieldConfigs = ({
   flowVersionOptions = [],
 }: {
   t: (key: string) => string
-  tagOptions: Array<{ label: string; value: string }>
-  customFieldOptions: Array<{ label: string; value: string }>
-  flowVersionOptions: Array<{ label: string; value: string }>
+  tagOptions: SelectOption[]
+  customFieldOptions: SelectOption[]
+  flowVersionOptions: SelectOption[]
 }): FieldConfig[] => [
   {
     name: ConditionField.language,
@@ -510,9 +513,9 @@ function ContactFilterCondition({
   onAdd,
 }: {
   onAdd: (data: ContactFilterRowSchema) => void
-  customFieldOptions: Array<{ label: string; value: string }>
-  flowVersionOptions: Array<{ label: string; value: string }>
-  tagOptions: Array<{ label: string; value: string }>
+  customFieldOptions: SelectOption[]
+  flowVersionOptions: SelectOption[]
+  tagOptions: SelectOption[]
 }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)

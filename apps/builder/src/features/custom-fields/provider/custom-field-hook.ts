@@ -115,7 +115,7 @@ export const useCustomFieldSelectOptions = (props: {
   customFieldTypes?: CustomFieldType[]
   includeReserved?: boolean
 }): SelectOption[] => {
-  const { customFieldTypes, includeReserved = true } = props
+  const { customFieldTypes, includeReserved } = props
 
   const { customFields } = useCustomFieldStore((state) => state)
 

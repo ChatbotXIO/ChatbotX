@@ -1,4 +1,4 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { InboxType, type Prisma, prisma } from "@aha.chat/database"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -11,12 +11,16 @@ import {
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@aha.chat/flow-config"
+import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
+import type { WhatsappWebhookEvent } from "@aha.chat/integration-whatsapp"
+import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import { subHours } from "date-fns"
-import type { FlowStepProps } from "./step-handler"
+import { allIntegrations, getDBIntegration } from "../../lib/integrations"
+import type { ExecuteStepProps } from "./flow"
 
 export async function archiveConversation({
   conversation,
-}: FlowStepProps<ArchiveConversationStepSchema>) {
+}: ExecuteStepProps<ArchiveConversationStepSchema>) {
   await prisma.conversation.update({
     where: { id: conversation.id },
     data: { archivedAt: new Date() },
@@ -25,7 +29,7 @@ export async function archiveConversation({
 
 export async function unarchiveConversation({
   conversation,
-}: FlowStepProps<UnarchiveConversationStepSchema>) {
+}: ExecuteStepProps<UnarchiveConversationStepSchema>) {
   await prisma.conversation.update({
     where: { id: conversation.id },
     data: { archivedAt: null },
@@ -35,7 +39,7 @@ export async function unarchiveConversation({
 export async function assignConversation({
   conversation,
   step,
-}: FlowStepProps<AssignConversationStepSchema>) {
+}: ExecuteStepProps<AssignConversationStepSchema>) {
   if (step.assignedId.startsWith("u_")) {
     const userId = step.assignedId.substring(2)
     const chatbotMember = await prisma.chatbotMember.findFirst({
@@ -70,7 +74,7 @@ export async function assignConversation({
 export async function autoAssignConversation({
   conversation,
   step,
-}: FlowStepProps<AutoAssignConversationStepSchema>) {
+}: ExecuteStepProps<AutoAssignConversationStepSchema>) {
   if (step.assignedIds.length === 0) {
     return
   }
@@ -223,7 +227,7 @@ export async function autoAssignConversation({
 
 export async function unassignConversation({
   conversation,
-}: FlowStepProps<UnassignConversationStepSchema>) {
+}: ExecuteStepProps<UnassignConversationStepSchema>) {
   await prisma.conversation.update({
     where: { id: conversation.id },
     data: {
@@ -235,7 +239,7 @@ export async function unassignConversation({
 
 export async function followConversation({
   conversation,
-}: FlowStepProps<FollowConversationStepSchema>) {
+}: ExecuteStepProps<FollowConversationStepSchema>) {
   await prisma.conversation.update({
     where: { id: conversation.id },
     data: { followed: true },
@@ -244,7 +248,7 @@ export async function followConversation({
 
 export async function unfollowConversation({
   conversation,
-}: FlowStepProps<UnfollowConversationStepSchema>) {
+}: ExecuteStepProps<UnfollowConversationStepSchema>) {
   await prisma.conversation.update({
     where: { id: conversation.id },
     data: { followed: false },
@@ -253,7 +257,7 @@ export async function unfollowConversation({
 
 export async function disableBot({
   conversation,
-}: FlowStepProps<DisableBotStepSchema>) {
+}: ExecuteStepProps<DisableBotStepSchema>) {
   await prisma.conversation.update({
     where: { id: conversation.id },
     data: { liveChatEnabled: true },
@@ -262,9 +266,63 @@ export async function disableBot({
 
 export async function enableBot({
   conversation,
-}: FlowStepProps<EnableBotStepSchema>) {
+}: ExecuteStepProps<EnableBotStepSchema>) {
   await prisma.conversation.update({
     where: { id: conversation.id },
     data: { liveChatEnabled: false },
+  })
+}
+
+export async function readMessage({
+  integrationType,
+  payload,
+}: {
+  integrationType: string
+  payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
+}) {
+  if (!Object.hasOwn(allIntegrations, integrationType)) {
+    throw new Error(`Unsupported integration: ${integrationType}`)
+  }
+  const dbIntegration = await getDBIntegration(integrationType, payload)
+  const { chatbotId } = dbIntegration
+
+  const conversation = await prisma.conversation.findFirstOrThrow({
+    where: {
+      chatbotId,
+      sourceId: (() => {
+        switch (integrationType) {
+          case InboxType.whatsapp:
+            return (payload as WhatsappWebhookEvent).from
+          case InboxType.messenger:
+            return (payload as MessengerWebhookEvent).entry[0].messaging[0]
+              .recipient.id
+          case InboxType.zalo:
+            return (payload as ZaloWebhookEvent).recipient.id
+          default:
+            throw new Error(`Unsupported integration: ${integrationType}`)
+        }
+      })(),
+    },
+  })
+
+  await prisma.conversation.update({
+    where: {
+      id: conversation.id,
+    },
+    data: {
+      contactLastSeenAt: (() => {
+        switch (integrationType) {
+          case InboxType.messenger: {
+            const watermark = (payload as MessengerWebhookEvent).entry[0]
+              .messaging[0].read?.watermark
+            return new Date(watermark ?? Date.now())
+          }
+          case InboxType.zalo:
+            return new Date(Number((payload as ZaloWebhookEvent).timestamp))
+          default:
+            return new Date()
+        }
+      })(),
+    },
   })
 }

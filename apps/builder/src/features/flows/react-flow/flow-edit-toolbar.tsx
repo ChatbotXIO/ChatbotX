@@ -29,11 +29,11 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
 import { updateFlowVersionSchema } from "../schemas/action"
 import { DuplicateFlowDialog } from "./components/duplicate-flow"
+import GetFlowLinkDialog from "./components/get-flow-link"
 import { RenameFlowDialog } from "./components/rename-flow"
 
 export function FlowEditToolbar({
@@ -59,13 +59,6 @@ export function FlowEditToolbar({
     | "revertToPublished"
     | null
   >(null)
-
-  const [_, copy] = useCopyToClipboard()
-  const handleCopy = (text: string) => {
-    copy(text).then(() => {
-      toast.success(t("messages.copiedToClipboard"))
-    })
-  }
 
   // NOTES: DO NOT use useNodes & useEdges, it makes component re-render when node or edge is changed
   const { getNodes, getEdges } = useReactFlow()
@@ -135,13 +128,7 @@ export function FlowEditToolbar({
               <CopyIcon />
               {t("actions.duplicate")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                handleCopy(
-                  `${window.location.origin}/chatbots/${chatbotId}/flows/${flow.id}`,
-                )
-              }
-            >
+            <DropdownMenuItem onClick={() => setAction("getDraftLink")}>
               <LinkIcon />
               {t("actions.getDraftLink")}
             </DropdownMenuItem>
@@ -196,6 +183,13 @@ export function FlowEditToolbar({
         }}
         open={action === "delete"}
         showTrigger={false}
+      />
+
+      <GetFlowLinkDialog
+        flow={flow}
+        isDraft={true}
+        onOpenChange={() => setAction(null)}
+        open={action === "getDraftLink"}
       />
     </div>
   )

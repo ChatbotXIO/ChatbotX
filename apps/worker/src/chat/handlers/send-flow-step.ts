@@ -9,7 +9,7 @@ import {
   type AttachmentModel,
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
-import { uploader } from "@aha.chat/filesystem"
+import { uploader, uploadFileFromUrl } from "@aha.chat/filesystem"
 import {
   type ButtonStepProps,
   ButtonType,
@@ -27,15 +27,19 @@ import {
   guessFileTypeFromMimeType,
   type MessageButtonTemplate,
   type MessageCardTemplate,
+  type MessageEntity,
   type MessageTemplateEntity,
   type SendFlowStepData,
 } from "@aha.chat/sdk"
-import type { ChatJobSendFlowStep } from "@aha.chat/worker-config"
+import type {
+  ChatJobSendChatMessage,
+  ChatJobSendFlowStep,
+} from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"
 import imageSize from "image-size"
 import { logger } from "../../lib/logger"
-import { sendFlowStepToExternal } from "./send-message"
+import { sendFlowStepToExternal, sendMessageToExternal } from "./send-message"
 
 const convertButtonsToTemplate = (props: {
   flowId: string
@@ -231,36 +235,84 @@ export async function sendFlowStep({
   } catch (error) {
     logger.error("sendFlowStep error", error)
   }
+}
 
-  // else if (step.stepType === StepType.sendText) {
-  //   // Only SEND_TEXT and SEND_IMAGE are supported for external at this layer
-  //   promises.push(
-  //     sendFlowStepToExternal({
-  //       conversation: conversation as ConversationEntity,
-  //       flowVersionId,
-  //       step: {
-  //         id: step.id,
-  //         stepType: StepType.sendText,
-  //         message: step.message,
-  //         buttons: step.buttons,
-  //       },
-  //     }),
-  //   )
-  // } else if (step.stepType === StepType.sendImage) {
-  //   promises.push(
-  //     sendFlowStepToExternal({
-  //       conversation: conversation as ConversationEntity,
-  //       flowVersionId,
-  //       step: {
-  //         id: step.id,
-  //         stepType: StepType.sendImage,
-  //         mode: step.mode,
-  //         url: step.url,
-  //         buttons: step.buttons,
-  //         // attachment is optional in schema
-  //         attachment: step.attachment,
-  //       },
-  //     }),
-  //   )
-  // }
+export async function sendChatMessage({
+  conversationId,
+  text,
+  url,
+}: ChatJobSendChatMessage["data"]) {
+  const conversation = await prisma.conversation.findFirst({
+    where: { id: conversationId },
+    include: { contact: true },
+  })
+  if (!conversation) {
+    return
+  }
+
+  try {
+    const message = await prisma.$transaction(async (tx) => {
+      const messageData: Prisma.MessageUncheckedCreateInput = {
+        inboxId: conversation.inboxId,
+        chatbotId: conversation.chatbotId,
+        conversationId: conversation.id,
+        messageType: MessageType.outgoing,
+        contentType: ContentType.text,
+        senderType: SenderType.bot,
+        sourceId: null,
+        content: text,
+      }
+
+      const newMessage = await prisma.message.create({
+        data: messageData,
+      })
+
+      if (url) {
+        const uploadedFile = await uploadFileFromUrl(
+          url,
+          `public/chatbots/${newMessage.chatbotId}/conversations/${conversation.id}/${createId()}`,
+        )
+
+        const attachment = await tx.attachment.create({
+          data: {
+            chatbotId: conversation.chatbotId,
+            conversationId: conversation.id,
+            messageId: newMessage.id,
+            ...uploadedFile,
+          },
+        })
+        ;(newMessage as { attachments?: AttachmentModel[] }).attachments = [
+          attachment,
+        ]
+      }
+
+      return newMessage
+    })
+
+    const promises: Promise<unknown>[] = [
+      broadcastToChatbotParty(conversation.chatbotId, {
+        eventType: RealtimeEventType.CREATE_MESSAGE,
+        data: message,
+      }),
+    ]
+    if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
+      promises.push(
+        broadcastToGuestParty(conversation.sourceId, {
+          eventType: RealtimeEventType.CREATE_MESSAGE,
+          data: message,
+        }),
+      )
+    } else {
+      promises.push(
+        sendMessageToExternal({
+          conversation: conversation as ConversationEntity,
+          message: message as MessageEntity,
+        }),
+      )
+    }
+
+    await Promise.all(promises)
+  } catch (error) {
+    logger.error("sendFlowStep error", error)
+  }
 }

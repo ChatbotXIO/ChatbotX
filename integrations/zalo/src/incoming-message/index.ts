@@ -5,6 +5,7 @@ import {
   type ConversationEntity,
   type MessageEntity,
   MessageType,
+  type ReceivedMessageResult,
 } from "@aha.chat/sdk"
 import { getMessageAttachmentEntity } from "../api/message"
 import { ZaloException } from "../libs/exception"
@@ -52,7 +53,7 @@ export const parseIncomingMessage = async ({
 }: {
   ctx: Context<ZaloAuthValue>
   data: ZaloWebhookEvent
-}) => {
+}): Promise<ReceivedMessageResult | null> => {
   if (!data.message) {
     return null
   }
@@ -71,11 +72,13 @@ export const parseIncomingMessage = async ({
     },
   }
 
-  return Promise.resolve({
+  return {
     message,
     conversation,
     postbackAction,
-  })
+    quickReplyAction: null,
+    ref: null,
+  }
 }
 
 const getMessageEntity = async (

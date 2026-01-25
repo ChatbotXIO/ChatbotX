@@ -145,7 +145,10 @@
     "unsetDefaultAgent": "Bỏ đặt Agent mặc định",
     "randomRow": "Hàng ngẫu nhiên",
     "clickToEdit": "Nhấp để chỉnh sửa",
-    "move": "Di chuyển"
+    "move": "Di chuyển",
+    "onSuccess": "Khi thành công",
+    "onFailure": "Khi thất bại",
+    "onSkip": "Khi bỏ qua"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -1193,7 +1196,7 @@
       "unfollowConversation": "Bỏ theo dõi cuộc trò chuyện",
       "unsubscribeBroadcast": "Hủy đăng ký phát sóng",
       "waitUserReply": "Chờ người dùng trả lời",
-      "getUserInput": "Lấy đầu vào người dùng",
+      "getUserData": "Lấy đầu vào người dùng",
       "sendCarousel": "Gửi băng chuyền",
       "actions": "Hành động",
       "findGif": "Tìm Gif",

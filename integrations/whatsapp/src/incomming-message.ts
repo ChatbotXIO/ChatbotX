@@ -6,6 +6,7 @@ import {
   FileType,
   type MessageEntity,
   MessageType,
+  type ReceivedMessageResult,
   SdkException,
 } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
@@ -31,7 +32,7 @@ export const parseIncomingMessage = async (
   ctx: Context<WhatsappAuthValue>,
   whatsappClient: WhatsAppAPI,
   props: WhatsappWebhookEvent,
-) => {
+): Promise<ReceivedMessageResult> => {
   const message: MessageEntity = {
     sourceId: props.message.id,
     messageType: MessageType.incoming,
@@ -180,7 +181,13 @@ export const parseIncomingMessage = async (
       break
   }
 
-  return { message, conversation, postbackAction }
+  return {
+    message,
+    conversation,
+    postbackAction,
+    quickReplyAction: null,
+    ref: null,
+  }
 }
 
 export const fetchMedia = async (

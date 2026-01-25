@@ -30,7 +30,12 @@ export const createWebchatMessageRequest = z
     z.object({
       content: z.string().trim().min(1).max(1000),
       postback: z.string().trim().optional(),
-      flowId: z.cuid2().optional(),
+    }),
+    z.object({
+      flowId: z.cuid2(),
+    }),
+    z.object({
+      initRef: z.string(),
     }),
     z.object({
       files: z
@@ -52,6 +57,7 @@ export const createWebchatMessageRequest = z
         .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {
           message: "Invalid guest conversation ID",
         }),
+      ref: z.string().optional(),
     }),
   )
 export type CreateWebchatMessageRequest = z.infer<

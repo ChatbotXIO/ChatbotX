@@ -48,7 +48,7 @@ export const OptionItem = ({
   )
 }
 
-type ComboboxFieldProps<T extends FieldValues> = {
+export type ComboboxFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   required?: boolean

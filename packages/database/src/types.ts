@@ -186,3 +186,18 @@ export const fillableContactKeys = [
   "gender",
 ] as const
 export type FillableContactKeys = (typeof fillableContactKeys)[number]
+
+export type ConversationAttributes = {
+  phoneNumber?: string
+  challenge?: {
+    type: "step"
+    data: {
+      flowId: string
+      flowVersionId?: string
+      nodeId: string
+      stepId: string
+      attempts: number
+      lastAttemptAt: Date
+    }
+  }
+}

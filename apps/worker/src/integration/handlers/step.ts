@@ -1,4 +1,3 @@
-import type { ConversationModel } from "@aha.chat/database/types"
 import {
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
@@ -23,7 +22,7 @@ import {
   optOutEmail,
   removeContactTag,
   setContactCustomField,
-} from "./contact-handler"
+} from "./contact"
 import {
   archiveConversation,
   assignConversation,
@@ -34,7 +33,9 @@ import {
   unarchiveConversation,
   unassignConversation,
   unfollowConversation,
-} from "./conversation-handler"
+} from "./conversation"
+import type { ExecuteStepProps } from "./flow"
+import { getUserData } from "./get-user-data"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -49,41 +50,33 @@ import {
   getDataFromJSON,
 } from "./tool-handler"
 
-export type FlowStepProps<T> = {
-  conversation: ConversationModel
-  flowId: string
-  flowVersionId?: string
-  step: T
-}
+export type StepStatus = "retry" | "skip" | "success" | "failure"
 
 export async function sendFlowMessage(
-  props: FlowStepProps<ChatJobSendFlowStep["data"]["step"]>,
+  props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
 ) {
-  const { conversation, flowId, flowVersionId, step } = props
+  const { conversation, flowVersion, step } = props
   await chatQueue.add(ChatJobAction.sendFlowMessage, {
     type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId: conversation.id,
-      flowId,
-      flowVersionId,
+      flowId: flowVersion.flowId,
+      flowVersionId: flowVersion.id,
       step,
     },
   })
 }
 
-async function startAnotherNode({
-  conversation,
-  flowId,
-  flowVersionId,
-  step,
-}: FlowStepProps<StartAnotherNodeStepSchema>) {
+async function startAnotherNode(
+  props: ExecuteStepProps<StartAnotherNodeStepSchema>,
+) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
-      conversationId: conversation.id,
-      flowId,
-      flowVersionId,
-      nodeId: step.nodeId,
+      conversationId: props.conversation.id,
+      flowId: props.flowVersion.flowId,
+      flowVersionId: props.flowVersion.id,
+      nodeId: props.step.nodeId,
     },
   })
 }
@@ -91,7 +84,7 @@ async function startAnotherNode({
 async function startExternalFlow({
   conversation,
   step,
-}: FlowStepProps<StartExternalFlowStepSchema>) {
+}: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
@@ -104,7 +97,7 @@ async function startExternalFlow({
 async function startExternalNode({
   conversation,
   step,
-}: FlowStepProps<StartExternalNodeStepSchema>) {
+}: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
@@ -117,8 +110,11 @@ async function startExternalNode({
 
 export const flowStepHandlers: Record<
   StepType,
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  ((props: FlowStepProps<any>) => Promise<void>) | undefined
+  | ((
+      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+      props: ExecuteStepProps<any, any>,
+    ) => Promise<{ status: StepStatus; wait: boolean }> | Promise<void>)
+  | undefined
 > = {
   [StepType.addContactNotes]: addContactNotes,
   [StepType.addContactTag]: addContactTag,
@@ -166,7 +162,7 @@ export const flowStepHandlers: Record<
   [StepType.unarchiveConversation]: unarchiveConversation,
   [StepType.unassignConversation]: unassignConversation,
   [StepType.unfollowConversation]: unfollowConversation,
-  [StepType.getUserInput]: undefined,
+  [StepType.getUserData]: getUserData,
   [StepType.wait]: undefined,
   [StepType.startExternalFlow]: startExternalFlow,
   [StepType.chooseChannel]: undefined,

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
-import { type KeyboardEvent, useEffect, useRef } from "react"
+import { type KeyboardEvent, useEffect, useMemo, useRef } from "react"
 import { Controller, useWatch } from "react-hook-form"
 import { createWebchatMessageAction } from "../messages/actions/create-webchat-message.action"
 import EmojiPicker from "../messages/components/emoji-picker"
@@ -19,23 +19,36 @@ import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 type WebchatMessageInputProps = {
   chatbotId: string
   webchatId: string
+  referral?: string
 }
 
 export const WebchatMessageInput = ({
   chatbotId,
   webchatId,
+  referral,
 }: WebchatMessageInputProps) => {
   const { sendMessage, guestConversationId } = useGuestSessionStore(
     (state) => state,
   )
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const defaultValues = useMemo(
+    () => ({
+      content: "",
+      files: [],
+      chatbotId,
+      webchatId,
+      guestConversationId: guestConversationId ?? "",
+      ref: referral,
+    }),
+    [chatbotId, webchatId, guestConversationId, referral],
+  )
 
   const {
     form,
     handleSubmitWithAction,
     resetFormAndAction,
-    form: { control, setValue, resetField },
+    form: { control, setValue, resetField, reset },
   } = useHookFormAction(
     createWebchatMessageAction,
     zodResolver(createWebchatMessageRequest),
@@ -54,23 +67,14 @@ export const WebchatMessageInput = ({
           textareaRef.current?.focus()
           resetFormAndAction()
 
+          reset(defaultValues)
           setValue("clientId", createId())
-          setValue("chatbotId", chatbotId)
-          setValue("webchatId", webchatId)
-          setValue(
-            "guestConversationId",
-            localStorage.getItem("x-conversation-id") ?? "",
-          )
         },
       },
       formProps: {
         defaultValues: {
-          content: "",
-          files: [],
+          ...defaultValues,
           clientId: createId(),
-          chatbotId,
-          webchatId,
-          guestConversationId: guestConversationId ?? "",
         },
       },
       errorMapProps: {},
@@ -84,6 +88,7 @@ export const WebchatMessageInput = ({
   }, [guestConversationId, setValue])
 
   const files = useWatch({ control, name: "files" })
+  const content = useWatch({ control, name: "content" })
 
   useEffect(() => {
     if (files.length > 0) {
@@ -92,6 +97,10 @@ export const WebchatMessageInput = ({
   }, [files, resetField])
 
   const onSelectEmoji = (emoji: string) => {
+    if (files.length > 0) {
+      return
+    }
+
     const element = textareaRef.current
     if (!element) {
       return
@@ -114,6 +123,10 @@ export const WebchatMessageInput = ({
   }
 
   const onKeyDown = async (e: KeyboardEvent) => {
+    if (files.length > 0) {
+      return
+    }
+
     if (e.key === "Enter" && e.shiftKey === false) {
       e.preventDefault()
 
@@ -128,23 +141,25 @@ export const WebchatMessageInput = ({
           className="flex w-full flex-col"
           onSubmit={handleSubmitWithAction}
         >
-          <div className="mb-1 w-full px-2.5 py-1">
-            <Controller
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <Textarea
-                  autoComplete="off"
-                  className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
-                  disabled={files.length > 0}
-                  placeholder="Message..."
-                  {...field}
-                  onKeyDown={onKeyDown}
-                  ref={textareaRef}
-                />
-              )}
-            />
-          </div>
+          {files.length === 0 && (
+            <div className="mb-1 w-full px-2.5 py-1">
+              <Controller
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <Textarea
+                    autoComplete="off"
+                    className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
+                    disabled={files.length > 0}
+                    placeholder="Message..."
+                    {...field}
+                    onKeyDown={onKeyDown}
+                    ref={textareaRef}
+                  />
+                )}
+              />
+            </div>
+          )}
           <div className="5 px-2">
             <FileUploadPreview ref={fileUploadRef} />
           </div>
@@ -153,16 +168,21 @@ export const WebchatMessageInput = ({
               <WebchatMessageMenu chatbotId={chatbotId} webchatId={webchatId} />
             </div>
             <div className="message-toolbar flex items-center">
-              <Button
-                className="px-2 py-1.5 [&_svg]:size-5"
-                disabled={!chatbotId}
-                onClick={onClickAttachment}
-                type="button"
-                variant="ghost"
-              >
-                <PaperclipIcon />
-              </Button>
-              <EmojiPicker onSelectEmoji={onSelectEmoji} />
+              {!content && (
+                <Button
+                  className="px-2 py-1.5 [&_svg]:size-5"
+                  disabled={!chatbotId}
+                  onClick={onClickAttachment}
+                  type="button"
+                  variant="ghost"
+                >
+                  <PaperclipIcon />
+                </Button>
+              )}
+              <EmojiPicker
+                disabled={files.length > 0}
+                onSelectEmoji={onSelectEmoji}
+              />
               <Button
                 className="px-2 py-1.5 [&_svg]:size-5"
                 disabled={

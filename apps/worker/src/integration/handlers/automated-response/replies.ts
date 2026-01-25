@@ -4,7 +4,6 @@ import {
   type AutomatedResponseReply,
   ReplyType,
 } from "@aha.chat/database/types"
-import { StepType } from "@aha.chat/flow-config"
 import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import {
   ChatJobAction,
@@ -14,7 +13,6 @@ import {
 } from "@aha.chat/worker-config"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
-import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
 import { AI_PROVIDERS, TEXT } from "./constants"
@@ -117,20 +115,15 @@ export async function replyByAutomatedResponse({
       for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
           case ReplyType.Message:
-            await chatQueue.add(ChatJobAction.sendFlowMessage, {
-              type: ChatJobAction.sendFlowMessage,
-              data: {
-                conversationId: message.conversationId,
-                flowId: "",
-                flowVersionId: "",
-                step: {
-                  id: createId(),
-                  message: reply.message ?? "",
-                  stepType: StepType.sendText,
-                  buttons: [],
+            if (reply.message) {
+              await chatQueue.add(ChatJobAction.sendChatMessage, {
+                type: ChatJobAction.sendChatMessage,
+                data: {
+                  conversationId: message.conversationId,
+                  text: reply.message,
                 },
-              },
-            })
+              })
+            }
             replied = true
             break
           case ReplyType.Flow: {

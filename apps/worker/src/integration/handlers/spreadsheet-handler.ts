@@ -20,8 +20,8 @@ import {
 import { SdkException } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
+import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"
-import type { FlowStepProps } from "./step-handler"
 
 const findRowType = {
   SINGLE: "single",
@@ -54,7 +54,7 @@ const getGoogleSheetsIntegration = async (chatbotId: string) =>
 const getSheetData = async ({
   conversation,
   step,
-}: FlowStepProps<SpreadsheetGetRowSchema>) => {
+}: ExecuteStepProps<SpreadsheetGetRowSchema>) => {
   const auth = await getGoogleSheetAuth(conversation.chatbotId)
   const worksheet = await getWorksheet({
     id: step.spreadsheetId,
@@ -117,7 +117,7 @@ const findRows = ({
 type OperatorType = (typeof Operator)[keyof typeof Operator]
 
 export const getSpreadsheetRow = async (
-  props: FlowStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
 ) => {
   try {
     const { headers, rows: values } = await getSheetData(props)
@@ -153,7 +153,7 @@ const getGoogleSheetAuth = async (chatbotId: string) => {
 }
 
 export const sendSpreadsheetData = async (
-  props: FlowStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
 ) => {
   try {
     const auth = await getGoogleSheetAuth(props.conversation.chatbotId)
@@ -195,7 +195,7 @@ export const sendSpreadsheetData = async (
 }
 
 export const updateSpreadsheetRow = async (
-  props: FlowStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
 ) => {
   try {
     const { headers, rows: values } = await getSheetData(props)
@@ -251,7 +251,7 @@ export const updateSpreadsheetRow = async (
 }
 
 export const clearSpreadsheetRow = async (
-  props: FlowStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
 ) => {
   try {
     const { headers, rows: values } = await getSheetData(props)
@@ -291,7 +291,7 @@ export const clearSpreadsheetRow = async (
 }
 
 export const getSpreadsheetRandomRow = async (
-  props: FlowStepProps<SpreadsheetGetRowSchema>,
+  props: ExecuteStepProps<SpreadsheetGetRowSchema>,
 ) => {
   try {
     const { headers, rows: values } = await getSheetData(props)
@@ -366,7 +366,7 @@ const sendFlow = async (
     conversation,
     flowVersionId,
     step,
-  }: FlowStepProps<
+  }: ExecuteStepProps<
     | SpreadsheetGetRowSchema
     | SpreadsheetSendDataSchema
     | SpreadsheetGetRandomRowSchema
@@ -399,7 +399,6 @@ const sendFlow = async (
       data: {
         conversationId: conversation.id,
         flowId: currentFlowVersion.flowId,
-        flowVersionId: currentFlowVersion.id,
         nodeId: foundEdge.target,
       },
     })

@@ -9,12 +9,14 @@ import { queueName } from "../../lib/types"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
+  runRef: "runRef",
   incomingMessage: "incomingMessage",
-  sendFlowPostback: "sendFlowPostback",
-  sendFlowQuickReply: "sendFlowQuickReply",
+  runFlowPostback: "runFlowPostback",
+  runFlowQuickReply: "runFlowQuickReply",
   triggerAutomatedResponse: "triggerAutomatedResponse",
   sendBroadcast: "sendBroadcast",
   readMessage: "readMessage",
+  runChallenge: "runChallenge",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -26,7 +28,7 @@ export type IntegrationJobReceiveMessage = {
   }
 }
 
-export type IntegrationJobSendFlow = {
+export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
     conversationId: string
@@ -37,18 +39,20 @@ export type IntegrationJobSendFlow = {
 }
 
 export type IntegrationJobSendFlowPostback = {
-  type: typeof IntegrationJobAction.sendFlowPostback
+  type: typeof IntegrationJobAction.runFlowPostback
   data: {
     conversationId: string
     action: string
+    ref?: string | null
   }
 }
 
 export type IntegrationJobSendFlowQuickReply = {
-  type: typeof IntegrationJobAction.sendFlowQuickReply
+  type: typeof IntegrationJobAction.runFlowQuickReply
   data: {
     conversationId: string
     action: string
+    ref?: string | null
   }
 }
 
@@ -75,14 +79,42 @@ export type IntegrationJobReadMessage = {
   }
 }
 
+export type IntegrationJobRunRef = {
+  type: typeof IntegrationJobAction.runRef
+  data: {
+    conversationId: string
+    ref: string
+  }
+}
+
+export type IntegrationJobRunChallenge = {
+  type: typeof IntegrationJobAction.runChallenge
+  data: {
+    conversationId: string
+    challenge: {
+      type: "step"
+      data: {
+        flowId: string
+        flowVersionId?: string
+        nodeId: string
+        stepId: string
+        attempts: number
+        lastAttemptAt: Date
+      }
+    }
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
-  | IntegrationJobSendFlow
+  | IntegrationJobRunFlowNode
   | IntegrationJobSendFlowPostback
   | IntegrationJobSendFlowQuickReply
   | IntegrationJobTriggerAutomatedResponse
   | IntegrationJobSendBroadcast
   | IntegrationJobReadMessage
+  | IntegrationJobRunRef
+  | IntegrationJobRunChallenge
 
 export const integrationQueue =
   process.env.NEXT_PHASE !== "phase-production-build"

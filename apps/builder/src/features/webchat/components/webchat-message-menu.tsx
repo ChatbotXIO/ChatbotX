@@ -81,7 +81,6 @@ export default function WebchatMessageMenu({
               <DropdownMenuItem
                 onClick={() =>
                   execute({
-                    content: menu.label,
                     flowId: menu.flowId,
                     clientId: createId(),
                     chatbotId,

@@ -1,11 +1,10 @@
 import type {
   ContactEntity,
   Context,
-  ConversationEntity,
   Handler,
-  MessageEntity,
   Oauth2AuthValue,
   Oauth2Config,
+  ReceivedMessageResult,
   SendFlowStepProps,
   SendMessageProps,
 } from "@aha.chat/sdk"
@@ -35,12 +34,7 @@ export type MessengerActions = {
       ctx: Context<MessengerAuthValue>
       data: MessengerWebhookEvent
     },
-    {
-      message: MessageEntity
-      conversation: ConversationEntity
-      postbackAction: string | null
-      quickReplyAction: string | null
-    }
+    ReceivedMessageResult | null
   >
   sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
   sendFlowStep: (props: SendFlowStepProps<MessengerAuthValue>) => Promise<void>
@@ -87,34 +81,30 @@ export const messengerDeliverySchema = z.object({
   mids: z.array(z.string()),
   watermark: z.number(),
 })
-export type MessengerDelivery = z.infer<typeof messengerDeliverySchema>
 
 export const messengerReadSchema = z.object({
   watermark: z.number(),
 })
-export type MessengerRead = z.infer<typeof messengerReadSchema>
 
 export const messengerPostbackSchema = z.object({
   mid: z.string(),
   title: z.string(),
   payload: z.string(),
 })
-export type MessengerPostback = z.infer<typeof messengerPostbackSchema>
 
-export const messengerSenderSchema = idSchema
-export type MessengerSender = z.infer<typeof messengerSenderSchema>
-
-export const messengerRecipientSchema = idSchema
-export type MessengerRecipient = z.infer<typeof messengerRecipientSchema>
+const messengerReferralSchema = z.object({
+  ref: z.string(),
+})
 
 export const messengerMessagingEventSchema = z.object({
-  sender: messengerSenderSchema,
-  recipient: messengerRecipientSchema,
+  sender: idSchema,
+  recipient: idSchema,
   timestamp: z.number(),
   message: messengerMessageSchema.optional(),
   delivery: messengerDeliverySchema.optional(),
   read: messengerReadSchema.optional(),
   postback: messengerPostbackSchema.optional(),
+  referral: messengerReferralSchema.optional(),
 })
 export type MessengerMessagingEvent = z.infer<
   typeof messengerMessagingEventSchema

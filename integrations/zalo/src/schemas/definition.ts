@@ -1,11 +1,10 @@
 import type {
   ContactEntity,
   Context,
-  ConversationEntity,
   Handler,
-  MessageEntity,
   Oauth2AuthValue,
   Oauth2Config,
+  ReceivedMessageResult,
   SendFlowStepProps,
   SendMessageProps,
 } from "@aha.chat/sdk"
@@ -30,11 +29,7 @@ export type ZaloActions = {
       ctx: Context<ZaloAuthValue>
       data: ZaloWebhookEvent
     },
-    {
-      message: MessageEntity
-      conversation: ConversationEntity
-      postbackAction: string | null
-    } | null
+    ReceivedMessageResult | null
   >
   sendFlowStep: (props: SendFlowStepProps<ZaloAuthValue>) => Promise<void>
   sendMessage: (props: SendMessageProps<ZaloAuthValue>) => Promise<void>

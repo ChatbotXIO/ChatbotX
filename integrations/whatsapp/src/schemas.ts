@@ -1,10 +1,9 @@
 import type {
   BaseConfig,
   Context,
-  ConversationEntity,
   Handler,
-  MessageEntity,
   Oauth2AuthValue,
+  ReceivedMessageResult,
   SendFlowStepProps,
   SendMessageProps,
 } from "@aha.chat/sdk"
@@ -67,11 +66,7 @@ export type WhatsappActions = {
       ctx: Context<WhatsappAuthValue>
       data: WhatsappWebhookEvent
     },
-    {
-      message: MessageEntity
-      conversation: ConversationEntity
-      postbackAction: string | null
-    }
+    ReceivedMessageResult | null
   >
   sendMessage: (props: SendMessageProps<WhatsappAuthValue>) => Promise<void>
   sendFlowStep: (props: SendFlowStepProps<WhatsappAuthValue>) => Promise<void>

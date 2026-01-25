@@ -8,20 +8,14 @@ import {
   type UserModel,
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
-import { uploader } from "@aha.chat/filesystem"
+import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import {
-  type AttachmentEntity,
-  type ConversationEntity,
-  guessFileTypeFromMimeType,
-} from "@aha.chat/sdk"
+import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
-import imageSize from "image-size"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -29,7 +23,6 @@ import {
 } from "@/features/common/schemas"
 import { findConversation } from "@/features/conversations/queries/list-conversations.query"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { logger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
@@ -56,28 +49,12 @@ export const createMessageAction = chatbotActionClient
       })
 
       // upload file if exists
-      let path: string | null = null
-      let imageDimensions: { width: number; height: number } | null = null
+      let uploadedFiles: UploadedFile[] = []
       if ("files" in parsedInput && parsedInput.files.length > 0) {
-        const file = parsedInput.files[0] as File
-        path = `public/chatbots/${chatbotId}/conversations/${conversationId}/${createId()}`
-
-        const buffer = (await file.arrayBuffer()) as unknown as Buffer
-        await uploader.putObject(path, buffer, {
-          ACL: "public-read",
-          ContentLength: file.size,
-          ContentType: file.type,
-        })
-
-        // try to find image dimensions
-        if (file.type.startsWith("image/")) {
-          try {
-            const { width, height } = await imageSize(new Uint8Array(buffer))
-            imageDimensions = { width, height }
-          } catch (error) {
-            logger.warn("Unable to retrieve image dimensions", error)
-          }
-        }
+        uploadedFiles = await uploadMultipleFiles(
+          parsedInput.files,
+          `public/chatbots/${chatbotId}/conversations/${conversation.id}`,
+        )
       }
 
       const message = await prisma.$transaction(async (tx) => {
@@ -95,24 +72,17 @@ export const createMessageAction = chatbotActionClient
         })
 
         // create attachment if path exists
-        if (path && "files" in parsedInput && parsedInput.files?.[0]) {
-          const file = parsedInput.files[0]
-          const mimeType = file.type as string
-          const attachment = await tx.attachment.create({
-            data: {
+        if (uploadedFiles.length > 0) {
+          const attachments = await tx.attachment.createManyAndReturn({
+            data: uploadedFiles.map((file) => ({
               messageId: newMessage.id,
               chatbotId: newMessage.chatbotId,
               conversationId: newMessage.conversationId,
-              originPath: path,
-              name: file.name,
-              mimeType,
-              size: file.size,
-              fileType: guessFileTypeFromMimeType(mimeType),
-              ...imageDimensions,
-            },
+              ...file,
+            })),
           })
 
-          newMessage.attachments = [attachment as AttachmentResource]
+          newMessage.attachments = attachments as AttachmentResource[]
         }
 
         await tx.conversation.update({

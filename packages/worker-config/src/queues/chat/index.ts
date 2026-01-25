@@ -21,9 +21,10 @@ import { queueName } from "../../lib/types"
 export const ChatJobAction = {
   sendExternalMessage: "sendExternalMessage",
   sendFlowMessage: "sendFlowMessage",
+  sendChatMessage: "sendChatMessage",
 } as const
 
-export type ChatJobSendMessage = {
+export type ChatJobSendExternalMessage = {
   type: typeof ChatJobAction.sendExternalMessage
   data: {
     conversation: ConversationEntity
@@ -50,7 +51,19 @@ export type ChatJobSendFlowStep = {
   }
 }
 
-export type ChatJobData = ChatJobSendMessage | ChatJobSendFlowStep
+export type ChatJobSendChatMessage = {
+  type: typeof ChatJobAction.sendChatMessage
+  data: {
+    conversationId: string
+    text?: string
+    url?: string
+  }
+}
+
+export type ChatJobData =
+  | ChatJobSendExternalMessage
+  | ChatJobSendFlowStep
+  | ChatJobSendChatMessage
 
 export const chatQueue =
   process.env.NEXT_PHASE !== "phase-production-build"

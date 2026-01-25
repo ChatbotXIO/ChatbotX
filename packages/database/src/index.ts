@@ -33,17 +33,6 @@ export const prisma =
         }
       : undefined,
     result: {
-      attachment: {
-        url: {
-          needs: { originPath: true },
-          compute(attachment) {
-            return new URL(
-              attachment.originPath,
-              env.NEXT_PUBLIC_ASSET_URL,
-            ).toString()
-          },
-        },
-      },
       aIFile: {
         url: {
           needs: { path: true },

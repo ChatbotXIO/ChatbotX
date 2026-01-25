@@ -20,7 +20,7 @@ export const StepType = {
   waitUserReply: "W01",
   setDebounce: "W02",
   wait: "W03",
-  getUserInput: "W04",
+  getUserData: "W04",
 
   // Contact Operations (C_)
   addContactTag: "C01",

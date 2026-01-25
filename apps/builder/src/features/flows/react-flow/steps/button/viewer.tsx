@@ -2,6 +2,7 @@ import { type ButtonStepProps, ButtonType } from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { cn } from "@aha.chat/ui/lib/utils"
 import { Position } from "@xyflow/react"
+import { useTranslations } from "next-intl"
 import { BaseHandle } from "@/components/base-handle"
 
 type ButtonStepViewerProps = {
@@ -48,6 +49,60 @@ export const ButtonGroupViewer = (props: ButtonGroupViewerProps) => {
       {data.map((button) => (
         <ButtonStepViewer data={button} key={button.id} />
       ))}
+    </div>
+  )
+}
+
+export const OnSuccessStepViewer = (props: ButtonStepViewerProps) => {
+  const { data } = props
+  const t = useTranslations()
+
+  return (
+    <div className="relative flex items-center justify-end gap-2 text-green-500 text-xs">
+      <div className="mr-4">{t("actions.onSuccess")}</div>
+      <BaseHandle
+        className="transform-none! top-0.5! border-green-500!"
+        id={data.id}
+        onConnectedClassName="bg-green-500!"
+        position={Position.Right}
+        type="source"
+      />
+    </div>
+  )
+}
+
+export const OnSkipStepViewer = (props: ButtonStepViewerProps) => {
+  const { data } = props
+  const t = useTranslations()
+
+  return (
+    <div className="relative flex items-center justify-end gap-2 text-xs text-yellow-500">
+      <div className="mr-4">{t("actions.onSkip")}</div>
+      <BaseHandle
+        className="transform-none! top-0.5! border-yellow-500!"
+        id={data.id}
+        onConnectedClassName="bg-yellow-500!"
+        position={Position.Right}
+        type="source"
+      />
+    </div>
+  )
+}
+
+export const OnFailureStepViewer = (props: ButtonStepViewerProps) => {
+  const { data } = props
+  const t = useTranslations()
+
+  return (
+    <div className="relative flex items-center justify-end gap-2 text-red-500 text-xs">
+      <div className="mr-4">{t("actions.onFailure")}</div>
+      <BaseHandle
+        className="transform-none! top-0.5! border-red-500!"
+        id={data.id}
+        onConnectedClassName="bg-red-500!"
+        position={Position.Right}
+        type="source"
+      />
     </div>
   )
 }

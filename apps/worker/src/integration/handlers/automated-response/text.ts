@@ -1,11 +1,4 @@
-import { prisma } from "@aha.chat/database"
-import { FileType } from "@aha.chat/database/types"
-import { uploader } from "@aha.chat/filesystem"
-import { StepType } from "@aha.chat/flow-config"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
-import imageSize from "image-size"
-import { logger } from "../../../lib/logger"
 import { SUPPORTED_IMAGE_EXTENSIONS } from "./constants"
 
 // Precompiled regex literals (top-level for performance)
@@ -25,88 +18,6 @@ function isImageUrl(url: string): boolean {
     const p = u.pathname.toLowerCase()
     return SUPPORTED_IMAGE_EXTENSIONS.some((ext) => p.endsWith(ext))
   } catch {
-    return false
-  }
-}
-
-export async function downloadAndUploadImage(
-  imageUrl: string,
-  conversationId: string,
-): Promise<boolean> {
-  try {
-    const res = await fetch(imageUrl, { redirect: "follow" as const })
-    if (!res.ok) {
-      throw new Error(`Failed to download image: ${res.status}`)
-    }
-
-    const contentType =
-      res.headers.get("content-type") || "application/octet-stream"
-    const arrayBuf = await res.arrayBuffer()
-    const buffer = Buffer.from(arrayBuf)
-
-    // Detect filename from URL if possible
-    let detectedName: string | null = null
-    try {
-      const u = new URL(imageUrl)
-      const last = u.pathname.split("/").pop() ?? ""
-      detectedName = last ? decodeURIComponent(last) : null
-    } catch {
-      detectedName = null
-    }
-
-    // Detect image dimensions
-    let detectedWidth: number | undefined
-    let detectedHeight: number | undefined
-    if (contentType.startsWith("image/")) {
-      const dims = imageSize(buffer)
-      detectedWidth = dims.width
-      detectedHeight = dims.height
-    }
-
-    const conversation = await prisma.conversation.findFirstOrThrow({
-      where: { id: conversationId },
-      select: { chatbotId: true },
-    })
-
-    const path = `public/chatbots/${conversation.chatbotId}/conversations/${conversationId}/${createId()}`
-    await uploader.putObject(path, buffer, {
-      ACL: "public-read",
-      ContentType: contentType,
-      ContentLength: buffer.length,
-    })
-
-    await chatQueue.add(ChatJobAction.sendFlowMessage, {
-      type: ChatJobAction.sendFlowMessage,
-      data: {
-        conversationId,
-        flowId: "",
-        flowVersionId: "",
-        step: {
-          id: createId(),
-          stepType: StepType.sendImage,
-          mode: "file",
-          url: path,
-          buttons: [],
-          attachment: {
-            originPath: path,
-            name: detectedName,
-            mimeType: contentType,
-            size: buffer.length,
-            width: detectedWidth,
-            height: detectedHeight,
-            fileType: FileType.image,
-          },
-        },
-      },
-    })
-
-    return true
-  } catch (error) {
-    logger.error("[automated-response] downloadAndUploadImage failed", {
-      error,
-      imageUrl,
-      conversationId,
-    })
     return false
   }
 }
@@ -196,24 +107,21 @@ export async function sendMessageWithRender(
 ): Promise<void> {
   const trimmed = message.trim()
   if (isImageUrl(trimmed)) {
-    const success = await downloadAndUploadImage(trimmed, conversationId)
-    if (success) {
-      return
-    }
+    await chatQueue.add(ChatJobAction.sendChatMessage, {
+      type: ChatJobAction.sendChatMessage,
+      data: {
+        conversationId,
+        url: trimmed,
+      },
+    })
+    return
   }
 
-  await chatQueue.add(ChatJobAction.sendFlowMessage, {
-    type: ChatJobAction.sendFlowMessage,
+  await chatQueue.add(ChatJobAction.sendChatMessage, {
+    type: ChatJobAction.sendChatMessage,
     data: {
       conversationId,
-      flowId: "",
-      flowVersionId: "",
-      step: {
-        id: createId(),
-        message,
-        stepType: StepType.sendText,
-        buttons: [],
-      },
+      text: trimmed,
     },
   })
 }

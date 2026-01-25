@@ -137,7 +137,10 @@
     "unsetDefaultAgent": "Unset Default",
     "randomRow": "Random Row",
     "clickToEdit": "Click to edit",
-    "move": "Move"
+    "move": "Move",
+    "onSuccess": "On Success",
+    "onFailure": "On Failure",
+    "onSkip": "On Skip"
   },
   "admins": {
     "title": "Admins"
@@ -1105,7 +1108,7 @@
       "unfollowConversation": "Unfollow Conversation",
       "unsubscribeBroadcast": "Unsubscribe Broadcast",
       "waitUserReply": "Wait User Reply",
-      "getUserInput": "Get User Input",
+      "getUserData": "Get User Data",
       "sendCarousel": "Send Carousel",
       "actions": "Actions",
       "findGif": "Find Gif",

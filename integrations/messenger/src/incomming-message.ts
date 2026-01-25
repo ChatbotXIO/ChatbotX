@@ -5,6 +5,7 @@ import {
   type ConversationEntity,
   type MessageEntity,
   MessageType,
+  type ReceivedMessageResult,
 } from "@aha.chat/sdk"
 
 import { getMessageAttachmentEntity } from "./apis/page"
@@ -54,7 +55,7 @@ export const parseIncomingMessage = async ({
 }: {
   ctx: Context<MessengerAuthValue>
   data: MessengerWebhookEvent
-}) => {
+}): Promise<ReceivedMessageResult> => {
   const entry = data.entry[0]
 
   if (!entry.messaging[0]) {
@@ -83,25 +84,24 @@ export const parseIncomingMessage = async ({
     },
   }
 
-  return Promise.resolve({
+  return {
     message,
     conversation,
     postbackAction,
     quickReplyAction,
-  })
+    ref: null,
+  }
 }
 
 const getMessageEntity = async (
   ctx: Context<MessengerAuthValue>,
   messaging: MessengerMessagingEvent,
-): Promise<{
-  message: MessageEntity
-  postbackAction: string | null
-  quickReplyAction: string | null
-}> => {
+): Promise<Omit<ReceivedMessageResult, "conversation">> => {
   let message: MessageEntity | null = null
   let postbackAction: string | null = null
   let quickReplyAction: string | null = null
+  let ref: string | null = null
+
   if (messaging.message) {
     message = {
       sourceId: messaging.message.mid,
@@ -126,8 +126,12 @@ const getMessageEntity = async (
     postbackAction = messaging.postback.payload
   }
 
+  if (messaging.referral) {
+    ref = messaging.referral.ref
+  }
+
   if (message) {
-    return { message, postbackAction, quickReplyAction }
+    return { message, postbackAction, quickReplyAction, ref }
   }
 
   throw new MessengerException("No message found")
