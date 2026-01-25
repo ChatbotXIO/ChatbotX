@@ -38,7 +38,7 @@ export default async function Dashboard({
       <InboxCardList chatbotId={chatbotId} inboxes={inboxes} />
 
       <AnalysisStoreProvider chatbotId={chatbotId}>
-        <AnalysisFilterForm />
+        <AnalysisFilterForm defaultPreset="last7" />
         <InboxStatsList />
 
         <div className="grid grid-cols-2 gap-4">
