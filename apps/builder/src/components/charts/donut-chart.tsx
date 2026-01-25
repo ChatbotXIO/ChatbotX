@@ -56,7 +56,7 @@ export function DonutChart({
                   <Cell
                     fill={entry.color || COLORS[index % COLORS.length]}
                     key={`cell-${
-                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                      // biome-ignore lint/suspicious/noArrayIndexKey: wip
                       index
                     }`}
                   />
