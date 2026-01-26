@@ -3,17 +3,17 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@prisma/adapter-pg": "7.1.0",
-    "@t3-oss/env-nextjs": "^0.13.9",
-    "zod": "^4.1.13"
+    "@prisma/adapter-pg": "7.2.0",
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@paralleldrive/cuid2": "^3.0.4",
-    "@prisma/client": "^7.1.0",
+    "@prisma/client": "^7.2.0",
     "@types/node": "^24.10.4",
     "dotenv-cli": "^11.0.0",
-    "prisma": "7.1.0"
+    "prisma": "7.2.0"
   },
   "scripts": {
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",

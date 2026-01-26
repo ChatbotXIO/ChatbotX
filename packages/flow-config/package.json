@@ -13,7 +13,7 @@
     "@aha.chat/database": "workspace:*",
     "@paralleldrive/cuid2": "^3.1.0",
     "@xyflow/react": "^12.10.0",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "exports": {
     ".": "./src/index.ts"

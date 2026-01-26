@@ -153,7 +153,7 @@ export const SelectField = <T extends FieldValues>(
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-              {allowClear && <SelectClear />}
+              {allowClear ? <SelectClear /> : null}
               {optionItems}
             </SelectContent>
           </Select>

@@ -28,9 +28,17 @@ export const listConversations = async (
       contact: {
         include: {
           contactCustomFields: true,
+          contactNotes: {
+            include: {
+              createdBy: true,
+            },
+          },
+          tags: true,
         },
       },
       inbox: true,
+      assignedUser: true,
+      assignedInboxTeam: true,
     },
     take: perPage,
     where,

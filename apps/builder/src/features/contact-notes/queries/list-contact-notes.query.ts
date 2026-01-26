@@ -13,8 +13,15 @@ export async function listContactNotes(
       where: {
         contactId: input.contactId,
       },
+      include: {
+        createdBy: true,
+      },
     }),
   ])
 
-  return { data }
+  return {
+    data: data.filter(
+      (note) => note.createdBy !== null,
+    ) as ContactNoteCollection["data"],
+  }
 }

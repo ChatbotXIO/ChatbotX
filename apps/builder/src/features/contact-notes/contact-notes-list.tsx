@@ -1,47 +1,66 @@
-// import { use } from "react";
-// import type { listContactNotes } from "./queries/list-contact-notes.query";
-
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Label } from "@aha.chat/ui/components/ui/label"
-import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
-import type { ContactNoteCollection } from "./schemas/resource"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
+import { formatDate } from "@aha.chat/ui/lib/format"
+import { CircleUserRound, PencilIcon, TrashIcon } from "lucide-react"
+import type { ContactNoteResource } from "./schemas/resource"
 
-// interface ContactNotesListProps {
-//   chatbotId: string,
-//   promises: Promise<[Awaited<ReturnType<typeof listContactNotes>>]>
-// }
-
-export function ContactNotesList() {
-  const t = useTranslations()
-  const listContactNotes: ContactNoteCollection = { data: [] }
-
+export function ContactNoteList({
+  allContactNotes,
+  onEdit,
+  onDelete,
+}: {
+  allContactNotes: ContactNoteResource[]
+  onEdit: (contactNote: ContactNoteResource) => void
+  onDelete: (contactNote: ContactNoteResource) => void
+}) {
   return (
     <div className="flex w-full flex-col">
-      <div className="flex w-full">
-        <Label className="flex-1 text-medium">
-          {t("fields.notes.label")} ({listContactNotes.data.length})
-        </Label>
-        <Button size="icon" variant="ghost">
-          <PlusIcon />
-        </Button>
-      </div>
-      <div className="flex w-full flex-col">
-        {listContactNotes.data.map((contactNote) => (
-          <div className="flex w-full flex-col" key={contactNote.id}>
-            <div className="flex w-full">
-              <div className="flex-1">{contactNote.createdById}</div>
-              <Button size="icon" variant="ghost">
-                <PencilIcon />
-              </Button>
-              <Button size="icon" variant="ghost">
-                <TrashIcon />
-              </Button>
-            </div>
-            <div className="w-full">{contactNote.content}</div>
+      {allContactNotes.map((contactNote) => (
+        <div className="flex w-full flex-col" key={contactNote.id}>
+          <div className="flex w-full">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-1 items-center gap-2 text-sm">
+                    <CircleUserRound />
+                    <div>
+                      {formatDate(contactNote.updatedAt, {
+                        month: "short",
+                      })}
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{contactNote.createdBy?.name ?? "Unknown"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button
+              onClick={() => onEdit(contactNote)}
+              size="icon"
+              variant="ghost"
+            >
+              <PencilIcon />
+            </Button>
+            <Button
+              className="text-destructive"
+              onClick={() => onDelete(contactNote)}
+              size="sm"
+              variant="ghost"
+            >
+              <TrashIcon />
+            </Button>
           </div>
-        ))}
-      </div>
+          <div className="mb-4 w-full whitespace-pre-wrap text-gray-500 text-sm">
+            {contactNote.content}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

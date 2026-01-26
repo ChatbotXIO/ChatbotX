@@ -113,6 +113,7 @@ export const zaloWebhookEventSchema = z.object({
     "user_send_sticker",
     "user_send_file",
     "user_send_audio",
+    "user_seen_message",
     "oa_send_msg",
     "oa_send_text",
     "oa_send_image",
@@ -132,7 +133,8 @@ export const zaloWebhookEventSchema = z.object({
     id: z.string(),
   }),
   message: z.object({
-    msg_id: z.string(),
+    msg_id: z.string().optional(),
+    msg_ids: z.array(z.string()).optional(),
     text: z.string().optional(),
     attachments: z.array(messageAttachmentSchema).optional(),
   }),

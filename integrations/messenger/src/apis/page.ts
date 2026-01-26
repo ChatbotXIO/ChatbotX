@@ -65,7 +65,7 @@ export const subscribePageToAppWebhook = async (props: {
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
 
-  await facebookGraphClient.post(`${version}/${props.pageId}/subscribed_apps`, {
+  await facebookGraphClient.post(`${version}/me/subscribed_apps`, {
     headers: {
       Authorization: `Bearer ${props.accessToken}`,
     },
@@ -83,14 +83,11 @@ export const unsubscribePageFromAppWebhook = async (props: {
   const { version = DEFAULT_API_VERSION } = props
 
   try {
-    await facebookGraphClient.delete(
-      `${version}/${props.pageId}/subscribed_apps`,
-      {
-        headers: {
-          Authorization: `Bearer ${props.accessToken}`,
-        },
+    await facebookGraphClient.delete(`${version}/me/subscribed_apps`, {
+      headers: {
+        Authorization: `Bearer ${props.accessToken}`,
       },
-    )
+    })
   } catch (error) {
     logger.error("Unsubscribe Page From AppWebhook failed", error)
     throw new MessengerAPIException(
@@ -106,24 +103,16 @@ export const sendMessage = async (
 ): Promise<FacebookSendMessageResponse> => {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
-    return await facebookGraphClient.post(
-      `${version}/${auth.metadata.pageId}/messages`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.tokens.accessToken}`,
-        },
-        json: payload,
+  return await facebookGraphClient.post<FacebookSendMessageResponse>(
+    `${version}/me/messages`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
-    )
-  } catch (error) {
-    logger.error("Send Message error", error)
-    throw new MessengerAPIException(
-      "An error occurred while sending the message",
-      `${version}/${auth.metadata.pageId}/messages`,
-    )
-  }
+      json: payload,
+    },
+  )
 }
 
 export const getMessageAttachmentEntity = async ({

@@ -69,24 +69,35 @@ export function getTagColumns({
       enableHiding: false,
     },
     {
+      id: "name",
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => <div>{row.original.name}</div>,
       size: 300,
+      meta: {
+        label: t("fields.name.label"),
+        placeholder: t("fields.name.searchPlaceholder"),
+        variant: "text",
+      },
+      enableColumnFilter: true,
       enableSorting: true,
-      enableHiding: false,
     },
     {
-      accessorKey: "contactsCount",
+      id: "contacts",
+      accessorKey: "contacts",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Contacts" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("fields.contacts.label")}
+        />
       ),
       cell: ({ row }) => <div>{row.original._count?.contacts ?? 0}</div>,
       size: 50,
-      enableSorting: false,
-      enableHiding: false,
+      meta: {
+        label: t("fields.contacts.label"),
+      },
     },
     {
       id: "actions",

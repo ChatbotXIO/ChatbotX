@@ -3,7 +3,7 @@ import {
   type AIJobData,
   defaultWorkerOptions,
   getRedisConnection,
-  QueueName,
+  queueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { aiLogger, logger } from "../lib/logger"
@@ -11,7 +11,7 @@ import { processAIFile } from "./handlers/process-ai-file"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 
 const worker = new Worker(
-  QueueName.aiAgent,
+  queueName.aiAgent,
   async (job: Job<AIJobData>) => {
     aiLogger.info("Worker received job", {
       id: job.id,

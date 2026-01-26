@@ -1,5 +1,6 @@
 "use client"
 
+import { rootFolderId } from "@aha.chat/database/enums"
 import { CustomFieldType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -23,9 +24,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCustomFieldTypeLabels } from "../shared-fields/shared"
@@ -35,15 +35,16 @@ import { createAccountFieldRequest } from "./schemas/create-account-field.schema
 
 type CreateAccountFieldDialogProps = {
   chatbotId: string
+  folderId: string | null
   onSuccess?: () => void
 }
 
 export function CreateAccountFieldDialog({
   chatbotId,
+  folderId,
   onSuccess,
 }: CreateAccountFieldDialogProps) {
   const t = useTranslations()
-  const searchParams = useSearchParams()
 
   const [open, setOpen] = useState(false)
   const customFieldTypeLabels = useCustomFieldTypeLabels()
@@ -77,14 +78,20 @@ export function CreateAccountFieldDialog({
             customFieldType: CustomFieldType.shortText,
             value: "",
             description: "",
-            folderId: searchParams.get("folderId"),
+            folderId: null,
           },
         },
         errorMapProps: {},
       },
     )
+  const { control, setValue } = form
 
-  const { control } = form
+  useEffect(() => {
+    if (folderId && folderId !== rootFolderId) {
+      setValue("folderId", folderId)
+    }
+  }, [folderId, setValue])
+
   const watchCustomFieldType = useWatch({
     control,
     name: "customFieldType",

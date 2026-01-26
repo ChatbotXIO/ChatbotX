@@ -6,6 +6,7 @@ import {
   FileType,
   type MessageEntity,
   MessageType,
+  type ReceivedMessageResult,
   SdkException,
 } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
@@ -31,7 +32,7 @@ export const parseIncomingMessage = async (
   ctx: Context<WhatsappAuthValue>,
   whatsappClient: WhatsAppAPI,
   props: WhatsappWebhookEvent,
-) => {
+): Promise<ReceivedMessageResult> => {
   const message: MessageEntity = {
     sourceId: props.message.id,
     messageType: MessageType.incoming,
@@ -47,7 +48,7 @@ export const parseIncomingMessage = async (
       firstName: props.name,
     },
   }
-  let postbackAction: { flowVersionId: string; buttonId: string } | null = null
+  let postbackAction: string | null = null
 
   switch (props.message.type) {
     case "text":
@@ -148,10 +149,7 @@ export const parseIncomingMessage = async (
       switch (props.message.interactive.type) {
         case "button_reply": {
           message.content = props.message.interactive.button_reply.title
-          const arr = props.message.interactive.button_reply.id.split("_")
-          if (arr.length > 1) {
-            postbackAction = { flowVersionId: arr[0], buttonId: arr[1] }
-          }
+          postbackAction = props.message.interactive.button_reply.id
           break
         }
         case "list_reply":
@@ -183,7 +181,13 @@ export const parseIncomingMessage = async (
       break
   }
 
-  return { message, conversation, postbackAction }
+  return {
+    message,
+    conversation,
+    postbackAction,
+    quickReplyAction: null,
+    ref: null,
+  }
 }
 
 export const fetchMedia = async (

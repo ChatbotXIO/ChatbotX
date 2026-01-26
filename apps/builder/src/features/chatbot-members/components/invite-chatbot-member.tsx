@@ -226,7 +226,7 @@ export function AddChatbotMemberForm({
           )}
           <div className="flex items-center justify-end gap-2">
             <Button
-              onAbort={() => cancelHandler?.()}
+              onClick={() => cancelHandler?.()}
               size="sm"
               type="button"
               variant="ghost"

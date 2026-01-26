@@ -9,10 +9,10 @@ export const DelayType = {
 } as const
 
 export const DelayUnit = {
-  second: "s",
-  minute: "m",
-  hour: "h",
-  day: "d",
+  seconds: "seconds",
+  minutes: "minutes",
+  hours: "hours",
+  days: "days",
 } as const
 
 export const waitStepSchema = z
@@ -52,7 +52,7 @@ export const waitStepDefaultFn = (): WaitStepSchema => ({
 
 export const delayTypeDurationDefaultFn = () => ({
   duration: 1,
-  unit: DelayUnit.hour,
+  unit: DelayUnit.hours,
   interval: false,
   startTime: "00:00:00",
   endTime: "23:00:00",

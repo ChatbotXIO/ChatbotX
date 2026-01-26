@@ -18,6 +18,7 @@ export default async function WebchatPage(props: WebchatPageProps) {
     .object({
       chatbotId: z.cuid2(),
       webchatId: z.cuid2(),
+      ref: z.string().optional(),
     })
     .safeParse(searchParams)
 
@@ -37,7 +38,7 @@ export default async function WebchatPage(props: WebchatPageProps) {
 
   return (
     <GuestSessionStoreProvider config={integrationWebchat}>
-      <WebchatWrapper />
+      <WebchatWrapper referral={data.ref} />
     </GuestSessionStoreProvider>
   )
 }

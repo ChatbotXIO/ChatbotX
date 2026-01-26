@@ -5,7 +5,7 @@ import {
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
 } from "../steps/choose-channel"
-import { getUserInputStepSchema } from "../steps/get-user-input"
+import { getUserDataStepSchema } from "../steps/get-user-data"
 import { sendAudioStepSchema } from "../steps/send-audio"
 import { sendCardStepSchema } from "../steps/send-card"
 import { sendCarouselStepSchema } from "../steps/send-carousel"
@@ -37,7 +37,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
           sendVideoStepSchema,
           sendCardStepSchema,
           sendCarouselStepSchema,
-          getUserInputStepSchema,
+          getUserDataStepSchema,
           sendGifStepSchema,
           ...actionSteps,
         ]),

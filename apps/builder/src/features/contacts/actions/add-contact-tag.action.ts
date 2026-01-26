@@ -50,6 +50,7 @@ export const addContactTagAction = chatbotActionClient
 
         const allTags = await tx.tag.findMany({
           where: {
+            chatbotId,
             name: { in: parsedInput.tags },
           },
           select: {

@@ -1,7 +1,9 @@
 import type { ContextQueue } from "./context"
+import type { ConversationEntity, MessageEntity } from "./message"
 
 export * from "./context"
 export * from "./message"
+export * from "./mime-types"
 
 export type Handler<I, O> = (props: I) => Promise<O>
 
@@ -18,3 +20,11 @@ export const HandleRequestType = {
   webhook: "webhook",
   generateAuthUrl: "generate-auth-url",
 } as const
+
+export type ReceivedMessageResult = {
+  message: MessageEntity
+  conversation: ConversationEntity
+  postbackAction: string | null
+  quickReplyAction: string | null
+  ref: string | null
+}

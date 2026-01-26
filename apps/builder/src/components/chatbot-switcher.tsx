@@ -21,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@aha.chat/ui/components/ui/sidebar"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { ChevronsUpDown, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
@@ -43,7 +44,7 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="flex h-12 items-center justify-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
@@ -55,7 +56,7 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
                   alt={activeChatbot?.name}
                   src={activeChatbot?.logo ?? ""}
                 />
-                <AvatarFallback className="rounded">
+                <AvatarFallback className="rounded font-medium">
                   {activeChatbot?.name?.slice(0, 2) || "  "}
                 </AvatarFallback>
               </Avatar>
@@ -80,18 +81,19 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
             {chatbots.map((chatbot) => (
               <DropdownMenuItem
                 asChild
-                className="gap-2 p-2"
+                className={cn(
+                  "gap-2 p-2",
+                  activeChatbot?.id === chatbot.id &&
+                    "bg-sidebar-accent text-sidebar-accent-foreground",
+                )}
                 key={chatbot.name}
                 onClick={() => setActiveChatbot(chatbot)}
               >
                 <Link href={`/chatbots/${chatbot.id}/dashboard`}>
                   <Avatar className="rounded-lg border">
-                    <AvatarImage
-                      alt={activeChatbot?.name}
-                      src={activeChatbot?.logo ?? ""}
-                    />
-                    <AvatarFallback className="rounded">
-                      {activeChatbot?.name?.charAt(0)}
+                    <AvatarImage alt={chatbot.name} src={chatbot.logo ?? ""} />
+                    <AvatarFallback className="rounded font-medium">
+                      {chatbot.name.slice(0, 2) || "  "}
                     </AvatarFallback>
                   </Avatar>
                   {chatbot.name}

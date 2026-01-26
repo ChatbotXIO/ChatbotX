@@ -2,6 +2,7 @@ import { Loader2Icon, UploadIcon } from "lucide-react"
 import { useCallback, useState } from "react"
 import { randomString } from "remeda"
 import { toast } from "sonner"
+import { getMimeTypeFromFile } from "../../lib/file-types"
 import { Button } from "../ui/button"
 import {
   FileUpload,
@@ -62,6 +63,9 @@ export function DirectUploadButton({
         const uploadPromises = choosenFiles.map(async (file) => {
           try {
             const filePath = `${uploadPath}/${randomString(20)}${Date.now()}`
+
+            const mimeType = getMimeTypeFromFile(file)
+
             // Step 1: Get presigned upload URL
             const presignedResponse = await fetch(uploadHandlerUrl, {
               method: "POST",
@@ -72,7 +76,7 @@ export function DirectUploadButton({
                 {
                   path: filePath,
                   name: file.name,
-                  mimeType: file.type,
+                  mimeType,
                 },
               ]),
             })

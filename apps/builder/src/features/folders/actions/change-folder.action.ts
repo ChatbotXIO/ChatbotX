@@ -1,6 +1,7 @@
 "use server"
 
 import { FolderType, prisma } from "@aha.chat/database"
+import { rootFolderId } from "@aha.chat/database/enums"
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { BaseException } from "@/lib/errors/exception"
@@ -15,22 +16,24 @@ export const changeFolderAction = chatbotActionClient
     const [chatbotId] = bindArgsParsedInputs
 
     const resourceModel = findResourceModel(parsedInput.folderType)
-    const resource = await resourceModel.findFirst({
+    const resources: { id: string }[] = await resourceModel.findMany({
       where: {
         chatbotId,
-        id: parsedInput.modelId,
+        id: {
+          in: parsedInput.modelIds,
+        },
       },
       select: {
         id: true,
       },
     })
-    if (!resource) {
+    if (!resources || resources.length === 0) {
       throw new BaseException("Resource not found")
     }
 
     let newFolderId: string | null = null
     const inputNewFolderId =
-      parsedInput.newFolderId === "0" ? null : parsedInput.newFolderId
+      parsedInput.newFolderId === rootFolderId ? null : parsedInput.newFolderId
     if (inputNewFolderId) {
       const targetFolder = await prisma.folder.findFirst({
         where: {
@@ -53,10 +56,13 @@ export const changeFolderAction = chatbotActionClient
       newFolderId = targetFolder.id
     }
 
-    // Try to find the folder
-    await resourceModel.update({
+    // Update all resources
+    await resourceModel.updateMany({
       where: {
-        id: resource.id,
+        id: {
+          in: resources.map((resource) => resource.id),
+        },
+        chatbotId,
       },
       data: {
         folderId: newFolderId,

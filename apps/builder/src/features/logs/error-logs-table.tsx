@@ -5,6 +5,7 @@ import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
+import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { DeleteLogsDialog } from "./delete-logs-dialog"
 import { getColumns } from "./error-logs-table-columns"
@@ -17,11 +18,12 @@ type LogsTableProps = {
 }
 
 export function ErrorLogsTable({ promises, chatbotId }: LogsTableProps) {
+  const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<LogModel> | null>(null)
 
-  const columns = useMemo(() => getColumns({ setRowAction }), [])
+  const columns = useMemo(() => getColumns({ setRowAction, t }), [t])
 
   const { table } = useDataTable({
     data,

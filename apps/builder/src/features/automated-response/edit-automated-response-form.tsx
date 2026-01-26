@@ -58,6 +58,7 @@ export default function EditAutomatedResponseForm(
             }),
           )
           router.back()
+          setTimeout(() => router.refresh())
         },
         onError: ({ error }) => {
           if (error.serverError) {

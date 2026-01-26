@@ -1,10 +1,7 @@
 "use client"
 
 import "@xyflow/react/dist/style.css"
-import type {
-  FlowResource,
-  FlowVersionResource,
-} from "../schemas/get-flows-schema"
+import type { FlowResource, FlowVersionResource } from "../schemas/resource"
 import { ButtonEditorDialog } from "./button-editor-dialog"
 import { FrameHeader } from "./frame-header"
 import { NodeDetailSheet } from "./nodes/node-detail-sheet"

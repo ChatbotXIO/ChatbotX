@@ -1,8 +1,10 @@
 import type {
   SendAudioStepSchema,
+  SendCarouselStepSchema,
   SendFileStepSchema,
   SendGifStepSchema,
   SendImageStepSchema,
+  SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
 } from "@aha.chat/flow-config"
@@ -22,10 +24,16 @@ export type SendFlowStepData =
   | SendAudioStepSchema
   | SendVideoStepSchema
   | SendFileStepSchema
+  | SendQuickReplyStepSchema
+  | SendCarouselStepSchema
 
-export type SendFlowStepProps<TAuth extends BaseAuthValue> = {
+export type SendFlowStepProps<
+  TAuth extends BaseAuthValue,
+  S = SendFlowStepData,
+> = {
   ctx: Context<TAuth>
   conversation: ConversationEntity
-  flowVersionId: string
-  step: SendFlowStepData
+  flowId: string
+  flowVersionId?: string
+  step: S
 }

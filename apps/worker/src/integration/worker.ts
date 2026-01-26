@@ -6,25 +6,33 @@ import {
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
-  QueueName,
+  queueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
+import { runChallenge } from "./handlers/challenge"
+import { readMessage } from "./handlers/conversation"
+import {
+  runFlowNode,
+  runFlowPostback,
+  runFlowQuickReply,
+} from "./handlers/flow"
 import { receiveMessage } from "./handlers/received-message"
-import { sendFlowNode } from "./handlers/send-flow-node"
-import { sendFlowPostback } from "./handlers/send-flow-postback"
+import { runRef } from "./handlers/ref"
+import { sendBroadcast } from "./handlers/send-broadcast"
 
 const worker = new Worker(
-  QueueName.integration,
+  queueName.integration,
   async (job: Job<IntegrationJobData>) => {
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
-        const { message, postbackAction } = await receiveMessage(job.data.data)
+        const { message, postbackAction, quickReplyAction } =
+          await receiveMessage(job.data.data)
 
         // Trigger automated response if the message is from a user
         if (
-          !postbackAction &&
+          !(postbackAction || quickReplyAction) &&
           message.content &&
           message.senderType === SenderType.contact
         ) {
@@ -41,15 +49,35 @@ const worker = new Worker(
         return
       }
       case IntegrationJobAction.sendFlow: {
-        await sendFlowNode(job.data)
+        await runFlowNode(job.data)
         return
       }
-      case IntegrationJobAction.sendFlowPostback: {
-        await sendFlowPostback(job.data.data)
+      case IntegrationJobAction.runFlowPostback: {
+        await runFlowPostback(job.data.data)
+        return
+      }
+      case IntegrationJobAction.runFlowQuickReply: {
+        await runFlowQuickReply(job.data.data)
         return
       }
       case IntegrationJobAction.triggerAutomatedResponse: {
         await triggerAutomatedResponse(job.data.data)
+        return
+      }
+      case IntegrationJobAction.readMessage: {
+        await readMessage(job.data.data)
+        return
+      }
+      case IntegrationJobAction.sendBroadcast: {
+        await sendBroadcast(job.data.data.broadcastId)
+        return
+      }
+      case IntegrationJobAction.runRef: {
+        await runRef(job.data.data)
+        return
+      }
+      case IntegrationJobAction.runChallenge: {
+        await runChallenge(job.data.data)
         return
       }
       default:

@@ -31,13 +31,16 @@ export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
     zodResolver(createWebchatRequest),
     {
       actionProps: {
-        onSuccess: () => {
+        onSuccess: ({ data }) => {
           toast.success(
             t("messages.createdSuccess", {
               feature: t("fields.webchat.label"),
             }),
           )
-          router.push(`/chatbots/${chatbotId}/webchats`)
+          if (data.chatbotId) {
+            return router.push(`/chatbots/${data.chatbotId}/webchats`)
+          }
+          return router.push("/")
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to create webchat")
@@ -90,7 +93,7 @@ export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
                   size="sm"
                   type="submit"
                 >
-                  {form.formState.isSubmitting && (
+                  {!!form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />
                   )}
                   {t("actions.createFeature", {

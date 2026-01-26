@@ -40,7 +40,7 @@ export type MessageEntity = {
   messageType: MessageType
   contentType: ContentType
   content?: string
-  contentAttributes?: MessageLocationEntity | unknown
+  contentAttributes?: MessageLocationEntity | MessageTemplateEntity | unknown
   attachments?: AttachmentEntity[]
   clientId?: string | null
 }
@@ -72,6 +72,41 @@ export type ExternalMediaResult = {
 export type MessageLocationEntity = {
   latitude: string
   longitude: string
+}
+
+export type MessageButtonTemplate = {
+  id: string
+  label: string
+} & (
+  | {
+      buttonType: "url"
+      url: string
+    }
+  | {
+      buttonType: "postback"
+      postback: string
+    }
+)
+
+export type MessageCardTemplate = {
+  id: string
+  title: string
+  subtitle?: string
+  imageUrl?: string
+  buttons?: MessageButtonTemplate[]
+}
+
+export type MessageTemplateEntity = {
+  type: "template"
+  payload:
+    | {
+        templateType: "button"
+        buttons: MessageButtonTemplate[]
+      }
+    | {
+        templateType: "carousel"
+        cards: MessageCardTemplate[]
+      }
 }
 
 export const ContentType = {

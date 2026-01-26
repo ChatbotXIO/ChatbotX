@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@aha.chat/logger": "workspace:*",
-    "@t3-oss/env-nextjs": "^0.13.9",
-    "ky": "^1.14.1",
-    "zod": "^4.1.13"
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "ky": "^1.14.2",
+    "zod": "^4.2.1"
   },
   "exports": {
     ".": "./src/index.ts",

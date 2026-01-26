@@ -14,12 +14,13 @@ export const StepType = {
   sendMessengerOtn: "S07", // One time notification
   sendAudio: "S08",
   sendFile: "S09",
+  sendQuickReply: "S10",
 
   // Wait/Timing (W_)
   waitUserReply: "W01",
   setDebounce: "W02",
   wait: "W03",
-  getUserInput: "W04",
+  getUserData: "W04",
 
   // Contact Operations (C_)
   addContactTag: "C01",

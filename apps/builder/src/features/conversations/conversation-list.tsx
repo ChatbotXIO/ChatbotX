@@ -8,10 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@aha.chat/ui/components/ui/select"
-import { useSidebar } from "@aha.chat/ui/components/ui/sidebar"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import { FilterIcon, PanelLeftClose, UserPlusIcon } from "lucide-react"
-import { useParams } from "next/navigation"
+import { FilterIcon, UserPlusIcon } from "lucide-react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useChatStore } from "../chat/store/chat-store-provider"
@@ -20,6 +19,8 @@ import ConversationItem from "./conversation-item"
 
 export default function ConversationList() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const {
     conversations,
     loadMoreConversations,
@@ -28,7 +29,6 @@ export default function ConversationList() {
     activeConversationId,
     setActiveConversationId,
   } = useChatStore((state) => state)
-  const { toggleSidebar, open } = useSidebar()
 
   // Check if there are more pages to load
   const hasNextPage =
@@ -50,21 +50,6 @@ export default function ConversationList() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-center gap-1">
-        <Button
-          data-sidebar="trigger"
-          data-slot="sidebar-trigger"
-          onClick={() => {
-            toggleSidebar()
-          }}
-          size="icon"
-          variant="ghost"
-        >
-          {open ? (
-            <PanelLeftClose />
-          ) : (
-            <PanelLeftClose className="rotate-180" />
-          )}
-        </Button>
         <Select defaultValue="2" name="liveChatEnabled">
           <SelectTrigger className="h-8 w-[180px] text-xs">
             <SelectValue placeholder="" />
@@ -101,7 +86,14 @@ export default function ConversationList() {
             <ConversationItem
               conversation={item}
               isActive={item.id === activeConversationId}
-              onSelect={() => setActiveConversationId(item.id)}
+              onSelect={() => {
+                setActiveConversationId(item.id)
+
+                // Update the URL with the selected conversation ID
+                const params = new URLSearchParams(searchParams.toString())
+                params.set("conversationId", item.id)
+                router.replace(`?${params.toString()}`)
+              }}
             />
           )}
           rangeChanged={({ endIndex }) => {

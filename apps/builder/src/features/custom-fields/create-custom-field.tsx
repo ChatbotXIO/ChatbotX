@@ -1,4 +1,5 @@
 "use client"
+import { rootFolderId } from "@aha.chat/database/enums"
 import { CustomFieldType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -18,7 +19,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useEffect, useState } from "react"
+import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
 import { createCustomFieldSchema } from "./schemas/create-custom-field.schema"
@@ -96,32 +97,35 @@ function CreateCustomFieldForm({
 }) {
   const t = useTranslations()
 
-  const customFieldTypeOptions = [
-    {
-      value: CustomFieldType.shortText,
-      label: t("fields.shortText.label"),
-    },
-    {
-      value: CustomFieldType.number,
-      label: t("fields.number.label"),
-    },
-    {
-      value: CustomFieldType.date,
-      label: t("fields.date.label"),
-    },
-    {
-      value: CustomFieldType.datetime,
-      label: t("fields.datetime.label"),
-    },
-    {
-      value: CustomFieldType.boolean,
-      label: t("fields.boolean.label"),
-    },
-    {
-      value: CustomFieldType.longText,
-      label: t("fields.longText.label"),
-    },
-  ]
+  const customFieldTypeOptions = useMemo(
+    () => [
+      {
+        value: CustomFieldType.shortText,
+        label: t("fields.shortText.label"),
+      },
+      {
+        value: CustomFieldType.number,
+        label: t("fields.number.label"),
+      },
+      {
+        value: CustomFieldType.date,
+        label: t("fields.date.label"),
+      },
+      {
+        value: CustomFieldType.datetime,
+        label: t("fields.datetime.label"),
+      },
+      {
+        value: CustomFieldType.boolean,
+        label: t("fields.boolean.label"),
+      },
+      {
+        value: CustomFieldType.longText,
+        label: t("fields.longText.label"),
+      },
+    ],
+    [t],
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -151,7 +155,7 @@ function CreateCustomFieldForm({
             name: "",
             customFieldType: CustomFieldType.shortText,
             description: "",
-            folderId,
+            folderId: null,
           },
         },
         errorMapProps: {},
@@ -161,7 +165,9 @@ function CreateCustomFieldForm({
   const { setValue } = form
 
   useEffect(() => {
-    setValue("folderId", folderId)
+    if (folderId && folderId !== rootFolderId) {
+      setValue("folderId", folderId)
+    }
   }, [folderId, setValue])
 
   return (

@@ -10,7 +10,7 @@
   "dependencies": {
     "@aha.chat/flow-config": "workspace:*",
     "@types/node": "^24.10.4",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "exports": {
     ".": "./src/index.ts"

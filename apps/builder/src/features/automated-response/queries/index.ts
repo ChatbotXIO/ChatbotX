@@ -1,5 +1,6 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
+import { rootFolderId } from "@aha.chat/database/enums"
 import type {
   AutomatedResponseModel,
   AutomatedResponseWhereInput,
@@ -22,17 +23,19 @@ export async function getAutomatedResponses(
       has: input.keyword,
     }
   }
-
-  if (input.folderId !== undefined) {
-    where.folderId =
-      input.folderId === null || input.folderId === "0" ? null : input.folderId
+  if (input.folderId) {
+    where.folderId = input.folderId === rootFolderId ? null : input.folderId
   }
+  const orderBy = input.sort.map((sortItem) => ({
+    [sortItem.id]: sortItem.desc ? "desc" : "asc",
+  }))
 
   const [data, total] = await prisma.$transaction([
     prisma.automatedResponse.findMany({
       skip: (input.page - 1) * input.perPage,
       take: input.perPage,
       where,
+      orderBy,
     }),
     prisma.automatedResponse.count({ where }),
   ])

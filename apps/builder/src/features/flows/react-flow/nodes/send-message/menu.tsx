@@ -41,9 +41,9 @@ export const sendMessageEditorMenus = (t: TranslationFn): MenuItem[] => [
     stepType: StepType.sendVideo,
   },
   {
-    label: t("flows.actions.getUserInput"),
+    label: t("flows.actions.getUserData"),
     icon: KeyboardIcon,
-    stepType: StepType.getUserInput,
+    stepType: StepType.getUserData,
   },
   {
     label: t("flows.actions.sendGif"),

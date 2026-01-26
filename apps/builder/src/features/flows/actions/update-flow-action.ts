@@ -7,10 +7,7 @@ import {
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  type UpdateFlowSchema,
-  updateFlowSchema,
-} from "../schemas/update-flow-schema"
+import { type UpdateFlowSchema, updateFlowSchema } from "../schemas/action"
 
 export const updateFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
