@@ -48,13 +48,7 @@
             "ignoreRestSiblings": true
           }
         },
-        "noUnknownProperty": "error",
-        "useExhaustiveDependencies": {
-          "level": "warn",
-          "options": {
-            "reportUnnecessaryDependencies": false
-          }
-        }
+        "noUnknownProperty": "error"
       },
       "style": {
         "useNodejsImportProtocol": "off",

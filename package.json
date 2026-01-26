@@ -17,7 +17,7 @@
     "lefthook": "^2.0.13",
     "prisma": "7.2.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.7.2",
+    "turbo": "^2.7.6",
     "typescript": "5.9.3",
     "ultracite": "6.5.0"
   },
