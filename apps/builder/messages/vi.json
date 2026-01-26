@@ -1181,7 +1181,8 @@
       "sendgrid": "Add Contact to SendGrid",
       "mailerlite": "Thêm liên hệ vào MailerLite",
       "getResponse": "Thêm liên hệ vào GetResponse",
-      "sendFox": "Thêm liên hệ vào SendFox"
+      "sendFox": "Thêm liên hệ vào SendFox",
+      "moosend": "Thêm liên hệ vào Moosend"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1446,6 +1447,35 @@
       "lastNameField": "Trường Họ"
     },
     "notConnected": "SendFox chưa được kết nối"
+  },
+  "moosend": {
+    "title": "Moosend",
+    "setting": {
+      "label": "Moosend",
+      "description": "Tích hợp này cho phép bạn lưu thông tin liên hệ của khách hàng từ bot vào Moosend"
+    },
+    "dialog": {
+      "title": "Kết nối Moosend",
+      "description": "Nhập API Key từ tài khoản Moosend của bạn (Settings > API Key)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Nhập API Key của bạn"
+    },
+    "connectedSuccess": "Đã kết nối Moosend thành công",
+    "error": {
+      "invalidCredentials": "API Key không hợp lệ hoặc không có quyền truy cập",
+      "userNotEnabled": "Tài khoản Moosend của bạn chưa được kích hoạt hoặc bị vô hiệu hóa. Vui lòng kiểm tra lại tài khoản Moosend.",
+      "connectionFailed": "Kết nối thất bại. Vui lòng kiểm tra lại thông tin.",
+      "fetch_lists": "Không thể tải danh sách list Moosend"
+    },
+    "fields": {
+      "list": "Danh sách",
+      "listPlaceholder": "Chọn danh sách",
+      "emailField": "Trường Email",
+      "nameField": "Trường Tên"
+    },
+    "notConnected": "Moosend chưa được kết nối"
   },
   "googleSheets": {
     "delete": {

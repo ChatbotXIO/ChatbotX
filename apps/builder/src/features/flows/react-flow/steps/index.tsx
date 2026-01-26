@@ -25,6 +25,7 @@ import { waitUserReplyStep } from "./get-user-input"
 import { mailchimpAddMemberStep } from "./mailchimp-add-member"
 import { mailerLiteStep } from "./mailer-lite"
 import { markEmailVerifiedStep } from "./mark-email-verified"
+import { moosendStep } from "./moosend"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
@@ -125,6 +126,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.mailerLite]: mailerLiteStep,
   [StepType.getResponse]: getResponseStep,
   [StepType.sendFox]: sendFoxStep,
+  [StepType.moosend]: moosendStep,
   [StepType.sendQuickReply]: undefined,
 }
 

@@ -108,6 +108,9 @@ export const StepType = {
 
   // SendFox Operations (SF_)
   sendFox: "SF01",
+
+  // Moosend Operations (MO_)
+  moosend: "MO01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

@@ -22,6 +22,7 @@ type SettingIntegrationLayoutProps = {
   mailerLite: ReactNode
   getResponse: ReactNode
   sendFox: ReactNode
+  moosend: ReactNode
 }
 
 function SettingIntegrationLayoutContent({
@@ -35,6 +36,7 @@ function SettingIntegrationLayoutContent({
   mailerLite,
   getResponse,
   sendFox,
+  moosend,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
   const searchParams = useSearchParams()
@@ -100,6 +102,12 @@ function SettingIntegrationLayoutContent({
       keyName: t("sendFox.title"),
       icon: MailIcon,
       content: sendFox,
+    },
+    {
+      id: "moosend",
+      keyName: t("moosend.title"),
+      icon: MailIcon,
+      content: moosend,
     },
   ]
 

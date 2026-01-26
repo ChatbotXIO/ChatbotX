@@ -1,0 +1,7 @@
+{
+  "extends": "@aha.chat/typescript-config/base.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  },
+  "include": ["src/**/*.ts"]
+}

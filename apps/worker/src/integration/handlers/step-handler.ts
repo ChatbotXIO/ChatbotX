@@ -41,6 +41,7 @@ import { handleDripStep } from "./drip-handler"
 import { handleGetResponseStep } from "./get-response-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { handleMailerLiteStep } from "./mailer-lite-handler"
+import { handleMoosendStep } from "./moosend-handler"
 import { handleSendFoxStep } from "./send-fox-handler"
 import { handleSendGridStep } from "./sendgrid-handler"
 import {
@@ -209,6 +210,7 @@ export const flowStepHandlers: Record<
   [StepType.mailerLite]: handleMailerLiteStep,
   [StepType.getResponse]: handleGetResponseStep,
   [StepType.sendFox]: handleSendFoxStep,
+  [StepType.moosend]: handleMoosendStep,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendQuickReply,
 }

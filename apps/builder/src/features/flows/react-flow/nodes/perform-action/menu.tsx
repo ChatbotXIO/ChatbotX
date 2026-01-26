@@ -252,6 +252,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: MailIcon,
         stepType: StepType.sendFox,
       },
+      {
+        label: t("flows.actions.moosend"),
+        icon: MailIcon,
+        stepType: StepType.moosend,
+      },
     ],
   },
   {

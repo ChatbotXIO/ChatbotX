@@ -1127,7 +1127,8 @@
       "sendgrid": "Add Contact to SendGrid",
       "mailerlite": "Add Contact to MailerLite",
       "getResponse": "Add Contact to GetResponse",
-      "sendFox": "Add Contact to SendFox"
+      "sendFox": "Add Contact to SendFox",
+      "moosend": "Add Contact to Moosend"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1392,6 +1393,34 @@
       "lastNameField": "Last Name Field"
     },
     "notConnected": "SendFox not connected"
+  },
+  "moosend": {
+    "title": "Moosend",
+    "setting": {
+      "label": "Moosend",
+      "description": "This integration allows you to save customer contact information from your bot to Moosend"
+    },
+    "dialog": {
+      "title": "Connect Moosend",
+      "description": "Enter your API Key from your Moosend account (Settings > API Key)"
+    },
+    "apiKey": {
+      "label": "API Key",
+      "placeholder": "Enter your API Key"
+    },
+    "connectedSuccess": "Connected to Moosend successfully",
+    "error": {
+      "invalidCredentials": "Invalid API Key or no access to account",
+      "connectionFailed": "Connection failed. Please check your information.",
+      "fetch_lists": "Unable to load Moosend lists"
+    },
+    "fields": {
+      "list": "List",
+      "listPlaceholder": "Select a list",
+      "emailField": "Email Field",
+      "nameField": "Name Field"
+    },
+    "notConnected": "Moosend not connected"
   },
   "googleSheets": {
     "spreadsheet": "Spreadsheet",

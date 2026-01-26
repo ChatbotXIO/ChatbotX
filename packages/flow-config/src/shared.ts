@@ -19,6 +19,7 @@ import { getResponseStepSchema } from "./steps/get-response"
 import { mailchimpAddMemberStepSchema } from "./steps/mailchimp-add-member"
 import { mailerLiteStepSchema } from "./steps/mailer-lite"
 import { markEmailVerifiedStepSchema } from "./steps/mark-email-verified"
+import { moosendStepSchema } from "./steps/moosend"
 import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
@@ -107,6 +108,8 @@ const getResponseSteps = [getResponseStepSchema]
 
 const sendFoxSteps = [sendFoxStepSchema]
 
+const moosendSteps = [moosendStepSchema]
+
 export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
@@ -122,4 +125,5 @@ export const actionSteps = [
   ...mailerLiteSteps,
   ...getResponseSteps,
   ...sendFoxSteps,
+  ...moosendSteps,
 ]
