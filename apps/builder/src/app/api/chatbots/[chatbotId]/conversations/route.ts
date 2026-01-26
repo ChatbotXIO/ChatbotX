@@ -15,10 +15,7 @@ export async function GET(
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const { data } = listConversationsRequest.safeParse(searchParams)
 
-    const result = await listConversations(
-      chatbotId,
-      data ?? { contactFilter: { operator: "and", conditions: [] } },
-    )
+    const result = await listConversations(chatbotId, data)
 
     return NextResponse.json(result)
   } catch (e) {

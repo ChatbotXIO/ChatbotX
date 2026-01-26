@@ -82,7 +82,7 @@
       const stack = e.stack || e.stacktrace
       const lines = stack.split("\n")
       for (const line of lines) {
-        // biome-ignore lint/performance/useTopLevelRegex: safe ifnore
+        // biome-ignore lint/performance/useTopLevelRegex: safe ignore
         const match = line.match(/(http[s]?:\/\/[^)]+)/)
         if (match && !match[0].includes("getCurrentScriptURL")) {
           return match[0]

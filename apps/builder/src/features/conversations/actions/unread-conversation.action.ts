@@ -15,7 +15,7 @@ export const unreadConversationAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.$transaction(async (tx) => {
+      return await prisma.$transaction(async (tx) => {
         const conversation = await tx.conversation.findFirstOrThrow({
           where: { id, chatbotId },
         })
@@ -29,14 +29,16 @@ export const unreadConversationAction = chatbotActionClient
         })
         const lastMessage = last2Messages.at(-1)
 
-        if (lastMessage) {
-          await tx.conversation.update({
-            where: { id },
-            data: {
-              agentLastSeenAt: lastMessage ? lastMessage.createdAt : null,
-            },
-          })
-        }
+        const agentLastSeenAt = lastMessage ? lastMessage.createdAt : null
+
+        await tx.conversation.update({
+          where: { id },
+          data: {
+            agentLastSeenAt,
+          },
+        })
+
+        return { agentLastSeenAt }
       })
     },
   )

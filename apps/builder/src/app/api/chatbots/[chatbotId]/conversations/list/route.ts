@@ -15,10 +15,7 @@ export async function POST(
     const searchParams = await req.json()
     const { data } = listConversationsRequest.safeParse(searchParams)
 
-    const result = await listConversations(
-      chatbotId,
-      data ?? { contactFilter: { operator: "and", conditions: [] } },
-    )
+    const result = await listConversations(chatbotId, data)
 
     return NextResponse.json(result)
   } catch (e) {

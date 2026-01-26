@@ -29,6 +29,7 @@ export default async function ContactsPage(props: {
       <div className="mb-4 flex w-full justify-end">
         <CreateContactDialog chatbotId={params.chatbotId} />
       </div>
+
       <Suspense>
         <UserStoreProvider
           autoInitializeAgentsAndInboxTeams={true}

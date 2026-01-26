@@ -148,7 +148,8 @@
     "move": "Move",
     "onSuccess": "On Success",
     "onFailure": "On Failure",
-    "onSkip": "On Skip"
+    "onSkip": "On Skip",
+    "removeAssignee": "Remove Assignee"
   },
   "admins": {
     "title": "Admins"
@@ -322,7 +323,8 @@
       "followUp": "Follow up",
       "unread": "Unread",
       "archived": "Archived",
-      "blocked": "Blocked"
+      "blocked": "Blocked",
+      "noAdminReply": "No admin reply"
     },
     "groups": {
       "instagram": "Instagram",
@@ -1085,6 +1087,9 @@
     },
     "conversationType": {
       "label": "Conversation Type"
+    },
+    "source": {
+      "label": "Source"
     }
   },
   "flows": {

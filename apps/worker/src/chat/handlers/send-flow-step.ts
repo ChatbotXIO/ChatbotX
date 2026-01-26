@@ -171,14 +171,14 @@ export async function sendFlowStep({
 
     const promises: Promise<unknown>[] = [
       broadcastToChatbotParty(conversation.chatbotId, {
-        eventType: RealtimeEventType.CREATE_MESSAGE,
+        eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
     ]
     if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
       promises.push(
         broadcastToGuestParty(conversation.sourceId, {
-          eventType: RealtimeEventType.CREATE_MESSAGE,
+          eventType: RealtimeEventType.messageCreated,
           data: message,
         }),
       )
@@ -253,14 +253,14 @@ export async function sendChatMessage({
 
     const promises: Promise<unknown>[] = [
       broadcastToChatbotParty(conversation.chatbotId, {
-        eventType: RealtimeEventType.CREATE_MESSAGE,
+        eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
     ]
     if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
       promises.push(
         broadcastToGuestParty(conversation.sourceId, {
-          eventType: RealtimeEventType.CREATE_MESSAGE,
+          eventType: RealtimeEventType.messageCreated,
           data: message,
         }),
       )

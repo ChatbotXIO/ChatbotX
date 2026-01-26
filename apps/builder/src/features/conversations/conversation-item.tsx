@@ -110,11 +110,12 @@ export default function ConversationItem({
     },
   )
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: execute is not a dependency
   useEffect(() => {
     if (isActive) {
       execute()
     }
-  }, [isActive, execute])
+  }, [isActive])
 
   return (
     <div className="w-full">

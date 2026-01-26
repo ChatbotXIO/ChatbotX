@@ -133,7 +133,7 @@ const getSearchQuery = (value?: string): Prisma.ConversationWhereInput => {
 
 export const listConversations = async (
   chatbotId: string,
-  input: ListConversationsRequest,
+  input: ListConversationsRequest = {},
 ): Promise<ConversationCollection> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 

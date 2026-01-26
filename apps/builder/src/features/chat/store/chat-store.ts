@@ -6,6 +6,7 @@ import type { InboxType } from "@aha.chat/database/types"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
+import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type {
   ConversationCollection,
   ConversationResource,
@@ -42,21 +43,35 @@ export type ChatState = {
 }
 
 export type ChatActions = {
+  // Conversation actions
   prependConversation: (newConversation: ConversationResource) => void
   loadMoreConversations: (chatbotId: string) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
+  updateConversation: (
+    conversationId: string,
+    data: Partial<ConversationResource>,
+  ) => void
+  updateConversations: (
+    conversationIds: string[],
+    data: Partial<ConversationResource>,
+  ) => void
+  updateConversationViaMessage: (message: MessageResource) => void
+
+  deleteConversation: (conversationId: string) => void
+  readConversation: (conversationId: string) => void
+
+  // Filter actions
   resetState: () => void
   setAssignee: (value: string | null) => void
   setFilters: (filters: ConversationFilters) => void
-  deleteConversation: (conversationId: string) => void
-  unreadConversation: (conversationId: string) => void
-  readConversation: (conversationId: string) => void
-  followConversation: (conversationId: string) => void
-  unfollowConversation: (conversationId: string) => void
+
+  // Message actions
   appendMessage: (message: MessageResource) => void
   loadMoreMessages: (chatbotId: string, perPage: number) => Promise<void>
-  updateConversationViaMessage: (message: MessageResource) => void
   handleNewMessage: (message: MessageResource) => void
+
+  // Contact actions
+  updateContact: (contactId: string, data: Partial<ContactResource>) => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -158,25 +173,6 @@ export const createChatStore = () => {
       })
     },
 
-    unreadConversation: (conversationId: string) => {
-      const { conversations } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === conversationId,
-      )
-
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        const conversation = { ...updatedConversations[conversationIndex] }
-        const lastMessage = (conversation.messages ?? []).at(-1)
-        conversation.agentLastSeenAt = lastMessage
-          ? new Date(lastMessage.createdAt)
-          : null
-
-        updatedConversations[conversationIndex] = conversation
-        set({ conversations: updatedConversations, activeConversationId: null })
-      }
-    },
-
     readConversation: (conversationId: string) => {
       const { conversations } = get()
       const conversationIndex = conversations.findIndex(
@@ -187,38 +183,6 @@ export const createChatStore = () => {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
         conversation.agentLastSeenAt = new Date()
-
-        updatedConversations[conversationIndex] = conversation
-        set({ conversations: updatedConversations })
-      }
-    },
-
-    followConversation: (conversationId: string) => {
-      const { conversations } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === conversationId,
-      )
-
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        const conversation = { ...updatedConversations[conversationIndex] }
-        conversation.followed = true
-
-        updatedConversations[conversationIndex] = conversation
-        set({ conversations: updatedConversations })
-      }
-    },
-
-    unfollowConversation: (conversationId: string) => {
-      const { conversations } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.id === conversationId,
-      )
-
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        const conversation = { ...updatedConversations[conversationIndex] }
-        conversation.followed = false
 
         updatedConversations[conversationIndex] = conversation
         set({ conversations: updatedConversations })
@@ -348,6 +312,50 @@ export const createChatStore = () => {
       }
     },
 
+    updateConversation: (
+      conversationId: string,
+      data: Partial<ConversationResource>,
+    ) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        updatedConversations[conversationIndex] = {
+          ...updatedConversations[conversationIndex],
+          ...data,
+        }
+
+        set({ conversations: updatedConversations })
+      }
+    },
+
+    updateConversations: (
+      conversationIds: string[],
+      data: Partial<ConversationResource>,
+    ) => {
+      if (conversationIds.length === 0) {
+        return
+      }
+
+      const { conversations } = get()
+      const updatedConversations = [...conversations]
+
+      for (const conversationId of conversationIds) {
+        const conversationIndex = conversations.findIndex(
+          (c) => c.id === conversationId,
+        )
+        if (conversationIndex > -1) {
+          updatedConversations[conversationIndex] = {
+            ...updatedConversations[conversationIndex],
+            ...data,
+          }
+        }
+      }
+      set({ conversations: updatedConversations })
+    },
+
     handleNewMessage: async (message: MessageResource) => {
       const {
         messages,
@@ -392,6 +400,24 @@ export const createChatStore = () => {
       } else {
         // just append the messages to the end of messages list
         appendMessage(message)
+      }
+    },
+
+    updateContact: (contactId: string, data: Partial<ContactResource>) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.contactId === contactId,
+      )
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        if (updatedConversations[conversationIndex].contact) {
+          updatedConversations[conversationIndex].contact = {
+            ...updatedConversations[conversationIndex].contact,
+            ...data,
+          }
+        }
+
+        set({ conversations: updatedConversations })
       }
     },
   }))

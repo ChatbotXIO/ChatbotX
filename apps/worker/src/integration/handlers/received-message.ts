@@ -128,6 +128,7 @@ export const receiveMessage = async ({
       update: {
         updatedAt: new Date(),
         contactRepliedAt: new Date(),
+        lastActivityAt: new Date(),
       },
     })
 
@@ -181,7 +182,7 @@ export const receiveMessage = async ({
     // emit new message to socket
     try {
       broadcastToChatbotParty(newConversation.chatbotId, {
-        eventType: RealtimeEventType.CREATE_MESSAGE,
+        eventType: RealtimeEventType.messageCreated,
         data: newMessage,
       })
     } catch (error) {

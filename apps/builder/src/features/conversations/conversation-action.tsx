@@ -9,16 +9,17 @@ import {
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import {
   ArchiveIcon,
+  ArchiveXIcon,
   EllipsisVerticalIcon,
   MailIcon,
   StarIcon,
+  StarOffIcon,
   TrashIcon,
   UserLockIcon,
 } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { blockContactAction } from "../contacts/actions/block-contact.action"
@@ -39,22 +40,16 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
-  const {
-    deleteConversation,
-    followConversation,
-    unfollowConversation,
-    unreadConversation,
-  } = useChatStore((state) => state)
-  const [isFollowedUp, setIsFollowedUp] = useState(conversation.followed)
-  const [isArchived, setIsArchived] = useState(!!conversation.archivedAt)
-  const [isBlocked, setIsBlocked] = useState(!!conversation.contact?.blockedAt)
+  const { deleteConversation, updateConversation, updateContact } =
+    useChatStore((state) => state)
 
   const { execute: followUpFn, isExecuting: isFollowingUp } = useAction(
     followConversationAction.bind(null, chatbotId, conversation.id),
     {
       onSuccess: () => {
-        followConversation(conversation.id)
-        setIsFollowedUp(true)
+        updateConversation(conversation.id, {
+          followed: true,
+        })
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -69,8 +64,9 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
       unfollowConversationAction.bind(null, chatbotId, conversation.id),
       {
         onSuccess: () => {
-          unfollowConversation(conversation.id)
-          setIsFollowedUp(false)
+          updateConversation(conversation.id, {
+            followed: false,
+          })
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -80,11 +76,13 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
       },
     )
 
-  const { execute: unReadFn, isExecuting: isMarkingUnread } = useAction(
+  const { execute: unreadFn, isExecuting: isMarkingUnread } = useAction(
     unreadConversationAction.bind(null, chatbotId, conversation.id),
     {
-      onSuccess: () => {
-        unreadConversation(conversation.id)
+      onSuccess: (result) => {
+        updateConversation(conversation.id, {
+          agentLastSeenAt: new Date(result.data?.agentLastSeenAt ?? new Date()),
+        })
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -98,7 +96,9 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     archiveConversationAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        deleteConversation(conversation.id)
+        updateConversation(conversation.id, {
+          archivedAt: new Date(),
+        })
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -112,8 +112,9 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     unarchiveConversationAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        setIsArchived(false)
-        deleteConversation(conversation.id)
+        updateConversation(conversation.id, {
+          archivedAt: null,
+        })
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -127,7 +128,9 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     blockContactAction.bind(null, chatbotId, conversation.contact?.id || ""),
     {
       onSuccess: () => {
-        deleteConversation(conversation.id)
+        updateContact(conversation.contactId, {
+          blockedAt: new Date(),
+        })
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -141,8 +144,9 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     unblockContactAction.bind(null, chatbotId, conversation.contact?.id || ""),
     {
       onSuccess: () => {
-        setIsBlocked(false)
-        deleteConversation(conversation.id)
+        updateContact(conversation.contactId, {
+          blockedAt: null,
+        })
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -152,16 +156,6 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     },
   )
 
-  useEffect(() => {
-    setIsFollowedUp(conversation.followed)
-    setIsArchived(!!conversation.archivedAt)
-    setIsBlocked(!!conversation.contact?.blockedAt)
-  }, [
-    conversation.followed,
-    conversation.archivedAt,
-    conversation.contact?.blockedAt,
-  ])
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -170,12 +164,12 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        {isFollowedUp ? (
+        {conversation.followed ? (
           <DropdownMenuItem
             disabled={isRemovingFollowUp}
             onSelect={() => removeFollowUpFn()}
           >
-            <StarIcon />
+            <StarOffIcon />
             {t("actions.removeFromFollowUp")}
           </DropdownMenuItem>
         ) : (
@@ -183,23 +177,23 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             disabled={isFollowingUp}
             onSelect={() => followUpFn()}
           >
-            <StarIcon />
+            <StarIcon className="fill-yellow-400 text-yellow-400" />
             {t("actions.markAsFollowUp")}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem
           disabled={isMarkingUnread}
-          onSelect={() => unReadFn()}
+          onSelect={() => unreadFn()}
         >
           <MailIcon />
           {t("actions.markAsUnread")}
         </DropdownMenuItem>
-        {isArchived ? (
+        {conversation.archivedAt ? (
           <DropdownMenuItem
             disabled={isUnarchiving}
             onSelect={() => unarchiveFn({ ids: [conversation.id] })}
           >
-            <ArchiveIcon />
+            <ArchiveXIcon />
             {t("actions.unarchive")}
           </DropdownMenuItem>
         ) : (
@@ -211,7 +205,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             {t("actions.archive")}
           </DropdownMenuItem>
         )}
-        {isBlocked ? (
+        {conversation.contact?.blockedAt ? (
           <DropdownMenuItem onSelect={() => unblockContactFn()}>
             <UserLockIcon />
             {t("actions.unblockContact")}

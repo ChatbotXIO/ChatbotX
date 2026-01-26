@@ -38,12 +38,6 @@ export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   disableValues?: string[]
 } & React.ComponentProps<typeof Select>
 
-// type SelectOptionItem = {
-//   value: string
-//   label: string
-//   disabled?: boolean
-// }
-
 const CLEAR_VALUE = "__clear__"
 
 const SelectClear = ({

@@ -1,6 +1,10 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import {
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@aha.chat/partysocket-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -65,23 +69,26 @@ export const assignConversationAction = chatbotActionClient
             })
           }
           updatedData.assignedInboxTeamId = inboxTeam.id
-        } else {
-          await tx.conversation.updateMany({
-            where: {
-              chatbotId,
-              contactId: {
-                in: parsedInput.contactIds,
-              },
-            },
-            data: updatedData,
-          })
         }
 
-        await tx.conversation.updateMany({
+        const conversations = await tx.conversation.findMany({
           where: {
             chatbotId,
             contactId: {
               in: parsedInput.contactIds,
+            },
+          },
+          select: { id: true },
+        })
+        const conversationIds = conversations.map((c) => c.id)
+        if (conversationIds.length === 0) {
+          return
+        }
+
+        await tx.conversation.updateMany({
+          where: {
+            id: {
+              in: conversations.map((c) => c.id),
             },
           },
           data: updatedData,
@@ -91,6 +98,15 @@ export const assignConversationAction = chatbotActionClient
           `chatbots:${chatbotId}#conversations`,
           `chatbots:${chatbotId}#contacts`,
         ])
+
+        await broadcastToChatbotParty(chatbotId, {
+          eventType: RealtimeEventType.conversationAssigned,
+          data: {
+            conversationIds,
+            assignedUserId: updatedData.assignedUserId,
+            assignedInboxTeamId: updatedData.assignedInboxTeamId,
+          },
+        })
       })
     },
   )

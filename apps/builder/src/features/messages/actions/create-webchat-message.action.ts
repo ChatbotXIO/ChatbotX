@@ -133,7 +133,7 @@ export async function handleCreateWebchatMessage({
       const promises: Promise<unknown>[] = []
       promises.push(
         broadcastToChatbotParty(newMessage.chatbotId, {
-          eventType: RealtimeEventType.CREATE_MESSAGE,
+          eventType: RealtimeEventType.messageCreated,
           data: {
             ...newMessage,
             clientId: parsedInput.clientId,
@@ -144,7 +144,7 @@ export async function handleCreateWebchatMessage({
       if (uploadedFiles.length > 0 && conversation.sourceId) {
         promises.push(
           broadcastToGuestParty(conversation.sourceId, {
-            eventType: RealtimeEventType.CREATE_MESSAGE,
+            eventType: RealtimeEventType.messageCreated,
             data: {
               ...newMessage,
               clientId: parsedInput.clientId,

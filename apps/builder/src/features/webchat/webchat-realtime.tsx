@@ -34,7 +34,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       try {
         const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
         switch (eventType) {
-          case RealtimeEventType.CREATE_MESSAGE:
+          case RealtimeEventType.messageCreated:
             handleNewMessage(data as MessageResource)
             break
           default:

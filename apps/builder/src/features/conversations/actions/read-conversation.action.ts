@@ -15,15 +15,8 @@ export const readConversationAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.conversation.findFirstOrThrow({
-        where: { id, chatbotId },
-        select: {
-          id: true,
-        },
-      })
-
       await prisma.conversation.update({
-        where: { id },
+        where: { id, chatbotId },
         data: { agentLastSeenAt: new Date() },
       })
     },

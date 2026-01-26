@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       new URL("**", env.NEXT_PUBLIC_ASSET_URL),
       {
         protocol: "https",
-        hostname: "*.picsum.photos",
+        hostname: "(.*.)?picsum.photos",
       },
       {
         protocol: "https",

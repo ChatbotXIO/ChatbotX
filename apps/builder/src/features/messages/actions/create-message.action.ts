@@ -101,7 +101,7 @@ export const createMessageAction = chatbotActionClient
 
       const promises: Promise<unknown>[] = [
         broadcastToChatbotParty(message.chatbotId, {
-          eventType: RealtimeEventType.CREATE_MESSAGE,
+          eventType: RealtimeEventType.messageCreated,
           data: {
             ...message,
             clientId: parsedInput.clientId,
@@ -111,7 +111,7 @@ export const createMessageAction = chatbotActionClient
       if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
         promises.push(
           broadcastToGuestParty(conversation.sourceId, {
-            eventType: RealtimeEventType.CREATE_MESSAGE,
+            eventType: RealtimeEventType.messageCreated,
             data: {
               ...message,
               clientId: parsedInput.clientId,

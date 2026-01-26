@@ -3,6 +3,7 @@ import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import type { ContactModel } from "node_modules/@aha.chat/database/src/generated/prisma/models/Contact"
 import {
   createSearchParamsCache,
+  parseAsArrayOf,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
@@ -15,6 +16,7 @@ export const listContactsRequest = createSearchParamsCache({
   sort: getSortingStateParser<ContactModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
+  includes: parseAsArrayOf(parseAsString),
 })
 
 export type ListContactsRequest = Awaited<

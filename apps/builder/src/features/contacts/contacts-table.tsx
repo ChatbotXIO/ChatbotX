@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
+import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ContactResource } from "./schemas/resource"
@@ -108,10 +109,10 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         ),
         cell: ({ row }) => (
           <div>
-            {row.original.conversation?.assignedUser
-              ? row.original.conversation?.assignedUser?.name ||
-                row.original.conversation?.assignedUser?.email
-              : t("assignAdmin.unAssigned")}
+            {getUserName(
+              row.original.conversation?.assignedUser,
+              t("assignAdmin.unAssigned"),
+            )}
           </div>
         ),
         meta: {

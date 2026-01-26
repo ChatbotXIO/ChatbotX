@@ -97,7 +97,7 @@ export default function AssignConversationDialog({
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-screen max-w-md">
         <DialogHeader>
           <DialogTitle>{t("actions.assignConversation")}</DialogTitle>
           <DialogDescription />
@@ -136,7 +136,7 @@ export default function AssignConversationDialog({
                       {isSubmitting && (
                         <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      {t("actions.remove")}
+                      {t("actions.removeAssignee")}
                     </Button>
                   )}
                 </div>

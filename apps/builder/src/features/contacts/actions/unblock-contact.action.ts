@@ -2,6 +2,10 @@
 
 import { prisma } from "@aha.chat/database"
 import {
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@aha.chat/partysocket-config"
+import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
@@ -36,5 +40,12 @@ export const unblockContactAction = chatbotActionClient
         `chatbots:${chatbotId}#contacts`,
         `chatbots:${chatbotId}#conversations`,
       ])
+
+      await broadcastToChatbotParty(chatbotId, {
+        eventType: RealtimeEventType.contactUnblocked,
+        data: {
+          contactId: id,
+        },
+      })
     },
   )
