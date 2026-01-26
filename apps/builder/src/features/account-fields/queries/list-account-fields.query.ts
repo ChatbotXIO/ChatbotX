@@ -1,4 +1,5 @@
 import { FieldType, type Prisma, prisma } from "@aha.chat/database"
+import { rootFolderId } from "@aha.chat/database/enums"
 import type { FieldFindManyArgs } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListAccountFieldsSearchParams } from "../schemas/list-account-fields.schema"
@@ -14,11 +15,8 @@ export async function listAccountFields(
     fieldType: FieldType.accountField,
   }
 
-  if (input.folderId !== undefined) {
-    where.folderId =
-      input.folderId === null || input.folderId.length === 0
-        ? null
-        : input.folderId
+  if (input.folderId) {
+    where.folderId = input.folderId === rootFolderId ? null : input.folderId
   }
 
   if (input.name) {

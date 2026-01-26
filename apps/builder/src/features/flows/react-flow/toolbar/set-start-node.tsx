@@ -1,9 +1,16 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useReactFlow } from "@xyflow/react"
 import { PlayIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { type MouseEvent, useCallback } from "react"
 
 export function SetStartNode() {
+  const t = useTranslations()
   const { setNodes, getNodes } = useReactFlow()
 
   const nodes = getNodes()
@@ -34,8 +41,20 @@ export function SetStartNode() {
   }
 
   return activeNode?.data.isStartNode ? null : (
-    <Button className="size-8" onClick={onClick} size="icon" variant="ghost">
-      <PlayIcon />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          className="size-8"
+          onClick={onClick}
+          size="icon"
+          variant="ghost"
+        >
+          <PlayIcon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{t("actions.setStartNode")}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }

@@ -4,13 +4,15 @@ import {
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
-import type { ChatJobSendMessage } from "@aha.chat/worker-config"
+import type { ChatJobSendExternalMessage } from "@aha.chat/worker-config"
+import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
-import { allIntegrations } from "../../shared/integrations"
 import { getIntegrationAuth } from "./integration.query"
 
-export async function sendMessageToExternal(data: ChatJobSendMessage) {
-  const { conversation, message } = data.data
+export async function sendMessageToExternal(
+  data: ChatJobSendExternalMessage["data"],
+) {
+  const { conversation, message } = data
   if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
     return
   }
@@ -49,11 +51,13 @@ export async function sendMessageToExternal(data: ChatJobSendMessage) {
 
 export async function sendFlowStepToExternal({
   conversation,
+  flowId,
   flowVersionId,
   step,
 }: {
   conversation: ConversationEntity
-  flowVersionId: string
+  flowId: string
+  flowVersionId?: string
   step: SendFlowStepData
 }) {
   // Find integration auth
@@ -84,6 +88,7 @@ export async function sendFlowStepToExternal({
       auth: integrationAuth as any,
     },
     conversation,
+    flowId,
     flowVersionId,
     step,
   })

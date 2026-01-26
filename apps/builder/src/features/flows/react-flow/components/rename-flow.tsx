@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateFlowAction } from "../../actions/update-flow-action"
-import { updateFlowSchema } from "../../schemas/update-flow-schema"
+import { updateFlowSchema } from "../../schemas/action"
 
 export function RenameFlowDialog({
   flow,

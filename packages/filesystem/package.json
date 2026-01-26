@@ -6,14 +6,19 @@
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@types/node": "^24.10.4",
+    "@types/probe-image-size": "^7.2.5",
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "@aha.chat/logger": "workspace:*",
     "@aws-sdk/client-s3": "^3.958.0",
     "@aws-sdk/s3-presigned-post": "^3.958.0",
+    "@paralleldrive/cuid2": "^3.0.6",
     "@t3-oss/env-nextjs": "^0.13.10",
     "aws4fetch": "^1.0.20",
+    "image-size": "^2.0.2",
     "ky": "^1.14.2",
+    "probe-image-size": "^7.2.3",
     "zod": "^4.2.1"
   },
   "exports": {

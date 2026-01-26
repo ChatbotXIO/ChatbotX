@@ -1,11 +1,18 @@
 import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useReactFlow } from "@xyflow/react"
 import { FingerprintIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { MouseEvent } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 
 export function GetNodeId() {
+  const t = useTranslations()
   const [_, copy] = useCopyToClipboard()
   const { getNodes } = useReactFlow()
 
@@ -23,14 +30,21 @@ export function GetNodeId() {
   }
 
   return (
-    <Button
-      className="size-8"
-      onClick={onClick}
-      size="icon"
-      type="button"
-      variant="ghost"
-    >
-      <FingerprintIcon />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          className="size-8"
+          onClick={onClick}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <FingerprintIcon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{t("actions.getNodeId")}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }

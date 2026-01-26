@@ -1,24 +1,33 @@
 import type { SendTextStepSchema } from "@aha.chat/flow-config"
-import type { FacebookMessage, FacebookMessageAttachment } from "../schemas"
+import type { SendFlowStepProps } from "@aha.chat/sdk"
+import type {
+  FacebookMessage,
+  FacebookMessageAttachment,
+  MessengerAuthValue,
+} from "../schemas"
 import { convertFacebookButtons } from "./send-button"
 
 export function* convertFlowStepText(
-  flowVersionId: string,
-  payload: SendTextStepSchema,
+  props: SendFlowStepProps<MessengerAuthValue, SendTextStepSchema>,
 ): Generator<FacebookMessageAttachment | FacebookMessage> {
-  if (payload.buttons.length === 0) {
+  const { step } = props
+  if (step.buttons.length === 0) {
     yield {
-      text: payload.message,
+      text: step.message,
     }
   } else {
-    const buttons = convertFacebookButtons(flowVersionId, payload.buttons)
+    const buttons = convertFacebookButtons({
+      flowId: props.flowId,
+      flowVersionId: props.flowVersionId,
+      buttons: step.buttons,
+    })
 
     yield {
       attachment: {
         type: "template",
         payload: {
           template_type: "button",
-          text: payload.message,
+          text: step.message,
           buttons,
         },
       },

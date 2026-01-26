@@ -6,9 +6,8 @@ import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import { useSidebar } from "@aha.chat/ui/components/ui/sidebar"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import { PanelLeftClose, SearchIcon, UserPlusIcon } from "lucide-react"
+import { SearchIcon, UserPlusIcon } from "lucide-react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
@@ -36,7 +35,6 @@ export default function ConversationList() {
     isLoadingConversation,
     setActiveConversationId,
   } = useChatStore((state) => state)
-  const { toggleSidebar, open } = useSidebar()
 
   const [showSearchInput, setShowSearchInput] = useState(false)
 
@@ -88,23 +86,6 @@ export default function ConversationList() {
     <Form {...form}>
       <form className="flex h-full flex-col">
         <div className="mb-2 flex items-center gap-1">
-          <Button
-            data-sidebar="trigger"
-            data-slot="sidebar-trigger"
-            onClick={() => {
-              toggleSidebar()
-            }}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            {open ? (
-              <PanelLeftClose />
-            ) : (
-              <PanelLeftClose className="rotate-180" />
-            )}
-          </Button>
-
           <SelectField
             name="conversationType"
             options={[
@@ -113,19 +94,6 @@ export default function ConversationList() {
               { label: "All", value: ConversationType.all },
             ]}
           />
-          {/* <Select
-            defaultValue={ConversationType.all}
-            onValueChange={handleChangeType}
-          >
-            <SelectTrigger className="h-8 w-[180px] text-xs">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ConversationType.human}>Human</SelectItem>
-              <SelectItem value={ConversationType.bot}>Bot</SelectItem>
-              <SelectItem value={ConversationType.all}>All</SelectItem>
-            </SelectContent>
-          </Select> */}
 
           <Button
             className="px-2"
@@ -189,31 +157,6 @@ export default function ConversationList() {
               }
             }}
           />
-
-          {/* <InfiniteLoader
-          itemCount={
-            hasNextPage ? conversations.length + 1 : conversations.length
-          }
-          isItemLoaded={isItemLoaded}
-          loadMoreItems={loadMoreItems}
-        >
-          {({ onItemsRendered, ref }) => (
-            <AutoSizer>
-              {({ height, width }) => (
-                <FixedSizeList
-                  ref={ref}
-                  onItemsRendered={onItemsRendered}
-                  height={height}
-                  itemCount={conversations.length}
-                  itemSize={72}
-                  width={width}
-                >
-                  {Row}
-                </FixedSizeList>
-              )}
-            </AutoSizer>
-          )}
-        </InfiniteLoader> */}
         </div>
       </form>
     </Form>

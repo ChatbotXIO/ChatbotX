@@ -1,5 +1,6 @@
 "use client"
 
+import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
@@ -10,7 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import { SiZalo, SiZaloHex } from "@icons-pack/react-simple-icons"
 import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -19,13 +19,16 @@ import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import type { InboxResource } from "../schemas/resource"
+import { InboxIcon } from "./inbox-icon"
 
 export default function InboxZaloCard({ inbox }: { inbox: InboxResource }) {
   return (
     <Card className="py-3" key={inbox.id}>
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <SiZalo aria-hidden="true" className="size-5" fill={SiZaloHex} />
-        <p className="flex-1 truncate text-sm">{inbox.integrationZalo?.name}</p>
+        <InboxIcon
+          inboxType={InboxType.zalo}
+          label={inbox.integrationZalo?.name}
+        />
         <ZaloQRCodeDiaglog oaId={inbox.integrationZalo?.oaId ?? ""} />
       </CardContent>
     </Card>
@@ -73,6 +76,8 @@ function ZaloQRCodeDiaglog({ oaId }: { oaId: string }) {
             <Link
               className="text-sky-600 no-underline hover:underline dark:text-sky-400"
               href={zaloUrl}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {zaloUrl}
             </Link>

@@ -1,7 +1,4 @@
-import type { ConversationModel } from "@aha.chat/database/types"
 import {
-  type SendQuickReplyStepSchema,
-  type SendTextStepSchema,
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
@@ -9,6 +6,7 @@ import {
 } from "@aha.chat/flow-config"
 import {
   ChatJobAction,
+  type ChatJobSendFlowStep,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
@@ -24,7 +22,7 @@ import {
   optOutEmail,
   removeContactTag,
   setContactCustomField,
-} from "./contact-handler"
+} from "./contact"
 import {
   archiveConversation,
   assignConversation,
@@ -35,7 +33,9 @@ import {
   unarchiveConversation,
   unassignConversation,
   unfollowConversation,
-} from "./conversation-handler"
+} from "./conversation"
+import type { ExecuteStepProps } from "./flow"
+import { getUserData } from "./get-user-data"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -50,53 +50,33 @@ import {
   getDataFromJSON,
 } from "./tool-handler"
 
-export type FlowStepProps<T> = {
-  conversation: ConversationModel
-  flowVersionId: string
-  step: T
-}
+export type StepStatus = "retry" | "skip" | "success" | "failure"
 
-export async function sendFlowMessage({
-  conversation,
-  flowVersionId,
-  step,
-}: FlowStepProps<SendTextStepSchema>) {
+export async function sendFlowMessage(
+  props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
+) {
+  const { conversation, flowVersion, step } = props
   await chatQueue.add(ChatJobAction.sendFlowMessage, {
     type: ChatJobAction.sendFlowMessage,
     data: {
       conversationId: conversation.id,
-      flowVersionId,
+      flowId: flowVersion.flowId,
+      flowVersionId: flowVersion.id,
       step,
     },
   })
 }
 
-export async function sendQuickReply({
-  conversation,
-  flowVersionId,
-  step,
-}: FlowStepProps<SendQuickReplyStepSchema>) {
-  await chatQueue.add(ChatJobAction.sendFlowMessage, {
-    type: ChatJobAction.sendFlowMessage,
-    data: {
-      conversationId: conversation.id,
-      flowVersionId,
-      step,
-    },
-  })
-}
-
-async function startAnotherNode({
-  conversation,
-  flowVersionId,
-  step,
-}: FlowStepProps<StartAnotherNodeStepSchema>) {
+async function startAnotherNode(
+  props: ExecuteStepProps<StartAnotherNodeStepSchema>,
+) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
-      conversationId: conversation.id,
-      flowVersionId,
-      nodeId: step.nodeId,
+      conversationId: props.conversation.id,
+      flowId: props.flowVersion.flowId,
+      flowVersionId: props.flowVersion.id,
+      nodeId: props.step.nodeId,
     },
   })
 }
@@ -104,7 +84,7 @@ async function startAnotherNode({
 async function startExternalFlow({
   conversation,
   step,
-}: FlowStepProps<StartExternalFlowStepSchema>) {
+}: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
@@ -117,7 +97,7 @@ async function startExternalFlow({
 async function startExternalNode({
   conversation,
   step,
-}: FlowStepProps<StartExternalNodeStepSchema>) {
+}: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
@@ -130,8 +110,11 @@ async function startExternalNode({
 
 export const flowStepHandlers: Record<
   StepType,
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  ((props: FlowStepProps<any>) => Promise<void>) | undefined
+  | ((
+      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+      props: ExecuteStepProps<any, any>,
+    ) => Promise<{ status: StepStatus; wait: boolean }> | Promise<void>)
+  | undefined
 > = {
   [StepType.addContactNotes]: addContactNotes,
   [StepType.addContactTag]: addContactTag,
@@ -166,8 +149,8 @@ export const flowStepHandlers: Record<
   [StepType.performAction]: undefined,
   [StepType.removeContactTag]: removeContactTag,
   [StepType.sendAudio]: sendFlowMessage,
-  [StepType.sendCard]: undefined,
-  [StepType.sendCarousel]: undefined,
+  [StepType.sendCard]: sendFlowMessage,
+  [StepType.sendCarousel]: sendFlowMessage,
   [StepType.sendFile]: sendFlowMessage,
   [StepType.sendGif]: sendFlowMessage,
   [StepType.sendImage]: sendFlowMessage,
@@ -179,7 +162,7 @@ export const flowStepHandlers: Record<
   [StepType.unarchiveConversation]: unarchiveConversation,
   [StepType.unassignConversation]: unassignConversation,
   [StepType.unfollowConversation]: unfollowConversation,
-  [StepType.getUserInput]: undefined,
+  [StepType.getUserData]: getUserData,
   [StepType.wait]: undefined,
   [StepType.startExternalFlow]: startExternalFlow,
   [StepType.chooseChannel]: undefined,
@@ -196,5 +179,5 @@ export const flowStepHandlers: Record<
   [StepType.spreadsheetSendData]: sendSpreadsheetData,
   [StepType.spreadsheetUpdateRow]: updateSpreadsheetRow,
   [StepType.waitUserReply]: undefined,
-  [StepType.sendQuickReply]: sendQuickReply,
+  [StepType.sendQuickReply]: sendFlowMessage,
 }

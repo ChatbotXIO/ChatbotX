@@ -129,7 +129,6 @@ async function getAIFunctionTools(aiAgent: AIAgentModel): Promise<ToolSet> {
         execute: async () => await Promise.resolve(outputMessage),
       })
     }
-
     return tools
   } catch (error) {
     logger.error("[automated-response] getAIFunctionTools failed", {
@@ -191,7 +190,17 @@ async function getMCPServerTools(aiAgent: AIAgentModel): Promise<ToolSet> {
             cleanedSchema as Parameters<typeof jsonSchema>[0],
           ),
           execute: async (args: Record<string, unknown>) => {
-            const result = await callMCPTool(mcpServer.url, toolName, args)
+            const argsWithContext: Record<string, unknown> = { ...args }
+
+            if (!("context" in argsWithContext)) {
+              argsWithContext.context = ""
+            }
+
+            const result = await callMCPTool(
+              mcpServer.url,
+              toolName,
+              argsWithContext,
+            )
             return (
               (result as unknown as { content?: unknown }).content ??
               (await Promise.resolve(result))

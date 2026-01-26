@@ -33,17 +33,6 @@ export const prisma =
         }
       : undefined,
     result: {
-      attachment: {
-        url: {
-          needs: { originPath: true },
-          compute(attachment) {
-            return new URL(
-              attachment.originPath,
-              env.NEXT_PUBLIC_ASSET_URL,
-            ).toString()
-          },
-        },
-      },
       aIFile: {
         url: {
           needs: { path: true },
@@ -61,3 +50,7 @@ if (env.NODE_ENV !== "production") {
 
 export { Prisma } from "./generated/prisma/client"
 export * from "./generated/prisma/enums"
+
+export type PrismaTransactionalClient = Parameters<
+  Parameters<PrismaClient["$transaction"]>[0]
+>[0]

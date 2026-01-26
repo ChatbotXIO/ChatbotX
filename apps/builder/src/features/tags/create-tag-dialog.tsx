@@ -1,5 +1,8 @@
 "use client"
 
+import { rootFolderId } from "@aha.chat/database/enums"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -11,16 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@aha.chat/ui/components/ui/form"
-import { Input } from "@aha.chat/ui/components/ui/input"
-import { Switch } from "@aha.chat/ui/components/ui/switch"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
@@ -68,7 +62,7 @@ export const CreateTagDialog = ({
           mode: "onChange",
           defaultValues: {
             name: "",
-            folderId,
+            folderId: null,
             syncToMessenger: false,
           },
         },
@@ -79,7 +73,9 @@ export const CreateTagDialog = ({
   const { setValue } = form
 
   useEffect(() => {
-    setValue("folderId", folderId)
+    if (folderId && folderId !== rootFolderId) {
+      setValue("folderId", folderId)
+    }
   }, [folderId, setValue])
 
   const handleOpenChange = useCallback(
@@ -109,36 +105,12 @@ export const CreateTagDialog = ({
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("fields.name.label")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("fields.name.label")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <InputField label={t("fields.name.label")} name="name" required />
 
-            <FormField
-              control={form.control}
+            <SwitchField
+              label={t("fields.syncToMessenger.label")}
               name="syncToMessenger"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2">
-                  <FormLabel>{t("fields.syncToMessenger.label")}</FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      className="mt-0!"
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              required
             />
 
             <DialogFooter>

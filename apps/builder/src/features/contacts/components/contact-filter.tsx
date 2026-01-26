@@ -1,11 +1,21 @@
 "use client"
 
-import { ConditionType, Operator } from "@aha.chat/database/enums"
+import {
+  ConditionField,
+  type ConditionFieldType,
+  ConditionType,
+  Operator,
+} from "@aha.chat/database/enums"
+import { IntegrationType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import {
+  SelectField,
+  type SelectOption,
+} from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -36,6 +46,13 @@ import {
 } from "react-hook-form"
 import z from "zod"
 import {
+  allContinentOptions,
+  allCountryOptions,
+} from "@/features/chatbot/schemas/types"
+import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
+import {
   type ContactFilterRequest,
   contactFilterRequest,
 } from "../schemas/query"
@@ -51,10 +68,9 @@ type ConditionOption = {
 }
 
 type FieldConfig = {
-  name: string
-  label: string
+  name: ConditionFieldType
   conditionType: ConditionType
-  options?: Array<{ label: string; value: string }>
+  options?: SelectOption[]
 }
 
 const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
@@ -110,84 +126,101 @@ const contactFilterRowSchema = z.object({
 })
 type ContactFilterRowSchema = z.infer<typeof contactFilterRowSchema>
 
-const getFieldConfigs = (t: (key: string) => string): FieldConfig[] => [
+const getFieldConfigs = ({
+  t,
+  tagOptions,
+  customFieldOptions,
+  flowVersionOptions,
+}: {
+  t: (key: string) => string
+  tagOptions: SelectOption[]
+  customFieldOptions: SelectOption[]
+  flowVersionOptions: SelectOption[]
+}): FieldConfig[] => [
   {
-    name: "language",
-    label: t("fields.language.label"),
+    name: ConditionField.language,
     conditionType: ConditionType.multiSelect,
-    options: [
-      {
-        label: "English",
-        value: "en",
-      },
-      {
-        label: "Spanish",
-        value: "es",
-      },
-      {
-        label: "French",
-        value: "fr",
-      },
-    ],
+    options: allCountryOptions,
   },
   {
-    name: "fullName",
-    label: t("fields.fullName.label"),
+    name: ConditionField.fullName,
     conditionType: ConditionType.text,
   },
   {
-    name: "country",
-    label: t("fields.country.label"),
+    name: ConditionField.country,
     conditionType: ConditionType.multiSelect,
-    options: [
-      {
-        label: "United States",
-        value: "US",
-      },
-      {
-        label: "Canada",
-        value: "CA",
-      },
-    ],
+    options: allCountryOptions,
   },
   {
-    name: "continent",
-    label: t("fields.continent.label"),
+    name: ConditionField.continent,
     conditionType: ConditionType.multiSelect,
-    options: [
-      {
-        label: "North America",
-        value: "North America",
-      },
-      {
-        label: "South America",
-        value: "South America",
-      },
-    ],
+    options: allContinentOptions,
   },
   {
-    name: "gender",
-    label: t("fields.gender.label"),
+    name: ConditionField.gender,
     conditionType: ConditionType.select,
     options: [
       {
-        label: "Male",
+        label: t("fields.gender.male"),
         value: "male",
       },
       {
-        label: "Female",
+        label: t("fields.gender.female"),
         value: "female",
       },
       {
-        label: "Unknown",
+        label: t("fields.gender.unknown"),
         value: "unknown",
       },
     ],
   },
   {
-    name: "subscribedToBroadcast",
-    label: t("fields.subscribedToBroadcast.label"),
-    conditionType: ConditionType.boolean,
+    name: ConditionField.subscribedToBroadcast,
+    conditionType: ConditionType.select,
+    options: [
+      {
+        label: t("condition.yes"),
+        value: "true",
+      },
+      {
+        label: t("condition.no"),
+        value: "false",
+      },
+    ],
+  },
+  {
+    name: ConditionField.contactCreatedDate,
+    conditionType: ConditionType.datetime,
+  },
+  {
+    name: ConditionField.contactCreatedDateMinutesAgo,
+    conditionType: ConditionType.number,
+  },
+  {
+    name: ConditionField.source,
+    conditionType: ConditionType.multiSelect,
+    options: [
+      {
+        label: "Webchat",
+        value: IntegrationType.webchat,
+      },
+      {
+        label: "WhatsApp",
+        value: IntegrationType.whatsapp,
+      },
+      {
+        label: "Facebook",
+        value: IntegrationType.messenger,
+      },
+      {
+        label: "Zalo",
+        value: IntegrationType.zalo,
+      },
+    ],
+  },
+  {
+    name: ConditionField.conversationTransferredToHuman,
+    conditionType: ConditionType.select,
     options: [
       {
         label: "Yes",
@@ -200,45 +233,105 @@ const getFieldConfigs = (t: (key: string) => string): FieldConfig[] => [
     ],
   },
   {
-    name: "createdAt",
-    label: t("fields.createdAt.label"),
-    conditionType: ConditionType.datetime,
+    name: ConditionField.interactedInLast24H,
+    conditionType: ConditionType.select,
+    options: [
+      {
+        label: "Yes",
+        value: "true",
+      },
+      {
+        label: "No",
+        value: "false",
+      },
+    ],
   },
   {
-    name: "createdAtMinutesAgo",
-    label: t("fields.createdAtMinutesAgo.label"),
-    conditionType: ConditionType.number,
+    name: ConditionField.archived,
+    conditionType: ConditionType.select,
+    options: [
+      {
+        label: "Yes",
+        value: "true",
+      },
+      {
+        label: "No",
+        value: "false",
+      },
+    ],
   },
   {
-    name: "source",
-    label: t("fields.source.label"),
+    name: ConditionField.blocked,
+    conditionType: ConditionType.select,
+    options: [
+      {
+        label: "Yes",
+        value: "true",
+      },
+      {
+        label: "No",
+        value: "false",
+      },
+    ],
+  },
+  {
+    name: ConditionField.existingContact,
+    conditionType: ConditionType.select,
+    options: [
+      {
+        label: "Yes",
+        value: "true",
+      },
+      {
+        label: "No",
+        value: "false",
+      },
+    ],
+  },
+  {
+    name: ConditionField.currentChannel,
     conditionType: ConditionType.multiSelect,
     options: [
       {
         label: "Webchat",
-        value: "webchat",
+        value: IntegrationType.webchat,
       },
       {
         label: "WhatsApp",
-        value: "whatsapp",
+        value: IntegrationType.whatsapp,
       },
       {
         label: "Facebook",
-        value: "facebook",
-      },
-      {
-        label: "Instagram",
-        value: "instagram",
-      },
-      {
-        label: "Telegram",
-        value: "telegram",
+        value: IntegrationType.messenger,
       },
       {
         label: "Zalo",
-        value: "zalo",
+        value: IntegrationType.zalo,
       },
     ],
+  },
+  {
+    name: ConditionField.email,
+    conditionType: ConditionType.text,
+  },
+  {
+    name: ConditionField.phone,
+    conditionType: ConditionType.text,
+  },
+  {
+    name: ConditionField.tags,
+    conditionType: ConditionType.multiSelect,
+    options: tagOptions,
+  },
+  {
+    name: ConditionField.customFields,
+    conditionType: ConditionType.multiSelect,
+    options: customFieldOptions,
+  },
+  {
+    name: ConditionField.executedFlow,
+    conditionType: ConditionType.select,
+    options: flowVersionOptions,
   },
 ]
 
@@ -398,7 +491,6 @@ export function ContactFilterDialog() {
 
 export function ContactFilter({ parentName }: ContactFilterProps) {
   const t = useTranslations()
-
   const { control } = useFormContext()
   const { append, remove } = useFieldArray({
     control,
@@ -409,6 +501,21 @@ export function ContactFilter({ parentName }: ContactFilterProps) {
     control,
     name: `${parentName}.conditions`,
   })
+
+  const tagOptions = useTagSelectOptions()
+  const customFieldOptions = useCustomFieldSelectOptions({})
+  const flowVersionOptions = useFlowSelectOptions()
+
+  const configs = useMemo(
+    () =>
+      getFieldConfigs({
+        t,
+        tagOptions,
+        customFieldOptions,
+        flowVersionOptions,
+      }),
+    [t, tagOptions, customFieldOptions, flowVersionOptions],
+  )
 
   const onAdd = (data: ContactFilterRowSchema) => {
     append(data)
@@ -437,7 +544,7 @@ export function ContactFilter({ parentName }: ContactFilterProps) {
         <div className="flex gap-2" key={index}>
           <div className="flex flex-1 items-center gap-2">
             <span className="font-medium text-sm">
-              {getFieldConfigs(t).find((c) => c.name === row.field)?.label}
+              {t(`condition.fields.${row.field}`)}
             </span>
             <span className="font-medium text-sm italic">
               {
@@ -447,9 +554,7 @@ export function ContactFilter({ parentName }: ContactFilterProps) {
             </span>
             <span className="text-sm">
               {(() => {
-                const fieldConfig = getFieldConfigs(t).find(
-                  (c) => c.name === row.field,
-                )
+                const fieldConfig = configs.find((c) => c.name === row.field)
                 if (!fieldConfig?.options) {
                   return Array.isArray(row.value)
                     ? row.value.join(", ")
@@ -489,9 +594,22 @@ function ContactFilterCondition({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
 
+  const tagOptions = useTagSelectOptions()
+  const customFieldOptions = useCustomFieldSelectOptions({})
+  const flowVersionOptions = useFlowSelectOptions()
+
   const conditionOptions = useMemo(() => getConditionOptions(t), [t])
 
-  const configs = useMemo(() => getFieldConfigs(t), [t])
+  const configs = useMemo(
+    () =>
+      getFieldConfigs({
+        t,
+        tagOptions,
+        customFieldOptions,
+        flowVersionOptions,
+      }),
+    [t, tagOptions, customFieldOptions, flowVersionOptions],
+  )
 
   const [valueType, setValueType] = useState<ConditionType | null>(null)
   const [valueOptions, setValueOptions] = useState<
@@ -574,10 +692,10 @@ function ContactFilterCondition({
   const fieldOptions = useMemo(
     () =>
       configs.map((config) => ({
-        label: config.label,
+        label: t(`condition.fields.${config.name}`),
         value: config.name,
       })),
-    [configs],
+    [configs, t],
   )
 
   const onConfirm = (e: FormEvent<HTMLFormElement>) => {
@@ -620,11 +738,22 @@ function ContactFilterCondition({
                 {valueType === ConditionType.text && (
                   <InputField name="value" />
                 )}
+                {valueType === ConditionType.number && (
+                  <InputField name="value" type="number" />
+                )}
                 {valueType === ConditionType.select && (
                   <SelectField name="value" options={valueOptions} />
                 )}
                 {valueType === ConditionType.multiSelect && (
                   <MultiSelectField name="value" options={valueOptions} />
+                )}
+                {valueType === ConditionType.datetime && (
+                  <DateTimePickerField
+                    dateTimeFormat="yyyy-MM-dd HH:mm"
+                    granularity="minute"
+                    name="value"
+                    required
+                  />
                 )}
                 {!valueType && <div> </div>}
               </div>
@@ -632,7 +761,10 @@ function ContactFilterCondition({
 
             <div className="flex justify-end gap-2">
               <Button
-                onClick={handleReset}
+                onClick={() => {
+                  handleReset()
+                  setOpen(false)
+                }}
                 size="sm"
                 type="button"
                 variant="ghost"
@@ -641,7 +773,9 @@ function ContactFilterCondition({
               </Button>
               <Button
                 className="w-20"
-                disabled={form.formState.isSubmitting}
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
                 size="sm"
                 type="submit"
               >

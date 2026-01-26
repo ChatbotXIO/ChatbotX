@@ -1,7 +1,11 @@
 import {
+  ContentType,
   type IntegrationWebchatModel,
+  MessageType,
+  SenderType,
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
+import type { MessageButtonTemplate } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
@@ -9,6 +13,7 @@ import type {
   MessageCollection,
   MessageResource,
 } from "@/features/messages/schemas"
+import type { CreateWebchatMessageRequest } from "@/features/messages/schemas/create-message.schema"
 import type { UserResource } from "@/features/users/schemas/resource"
 import type { PersistentMenuSchema } from "../../schemas/webchat.schema"
 
@@ -32,12 +37,14 @@ export type GuestSessionActions = {
   initGuestSession: () => void
 
   // messages
-  appendMessage: (message: MessageResource) => void
+  appendMessage: (message: Partial<MessageResource>) => MessageResource
   loadMoreMessages: (
     guestConversationId: string,
     perPage: number,
   ) => Promise<void>
   handleNewMessage: (message: MessageResource) => void
+  sendMessage: (content: string) => void
+  sendPostback: (button: MessageButtonTemplate) => Promise<void>
 
   getMenus: () => PersistentMenuSchema[]
 }
@@ -114,7 +121,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     },
 
     handleNewMessage: (message: MessageResource) => {
-      const { messages } = get()
+      const { messages, appendMessage } = get()
 
       // If the message contains the clientId, it can be sent from this tab itself.
       if (message.clientId) {
@@ -134,15 +141,69 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
       }
 
       // Append the message to the end of messages list
-      set((state) => ({
-        messages: [...state.messages, message],
-      }))
+      appendMessage(message)
     },
 
-    appendMessage: (message: MessageResource) => {
+    sendMessage: (content: string) => {
+      const { appendMessage } = get()
+
+      appendMessage({
+        content,
+      })
+    },
+
+    sendPostback: async (button: MessageButtonTemplate) => {
+      const { appendMessage, config, guestConversationId } = get()
+
+      const newMessage = appendMessage({
+        content: button.label,
+      })
+
+      await Promise.resolve()
+
+      try {
+        if (button.buttonType === "postback") {
+          await ky.post("/api/guest/messages", {
+            json: {
+              content: button.label,
+              postback: button.postback,
+              chatbotId: config.chatbotId,
+              guestConversationId,
+              clientId: newMessage.clientId,
+              webchatId: config.id,
+            } as CreateWebchatMessageRequest,
+          })
+        }
+      } catch (error) {
+        console.error("Failed to send postback:", error)
+        throw error
+      }
+    },
+
+    appendMessage: (message: Partial<MessageResource>) => {
+      const newMessage: MessageResource = {
+        id: createId(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        chatbotId: props.chatbotId,
+        inboxId: props.inboxId,
+        sourceId: null,
+        conversationId: "",
+        content: null,
+        contentAttributes: null,
+        messageType: MessageType.incoming,
+        contentType: ContentType.text,
+        senderType: SenderType.contact,
+        senderId: "",
+        clientId: createId(),
+        ...message,
+      }
+
       set((state) => ({
-        messages: [...state.messages, message],
+        messages: [...state.messages, newMessage],
       }))
+
+      return newMessage
     },
 
     getMenus: () => {

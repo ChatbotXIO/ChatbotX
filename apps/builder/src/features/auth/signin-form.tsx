@@ -9,6 +9,8 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 import GoogleButton from "react-google-button"
 import { authClient } from "@/lib/auth/auth-client"
 import { EmailPasswordSignIn } from "./components/email-password-signin"
@@ -25,19 +27,32 @@ export const SignInForm = ({
   ...props
 }: SignInFormProps) => {
   const t = useTranslations()
+  const { theme, systemTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const currentTheme = theme === "system" ? systemTheme : theme
+  const logoSrc =
+    currentTheme === "dark" ? "/brand/logo_white.svg" : "/brand/logo_black.svg"
 
   return (
     <div className="flex flex-col gap-6" {...props}>
       <Card>
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2">
-            <Image
-              alt={brandName}
-              height={64}
-              priority={true}
-              src="/brand/logo.svg"
-              width={64}
-            />
+          <div className="flex items-center justify-center gap-4">
+            {mounted && (
+              <Image
+                alt={brandName}
+                className="h-20 w-auto"
+                height={80}
+                priority={true}
+                src={logoSrc}
+                width={64}
+              />
+            )}
           </div>
           <CardTitle className="text-slate-600 text-xl">
             {t("signIn.title", { name: brandName })}

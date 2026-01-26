@@ -23,7 +23,7 @@ services:
     ports:
       - "5050:80"
     environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@aha.chat
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
       - PGADMIN_DEFAULT_PASSWORD=nr541Kv59xB4f48bhZOy5wBz
 
   mailhog:

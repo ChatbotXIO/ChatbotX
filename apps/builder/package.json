@@ -50,6 +50,7 @@
     "better-auth": "^1.4.9",
     "class-variance-authority": "^0.7.1",
     "countries-and-timezones": "^3.8.0",
+    "countries-list": "^3.2.0",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
     "emoji-picker-react": "^4.16.1",

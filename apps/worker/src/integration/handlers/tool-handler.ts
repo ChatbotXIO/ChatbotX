@@ -10,12 +10,12 @@ import {
 import { faker } from "@faker-js/faker"
 import { format } from "date-fns"
 import { getProperty } from "dot-prop"
-import type { FlowStepProps } from "./step-handler"
+import type { ExecuteStepProps } from "./step"
 
 export async function countCharacters({
   conversation,
   step,
-}: FlowStepProps<CountCharactersStepSchema>) {
+}: ExecuteStepProps<CountCharactersStepSchema>) {
   const customFieldIds = [step.inputCfId, step.outputCfId]
   const customFieldsCount = await prisma.field.count({
     where: {
@@ -62,7 +62,7 @@ export async function countCharacters({
 export async function formatDate({
   conversation,
   step,
-}: FlowStepProps<FormatDateStepSchema>) {
+}: ExecuteStepProps<FormatDateStepSchema>) {
   const inputContactCustomField = await prisma.contactCustomField.findFirst({
     where: {
       customFieldId: step.inputCfId,
@@ -96,7 +96,7 @@ export async function formatDate({
 export async function generateCode({
   conversation,
   step,
-}: FlowStepProps<GenerateCodeStepSchema>) {
+}: ExecuteStepProps<GenerateCodeStepSchema>) {
   let value: string | null = null
   switch (step.type) {
     case GenerateCodeType.NUMERIC_LENGTH: {
@@ -140,7 +140,7 @@ export async function generateCode({
 export async function getDataFromJSON({
   conversation,
   step,
-}: FlowStepProps<GetDataFromJsonStepSchema>) {
+}: ExecuteStepProps<GetDataFromJsonStepSchema>) {
   const inputValue = await prisma.contactCustomField.findFirst({
     where: {
       contactId: conversation.contactId,

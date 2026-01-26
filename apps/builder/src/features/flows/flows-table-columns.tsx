@@ -24,7 +24,7 @@ import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
 import { updateFlowAction } from "./actions/update-flow-action"
-import type { FlowResource } from "./schemas/get-flows-schema"
+import type { FlowResource } from "./schemas/resource"
 
 type GetColumnsProps = {
   t: ReturnType<typeof useTranslations>

@@ -4,8 +4,13 @@ import {
   type BroadcastInboxType,
   BroadcastSubaction,
 } from "@aha.chat/database/enums"
-import { BroadcastSchedulesType, InboxType } from "@aha.chat/database/types"
+import {
+  BroadcastSchedulesType,
+  InboxType,
+  Omnichannel,
+} from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -14,21 +19,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  SiMessenger,
-  SiMessengerHex,
-  SiWhatsapp,
-  SiWhatsappHex,
-  SiZalo,
-  SiZaloHex,
-} from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"
-import { AtomIcon, Loader2Icon } from "lucide-react"
+import { Loader2Icon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
@@ -37,17 +32,18 @@ import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
 import { ContactFilter } from "../contacts/components/contact-filter"
+import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
+import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import {
   FlowStoreProvider,
   useFlowStore,
 } from "../flows/provider/flow-store-context"
+import { InboxIcon } from "../inboxes/components/inbox-icon"
+import { useTagSelectOptions } from "../tags/provider/tag-hook"
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   {
-    icon: AtomIcon,
-    iconColor: "none",
-    name: t("omnichannel.title"),
-    value: "omnichannel",
+    value: Omnichannel,
     description:
       "Send a flow to all contacts. You can send messages or executes actions.",
     subactions: [
@@ -59,9 +55,6 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    icon: SiMessenger,
-    iconColor: SiMessengerHex,
-    name: t("messenger.title"),
     value: InboxType.messenger,
     description: "",
     subactions: [
@@ -93,9 +86,6 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    icon: SiWhatsapp,
-    iconColor: SiWhatsappHex,
-    name: t("whatsapp.title"),
     value: InboxType.whatsapp,
     description: "",
     subactions: [
@@ -107,9 +97,6 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
     ],
   },
   {
-    icon: SiZalo,
-    iconColor: SiZaloHex,
-    name: t("zalo.title"),
     value: InboxType.zalo,
     description: "",
     subactions: [
@@ -122,7 +109,11 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) => [
   },
 ]
 
-export function CreateBroadcastForm({ chatbotId }: { chatbotId: string }) {
+type CreateBroadcastFormProps = {
+  chatbotId: string
+}
+
+export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -226,10 +217,11 @@ function CreateBroadcastChooseChannel() {
       <CardContent className="flex flex-col gap-4">
         {configs.map((config) => (
           <div className="flex w-full items-center gap-2" key={config.value}>
-            <span className="flex flex-1 gap-2">
-              <config.icon fill={config.iconColor} />
-              {config.name}
-            </span>
+            <InboxIcon
+              iconClassName="size-5"
+              inboxType={config.value as InboxType}
+              wrapperClassName="flex-1 gap-2"
+            />
             <Button
               onClick={() => handleChooseChannel(config.value as InboxType)}
               type="button"
@@ -323,6 +315,10 @@ function CreateBroadcastChooseFlow() {
   const router = useRouter()
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
+  const _flowVersionOptions = useFlowSelectOptions()
+  const _customFieldOptions = useCustomFieldSelectOptions({})
+  const _tagOptions = useTagSelectOptions()
+
   const schedulesOptions = useMemo(
     () => [
       {
@@ -351,13 +347,6 @@ function CreateBroadcastChooseFlow() {
       if (value === BroadcastSchedulesType.now) {
         setValue("schedulesAt", null)
       }
-    },
-    [setValue],
-  )
-
-  const handleDateTimeChange = useCallback(
-    (value: Date | null) => {
-      setValue("schedulesAt", (value ?? new Date()).toISOString())
     },
     [setValue],
   )
@@ -393,18 +382,17 @@ function CreateBroadcastChooseFlow() {
         />
 
         {watchedSchedulesType === BroadcastSchedulesType.future && (
-          <div className="flex flex-col gap-2">
-            <Label>{t("fields.chooseTime.label")}</Label>
-            <DateTimePicker
-              disabled={{
-                before: new Date(),
-              }}
-              displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-              granularity="minute"
-              onChange={(date) => handleDateTimeChange(date ?? null)}
-              value={defaultDateTime}
-            />
-          </div>
+          <DateTimePickerField
+            disabled={{
+              before: new Date(),
+            }}
+            displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
+            granularity="minute"
+            label={t("fields.chooseTime.label")}
+            name="schedulesAt"
+            required
+            value={defaultDateTime}
+          />
         )}
 
         <ContactFilter parentName="contactFilter" />

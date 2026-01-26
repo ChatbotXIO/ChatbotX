@@ -13,20 +13,15 @@ export async function listCustomFields(
     fieldType: FieldType.customField,
   }
 
-  if (input.folderId !== undefined) {
-    where.folderId =
-      input.folderId === null || input.folderId === "0" ? null : input.folderId
+  if (input.folderId) {
+    where.folderId = input.folderId === "0" ? null : input.folderId
   }
 
   if (input.name) {
-    where.AND = [
-      {
-        name: {
-          contains: input.name,
-          mode: "insensitive",
-        },
-      },
-    ]
+    where.name = {
+      contains: input.name,
+      mode: "insensitive",
+    }
   }
 
   const orderBy = input.sort.map((sortItem) => ({

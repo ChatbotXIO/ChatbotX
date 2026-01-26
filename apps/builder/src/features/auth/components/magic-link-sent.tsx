@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Card,
@@ -9,22 +11,37 @@ import { CheckCircleIcon, MailIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 export default function MagicLinkSent({ brandName }: { brandName: string }) {
   const t = useTranslations()
+  const { theme, systemTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const currentTheme = theme === "system" ? systemTheme : theme
+  const logoSrc =
+    currentTheme === "dark" ? "/brand/logo_white.svg" : "/brand/logo_black.svg"
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-md flex-col gap-6">
         <h1 className="flex items-center gap-2 self-center font-medium text-3xl">
           <div className="flex items-center justify-center text-primary-foreground">
-            <Image
-              alt={brandName}
-              height={48}
-              priority={true}
-              src="/brand/logo.svg"
-              width={48}
-            />
+            {mounted && (
+              <Image
+                alt={brandName}
+                className="h-20 w-auto"
+                height={80}
+                priority={true}
+                src={logoSrc}
+                width={48}
+              />
+            )}
           </div>
           {brandName}
         </h1>

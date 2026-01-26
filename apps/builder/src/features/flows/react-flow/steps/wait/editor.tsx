@@ -2,15 +2,14 @@
 
 import { CustomFieldType } from "@aha.chat/database/types"
 import { DelayType } from "@aha.chat/flow-config"
+import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@aha.chat/ui/components/ui/tooltip"
-import { parseISO } from "date-fns"
 import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFormContext, useWatch } from "react-hook-form"
@@ -31,7 +30,6 @@ const WaitStepEditor = (props: WaitStepEditorProps) => {
 
   const delayType = useWatch({ name: `${parentName}.delayType` })
   const repeat = useWatch({ name: `${parentName}.repeat` })
-  const datetime = useWatch({ name: `${parentName}.datetime` })
 
   return (
     <div className="flex flex-col gap-3">
@@ -82,17 +80,10 @@ const WaitStepEditor = (props: WaitStepEditorProps) => {
               </TooltipContent>
             </Tooltip>
           </div>
-          <DateTimePicker
-            displayFormat={{ hour24: "yyyy-MM-dd HH:mm" }}
-            granularity="minute"
-            onChange={(value) => {
-              setValue(`${parentName}.datetime`, value)
-            }}
-            value={
-              typeof datetime === "string"
-                ? parseISO(datetime)
-                : (datetime ?? new Date())
-            }
+          <DateTimePickerField
+            dateTimeFormat="yyyy-MM-dd HH:mm"
+            name={`${parentName}.datetime`}
+            required
           />
         </>
       )}

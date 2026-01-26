@@ -11,7 +11,6 @@ import { useEffect, useState } from "react"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
 import type { ConversationResource } from "../conversations/schemas/resource"
-import { useInboxStore } from "../inboxes/provider/inbox-store-context"
 import { MessageInput } from "../messages/components/message-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
@@ -25,7 +24,6 @@ type ChatLayoutProps = {
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
   const { layout = [25, 50, 25] } = props
-  const _inboxes = useInboxStore((state) => state.inboxes)
 
   const {
     conversations,

@@ -10,23 +10,12 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  type IconType,
-  SiMessenger,
-  SiWhatsapp,
-  SiZalo,
-} from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"
-import {
-  GlobeIcon,
-  type LucideIcon,
-  PaperclipIcon,
-  SendHorizonalIcon,
-} from "lucide-react"
-import { useTranslations } from "next-intl"
+import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
 import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
 import { Controller } from "react-hook-form"
+import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
@@ -34,38 +23,8 @@ import { createMessageRequest } from "../schemas/create-message.schema"
 import EmojiPicker from "./emoji-picker"
 import { FileUploadPreview } from "./file-upload"
 
-// Memoize inbox types configuration to prevent recreation on every render
-const createInboxTypes = (
-  t: (key: string) => string,
-): Record<
-  InboxType | "omnichannel",
-  { icon: IconType | LucideIcon; label: string } | undefined
-> => ({
-  webchat: {
-    icon: GlobeIcon,
-    label: t("webchat.title"),
-  },
-  messenger: {
-    icon: SiMessenger,
-    label: t("messenger.title"),
-  },
-  whatsapp: {
-    icon: SiWhatsapp,
-    label: t("whatsapp.title"),
-  },
-  omnichannel: undefined,
-  zalo: {
-    icon: SiZalo,
-    label: t("zalo.title"),
-  },
-})
-
 export const MessageInput = () => {
   const session = authClient.useSession()
-  const t = useTranslations()
-
-  // Memoize inbox types to prevent recreation on every render
-  const inboxTypes = useMemo(() => createInboxTypes(t), [t])
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
@@ -176,8 +135,6 @@ export const MessageInput = () => {
 
   // Memoize inbox type and icon for current conversation
   const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.webchat
-  const inboxConfig = inboxTypes[currentInboxType as InboxType]
-  const IconComponent = inboxConfig?.icon
 
   // Early return if no active conversation
   if (!activeConversationId) {
@@ -200,7 +157,7 @@ export const MessageInput = () => {
                 <Textarea
                   aria-label="Type your message"
                   autoComplete="off"
-                  className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0"
+                  className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
                   placeholder="Message..."
                   {...field}
                   onKeyDown={onKeyDown}
@@ -213,16 +170,7 @@ export const MessageInput = () => {
             <FileUploadPreview ref={fileUploadRef} />
           </div>
           <div className="flex w-full items-center pl-2.5">
-            <div className="flex flex-1 items-center gap-1">
-              {IconComponent && (
-                <IconComponent
-                  aria-hidden="true"
-                  className="size-4"
-                  focusable="false"
-                />
-              )}
-              <span className="text-sm">{inboxConfig?.label}</span>
-            </div>
+            <InboxIcon inboxType={currentInboxType} wrapperClassName="flex-1" />
 
             <div className="message-toolbar flex items-center gap-2">
               <Button

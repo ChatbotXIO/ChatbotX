@@ -1,17 +1,15 @@
 "use client"
 
 import {
-  type GetUserInputStepSchema,
-  getUserInputStepDefaultFn,
-  getUserInputStepSchema,
+  type GetUserDataStepSchema,
+  getUserDataStepDefaultFn,
+  getUserDataStepSchema,
   ReplyFormat,
 } from "@aha.chat/flow-config"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
-import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -24,33 +22,34 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ClockIcon, Loader2Icon } from "lucide-react"
+import { KeyboardIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
-import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
+import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
+import CustomFieldField from "@/features/custom-fields/components/custom-field-field"
 import { BaseStepEditor } from "../base/editor"
 import DelayUnitSelect from "../wait/components/delay-unit-select"
 
-type GetUserInputStepFormProps = {
+type GetUserDataStepFormProps = {
   parentName: string
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-const GetUserInputStepForm = ({
+const GetUserDataStepForm = ({
   parentName,
   onSuccess,
   onCancel,
-}: GetUserInputStepFormProps) => {
+}: GetUserDataStepFormProps) => {
   const t = useTranslations()
 
   const { getValues: getParentValues, setValue: setParentValue } =
     useFormContext()
 
-  const form = useForm<GetUserInputStepSchema>({
-    resolver: zodResolver(getUserInputStepSchema),
-    defaultValues: getUserInputStepDefaultFn(),
+  const form = useForm({
+    resolver: zodResolver(getUserDataStepSchema),
+    defaultValues: getUserDataStepDefaultFn(),
     mode: "onChange",
   })
 
@@ -67,16 +66,14 @@ const GetUserInputStepForm = ({
     [t],
   )
 
-  const customFieldOptions = useCustomFieldSelectOptions({})
-
-  const autoSkip = useWatch({ name: "autoSkip" })
+  const autoSkip = useWatch({ name: "autoSkip", control: form.control })
 
   const handleCancel = () => {
     form.reset()
     onCancel?.()
   }
 
-  const onSubmit = (data: GetUserInputStepSchema) => {
+  const onSubmit = (data: GetUserDataStepSchema) => {
     setParentValue(parentName, data)
     onSuccess?.()
   }
@@ -84,32 +81,36 @@ const GetUserInputStepForm = ({
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-6"
+        className="flex max-h-[calc(100vh-120px)] flex-col gap-6 overflow-y-scroll px-1"
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <InputField label="Message" name="message" required />
+        <TiptapEditorField label="Message" name="message" required />
+
         <SelectField
           label={t("fields.replyFormat.label")}
           name="replyFormat"
           options={replyFormatOptions}
           required
         />
-        <ComboboxField
+
+        <CustomFieldField
           label={t("fields.outputCustomField.label")}
           name="outputCfId"
-          options={customFieldOptions}
           required
         />
-        <TextareaField
+
+        <TiptapEditorField
           label={t("fields.retryMessage.label")}
           name="retryMessage"
-          rows={3}
         />
+
         <InputField
           label={t("fields.skipButtonLabel.label")}
           name="skipButtonLabel"
         />
+
         <SwitchField label={t("fields.autoSkip.label")} name="autoSkip" />
+
         {typeof autoSkip === "boolean" && autoSkip && (
           <>
             <div className="flex flex-col justify-between gap-2">
@@ -125,6 +126,7 @@ const GetUserInputStepForm = ({
                 <DelayUnitSelect name="autoSkipTimeUnit" required />
               </div>
             </div>
+
             <InputNumberField
               label={t("fields.autoSkipFailAttempts.label")}
               max={100}
@@ -157,12 +159,12 @@ const GetUserInputStepForm = ({
   )
 }
 
-const GetUserInputStepEditor = ({ parentName }: { parentName: string }) => {
+const GetUserDataStepEditor = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   return (
-    <BaseStepEditor icon={ClockIcon} title={t("flows.actions.getUserInput")}>
+    <BaseStepEditor icon={KeyboardIcon} title={t("flows.actions.getUserData")}>
       <div className="flex flex-col gap-3">
         <InputField label="Message" name={`${parentName}.message`} required />
 
@@ -176,11 +178,11 @@ const GetUserInputStepEditor = ({ parentName }: { parentName: string }) => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t("flows.actions.getUserInput")}</DialogTitle>
+              <DialogTitle>{t("flows.actions.getUserData")}</DialogTitle>
               <DialogDescription />
             </DialogHeader>
 
-            <GetUserInputStepForm
+            <GetUserDataStepForm
               onCancel={() => setOpen(false)}
               onSuccess={() => setOpen(false)}
               parentName={parentName}
@@ -192,4 +194,4 @@ const GetUserInputStepEditor = ({ parentName }: { parentName: string }) => {
   )
 }
 
-export default GetUserInputStepEditor
+export default GetUserDataStepEditor
