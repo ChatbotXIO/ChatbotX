@@ -1,9 +1,9 @@
 export const geminiModels = {
-  gemini3Pro: "gemini-3-pro-image-preview",
-  gemini25FlashLite: "gemini-2.5-flash-lite",
-  gemini25Flash: "gemini-2.5-flash",
-  gemini25Pro: "gemini-2.5-pro",
-  gemini20FlashThinking: "gemini-2.0-flash-thinking-exp",
+  gemini3Pro: "gemini/gemini-3-pro-image-preview",
+  gemini25FlashLite: "gemini/gemini-2.5-flash-lite",
+  gemini25Flash: "gemini/gemini-2.5-flash",
+  gemini25Pro: "gemini/gemini-2.5-pro",
+  gemini20FlashThinking: "gemini/gemini-2.0-flash-thinking-exp",
 } as const
 export type GeminiModel = keyof typeof geminiModels
 

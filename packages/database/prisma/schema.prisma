@@ -395,6 +395,8 @@ model Conversation {
   currentFlowRunId       String?
   lastActivityAt         DateTime  @default(now())
   followed               Boolean   @default(false)
+  adminRepliedAt         DateTime?
+  contactRepliedAt       DateTime?
 
   assignedUserId String?
   assignedUser   User?   @relation(fields: [assignedUserId], references: [id])

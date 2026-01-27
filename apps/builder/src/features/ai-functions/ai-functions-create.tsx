@@ -23,7 +23,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
+import CustomFieldField from "../custom-fields/components/custom-field-field"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAIFunctionAction } from "./actions/create-ai-function.action"
 import { createAIFunctionRequest } from "./schemas"
@@ -40,9 +40,6 @@ export function AIFunctionsCreate({ onSuccess }: AIFunctionsCreateProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const flowOptions = useFlowSelectOptions()
-  const customFieldOptions = useCustomFieldSelectOptions({
-    includeReserved: false,
-  })
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -132,10 +129,7 @@ export function AIFunctionsCreate({ onSuccess }: AIFunctionsCreateProps) {
                     placeholder="Attribute"
                   />
                   <MoveRightIcon className="size-10" />
-                  <ComboboxField
-                    name={`dataCollect.${index}.to`}
-                    options={customFieldOptions}
-                  />
+                  <CustomFieldField name={`dataCollect.${index}.to`} />
                   <Button onClick={() => remove(index)} variant="outline">
                     <TrashIcon className="h-4 w-4" />
                   </Button>

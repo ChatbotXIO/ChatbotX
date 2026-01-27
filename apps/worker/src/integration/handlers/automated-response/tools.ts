@@ -128,7 +128,6 @@ export async function getAIFunctionTools(
         execute: async () => await Promise.resolve(outputMessage),
       })
     }
-
     return tools
   } catch (error) {
     logger.error("[automated-response] getAIFunctionTools failed", {

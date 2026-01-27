@@ -122,7 +122,9 @@ export const ContactDetail = () => {
           <div className="flex w-full items-center gap-1" key={editable.key}>
             <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
               <editable.icon className="size-4" />
-              <div className="flex-1 truncate">{editable.label}</div>
+              <div className="flex-1 truncate dark:text-white">
+                {editable.label}
+              </div>
             </div>
 
             <Button
@@ -132,7 +134,9 @@ export const ContactDetail = () => {
               variant="ghost"
             >
               {editable.value && editable.value.length > 0 ? (
-                <span className="truncate">{editable.value}</span>
+                <span className="truncate dark:text-white">
+                  {editable.value}
+                </span>
               ) : (
                 <span className="italic">-- {t("actions.clickToEdit")} --</span>
               )}

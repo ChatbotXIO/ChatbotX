@@ -1,36 +1,42 @@
 "use client"
 
+import { AssignerFilterType, ConversationType } from "@aha.chat/database/enums"
+import { Omnichannel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@aha.chat/ui/components/ui/select"
-import { useSidebar } from "@aha.chat/ui/components/ui/sidebar"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import { FilterIcon, PanelLeftClose, UserPlusIcon } from "lucide-react"
+import { SearchIcon, UserPlusIcon } from "lucide-react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
+import { useDebouncedCallback } from "use-debounce"
+import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
+import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
 
 export default function ConversationList() {
+  const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
   const {
     conversations,
     loadMoreConversations,
+    filters,
+    setFilters,
+    resetState,
     nextCursorConversation,
     isLoadingConversation,
-    activeConversationId,
     setActiveConversationId,
   } = useChatStore((state) => state)
-  const { toggleSidebar, open } = useSidebar()
+
+  const [showSearchInput, setShowSearchInput] = useState(false)
 
   // Check if there are more pages to load
   const hasNextPage =
@@ -49,103 +55,111 @@ export default function ConversationList() {
     }
   }
 
+  const handleChange = useDebouncedCallback(() => {
+    resetState()
+    loadMoreConversations(chatbotId)
+  }, 300)
+
+  const form = useForm<ConversationFilters>({
+    defaultValues: {
+      searchText: "",
+      conversationType: ConversationType.all,
+      inboxType: Omnichannel,
+      assignedUserId: AssignerFilterType.all,
+      status: [],
+      contactFilter: {
+        operator: "and",
+        conditions: [],
+      },
+    },
+  })
+
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      setFilters(values as ConversationFilters)
+      handleChange()
+    })
+    return () => subscription.unsubscribe()
+  }, [form, handleChange, setFilters])
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-2 flex items-center gap-1">
-        <Button
-          data-sidebar="trigger"
-          data-slot="sidebar-trigger"
-          onClick={() => {
-            toggleSidebar()
-          }}
-          size="icon"
-          variant="ghost"
-        >
-          {open ? (
-            <PanelLeftClose />
-          ) : (
-            <PanelLeftClose className="rotate-180" />
-          )}
-        </Button>
-        <Select defaultValue="2" name="liveChatEnabled">
-          <SelectTrigger className="h-8 w-[180px] text-xs">
-            <SelectValue placeholder="" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">Human</SelectItem>
-            <SelectItem value="0">Bot</SelectItem>
-            <SelectItem value="2">All</SelectItem>
-          </SelectContent>
-        </Select>
+    <Form {...form}>
+      <form className="flex h-full flex-col">
+        <div className="mb-2 flex items-center gap-1">
+          <SelectField
+            name="conversationType"
+            options={[
+              { label: "Human", value: ConversationType.human },
+              { label: "Bot", value: ConversationType.bot },
+              { label: "All", value: ConversationType.all },
+            ]}
+          />
 
-        <CreateContactDialog
-          chatbotId={chatbotId}
-          trigger={
-            <Button className="px-2" size="sm" variant="outline">
-              <UserPlusIcon />
-            </Button>
-          }
-        />
+          <Button
+            className="px-2"
+            onClick={() => {
+              setShowSearchInput(!showSearchInput)
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <SearchIcon className={filters.searchText ? "text-primary" : ""} />
+          </Button>
 
-        <Button className="px-2" size="sm" variant="outline">
-          <FilterIcon />
-        </Button>
-      </div>
+          <CreateContactDialog
+            chatbotId={chatbotId}
+            trigger={
+              <Button className="px-2" size="sm" variant="outline">
+                <UserPlusIcon />
+              </Button>
+            }
+          />
 
-      <div className="flex-1">
-        <Virtuoso
-          components={{
-            List: ConversationListList,
-            Footer: ConversationListFooter,
-          }}
-          data={conversations}
-          itemContent={(_, item) => (
-            <ConversationItem
-              conversation={item}
-              isActive={item.id === activeConversationId}
-              onSelect={() => {
-                setActiveConversationId(item.id)
+          <ConversationFilter />
+        </div>
 
-                // Update the URL with the selected conversation ID
-                const params = new URLSearchParams(searchParams.toString())
-                params.set("conversationId", item.id)
-                router.replace(`?${params.toString()}`)
+        <div className="flex-1">
+          {showSearchInput && (
+            <InputField
+              className="mb-2"
+              name="searchText"
+              placeholder={t("actions.search")}
+              {...{
+                onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault()
+                  }
+                },
               }}
             />
           )}
-          rangeChanged={({ endIndex }) => {
-            if (endIndex >= conversations.length - 5) {
-              loadMoreItems()
-            }
-          }}
-        />
-
-        {/* <InfiniteLoader
-          itemCount={
-            hasNextPage ? conversations.length + 1 : conversations.length
-          }
-          isItemLoaded={isItemLoaded}
-          loadMoreItems={loadMoreItems}
-        >
-          {({ onItemsRendered, ref }) => (
-            <AutoSizer>
-              {({ height, width }) => (
-                <FixedSizeList
-                  ref={ref}
-                  onItemsRendered={onItemsRendered}
-                  height={height}
-                  itemCount={conversations.length}
-                  itemSize={72}
-                  width={width}
-                >
-                  {Row}
-                </FixedSizeList>
-              )}
-            </AutoSizer>
-          )}
-        </InfiniteLoader> */}
-      </div>
-    </div>
+          <Virtuoso
+            components={{
+              List: ConversationListList,
+              Footer: ConversationListFooter,
+            }}
+            data={conversations}
+            itemContent={(_, item) => (
+              <ConversationItem
+                conversation={item}
+                onSelect={() => {
+                  const params = new URLSearchParams(searchParams.toString())
+                  params.set("conversationId", item.id)
+                  router.replace(`?${params.toString()}`)
+                  setActiveConversationId(item.id)
+                }}
+              />
+            )}
+            rangeChanged={({ endIndex }) => {
+              if (endIndex >= conversations.length - 5) {
+                loadMoreItems()
+              }
+            }}
+          />
+        </div>
+      </form>
+    </Form>
   )
 }
 

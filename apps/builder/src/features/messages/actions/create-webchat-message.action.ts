@@ -1,31 +1,28 @@
 "use server"
 
-import { Gender, prisma } from "@aha.chat/database"
+import {
+  Gender,
+  type PrismaTransactionalClient,
+  prisma,
+} from "@aha.chat/database"
 import {
   ContentType,
-  type ConversationModel,
-  InboxType,
+  type ConversationAttributes,
   IntegrationType,
   MessageType,
   SenderType,
 } from "@aha.chat/database/types"
-import { uploader } from "@aha.chat/filesystem"
+import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
+  broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import {
-  guessFileTypeFromMimeType,
-  type OutgoingMessageEntity,
-} from "@aha.chat/sdk"
+import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
-import imageSize from "image-size"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { BaseException } from "@/lib/errors/exception"
-import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
@@ -35,193 +32,243 @@ import {
 
 export const createWebchatMessageAction = actionClient
   .inputSchema(createWebchatMessageRequest)
-  .action(
-    async ({ parsedInput }: { parsedInput: CreateWebchatMessageRequest }) => {
-      // Create conversation if it does not exist
-      let conversation: ConversationModel | null = null
+  .action(handleCreateWebchatMessage)
 
-      const inbox = await prisma.inbox.findFirst({
-        where: {
-          chatbotId: parsedInput.chatbotId,
-          inboxType: InboxType.webchat,
+export async function handleCreateWebchatMessage({
+  parsedInput,
+}: {
+  parsedInput: CreateWebchatMessageRequest
+}) {
+  const { conversation } = await prisma.$transaction(async (tx) => {
+    return await getConversationFromInput(tx, parsedInput)
+  })
+
+  // Process flow if exists
+  if ("flowId" in parsedInput) {
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation.id,
+        flowId: parsedInput.flowId,
+      },
+    })
+    return null
+  }
+
+  // Process ref if exists
+  if ("initRef" in parsedInput && parsedInput.initRef) {
+    await integrationQueue.add(IntegrationJobAction.runRef, {
+      type: IntegrationJobAction.runRef,
+      data: {
+        conversationId: conversation.id,
+        ref: parsedInput.initRef,
+      },
+    })
+    return null
+  }
+
+  if ("postback" in parsedInput && parsedInput.postback) {
+    await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
+      type: IntegrationJobAction.runFlowPostback,
+      data: {
+        conversationId: conversation.id,
+        action: parsedInput.postback,
+      },
+    })
+  }
+
+  // Create conversation if it does not exist
+  return await prisma.$transaction(async (tx) => {
+    // upload file if exists
+    let uploadedFiles: UploadedFile[] = []
+    if ("files" in parsedInput && parsedInput.files.length > 0) {
+      uploadedFiles = await uploadMultipleFiles(
+        parsedInput.files,
+        `public/chatbots/${parsedInput.chatbotId}/conversations/${conversation.id}`,
+      )
+    }
+
+    if (
+      "content" in parsedInput &&
+      (parsedInput.content || uploadedFiles.length > 0)
+    ) {
+      const newMessage: MessageResource = await tx.message.create({
+        data: {
+          content: "content" in parsedInput ? parsedInput.content : null,
+          messageType: MessageType.incoming,
+          chatbotId: conversation.chatbotId,
+          conversationId: conversation.id,
+          senderType: SenderType.contact,
+          senderId: conversation.contactId,
+          inboxId: conversation.inboxId,
+          contentType: ContentType.text,
         },
       })
-      if (!inbox) {
-        throw new BaseException("Inbox not found")
+
+      if (uploadedFiles.length > 0) {
+        const attachments = await tx.attachment.createManyAndReturn({
+          data: uploadedFiles.map((file) => ({
+            messageId: newMessage.id,
+            chatbotId: newMessage.chatbotId,
+            conversationId: newMessage.conversationId,
+            ...file,
+          })),
+        })
+
+        newMessage.attachments = attachments as AttachmentResource[]
       }
 
-      const chatbotUsage = await prisma.chatbotUsage.findFirstOrThrow({
+      await tx.conversation.update({
+        where: {
+          id: conversation.id,
+        },
+        data: {
+          contactLastSeenAt: new Date(),
+          lastActivityAt: new Date(),
+          contactRepliedAt: new Date(),
+        },
+      })
+
+      // Broadcast realtime message
+      const promises: Promise<unknown>[] = []
+      promises.push(
+        broadcastToChatbotParty(newMessage.chatbotId, {
+          eventType: RealtimeEventType.messageCreated,
+          data: {
+            ...newMessage,
+            clientId: parsedInput.clientId,
+          },
+        }),
+      )
+
+      if (uploadedFiles.length > 0 && conversation.sourceId) {
+        promises.push(
+          broadcastToGuestParty(conversation.sourceId, {
+            eventType: RealtimeEventType.messageCreated,
+            data: {
+              ...newMessage,
+              clientId: parsedInput.clientId,
+            },
+          }),
+        )
+      }
+
+      // trigger automated response if the message is not a postback
+      if (
+        !conversation.liveChatEnabled &&
+        newMessage.content &&
+        !("postback" in parsedInput && parsedInput.postback)
+      ) {
+        promises.push(
+          integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
+            type: IntegrationJobAction.triggerAutomatedResponse,
+            data: {
+              message: newMessage as OutgoingMessageEntity,
+            },
+          }),
+        )
+      }
+
+      const conversationAttributes =
+        conversation.conversationAttributes as unknown as ConversationAttributes
+
+      if (conversationAttributes?.challenge) {
+        promises.push(
+          integrationQueue.add(
+            IntegrationJobAction.runChallenge,
+            {
+              type: IntegrationJobAction.runChallenge,
+              data: {
+                conversationId: conversation.id,
+                challenge: conversationAttributes?.challenge,
+              },
+            },
+            {
+              deduplication: {
+                id: `conversation-${conversation.id}-challenge`,
+              },
+            },
+          ),
+        )
+      }
+
+      if (promises.length > 0) {
+        await Promise.all(promises)
+      }
+
+      return newMessage
+    }
+
+    return null
+  })
+}
+
+async function getConversationFromInput(
+  tx: PrismaTransactionalClient,
+  parsedInput: CreateWebchatMessageRequest,
+) {
+  const integrationWebchat = await tx.integrationWebchat.findFirst({
+    where: {
+      chatbotId: parsedInput.chatbotId,
+      id: parsedInput.webchatId,
+    },
+  })
+  if (!integrationWebchat) {
+    throw new BaseException("Channel not found")
+  }
+
+  const sourceId = parsedInput.guestConversationId
+  let conversation = await tx.conversation.findFirst({
+    where: {
+      chatbotId: parsedInput.chatbotId,
+      sourceId,
+      inboxId: integrationWebchat.inboxId,
+    },
+  })
+
+  if (!conversation) {
+    // find or create contact
+    let contact = await tx.contact.findFirst({
+      where: {
+        chatbotId: parsedInput.chatbotId,
+        sourceId,
+      },
+    })
+
+    if (!contact) {
+      const chatbotUsage = await tx.chatbotUsage.findFirstOrThrow({
         where: { chatbotId: parsedInput.chatbotId },
       })
       if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
         throw new BaseException("Max contacts reached")
       }
 
-      const sourceId = parsedInput.guestConversationId
-      conversation = await prisma.conversation.findFirst({
-        where: {
+      contact = await tx.contact.create({
+        data: {
           chatbotId: parsedInput.chatbotId,
           sourceId,
-          inboxId: inbox.id,
+          email: parsedInput.guestConversationId,
+          source: IntegrationType.webchat,
+          gender: Gender.unknown,
+          firstName: "Guest",
+          lastName: randomString(10),
         },
       })
+    }
 
-      if (!conversation) {
-        // find or create contact
-        let contact = await prisma.contact.findFirst({
-          where: {
-            chatbotId: parsedInput.chatbotId,
-            sourceId,
-          },
-        })
+    conversation = await tx.conversation.create({
+      data: {
+        chatbotId: parsedInput.chatbotId,
+        sourceId,
+        inboxId: integrationWebchat.inboxId,
+        contactId: contact.id,
+      },
+    })
+  }
 
-        if (!contact) {
-          contact = await prisma.contact.create({
-            data: {
-              chatbotId: parsedInput.chatbotId,
-              sourceId,
-              email: parsedInput.guestConversationId,
-              source: IntegrationType.webchat,
-              gender: Gender.unknown,
-              firstName: "Guest",
-              lastName: randomString(10),
-            },
-          })
-        }
+  if (!conversation) {
+    throw new BaseException("Conversation not found")
+  }
 
-        conversation = await prisma.conversation.create({
-          data: {
-            chatbotId: parsedInput.chatbotId,
-            sourceId,
-            inboxId: inbox.id,
-            contactId: contact.id,
-          },
-        })
-      }
-
-      if (!conversation) {
-        throw new BaseException("Conversation not found")
-      }
-
-      // upload file if exists
-      let path: string | null = null
-      let imageDimensions: { width: number; height: number } | null = null
-      if ("files" in parsedInput && parsedInput.files.length > 0) {
-        const file = parsedInput.files[0] as File
-        path = `public/chatbots/${parsedInput.chatbotId}/conversations/${conversation.id}/${createId()}`
-
-        const buffer = (await file.arrayBuffer()) as unknown as Buffer
-        await uploader.putObject(path, buffer, {
-          ACL: "public-read",
-          ContentLength: file.size,
-          ContentType: file.type,
-        })
-
-        // try to find image dimensions
-        if (file.type.startsWith("image/")) {
-          try {
-            const { width, height } = await imageSize(new Uint8Array(buffer))
-            imageDimensions = { width, height }
-          } catch (error) {
-            logger.warn("Unable to retrieve image dimensions", error)
-          }
-        }
-      }
-
-      const message = await prisma.$transaction(async (tx) => {
-        const newMessage: MessageResource = await tx.message.create({
-          data: {
-            content: "content" in parsedInput ? parsedInput.content : null,
-            messageType: MessageType.incoming,
-            chatbotId: conversation.chatbotId,
-            conversationId: conversation.id,
-            senderType: SenderType.contact,
-            senderId: conversation.contactId,
-            inboxId: conversation.inboxId,
-            contentType: ContentType.text,
-          },
-        })
-
-        if (path && "files" in parsedInput && parsedInput.files?.[0]) {
-          // create attachment if path exists
-          const file = parsedInput.files[0]
-          const mimeType = file.type as string
-          const attachment = await tx.attachment.create({
-            data: {
-              messageId: newMessage.id,
-              chatbotId: newMessage.chatbotId,
-              conversationId: newMessage.conversationId,
-              originPath: path,
-              name: file.name,
-              mimeType,
-              size: file.size,
-              fileType: guessFileTypeFromMimeType(mimeType),
-              ...imageDimensions,
-            },
-          })
-
-          newMessage.attachments = [attachment as AttachmentResource]
-        }
-
-        if ("flowId" in parsedInput && parsedInput.flowId) {
-          const flow = await tx.flow.findFirst({
-            where: {
-              chatbotId: conversation.chatbotId,
-              id: parsedInput.flowId,
-            },
-          })
-
-          if (flow?.currentVersionId) {
-            try {
-              await integrationQueue.add(IntegrationJobAction.sendFlow, {
-                type: IntegrationJobAction.sendFlow,
-                data: {
-                  conversationId: conversation.id,
-                  flowVersionId: flow.currentVersionId,
-                },
-              })
-            } catch (error) {
-              console.error("Error sending flow", error)
-            }
-          }
-        }
-
-        await tx.conversation.update({
-          where: {
-            id: conversation.id,
-          },
-          data: {
-            agentLastSeenAt: new Date(),
-            lastActivityAt: new Date(),
-          },
-        })
-
-        return newMessage
-      })
-
-      const promises: Promise<unknown>[] = [
-        broadcastToChatbotParty(message.chatbotId, {
-          eventType: RealtimeEventType.CREATE_MESSAGE,
-          data: {
-            ...message,
-            clientId: parsedInput.clientId,
-          },
-        }),
-      ]
-      if (message.content) {
-        promises.push(
-          integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
-            type: IntegrationJobAction.triggerAutomatedResponse,
-            data: {
-              message: message as OutgoingMessageEntity,
-            },
-          }),
-        )
-      }
-
-      // Broadcast and send
-      await Promise.all(promises)
-
-      revalidateCacheTags(`chatbots:${conversation.chatbotId}:conversations`)
-    },
-  )
+  return { conversation }
+}

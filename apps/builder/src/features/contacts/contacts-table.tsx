@@ -10,6 +10,8 @@ import { format, formatDistance } from "date-fns"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
+import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
+import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ContactResource } from "./schemas/resource"
@@ -21,8 +23,10 @@ type ContactsTableProps = {
 }
 
 export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
-  const [{ data, pageCount }] = use(promises)
   const t = useTranslations()
+  const [{ data, pageCount }] = use(promises)
+
+  const channelOptions = useConfiguredInboxTypeOptions()
 
   const columns = useMemo<ColumnDef<ContactResource>[]>(
     () => [
@@ -84,9 +88,12 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
             title={t("fields.source.label")}
           />
         ),
-        cell: ({ cell }) => (
-          <div>{cell.getValue<ContactResource["source"]>()}</div>
-        ),
+        cell: ({ row }) => {
+          const channel = channelOptions.find(
+            (option) => option.value === row.original.source,
+          )
+          return <div>{channel ? channel.label : ""}</div>
+        },
         enableSorting: false,
         meta: {
           label: t("fields.source.label"),
@@ -102,9 +109,10 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         ),
         cell: ({ row }) => (
           <div>
-            {row.original.conversation?.assignedUser?.name ||
-              row.original.conversation?.assignedInboxTeam?.name ||
-              "Unassigned"}
+            {getUserName(
+              row.original.conversation?.assignedUser,
+              t("assignAdmin.unAssigned"),
+            )}
           </div>
         ),
         meta: {
@@ -154,7 +162,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         enableSorting: true,
       },
     ],
-    [chatbotId, t],
+    [chatbotId, t, channelOptions],
   )
 
   const { table } = useDataTable({

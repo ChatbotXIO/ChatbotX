@@ -12,11 +12,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   images: {
+    // dangerouslyAllowLocalIP: true,
     remotePatterns: [
       new URL("**", env.NEXT_PUBLIC_ASSET_URL),
       {
         protocol: "https",
-        hostname: "*.picsum.photos",
+        hostname: "(.*.)?picsum.photos",
       },
       {
         protocol: "https",

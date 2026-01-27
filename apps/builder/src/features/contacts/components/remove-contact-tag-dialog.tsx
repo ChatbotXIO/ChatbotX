@@ -75,7 +75,7 @@ export default function RemoveContactTagDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent className={"max-h-screen max-w-md"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", { feature: t("fields.tag.label") })}

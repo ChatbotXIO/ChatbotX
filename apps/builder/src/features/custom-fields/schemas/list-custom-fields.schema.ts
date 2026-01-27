@@ -7,8 +7,8 @@ import {
 import type { CustomFieldResource } from "."
 
 export const listCustomFieldsSearchParams = createSearchParamsCache({
-  page: parseAsInteger,
-  perPage: parseAsInteger,
+  page: parseAsInteger.withDefault(1),
+  perPage: parseAsInteger.withDefault(10),
   name: parseAsString,
   folderId: parseAsString,
   sort: getSortingStateParser<CustomFieldResource>().withDefault([

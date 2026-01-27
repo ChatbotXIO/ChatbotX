@@ -17,7 +17,7 @@ export type EditFolderSchema = z.infer<typeof editFolderSchema>
 
 export const changeFolderRequest = z.object({
   folderType: z.enum(FolderType),
-  modelId: z.cuid2().nullish(),
+  modelIds: z.array(z.cuid2()).nullish(),
   newFolderId: z.cuid2().or(z.literal("0")),
 })
 export type ChangeFolderRequest = z.infer<typeof changeFolderRequest>

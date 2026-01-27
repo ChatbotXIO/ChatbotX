@@ -58,6 +58,6 @@ function isPublicRoute(pathname: string) {
 
 export const config = {
   matcher: [
-    "/((?!api|webchat|signin|zalo_verifier|pricing|chat-widget|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg).*)",
+    "/((?!api|webchat|signin|zalo_verifier|pricing|chat-widget|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand).*)",
   ],
 }

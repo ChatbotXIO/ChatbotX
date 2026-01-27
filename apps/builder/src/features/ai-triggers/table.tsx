@@ -26,11 +26,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<AITriggerModel> | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
-  const columns = useMemo(
-    () => getAITriggersColumns({ setRowAction }),
-    [setRowAction],
-  )
+  const columns = useMemo(() => getAITriggersColumns({ setRowAction }), [])
 
   const { execute } = useAction(
     duplicateAITriggerAction.bind(
@@ -82,13 +78,6 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
         showTrigger={false}
         trigger={rowAction?.row.original ? [rowAction?.row.original] : []}
       />
-
-      {/* <UpdateAITriggerDialog
-        chatbotId={chatbotId}
-        onOpenChange={() => setRowAction(null)}
-        open={rowAction?.variant === "update"}
-        trigger={rowAction?.row.original || null}
-      /> */}
     </>
   )
 }

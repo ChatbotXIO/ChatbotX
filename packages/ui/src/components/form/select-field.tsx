@@ -16,7 +16,8 @@ import { FormFieldWrapper } from "./field-wrapper"
 export type SingleSelectOption = {
   value: string
   label: string
-  Icon?: LucideIcon
+  icon?: LucideIcon
+  iconColor?: string
   disabled?: boolean
 }
 
@@ -36,12 +37,6 @@ export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   triggerValueChange?: (value?: string) => void
   disableValues?: string[]
 } & React.ComponentProps<typeof Select>
-
-type SelectOptionItem = {
-  value: string
-  label: string
-  disabled?: boolean
-}
 
 const CLEAR_VALUE = "__clear__"
 
@@ -71,9 +66,9 @@ export const SelectField = <T extends FieldValues>(
     ...rest
   } = props
 
-  const [fetchedOptions, setFetchedOptions] = useState<SelectOptionItem[]>([])
+  const [fetchedOptions, setFetchedOptions] = useState<SelectOption[]>([])
 
-  const normalizedOptions = useMemo<SelectOptionItem[]>(
+  const normalizedOptions = useMemo<SelectOption[]>(
     () => (options.length > 0 ? options : fetchedOptions),
     [options, fetchedOptions],
   )
@@ -86,6 +81,11 @@ export const SelectField = <T extends FieldValues>(
           key={option.value}
           value={option.value}
         >
+          {option.icon ? (
+            <option.icon className="h-4 w-4" fill={option.iconColor} />
+          ) : (
+            " "
+          )}
           {option.label}
         </SelectItem>
       )),

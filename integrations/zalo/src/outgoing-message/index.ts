@@ -1,10 +1,16 @@
-import { StepType } from "@aha.chat/flow-config"
+import {
+  type SendFileStepSchema,
+  type SendGifStepSchema,
+  type SendImageStepSchema,
+  type SendTextStepSchema,
+  StepType,
+} from "@aha.chat/flow-config"
 import {
   type Context,
   type ConversationEntity,
   FileType,
   type MessageEntity,
-  type SendFlowStepData,
+  type SendFlowStepProps,
 } from "@aha.chat/sdk"
 import { sendMessage, uploadAttachment } from "../api/message"
 import { logger } from "../libs/logger"
@@ -105,38 +111,38 @@ const buildMessagePayload = (
 }
 
 export async function* convertFlowStepToZaloMessage(
-  auth: ZaloAuthValue,
-  flowVersionId: string,
-  step: SendFlowStepData,
+  props: SendFlowStepProps<ZaloAuthValue>,
 ): AsyncGenerator<MessageTemplate> {
+  const { step } = props
   switch (step.stepType) {
     case StepType.sendText:
-      yield* convertFlowStepText(flowVersionId, step)
+      yield* convertFlowStepText(
+        props as SendFlowStepProps<ZaloAuthValue, SendTextStepSchema>,
+      )
       break
     case StepType.sendImage:
     case StepType.sendGif:
-      yield* await convertFlowStepImage(auth, flowVersionId, step)
+      yield* await convertFlowStepImage(
+        props as SendFlowStepProps<
+          ZaloAuthValue,
+          SendImageStepSchema | SendGifStepSchema
+        >,
+      )
       break
     case StepType.sendFile:
-      yield* await convertFlowStepFile(auth, step)
+      yield* await convertFlowStepFile(
+        props as SendFlowStepProps<ZaloAuthValue, SendFileStepSchema>,
+      )
       break
     default:
       break
   }
 }
 
-export const sendFlowStep = async (
-  ctx: Context<ZaloAuthValue>,
-  conversation: ConversationEntity,
-  flowVersionId: string,
-  step: SendFlowStepData,
-) => {
+export const sendFlowStep = async (props: SendFlowStepProps<ZaloAuthValue>) => {
+  const { ctx, conversation } = props
   try {
-    for await (const zaloMessage of convertFlowStepToZaloMessage(
-      ctx.auth,
-      flowVersionId,
-      step,
-    )) {
+    for await (const zaloMessage of convertFlowStepToZaloMessage(props)) {
       await sendMessage(
         ctx.auth,
         buildMessagePayload(conversation, zaloMessage),

@@ -1,5 +1,6 @@
 "use client"
 
+import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
@@ -10,7 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
-import { SiMessenger, SiMessengerHex } from "@icons-pack/react-simple-icons"
 import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -19,6 +19,7 @@ import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import type { InboxResource } from "../schemas/resource"
+import { InboxIcon } from "./inbox-icon"
 
 export default function InboxMessengerCard({
   inbox,
@@ -28,14 +29,11 @@ export default function InboxMessengerCard({
   return (
     <Card className="py-3" key={inbox.id}>
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <SiMessenger
-          aria-hidden="true"
-          className="size-5"
-          fill={SiMessengerHex}
+        <InboxIcon
+          inboxType={InboxType.messenger}
+          label={inbox.integrationMessenger?.name}
         />
-        <p className="flex-1 truncate text-sm">
-          {inbox.integrationMessenger?.name}
-        </p>
+
         <MessengerQRCodeDiaglog
           pageId={inbox.integrationMessenger?.pageId ?? ""}
         />
@@ -85,6 +83,8 @@ function MessengerQRCodeDiaglog({ pageId }: { pageId: string }) {
             <Link
               className="text-sky-600 no-underline hover:underline dark:text-sky-400"
               href={messengerUrl}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {messengerUrl}
             </Link>

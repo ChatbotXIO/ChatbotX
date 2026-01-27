@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -25,13 +26,17 @@ import { assignConversationSchema } from "../schemas/action"
 
 type AssignConversationDialogProps = {
   trigger: ReactElement
+  assignedId?: string
   contactIds: string[]
-  onSuccess?: () => void
+  showRemove?: boolean
+  onSuccess?: (value: string | null) => void
 }
 
 export default function AssignConversationDialog({
   trigger,
+  assignedId,
   contactIds,
+  showRemove,
   onSuccess,
 }: AssignConversationDialogProps) {
   const t = useTranslations()
@@ -43,48 +48,47 @@ export default function AssignConversationDialog({
   const defaultValues = useMemo(
     () => ({
       contactIds,
-      assignedId: "",
+      assignedId,
     }),
-    [contactIds],
+    [contactIds, assignedId],
   )
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    assignConversationAction.bind(null, chatbotId),
-    zodResolver(assignConversationSchema),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success(
-            t("messages.updatedSuccess", {
-              feature: t("fields.conversation.label"),
-            }),
-          )
-          form.reset(defaultValues)
-          setOpen(false)
-          onSuccess?.()
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      assignConversationAction.bind(null, chatbotId),
+      zodResolver(assignConversationSchema),
+      {
+        actionProps: {
+          onSuccess: () => {
+            toast.success(
+              t("messages.updatedSuccess", {
+                feature: t("fields.conversation.label"),
+              }),
+            )
+            onSuccess?.(form.getValues("assignedId"))
+            resetFormAndAction()
+            setOpen(false)
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
         },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
+        formProps: {
+          mode: "onChange",
+          defaultValues,
         },
+        errorMapProps: {},
       },
-      formProps: {
-        mode: "onChange",
-        defaultValues,
-      },
-      errorMapProps: {},
-    },
-  )
+    )
 
   const { isValid, isSubmitting } = form.formState
 
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       setOpen(newOpen)
-      if (!newOpen) {
-        form.reset(defaultValues)
-      }
+      form.reset(defaultValues)
     },
     [defaultValues, form],
   )
@@ -93,9 +97,10 @@ export default function AssignConversationDialog({
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-screen max-w-md">
         <DialogHeader>
           <DialogTitle>{t("actions.assignConversation")}</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
 
         <Form {...form}>
@@ -111,22 +116,47 @@ export default function AssignConversationDialog({
             />
 
             <DialogFooter>
-              <DialogClose asChild>
-                <Button size="sm" type="button" variant="ghost">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
+              <div className="flex w-full items-center gap-4">
+                <div className="flex-1">
+                  {showRemove && (
+                    <Button
+                      disabled={
+                        !isValid ||
+                        isSubmitting ||
+                        !form.getValues("assignedId")
+                      }
+                      onClick={() => {
+                        form.setValue("assignedId", null)
+                        handleSubmitWithAction()
+                      }}
+                      size="sm"
+                      type="button"
+                      variant="destructive"
+                    >
+                      {isSubmitting && (
+                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      {t("actions.removeAssignee")}
+                    </Button>
+                  )}
+                </div>
+                <DialogClose asChild>
+                  <Button size="sm" type="button" variant="ghost">
+                    {t("actions.cancel")}
+                  </Button>
+                </DialogClose>
 
-              <Button
-                disabled={!isValid || isSubmitting}
-                size="sm"
-                type="submit"
-              >
-                {isSubmitting && (
-                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {t("actions.confirm")}
-              </Button>
+                <Button
+                  disabled={!isValid || isSubmitting}
+                  size="sm"
+                  type="submit"
+                >
+                  {isSubmitting && (
+                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {t("actions.confirm")}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

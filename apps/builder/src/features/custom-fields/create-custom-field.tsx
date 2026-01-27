@@ -1,4 +1,5 @@
 "use client"
+import { rootFolderId } from "@aha.chat/database/enums"
 import { CustomFieldType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -154,7 +155,7 @@ function CreateCustomFieldForm({
             name: "",
             customFieldType: CustomFieldType.shortText,
             description: "",
-            folderId,
+            folderId: null,
           },
         },
         errorMapProps: {},
@@ -164,7 +165,9 @@ function CreateCustomFieldForm({
   const { setValue } = form
 
   useEffect(() => {
-    setValue("folderId", folderId)
+    if (folderId && folderId !== rootFolderId) {
+      setValue("folderId", folderId)
+    }
   }, [folderId, setValue])
 
   return (

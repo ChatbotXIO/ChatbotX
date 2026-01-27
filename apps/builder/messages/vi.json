@@ -27,13 +27,18 @@
     "addTag": "Thêm thẻ",
     "addTextReply": "Thêm phản hồi văn bản",
     "appendToEnd": "Thêm vào cuối",
+    "markAsFollowUp": "Đánh dấu theo dõi",
+    "removeFromFollowUp": "Xóa khỏi theo dõi",
+    "markAsUnread": "Đánh dấu chưa đọc",
     "archive": "Lưu trữ",
+    "unarchive": "Bỏ lưu trữ",
     "archiveConversation": "Lưu trữ cuộc trò chuyện",
     "assign": "Gán",
     "assignConversation": "Gán cuộc trò chuyện",
     "autoAssignConversation": "Tự động gán cuộc trò chuyện",
     "back": "Quay lại",
     "blockContact": "Chặn liên hệ",
+    "unblockContact": "Bỏ chặn liên hệ",
     "broadcastActions": "Phát sóng",
     "cancel": "Hủy",
     "clearCustomField": "Xóa trường tùy chỉnh",
@@ -146,10 +151,31 @@
     "unsetDefaultAgent": "Bỏ đặt Agent mặc định",
     "randomRow": "Hàng ngẫu nhiên",
     "clickToEdit": "Nhấp để chỉnh sửa",
-    "move": "Di chuyển"
+    "move": "Di chuyển",
+    "onSuccess": "Khi thành công",
+    "onFailure": "Khi thất bại",
+    "onSkip": "Khi bỏ qua",
+    "remove": "Xóa",
+    "setStartNode": "Đặt làm nút bắt đầu",
+    "getNodeId": "Lấy ID nút",
+    "removeAssignee": "Xóa người được gán",
+    "condition": "Điều kiện",
+    "sendMail": "Gửi thư",
+    "splitTraffic": "Chia lưu lượng",
+    "wait": "Chờ",
+    "landingPage": "Trang đích",
+    "addNotes": "Thêm ghi chú"
   },
   "admins": {
     "title": "Quản trị viên"
+  },
+  "assignAdmin": {
+    "assignConversation": "Gán cuộc trò chuyện",
+    "assignedToMe": "Đã gán cho tôi",
+    "assignedTo": "Đã gán cho {name}",
+    "removeAssigner": "Xóa người gán",
+    "assignedAndUnassigned": "Đã gán và Chưa gán",
+    "unAssigned": "Chưa gán"
   },
   "aiAgent": {
     "defaultAgent": "Agent mặc định",
@@ -279,6 +305,8 @@
   "condition": {
     "add": "Thêm điều kiện",
     "title": "Điều kiện",
+    "yes": "Có",
+    "no": "Không",
     "fields": {
       "language": "Ngôn ngữ",
       "fullName": "Họ và tên",
@@ -349,7 +377,12 @@
       "shoppingCartIsEmpty": "Giỏ hàng trống",
       "shoppingCartContainsItems": "Giỏ hàng chứa mặt hàng",
       "lastUserInput": "Đầu vào người dùng cuối",
-      "lastUserInputType": "Loại đầu vào người dùng cuối"
+      "lastUserInputType": "Loại đầu vào người dùng cuối",
+      "followUp": "Theo dõi",
+      "unread": "Chưa đọc",
+      "customFields": "Trường tùy chỉnh",
+      "archived": "Đã lưu trữ",
+      "blocked": "Đã chặn"
     },
     "groups": {
       "instagram": "Instagram",
@@ -367,7 +400,8 @@
     "label": "Kênh"
   },
   "channels": {
-    "title": "Kênh"
+    "title": "Kênh",
+    "allChannels": "Tất cả kênh"
   },
   "chatbots": {
     "create": {
@@ -457,6 +491,9 @@
     },
     "contactFilter": {
       "label": "Bộ lọc liên hệ"
+    },
+    "contactNote": {
+      "label": "Ghi chú liên hệ"
     },
     "chooseTime": {
       "label": "Chọn thời gian"
@@ -762,6 +799,9 @@
     "inboxTeamMember": {
       "label": "Thành viên nhóm hộp thư"
     },
+    "teamMembers": {
+      "label": "Thành viên nhóm"
+    },
     "inputCustomField": {
       "label": "Trường tùy chỉnh đầu vào"
     },
@@ -817,7 +857,8 @@
     },
     "name": {
       "label": "Tên",
-      "placeholder": "Nhập tên"
+      "placeholder": "Nhập tên",
+      "searchPlaceholder": "Tìm kiếm tên..."
     },
     "node": {
       "label": "Nút"
@@ -975,7 +1016,26 @@
     },
     "type": {
       "label": "Loại",
-      "placeholder": "Chọn loại"
+      "placeholder": "Chọn loại",
+      "searchPlaceholder": "Tìm kiếm loại..."
+    },
+    "lastSeen": {
+      "label": "Lần xem cuối"
+    },
+    "assignee": {
+      "label": "Người được gán"
+    },
+    "modified": {
+      "label": "Đã chỉnh sửa"
+    },
+    "estimatedContacts": {
+      "label": "Số liên hệ ước tính"
+    },
+    "scheduledAt": {
+      "label": "Lên lịch lúc"
+    },
+    "channel": {
+      "label": "Kênh"
     },
     "updatedAt": {
       "label": "Cập nhật lúc"
@@ -1110,6 +1170,9 @@
     "spreadsheets": {
       "label": "Bảng tính"
     },
+    "spreadsheet": {
+      "label": "Bảng tính"
+    },
     "retryMessage": {
       "label": "Thử lại tin nhắn"
     },
@@ -1124,6 +1187,9 @@
     },
     "autoSkip": {
       "label": "Tự động bỏ qua"
+    },
+    "conversationType": {
+      "label": "Loại cuộc trò chuyện"
     }
   },
   "flows": {
@@ -1185,7 +1251,7 @@
       "unfollowConversation": "Bỏ theo dõi cuộc trò chuyện",
       "unsubscribeBroadcast": "Hủy đăng ký phát sóng",
       "waitUserReply": "Chờ người dùng trả lời",
-      "getUserInput": "Lấy đầu vào người dùng",
+      "getUserData": "Lấy đầu vào người dùng",
       "sendCarousel": "Gửi băng chuyền",
       "actions": "Hành động",
       "findGif": "Tìm Gif",
@@ -1194,7 +1260,15 @@
       "spreadsheetUpdateRow": "Cập nhật hàng",
       "spreadsheetSendData": "Gửi dữ liệu",
       "spreadsheetGetRandomRow": "Lấy hàng ngẫu nhiên",
-      "spreadsheetClearRow": "Xóa hàng"
+      "spreadsheetClearRow": "Xóa hàng",
+      "emailText": "Văn bản",
+      "emailH3": "Tiêu đề",
+      "emailImage": "Hình ảnh",
+      "emailButton": "Nút",
+      "emailLine": "Đường kẻ",
+      "emailSpacing": "Khoảng cách",
+      "emailCode": "Mã",
+      "emailHeader": "Tiêu đề"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1364,7 +1438,8 @@
     "duplicateSuccess": "Đã nhân bản {feature} thành công",
     "changeDefault": "Thay đổi mặc định",
     "changeDefaultDescription": "Bạn có chắc chắn muốn thay đổi AI agent mặc định?",
-    "unsetDefaultDescription": "Bạn có chắc chắn muốn bỏ đặt AI agent mặc định?"
+    "unsetDefaultDescription": "Bạn có chắc chắn muốn bỏ đặt AI agent mặc định?",
+    "botIsActive": "Bot đang hoạt động"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",

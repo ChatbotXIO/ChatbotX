@@ -1,6 +1,6 @@
 "use client"
 
-import type { OrganizationSettings } from "@aha.chat/database/types"
+import { InboxType, type OrganizationSettings } from "@aha.chat/database/types"
 import type {
   WhatsappPhoneNumber,
   WhatsappPhoneNumberResponse,
@@ -21,7 +21,6 @@ import FacebookLogin, {
   type InitParams,
 } from "@greatsumini/react-facebook-login"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { SiWhatsapp, SiWhatsappHex } from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import ky from "ky"
 import { Loader2Icon } from "lucide-react"
@@ -30,6 +29,7 @@ import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
 import { connectWhatsappAction } from "../actions/connect.action"
 import { connectWhatsappSchema } from "../schemas"
@@ -227,9 +227,12 @@ export default function WhatsappCreate({
   return (
     <Card className={`${CARD_MARGIN} ${MAX_CARD_WIDTH}`}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-bold text-2xl">
-          <SiWhatsapp fill={SiWhatsappHex} />
-          {t("whatsapp.title")}
+        <CardTitle>
+          <InboxIcon
+            iconClassName="size-7"
+            inboxType={InboxType.whatsapp}
+            wrapperClassName="text-xl font-bold gap-2"
+          />
         </CardTitle>
         <CardDescription />
       </CardHeader>

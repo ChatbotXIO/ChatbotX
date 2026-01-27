@@ -17,15 +17,17 @@ const BaseEmojiPicker = dynamic(() => import("emoji-picker-react"), {
 
 const EmojiPicker = (props: {
   size?: number
+  disabled?: boolean
   onSelectEmoji: (v: string) => void
 }) => {
-  const { size = 300, onSelectEmoji } = props
+  const { size = 300, disabled = false, onSelectEmoji } = props
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           className="px-2 py-1.5 [&_svg]:size-5"
+          disabled={disabled}
           size="sm"
           variant="ghost"
         >

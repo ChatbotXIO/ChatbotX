@@ -22,11 +22,15 @@ import { createWebchatMessageAction } from "@/features/messages/actions/create-w
 import { useGuestSessionStore } from "../providers/store/guest-session-provider"
 import type { PersistentMenuSchema } from "../schemas/webchat.schema"
 
+type WebchatMessageMenuProps = {
+  chatbotId: string
+  webchatId: string
+}
+
 export default function WebchatMessageMenu({
   chatbotId,
-}: {
-  chatbotId: string
-}) {
+  webchatId,
+}: WebchatMessageMenuProps) {
   const { getMenus } = useGuestSessionStore((state) => state)
   const [menus, setMenus] = useState<PersistentMenuSchema[]>([])
 
@@ -77,10 +81,10 @@ export default function WebchatMessageMenu({
               <DropdownMenuItem
                 onClick={() =>
                   execute({
-                    content: menu.label,
                     flowId: menu.flowId,
                     clientId: createId(),
                     chatbotId,
+                    webchatId,
                     guestConversationId: guestConversationId ?? "",
                   })
                 }

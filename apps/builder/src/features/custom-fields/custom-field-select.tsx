@@ -48,8 +48,8 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
   )
 
   const handleSuccess = useCallback(() => {
-    getAllCustomFields(params.chatbotId)
-  }, [getAllCustomFields, params.chatbotId])
+    getAllCustomFields()
+  }, [getAllCustomFields])
 
   const showLabel = label && label !== ""
 

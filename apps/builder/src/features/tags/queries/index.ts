@@ -1,5 +1,6 @@
 import type { Prisma } from "@aha.chat/database"
 import { prisma } from "@aha.chat/database"
+import { rootFolderId } from "@aha.chat/database/enums"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetTagsSchema } from "../schemas/get-tags-schema"
 import type { TagCollection } from "../schemas/resource"
@@ -11,20 +12,15 @@ export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
     chatbotId: input.chatbotId,
   }
 
-  if (input.folderId !== undefined) {
-    where.folderId =
-      input.folderId === null || input.folderId === "0" ? null : input.folderId
+  if (input.folderId) {
+    where.folderId = input.folderId === rootFolderId ? null : input.folderId
   }
 
   if (input.name) {
-    where.AND = [
-      {
-        name: {
-          contains: input.name,
-          mode: "insensitive",
-        },
-      },
-    ]
+    where.name = {
+      contains: input.name,
+      mode: "insensitive",
+    }
   }
 
   const orderBy = input.sort.map((sortItem) => {

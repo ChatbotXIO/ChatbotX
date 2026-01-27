@@ -103,24 +103,16 @@ export const sendMessage = async (
 ): Promise<FacebookSendMessageResponse> => {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
-    return await facebookGraphClient.post<FacebookSendMessageResponse>(
-      `${version}/me/messages`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.tokens.accessToken}`,
-        },
-        json: payload,
+  return await facebookGraphClient.post<FacebookSendMessageResponse>(
+    `${version}/me/messages`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
-    )
-  } catch (error) {
-    logger.error("Send Message error", error)
-    throw new MessengerAPIException(
-      "An error occurred while sending the message",
-      `${version}/${auth.metadata.pageId}/messages`,
-    )
-  }
+      json: payload,
+    },
+  )
 }
 
 export const getMessageAttachmentEntity = async ({

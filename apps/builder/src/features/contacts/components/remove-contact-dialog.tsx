@@ -22,11 +22,13 @@ import { deleteContactAction } from "../actions/delete-contact.action"
 type DeleteContactDialogProps = {
   trigger: ReactElement
   ids: string[]
+  onSuccess?: () => void
 }
 
 export default function DeleteContactDialog({
   trigger,
   ids,
+  onSuccess,
 }: DeleteContactDialogProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -44,7 +46,11 @@ export default function DeleteContactDialog({
           }),
         )
         setOpen(false)
-        router.refresh()
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          router.refresh()
+        }
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -58,7 +64,7 @@ export default function DeleteContactDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent className={"max-h-screen max-w-md"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", {
@@ -73,12 +79,15 @@ export default function DeleteContactDialog({
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">{t("actions.cancel")}</Button>
+            <Button size="sm" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
           </DialogClose>
 
           <Button
             disabled={isPending}
             onClick={() => execute({ ids })}
+            size="sm"
             type="button"
             variant="destructive"
           >

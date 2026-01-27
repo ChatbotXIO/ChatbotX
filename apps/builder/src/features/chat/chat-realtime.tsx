@@ -13,7 +13,9 @@ import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {
   const { chatbotId } = useParams<{ chatbotId: string }>()
-  const { handleNewMessage } = useChatStore((state) => state)
+  const { handleNewMessage, updateContact, updateConversations } = useChatStore(
+    (state) => state,
+  )
 
   usePartySocket({
     host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
@@ -34,8 +36,24 @@ export function ChatRealtime() {
       try {
         const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
         switch (eventType) {
-          case RealtimeEventType.CREATE_MESSAGE:
+          case RealtimeEventType.messageCreated:
             handleNewMessage(data as MessageResource)
+            break
+          case RealtimeEventType.contactBlocked:
+            updateContact(data.contactId, {
+              blockedAt: new Date(),
+            })
+            break
+          case RealtimeEventType.contactUnblocked:
+            updateContact(data.contactId, {
+              blockedAt: null,
+            })
+            break
+          case RealtimeEventType.conversationAssigned:
+            updateConversations(data.conversationIds, {
+              assignedUserId: data.assignedUserId,
+              assignedInboxTeamId: data.assignedInboxTeamId,
+            })
             break
           default:
             break

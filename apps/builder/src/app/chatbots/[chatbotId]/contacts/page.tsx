@@ -5,6 +5,7 @@ import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
 import { listContacts } from "@/features/contacts/queries/list-contacts.queries"
 import { listContactsRequest } from "@/features/contacts/schemas/query"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
 
@@ -28,6 +29,7 @@ export default async function ContactsPage(props: {
       <div className="mb-4 flex w-full justify-end">
         <CreateContactDialog chatbotId={params.chatbotId} />
       </div>
+
       <Suspense>
         <UserStoreProvider
           autoInitializeAgentsAndInboxTeams={true}
@@ -38,7 +40,15 @@ export default async function ContactsPage(props: {
               autoInitialize={true}
               chatbotId={params.chatbotId}
             >
-              <ContactsTable chatbotId={params.chatbotId} promises={promises} />
+              <InboxStoreProvider
+                autoInitialize={true}
+                chatbotId={params.chatbotId}
+              >
+                <ContactsTable
+                  chatbotId={params.chatbotId}
+                  promises={promises}
+                />
+              </InboxStoreProvider>
             </CustomFieldStoreProvider>
           </TagStoreProvider>
         </UserStoreProvider>

@@ -2,7 +2,10 @@
 
 import { prisma } from "@aha.chat/database"
 import {
-  bulkUpdateIdsRequest,
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@aha.chat/partysocket-config"
+import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
@@ -11,7 +14,6 @@ import { chatbotActionClient } from "@/lib/safe-action"
 
 export const unblockContactAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],
@@ -38,5 +40,12 @@ export const unblockContactAction = chatbotActionClient
         `chatbots:${chatbotId}#contacts`,
         `chatbots:${chatbotId}#conversations`,
       ])
+
+      await broadcastToChatbotParty(chatbotId, {
+        eventType: RealtimeEventType.contactUnblocked,
+        data: {
+          contactId: id,
+        },
+      })
     },
   )

@@ -34,16 +34,18 @@ export const createWebchatAction = authActionClient
         chatbotId = newChatbot.id
       }
 
+      const webchatId = createId()
       const inbox = await tx.inbox.create({
         data: {
           chatbotId,
           inboxType: InboxType.webchat,
-          sourceId: createId(),
+          sourceId: webchatId,
         },
       })
       await tx.integrationWebchat.create({
         data: {
           ...rest,
+          id: webchatId,
           authorizedDomains: authorizedDomains.map((domain) => domain.value),
           chatbotId,
           inboxId: inbox.id,

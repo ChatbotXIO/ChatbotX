@@ -9,3 +9,7 @@
   width: 12px;
   height: 12px;
 }
+
+.react-flow__controls.horizontal .react-flow__controls-button {
+  border: none;
+}

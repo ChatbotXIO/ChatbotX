@@ -12,12 +12,16 @@ import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-fi
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import {
+  SelectField,
+  type SelectOption,
+} from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -45,12 +49,16 @@ import {
   allContinentOptions,
   allCountryOptions,
 } from "@/features/chatbot/schemas/types"
+import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
+import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
+import {
+  type ContactFilterRequest,
+  contactFilterRequest,
+} from "../schemas/query"
 
 type ContactFilterProps = {
   parentName: string
-  customFieldOptions: Array<{ label: string; value: string }>
-  flowVersionOptions: Array<{ label: string; value: string }>
-  tagOptions: Array<{ label: string; value: string }>
 }
 
 type ConditionOption = {
@@ -62,7 +70,7 @@ type ConditionOption = {
 type FieldConfig = {
   name: ConditionFieldType
   conditionType: ConditionType
-  options?: Array<{ label: string; value: string }>
+  options?: SelectOption[]
 }
 
 const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
@@ -120,14 +128,14 @@ type ContactFilterRowSchema = z.infer<typeof contactFilterRowSchema>
 
 const getFieldConfigs = ({
   t,
-  tagOptions = [],
-  customFieldOptions = [],
-  flowVersionOptions = [],
+  tagOptions,
+  customFieldOptions,
+  flowVersionOptions,
 }: {
   t: (key: string) => string
-  tagOptions: Array<{ label: string; value: string }>
-  customFieldOptions: Array<{ label: string; value: string }>
-  flowVersionOptions: Array<{ label: string; value: string }>
+  tagOptions: SelectOption[]
+  customFieldOptions: SelectOption[]
+  flowVersionOptions: SelectOption[]
 }): FieldConfig[] => [
   {
     name: ConditionField.language,
@@ -400,12 +408,88 @@ const getConditionOptions = (t: (key: string) => string): ConditionOption[] => [
   },
 ]
 
-export function ContactFilter({
-  parentName,
-  customFieldOptions,
-  flowVersionOptions,
-  tagOptions,
-}: ContactFilterProps) {
+export function ContactFilterDialog() {
+  const t = useTranslations()
+  const [open, setOpen] = useState(false)
+
+  const { getValues: getParentValues, setValue: setParentValue } =
+    useFormContext()
+
+  const contactFilterForm = useForm({
+    resolver: zodResolver(contactFilterRequest),
+    defaultValues: {
+      contactFilter: {
+        operator: "and",
+        conditions: [],
+      },
+    },
+  })
+
+  useEffect(() => {
+    if (open) {
+      contactFilterForm.reset({
+        contactFilter: getParentValues("contactFilter"),
+      })
+    }
+  }, [open, getParentValues, contactFilterForm])
+
+  const handleSubmit = (data: ContactFilterRequest) => {
+    setParentValue("contactFilter", data.contactFilter)
+    setOpen(false)
+  }
+
+  return (
+    <Dialog onOpenChange={setOpen} open={open}>
+      <DialogTrigger asChild>
+        <Button>
+          {t("actions.addFeature", {
+            feature: t("fields.contactFilter.label"),
+          })}
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("actions.addFeature", {
+              feature: t("fields.contactFilter.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription />
+        </DialogHeader>
+
+        <Form {...contactFilterForm}>
+          <form
+            className="flex flex-col gap-6"
+            onSubmit={contactFilterForm.handleSubmit(handleSubmit)}
+          >
+            <ContactFilter parentName="contactFilter" />
+
+            <DialogFooter>
+              <Button
+                onClick={() => setOpen(false)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                {t("actions.cancel")}
+              </Button>
+              <Button
+                disabled={!contactFilterForm.formState.isValid}
+                size="sm"
+                type="submit"
+              >
+                {t("actions.continue")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function ContactFilter({ parentName }: ContactFilterProps) {
   const t = useTranslations()
   const { control } = useFormContext()
   const { append, remove } = useFieldArray({
@@ -417,6 +501,10 @@ export function ContactFilter({
     control,
     name: `${parentName}.conditions`,
   })
+
+  const tagOptions = useTagSelectOptions()
+  const customFieldOptions = useCustomFieldSelectOptions({})
+  const flowVersionOptions = useFlowSelectOptions()
 
   const configs = useMemo(
     () =>
@@ -493,29 +581,22 @@ export function ContactFilter({
         </div>
       ))}
 
-      <ContactFilterCondition
-        customFieldOptions={customFieldOptions}
-        flowVersionOptions={flowVersionOptions}
-        onAdd={onAdd}
-        tagOptions={tagOptions}
-      />
+      <ContactFilterCondition onAdd={onAdd} />
     </div>
   )
 }
 
 function ContactFilterCondition({
-  customFieldOptions,
-  flowVersionOptions,
-  tagOptions,
   onAdd,
 }: {
   onAdd: (data: ContactFilterRowSchema) => void
-  customFieldOptions: Array<{ label: string; value: string }>
-  flowVersionOptions: Array<{ label: string; value: string }>
-  tagOptions: Array<{ label: string; value: string }>
 }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
+
+  const tagOptions = useTagSelectOptions()
+  const customFieldOptions = useCustomFieldSelectOptions({})
+  const flowVersionOptions = useFlowSelectOptions()
 
   const conditionOptions = useMemo(() => getConditionOptions(t), [t])
 
