@@ -87,6 +87,16 @@ export const StepType = {
   spreadsheetGetRandomRow: "G03",
   spreadsheetUpdateRow: "G04",
   spreadsheetClearRow: "G05",
+
+  // Eamil
+  emailText: "M01",
+  emailH3: "M02",
+  emailImage: "M03",
+  emailButton: "M04",
+  emailSpacing: "M05",
+  emailCode: "M06",
+  emailLine: "M07",
+  emailHeader: "M08",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

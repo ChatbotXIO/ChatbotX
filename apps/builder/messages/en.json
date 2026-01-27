@@ -149,7 +149,13 @@
     "onSuccess": "On Success",
     "onFailure": "On Failure",
     "onSkip": "On Skip",
-    "removeAssignee": "Remove Assignee"
+    "removeAssignee": "Remove Assignee",
+    "condition": "Condition",
+    "sendMail": "Send Mail",
+    "splitTraffic": "Split Traffic",
+    "wait": "Wait",
+    "landingPage": "Landing Page",
+    "addNotes": "Add Notes"
   },
   "admins": {
     "title": "Admins"
@@ -1160,7 +1166,15 @@
       "spreadsheetUpdateRow": "Update Row",
       "spreadsheetSendData": "Send Data",
       "spreadsheetGetRandomRow": "Get Random Row",
-      "spreadsheetClearRow": "Clear Row"
+      "spreadsheetClearRow": "Clear Row",
+      "emailText": "Text",
+      "emailH3": "Heading",
+      "emailImage": "Image",
+      "emailButton": "Button",
+      "emailLine": "Line",
+      "emailSpacing": "Spacing",
+      "emailCode": "Code",
+      "emailHeader": "Header"
     },
     "additionalSteps": "Additional steps",
     "button": {

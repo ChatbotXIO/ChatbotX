@@ -1,11 +1,10 @@
 "use server"
 
-import { ChatbotMemberRole, prisma } from "@aha.chat/database"
+import { ChatbotMemberRole, type Prisma, prisma } from "@aha.chat/database"
 import type {
   ChatbotMemberNotificationChannels,
   ChatbotMemberNotificationTypes,
 } from "@aha.chat/database/types"
-import type { InputJsonObject } from "node_modules/@aha.chat/database/src/generated/prisma/internal/prismaNamespace"
 import { z } from "zod"
 import { BaseException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
@@ -43,7 +42,7 @@ export const acceptInvitationAction = authActionClient
           chatbotId: invitation.chatbotId,
           userId: ctx.user.id,
           role: ChatbotMemberRole.agent,
-          permissions: invitation.permissions as InputJsonObject,
+          permissions: invitation.permissions as Prisma.InputJsonValue,
           notificationTypes: {
             notifyAdmin: true,
             newMessageToHuman: true,

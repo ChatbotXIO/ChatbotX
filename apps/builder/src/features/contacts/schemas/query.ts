@@ -1,6 +1,6 @@
 import { Operator } from "@aha.chat/database/enums"
+import type { ContactModel } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
-import type { ContactModel } from "node_modules/@aha.chat/database/src/generated/prisma/models/Contact"
 import {
   createSearchParamsCache,
   parseAsArrayOf,

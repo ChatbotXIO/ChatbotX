@@ -41,6 +41,8 @@ import ButtonEdge from "./edges/button-edge"
 
 const nodeTypes = {
   [NodeType.sendMessage]: NodeViewer,
+  [NodeType.sendMail]: NodeViewer,
+  [NodeType.landingPage]: NodeViewer,
   [NodeType.performAction]: NodeViewer,
   [NodeType.addNotes]: NodeViewer,
   [NodeType.wait]: NodeViewer,

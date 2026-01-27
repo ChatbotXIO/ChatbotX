@@ -153,7 +153,17 @@
     "move": "Di chuyển",
     "onSuccess": "Khi thành công",
     "onFailure": "Khi thất bại",
-    "onSkip": "Khi bỏ qua"
+    "onSkip": "Khi bỏ qua",
+    "remove": "Xóa",
+    "setStartNode": "Đặt làm nút bắt đầu",
+    "getNodeId": "Lấy ID nút",
+    "removeAssignee": "Xóa người được gán",
+    "condition": "Điều kiện",
+    "sendMail": "Gửi thư",
+    "splitTraffic": "Chia lưu lượng",
+    "wait": "Chờ",
+    "landingPage": "Trang đích",
+    "addNotes": "Thêm ghi chú"
   },
   "admins": {
     "title": "Quản trị viên"
@@ -1151,6 +1161,9 @@
     },
     "autoSkip": {
       "label": "Tự động bỏ qua"
+    },
+    "conversationType": {
+      "label": "Loại cuộc trò chuyện"
     }
   },
   "flows": {
@@ -1221,7 +1234,15 @@
       "spreadsheetUpdateRow": "Cập nhật hàng",
       "spreadsheetSendData": "Gửi dữ liệu",
       "spreadsheetGetRandomRow": "Lấy hàng ngẫu nhiên",
-      "spreadsheetClearRow": "Xóa hàng"
+      "spreadsheetClearRow": "Xóa hàng",
+      "emailText": "Văn bản",
+      "emailH3": "Tiêu đề",
+      "emailImage": "Hình ảnh",
+      "emailButton": "Nút",
+      "emailLine": "Đường kẻ",
+      "emailSpacing": "Khoảng cách",
+      "emailCode": "Mã",
+      "emailHeader": "Tiêu đề"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {

@@ -13,6 +13,14 @@ import { countCharactersStep } from "./count-characters"
 import type { StepDefinition } from "./definition"
 import { deleteContactStep } from "./delete-contact"
 import { disableBotStep } from "./disable-bot"
+import emailButtonStep from "./email-button"
+import emailCodeStep from "./email-code"
+import emailH3Step from "./email-h3"
+import emailHeaderStep from "./email-header"
+import emailImageStep from "./email-image"
+import emailLineStep from "./email-line"
+import emailSpacingStep from "./email-spacing"
+import emailTextStep from "./email-text"
 import { enableBotStep } from "./enable-bot"
 import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
@@ -112,6 +120,14 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.spreadsheetClearRow]: spreadsheetClearRowStep,
   [StepType.spreadsheetSendData]: spreadsheetSendDataStep,
   [StepType.sendQuickReply]: undefined,
+  [StepType.emailH3]: emailH3Step,
+  [StepType.emailText]: emailTextStep,
+  [StepType.emailImage]: emailImageStep,
+  [StepType.emailButton]: emailButtonStep,
+  [StepType.emailLine]: emailLineStep,
+  [StepType.emailSpacing]: emailSpacingStep,
+  [StepType.emailCode]: emailCodeStep,
+  [StepType.emailHeader]: emailHeaderStep,
 }
 
 export const DynamicStepEditor = memo(

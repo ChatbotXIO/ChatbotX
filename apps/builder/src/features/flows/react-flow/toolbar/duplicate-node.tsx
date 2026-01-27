@@ -37,7 +37,8 @@ export function DuplicateNode() {
             }))
           }
           return { ...step, id: createId() }
-        })
+          // biome-ignore lint/suspicious/noExplicitAny: skip typescript type error
+        }) as any
       }
 
       addNodes([

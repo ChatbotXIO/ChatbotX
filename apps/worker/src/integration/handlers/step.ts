@@ -180,4 +180,12 @@ export const flowStepHandlers: Record<
   [StepType.spreadsheetUpdateRow]: updateSpreadsheetRow,
   [StepType.waitUserReply]: undefined,
   [StepType.sendQuickReply]: sendFlowMessage,
+  [StepType.emailH3]: undefined,
+  [StepType.emailText]: undefined,
+  [StepType.emailImage]: undefined,
+  [StepType.emailButton]: undefined,
+  [StepType.emailLine]: undefined,
+  [StepType.emailSpacing]: undefined,
+  [StepType.emailCode]: undefined,
+  [StepType.emailHeader]: undefined,
 }
