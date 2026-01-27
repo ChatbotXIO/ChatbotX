@@ -17,11 +17,8 @@ export default async function InboxPage({ params }: InboxPageProps) {
   return (
     <ChatStoreProvider>
       <InboxStoreProvider chatbotId={chatbotId}>
-        <UserStoreProvider
-          autoInitializeAgentsAndInboxTeams={true}
-          chatbotId={chatbotId}
-        >
-          <CustomFieldStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+        <UserStoreProvider chatbotId={chatbotId}>
+          <CustomFieldStoreProvider chatbotId={chatbotId}>
             <ChatLayout layout={savedLayout} />
           </CustomFieldStoreProvider>
         </UserStoreProvider>

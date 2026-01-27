@@ -17,7 +17,7 @@ export default async function AILayout({
   }
 
   return (
-    <CustomFieldStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+    <CustomFieldStoreProvider chatbotId={chatbotId}>
       {children}
     </CustomFieldStoreProvider>
   )

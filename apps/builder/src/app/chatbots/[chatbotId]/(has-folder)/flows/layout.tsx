@@ -18,11 +18,7 @@ export default function FolderableLayout({
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   return (
-    <FolderStoreProvider
-      autoInitialize={true}
-      chatbotId={chatbotId}
-      folderType={FolderType.flow}
-    >
+    <FolderStoreProvider chatbotId={chatbotId} folderType={FolderType.flow}>
       <Card>
         <CardContent className="flex items-center gap-8">
           <Link

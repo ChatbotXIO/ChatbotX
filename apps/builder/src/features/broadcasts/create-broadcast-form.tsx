@@ -171,7 +171,7 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   })
 
   return (
-    <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+    <FlowStoreProvider chatbotId={chatbotId}>
       <div className="flex h-svh flex-col items-center justify-center">
         <Form {...form}>
           <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>

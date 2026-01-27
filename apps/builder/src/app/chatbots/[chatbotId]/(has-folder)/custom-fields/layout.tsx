@@ -16,7 +16,6 @@ export default async function FolderableLayout({
 
   return (
     <FolderStoreProvider
-      autoInitialize={true}
       chatbotId={chatbotId}
       folderType={FolderType.customField}
     >

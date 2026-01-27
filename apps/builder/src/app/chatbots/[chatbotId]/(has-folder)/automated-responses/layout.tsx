@@ -17,16 +17,13 @@ export default async function FolderableLayout({
 
   return (
     <FolderStoreProvider
-      autoInitialize={true}
       chatbotId={chatbotId}
       folderType={FolderType.automatedResponse}
     >
       {folders}
       <Separator className="my-4" />
       <Suspense>
-        <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
-          {children}
-        </FlowStoreProvider>
+        <FlowStoreProvider chatbotId={chatbotId}>{children}</FlowStoreProvider>
       </Suspense>
     </FolderStoreProvider>
   )

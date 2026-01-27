@@ -25,9 +25,10 @@ export default async function AIFunctionsPage({
   return (
     <div className="space-y-6">
       <AIHubBreadcrumb />
+
       <Suspense>
-        <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
-          <CustomFieldStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+        <FlowStoreProvider chatbotId={chatbotId}>
+          <CustomFieldStoreProvider chatbotId={chatbotId}>
             <AIFunctionsTable promises={promises} />
           </CustomFieldStoreProvider>
         </FlowStoreProvider>
