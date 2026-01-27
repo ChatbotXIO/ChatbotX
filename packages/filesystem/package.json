@@ -11,15 +11,15 @@
   },
   "dependencies": {
     "@aha.chat/logger": "workspace:*",
-    "@aws-sdk/client-s3": "^3.958.0",
-    "@aws-sdk/s3-presigned-post": "^3.958.0",
-    "@paralleldrive/cuid2": "^3.0.6",
+    "@aws-sdk/client-s3": "^3.975.0",
+    "@aws-sdk/s3-presigned-post": "^3.975.0",
+    "@paralleldrive/cuid2": "^3.3.0",
     "@t3-oss/env-nextjs": "^0.13.10",
     "aws4fetch": "^1.0.20",
     "image-size": "^2.0.2",
-    "ky": "^1.14.2",
+    "ky": "^1.14.3",
     "probe-image-size": "^7.2.3",
-    "zod": "^4.2.1"
+    "zod": "^4.3.6"
   },
   "exports": {
     ".": "./src/index.ts"

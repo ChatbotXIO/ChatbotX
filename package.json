@@ -4,22 +4,22 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "fix": "ultracite fix --unsafe",
+    "fix": "ultracite fix",
     "lint": "ultracite lint",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
     "imports:check": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.10",
+    "@biomejs/biome": "^2.3.13",
     "@types/node": "^24.10.4",
-    "knip": "^5.78.0",
-    "lefthook": "^2.0.13",
-    "prisma": "7.2.0",
+    "knip": "^5.82.1",
+    "lefthook": "^2.0.16",
+    "prisma": "7.3.0",
     "tsx": "^4.21.0",
     "turbo": "^2.7.6",
     "typescript": "5.9.3",
-    "ultracite": "6.5.0"
+    "ultracite": "7.1.1"
   },
   "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316",
   "engines": {
