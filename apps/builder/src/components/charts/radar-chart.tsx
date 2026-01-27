@@ -14,6 +14,7 @@ import {
   RadarChart as RC,
 } from "recharts"
 import ChartHeader from "./chart-header"
+import { OPACITY } from "./constants"
 
 type RadarData = {
   name: string
@@ -53,14 +54,14 @@ export function RadarChart({
           }}
         >
           <RC data={chartData}>
-            <PolarGrid />
+            <PolarGrid gridType="circle" />
             <PolarAngleAxis dataKey="name" />
-            <PolarRadiusAxis domain={[0, maxValue]} />
+            <PolarRadiusAxis angle={90} domain={[0, maxValue]} />
             <Radar
               dataKey="value"
-              fill="var(--color-primary)"
-              fillOpacity={0.6}
-              stroke="var(--color-primary)"
+              fill="var(--color-chart-1)"
+              fillOpacity={OPACITY}
+              stroke="var(--color-chart-1)"
             />
             <ChartTooltip content={<ChartTooltipContent />} />
           </RC>

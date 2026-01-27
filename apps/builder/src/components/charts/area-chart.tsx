@@ -37,8 +37,8 @@ export default function AreaChart({
             <YAxis width="auto" />
             <Area
               dataKey="value"
-              fill="var(--color-primary)"
-              stroke="var(--color-primary)"
+              fill="var(--color-chart-1)"
+              stroke="var(--color-chart-1)"
               type="monotone"
             />
             <ChartTooltip content={<ChartTooltipContent />} />

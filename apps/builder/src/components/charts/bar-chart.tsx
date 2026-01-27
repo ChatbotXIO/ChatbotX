@@ -4,17 +4,16 @@ import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   ChartContainer,
   ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@aha.chat/ui/components/ui/chart"
 import { Bar, BarChart as BC, CartesianGrid, XAxis, YAxis } from "recharts"
 import ChartHeader from "./chart-header"
+import { COLORS } from "./constants"
 
 type BarValue = {
   label: string
   value: number
-  color?: string
 }
 
 type DataItem = {
@@ -39,14 +38,6 @@ export default function BarChart({ name, data, helpMessage }: BarChartProps) {
     }
     return obj
   })
-  const labelColor: Record<string, string | undefined> = {}
-  for (const item of data) {
-    for (const v of item.value) {
-      if (v.color && !labelColor[v.label]) {
-        labelColor[v.label] = v.color
-      }
-    }
-  }
 
   return (
     <Card className="flex-1">
@@ -60,22 +51,15 @@ export default function BarChart({ name, data, helpMessage }: BarChartProps) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis width="auto" />
-            {barLabels.map((label) => (
+            {barLabels.map((label, index) => (
               <Bar
-                activeBar={
-                  labelColor[label]
-                    ? { fill: labelColor[label], stroke: labelColor[label] }
-                    : undefined
-                }
                 dataKey={label}
-                fill={labelColor[label] || undefined}
+                fill={COLORS[index % COLORS.length]}
                 key={label}
               />
             ))}
             <ChartTooltip content={<ChartTooltipContent />} />
-            {data[0]?.value.length > 1 && (
-              <ChartLegend content={<ChartLegendContent payload={{}} />} />
-            )}
+            {data[0]?.value.length > 1 && <ChartLegend />}
           </BC>
         </ChartContainer>
       </CardContent>

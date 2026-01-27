@@ -3,16 +3,13 @@
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartTooltip,
   ChartTooltipContent,
 } from "@aha.chat/ui/components/ui/chart"
-import {
-  Cell,
-  Pie,
-  PieChart,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-} from "recharts"
+import { Cell, PieChart as PC, Pie, ResponsiveContainer } from "recharts"
 import ChartHeader from "./chart-header"
+import { COLORS } from "./constants"
 
 export interface DonutChartProps {
   name: string
@@ -20,14 +17,6 @@ export interface DonutChartProps {
   data: Array<{ name: string; value: number; color?: string }>
   helpMessage?: string
 }
-
-const COLORS = [
-  "var(--color-chart-1)",
-  "var(--color-chart-2)",
-  "var(--color-chart-3)",
-  "var(--color-chart-4)",
-  "var(--color-chart-5)",
-]
 
 export function DonutChart({
   name,
@@ -41,14 +30,13 @@ export function DonutChart({
       <CardContent>
         <ChartContainer config={{ value: { label: valueLabel } }}>
           <ResponsiveContainer height={300} width="100%">
-            <PieChart>
+            <PC>
               <Pie
                 cx="50%"
                 cy="50%"
                 data={data}
                 dataKey="value"
                 innerRadius={60}
-                label
                 nameKey="name"
                 outerRadius={100}
               >
@@ -62,8 +50,9 @@ export function DonutChart({
                   />
                 ))}
               </Pie>
-              <RechartsTooltip content={<ChartTooltipContent />} />
-            </PieChart>
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartLegend />
+            </PC>
           </ResponsiveContainer>
         </ChartContainer>
       </CardContent>

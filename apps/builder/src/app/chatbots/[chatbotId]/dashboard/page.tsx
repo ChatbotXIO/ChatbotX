@@ -51,7 +51,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.contacts"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -61,7 +60,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.contacts"),
                     value: 2,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -71,7 +69,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.contacts"),
                     value: 0,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -81,7 +78,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.contacts"),
                     value: 3,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -91,7 +87,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.contacts"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -106,12 +101,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.firstResponseTime"),
                     value: 4000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.responseTime"),
                     value: 2400,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -121,12 +114,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.firstResponseTime"),
                     value: 3000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.responseTime"),
                     value: 1398,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -136,12 +127,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.firstResponseTime"),
                     value: 2000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.responseTime"),
                     value: 9800,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -151,12 +140,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.firstResponseTime"),
                     value: 2780,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.responseTime"),
                     value: 3908,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -166,12 +153,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.firstResponseTime"),
                     value: 1890,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.responseTime"),
                     value: 4800,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -181,12 +166,12 @@ export default async function Dashboard({
           />
           <RadarChart
             data={[
-              { name: "Member 1", value: 120 },
+              { name: "Member 1", value: 20 },
               { name: "Member 2", value: 200 },
-              { name: "Member 3", value: 150 },
-              { name: "Member 4", value: 280 },
-              { name: "Member 5", value: 100 },
-              { name: "Member 6", value: 220 },
+              { name: "Member 3", value: 300 },
+              { name: "Member 4", value: 500 },
+              { name: "Member 5", value: 1000 },
+              { name: "Member 6", value: 2000 },
             ]}
             helpMessage={t("analytics.averageFirstResponseTimeByAdminHelp")}
             name={t("analytics.averageFirstResponseTimeByAdmin")}
@@ -200,10 +185,19 @@ export default async function Dashboard({
               { name: "Member 4", value: 280 },
               { name: "Member 5", value: 100 },
               { name: "Member 6", value: 220 },
+              { name: "Member 7", value: 200 },
+              {
+                name: "Member 8",
+                value: 300,
+              },
+              {
+                name: "Member 9",
+                value: 400,
+              },
             ]}
             helpMessage={t("analytics.averageResponseTimeHelp")}
             name={t("analytics.averageResponseTimeByAdmin")}
-            valueLabel="Value"
+            valueLabel="Minutes"
           />
           <BarChart
             data={[
@@ -213,7 +207,6 @@ export default async function Dashboard({
                   {
                     label: "Value",
                     value: 4000,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -223,7 +216,6 @@ export default async function Dashboard({
                   {
                     label: "Value",
                     value: 3000,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -233,7 +225,6 @@ export default async function Dashboard({
                   {
                     label: "Value",
                     value: 2000,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -243,7 +234,6 @@ export default async function Dashboard({
                   {
                     label: "Value",
                     value: 2780,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -253,7 +243,6 @@ export default async function Dashboard({
                   {
                     label: "Value",
                     value: 1890,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -272,12 +261,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.success"),
                     value: 4000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.fallbackFlow"),
                     value: 2400,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -287,12 +274,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.success"),
                     value: 3000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.fallbackFlow"),
                     value: 1398,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -302,12 +287,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.success"),
                     value: 2000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.fallbackFlow"),
                     value: 9800,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -317,12 +300,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.success"),
                     value: 2780,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.fallbackFlow"),
                     value: 3908,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -332,12 +313,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.success"),
                     value: 1890,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.fallbackFlow"),
                     value: 4800,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -369,12 +348,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.human"),
                     value: 4000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.bot"),
                     value: 2400,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -384,12 +361,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.human"),
                     value: 3000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.bot"),
                     value: 1398,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -399,12 +374,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.human"),
                     value: 2000,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.bot"),
                     value: 9800,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -414,12 +387,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.human"),
                     value: 2780,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.bot"),
                     value: 3908,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -429,12 +400,10 @@ export default async function Dashboard({
                   {
                     label: t("analytics.human"),
                     value: 1890,
-                    color: "var(--color-primary)",
                   },
                   {
                     label: t("analytics.bot"),
                     value: 4800,
-                    color: "var(--color-chart-2)",
                   },
                 ],
               },
@@ -545,7 +514,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -555,7 +523,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 2,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -565,7 +532,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 0,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -575,7 +541,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 3,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -585,7 +550,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -601,7 +565,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -611,7 +574,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 2,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -621,7 +583,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 0,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -631,7 +592,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 3,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -641,7 +601,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -657,7 +616,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -667,7 +625,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 2,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -677,7 +634,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 0,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -687,7 +643,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 3,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -697,7 +652,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -712,7 +666,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -722,7 +675,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 2,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -732,7 +684,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 0,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -742,7 +693,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 3,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
@@ -752,7 +702,6 @@ export default async function Dashboard({
                   {
                     label: t("analytics.conversations"),
                     value: 1,
-                    color: "var(--color-primary)",
                   },
                 ],
               },
