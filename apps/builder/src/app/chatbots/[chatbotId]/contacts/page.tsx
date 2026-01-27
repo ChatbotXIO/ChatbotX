@@ -31,19 +31,10 @@ export default async function ContactsPage(props: {
       </div>
 
       <Suspense>
-        <UserStoreProvider
-          autoInitializeAgentsAndInboxTeams={true}
-          chatbotId={params.chatbotId}
-        >
-          <TagStoreProvider autoInitialize={true} chatbotId={params.chatbotId}>
-            <CustomFieldStoreProvider
-              autoInitialize={true}
-              chatbotId={params.chatbotId}
-            >
-              <InboxStoreProvider
-                autoInitialize={true}
-                chatbotId={params.chatbotId}
-              >
+        <UserStoreProvider chatbotId={params.chatbotId}>
+          <TagStoreProvider chatbotId={params.chatbotId}>
+            <CustomFieldStoreProvider chatbotId={params.chatbotId}>
+              <InboxStoreProvider chatbotId={params.chatbotId}>
                 <ContactsTable
                   chatbotId={params.chatbotId}
                   promises={promises}

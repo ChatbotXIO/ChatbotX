@@ -34,17 +34,11 @@ export function FlowDetail({
           activeFlowId: flow.id,
         }}
       >
-        <InboxStoreProvider autoInitialize={true} chatbotId={flow.chatbotId}>
-          <FlowStoreProvider autoInitialize={true} chatbotId={flow.chatbotId}>
-            <TagStoreProvider autoInitialize={true} chatbotId={flow.chatbotId}>
-              <UserStoreProvider
-                autoInitializeAgentsAndInboxTeams={true}
-                chatbotId={flow.chatbotId}
-              >
-                <CustomFieldStoreProvider
-                  autoInitialize={true}
-                  chatbotId={flow.chatbotId}
-                >
+        <InboxStoreProvider chatbotId={flow.chatbotId}>
+          <FlowStoreProvider chatbotId={flow.chatbotId}>
+            <TagStoreProvider chatbotId={flow.chatbotId}>
+              <UserStoreProvider chatbotId={flow.chatbotId}>
+                <CustomFieldStoreProvider chatbotId={flow.chatbotId}>
                   <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
                 </CustomFieldStoreProvider>
               </UserStoreProvider>

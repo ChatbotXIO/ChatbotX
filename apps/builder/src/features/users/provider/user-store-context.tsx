@@ -19,12 +19,12 @@ export const UserStoreContext = createContext<UserStoreApi | undefined>(
 export type UserStoreProviderProps = {
   chatbotId: string
   children: ReactNode
-  autoInitializeAgentsAndInboxTeams?: boolean
+  autoInitialize?: boolean
 }
 
 export const UserStoreProvider = ({
   chatbotId,
-  autoInitializeAgentsAndInboxTeams = false,
+  autoInitialize = true,
   children,
 }: UserStoreProviderProps) => {
   const storeRef = useRef<UserStoreApi>(null)
@@ -33,10 +33,10 @@ export const UserStoreProvider = ({
   }
 
   useEffect(() => {
-    if (storeRef.current && autoInitializeAgentsAndInboxTeams) {
+    if (storeRef.current && autoInitialize) {
       storeRef.current.getState().initializeAgentsAndInboxTeams()
     }
-  }, [autoInitializeAgentsAndInboxTeams])
+  }, [autoInitialize])
 
   return (
     <UserStoreContext.Provider value={storeRef.current}>

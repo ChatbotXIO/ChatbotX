@@ -56,7 +56,6 @@ export default async function FoldersDetault(props: {
 
       <Suspense>
         <FolderStoreProvider
-          autoInitialize={true}
           chatbotId={params.chatbotId}
           folderType={folderType}
         >

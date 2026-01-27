@@ -10,7 +10,7 @@ export default async function GeneralPage(props: {
 
   return (
     <div className="px-4">
-      <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+      <FlowStoreProvider chatbotId={chatbotId}>
         <UpdateChatbotForm chatbot={chatbot} />
       </FlowStoreProvider>
     </div>

@@ -15,11 +15,7 @@ export default async function TagsLayout({
   const { chatbotId } = await params
 
   return (
-    <FolderStoreProvider
-      autoInitialize={true}
-      chatbotId={chatbotId}
-      folderType={FolderType.tag}
-    >
+    <FolderStoreProvider chatbotId={chatbotId} folderType={FolderType.tag}>
       {folders}
       <Separator />
       {children}

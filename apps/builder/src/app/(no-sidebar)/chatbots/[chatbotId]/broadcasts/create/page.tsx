@@ -11,9 +11,9 @@ export default async function CreateBroadcastPage({
   const { chatbotId } = await params
 
   return (
-    <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
-      <CustomFieldStoreProvider autoInitialize={true} chatbotId={chatbotId}>
-        <TagStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+    <FlowStoreProvider chatbotId={chatbotId}>
+      <CustomFieldStoreProvider chatbotId={chatbotId}>
+        <TagStoreProvider chatbotId={chatbotId}>
           <CreateBroadcastForm chatbotId={chatbotId} />
         </TagStoreProvider>
       </CustomFieldStoreProvider>
