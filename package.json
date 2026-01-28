@@ -26,8 +26,7 @@
     "node": ">=24"
   },
   "overrides": {
-    "@types/node": "24.x",
-    "ioredis": "5.8.2"
+    "@types/node": "24.x"
   },
   "workspaces": [
     "apps/*",

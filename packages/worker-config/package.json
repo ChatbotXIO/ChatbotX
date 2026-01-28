@@ -20,8 +20,5 @@
   "exports": {
     ".": "./src/index.ts",
     "./keys": "./src/keys.ts"
-  },
-  "overrides": {
-    "ioredis": "5.8.2"
   }
 }
