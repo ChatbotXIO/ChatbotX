@@ -5,9 +5,14 @@ import type {
 } from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import type { AIFileCollection } from "@/features/ai-files/schemas"
+import type { AIFunctionCollection } from "@/features/ai-functions/schemas"
+import type { AIMcpServerCollection } from "@/features/ai-mcp-servers/schemas"
 
 export type AIToolsState = {
-  loading: boolean
+  loadingAIFiles: boolean
+  loadingAIFunction: boolean
+  loadingAIMCPServer: boolean
   error: string | null
   initialized: boolean
 
@@ -18,15 +23,19 @@ export type AIToolsState = {
 }
 
 export type AIToolsActions = {
-  fetchTools: (chatbotId: string) => Promise<void>
-  refetch: () => Promise<void>
+  initialize: () => Promise<void>
+  getAIFiles: () => Promise<void>
+  getAIFunctions: () => Promise<void>
+  getAIMCPServers: () => Promise<void>
 }
 
 export type AIToolsStore = AIToolsState & AIToolsActions
 
-export const createAIToolsStore = () =>
+export const createAIToolsStore = (props: Partial<AIToolsState>) =>
   createStore<AIToolsStore>((set, get) => ({
-    loading: false,
+    loadingAIFiles: false,
+    loadingAIFunction: false,
+    loadingAIMCPServer: false,
     error: null,
     initialized: false,
 
@@ -34,71 +43,114 @@ export const createAIToolsStore = () =>
     files: [],
     functions: [],
     mcpServers: [],
+    ...props,
 
-    fetchTools: async (chatbotId: string) => {
-      const {
-        initialized,
-        chatbotId: currentChatbotId,
-        loading: isLoading,
-      } = get()
+    initialize: async () => {
+      const { initialized } = get()
 
       // Skip if already initialized for the same chatbotId or currently loading
-      if (
-        (initialized && currentChatbotId === chatbotId) ||
-        isLoading ||
-        !chatbotId
-      ) {
+      if (initialized) {
         return
       }
 
-      set({ loading: true, error: null, chatbotId })
-
       try {
-        const [filesResp, functionsResp, mcpServersResp] = await Promise.all([
-          ky
-            .get<{ data: AIFileModel[] }>(`/api/chatbots/${chatbotId}/ai-files`)
-            .json(),
-          ky
-            .get<{ data: AIFunctionModel[] }>(
-              `/api/chatbots/${chatbotId}/ai-functions`,
-            )
-            .json(),
-          ky
-            .get<{ data: AIMCPServerModel[] }>(
-              `/api/chatbots/${chatbotId}/ai-mcp-servers`,
-            )
-            .json(),
+        await Promise.all([
+          get().getAIFiles(),
+          get().getAIFunctions(),
+          get().getAIMCPServers(),
         ])
-
-        set({
-          files: filesResp?.data || [],
-          functions: functionsResp?.data || [],
-          mcpServers: mcpServersResp?.data || [],
-          loading: false,
-          initialized: true,
-        })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch AI tools",
-            loading: false,
-          })
-        }
-        throw error
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch AI tools",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
-    refetch: async () => {
-      const { chatbotId, loading } = get()
-      if (chatbotId && !loading) {
-        // Reset state to force refetch
-        set({ initialized: false, error: null })
-        await get().fetchTools(chatbotId)
+    getAIFiles: async () => {
+      const { chatbotId, loadingAIFiles } = get()
+
+      if (loadingAIFiles || !chatbotId) {
+        return
+      }
+
+      set({ loadingAIFiles: true, error: null })
+
+      try {
+        const { data } = await ky
+          .get<AIFileCollection>(`/api/chatbots/${chatbotId}/ai-files`)
+          .json()
+
+        set({ files: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch AI files",
+        })
+      } finally {
+        set({ loadingAIFiles: false })
+      }
+    },
+
+    getAIFunctions: async () => {
+      const { chatbotId, loadingAIFunction } = get()
+
+      if (loadingAIFunction || !chatbotId) {
+        return
+      }
+
+      set({ loadingAIFunction: true, error: null })
+
+      try {
+        const { data } = await ky
+          .get<AIFunctionCollection>(`/api/chatbots/${chatbotId}/ai-functions`)
+          .json()
+
+        set({ functions: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch AI functions",
+        })
+      } finally {
+        set({ loadingAIFunction: false })
+      }
+    },
+
+    getAIMCPServers: async () => {
+      const { chatbotId, loadingAIMCPServer } = get()
+
+      if (loadingAIMCPServer || !chatbotId) {
+        return
+      }
+
+      set({ loadingAIMCPServer: true, error: null })
+
+      try {
+        const { data } = await ky
+          .get<AIMcpServerCollection>(
+            `/api/chatbots/${chatbotId}/ai-mcp-servers`,
+          )
+          .json()
+
+        set({ mcpServers: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch AI MCP servers",
+        })
+      } finally {
+        set({ loadingAIMCPServer: false })
       }
     },
   }))

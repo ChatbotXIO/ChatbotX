@@ -32,14 +32,16 @@ export const CustomFieldStoreProvider = ({
 }: CustomFieldStoreProviderProps) => {
   const storeRef = useRef<CustomFieldStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createCustomFieldStore()
+    storeRef.current = createCustomFieldStore({
+      chatbotId,
+    })
   }
 
   useEffect(() => {
     if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().initialize(chatbotId)
+      storeRef.current.getState().initialize()
     }
-  }, [autoInitialize, chatbotId])
+  }, [autoInitialize])
 
   return (
     <CustomFieldStoreContext.Provider value={storeRef.current}>

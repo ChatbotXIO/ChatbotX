@@ -75,7 +75,7 @@ export default function ClearContactCustomFieldDialog({
 
       <DialogContent className={"max-h-screen max-w-md"}>
         <DialogHeader>
-          <DialogTitle>{t("dialog.clearCustomField")}</DialogTitle>
+          <DialogTitle>{t("actions.clearCustomField")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 

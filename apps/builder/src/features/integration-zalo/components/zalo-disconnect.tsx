@@ -52,12 +52,12 @@ export function ZaloDisconnect() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t("dialog.disconnect.title", {
+            {t("messages.disconnectFeature", {
               feature: t("zalo.title"),
             })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("dialog.disconnect.description", {
+            {t("messages.disconnectFeatureDescription", {
               feature: t("zalo.title"),
             })}
           </AlertDialogDescription>

@@ -113,7 +113,11 @@ export function CreateAccountFieldDialog({
       </DialogTrigger>
       <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>
-          <DialogTitle>{t("accountField.createDialog.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.createFeature", {
+              feature: t("fields.accountField.label"),
+            })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>

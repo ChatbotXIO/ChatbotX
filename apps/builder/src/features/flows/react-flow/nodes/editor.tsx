@@ -1,10 +1,5 @@
-import type {
-  AIGenerateTextProviderType,
-  FlowNode,
-  NodeType,
-} from "@aha.chat/flow-config"
+import type { FlowNode, NodeType } from "@aha.chat/flow-config"
 import {
-  aiGenerateTextDefaultFn,
   buttonStepDefaultFn,
   disabledCopyActionTypes,
   StepType,
@@ -107,7 +102,7 @@ const NodeEditorMenu = memo(
     onClick,
   }: {
     nodeType: NodeType
-    onClick: (stepType: StepType) => void
+    onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
 
@@ -237,12 +232,9 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   }, [updatedButtonData, getValues, onChangeButtonData, setValue])
 
   const onAddStep = useCallback(
-    (name: StepType, provider?: AIGenerateTextProviderType) => {
-      if (name === StepType.aiGenerateText && provider) {
-        const step = aiGenerateTextDefaultFn(provider)
-        appendStep(step)
-      } else {
-        const newStep = allSteps[name]?.defaultFn()
+    (menuItem: MenuItem) => {
+      if (menuItem.stepType) {
+        const newStep = allSteps[menuItem.stepType]?.defaultFn(menuItem.props)
         if (newStep) {
           appendStep(newStep)
         }

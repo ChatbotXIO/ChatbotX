@@ -57,9 +57,15 @@ export default function ArchiveConversationDialog({
 
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("dialog.archiveConversation.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.archiveFeature", {
+              feature: t("fields.conversation.label"),
+            })}
+          </DialogTitle>
           <DialogDescription>
-            {t("dialog.archiveConversation.description")}
+            {t("messages.archiveFeatureDescription", {
+              feature: t("fields.conversation.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
 

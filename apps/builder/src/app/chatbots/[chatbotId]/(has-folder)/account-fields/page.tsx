@@ -28,7 +28,9 @@ export default async function AccountFieldsPage(props: {
   return (
     <div>
       <div className="flex items-center">
-        <h3 className="flex-1 font-bold text-xl">{t("accountField.title")}</h3>
+        <h3 className="flex-1 font-bold text-xl">
+          {t("fields.accountField.label")}
+        </h3>
       </div>
 
       <Suspense>

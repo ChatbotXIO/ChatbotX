@@ -14,13 +14,13 @@ export type FlowState = {
 }
 
 export type FlowActions = {
-  initialize: (chatbotId: string) => Promise<void>
-  getAllActiveFlows: (chatbotId: string) => Promise<void>
+  initialize: () => Promise<void>
+  getAllActiveFlows: () => Promise<void>
 }
 
 export type FlowStore = FlowState & FlowActions
 
-export const createFlowStore = () =>
+export const createFlowStore = (props: Partial<FlowState>) =>
   createStore<FlowStore>((set, get) => ({
     loading: false,
     error: null,
@@ -28,47 +28,59 @@ export const createFlowStore = () =>
 
     chatbotId: "",
     flows: [],
+    ...props,
 
-    initialize: async (chatbotId: string) => {
+    initialize: async () => {
       const { initialized } = get()
 
       if (initialized) {
         return
       }
 
-      set({ loading: true, error: null })
       try {
-        await get().getAllActiveFlows(chatbotId)
-        set({
-          loading: false,
-          initialized: true,
-        })
+        await get().getAllActiveFlows()
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch flows",
-            loading: false,
-          })
-        }
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch flows",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
-    getAllActiveFlows: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: maxPerPageString,
-        active: "true",
-      })
-      const { data } = await ky
-        .get<PaginatedResponse<FlowResource>>(
-          `/api/chatbots/${chatbotId}/flows?${searchParams.toString()}`,
-        )
-        .json()
+    getAllActiveFlows: async () => {
+      const { chatbotId, loading } = get()
 
-      set({ flows: data })
+      if (loading || !chatbotId) {
+        return
+      }
+
+      try {
+        set({ loading: true, error: null })
+
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+          active: "true",
+        })
+        const { data } = await ky
+          .get<PaginatedResponse<FlowResource>>(
+            `/api/chatbots/${chatbotId}/flows?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({ flows: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch flows",
+        })
+      } finally {
+        set({ loading: false })
+      }
     },
   }))

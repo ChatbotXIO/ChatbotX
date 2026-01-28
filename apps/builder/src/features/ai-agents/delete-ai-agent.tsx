@@ -76,7 +76,7 @@ export function DeleteAIAgentsDialog({
             })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
-            {t("dialog.deleteConfirmation", {
+            {t("messages.deleteConfirmation", {
               feature: t("fields.aiAgent.label"),
             })}
           </DialogDescription>

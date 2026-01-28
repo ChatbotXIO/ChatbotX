@@ -11,7 +11,7 @@ export default async function CreateWebchatPage({
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+      <FlowStoreProvider chatbotId={chatbotId}>
         <CreateWebchatForm />
       </FlowStoreProvider>
     </Suspense>

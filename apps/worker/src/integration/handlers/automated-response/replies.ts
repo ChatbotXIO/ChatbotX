@@ -4,6 +4,7 @@ import {
   type AutomatedResponseReply,
   ReplyType,
 } from "@aha.chat/database/types"
+import { aiProviders } from "@aha.chat/flow-config"
 import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import {
   ChatJobAction,
@@ -14,7 +15,7 @@ import {
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import { AI_PROVIDERS, TEXT } from "./constants"
+import { TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
 
@@ -160,7 +161,7 @@ export async function replyByAutomatedResponse({
 
 export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
   return runAIReply(props, {
-    provider: AI_PROVIDERS.GEMINI,
+    provider: aiProviders.gemini,
     fetchIntegration: async (chatbotId: string) =>
       prisma.integrationGemini.findFirst({
         where: { chatbotId, autoReply: true },
@@ -172,7 +173,7 @@ export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
 
 export function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
   return runAIReply(props, {
-    provider: AI_PROVIDERS.OPENAI,
+    provider: aiProviders.openai,
     fetchIntegration: async (chatbotId: string) =>
       prisma.integrationOpenAI.findFirst({
         where: { chatbotId, autoReply: true },
@@ -187,7 +188,7 @@ export function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
 }
 
 type ProviderRunnerConfig = {
-  provider: (typeof AI_PROVIDERS)[keyof typeof AI_PROVIDERS]
+  provider: (typeof aiProviders)[keyof typeof aiProviders]
   fetchIntegration: (chatbotId: string) => Promise<{ auth: unknown } | null>
   createClient: (apiKey: string) => (modelName: string) => LanguageModel
   onFollowUpError: (ctx: {

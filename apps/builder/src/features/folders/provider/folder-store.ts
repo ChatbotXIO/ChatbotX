@@ -28,6 +28,7 @@ export const createFolderStore = (props: Partial<FolderState>) =>
     loading: false,
     error: null,
     initialized: false,
+
     chatbotId: "",
     folderType: null,
     folders: [],
@@ -40,40 +41,49 @@ export const createFolderStore = (props: Partial<FolderState>) =>
         return
       }
 
-      set({ loading: true, error: null })
-
       try {
         await get().getAllFolders()
-        set({
-          loading: false,
-          initialized: true,
-        })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch inboxes",
-            loading: false,
-          })
-        }
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch folders",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
     getAllFolders: async () => {
-      const searchParams = new URLSearchParams({
-        perPage: maxPerPageString,
-        folderType: get().folderType ?? "",
-      })
-      const { data } = await ky
-        .get<FolderCollection>(
-          `/api/chatbots/${get().chatbotId}/folders?${searchParams.toString()}`,
-        )
-        .json()
+      const { chatbotId, folderType, loading } = get()
 
-      set({ folders: data })
+      if (loading || !chatbotId) {
+        return
+      }
+
+      set({ loading: true, error: null })
+      try {
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+          folderType: folderType ?? "",
+        })
+        const { data } = await ky
+          .get<FolderCollection>(
+            `/api/chatbots/${get().chatbotId}/folders?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({ folders: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch folders",
+        })
+      } finally {
+        set({ loading: false })
+      }
     },
   }))

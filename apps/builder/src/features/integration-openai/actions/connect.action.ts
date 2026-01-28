@@ -7,7 +7,7 @@ import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { openAIModels } from "@/features/openai/models"
+import { openaiModels } from "@/features/openai/models"
 import { authActionClient } from "@/lib/safe-action"
 import {
   type ConnectOpenAISchema,
@@ -36,7 +36,7 @@ export const connectOpenAIAction = authActionClient
           await tx.integrationOpenAI.update({
             where: { id: integrationOpenAI.id },
             data: {
-              model: "openai/gpt-4o-mini",
+              model: openaiModels.gpt4oMini,
               auth: {
                 authType: AuthType.secretText,
                 secretText: parsedInput.apiKey,
@@ -50,10 +50,10 @@ export const connectOpenAIAction = authActionClient
             data: {
               chatbotId,
               integrationType: IntegrationType.openai,
-              openAI: {
+              openai: {
                 create: {
                   chatbotId,
-                  model: openAIModels.gpt4oMini,
+                  model: openaiModels.gpt4oMini,
                   auth: {
                     authType: AuthType.secretText,
                     secretText: parsedInput.apiKey,

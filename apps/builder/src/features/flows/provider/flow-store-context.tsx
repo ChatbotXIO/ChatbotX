@@ -29,14 +29,16 @@ export const FlowStoreProvider = ({
 }: FlowStoreProviderProps) => {
   const storeRef = useRef<FlowStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createFlowStore()
+    storeRef.current = createFlowStore({
+      chatbotId,
+    })
   }
 
   useEffect(() => {
     if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().initialize(chatbotId)
+      storeRef.current.getState().initialize()
     }
-  }, [autoInitialize, chatbotId])
+  }, [autoInitialize])
 
   return (
     <FlowStoreContext.Provider value={storeRef.current}>

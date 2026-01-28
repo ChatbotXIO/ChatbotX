@@ -44,7 +44,7 @@ import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
 import { updateAIAgentRequest } from "@/features/ai-agents/schemas/request"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openAIChatModelOptions } from "../openai/models"
+import { openaiChatModelOptions } from "../openai/models"
 import type { CreateAIAgentRequest } from "./schemas/request"
 
 export function UpdateAIAgentDialog({
@@ -107,10 +107,10 @@ export function UpdateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: t("fields.promptMessages.role.user"), value: "user" },
-      { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
+      { label: "User", value: "user" },
+      { label: "Assistant", value: "assistant" },
     ],
-    [t],
+    [],
   )
 
   const toolOptions = useMemo(
@@ -206,9 +206,9 @@ export function UpdateAIAgentDialog({
                         />
 
                         <SelectField
-                          label={t("fields.openAIModel.label")}
+                          label={t("fields.model.label")}
                           name="models.1.model"
-                          options={openAIChatModelOptions}
+                          options={openaiChatModelOptions}
                           required
                         />
 
@@ -241,7 +241,7 @@ export function UpdateAIAgentDialog({
               <Card>
                 <div className="flex flex-col gap-4 px-5">
                   <div className="font-medium text-sm">
-                    {t("fields.promptMessages.label")}
+                    {t("fields.prompt.label")}
                   </div>
                   {fields.map((item, index) => (
                     <div

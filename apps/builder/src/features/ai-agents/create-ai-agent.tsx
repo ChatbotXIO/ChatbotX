@@ -47,7 +47,7 @@ import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/request"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openAIChatModelOptions } from "../openai/models"
+import { openaiChatModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   files: AIFileModel[]
@@ -99,10 +99,10 @@ export function CreateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: t("fields.promptMessages.role.user"), value: "user" },
-      { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
+      { label: "User", value: "user" },
+      { label: "Assistant", value: "assistant" },
     ],
-    [t],
+    [],
   )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -141,7 +141,7 @@ export function CreateAIAgentDialog({
                 model: "gemini/gemini-2.5-flash-lite",
               },
               {
-                provider: "openAI",
+                provider: "openai",
                 model: "openai/gpt-4o-mini",
               },
             ],
@@ -200,7 +200,7 @@ export function CreateAIAgentDialog({
 
               <div className="flex flex-col items-start gap-2">
                 <div className="font-medium text-sm">
-                  {t("fields.promptMessages.label")}
+                  {t("fields.prompt.label")}
                 </div>
                 {fields.map((field, index) => (
                   <div className="flex w-full items-start gap-2" key={field.id}>
@@ -255,9 +255,9 @@ export function CreateAIAgentDialog({
                   />
 
                   <SelectField
-                    label={t("fields.openAIModel.label")}
+                    label={t("fields.model.label")}
                     name="models.1.model"
-                    options={openAIChatModelOptions}
+                    options={openaiChatModelOptions}
                     required
                   />
 

@@ -73,7 +73,7 @@ export function DeleteLogsDialog({
             {t("messages.deleteFeature", { feature: t("fields.log.label") })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
-            {t("dialog.deleteConfirmation", {
+            {t("messages.deleteConfirmation", {
               feature: t("fields.log.label"),
             })}
           </DialogDescription>

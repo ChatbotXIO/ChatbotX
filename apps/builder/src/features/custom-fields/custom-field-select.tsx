@@ -43,6 +43,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     customFieldTypes,
     includeReserved,
   })
+
   const getAllCustomFields = useCustomFieldStore(
     (state) => state.getAllCustomFields,
   )

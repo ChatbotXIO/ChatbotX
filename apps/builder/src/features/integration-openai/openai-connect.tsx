@@ -51,8 +51,10 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
   return (
     <>
       <SettingRow
-        description={t("openAI.connect.description")}
-        label={t("openAI.connect.title")}
+        description={t("openai.connect.description")}
+        label={t("messages.connectFeature", {
+          feature: t("fields.openai.label"),
+        })}
       >
         {integrationOpenAI ? (
           <AlertDialog>
@@ -64,12 +66,12 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  {t("dialog.disconnect.title", {
+                  {t("messages.disconnectFeature", {
                     feature: t("fields.openai.label"),
                   })}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {t("dialog.disconnect.description", {
+                  {t("messages.disconnectFeatureDescription", {
                     feature: t("fields.openai.label"),
                   })}
                 </AlertDialogDescription>

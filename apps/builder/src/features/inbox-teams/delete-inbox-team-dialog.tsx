@@ -61,7 +61,7 @@ export function DeleteInboxTeamDialog({
             })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
-            {t("dialog.deleteConfirmation", {
+            {t("messages.deleteConfirmation", {
               feature: t("fields.inboxTeam.label"),
             })}
           </DialogDescription>

@@ -508,7 +508,7 @@ model Integration {
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
-  openAI            IntegrationOpenAI?
+  openai            IntegrationOpenAI?
   googleSheets      IntegrationGoogleSheets?
   integrationGemini IntegrationGemini?
 

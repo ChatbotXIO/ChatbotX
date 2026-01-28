@@ -9,7 +9,7 @@ const AIGenerateImageQuality = {
   Low: "ld",
 } as const
 
-export const AIGenerateImageSchema = z.object({
+export const aiGenerateImageSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.aiGenerateImage),
   model: z.string().trim().min(1),
@@ -19,7 +19,7 @@ export const AIGenerateImageSchema = z.object({
   outputCfId: z.cuid2(),
 })
 
-export type AIGenerateImageSchema = z.infer<typeof AIGenerateImageSchema>
+export type AIGenerateImageSchema = z.infer<typeof aiGenerateImageSchema>
 
 export const AIGenerateImageDefaultFn = (
   props?: Partial<AIGenerateImageSchema>,

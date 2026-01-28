@@ -1,5 +1,5 @@
 import { prisma } from "@aha.chat/database"
-import { AI_PROVIDERS, AIGenerateTextProvider } from "@aha.chat/flow-config"
+import { aiProviders } from "@aha.chat/flow-config"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
@@ -17,7 +17,7 @@ export async function getAIProviderConfig(
   }
 
   switch (provider) {
-    case AIGenerateTextProvider.OPENAI: {
+    case aiProviders.openai: {
       const integration = await prisma.integrationOpenAI.findFirst({
         where: { chatbotId },
       })
@@ -34,13 +34,13 @@ export async function getAIProviderConfig(
       }
 
       return {
-        provider: AI_PROVIDERS.OPENAI,
+        provider: aiProviders.openai,
         model: step.model,
         apiKey,
       }
     }
 
-    case AIGenerateTextProvider.GEMINI: {
+    case aiProviders.gemini: {
       const integration = await prisma.integrationGemini.findFirst({
         where: { chatbotId },
       })
@@ -57,7 +57,7 @@ export async function getAIProviderConfig(
       }
 
       return {
-        provider: AI_PROVIDERS.GEMINI,
+        provider: aiProviders.gemini,
         model: step.model,
         apiKey,
       }
@@ -73,22 +73,22 @@ export function createAIModel(
   modelName: string,
 ): LanguageModel {
   switch (config.provider) {
-    case AI_PROVIDERS.OPENAI: {
+    case aiProviders.openai: {
       const openai = createOpenAI({ apiKey: config.apiKey })
       return openai(modelName) as LanguageModel
     }
 
-    case AI_PROVIDERS.GEMINI: {
+    case aiProviders.gemini: {
       const google = createGoogleGenerativeAI({ apiKey: config.apiKey })
       return google(modelName) as unknown as LanguageModel
     }
 
-    case AI_PROVIDERS.CLAUDE: {
+    case aiProviders.claude: {
       const anthropic = createAnthropic({ apiKey: config.apiKey })
       return anthropic(modelName) as unknown as LanguageModel
     }
 
-    case AI_PROVIDERS.DEEPSEEK: {
+    case aiProviders.deepseek: {
       const openai = createOpenAI({
         apiKey: config.apiKey,
         baseURL: config.baseURL,

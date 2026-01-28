@@ -13,13 +13,13 @@ export type InboxState = {
 }
 
 export type InboxActions = {
-  initialize: (chatbotId: string) => Promise<void>
-  getAllInboxes: (chatbotId: string) => Promise<void>
+  initialize: () => Promise<void>
+  getAllInboxes: () => Promise<void>
 }
 
 export type InboxStore = InboxState & InboxActions
 
-export const createInboxStore = () =>
+export const createInboxStore = (props: Partial<InboxState>) =>
   createStore<InboxStore>((set, get) => ({
     loading: false,
     error: null,
@@ -27,47 +27,56 @@ export const createInboxStore = () =>
 
     chatbotId: "",
     inboxes: [],
+    ...props,
 
-    initialize: async (chatbotId: string) => {
+    initialize: async () => {
       const { initialized } = get()
 
       if (initialized) {
         return
       }
 
-      set({ loading: true, error: null })
-
       try {
-        await get().getAllInboxes(chatbotId)
-        set({
-          loading: false,
-          initialized: true,
-        })
+        await get().getAllInboxes()
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch inboxes",
-            loading: false,
-          })
-        }
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch inboxes",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
-    getAllInboxes: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: maxPerPageString,
-      })
-      const { data } = await ky
-        .get<InboxCollection>(
-          `/api/chatbots/${chatbotId}/inboxes?${searchParams.toString()}`,
-        )
-        .json()
+    getAllInboxes: async () => {
+      const { chatbotId, loading } = get()
 
-      set({ inboxes: data })
+      if (loading || !chatbotId) {
+        return
+      }
+      set({ loading: true, error: null })
+      try {
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+        })
+        const { data } = await ky
+          .get<InboxCollection>(
+            `/api/chatbots/${chatbotId}/inboxes?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({ inboxes: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch inboxes",
+        })
+      } finally {
+        set({ loading: false })
+      }
     },
   }))

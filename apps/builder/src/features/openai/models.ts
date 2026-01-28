@@ -1,4 +1,4 @@
-export const openAIModels = {
+export const openaiModels = {
   gpt52Pro: "openai/gpt-5.2-pro",
   gpt52ChatLatest: "openai/gpt-5.2-chat-latest",
   gpt52: "openai/gpt-5.2",
@@ -22,81 +22,81 @@ export const openAIModels = {
   gpt4: "openai/gpt-4",
 } as const
 
-export const openAIChatModelOptions = [
+export const openaiChatModelOptions = [
   {
     label: "GPT-5.2 Pro",
-    value: openAIModels.gpt52Pro,
+    value: openaiModels.gpt52Pro,
   },
   {
     label: "GPT-5.2 Chat Latest",
-    value: openAIModels.gpt52ChatLatest,
+    value: openaiModels.gpt52ChatLatest,
   },
   {
     label: "GPT-5.2",
-    value: openAIModels.gpt52,
+    value: openaiModels.gpt52,
   },
   {
     label: "GPT-5.1 Codex Mini",
-    value: openAIModels.gpt51CodexMini,
+    value: openaiModels.gpt51CodexMini,
   },
   {
     label: "GPT-5.1 Codex",
-    value: openAIModels.gpt51Codex,
+    value: openaiModels.gpt51Codex,
   },
   {
     label: "GPT-5.1 Chat Latest",
-    value: openAIModels.gpt51ChatLatest,
+    value: openaiModels.gpt51ChatLatest,
   },
   {
     label: "GPT-5.1",
-    value: openAIModels.gpt51,
+    value: openaiModels.gpt51,
   },
   {
     label: "GPT-5 Pro",
-    value: openAIModels.gpt5Pro,
+    value: openaiModels.gpt5Pro,
   },
   {
     label: "GPT-5",
-    value: openAIModels.gpt5,
+    value: openaiModels.gpt5,
   },
   {
     label: "GPT-5 Mini",
-    value: openAIModels.gpt5Mini,
+    value: openaiModels.gpt5Mini,
   },
   {
     label: "GPT-5 Nano",
-    value: openAIModels.gpt5Nano,
+    value: openaiModels.gpt5Nano,
   },
   {
     label: "GPT-5 Codex",
-    value: openAIModels.gpt5Codex,
+    value: openaiModels.gpt5Codex,
   },
   {
     label: "GPT-5 Chat Latest",
-    value: openAIModels.gpt5ChatLatest,
+    value: openaiModels.gpt5ChatLatest,
   },
   {
     label: "GPT-4.1",
-    value: openAIModels.gpt41,
+    value: openaiModels.gpt41,
   },
   {
     label: "GPT-4.1 Mini",
-    value: openAIModels.gpt41Mini,
+    value: openaiModels.gpt41Mini,
   },
   {
     label: "GPT-4.1 Nano",
-    value: openAIModels.gpt41Nano,
+    value: openaiModels.gpt41Nano,
   },
   {
     label: "GPT-4o",
-    value: openAIModels.gpt4o,
+    value: openaiModels.gpt4o,
   },
   {
     label: "GPT-4o Mini",
-    value: openAIModels.gpt4oMini,
+    value: openaiModels.gpt4oMini,
   },
 ]
-export const openAIChatModels = openAIChatModelOptions.map(
+export const openaiChatModels = openaiChatModelOptions.map(
   (model) => model.value,
 )
-export type OpenAIChatModel = (typeof openAIChatModels)[number]
+export type OpenAIChatModel = (typeof openaiChatModels)[number]

@@ -6,7 +6,9 @@ import { useCallback, useEffect } from "react"
 import { useForm, useFormContext } from "react-hook-form"
 import { z } from "zod"
 
-const defaultStep = aiGenerateTextDefaultFn("openai")
+const defaultStep = aiGenerateTextDefaultFn({
+  provider: "openai",
+})
 const DEFAULT_TEMPERATURE = defaultStep.temperature
 const DEFAULT_MAX_TOKENS = defaultStep.maxTokens
 

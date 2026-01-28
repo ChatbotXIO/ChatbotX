@@ -71,7 +71,11 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
       </DialogTrigger>
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("openAI.connect.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.connectFeature", {
+              feature: t("fields.openai.label"),
+            })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <Form {...form}>
@@ -102,7 +106,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
                   max={2}
                   min={0}
                   name="temperature"
-                  step={0.1}
+                  stepper={0.1}
                 />
 
                 <InputNumberField
@@ -110,7 +114,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
                   max={8192}
                   min={1}
                   name="maxTokens"
-                  step={1}
+                  stepper={1}
                 />
               </CollapsibleContent>
             </Collapsible>

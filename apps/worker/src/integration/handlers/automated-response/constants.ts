@@ -38,8 +38,6 @@ export const JSON_TYPE = {
 } as const
 export type JsonType = (typeof JSON_TYPE)[keyof typeof JSON_TYPE]
 
-export { AI_PROVIDERS, type AIProvider } from "@aha.chat/flow-config"
-
 export const AUTH_TYPES = {
   TOKEN: "TOKEN",
   HEADERS: "HEADERS",

@@ -57,12 +57,12 @@ export default function EnableBotDialog({
       <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.enable.title", {
+            {t("messages.enableFeature", {
               feature: t("fields.bot.label"),
             })}
           </DialogTitle>
           <DialogDescription>
-            {t("dialog.enable.description", {
+            {t("messages.enableFeatureDescription", {
               feature: t("fields.bot.label"),
             })}
           </DialogDescription>

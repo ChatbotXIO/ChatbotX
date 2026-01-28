@@ -29,18 +29,16 @@ export const AIToolsStoreProvider = ({
 }: AIToolsStoreProviderProps) => {
   const storeRef = useRef<AIToolsStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createAIToolsStore()
+    storeRef.current = createAIToolsStore({
+      chatbotId,
+    })
   }
 
   useEffect(() => {
-    if (storeRef.current && autoInitialize && chatbotId) {
-      const state = storeRef.current.getState()
-      // Only fetch if not already initialized for this chatbotId
-      if (!state.initialized || state.chatbotId !== chatbotId) {
-        state.fetchTools(chatbotId)
-      }
+    if (storeRef.current && autoInitialize) {
+      storeRef.current.getState().initialize()
     }
-  }, [chatbotId, autoInitialize])
+  }, [autoInitialize])
 
   return (
     <AIToolsStoreContext.Provider value={storeRef.current}>

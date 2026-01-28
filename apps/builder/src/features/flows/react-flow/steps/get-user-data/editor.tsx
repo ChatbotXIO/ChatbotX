@@ -121,7 +121,7 @@ const GetUserDataStepForm = ({
                   min={1}
                   name="autoSkipTimeValue"
                   required
-                  step={1}
+                  stepper={1}
                 />
                 <DelayUnitSelect name="autoSkipTimeUnit" required />
               </div>
@@ -133,7 +133,7 @@ const GetUserDataStepForm = ({
               min={1}
               name="autoSkipFailAttempts"
               required
-              step={1}
+              stepper={1}
             />
           </>
         )}

@@ -57,9 +57,15 @@ export default function DisableBotDialog({
 
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("dialog.disableBot.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.disableFeature", {
+              feature: t("fields.conversation.label"),
+            })}
+          </DialogTitle>
           <DialogDescription>
-            {t("dialog.disableBot.description")}
+            {t("messages.disableFeatureDescription", {
+              feature: t("fields.conversation.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
 

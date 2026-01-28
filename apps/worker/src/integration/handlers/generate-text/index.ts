@@ -5,7 +5,7 @@ import {
   type Gender,
   reservedCustomFieldNames,
 } from "@aha.chat/database/types"
-import { AI_PROVIDERS } from "@aha.chat/flow-config"
+import { aiProviders } from "@aha.chat/flow-config"
 import { type ModelMessage, streamText } from "ai"
 import { logger } from "../../../lib/logger"
 import {
@@ -19,7 +19,7 @@ import {
   TOOL_RESULT_SUFFIX,
 } from "../automated-response/constants"
 import { processStreamingText } from "../automated-response/text"
-import type { FlowStepProps } from "../step-handler"
+import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
 import { createAIModel, getAIProviderConfig } from "./provider"
 import { getToolsFromStepConfig } from "./tools"
@@ -38,7 +38,7 @@ type ConversationSummary = {
 export async function handleAIGenerateText({
   conversation,
   step,
-}: FlowStepProps<Record<string, unknown>>) {
+}: ExecuteStepProps<Record<string, unknown>>) {
   const stepConfig = step as AIGenerateTextStep
 
   try {
@@ -61,7 +61,7 @@ export async function handleAIGenerateText({
     const temperature = stepConfig.temperature
 
     const finalMaxOutputTokens =
-      aiConfig.provider === AI_PROVIDERS.GEMINI &&
+      aiConfig.provider === aiProviders.gemini &&
       maxOutputTokens < GEMINI_MIN_TOKENS
         ? GEMINI_MIN_TOKENS
         : maxOutputTokens

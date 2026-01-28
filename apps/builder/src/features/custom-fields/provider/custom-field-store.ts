@@ -20,13 +20,13 @@ export type CustomFieldState = {
 }
 
 export type CustomFieldActions = {
-  initialize: (chatbotId: string) => Promise<void>
+  initialize: () => Promise<void>
   getAllCustomFields: () => Promise<void>
 }
 
 export type CustomFieldStore = CustomFieldState & CustomFieldActions
 
-export const createCustomFieldStore = () =>
+export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
   createStore<CustomFieldStore>((set, get) => ({
     loading: false,
     error: null,
@@ -34,34 +34,26 @@ export const createCustomFieldStore = () =>
 
     chatbotId: "",
     customFields: [],
+    ...props,
 
-    initialize: async (chatbotId: string) => {
+    initialize: async () => {
       const { initialized } = get()
 
       if (initialized) {
         return
       }
 
-      set({ loading: true, error: null, chatbotId })
-
       try {
         await get().getAllCustomFields()
-        set({
-          loading: false,
-          initialized: true,
-        })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch custom fields",
-            loading: false,
-          })
-        }
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch custom fields",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
@@ -73,7 +65,7 @@ export const createCustomFieldStore = () =>
         return
       }
 
-      set({ loading: true, error: null, chatbotId })
+      set({ loading: true, error: null })
 
       try {
         const searchParams = new URLSearchParams({
@@ -87,22 +79,16 @@ export const createCustomFieldStore = () =>
 
         set({
           customFields: data,
-          loading: false,
-          initialized: true,
         })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch custom fields",
-            loading: false,
-          })
-        }
-        throw error
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch custom fields",
+        })
+      } finally {
+        set({ loading: false })
       }
     },
   }))

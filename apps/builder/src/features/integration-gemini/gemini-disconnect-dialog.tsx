@@ -45,12 +45,12 @@ export const GeminiDisconnectDialog = () => {
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.disconnect.title", {
+            {t("messages.disconnectFeature", {
               feature: t("fields.gemini.label"),
             })}
           </DialogTitle>
           <DialogDescription>
-            {t("dialog.disconnect.description", {
+            {t("messages.disconnectFeatureDescription", {
               feature: t("fields.gemini.label"),
             })}
           </DialogDescription>

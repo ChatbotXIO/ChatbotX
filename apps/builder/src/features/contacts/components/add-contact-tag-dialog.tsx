@@ -53,7 +53,7 @@ export default function AddContactTagDialog({
                 feature: t("fields.contact.label"),
               }),
             )
-            getAllActiveTags(chatbotId)
+            getAllActiveTags()
             setOpen(false)
             resetFormAndAction()
           },

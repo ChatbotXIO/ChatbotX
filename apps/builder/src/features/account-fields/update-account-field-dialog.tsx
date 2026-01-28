@@ -83,7 +83,11 @@ export function UpdateAccountFieldDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("accountField.updateForm.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.editFeature", {
+              feature: t("fields.accountField.label"),
+            })}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">

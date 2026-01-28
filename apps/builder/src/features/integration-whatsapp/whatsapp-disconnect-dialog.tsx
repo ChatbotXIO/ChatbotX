@@ -58,12 +58,12 @@ export function WhatsappDisconnectDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t("dialog.disconnect.title", {
+            {t("messages.disconnectFeature", {
               feature: t("fields.whatsapp.label"),
             })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("dialog.disconnect.description", {
+            {t("messages.disconnectFeatureDescription", {
               feature: t("fields.whatsapp.label"),
             })}
           </AlertDialogDescription>

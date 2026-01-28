@@ -1,7 +1,3 @@
-import type {
-  AIGenerateTextProviderType,
-  StepType,
-} from "@aha.chat/flow-config"
 import {
   DropdownMenuItem,
   DropdownMenuPortal,
@@ -13,8 +9,8 @@ import type { MenuItem } from "../nodes/types"
 
 function MenuRow({ menuItem }: { menuItem: MenuItem }) {
   return (
-    <div className="flex gap-2">
-      <menuItem.icon size={16} />
+    <div className="flex items-center gap-2">
+      <menuItem.icon className="size-4" />
       {menuItem.label}
     </div>
   )
@@ -25,7 +21,7 @@ export default function RecursiveDropdownMenu({
   onClick,
 }: {
   data: MenuItem[]
-  onClick: (name: StepType, provider?: AIGenerateTextProviderType) => void
+  onClick: (menuItem: MenuItem) => void
 }) {
   return (
     <>
@@ -48,9 +44,7 @@ export default function RecursiveDropdownMenu({
         ) : (
           <DropdownMenuItem
             key={menuItem.stepType}
-            onClick={() =>
-              menuItem.stepType && onClick(menuItem.stepType, menuItem.provider)
-            }
+            onClick={() => menuItem.stepType && onClick(menuItem)}
           >
             <MenuRow menuItem={menuItem} />
           </DropdownMenuItem>

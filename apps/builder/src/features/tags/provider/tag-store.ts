@@ -1,5 +1,6 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { maxPerPageString } from "@/lib/shared-request"
 import type { TagCollection, TagResource } from "../schemas/resource"
 
 export type TagState = {
@@ -13,12 +14,12 @@ export type TagState = {
 
 export type TagActions = {
   initialize: () => Promise<void>
-  getAllActiveTags: (chatbotId: string) => Promise<void>
+  getAllActiveTags: () => Promise<void>
 }
 
 export type TagStore = TagState & TagActions
 
-export const createTagStore = () =>
+export const createTagStore = (props: Partial<TagState>) =>
   createStore<TagStore>((set, get) => ({
     loading: false,
     error: null,
@@ -26,6 +27,7 @@ export const createTagStore = () =>
 
     chatbotId: "",
     tags: [],
+    ...props,
 
     initialize: async () => {
       const { initialized } = get()
@@ -34,40 +36,46 @@ export const createTagStore = () =>
         return
       }
 
-      set({ loading: true, error: null })
-
       try {
-        await get().getAllActiveTags(get().chatbotId)
-        set({
-          loading: false,
-          initialized: true,
-        })
+        await get().getAllActiveTags()
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch tags",
-            loading: false,
-          })
-        }
+        set({
+          error:
+            error instanceof HTTPError ? error.message : "Failed to fetch tags",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
-    getAllActiveTags: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: "9999999",
-        active: "true",
-      })
-      const { data } = await ky
-        .get<TagCollection>(
-          `/api/chatbots/${chatbotId}/tags?${searchParams.toString()}`,
-        )
-        .json()
+    getAllActiveTags: async () => {
+      const { chatbotId, loading } = get()
 
-      set({ tags: data })
+      if (loading || !chatbotId) {
+        return
+      }
+
+      set({ loading: true, error: null })
+
+      try {
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+          active: "true",
+        })
+        const { data } = await ky
+          .get<TagCollection>(
+            `/api/chatbots/${chatbotId}/tags?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({ tags: data, loading: false })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError ? error.message : "Failed to fetch tags",
+        })
+      } finally {
+        set({ loading: false })
+      }
     },
   }))

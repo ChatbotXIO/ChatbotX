@@ -29,14 +29,16 @@ export const InboxStoreProvider = ({
 }: InboxStoreProviderProps) => {
   const storeRef = useRef<InboxStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createInboxStore()
+    storeRef.current = createInboxStore({
+      chatbotId,
+    })
   }
 
   useEffect(() => {
     if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().initialize(chatbotId)
+      storeRef.current.getState().initialize()
     }
-  }, [chatbotId, autoInitialize])
+  }, [autoInitialize])
 
   return (
     <InboxStoreContext.Provider value={storeRef.current}>
