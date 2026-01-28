@@ -56,7 +56,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
         defaultValues: {
           apiKey: "",
           temperature: 1.0,
-          maxTokens: 200,
+          maxOutputTokens: 200,
         },
       },
     },
@@ -110,10 +110,10 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
                 />
 
                 <InputNumberField
-                  label={t("fields.maxTokens.label")}
+                  label={t("fields.maxOutputTokens.label")}
                   max={8192}
                   min={1}
-                  name="maxTokens"
+                  name="maxOutputTokens"
                   stepper={1}
                 />
               </CollapsibleContent>

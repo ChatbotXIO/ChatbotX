@@ -50,7 +50,7 @@ export const connectGeminiAction = chatbotActionClient
                 secretText: parsedInput.apiKey,
               } as SecretTextAuthValue,
               temperature: parsedInput.temperature,
-              maxTokens: parsedInput.maxTokens,
+              maxOutputTokens: parsedInput.maxOutputTokens,
             },
           })
         } else {
@@ -67,7 +67,7 @@ export const connectGeminiAction = chatbotActionClient
                     secretText: parsedInput.apiKey,
                   } as SecretTextAuthValue,
                   temperature: parsedInput.temperature,
-                  maxTokens: parsedInput.maxTokens,
+                  maxOutputTokens: parsedInput.maxOutputTokens,
                 },
               },
             },

@@ -26,7 +26,7 @@ export const createAIAgentRequest = z.object({
     ]),
   ),
   temperature: z.number().min(0).max(2),
-  maxTokens: z.number().min(1).max(32_768),
+  maxOutputTokens: z.number().min(1).max(32_768),
   tools: z.array(z.string()),
   isDefault: z.boolean(),
 })

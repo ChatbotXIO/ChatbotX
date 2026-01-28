@@ -107,8 +107,8 @@ export function UpdateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: "User", value: "user" },
-      { label: "Assistant", value: "assistant" },
+      { label: "User", value: AIMessageRole.user },
+      { label: "Assistant", value: AIMessageRole.assistant },
     ],
     [],
   )
@@ -160,7 +160,7 @@ export function UpdateAIAgentDialog({
       setValue("prompt", agent.prompt ?? "")
       setValue("models", agent.models as CreateAIAgentRequest["models"])
       setValue("temperature", agent.temperature)
-      setValue("maxTokens", agent.maxTokens)
+      setValue("maxOutputTokens", agent.maxOutputTokens)
       setValue("messages", agent.messages as CreateAIAgentRequest["messages"])
       setValue("tools", agent.tools)
     }
@@ -221,10 +221,10 @@ export function UpdateAIAgentDialog({
                         />
 
                         <SliderField
-                          label={t("fields.maxTokens.label")}
+                          label={t("fields.maxOutputTokens.label")}
                           max={32_768}
                           min={1}
-                          name="maxTokens"
+                          name="maxOutputTokens"
                           step={1}
                         />
                       </PopoverContent>

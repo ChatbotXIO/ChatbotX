@@ -22,13 +22,13 @@ export const aiGenerateTextSchema = z.object({
   stepType: z.literal(StepType.aiGenerateText),
   provider: z.enum(aiProviders),
   model: z.string().trim().min(1),
-  prompt: z.string().trim().optional(),
+  system: z.string().trim().optional(),
   text: z.string().trim().min(1),
   outputCfId: z.string().trim().min(1),
   tools: z.array(z.string()).optional(),
   remember: z.boolean(),
   temperature: z.number().min(0).max(2),
-  maxTokens: z.number().int().min(250).max(4096),
+  maxOutputTokens: z.number().int().min(250).max(4096),
 })
 
 export type AIGenerateTextSchema = z.infer<typeof aiGenerateTextSchema>
@@ -45,13 +45,13 @@ export const aiGenerateTextDefaultFn = (
     id: createId(),
     provider: aiProviders.openai,
     model,
-    prompt: "",
+    system: "",
     text: "",
     outputCfId: "",
     tools: [],
     remember: false,
     temperature: 1.0,
-    maxTokens: 250,
+    maxOutputTokens: 250,
     ...props,
     stepType: StepType.aiGenerateText,
   }

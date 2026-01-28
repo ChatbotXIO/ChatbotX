@@ -1,85 +1,53 @@
 import { prisma } from "@aha.chat/database"
 import {
   AIMessageRole,
+  type ConversationModel,
   FieldType,
   type Gender,
   reservedCustomFieldNames,
 } from "@aha.chat/database/types"
-import { aiProviders } from "@aha.chat/flow-config"
-import { type ModelMessage, streamText } from "ai"
+import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
+import { type LanguageModel, type ModelMessage, streamText } from "ai"
+import { getAIIntegrationInDB, getAIModel } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
 import {
-  DEFAULT_MAX_TOKENS,
-  EMPTY_STRING,
-  GEMINI_MIN_TOKENS,
   MAGIC_NUMBERS,
   TEXT,
-  TOOL_CHOICE,
   TOOL_RESULT_PREFIX,
   TOOL_RESULT_SUFFIX,
 } from "../automated-response/constants"
 import { processStreamingText } from "../automated-response/text"
 import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
-import { createAIModel, getAIProviderConfig } from "./provider"
-import { getToolsFromStepConfig } from "./tools"
-import type { AIGenerateTextStep } from "./types"
+import { getAIToolset } from "./tools"
 
 type StreamTextResult = Awaited<ReturnType<typeof streamText>>
 type ToolResults = Awaited<StreamTextResult["toolResults"]>
 
-type ConversationSummary = {
-  id: string
-  contactId: string | null
-  inboxId: string
-  chatbotId: string
-}
-
 export async function handleAIGenerateText({
   conversation,
   step,
-}: ExecuteStepProps<Record<string, unknown>>) {
-  const stepConfig = step as AIGenerateTextStep
-
+}: ExecuteStepProps<AIGenerateTextSchema>) {
   try {
-    const messages = await buildAIMessages(conversation.id, stepConfig)
+    const messages = await buildAIMessages(conversation, step)
 
-    const aiConfig = await getAIProviderConfig(
-      stepConfig,
-      conversation.chatbotId,
-    )
-    if (!aiConfig) {
-      return
-    }
+    const aiConfig = await getAIIntegrationInDB({
+      chatbotId: conversation.chatbotId,
+      provider: step.provider,
+    })
 
-    const model = createAIModel(aiConfig, aiConfig.model)
+    const model = getAIModel(aiConfig, aiConfig.model)
 
-    const maxOutputTokens =
-      typeof stepConfig.maxTokens === "number"
-        ? stepConfig.maxTokens
-        : DEFAULT_MAX_TOKENS
-    const temperature = stepConfig.temperature
+    const toolSet = await getAIToolset(conversation.chatbotId, step.tools || [])
 
-    const finalMaxOutputTokens =
-      aiConfig.provider === aiProviders.gemini &&
-      maxOutputTokens < GEMINI_MIN_TOKENS
-        ? GEMINI_MIN_TOKENS
-        : maxOutputTokens
-
-    const toolSet = await getToolsFromStepConfig(
-      conversation.chatbotId,
-      stepConfig.tools || [],
-    )
-
-    const result = await streamText({
-      model,
-      system: stepConfig.prompt || EMPTY_STRING,
+    const result = streamText({
+      model: "openai:gpt-4o-mini",
+      system: step.system,
       messages,
-      maxOutputTokens: finalMaxOutputTokens,
-      temperature,
       tools: toolSet,
-      toolChoice:
-        Object.keys(toolSet).length > 0 ? TOOL_CHOICE.AUTO : undefined,
+      toolChoice: Object.keys(toolSet).length > 0 ? "auto" : undefined,
+      maxOutputTokens: step.maxOutputTokens,
+      temperature: step.temperature,
     })
 
     const toolCalls = await result.toolCalls
@@ -93,19 +61,19 @@ export async function handleAIGenerateText({
 
     if (toolCalls && toolCalls.length > 0) {
       await handleToolCallsFollowUp({
-        model,
+        model: model(step.model),
         messages,
         toolResults,
         fullText,
-        stepConfig,
+        stepConfig: step,
         conversation,
-        finalMaxOutputTokens,
-        temperature,
+        finalMaxOutputTokens: step.maxOutputTokens,
+        temperature: step.temperature,
       })
     } else {
       await saveResultToCustomField({
         contactId: conversation.contactId,
-        customFieldId: stepConfig.outputCfId,
+        customFieldId: step.outputCfId,
         fullText,
         messageCount,
         chatbotId: conversation.chatbotId,
@@ -115,8 +83,8 @@ export async function handleAIGenerateText({
     logger.error("[ai-generate-text] Step failed", {
       error,
       conversationId: conversation.id,
-      stepId: stepConfig.id,
-      stepType: stepConfig.stepType,
+      stepId: step.id,
+      stepType: step.stepType,
     })
     throw error
   }
@@ -132,12 +100,12 @@ async function handleToolCallsFollowUp({
   finalMaxOutputTokens,
   temperature,
 }: {
-  model: ReturnType<typeof createAIModel>
+  model: LanguageModel
   messages: Awaited<ReturnType<typeof buildAIMessages>>
   toolResults: ToolResults
   fullText: string
-  stepConfig: AIGenerateTextStep
-  conversation: ConversationSummary
+  stepConfig: AIGenerateTextSchema
+  conversation: ConversationModel
   finalMaxOutputTokens: number
   temperature: number
 }): Promise<void> {
@@ -163,7 +131,7 @@ async function handleToolCallsFollowUp({
   try {
     const followUpResult = await streamText({
       model,
-      system: stepConfig.prompt || EMPTY_STRING,
+      system: stepConfig.system,
       messages: followUpMessages,
       maxOutputTokens: finalMaxOutputTokens,
       temperature,

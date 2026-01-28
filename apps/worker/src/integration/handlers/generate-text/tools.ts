@@ -1,24 +1,26 @@
 import type { ToolSet } from "ai"
-import { TOOL_PREFIX } from "../automated-response/constants"
 import {
   getAIFileTools,
   getAIFunctionTools,
   getMCPServerTools,
-  parseSelectedIdsFromTools,
-} from "../automated-response/tools"
+} from "../../../lib/ai"
+import { toolPrefix } from "../automated-response/constants"
 
-export function parseToolIds(toolIds: string[], prefix: string): string[] {
-  return parseSelectedIdsFromTools(toolIds, prefix)
+export function parseToolIds(allTools: string[], prefix: string): string[] {
+  return allTools
+    .filter((value) => value.startsWith(prefix))
+    .map((value) => value.replace(prefix, ""))
+    .filter((id) => Boolean(id))
 }
 
-export async function getToolsFromStepConfig(
+export async function getAIToolset(
   chatbotId: string,
   tools: string[],
 ): Promise<ToolSet> {
   try {
-    const fileIds = parseToolIds(tools, TOOL_PREFIX.file)
-    const functionIds = parseToolIds(tools, TOOL_PREFIX.fn)
-    const mcpIds = parseToolIds(tools, TOOL_PREFIX.mcp)
+    const fileIds = parseToolIds(tools, toolPrefix.file)
+    const functionIds = parseToolIds(tools, toolPrefix.fn)
+    const mcpIds = parseToolIds(tools, toolPrefix.mcp)
 
     const [fileTools, functionTools, mcpTools] = await Promise.all([
       getAIFileTools(chatbotId, fileIds),

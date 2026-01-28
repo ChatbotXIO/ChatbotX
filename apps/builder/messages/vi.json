@@ -748,7 +748,7 @@
     "max": {
       "label": "Tối đa"
     },
-    "maxTokens": {
+    "maxOutputTokens": {
       "label": "Token tối đa",
       "placeholder": "Số lượng token tối đa để tạo"
     },

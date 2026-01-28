@@ -8,7 +8,7 @@ export const connectOpenAISchema = z.object({
   apiKey: z.string(),
   model: z.enum(openaiModels).default(openaiModels.gpt4oMini),
   temperature: z.coerce.number().min(0).max(2),
-  maxTokens: z.coerce.number().int().min(1).max(8192),
+  maxOutputTokens: z.coerce.number().int().min(1).max(8192),
 })
 export type ConnectOpenAISchema = z.infer<typeof connectOpenAISchema>
 

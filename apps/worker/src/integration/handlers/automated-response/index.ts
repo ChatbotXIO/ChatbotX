@@ -1,13 +1,13 @@
 import { prisma } from "@aha.chat/database"
-import { SenderType } from "@aha.chat/database/types"
+import { AIMessageRole, SenderType } from "@aha.chat/database/types"
 import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import type { ModelMessage } from "ai"
+import { getAIToolset } from "../generate-text/tools"
 import {
   replyByAutomatedResponse,
   replyByGemini,
   replyByOpenAI,
 } from "./replies"
-import { getSelectedTools } from "./tools"
 
 export async function triggerAutomatedResponse({
   message,
@@ -40,7 +40,10 @@ export async function triggerAutomatedResponse({
       continue
     }
     if (msg.senderType === SenderType.contact) {
-      lastAIMessages.push({ role: "user", content: msg.content })
+      lastAIMessages.push({
+        role: AIMessageRole.user,
+        content: msg.content,
+      })
     } else if (
       msg.senderType === SenderType.user ||
       msg.senderType === SenderType.bot
@@ -50,15 +53,19 @@ export async function triggerAutomatedResponse({
   }
   lastAIMessages.reverse()
 
-  const { tools, availableTools } = await getSelectedTools(aiAgent)
+  const toolset = await getAIToolset(aiAgent.chatbotId, aiAgent.tools)
 
   if (
     await replyByOpenAI({
       message,
       lastAIMessages,
       aiAgent,
-      tools,
-      availableTools,
+      tools: toolset,
+      availableTools: {
+        fileTools: [],
+        functionTools: [],
+        mcpTools: [],
+      },
     })
   ) {
     return
@@ -68,8 +75,12 @@ export async function triggerAutomatedResponse({
       message,
       lastAIMessages,
       aiAgent,
-      tools,
-      availableTools,
+      tools: toolset,
+      availableTools: {
+        fileTools: [],
+        functionTools: [],
+        mcpTools: [],
+      },
     })
   ) {
     return

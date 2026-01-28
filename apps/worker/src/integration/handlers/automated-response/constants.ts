@@ -21,7 +21,7 @@ export const TEXT = {
   fileSearchQueryDescription: "Search keywords to find relevant information",
 } as const
 
-export const TOOL_PREFIX = {
+export const toolPrefix = {
   file: "file:",
   fn: "fn:",
   mcp: "mcp:",
@@ -91,13 +91,7 @@ export const SUPPORTED_IMAGE_EXTENSIONS = [
 
 export const DEFAULT_MAX_TOKENS = 250
 export const GEMINI_MIN_TOKENS = 500
-export const MAX_CONVERSATION_HISTORY = 100
-
-export const TOOL_CHOICE = {
-  AUTO: "auto",
-} as const
-
-export const EMPTY_STRING = ""
+export const maxConversationHistory = 100
 
 export const TOOL_RESULT_PREFIX = "Tool "
 export const TOOL_RESULT_SUFFIX = " result: "

@@ -1,6 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import {
   type AIAgentProvider,
+  AIMessageRole,
   type AutomatedResponseReply,
   ReplyType,
 } from "@aha.chat/database/types"
@@ -241,7 +242,7 @@ async function runAIReply(
       model: clientFactory(modelName),
       system: completePrompt,
       messages: lastAIMessages,
-      maxOutputTokens: aiAgent.maxTokens,
+      maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
       tools,
       toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
@@ -262,11 +263,11 @@ async function runAIReply(
       const followUpMessages: ModelMessage[] = [
         ...lastAIMessages,
         {
-          role: "assistant",
+          role: AIMessageRole.assistant,
           content: fullText || TEXT.assistantFoundPrefix,
         },
         {
-          role: "user",
+          role: AIMessageRole.user,
           content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
         },
       ]
@@ -275,7 +276,7 @@ async function runAIReply(
           model: clientFactory(modelName),
           system: completePrompt,
           messages: followUpMessages,
-          maxOutputTokens: aiAgent.maxTokens,
+          maxOutputTokens: aiAgent.maxOutputTokens,
           temperature: aiAgent.temperature,
         })
         const { messageCount: followUpMessageCount } =

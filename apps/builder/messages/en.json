@@ -748,7 +748,7 @@
     "max": {
       "label": "Maximum"
     },
-    "maxTokens": {
+    "maxOutputTokens": {
       "label": "Max Tokens",
       "placeholder": "Maximum number of tokens to generate"
     },

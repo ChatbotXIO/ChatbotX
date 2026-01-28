@@ -107,10 +107,10 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
               />
 
               <InputNumberField
-                label={t("fields.maxTokens.label")}
+                label={t("fields.maxOutputTokens.label")}
                 max={4096}
                 min={250}
-                name="maxTokens"
+                name="maxOutputTokens"
                 required
                 stepper={1}
               />

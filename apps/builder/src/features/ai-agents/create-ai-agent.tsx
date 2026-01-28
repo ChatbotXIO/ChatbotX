@@ -1,10 +1,12 @@
 "use client"
 
-import type {
-  AIFileModel,
-  AIFunctionModel,
-  AIMCPServerModel,
+import {
+  type AIFileModel,
+  type AIFunctionModel,
+  type AIMCPServerModel,
+  AIMessageRole,
 } from "@aha.chat/database/types"
+import { aiProviders, defaultAIModelIds } from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -99,8 +101,8 @@ export function CreateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: "User", value: "user" },
-      { label: "Assistant", value: "assistant" },
+      { label: "User", value: AIMessageRole.user },
+      { label: "Assistant", value: AIMessageRole.assistant },
     ],
     [],
   )
@@ -137,16 +139,16 @@ export function CreateAIAgentDialog({
             messages: [],
             models: [
               {
-                provider: "gemini",
-                model: "gemini/gemini-2.5-flash-lite",
+                provider: aiProviders.gemini,
+                model: defaultAIModelIds.gemini,
               },
               {
-                provider: "openai",
-                model: "openai/gpt-4o-mini",
+                provider: aiProviders.openai,
+                model: defaultAIModelIds.openai,
               },
             ],
             temperature: 0.4,
-            maxTokens: 2048,
+            maxOutputTokens: 2048,
             tools: [],
           },
         },
@@ -161,7 +163,7 @@ export function CreateAIAgentDialog({
 
   const addMessage = () => {
     append({
-      role: "user",
+      role: AIMessageRole.user,
       content: "",
     })
   }
@@ -270,10 +272,10 @@ export function CreateAIAgentDialog({
                   />
 
                   <SliderField
-                    label={t("fields.maxTokens.label")}
+                    label={t("fields.maxOutputTokens.label")}
                     max={32_768}
                     min={1}
-                    name="maxTokens"
+                    name="maxOutputTokens"
                     step={1}
                   />
                 </CollapsibleContent>
