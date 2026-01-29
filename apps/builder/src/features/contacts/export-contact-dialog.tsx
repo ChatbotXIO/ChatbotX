@@ -18,7 +18,7 @@ import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { exportContactsAction } from "./actions/export-contacts.action"
-import { exportContactsRequest } from "./schemas/contact-export"
+import { exportContactsRequest } from "./schemas/action"
 
 export function ExportContactDialog({
   chatbotId,

@@ -25,7 +25,7 @@ import { CustomFieldSelect } from "../custom-fields/custom-field-select"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { useTagSelectOptions } from "../tags/provider/tag-hook"
 import { importContactsAction } from "./actions/import-contacts.action"
-import { importContactsRequest } from "./schemas/contact-import"
+import { importContactsRequest } from "./schemas/action"
 
 export function ImportContactsForm({ chatbotId }: { chatbotId: string }) {
   const t = useTranslations()

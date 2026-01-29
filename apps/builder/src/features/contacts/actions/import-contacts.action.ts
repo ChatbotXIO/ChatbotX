@@ -9,7 +9,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type ImportContactsRequest,
   importContactsRequest,
-} from "../schemas/contact-import"
+} from "../schemas/action"
 
 export const importContactsAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

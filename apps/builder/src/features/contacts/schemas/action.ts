@@ -1,5 +1,4 @@
-import { Operator } from "@aha.chat/database/enums"
-import { gender } from "@aha.chat/database/schema"
+import { gender, inboxType } from "@aha.chat/database/schema"
 import { z } from "zod"
 
 export const createContactRequest = z.object({
@@ -25,16 +24,28 @@ export type UpdateContactFieldRequest = z.infer<
   typeof updateContactFieldRequest
 >
 
-export const filterContactRequest = z.object({
-  filters: z.object({
-    operator: z.enum(["and", "or"]),
-    conditions: z.array(
-      z.object({
-        field: z.string().trim(),
-        operator: z.enum(Operator),
-        value: z.union([z.string(), z.array(z.string())]),
-      }),
-    ),
-  }),
+export const exportContactsRequest = z.object({
+  fields: z.array(z.string()).min(1),
+  contactIds: z.array(z.string()).min(1),
 })
-export type FilterContactRequest = z.infer<typeof filterContactRequest>
+export type ExportContactsRequest = z.infer<typeof exportContactsRequest>
+
+export const importContactsRequest = z.object({
+  file: z.instanceof(File),
+  inboxType: z.enum(inboxType.enumValues),
+  phoneNumber: z.string().optional(),
+  contactId: z.string(),
+  email: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  tagId: z.string().optional(),
+  fieldMapping: z
+    .array(
+      z.object({
+        column: z.string(),
+        fieldId: z.string(),
+      }),
+    )
+    .optional(),
+})
+export type ImportContactsRequest = z.infer<typeof importContactsRequest>

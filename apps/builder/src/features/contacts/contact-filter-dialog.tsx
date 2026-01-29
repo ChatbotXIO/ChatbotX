@@ -14,16 +14,16 @@ import { useTranslations } from "next-intl"
 import { type FormEvent, useState } from "react"
 import { useForm } from "react-hook-form"
 import { ContactFilter } from "./components/contact-filter"
-import { filterContactRequest } from "./schemas/action"
+import { contactFilterRequest } from "./schemas/query"
 
 export function ContactFilterDialog() {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   const form = useForm({
-    resolver: zodResolver(filterContactRequest),
+    resolver: zodResolver(contactFilterRequest),
     defaultValues: {
-      filters: {
+      contactFilter: {
         operator: "and",
         conditions: [],
       },
@@ -54,11 +54,11 @@ export function ContactFilterDialog() {
         <div className="flex items-center space-x-2">
           <Form {...form}>
             <form className="flex-1 space-y-4" onSubmit={onSubmit}>
-              <ContactFilter parentName="filters" />
+              <ContactFilter parentName="contactFilter" />
 
               <div className="flex justify-end gap-4">
                 <DialogClose asChild>
-                  <Button variant="outline">{t("actions.cancel")}</Button>
+                  <Button variant="ghost">{t("actions.cancel")}</Button>
                 </DialogClose>
 
                 <Button

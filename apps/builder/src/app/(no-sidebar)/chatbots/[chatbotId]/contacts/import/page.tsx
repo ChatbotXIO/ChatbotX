@@ -3,7 +3,7 @@ import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/cust
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 
-export default async function CreateBroadcastPage({
+export default async function ImportContactsPage({
   params,
 }: {
   params: Promise<{ chatbotId: string }>
