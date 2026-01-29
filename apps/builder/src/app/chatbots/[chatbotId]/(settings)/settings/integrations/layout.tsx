@@ -11,13 +11,13 @@ import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 
 type SettingIntegrationLayoutProps = {
-  openai: ReactNode
+  openAI: ReactNode
   gemini: ReactNode
   googleSheets: ReactNode
 }
 
 export default function SettingIntegrationLayout({
-  openai,
+  openAI,
   gemini,
   googleSheets,
 }: SettingIntegrationLayoutProps) {
@@ -27,7 +27,7 @@ export default function SettingIntegrationLayout({
     {
       keyName: t("openai.title"),
       icon: BotIcon,
-      content: openai,
+      content: openAI,
     },
     {
       keyName: t("gemini.title"),
