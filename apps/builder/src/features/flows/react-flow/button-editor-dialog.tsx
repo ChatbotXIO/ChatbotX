@@ -193,6 +193,7 @@ export function ButtonEditorDialog() {
     updateNodeData,
     deleteElements,
     getEdges,
+    screenToFlowPosition,
   } = useReactFlow()
   const {
     buttonPath,
@@ -201,7 +202,6 @@ export function ButtonEditorDialog() {
     setOpenButtonEditorDialog,
     onChangeButtonData,
   } = useStepStore((state) => state)
-  const { screenToFlowPosition } = useReactFlow()
 
   const form = useForm<ButtonStepProps>({
     resolver: zodResolver(buttonStepSchema),

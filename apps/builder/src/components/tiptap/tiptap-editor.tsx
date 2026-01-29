@@ -20,13 +20,13 @@ import { useEffect, useState } from "react"
 import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
 
 type TiptapEditorProps = {
-  defaultValue?: string
+  initValue?: string
   placeholder?: string
   onChange?: (content: string) => void
 }
 
 export const TiptapEditor = ({
-  defaultValue,
+  initValue,
   onChange,
   placeholder = "Type a message...",
 }: TiptapEditorProps) => {
@@ -57,7 +57,6 @@ export const TiptapEditor = ({
     parseOptions: {
       preserveWhitespace: "full",
     },
-    content: defaultValue,
     // Don't render immediately on the server to avoid SSR issues
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
@@ -84,10 +83,10 @@ export const TiptapEditor = ({
   }
 
   useEffect(() => {
-    if (tiptapEditor && defaultValue) {
-      tiptapEditor.commands.setContent(defaultValue)
+    if (tiptapEditor && initValue) {
+      tiptapEditor.commands.setContent(initValue)
     }
-  }, [tiptapEditor, defaultValue])
+  }, [tiptapEditor, initValue])
 
   return (
     <div className="relative">
