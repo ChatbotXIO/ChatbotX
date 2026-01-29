@@ -814,6 +814,9 @@ importers:
       '@aha.chat/flow-config':
         specifier: workspace:*
         version: link:../flow-config
+      '@aha.chat/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@types/node':
         specifier: ^24.10.4
         version: 24.10.4
