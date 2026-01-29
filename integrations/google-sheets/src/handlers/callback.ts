@@ -1,5 +1,7 @@
 import { AuthType, type HandleRequestProps, SdkException } from "@aha.chat/sdk"
+import type { Credentials } from "google-auth-library"
 import { getClient } from "../client"
+import { googleSheetsLogger } from "../logger"
 import type { GoogleSheetsAuthValue, GoogleSheetsConfig } from "../schemas"
 
 export const callbackHandler = async (
@@ -12,7 +14,21 @@ export const callbackHandler = async (
   }
 
   const client = getClient(props.config)
-  const tokens = await client.getToken(code)
+  let tokens: { tokens: Credentials }
+  try {
+    tokens = await client.getToken(code)
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to exchange code for tokens"
+    googleSheetsLogger.error(
+      { err: error },
+      "client.getToken failed: %s",
+      message,
+    )
+    throw new SdkException(`OAuth token exchange failed: ${message}`)
+  }
 
   return {
     authType: AuthType.oauth2,

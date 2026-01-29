@@ -458,6 +458,9 @@ importers:
 
   integrations/google-sheets:
     dependencies:
+      '@aha.chat/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@aha.chat/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk

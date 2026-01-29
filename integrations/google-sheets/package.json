@@ -5,6 +5,7 @@
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
+    "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "google-auth-library": "^10.5.0",
     "googleapis": "^170.1.0"
