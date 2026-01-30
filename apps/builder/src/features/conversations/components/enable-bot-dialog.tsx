@@ -54,30 +54,34 @@ export default function EnableBotDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("dialog.enable.title", {
+            {t("messages.enableFeature", {
               feature: t("fields.bot.label"),
             })}
           </DialogTitle>
-          <DialogDescription />
+          <DialogDescription>
+            {t("messages.enableFeatureDescription", {
+              feature: t("fields.bot.label"),
+            })}
+          </DialogDescription>
         </DialogHeader>
-
-        <div>
-          {t("dialog.enable.description", {
-            feature: t("fields.bot.label"),
-          })}
-        </div>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">{t("actions.cancel")}</Button>
+            <Button size="sm" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
           </DialogClose>
 
-          <Button disabled={isPending} onClick={() => execute({ ids })}>
+          <Button
+            disabled={isPending}
+            onClick={() => execute({ ids })}
+            size="sm"
+          >
             {isPending && <Loader2Icon className="animate-spin" />}
-            {t("actions.save")}
+            {t("actions.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

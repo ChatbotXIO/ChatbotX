@@ -1,7 +1,10 @@
 import {
   type BaseConfig,
+  type HandleRequestProps,
   Integration,
   type IntegrationDefinition,
+  type Oauth2AuthValue,
+  type SecretTextAuthValue,
 } from "@aha.chat/sdk"
 import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
@@ -12,7 +15,7 @@ const config: IntegrationDefinition<
   OpenAIAuthValue,
   OpenAIActions
 > = {
-  name: "openAI",
+  name: "openai",
   actions: {
     generateText: async ({ ctx, props }): Promise<string> => {
       const openai = createOpenAI({
@@ -21,7 +24,6 @@ const config: IntegrationDefinition<
 
       const { text } = await generateText({
         model: openai(props.model),
-        prompt: props.prompt,
         messages: [
           {
             role: "user",
@@ -32,6 +34,14 @@ const config: IntegrationDefinition<
 
       return text
     },
+  },
+  handleRequest(
+    _props: HandleRequestProps<BaseConfig>,
+  ): Promise<string | number | Oauth2AuthValue> {
+    throw new Error("Function not implemented.")
+  },
+  disconnect(_props: SecretTextAuthValue): Promise<void> {
+    throw new Error("Function not implemented.")
   },
 }
 

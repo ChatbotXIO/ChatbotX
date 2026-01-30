@@ -20,7 +20,10 @@ import {
   type MailchimpMemberResource,
   type MailchimpMergeFieldResource,
   type MailchimpTagResource,
+  mailchimpAudienceResourceSchema,
   mailchimpMemberResourceSchema,
+  mailchimpMergeFieldResourceSchema,
+  mailchimpTagResourceSchema,
 } from "./schemas"
 
 const config: IntegrationDefinition<
@@ -65,21 +68,11 @@ const config: IntegrationDefinition<
       const response = await client.lists.getAllLists()
       const { lists } = z
         .object({
-          lists: z
-            .array(
-              z.object({
-                id: z.string(),
-                name: z.string(),
-              }),
-            )
-            .optional(),
+          lists: z.array(mailchimpAudienceResourceSchema).optional(),
         })
         .parse(response)
 
-      return (lists || []).map((list) => ({
-        id: list.id,
-        name: list.name,
-      }))
+      return lists || []
     },
     listTags: async ({ ctx, props }): Promise<MailchimpTagResource[]> => {
       const client = getMailchimpClient(ctx.auth)
@@ -91,21 +84,11 @@ const config: IntegrationDefinition<
       })
       const { segments } = z
         .object({
-          segments: z
-            .array(
-              z.object({
-                id: z.number(),
-                name: z.string(),
-              }),
-            )
-            .optional(),
+          segments: z.array(mailchimpTagResourceSchema).optional(),
         })
         .parse(response)
 
-      return (segments || []).map((segment) => ({
-        id: segment.id,
-        name: segment.name,
-      }))
+      return segments || []
     },
     listMergeFields: async ({
       ctx,
@@ -117,23 +100,11 @@ const config: IntegrationDefinition<
       })
       const { merge_fields } = z
         .object({
-          merge_fields: z
-            .array(
-              z.object({
-                tag: z.string(),
-                name: z.string(),
-                type: z.string(),
-              }),
-            )
-            .optional(),
+          merge_fields: z.array(mailchimpMergeFieldResourceSchema).optional(),
         })
         .parse(response)
 
-      return (merge_fields || []).map((field) => ({
-        tag: field.tag,
-        name: field.name,
-        type: field.type,
-      }))
+      return merge_fields || []
     },
   },
   disconnect: async (_props: MailchimpAuthValue): Promise<void> => {

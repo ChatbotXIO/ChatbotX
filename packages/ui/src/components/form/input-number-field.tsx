@@ -10,7 +10,7 @@ type InputNumberFieldProps<T extends FieldValues> = {
   description?: string
   defaultValue?: number
   className?: string
-  step?: number
+  stepper?: number
   min?: number
   max?: number
 }

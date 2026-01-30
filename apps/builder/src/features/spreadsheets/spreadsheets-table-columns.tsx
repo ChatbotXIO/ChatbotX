@@ -31,7 +31,7 @@ export function getSpreadsheetColumns({
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("googleSheets.name")} />
+        <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => row.original.name,
       size: 300,
@@ -41,7 +41,7 @@ export function getSpreadsheetColumns({
     {
       accessorKey: "link",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("googleSheets.link")} />
+        <DataTableColumnHeader column={column} title={t("fields.url.label")} />
       ),
       cell: ({ row }) => (
         <Link className="truncate" href={row.original.url} target="_black">

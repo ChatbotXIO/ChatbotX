@@ -396,6 +396,8 @@ model Conversation {
   currentFlowRunId       String?
   lastActivityAt         DateTime  @default(now())
   followed               Boolean   @default(false)
+  adminRepliedAt         DateTime?
+  contactRepliedAt       DateTime?
 
   assignedUserId String?
   assignedUser   User?   @relation(fields: [assignedUserId], references: [id])
@@ -507,7 +509,7 @@ model Integration {
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
-  openAI            IntegrationOpenAI?
+  openai            IntegrationOpenAI?
   googleSheets      IntegrationGoogleSheets?
   integrationGemini IntegrationGemini?
   mailchimp         IntegrationMailchimp?
@@ -520,14 +522,14 @@ model AIAgent {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name        String
-  prompt      String?
-  messages    Json[]
-  isDefault   Boolean  @default(false)
-  tools       String[]
-  models      Json[]
-  temperature Float
-  maxTokens   Int
+  name            String
+  prompt          String?
+  messages        Json[]
+  isDefault       Boolean  @default(false)
+  tools           String[]
+  models          Json[]
+  temperature     Float
+  maxOutputTokens Int
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -600,14 +602,14 @@ model IntegrationOpenAI {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  auth           Json
-  autoReply      Boolean @default(true)
-  autoReplyVoice Boolean @default(false)
-  voice          String?
-  prompt         String?
-  model          String
-  temperature    Float
-  maxTokens      Int
+  auth            Json
+  autoReply       Boolean @default(true)
+  autoReplyVoice  Boolean @default(false)
+  voice           String?
+  prompt          String?
+  model           String
+  temperature     Float
+  maxOutputTokens Int
 
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -726,12 +728,12 @@ model IntegrationGemini {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  auth        Json
-  autoReply   Boolean @default(false)
-  prompt      String?
-  model       String
-  temperature Float
-  maxTokens   Int
+  auth            Json
+  autoReply       Boolean @default(false)
+  prompt          String?
+  model           String
+  temperature     Float
+  maxOutputTokens Int
 
   chatbotId String  @unique
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)

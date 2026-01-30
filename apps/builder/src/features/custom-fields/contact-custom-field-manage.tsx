@@ -65,7 +65,7 @@ export function ContactCustomFieldManage({
             chatbotId={chatbotId}
             folderId={null}
             onSuccess={() => {
-              getAllCustomFields(chatbotId)
+              getAllCustomFields()
               setOpen(false)
             }}
             triggerButton={
@@ -90,7 +90,7 @@ export function ContactCustomFieldManage({
                 }}
                 value={option.value}
               >
-                {option.Icon && <option.Icon className="h-4 w-4" />}
+                {option.icon && <option.icon className="h-4 w-4" />}
                 {option.label}
               </CommandItem>
             ))}

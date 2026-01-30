@@ -1,6 +1,6 @@
 "use client"
 
-import type { OrganizationSettings } from "@aha.chat/database/types"
+import { InboxType, type OrganizationSettings } from "@aha.chat/database/types"
 import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
 import {
   Card,
@@ -11,10 +11,10 @@ import {
 import FacebookLogin, {
   type InitParams,
 } from "@greatsumini/react-facebook-login"
-import { SiMessenger, SiMessengerHex } from "@icons-pack/react-simple-icons"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { getFacebookPages } from "../libs/facebook"
 import { FacebookPages } from "./messenger-pages"
 
@@ -98,8 +98,11 @@ export function MessengerConnectButton({
       }}
       scope={MESSENGER_SCOPE.join(",")}
     >
-      <SiMessenger className="size-4" fill={SiMessengerHex} />
-      {t("actions.connect")}
+      <InboxIcon
+        inboxType={InboxType.messenger}
+        label={t("actions.connect")}
+        wrapperClassName="gap-2"
+      />
     </FacebookLogin>
   )
 }

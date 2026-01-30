@@ -11,7 +11,8 @@ import type {
 import { maxPerPageString } from "@/lib/shared-request"
 
 export type UserState = {
-  loading: boolean
+  loadingChatbotMembers: boolean
+  loadingInboxTeams: boolean
   error: string | null
   initialized: boolean
 
@@ -22,22 +23,22 @@ export type UserState = {
 
 export type UserActions = {
   initializeAgentsAndInboxTeams: () => Promise<void>
-  getAllChatbotMembers: (chatbotId: string) => Promise<void>
-  getAllInboxTeams: (chatbotId: string) => Promise<void>
+  getAllChatbotMembers: () => Promise<void>
+  getAllInboxTeams: () => Promise<void>
 }
 
 export type UserStore = UserState & UserActions
 
 export const createUserStore = (props: Partial<UserState>) =>
   createStore<UserStore>((set, get) => ({
-    loading: false,
+    loadingChatbotMembers: false,
+    loadingInboxTeams: false,
     error: null,
     initialized: false,
 
     chatbotId: "",
     chatbotMembers: [],
     inboxTeams: [],
-
     ...props,
 
     initializeAgentsAndInboxTeams: async () => {
@@ -47,55 +48,86 @@ export const createUserStore = (props: Partial<UserState>) =>
         return
       }
 
-      set({ loading: true, error: null })
-
       try {
         await Promise.all([
-          get().getAllChatbotMembers(get().chatbotId),
-          get().getAllInboxTeams(get().chatbotId),
+          get().getAllChatbotMembers(),
+          get().getAllInboxTeams(),
         ])
-        set({
-          loading: false,
-          initialized: true,
-        })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch agents",
-            loading: false,
-          })
-        }
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch agents",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
-    getAllChatbotMembers: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: maxPerPageString,
-      })
-      const { data } = await ky
-        .get<ChatbotMemberCollection>(
-          `/api/chatbots/${chatbotId}/agents?${searchParams.toString()}`,
-        )
-        .json()
+    getAllChatbotMembers: async () => {
+      const { chatbotId, loadingChatbotMembers } = get()
 
-      set({ chatbotMembers: data })
+      if (loadingChatbotMembers || !chatbotId) {
+        return
+      }
+
+      set({ loadingChatbotMembers: true, error: null })
+
+      try {
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+        })
+        const { data } = await ky
+          .get<ChatbotMemberCollection>(
+            `/api/chatbots/${chatbotId}/agents?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({ chatbotMembers: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch chatbot members",
+        })
+      } finally {
+        set({ loadingChatbotMembers: false })
+      }
     },
 
-    getAllInboxTeams: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: maxPerPageString,
-      })
+    getAllInboxTeams: async () => {
+      const { chatbotId, loadingInboxTeams } = get()
 
-      const { data } = await ky
-        .get<InboxTeamCollection>(
-          `/api/chatbots/${chatbotId}/inbox-teams?${searchParams.toString()}`,
-        )
-        .json()
-      set({ inboxTeams: data })
+      // Skip if already initialized for the same chatbotId or currently loading
+      if (loadingInboxTeams || !chatbotId) {
+        return
+      }
+
+      set({ loadingInboxTeams: true, error: null })
+
+      try {
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+        })
+
+        const { data } = await ky
+          .get<InboxTeamCollection>(
+            `/api/chatbots/${chatbotId}/inbox-teams?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({ inboxTeams: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch inbox teams",
+        })
+      } finally {
+        set({ loadingInboxTeams: false })
+      }
     },
   }))

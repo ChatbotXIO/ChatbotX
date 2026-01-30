@@ -1,7 +1,16 @@
 "use client"
 
-import { type FieldModel, FieldType } from "@aha.chat/database/types"
+import {
+  type FieldModel,
+  FieldType,
+  FolderType,
+} from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
+import { FolderUpIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { useState } from "react"
+import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 
 type CustomFieldsTableToolbarActionsProps = {
@@ -17,17 +26,38 @@ export function CustomFieldsTableToolbarActions({
   chatbotId,
   // setRowAction,
 }: CustomFieldsTableToolbarActionsProps) {
+  const t = useTranslations()
+  const [openChangeFolder, setOpenChangeFolder] = useState(false)
+
   return (
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <DeleteFieldsDialog
-          chatbotId={chatbotId}
-          fieldType={FieldType.customField}
-          onSuccess={() => table.toggleAllRowsSelected(false)}
-          records={table
-            .getFilteredSelectedRowModel()
-            .rows.map((row) => row.original)}
-        />
+        <>
+          <DeleteFieldsDialog
+            chatbotId={chatbotId}
+            fieldType={FieldType.customField}
+            onSuccess={() => table.toggleAllRowsSelected(false)}
+            records={table
+              .getFilteredSelectedRowModel()
+              .rows.map((row) => row.original)}
+          />
+          <ChangeFolderDialog
+            chatbotId={chatbotId}
+            currentFolderId={null}
+            folderType={FolderType.customField}
+            modelIds={table
+              .getFilteredSelectedRowModel()
+              .rows.map((row) => row.original.id)}
+            onOpenChange={setOpenChangeFolder}
+            open={openChangeFolder}
+            trigger={
+              <Button type="button" variant="outline">
+                <FolderUpIcon aria-hidden="true" className="size-4" />
+                {t("actions.move")}
+              </Button>
+            }
+          />
+        </>
       ) : null}
     </div>
   )

@@ -16,6 +16,7 @@ export function WebchatMessageList() {
     isLoadMoreMessage,
     initGuestSession,
     guestConversationId,
+    sendPostback,
   } = useGuestSessionStore((state) => state)
 
   // Check if there are more pages to load
@@ -50,7 +51,12 @@ export function WebchatMessageList() {
         followOutput
         initialTopMostItemIndex={messages.length - 1}
         itemContent={(_, message) => (
-          <MessageItem guestDisplay={true} key={message.id} message={message} />
+          <MessageItem
+            guestDisplay={true}
+            key={message.id}
+            message={message}
+            onPostback={sendPostback}
+          />
         )}
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {

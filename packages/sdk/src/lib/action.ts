@@ -1,5 +1,6 @@
 import type {
   SendAudioStepSchema,
+  SendCarouselStepSchema,
   SendFileStepSchema,
   SendGifStepSchema,
   SendImageStepSchema,
@@ -24,10 +25,15 @@ export type SendFlowStepData =
   | SendVideoStepSchema
   | SendFileStepSchema
   | SendQuickReplyStepSchema
+  | SendCarouselStepSchema
 
-export type SendFlowStepProps<TAuth extends BaseAuthValue> = {
+export type SendFlowStepProps<
+  TAuth extends BaseAuthValue,
+  S = SendFlowStepData,
+> = {
   ctx: Context<TAuth>
   conversation: ConversationEntity
-  flowVersionId: string
-  step: SendFlowStepData
+  flowId: string
+  flowVersionId?: string
+  step: S
 }

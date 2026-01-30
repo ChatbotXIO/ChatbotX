@@ -1,5 +1,6 @@
 import { AuthType, type HandleRequestProps, SdkException } from "@aha.chat/sdk"
 import { getClient } from "../client"
+import { handleError } from "../error"
 import type { GoogleSheetsAuthValue, GoogleSheetsConfig } from "../schemas"
 
 export const callbackHandler = async (
@@ -11,21 +12,25 @@ export const callbackHandler = async (
     throw new SdkException("Code is required")
   }
 
-  const client = getClient(props.config)
-  const tokens = await client.getToken(code)
+  try {
+    const client = getClient(props.config)
+    const tokens = await client.getToken(code)
 
-  return {
-    authType: AuthType.oauth2,
-    clientId: props.config.clientId,
-    clientSecret: props.config.clientSecret,
-    redirectUrl: props.config.redirectUrl,
-    tokens: {
-      accessToken: tokens.tokens.access_token || "",
-      expiresAt: new Date(tokens.tokens.expiry_date ?? "").toISOString(),
-      refreshToken: tokens.tokens.refresh_token ?? null,
-    },
-    metadata: {
-      scope: tokens.tokens.scope,
-    },
+    return {
+      authType: AuthType.oauth2,
+      clientId: props.config.clientId,
+      clientSecret: props.config.clientSecret,
+      redirectUrl: props.config.redirectUrl,
+      tokens: {
+        accessToken: tokens.tokens.access_token || "",
+        expiresAt: new Date(tokens.tokens.expiry_date ?? "").toISOString(),
+        refreshToken: tokens.tokens.refresh_token ?? null,
+      },
+      metadata: {
+        scope: tokens.tokens.scope,
+      },
+    }
+  } catch (error) {
+    return handleError(error)
   }
 }

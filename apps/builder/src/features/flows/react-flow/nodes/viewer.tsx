@@ -42,7 +42,7 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
         <FlowNodeToolbar isStartNode={data.isStartNode} />
       </NodeToolbar>
 
-      <Card className="w-72 gap-0 bg-white/75 p-0 hover:border-blue-500">
+      <Card className="w-72 gap-0 p-0">
         <CardHeader className="relative p-4">
           <BaseHandle
             id={id}

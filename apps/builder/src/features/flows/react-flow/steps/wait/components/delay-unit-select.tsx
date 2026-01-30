@@ -12,10 +12,10 @@ const DelayUnitSelect = (props: DelayUnitSelectProps) => {
   const t = useTranslations()
 
   const delayUnits = [
-    { value: DelayUnit.second, label: t("fields.delayUnit.seconds") },
-    { value: DelayUnit.minute, label: t("fields.delayUnit.minutes") },
-    { value: DelayUnit.hour, label: t("fields.delayUnit.hours") },
-    { value: DelayUnit.day, label: t("fields.delayUnit.days") },
+    { value: DelayUnit.seconds, label: t("fields.delayUnit.seconds") },
+    { value: DelayUnit.minutes, label: t("fields.delayUnit.minutes") },
+    { value: DelayUnit.hours, label: t("fields.delayUnit.hours") },
+    { value: DelayUnit.days, label: t("fields.delayUnit.days") },
   ]
 
   return <SelectField {...props} options={delayUnits} />

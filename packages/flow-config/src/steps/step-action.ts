@@ -20,7 +20,7 @@ export const StepType = {
   waitUserReply: "W01",
   setDebounce: "W02",
   wait: "W03",
-  getUserInput: "W04",
+  getUserData: "W04",
 
   // Contact Operations (C_)
   addContactTag: "C01",
@@ -88,8 +88,18 @@ export const StepType = {
   spreadsheetUpdateRow: "G04",
   spreadsheetClearRow: "G05",
 
-  // Mailchimp Operations (M_)
-  mailchimpAddMember: "M01",
+  // Email Operations (M_)
+  emailText: "M01",
+  emailH3: "M02",
+  emailImage: "M03",
+  emailButton: "M04",
+  emailSpacing: "M05",
+  emailCode: "M06",
+  emailLine: "M07",
+  emailHeader: "M08",
+
+  // Mailchimp Operations (MK_)
+  mailchimpAddMember: "MK09",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

@@ -1,7 +1,9 @@
 import { prisma } from "@aha.chat/database"
 import { InboxType } from "@aha.chat/database/types"
 import { type NextRequest, NextResponse } from "next/server"
+import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
 import { listMessages } from "@/features/messages/queries/list-messages.query"
+import { createWebchatMessageRequest } from "@/features/messages/schemas/create-message.schema"
 import { listGuestMessagesRequest } from "@/features/messages/schemas/list-messages.schema"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 
@@ -33,6 +35,21 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json(result)
+  } catch (e) {
+    return serverErrorHandler(e)
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const data = await req.json()
+    const parsedInput = createWebchatMessageRequest.parse(data)
+
+    const message = await handleCreateWebchatMessage({ parsedInput })
+
+    return NextResponse.json({
+      data: message,
+    })
   } catch (e) {
     return serverErrorHandler(e)
   }

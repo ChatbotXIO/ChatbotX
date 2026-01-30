@@ -55,22 +55,32 @@ export default function DisableBotDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("dialog.disableBot.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.disableFeature", {
+              feature: t("fields.conversation.label"),
+            })}
+          </DialogTitle>
           <DialogDescription>
-            {t("dialog.disableBot.description")}
+            {t("messages.disableFeatureDescription", {
+              feature: t("fields.conversation.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
 
-        <div>Are you sure to disable bot?</div>
-
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">{t("actions.cancel")}</Button>
+            <Button size="sm" variant="ghost">
+              {t("actions.cancel")}
+            </Button>
           </DialogClose>
 
-          <Button disabled={isPending} onClick={() => execute({ ids })}>
+          <Button
+            disabled={isPending}
+            onClick={() => execute({ ids })}
+            size="sm"
+          >
             {isPending && <Loader2Icon className="animate-spin" />}
             {t("actions.confirm")}
           </Button>

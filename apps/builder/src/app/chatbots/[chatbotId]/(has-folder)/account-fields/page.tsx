@@ -1,3 +1,4 @@
+import { rootFolderId } from "@aha.chat/database/enums"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -14,22 +15,30 @@ export default async function AccountFieldsPage(props: {
   const t = await getTranslations()
 
   const search = listAccountFieldsSearchParams.parse(searchParams)
+  const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
     listAccountFields({
       ...search,
       chatbotId: params.chatbotId,
+      folderId,
     }),
   ])
 
   return (
     <div>
       <div className="flex items-center">
-        <h3 className="flex-1 font-bold text-xl">{t("accountField.title")}</h3>
+        <h3 className="flex-1 font-bold text-xl">
+          {t("fields.accountField.label")}
+        </h3>
       </div>
 
       <Suspense>
-        <AccountFieldsTable chatbotId={params.chatbotId} promises={promises} />
+        <AccountFieldsTable
+          chatbotId={params.chatbotId}
+          folderId={folderId}
+          promises={promises}
+        />
       </Suspense>
     </div>
   )

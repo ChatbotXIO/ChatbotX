@@ -7,8 +7,8 @@ import type { MailchimpAuthValue, MailchimpConfig } from "./schemas"
 
 export const getMailchimpClient = (auth: MailchimpAuthValue) => {
   mailchimp.setConfig({
-    apiKey: auth.secretText,
-    server: auth.metadata.server,
+    apiKey: auth.tokens.accessToken,
+    server: auth.server,
   })
   return mailchimp
 }
@@ -61,28 +61,33 @@ export const exchangeCode = async (
     const metadata = z.object({ dc: z.string() }).parse(metadataResponse)
 
     return {
-      authType: AuthType.secretText,
-      secretText: accessToken,
-      metadata: {
-        server: metadata.dc,
+      authType: AuthType.oauth2,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      redirectUrl: config.redirectUrl,
+      tokens: {
+        accessToken,
       },
+      server: metadata.dc,
     }
-  } catch (error: unknown) {
-    if (error instanceof HTTPError) {
-      const errorData = (await error.response
-        .json()
-        .catch(() => ({}))) as Record<string, unknown>
+  } catch (error) {
+    const err = error as Error | HTTPError
+    if (err instanceof HTTPError) {
+      const errorData = (await err.response.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >
       throw new SdkException(
         `Failed to exchange Mailchimp code: ${JSON.stringify(errorData)}`,
       )
     }
 
-    if (error instanceof z.ZodError) {
+    if (err instanceof z.ZodError) {
       throw new SdkException(
-        `Failed to parse Mailchimp response: ${error.message}`,
+        `Failed to parse Mailchimp response: ${err.message}`,
       )
     }
 
-    throw error
+    throw err
   }
 }

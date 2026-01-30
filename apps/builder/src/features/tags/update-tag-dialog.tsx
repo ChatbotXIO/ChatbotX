@@ -83,7 +83,7 @@ export function UpdateTagDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.editFeature", { feature: t("fields.tag.label") })}

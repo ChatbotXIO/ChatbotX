@@ -231,7 +231,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         chatbotId={chatbotId}
         currentFolderId={rowAction?.row.original?.folderId || null}
         folderType={FolderType.customField}
-        modelId={rowAction?.row.original?.id || null}
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "move"}
       />

@@ -1,7 +1,8 @@
 import { AIMessageRole } from "@aha.chat/database/types"
+import { aiProviders } from "@aha.chat/flow-config"
 import { z } from "zod"
 import { geminiModels } from "@/features/integration-gemini/schemas/models"
-import { openAIModels } from "@/features/openai/models"
+import { openaiChatModels } from "@/features/openai/models"
 
 export const createAIAgentRequest = z.object({
   name: z.string().trim().min(1).max(255),
@@ -15,17 +16,17 @@ export const createAIAgentRequest = z.object({
   models: z.array(
     z.discriminatedUnion("provider", [
       z.object({
-        provider: z.literal("gemini"),
+        provider: z.literal(aiProviders.gemini),
         model: z.enum(geminiModels),
       }),
       z.object({
-        provider: z.literal("openAI"),
-        model: z.enum(openAIModels),
+        provider: z.literal(aiProviders.openai),
+        model: z.enum(openaiChatModels),
       }),
     ]),
   ),
   temperature: z.number().min(0).max(2),
-  maxTokens: z.number().min(1).max(32_768),
+  maxOutputTokens: z.number().min(1).max(32_768),
   tools: z.array(z.string()),
   isDefault: z.boolean(),
 })

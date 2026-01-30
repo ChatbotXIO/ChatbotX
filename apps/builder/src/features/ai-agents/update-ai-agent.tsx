@@ -44,7 +44,7 @@ import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
 import { updateAIAgentRequest } from "@/features/ai-agents/schemas/request"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openAIModelOptions } from "../openai/models"
+import { openaiChatModelOptions } from "../openai/models"
 import type { CreateAIAgentRequest } from "./schemas/request"
 
 export function UpdateAIAgentDialog({
@@ -107,10 +107,10 @@ export function UpdateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: t("fields.promptMessages.role.user"), value: "user" },
-      { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
+      { label: "User", value: AIMessageRole.user },
+      { label: "Assistant", value: AIMessageRole.assistant },
     ],
-    [t],
+    [],
   )
 
   const toolOptions = useMemo(
@@ -160,7 +160,7 @@ export function UpdateAIAgentDialog({
       setValue("prompt", agent.prompt ?? "")
       setValue("models", agent.models as CreateAIAgentRequest["models"])
       setValue("temperature", agent.temperature)
-      setValue("maxTokens", agent.maxTokens)
+      setValue("maxOutputTokens", agent.maxOutputTokens)
       setValue("messages", agent.messages as CreateAIAgentRequest["messages"])
       setValue("tools", agent.tools)
     }
@@ -206,9 +206,9 @@ export function UpdateAIAgentDialog({
                         />
 
                         <SelectField
-                          label={t("fields.openAIModel.label")}
+                          label={t("fields.model.label")}
                           name="models.1.model"
-                          options={openAIModelOptions}
+                          options={openaiChatModelOptions}
                           required
                         />
 
@@ -221,10 +221,10 @@ export function UpdateAIAgentDialog({
                         />
 
                         <SliderField
-                          label={t("fields.maxTokens.label")}
+                          label={t("fields.maxOutputTokens.label")}
                           max={32_768}
                           min={1}
-                          name="maxTokens"
+                          name="maxOutputTokens"
                           step={1}
                         />
                       </PopoverContent>
@@ -241,7 +241,7 @@ export function UpdateAIAgentDialog({
               <Card>
                 <div className="flex flex-col gap-4 px-5">
                   <div className="font-medium text-sm">
-                    {t("fields.promptMessages.label")}
+                    {t("fields.prompt.label")}
                   </div>
                   {fields.map((item, index) => (
                     <div

@@ -27,14 +27,16 @@ export const TagStoreProvider = ({
 }: TagStoreProviderProps) => {
   const storeRef = useRef<TagStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createTagStore()
+    storeRef.current = createTagStore({
+      chatbotId,
+    })
   }
 
   useEffect(() => {
     if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().getAllActiveTags(chatbotId)
+      storeRef.current.getState().initialize()
     }
-  }, [chatbotId, autoInitialize])
+  }, [autoInitialize])
 
   return (
     <TagStoreContext.Provider value={storeRef.current}>

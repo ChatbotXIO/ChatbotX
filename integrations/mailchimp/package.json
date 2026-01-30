@@ -7,7 +7,7 @@
   "dependencies": {
     "@aha.chat/sdk": "workspace:*",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
-    "ky": "^1.14.2",
+    "ky": "^1.14.3",
     "zod": "^4.2.1"
   },
   "devDependencies": {

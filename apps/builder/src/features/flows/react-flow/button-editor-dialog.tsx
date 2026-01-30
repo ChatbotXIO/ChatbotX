@@ -1,19 +1,16 @@
 "use client"
 
-import type {
-  FlowNode,
-  OpenWebsiteStepSchema,
-  StartAnotherNodeStepSchema,
-  StartExternalNodeStepSchema,
-  StepType,
-} from "@aha.chat/flow-config"
 import {
   type ButtonStepProps,
   ButtonType,
   buttonStepSchema,
+  type FlowNode,
   NodeType,
+  type OpenWebsiteStepSchema,
   openWebsiteStepDefaultFn,
   performActionNodeDefaultFn,
+  type StartAnotherNodeStepSchema,
+  type StartExternalNodeStepSchema,
   sendMessageNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
   startExternalNodeStepDefaultFn,
@@ -51,6 +48,7 @@ import {
 import { setProperty } from "@/lib/object-util"
 import RecursiveDropdownMenu from "./components/recursive-dropdown-menu"
 import { sendMessageEditorMenusWithButton } from "./nodes/send-message/menu"
+import type { MenuItem } from "./nodes/types"
 import { allSteps, DynamicStepEditor } from "./steps"
 import { allButtonsConfig } from "./steps/button-config"
 import { useStepStore } from "./stores/step-store-provider"
@@ -131,10 +129,12 @@ function ButtonSteps() {
     name: "steps",
   })
 
-  const onAddAction = (action: StepType) => {
-    const newStep = allSteps[action]?.defaultFn()
-    if (newStep) {
-      append(newStep)
+  const onAddAction = (menuItem: MenuItem) => {
+    if (menuItem.stepType) {
+      const newStep = allSteps[menuItem.stepType]?.defaultFn(menuItem.props)
+      if (newStep) {
+        append(newStep)
+      }
     }
   }
 

@@ -3,10 +3,8 @@
 import { CustomFieldType } from "@aha.chat/database/types"
 import { FieldOperationType } from "@aha.chat/flow-config"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import {
-  SelectField,
-  type SelectOption,
-} from "@aha.chat/ui/components/form/select-field"
+import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
 import {
@@ -55,21 +53,19 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     customFieldTypes,
     includeReserved,
   })
-
   const options = useMemo(() => {
     if (!allowClear) {
       return customFieldSelectOptions
     }
     return [{ label: "---", value: "" }, ...customFieldSelectOptions]
   }, [allowClear, customFieldSelectOptions])
-
   const getAllCustomFields = useCustomFieldStore(
     (state) => state.getAllCustomFields,
   )
 
   const handleSuccess = useCallback(() => {
-    getAllCustomFields(params.chatbotId)
-  }, [getAllCustomFields, params.chatbotId])
+    getAllCustomFields()
+  }, [getAllCustomFields])
 
   const showLabel = label && label !== ""
 

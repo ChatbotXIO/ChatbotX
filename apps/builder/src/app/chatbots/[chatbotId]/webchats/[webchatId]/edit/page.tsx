@@ -16,7 +16,7 @@ export default async function WebchatEditPage({
   })
 
   return (
-    <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+    <FlowStoreProvider chatbotId={chatbotId}>
       <Suspense fallback={<div>Loading...</div>}>
         <UpdateWebchatForm integrationWebchat={integrationWebchat} />
       </Suspense>

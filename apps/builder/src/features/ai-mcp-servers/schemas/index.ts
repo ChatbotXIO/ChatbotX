@@ -34,6 +34,7 @@ const baseAIMcpServerRequest = z.object({
     }),
   ]),
 })
+export type BaseAIMcpServerRequest = z.infer<typeof baseAIMcpServerRequest>
 
 export const createAIMcpServerRequest = baseAIMcpServerRequest.extend({
   name: z.string().trim().min(1),

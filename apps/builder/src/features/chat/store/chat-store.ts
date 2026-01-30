@@ -1,5 +1,12 @@
+import type {
+  ConversationStatus,
+  ConversationType,
+} from "@aha.chat/database/enums"
+import type { InboxType } from "@aha.chat/database/types"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
+import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
+import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type {
   ConversationCollection,
   ConversationResource,
@@ -9,17 +16,24 @@ import type {
   MessageResource,
 } from "@/features/messages/schemas"
 
-export type ClientConversationResource = ConversationResource & {
-  isActive: boolean
+export type ConversationFilters = {
+  assignedUserId?: string
+  inboxType?: InboxType | "omnichannel"
+  status?: ConversationStatus[]
+  searchText?: string
+  conversationType?: ConversationType
+  contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
 export type ChatState = {
   // conversation list
-  conversations: ClientConversationResource[]
+  isFirstLoadConversation: boolean
+  conversations: ConversationResource[]
   nextCursorConversation: string | null
   isLoadingConversation: boolean
   activeConversationId: string | null
   hasNextConversationPage: boolean
+  filters: ConversationFilters
 
   // message list
   messages: MessageResource[]
@@ -29,13 +43,35 @@ export type ChatState = {
 }
 
 export type ChatActions = {
-  prependConversation: (newConversation: ClientConversationResource) => void
+  // Conversation actions
+  prependConversation: (newConversation: ConversationResource) => void
   loadMoreConversations: (chatbotId: string) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
+  updateConversation: (
+    conversationId: string,
+    data: Partial<ConversationResource>,
+  ) => void
+  updateConversations: (
+    conversationIds: string[],
+    data: Partial<ConversationResource>,
+  ) => void
+  updateConversationViaMessage: (message: MessageResource) => void
+
+  deleteConversation: (conversationId: string) => void
+  readConversation: (conversationId: string) => void
+
+  // Filter actions
+  resetState: () => void
+  setAssignee: (value: string | null) => void
+  setFilters: (filters: ConversationFilters) => void
+
+  // Message actions
   appendMessage: (message: MessageResource) => void
   loadMoreMessages: (chatbotId: string, perPage: number) => Promise<void>
-  updateConversationViaMessage: (message: MessageResource) => void
   handleNewMessage: (message: MessageResource) => void
+
+  // Contact actions
+  updateContact: (contactId: string, data: Partial<ContactResource>) => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -43,11 +79,13 @@ export type ChatStore = ChatState & ChatActions
 export const createChatStore = () => {
   return createStore<ChatStore>((set, get) => ({
     // default conversation state
+    isFirstLoadConversation: true,
     conversations: [],
     nextCursorConversation: null,
     isLoadingConversation: false,
     hasNextConversationPage: true,
     activeConversationId: null,
+    filters: {},
 
     // default message state
     messages: [],
@@ -55,7 +93,7 @@ export const createChatStore = () => {
     isLoadMoreMessage: false,
     hasNextMessagePage: true,
 
-    prependConversation: (newConversation: ClientConversationResource) =>
+    prependConversation: (newConversation: ConversationResource) =>
       set((state) => ({
         conversations: [newConversation, ...state.conversations],
       })),
@@ -67,26 +105,25 @@ export const createChatStore = () => {
       }
 
       // fetch next conversation list
-      const { conversations, nextCursorConversation, activeConversationId } =
-        get()
+      const {
+        conversations,
+        nextCursorConversation,
+        activeConversationId,
+        filters,
+      } = get()
       set({ isLoadingConversation: true })
 
-      const params = new URLSearchParams({
+      const searchParams = {
         perPage: "20",
         cursor: nextCursorConversation ?? "",
-      })
-      const { data, nextCursor } = await ky
-        .get<ConversationCollection>(
-          `/api/chatbots/${chatbotId}/conversations?${params.toString()}`,
+        ...filters,
+      }
+      const { data: newConversations, nextCursor } = await ky
+        .post<ConversationCollection>(
+          `/api/chatbots/${chatbotId}/conversations/list`,
+          { json: searchParams },
         )
         .json()
-
-      const newConversations = (data as ClientConversationResource[]).map(
-        (conversation) => {
-          conversation.isActive = false
-          return conversation
-        },
-      )
 
       const urlParams = new URLSearchParams(window.location.search)
       const queryConversationId = urlParams.get("conversationId")
@@ -99,11 +136,9 @@ export const createChatStore = () => {
             set({ activeConversationId: queryConversationId })
           }
         } else {
-          const firstConversation =
-            newConversations[0] as ClientConversationResource
-          firstConversation.isActive = true
-
-          set({ activeConversationId: firstConversation.id })
+          set({
+            activeConversationId: newConversations[0].id,
+          })
         }
       }
 
@@ -111,6 +146,7 @@ export const createChatStore = () => {
         conversations: [...conversations, ...newConversations],
         nextCursorConversation: nextCursor,
         isLoadingConversation: false,
+        isFirstLoadConversation: false,
       })
     },
 
@@ -118,6 +154,88 @@ export const createChatStore = () => {
       const { activeConversationId: oldActiveConversationId } = get()
       if (oldActiveConversationId !== activeConversationId) {
         set({ activeConversationId, messages: [], nextCursorMessage: null })
+      }
+    },
+
+    deleteConversation: (conversationId: string) => {
+      const { conversations, activeConversationId } = get()
+      const updatedConversations = conversations.filter(
+        (c) => c.id !== conversationId,
+      )
+      let newActiveConversationId = activeConversationId
+      if (activeConversationId === conversationId) {
+        newActiveConversationId =
+          updatedConversations.length > 0 ? updatedConversations[0].id : null
+      }
+      set({
+        conversations: updatedConversations,
+        activeConversationId: newActiveConversationId,
+      })
+    },
+
+    readConversation: (conversationId: string) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+        conversation.agentLastSeenAt = new Date()
+
+        updatedConversations[conversationIndex] = conversation
+        set({ conversations: updatedConversations })
+      }
+    },
+
+    resetState: () => {
+      set({
+        isFirstLoadConversation: true,
+        conversations: [],
+        nextCursorConversation: null,
+        isLoadingConversation: false,
+        hasNextConversationPage: true,
+        activeConversationId: null,
+
+        messages: [],
+        nextCursorMessage: null,
+        isLoadMoreMessage: false,
+        hasNextMessagePage: true,
+      })
+    },
+
+    setFilters: (filters: ConversationFilters) => {
+      set({ filters })
+    },
+
+    setAssignee: (value: string | null) => {
+      const { conversations, activeConversationId } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === activeConversationId,
+      )
+
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        const conversation = { ...updatedConversations[conversationIndex] }
+
+        if (value === null) {
+          conversation.assignedUser = null
+          conversation.assignedUserId = null
+          conversation.assignedInboxTeam = null
+          conversation.assignedInboxTeamId = null
+        } else if (value.startsWith("u_")) {
+          const userId = value.substring(2)
+          conversation.assignedUserId = userId
+          conversation.assignedInboxTeamId = null
+        } else if (value.startsWith("t_")) {
+          const inboxTeamId = value.substring(2)
+          conversation.assignedInboxTeamId = inboxTeamId
+          conversation.assignedUserId = null
+        }
+
+        updatedConversations[conversationIndex] = conversation
+        set({ conversations: updatedConversations })
       }
     },
 
@@ -136,15 +254,15 @@ export const createChatStore = () => {
       const { nextCursorMessage, messages, activeConversationId } = get()
       set({ isLoadMoreMessage: true })
 
-      const params = new URLSearchParams({
+      const searchParams = new URLSearchParams({
         perPage: `${perPage}`,
         cursor: nextCursorMessage ?? "",
         conversationId: activeConversationId ?? "",
       })
       const { data, nextCursor } = await ky
-        .get<MessageCollection>(
-          `/api/chatbots/${chatbotId}/messages?${params.toString()}`,
-        )
+        .get<MessageCollection>(`/api/chatbots/${chatbotId}/messages`, {
+          searchParams,
+        })
         .json()
       set({
         messages: [...data.reverse(), ...messages],
@@ -190,8 +308,52 @@ export const createChatStore = () => {
           )
           .json()
         newConversation.data.messages = [message]
-        prependConversation({ ...newConversation.data, isActive: true })
+        prependConversation(newConversation.data)
       }
+    },
+
+    updateConversation: (
+      conversationId: string,
+      data: Partial<ConversationResource>,
+    ) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        updatedConversations[conversationIndex] = {
+          ...updatedConversations[conversationIndex],
+          ...data,
+        }
+
+        set({ conversations: updatedConversations })
+      }
+    },
+
+    updateConversations: (
+      conversationIds: string[],
+      data: Partial<ConversationResource>,
+    ) => {
+      if (conversationIds.length === 0) {
+        return
+      }
+
+      const { conversations } = get()
+      const updatedConversations = [...conversations]
+
+      for (const conversationId of conversationIds) {
+        const conversationIndex = conversations.findIndex(
+          (c) => c.id === conversationId,
+        )
+        if (conversationIndex > -1) {
+          updatedConversations[conversationIndex] = {
+            ...updatedConversations[conversationIndex],
+            ...data,
+          }
+        }
+      }
+      set({ conversations: updatedConversations })
     },
 
     handleNewMessage: async (message: MessageResource) => {
@@ -238,6 +400,24 @@ export const createChatStore = () => {
       } else {
         // just append the messages to the end of messages list
         appendMessage(message)
+      }
+    },
+
+    updateContact: (contactId: string, data: Partial<ContactResource>) => {
+      const { conversations } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.contactId === contactId,
+      )
+      if (conversationIndex > -1) {
+        const updatedConversations = [...conversations]
+        if (updatedConversations[conversationIndex].contact) {
+          updatedConversations[conversationIndex].contact = {
+            ...updatedConversations[conversationIndex].contact,
+            ...data,
+          }
+        }
+
+        set({ conversations: updatedConversations })
       }
     },
   }))

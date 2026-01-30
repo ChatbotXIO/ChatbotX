@@ -53,7 +53,7 @@ export default function AddContactTagDialog({
                 feature: t("fields.contact.label"),
               }),
             )
-            getAllActiveTags(chatbotId)
+            getAllActiveTags()
             setOpen(false)
             resetFormAndAction()
           },
@@ -78,9 +78,7 @@ export default function AddContactTagDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent
-        className={"flex h-96 max-h-screen max-w-xl flex-col overflow-y-scroll"}
-      >
+      <DialogContent className={"flex max-h-screen max-w-xl flex-col"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.addFeature", { feature: t("fields.tag.label") })}
@@ -90,7 +88,7 @@ export default function AddContactTagDialog({
 
         <Form {...form}>
           <form
-            className="flex flex-1 flex-col gap-2"
+            className="flex flex-1 flex-col space-y-4"
             onSubmit={handleSubmitWithAction}
           >
             <TagsInputField
@@ -101,13 +99,16 @@ export default function AddContactTagDialog({
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">{t("actions.cancel")}</Button>
+                <Button size="sm" variant="ghost">
+                  {t("actions.cancel")}
+                </Button>
               </DialogClose>
 
               <Button
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                size="sm"
                 type="submit"
               >
                 {form.formState.isSubmitting && (

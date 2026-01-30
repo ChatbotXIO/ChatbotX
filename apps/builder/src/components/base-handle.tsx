@@ -1,7 +1,9 @@
 import { cn } from "@aha.chat/ui/lib/utils"
 import { Handle, type HandleProps, useNodeConnections } from "@xyflow/react"
 
-export type BaseHandleProps = HandleProps
+export type BaseHandleProps = HandleProps & {
+  onConnectedClassName?: string
+}
 
 export const BaseHandle = (
   props: BaseHandleProps & {
@@ -9,7 +11,7 @@ export const BaseHandle = (
     ref?: React.RefObject<HTMLDivElement>
   },
 ) => {
-  const { ref, className, children, ...rest } = props
+  const { ref, className, onConnectedClassName, children, ...rest } = props
 
   const connections = useNodeConnections({
     handleType: rest.type,
@@ -19,9 +21,10 @@ export const BaseHandle = (
   return (
     <Handle
       className={cn(
-        "h-[11px] w-[11px] rounded-full border border-slate-300 bg-slate-100 transition dark:border-secondary dark:bg-secondary",
+        "h-[11px] w-[11px] rounded-full border border-slate-300 bg-slate-400 transition dark:border-secondary dark:bg-white",
+        connections.length > 0 &&
+          (onConnectedClassName ?? "bg-zinc-700! dark:bg-neutral-700!"),
         className,
-        connections.length > 0 && "bg-zinc-700!",
       )}
       {...rest}
       ref={ref}

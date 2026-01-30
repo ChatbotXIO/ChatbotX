@@ -1,6 +1,10 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
+import {
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@aha.chat/partysocket-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -32,54 +36,77 @@ export const assignConversationAction = chatbotActionClient
         assignedInboxTeamId: null,
       }
 
-      // Verify again assigned
-      if (parsedInput.assignedId.startsWith("u_")) {
-        const userId = parsedInput.assignedId.substring(2)
-        const chatbotMember = await prisma.chatbotMember.findFirst({
-          where: {
-            chatbotId,
-            userId,
-          },
-        })
-        if (!chatbotMember) {
-          returnValidationErrors(assignConversationSchema, {
-            assignedId: {
-              _errors: ["User is not valid"],
+      await prisma.$transaction(async (tx) => {
+        if (parsedInput.assignedId?.startsWith("u_")) {
+          const userId = parsedInput.assignedId.substring(2)
+          const chatbotMember = await tx.chatbotMember.findFirst({
+            where: {
+              chatbotId,
+              userId,
             },
           })
-        }
-        updatedData.assignedUserId = chatbotMember.userId
-      } else if (parsedInput.assignedId.startsWith("t_")) {
-        const inboxteamId = parsedInput.assignedId.substring(2)
-        const inboxTeam = await prisma.inboxTeam.findFirst({
-          where: {
-            chatbotId,
-            id: inboxteamId,
-          },
-        })
-        if (!inboxTeam) {
-          returnValidationErrors(assignConversationSchema, {
-            assignedId: {
-              _errors: ["Inbox Team is not valid"],
+          if (!chatbotMember) {
+            returnValidationErrors(assignConversationSchema, {
+              assignedId: {
+                _errors: ["User is not valid"],
+              },
+            })
+          }
+          updatedData.assignedUserId = chatbotMember.userId
+        } else if (parsedInput.assignedId?.startsWith("t_")) {
+          const inboxteamId = parsedInput.assignedId.substring(2)
+          const inboxTeam = await tx.inboxTeam.findFirst({
+            where: {
+              chatbotId,
+              id: inboxteamId,
             },
           })
+          if (!inboxTeam) {
+            returnValidationErrors(assignConversationSchema, {
+              assignedId: {
+                _errors: ["Inbox Team is not valid"],
+              },
+            })
+          }
+          updatedData.assignedInboxTeamId = inboxTeam.id
         }
-        updatedData.assignedInboxTeamId = inboxTeam.id
-      }
 
-      await prisma.conversation.updateMany({
-        where: {
-          chatbotId,
-          contactId: {
-            in: parsedInput.contactIds,
+        const conversations = await tx.conversation.findMany({
+          where: {
+            chatbotId,
+            contactId: {
+              in: parsedInput.contactIds,
+            },
           },
-        },
-        data: updatedData,
+          select: { id: true },
+        })
+        const conversationIds = conversations.map((c) => c.id)
+        if (conversationIds.length === 0) {
+          return
+        }
+
+        await tx.conversation.updateMany({
+          where: {
+            id: {
+              in: conversations.map((c) => c.id),
+            },
+          },
+          data: updatedData,
+        })
+
+        revalidateCacheTags([
+          `chatbots:${chatbotId}#conversations`,
+          `chatbots:${chatbotId}#contacts`,
+        ])
+
+        await broadcastToChatbotParty(chatbotId, {
+          eventType: RealtimeEventType.conversationAssigned,
+          data: {
+            conversationIds,
+            assignedUserId: updatedData.assignedUserId,
+            assignedInboxTeamId: updatedData.assignedInboxTeamId,
+          },
+        })
       })
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#conversations`,
-        `chatbots:${chatbotId}#contacts`,
-      ])
     },
   )

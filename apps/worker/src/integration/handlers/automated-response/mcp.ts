@@ -1,77 +1,86 @@
+import ky, { type Options } from "ky"
+import { z } from "zod"
 import { logger } from "../../../lib/logger"
-import { AUTH_TYPES, JSON_TYPE, TEXT } from "./constants"
-
-type MCPHeader = { header: string; value: string }
-type MCPAuth =
-  | { type: "TOKEN"; token: string }
-  | { type: "HEADERS"; headers: MCPHeader[] }
-  | { type: "NONE" }
+import { JSON_TYPE, TEXT } from "./constants"
 
 type MCPSuccess = { content: unknown; success: true }
 type MCPFailure = { error: string; success: false }
 type MCPResult = MCPSuccess | MCPFailure
 
-export async function callMCPTool(
-  mcpServerUrl: string,
-  toolName: string,
-  args: Record<string, unknown>,
-  auth?: MCPAuth,
-): Promise<MCPResult> {
+export const mcpAuthTypes = {
+  none: "none",
+  header: "header",
+  token: "token",
+} as const
+
+const mcpAuthSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal(mcpAuthTypes.none),
+  }),
+  z.object({
+    type: z.literal(mcpAuthTypes.token),
+    token: z.string().trim().min(1),
+  }),
+  z.object({
+    type: z.literal(mcpAuthTypes.header),
+    headers: z.array(
+      z.object({
+        header: z.string().trim().min(1),
+        value: z.string().trim().min(1),
+      }),
+    ),
+  }),
+])
+export type MCPAuthSchema = z.infer<typeof mcpAuthSchema>
+
+export async function callMCPTool(props: {
+  url: string
+  auth: MCPAuthSchema
+  toolName: string
+  args: Record<string, unknown>
+}): Promise<MCPResult> {
+  const { url, auth, toolName, args } = props
+
   try {
-    const requestId = Date.now() + Math.floor(Math.random() * 1000)
-    const requestBody = {
-      jsonrpc: TEXT.jsonRpcVersion,
-      id: requestId,
-      method: "tools/call",
-      params: {
-        name: toolName,
-        arguments: args,
+    const requestOptions: Options = {
+      json: {
+        jsonrpc: TEXT.jsonRpcVersion,
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        method: "tools/call",
+        params: {
+          name: toolName,
+          arguments: args,
+        },
       },
     }
-
-    const headers: Record<string, string> = {
-      "Content-Type": TEXT.contentType,
+    switch (auth.type) {
+      case mcpAuthTypes.header:
+        requestOptions.headers = {
+          ...auth.headers.reduce(
+            (acc, header) => {
+              acc[header.header] = header.value
+              return acc
+            },
+            {} as Record<string, string>,
+          ),
+        }
+        break
+      case mcpAuthTypes.token:
+        requestOptions.headers = {
+          Authorization: `Bearer ${auth.token}`,
+        }
+        break
+      default:
+        break
     }
 
-    if (auth !== undefined) {
-      switch (auth.type) {
-        case AUTH_TYPES.TOKEN:
-          headers.Authorization = `${TEXT.bearerTokenPrefix}${auth.token}`
-          break
-        case AUTH_TYPES.HEADERS:
-          for (const header of auth.headers) {
-            headers[header.header] = header.value
-          }
-          break
-        default:
-          break
-      }
-    }
+    const result = await ky.post(url, requestOptions).json<MCPResult>()
 
-    const response = await fetch(mcpServerUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(
-        `HTTP error! status: ${response.status}, body: ${errorText}`,
-      )
-    }
-
-    const result = await response.json()
-
-    if (result.jsonrpc !== TEXT.jsonRpcVersion) {
+    if (!result.success) {
       throw new Error("Invalid JSON-RPC 2.0 response")
     }
 
-    if (result.error) {
-      throw new Error(`MCP tool error: ${result.error.message}`)
-    }
-
-    let content = result.result?.content || result.result
+    let content = result.content
 
     if (Array.isArray(content) && content.length > 0) {
       const firstItem = content[0]
@@ -87,7 +96,7 @@ export async function callMCPTool(
   } catch (error) {
     logger.error("[automated-response] callMCPTool failed", {
       error,
-      mcpServerUrl,
+      url,
       toolName,
     })
     return {

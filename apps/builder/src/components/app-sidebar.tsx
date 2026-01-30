@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type ComponentProps, use } from "react"
+import { BrandIcon } from "@/components/brand-icon"
 import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -94,8 +95,13 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="px-2">
-        <ChatbotSwitcher chatbots={chatbots} />
+      <SidebarHeader className="gap-0 px-0 py-0">
+        <div className="flex h-12 items-center justify-center border-b">
+          <BrandIcon alt="Brand" />
+        </div>
+        <div className="border-b px-1">
+          <ChatbotSwitcher chatbots={chatbots} />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -16,7 +17,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { type ReactNode, useEffect } from "react"
 import { toast } from "sonner"
 import { changeFolderAction } from "./actions/change-folder.action"
 import { useFolderSelectOptions } from "./provider/folder-hook"
@@ -24,17 +25,19 @@ import { changeFolderRequest } from "./schemas/action"
 
 export type ChangeFolderDialogProps = {
   chatbotId: string
-  modelId: string | null
+  modelIds: string[] | null
   currentFolderId: string | null
   folderType: FolderType
   open: boolean
+  trigger?: ReactNode
   onOpenChange: (open: boolean) => void
 }
 
 export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
   const {
     chatbotId,
-    modelId,
+    modelIds,
+    trigger,
     currentFolderId,
     folderType,
     open,
@@ -46,6 +49,7 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
+      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -59,7 +63,7 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
           chatbotId={chatbotId}
           currentFolderId={currentFolderId}
           folderType={folderType}
-          modelId={modelId}
+          modelIds={modelIds}
           onClose={() => onOpenChange(false)}
           onSuccess={() => {
             onOpenChange(false)
@@ -73,7 +77,7 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
 
 export type ChangeFolderFormProps = {
   chatbotId: string
-  modelId: string | null
+  modelIds: string[] | null
   currentFolderId: string | null
   folderType: FolderType
   onClose?: () => void
@@ -88,7 +92,7 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
 
   const {
     chatbotId,
-    modelId,
+    modelIds,
     currentFolderId,
     folderType,
     onClose,
@@ -123,12 +127,12 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
     )
 
   useEffect(() => {
-    if (modelId) {
+    if (modelIds) {
       form.setValue("newFolderId", currentFolderId ?? "")
       form.setValue("folderType", folderType)
-      form.setValue("modelId", modelId)
+      form.setValue("modelIds", modelIds)
     }
-  }, [modelId, currentFolderId, folderType, form.setValue])
+  }, [modelIds, currentFolderId, folderType, form.setValue])
 
   return (
     <Form {...form}>

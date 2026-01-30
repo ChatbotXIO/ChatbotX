@@ -1,5 +1,6 @@
 "use client"
 
+import { rootFolderId } from "@aha.chat/database/enums"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -21,7 +22,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createFlowAction } from "./actions/create-flow-action"
-import { createFlowSchema } from "./schemas/create-flow-schema"
+import { createFlowSchema } from "./schemas/action"
 
 export function CreateFlowDialog({
   chatbotId,
@@ -62,7 +63,7 @@ export function CreateFlowDialog({
           mode: "onChange",
           defaultValues: {
             name: "",
-            folderId,
+            folderId: null,
           },
         },
         errorMapProps: {},
@@ -72,7 +73,9 @@ export function CreateFlowDialog({
   const { setValue } = form
 
   useEffect(() => {
-    setValue("folderId", folderId)
+    if (folderId && folderId !== rootFolderId) {
+      setValue("folderId", folderId)
+    }
   }, [folderId, setValue])
 
   return (

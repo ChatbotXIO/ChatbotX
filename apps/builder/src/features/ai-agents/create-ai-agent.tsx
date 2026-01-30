@@ -1,10 +1,12 @@
 "use client"
 
-import type {
-  AIFileModel,
-  AIFunctionModel,
-  AIMCPServerModel,
+import {
+  type AIFileModel,
+  type AIFunctionModel,
+  type AIMCPServerModel,
+  AIMessageRole,
 } from "@aha.chat/database/types"
+import { aiProviders, defaultAIModelIds } from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -46,11 +48,8 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/request"
-import {
-  geminiModelOptions,
-  geminiModels,
-} from "../integration-gemini/schemas/models"
-import { openAIModelOptions, openAIModels } from "../openai/models"
+import { geminiModelOptions } from "../integration-gemini/schemas/models"
+import { openaiChatModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   files: AIFileModel[]
@@ -102,10 +101,10 @@ export function CreateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: t("fields.promptMessages.role.user"), value: "user" },
-      { label: t("fields.promptMessages.role.assistant"), value: "assistant" },
+      { label: "User", value: AIMessageRole.user },
+      { label: "Assistant", value: AIMessageRole.assistant },
     ],
-    [t],
+    [],
   )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -140,16 +139,16 @@ export function CreateAIAgentDialog({
             messages: [],
             models: [
               {
-                provider: "gemini",
-                model: geminiModels.gemini25FlashLite,
+                provider: aiProviders.gemini,
+                model: defaultAIModelIds.gemini,
               },
               {
-                provider: "openAI",
-                model: openAIModels.gpt4oMini,
+                provider: aiProviders.openai,
+                model: defaultAIModelIds.openai,
               },
             ],
             temperature: 0.4,
-            maxTokens: 2048,
+            maxOutputTokens: 2048,
             tools: [],
           },
         },
@@ -164,7 +163,7 @@ export function CreateAIAgentDialog({
 
   const addMessage = () => {
     append({
-      role: "user",
+      role: AIMessageRole.user,
       content: "",
     })
   }
@@ -203,7 +202,7 @@ export function CreateAIAgentDialog({
 
               <div className="flex flex-col items-start gap-2">
                 <div className="font-medium text-sm">
-                  {t("fields.promptMessages.label")}
+                  {t("fields.prompt.label")}
                 </div>
                 {fields.map((field, index) => (
                   <div className="flex w-full items-start gap-2" key={field.id}>
@@ -258,9 +257,9 @@ export function CreateAIAgentDialog({
                   />
 
                   <SelectField
-                    label={t("fields.openAIModel.label")}
+                    label={t("fields.model.label")}
                     name="models.1.model"
-                    options={openAIModelOptions}
+                    options={openaiChatModelOptions}
                     required
                   />
 
@@ -273,10 +272,10 @@ export function CreateAIAgentDialog({
                   />
 
                   <SliderField
-                    label={t("fields.maxTokens.label")}
+                    label={t("fields.maxOutputTokens.label")}
                     max={32_768}
                     min={1}
-                    name="maxTokens"
+                    name="maxOutputTokens"
                     step={1}
                   />
                 </CollapsibleContent>

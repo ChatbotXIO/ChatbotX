@@ -1,5 +1,10 @@
 import { StepType } from "@aha.chat/flow-config"
 import {
+  SiClaude,
+  SiGooglegemini,
+  SiOpenai,
+} from "@icons-pack/react-simple-icons"
+import {
   ArchiveIcon,
   BellOffIcon,
   BellRingIcon,
@@ -54,6 +59,86 @@ const sheetsMenus = (t: TranslationFn): MenuItem[] => [
     label: t("flows.actions.spreadsheetSendData"),
     icon: SheetIcon,
     stepType: StepType.spreadsheetSendData,
+  },
+]
+
+const openaiMenus = (t: TranslationFn): MenuItem[] => [
+  {
+    label: "OpenAI",
+    icon: SiOpenai,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.aiGenerateText.label", {
+          name: "OpenAI",
+        }),
+        icon: SiOpenai,
+        stepType: StepType.aiGenerateText,
+        props: {
+          provider: "openai",
+        },
+      },
+    ],
+  },
+]
+
+const claudeMenus = (t: TranslationFn): MenuItem[] => [
+  {
+    label: "Claude",
+    icon: SiClaude,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.aiGenerateText.label", {
+          name: "Claude",
+        }),
+        icon: SiClaude,
+        stepType: StepType.aiGenerateText,
+        props: {
+          provider: "claude",
+        },
+      },
+    ],
+  },
+]
+
+const geminiMenus = (t: TranslationFn): MenuItem[] => [
+  {
+    label: "Gemini",
+    icon: SiGooglegemini,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.aiGenerateText.label", {
+          name: "Gemini",
+        }),
+        icon: SiGooglegemini,
+        stepType: StepType.aiGenerateText,
+        props: {
+          provider: "gemini",
+        },
+      },
+    ],
+  },
+]
+
+const deepseekMenus = (t: TranslationFn): MenuItem[] => [
+  {
+    label: "Deepseek",
+    icon: BotIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.aiGenerateText.label", {
+          name: "Deepseek",
+        }),
+        icon: BotIcon,
+        stepType: StepType.aiGenerateText,
+        props: {
+          provider: "deepseek",
+        },
+      },
+    ],
   },
 ]
 
@@ -251,4 +336,8 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       },
     ],
   },
+  ...openaiMenus(t),
+  ...geminiMenus(t),
+  ...claudeMenus(t),
+  ...deepseekMenus(t),
 ]

@@ -102,7 +102,7 @@ const NodeEditorMenu = memo(
     onClick,
   }: {
     nodeType: NodeType
-    onClick: (stepType: StepType) => void
+    onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
 
@@ -232,10 +232,12 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   }, [updatedButtonData, getValues, onChangeButtonData, setValue])
 
   const onAddStep = useCallback(
-    (name: StepType) => {
-      const newStep = allSteps[name]?.defaultFn()
-      if (newStep) {
-        appendStep(newStep)
+    (menuItem: MenuItem) => {
+      if (menuItem.stepType) {
+        const newStep = allSteps[menuItem.stepType]?.defaultFn(menuItem.props)
+        if (newStep) {
+          appendStep(newStep)
+        }
       }
     },
     [appendStep],

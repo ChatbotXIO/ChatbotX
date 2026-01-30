@@ -36,7 +36,7 @@ export const OptionItem = ({
   const isSelected = option.value === selectedValue
   return (
     <CommandItem disabled={disabled} onSelect={onSelect} value={option.value}>
-      {option.Icon && <option.Icon className="h-4 w-4" />}
+      {option.icon && <option.icon className="h-4 w-4" />}
       {option.label}
       <Check
         className={cn(
@@ -48,7 +48,7 @@ export const OptionItem = ({
   )
 }
 
-type ComboboxFieldProps<T extends FieldValues> = {
+export type ComboboxFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   required?: boolean

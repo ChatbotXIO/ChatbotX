@@ -52,12 +52,12 @@ export function MessengerDisconnect() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t("dialog.disconnect.title", {
+            {t("messages.disconnectFeature", {
               feature: t("messenger.title"),
             })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("dialog.disconnect.description", {
+            {t("messages.disconnectFeatureDescription", {
               feature: t("messenger.title"),
             })}
           </AlertDialogDescription>

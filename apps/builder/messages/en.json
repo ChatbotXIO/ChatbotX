@@ -1,13 +1,4 @@
 {
-  "accountField": {
-    "createDialog": {
-      "title": "Create Account Field"
-    },
-    "title": "Account Fields",
-    "updateForm": {
-      "title": "Update Account Field"
-    }
-  },
   "actions": {
     "copy": "Copy",
     "actions": "Actions",
@@ -20,15 +11,21 @@
     "addTag": "Add Tag",
     "addTextReply": "Add text reply",
     "appendToEnd": "Append to the end",
+    "markAsFollowUp": "Mark as Follow Up",
+    "removeFromFollowUp": "Remove from Follow Up",
+    "markAsUnread": "Mark as Unread",
     "archive": "Archive",
+    "unarchive": "Unarchive",
     "archiveConversation": "Archive Conversation",
     "assign": "Assign",
     "assignConversation": "Assign Conversation",
     "autoAssignConversation": "Auto Assign Conversation",
     "back": "Back",
     "blockContact": "Block Contact",
+    "unblockContact": "Unblock Contact",
     "broadcastActions": "Broadcast",
     "cancel": "Cancel",
+    "remove": "Remove",
     "clearCustomField": "Clear Custom Field",
     "confirm": "Confirm",
     "connect": "Connect",
@@ -55,6 +52,7 @@
     "followConversation": "Follow Conversation",
     "formatDate": "Format Date",
     "generateCode": "Generate Code",
+    "generateText": "Generate Text",
     "getDataFromJson": "Get Data From JSON",
     "getEmbedCode": "Get Embed Code",
     "getID": "Get ID",
@@ -133,14 +131,34 @@
     "chooseSubaction": "Choose Subaction",
     "resend": "Resend",
     "publish": "Publish",
+    "setStartNode": "Set as Start Node",
+    "getNodeId": "Get Node ID",
     "setAsDefaultAgent": "Set as Default",
     "unsetDefaultAgent": "Unset Default",
     "randomRow": "Random Row",
     "clickToEdit": "Click to edit",
-    "move": "Move"
+    "move": "Move",
+    "onSuccess": "On Success",
+    "onFailure": "On Failure",
+    "onSkip": "On Skip",
+    "removeAssignee": "Remove Assignee",
+    "condition": "Condition",
+    "sendMail": "Send Mail",
+    "splitTraffic": "Split Traffic",
+    "wait": "Wait",
+    "landingPage": "Landing Page",
+    "addNotes": "Add Notes"
   },
   "admins": {
     "title": "Admins"
+  },
+  "assignAdmin": {
+    "assignConversation": "Assign conversation",
+    "assignedToMe": "Assigned to me",
+    "assignedTo": "Assigned to {name}",
+    "removeAssigner": "Remove assigner",
+    "assignedAndUnassigned": "Assigned and Unassigned",
+    "unAssigned": "Unassigned"
   },
   "aiAgent": {
     "defaultAgent": "Default Agent",
@@ -189,6 +207,10 @@
     "name": {
       "label": "AI Trigger name"
     },
+    "setting": {
+      "description": "AI Triggers description",
+      "label": "AI Triggers"
+    },
     "update": {
       "title": "Update AI Trigger"
     }
@@ -210,7 +232,7 @@
   },
   "automatedResponse": {
     "heading": {
-      "title": "Automated Responses"
+      "title": "Keywords"
     },
     "setting": {
       "description": "Automated responses description",
@@ -221,6 +243,7 @@
     "title": "Billing"
   },
   "broadcasts": {
+    "scheduleSendMessage": "Schedule send message",
     "update": {
       "title": "Update Broadcast"
     },
@@ -284,8 +307,27 @@
       "phone": "Phone",
       "executedFlow": "Executed flow",
       "email": "Email",
+      "emailWasVerified": "Email was verified",
+      "optedInForEmail": "Opted in for email",
+      "emailSent": "Email sent",
+      "emailDelivered": "Email delivered",
+      "emailOpened": "Email opened",
+      "emailClicked": "Email clicked",
+      "bought": "Bought",
+      "boughtTheItems": "Bought the items",
+      "totalSpent": "Total spent",
+      "numberOfOrders": "Number of orders",
+      "shoppingCartTotal": "Shopping cart total",
+      "shoppingCartSubTotal": "Shopping cart subtotal",
+      "shoppingCartIsEmpty": "Shopping cart is empty",
+      "shoppingCartContainsItems": "Shopping cart contains items",
+      "lastUserInput": "Last user input",
+      "lastUserInputType": "Last user input type",
+      "followUp": "Follow up",
+      "unread": "Unread",
       "archived": "Archived",
-      "blocked": "Blocked"
+      "blocked": "Blocked",
+      "noAdminReply": "No admin reply"
     },
     "groups": {
       "instagram": "Instagram",
@@ -303,7 +345,8 @@
     "label": "Channel"
   },
   "channels": {
-    "title": "Channels"
+    "title": "Channels",
+    "allChannels": "All Channels"
   },
   "chatbots": {
     "create": {
@@ -316,29 +359,6 @@
   "customField": {
     "heading": {
       "title": "Custom Fields"
-    }
-  },
-  "dialog": {
-    "archiveConversation": {
-      "description": "Are you sure to archive those conversations?",
-      "title": "Archive Conversation"
-    },
-    "clearCustomField": "Clear Custom Field",
-    "connect": {
-      "title": "Connect {feature}"
-    },
-    "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
-    "disableBot": {
-      "description": "Are you sure to disable bot?",
-      "title": "Disable Bot"
-    },
-    "disconnect": {
-      "description": "Are you sure to disconnect {feature}?",
-      "title": "Disconnect {feature}"
-    },
-    "enable": {
-      "description": "Are you sure to enable {feature}?",
-      "title": "Enable {feature}"
     }
   },
   "fields": {
@@ -470,7 +490,7 @@
       "label": "Automated Response"
     },
     "automatedResponses": {
-      "label": "Automated Responses"
+      "label": "Keywords"
     },
     "autoReply": {
       "label": "Auto Reply"
@@ -728,8 +748,9 @@
     "max": {
       "label": "Maximum"
     },
-    "maxTokens": {
-      "label": "Max Tokens"
+    "maxOutputTokens": {
+      "label": "Max Tokens",
+      "placeholder": "Maximum number of tokens to generate"
     },
     "mcpServer": {
       "label": "MCP Server"
@@ -768,8 +789,11 @@
     "openai": {
       "label": "OpenAI"
     },
-    "openAIModel": {
-      "label": "OpenAI Model"
+    "claude": {
+      "label": "Claude"
+    },
+    "deepseek": {
+      "label": "DeepSeek"
     },
     "operation": {
       "label": "Operation"
@@ -809,10 +833,10 @@
       "noPhoneNumbersFound": "No phone numbers found for this account"
     },
     "prompt": {
-      "label": "Prompt"
+      "label": "Prompt",
+      "placeholder": "Enter prompt"
     },
     "promptMessages": {
-      "label": "Prompt Messages",
       "role": {
         "assistant": "Assistant",
         "user": "User"
@@ -868,6 +892,9 @@
     },
     "team": {
       "label": "Team"
+    },
+    "rememberConversation": {
+      "label": "Remember conversation"
     },
     "temperature": {
       "label": "Temperature"
@@ -1014,6 +1041,10 @@
       "now": "Now",
       "scheduled": "Schedule for later"
     },
+    "placeholders": {
+      "selectTools": "Select tools",
+      "temperatureHint": "Controls randomness (0-2), higher = more creative"
+    },
     "inputCfId": {
       "label": "Input Custom Field"
     },
@@ -1044,9 +1075,18 @@
     },
     "spreadsheet": {
       "label": "Spreadsheet"
+    },
+    "conversationType": {
+      "label": "Conversation Type"
+    },
+    "source": {
+      "label": "Source"
     }
   },
   "flows": {
+    "aiGenerateText": {
+      "label": "{name}: AI Generate Text"
+    },
     "actions": {
       "addContactNotes": "Add Contact Notes",
       "addContactTag": "Add Contact Tag",
@@ -1081,8 +1121,8 @@
       "removeContactTag": "Remove Contact Tag",
       "sendAudio": "Send Audio",
       "sendCard": "Send Card",
-      "sendExternalFlow": "Send External Flow",
-      "sendExternalNode": "Send External Node",
+      "sendExternalFlow": "Start External Flow",
+      "sendExternalNode": "Start External Node",
       "sendFile": "Send File",
       "sendFlow": "Send Flow",
       "sendGif": "Send Gif",
@@ -1105,7 +1145,7 @@
       "unfollowConversation": "Unfollow Conversation",
       "unsubscribeBroadcast": "Unsubscribe Broadcast",
       "waitUserReply": "Wait User Reply",
-      "getUserInput": "Get User Input",
+      "getUserData": "Get User Data",
       "sendCarousel": "Send Carousel",
       "actions": "Actions",
       "findGif": "Find Gif",
@@ -1115,6 +1155,14 @@
       "spreadsheetSendData": "Send Data",
       "spreadsheetGetRandomRow": "Get Random Row",
       "spreadsheetClearRow": "Clear Row",
+      "emailText": "Text",
+      "emailH3": "Heading",
+      "emailImage": "Image",
+      "emailButton": "Button",
+      "emailLine": "Line",
+      "emailSpacing": "Spacing",
+      "emailCode": "Code",
+      "emailHeader": "Header",
       "mailchimpAddMember": "Add Contact to Mailchimp"
     },
     "additionalSteps": "Additional steps",
@@ -1171,18 +1219,6 @@
     "title": "General"
   },
   "googleSheets": {
-    "spreadsheet": "Spreadsheet",
-    "name": "Spreadsheet Name",
-    "link": "Spreadsheet Link",
-    "add": {
-      "title": "Add Spreadsheet"
-    },
-    "confirmDeleteDesc": "Are you sure you want to delete this Google Sheets?",
-    "update": {
-      "dialog_title": "Update Spreadsheet"
-    },
-    "deleted": "Google Sheets deleted successfully",
-    "length": "Google Sheets length",
     "setting": {
       "description": "Google Sheets description",
       "label": "Google Sheets"
@@ -1213,13 +1249,11 @@
       "doubleOptInTooltip": "If yes, a confirmation email will be sent to the email before add the contact to your list.",
       "tags": "Tags",
       "tagsPlaceholder": "Select tags",
-      "customFieldsMapping": "Custom Fields in Mailchimp"
-    }
-  },
-  "inboxTeam": {
-    "updateAction": {
-      "heading": {
-        "label": "Rename Inbox Team"
+      "customFieldsMapping": "Custom Fields in Mailchimp",
+      "error": {
+        "fetch_lists": "Failed to fetch Mailchimp lists",
+        "fetch_tags": "Failed to fetch Mailchimp tags",
+        "fetch_merge_fields": "Failed to fetch Mailchimp merge fields"
       }
     }
   },
@@ -1228,25 +1262,6 @@
     "disconnectDescription": "This action cannot be undone."
   },
   "integrations": {
-    "gemini": {
-      "apiKey": "Gemini API Key",
-      "button": {
-        "connect": "Connect"
-      }
-    },
-    "googleSheets": {
-      "button": {
-        "connect": "Connect"
-      }
-    },
-    "openAI": {
-      "apiKey": "OpenAI API Key",
-      "button": {
-        "connect": "Connect"
-      },
-      "maxTokens": "Max Tokens",
-      "temperature": "Temperature"
-    },
     "title": "Integrations"
   },
   "messages": {
@@ -1266,8 +1281,9 @@
     "deleteComingSoon": "Delete functionality coming soon",
     "deletedSuccess": "{feature} deleted successfully",
     "deleteFileComingSoon": "Delete file functionality coming soon",
-    "disabledSuccess": "{feature} disabled successfully",
-    "disconnectedSuccess": "{feature} disconnected successfully",
+    "disconnectFeature": "Disconnect {feature}",
+    "disconnectFeatureDescription": "Are you sure you want to disconnect the {feature}?",
+    "disconnectSuccess": "{feature} disconnected successfully",
     "downloadComingSoon": "Download functionality coming soon",
     "enabledSuccessfully": "{feature} enabled successfully",
     "failedToCopy": "Failed to copy",
@@ -1308,7 +1324,20 @@
     "duplicateSuccess": "{feature} duplicated successfully",
     "changeDefault": "Change Default",
     "changeDefaultDescription": "Are you sure you want to change the default AI agent?",
-    "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?"
+    "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?",
+    "botIsActive": "Bot is active",
+    "archiveFeature": "Archive {feature}",
+    "archiveFeatureDescription": "Are you sure you want to archive the {feature}?",
+    "archiveSuccess": "{feature} archived successfully",
+    "unarchiveFeature": "Unarchive {feature}",
+    "unarchiveFeatureDescription": "Are you sure you want to unarchive the {feature}?",
+    "unarchiveSuccess": "{feature} unarchived successfully",
+    "disableFeature": "Disable {feature}",
+    "disableFeatureDescription": "Are you sure you want to disable the {feature}?",
+    "disableSuccess": "{feature} disabled successfully",
+    "enableFeature": "Enable {feature}",
+    "enableFeatureDescription": "Are you sure you want to enable the {feature}?",
+    "enableSuccess": "{feature} enabled successfully"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1318,7 +1347,7 @@
   "omnichannel": {
     "title": "Omnichannel"
   },
-  "openAI": {
+  "openai": {
     "connect": {
       "description": "Respond to users naturally with AI powered by your business data.",
       "title": "OpenAI"
@@ -1339,9 +1368,9 @@
       "title": "AI Triggers"
     },
     "automatedResponses": {
-      "title": "Automated Responses"
+      "title": "Keywords"
     },
-    "openAI": {
+    "openai": {
       "description": "OpenAI integration description",
       "title": "OpenAI Integration"
     }
@@ -1364,11 +1393,6 @@
   "tags": {
     "heading": {
       "title": "Tags"
-    }
-  },
-  "teams": {
-    "create": {
-      "title": "Create Inbox Team"
     }
   },
   "texts": {

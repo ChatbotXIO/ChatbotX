@@ -6,6 +6,7 @@ import {
   InboxType,
   type IntegrationType,
   type MessageModel,
+  MessageType,
   SenderType,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
@@ -16,10 +17,15 @@ import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { AttachmentEntity, AuthValue, Context } from "@aha.chat/sdk"
+import type {
+  AttachmentEntity,
+  AuthValue,
+  Context,
+  ReceivedMessageResult,
+} from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
-import { allIntegrations, getDBIntegration } from "../../shared/integrations"
 
 export const receiveMessage = async ({
   integrationType,
@@ -30,8 +36,9 @@ export const receiveMessage = async ({
 }): Promise<{
   message: MessageModel
   conversation: ConversationModel
-  postbackAction: { flowVersionId: string; buttonId: string } | null
-  quickReplyAction: { flowVersionId: string; buttonId: string } | null
+  postbackAction: string | null
+  quickReplyAction: string | null
+  ref?: string | null
 }> => {
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
@@ -44,7 +51,8 @@ export const receiveMessage = async ({
     auth: auth as AuthValue,
     uploader,
   }
-  const parsedMessage = await allIntegrations[
+
+  const parsedMessage: ReceivedMessageResult | null = await allIntegrations[
     integrationType as IntegrationType
   ]?.actions.receiveMessage({
     ctx,
@@ -54,7 +62,7 @@ export const receiveMessage = async ({
     throw new Error("Unable to parse received message")
   }
 
-  const { message, conversation, postbackAction, quickReplyAction } =
+  const { message, conversation, postbackAction, quickReplyAction, ref } =
     parsedMessage
 
   const result = await prisma.$transaction(async (tx) => {
@@ -119,9 +127,14 @@ export const receiveMessage = async ({
       },
       update: {
         updatedAt: new Date(),
+        contactRepliedAt: new Date(),
+        lastActivityAt: new Date(),
       },
     })
 
+    const now = new Date()
+
+    // Create message and attachments
     const newMessage = await tx.message.upsert({
       where: {
         chatbotId_sourceId: {
@@ -132,32 +145,44 @@ export const receiveMessage = async ({
       create: {
         conversationId: newConversation.id,
         inboxId,
-        senderType: SenderType.contact,
+        senderType:
+          message.messageType === MessageType.outgoing
+            ? SenderType.user
+            : SenderType.contact,
         chatbotId,
-        senderId: newContact.id,
+        sourceId: message.sourceId ?? "",
+        senderId:
+          message.messageType === MessageType.outgoing ? null : newContact.id,
         messageType: message.messageType,
         content: message.content,
         contentType: message.contentType as ContentType,
         contentAttributes: message.contentAttributes as Prisma.InputJsonValue,
-        attachments: message.attachments
-          ? {
-              create: message.attachments.map(
-                (attachment: AttachmentEntity) => ({
-                  chatbotId: newConversation.chatbotId,
-                  conversationId: newConversation.id,
-                  ...attachment,
-                }),
-              ),
-            }
-          : undefined,
+        createdAt: now,
+        updatedAt: now,
       },
-      update: {},
+      update: {
+        updatedAt: now,
+      },
     })
+
+    if (
+      message.attachments &&
+      newMessage.createdAt.getTime() === now.getTime()
+    ) {
+      await tx.attachment.createMany({
+        data: message.attachments.map((attachment: AttachmentEntity) => ({
+          ...attachment,
+          messageId: newMessage.id,
+          chatbotId: newConversation.chatbotId,
+          conversationId: newConversation.id,
+        })),
+      })
+    }
 
     // emit new message to socket
     try {
       broadcastToChatbotParty(newConversation.chatbotId, {
-        eventType: RealtimeEventType.CREATE_MESSAGE,
+        eventType: RealtimeEventType.messageCreated,
         data: newMessage,
       })
     } catch (error) {
@@ -168,23 +193,23 @@ export const receiveMessage = async ({
   })
 
   if (postbackAction) {
-    await integrationQueue.add(IntegrationJobAction.sendFlowPostback, {
-      type: IntegrationJobAction.sendFlowPostback,
+    await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
+      type: IntegrationJobAction.runFlowPostback,
       data: {
         conversationId: result.conversation.id,
-        flowVersionId: postbackAction.flowVersionId,
-        buttonId: postbackAction.buttonId,
+        action: postbackAction,
+        ref,
       },
     })
   }
 
   if (quickReplyAction) {
-    await integrationQueue.add(IntegrationJobAction.sendFlowQuickReply, {
-      type: IntegrationJobAction.sendFlowQuickReply,
+    await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
+      type: IntegrationJobAction.runFlowQuickReply,
       data: {
         conversationId: result.conversation.id,
-        flowVersionId: quickReplyAction.flowVersionId,
-        buttonId: quickReplyAction.buttonId,
+        action: quickReplyAction,
+        ref,
       },
     })
   }
@@ -194,6 +219,7 @@ export const receiveMessage = async ({
     conversation: result.conversation,
     postbackAction,
     quickReplyAction,
+    ref,
   }
 }
 

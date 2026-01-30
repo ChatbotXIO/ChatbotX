@@ -9,9 +9,5 @@ export default async function AutomatedResponsesLayout({
 }) {
   const { chatbotId } = await params
 
-  return (
-    <FlowStoreProvider autoInitialize={true} chatbotId={chatbotId}>
-      {children}
-    </FlowStoreProvider>
-  )
+  return <FlowStoreProvider chatbotId={chatbotId}>{children}</FlowStoreProvider>
 }

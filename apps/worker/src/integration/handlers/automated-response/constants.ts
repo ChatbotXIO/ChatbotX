@@ -21,7 +21,7 @@ export const TEXT = {
   fileSearchQueryDescription: "Search keywords to find relevant information",
 } as const
 
-export const TOOL_PREFIX = {
+export const toolPrefix = {
   file: "file:",
   fn: "fn:",
   mcp: "mcp:",
@@ -37,13 +37,6 @@ export const JSON_TYPE = {
   null: "null",
 } as const
 export type JsonType = (typeof JSON_TYPE)[keyof typeof JSON_TYPE]
-
-export const AI_PROVIDERS = {
-  OPENAI: "openAI",
-  GEMINI: "gemini",
-} as const
-
-export type AIProvider = (typeof AI_PROVIDERS)[keyof typeof AI_PROVIDERS]
 
 export const AUTH_TYPES = {
   TOKEN: "TOKEN",
@@ -95,3 +88,14 @@ export const SUPPORTED_IMAGE_EXTENSIONS = [
   IMAGE_EXTENSIONS.WEBP,
   IMAGE_EXTENSIONS.SVG,
 ] as const
+
+export const DEFAULT_MAX_TOKENS = 250
+export const GEMINI_MIN_TOKENS = 500
+export const maxConversationHistory = 100
+
+export const TOOL_RESULT_PREFIX = "Tool "
+export const TOOL_RESULT_SUFFIX = " result: "
+
+export const MAGIC_NUMBERS = {
+  ZERO_MESSAGE_COUNT: 0,
+} as const

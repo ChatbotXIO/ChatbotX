@@ -1,10 +1,11 @@
 import { prisma } from "@aha.chat/database"
 import {
   type AIAgentProvider,
+  AIMessageRole,
   type AutomatedResponseReply,
   ReplyType,
 } from "@aha.chat/database/types"
-import { StepType } from "@aha.chat/flow-config"
+import { aiProviders } from "@aha.chat/flow-config"
 import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import {
   ChatJobAction,
@@ -14,10 +15,8 @@ import {
 } from "@aha.chat/worker-config"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
-import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import { logger } from "../../../lib/logger"
-import { AI_PROVIDERS, TEXT } from "./constants"
+import { TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
 
@@ -64,16 +63,12 @@ async function replaceCustomFieldAttributes(
     )
 
     return processedMessage
-  } catch (error) {
-    logger.error("[automated-response] replaceCustomFieldAttributes failed", {
-      error,
-      conversationId,
-    })
+  } catch {
     return message
   }
 }
 
-export async function listAllEnabledAutomatedResponses({
+async function listAllEnabledAutomatedResponses({
   chatbotId,
 }: {
   chatbotId: string
@@ -82,11 +77,7 @@ export async function listAllEnabledAutomatedResponses({
     return await prisma.automatedResponse.findMany({
       where: { chatbotId, status: true },
     })
-  } catch (error) {
-    logger.error(
-      "[automated-response] listAllEnabledAutomatedResponses failed",
-      { error, chatbotId },
-    )
+  } catch {
     return []
   }
 }
@@ -109,40 +100,54 @@ export async function replyByAutomatedResponse({
   }
 
   for (const automatedResponse of allAutomatedResponses) {
-    const matched = automatedResponse.userMessages.some((v) =>
-      (message.content ?? "").includes(v),
-    )
+    const matched = automatedResponse.userMessages
+      .map((v) => v.toLowerCase())
+      .some((v) => (message.content ?? "").toLowerCase().includes(v))
+
     if (matched) {
       for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
-          case ReplyType.Message:
-            await chatQueue.add(ChatJobAction.sendFlowMessage, {
-              type: ChatJobAction.sendFlowMessage,
-              data: {
-                conversationId: message.conversationId,
-                flowVersionId: "",
-                step: {
-                  id: createId(),
-                  message: reply.message ?? "",
-                  stepType: StepType.sendText,
-                  buttons: [],
+          case ReplyType.Message: {
+            if (reply.message) {
+              const stepMessage = await replaceCustomFieldAttributes(
+                reply.message,
+                message.conversationId,
+              )
+
+              await chatQueue.add(ChatJobAction.sendChatMessage, {
+                type: ChatJobAction.sendChatMessage,
+                data: {
+                  conversationId: message.conversationId,
+                  text: stepMessage,
                 },
-              },
-            })
+              })
+            }
             replied = true
             break
+          }
           case ReplyType.Flow: {
             const flow = await prisma.flow.findFirst({
               where: { id: reply.flowId },
+              include: {
+                flowVersions: {
+                  where: {
+                    isDraft: false,
+                    isLatest: true,
+                  },
+                  orderBy: { createdAt: "desc" },
+                  take: 1,
+                },
+              },
             })
             if (flow?.currentVersionId) {
               await integrationQueue.add(IntegrationJobAction.sendFlow, {
                 type: IntegrationJobAction.sendFlow,
                 data: {
                   conversationId: message.conversationId,
-                  flowVersionId: flow.currentVersionId,
+                  flowId: flow.id,
                 },
               })
+              replied = true
             }
             break
           }
@@ -157,7 +162,7 @@ export async function replyByAutomatedResponse({
 
 export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
   return runAIReply(props, {
-    provider: AI_PROVIDERS.GEMINI,
+    provider: aiProviders.gemini,
     fetchIntegration: async (chatbotId: string) =>
       prisma.integrationGemini.findFirst({
         where: { chatbotId, autoReply: true },
@@ -169,7 +174,7 @@ export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
 
 export function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
   return runAIReply(props, {
-    provider: AI_PROVIDERS.OPENAI,
+    provider: aiProviders.openai,
     fetchIntegration: async (chatbotId: string) =>
       prisma.integrationOpenAI.findFirst({
         where: { chatbotId, autoReply: true },
@@ -184,7 +189,7 @@ export function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
 }
 
 type ProviderRunnerConfig = {
-  provider: (typeof AI_PROVIDERS)[keyof typeof AI_PROVIDERS]
+  provider: (typeof aiProviders)[keyof typeof aiProviders]
   fetchIntegration: (chatbotId: string) => Promise<{ auth: unknown } | null>
   createClient: (apiKey: string) => (modelName: string) => LanguageModel
   onFollowUpError: (ctx: {
@@ -204,9 +209,15 @@ async function runAIReply(
       return false
     }
 
-    const clientFactory = cfg.createClient(
-      (integration.auth as SecretTextAuthValue | null)?.secretText || "",
-    )
+    const apiKey =
+      (integration.auth as SecretTextAuthValue | null)?.secretText || ""
+
+    if (!apiKey || apiKey.length === 0) {
+      return false
+    }
+
+    const clientFactory = cfg.createClient(apiKey)
+
     const selectedModel = (aiAgent.models as AIAgentProvider[]).find(
       (v) => v.provider === cfg.provider,
     )
@@ -231,36 +242,14 @@ async function runAIReply(
       model: clientFactory(modelName),
       system: completePrompt,
       messages: lastAIMessages,
-      maxOutputTokens: aiAgent.maxTokens,
+      maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
       tools,
       toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
     })
 
     const toolCalls = await result.toolCalls
-    if (toolCalls && toolCalls.length > 0) {
-      try {
-        const planned = toolCalls.map((t) => t.toolName).join(", ")
-        logger.info(`[AI_TOOL] Planned tool calls: ${planned}`)
-      } catch {
-        // ignore
-      }
-    }
     const toolResults = await result.toolResults
-    if (toolResults && toolResults.length > 0) {
-      for (const r of toolResults) {
-        try {
-          const outputPreview =
-            typeof r.output === "string"
-              ? r.output.slice(0, 200)
-              : JSON.stringify(r.output).slice(0, 200)
-          logger.info(`[AI_TOOL] Result: ${r.toolName} -> ${outputPreview}`)
-        } catch {
-          // ignore
-        }
-      }
-    }
-
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,
       message.conversationId,
@@ -274,11 +263,11 @@ async function runAIReply(
       const followUpMessages: ModelMessage[] = [
         ...lastAIMessages,
         {
-          role: "assistant",
+          role: AIMessageRole.assistant,
           content: fullText || TEXT.assistantFoundPrefix,
         },
         {
-          role: "user",
+          role: AIMessageRole.user,
           content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
         },
       ]
@@ -287,7 +276,7 @@ async function runAIReply(
           model: clientFactory(modelName),
           system: completePrompt,
           messages: followUpMessages,
-          maxOutputTokens: aiAgent.maxTokens,
+          maxOutputTokens: aiAgent.maxOutputTokens,
           temperature: aiAgent.temperature,
         })
         const { messageCount: followUpMessageCount } =
@@ -299,12 +288,7 @@ async function runAIReply(
         if (followUpMessageCount > 0) {
           return true
         }
-      } catch (error) {
-        logger.error("[automated-response] follow-up streamText failed", {
-          error,
-          provider: cfg.provider,
-          conversationId: message.conversationId,
-        })
+      } catch (_error) {
         return await cfg.onFollowUpError({
           conversationId: message.conversationId,
           toolResultsText,
@@ -316,12 +300,7 @@ async function runAIReply(
       return true
     }
     return false
-  } catch (error) {
-    logger.error("[automated-response] runAIReply failed", {
-      error,
-      provider: cfg.provider,
-      chatbotId: message.chatbotId,
-    })
+  } catch (_error) {
     return false
   }
 }

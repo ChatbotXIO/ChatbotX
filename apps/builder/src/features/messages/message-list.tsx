@@ -75,7 +75,10 @@ const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
-  <div {...props} className="virtuoso-item-list flex flex-col gap-1.5">
+  <div
+    {...props}
+    className="virtuoso-item-list flex flex-col gap-1.5 [&>div:first-child]:mt-3"
+  >
     {children}
   </div>
 )

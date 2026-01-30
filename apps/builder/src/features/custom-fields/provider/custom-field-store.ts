@@ -20,14 +20,13 @@ export type CustomFieldState = {
 }
 
 export type CustomFieldActions = {
-  initialize: (chatbotId: string) => Promise<void>
-  getAllCustomFields: (chatbotId: string) => Promise<void>
-  getCustomFieldSelectOptions: () => CustomFieldSelectOption[]
+  initialize: () => Promise<void>
+  getAllCustomFields: () => Promise<void>
 }
 
 export type CustomFieldStore = CustomFieldState & CustomFieldActions
 
-export const createCustomFieldStore = () =>
+export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
   createStore<CustomFieldStore>((set, get) => ({
     loading: false,
     error: null,
@@ -35,57 +34,61 @@ export const createCustomFieldStore = () =>
 
     chatbotId: "",
     customFields: [],
+    ...props,
 
-    initialize: async (chatbotId: string) => {
+    initialize: async () => {
       const { initialized } = get()
 
       if (initialized) {
         return
       }
 
-      set({ loading: true, error: null })
-
       try {
-        await get().getAllCustomFields(chatbotId)
-        set({
-          loading: false,
-          initialized: true,
-        })
+        await get().getAllCustomFields()
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch custom fields",
-            loading: false,
-          })
-        }
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch custom fields",
+        })
+      } finally {
+        set({ initialized: true })
       }
     },
 
-    getAllCustomFields: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: maxPerPageString,
-      })
-      const { data } = await ky
-        .get<CustomFieldCollection>(
-          `/api/chatbots/${chatbotId}/custom-fields?${searchParams.toString()}`,
-        )
-        .json()
+    getAllCustomFields: async () => {
+      const { chatbotId, loading } = get()
 
-      set({ customFields: data })
-    },
+      // Skip if already initialized for the same chatbotId or currently loading
+      if (loading || !chatbotId) {
+        return
+      }
 
-    getCustomFieldSelectOptions: () => {
-      const { customFields } = get()
+      set({ loading: true, error: null })
 
-      return customFields.map((customField) => ({
-        label: customField.name,
-        value: customField.id,
-        type: customField.fieldType,
-      }))
+      try {
+        const searchParams = new URLSearchParams({
+          perPage: maxPerPageString,
+        })
+        const { data } = await ky
+          .get<CustomFieldCollection>(
+            `/api/chatbots/${chatbotId}/custom-fields?${searchParams.toString()}`,
+          )
+          .json()
+
+        set({
+          customFields: data,
+        })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch custom fields",
+        })
+      } finally {
+        set({ loading: false })
+      }
     },
   }))

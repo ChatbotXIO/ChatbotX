@@ -31,7 +31,7 @@ function SettingIntegrationLayoutContent({
   const integrationItems = [
     {
       id: "openai",
-      keyName: t("openAI.title"),
+      keyName: t("openai.title"),
       icon: BotIcon,
       content: openAI,
     },

@@ -2,6 +2,8 @@ import type {
   SendAudioStepSchema,
   SendCardStepSchema,
   SendCarouselStepSchema,
+  SendFileStepSchema,
+  SendGifStepSchema,
   SendImageStepSchema,
   SendQuickReplyStepSchema,
   SendTextStepSchema,
@@ -19,9 +21,10 @@ import { queueName } from "../../lib/types"
 export const ChatJobAction = {
   sendExternalMessage: "sendExternalMessage",
   sendFlowMessage: "sendFlowMessage",
+  sendChatMessage: "sendChatMessage",
 } as const
 
-export type ChatJobSendMessage = {
+export type ChatJobSendExternalMessage = {
   type: typeof ChatJobAction.sendExternalMessage
   data: {
     conversation: ConversationEntity
@@ -33,10 +36,13 @@ export type ChatJobSendFlowStep = {
   type: typeof ChatJobAction.sendFlowMessage
   data: {
     conversationId: string
-    flowVersionId: string
+    flowId: string
+    flowVersionId?: string
     step:
       | SendTextStepSchema
       | SendImageStepSchema
+      | SendGifStepSchema
+      | SendFileStepSchema
       | SendVideoStepSchema
       | SendAudioStepSchema
       | SendCardStepSchema
@@ -45,7 +51,19 @@ export type ChatJobSendFlowStep = {
   }
 }
 
-export type ChatJobData = ChatJobSendMessage | ChatJobSendFlowStep
+export type ChatJobSendChatMessage = {
+  type: typeof ChatJobAction.sendChatMessage
+  data: {
+    conversationId: string
+    text?: string
+    url?: string
+  }
+}
+
+export type ChatJobData =
+  | ChatJobSendExternalMessage
+  | ChatJobSendFlowStep
+  | ChatJobSendChatMessage
 
 export const chatQueue =
   process.env.NEXT_PHASE !== "phase-production-build"

@@ -82,12 +82,12 @@ export function GoogleSheetsManage({
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  {t("dialog.disconnect.title", {
+                  {t("messages.disconnectFeature", {
                     feature: t("fields.googleSheets.label"),
                   })}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {t("dialog.disconnect.description", {
+                  {t("messages.disconnectFeatureDescription", {
                     feature: t("fields.googleSheets.label"),
                   })}
                 </AlertDialogDescription>

@@ -55,15 +55,19 @@ export default function ArchiveConversationDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>{t("dialog.archiveConversation.title")}</DialogTitle>
+          <DialogTitle>
+            {t("messages.archiveFeature", {
+              feature: t("fields.conversation.label"),
+            })}
+          </DialogTitle>
           <DialogDescription>
-            {t("dialog.archiveConversation.description")}
+            {t("messages.archiveFeatureDescription", {
+              feature: t("fields.conversation.label"),
+            })}
           </DialogDescription>
         </DialogHeader>
-
-        <div>Are you sure to archive those conversations?</div>
 
         <DialogFooter>
           <DialogClose asChild>

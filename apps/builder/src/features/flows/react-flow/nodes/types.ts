@@ -7,6 +7,8 @@ export type MenuItem = {
   icon: LucideIcon
   stepType: StepType | null
   children?: MenuItem[]
+  // biome-ignore lint/suspicious/noExplicitAny: save additional props for onAdd
+  props?: Record<string, any>
 }
 
 export type TranslationFn = ReturnType<typeof useTranslations>
