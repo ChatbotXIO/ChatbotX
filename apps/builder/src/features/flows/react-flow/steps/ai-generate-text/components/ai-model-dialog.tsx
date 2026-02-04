@@ -1,9 +1,9 @@
 "use client"
 
-import { aiGenerateImageSchema } from "@aha.chat/flow-config"
-import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
+import { aiGenerateTextSchema } from "@aha.chat/flow-config"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
+import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -34,12 +34,28 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
   const [open, setOpen] = useState(false)
   const toolOptions = useAIToolOptions()
 
-  const { getValues, control } = useFormContext()
+  const { control, getValues, setValue } = useFormContext()
   const provider = useWatch({ name: `${parentName}.provider`, control })
 
   const form = useForm({
-    resolver: zodResolver(aiGenerateImageSchema),
+    resolver: zodResolver(aiGenerateTextSchema),
     defaultValues: getValues(parentName),
+  })
+
+  const handleSubmit = form.handleSubmit((values) => {
+    const currentValues = getValues(parentName)
+
+    setValue(
+      parentName,
+      {
+        ...currentValues,
+        ...values,
+        provider: provider ?? currentValues.provider,
+      },
+      { shouldDirty: true, shouldTouch: true, shouldValidate: true },
+    )
+
+    setOpen(false)
   })
 
   return (
@@ -60,13 +76,13 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
         </DialogHeader>
 
         <Form {...form}>
-          <form className="flex flex-col space-y-4">
+          <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
             <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-4 overflow-y-auto">
               <AIModelSelect name="model" provider={provider} required />
 
               <TiptapEditorField
                 label={t("fields.prompt.label")}
-                name="prompt"
+                name="system"
                 placeholder={t("fields.prompt.placeholder")}
               />
 
@@ -90,11 +106,10 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
                 options={toolOptions}
               />
 
-              <CheckboxGroupField
-                name="rememberConversation"
-                options={[
-                  { value: "1", label: t("fields.rememberConversation.label") },
-                ]}
+              <SwitchField
+                formItemClassName="flex flex-row items-center justify-between rounded-lg border p-3"
+                label={t("fields.rememberConversation.label")}
+                name="remember"
               />
 
               <InputNumberField
