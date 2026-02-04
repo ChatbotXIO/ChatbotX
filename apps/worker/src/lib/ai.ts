@@ -34,6 +34,25 @@ type DataField = {
 
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
 
+export function normalizeAIModelId(modelId: string): string {
+  const trimmed = modelId.trim()
+  if (!trimmed) {
+    return trimmed
+  }
+
+  const lastSlash = trimmed.lastIndexOf("/")
+  if (lastSlash >= 0 && lastSlash < trimmed.length - 1) {
+    return trimmed.slice(lastSlash + 1)
+  }
+
+  const lastColon = trimmed.lastIndexOf(":")
+  if (lastColon >= 0 && lastColon < trimmed.length - 1) {
+    return trimmed.slice(lastColon + 1)
+  }
+
+  return trimmed
+}
+
 export async function getAIIntegrationInDB(props: {
   workspaceId: string
   provider: string
