@@ -12,7 +12,11 @@ import {
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import { getAIIntegrationInDB, getAIModel } from "../../../lib/ai"
+import {
+  getAIIntegrationInDB,
+  getAIModel,
+  normalizeAIModelId,
+} from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
 import {
   MAGIC_NUMBERS,
@@ -39,13 +43,14 @@ export async function handleAIGenerateText({
       chatbotId: conversation.chatbotId,
       provider: step.provider,
     })
-
-    const model = getAIModel(aiConfig, aiConfig.model)
+    const modelProvider = getAIModel(aiConfig, step.provider)
+    const normalizedModelId = normalizeAIModelId(step.model)
+    const model = modelProvider(normalizedModelId)
 
     const toolSet = await getAIToolset(conversation.chatbotId, step.tools || [])
 
     const result = streamText({
-      model: "openai:gpt-4o-mini",
+      model,
       system: step.system,
       messages,
       tools: toolSet,
@@ -65,7 +70,7 @@ export async function handleAIGenerateText({
 
     if (toolCalls && toolCalls.length > 0) {
       await handleToolCallsFollowUp({
-        model: model(step.model),
+        model,
         messages,
         toolResults,
         fullText,
