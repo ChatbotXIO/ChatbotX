@@ -14,8 +14,8 @@ importers:
   .:
     devDependencies:
       '@biomejs/biome':
-        specifier: ^2.4.10
-        version: 2.4.10
+        specifier: ^2.4.12
+        version: 2.4.12
       '@types/node':
         specifier: 24.x
         version: 24.12.0
@@ -23,8 +23,8 @@ importers:
         specifier: ^17.3.10
         version: 17.3.10
       knip:
-        specifier: ^6.3.0
-        version: 6.3.0(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
+        specifier: ^6.4.1
+        version: 6.4.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
       lefthook:
         specifier: ^2.1.5
         version: 2.1.5
@@ -32,8 +32,8 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       turbo:
-        specifier: ^2.9.4
-        version: 2.9.4
+        specifier: ^2.9.6
+        version: 2.9.6
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -2249,59 +2249,59 @@ packages:
   '@better-fetch/fetch@1.1.21':
     resolution: {integrity: sha512-/ImESw0sskqlVR94jB+5+Pxjf+xBwDZF/N5+y2/q4EqD7IARUTSpPfIo8uf39SYpCxyOCtbyYpUrZ3F/k0zT4A==}
 
-  '@biomejs/biome@2.4.10':
-    resolution: {integrity: sha512-xxA3AphFQ1geij4JTHXv4EeSTda1IFn22ye9LdyVPoJU19fNVl0uzfEuhsfQ4Yue/0FaLs2/ccVi4UDiE7R30w==}
+  '@biomejs/biome@2.4.12':
+    resolution: {integrity: sha512-Rro7adQl3NLq/zJCIL98eElXKI8eEiBtoeu5TbXF/U3qbjuSc7Jb5rjUbeHHcquDWeSf3HnGP7XI5qGrlRk/pA==}
     engines: {node: '>=14.21.3'}
     hasBin: true
 
-  '@biomejs/cli-darwin-arm64@2.4.10':
-    resolution: {integrity: sha512-vuzzI1cWqDVzOMIkYyHbKqp+AkQq4K7k+UCXWpkYcY/HDn1UxdsbsfgtVpa40shem8Kax4TLDLlx8kMAecgqiw==}
+  '@biomejs/cli-darwin-arm64@2.4.12':
+    resolution: {integrity: sha512-BnMU4Pc3ciEVteVpZ0BK33MLr7X57F5w1dwDLDn+/iy/yTrA4Q/N2yftidFtsA4vrDh0FMXDpacNV/Tl3fbmng==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [darwin]
 
-  '@biomejs/cli-darwin-x64@2.4.10':
-    resolution: {integrity: sha512-14fzASRo+BPotwp7nWULy2W5xeUyFnTaq1V13Etrrxkrih+ez/2QfgFm5Ehtf5vSjtgx/IJycMMpn5kPd5ZNaA==}
+  '@biomejs/cli-darwin-x64@2.4.12':
+    resolution: {integrity: sha512-x9uJ0bI1rJsWICp3VH8w/5PnAVD3A7SqzDpbrfoUQX1QyWrK5jSU4fRLo/wSgGeplCivbxBRKmt5Xq4/nWvq8A==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [darwin]
 
-  '@biomejs/cli-linux-arm64-musl@2.4.10':
-    resolution: {integrity: sha512-WrJY6UuiSD/Dh+nwK2qOTu8kdMDlLV3dLMmychIghHPAysWFq1/DGC1pVZx8POE3ZkzKR3PUUnVrtZfMfaJjyQ==}
+  '@biomejs/cli-linux-arm64-musl@2.4.12':
+    resolution: {integrity: sha512-FhfpkAAlKL6kwvcVap0Hgp4AhZmtd3YImg0kK1jd7C/aSoh4SfsB2f++yG1rU0lr8Y5MCFJrcSkmssiL9Xnnig==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@biomejs/cli-linux-arm64@2.4.10':
-    resolution: {integrity: sha512-7MH1CMW5uuxQ/s7FLST63qF8B3Hgu2HRdZ7tA1X1+mk+St4JOuIrqdhIBnnyqeyWJNI+Bww7Es5QZ0wIc1Cmkw==}
+  '@biomejs/cli-linux-arm64@2.4.12':
+    resolution: {integrity: sha512-tOwuCuZZtKi1jVzbk/5nXmIsziOB6yqN8c9r9QM0EJYPU6DpQWf11uBOSCfFKKM4H3d9ZoarvlgMfbcuD051Pw==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@biomejs/cli-linux-x64-musl@2.4.10':
-    resolution: {integrity: sha512-kDTi3pI6PBN6CiczsWYOyP2zk0IJI08EWEQyDMQWW221rPaaEz6FvjLhnU07KMzLv8q3qSuoB93ua6inSQ55Tw==}
+  '@biomejs/cli-linux-x64-musl@2.4.12':
+    resolution: {integrity: sha512-dwTIgZrGutzhkQCuvHynCkyW6hJxUuyZqKKO0YNfaS2GUoRO+tOvxXZqZB6SkWAOdfZTzwaw8IEdUnIkHKHoew==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@biomejs/cli-linux-x64@2.4.10':
-    resolution: {integrity: sha512-tZLvEEi2u9Xu1zAqRjTcpIDGVtldigVvzug2fTuPG0ME/g8/mXpRPcNgLB22bGn6FvLJpHHnqLnwliOu8xjYrg==}
+  '@biomejs/cli-linux-x64@2.4.12':
+    resolution: {integrity: sha512-8pFeAnLU9QdW9jCIslB/v82bI0lhBmz2ZAKc8pVMFPO0t0wAHsoEkrUQUbMkIorTRIjbqyNZHA3lEXavsPWYSw==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@biomejs/cli-win32-arm64@2.4.10':
-    resolution: {integrity: sha512-umwQU6qPzH+ISTf/eHyJ/QoQnJs3V9Vpjz2OjZXe9MVBZ7prgGafMy7yYeRGnlmDAn87AKTF3Q6weLoMGpeqdQ==}
+  '@biomejs/cli-win32-arm64@2.4.12':
+    resolution: {integrity: sha512-B0DLnx0vA9ya/3v7XyCaP+/lCpnbWbMOfUFFve+xb5OxyYvdHaS55YsSddr228Y+JAFk58agCuZTsqNiw2a6ig==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [win32]
 
-  '@biomejs/cli-win32-x64@2.4.10':
-    resolution: {integrity: sha512-aW/JU5GuyH4uxMrNYpoC2kjaHlyJGLgIa3XkhPEZI0uKhZhJZU8BuEyJmvgzSPQNGozBwWjC972RaNdcJ9KyJg==}
+  '@biomejs/cli-win32-x64@2.4.12':
+    resolution: {integrity: sha512-yMckRzTyZ83hkk8iDFWswqSdU8tvZxspJKnYNh7JZr/zhZNOlzH13k4ecboU6MurKExCe2HUkH75pGI/O2JwGA==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
@@ -3485,6 +3485,12 @@ packages:
 
   '@napi-rs/wasm-runtime@1.1.2':
     resolution: {integrity: sha512-sNXv5oLJ7ob93xkZ1XnxisYhGYXfaG9f65/ZgYuAu3qt7b3NadcOEhLvx28hv31PgX8SZJRYrAIPQilQmFpLVw==}
+    peerDependencies:
+      '@emnapi/core': ^1.7.1
+      '@emnapi/runtime': ^1.7.1
+
+  '@napi-rs/wasm-runtime@1.1.4':
+    resolution: {integrity: sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow==}
     peerDependencies:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
@@ -6090,33 +6096,33 @@ packages:
       '@tiptap/core': ^3.22.2
       '@tiptap/pm': ^3.22.2
 
-  '@turbo/darwin-64@2.9.4':
-    resolution: {integrity: sha512-ZSlPqJ5Vqg/wgVw8P3AOVCIosnbBilOxLq7TMz3MN/9U46DUYfdG2jtfevNDufyxyrg98pcPs/GBgDRaaids6g==}
+  '@turbo/darwin-64@2.9.6':
+    resolution: {integrity: sha512-X/56SnVXIQZBLKwniGTwEQTGmtE5brSACnKMBWpY3YafuxVYefrC2acamfjgxP7BG5w3I+6jf0UrLoSzgPcSJg==}
     cpu: [x64]
     os: [darwin]
 
-  '@turbo/darwin-arm64@2.9.4':
-    resolution: {integrity: sha512-9cjTWe4OiNlFMSRggPNh+TJlRs7MS5FWrHc96MOzft5vESWjjpvaadYPv5ykDW7b45mVHOF2U/W+48LoX9USWw==}
+  '@turbo/darwin-arm64@2.9.6':
+    resolution: {integrity: sha512-aalBeSl4agT/QtYGDyf/XLajedWzUC9Vg/pm/YO6QQ93vkQ91Vz5uK1ta5RbVRDozQSz4njxUNqRNmOXDzW+qw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@turbo/linux-64@2.9.4':
-    resolution: {integrity: sha512-Cl1GjxqBXQ+r9KKowmXG+lhD1gclLp48/SE7NxL//66iaMytRw0uiphWGOkccD92iPiRjHLRUaA9lOTtgr5OCA==}
+  '@turbo/linux-64@2.9.6':
+    resolution: {integrity: sha512-YKi05jnNHaD7vevgYwahpzGwbsNNTwzU2c7VZdmdFm7+cGDP4oREUWSsainiMfRqjRuolQxBwRn8wf1jmu+YZA==}
     cpu: [x64]
     os: [linux]
 
-  '@turbo/linux-arm64@2.9.4':
-    resolution: {integrity: sha512-j2hPAKVmGNN2EsKigEWD+43y9m7zaPhNAs6ptsyfq0u7evHHBAXAwOfv86OEMg/gvC+pwGip0i1CIm1bR1vYug==}
+  '@turbo/linux-arm64@2.9.6':
+    resolution: {integrity: sha512-02o/ZS69cOYEDczXvOB2xmyrtzjQ2hVFtWZK1iqxXUfzMmTjZK4UumrfNnjckSg+gqeBfnPRHa0NstA173Ik3g==}
     cpu: [arm64]
     os: [linux]
 
-  '@turbo/windows-64@2.9.4':
-    resolution: {integrity: sha512-1jWPjCe9ZRmsDTXE7uzqfySNQspnUx0g6caqvwps+k/sc+fm9hC/4zRQKlXZLbVmP3Xxp601Ju71boegHdnYGw==}
+  '@turbo/windows-64@2.9.6':
+    resolution: {integrity: sha512-wVdQjvnBI15wB6JrA+43CtUtagjIMmX6XYO758oZHAsCNSxqRlJtdyujih0D8OCnwCRWiGWGI63zAxR0hO6s9g==}
     cpu: [x64]
     os: [win32]
 
-  '@turbo/windows-arm64@2.9.4':
-    resolution: {integrity: sha512-dlko15TQVu/BFYmIY018Y3covWMRQlUgAkD+OOk+Rokcfj6VY02Vv4mCfT/Zns6B4q8jGbOd6IZhnCFYsE8Viw==}
+  '@turbo/windows-arm64@2.9.6':
+    resolution: {integrity: sha512-1XUUyWW0W6FTSqGEhU8RHVqb2wP1SPkr7hIvBlMEwH9jr+sJQK5kqeosLJ/QaUv4ecSAd1ZhIrLoW7qslAzT4A==}
     cpu: [arm64]
     os: [win32]
 
@@ -7927,8 +7933,8 @@ packages:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
 
-  knip@6.3.0:
-    resolution: {integrity: sha512-g6dVPoTw6iNm3cubC5IWxVkVsd0r5hXhTBTbAGIEQN53GdA2ZM/slMTPJ7n5l8pBebNQPHpxjmKxuR4xVQ2/hQ==}
+  knip@6.4.1:
+    resolution: {integrity: sha512-Ry+ywmDFSZvKp/jx7LxMgsZWRTs931alV84e60lh0Stf6kSRYqSIUTkviyyDFRcSO3yY1Kpbi83OirN+4lA2Xw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -9233,8 +9239,8 @@ packages:
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
 
-  resolve@1.22.11:
-    resolution: {integrity: sha512-RfqAvLnMl313r7c9oclB1HhUEAezcpLjz95wFH4LVuhk9JF/r22qmVP9AMmOU4vMX7Q8pN8jwNg/CSpdFnMjTQ==}
+  resolve@1.22.12:
+    resolution: {integrity: sha512-TyeJ1zif53BPfHootBGwPRYT1RUt6oGWsaQr8UyZW/eAm9bKoijtvruSDEmZHm92CwS9nj7/fWttqPCgzep8CA==}
     engines: {node: '>= 0.4'}
     hasBin: true
 
@@ -9675,6 +9681,10 @@ packages:
     resolution: {integrity: sha512-u9r3uZC0bdpGOXtlxUIdwf9pkmvhqJdrVCH9fapQtgy/OeTTMZ1nqH7agtvEfmGui6e1XxjcdrlxvxJvc3sMqw==}
     engines: {node: '>=18'}
 
+  tinyexec@1.1.1:
+    resolution: {integrity: sha512-VKS/ZaQhhkKFMANmAOhhXVoIfBXblQxGX1myCQ2faQrfmobMftXeJPcZGp0gS07ocvGJWDLZGyOZDadDBqYIJg==}
+    engines: {node: '>=18'}
+
   tinyglobby@0.2.15:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
     engines: {node: '>=12.0.0'}
@@ -9781,8 +9791,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  turbo@2.9.4:
-    resolution: {integrity: sha512-wZ/kMcZCuK5oEp7sXSSo/5fzKjP9I2EhoiarZjyCm2Ixk0WxFrC/h0gF3686eHHINoFQOOSWgB/pGfvkR8rkgQ==}
+  turbo@2.9.6:
+    resolution: {integrity: sha512-+v2QJey7ZUeUiuigkU+uFfklvNUyPI2VO2vBpMYJA+a1hKFLFiKtUYlRHdb3P9CrAvMzi0upbjI4WT+zKtqkBg==}
     hasBin: true
 
   tw-animate-css@1.4.0:
@@ -10960,39 +10970,39 @@ snapshots:
 
   '@better-fetch/fetch@1.1.21': {}
 
-  '@biomejs/biome@2.4.10':
+  '@biomejs/biome@2.4.12':
     optionalDependencies:
-      '@biomejs/cli-darwin-arm64': 2.4.10
-      '@biomejs/cli-darwin-x64': 2.4.10
-      '@biomejs/cli-linux-arm64': 2.4.10
-      '@biomejs/cli-linux-arm64-musl': 2.4.10
-      '@biomejs/cli-linux-x64': 2.4.10
-      '@biomejs/cli-linux-x64-musl': 2.4.10
-      '@biomejs/cli-win32-arm64': 2.4.10
-      '@biomejs/cli-win32-x64': 2.4.10
+      '@biomejs/cli-darwin-arm64': 2.4.12
+      '@biomejs/cli-darwin-x64': 2.4.12
+      '@biomejs/cli-linux-arm64': 2.4.12
+      '@biomejs/cli-linux-arm64-musl': 2.4.12
+      '@biomejs/cli-linux-x64': 2.4.12
+      '@biomejs/cli-linux-x64-musl': 2.4.12
+      '@biomejs/cli-win32-arm64': 2.4.12
+      '@biomejs/cli-win32-x64': 2.4.12
 
-  '@biomejs/cli-darwin-arm64@2.4.10':
+  '@biomejs/cli-darwin-arm64@2.4.12':
     optional: true
 
-  '@biomejs/cli-darwin-x64@2.4.10':
+  '@biomejs/cli-darwin-x64@2.4.12':
     optional: true
 
-  '@biomejs/cli-linux-arm64-musl@2.4.10':
+  '@biomejs/cli-linux-arm64-musl@2.4.12':
     optional: true
 
-  '@biomejs/cli-linux-arm64@2.4.10':
+  '@biomejs/cli-linux-arm64@2.4.12':
     optional: true
 
-  '@biomejs/cli-linux-x64-musl@2.4.10':
+  '@biomejs/cli-linux-x64-musl@2.4.12':
     optional: true
 
-  '@biomejs/cli-linux-x64@2.4.10':
+  '@biomejs/cli-linux-x64@2.4.12':
     optional: true
 
-  '@biomejs/cli-win32-arm64@2.4.10':
+  '@biomejs/cli-win32-arm64@2.4.12':
     optional: true
 
-  '@biomejs/cli-win32-x64@2.4.10':
+  '@biomejs/cli-win32-x64@2.4.12':
     optional: true
 
   '@chevrotain/cst-dts-gen@10.5.0':
@@ -11843,6 +11853,13 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
+  '@napi-rs/wasm-runtime@1.1.4(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)':
+    dependencies:
+      '@emnapi/core': 1.9.2
+      '@emnapi/runtime': 1.9.2
+      '@tybys/wasm-util': 0.10.1
+    optional: true
+
   '@next-safe-action/adapter-react-hook-form@2.0.5(@hookform/resolvers@5.2.2(react-hook-form@7.72.1(react@19.2.4)))(next-safe-action@8.4.0(next@16.2.2(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.2.2(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react-hook-form@7.72.1(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@hookform/resolvers': 5.2.2(react-hook-form@7.72.1(react@19.2.4))
@@ -12183,7 +12200,7 @@ snapshots:
 
   '@oxc-parser/binding-wasm32-wasi@0.121.0(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)':
     dependencies:
-      '@napi-rs/wasm-runtime': 1.1.2(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
+      '@napi-rs/wasm-runtime': 1.1.4(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -12252,7 +12269,7 @@ snapshots:
 
   '@oxc-resolver/binding-wasm32-wasi@11.19.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)':
     dependencies:
-      '@napi-rs/wasm-runtime': 1.1.2(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
+      '@napi-rs/wasm-runtime': 1.1.4(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -14320,22 +14337,22 @@ snapshots:
       '@tiptap/core': 3.22.2(@tiptap/pm@3.22.2)
       '@tiptap/pm': 3.22.2
 
-  '@turbo/darwin-64@2.9.4':
+  '@turbo/darwin-64@2.9.6':
     optional: true
 
-  '@turbo/darwin-arm64@2.9.4':
+  '@turbo/darwin-arm64@2.9.6':
     optional: true
 
-  '@turbo/linux-64@2.9.4':
+  '@turbo/linux-64@2.9.6':
     optional: true
 
-  '@turbo/linux-arm64@2.9.4':
+  '@turbo/linux-arm64@2.9.6':
     optional: true
 
-  '@turbo/windows-64@2.9.4':
+  '@turbo/windows-64@2.9.6':
     optional: true
 
-  '@turbo/windows-arm64@2.9.4':
+  '@turbo/windows-arm64@2.9.6':
     optional: true
 
   '@tybys/wasm-util@0.10.1':
@@ -16135,7 +16152,7 @@ snapshots:
 
   kleur@3.0.3: {}
 
-  knip@6.3.0(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2):
+  knip@6.4.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
       fast-glob: 3.3.3
@@ -16732,7 +16749,7 @@ snapshots:
     dependencies:
       citty: 0.2.2
       pathe: 2.0.3
-      tinyexec: 1.0.4
+      tinyexec: 1.1.1
 
   object-assign@4.1.1: {}
 
@@ -17529,7 +17546,7 @@ snapshots:
 
   rechoir@0.8.0:
     dependencies:
-      resolve: 1.22.11
+      resolve: 1.22.12
 
   redis-errors@1.2.0: {}
 
@@ -17571,8 +17588,9 @@ snapshots:
 
   resolve-pkg-maps@1.0.0: {}
 
-  resolve@1.22.11:
+  resolve@1.22.12:
     dependencies:
+      es-errors: 1.3.0
       is-core-module: 2.16.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
@@ -18105,6 +18123,8 @@ snapshots:
 
   tinyexec@1.0.4: {}
 
+  tinyexec@1.1.1: {}
+
   tinyglobby@0.2.15:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.4)
@@ -18219,14 +18239,14 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  turbo@2.9.4:
+  turbo@2.9.6:
     optionalDependencies:
-      '@turbo/darwin-64': 2.9.4
-      '@turbo/darwin-arm64': 2.9.4
-      '@turbo/linux-64': 2.9.4
-      '@turbo/linux-arm64': 2.9.4
-      '@turbo/windows-64': 2.9.4
-      '@turbo/windows-arm64': 2.9.4
+      '@turbo/darwin-64': 2.9.6
+      '@turbo/darwin-arm64': 2.9.6
+      '@turbo/linux-64': 2.9.6
+      '@turbo/linux-arm64': 2.9.6
+      '@turbo/windows-64': 2.9.6
+      '@turbo/windows-arm64': 2.9.6
 
   tw-animate-css@1.4.0: {}
 
