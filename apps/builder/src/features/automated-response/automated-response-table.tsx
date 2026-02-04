@@ -251,7 +251,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [chatbotId, t, allFlows, searchParams],
+    [chatbotId, t, allFlows, searchParams.toString, searchParams],
   )
 
   const { table } = useDataTable({
