@@ -15,6 +15,8 @@ import type {
   FacebookSendMessageRequest,
   FacebookSendMessageResponse,
   MessengerAuthValue,
+  MessengerProfileRequest,
+  PersonaRequest,
 } from "../schemas"
 
 export const PAGE_SUBSCRIBE_SCOPES = [
@@ -162,5 +164,81 @@ export const getMessageAttachmentEntity = async ({
       size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
       ...imageProperties,
     }
+  }
+}
+
+export const updateMessengerProfile = async (props: {
+  ctx: Context<MessengerAuthValue>
+  params: MessengerProfileRequest
+}): Promise<void> => {
+  const { ctx, params } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+
+  await facebookGraphClient.post(`${version}/me/messenger_profile`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+    },
+    json: params,
+  })
+}
+
+export const createPersona = async (props: {
+  ctx: Context<MessengerAuthValue>
+  persona: PersonaRequest
+}): Promise<{ personaId?: string }> => {
+  const { ctx, persona } = props
+
+  const response: { id: string } = await facebookGraphClient.post(
+    `me/personas?access_token=${ctx.auth.tokens.accessToken}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      json: persona,
+    },
+  )
+  return { personaId: response.id }
+}
+
+export const deleteAllPersonas = async (props: {
+  ctx: Context<MessengerAuthValue>
+}): Promise<void> => {
+  const { ctx } = props
+
+  const response: { data: Array<{ id: string }> } =
+    await facebookGraphClient.get("me/personas", {
+      headers: {
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      },
+    })
+
+  await Promise.all(
+    response.data.map((persona) =>
+      facebookGraphClient.delete(persona.id, {
+        headers: {
+          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+        },
+      }),
+    ),
+  )
+}
+
+export const updatePersona = async (props: {
+  ctx: Context<MessengerAuthValue>
+  persona: PersonaRequest
+}): Promise<{ personaId?: string }> => {
+  const { ctx, persona } = props
+
+  try {
+    await deleteAllPersonas({ ctx })
+
+    if (!persona) {
+      return {}
+    }
+    return await createPersona({ ctx, persona })
+  } catch (error) {
+    logger.error("Update persona failed", error)
+    return {}
   }
 }

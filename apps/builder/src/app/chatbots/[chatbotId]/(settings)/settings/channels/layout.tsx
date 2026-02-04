@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
+import { useSearchParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 
@@ -28,6 +29,9 @@ export default function SettingsChannelsPage({
   zalo,
   webchat,
 }: SettingsChannelsPageProps) {
+  const queriesParams = useSearchParams()
+  const selectedChannel = queriesParams.get("channel") ?? ""
+
   const integrationItems: IntegrationItem[] = [
     {
       value: "whatsapp",
@@ -48,7 +52,12 @@ export default function SettingsChannelsPage({
   ]
 
   return (
-    <Accordion className="w-full" collapsible type="single">
+    <Accordion
+      className="w-full"
+      collapsible
+      defaultValue={selectedChannel}
+      type="single"
+    >
       {integrationItems.map((integration) => (
         <AccordionItem
           className="transition-all hover:data-[state=open]:rounded-none"

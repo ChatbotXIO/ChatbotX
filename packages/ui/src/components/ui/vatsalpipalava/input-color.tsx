@@ -311,7 +311,7 @@ export default function InputColor({
 
   return (
     <div className={cn(className)}>
-      <Label className="mb-3">{label}</Label>
+      {label && <Label className="mb-3">{label}</Label>}
       <div className="flex items-center gap-4">
         <Popover onOpenChange={handlePopoverChange}>
           <PopoverTrigger asChild>

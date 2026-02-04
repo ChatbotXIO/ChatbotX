@@ -95,15 +95,15 @@ export async function sendFlowStepToExternal({
   )
 
   // Find integration detail
-  const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
-  if (!intergationDetail) {
+  const integrationDetail = allIntegrations[inbox.inboxType as IntegrationType]
+  if (!integrationDetail) {
     logger.error(
       `Unable to find integration detail for inboxType: ${inbox.inboxType}`,
     )
     return
   }
 
-  await intergationDetail.runAction("sendFlowStep", {
+  await integrationDetail.runAction("sendFlowStep", {
     ctx: {
       chatbot: inbox.chatbot,
       auth,

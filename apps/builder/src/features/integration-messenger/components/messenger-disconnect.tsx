@@ -1,5 +1,6 @@
 "use client"
 
+import type { IntegrationMessengerModel } from "@aha.chat/database/types"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,32 +21,35 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectMessengerAction } from "../actions/disconnect-messenger.action"
 
-export function MessengerDisconnect() {
+export function MessengerDisconnect({
+  integrationMessenger,
+}: {
+  integrationMessenger: IntegrationMessengerModel
+}) {
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState<boolean>(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectMessengerAction.bind(null, chatbotId), {
-      onSuccess: () => {
-        router.refresh()
+    useAction(
+      disconnectMessengerAction.bind(null, chatbotId, integrationMessenger.id),
+      {
+        onSuccess: () => {
+          router.refresh()
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
+        },
       },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    })
+    )
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
-        <Button
-          className="w-fit cursor-pointer"
-          size="sm"
-          variant="destructive"
-        >
+        <Button className="cursor-pointer" size="sm" variant="destructive">
           {t("actions.disconnect")}
         </Button>
       </AlertDialogTrigger>
@@ -57,8 +61,8 @@ export function MessengerDisconnect() {
             })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("messages.disconnectFeatureDescription", {
-              feature: t("messenger.title"),
+            {t("dialog.disconnect.description", {
+              feature: integrationMessenger.name,
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>

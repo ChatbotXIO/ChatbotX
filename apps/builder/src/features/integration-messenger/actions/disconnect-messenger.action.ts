@@ -10,23 +10,24 @@ import type { IntegrationMessengerModel } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
 import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const disconnectMessengerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [chatbotId, integrationMessengerId],
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
       const integrationMessenger = await findOrFail<IntegrationMessengerModel>(
         integrationMessengerModel,
         {
+          id: integrationMessengerId,
           chatbotId,
         },
         "Integration Messenger not found",

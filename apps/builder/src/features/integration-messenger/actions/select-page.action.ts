@@ -43,6 +43,16 @@ export const selectPageAction = authActionClient
           throw new ChatbotXException("Messenger settings not found")
         }
 
+        // make sure the page is unique
+        const existedPage = await db.query.integrationMessengerModel.findFirst({
+          where: {
+            pageId: parsedInput.pageId,
+          },
+        })
+        if (existedPage) {
+          throw new ChatbotXException("Page is already connected")
+        }
+
         await db.transaction(async (tx) => {
           // create new chatbot if not exists
           if (!chatbotId) {

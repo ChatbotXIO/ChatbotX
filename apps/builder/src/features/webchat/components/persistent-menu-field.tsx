@@ -12,6 +12,7 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -129,6 +130,9 @@ export default function PersistentMenuField() {
             {t("fields.persistentMenu.label", { plural: 1 })}
           </Label>
         </CardTitle>
+        <CardDescription>
+          {t("fields.persistentMenu.description")}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col">
         <Accordion collapsible type="single">
@@ -169,7 +173,12 @@ export default function PersistentMenuField() {
         </Accordion>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleAppend} size="sm" type="button">
+        <Button
+          onClick={handleAppend}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
           <PlusIcon className="h-4 w-4" />
           {t("actions.addFeature", {
             feature: t("fields.persistentMenu.label", { plural: 0 }),

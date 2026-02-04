@@ -42,7 +42,9 @@ export function FacebookPages({
       actionProps: {
         onSuccess: ({ data }) => {
           if (chatbotId) {
-            router.push(`/chatbots/${data.chatbotId}/dashboard`)
+            router.push(
+              `/chatbots/${data.chatbotId}/settings/channels?channel=messenger`,
+            )
           } else {
             router.push("/")
           }
