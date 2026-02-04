@@ -316,7 +316,6 @@ export function UpdateMessengerForm({
                 {personas.map((persona, index) => (
                   <AccordionItem
                     className="flex flex-col gap-2"
-                    // biome-ignore lint/suspicious/noArrayIndexKey: wip
                     key={persona.id}
                     value={`personas-${persona.id}`}
                   >
