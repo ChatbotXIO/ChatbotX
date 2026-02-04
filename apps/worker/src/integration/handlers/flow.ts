@@ -255,6 +255,18 @@ export async function runFlowPostback(
     throw new SdkException("Invalid postback action")
   }
 
+  if (!parsedAction.buttonId) {
+    await runFlowNode({
+      type: "sendFlow",
+      data: {
+        conversationId: data.conversationId,
+        flowId: parsedAction.flowId,
+        flowVersionId: parsedAction.flowVersionId,
+      },
+    })
+    return
+  }
+
   const { conversation, flowVersion } = await findConversationAndFlowVersion({
     conversationId: data.conversationId,
     flowId: parsedAction.flowId,

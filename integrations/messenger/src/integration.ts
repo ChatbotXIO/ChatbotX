@@ -3,6 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@aha.chat/sdk"
+import { updateMessengerProfile, updatePersona } from "./apis/page"
 import { getUserProfile } from "./apis/user"
 import { agentMarkAsRead, sendTyping } from "./conversation"
 import { MessengerAPIException } from "./exception"
@@ -34,8 +35,20 @@ const config: IntegrationDefinition<
     },
   },
   actions: {
+    receiveMessage: async ({ ctx, data }) =>
+      await receiveMessage({
+        ctx,
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: ctx.auth.metadata.pageId,
+          payload: data,
+        },
+      }),
+    sendMessage,
     sendFlowStep,
     getUserProfile,
+    updateMessengerProfile,
+    updatePersona,
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

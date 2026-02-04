@@ -3,5 +3,6 @@ export type {
   MessengerAuthValue,
   MessengerConfig,
   MessengerMessagingEvent,
+  MessengerProfileRequest,
   MessengerWebhookEvent,
 } from "./schemas"

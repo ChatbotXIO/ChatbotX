@@ -1,9 +1,12 @@
 import type {
   Context,
+  Handler,
   IncomingContact,
   Oauth2AuthValue,
   Oauth2Config,
+  ReceivedMessageResult,
   SendFlowStepProps,
+  SendMessageProps,
 } from "@aha.chat/sdk"
 import { z } from "zod"
 
@@ -26,11 +29,27 @@ export type MessengerAuthValue = Oauth2AuthValue & {
 }
 
 export type MessengerActions = {
+  receiveMessage: Handler<
+    {
+      ctx: Context<MessengerAuthValue>
+      data: MessengerWebhookEvent
+    },
+    ReceivedMessageResult | null
+  >
+  sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
   sendFlowStep: (props: SendFlowStepProps<MessengerAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<MessengerAuthValue>
     psid: string
   }) => Promise<IncomingContact>
+  updateMessengerProfile: (props: {
+    ctx: Context<MessengerAuthValue>
+    params: MessengerProfileRequest
+  }) => Promise<void>
+  updatePersona: (props: {
+    ctx: Context<MessengerAuthValue>
+    persona: PersonaRequest
+  }) => Promise<{ personaId?: string }>
 }
 
 // Common attachment types
@@ -403,3 +422,45 @@ export const selectPageRequestSchema = z.object({
   accessToken: z.string().min(1, "Page access token is required"),
 })
 export type SelectPageRequest = z.infer<typeof selectPageRequestSchema>
+
+export const messengerProfileRequest = z.object({
+  get_started: z
+    .object({
+      payload: z.string(),
+    })
+    .optional(),
+  greeting: z
+    .array(
+      z.object({
+        locale: z.string(),
+        text: z.string(),
+      }),
+    )
+    .optional(),
+  persistent_menu: z
+    .array(
+      z.object({
+        locale: z.string(),
+        composer_input_disabled: z.boolean(),
+        call_to_actions: z.array(facebookButtonSchema).max(3).optional(),
+      }),
+    )
+    .optional(),
+  ice_breakers: z
+    .array(
+      z.object({
+        question: z.string(),
+        payload: z.string(),
+      }),
+    )
+    .optional(),
+})
+export type MessengerProfileRequest = z.infer<typeof messengerProfileRequest>
+
+export const personaRequest = z
+  .object({
+    name: z.string(),
+    profile_picture_url: z.string(),
+  })
+  .optional()
+export type PersonaRequest = z.infer<typeof personaRequest>
