@@ -11,13 +11,13 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.13",
+    "@biomejs/biome": "^2.3.14",
     "@types/node": "^24.10.4",
-    "knip": "^5.82.1",
-    "lefthook": "^2.0.16",
+    "knip": "^5.83.0",
+    "lefthook": "^2.1.0",
     "prisma": "7.3.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.7.6",
+    "turbo": "^2.8.3",
     "typescript": "5.9.3",
     "ultracite": "7.1.4"
   },

@@ -8,7 +8,7 @@
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "google-auth-library": "^10.5.0",
-    "googleapis": "^170.1.0"
+    "googleapis": "^171.3.0"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
