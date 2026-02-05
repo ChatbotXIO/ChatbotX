@@ -125,14 +125,15 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
         },
       },
     )
+  const { setValue } = form
 
   useEffect(() => {
     if (modelIds) {
-      form.setValue("newFolderId", currentFolderId ?? "")
-      form.setValue("folderType", folderType)
-      form.setValue("modelIds", modelIds)
+      setValue("newFolderId", currentFolderId ?? "")
+      setValue("folderType", folderType)
+      setValue("modelIds", modelIds)
     }
-  }, [modelIds, currentFolderId, folderType, form.setValue])
+  }, [modelIds, currentFolderId, folderType, setValue])
 
   return (
     <Form {...form}>
