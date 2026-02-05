@@ -166,7 +166,7 @@ export const connectWhatsappAction = authActionClient
           redirectUrl: `/chatbots/${chatbotId}/dashboard`,
         }
       } catch (err: unknown) {
-        logger.error("Unable to verify whatsapp token: ", err)
+        logger.error(err, "Unable to verify whatsapp token")
 
         throw new BaseException("Unable to verify Whatsapp token")
       }

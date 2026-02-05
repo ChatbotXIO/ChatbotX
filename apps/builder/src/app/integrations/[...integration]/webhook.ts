@@ -27,7 +27,7 @@ export const handleWebhook = async (
   // Verify organization settings
   const orgSettings = organizationSettingsSchema.parse(organization?.settings)
   if (!orgSettings?.[integrationType as keyof OrganizationSettings]) {
-    logger.warn(`Integration ${integrationType} is not configured`)
+    logger.debug(`Integration ${integrationType} is not configured`)
     return new Response(
       JSON.stringify({ message: "Integration is not configured" }),
       {

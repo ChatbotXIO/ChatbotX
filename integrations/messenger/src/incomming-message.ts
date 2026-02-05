@@ -43,8 +43,8 @@ const getMessageAttachments = async (
           result.status === "fulfilled" && result.value !== null,
       )
       .map((result) => result.value)
-  } catch (_error) {
-    logger.error("Error getting message attachments", _error)
+  } catch (error) {
+    logger.error(error, "Error getting message attachments")
     return []
   }
 }

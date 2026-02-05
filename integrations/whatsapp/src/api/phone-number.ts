@@ -39,7 +39,7 @@ export async function listPhoneNumbers(props: {
       )
       .json()
   } catch (error) {
-    logger.error("Unable to list WhatsApp's phone numbers", { error })
+    logger.error(error, "Unable to list WhatsApp's phone numbers")
 
     throw new WhatsappException("Unable to list WhatsApp's phone numbers")
   }
@@ -65,7 +65,7 @@ export async function findPhoneNumber(props: {
       )
       .json()
   } catch (error) {
-    logger.error("Unable to find WhatsApp's phone number", { error })
+    logger.error(error, "Unable to find WhatsApp's phone number")
 
     throw new WhatsappException("Unable to find WhatsApp's phone number")
   }
@@ -107,7 +107,7 @@ export const findConversationalAutomation = async (
 
     return result.conversational_automation
   } catch (e) {
-    logger.error("Failed to list conversational automation", { error: e })
+    logger.error(e, "Failed to list conversational automation")
     throw new WhatsappException("Failed to list conversational automation")
   }
 }
@@ -129,7 +129,7 @@ export async function updateConversationalAutomation(
       },
     )
   } catch (e) {
-    logger.error("Failed to update conversational automation", { error: e })
+    logger.error(e, "Failed to update conversational automation")
     throw new WhatsappException("Failed to update conversational automation")
   }
 }

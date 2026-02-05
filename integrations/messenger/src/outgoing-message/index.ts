@@ -45,10 +45,7 @@ export const sendOutgoingMessage = async (
       logger.info(`Message sent for PSID: ${conversation.sourceId}`)
     }
   } catch (error) {
-    logger.error(
-      "An error occurred while sending the message",
-      JSON.stringify(error),
-    )
+    logger.error(error, "An error occurred while sending the message")
   }
 }
 
@@ -194,9 +191,6 @@ export const sendFlowStep = async (
       logger.info(`Message sent for PSID: ${conversation.sourceId}`)
     }
   } catch (error) {
-    logger.error(
-      "An error occurred while sending the message",
-      JSON.stringify(error),
-    )
+    logger.error(error, "An error occurred while sending the message")
   }
 }

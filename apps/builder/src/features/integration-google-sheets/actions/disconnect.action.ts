@@ -30,9 +30,8 @@ export const disconnectGoogleSheets = authActionClient
         )
       } catch (e) {
         logger.error(
-          "Unable to disconnect google sheets for chatbot",
-          { chatbotId },
           e,
+          `Unable to disconnect google sheets for chatbot: ${chatbotId}`,
         )
       }
 

@@ -78,7 +78,7 @@ export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
 
     return parser.text
   } catch (error) {
-    logger.warn("PDF parsing failed, falling back to plain text", { error })
+    logger.warn(error, "PDF parsing failed, falling back to plain text")
     throw new Error("PDF parsing failed")
   }
 }
@@ -88,7 +88,7 @@ async function extractTextFromDocx(buffer: Buffer): Promise<string> {
     const { value } = await extractRawText({ buffer })
     return normalizeWhitespace(value || "")
   } catch (error) {
-    logger.warn("DOCX parsing failed, falling back to plain text", { error })
+    logger.warn(error, "DOCX parsing failed, falling back to plain text")
     throw new Error("DOCX parsing failed")
   }
 }
@@ -109,9 +109,7 @@ async function extractTextFromXlsx(buffer: Buffer): Promise<string> {
     }
     return await normalizeWhitespace(texts.join("\n"))
   } catch (error) {
-    logger.warn("XLSX/XLS parsing failed, falling back to plain text", {
-      error,
-    })
+    logger.warn(error, "XLSX/XLS parsing failed, falling back to plain text")
     throw new Error("XLSX/XLS parsing failed")
   }
 }
@@ -126,7 +124,7 @@ async function extractTextFromHtml(buffer: Buffer): Promise<string> {
     const html = decodeUtf8(buffer)
     return await normalizeWhitespace(htmlToText(html, { wordwrap: false }))
   } catch (error) {
-    logger.warn("HTML parsing failed, falling back to plain text", { error })
+    logger.warn(error, "HTML parsing failed, falling back to plain text")
     throw new Error("HTML parsing failed")
   }
 }
@@ -141,9 +139,7 @@ async function extractTextFromMarkdown(buffer: Buffer): Promise<string> {
     })
     return await normalizeWhitespace(plain)
   } catch (error) {
-    logger.warn("Markdown parsing failed, falling back to plain text", {
-      error,
-    })
+    logger.warn(error, "Markdown parsing failed, falling back to plain text")
     return normalizeWhitespace(decodeUtf8(buffer))
   }
 }

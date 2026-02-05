@@ -34,7 +34,7 @@ export async function findOrganizationSettings(
 ): Promise<OrganizationSettings> {
   const organization = await findOrganization(where)
   if (!organization) {
-    logger.error("Organization not found", { where })
+    logger.debug({ where }, "Organization not found")
     throw new BaseException("Organization not found")
   }
 

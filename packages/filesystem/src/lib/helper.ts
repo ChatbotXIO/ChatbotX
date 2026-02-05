@@ -50,7 +50,7 @@ async function getImageDimensions(mimeType: string, buffer: Buffer) {
       imageDimensions.width = width
       imageDimensions.height = height
     } catch (error) {
-      uploaderLogger.warn("Unable to retrieve image dimensions", { error })
+      uploaderLogger.warn(error, "Unable to retrieve image dimensions")
 
       // force image to file
       imageDimensions.fileType = "file"

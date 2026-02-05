@@ -25,6 +25,7 @@ import { sendBroadcast } from "./handlers/send-broadcast"
 const worker = new Worker(
   queueName.integration,
   async (job: Job<IntegrationJobData>) => {
+    logger.info(job.data, "Worker received job")
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
         const { message, postbackAction, quickReplyAction } =
@@ -92,6 +93,6 @@ const worker = new Worker(
 
 worker.on("failed", (job, err) => {
   if (job) {
-    logger.error(`${job.id} has failed`, err)
+    logger.error(err, `Job ${job.id} has failed`)
   }
 })

@@ -1,5 +1,4 @@
 import type { BaseAuthValue, Oauth2AuthValue } from "./auth"
-import { sdkLogger } from "./logger"
 import type { BaseConfig, HandleRequestProps, Handler } from "./shared"
 
 export type IntegrationDefinition<
@@ -60,7 +59,6 @@ export class Integration<
   ): Promise<ReturnType<Exclude<T["actions"][ActionName], undefined>>> {
     const action = this.actions?.[actionName]
     if (action) {
-      sdkLogger.info(`Running action "${String(actionName)}"`, { props })
       return await action(props)
     }
 

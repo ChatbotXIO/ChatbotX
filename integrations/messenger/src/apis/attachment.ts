@@ -34,7 +34,7 @@ export const uploadAttachment = async (
       },
     )
   } catch (error) {
-    logger.error("Upload attachment failed", error)
+    logger.error(error, "Upload attachment failed")
     throw new MessengerAttachmentException("Upload attachment failed", url)
   }
 }

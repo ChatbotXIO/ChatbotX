@@ -138,9 +138,6 @@
     "randomRow": "Random Row",
     "clickToEdit": "Click to edit",
     "move": "Move",
-    "onSuccess": "On Success",
-    "onFailure": "On Failure",
-    "onSkip": "On Skip",
     "removeAssignee": "Remove Assignee",
     "condition": "Condition",
     "sendMail": "Send Mail",
@@ -148,6 +145,11 @@
     "wait": "Wait",
     "landingPage": "Landing Page",
     "addNotes": "Add Notes"
+  },
+  "states": {
+    "success": "Success",
+    "error": "Error",
+    "skip": "Skip"
   },
   "admins": {
     "title": "Admins"

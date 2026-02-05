@@ -186,7 +186,7 @@ export const receiveMessage = async ({
         data: newMessage,
       })
     } catch (error) {
-      logger.warn("Unable to emit realtime message", error)
+      logger.warn(error, "Unable to emit realtime message")
     }
 
     return { message: newMessage, conversation: newConversation }

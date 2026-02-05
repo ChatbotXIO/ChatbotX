@@ -2,7 +2,7 @@ import { AIEmbeddingStatus, prisma } from "@aha.chat/database"
 import type { AIJobProcessPendingEmbedding } from "@aha.chat/worker-config"
 import { embed } from "ai"
 import { resolveEmbeddingModel } from "../../ai-agent/lib/embedding-model"
-import { aiLogger } from "../../lib/logger"
+import { logger } from "../../lib/logger"
 
 export async function processPendingEmbedding(
   data: AIJobProcessPendingEmbedding["data"],
@@ -30,10 +30,10 @@ export async function processPendingEmbedding(
     const embeddingString = `[${embedding.join(",")}]`
     await prisma.$executeRaw`UPDATE "AIEmbedding" SET "embedding" = ${embeddingString}::vector, "updatedAt" = ${new Date()}, "status" = ${AIEmbeddingStatus.success} WHERE "id" = ${aiEmbedding.id}`
   } catch (error) {
-    aiLogger.error("processPendingEmbedding item failed", {
+    logger.error(
       error,
-      embeddingId: aiEmbedding.id,
-    })
+      `processPendingEmbedding item failed for embeddingId: ${aiEmbedding.id}`,
+    )
 
     await prisma.aIEmbedding.update({
       where: { id: aiEmbedding.id },

@@ -27,9 +27,6 @@ export async function* convertFlowStepFile(
       },
     }
   } catch (error) {
-    logger.error(
-      "An error occurred while uploading the attachment",
-      JSON.stringify(error),
-    )
+    logger.error(error, "An error occurred while uploading the attachment")
   }
 }

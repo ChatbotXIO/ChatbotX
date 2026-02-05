@@ -140,7 +140,7 @@ export const getSpreadsheetRow = async (
     await sendFlow(props, true)
   } catch (error) {
     await sendFlow(props, false)
-    logger.error("Error in getSpreadsheetRow:", error)
+    logger.error(error, "Error in getSpreadsheetRow")
   }
 }
 
@@ -190,7 +190,7 @@ export const sendSpreadsheetData = async (
     await sendFlow(props, true)
   } catch (error) {
     await sendFlow(props, false)
-    logger.error("Error in sendSpreadsheetData:", error)
+    logger.error(error, "Error in sendSpreadsheetData")
   }
 }
 
@@ -246,7 +246,7 @@ export const updateSpreadsheetRow = async (
     await sendFlow(props, true)
   } catch (error) {
     await sendFlow(props, false)
-    logger.error("Error in updateSpreadsheetRow:", error)
+    logger.error(error, "Error in updateSpreadsheetRow")
   }
 }
 
@@ -286,7 +286,7 @@ export const clearSpreadsheetRow = async (
     await sendFlow(props, true)
   } catch (error) {
     await sendFlow(props, false)
-    logger.error("Error in clearSpreadsheetRow:", error)
+    logger.error(error, "Error in clearSpreadsheetRow")
   }
 }
 
@@ -314,7 +314,7 @@ export const getSpreadsheetRandomRow = async (
     await sendFlow(props, true)
   } catch (error) {
     await sendFlow(props, false)
-    logger.error("Error in getSpreadsheetRandomRow:", error)
+    logger.error(error, "Error in getSpreadsheetRandomRow")
   }
 }
 
@@ -364,7 +364,7 @@ const getRandomRow = (rows: string[][]): string[] | null => {
 const sendFlow = async (
   {
     conversation,
-    flowVersionId,
+    flowVersion,
     step,
   }: ExecuteStepProps<
     | SpreadsheetGetRowSchema
@@ -377,7 +377,7 @@ const sendFlow = async (
 ) => {
   const currentFlowVersion = await prisma.flowVersion.findFirst({
     where: {
-      id: flowVersionId,
+      id: flowVersion.id,
       chatbotId: conversation.chatbotId,
     },
   })

@@ -34,7 +34,7 @@ export async function findWaba(props: {
       )
       .json()
   } catch (error) {
-    logger.error("Unable to find WhatsApp's business account", { error })
+    logger.error(error, "Unable to find WhatsApp's business account")
 
     throw new WhatsappException("Unable to find WhatsApp's business account")
   }
@@ -71,7 +71,7 @@ export async function listFlows({
       )
       .json()
   } catch (e) {
-    logger.error("Failed to list flows", { error: e })
+    logger.error(e, "Failed to list flows")
     throw new WhatsappException("Failed to list flows")
   }
 }
@@ -116,7 +116,7 @@ export const listMessageTemplates = async (
       )
       .json()
   } catch (e) {
-    logger.error("Failed to list message templates", { error: e })
+    logger.error(e, "Failed to list message templates")
     throw new WhatsappException("Failed to list message templates")
   }
 }
@@ -137,7 +137,7 @@ export const createMessageTemplate = async (
       })
       .json()
   } catch (e) {
-    logger.error("Failed to create message template", { error: e })
+    logger.error(e, "Failed to create message template")
     throw new WhatsappException("Failed to create message template")
   }
 }

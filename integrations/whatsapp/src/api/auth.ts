@@ -31,7 +31,7 @@ export const exchangeAccessToken = async (
 
     return result
   } catch (e) {
-    logger.error("Failed to exchange access token", { error: e })
+    logger.error(e, "Failed to exchange access token")
     throw new WhatsappException("Failed to exchange access token")
   }
 }

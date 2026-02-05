@@ -8,6 +8,7 @@
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
+    "@edenchazard/tiny-chunk-array": "^1.0.1",
     "@paralleldrive/cuid2": "^3.3.0",
     "@types/node": "^24.10.4",
     "cross-fetch": "^4.1.0",

@@ -195,7 +195,10 @@ export async function sendFlowStep({
 
     await Promise.all(promises)
   } catch (error) {
-    logger.error("sendFlowStep error", error)
+    logger.error(
+      error,
+      `sendFlowStep error for conversationId: ${conversationId}`,
+    )
   }
 }
 
@@ -275,6 +278,9 @@ export async function sendChatMessage({
 
     await Promise.all(promises)
   } catch (error) {
-    logger.error("sendFlowStep error", error)
+    logger.error(
+      error,
+      `sendChatMessage error for conversationId: ${conversationId}`,
+    )
   }
 }

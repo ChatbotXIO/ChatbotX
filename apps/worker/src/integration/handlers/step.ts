@@ -51,8 +51,6 @@ import {
   getDataFromJSON,
 } from "./tool-handler"
 
-export type StepStatus = "retry" | "skip" | "success" | "failure"
-
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
 ) {
@@ -109,12 +107,19 @@ async function startExternalNode({
   })
 }
 
+export type ExecuteStepResult = {
+  status: "success" | "skip" | "error" | "retry" | "wait"
+  errorMessage?: string
+  // biome-ignore lint/suspicious/noExplicitAny: safe ignore
+  result: any
+}
+
 export const flowStepHandlers: Record<
   StepType,
   | ((
       // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-      props: ExecuteStepProps<any, any>,
-    ) => Promise<{ status: StepStatus; wait: boolean }> | Promise<void>)
+      props: ExecuteStepProps<any>,
+    ) => Promise<ExecuteStepResult> | Promise<void>)
   | undefined
 > = {
   [StepType.addContactNotes]: addContactNotes,

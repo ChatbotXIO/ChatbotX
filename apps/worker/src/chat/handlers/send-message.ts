@@ -27,14 +27,18 @@ export async function sendMessageToExternal(
   })
   const integrationAuth = await getIntegrationAuth(inbox)
   if (!integrationAuth) {
-    logger.error("Unable to find integration auth:", inbox.inboxType)
+    logger.error(
+      `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
+    )
     return
   }
 
   // Find integration detail
   const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
   if (!intergationDetail) {
-    logger.info("Does not support this integration:", inbox.inboxType)
+    logger.debug(
+      `Does not support this integration for inboxType: ${inbox.inboxType}`,
+    )
     return
   }
 
@@ -70,14 +74,18 @@ export async function sendFlowStepToExternal({
   })
   const integrationAuth = await getIntegrationAuth(inbox)
   if (!integrationAuth) {
-    logger.error("Unable to find integration auth:", inbox.inboxType)
+    logger.error(
+      `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
+    )
     return
   }
 
   // Find integration detail
   const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
   if (!intergationDetail) {
-    logger.error("Unable to find integration detail:", inbox.inboxType)
+    logger.error(
+      `Unable to find integration detail for inboxType: ${inbox.inboxType}`,
+    )
     return
   }
 

@@ -14,15 +14,15 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
   })
 
   if (!conversation) {
-    logger.error(`Conversation not found: ${conversationId}`)
+    logger.warn(`Conversation not found: ${conversationId}`)
     return
   }
 
   if (ref.startsWith("draft-")) {
-    logger.info(`Draft ref: ${ref}`)
+    logger.debug(`Draft ref: ${ref}`)
     const flowId = ref.replace("draft-", "").trim()
     if (!flowId) {
-      logger.error(`Invalid draft ref: ${ref}`)
+      logger.warn(`Invalid draft ref: ${ref}`)
       return
     }
 
