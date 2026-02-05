@@ -47,3 +47,6 @@ yarn-error.log*
 .partykit
 test.rest
 test-webchat
+
+# ClickHouse migrations local state
+packages/analytics/src/migrations/clickhouse/.migrations.local.json

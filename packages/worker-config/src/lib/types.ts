@@ -6,4 +6,5 @@ export const queueName = {
   trigger: "trigger",
   webhook: "webhook",
   default: "default",
+  analytics: "analytics",
 } as const

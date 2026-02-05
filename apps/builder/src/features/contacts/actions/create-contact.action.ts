@@ -1,5 +1,6 @@
 "use server"
 
+import { contactTrackingService } from "@aha.chat/analytics"
 import { db, eq, findOrFail, sql } from "@aha.chat/database/client"
 import {
   chatbotUsageModel,
@@ -122,6 +123,19 @@ export const createContact = async ({
     )
   } catch (error) {
     console.error("Failed to emit contactCreated event:", error)
+  }
+
+  if (contact.sourceId) {
+    await contactTrackingService.trackEvent({
+      chatbotId,
+      contactId: contact.sourceId,
+      eventType: "contact_created",
+      occurredAt: contact.createdAt,
+      source: contact.source,
+      sourceId: contact.sourceId,
+      channel: inbox.inboxType,
+      country: undefined,
+    })
   }
 
   revalidateCacheTags([

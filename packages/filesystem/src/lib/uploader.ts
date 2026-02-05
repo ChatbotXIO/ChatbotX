@@ -1,8 +1,10 @@
 import type { Readable } from "node:stream"
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   type PutObjectCommandInput,
   S3Client,
@@ -124,12 +126,36 @@ class Uploader {
     return response.Body as Readable
   }
 
+  async copyObject(sourcePath: string, destinationPath: string) {
+    const encodedSource = sourcePath
+      .split("/")
+      .map((segment) => encodeURIComponent(segment))
+      .join("/")
+
+    const command = new CopyObjectCommand({
+      Bucket: env.AWS_BUCKET,
+      Key: destinationPath,
+      CopySource: `${env.AWS_BUCKET}/${encodedSource}`,
+    })
+
+    return await this.#client.send(command)
+  }
+
   async deleteObject(path: string) {
     const command = new DeleteObjectCommand({
       Bucket: env.S3_BUCKET,
       Key: path,
     })
     return await this.#client.send(command)
+  }
+
+  async listObjects(prefix: string) {
+    const command = new ListObjectsV2Command({
+      Bucket: env.AWS_BUCKET,
+      Prefix: prefix,
+    })
+    const response = await this.#client.send(command)
+    return response.Contents ?? []
   }
 }
 

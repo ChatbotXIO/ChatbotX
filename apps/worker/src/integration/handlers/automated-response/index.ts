@@ -1,5 +1,6 @@
 import { db } from "@aha.chat/database/client"
 import type { IntegrationJobTriggerAutomatedResponse } from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
 import type { ModelMessage } from "ai"
 import { getAIToolset } from "../generate-text/tools"
 import {
@@ -7,6 +8,7 @@ import {
   replyByGemini,
   replyByOpenAI,
 } from "./replies"
+import { trackBotResponse } from "./track-bot-response"
 
 export async function triggerAutomatedResponse(
   props: IntegrationJobTriggerAutomatedResponse["data"],
@@ -16,7 +18,20 @@ export async function triggerAutomatedResponse(
     return
   }
 
+  const startTime = Date.now()
+  const messageId = createId()
+
   if (await replyByAutomatedResponse(props)) {
+    await trackBotResponse({
+      chatbotId: message.chatbotId,
+      conversationId: message.conversationId,
+      messageId,
+      hasResponse: true,
+      responseType: "automated_response",
+      result: "success",
+      aiProvider: "none",
+      startTime,
+    })
     return
   }
 
@@ -63,6 +78,16 @@ export async function triggerAutomatedResponse(
       },
     })
   ) {
+    await trackBotResponse({
+      chatbotId: message.chatbotId,
+      conversationId: message.conversationId,
+      messageId,
+      hasResponse: true,
+      responseType: "ai_agent",
+      result: "success",
+      aiProvider: "openai",
+      startTime,
+    })
     return
   }
   if (
@@ -78,6 +103,29 @@ export async function triggerAutomatedResponse(
       },
     })
   ) {
+    await trackBotResponse({
+      chatbotId: message.chatbotId,
+      conversationId: message.conversationId,
+      messageId,
+      hasResponse: true,
+      responseType: "ai_agent",
+      result: "success",
+      aiProvider: "gemini",
+      startTime,
+    })
     return
   }
+
+  await trackBotResponse({
+    chatbotId: message.chatbotId,
+    conversationId: message.conversationId,
+    messageId,
+    hasResponse: false,
+    responseType: "none",
+    aiProvider: "none",
+    metadata: {
+      fallbackReason: "NO_INTENT_MATCH",
+    },
+    startTime,
+  })
 }

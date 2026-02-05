@@ -1,12 +1,15 @@
 "use server"
 
+import { contactTrackingService } from "@aha.chat/analytics"
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import {
   attachmentModel,
+  contactModel,
   conversationModel,
   messageModel,
 } from "@aha.chat/database/schema"
 import {
+  type ContactModel,
   type ConversationModel,
   type UserModel,
   WEBCHAT_SOURCE_PREFIX,
@@ -159,6 +162,36 @@ export const createMessage = async (
       },
     }),
   ]
+
+  const contact = await findOrFail<ContactModel>(
+    contactModel,
+    {
+      where: {
+        id: conversation.contactId,
+      },
+    },
+    "Contact not found",
+  )
+
+  if (contact.sourceId) {
+    promises.push(
+      contactTrackingService.trackEvent({
+        chatbotId: message.chatbotId,
+        contactId: contact.sourceId,
+        eventType: "contact_message_out",
+        occurredAt: new Date(),
+        source: contact.source,
+        sourceId: contact.sourceId,
+        channel: conversation.inboxType,
+        country: undefined,
+        metadata: {
+          messageId: message.id,
+          conversationId: message.conversationId,
+        },
+      }),
+    )
+  }
+
   if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
     promises.push(
       broadcastToGuestParty(conversation.sourceId, {

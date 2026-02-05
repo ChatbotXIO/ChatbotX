@@ -10,6 +10,7 @@
     "schedule": "dotenv -e ../../.env -- tsx --watch src/schedule/worker.ts",
     "worker:trigger": "dotenv -e ../../.env -- tsx --watch src/trigger/worker.ts",
     "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts",
+    "worker:analytics": "dotenv -e ../../.env -- tsx --watch src/analytics/worker.ts",
     "dev": "concurrently pnpm:worker:*",
     "https": "pnpm dev",
     "build": "tsdown",
@@ -19,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aha.chat/analytics": "workspace:*",
     "@aha.chat/database": "workspace:*",
     "@chatbotx/events": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
@@ -41,6 +43,7 @@
     "@t3-oss/env-core": "^0.13.10",
     "ai": "^6.0.105",
     "bullmq": "^5.70.1",
+    "@aws-sdk/client-s3": "^3.958.0",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
     "html-to-text": "^9.0.5",

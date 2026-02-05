@@ -1,6 +1,7 @@
 "use server"
 
-import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { contactTrackingService } from "@aha.chat/analytics"
+import { and, db, inArray } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
@@ -22,14 +23,41 @@ export const deleteContactAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await db
-        .delete(contactModel)
-        .where(
-          and(
-            eq(contactModel.chatbotId, chatbotId),
-            inArray(contactModel.id, parsedInput.ids),
+      const contacts = await db.query.contactModel.findMany({
+        where: {
+          chatbotId,
+          id: {
+            in: parsedInput.ids,
+          },
+        },
+      })
+
+      await db.delete(contactModel).where(
+        and(
+          inArray(
+            contactModel.id,
+            contacts.map((c) => c.id),
           ),
+        ),
+      )
+
+      const events = contacts
+        .filter((contact) => Boolean(contact.sourceId))
+        .map((contact) => ({
+          chatbotId,
+          contactId: contact.sourceId as string,
+          eventType: "contact_deleted" as const,
+          occurredAt: contact.updatedAt,
+          source: contact.source,
+          sourceId: contact.sourceId as string,
+        }))
+
+      contactTrackingService.trackEvents(events).catch((error) => {
+        console.error(
+          "[deleteContactAction] Failed to track contact_deleted events",
+          error,
         )
+      })
 
       revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
     },

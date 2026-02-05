@@ -1,10 +1,14 @@
 import { getTranslations } from "next-intl/server"
-import AreaChart from "@/components/charts/area-chart"
 import BarChart from "@/components/charts/bar-chart"
 import { DonutChart } from "@/components/charts/donut-chart"
 import { RadarChart } from "@/components/charts/radar-chart"
 import AnalysisFilterForm from "@/features/analysis/filter-form"
 import { AnalysisStoreProvider } from "@/features/analysis/provider/analysis-store-context"
+import { ContactsByChannelChart } from "@/features/analytics/components/contacts-by-channel-chart"
+import { ContactsByCountryChart } from "@/features/analytics/components/contacts-by-country-chart"
+import { ContactsBySourceChart } from "@/features/analytics/components/contacts-by-source-chart"
+import { NewContactsChart } from "@/features/analytics/components/new-contacts-chart"
+import { TotalContactsChart } from "@/features/analytics/components/total-contacts-chart"
 import { ChatbotMemberAnalysis } from "@/features/chatbot-members/components/admins-analysis"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import InboxStatsList from "@/features/inboxes/components/inbox-stats-list"
@@ -32,67 +36,8 @@ export default async function Dashboard({
         <InboxStatsList />
 
         <div className="grid grid-cols-2 gap-4">
-          <AreaChart
-            data={[
-              { name: "Jan 7", value: 50 },
-              { name: "Jan 8", value: 52 },
-              { name: "Jan 9", value: 63 },
-              { name: "Jan 10", value: 81 },
-              { name: "Jan 11", value: 102 },
-            ]}
-            name={t("analytics.totalContacts")}
-            valueLabel={t("analytics.contacts")}
-          />
-          <BarChart
-            data={[
-              {
-                name: "Jan 7",
-                value: [
-                  {
-                    label: t("analytics.contacts"),
-                    value: 1,
-                  },
-                ],
-              },
-              {
-                name: "Jan 8",
-                value: [
-                  {
-                    label: t("analytics.contacts"),
-                    value: 2,
-                  },
-                ],
-              },
-              {
-                name: "Jan 9",
-                value: [
-                  {
-                    label: t("analytics.contacts"),
-                    value: 0,
-                  },
-                ],
-              },
-              {
-                name: "Jan 10",
-                value: [
-                  {
-                    label: t("analytics.contacts"),
-                    value: 3,
-                  },
-                ],
-              },
-              {
-                name: "Jan 11",
-                value: [
-                  {
-                    label: t("analytics.contacts"),
-                    value: 1,
-                  },
-                ],
-              },
-            ]}
-            name={t("analytics.newContacts")}
-          />
+          <TotalContactsChart chatbotId={chatbotId} />
+          <NewContactsChart chatbotId={chatbotId} />
           <BarChart
             data={[
               {
@@ -440,55 +385,8 @@ export default async function Dashboard({
             name={t("analytics.messagesSentByAdmins")}
             valueLabel={t("analytics.messages")}
           />
-          <DonutChart
-            data={[
-              { name: "A", value: 400 },
-              { name: "B", value: 300 },
-              { name: "C", value: 300 },
-              { name: "D", value: 200 },
-              {
-                name: "E",
-                value: 278,
-              },
-              { name: "F", value: 189 },
-              { name: "G", value: 100 },
-            ]}
-            name={t("analytics.allContactsByChannel")}
-            valueLabel={t("analytics.contacts")}
-          />
-          <DonutChart
-            data={[
-              { name: "A", value: 400 },
-              { name: "B", value: 300 },
-              { name: "C", value: 300 },
-              { name: "D", value: 200 },
-              {
-                name: "E",
-                value: 278,
-              },
-              { name: "F", value: 189 },
-              { name: "G", value: 100 },
-            ]}
-            name={t("analytics.newContactsByChannel")}
-            valueLabel={t("analytics.contacts")}
-          />
-          <DonutChart
-            data={[
-              { name: "A", value: 400 },
-              { name: "B", value: 300 },
-              { name: "C", value: 300 },
-              { name: "D", value: 200 },
-              {
-                name: "E",
-                value: 278,
-              },
-              { name: "F", value: 189 },
-              { name: "G", value: 100 },
-            ]}
-            helpMessage={t("analytics.newContactsBySourceHelp")}
-            name={t("analytics.newContactsBySource")}
-            valueLabel={t("analytics.contacts")}
-          />
+          <ContactsByChannelChart chatbotId={chatbotId} />
+          <ContactsBySourceChart chatbotId={chatbotId} />
           <DonutChart
             data={[
               { name: "A", value: 400 },
@@ -709,38 +607,7 @@ export default async function Dashboard({
             helpMessage={t("analytics.blockedConversationsHelp")}
             name={t("analytics.blockedConversations")}
           />
-          <DonutChart
-            data={[
-              { name: "A", value: 400 },
-              { name: "B", value: 300 },
-              { name: "C", value: 300 },
-              { name: "D", value: 200 },
-              {
-                name: "E",
-                value: 278,
-              },
-              { name: "F", value: 189 },
-              { name: "G", value: 100 },
-            ]}
-            name={t("analytics.allContactsByCountry")}
-            valueLabel={t("analytics.contacts")}
-          />
-          <DonutChart
-            data={[
-              { name: "A", value: 400 },
-              { name: "B", value: 300 },
-              { name: "C", value: 300 },
-              { name: "D", value: 200 },
-              {
-                name: "E",
-                value: 278,
-              },
-              { name: "F", value: 189 },
-              { name: "G", value: 100 },
-            ]}
-            name={t("analytics.newContactsByCountry")}
-            valueLabel={t("analytics.contacts")}
-          />
+          <ContactsByCountryChart chatbotId={chatbotId} />
         </div>
       </AnalysisStoreProvider>
     </div>

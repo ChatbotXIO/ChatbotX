@@ -1,3 +1,4 @@
+import { contactTrackingService } from "@aha.chat/analytics"
 import { db, findOrFail } from "@aha.chat/database/client"
 import {
   attachmentModel,
@@ -266,6 +267,39 @@ export const receiveMessage = async (
         conversationId: result.conversation.id,
         action: quickReplyAction,
         ref,
+      },
+    })
+  }
+
+  if (result.isNewContact && conversation.contact.sourceId) {
+    await contactTrackingService.trackEvent({
+      chatbotId,
+      contactId: conversation.contact.sourceId,
+      eventType: "contact_created",
+      occurredAt: new Date(),
+      source: integrationType,
+      sourceId: conversation.contact.sourceId,
+      channel: inbox.inboxType,
+      country: undefined,
+      metadata: {
+        inboxId,
+      },
+    })
+  }
+
+  if (conversation.contact.sourceId && message.messageType === "incoming") {
+    await contactTrackingService.trackEvent({
+      chatbotId,
+      contactId: conversation.contact.sourceId,
+      eventType: "contact_message_in",
+      occurredAt: new Date(),
+      source: integrationType,
+      sourceId: conversation.contact.sourceId,
+      channel: inbox.inboxType,
+      country: undefined,
+      metadata: {
+        inboxId,
+        messageId: result.message.id,
       },
     })
   }

@@ -1,0 +1,29 @@
+{
+  "name": "@aha.chat/analytics",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./events": "./src/events.ts",
+    "./queries": "./src/queries.ts"
+  },
+  "scripts": {
+    "migrate": "dotenv -e ../../.env -- tsx src/migrations/run.ts"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^1.7.0",
+    "@paralleldrive/cuid2": "^3.0.4",
+    "date-fns": "^4.1.0",
+    "ioredis": "^5.4.2",
+    "zod": "^4.2.1",
+    "dotenv-cli": "^11.0.0",
+    "@aha.chat/filesystem": "workspace:*",
+    "@aha.chat/database": "workspace:*"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.1",
+    "tsx": "^4.21.0"
+  }
+}

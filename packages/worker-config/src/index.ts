@@ -1,6 +1,7 @@
 export * from "./lib/connection"
 export * from "./lib/types"
 export * from "./queues/ai-agent"
+export * from "./queues/analytics"
 export * from "./queues/chat"
 export * from "./queues/default"
 export * from "./queues/integration"

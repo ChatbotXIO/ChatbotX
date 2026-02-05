@@ -23,6 +23,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./node-upload": "./src/lib/node-upload.ts"
+    "./node-upload": "./src/lib/node-upload.ts",
+    "./server": "./src/lib/ndjson/server.ts"
   }
 }

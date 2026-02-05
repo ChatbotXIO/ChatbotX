@@ -1,5 +1,6 @@
 "use server"
 
+import { contactTrackingService } from "@aha.chat/analytics"
 import { db, eq, findOrFail, type Transaction } from "@aha.chat/database/client"
 import {
   attachmentModel,
@@ -11,6 +12,7 @@ import {
 } from "@aha.chat/database/schema"
 import type {
   ChatbotUsageModel,
+  ContactModel,
   ConversationAttributes,
   IntegrationWebchatModel,
 } from "@aha.chat/database/types"
@@ -26,7 +28,7 @@ import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import { ChatbotXException } from "@/lib/errors/exception"
+import { ChatbotXException, notFoundException } from "@/lib/errors/exception"
 import { actionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
@@ -43,9 +45,11 @@ export async function handleCreateWebchatMessage({
 }: {
   parsedInput: CreateWebchatMessageRequest
 }) {
-  const { conversation } = await db.transaction(async (tx) => {
-    return await getConversationFromInput(tx, parsedInput)
-  })
+  const { conversation, isNewContact, contact } = await db.transaction(
+    async (tx) => {
+      return await getConversationFromInput(tx, parsedInput)
+    },
+  )
 
   // Process flow if exists
   if ("flowId" in parsedInput) {
@@ -206,6 +210,19 @@ export async function handleCreateWebchatMessage({
         )
       }
 
+      if (isNewContact && parsedInput.guestConversationId) {
+        await contactTrackingService.trackEvent({
+          chatbotId: parsedInput.chatbotId,
+          contactId: parsedInput.guestConversationId,
+          eventType: "contact_created",
+          occurredAt: contact.createdAt,
+          source: "webchat",
+          sourceId: parsedInput.guestConversationId,
+          channel: "webchat",
+          country: undefined,
+        })
+      }
+
       if (promises.length > 0) {
         await Promise.all(promises)
       }
@@ -238,8 +255,18 @@ async function getConversationFromInput(
       inboxId: integrationWebchat.inboxId,
     },
   })
+  let contact: ContactModel | null = null
+  let isNewContact = false
 
-  if (!conversation) {
+  if (conversation) {
+    contact = await findOrFail<ContactModel>(
+      contactModel,
+      {
+        id: conversation.contactId,
+      },
+      "Contact not found",
+    )
+  } else {
     // find or create contact
     let contact = await tx.query.contactModel.findFirst({
       where: {
@@ -274,6 +301,7 @@ async function getConversationFromInput(
         })
         .returning()
         .then((result) => result[0])
+      isNewContact = true
     }
 
     if (!contact) {
@@ -294,8 +322,15 @@ async function getConversationFromInput(
   }
 
   if (!conversation) {
-    throw new ChatbotXException("Conversation not found")
+    throw notFoundException("Conversation not found")
+  }
+  if (!contact) {
+    throw notFoundException("Contact not found")
   }
 
-  return { conversation }
+  return {
+    conversation,
+    contact,
+    isNewContact,
+  }
 }

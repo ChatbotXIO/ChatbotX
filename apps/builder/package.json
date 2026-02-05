@@ -12,6 +12,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@aha.chat/analytics": "workspace:*",
     "@aha.chat/database": "workspace:*",
     "@chatbotx/events": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
