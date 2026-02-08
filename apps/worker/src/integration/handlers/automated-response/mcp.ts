@@ -94,11 +94,7 @@ export async function callMCPTool(props: {
       success: true,
     }
   } catch (error) {
-    logger.error("[automated-response] callMCPTool failed", {
-      error,
-      url,
-      toolName,
-    })
+    logger.error(error, "[automated-response] callMCPTool failed")
     return {
       error: error instanceof Error ? error.message : TEXT.unknownError,
       success: false,

@@ -153,22 +153,6 @@ export async function handleCreateWebchatMessage({
         )
       }
 
-      // trigger automated response if the message is not a postback
-      if (
-        !conversation.liveChatEnabled &&
-        newMessage.content &&
-        !("postback" in parsedInput && parsedInput.postback)
-      ) {
-        promises.push(
-          integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
-            type: IntegrationJobAction.triggerAutomatedResponse,
-            data: {
-              message: newMessage as OutgoingMessageEntity,
-            },
-          }),
-        )
-      }
-
       const conversationAttributes =
         conversation.conversationAttributes as unknown as ConversationAttributes
 
@@ -189,6 +173,20 @@ export async function handleCreateWebchatMessage({
               },
             },
           ),
+        )
+      } else if (
+        !conversation.liveChatEnabled &&
+        newMessage.content &&
+        !("postback" in parsedInput && parsedInput.postback)
+      ) {
+        // trigger automated response if the message is not a postback
+        promises.push(
+          integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
+            type: IntegrationJobAction.triggerAutomatedResponse,
+            data: {
+              message: newMessage as OutgoingMessageEntity,
+            },
+          }),
         )
       }
 

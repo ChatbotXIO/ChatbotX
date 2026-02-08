@@ -57,7 +57,7 @@ export async function* convertFlowStepImage(
       },
     }
   } catch (error) {
-    logger.error("Error uploading media:", JSON.stringify(error))
+    logger.error(error, "Error uploading media")
     throw error
   }
 }

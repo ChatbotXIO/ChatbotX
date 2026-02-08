@@ -25,9 +25,6 @@ export const deleteAIFileAction = chatbotActionClient
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
     } catch (error) {
-      logger.warn("deleteAIFileAction failed", {
-        error,
-        aiFileId: aiFile.id,
-      })
+      logger.warn(error, `deleteAIFileAction failed for aiFileId: ${aiFileId}`)
     }
   })

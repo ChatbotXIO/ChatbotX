@@ -25,10 +25,10 @@ export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
     if (error instanceof HTTPError) {
       const result = await error.response.json()
       if (result.error === "invalid_request") {
-        logger.error("Failed to subscribe webhook", { result })
+        logger.error(error, "Failed to subscribe webhook")
       }
     } else {
-      logger.error("Failed to subscribe webhook", { error })
+      logger.error(error, "Failed to subscribe webhook")
     }
 
     throw new WhatsappException("Failed to subscribe webhook")
@@ -57,7 +57,7 @@ export async function unsubscribeWebhook({
       throw new WhatsappException("Failed to unsubscribe webhook")
     }
   } catch (error) {
-    logger.error("Failed to unsubscribe webhook", { error })
+    logger.error(error, "Failed to unsubscribe webhook")
 
     throw new WhatsappException("Failed to unsubscribe webhook")
   }

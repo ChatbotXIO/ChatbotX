@@ -232,7 +232,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [chatbotId, t, allFlows, searchParams.toString, searchParams],
+    [chatbotId, t, allFlows, searchParams],
   )
 
   const { table } = useDataTable({

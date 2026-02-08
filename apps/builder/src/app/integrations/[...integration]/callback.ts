@@ -28,14 +28,14 @@ export const handleCallback = async (
   const rawState = JSON.parse(atob(url.searchParams.get("state") || ""))
   const { data: stateParams } = stateValidationSchema.safeParse(rawState)
   if (!stateParams) {
-    logger.warn("state is not valid", url)
+    logger.debug(url, "state is not valid")
     return notFound()
   }
 
   const targetIntegration = integrations[integrationType as IntegrationKey]
 
   if (!(targetIntegration && "handleRequest" in targetIntegration)) {
-    logger.warn(`${integrationType} is missing handleRequest method`)
+    logger.debug(`${integrationType} is missing handleRequest method`)
     return notFound()
   }
 

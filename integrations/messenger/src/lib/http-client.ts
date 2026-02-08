@@ -27,10 +27,13 @@ class MessengerHttpClient {
           (error) => {
             const { response } = error
             if (response) {
-              logger.error(`HTTP ${response.status}: ${response.statusText}`, {
-                url: error.request?.url,
-                method: error.request?.method,
-              })
+              logger.error(
+                {
+                  url: error.request?.url,
+                  method: error.request?.method,
+                },
+                `HTTP ${response.status}: ${response.statusText}`,
+              )
             }
             return error
           },

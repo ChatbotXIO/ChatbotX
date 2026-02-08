@@ -1,6 +1,11 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { buttonStepDefaultFn, buttonStepSchema } from "./button"
+import {
+  skipStateDefaultFn,
+  skipStateSchema,
+  successStateDefaultFn,
+  successStateSchema,
+} from "../states"
 import { StepType } from "./step-action"
 import { DelayUnit } from "./wait"
 
@@ -30,7 +35,7 @@ export const getUserDataStepSchema = z.object({
   autoSkipTimeUnit: z.string().pipe(z.enum(DelayUnit)),
   autoSkipTimeValue: z.coerce.number().int().min(1).max(100),
   autoSkipFailAttempts: z.coerce.number().int().min(1).max(100),
-  buttons: z.array(buttonStepSchema).length(2),
+  states: z.tuple([successStateSchema, skipStateSchema]),
 })
 export type GetUserDataStepSchema = z.infer<typeof getUserDataStepSchema>
 
@@ -46,12 +51,5 @@ export const getUserDataStepDefaultFn = (): GetUserDataStepSchema => ({
   autoSkipTimeUnit: DelayUnit.minutes,
   autoSkipTimeValue: 3,
   autoSkipFailAttempts: 3,
-  buttons: [
-    buttonStepDefaultFn({
-      label: "onSuccess",
-    }),
-    buttonStepDefaultFn({
-      label: "onSkip",
-    }),
-  ],
+  states: [successStateDefaultFn(), skipStateDefaultFn()],
 })

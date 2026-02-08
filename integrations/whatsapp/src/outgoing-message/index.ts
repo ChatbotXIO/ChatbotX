@@ -82,7 +82,7 @@ export const sendOutgoingMessage = async (
   try {
     for (const whatsappMessage of convertMessageToWhatsappMessage(message)) {
       if (!whatsappMessage) {
-        logger.error("Unable to parse outgoing message", message)
+        logger.error(message, "Unable to parse outgoing message")
         continue
       }
 
@@ -96,8 +96,8 @@ export const sendOutgoingMessage = async (
 
       if (serverError?.error) {
         logger.error(
-          `Failed to send message of type ${whatsappMessage._type}`,
           serverError.error,
+          `Failed to send message of type ${whatsappMessage._type}`,
         )
         continue
       }
@@ -105,20 +105,23 @@ export const sendOutgoingMessage = async (
       const messageId = (sendResponse as ServerSentMessageResponse)
         ?.messages?.[0]?.id
       if (messageId) {
-        logger.info("Message sent successfully", {
-          messageId,
-          messageType: whatsappMessage._type,
-        })
+        logger.info(
+          {
+            messageId,
+            messageType: whatsappMessage._type,
+          },
+          "Message sent successfully",
+        )
         continue
       }
 
       logger.warn(
-        `Message of type ${whatsappMessage._type} could not be sent`,
         sendResponse,
+        `Message of type ${whatsappMessage._type} could not be sent`,
       )
     }
   } catch (error) {
-    logger.error("An error occurred while sending the message", error)
+    logger.error(error, "An error occurred while sending the message")
   }
 }
 
@@ -131,7 +134,7 @@ export const sendFlowStep = async (
   try {
     for (const whatsappMessage of convertFlowStepToWhatsappMessage(props)) {
       if (!whatsappMessage) {
-        logger.error("Unable to parse outgoing message", step)
+        logger.error(step, "Unable to parse outgoing message")
         continue
       }
 
@@ -145,8 +148,8 @@ export const sendFlowStep = async (
 
       if (serverError?.error) {
         logger.error(
-          `Failed to send message of type ${whatsappMessage._type}`,
           serverError.error,
+          `Failed to send message of type ${whatsappMessage._type}`,
         )
         continue
       }
@@ -154,19 +157,22 @@ export const sendFlowStep = async (
       const messageId = (sendResponse as ServerSentMessageResponse)
         ?.messages?.[0]?.id
       if (messageId) {
-        logger.info("Message sent successfully", {
-          messageId,
-          messageType: whatsappMessage._type,
-        })
+        logger.info(
+          {
+            messageId,
+            messageType: whatsappMessage._type,
+          },
+          "Message sent successfully",
+        )
         continue
       }
 
       logger.warn(
-        `Message of type ${whatsappMessage._type} could not be sent`,
         sendResponse,
+        `Message of type ${whatsappMessage._type} could not be sent`,
       )
     }
   } catch (error) {
-    logger.error("An error occurred while sending the message", error)
+    logger.error(error, "An error occurred while sending the message")
   }
 }

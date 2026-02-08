@@ -1,5 +1,3 @@
-import baseLogger from "@aha.chat/logger"
+import { getChildLogger } from "@aha.chat/logger"
 
-export const uploaderLogger = baseLogger.getSubLogger({
-  name: "uploader",
-})
+export const uploaderLogger = getChildLogger("uploader")

@@ -1,5 +1,3 @@
-import baseLogger from "@aha.chat/logger"
+import { getChildLogger } from "@aha.chat/logger"
 
-export const googleSheetsLogger = baseLogger.getSubLogger({
-  name: "google-sheets",
-})
+export const googleSheetsLogger = getChildLogger("google-sheets")

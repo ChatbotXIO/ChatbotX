@@ -50,7 +50,7 @@ export async function verifyGoogleSheetsUrl(
       },
     })
   } catch (e) {
-    logger.error("Unable to get data from google sheets", e)
+    logger.error(e, "Unable to get data from google sheets")
 
     returnValidationErrors(createSpreadsheetRequest, {
       url: {

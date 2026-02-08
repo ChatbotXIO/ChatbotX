@@ -38,7 +38,7 @@ export const getUserProfile = async ({
 
     return result
   } catch (error) {
-    logger.error("getUserProfile error", error)
+    logger.error(error, "getUserProfile error")
     throw new MessengerAPIException(
       "Failed to fetch user profile",
       `${API_URL}/${ctx.auth.metadata.version}/${psid}`,

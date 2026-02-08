@@ -236,11 +236,11 @@ export const fetchMedia = async (
       }
     }
 
-    logger.error("Unable to fetch media:", { mediaId, mediaResponse })
+    logger.error({ mediaId, mediaResponse }, "Unable to fetch media:")
 
     throw new SdkException("Unable to download media")
   } catch (error) {
-    logger.error("Unable to fetch media info:", { error })
+    logger.error(error, "Unable to fetch media info:")
 
     throw new SdkException("Unable to fetch media info")
   }

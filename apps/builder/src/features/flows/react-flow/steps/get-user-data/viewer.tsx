@@ -2,7 +2,7 @@
 
 import type { GetUserDataStepSchema } from "@aha.chat/flow-config"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { OnSkipStepViewer, OnSuccessStepViewer } from "../button/viewer"
+import { BaseStateViewer } from "../../states/viewer"
 
 const GetUserDataStepViewer = ({ data }: { data: GetUserDataStepSchema }) => {
   return (
@@ -12,8 +12,9 @@ const GetUserDataStepViewer = ({ data }: { data: GetUserDataStepSchema }) => {
           {data.message}
         </p>
         <div className="my-2 mr-3 flex flex-col gap-1">
-          <OnSuccessStepViewer data={data.buttons[0]} />
-          <OnSkipStepViewer data={data.buttons[1]} />
+          {data.states.map((state) => (
+            <BaseStateViewer data={state} key={state.id} />
+          ))}
         </div>
       </CardContent>
     </Card>

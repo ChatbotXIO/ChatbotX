@@ -126,7 +126,7 @@ export const selectPageAction = authActionClient
           throw new BaseException("Page already connected")
         }
 
-        logger.error("Failed to connect Facebook page", { error })
+        logger.error(error, "Failed to connect Facebook page")
         throw new BaseException("Failed to connect Facebook page")
       }
     },

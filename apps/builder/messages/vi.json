@@ -149,6 +149,11 @@
     "landingPage": "Trang đích",
     "addNotes": "Thêm ghi chú"
   },
+  "states": {
+    "success": "Thành công",
+    "error": "Lỗi",
+    "skip": "Bỏ qua"
+  },
   "admins": {
     "title": "Quản trị viên"
   },
@@ -833,7 +838,8 @@
       "noPhoneNumbersFound": "Không tìm thấy số điện thoại cho tài khoản này"
     },
     "prompt": {
-      "label": "Prompt"
+      "label": "Prompt",
+      "placeholder": "Nhập prompt"
     },
     "promptMessages": {
       "label": "Tin nhắn prompt",
@@ -1084,6 +1090,9 @@
     }
   },
   "flows": {
+    "aiGenerateText": {
+      "label": "{name}: AI Tạo văn bản"
+    },
     "actions": {
       "addContactNotes": "Thêm ghi chú liên hệ",
       "addContactTag": "Thêm thẻ liên hệ",
