@@ -3,6 +3,7 @@ import type {
   ConversationType,
 } from "@aha.chat/database/enums"
 import type { InboxType } from "@aha.chat/database/types"
+import { MessageType } from "@aha.chat/sdk"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
@@ -240,9 +241,12 @@ export const createChatStore = () => {
     },
 
     appendMessage: (message: MessageResource) => {
+      const { updateConversationViaMessage } = get()
       set((state) => ({
         messages: [...state.messages, message],
       }))
+
+      updateConversationViaMessage(message)
     },
 
     loadMoreMessages: async (chatbotId: string, perPage: number) => {
@@ -284,8 +288,6 @@ export const createChatStore = () => {
 
         // Update the latest message
         conversation.messages = [message]
-        conversation.lastActivityAt = new Date()
-        conversation.agentLastSeenAt = new Date()
 
         // Handle unread count
         if (conversation.id !== activeConversationId) {
@@ -362,7 +364,26 @@ export const createChatStore = () => {
         activeConversationId,
         appendMessage,
         updateConversationViaMessage,
+        updateConversation,
       } = get()
+
+      // Update last seen timestamps
+      if (message.messageType === MessageType.incoming) {
+        updateConversation(message.conversationId, {
+          contactRepliedAt: new Date(message.createdAt ?? new Date()),
+          contactLastSeenAt: new Date(message.createdAt ?? new Date()),
+        })
+      }
+      if (
+        message.messageType === MessageType.outgoing ||
+        (message.messageType === MessageType.incoming &&
+          message.conversationId === activeConversationId)
+      ) {
+        updateConversation(message.conversationId, {
+          agentLastSeenAt: new Date(),
+          adminRepliedAt: new Date(),
+        })
+      }
 
       // Update the conversation list
       updateConversationViaMessage(message)

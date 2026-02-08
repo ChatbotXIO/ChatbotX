@@ -35,6 +35,7 @@ export const TiptapEditor = ({
   const [isOpenCustomField, setIsOpenCustomField] = useState(false)
   const customFieldSelectOptions = useCustomFieldSelectOptions({
     includeReserved: true,
+    valueKey: "name",
   })
 
   const tiptapEditor = useEditor({

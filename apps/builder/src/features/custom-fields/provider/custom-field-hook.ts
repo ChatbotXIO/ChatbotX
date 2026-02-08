@@ -114,10 +114,19 @@ export const reservedCustomFieldOptions: {
 export const useCustomFieldSelectOptions = (props: {
   customFieldTypes?: CustomFieldType[]
   includeReserved?: boolean
+  valueKey?: string
 }): SelectOption[] => {
-  const { customFieldTypes, includeReserved } = props
+  const { customFieldTypes, includeReserved, valueKey } = props
 
-  const { customFields } = useCustomFieldStore((state) => state)
+  let { customFields } = useCustomFieldStore((state) => state)
+
+  if (valueKey && valueKey !== "id") {
+    customFields = customFields.map((field) => ({
+      ...field,
+      // biome-ignore lint/suspicious/noExplicitAny: wip
+      id: (field as any)[valueKey],
+    }))
+  }
 
   return useMemo(() => {
     const allFields = includeReserved

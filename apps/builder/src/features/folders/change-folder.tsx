@@ -132,7 +132,7 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
       form.setValue("folderType", folderType)
       form.setValue("modelIds", modelIds)
     }
-  }, [modelIds, currentFolderId, folderType, form.setValue])
+  }, [modelIds, currentFolderId, folderType, form.setValue, form])
 
   return (
     <Form {...form}>

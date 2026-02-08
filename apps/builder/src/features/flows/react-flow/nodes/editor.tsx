@@ -60,7 +60,7 @@ const NodeEditorQuickReplies = () => {
   })
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Sortable
         getItemValue={(item) => item.id}
         onMove={({ activeIndex, overIndex }) =>
@@ -69,7 +69,7 @@ const NodeEditorQuickReplies = () => {
         value={quickReplies}
       >
         <SortableContent asChild>
-          <div className="flex gap-2">
+          <div className="contents gap-2">
             {quickReplies.map((field, index) => (
               <SortableItem asChild key={field.id} value={field.id}>
                 <ButtonStepEditor parentName={`quickReplies.${index}`} />
@@ -87,7 +87,7 @@ const NodeEditorQuickReplies = () => {
           )
         }
         type="button"
-        variant="secondary"
+        variant="dashed"
       >
         <PlusIcon />
         {t("fields.quickReply.label")}
@@ -291,7 +291,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
         />
       )}
 
-      <div className="my-2 flex flex-1 flex-col gap-2 overflow-y-auto">
+      <div className="my-2 flex flex-1 flex-col gap-2">
         <Sortable
           getItemValue={(item) => item.id}
           onMove={({ activeIndex, overIndex }) =>

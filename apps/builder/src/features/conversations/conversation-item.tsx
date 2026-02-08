@@ -17,12 +17,11 @@ import { formatDistanceToNowStrict, isAfter } from "date-fns"
 import { StarIcon, UsersRoundIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
-import type { MessageResource } from "../messages/schemas"
 import { readConversationAction } from "./actions/read-conversation.action"
 import type { ConversationResource } from "./schemas/resource"
 
@@ -67,9 +66,7 @@ export default function ConversationItem({
   onSelect,
 }: ConversationItemProps) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
-  const [lastMessage, _setLastMessage] = useState<MessageResource | undefined>(
-    conversation.messages?.[0],
-  )
+  const lastMessage = conversation.messages?.[0]
   const { activeConversationId, readConversation } = useChatStore(
     (state) => state,
   )
