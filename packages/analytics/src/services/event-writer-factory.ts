@@ -30,9 +30,25 @@ export interface BotMessageEventRow {
   inserted_at: number
 }
 
+export interface ConversationEventRow {
+  event_id: string
+  chatbot_id: string
+  conversation_id: string
+  event_type: string
+  occurred_at: number
+  from_assignee: string
+  to_assignee: string
+  channel: string
+  metadata: string
+  inserted_at: number
+}
+
 export interface EventWriter {
   insert(table: string, rows: EventRow[]): Promise<void>
-  insertOne(table: string, row: EventRow | BotMessageEventRow): Promise<void>
+  insertOne(
+    table: string,
+    row: EventRow | BotMessageEventRow | ConversationEventRow,
+  ): Promise<void>
 }
 
 export type EventWriterType = "clickhouse"

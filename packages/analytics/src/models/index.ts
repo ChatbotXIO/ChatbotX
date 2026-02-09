@@ -2,6 +2,7 @@ export type {
   BotMessageAIProviderStats,
   BotMessageRouteType,
   BotMessageStats,
+  CreateBotMessageEvent,
 } from "./bot-message-event.model"
 export type {
   ContactEvent,

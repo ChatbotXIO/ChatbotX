@@ -3,6 +3,7 @@ import type {
   ContactStats,
   ContactsByDimension,
   DailyTotalContacts,
+  MessagesBySenderStats,
   TimeRange,
 } from "../models"
 import { contactStatsRepository } from "../repositories"

@@ -60,7 +60,7 @@ export const createAnalysisStore = () =>
         from: from.toString(),
         to: to.toString(),
       })
-      const { data } = await ky
+      const data = await ky
         .get(
           `/api/chatbots/${chatbotId}/total-contacts?${searchParams.toString()}`,
         )
