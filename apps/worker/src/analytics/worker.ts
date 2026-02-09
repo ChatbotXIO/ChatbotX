@@ -9,8 +9,10 @@ import {
 import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { ingestBotMessageEvents } from "./handlers/ingest-bot-message"
 import { ingestContactEvents } from "./handlers/ingest-contact"
 import { registerSchedules } from "./handlers/register-schedules"
+import { syncBotMessage } from "./handlers/sync-bot-message"
 import { syncContact } from "./handlers/sync-contact"
 
 async function startScheduleWorker() {
@@ -44,8 +46,14 @@ async function startScheduleWorker() {
         case AnalyticsJobData.syncConversation:
           // TODO: implement sync analytics
           return
+        case AnalyticsJobData.syncBotMessage:
+          await syncBotMessage(job.data)
+          return
         case AnalyticsJobData.ingestContactEvents:
           await ingestContactEvents(job.data)
+          return
+        case AnalyticsJobData.ingestBotMessageEvents:
+          await ingestBotMessageEvents(job.data)
           return
         default:
           throw new SdkException("AnalyticsJobData type is not defined")

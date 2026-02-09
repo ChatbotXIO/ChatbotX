@@ -4,9 +4,12 @@ import { DonutChart } from "@/components/charts/donut-chart"
 import { RadarChart } from "@/components/charts/radar-chart"
 import AnalysisFilterForm from "@/features/analysis/filter-form"
 import { AnalysisStoreProvider } from "@/features/analysis/provider/analysis-store-context"
+import { BotMessagesByResultChart } from "@/features/analytics/components/bot-messages-by-result-chart"
 import { ContactsByChannelChart } from "@/features/analytics/components/contacts-by-channel-chart"
 import { ContactsByCountryChart } from "@/features/analytics/components/contacts-by-country-chart"
 import { ContactsBySourceChart } from "@/features/analytics/components/contacts-by-source-chart"
+import { ConversationsMovedChart } from "@/features/analytics/components/conversations-moved-chart"
+import { MessagesBySenderChart } from "@/features/analytics/components/messages-by-sender-chart"
 import { NewContactsChart } from "@/features/analytics/components/new-contacts-chart"
 import { TotalContactsChart } from "@/features/analytics/components/total-contacts-chart"
 import { ChatbotMemberAnalysis } from "@/features/chatbot-members/components/admins-analysis"
@@ -198,163 +201,9 @@ export default async function Dashboard({
         </div>
         <ChatbotMemberAnalysis />
         <div className="grid grid-cols-2 gap-4">
-          <BarChart
-            data={[
-              {
-                name: "Jan 7",
-                value: [
-                  {
-                    label: t("analytics.success"),
-                    value: 4000,
-                  },
-                  {
-                    label: t("analytics.fallbackFlow"),
-                    value: 2400,
-                  },
-                ],
-              },
-              {
-                name: "Jan 8",
-                value: [
-                  {
-                    label: t("analytics.success"),
-                    value: 3000,
-                  },
-                  {
-                    label: t("analytics.fallbackFlow"),
-                    value: 1398,
-                  },
-                ],
-              },
-              {
-                name: "Jan 9",
-                value: [
-                  {
-                    label: t("analytics.success"),
-                    value: 2000,
-                  },
-                  {
-                    label: t("analytics.fallbackFlow"),
-                    value: 9800,
-                  },
-                ],
-              },
-              {
-                name: "Jan 10",
-                value: [
-                  {
-                    label: t("analytics.success"),
-                    value: 2780,
-                  },
-                  {
-                    label: t("analytics.fallbackFlow"),
-                    value: 3908,
-                  },
-                ],
-              },
-              {
-                name: "Jan 11",
-                value: [
-                  {
-                    label: t("analytics.success"),
-                    value: 1890,
-                  },
-                  {
-                    label: t("analytics.fallbackFlow"),
-                    value: 4800,
-                  },
-                ],
-              },
-            ]}
-            helpMessage={t("analytics.messagesReceivedByTheBotHelp")}
-            name={t("analytics.messagesReceivedByTheBot")}
-          />
-          <DonutChart
-            data={[
-              { name: "A", value: 400 },
-              { name: "B", value: 300 },
-              { name: "C", value: 300 },
-              { name: "D", value: 200 },
-              {
-                name: "E",
-                value: 278,
-              },
-              { name: "F", value: 189 },
-              { name: "G", value: 100 },
-            ]}
-            name={t("analytics.messagesSentByHumanOrBot")}
-            valueLabel={t("analytics.messages")}
-          />
-          <BarChart
-            data={[
-              {
-                name: "Jan 7",
-                value: [
-                  {
-                    label: t("analytics.human"),
-                    value: 4000,
-                  },
-                  {
-                    label: t("analytics.bot"),
-                    value: 2400,
-                  },
-                ],
-              },
-              {
-                name: "Jan 8",
-                value: [
-                  {
-                    label: t("analytics.human"),
-                    value: 3000,
-                  },
-                  {
-                    label: t("analytics.bot"),
-                    value: 1398,
-                  },
-                ],
-              },
-              {
-                name: "Jan 9",
-                value: [
-                  {
-                    label: t("analytics.human"),
-                    value: 2000,
-                  },
-                  {
-                    label: t("analytics.bot"),
-                    value: 9800,
-                  },
-                ],
-              },
-              {
-                name: "Jan 10",
-                value: [
-                  {
-                    label: t("analytics.human"),
-                    value: 2780,
-                  },
-                  {
-                    label: t("analytics.bot"),
-                    value: 3908,
-                  },
-                ],
-              },
-              {
-                name: "Jan 11",
-                value: [
-                  {
-                    label: t("analytics.human"),
-                    value: 1890,
-                  },
-                  {
-                    label: t("analytics.bot"),
-                    value: 4800,
-                  },
-                ],
-              },
-            ]}
-            name={t("analytics.conversationsMovedToHumanOrBot")}
-          />
+          <BotMessagesByResultChart chatbotId={chatbotId} />
+          <MessagesBySenderChart chatbotId={chatbotId} />
+          <ConversationsMovedChart chatbotId={chatbotId} />
           <DonutChart
             data={[
               { name: "A", value: 400 },

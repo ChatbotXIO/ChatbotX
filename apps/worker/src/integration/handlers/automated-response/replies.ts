@@ -85,11 +85,15 @@ export async function replyByAutomatedResponse(
   const { message, conversation } = props
 
   let replied = false
+  let isFlow = false
+  let flowId: string | undefined
+  let automatedResponseId: string | undefined
+
   const allAutomatedResponses = await listAllEnabledAutomatedResponses({
     chatbotId: message.chatbotId,
   })
   if (allAutomatedResponses.length === 0) {
-    return false
+    return { replied: false, isFlow: false }
   }
 
   for (const automatedResponse of allAutomatedResponses) {
@@ -98,6 +102,7 @@ export async function replyByAutomatedResponse(
       .some((v) => (message.content ?? "").toLowerCase().includes(v))
 
     if (matched) {
+      automatedResponseId = automatedResponse.id
       for (const reply of automatedResponse.replies as AutomatedResponseReply[]) {
         switch (reply.type) {
           case ReplyType.Message: {
@@ -128,9 +133,12 @@ export async function replyByAutomatedResponse(
                 data: {
                   conversationId: message.conversationId,
                   flowId: flow.id,
+                  messageId,
                 },
               })
               replied = true
+              isFlow = true
+              flowId = flow.id
             }
             break
           }
@@ -140,7 +148,7 @@ export async function replyByAutomatedResponse(
       }
     }
   }
-  return replied
+  return { replied, isFlow, flowId, automatedResponseId }
 }
 
 export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {

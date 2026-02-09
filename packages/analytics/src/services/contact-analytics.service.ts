@@ -82,6 +82,18 @@ export class ContactAnalyticsService {
   ): Promise<ContactsByDimension[]> {
     return contactStatsRepository.getContactsBySource(chatbotId, timeRange)
   }
+
+  getMessagesBySender(
+    chatbotId: string,
+    timeRange: TimeRange,
+    granularity?: "day" | "month",
+  ): Promise<MessagesBySenderStats[]> {
+    return contactStatsRepository.getMessagesBySender(
+      chatbotId,
+      timeRange,
+      granularity,
+    )
+  }
 }
 
 export const contactAnalyticsService = new ContactAnalyticsService()

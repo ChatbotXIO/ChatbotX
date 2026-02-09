@@ -4,6 +4,8 @@ export type BotMessageResponseType =
   | "flow"
   | "none"
 
+export type BotMessageRouteType = "FLOW" | "AGENT" | "FALLBACK"
+
 export type BotMessageResult = "success" | "fallback"
 
 export type BotMessageAIProvider = "openai" | "gemini" | "none"
@@ -12,6 +14,10 @@ export type BotMessageFallbackReason =
   | "NO_INTENT_MATCH"
   | "LOW_CONFIDENCE"
   | "ROUTE_GUARD_BLOCKED"
+  | "NO_CONTENT"
+  | "NOT_FROM_CONTACT"
+  | "NO_AI_AGENT"
+  | "BUTTON_NOT_FOUND"
   | "HANDLER_ERROR_TO_FALLBACK"
   | "UNSUPPORTED_MESSAGE_TYPE"
 
@@ -24,6 +30,7 @@ export interface BotMessageEvent {
 
   hasResponse: boolean
   responseType: BotMessageResponseType
+  routeType?: BotMessageRouteType
   result?: BotMessageResult
   aiProvider: BotMessageAIProvider
 
@@ -31,6 +38,7 @@ export interface BotMessageEvent {
   source?: string
   metadata?: {
     flowId?: string
+    automatedResponseId?: string
     intentId?: string
     intentConfidence?: number
     fallbackReason?: BotMessageFallbackReason
@@ -45,6 +53,7 @@ export interface BotMessageStats {
   timestamp: Date
   hasResponse: boolean
   responseType: BotMessageResponseType
+  routeType?: BotMessageRouteType
   result?: BotMessageResult
   aiProvider: BotMessageAIProvider
   count: number

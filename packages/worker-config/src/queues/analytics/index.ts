@@ -9,16 +9,20 @@ import { queueName } from "../../lib/types"
 export const AnalyticsJobData = {
   syncContact: "sync-contact",
   syncConversation: "sync-conversation",
+  syncBotMessage: "sync-bot-message",
   ingestContactEvents: "ingest-contact-events",
+  ingestBotMessageEvents: "ingest-bot-message-events",
 } as const
 
 export type AnalyticsJob = {
   type:
     | typeof AnalyticsJobData.syncContact
     | typeof AnalyticsJobData.syncConversation
+    | typeof AnalyticsJobData.syncBotMessage
     | typeof AnalyticsJobData.ingestContactEvents
+    | typeof AnalyticsJobData.ingestBotMessageEvents
   data: {
-    type: "contact_events"
+    type: "contact_events" | "bot_message_events"
   }
 }
 

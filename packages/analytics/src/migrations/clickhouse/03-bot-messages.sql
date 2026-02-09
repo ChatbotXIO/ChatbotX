@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS bot_message_events (
     -- Response tracking
     has_response UInt8,  -- 0 or 1
     response_type LowCardinality(String),  -- automated_response, ai_agent, flow, none
+    route_type LowCardinality(String),  -- FLOW, AGENT, FALLBACK
     result LowCardinality(String),  -- success, fallback, empty string
 
     -- AI tracking
@@ -54,12 +55,13 @@ CREATE TABLE IF NOT EXISTS bot_messages_minute (
     minute DateTime,
     has_response UInt8,
     response_type LowCardinality(String),
+    route_type LowCardinality(String),
     result LowCardinality(String),
     ai_provider LowCardinality(String),
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(minute)
-ORDER BY (chatbot_id, minute, has_response, response_type, result, ai_provider)
+ORDER BY (chatbot_id, minute, has_response, response_type, route_type, result, ai_provider)
 TTL minute + INTERVAL 30 DAY
 SETTINGS index_granularity = 8192;
 
@@ -69,12 +71,13 @@ CREATE TABLE IF NOT EXISTS bot_messages_hourly (
     hour DateTime,
     has_response UInt8,
     response_type LowCardinality(String),
+    route_type LowCardinality(String),
     result LowCardinality(String),
     ai_provider LowCardinality(String),
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, has_response, response_type, result, ai_provider)
+ORDER BY (chatbot_id, hour, has_response, response_type, route_type, result, ai_provider)
 TTL hour + INTERVAL 12 MONTH
 SETTINGS index_granularity = 8192;
 
@@ -84,12 +87,13 @@ CREATE TABLE IF NOT EXISTS bot_messages_daily (
     day Date,
     has_response UInt8,
     response_type LowCardinality(String),
+    route_type LowCardinality(String),
     result LowCardinality(String),
     ai_provider LowCardinality(String),
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYear(day)
-ORDER BY (chatbot_id, day, has_response, response_type, result, ai_provider)
+ORDER BY (chatbot_id, day, has_response, response_type, route_type, result, ai_provider)
 TTL day + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -102,11 +106,12 @@ AS SELECT
     toStartOfMinute(toDateTime(occurred_at, 'UTC')) as minute,
     has_response,
     response_type,
+    route_type,
     result,
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, minute, has_response, response_type, result, ai_provider;
+GROUP BY chatbot_id, minute, has_response, response_type, route_type, result, ai_provider;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS bot_messages_hourly_mv
 TO bot_messages_hourly
@@ -115,11 +120,12 @@ AS SELECT
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     has_response,
     response_type,
+    route_type,
     result,
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, hour, has_response, response_type, result, ai_provider;
+GROUP BY chatbot_id, hour, has_response, response_type, route_type, result, ai_provider;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS bot_messages_daily_mv
 TO bot_messages_daily
@@ -128,11 +134,12 @@ AS SELECT
     toDate(toDateTime(occurred_at, 'UTC')) as day,
     has_response,
     response_type,
+    route_type,
     result,
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, day, has_response, response_type, result, ai_provider;
+GROUP BY chatbot_id, day, has_response, response_type, route_type, result, ai_provider;
 
 -- Create indexes for better query performance
 ALTER TABLE bot_message_events ADD INDEX IF NOT EXISTS idx_event_id event_id TYPE bloom_filter GRANULARITY 1;

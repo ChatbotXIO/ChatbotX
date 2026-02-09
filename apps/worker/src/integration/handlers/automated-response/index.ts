@@ -1,37 +1,37 @@
 import { db } from "@aha.chat/database/client"
 import type { IntegrationJobTriggerAutomatedResponse } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
 import type { ModelMessage } from "ai"
 import { getAIToolset } from "../generate-text/tools"
-import {
-  replyByAutomatedResponse,
-  replyByGemini,
-  replyByOpenAI,
-} from "./replies"
+import { replyByGemini, replyByOpenAI } from "./replies"
 import { trackBotResponse } from "./track-bot-response"
 
 export async function triggerAutomatedResponse(
   props: IntegrationJobTriggerAutomatedResponse["data"],
 ) {
   const { message } = props
-  if (!message.content) {
-    return
-  }
-
+  const messageId = (message as { id?: string }).id ?? ""
   const startTime = Date.now()
-  const messageId = createId()
-
-  if (await replyByAutomatedResponse(props)) {
+  if (!message.content) {
     await trackBotResponse({
       chatbotId: message.chatbotId,
       conversationId: message.conversationId,
       messageId,
-      hasResponse: true,
-      responseType: "automated_response",
-      result: "success",
+      hasResponse: false,
+      responseType: "none",
+      routeType: "FALLBACK",
+      result: "fallback",
       aiProvider: "none",
-      startTime,
+      startTime: Date.now(),
+      metadata: {
+        fallbackReason: "NO_CONTENT",
+      },
+      triggerContext: {
+        triggerSource: "worker",
+        triggerHandler: "triggerAutomatedResponse",
+        triggerType: "bot_response_fallback_no_content",
+      },
     })
+
     return
   }
 
@@ -39,6 +39,21 @@ export async function triggerAutomatedResponse(
     where: { chatbotId: message.chatbotId, isDefault: true },
   })
   if (!aiAgent) {
+    // No AI Agent configured → Route to FALLBACK
+    await trackBotResponse({
+      chatbotId: message.chatbotId,
+      conversationId: message.conversationId,
+      messageId,
+      hasResponse: false,
+      responseType: "none",
+      routeType: "FALLBACK",
+      result: "fallback",
+      aiProvider: "none",
+      metadata: {
+        fallbackReason: "NO_AI_AGENT",
+      },
+      startTime,
+    })
     return
   }
 
@@ -78,12 +93,14 @@ export async function triggerAutomatedResponse(
       },
     })
   ) {
+    // Step 3: AI Agent exists → Route to AGENT
     await trackBotResponse({
       chatbotId: message.chatbotId,
       conversationId: message.conversationId,
       messageId,
       hasResponse: true,
       responseType: "ai_agent",
+      routeType: "AGENT",
       result: "success",
       aiProvider: "openai",
       startTime,
@@ -109,6 +126,7 @@ export async function triggerAutomatedResponse(
       messageId,
       hasResponse: true,
       responseType: "ai_agent",
+      routeType: "AGENT",
       result: "success",
       aiProvider: "gemini",
       startTime,
@@ -116,12 +134,16 @@ export async function triggerAutomatedResponse(
     return
   }
 
+  // Step 4: AI Agent failed to respond → Still routed to AGENT, but response failed
+  // This is NOT fallback - routing decision was AGENT, but execution failed
   await trackBotResponse({
     chatbotId: message.chatbotId,
     conversationId: message.conversationId,
     messageId,
     hasResponse: false,
-    responseType: "none",
+    responseType: "ai_agent",
+    routeType: "AGENT",
+    result: "success",
     aiProvider: "none",
     metadata: {
       fallbackReason: "NO_INTENT_MATCH",

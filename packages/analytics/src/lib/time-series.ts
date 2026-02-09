@@ -1,4 +1,5 @@
 import type {
+  BotMessageStats,
   ContactEventType,
   ContactStats,
   DailyTotalContacts,
@@ -87,6 +88,7 @@ export function fillContactStatsDaySeries(
 export function fillDailyTotalContactsSeries(
   timeRange: TimeRange,
   raw: DailyTotalContacts[],
+  initialTotal = 0,
 ): DailyTotalContacts[] {
   const byDay = new Map<string, number>()
   for (const r of raw) {
@@ -94,7 +96,7 @@ export function fillDailyTotalContactsSeries(
   }
 
   const filled: DailyTotalContacts[] = []
-  let lastTotal = 0
+  let lastTotal = initialTotal
   for (const d of iterateUtcDays(timeRange.from, timeRange.to)) {
     const dayKey = getUtcDayKey(d)
     const v = byDay.get(dayKey)
@@ -146,6 +148,7 @@ export function fillContactStatsMonthSeries(
 export function fillMonthlyTotalContactsSeries(
   timeRange: TimeRange,
   raw: DailyTotalContacts[],
+  initialTotal = 0,
 ): DailyTotalContacts[] {
   const byMonth = new Map<string, number>()
   for (const r of raw) {
@@ -153,7 +156,7 @@ export function fillMonthlyTotalContactsSeries(
   }
 
   const filled: DailyTotalContacts[] = []
-  let lastTotal = 0
+  let lastTotal = initialTotal
   for (const m of iterateUtcMonths(timeRange.from, timeRange.to)) {
     const monthKey = getUtcMonthKey(m)
     const v = byMonth.get(monthKey)
@@ -164,6 +167,80 @@ export function fillMonthlyTotalContactsSeries(
       day: getUtcMonthStart(m),
       totalContacts: lastTotal,
     })
+  }
+
+  return filled
+}
+
+export function fillBotMessageStatsDaySeries(
+  chatbotId: string,
+  timeRange: TimeRange,
+  rows: BotMessageStats[],
+  results: Array<"success" | "fallback">,
+): BotMessageStats[] {
+  const keyOf = (day: string, result: string) => `${day}::${result}`
+
+  const byKey = new Map<string, BotMessageStats>()
+  for (const r of rows) {
+    if (r.result) {
+      byKey.set(keyOf(getUtcDayKey(r.timestamp), r.result), r)
+    }
+  }
+
+  const filled: BotMessageStats[] = []
+  for (const d of iterateUtcDays(timeRange.from, timeRange.to)) {
+    const dayKey = getUtcDayKey(d)
+    for (const result of results) {
+      const existing = byKey.get(keyOf(dayKey, result))
+      filled.push(
+        existing ?? {
+          chatbotId,
+          timestamp: getUtcDayStart(d),
+          hasResponse: true,
+          responseType: "none",
+          result,
+          aiProvider: "none",
+          count: 0,
+        },
+      )
+    }
+  }
+
+  return filled
+}
+
+export function fillBotMessageStatsMonthSeries(
+  chatbotId: string,
+  timeRange: TimeRange,
+  rows: BotMessageStats[],
+  results: Array<"success" | "fallback">,
+): BotMessageStats[] {
+  const keyOf = (month: string, result: string) => `${month}::${result}`
+
+  const byKey = new Map<string, BotMessageStats>()
+  for (const r of rows) {
+    if (r.result) {
+      byKey.set(keyOf(getUtcMonthKey(r.timestamp), r.result), r)
+    }
+  }
+
+  const filled: BotMessageStats[] = []
+  for (const m of iterateUtcMonths(timeRange.from, timeRange.to)) {
+    const monthKey = getUtcMonthKey(m)
+    for (const result of results) {
+      const existing = byKey.get(keyOf(monthKey, result))
+      filled.push(
+        existing ?? {
+          chatbotId,
+          timestamp: getUtcMonthStart(m),
+          hasResponse: true,
+          responseType: "none",
+          result,
+          aiProvider: "none",
+          count: 0,
+        },
+      )
+    }
   }
 
   return filled

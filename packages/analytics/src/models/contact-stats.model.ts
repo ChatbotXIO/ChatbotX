@@ -23,3 +23,11 @@ export interface DailyTotalContacts {
   day: Date
   totalContacts: number
 }
+
+export interface MessagesBySenderStats {
+  chatbotId: string
+  timestamp: Date
+  channel: string
+  senderType: "bot" | "human"
+  count: number
+}

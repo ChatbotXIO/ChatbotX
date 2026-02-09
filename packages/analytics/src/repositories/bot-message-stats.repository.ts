@@ -1,3 +1,8 @@
+import {
+  fillBotMessageStatsDaySeries,
+  fillBotMessageStatsMonthSeries,
+  shouldUseMonthlyGranularity,
+} from "../lib"
 import type {
   BotMessageAIProviderStats,
   BotMessageStats,
@@ -19,37 +24,36 @@ export class BotMessageStatsRepository extends BaseRepository {
     return { table: "bot_messages_daily", timeColumn: "day" }
   }
 
-  async getMessagesByResult(
+  private async getMessagesByResultMonth(
     chatbotId: string,
     timeRange: TimeRange,
-    granularity: "minute" | "hour" | "day",
   ): Promise<BotMessageStats[]> {
-    const { table, timeColumn } = this.getTableAndColumn(granularity)
-
     const timeFilter = this.buildTimestampFilter(
-      timeColumn,
+      "day",
       timeRange.from,
       timeRange.to,
     )
 
     const sql = `
       SELECT
-        ${timeColumn} as timestamp,
+        chatbot_id,
+        toStartOfMonth(day) as month,
         result,
         response_type,
         ai_provider,
-        countMerge(event_count_state) as count
-      FROM ${table}
+        sum(countMerge(event_count_state)) as count
+      FROM bot_messages_daily
       WHERE chatbot_id = {chatbotId:String}
-        AND has_response = 1
         AND result != ''
-        AND ${timeFilter.sql}
-      GROUP BY ${timeColumn}, result, response_type, ai_provider
-      ORDER BY ${timeColumn} ASC
+        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
+        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+      GROUP BY chatbot_id, month, result, response_type, ai_provider
+      ORDER BY month ASC, result ASC
     `
 
     const result = await this.query<{
-      timestamp: string
+      chatbot_id: string
+      month: string
       result: string
       response_type: string
       ai_provider: string
@@ -59,7 +63,101 @@ export class BotMessageStatsRepository extends BaseRepository {
       ...timeFilter.params,
     })
 
-    return result.map((row) => ({
+    const rows = result.map((row) => ({
+      chatbotId: row.chatbot_id,
+      timestamp: new Date(row.month),
+      hasResponse: true,
+      responseType: row.response_type as BotMessageStats["responseType"],
+      result: row.result as BotMessageStats["result"],
+      aiProvider: row.ai_provider as BotMessageStats["aiProvider"],
+      count: Number(row.count),
+    }))
+
+    const results: Array<"success" | "fallback"> = ["success", "fallback"]
+    return fillBotMessageStatsMonthSeries(chatbotId, timeRange, rows, results)
+  }
+
+  async getMessagesByResult(
+    chatbotId: string,
+    timeRange: TimeRange,
+    granularity: "minute" | "hour" | "day",
+  ): Promise<BotMessageStats[]> {
+    if (
+      granularity === "day" &&
+      shouldUseMonthlyGranularity(timeRange.from, timeRange.to)
+    ) {
+      return this.getMessagesByResultMonth(chatbotId, timeRange)
+    }
+
+    const { table, timeColumn } = this.getTableAndColumn(granularity)
+
+    let sql: string
+    let params: Record<string, unknown>
+
+    if (granularity === "day") {
+      const timeFilter = this.buildTimestampFilter(
+        "day",
+        timeRange.from,
+        timeRange.to,
+      )
+
+      sql = `
+        SELECT
+          ${timeColumn} as timestamp,
+          result,
+          response_type,
+          ai_provider,
+          countMerge(event_count_state) as count
+        FROM ${table}
+        WHERE chatbot_id = {chatbotId:String}
+          AND result != ''
+          AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
+          AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        GROUP BY ${timeColumn}, result, response_type, ai_provider
+        ORDER BY ${timeColumn} ASC
+      `
+
+      params = {
+        chatbotId,
+        ...timeFilter.params,
+      }
+    } else {
+      const timeFilter = this.buildTimestampFilter(
+        timeColumn,
+        timeRange.from,
+        timeRange.to,
+      )
+
+      sql = `
+        SELECT
+          ${timeColumn} as timestamp,
+          result,
+          response_type,
+          ai_provider,
+          countMerge(event_count_state) as count
+        FROM ${table}
+        WHERE chatbot_id = {chatbotId:String}
+          AND result != ''
+          AND ${timeFilter.sql}
+        GROUP BY ${timeColumn}, result, response_type, ai_provider
+        ORDER BY ${timeColumn} ASC
+      `
+
+      params = {
+        chatbotId,
+        ...timeFilter.params,
+      }
+    }
+
+    const result = await this.query<{
+      timestamp: string
+      result: string
+      response_type: string
+      ai_provider: string
+      count: string
+    }>(sql, params)
+
+    const rows = result.map((row) => ({
       chatbotId,
       timestamp: new Date(row.timestamp),
       hasResponse: true,
@@ -68,6 +166,13 @@ export class BotMessageStatsRepository extends BaseRepository {
       aiProvider: row.ai_provider as BotMessageStats["aiProvider"],
       count: Number(row.count),
     }))
+
+    if (granularity === "day") {
+      const results: Array<"success" | "fallback"> = ["success", "fallback"]
+      return fillBotMessageStatsDaySeries(chatbotId, timeRange, rows, results)
+    }
+
+    return rows
   }
 
   async getMessagesWithNoResponse(

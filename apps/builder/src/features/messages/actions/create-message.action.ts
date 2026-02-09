@@ -70,7 +70,7 @@ export const createMessageAction = chatbotActionClient
 export const createMessage = async (
   conversation: ConversationModel,
   parsedInput: CreateMessageRequest,
-  user: UserModel | null = null,
+  user: UserModel,
 ) => {
   // Handle send flow
   if ("flowId" in parsedInput) {
@@ -212,6 +212,27 @@ export const createMessage = async (
             ...message,
             clientId: parsedInput.clientId,
           } as OutgoingMessage,
+        },
+      }),
+    )
+  }
+
+  if (contact.sourceId) {
+    promises.push(
+      contactTrackingService.trackEvent({
+        chatbotId: message.chatbotId,
+        contactId: contact.sourceId,
+        eventType: "contact_message_out",
+        senderType: "human",
+        occurredAt: new Date(),
+        source: contact.source,
+        sourceId: contact.sourceId,
+        channel: conversation.inboxType,
+        country: undefined,
+        metadata: {
+          messageId: message.id,
+          conversationId: message.conversationId,
+          adminId: user.id,
         },
       }),
     )

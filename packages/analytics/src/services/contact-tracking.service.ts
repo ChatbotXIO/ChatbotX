@@ -18,6 +18,7 @@ export class ContactTrackingService extends BaseService {
       chatbot_id: event.chatbotId,
       contact_id: event.contactId,
       event_type: event.eventType,
+      sender_type: event.senderType || "",
       occurred_at: Math.floor(event.occurredAt.getTime() / 1000),
       source: event.source || null,
       source_id: event.sourceId || null,

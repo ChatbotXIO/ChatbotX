@@ -231,6 +231,33 @@ export class ContactStatsRepository extends BaseRepository {
       timeRange.to,
     )
 
+    const baselineSql = `
+      WITH daily_created AS (
+        SELECT
+          day,
+          uniqMerge(unique_contacts_state) AS created_contacts
+        FROM contact_stats_daily
+        WHERE chatbot_id = {chatbotId:String}
+          AND day < toStartOfMonth(toDate(toDateTime({from:UInt32}, 'UTC')))
+          AND event_type = 'contact_created'
+        GROUP BY day
+      ),
+      daily_deleted AS (
+        SELECT
+          day,
+          uniqMerge(unique_contacts_state) AS deleted_contacts
+        FROM contact_stats_daily
+        WHERE chatbot_id = {chatbotId:String}
+          AND day < toStartOfMonth(toDate(toDateTime({from:UInt32}, 'UTC')))
+          AND event_type = 'contact_deleted'
+        GROUP BY day
+      )
+      SELECT
+        sum(created_contacts) - sum(deleted_contacts) AS baseline_total
+      FROM daily_created
+      FULL OUTER JOIN daily_deleted USING (day)
+    `
+
     const createdSql = `
       WITH daily AS (
         SELECT
@@ -295,7 +322,13 @@ export class ContactStatsRepository extends BaseRepository {
       ORDER BY month ASC
     `
 
-    const [createdResult, deletedResult] = await Promise.all([
+    const [baselineResult, createdResult, deletedResult] = await Promise.all([
+      this.query<{
+        baseline_total: string
+      }>(baselineSql, {
+        chatbotId,
+        ...timeFilter.params,
+      }),
       this.query<{
         month: string
         total_contacts: string
@@ -312,6 +345,10 @@ export class ContactStatsRepository extends BaseRepository {
       }),
     ])
 
+    const baselineTotal = baselineResult[0]?.baseline_total
+      ? Number(baselineResult[0].baseline_total)
+      : 0
+
     const deletedByMonth = new Map<string, number>()
     for (const row of deletedResult) {
       deletedByMonth.set(row.month, Number(row.total_deleted))
@@ -327,7 +364,7 @@ export class ContactStatsRepository extends BaseRepository {
       }
     })
 
-    return fillMonthlyTotalContactsSeries(timeRange, raw)
+    return fillMonthlyTotalContactsSeries(timeRange, raw, baselineTotal)
   }
 
   async getTotalContactsByDay(
@@ -342,6 +379,33 @@ export class ContactStatsRepository extends BaseRepository {
       timeRange.from,
       timeRange.to,
     )
+
+    const baselineSql = `
+      WITH daily_created AS (
+        SELECT
+          day,
+          uniqMerge(unique_contacts_state) AS created_contacts
+        FROM contact_stats_daily
+        WHERE chatbot_id = {chatbotId:String}
+          AND day < toDate(toDateTime({from:UInt32}, 'UTC'))
+          AND event_type = 'contact_created'
+        GROUP BY day
+      ),
+      daily_deleted AS (
+        SELECT
+          day,
+          uniqMerge(unique_contacts_state) AS deleted_contacts
+        FROM contact_stats_daily
+        WHERE chatbot_id = {chatbotId:String}
+          AND day < toDate(toDateTime({from:UInt32}, 'UTC'))
+          AND event_type = 'contact_deleted'
+        GROUP BY day
+      )
+      SELECT
+        sum(created_contacts) - sum(deleted_contacts) AS baseline_total
+      FROM daily_created
+      FULL OUTER JOIN daily_deleted USING (day)
+    `
 
     const createdSql = `
       WITH daily AS (
@@ -393,7 +457,13 @@ export class ContactStatsRepository extends BaseRepository {
       ORDER BY day ASC
     `
 
-    const [createdResult, deletedResult] = await Promise.all([
+    const [baselineResult, createdResult, deletedResult] = await Promise.all([
+      this.query<{
+        baseline_total: string
+      }>(baselineSql, {
+        chatbotId,
+        ...timeFilter.params,
+      }),
       this.query<{
         day: string
         total_contacts: string
@@ -410,6 +480,10 @@ export class ContactStatsRepository extends BaseRepository {
       }),
     ])
 
+    const baselineTotal = baselineResult[0]?.baseline_total
+      ? Number(baselineResult[0].baseline_total)
+      : 0
+
     const deletedByDay = new Map<string, number>()
     for (const row of deletedResult) {
       deletedByDay.set(row.day, Number(row.total_deleted))
@@ -425,7 +499,7 @@ export class ContactStatsRepository extends BaseRepository {
       }
     })
 
-    return fillDailyTotalContactsSeries(timeRange, raw)
+    return fillDailyTotalContactsSeries(timeRange, raw, baselineTotal)
   }
 
   async getNewContactsCount(
@@ -603,6 +677,61 @@ export class ContactStatsRepository extends BaseRepository {
       dimension: row.dimension,
       count: Number(row.count),
       uniqueContacts: Number(row.unique_contacts),
+    }))
+  }
+
+  async getMessagesBySender(
+    chatbotId: string,
+    timeRange: TimeRange,
+    granularity: "day" | "month" = "day",
+  ): Promise<MessagesBySenderStats[]> {
+    const _effectiveGranularity =
+      granularity === "day" &&
+      shouldUseMonthlyGranularity(timeRange.from, timeRange.to)
+        ? "month"
+        : granularity
+
+    const table = "contact_stats_daily"
+    const timeColumn = "day"
+
+    const fromTimestamp = Math.floor(timeRange.from.getTime() / 1000)
+    const toTimestamp = Math.floor(timeRange.to.getTime() / 1000)
+
+    const sql = `
+      SELECT
+        chatbot_id,
+        ${timeColumn} as timestamp,
+        channel,
+        sender_type,
+        countMerge(event_count_state) as count
+      FROM ${table}
+      WHERE chatbot_id = {chatbotId:String}
+        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
+        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        AND event_type = 'contact_message_out'
+        AND sender_type != ''
+      GROUP BY chatbot_id, ${timeColumn}, channel, sender_type
+      ORDER BY ${timeColumn} ASC, channel ASC, sender_type ASC
+    `
+
+    const result = await this.query<{
+      chatbot_id: string
+      timestamp: string
+      channel: string
+      sender_type: "bot" | "human"
+      count: string
+    }>(sql, {
+      chatbotId,
+      from: fromTimestamp,
+      to: toTimestamp,
+    })
+
+    return result.map((row) => ({
+      chatbotId: row.chatbot_id,
+      timestamp: new Date(row.timestamp),
+      channel: row.channel,
+      senderType: row.sender_type,
+      count: Number(row.count),
     }))
   }
 }

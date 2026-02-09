@@ -38,9 +38,10 @@ export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
     conversationId: string
-    flowId: string
+    flowId?: string
     flowVersionId?: string
     nodeId?: string
+    messageId?: string
   }
 }
 

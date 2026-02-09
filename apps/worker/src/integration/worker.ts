@@ -10,6 +10,7 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
+import { trackBotResponse } from "./handlers/automated-response/track-bot-response"
 import { runChallenge } from "./handlers/challenge"
 import {
   broadcastBlockContactEvent,
@@ -63,6 +64,25 @@ async function startIntegrationWorker() {
                 },
               },
             )
+          } else if (!(postbackAction || quickReplyAction)) {
+            // Track no response for messages without content or not from contact
+            // (postback/quickReply are tracked in their own handlers)
+            await trackBotResponse({
+              chatbotId: message.chatbotId,
+              conversationId: message.conversationId,
+              messageId: message.id,
+              hasResponse: false,
+              responseType: "none",
+              routeType: "FALLBACK",
+              result: "fallback",
+              aiProvider: "none",
+              metadata: {
+                fallbackReason: message.content
+                  ? "NOT_FROM_CONTACT"
+                  : "NO_CONTENT",
+              },
+              startTime: Date.now(),
+            })
           }
           return
         }

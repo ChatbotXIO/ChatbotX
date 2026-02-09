@@ -1,3 +1,24 @@
-export * from "./bot-message-event.model"
-export * from "./contact-event.model"
-export * from "./contact-stats.model"
+export type {
+  BotMessageAIProviderStats,
+  BotMessageRouteType,
+  BotMessageStats,
+} from "./bot-message-event.model"
+export type {
+  ContactEvent,
+  ContactEventType,
+  ContactSenderType,
+  CreateContactEvent,
+} from "./contact-event.model"
+export type {
+  ContactStats,
+  ContactsByDimension,
+  DailyTotalContacts,
+  MessagesBySenderStats,
+  TimeRange,
+} from "./contact-stats.model"
+export type {
+  ConversationEvent,
+  ConversationEventType,
+  ConversationHandoffStats,
+  CreateConversationEvent,
+} from "./conversation-event.model"

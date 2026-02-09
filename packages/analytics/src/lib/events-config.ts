@@ -31,7 +31,7 @@ export function parseTmpFilename(filename: string): NdjsonTmpFilename | null {
   return { eventType, instanceId, timestamp, seq }
 }
 
-type AnalyticsContactConfig = {
+type AnalyticsSyncConfig = {
   eventType: string
   spool: {
     rootPath: string
@@ -48,14 +48,14 @@ type AnalyticsContactConfig = {
 }
 
 type AnalyticsConfig = {
-  [CONTACT_EVENTS_EVENT_TYPE]: AnalyticsContactConfig
-  [CONVERSATION_EVENTS_EVENT_TYPE]: AnalyticsContactConfig
-  [BOT_MESSAGE_EVENTS_EVENT_TYPE]: AnalyticsContactConfig
+  [CONTACT_EVENTS_EVENT_TYPE]: AnalyticsSyncConfig
+  [CONVERSATION_EVENTS_EVENT_TYPE]: AnalyticsSyncConfig
+  [BOT_MESSAGE_EVENTS_EVENT_TYPE]: AnalyticsSyncConfig
 }
 
 const defaultConfig = {
   rootPath: "/var/spool/analytics",
-  acceptWindowSeconds: 10_000,
+  acceptWindowSeconds: 10,
   concurrency: 3,
   maxBatchSize: 10_000,
   redisTTL: 7200, // 2 hours
@@ -75,7 +75,7 @@ export function getDefaultSpoolerConfig(): {
 
 export function getAnalyticsConfig(
   key: keyof AnalyticsConfig,
-): AnalyticsContactConfig {
+): AnalyticsSyncConfig {
   const config = {
     ...getDefaultSpoolerConfig(),
     concurrency:
@@ -87,46 +87,46 @@ export function getAnalyticsConfig(
     [CONTACT_EVENTS_EVENT_TYPE]: {
       eventType: CONTACT_EVENTS_EVENT_TYPE,
       spool: {
-        rootPath: config.rootPath,
+        rootPath: `${config.rootPath}/${CONTACT_EVENTS_EVENT_TYPE}`,
         acceptWindowSeconds: config.acceptWindowSeconds,
       },
       uploader: {
-        rootPath: config.rootPath,
+        rootPath: `${config.rootPath}/${CONTACT_EVENTS_EVENT_TYPE}`,
         s3Prefix: CONTACT_EVENTS_EVENT_TYPE,
         concurrency: config.concurrency,
       },
       finalize: {
-        maxAgeMs: config.acceptWindowSeconds + 2000,
+        maxAgeMs: config.acceptWindowSeconds * 1000 + 2000,
       },
     },
     [CONVERSATION_EVENTS_EVENT_TYPE]: {
       eventType: CONVERSATION_EVENTS_EVENT_TYPE,
       spool: {
-        rootPath: config.rootPath,
+        rootPath: `${config.rootPath}/${CONVERSATION_EVENTS_EVENT_TYPE}`,
         acceptWindowSeconds: config.acceptWindowSeconds,
       },
       uploader: {
-        rootPath: config.rootPath,
+        rootPath: `${config.rootPath}/${CONVERSATION_EVENTS_EVENT_TYPE}`,
         s3Prefix: CONVERSATION_EVENTS_EVENT_TYPE,
         concurrency: config.concurrency,
       },
       finalize: {
-        maxAgeMs: config.acceptWindowSeconds + 2000,
+        maxAgeMs: config.acceptWindowSeconds * 1000 + 2000,
       },
     },
     [BOT_MESSAGE_EVENTS_EVENT_TYPE]: {
       eventType: BOT_MESSAGE_EVENTS_EVENT_TYPE,
       spool: {
-        rootPath: config.rootPath,
+        rootPath: `${config.rootPath}/${BOT_MESSAGE_EVENTS_EVENT_TYPE}`,
         acceptWindowSeconds: config.acceptWindowSeconds,
       },
       uploader: {
-        rootPath: config.rootPath,
+        rootPath: `${config.rootPath}/${BOT_MESSAGE_EVENTS_EVENT_TYPE}`,
         s3Prefix: BOT_MESSAGE_EVENTS_EVENT_TYPE,
         concurrency: config.concurrency,
       },
       finalize: {
-        maxAgeMs: config.acceptWindowSeconds + 2000,
+        maxAgeMs: config.acceptWindowSeconds * 1000 + 2000,
       },
     },
   }

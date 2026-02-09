@@ -1,5 +1,6 @@
 "use server"
 
+import { conversationTrackingService } from "@aha.chat/analytics"
 import { db, inArray } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
 import type { UserModel } from "@aha.chat/database/types"
@@ -79,7 +80,7 @@ export const assignConversationAction = chatbotActionClient
             in: parsedInput.contactIds,
           },
         },
-        columns: { id: true, contactId: true },
+        columns: { id: true, contactId: true, inboxType: true },
       })
       const conversationIds = conversations.map((c) => c.id)
       if (conversationIds.length === 0) {
@@ -111,6 +112,21 @@ export const assignConversationAction = chatbotActionClient
           )
         } catch (error) {
           console.error("Failed to emit conversationAssigned event:", error)
+        }
+      }
+
+      const toAssignee =
+        updatedData.assignedUserId || updatedData.assignedInboxTeamId
+      if (toAssignee) {
+        for (const conv of conversations) {
+          await conversationTrackingService.trackEvent({
+            chatbotId,
+            conversationId: conv.id,
+            eventType: "conversation_assigned",
+            toAssignee,
+            occurredAt: new Date(),
+            channel: conv.inboxType,
+          })
         }
       }
 

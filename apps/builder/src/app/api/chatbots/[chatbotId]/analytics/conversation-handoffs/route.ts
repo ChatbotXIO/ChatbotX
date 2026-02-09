@@ -1,4 +1,4 @@
-import { botMessageAnalyticsService } from "@aha.chat/analytics"
+import { conversationAnalyticsService } from "@aha.chat/analytics"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -7,7 +7,6 @@ import { serverErrorHandler } from "@/lib/errors/server-handler"
 const querySchema = z.object({
   from: z.string().transform((val) => new Date(val)),
   to: z.string().transform((val) => new Date(val)),
-  granularity: z.enum(["minute", "hour", "day"]).default("day"),
 })
 
 export async function GET(
@@ -22,13 +21,14 @@ export async function GET(
       Object.fromEntries(request.nextUrl.searchParams),
     )
 
-    const data = await botMessageAnalyticsService.getMessagesByResult(
+    const timeRange = {
+      from: searchParams.from,
+      to: searchParams.to,
+    }
+
+    const data = await conversationAnalyticsService.getHandoffsByDay(
       chatbotId,
-      {
-        from: searchParams.from,
-        to: searchParams.to,
-      },
-      searchParams.granularity,
+      timeRange,
     )
 
     return NextResponse.json(data)
