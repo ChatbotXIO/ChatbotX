@@ -1,13 +1,15 @@
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { SUPPORTED_IMAGE_EXTENSIONS } from "./constants"
 
-// Precompiled regex literals (top-level for performance)
 const REGEX_MD_IMAGE = /!\[([^\]]*)\]\(\s*([^)\s\r\n]+)\s*\)/g
 const REGEX_MD_LINK = /\[([^\]]+)\]\(\s*([^)\s\r\n]+)\s*\)/g
 const REGEX_RAW_URL = /(https?:\/\/[^\s)\]]+(?:\?[^\s)\]]*)?)/g
 const REGEX_ONLY_WHITESPACE = /^\s*$/
 const REGEX_ONLY_EMOJI = /^[\u{1F300}-\u{1F9FF}]+$/u
 const REGEX_STARS_OR_DASHES = /^[-*]\s*/u
+const REGEX_COMMON_JSON_KEYS =
+  /"products"\s*:|"pagination"\s*:|"available_filters"\s*:|"variants"\s*:|"jsonrpc"\s*:|"result"\s*:|"params"\s*:/i
+const JSON_DUMP_MIN_LEN = 120
 
 function isImageUrl(url: string): boolean {
   const s = url.trim().toLowerCase()
@@ -21,6 +23,40 @@ function isImageUrl(url: string): boolean {
   } catch {
     return false
   }
+}
+
+function isLikelyJsonDump(text: string): boolean {
+  const t = text.trim()
+  if (t.length < JSON_DUMP_MIN_LEN) {
+    return false
+  }
+
+  const startsLikeJson = t.startsWith("{") || t.startsWith("[")
+  if (!startsLikeJson) {
+    return false
+  }
+
+  // Heuristic: must look like JSON-ish (quotes + colon) or common MCP keys
+  if (!(REGEX_COMMON_JSON_KEYS.test(t) || t.includes('":'))) {
+    return false
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(t)
+    if (typeof parsed === "object" && parsed !== null) {
+      return true
+    }
+  } catch {
+    // fall through to heuristics below
+  }
+
+  // If parsing fails (truncated stream), still suppress if highly JSON-like
+  const quoteCount = (t.match(/"/g) ?? []).length
+  if (quoteCount >= 20) {
+    return true
+  }
+
+  return false
 }
 
 export function processTextForImagesAndLinks(text: string): string[] {
@@ -69,7 +105,6 @@ export function processTextForImagesAndLinks(text: string): string[] {
     }
 
     if (idx0 === minIdx) {
-      // Markdown image: ![alt](url)
       const url = (m0?.[2] || "").trim()
       if (url && !seenUrls.has(url)) {
         seenUrls.add(url)
@@ -77,7 +112,6 @@ export function processTextForImagesAndLinks(text: string): string[] {
       }
       cursor = idx0 + (m0?.[0].length ?? 0)
     } else if (idx1 === minIdx) {
-      // Markdown link: [text](url)
       const url = (m1?.[2] || "").trim()
       if (url && !seenUrls.has(url)) {
         seenUrls.add(url)
@@ -85,7 +119,6 @@ export function processTextForImagesAndLinks(text: string): string[] {
       }
       cursor = idx1 + (m1?.[0].length ?? 0)
     } else {
-      // Raw URL
       const url = (m2?.[1] || "").trim()
       if (url && !seenUrls.has(url)) {
         seenUrls.add(url)
@@ -98,6 +131,9 @@ export function processTextForImagesAndLinks(text: string): string[] {
   const filtered = parts.filter((p) => {
     const t = p.trim()
     if (!t) {
+      return false
+    }
+    if (isLikelyJsonDump(t)) {
       return false
     }
     if (REGEX_ONLY_WHITESPACE.test(t)) {
@@ -117,6 +153,9 @@ export async function sendMessageWithRender(
   message: string,
 ): Promise<void> {
   const trimmed = message.trim()
+  if (isLikelyJsonDump(trimmed)) {
+    return
+  }
   if (isImageUrl(trimmed)) {
     await chatQueue.add(ChatJobAction.sendChatMessage, {
       type: ChatJobAction.sendChatMessage,
@@ -148,6 +187,7 @@ export async function sendProcessedTextParts(
     if (
       trimmedPart &&
       trimmedPart.length > 0 &&
+      !isLikelyJsonDump(trimmedPart) &&
       !REGEX_ONLY_WHITESPACE.test(trimmedPart)
     ) {
       count += 1
@@ -186,6 +226,7 @@ export async function processStreamingText(
           if (
             trimmedPart &&
             trimmedPart.length > 0 &&
+            !isLikelyJsonDump(trimmedPart) &&
             !REGEX_ONLY_WHITESPACE.test(trimmedPart)
           ) {
             messageCount += 1
@@ -207,6 +248,7 @@ export async function processStreamingText(
       if (
         trimmedPart &&
         trimmedPart.length > 0 &&
+        !isLikelyJsonDump(trimmedPart) &&
         !REGEX_ONLY_WHITESPACE.test(trimmedPart)
       ) {
         messageCount += 1

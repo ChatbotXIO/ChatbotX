@@ -1,37 +1,47 @@
 import { prisma } from "@aha.chat/database"
 import {
-  AIMessageRole,
-  type ConversationModel,
   FieldType,
   type Gender,
   reservedCustomFieldNames,
 } from "@aha.chat/database/types"
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
-import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import {
-  getAIIntegrationInDB,
-  getAIModel,
-  normalizeAIModelId,
-} from "../../../lib/ai"
+import type { LanguageModel } from "ai"
+import { generateText, Output, streamText } from "ai"
+import { z } from "zod"
+import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
-import {
-  MAGIC_NUMBERS,
-  TEXT,
-  TOOL_RESULT_PREFIX,
-  TOOL_RESULT_SUFFIX,
-} from "../automated-response/constants"
 import { processStreamingText } from "../automated-response/text"
 import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
 import { getAIToolset } from "./tools"
 
-type StreamTextResult = Awaited<ReturnType<typeof streamText>>
-type ToolResults = Awaited<StreamTextResult["toolResults"]>
+const contactSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  fullName: z.string(),
+  email: z.string(),
+  phoneNumber: z.string(),
+  gender: z.enum(["male", "female", "unknown"]),
+})
+
+type ContactSchemaOutput = z.infer<typeof contactSchema>
+
+type ContactData = {
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  email?: string
+  phoneNumber?: string
+  gender?: Gender
+}
 
 export async function handleAIGenerateText({
   conversation,
   step,
 }: ExecuteStepProps<AIGenerateTextSchema>) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 120_000)
+
   try {
     const messages = await buildAIMessages(conversation, step)
 
@@ -39,9 +49,18 @@ export async function handleAIGenerateText({
       chatbotId: conversation.chatbotId,
       provider: step.provider,
     })
-    const modelProvider = getAIModel(aiConfig, step.provider)
-    const normalizedModelId = normalizeAIModelId(step.model)
-    const model = modelProvider(normalizedModelId)
+
+    if (!aiConfig) {
+      return
+    }
+
+    const model = createAIModelInstance({
+      model: aiConfig,
+      provider: step.provider,
+      modelId: step.model,
+      abortSignal: controller.signal,
+      traceId: conversation.id,
+    })
 
     const toolSet = await getAIToolset(conversation.chatbotId, step.tools || [])
 
@@ -53,10 +72,10 @@ export async function handleAIGenerateText({
       toolChoice: Object.keys(toolSet).length > 0 ? "auto" : undefined,
       maxOutputTokens: step.maxOutputTokens,
       temperature: step.temperature,
+      // @ts-expect-error - maxSteps is supported in AI SDK v6
+      maxSteps: 5,
+      abortSignal: controller.signal,
     })
-
-    const toolCalls = await result.toolCalls
-    const toolResults = await result.toolResults
 
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,
@@ -64,111 +83,71 @@ export async function handleAIGenerateText({
       { sendParts: true },
     )
 
-    if (toolCalls && toolCalls.length > 0) {
-      await handleToolCallsFollowUp({
-        model,
-        messages,
-        toolResults,
-        fullText,
-        stepConfig: step,
-        conversation,
-        finalMaxOutputTokens: step.maxOutputTokens,
-        temperature: step.temperature,
+    await saveResultToCustomField({
+      contactId: conversation.contactId,
+      customFieldId: step.outputCfId,
+      fullText,
+      messageCount,
+      chatbotId: conversation.chatbotId,
+      model,
+      abortSignal: controller.signal,
+    })
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      logger.warn("[ai-generate-text] Step timed out or aborted", {
+        conversationId: conversation.id,
+        stepId: step.id,
       })
     } else {
-      await saveResultToCustomField({
-        contactId: conversation.contactId,
-        customFieldId: step.outputCfId,
-        fullText,
-        messageCount,
-        chatbotId: conversation.chatbotId,
+      logger.error("[ai-generate-text] Step failed", {
+        error,
+        conversationId: conversation.id,
+        stepId: step.id,
+        stepType: step.stepType,
       })
     }
-  } catch (error) {
-    logger.error("[ai-generate-text] Step failed", {
-      error,
-      conversationId: conversation.id,
-      stepId: step.id,
-      stepType: step.stepType,
-    })
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
-async function handleToolCallsFollowUp({
-  model,
-  messages,
-  toolResults,
-  fullText,
-  stepConfig,
-  conversation,
-  finalMaxOutputTokens,
-  temperature,
-}: {
-  model: LanguageModel
-  messages: Awaited<ReturnType<typeof buildAIMessages>>
-  toolResults: ToolResults
-  fullText: string
-  stepConfig: AIGenerateTextSchema
-  conversation: ConversationModel
-  finalMaxOutputTokens: number
-  temperature: number
-}): Promise<void> {
-  const toolResultsText = toolResults
-    .map(
-      (r) =>
-        `${TOOL_RESULT_PREFIX}${r.toolName}${TOOL_RESULT_SUFFIX}${r.output}`,
-    )
-    .join("\n\n")
+const REGEX_ONLY_NUMBERS = /^\d+$/
 
-  const followUpMessages: ModelMessage[] = [
-    ...messages,
-    {
-      role: AIMessageRole.assistant,
-      content: fullText || TEXT.assistantFoundPrefix,
-    },
-    {
-      role: AIMessageRole.user,
-      content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
-    },
-  ]
+async function validateExtractedData(
+  data: ContactSchemaOutput,
+): Promise<ContactData> {
+  const validated: ContactData = {}
 
-  try {
-    const followUpResult = await streamText({
-      model,
-      system: stepConfig.system,
-      messages: followUpMessages,
-      maxOutputTokens: finalMaxOutputTokens,
-      temperature,
-    })
-
-    const { messageCount: followUpMessageCount, fullText: followUpFullText } =
-      await processStreamingText(followUpResult.textStream, conversation.id, {
-        sendParts: true,
-      })
-
-    await saveResultToCustomField({
-      contactId: conversation.contactId,
-      customFieldId: stepConfig.outputCfId,
-      fullText: followUpFullText,
-      messageCount: followUpMessageCount,
-      chatbotId: conversation.chatbotId,
-    })
-  } catch (followUpError) {
-    logger.error("[ai-generate-text] Follow-up request failed", {
-      error: followUpError,
-      conversationId: conversation.id,
-      stepId: stepConfig.id,
-    })
-
-    await saveResultToCustomField({
-      contactId: conversation.contactId,
-      customFieldId: stepConfig.outputCfId,
-      fullText,
-      messageCount: MAGIC_NUMBERS.ZERO_MESSAGE_COUNT,
-      chatbotId: conversation.chatbotId,
-    })
+  if (data.email?.includes("@")) {
+    validated.email = data.email
   }
+
+  if (
+    data.firstName &&
+    data.firstName.length >= 2 &&
+    !REGEX_ONLY_NUMBERS.test(data.firstName)
+  ) {
+    validated.firstName = data.firstName
+  }
+
+  if (data.lastName) {
+    validated.lastName = data.lastName
+  }
+
+  if (data.fullName) {
+    validated.fullName = data.fullName
+  }
+
+  if (data.phoneNumber) {
+    validated.phoneNumber = data.phoneNumber
+  }
+
+  if (data.gender) {
+    validated.gender = data.gender as Gender
+  }
+
+  return await Promise.resolve(validated)
 }
 
 async function saveResultToCustomField({
@@ -177,23 +156,18 @@ async function saveResultToCustomField({
   fullText,
   messageCount,
   chatbotId,
+  model,
+  abortSignal,
 }: {
   contactId: string | null
   customFieldId: string
   fullText: string
   messageCount: number
   chatbotId: string
+  model: LanguageModel
+  abortSignal: AbortSignal
 }): Promise<void> {
-  if (!contactId) {
-    return
-  }
-  if (!customFieldId.trim()) {
-    return
-  }
-  if (messageCount === 0) {
-    return
-  }
-  if (!fullText) {
+  if (!(contactId && customFieldId.trim()) || messageCount === 0 || !fullText) {
     return
   }
 
@@ -202,6 +176,16 @@ async function saveResultToCustomField({
   )
 
   if (isReservedField) {
+    const { output: extractedDataRaw } = await generateText({
+      model,
+      output: Output.object({ schema: contactSchema }),
+      prompt: `Extract the following information for the field "${customFieldId}" from this text: "${fullText}"`,
+      temperature: 0,
+      abortSignal,
+    })
+
+    const extractedData = await validateExtractedData(extractedDataRaw)
+
     const updateData: Partial<{
       firstName: string
       lastName: string
@@ -212,49 +196,55 @@ async function saveResultToCustomField({
     }> = {}
 
     switch (customFieldId) {
-      case reservedCustomFieldNames.first_name:
-        updateData.firstName = fullText
-        break
-      case reservedCustomFieldNames.last_name:
-        updateData.lastName = fullText
-        break
-      case reservedCustomFieldNames.full_name: {
-        const trimmedName = fullText.trim()
-        const spaceIndex = trimmedName.indexOf(" ")
-        if (spaceIndex > 0) {
-          updateData.firstName = trimmedName.substring(0, spaceIndex)
-          updateData.lastName = trimmedName.substring(spaceIndex + 1).trim()
-        } else if (trimmedName.length > 0) {
-          updateData.firstName = trimmedName
+      case reservedCustomFieldNames.first_name: {
+        if (extractedData.firstName) {
+          updateData.firstName = extractedData.firstName
         }
         break
       }
-      case reservedCustomFieldNames.email:
-        updateData.email = fullText
-        break
-      case reservedCustomFieldNames.phone_number:
-        updateData.phoneNumber = fullText
-        break
-      case reservedCustomFieldNames.avatar:
-        updateData.avatar = fullText
-        break
-      case reservedCustomFieldNames.gender:
-        if (
-          fullText === "male" ||
-          fullText === "female" ||
-          fullText === "unknown"
-        ) {
-          updateData.gender = fullText as Gender
+      case reservedCustomFieldNames.last_name: {
+        if (extractedData.lastName) {
+          updateData.lastName = extractedData.lastName
         }
         break
+      }
+      case reservedCustomFieldNames.full_name: {
+        if (extractedData.firstName) {
+          updateData.firstName = extractedData.firstName
+        }
+        if (extractedData.lastName) {
+          updateData.lastName = extractedData.lastName
+        }
+        break
+      }
+      case reservedCustomFieldNames.email: {
+        if (extractedData.email) {
+          updateData.email = extractedData.email
+        }
+        break
+      }
+      case reservedCustomFieldNames.phone_number: {
+        if (extractedData.phoneNumber) {
+          updateData.phoneNumber = extractedData.phoneNumber
+        }
+        break
+      }
+      case reservedCustomFieldNames.gender: {
+        if (extractedData.gender) {
+          updateData.gender = extractedData.gender as Gender
+        }
+        break
+      }
       default:
         return
     }
 
-    await prisma.contact.update({
-      where: { id: contactId },
-      data: updateData,
-    })
+    if (Object.keys(updateData).length > 0) {
+      await prisma.contact.update({
+        where: { id: contactId },
+        data: updateData,
+      })
+    }
     return
   }
 
