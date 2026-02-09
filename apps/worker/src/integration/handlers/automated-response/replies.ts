@@ -1,301 +1,141 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { db, sql } from "@aha.chat/database/client"
 import { createOpenAI } from "@ai-sdk/openai"
-import { db } from "@chatbotx.io/database/client"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
-import { type AIProvider, aiProviders } from "@chatbotx.io/flow-config"
-import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
-import {
-  type BotResponseTrackingContext,
-  ChatJobAction,
-  chatQueue,
-  IntegrationJobAction,
-  type IntegrationJobTriggerAutomatedResponse,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
-import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import { TEXT } from "./constants"
-import { processStreamingText, sendMessageWithRender } from "./text"
-import type { ReplyByAIProps } from "./types"
+import { embed } from "ai"
+import { logger } from "../../../lib/logger"
+import { isRecord } from "../../../lib/utils"
+import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
+import type {
+  FileSearchArgs,
+  FileSearchConfig,
+  SimilaritySearchResult,
+} from "./types"
 
-export async function replaceCustomFieldAttributes(
-  message: string,
-  conversationId: string,
+function getSecretTextFromAuth(auth: unknown): string | null {
+  if (!isRecord(auth)) {
+    return null
+  }
+  const secretText = auth.secretText
+  if (typeof secretText !== "string") {
+    return null
+  }
+  const trimmed = secretText.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+async function getOpenAIIntegration(chatbotId: string) {
+  const integrationOpenAI = await db.query.integrationOpenAIModel.findFirst({
+    where: {
+      chatbotId,
+      autoReply: true,
+    },
+  })
+
+  if (!integrationOpenAI) {
+    throw new Error("OpenAI integration not found")
+  }
+
+  return integrationOpenAI
+}
+
+async function createQueryEmbedding(
+  query: string,
+  chatbotId: string,
+): Promise<number[]> {
+  const integrationOpenAI = await getOpenAIIntegration(chatbotId)
+
+  const apiKey = getSecretTextFromAuth(integrationOpenAI.auth)
+  if (!apiKey) {
+    throw new Error("Missing OpenAI API key")
+  }
+
+  const openai = createOpenAI({
+    apiKey,
+  })
+
+  const embeddingModel = openai.embedding(DEFAULT_OPENAI_EMBEDDING_MODEL)
+  const { embedding } = await embed({
+    model: embeddingModel,
+    value: query,
+  })
+
+  return embedding
+}
+
+async function searchSimilarEmbeddings(
+  queryEmbedding: number[],
+  config: FileSearchConfig,
+): Promise<SimilaritySearchResult[]> {
+  const embeddingString = `[${queryEmbedding.join(",")}]`
+
+  const results = await db.execute(sql`
+    SELECT
+      "id",
+      "content",
+      "aiFileId",
+      1 - ("embedding" <=> ${embeddingString}::vector) as distance
+    FROM "AIEmbedding"
+    WHERE "chatbotId" = ${config.chatbotId}
+      AND "aiFileId" = ANY(${config.selectedFileIds})
+    ORDER BY "embedding" <=> ${embeddingString}::vector
+    LIMIT ${config.maxResults}
+  `)
+
+  return results.rows as unknown as SimilaritySearchResult[]
+}
+
+function filterRelevantResults(
+  results: SimilaritySearchResult[],
+  threshold: number,
+): SimilaritySearchResult[] {
+  return results.filter((result) => result.distance > threshold)
+}
+
+function formatSearchResults(results: SimilaritySearchResult[]): string {
+  if (results.length === 0) {
+    return TEXT.fileSearchNoResult
+  }
+
+  const formattedResults = results
+    .map((item, index) => `${index + 1}. ${item.content}`)
+    .join("\n\n")
+
+  return `${TEXT.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
+}
+
+export async function performFileSearch(
+  args: FileSearchArgs,
+  config: FileSearchConfig,
 ): Promise<string> {
   try {
-    const conversation = await db.query.conversationModel.findFirst({
-      where: { id: conversationId },
-      with: {
-        contact: {
-          with: {
-            contactCustomFields: {
-              with: {
-                customField: true,
-              },
-            },
-          },
-        },
-      },
-    })
+    const queryEmbedding = await createQueryEmbedding(
+      args.query,
+      config.chatbotId,
+    )
+    const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
 
-    if (!conversation?.contact) {
-      return message
+    if (searchResults.length === 0) {
+      return TEXT.fileSearchNoResult
     }
 
-    const fieldMap = new Map<string, string>()
-    for (const customField of conversation.contact.contactCustomFields) {
-      if (customField.customField?.name && customField.value) {
-        fieldMap.set(customField.customField.name, customField.value)
-      }
-    }
-
-    let processedMessage = message
-    const attributeRegex = /\{\{(\w+)\}\}/g
-
-    processedMessage = processedMessage.replace(
-      attributeRegex,
-      (match, fieldName) => {
-        const value = fieldMap.get(fieldName)
-        return value || match
-      },
+    const relevantResults = filterRelevantResults(
+      searchResults,
+      config.similarityThreshold,
     )
 
-    return processedMessage
-  } catch {
-    return message
-  }
-}
-
-async function listAllEnabledAutomatedResponses({
-  workspaceId,
-}: {
-  workspaceId: string
-}) {
-  return await db.query.automatedResponseModel.findMany({
-    where: { workspaceId, status: true },
-    orderBy: { createdAt: "desc" },
-  })
-}
-
-export async function replyByAutomatedResponse(
-  props: IntegrationJobTriggerAutomatedResponse["data"],
-  trackingContext: BotResponseTrackingContext,
-): Promise<boolean> {
-  const { message, conversation } = props
-
-  let replied = false
-
-  const allAutomatedResponses = await listAllEnabledAutomatedResponses({
-    workspaceId: message.workspaceId,
-  })
-  if (allAutomatedResponses.length === 0) {
-    return false
-  }
-
-  for (const automatedResponse of allAutomatedResponses) {
-    const matched = automatedResponse.userMessages
-      .map((v) => v.toLowerCase())
-      .some((v) => (message.text ?? "").toLowerCase().includes(v))
-
-    if (matched) {
-      if (automatedResponse.text) {
-        const stepMessage = await replaceCustomFieldAttributes(
-          automatedResponse.text,
-          message.conversationId,
-        )
-
-        await chatQueue.add(ChatJobAction.sendChatMessage, {
-          type: ChatJobAction.sendChatMessage,
-          data: {
-            conversation,
-            text: stepMessage,
-            trackingContext,
-          },
-        })
-        replied = true
-      } else if (automatedResponse.flowId) {
-        const flow = await db.query.flowModel.findFirst({
-          where: { id: automatedResponse.flowId },
-        })
-        if (flow) {
-          await integrationQueue.add(IntegrationJobAction.sendFlow, {
-            type: IntegrationJobAction.sendFlow,
-            data: {
-              conversationId: message.conversationId,
-              flowId: flow.id,
-              trackingContext,
-            },
-          })
-          replied = true
-        }
-      }
+    if (relevantResults.length === 0) {
+      return TEXT.fileSearchNoResult
     }
-  }
-  return replied
-}
 
-export function replyByGemini(
-  props: ReplyByAIProps,
-  trackingContext: BotResponseTrackingContext,
-): Promise<boolean> {
-  return runAIReply(
-    props,
-    {
-      provider: aiProviders.enum.gemini,
-      fetchIntegration: async (workspaceId: string) => {
-        const integration = await db.query.integrationGeminiModel.findFirst({
-          where: { workspaceId, autoReply: true },
-        })
-        return integration?.auth
+    const result = formatSearchResults(relevantResults)
+    return result
+  } catch (error) {
+    logger.error(
+      {
+        error,
+        chatbotId: config.chatbotId,
       },
-      createClient: (apiKey: string) => createGoogleGenerativeAI({ apiKey }),
-      onFollowUpError: async () => true,
-    },
-    trackingContext,
-  )
-}
-
-export function replyByOpenAI(
-  props: ReplyByAIProps,
-  trackingContext: BotResponseTrackingContext,
-): Promise<boolean> {
-  return runAIReply(
-    props,
-    {
-      provider: aiProviders.enum.openai,
-      fetchIntegration: async (workspaceId: string) => {
-        const integration = await db.query.integrationOpenaiModel.findFirst({
-          where: { workspaceId, autoReply: true },
-        })
-        return integration?.auth
-      },
-      createClient: (apiKey: string) => createOpenAI({ apiKey }),
-      onFollowUpError: async (ctx) => {
-        const fallbackMessage = `${TEXT.foundProductsFallbackPrefix}\n\n${ctx.toolResultsText}`
-        await sendMessageWithRender(
-          ctx.conversationId,
-          fallbackMessage,
-          trackingContext,
-        )
-        return true
-      },
-    },
-    trackingContext,
-  )
-}
-
-type ProviderRunnerConfig = {
-  provider: (typeof aiProviders)[keyof typeof aiProviders]
-  fetchIntegration: (workspaceId: string) => Promise<unknown>
-  createClient: (apiKey: string) => (modelName: string) => LanguageModel
-  onFollowUpError: (ctx: {
-    conversationId: string
-    toolResultsText: string
-  }) => Promise<boolean>
-}
-
-async function runAIReply(
-  props: ReplyByAIProps,
-  cfg: ProviderRunnerConfig,
-  trackingContext: BotResponseTrackingContext,
-): Promise<boolean> {
-  const { message, lastAIMessages, aiAgent, tools } = props
-  try {
-    const auth = await cfg.fetchIntegration(message.workspaceId)
-    if (!auth) {
-      return false
-    }
-
-    const apiKey = (auth as SecretTextAuthValue)?.secretText
-
-    if (!apiKey || apiKey.length === 0) {
-      return false
-    }
-
-    const clientFactory = cfg.createClient(apiKey)
-
-    const selectedModel = (
-      aiAgent.models as { provider: AIProvider; model: string }[]
-    ).find((v) => v.provider === cfg.provider)
-    if (!selectedModel) {
-      return false
-    }
-    const selectedModelValue = selectedModel.model
-    if (
-      typeof selectedModelValue !== "string" ||
-      selectedModelValue.length === 0
-    ) {
-      return false
-    }
-    const modelName = selectedModelValue
-
-    const completePrompt = await replaceCustomFieldAttributes(
-      aiAgent.prompt || "",
-      message.conversationId,
+      "[automated-response] performFileSearch failed",
     )
-
-    const result = await streamText({
-      model: clientFactory(modelName),
-      system: completePrompt,
-      messages: lastAIMessages,
-      maxOutputTokens: aiAgent.maxOutputTokens,
-      temperature: aiAgent.temperature,
-      tools,
-      toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
-    })
-
-    const toolCalls = await result.toolCalls
-    const toolResults = await result.toolResults
-    const { messageCount, fullText } = await processStreamingText(
-      result.textStream,
-      message.conversationId,
-      { sendParts: true, trackingContext },
-    )
-
-    if (toolCalls && toolCalls.length > 0) {
-      const toolResultsText = toolResults
-        .map((r) => `Tool ${r.toolName} result: ${r.output}`)
-        .join("\n\n")
-      const followUpMessages: ModelMessage[] = [
-        ...lastAIMessages,
-        {
-          role: aiMessageRoles.enum.assistant,
-          content: fullText || TEXT.assistantFoundPrefix,
-        },
-        {
-          role: aiMessageRoles.enum.user,
-          content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
-        },
-      ]
-      try {
-        const followUpResult = await streamText({
-          model: clientFactory(modelName),
-          system: completePrompt,
-          messages: followUpMessages,
-          maxOutputTokens: aiAgent.maxOutputTokens,
-          temperature: aiAgent.temperature,
-        })
-        const { messageCount: followUpMessageCount } =
-          await processStreamingText(
-            followUpResult.textStream,
-            message.conversationId,
-            { sendParts: true, trackingContext },
-          )
-        if (followUpMessageCount > 0) {
-          return true
-        }
-      } catch (_error) {
-        return await cfg.onFollowUpError({
-          conversationId: message.conversationId,
-          toolResultsText,
-        })
-      }
-    }
-
-    if (messageCount > 0) {
-      return true
-    }
-    return false
-  } catch (_error) {
-    return false
+    return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : TEXT.unknownError}`
   }
 }

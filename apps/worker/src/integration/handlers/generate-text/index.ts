@@ -1,6 +1,5 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import {
-  aiMessageRoles,
   type GenderType,
   type ReservedCustomFieldName,
   reservedCustomFieldNames,
@@ -9,34 +8,45 @@ import {
   contactCustomFieldModel,
   contactModel,
 } from "@chatbotx.io/database/schema"
-import type { ConversationModel } from "@chatbotx.io/database/types"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { createId, parseBigIntId } from "@chatbotx.io/utils"
-import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import {
-  getAIIntegrationInDB,
-  getAIModel,
-  normalizeAIModelId,
-} from "../../../lib/ai"
+import { generateText, type LanguageModel, Output, streamText } from "ai"
+import { z } from "zod"
+import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
-import {
-  MAGIC_NUMBERS,
-  TEXT,
-  TOOL_RESULT_PREFIX,
-  TOOL_RESULT_SUFFIX,
-} from "../automated-response/constants"
+import { AI_GENERATE_TEXT } from "../automated-response/constants"
 import { processStreamingText } from "../automated-response/text"
 import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
 import { getAIToolset } from "./tools"
 
-type StreamTextResult = Awaited<ReturnType<typeof streamText>>
-type ToolResults = Awaited<StreamTextResult["toolResults"]>
+const contactSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  fullName: z.string(),
+  email: z.string(),
+  phoneNumber: z.string(),
+  gender: z.enum(["male", "female", "unknown"]),
+})
+
+type ContactSchemaOutput = z.infer<typeof contactSchema>
+
+type ContactData = {
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  email?: string
+  phoneNumber?: string
+  gender?: GenderType
+}
 
 export async function handleAIGenerateText({
   conversation,
   step,
 }: ExecuteStepProps<AIGenerateTextSchema>) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 120_000)
+
   try {
     const messages = await buildAIMessages(conversation, step)
 
@@ -44,9 +54,18 @@ export async function handleAIGenerateText({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
     })
-    const modelProvider = getAIModel(aiConfig, step.provider)
-    const normalizedModelId = normalizeAIModelId(step.model)
-    const model = modelProvider(normalizedModelId)
+
+    if (!aiConfig) {
+      return
+    }
+
+    const model = createAIModelInstance({
+      model: aiConfig,
+      provider: step.provider,
+      modelId: step.model,
+      abortSignal: controller.signal,
+      traceId: conversation.id,
+    })
 
     const toolSet = await getAIToolset(
       conversation.workspaceId,
@@ -63,159 +82,124 @@ export async function handleAIGenerateText({
       temperature: step.temperature,
     })
 
-    const toolCalls = await result.toolCalls
-    const toolResults = await result.toolResults
-
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,
       conversation.id,
       { sendParts: true },
     )
 
-    if (toolCalls && toolCalls.length > 0) {
-      await handleToolCallsFollowUp({
-        model,
-        messages,
-        toolResults,
-        fullText,
-        stepConfig: step,
-        conversation,
-        finalMaxOutputTokens: step.maxOutputTokens,
-        temperature: step.temperature,
-      })
-    } else {
-      await saveResultToCustomField({
-        contactId: conversation.contactId,
-        customFieldName: step.outputFieldId,
-        fullText,
-        messageCount,
-        workspaceId: conversation.workspaceId,
-      })
-    }
+    await saveResultToCustomField({
+      contactId: conversation.contactId,
+      customFieldId: step.outputFieldId,
+      fullText,
+      messageCount,
+      workspaceId: conversation.workspaceId,
+      model,
+      abortSignal: controller.signal,
+    })
   } catch (error) {
-    logger.error(
-      {
-        error,
-        conversationId: conversation.id,
-        stepId: step.id,
-        stepType: step.stepType,
-      },
-      "[ai-generate-text] Step failed",
-    )
+    if (error instanceof Error && error.name === "AbortError") {
+      logger.warn(
+        {
+          conversationId: conversation.id,
+          stepId: step.id,
+        },
+        "[ai-generate-text] Step timed out or aborted",
+      )
+    } else {
+      logger.error(
+        {
+          error,
+          conversationId: conversation.id,
+          stepId: step.id,
+          stepType: step.stepType,
+        },
+        "[ai-generate-text] Step failed",
+      )
+    }
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
-async function handleToolCallsFollowUp({
-  model,
-  messages,
-  toolResults,
-  fullText,
-  stepConfig,
-  conversation,
-  finalMaxOutputTokens,
-  temperature,
-}: {
-  model: LanguageModel
-  messages: Awaited<ReturnType<typeof buildAIMessages>>
-  toolResults: ToolResults
-  fullText: string
-  stepConfig: AIGenerateTextSchema
-  conversation: ConversationModel
-  finalMaxOutputTokens: number
-  temperature: number
-}): Promise<void> {
-  const toolResultsText = toolResults
-    .map(
-      (r) =>
-        `${TOOL_RESULT_PREFIX}${r.toolName}${TOOL_RESULT_SUFFIX}${r.output}`,
-    )
-    .join("\n\n")
+const REGEX_ONLY_NUMBERS = /^\d+$/
 
-  const followUpMessages: ModelMessage[] = [
-    ...messages,
-    {
-      role: aiMessageRoles.enum.assistant,
-      content: fullText || TEXT.assistantFoundPrefix,
-    },
-    {
-      role: aiMessageRoles.enum.user,
-      content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
-    },
-  ]
+async function validateExtractedData(
+  data: ContactSchemaOutput,
+): Promise<ContactData> {
+  const validated: ContactData = {}
 
-  try {
-    const followUpResult = await streamText({
-      model,
-      system: stepConfig.system,
-      messages: followUpMessages,
-      maxOutputTokens: finalMaxOutputTokens,
-      temperature,
-    })
-
-    const { messageCount: followUpMessageCount, fullText: followUpFullText } =
-      await processStreamingText(followUpResult.textStream, conversation.id, {
-        sendParts: true,
-      })
-
-    await saveResultToCustomField({
-      contactId: conversation.contactId,
-      customFieldName: stepConfig.outputFieldId,
-      fullText: followUpFullText,
-      messageCount: followUpMessageCount,
-      workspaceId: conversation.workspaceId,
-    })
-  } catch (followUpError) {
-    logger.error(
-      {
-        error: followUpError,
-        conversationId: conversation.id,
-        stepId: stepConfig.id,
-      },
-      "[ai-generate-text] Follow-up request failed",
-    )
-
-    await saveResultToCustomField({
-      contactId: conversation.contactId,
-      customFieldName: stepConfig.outputFieldId,
-      fullText,
-      messageCount: MAGIC_NUMBERS.ZERO_MESSAGE_COUNT,
-      workspaceId: conversation.workspaceId,
-    })
+  if (data.email?.includes("@")) {
+    validated.email = data.email
   }
+
+  if (
+    data.firstName &&
+    data.firstName.length >= 2 &&
+    !REGEX_ONLY_NUMBERS.test(data.firstName)
+  ) {
+    validated.firstName = data.firstName
+  }
+
+  if (data.lastName) {
+    validated.lastName = data.lastName
+  }
+
+  if (data.fullName) {
+    validated.fullName = data.fullName
+  }
+
+  if (data.phoneNumber) {
+    validated.phoneNumber = data.phoneNumber
+  }
+
+  if (data.gender) {
+    validated.gender = data.gender as GenderType
+  }
+
+  return await Promise.resolve(validated)
 }
 
 async function saveResultToCustomField({
   contactId,
-  customFieldName,
+  customFieldId,
   fullText,
   messageCount,
   workspaceId,
+  model,
+  abortSignal,
 }: {
   contactId: string | null
-  customFieldName: string
+  customFieldId: string
   fullText: string
   messageCount: number
   workspaceId: string
+  model: LanguageModel
+  abortSignal: AbortSignal
 }): Promise<void> {
-  if (!contactId) {
-    return
-  }
-  if (!customFieldName) {
-    return
-  }
-  if (messageCount === 0) {
-    return
-  }
-  if (!fullText) {
+  if (!(contactId && customFieldId.trim()) || messageCount === 0 || !fullText) {
     return
   }
 
   const isReservedField = Object.values(reservedCustomFieldNames).includes(
-    customFieldName as ReservedCustomFieldName,
+    customFieldId as ReservedCustomFieldName,
   )
 
   if (isReservedField) {
+    const { output: extractedDataRaw } = await generateText({
+      model,
+      output: Output.object({ schema: contactSchema }),
+      prompt: AI_GENERATE_TEXT.RESERVED_FIELD_EXTRACTION_PROMPT.replace(
+        "{{customFieldId}}",
+        customFieldId,
+      ).replace("{{fullText}}", fullText),
+      temperature: 0,
+      abortSignal,
+    })
+
+    const extractedData = await validateExtractedData(extractedDataRaw)
+
     const updateData: Partial<{
       firstName: string
       lastName: string
@@ -225,55 +209,61 @@ async function saveResultToCustomField({
       gender: GenderType
     }> = {}
 
-    switch (customFieldName) {
-      case reservedCustomFieldNames.enum.first_name:
-        updateData.firstName = fullText
-        break
-      case reservedCustomFieldNames.enum.last_name:
-        updateData.lastName = fullText
-        break
-      case reservedCustomFieldNames.enum.full_name: {
-        const trimmedName = fullText.trim()
-        const spaceIndex = trimmedName.indexOf(" ")
-        if (spaceIndex > 0) {
-          updateData.firstName = trimmedName.slice(0, spaceIndex)
-          updateData.lastName = trimmedName.slice(spaceIndex + 1).trim()
-        } else if (trimmedName.length > 0) {
-          updateData.firstName = trimmedName
+    switch (customFieldId) {
+      case reservedCustomFieldNames.enum.first_name: {
+        if (extractedData.firstName) {
+          updateData.firstName = extractedData.firstName
         }
         break
       }
-      case reservedCustomFieldNames.enum.email:
-        updateData.email = fullText
-        break
-      case reservedCustomFieldNames.enum.phone_number:
-        updateData.phoneNumber = fullText
-        break
-      case reservedCustomFieldNames.enum.avatar:
-        updateData.avatar = fullText
-        break
-      case reservedCustomFieldNames.enum.gender:
-        if (
-          fullText === "male" ||
-          fullText === "female" ||
-          fullText === "unknown"
-        ) {
-          updateData.gender = fullText as GenderType
+      case reservedCustomFieldNames.enum.last_name: {
+        if (extractedData.lastName) {
+          updateData.lastName = extractedData.lastName
         }
         break
+      }
+      case reservedCustomFieldNames.enum.full_name: {
+        if (extractedData.firstName) {
+          updateData.firstName = extractedData.firstName
+        }
+        if (extractedData.lastName) {
+          updateData.lastName = extractedData.lastName
+        }
+        break
+      }
+      case reservedCustomFieldNames.enum.email: {
+        if (extractedData.email) {
+          updateData.email = extractedData.email
+        }
+        break
+      }
+      case reservedCustomFieldNames.enum.phone_number: {
+        if (extractedData.phoneNumber) {
+          updateData.phoneNumber = extractedData.phoneNumber
+        }
+        break
+      }
+      case reservedCustomFieldNames.enum.gender: {
+        if (extractedData.gender) {
+          updateData.gender = extractedData.gender as GenderType
+        }
+        break
+      }
       default:
         return
     }
 
-    await db
-      .update(contactModel)
-      .set(updateData)
-      .where(eq(contactModel.id, contactId))
+    if (Object.keys(updateData).length > 0) {
+      await db
+        .update(contactModel)
+        .set(updateData)
+        .where(eq(contactModel.id, contactId))
+    }
     return
   }
 
-  const customFieldId = parseBigIntId(customFieldName)
-  if (!customFieldId) {
+  const customFieldIdInt = parseBigIntId(customFieldId)
+  if (!customFieldIdInt) {
     return
   }
   const customField = await db.query.customFieldModel.findFirst({

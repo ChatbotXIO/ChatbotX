@@ -19,6 +19,14 @@ export const TEXT = {
   fileSearchDescription:
     "Search uploaded files for information about products, policies, and company details. Do NOT use for greetings or casual salutations.",
   fileSearchQueryDescription: "Search keywords to find relevant information",
+  fallbackLookup:
+    "I've found some data, but I couldn't generate a complete answer yet. Could you please specify what you're looking for (price, size, color)?",
+  toolOutputGuard: [
+    "IMPORTANT RULES (REQUIRED):",
+    "- Never send raw JSON or tool outputs directly to the user.",
+    "- If you use a tool, summarize the result concisely in natural language.",
+    "- Only provide the most relevant information the customer is asking for.",
+  ].join("\n"),
 } as const
 
 export const toolPrefix = {
@@ -88,14 +96,4 @@ export const SUPPORTED_IMAGE_EXTENSIONS = [
   IMAGE_EXTENSIONS.WEBP,
   IMAGE_EXTENSIONS.SVG,
 ] as const
-
-export const DEFAULT_MAX_TOKENS = 250
-export const GEMINI_MIN_TOKENS = 500
 export const maxConversationHistory = 100
-
-export const TOOL_RESULT_PREFIX = "Tool "
-export const TOOL_RESULT_SUFFIX = " result: "
-
-export const MAGIC_NUMBERS = {
-  ZERO_MESSAGE_COUNT: 0,
-} as const
