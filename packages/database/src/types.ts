@@ -173,7 +173,7 @@ export const AIMessageRole = {
 export type AIMessageRole = (typeof AIMessageRole)[keyof typeof AIMessageRole]
 
 export type AIAgentProvider = {
-  provider: "openai" | "gemini"
+  provider: "openai" | "gemini" | "claude" | "deepseek"
   model: string
 }
 
