@@ -1,10 +1,13 @@
 import { prisma } from "@aha.chat/database"
-import {
-  type IntegrationType,
-  WEBCHAT_SOURCE_PREFIX,
+import type {
+  ConversationModel,
+  IntegrationType,
 } from "@aha.chat/database/types"
-import type { ConversationEntity, SendFlowStepData } from "@aha.chat/sdk"
-import type { ChatJobSendExternalMessage } from "@aha.chat/worker-config"
+import type { SendFlowStepData } from "@aha.chat/sdk"
+import type {
+  ChatJobSendExternalMessage,
+  ChatJobSendTyping,
+} from "@aha.chat/worker-config"
 import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
 import { getIntegrationAuth } from "./integration.query"
@@ -13,9 +16,6 @@ export async function sendMessageToExternal(
   data: ChatJobSendExternalMessage["data"],
 ) {
   const { conversation, message } = data
-  if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
-    return
-  }
 
   // Find integration auth
   const inbox = await prisma.inbox.findFirstOrThrow({
@@ -42,14 +42,57 @@ export async function sendMessageToExternal(
     return
   }
 
-  await intergationDetail.actions.sendMessage({
+  const contact = await prisma.contact.findFirstOrThrow({
+    where: { id: conversation.contactId },
+  })
+
+  await intergationDetail.channels?.channel?.message?.sendMessage?.({
     ctx: {
       chatbot: inbox.chatbot,
-      // biome-ignore lint/suspicious/noExplicitAny: wip
-      auth: integrationAuth as any,
+      auth: integrationAuth,
     },
-    conversation,
-    message,
+    data: {
+      contact,
+      conversation,
+      message,
+    },
+  })
+}
+
+export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
+  const { conversation, typing } = data
+
+  // Find integration auth
+  const inbox = await prisma.inbox.findFirstOrThrow({
+    where: { id: conversation.inboxId },
+    include: {
+      integrationWhatsapp: true,
+      chatbot: true,
+    },
+  })
+  const integrationAuth = await getIntegrationAuth(inbox)
+  if (!integrationAuth) {
+    logger.error(
+      `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
+    )
+    return
+  }
+
+  // Find integration detail
+  const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
+  if (!intergationDetail) {
+    logger.debug(
+      `Does not support this integration for inboxType: ${inbox.inboxType}`,
+    )
+    return
+  }
+
+  await intergationDetail.channels?.channel?.conversation?.sendTyping?.({
+    ctx: {
+      chatbot: inbox.chatbot,
+      auth: integrationAuth,
+    },
+    data: { conversation, typing },
   })
 }
 
@@ -59,7 +102,7 @@ export async function sendFlowStepToExternal({
   flowVersionId,
   step,
 }: {
-  conversation: ConversationEntity
+  conversation: ConversationModel
   flowId: string
   flowVersionId?: string
   step: SendFlowStepData
@@ -92,8 +135,7 @@ export async function sendFlowStepToExternal({
   await intergationDetail.runAction("sendFlowStep", {
     ctx: {
       chatbot: inbox.chatbot,
-      // biome-ignore lint/suspicious/noExplicitAny: wip
-      auth: integrationAuth as any,
+      auth: integrationAuth,
     },
     conversation,
     flowId,

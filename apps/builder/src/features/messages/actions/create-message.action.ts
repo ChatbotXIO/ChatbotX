@@ -6,16 +6,9 @@ import {
   MessageType,
   SenderType,
   type UserModel,
-  WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
-import {
-  broadcastToChatbotParty,
-  broadcastToGuestParty,
-  RealtimeEventType,
-} from "@aha.chat/partysocket-config"
-import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
-import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -99,48 +92,16 @@ export const createMessageAction = chatbotActionClient
         return newMessage
       })
 
-      const promises: Promise<unknown>[] = [
-        broadcastToChatbotParty(message.chatbotId, {
-          eventType: RealtimeEventType.messageCreated,
-          data: {
+      revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
+
+      await integrationQueue.add(IntegrationJobAction.createMessage, {
+        type: IntegrationJobAction.createMessage,
+        data: {
+          message: {
             ...message,
             clientId: parsedInput.clientId,
           },
-        }),
-      ]
-      if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
-        promises.push(
-          broadcastToGuestParty(conversation.sourceId, {
-            eventType: RealtimeEventType.messageCreated,
-            data: {
-              ...message,
-              clientId: parsedInput.clientId,
-            },
-          }),
-        )
-      } else {
-        promises.push(
-          chatQueue.add(ChatJobAction.sendExternalMessage, {
-            type: ChatJobAction.sendExternalMessage,
-            data: {
-              conversation: conversation as ConversationEntity,
-              message: {
-                ...message,
-                messageType: MessageType.outgoing,
-                clientId: parsedInput.clientId,
-                sourceId: message.sourceId || "",
-                contentType: message.contentType as unknown as ContentType,
-                content: message.content ?? "",
-                attachments: message.attachments as AttachmentEntity[],
-              },
-            },
-          }),
-        )
-      }
-
-      // Broadcast and send
-      await Promise.all(promises)
-
-      revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
+        },
+      })
     },
   )

@@ -50,6 +50,7 @@ import {
   generateCode,
   getDataFromJSON,
 } from "./tool-handler"
+import { sendTyping } from "./typing"
 
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
@@ -194,4 +195,5 @@ export const flowStepHandlers: Record<
   [StepType.emailSpacing]: undefined,
   [StepType.emailCode]: undefined,
   [StepType.emailHeader]: undefined,
+  [StepType.typing]: sendTyping,
 }

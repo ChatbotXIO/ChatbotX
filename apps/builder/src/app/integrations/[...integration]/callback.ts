@@ -1,7 +1,7 @@
 import { prisma } from "@aha.chat/database"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import { IntegrationType } from "@aha.chat/database/types"
-import type { BaseAuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
+import type { AuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 import { findChatbot } from "@/features/chatbot/queries"
@@ -45,7 +45,7 @@ export const handleCallback = async (
   const organizationSettings =
     organization?.settings as unknown as OrganizationSettings
 
-  let authResult: BaseAuthValue
+  let authResult: AuthValue
   let additionalIntegrationCreationData = {}
   switch (integrationType) {
     case IntegrationType.zalo: {

@@ -5,7 +5,7 @@ import { MessengerWebhookException } from "../exception"
 import {
   MESSENGER_MESSAGE_METADATA,
   type MessengerConfig,
-  type MessengerWebhookEvent,
+  messengerWebhookEventSchema,
 } from "../schemas"
 
 const verifyWebhookSignature = (
@@ -58,7 +58,7 @@ const handleWebhookEvent = async (
       throw new MessengerWebhookException("Invalid webhook signature")
     }
 
-    const webhookData = JSON.parse(body) as MessengerWebhookEvent
+    const webhookData = messengerWebhookEventSchema.parse(JSON.parse(body))
     if (webhookData.object !== "page") {
       throw new MessengerWebhookException(
         `Unsupported webhook object type: ${webhookData.object}`,
@@ -66,9 +66,9 @@ const handleWebhookEvent = async (
       )
     }
 
-    if (webhookData.entry[0].messaging[0].read) {
-      await queue?.add("readMessage", {
-        type: "readMessage",
+    if (webhookData.entry[0].messaging[0]?.read) {
+      await queue?.add("contactMarkAsRead", {
+        type: "contactMarkAsRead",
         data: {
           integrationType: "messenger",
           payload: webhookData,

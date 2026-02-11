@@ -1,13 +1,99 @@
-import type { BaseAuthValue, Oauth2AuthValue } from "./auth"
-import type { BaseConfig, HandleRequestProps, Handler } from "./shared"
+import type { AuthValue, Oauth2AuthValue } from "./auth"
+import type {
+  BaseConfig,
+  Context,
+  HandleRequestProps,
+  Handler,
+  OutgoingContact,
+  OutgoingConversation,
+  OutgoingMessage,
+  ReceivedMessageResult,
+} from "./shared"
+
+type IChannel<IAuth extends AuthValue> = {
+  message?: {
+    sendMessage?: Handler<
+      {
+        ctx: Context<IAuth>
+        data: {
+          contact: OutgoingContact
+          conversation: OutgoingConversation
+          message: OutgoingMessage
+        }
+      },
+      void
+    >
+    receiveMessage?: Handler<
+      {
+        ctx: Context<IAuth>
+        data: {
+          integrationType: string
+          integrationIdentifier: string
+          sourceContactId: string
+          sourceConversationId: string
+          payload: unknown
+        }
+      },
+      ReceivedMessageResult | null
+    >
+  }
+  conversation?: {
+    sendTyping?: Handler<
+      {
+        ctx: Context<IAuth>
+        data: {
+          conversation: OutgoingConversation
+          typing: boolean
+        }
+      },
+      void
+    >
+    contactMarkAsRead?: Handler<
+      {
+        ctx: Context<IAuth>
+        data: {
+          integrationType: string
+          integrationIdentifier: string
+          sourceContactId: string
+          sourceConversationId: string
+          payload: unknown
+        }
+      },
+      void
+    >
+    agentMarkAsRead?: Handler<
+      {
+        ctx: Context<IAuth>
+        data: {
+          conversation: OutgoingConversation
+        }
+      },
+      void
+    >
+  }
+  contact?: {
+    block?: Handler<
+      { ctx: Context<IAuth>; data: { contact: OutgoingContact } },
+      void
+    >
+    unblock?: Handler<
+      { ctx: Context<IAuth>; data: { contact: OutgoingContact } },
+      void
+    >
+  }
+}
 
 export type IntegrationDefinition<
   IConfig extends BaseConfig,
-  IAuth extends BaseAuthValue,
+  IAuth extends AuthValue,
   // biome-ignore lint/suspicious/noExplicitAny: wip
-  IActions extends Record<string, Handler<any, any>>,
+  IActions extends Record<string, Handler<any, any>> = Record<string, never>,
 > = {
   name: string
+  channels?: {
+    channel: IChannel<IAuth>
+    [key: string]: IChannel<IAuth>
+  }
   actions: IActions
   handleRequest: Handler<
     HandleRequestProps<IConfig>,
@@ -35,6 +121,11 @@ export class Integration<
 
   get actions(): T["actions"] {
     return this.props.actions || {}
+  }
+
+  get channels() {
+    // biome-ignore lint/suspicious/noExplicitAny: wip
+    return this.props.channels || ({} as { [key: string]: IChannel<any> })
   }
 
   // get authorize(): Handler<AI, AO> | undefined {

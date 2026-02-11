@@ -1,4 +1,3 @@
-import { UploadMode } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { buttonStepSchema } from "./button"
@@ -7,7 +6,7 @@ import { StepType } from "./step-action"
 export const sendFileStepSchema = z.object({
   id: z.cuid2(),
   stepType: z.literal(StepType.sendFile),
-  mode: z.enum(UploadMode),
+  mode: z.enum(["file", "link"]),
   url: z.url(),
   buttons: z.array(buttonStepSchema),
 })
@@ -17,7 +16,7 @@ export type SendFileStepSchema = z.infer<typeof sendFileStepSchema>
 export const sendFileStepDefaultFn = (): SendFileStepSchema => ({
   id: createId(),
   stepType: StepType.sendFile,
-  mode: UploadMode.file,
+  mode: "file",
   url: "",
   buttons: [],
 })

@@ -1,10 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import {
-  broadcastToChatbotParty,
-  RealtimeEventType,
-} from "@aha.chat/partysocket-config"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -99,14 +96,25 @@ export const assignConversationAction = chatbotActionClient
           `chatbots:${chatbotId}#contacts`,
         ])
 
-        await broadcastToChatbotParty(chatbotId, {
-          eventType: RealtimeEventType.conversationAssigned,
-          data: {
-            conversationIds,
-            assignedUserId: updatedData.assignedUserId,
-            assignedInboxTeamId: updatedData.assignedInboxTeamId,
+        const updatedConversations = await tx.conversation.findMany({
+          where: {
+            id: {
+              in: conversations.map((c) => c.id),
+            },
           },
         })
+
+        await integrationQueue.addBulk(
+          updatedConversations.map((conversation) => ({
+            name: IntegrationJobAction.assignConversation,
+            data: {
+              type: IntegrationJobAction.assignConversation,
+              data: {
+                conversation,
+              },
+            },
+          })),
+        )
       })
     },
   )

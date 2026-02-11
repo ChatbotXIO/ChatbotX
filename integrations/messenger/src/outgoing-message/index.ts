@@ -10,13 +10,13 @@ import {
 } from "@aha.chat/flow-config"
 import {
   ContentType,
-  type Context,
-  type ConversationEntity,
   FileType,
-  type MessageEntity,
+  type OutgoingConversation,
+  type OutgoingMessage,
   type SendFlowStepProps,
+  type SendMessageProps,
 } from "@aha.chat/sdk"
-import { sendMessage } from "../apis/page"
+import { sendPageMessage } from "../apis/page"
 import { logger } from "../lib/logger"
 import {
   type FacebookMessage,
@@ -33,15 +33,18 @@ import { convertFlowStepMedia } from "./send-media"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
-export const sendOutgoingMessage = async (
-  ctx: Context<MessengerAuthValue>,
-  conversation: ConversationEntity,
-  message: MessageEntity,
+export const sendMessage = async (
+  props: SendMessageProps<MessengerAuthValue>,
 ): Promise<void> => {
+  const {
+    ctx,
+    data: { conversation, message },
+  } = props
+
   try {
     for (const facebookMessage of convertMessageToFacebookMessage(message)) {
       const payload = buildMessagePayload(conversation, facebookMessage)
-      await sendMessage(ctx.auth, payload)
+      await sendPageMessage(ctx.auth, payload)
       logger.info(`Message sent for PSID: ${conversation.sourceId}`)
     }
   } catch (error) {
@@ -50,7 +53,7 @@ export const sendOutgoingMessage = async (
 }
 
 export function* convertMessageToFacebookMessage(
-  message: MessageEntity,
+  message: OutgoingMessage,
 ): Generator<FacebookMessage> {
   if (message.contentType === ContentType.text) {
     if (message.content) {
@@ -99,11 +102,11 @@ export function* convertMessageToFacebookMessage(
 }
 
 const buildMessagePayload = (
-  conversation: ConversationEntity,
+  conversation: OutgoingConversation,
   message: FacebookMessageAttachmentPayload | FacebookMessage,
   messagingType: "MESSAGE_TAG" | "RESPONSE" = "MESSAGE_TAG",
 ): FacebookSendMessageRequest => {
-  const recipientId = conversation.contact?.sourceId
+  const recipientId = conversation.sourceId
 
   if (!recipientId) {
     throw new Error("Missing recipient ID in conversation")
@@ -123,7 +126,9 @@ const buildMessagePayload = (
 export async function* convertFlowStepToFacebookMessage(
   props: SendFlowStepProps<MessengerAuthValue>,
 ): AsyncGenerator<FacebookMessageAttachmentPayload | FacebookMessage> {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
 
   switch (step.stepType) {
     case StepType.sendText:
@@ -173,12 +178,15 @@ export async function* convertFlowStepToFacebookMessage(
 export const sendFlowStep = async (
   props: SendFlowStepProps<MessengerAuthValue>,
 ) => {
-  const { ctx, conversation, step } = props
+  const {
+    ctx,
+    data: { conversation, step },
+  } = props
   try {
     for await (const facebookMessage of convertFlowStepToFacebookMessage(
       props,
     )) {
-      await sendMessage(
+      await sendPageMessage(
         ctx.auth,
         buildMessagePayload(
           conversation,

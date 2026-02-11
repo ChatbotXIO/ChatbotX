@@ -1,8 +1,8 @@
 import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
-import type { GoogleSheetsAuthValue, GoogleSheetsConfig } from "./schemas"
+import type { GoogleSheetsConfig, Oauth2AuthValue } from "./schemas"
 
-export function getClient(props: GoogleSheetsConfig | GoogleSheetsAuthValue) {
+export function getClient(props: GoogleSheetsConfig | Oauth2AuthValue) {
   const client = new OAuth2Client(
     props.clientId,
     props.clientSecret,
@@ -10,7 +10,7 @@ export function getClient(props: GoogleSheetsConfig | GoogleSheetsAuthValue) {
   )
 
   if ("tokens" in props) {
-    const tokens = props.tokens as GoogleSheetsAuthValue["tokens"]
+    const tokens = props.tokens as Oauth2AuthValue["tokens"]
     client.setCredentials({
       access_token: tokens.accessToken,
       expiry_date: tokens.expiresAt
@@ -35,13 +35,13 @@ export function generateAuthUrl(props: GoogleSheetsConfig): string {
   })
 }
 
-export function getSheetsClient(props: GoogleSheetsAuthValue) {
+export function getSheetsClient(props: Oauth2AuthValue) {
   const client = getClient(props)
 
   return google.sheets({ version: "v4", auth: client })
 }
 
-export async function revokeToken(auth: GoogleSheetsAuthValue): Promise<void> {
+export async function revokeToken(auth: Oauth2AuthValue): Promise<void> {
   const client = getClient(auth)
 
   await client.revokeToken(auth.tokens.accessToken ?? "")

@@ -6,11 +6,11 @@ import {
   StepType,
 } from "@aha.chat/flow-config"
 import {
-  type Context,
-  type ConversationEntity,
   FileType,
-  type MessageEntity,
+  type OutgoingContact,
+  type OutgoingMessage,
   type SendFlowStepProps,
+  type SendMessageProps,
 } from "@aha.chat/sdk"
 import { sendMessage, uploadAttachment } from "../api/message"
 import { logger } from "../libs/logger"
@@ -24,16 +24,18 @@ import { convertFlowStepImage } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 
 export const sendOutgoingMessage = async (
-  ctx: Context<ZaloAuthValue>,
-  conversation: ConversationEntity,
-  message: MessageEntity,
+  props: SendMessageProps<ZaloAuthValue>,
 ): Promise<void> => {
+  const {
+    ctx,
+    data: { conversation, contact, message },
+  } = props
   try {
     for await (const zaloMessage of convertMessageToZaloMessage(
       ctx.auth,
       message,
     )) {
-      const payload = buildMessagePayload(conversation, zaloMessage)
+      const payload = buildMessagePayload(contact, zaloMessage)
       await sendMessage(ctx.auth, payload)
       logger.info(`Message sent for Zalo UID: ${conversation.sourceId}`)
     }
@@ -44,7 +46,7 @@ export const sendOutgoingMessage = async (
 
 export async function* convertMessageToZaloMessage(
   auth: ZaloAuthValue,
-  message: MessageEntity,
+  message: OutgoingMessage,
 ): AsyncGenerator<MessageTemplate> {
   if (message.content) {
     yield {
@@ -92,10 +94,10 @@ export async function* convertMessageToZaloMessage(
 }
 
 const buildMessagePayload = (
-  conversation: ConversationEntity,
+  contact: OutgoingContact,
   message: MessageTemplate,
 ): ZaloSendMessageRequest => {
-  const recipientId = conversation.contact?.sourceId
+  const recipientId = contact.sourceId
 
   if (!recipientId?.trim()) {
     throw new Error("Recipient ID is required and cannot be empty")
@@ -110,7 +112,9 @@ const buildMessagePayload = (
 export async function* convertFlowStepToZaloMessage(
   props: SendFlowStepProps<ZaloAuthValue>,
 ): AsyncGenerator<MessageTemplate> {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   switch (step.stepType) {
     case StepType.sendText:
       yield* convertFlowStepText(
@@ -137,13 +141,13 @@ export async function* convertFlowStepToZaloMessage(
 }
 
 export const sendFlowStep = async (props: SendFlowStepProps<ZaloAuthValue>) => {
-  const { ctx, conversation } = props
+  const {
+    ctx,
+    data: { conversation, contact },
+  } = props
   try {
     for await (const zaloMessage of convertFlowStepToZaloMessage(props)) {
-      await sendMessage(
-        ctx.auth,
-        buildMessagePayload(conversation, zaloMessage),
-      )
+      await sendMessage(ctx.auth, buildMessagePayload(contact, zaloMessage))
       logger.info(`Message sent for ID: ${conversation.sourceId}`)
     }
   } catch (error) {

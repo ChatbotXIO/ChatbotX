@@ -1,4 +1,4 @@
-import { InboxType, type Prisma, prisma } from "@aha.chat/database"
+import { type Prisma, prisma } from "@aha.chat/database"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -11,11 +11,13 @@ import {
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@aha.chat/flow-config"
-import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
-import type { WhatsappWebhookEvent } from "@aha.chat/integration-whatsapp"
-import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
+import type { AuthValue, SendTypingProps } from "@aha.chat/sdk"
+import type {
+  IntegrationJobAgentMarkAsRead,
+  IntegrationJobContactMarkAsRead,
+} from "@aha.chat/worker-config"
 import { subHours } from "date-fns"
-import { allIntegrations, getDBIntegration } from "../../lib/integrations"
+import { allIntegrations } from "../../lib/integrations"
 import type { ExecuteStepProps } from "./flow"
 
 export async function archiveConversation({
@@ -273,56 +275,41 @@ export async function enableBot({
   })
 }
 
-export async function readMessage({
-  integrationType,
-  payload,
-}: {
-  integrationType: string
-  payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
-}) {
-  if (!Object.hasOwn(allIntegrations, integrationType)) {
-    throw new Error(`Unsupported integration: ${integrationType}`)
-  }
-  const dbIntegration = await getDBIntegration(integrationType, payload)
-  const { chatbotId } = dbIntegration
+export const contactMarkAsRead = async (
+  props: IntegrationJobContactMarkAsRead["data"],
+) => {
+  const { sourceConversationId } = props
 
-  const conversation = await prisma.conversation.findFirstOrThrow({
+  await prisma.conversation.updateMany({
     where: {
-      chatbotId,
-      sourceId: (() => {
-        switch (integrationType) {
-          case InboxType.whatsapp:
-            return (payload as WhatsappWebhookEvent).from
-          case InboxType.messenger:
-            return (payload as MessengerWebhookEvent).entry[0].messaging[0]
-              .recipient.id
-          case InboxType.zalo:
-            return (payload as ZaloWebhookEvent).recipient.id
-          default:
-            throw new Error(`Unsupported integration: ${integrationType}`)
-        }
-      })(),
-    },
-  })
-
-  await prisma.conversation.update({
-    where: {
-      id: conversation.id,
+      sourceId: sourceConversationId,
     },
     data: {
-      contactLastSeenAt: (() => {
-        switch (integrationType) {
-          case InboxType.messenger: {
-            const watermark = (payload as MessengerWebhookEvent).entry[0]
-              .messaging[0].read?.watermark
-            return new Date(watermark ?? Date.now())
-          }
-          case InboxType.zalo:
-            return new Date(Number((payload as ZaloWebhookEvent).timestamp))
-          default:
-            return new Date()
-        }
-      })(),
+      contactLastSeenAt: new Date(),
     },
+  })
+}
+
+export const agentMarkAsRead = async (
+  _props: IntegrationJobAgentMarkAsRead["data"],
+) => {
+  // TODO: Implement
+}
+
+export const sendTyping = async (props: SendTypingProps<AuthValue>) => {
+  const {
+    ctx,
+    data: { conversation, typing },
+  } = props
+
+  const inbox = await prisma.inbox.findFirstOrThrow({
+    where: { id: conversation.inboxId },
+  })
+
+  await allIntegrations[
+    inbox.inboxType
+  ]?.channels.channel?.conversation?.sendTyping?.({
+    ctx,
+    data: { conversation, typing },
   })
 }

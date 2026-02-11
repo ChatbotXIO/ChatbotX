@@ -241,7 +241,7 @@ async function sendMessage(
   await chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
     data: {
-      conversationId: conversation.id,
+      conversation,
       text,
     },
   })

@@ -13,12 +13,7 @@ import {
   SenderType,
 } from "@aha.chat/database/types"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
-import {
-  broadcastToChatbotParty,
-  broadcastToGuestParty,
-  RealtimeEventType,
-} from "@aha.chat/partysocket-config"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import type { OutgoingMessage } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
@@ -130,28 +125,17 @@ export async function handleCreateWebchatMessage({
       })
 
       // Broadcast realtime message
-      const promises: Promise<unknown>[] = []
-      promises.push(
-        broadcastToChatbotParty(newMessage.chatbotId, {
-          eventType: RealtimeEventType.messageCreated,
+      const promises: Promise<unknown>[] = [
+        integrationQueue.add(IntegrationJobAction.createMessage, {
+          type: IntegrationJobAction.createMessage,
           data: {
-            ...newMessage,
-            clientId: parsedInput.clientId,
-          },
-        }),
-      )
-
-      if (uploadedFiles.length > 0 && conversation.sourceId) {
-        promises.push(
-          broadcastToGuestParty(conversation.sourceId, {
-            eventType: RealtimeEventType.messageCreated,
-            data: {
+            message: {
               ...newMessage,
               clientId: parsedInput.clientId,
             },
-          }),
-        )
-      }
+          },
+        }),
+      ]
 
       const conversationAttributes =
         conversation.conversationAttributes as unknown as ConversationAttributes
@@ -184,7 +168,7 @@ export async function handleCreateWebchatMessage({
           integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
             type: IntegrationJobAction.triggerAutomatedResponse,
             data: {
-              message: newMessage as OutgoingMessageEntity,
+              message: newMessage as OutgoingMessage,
             },
           }),
         )

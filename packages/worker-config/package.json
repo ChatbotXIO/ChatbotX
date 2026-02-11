@@ -8,6 +8,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "@aha.chat/database": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",

@@ -23,19 +23,21 @@ import {
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
 import type {
-  ConversationEntity,
+  AuthValue,
   MessageButtonTemplate,
   MessageCardTemplate,
-  MessageEntity,
   MessageTemplateEntity,
   SendFlowStepData,
+  SendTypingProps,
 } from "@aha.chat/sdk"
 import type {
   ChatJobSendChatMessage,
   ChatJobSendFlowStep,
 } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
+import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
+import { getIntegrationAuth } from "./integration.query"
 import { sendFlowStepToExternal, sendMessageToExternal } from "./send-message"
 
 const convertButtonsToTemplate = (props: {
@@ -185,7 +187,7 @@ export async function sendFlowStep({
     } else {
       promises.push(
         sendFlowStepToExternal({
-          conversation: conversation as ConversationEntity,
+          conversation,
           flowId,
           flowVersionId,
           step: step as SendFlowStepData,
@@ -202,18 +204,10 @@ export async function sendFlowStep({
   }
 }
 
-export async function sendChatMessage({
-  conversationId,
-  text,
-  url,
-}: ChatJobSendChatMessage["data"]) {
-  const conversation = await prisma.conversation.findFirst({
-    where: { id: conversationId },
-    include: { contact: true },
-  })
-  if (!conversation) {
-    return
-  }
+export const sendChatMessage = async (
+  props: ChatJobSendChatMessage["data"],
+) => {
+  const { conversation, text, url } = props
 
   try {
     const message = await prisma.$transaction(async (tx) => {
@@ -254,6 +248,54 @@ export async function sendChatMessage({
       return newMessage
     })
 
+    const inbox = await prisma.inbox.findFirstOrThrow({
+      where: { id: conversation.inboxId },
+      include: { chatbot: true },
+    })
+    const integrationAuth = await getIntegrationAuth(inbox)
+    if (!integrationAuth) {
+      logger.error(
+        `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
+      )
+      return
+    }
+
+    const contact = await prisma.contact.findFirstOrThrow({
+      where: { id: conversation.contactId },
+    })
+    if (!contact) {
+      logger.error(
+        `Unable to find contact for conversationId: ${conversation.id}`,
+      )
+      return
+    }
+
+    await allIntegrations[
+      inbox.inboxType
+    ]?.channels?.channel?.message?.sendMessage?.({
+      ctx: {
+        chatbot: inbox.chatbot,
+        auth: integrationAuth,
+      },
+      data: {
+        contact,
+        conversation,
+        message,
+      },
+    })
+
+    await allIntegrations.chatbotx?.channels?.channel?.message?.sendMessage?.({
+      ctx: {
+        chatbot: inbox.chatbot,
+        auth: integrationAuth,
+      },
+      data: {
+        contact,
+        conversation,
+        message,
+      },
+    })
+
     const promises: Promise<unknown>[] = [
       broadcastToChatbotParty(conversation.chatbotId, {
         eventType: RealtimeEventType.messageCreated,
@@ -270,8 +312,8 @@ export async function sendChatMessage({
     } else {
       promises.push(
         sendMessageToExternal({
-          conversation: conversation as ConversationEntity,
-          message: message as MessageEntity,
+          conversation,
+          message,
         }),
       )
     }
@@ -280,7 +322,29 @@ export async function sendChatMessage({
   } catch (error) {
     logger.error(
       error,
-      `sendChatMessage error for conversationId: ${conversationId}`,
+      `sendChatMessage error for conversationId: ${conversation.id}`,
     )
   }
+}
+
+export const sendTyping = async (
+  props: SendTypingProps<AuthValue>,
+): Promise<void> => {
+  const {
+    ctx,
+    data: { conversation, typing },
+  } = props
+
+  const inbox = await prisma.inbox.findFirstOrThrow({
+    where: {
+      id: conversation.inboxId,
+    },
+  })
+
+  await allIntegrations[
+    inbox.inboxType
+  ]?.channels?.channel?.conversation?.sendTyping?.({
+    ctx,
+    data: { conversation, typing },
+  })
 }

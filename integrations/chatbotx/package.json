@@ -1,0 +1,22 @@
+{
+  "name": "@aha.chat/integration-chatbotx",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@aha.chat/partysocket-config": "workspace:*",
+    "@aha.chat/sdk": "workspace:*",
+    "ky": "^1.14.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "5.9.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./**/*": "./src/**/*.ts"
+  }
+}

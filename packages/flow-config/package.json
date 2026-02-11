@@ -10,7 +10,6 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
     "@paralleldrive/cuid2": "^3.3.0",
     "@xyflow/react": "^12.10.0",
     "zod": "^4.3.6"

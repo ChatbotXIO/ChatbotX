@@ -1,10 +1,7 @@
 "use server"
 
 import { prisma } from "@aha.chat/database"
-import {
-  broadcastToChatbotParty,
-  RealtimeEventType,
-} from "@aha.chat/partysocket-config"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -27,7 +24,7 @@ export const unblockContactAction = chatbotActionClient
         },
       })
 
-      await prisma.contact.update({
+      const contact = await prisma.contact.update({
         where: {
           id,
         },
@@ -41,10 +38,10 @@ export const unblockContactAction = chatbotActionClient
         `chatbots:${chatbotId}#conversations`,
       ])
 
-      await broadcastToChatbotParty(chatbotId, {
-        eventType: RealtimeEventType.contactUnblocked,
+      await integrationQueue.add(IntegrationJobAction.unblockContact, {
+        type: IntegrationJobAction.unblockContact,
         data: {
-          contactId: id,
+          contact,
         },
       })
     },
