@@ -7,16 +7,18 @@ import {
   type DisableBotStepSchema,
   type EnableBotStepSchema,
   type FollowConversationStepSchema,
+  type TypingStepSchema,
   type UnarchiveConversationStepSchema,
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@aha.chat/flow-config"
-import type { AuthValue, SendTypingProps } from "@aha.chat/sdk"
+import type { OutgoingConversation } from "@aha.chat/sdk"
 import type {
   IntegrationJobAgentMarkAsRead,
   IntegrationJobContactMarkAsRead,
 } from "@aha.chat/worker-config"
 import { subHours } from "date-fns"
+import { getIntegrationAuth } from "../../chat/handlers/integration.query"
 import { allIntegrations } from "../../lib/integrations"
 import type { ExecuteStepProps } from "./flow"
 
@@ -296,20 +298,28 @@ export const agentMarkAsRead = async (
   // TODO: Implement
 }
 
-export const sendTyping = async (props: SendTypingProps<AuthValue>) => {
-  const {
-    ctx,
-    data: { conversation, typing },
-  } = props
+export const sendTyping = async (props: ExecuteStepProps<TypingStepSchema>) => {
+  const { conversation } = props
 
   const inbox = await prisma.inbox.findFirstOrThrow({
     where: { id: conversation.inboxId },
+  })
+  const integrationAuth = await getIntegrationAuth(inbox)
+
+  const chatbot = await prisma.chatbot.findFirstOrThrow({
+    where: { id: conversation.chatbotId },
   })
 
   await allIntegrations[
     inbox.inboxType
   ]?.channels.channel?.conversation?.sendTyping?.({
-    ctx,
-    data: { conversation, typing },
+    ctx: {
+      chatbot,
+      auth: integrationAuth,
+    },
+    data: {
+      conversation: conversation as OutgoingConversation,
+      typing: true,
+    },
   })
 }

@@ -1,6 +1,7 @@
+import type { Oauth2AuthValue } from "@aha.chat/sdk"
 import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
-import type { GoogleSheetsConfig, Oauth2AuthValue } from "./schemas"
+import type { GoogleSheetsConfig } from "./schemas"
 
 export function getClient(props: GoogleSheetsConfig | Oauth2AuthValue) {
   const client = new OAuth2Client(

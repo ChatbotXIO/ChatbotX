@@ -130,7 +130,7 @@ export async function handleCreateWebchatMessage({
           type: IntegrationJobAction.createMessage,
           data: {
             message: {
-              ...newMessage,
+              ...(newMessage as unknown as OutgoingMessage),
               clientId: parsedInput.clientId,
             },
           },

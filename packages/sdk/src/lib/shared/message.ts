@@ -91,7 +91,7 @@ export type OutgoingAttachment = {
   url?: string
   width?: number | null
   height?: number | null
-  name: string | null
+  name?: string | null
 }
 
 export type ExternalMediaResult = {
@@ -154,7 +154,6 @@ export const FileType = {
   audio: "audio",
   video: "video",
   file: "file",
-  gif: "gif",
 } as const
 
 export type FileType = (typeof FileType)[keyof typeof FileType]

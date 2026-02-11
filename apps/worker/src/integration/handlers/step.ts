@@ -30,6 +30,7 @@ import {
   disableBot,
   enableBot,
   followConversation,
+  sendTyping,
   unarchiveConversation,
   unassignConversation,
   unfollowConversation,
@@ -50,7 +51,6 @@ import {
   generateCode,
   getDataFromJSON,
 } from "./tool-handler"
-import { sendTyping } from "./typing"
 
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,

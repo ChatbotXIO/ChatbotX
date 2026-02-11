@@ -13,7 +13,7 @@ const config: IntegrationDefinition<BaseConfig, ChatbotxAuthValue> = {
   channels: {
     channel: {
       message: {
-        create: async ({ ctx, data }) => {
+        sendMessage: async ({ ctx, data }) => {
           await broadcastMessageToChatbotParty(ctx, data.message)
         },
       },

@@ -10,13 +10,10 @@ import {
 } from "./api/phone-number"
 import { listFlows, listMessageTemplates } from "./api/waba"
 import { uploadMedia, verifyAccessToken } from "./client"
+import { agentMarkAsRead, sendTyping } from "./conversation"
 import { webhookHandler } from "./handlers/webhook"
-import {
-  markAsRead,
-  sendFlowStep,
-  sendMessage,
-  sendTyping,
-} from "./outgoing-message"
+import { receiveMessage } from "./incomming-message"
+import { sendFlowStep, sendMessage } from "./outgoing-message"
 import type {
   WhatsappActions,
   WhatsappAuthValue,
@@ -32,11 +29,12 @@ const config: IntegrationDefinition<
   channels: {
     channel: {
       message: {
-        create: sendMessage,
+        receiveMessage,
+        sendMessage,
       },
       conversation: {
         sendTyping,
-        markAsRead,
+        agentMarkAsRead,
       },
     },
   },

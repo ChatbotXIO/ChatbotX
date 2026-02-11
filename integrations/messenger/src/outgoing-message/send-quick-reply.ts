@@ -14,15 +14,17 @@ import type {
 export function* convertFlowStepQuickReply(
   props: SendFlowStepProps<MessengerAuthValue, SendQuickReplyStepSchema>,
 ): Generator<FacebookMessageAttachment | FacebookMessage> {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   if (step.buttons.length === 0) {
     yield {
       text: step.message,
     }
   } else {
     const buttons = convertFacebookQuickReplies({
-      flowId: props.flowId,
-      flowVersionId: props.flowVersionId,
+      flowId: props.data.flowId,
+      flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,
     })
 

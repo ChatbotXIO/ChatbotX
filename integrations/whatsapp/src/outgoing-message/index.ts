@@ -6,11 +6,9 @@ import {
 import {
   ContentType,
   FileType,
-  type MarkAsReadProps,
   type OutgoingMessage,
   type SendFlowStepProps,
   type SendMessageProps,
-  type SendTypingProps,
 } from "@aha.chat/sdk"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
 import type {
@@ -183,37 +181,4 @@ export const sendFlowStep = async (
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
   }
-}
-
-export const sendTyping = async (props: SendTypingProps<WhatsappAuthValue>) => {
-  const {
-    ctx,
-    data: { conversation, typing },
-  } = props
-
-  if (!typing) {
-    return // does not support typing off
-  }
-
-  const whatsappClient = getWhatsappClient(ctx.auth)
-
-  await whatsappClient.markAsRead(
-    conversation.conversationAttributes.phoneNumberId as string,
-    "lastMessageId", // TODO: get last message id
-    "text",
-  )
-}
-
-export const markAsRead = async (props: MarkAsReadProps<WhatsappAuthValue>) => {
-  const {
-    ctx,
-    data: { conversation },
-  } = props
-
-  const whatsappClient = getWhatsappClient(ctx.auth)
-
-  await whatsappClient.markAsRead(
-    conversation.conversationAttributes.phoneNumberId as string,
-    "lastMessageId", // TODO: get last message id
-  )
 }

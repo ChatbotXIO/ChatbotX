@@ -8,6 +8,7 @@ import {
   type UserModel,
 } from "@aha.chat/database/types"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
+import type { OutgoingMessage } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
@@ -98,7 +99,7 @@ export const createMessageAction = chatbotActionClient
         type: IntegrationJobAction.createMessage,
         data: {
           message: {
-            ...message,
+            ...(message as unknown as OutgoingMessage),
             clientId: parsedInput.clientId,
           },
         },
