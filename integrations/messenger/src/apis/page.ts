@@ -238,7 +238,7 @@ export const updatePersona = async (props: {
     }
     return await createPersona({ ctx, persona })
   } catch (error) {
-    logger.error("Update persona failed", error)
+    logger.error(error, "Update persona failed")
     return {}
   }
 }
