@@ -1,5 +1,5 @@
 {
-  "name": "ahachat.ai",
+  "name": "chatbotx",
   "private": true,
   "scripts": {
     "build": "turbo build",
@@ -17,7 +17,7 @@
     "lefthook": "^2.1.0",
     "prisma": "7.3.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.8.3",
+    "turbo": "^2.8.7",
     "typescript": "5.9.3",
     "ultracite": "7.1.4"
   },

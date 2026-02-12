@@ -1,13 +1,13 @@
 import pino from "pino"
 
 const baseLogger = pino({
-  transport: {
-    target: "pino-pretty",
-    options: {
-      colorize: true,
+  level: process.env.LOG_LEVEL || "info",
+  formatters: {
+    level: (label) => {
+      return { level: label.toUpperCase() } // Use 'INFO' instead of 30
     },
   },
-  level: process.env.LOG_LEVEL || "info",
+  timestamp: pino.stdTimeFunctions.isoTime, // Use ISO 8601 format
 })
 
 export const getChildLogger = (name: string) => {
