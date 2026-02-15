@@ -2,7 +2,6 @@ import ky, { HTTPError } from "ky"
 import type { WhatsappAuthValue } from ".."
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
-import { logger } from "../lib/logger"
 
 export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
   const { version = DEFAULT_API_VERSION } = auth
@@ -25,10 +24,10 @@ export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
     if (error instanceof HTTPError) {
       const result = await error.response.json()
       if (result.error === "invalid_request") {
-        logger.error(error, "Failed to subscribe webhook")
+        console.error("Failed to subscribe webhook", error)
       }
     } else {
-      logger.error(error, "Failed to subscribe webhook")
+      console.error("Failed to subscribe webhook", error)
     }
 
     throw new WhatsappException("Failed to subscribe webhook")
@@ -57,7 +56,7 @@ export async function unsubscribeWebhook({
       throw new WhatsappException("Failed to unsubscribe webhook")
     }
   } catch (error) {
-    logger.error(error, "Failed to unsubscribe webhook")
+    console.error("Failed to unsubscribe webhook", error)
 
     throw new WhatsappException("Failed to unsubscribe webhook")
   }

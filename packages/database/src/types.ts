@@ -64,6 +64,10 @@ export const organizationSettingsSchema = z.object({
       verifyToken: z.string(),
       version: z.string(),
       configId: z.string(),
+      systemUserId: z.string(),
+      systemUserToken: z.string(),
+      businessId: z.string().optional(),
+      businessName: z.string(),
     })
     .optional(),
   googleSheets: z
