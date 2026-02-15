@@ -13,7 +13,7 @@
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
     "ky": "^1.14.3",
-    "remeda": "^2.33.5",
+    "remeda": "^2.33.6",
     "zod": "^4.3.6"
   },
   "devDependencies": {

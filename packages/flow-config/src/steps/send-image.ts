@@ -1,6 +1,6 @@
-import { UploadMode } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { UploadMode } from "../types"
 import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 

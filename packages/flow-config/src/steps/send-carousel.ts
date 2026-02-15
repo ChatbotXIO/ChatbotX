@@ -1,6 +1,6 @@
-import { CardLayout } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { CardLayout } from "../types"
 import { sendCardStepDefaultFn, sendCardStepSchema } from "./send-card"
 import { StepType } from "./step-action"
 

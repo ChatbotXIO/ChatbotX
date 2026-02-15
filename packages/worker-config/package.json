@@ -12,8 +12,8 @@
     "@aha.chat/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@types/node": "^24.10.4",
-    "bullmq": "^5.67.3",
-    "ioredis": "^5.9.2",
+    "bullmq": "^5.69.2",
+    "ioredis": "5.9.2",
     "zod": "^4.3.6"
   },
   "exports": {

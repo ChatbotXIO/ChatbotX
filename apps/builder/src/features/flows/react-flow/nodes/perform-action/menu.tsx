@@ -1,9 +1,6 @@
 import { StepType } from "@aha.chat/flow-config"
-import {
-  SiClaude,
-  SiGooglegemini,
-  SiOpenai,
-} from "@icons-pack/react-simple-icons"
+import { SiClaude, SiGooglegemini } from "@icons-pack/react-simple-icons"
+import { OpenAI as OpenAIIcon } from "@lobehub/icons"
 import {
   ArchiveIcon,
   BellOffIcon,
@@ -65,14 +62,14 @@ const sheetsMenus = (t: TranslationFn): MenuItem[] => [
 const openaiMenus = (t: TranslationFn): MenuItem[] => [
   {
     label: "OpenAI",
-    icon: SiOpenai,
+    icon: OpenAIIcon,
     stepType: null,
     children: [
       {
         label: t("flows.aiGenerateText.label", {
           name: "OpenAI",
         }),
-        icon: SiOpenai,
+        icon: OpenAIIcon,
         stepType: StepType.aiGenerateText,
         props: {
           provider: "openai",
