@@ -1,12 +1,20 @@
 "use client"
 
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import { useEffect, useState } from "react"
-import { type GridComponents, Virtuoso } from "react-virtuoso"
+import { useEffect, useRef, useState } from "react"
+import {
+  type GridComponents,
+  Virtuoso,
+  type VirtuosoHandle,
+} from "react-virtuoso"
+import { MessageBubble } from "../messages/components/message-bubble"
 import { MessageItem } from "../messages/components/message-item"
+import type { MessageResource } from "../messages/schemas"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 const MESSAGE_LIST_PER_PAGE = 50
+
+const TYPING_INDICATOR_ID = "__typing-indicator__" as const
 
 export function WebchatMessageList() {
   const {
@@ -17,7 +25,13 @@ export function WebchatMessageList() {
     initGuestSession,
     guestConversationId,
     sendPostback,
+    isTyping,
   } = useGuestSessionStore((state) => state)
+
+  const virtuosoRef = useRef<VirtuosoHandle>(null)
+
+  // Include typing indicator as last item so scrollToIndex("LAST") works
+  const data = isTyping ? [...messages, { id: TYPING_INDICATOR_ID }] : messages
 
   // Check if there are more pages to load
   const hasNextPage = messages.length === 0 || nextCursorMessage !== null
@@ -41,28 +55,34 @@ export function WebchatMessageList() {
   }
 
   return (
-    <div className="flex flex-1 flex-col py-4">
+    <div className="relative flex flex-1 flex-col py-4">
       <Virtuoso
+        alignToBottom={true}
         components={{
           List: MessageComponentList,
           Header: MessageComponentHeader,
         }}
-        data={messages}
-        followOutput
-        initialTopMostItemIndex={messages.length - 1}
-        itemContent={(_, message) => (
-          <MessageItem
-            guestDisplay={true}
-            key={message.id}
-            message={message}
-            onPostback={sendPostback}
-          />
-        )}
+        data={data}
+        followOutput={true}
+        initialTopMostItemIndex={Math.max(0, data.length - 1)}
+        itemContent={(_, item) =>
+          item.id === TYPING_INDICATOR_ID ? (
+            <TypingIndicator />
+          ) : (
+            <MessageItem
+              guestDisplay={true}
+              key={item.id}
+              message={item as MessageResource}
+              onPostback={sendPostback}
+            />
+          )
+        }
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {
             loadMoreItems()
           }
         }}
+        ref={virtuosoRef}
       />
     </div>
   )
@@ -77,6 +97,25 @@ const MessageComponentHeader: GridComponents["Header"] = () => {
     </div>
   ) : null
 }
+
+const TypingIndicator = () => (
+  <MessageBubble variant="left">
+    <div className="mx-3 flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-4 py-3">
+      <span
+        aria-hidden
+        className="size-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]"
+      />
+      <span
+        aria-hidden
+        className="size-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]"
+      />
+      <span
+        aria-hidden
+        className="size-2 animate-bounce rounded-full bg-muted-foreground"
+      />
+    </div>
+  </MessageBubble>
+)
 
 const MessageComponentList: GridComponents["List"] = ({
   children,

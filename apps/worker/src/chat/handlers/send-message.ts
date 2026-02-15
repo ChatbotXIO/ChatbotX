@@ -8,9 +8,9 @@ import type {
   ChatJobSendExternalMessage,
   ChatJobSendTyping,
 } from "@aha.chat/worker-config"
+import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
-import { getIntegrationAuth } from "./integration.query"
 
 export async function sendMessageToExternal(
   data: ChatJobSendExternalMessage["data"],
@@ -18,20 +18,9 @@ export async function sendMessageToExternal(
   const { conversation, message } = data
 
   // Find integration auth
-  const inbox = await prisma.inbox.findFirstOrThrow({
-    where: { id: conversation.inboxId },
-    include: {
-      integrationWhatsapp: true,
-      chatbot: true,
-    },
-  })
-  const integrationAuth = await getIntegrationAuth(inbox)
-  if (!integrationAuth) {
-    logger.error(
-      `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
-    )
-    return
-  }
+  const { inbox, auth } = await getInboxWithAuthFromInboxId(
+    conversation.inboxId,
+  )
 
   // Find integration detail
   const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
@@ -49,7 +38,7 @@ export async function sendMessageToExternal(
   await intergationDetail.channels?.channel?.message?.sendMessage?.({
     ctx: {
       chatbot: inbox.chatbot,
-      auth: integrationAuth,
+      auth,
     },
     data: {
       contact,
@@ -63,20 +52,9 @@ export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
   const { conversation, typing } = data
 
   // Find integration auth
-  const inbox = await prisma.inbox.findFirstOrThrow({
-    where: { id: conversation.inboxId },
-    include: {
-      integrationWhatsapp: true,
-      chatbot: true,
-    },
-  })
-  const integrationAuth = await getIntegrationAuth(inbox)
-  if (!integrationAuth) {
-    logger.error(
-      `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
-    )
-    return
-  }
+  const { inbox, auth } = await getInboxWithAuthFromInboxId(
+    conversation.inboxId,
+  )
 
   // Find integration detail
   const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
@@ -90,7 +68,7 @@ export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
   await intergationDetail.channels?.channel?.conversation?.sendTyping?.({
     ctx: {
       chatbot: inbox.chatbot,
-      auth: integrationAuth,
+      auth,
     },
     data: { conversation, typing },
   })
@@ -108,20 +86,9 @@ export async function sendFlowStepToExternal({
   step: SendFlowStepData
 }) {
   // Find integration auth
-  const inbox = await prisma.inbox.findFirstOrThrow({
-    where: { id: conversation.inboxId },
-    include: {
-      integrationWhatsapp: true,
-      chatbot: true,
-    },
-  })
-  const integrationAuth = await getIntegrationAuth(inbox)
-  if (!integrationAuth) {
-    logger.error(
-      `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
-    )
-    return
-  }
+  const { inbox, auth } = await getInboxWithAuthFromInboxId(
+    conversation.inboxId,
+  )
 
   // Find integration detail
   const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
@@ -135,7 +102,7 @@ export async function sendFlowStepToExternal({
   await intergationDetail.runAction("sendFlowStep", {
     ctx: {
       chatbot: inbox.chatbot,
-      auth: integrationAuth,
+      auth,
     },
     conversation,
     flowId,

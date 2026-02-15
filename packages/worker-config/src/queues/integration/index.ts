@@ -139,7 +139,7 @@ export type IntegrationJobUnblockContact = {
 export type IntegrationJobAssignConversation = {
   type: typeof IntegrationJobAction.assignConversation
   data: {
-    conversation: ConversationModel
+    conversations: ConversationModel[]
   }
 }
 

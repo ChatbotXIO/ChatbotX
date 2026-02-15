@@ -104,17 +104,12 @@ export const assignConversationAction = chatbotActionClient
           },
         })
 
-        await integrationQueue.addBulk(
-          updatedConversations.map((conversation) => ({
-            name: IntegrationJobAction.assignConversation,
-            data: {
-              type: IntegrationJobAction.assignConversation,
-              data: {
-                conversation,
-              },
-            },
-          })),
-        )
+        await integrationQueue.add(IntegrationJobAction.assignConversation, {
+          type: IntegrationJobAction.assignConversation,
+          data: {
+            conversations: updatedConversations,
+          },
+        })
       })
     },
   )

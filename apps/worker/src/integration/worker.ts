@@ -12,7 +12,15 @@ import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
-import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
+import {
+  broadcastBlockContactEvent,
+  broadcastUnblockContactEvent,
+} from "./handlers/contact"
+import {
+  agentMarkAsRead,
+  broadcastAssignConversation,
+  contactMarkAsRead,
+} from "./handlers/conversation"
 import {
   runFlowNode,
   runFlowPostback,
@@ -83,6 +91,18 @@ const worker = new Worker(
       }
       case IntegrationJobAction.runChallenge: {
         await runChallenge(job.data.data)
+        return
+      }
+      case IntegrationJobAction.blockContact: {
+        await broadcastBlockContactEvent(job.data.data)
+        return
+      }
+      case IntegrationJobAction.unblockContact: {
+        await broadcastUnblockContactEvent(job.data.data)
+        return
+      }
+      case IntegrationJobAction.assignConversation: {
+        await broadcastAssignConversation(job.data.data)
         return
       }
       default:

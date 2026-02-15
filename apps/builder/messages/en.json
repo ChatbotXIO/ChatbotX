@@ -1164,7 +1164,8 @@
       "emailLine": "Line",
       "emailSpacing": "Spacing",
       "emailCode": "Code",
-      "emailHeader": "Header"
+      "emailHeader": "Header",
+      "typing": "Typing"
     },
     "additionalSteps": "Additional steps",
     "button": {

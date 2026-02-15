@@ -16,6 +16,7 @@ export default function TypingStepEditor(props: TypingStepEditorProps) {
         max={60}
         min={1}
         name={`${parentName}.seconds`}
+        required
         stepper={1}
       />
     </div>

@@ -35,9 +35,9 @@ import type {
   ChatJobSendFlowStep,
 } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
+import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
-import { getIntegrationAuth } from "./integration.query"
 import { sendFlowStepToExternal, sendMessageToExternal } from "./send-message"
 
 const convertButtonsToTemplate = (props: {
@@ -248,34 +248,20 @@ export const sendChatMessage = async (
       return newMessage
     })
 
-    const inbox = await prisma.inbox.findFirstOrThrow({
-      where: { id: conversation.inboxId },
-      include: { chatbot: true },
-    })
-    const integrationAuth = await getIntegrationAuth(inbox)
-    if (!integrationAuth) {
-      logger.error(
-        `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
-      )
-      return
-    }
+    const { inbox, auth } = await getInboxWithAuthFromInboxId(
+      conversation.inboxId,
+    )
 
     const contact = await prisma.contact.findFirstOrThrow({
       where: { id: conversation.contactId },
     })
-    if (!contact) {
-      logger.error(
-        `Unable to find contact for conversationId: ${conversation.id}`,
-      )
-      return
-    }
 
     await allIntegrations[
       inbox.inboxType
     ]?.channels?.channel?.message?.sendMessage?.({
       ctx: {
         chatbot: inbox.chatbot,
-        auth: integrationAuth,
+        auth,
       },
       data: {
         contact,
@@ -287,7 +273,7 @@ export const sendChatMessage = async (
     await allIntegrations.chatbotx?.channels?.channel?.message?.sendMessage?.({
       ctx: {
         chatbot: inbox.chatbot,
-        auth: integrationAuth,
+        auth,
       },
       data: {
         contact,
