@@ -189,20 +189,6 @@ export const receiveMessage = async (
       logger.warn(error, "Unable to emit realtime message")
     }
 
-    // emit new message to socket
-    // try {
-    //   await integrationQueue.add(IntegrationJobAction.broadcastEvent, {
-    //     type: IntegrationJobAction.broadcastEvent,
-    //     data: {
-    //       eventType: RealtimeEventType.messageCreated,
-    //       data: { message: newMessage },
-    //       realtimeData: newMessage,
-    //     },
-    //   })
-    // } catch (error) {
-    //   logger.warn(error, "Unable to emit realtime message")
-    // }
-
     return { message: newMessage, conversation: newConversation }
   })
 

@@ -11,6 +11,7 @@ import {
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
+  broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
 import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
@@ -103,12 +104,13 @@ export const createMessageAction = chatbotActionClient
           eventType: RealtimeEventType.messageCreated,
           data: {
             ...message,
+            clientId: parsedInput.clientId,
           },
         }),
       ]
       if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
         promises.push(
-          broadcastToChatbotParty(conversation.chatbotId, {
+          broadcastToGuestParty(conversation.chatbotId, {
             eventType: RealtimeEventType.messageCreated,
             data: {
               ...message,
