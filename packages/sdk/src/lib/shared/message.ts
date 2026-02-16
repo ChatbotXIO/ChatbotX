@@ -49,6 +49,7 @@ export type OutgoingMessage = {
   attachments?: OutgoingAttachment[]
   inboxId: string
   clientId?: string | null
+  messageType: "outgoing" | "incoming" | "system"
 }
 
 export const MessageType = {

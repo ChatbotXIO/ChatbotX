@@ -10,6 +10,10 @@ import {
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import {
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@aha.chat/partysocket-config"
+import {
   type AuthValue,
   type Context,
   type IncomingAttachment,
@@ -21,6 +25,7 @@ import {
   integrationQueue,
 } from "@aha.chat/worker-config"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
+import { logger } from "../../lib/logger"
 
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
@@ -173,6 +178,15 @@ export const receiveMessage = async (
           conversationId: newConversation.id,
         })),
       })
+    }
+
+    try {
+      broadcastToChatbotParty(newConversation.chatbotId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: newMessage,
+      })
+    } catch (error) {
+      logger.warn(error, "Unable to emit realtime message")
     }
 
     // emit new message to socket

@@ -6,10 +6,15 @@ import {
   MessageType,
   SenderType,
   type UserModel,
+  WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
-import type { OutgoingMessage } from "@aha.chat/sdk"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import {
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@aha.chat/partysocket-config"
+import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
+import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -93,16 +98,42 @@ export const createMessageAction = chatbotActionClient
         return newMessage
       })
 
-      revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
-
-      await integrationQueue.add(IntegrationJobAction.createMessage, {
-        type: IntegrationJobAction.createMessage,
-        data: {
-          message: {
-            ...(message as unknown as OutgoingMessage),
-            clientId: parsedInput.clientId,
+      const promises: Promise<unknown>[] = [
+        broadcastToChatbotParty(message.chatbotId, {
+          eventType: RealtimeEventType.messageCreated,
+          data: {
+            ...message,
           },
-        },
-      })
+        }),
+      ]
+      if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
+        promises.push(
+          broadcastToChatbotParty(conversation.chatbotId, {
+            eventType: RealtimeEventType.messageCreated,
+            data: {
+              ...message,
+              clientId: parsedInput.clientId,
+            },
+          }),
+        )
+      } else {
+        promises.push(
+          chatQueue.add(ChatJobAction.sendExternalMessage, {
+            type: ChatJobAction.sendExternalMessage,
+            data: {
+              conversation: conversation as OutgoingConversation,
+              message: {
+                ...message,
+                clientId: parsedInput.clientId,
+              } as OutgoingMessage,
+            },
+          }),
+        )
+      }
+
+      // Broadcast and send
+      await Promise.all(promises)
+
+      revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
     },
   )
