@@ -5,11 +5,10 @@ import {
 } from "@aha.chat/flow-config"
 import {
   ContentType,
-  type Context,
-  type ConversationEntity,
   FileType,
-  type MessageEntity,
+  type OutgoingMessage,
   type SendFlowStepProps,
+  type SendMessageProps,
 } from "@aha.chat/sdk"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
 import type {
@@ -24,7 +23,7 @@ import { convertFlowStepImage } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 
 export function* convertMessageToWhatsappMessage(
-  message: MessageEntity,
+  message: OutgoingMessage,
 ): Generator<ClientMessage | null> {
   if (message.contentType === ContentType.text) {
     if (message.content) {
@@ -55,7 +54,9 @@ export function* convertMessageToWhatsappMessage(
 export function* convertFlowStepToWhatsappMessage(
   props: SendFlowStepProps<WhatsappAuthValue>,
 ) {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   switch (step.stepType) {
     case StepType.sendText:
       yield* convertFlowStepText(
@@ -72,11 +73,13 @@ export function* convertFlowStepToWhatsappMessage(
   }
 }
 
-export const sendOutgoingMessage = async (
-  ctx: Context<WhatsappAuthValue>,
-  conversation: ConversationEntity,
-  message: MessageEntity,
+export const sendMessage = async (
+  props: SendMessageProps<WhatsappAuthValue>,
 ) => {
+  const {
+    ctx,
+    data: { conversation, message },
+  } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   try {
@@ -128,7 +131,10 @@ export const sendOutgoingMessage = async (
 export const sendFlowStep = async (
   props: SendFlowStepProps<WhatsappAuthValue>,
 ) => {
-  const { ctx, conversation, step } = props
+  const {
+    ctx,
+    data: { conversation, step },
+  } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   try {

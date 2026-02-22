@@ -30,6 +30,7 @@ export type GuestSessionState = {
   nextCursorMessage: string | null
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
+  isTyping: boolean
 }
 
 export type GuestSessionActions = {
@@ -45,6 +46,7 @@ export type GuestSessionActions = {
   handleNewMessage: (message: MessageResource) => void
   sendMessage: (content: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
+  setIsTyping: (isTyping: boolean) => void
 
   getMenus: () => PersistentMenuSchema[]
 }
@@ -63,6 +65,8 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     nextCursorMessage: null,
     isLoadMoreMessage: false,
     hasNextMessagePage: true,
+
+    isTyping: false,
 
     initGuestSession: () => {
       const { guestConversationId } = get()
@@ -209,6 +213,10 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     getMenus: () => {
       const { config } = get()
       return (config.persistentMenus ?? []) as PersistentMenuSchema[]
+    },
+
+    setIsTyping: (isTyping: boolean) => {
+      set({ isTyping })
     },
   }))
 }

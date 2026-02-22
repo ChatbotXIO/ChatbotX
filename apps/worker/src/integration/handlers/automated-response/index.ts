@@ -1,6 +1,6 @@
 import { prisma } from "@aha.chat/database"
 import { AIMessageRole, SenderType } from "@aha.chat/database/types"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import type { OutgoingMessage } from "@aha.chat/sdk"
 import type { ModelMessage } from "ai"
 import { getAIToolset } from "../generate-text/tools"
 import {
@@ -12,7 +12,7 @@ import {
 export async function triggerAutomatedResponse({
   message,
 }: {
-  message: OutgoingMessageEntity
+  message: OutgoingMessage
 }) {
   if (!message.content) {
     return

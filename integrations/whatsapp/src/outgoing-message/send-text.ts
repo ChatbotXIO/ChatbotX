@@ -17,7 +17,9 @@ import { MAX_BUTTONS } from "./shared"
 export function* convertFlowStepText(
   props: SendFlowStepProps<WhatsappAuthValue, SendTextStepSchema>,
 ) {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   if (step.buttons.length === 0) {
     yield new Text(step.message)
   } else {
@@ -26,8 +28,8 @@ export function* convertFlowStepText(
     for (const c1 of chunks) {
       const buttons = c1.map((button) => {
         const buttonId = encodeButtonPayload({
-          flowId: props.flowId,
-          flowVersionId: props.flowVersionId,
+          flowId: props.data.flowId,
+          flowVersionId: props.data.flowVersionId,
           buttonId: button.id,
         })
         return new Button(buttonId, button.label)

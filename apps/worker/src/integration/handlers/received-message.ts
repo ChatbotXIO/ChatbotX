@@ -4,47 +4,48 @@ import {
   type ConversationModel,
   Gender,
   InboxType,
-  type IntegrationType,
   type MessageModel,
   MessageType,
   SenderType,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
-import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
-import type { WhatsappWebhookEvent } from "@aha.chat/integration-whatsapp"
-import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type {
-  AttachmentEntity,
-  AuthValue,
-  Context,
-  ReceivedMessageResult,
+import {
+  type AuthValue,
+  type Context,
+  type IncomingAttachment,
+  SdkException,
 } from "@aha.chat/sdk"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import {
+  IntegrationJobAction,
+  type IntegrationJobReceiveMessage,
+  integrationQueue,
+} from "@aha.chat/worker-config"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
 
-export const receiveMessage = async ({
-  integrationType,
-  payload,
-}: {
-  integrationType: string
-  payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
-}): Promise<{
+export const receiveMessage = async (
+  props: IntegrationJobReceiveMessage["data"],
+): Promise<{
   message: MessageModel
   conversation: ConversationModel
   postbackAction: string | null
   quickReplyAction: string | null
   ref?: string | null
 }> => {
+  const { integrationType, integrationIdentifier } = props
+
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
   }
 
-  const dbIntegration = await getDBIntegration(integrationType, payload)
+  const dbIntegration = await getDBIntegration(
+    integrationType,
+    integrationIdentifier,
+  )
   const { chatbot, chatbotId, inboxId, auth } = dbIntegration
   const ctx = {
     chatbot,
@@ -52,14 +53,14 @@ export const receiveMessage = async ({
     uploader,
   }
 
-  const parsedMessage: ReceivedMessageResult | null = await allIntegrations[
-    integrationType as IntegrationType
-  ]?.actions.receiveMessage({
+  const parsedMessage = await allIntegrations[
+    integrationType
+  ]?.channels?.channel?.message?.receiveMessage?.({
     ctx,
-    data: payload,
+    data: props,
   })
   if (!parsedMessage) {
-    throw new Error("Unable to parse received message")
+    throw new SdkException("Unable to parse received message")
   }
 
   const { message, conversation, postbackAction, quickReplyAction, ref } =
@@ -170,7 +171,7 @@ export const receiveMessage = async ({
       newMessage.createdAt.getTime() === now.getTime()
     ) {
       await tx.attachment.createMany({
-        data: message.attachments.map((attachment: AttachmentEntity) => ({
+        data: message.attachments.map((attachment: IncomingAttachment) => ({
           ...attachment,
           messageId: newMessage.id,
           chatbotId: newConversation.chatbotId,
@@ -179,7 +180,6 @@ export const receiveMessage = async ({
       })
     }
 
-    // emit new message to socket
     try {
       broadcastToChatbotParty(newConversation.chatbotId, {
         eventType: RealtimeEventType.messageCreated,

@@ -18,7 +18,7 @@ import {
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import type { OutgoingMessage } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
@@ -184,7 +184,7 @@ export async function handleCreateWebchatMessage({
           integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
             type: IntegrationJobAction.triggerAutomatedResponse,
             data: {
-              message: newMessage as OutgoingMessageEntity,
+              message: newMessage as OutgoingMessage,
             },
           }),
         )

@@ -7,13 +7,13 @@ import {
 } from "../steps/choose-channel"
 import { getUserDataStepSchema } from "../steps/get-user-data"
 import { sendAudioStepSchema } from "../steps/send-audio"
-import { sendCardStepSchema } from "../steps/send-card"
 import { sendCarouselStepSchema } from "../steps/send-carousel"
 import { sendFileStepSchema } from "../steps/send-file"
 import { sendGifStepSchema } from "../steps/send-gif"
 import { sendImageStepSchema } from "../steps/send-image"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
+import { typingStepSchema } from "../steps/typing"
 import {
   baseNodeDataSchema,
   baseNodeSchema,
@@ -28,17 +28,17 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
     details: z.object({
       beforeStep: chooseChannelStepSchema,
       steps: z.array(
-        z.union([
+        z.discriminatedUnion("stepType", [
           sendAudioStepSchema,
-          sendFileStepSchema,
           sendFileStepSchema,
           sendImageStepSchema,
           sendTextStepSchema,
           sendVideoStepSchema,
-          sendCardStepSchema,
+          // sendCardStepSchema,
           sendCarouselStepSchema,
           getUserDataStepSchema,
           sendGifStepSchema,
+          typingStepSchema,
           ...actionSteps,
         ]),
       ),

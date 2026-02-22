@@ -1,9 +1,9 @@
 import {
-  type AttachmentEntity,
   ContentType,
   type Context,
-  type ConversationEntity,
-  type MessageEntity,
+  type IncomingAttachment,
+  type IncomingConversation,
+  type IncomingMessage,
   MessageType,
   type ReceivedMessageResult,
 } from "@aha.chat/sdk"
@@ -16,7 +16,7 @@ import type { ZaloWebhookEvent } from "../schemas/webhook"
 const getMessageAttachments = async (
   ctx: Context<ZaloAuthValue>,
   message: ZaloWebhookEvent["message"],
-): Promise<AttachmentEntity[]> => {
+): Promise<IncomingAttachment[]> => {
   if (!message?.attachments) {
     return []
   }
@@ -37,23 +37,30 @@ const getMessageAttachments = async (
       .filter(
         (
           result,
-        ): result is PromiseFulfilledResult<AttachmentEntity | undefined> =>
+        ): result is PromiseFulfilledResult<IncomingAttachment | undefined> =>
           result.status === "fulfilled" && result.value !== undefined,
       )
-      .map((result) => result.value as AttachmentEntity)
+      .map((result) => result.value as IncomingAttachment)
   } catch (error) {
     logger.error(error, "Error getting message attachments")
     return []
   }
 }
 
-export const parseIncomingMessage = async ({
-  ctx,
-  data,
-}: {
+export const receiveMessage = async (props: {
   ctx: Context<ZaloAuthValue>
-  data: ZaloWebhookEvent
+  data: {
+    integrationType: string
+    payload: unknown
+  }
 }): Promise<ReceivedMessageResult | null> => {
+  const {
+    ctx,
+    data: { payload },
+  } = props
+
+  const data = payload as ZaloWebhookEvent
+
   if (!data.message) {
     return null
   }
@@ -64,7 +71,8 @@ export const parseIncomingMessage = async ({
   const sourceId = data.event_name.includes("user_send")
     ? data.sender.id
     : data.recipient.id
-  const conversation: ConversationEntity = {
+
+  const conversation: IncomingConversation = {
     sourceId,
     conversationAttributes: {},
     contact: {
@@ -84,11 +92,11 @@ export const parseIncomingMessage = async ({
 const getMessageEntity = async (
   ctx: Context<ZaloAuthValue>,
   event: ZaloWebhookEvent,
-): Promise<{ message: MessageEntity; postbackAction: string | null }> => {
+): Promise<{ message: IncomingMessage; postbackAction: string | null }> => {
   if (!event.message.msg_id) {
     throw new ZaloException("Missing msg_id in message event")
   }
-  let message: MessageEntity = {
+  let message: IncomingMessage = {
     sourceId: event.message.msg_id,
     messageType: event.event_name.includes("user_send")
       ? MessageType.incoming

@@ -9,10 +9,11 @@ import {
   updateConversationalAutomation,
 } from "./api/phone-number"
 import { listFlows, listMessageTemplates } from "./api/waba"
-import { getWhatsappClient, uploadMedia, verifyAccessToken } from "./client"
+import { uploadMedia, verifyAccessToken } from "./client"
+import { agentMarkAsRead, sendTyping } from "./conversation"
 import { webhookHandler } from "./handlers/webhook"
-import { parseIncomingMessage } from "./incomming-message"
-import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
+import { receiveMessage } from "./incomming-message"
+import { sendFlowStep, sendMessage } from "./outgoing-message"
 import type {
   WhatsappActions,
   WhatsappAuthValue,
@@ -25,17 +26,21 @@ const config: IntegrationDefinition<
   WhatsappActions
 > = {
   name: "whatsapp",
+  channels: {
+    channel: {
+      message: {
+        receiveMessage,
+        sendMessage,
+      },
+      conversation: {
+        sendTyping,
+        agentMarkAsRead,
+      },
+    },
+  },
   actions: {
     verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
     uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
-    receiveMessage: async ({ ctx, data }) => {
-      const whatsappClient = getWhatsappClient(ctx.auth)
-
-      return await parseIncomingMessage(ctx, whatsappClient, data)
-    },
-    sendMessage: async ({ ctx, message, conversation }) => {
-      await sendOutgoingMessage(ctx, conversation, message)
-    },
     sendFlowStep: async (props) => {
       await sendFlowStep(props)
     },
@@ -59,7 +64,7 @@ const config: IntegrationDefinition<
     )
   },
   disconnect: (_props: WhatsappAuthValue): Promise<void> => {
-    throw new Error("Function not implemented.")
+    throw new Error("Method is not implemented.")
   },
 }
 

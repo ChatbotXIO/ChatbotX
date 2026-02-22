@@ -1,12 +1,9 @@
 import type {
-  ContactEntity,
   Context,
-  Handler,
+  IncomingContact,
   Oauth2AuthValue,
   Oauth2Config,
-  ReceivedMessageResult,
   SendFlowStepProps,
-  SendMessageProps,
 } from "@aha.chat/sdk"
 import { z } from "zod"
 
@@ -29,19 +26,11 @@ export type MessengerAuthValue = Oauth2AuthValue & {
 }
 
 export type MessengerActions = {
-  receiveMessage: Handler<
-    {
-      ctx: Context<MessengerAuthValue>
-      data: MessengerWebhookEvent
-    },
-    ReceivedMessageResult | null
-  >
-  sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
   sendFlowStep: (props: SendFlowStepProps<MessengerAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<MessengerAuthValue>
     psid: string
-  }) => Promise<ContactEntity>
+  }) => Promise<IncomingContact>
 }
 
 // Common attachment types
@@ -211,7 +200,8 @@ export const facebookSendMessageRequestSchema = z.object({
   sender_action: z.enum(["typing_on", "typing_off", "mark_seen"]).optional(),
   messaging_type: z
     .enum(["RESPONSE", "UPDATE", "MESSAGE_TAG"])
-    .default("RESPONSE"),
+    .default("RESPONSE")
+    .optional(),
   tag: z
     .enum([
       "COMMUNITY_ALERT",

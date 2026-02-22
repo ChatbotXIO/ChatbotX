@@ -2,7 +2,6 @@ import { prisma } from "@aha.chat/database"
 import type {
   AddContactTagStepSchema,
   AddNotesStepSchema,
-  BlockContactStepSchema,
   ClearCustomFieldStepSchema,
   DeleteContactStepSchema,
   MarkEmailVerifiedStepSchema,
@@ -10,6 +9,16 @@ import type {
   OptOutEmailStepSchema,
   SetCustomFieldStepSchema,
 } from "@aha.chat/flow-config"
+import {
+  broadcastToChatbotParty,
+  RealtimeEventType,
+} from "@aha.chat/partysocket-config"
+import type {
+  IntegrationJobBlockContact,
+  IntegrationJobUnblockContact,
+} from "@aha.chat/worker-config"
+import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
+import { allIntegrations } from "../../lib/integrations"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
@@ -55,15 +64,6 @@ export async function addContactNotes({
       contactId: conversation.contactId,
       content: step.content,
     },
-  })
-}
-
-export async function blockContact({
-  conversation,
-}: ExecuteStepProps<BlockContactStepSchema>) {
-  await prisma.contact.update({
-    where: { id: conversation.contactId },
-    data: { blockedAt: new Date() },
   })
 }
 
@@ -168,4 +168,70 @@ export async function deleteContact({
       },
     })
   })
+}
+
+export const broadcastBlockContactEvent = async ({
+  contact,
+}: IntegrationJobBlockContact["data"]) => {
+  const firstConversation = await prisma.conversation.findFirstOrThrow({
+    where: {
+      contactId: contact.id,
+    },
+  })
+  const { inbox, auth } = await getInboxWithAuthFromInboxId(
+    firstConversation.inboxId,
+  )
+
+  const promises = [
+    allIntegrations[inbox.inboxType]?.channels?.channel?.contact?.block?.({
+      ctx: {
+        chatbot: inbox.chatbot,
+        auth,
+      },
+      data: {
+        contact,
+      },
+    }),
+    broadcastToChatbotParty(inbox.chatbotId, {
+      eventType: RealtimeEventType.contactBlocked,
+      data: {
+        contactId: contact.id,
+      },
+    }),
+  ]
+
+  await Promise.all(promises)
+}
+
+export const broadcastUnblockContactEvent = async ({
+  contact,
+}: IntegrationJobUnblockContact["data"]) => {
+  const firstConversation = await prisma.conversation.findFirstOrThrow({
+    where: {
+      contactId: contact.id,
+    },
+  })
+  const { inbox, auth } = await getInboxWithAuthFromInboxId(
+    firstConversation.inboxId,
+  )
+
+  const promises = [
+    allIntegrations[inbox.inboxType]?.channels?.channel?.contact?.unblock?.({
+      ctx: {
+        chatbot: inbox.chatbot,
+        auth,
+      },
+      data: {
+        contact,
+      },
+    }),
+    broadcastToChatbotParty(inbox.chatbotId, {
+      eventType: RealtimeEventType.contactUnblocked,
+      data: {
+        contactId: contact.id,
+      },
+    }),
+  ]
+
+  await Promise.all(promises)
 }

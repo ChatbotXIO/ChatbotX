@@ -3,7 +3,12 @@
 import { type Prisma, prisma } from "@aha.chat/database"
 import { InboxStatus } from "@aha.chat/database/enums"
 import { IntegrationType, type UserModel } from "@aha.chat/database/types"
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import {
+  addSystemUser,
+  registerPhoneNumber,
+  shareCreditLine,
+  type WhatsappAuthValue,
+} from "@aha.chat/integration-whatsapp"
 import { exchangeAccessToken } from "@aha.chat/integration-whatsapp/api/auth"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@aha.chat/integration-whatsapp/api/phone-number"
 import { subscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
@@ -15,7 +20,6 @@ import { identifyChatbotAndOrganizationFromRequest } from "@/features/integratio
 import { verifyOrganizationSettings } from "@/features/organization/queries"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { BaseException } from "@/lib/errors/exception"
-import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
@@ -103,9 +107,29 @@ export const connectWhatsappAction = authActionClient
           },
         }
 
+        await addSystemUser({
+          auth,
+          whatsappSettings,
+        })
+        console.info("addSystemUser")
+
+        if (whatsappSettings.businessId) {
+          await shareCreditLine({
+            auth,
+            whatsappSettings,
+          })
+          console.info("shareCreditLine")
+        }
+
+        await registerPhoneNumber({
+          auth,
+        })
+        console.info("registerPhoneNumber")
+
         await subscribeWebhook({
           auth,
         })
+        console.info("subscribeWebhook")
 
         await prisma.$transaction(async (tx) => {
           // create new chatbot if not exists
@@ -166,7 +190,7 @@ export const connectWhatsappAction = authActionClient
           redirectUrl: `/chatbots/${chatbotId}/dashboard`,
         }
       } catch (err: unknown) {
-        logger.error(err, "Unable to verify whatsapp token")
+        console.error(err, "Unable to verify whatsapp token")
 
         throw new BaseException("Unable to verify Whatsapp token")
       }

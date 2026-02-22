@@ -14,7 +14,7 @@ import {
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
+import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
@@ -123,16 +123,11 @@ export const createMessageAction = chatbotActionClient
           chatQueue.add(ChatJobAction.sendExternalMessage, {
             type: ChatJobAction.sendExternalMessage,
             data: {
-              conversation: conversation as ConversationEntity,
+              conversation: conversation as OutgoingConversation,
               message: {
                 ...message,
-                messageType: MessageType.outgoing,
                 clientId: parsedInput.clientId,
-                sourceId: message.sourceId || "",
-                contentType: message.contentType as unknown as ContentType,
-                content: message.content ?? "",
-                attachments: message.attachments as AttachmentEntity[],
-              },
+              } as OutgoingMessage,
             },
           }),
         )

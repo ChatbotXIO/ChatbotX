@@ -7,15 +7,17 @@ import { convertZaloButtons } from "./send-button"
 export function* convertFlowStepText(
   props: SendFlowStepProps<ZaloAuthValue, SendTextStepSchema>,
 ): Generator<MessageTemplate> {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   if (step.buttons.length === 0) {
     yield {
       text: step.message,
     }
   } else {
     const buttons: ButtonPayload[] | undefined = convertZaloButtons({
-      flowId: props.flowId,
-      flowVersionId: props.flowVersionId,
+      flowId: props.data.flowId,
+      flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,
     })
 

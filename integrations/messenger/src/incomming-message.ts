@@ -1,9 +1,9 @@
 import {
-  type AttachmentEntity,
   ContentType,
   type Context,
-  type ConversationEntity,
-  type MessageEntity,
+  type IncomingAttachment,
+  type IncomingConversation,
+  type IncomingMessage,
   MessageType,
   type ReceivedMessageResult,
 } from "@aha.chat/sdk"
@@ -11,17 +11,17 @@ import {
 import { getMessageAttachmentEntity } from "./apis/page"
 import { MessengerException } from "./exception"
 import { logger } from "./lib/logger"
-import type {
-  MessengerAuthValue,
-  MessengerMessage,
-  MessengerMessagingEvent,
-  MessengerWebhookEvent,
+import {
+  type MessengerAuthValue,
+  type MessengerMessage,
+  type MessengerMessagingEvent,
+  messengerWebhookEventSchema,
 } from "./schemas"
 
 const getMessageAttachments = async (
   ctx: Context<MessengerAuthValue>,
   message: MessengerMessage,
-): Promise<AttachmentEntity[]> => {
+): Promise<IncomingAttachment[]> => {
   if (!message.attachments) {
     return []
   }
@@ -39,7 +39,7 @@ const getMessageAttachments = async (
     const attachmentResults = await Promise.allSettled(attachmentPromises)
     return attachmentResults
       .filter(
-        (result): result is PromiseFulfilledResult<AttachmentEntity> =>
+        (result): result is PromiseFulfilledResult<IncomingAttachment> =>
           result.status === "fulfilled" && result.value !== null,
       )
       .map((result) => result.value)
@@ -49,14 +49,16 @@ const getMessageAttachments = async (
   }
 }
 
-export const parseIncomingMessage = async ({
+export const receiveMessage = async ({
   ctx,
   data,
 }: {
   ctx: Context<MessengerAuthValue>
-  data: MessengerWebhookEvent
+  data: unknown
 }): Promise<ReceivedMessageResult> => {
-  const entry = data.entry[0]
+  const validatedData = messengerWebhookEventSchema.parse(data)
+
+  const entry = validatedData.entry[0]
 
   if (!entry.messaging[0]) {
     throw new MessengerException("No messaging found")
@@ -73,7 +75,7 @@ export const parseIncomingMessage = async ({
     messaging,
   )
 
-  const conversation: ConversationEntity = {
+  const conversation: IncomingConversation = {
     sourceId,
     conversationAttributes: {},
     contact: {
@@ -97,7 +99,7 @@ const getMessageEntity = async (
   ctx: Context<MessengerAuthValue>,
   messaging: MessengerMessagingEvent,
 ): Promise<Omit<ReceivedMessageResult, "conversation">> => {
-  let message: MessageEntity | null = null
+  let message: IncomingMessage | null = null
   let postbackAction: string | null = null
   let quickReplyAction: string | null = null
   let ref: string | null = null

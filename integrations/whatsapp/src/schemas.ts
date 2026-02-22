@@ -3,11 +3,10 @@ import type {
   Context,
   Handler,
   Oauth2AuthValue,
-  ReceivedMessageResult,
   SendFlowStepProps,
-  SendMessageProps,
 } from "@aha.chat/sdk"
 import type { ServerMessage } from "whatsapp-api-js/types"
+import z from "zod"
 import type {
   ConversationalAutomation,
   WhatsappPhoneNumber,
@@ -34,24 +33,13 @@ export type WhatsappPagination = {
   }
 }
 
-export type WhatsappWebhookEvent = {
-  /**
-   * The bot's phoneID
-   */
-  phoneID: string
-  /**
-   * The user's phone number
-   */
-  from: string
-  /**
-   * The messages object
-   */
-  message: ServerMessage
-  /**
-   * The username
-   */
-  name?: string
-}
+export const whatsappWebhookEventSchema = z.object({
+  phoneID: z.string(), // bot phone number id
+  from: z.string(), // user phone number
+  message: z.object().transform((data) => data as unknown as ServerMessage),
+  name: z.string().optional(), // user name
+})
+export type WhatsappWebhookEvent = z.infer<typeof whatsappWebhookEventSchema>
 
 export type WhatsappActions = {
   verifyAccessToken: Handler<
@@ -61,14 +49,6 @@ export type WhatsappActions = {
     WhatsappPhoneNumber
   >
   uploadMedia: Handler<{ ctx: Context<WhatsappAuthValue>; file: File }, string>
-  receiveMessage: Handler<
-    {
-      ctx: Context<WhatsappAuthValue>
-      data: WhatsappWebhookEvent
-    },
-    ReceivedMessageResult | null
-  >
-  sendMessage: (props: SendMessageProps<WhatsappAuthValue>) => Promise<void>
   sendFlowStep: (props: SendFlowStepProps<WhatsappAuthValue>) => Promise<void>
   listMessageTemplates: Handler<
     {

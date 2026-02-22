@@ -9,7 +9,9 @@ const MAX_CAROUSEL_ELEMENTS = 10
 export function* convertFlowStepCarousel(
   props: SendFlowStepProps<MessengerAuthValue, SendCarouselStepSchema>,
 ) {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
 
   const chunks = chunk(step.cards, MAX_CAROUSEL_ELEMENTS)
   for (const chunk of chunks) {
@@ -26,8 +28,8 @@ export function* convertFlowStepCarousel(
               "buttons" in card && card.buttons.length > 0
                 ? card.buttons.map((button) =>
                     getButtonTemplate({
-                      flowId: props.flowId,
-                      flowVersionId: props.flowVersionId,
+                      flowId: props.data.flowId,
+                      flowVersionId: props.data.flowVersionId,
                       button,
                     }),
                   )

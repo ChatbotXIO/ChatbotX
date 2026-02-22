@@ -14,7 +14,6 @@ import {
 import {
   addContactNotes,
   addContactTag,
-  blockContact,
   clearContactCustomField,
   deleteContact,
   markEmailVerified,
@@ -23,17 +22,6 @@ import {
   removeContactTag,
   setContactCustomField,
 } from "./contact"
-import {
-  archiveConversation,
-  assignConversation,
-  autoAssignConversation,
-  disableBot,
-  enableBot,
-  followConversation,
-  unarchiveConversation,
-  unassignConversation,
-  unfollowConversation,
-} from "./conversation"
 import type { ExecuteStepProps } from "./flow"
 import { handleAIGenerateText } from "./generate-text"
 import { getUserData } from "./get-user-data"
@@ -44,6 +32,19 @@ import {
   sendSpreadsheetData,
   updateSpreadsheetRow,
 } from "./spreadsheet-handler"
+import {
+  stepArchiveConversation,
+  stepAssignConversation,
+  stepAutoAssignConversation,
+  stepBlockContact,
+  stepDisableBot,
+  stepEnableBot,
+  stepFollowConversation,
+  stepSendTyping,
+  stepUnarchiveConversation,
+  stepUnassignConversation,
+  stepUnfollowConversation,
+} from "./step-handlers"
 import {
   countCharacters,
   formatDate,
@@ -124,18 +125,18 @@ export const flowStepHandlers: Record<
 > = {
   [StepType.addContactNotes]: addContactNotes,
   [StepType.addContactTag]: addContactTag,
-  [StepType.archiveConversation]: archiveConversation,
-  [StepType.assignConversation]: assignConversation,
-  [StepType.autoAssignConversation]: autoAssignConversation,
-  [StepType.blockContact]: blockContact,
+  [StepType.archiveConversation]: stepArchiveConversation,
+  [StepType.assignConversation]: stepAssignConversation,
+  [StepType.autoAssignConversation]: stepAutoAssignConversation,
+  [StepType.blockContact]: stepBlockContact,
   [StepType.callApi]: undefined,
   [StepType.cancelContactInput]: undefined,
   [StepType.clearCustomField]: clearContactCustomField,
   [StepType.countCharacters]: countCharacters,
   [StepType.deleteContact]: deleteContact,
-  [StepType.disableBot]: disableBot,
-  [StepType.enableBot]: enableBot,
-  [StepType.followConversation]: followConversation,
+  [StepType.disableBot]: stepDisableBot,
+  [StepType.enableBot]: stepEnableBot,
+  [StepType.followConversation]: stepFollowConversation,
   [StepType.formatDate]: formatDate,
   [StepType.generateCode]: generateCode,
   [StepType.getDataFromJson]: getDataFromJSON,
@@ -165,9 +166,9 @@ export const flowStepHandlers: Record<
   [StepType.sendVideo]: sendFlowMessage,
   [StepType.setCustomField]: setContactCustomField,
   [StepType.setDebounce]: undefined,
-  [StepType.unarchiveConversation]: unarchiveConversation,
-  [StepType.unassignConversation]: unassignConversation,
-  [StepType.unfollowConversation]: unfollowConversation,
+  [StepType.unarchiveConversation]: stepUnarchiveConversation,
+  [StepType.unassignConversation]: stepUnassignConversation,
+  [StepType.unfollowConversation]: stepUnfollowConversation,
   [StepType.getUserData]: getUserData,
   [StepType.wait]: undefined,
   [StepType.startExternalFlow]: startExternalFlow,
@@ -194,4 +195,5 @@ export const flowStepHandlers: Record<
   [StepType.emailSpacing]: undefined,
   [StepType.emailCode]: undefined,
   [StepType.emailHeader]: undefined,
+  [StepType.typing]: stepSendTyping,
 }
