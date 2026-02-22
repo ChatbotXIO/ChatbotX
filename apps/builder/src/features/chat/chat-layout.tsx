@@ -46,9 +46,11 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     disableBotAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        updateConversation(activeConversationId as string, {
-          liveChatEnabled: true,
-        })
+        if (activeConversation) {
+          updateConversation(activeConversation.id, {
+            liveChatEnabled: true,
+          })
+        }
       },
       onError: ({ error }) => {
         if (error.serverError) {

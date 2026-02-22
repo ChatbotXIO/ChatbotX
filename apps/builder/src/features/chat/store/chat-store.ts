@@ -370,8 +370,8 @@ export const createChatStore = () => {
       // Update last seen timestamps
       if (message.messageType === MessageType.incoming) {
         updateConversation(message.conversationId, {
-          contactRepliedAt: new Date(message.createdAt ?? new Date()),
-          contactLastSeenAt: new Date(message.createdAt ?? new Date()),
+          contactRepliedAt: message.createdAt,
+          contactLastSeenAt: message.createdAt,
         })
       }
       if (

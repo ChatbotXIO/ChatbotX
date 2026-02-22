@@ -36,9 +36,11 @@ export default function MessageHead() {
     enableBotAction.bind(null, chatbotId),
     {
       onSuccess: () => {
-        updateConversation(activeConversationId as string, {
-          liveChatEnabled: false,
-        })
+        if (activeConversation) {
+          updateConversation(activeConversation.id, {
+            liveChatEnabled: false,
+          })
+        }
       },
       onError: ({ error }) => {
         if (error.serverError) {
