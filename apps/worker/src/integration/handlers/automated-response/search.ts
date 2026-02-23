@@ -6,9 +6,24 @@ import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
 import type {
   FileSearchArgs,
   FileSearchConfig,
-  SecretTextAuthValue,
   SimilaritySearchResult,
 } from "./types"
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function getSecretTextFromAuth(auth: unknown): string | null {
+  if (!isRecord(auth)) {
+    return null
+  }
+  const secretText = auth.secretText
+  if (typeof secretText !== "string") {
+    return null
+  }
+  const trimmed = secretText.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 async function getOpenAIIntegration(chatbotId: string) {
   const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
@@ -31,8 +46,13 @@ async function createQueryEmbedding(
 ): Promise<number[]> {
   const integrationOpenAI = await getOpenAIIntegration(chatbotId)
 
+  const apiKey = getSecretTextFromAuth(integrationOpenAI.auth)
+  if (!apiKey) {
+    throw new Error("Missing OpenAI API key")
+  }
+
   const openai = createOpenAI({
-    apiKey: (integrationOpenAI.auth as SecretTextAuthValue | null)?.secretText,
+    apiKey,
   })
 
   const embeddingModel = openai.embedding(DEFAULT_OPENAI_EMBEDDING_MODEL)
@@ -116,6 +136,6 @@ export async function performFileSearch(
       error,
       chatbotId: config.chatbotId,
     })
-    return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : "Unknown error"}`
+    return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : TEXT.unknownError}`
   }
 }

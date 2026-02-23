@@ -98,7 +98,7 @@ export const organizationSettingsSchema = z.object({
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
 
 export type AIAgentProvider = {
-  provider: "openai" | "gemini"
+  provider: "openai" | "gemini" | "claude" | "deepseek"
   model: string
 }
 
