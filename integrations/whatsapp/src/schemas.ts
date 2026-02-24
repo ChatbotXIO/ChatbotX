@@ -53,7 +53,6 @@ export type WhatsappActions = {
   listMessageTemplates: Handler<
     {
       ctx: Context<WhatsappAuthValue>
-      params: { limit: number }
     },
     ListMessageTemplatesReponse
   >

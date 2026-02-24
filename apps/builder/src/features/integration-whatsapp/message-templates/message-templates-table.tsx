@@ -16,6 +16,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import React from "react"
 import type { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
+import { WhatsappMessageTemplatesTableToolbarActions } from "./message-templates-table-toolbar-actions"
 
 type WhatsappMessageTemplatesTableProps = {
   integrationWhatsapp: IntegrationWhatsappModel
@@ -80,6 +81,12 @@ export function WhatsappMessageTemplatesTable({
             )}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex flex-col items-center justify-center p-4">
+        <WhatsappMessageTemplatesTableToolbarActions
+          chatbotId={integrationWhatsapp.chatbotId}
+          integrationWhatsappId={integrationWhatsapp.id}
+        />
       </div>
     </div>
   )

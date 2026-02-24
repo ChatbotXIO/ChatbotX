@@ -9,21 +9,23 @@ import { syncMessageTemplateAction } from "./actions/sync-message-templates"
 
 export function WhatsappMessageTemplatesTableToolbarActions({
   chatbotId,
+  integrationWhatsappId,
 }: {
   chatbotId: string
+  integrationWhatsappId: string
 }) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    syncMessageTemplateAction.bind(null, chatbotId),
+    syncMessageTemplateAction.bind(null, chatbotId, integrationWhatsappId),
     {
       onSuccess() {
         toast.success(t("messages.syncedSuccessfully"))
       },
       onError({ error }) {
         if (error.serverError) {
-            toast.error(error.serverError)
-          }
+          toast.error(error.serverError)
+        }
       },
     },
   )

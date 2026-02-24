@@ -89,6 +89,7 @@ export type MessageTemplateEntity = {
   status: "APPROVED" | "PENDING" | "REJECTED"
   language: string
   category: "AUTHENTICATION" | "MARKETING" | "UTILITY"
+  components: JSON[]
 }
 
 export type CreateMessageTemplateProps = {
@@ -103,18 +104,28 @@ export const listMessageTemplates = async (
   auth: WhatsappAuthValue,
 ): Promise<ListMessageTemplatesReponse> => {
   const { version = DEFAULT_API_VERSION } = auth
+  const allTemplates: MessageTemplateEntity[] = []
+  let nextUrl: string | undefined =
+    `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`
 
   try {
-    return await ky
-      .get<ListMessageTemplatesReponse>(
-        `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`,
-        {
+    while (nextUrl) {
+      const response: ListMessageTemplatesReponse = await ky
+        .get<ListMessageTemplatesReponse>(nextUrl, {
           headers: {
             Authorization: `Bearer ${auth.tokens.accessToken}`,
           },
-        },
-      )
-      .json()
+        })
+        .json()
+
+      allTemplates.push(...response.data)
+      nextUrl = response.paging?.next
+    }
+
+    return {
+      data: allTemplates,
+      paging: { next: "" },
+    }
   } catch (e) {
     logger.error(e, "Failed to list message templates")
     throw new WhatsappException("Failed to list message templates")
