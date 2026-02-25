@@ -1,3 +1,16 @@
+export interface MessageTemplate {
+  id: string
+  name: string
+  language: string
+  category: string
+  status: string
+}
+
+export interface MessageTemplateWithComponents extends MessageTemplate {
+  components: unknown
+  sourceId: string
+}
+
 export const TemplateType = {
   Text: "Text",
   Image: "Image",
