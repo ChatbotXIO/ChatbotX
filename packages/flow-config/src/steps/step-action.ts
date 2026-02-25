@@ -98,6 +98,9 @@ export const StepType = {
   emailCode: "M06",
   emailLine: "M07",
   emailHeader: "M08",
+
+  // WhatsApp Template Message
+  sendWaTemplateMessage: "WA_TM01",
 } as const
 
 export type StepType = (typeof StepType)[keyof typeof StepType]

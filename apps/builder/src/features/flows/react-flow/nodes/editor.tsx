@@ -33,6 +33,7 @@ import {
 } from "react-hook-form"
 import { funnel } from "remeda"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
+import { useMenuData } from "../contexts/menu-data-context"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
 import { ErrorAlert } from "../steps/error-alert"
@@ -105,17 +106,19 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
+    const menuData = useMenuData()
+    const beforeStep = useWatch({ name: "beforeStep" })
 
     const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
 
     useEffect(() => {
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
       if (nodeConfig) {
-        setNodeMenus(nodeConfig.menus(t))
+        setNodeMenus(nodeConfig.menus(t, { ...menuData, beforeStep }))
       } else {
         setNodeMenus([])
       }
-    }, [nodeType, t])
+    }, [nodeType, t, menuData, beforeStep])
 
     return (
       nodeMenus.length > 0 && (

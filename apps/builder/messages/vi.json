@@ -1368,6 +1368,7 @@
       "sendNode": "Bắt đầu nút khác",
       "sendText": "Gửi văn bản",
       "sendVideo": "Gửi video",
+      "sendWaTemplateMessage": "Tin nhắn mẫu",
       "setCustomField": "Thiết lập trường tùy chỉnh",
       "startAnotherNode": "Bắt đầu nút khác",
       "startExternalFlow": "Bắt đầu luồng bên ngoài",
@@ -1422,6 +1423,12 @@
     "formatTimezone": {
       "accountTimezone": "Múi giờ tài khoản",
       "contactTimezone": "Múi giờ liên hệ"
+    },
+    "fields": {
+      "selectTemplate": "Chọn mẫu",
+      "selectTemplatePlaceholder": "Chọn mẫu WhatsApp",
+      "templateParameters": "Tham số mẫu",
+      "preview": "Xem trước"
     },
     "name": {
       "label": "Tên luồng"

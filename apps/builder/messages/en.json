@@ -1365,6 +1365,8 @@
       "sendNode": "Start Another Node",
       "sendText": "Send Text",
       "sendVideo": "Send Video",
+      "sendWaTemplateMessage": "Template Message",
+      "noTemplatesAvailable": "No templates available",
       "setCustomField": "Set Custom Field",
       "startAnotherNode": "Start Another Node",
       "startExternalFlow": "Start External Flow",
@@ -1419,6 +1421,12 @@
     "formatTimezone": {
       "accountTimezone": "Account Timezone",
       "contactTimezone": "Contact Timezone"
+    },
+    "fields": {
+      "selectTemplate": "Select Template",
+      "selectTemplatePlaceholder": "Choose a WhatsApp template",
+      "templateParameters": "Template Parameters",
+      "preview": "Preview"
     },
     "name": {
       "label": "Flow name"

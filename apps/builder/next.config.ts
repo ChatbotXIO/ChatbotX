@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       new URL("**", env.NEXT_PUBLIC_ASSET_URL),
       {
         protocol: "https",
+        hostname: "storage.googleapis.com",
+      },
+      {
+        protocol: "https",
         hostname: "(.*.)?picsum.photos",
       },
       {

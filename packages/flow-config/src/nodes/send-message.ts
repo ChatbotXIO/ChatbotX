@@ -13,6 +13,7 @@ import { sendGifStepSchema } from "../steps/send-gif"
 import { sendImageStepSchema } from "../steps/send-image"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
+import { sendWaTemplateMessageStepSchema } from "../steps/send-wa-message-template"
 import { typingStepSchema } from "../steps/typing"
 import {
   baseNodeDataSchema,
@@ -39,6 +40,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
           getUserDataStepSchema,
           sendGifStepSchema,
           typingStepSchema,
+          sendWaTemplateMessageStepSchema,
           ...actionSteps,
         ]),
       ),

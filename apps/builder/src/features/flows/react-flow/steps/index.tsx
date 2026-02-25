@@ -40,6 +40,7 @@ import sendGifStep from "./send-gif"
 import sendImageStep from "./send-image"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
+import sendWaTemplateMessageStep from "./send-wa-template-message"
 import { setCustomFieldStep } from "./set-custom-field"
 import { spreadsheetClearRowStep } from "./spreadsheet-clear-row"
 import { spreadsheetGetRandomRowStep } from "./spreadsheet-get-random-row"
@@ -64,6 +65,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.sendCarousel]: sendCarouselStep,
   [StepType.getUserData]: getUserDataStep,
   [StepType.sendVideo]: sendVideoStep,
+  [StepType.sendWaTemplateMessage]: sendWaTemplateMessageStep,
   [StepType.sendGif]: sendGifStep,
   [StepType.setDebounce]: undefined,
   [StepType.sendMessengerOtn]: undefined,

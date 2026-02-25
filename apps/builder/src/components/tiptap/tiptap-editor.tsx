@@ -22,6 +22,7 @@ import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/c
 type TiptapEditorProps = {
   initValue?: string
   placeholder?: string
+  showEmojiPicker?: boolean
   onChange?: (content: string) => void
 }
 
@@ -29,6 +30,7 @@ export const TiptapEditor = ({
   initValue,
   onChange,
   placeholder = "Type a message...",
+  showEmojiPicker = true,
 }: TiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
@@ -95,16 +97,18 @@ export const TiptapEditor = ({
       <div
         className={`${isEditorFocused ? "opacity-100" : "opacity-0"} absolute right-0 bottom-0 z-10 flex translate-y-full cursor-pointer items-center rounded-b-sm bg-gray-500 hover:bg-gray-600`}
       >
-        <Popover onOpenChange={setIsOpenEmoji} open={isOpenEmoji}>
-          <PopoverTrigger asChild onClick={() => setIsEditorFocused(true)}>
-            <div className="p-2">
-              <Smile className="text-white" size={14} />
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <EmojiPicker onEmojiClick={onEmojiClick} />
-          </PopoverContent>
-        </Popover>
+        {showEmojiPicker && (
+          <Popover onOpenChange={setIsOpenEmoji} open={isOpenEmoji}>
+            <PopoverTrigger asChild onClick={() => setIsEditorFocused(true)}>
+              <div className="p-2">
+                <Smile className="text-white" size={14} />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <EmojiPicker onEmojiClick={onEmojiClick} />
+            </PopoverContent>
+          </Popover>
+        )}
 
         <Popover onOpenChange={setIsOpenCustomField} open={isOpenCustomField}>
           <PopoverTrigger asChild onClick={() => setIsEditorFocused(true)}>

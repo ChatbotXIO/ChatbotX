@@ -18,6 +18,7 @@ export type TiptapEditorFieldProps = {
   required?: boolean
   placeholder?: string
   formItemClassName?: string
+  showEmojiPicker?: boolean
 }
 
 export const TiptapEditorField = ({
@@ -26,6 +27,7 @@ export const TiptapEditorField = ({
   required = false,
   formItemClassName,
   placeholder,
+  showEmojiPicker = true,
 }: TiptapEditorFieldProps) => {
   const { control, getValues } = useFormContext()
 
@@ -57,6 +59,7 @@ export const TiptapEditorField = ({
               initValue={initValue}
               onChange={field.onChange}
               placeholder={placeholder}
+              showEmojiPicker={showEmojiPicker}
             />
           </FormControl>
           <FormMessage />
