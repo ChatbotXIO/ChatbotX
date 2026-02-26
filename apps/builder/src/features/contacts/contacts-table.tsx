@@ -80,6 +80,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           variant: "text",
         },
         enableColumnFilter: true,
+        enableHiding: false,
       },
       {
         accessorKey: "source",
@@ -96,6 +97,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           return <div>{channel ? channel.label : ""}</div>
         },
         enableSorting: false,
+        enableHiding: false,
         meta: {
           label: t("fields.source.label"),
         },
@@ -120,6 +122,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           label: t("fields.assignee.label"),
         },
         enableSorting: false,
+        enableHiding: false,
       },
       {
         id: "lastSeenAt",
@@ -147,6 +150,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           label: t("fields.lastSeen.label"),
         },
         enableSorting: true,
+        enableHiding: false,
       },
       {
         accessorKey: "createdAt",
@@ -161,6 +165,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           label: t("fields.createdAt.label"),
         },
         enableSorting: true,
+        enableHiding: false,
       },
     ],
     [chatbotId, t, channelOptions],

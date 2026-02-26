@@ -86,6 +86,7 @@ export function getFlowColumns({
       enableColumnFilter: true,
       size: 300,
       enableSorting: true,
+      enableHiding: false,
     },
     {
       accessorKey: "status",
@@ -119,6 +120,7 @@ export function getFlowColumns({
       },
       size: 50,
       enableSorting: false,
+      enableHiding: false,
     },
     {
       accessorKey: "inbox",
@@ -153,6 +155,7 @@ export function getFlowColumns({
       },
       size: 50,
       enableSorting: false,
+      enableHiding: false,
     },
     {
       accessorKey: "createdAt",
@@ -168,6 +171,7 @@ export function getFlowColumns({
       meta: {
         label: t("fields.modified.label"),
       },
+      enableHiding: false,
     },
     {
       id: "actions",
