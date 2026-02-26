@@ -430,7 +430,9 @@ function buildToolSummaryForFollowUp(
     }
   }
 
-  return summaries.length > 0 ? summaries.join("\n\n") : null
+  const result = summaries.length > 0 ? summaries.join("\n\n") : null
+
+  return result
 }
 
 function buildFallbackTextFromTools(

@@ -1,13 +1,11 @@
-const MAX_SUMMARY_CHARS = 1200
-const REGEX_ONLY_DIGITS = /^\d+$/
+const MAX_SUMMARY_CHARS = 10_000
 
 export function summarizeToolResult(rawContent: unknown): string | null {
   const unwrapped = tryUnwrapMcpResult(rawContent)
   const content = unwrapped !== null ? unwrapped : rawContent
 
-  const directSummary = summarizeKnownToolSchemas(content)
-  if (directSummary) {
-    return clampTextLength(directSummary)
+  if (content === null || content === undefined) {
+    return null
   }
 
   if (typeof content === "string") {
@@ -18,31 +16,18 @@ export function summarizeToolResult(rawContent: unknown): string | null {
 
     const parsed = tryParseJsonValue(trimmed)
     if (parsed !== null) {
-      const parsedSummary = summarizeKnownToolSchemas(parsed)
-      if (parsedSummary) {
-        return clampTextLength(parsedSummary)
-      }
-      return null
-    }
-
-    if (
-      (trimmed.startsWith("{") || trimmed.startsWith("[")) &&
-      trimmed.length > 50
-    ) {
-      return null
+      return summarizeStructuredValue(parsed)
     }
 
     return clampTextLength(trimmed)
   }
 
   if (isRecord(content) || Array.isArray(content)) {
-    const summary = summarizeKnownToolSchemas(content)
-    if (summary) {
-      return clampTextLength(summary)
-    }
+    return summarizeStructuredValue(content)
   }
 
-  return null
+  // Fallback for other types (boolean, number)
+  return String(content)
 }
 
 function tryUnwrapMcpResult(value: unknown): unknown | null {
@@ -69,144 +54,13 @@ function tryUnwrapMcpResult(value: unknown): unknown | null {
   return null
 }
 
-function summarizeKnownToolSchemas(value: unknown): string | null {
-  const shopCatalogSummary = summarizeShopCatalog(value)
-  if (shopCatalogSummary) {
-    return shopCatalogSummary
-  }
-
-  return null
-}
-
-function summarizeShopCatalog(value: unknown): string | null {
-  const products = extractProductsArray(value)
-  if (!products) {
+function summarizeStructuredValue(value: unknown): string | null {
+  try {
+    const jsonString = JSON.stringify(value)
+    return clampTextLength(jsonString)
+  } catch {
     return null
   }
-
-  if (products.length === 0) {
-    return null // Let the caller decide the fallback
-  }
-
-  const lines: string[] = []
-  const maxItems = Math.min(products.length, 3)
-
-  for (let i = 0; i < products.length && lines.length < maxItems; i++) {
-    const item = products[i]
-    if (!isRecord(item)) {
-      continue
-    }
-
-    const title = getString(item.title) ?? getString(item.name)
-    if (!title) {
-      continue
-    }
-
-    const currency = getString(item.currency)
-    const available =
-      getBoolean(item.available) ??
-      getBooleanFromFirstVariant(item.variants) ??
-      null
-
-    const price =
-      getPriceFromFirstVariant(item.variants) ?? getString(item.price)
-    const priceText = formatPrice(price, currency)
-
-    let availabilityText = ""
-    if (available === true) {
-      availabilityText = " (in stock)"
-    } else if (available === false) {
-      availabilityText = " (out of stock)"
-    }
-
-    lines.push(
-      `- ${title}${priceText ? ` — ${priceText}` : ""}${availabilityText}`,
-    )
-  }
-
-  if (lines.length === 0) {
-    return null
-  }
-
-  return [`Found ${products.length} products. Highlights:`, ...lines].join("\n")
-}
-
-function extractProductsArray(value: unknown): unknown[] | null {
-  if (!value) {
-    return null
-  }
-
-  if (Array.isArray(value)) {
-    return value
-  }
-
-  if (!isRecord(value)) {
-    return null
-  }
-
-  const direct = value.products
-  if (Array.isArray(direct)) {
-    return direct
-  }
-  if (isRecord(direct)) {
-    const nestedProducts = direct.products
-    if (Array.isArray(nestedProducts)) {
-      return nestedProducts
-    }
-    const nestedItems = direct.items
-    if (Array.isArray(nestedItems)) {
-      return nestedItems
-    }
-  }
-
-  const nested = value.result
-  if (isRecord(nested) && Array.isArray(nested.products)) {
-    return nested.products
-  }
-
-  const data = value.data
-  if (isRecord(data) && Array.isArray(data.products)) {
-    return data.products
-  }
-
-  return null
-}
-
-function getBooleanFromFirstVariant(variants: unknown): boolean | null {
-  if (!Array.isArray(variants) || variants.length === 0) {
-    return null
-  }
-  const first = variants[0]
-  if (!isRecord(first)) {
-    return null
-  }
-  return getBoolean(first.available)
-}
-
-function getPriceFromFirstVariant(variants: unknown): string | null {
-  if (!Array.isArray(variants) || variants.length === 0) {
-    return null
-  }
-  const first = variants[0]
-  if (!isRecord(first)) {
-    return null
-  }
-  return getString(first.price)
-}
-
-function getString(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null
-  }
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-
-function getBoolean(value: unknown): boolean | null {
-  if (typeof value !== "boolean") {
-    return null
-  }
-  return value
 }
 
 function tryParseJsonValue(text: string): unknown | null {
@@ -233,29 +87,6 @@ function clampTextLength(text: string): string {
     return trimmed
   }
   return `${trimmed.slice(0, MAX_SUMMARY_CHARS).trim()}...`
-}
-
-function formatPrice(
-  price: string | null,
-  currency: string | null,
-): string | null {
-  if (!price) {
-    return null
-  }
-
-  const numeric = REGEX_ONLY_DIGITS.test(price) ? Number(price) : null
-  if (numeric !== null && Number.isFinite(numeric)) {
-    try {
-      if ((currency ?? "").toUpperCase() === "VND") {
-        return `${new Intl.NumberFormat("vi-VN").format(numeric)}₫`
-      }
-      return new Intl.NumberFormat("vi-VN").format(numeric)
-    } catch {
-      return price
-    }
-  }
-
-  return price
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

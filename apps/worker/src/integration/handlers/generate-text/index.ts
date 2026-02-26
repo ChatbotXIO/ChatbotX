@@ -10,6 +10,7 @@ import { generateText, Output, streamText } from "ai"
 import { z } from "zod"
 import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
+import { AI_GENERATE_TEXT } from "../automated-response/constants"
 import { processStreamingText } from "../automated-response/text"
 import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
@@ -179,7 +180,10 @@ async function saveResultToCustomField({
     const { output: extractedDataRaw } = await generateText({
       model,
       output: Output.object({ schema: contactSchema }),
-      prompt: `Extract the following information for the field "${customFieldId}" from this text: "${fullText}"`,
+      prompt: AI_GENERATE_TEXT.RESERVED_FIELD_EXTRACTION_PROMPT.replace(
+        "{{customFieldId}}",
+        customFieldId,
+      ).replace("{{fullText}}", fullText),
       temperature: 0,
       abortSignal,
     })

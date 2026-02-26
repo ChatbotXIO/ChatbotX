@@ -76,7 +76,6 @@ export async function callMCPTool(props: {
   args: Record<string, unknown>
 }): Promise<MCPResult> {
   const { url, toolName, args } = props
-  const startedAt = Date.now()
 
   try {
     const authParsed = mcpAuthSchema.safeParse(props.auth)
@@ -193,12 +192,7 @@ export async function callMCPTool(props: {
       content: normalized,
     }
   } catch (error) {
-    logger.error("[mcp] call tool failed", {
-      url,
-      toolName,
-      durationMs: Date.now() - startedAt,
-      error,
-    })
+    logger.error(error, "[automated-response] callMCPTool failed")
     return {
       error: error instanceof Error ? error.message : TEXT.unknownError,
       success: false,
