@@ -107,6 +107,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         },
         enableColumnFilter: true,
         enableSorting: true,
+        enableHiding: false,
       },
       {
         id: "Type",
@@ -127,6 +128,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         },
         size: 100,
         enableSorting: false,
+        enableHiding: false,
       },
       {
         id: "Inbox",
@@ -139,6 +141,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
         ),
         cell: ({ row }) => <Switch checked={row.original.showInInbox} />,
         enableSorting: false,
+        enableHiding: false,
         meta: {
           label: t("fields.inbox.label"),
         },

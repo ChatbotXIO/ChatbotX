@@ -38,6 +38,7 @@ export function getWebchatColumns({
         const webchat = row.original
         return <span className="font-medium">{webchat.name}</span>
       },
+      enableHiding: false,
     },
     {
       accessorKey: "updatedAt",
@@ -53,6 +54,7 @@ export function getWebchatColumns({
           <div className="text-sm">{format(date, "MM/dd/yyyy h:mm a")}</div>
         )
       },
+      enableHiding: false,
     },
     // {
     //   accessorKey: "enable",

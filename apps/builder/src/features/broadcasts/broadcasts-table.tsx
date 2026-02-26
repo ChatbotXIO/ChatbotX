@@ -63,6 +63,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           variant: "text",
         },
         enableColumnFilter: true,
+        enableHiding: false,
       },
       {
         id: "inboxType",
@@ -79,6 +80,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         meta: {
           label: t("fields.channel.label"),
         },
+        enableHiding: false,
       },
       {
         id: "status",
@@ -100,6 +102,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
             </Badge>
           ),
         enableSorting: false,
+        enableHiding: false,
         meta: {
           label: t("fields.status.label"),
         },
@@ -116,6 +119,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         meta: {
           label: t("fields.estimatedContacts.label"),
         },
+        enableHiding: false,
       },
       {
         accessorKey: "schedulesAt",
@@ -131,6 +135,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         meta: {
           label: t("fields.scheduledAt.label"),
         },
+        enableHiding: false,
       },
       {
         id: "actions",

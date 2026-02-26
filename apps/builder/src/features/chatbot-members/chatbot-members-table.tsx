@@ -61,6 +61,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
             <span>{row.original.user?.name}</span>
           </div>
         ),
+        enableHiding: false,
       },
       {
         id: "enableContacts",
@@ -73,6 +74,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           ) : (
             <XCircleIcon className="size-5" />
           ),
+        enableHiding: false,
       },
       {
         id: "enableAnalytics",
@@ -85,6 +87,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           ) : (
             <XCircleIcon className="size-5" />
           ),
+        enableHiding: false,
       },
       {
         id: "enableFlows",
@@ -97,6 +100,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           ) : (
             <XCircleIcon className="size-5" />
           ),
+        enableHiding: false,
       },
       {
         id: "flows",
@@ -110,6 +114,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           ) : (
             <XCircleIcon className="size-5" />
           ),
+        enableHiding: false,
       },
       {
         id: "notificationTypes",
@@ -122,6 +127,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
           ) : (
             <XCircleIcon className="size-5" />
           ),
+        enableHiding: false,
       },
       {
         id: "actions",
@@ -148,6 +154,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         ),
+        enableHiding: false,
       },
     ],
     [t],

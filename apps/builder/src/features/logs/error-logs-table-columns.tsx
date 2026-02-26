@@ -70,6 +70,7 @@ export function getColumns({
       },
       enableColumnFilter: true,
       enableSorting: true,
+      enableHiding: false,
     },
     {
       accessorKey: "detail",
@@ -82,6 +83,7 @@ export function getColumns({
       },
       size: 400,
       enableSorting: true,
+      enableHiding: false,
     },
     {
       id: "contact",
@@ -97,6 +99,7 @@ export function getColumns({
       },
       size: 50,
       enableSorting: false,
+      enableHiding: false,
     },
     {
       accessorKey: "createdAt",
@@ -109,6 +112,7 @@ export function getColumns({
         label: t("fields.date.label"),
       },
       enableSorting: true,
+      enableHiding: false,
     },
     {
       id: "actions",

@@ -106,6 +106,7 @@ export function AutomatedResponsesTable({
         meta: {
           label: t("fields.userMessage.label"),
         },
+        enableHiding: false,
       },
       {
         id: "replies",
@@ -145,6 +146,7 @@ export function AutomatedResponsesTable({
           )
         },
         enableSorting: false,
+        enableHiding: false,
         meta: {
           label: t("fields.botResponse.label"),
         },
@@ -167,6 +169,7 @@ export function AutomatedResponsesTable({
           />
         ),
         enableSorting: false,
+        enableHiding: false,
         meta: {
           label: t("fields.status.label"),
         },
@@ -187,6 +190,7 @@ export function AutomatedResponsesTable({
           label: t("fields.createdAt.label"),
         },
         enableSorting: true,
+        enableHiding: false,
       },
       {
         id: "action",

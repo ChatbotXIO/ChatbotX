@@ -1,6 +1,9 @@
 import { FolderType } from "@aha.chat/database/types"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
+import { Card } from "@aha.chat/ui/components/ui/card"
+import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
+import { AppBreadcrumb } from "@/components/app-breadcrumb"
+import { AppTab } from "@/components/app-tab"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 
 export default async function TagsLayout({
@@ -13,12 +16,22 @@ export default async function TagsLayout({
   params: Promise<{ chatbotId: string }>
 }) {
   const { chatbotId } = await params
+  const t = await getTranslations()
 
   return (
     <FolderStoreProvider chatbotId={chatbotId} folderType={FolderType.tag}>
-      {folders}
-      <Separator />
-      {children}
+      <AppBreadcrumb
+        items={[
+          {
+            label: t("fields.flows.label"),
+            href: `/chatbots/${chatbotId}/flows`,
+          },
+          { label: t("tags.heading.title"), href: "" },
+        ]}
+      />
+      <AppTab chatbotId={chatbotId} />
+      <Card className="px-8">{folders}</Card>
+      <Card className="px-8">{children}</Card>
     </FolderStoreProvider>
   )
 }
