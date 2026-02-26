@@ -90,7 +90,7 @@ export async function handleAIGenerateText({
 
     await saveResultToCustomField({
       contactId: conversation.contactId,
-      customFieldId: step.outputFieldId,
+      customFieldId: step.outputCfId,
       fullText,
       messageCount,
       workspaceId: conversation.workspaceId,

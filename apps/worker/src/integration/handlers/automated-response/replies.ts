@@ -1,141 +1,467 @@
-import { db, sql } from "@aha.chat/database/client"
-import { createOpenAI } from "@ai-sdk/openai"
-import { embed } from "ai"
+import { db } from "@aha.chat/database/client"
+import { ReplyType } from "@aha.chat/database/types"
+import type { OutgoingConversation } from "@aha.chat/sdk"
+import {
+  ChatJobAction,
+  chatQueue,
+  IntegrationJobAction,
+  integrationQueue,
+} from "@aha.chat/worker-config"
+import { streamText, type ToolSet, tool } from "ai"
+import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
 import { isRecord } from "../../../lib/utils"
-import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
-import type {
-  FileSearchArgs,
-  FileSearchConfig,
-  SimilaritySearchResult,
-} from "./types"
+import { TEXT } from "./constants"
+import { summarizeToolResult } from "./summarizer"
+import { processStreamingText, sendMessageWithRender } from "./text"
+import type { ReplyByAIProps } from "./types"
 
-function getSecretTextFromAuth(auth: unknown): string | null {
-  if (!isRecord(auth)) {
-    return null
-  }
-  const secretText = auth.secretText
-  if (typeof secretText !== "string") {
-    return null
-  }
-  const trimmed = secretText.trim()
-  return trimmed.length > 0 ? trimmed : null
+type ParsedAIAgentProvider = {
+  provider: string
+  model: string
 }
 
-async function getOpenAIIntegration(chatbotId: string) {
-  const integrationOpenAI = await db.query.integrationOpenAIModel.findFirst({
-    where: {
-      chatbotId,
-      autoReply: true,
-    },
-  })
-
-  if (!integrationOpenAI) {
-    throw new Error("OpenAI integration not found")
+function parseAIAgentProviders(value: unknown): ParsedAIAgentProvider[] {
+  if (!Array.isArray(value)) {
+    return []
   }
 
-  return integrationOpenAI
+  const parsed: ParsedAIAgentProvider[] = []
+  for (const item of value) {
+    if (!isRecord(item)) {
+      continue
+    }
+    const provider = item.provider
+    const model = item.model
+    if (typeof provider !== "string" || typeof model !== "string") {
+      continue
+    }
+    const trimmedProvider = provider.trim()
+    const trimmedModel = model.trim()
+    if (!(trimmedProvider && trimmedModel)) {
+      continue
+    }
+    parsed.push({ provider: trimmedProvider, model: trimmedModel })
+  }
+  return parsed
 }
 
-async function createQueryEmbedding(
-  query: string,
-  chatbotId: string,
-): Promise<number[]> {
-  const integrationOpenAI = await getOpenAIIntegration(chatbotId)
+type ParsedAutomatedReply =
+  | { type: typeof ReplyType.Message; message: string }
+  | { type: typeof ReplyType.Flow; flowId: string }
 
-  const apiKey = getSecretTextFromAuth(integrationOpenAI.auth)
-  if (!apiKey) {
-    throw new Error("Missing OpenAI API key")
+function parseAutomatedResponseReplies(value: unknown): ParsedAutomatedReply[] {
+  if (!Array.isArray(value)) {
+    return []
   }
 
-  const openai = createOpenAI({
-    apiKey,
-  })
-
-  const embeddingModel = openai.embedding(DEFAULT_OPENAI_EMBEDDING_MODEL)
-  const { embedding } = await embed({
-    model: embeddingModel,
-    value: query,
-  })
-
-  return embedding
-}
-
-async function searchSimilarEmbeddings(
-  queryEmbedding: number[],
-  config: FileSearchConfig,
-): Promise<SimilaritySearchResult[]> {
-  const embeddingString = `[${queryEmbedding.join(",")}]`
-
-  const results = await db.execute(sql`
-    SELECT
-      "id",
-      "content",
-      "aiFileId",
-      1 - ("embedding" <=> ${embeddingString}::vector) as distance
-    FROM "AIEmbedding"
-    WHERE "chatbotId" = ${config.chatbotId}
-      AND "aiFileId" = ANY(${config.selectedFileIds})
-    ORDER BY "embedding" <=> ${embeddingString}::vector
-    LIMIT ${config.maxResults}
-  `)
-
-  return results.rows as unknown as SimilaritySearchResult[]
-}
-
-function filterRelevantResults(
-  results: SimilaritySearchResult[],
-  threshold: number,
-): SimilaritySearchResult[] {
-  return results.filter((result) => result.distance > threshold)
-}
-
-function formatSearchResults(results: SimilaritySearchResult[]): string {
-  if (results.length === 0) {
-    return TEXT.fileSearchNoResult
+  const parsed: ParsedAutomatedReply[] = []
+  for (const item of value) {
+    if (!isRecord(item)) {
+      continue
+    }
+    const type = item.type
+    if (type === ReplyType.Message) {
+      const message = item.message
+      if (typeof message === "string" && message.trim().length > 0) {
+        parsed.push({ type: ReplyType.Message, message })
+      }
+      continue
+    }
+    if (type === ReplyType.Flow) {
+      const flowId = item.flowId
+      if (typeof flowId === "string" && flowId.trim().length > 0) {
+        parsed.push({ type: ReplyType.Flow, flowId })
+      }
+    }
   }
-
-  const formattedResults = results
-    .map((item, index) => `${index + 1}. ${item.content}`)
-    .join("\n\n")
-
-  return `${TEXT.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
+  return parsed
 }
 
-export async function performFileSearch(
-  args: FileSearchArgs,
-  config: FileSearchConfig,
+async function replaceCustomFieldAttributes(
+  message: string,
+  conversationId: string,
 ): Promise<string> {
   try {
-    const queryEmbedding = await createQueryEmbedding(
-      args.query,
-      config.chatbotId,
-    )
-    const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
+    const conversation = await db.query.conversationModel.findFirst({
+      where: { id: conversationId },
+      with: {
+        contact: {
+          with: {
+            contactCustomFields: {
+              with: {
+                customField: true,
+              },
+            },
+          },
+        },
+      },
+    })
 
-    if (searchResults.length === 0) {
-      return TEXT.fileSearchNoResult
+    if (!conversation?.contact) {
+      return message
     }
 
-    const relevantResults = filterRelevantResults(
-      searchResults,
-      config.similarityThreshold,
-    )
-
-    if (relevantResults.length === 0) {
-      return TEXT.fileSearchNoResult
+    const fieldMap = new Map<string, string>()
+    for (const customField of conversation.contact.contactCustomFields) {
+      if (customField.customField?.name && customField.value) {
+        fieldMap.set(customField.customField.name, customField.value)
+      }
     }
 
-    const result = formatSearchResults(relevantResults)
-    return result
+    let processedMessage = message
+    const attributeRegex = /\{\{(\w+)\}\}/g
+
+    processedMessage = processedMessage.replace(
+      attributeRegex,
+      (match, fieldName) => {
+        const value = fieldMap.get(fieldName)
+        return value || match
+      },
+    )
+
+    return processedMessage
+  } catch {
+    return message
+  }
+}
+
+async function listAllEnabledAutomatedResponses({
+  chatbotId,
+}: {
+  chatbotId: string
+}) {
+  try {
+    return await db.query.automatedResponseModel.findMany({
+      where: { chatbotId, status: true },
+    })
+  } catch {
+    return []
+  }
+}
+
+export async function replyByAutomatedResponse({
+  message,
+  conversation,
+}: {
+  message: {
+    content?: string | null
+    conversationId: string
+    chatbotId: string
+  }
+  conversation: OutgoingConversation
+}): Promise<boolean> {
+  try {
+    let replied = false
+    const allAutomatedResponses = await listAllEnabledAutomatedResponses({
+      chatbotId: message.chatbotId,
+    })
+    if (allAutomatedResponses.length === 0) {
+      return false
+    }
+
+    for (const automatedResponse of allAutomatedResponses) {
+      const content = (message.content ?? "").toLowerCase()
+      const matched = automatedResponse.userMessages
+        .map((v) => v.toLowerCase())
+        .some((v) => content.includes(v))
+
+      if (!matched) {
+        continue
+      }
+
+      const replies = parseAutomatedResponseReplies(automatedResponse.replies)
+      for (const reply of replies) {
+        switch (reply.type) {
+          case ReplyType.Message: {
+            const stepMessage = await replaceCustomFieldAttributes(
+              reply.message,
+              message.conversationId,
+            )
+
+            await chatQueue.add(ChatJobAction.sendChatMessage, {
+              type: ChatJobAction.sendChatMessage,
+              data: {
+                conversation,
+                text: stepMessage,
+              },
+            })
+            replied = true
+            break
+          }
+          case ReplyType.Flow: {
+            const flow = await db.query.flowModel.findFirst({
+              where: { id: reply.flowId },
+              with: {
+                flowVersions: {
+                  where: {
+                    isDraft: false,
+                    isLatest: true,
+                  },
+                  orderBy: (table, { desc }) => [desc(table.createdAt)],
+                  limit: 1,
+                },
+              },
+            })
+            if (flow?.currentVersionId) {
+              await integrationQueue.add(IntegrationJobAction.sendFlow, {
+                type: IntegrationJobAction.sendFlow,
+                data: {
+                  conversationId: message.conversationId,
+                  flowId: flow.id,
+                },
+              })
+              replied = true
+            }
+            break
+          }
+          default:
+            break
+        }
+      }
+    }
+    return replied
   } catch (error) {
     logger.error(
       {
         error,
-        chatbotId: config.chatbotId,
+        conversationId: message.conversationId,
+        chatbotId: message.chatbotId,
       },
-      "[automated-response] performFileSearch failed",
+      "[automated-response] replyByAutomatedResponse failed",
     )
-    return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : TEXT.unknownError}`
+    return false
   }
+}
+
+export async function replyByAI(props: ReplyByAIProps): Promise<boolean> {
+  const { aiAgent } = props
+  const providers = parseAIAgentProviders(aiAgent.models)
+
+  for (const providerInfo of providers) {
+    const success = await runAIReply(props, providerInfo)
+    if (success) {
+      return true
+    }
+  }
+
+  return false
+}
+
+async function runAIReply(
+  props: ReplyByAIProps,
+  providerInfo: ParsedAIAgentProvider,
+): Promise<boolean> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 120_000)
+
+  const { message, lastAIMessages, aiAgent, tools } = props
+  const provider = providerInfo.provider
+  try {
+    const selectedModelId = providerInfo.model
+
+    const integration = await getAIIntegrationInDB({
+      chatbotId: message.chatbotId,
+      provider,
+      autoReply: true,
+    })
+
+    if (!integration) {
+      return false
+    }
+
+    const model = createAIModelInstance({
+      model: integration,
+      provider,
+      modelId: selectedModelId,
+      abortSignal: controller.signal,
+      traceId: message.conversationId,
+    })
+
+    const completePrompt = await replaceCustomFieldAttributes(
+      aiAgent.prompt || "",
+      message.conversationId,
+    )
+    const systemPrompt = appendToolOutputGuard(completePrompt)
+
+    const toolExecutions: ToolExecutionLog[] = []
+    const toolsWithLogging = wrapToolsWithLogging(tools, {
+      conversationId: message.conversationId,
+      chatbotId: message.chatbotId,
+      provider,
+      onToolResult: (toolName, result, toolCallId) => {
+        toolExecutions.push({ toolName, result, toolCallId })
+      },
+    })
+
+    const result = await streamText({
+      model,
+      system: systemPrompt,
+      messages: lastAIMessages,
+      maxOutputTokens: aiAgent.maxOutputTokens,
+      temperature: aiAgent.temperature,
+      tools: toolsWithLogging,
+      toolChoice: Object.keys(toolsWithLogging).length > 0 ? "auto" : undefined,
+      // @ts-expect-error - maxSteps is supported in AI SDK v6
+      maxSteps: 5,
+      abortSignal: controller.signal,
+    })
+
+    const { messageCount } = await processStreamingText(
+      result.textStream,
+      props.conversation,
+      { sendParts: true },
+    )
+
+    if (messageCount > 0) {
+      return true
+    }
+
+    const toolSummary = buildToolSummaryForFollowUp(toolExecutions)
+    if (toolSummary) {
+      const followUpResult = await streamText({
+        model,
+        system: systemPrompt,
+        messages: [
+          ...lastAIMessages,
+          {
+            role: "user",
+            content: `${TEXT.followUpInstruction}\n\n${toolSummary}`,
+          },
+        ],
+        maxOutputTokens: aiAgent.maxOutputTokens,
+        temperature: aiAgent.temperature,
+        toolChoice: "none",
+        // @ts-expect-error - maxSteps is supported in AI SDK v6
+        maxSteps: 5,
+        abortSignal: controller.signal,
+      })
+
+      const { messageCount: followUpCount } = await processStreamingText(
+        followUpResult.textStream,
+        props.conversation,
+        { sendParts: true },
+      )
+
+      if (followUpCount > 0) {
+        return true
+      }
+    }
+
+    const fallbackText = buildFallbackTextFromTools(toolExecutions)
+    if (fallbackText) {
+      await sendMessageWithRender(props.conversation, fallbackText)
+      return true
+    }
+
+    return false
+  } catch (error) {
+    logger.error(
+      {
+        error,
+        provider,
+        conversationId: message.conversationId,
+        chatbotId: message.chatbotId,
+      },
+      "[automated-response] runAIReply failed",
+    )
+    return false
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+type ToolExecutionLog = {
+  toolName: string
+  result: unknown
+  toolCallId?: string
+}
+
+function wrapToolsWithLogging(
+  tools: ToolSet,
+  ctx: {
+    conversationId: string
+    chatbotId: string
+    provider: string
+    onToolResult?: (
+      toolName: string,
+      result: unknown,
+      toolCallId?: string,
+    ) => void
+  },
+): ToolSet {
+  const wrapped: ToolSet = {}
+
+  for (const [toolName, originalTool] of Object.entries(tools)) {
+    wrapped[toolName] = tool({
+      description: originalTool.description,
+      inputSchema: originalTool.inputSchema,
+      execute: async (input, options) => {
+        const startedAt = Date.now()
+
+        try {
+          if (!originalTool.execute) {
+            throw new Error("Tool execute() is not defined")
+          }
+
+          const result = await originalTool.execute(input, options)
+          ctx.onToolResult?.(toolName, result, options.toolCallId)
+          return result
+        } catch (error) {
+          logger.error(
+            {
+              toolName,
+              provider: ctx.provider,
+              conversationId: ctx.conversationId,
+              chatbotId: ctx.chatbotId,
+              ms: Date.now() - startedAt,
+              error,
+            },
+            "[automated-response] tool failed",
+          )
+          throw error
+        }
+      },
+    })
+  }
+
+  return wrapped
+}
+
+function buildToolSummaryForFollowUp(
+  executions: ToolExecutionLog[],
+): string | null {
+  const summaries: string[] = []
+  for (const exec of executions) {
+    const text = summarizeToolResult(exec.result)
+    if (text) {
+      summaries.push(`Tool ${exec.toolName} result:\n${text}`)
+    }
+  }
+
+  const result = summaries.length > 0 ? summaries.join("\n\n") : null
+
+  return result
+}
+
+function buildFallbackTextFromTools(
+  executions: ToolExecutionLog[],
+): string | null {
+  for (let i = executions.length - 1; i >= 0; i--) {
+    const exec = executions[i]
+    const text = summarizeToolResult(exec.result)
+    if (text) {
+      return text
+    }
+  }
+
+  if (executions.length > 0) {
+    return TEXT.fallbackLookup
+  }
+
+  return null
+}
+
+function appendToolOutputGuard(systemPrompt: string): string {
+  return `${systemPrompt}\n\n${TEXT.toolOutputGuard}`.trim()
 }

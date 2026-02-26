@@ -97,3 +97,7 @@ export const SUPPORTED_IMAGE_EXTENSIONS = [
   IMAGE_EXTENSIONS.SVG,
 ] as const
 export const maxConversationHistory = 100
+export const AI_GENERATE_TEXT = {
+  RESERVED_FIELD_EXTRACTION_PROMPT:
+    'Extract the following information for the field "{{customFieldId}}" from this text: "{{fullText}}"',
+} as const
