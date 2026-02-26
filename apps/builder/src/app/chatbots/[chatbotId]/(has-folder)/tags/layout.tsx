@@ -1,4 +1,3 @@
-import { Card } from "@aha.chat/ui/components/ui/card"
 import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
@@ -25,12 +24,12 @@ export default async function TagsLayout({
             label: t("fields.flows.label"),
             href: `/chatbots/${chatbotId}/flows`,
           },
-          { label: t("tags.heading.title"), href: "" },
+          { label: t("tags.title") },
         ]}
       />
       <AppTab chatbotId={chatbotId} />
-      <Card className="px-8">{folders}</Card>
-      <Card className="px-8">{children}</Card>
+      {folders}
+      {children}
     </FolderStoreProvider>
   )
 }

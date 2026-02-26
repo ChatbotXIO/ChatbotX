@@ -248,7 +248,7 @@ export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-bold text-2xl">
+        <CardTitle className="font-bold text-xl">
           {t("fields.inboxTeam.label")}
         </CardTitle>
       </CardHeader>

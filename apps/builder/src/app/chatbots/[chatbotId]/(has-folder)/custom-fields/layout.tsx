@@ -1,4 +1,3 @@
-import { Card } from "@aha.chat/ui/components/ui/card"
 import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
@@ -29,8 +28,8 @@ export default async function FolderableLayout({
         ]}
       />
       <AppTab chatbotId={chatbotId} />
-      <Card className="px-8">{folders}</Card>
-      <Card className="px-8">{children}</Card>
+      {folders}
+      {children}
     </FolderStoreProvider>
   )
 }

@@ -58,7 +58,7 @@ const ListFolders = (props: ListFoldersProps) => {
             items={[
               {
                 label: "Root",
-                childrenEl: (
+                element: (
                   <Button
                     className="p-0 hover:bg-transparent"
                     onClick={() => setFolderId(null)}
@@ -70,7 +70,7 @@ const ListFolders = (props: ListFoldersProps) => {
               },
               ...parents.map((parentFolder: FolderModel) => ({
                 label: parentFolder.name,
-                childrenEl: (
+                element: (
                   <Button
                     className="p-0 hover:bg-transparent"
                     onClick={() => setFolderId(parentFolder.id)}
@@ -85,7 +85,7 @@ const ListFolders = (props: ListFoldersProps) => {
                 ? [
                     {
                       label: folder?.name ?? "...",
-                      childrenEl: (
+                      element: (
                         <Button
                           className="p-0 hover:bg-transparent"
                           disabled

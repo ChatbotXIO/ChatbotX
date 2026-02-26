@@ -25,5 +25,7 @@ export async function getInboxTeams(
     },
   })
 
+  console.log("asdfasdfasfsdfd", JSON.stringify(data))
+
   return { data, pageCount: 1 }
 }

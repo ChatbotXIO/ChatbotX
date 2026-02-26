@@ -6,7 +6,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
-import { flowVersionResourece } from "@/features/flow-versions/schema/resource"
+import { flowVersionResource } from "@/features/flow-versions/schema/resource"
 import { basePaginationRequest } from "@/lib/pagination"
 import { type FlowResource, flowResource } from "./resource"
 
@@ -38,7 +38,7 @@ export const listFlowsResponse = z.object({
   data: z.array(
     flowResource.and(
       z.object({
-        flowVersions: z.array(flowVersionResourece),
+        flowVersions: z.array(flowVersionResource),
       }),
     ),
   ),

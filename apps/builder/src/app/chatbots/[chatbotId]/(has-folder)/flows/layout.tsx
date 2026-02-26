@@ -1,6 +1,5 @@
 "use client"
 
-import { Card } from "@aha.chat/ui/components/ui/card"
 import { useParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { AppTab } from "@/components/app-tab"
@@ -18,10 +17,8 @@ export default function FolderableLayout({
   return (
     <FolderStoreProvider chatbotId={chatbotId} folderType="flow">
       <AppTab chatbotId={chatbotId} />
-
-      <Card className="px-8">{folders}</Card>
-
-      <Card className="px-8">{children}</Card>
+      {folders}
+      {children}
     </FolderStoreProvider>
   )
 }

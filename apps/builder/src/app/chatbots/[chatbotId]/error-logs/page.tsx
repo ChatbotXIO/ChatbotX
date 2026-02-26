@@ -32,7 +32,7 @@ export default async function ErrorLogsPage(props: {
             label: t("fields.flows.label"),
             href: `/chatbots/${params.chatbotId}/flows`,
           },
-          { label: t("errorLog.heading.title"), href: "" },
+          { label: t("errorLogs.title"), href: "" },
         ]}
       />
       <AppTab chatbotId={params.chatbotId} />
