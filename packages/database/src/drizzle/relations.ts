@@ -90,6 +90,10 @@ export const relations = defineRelations(schema, (r) => ({
     organizations: r.many.organizationModel(),
     sessions: r.many.sessionModel(),
     chatbotMembers: r.many.chatbotMemberModel(),
+    inboxTeams: r.many.inboxTeamModel({
+      from: r.userModel.id.through(r.inboxTeamMemberModel.userId),
+      to: r.inboxTeamModel.id.through(r.inboxTeamMemberModel.inboxTeamId),
+    }),
   },
   chatbotModel: {
     usersViaActivityLog: r.many.userModel({
@@ -157,7 +161,6 @@ export const relations = defineRelations(schema, (r) => ({
       alias: "inbox_chatbotId_chatbot_id",
     }),
     inboxTeams: r.many.inboxTeamModel(),
-    inboxTeamMembers: r.many.inboxTeamMemberModel(),
     integrationsChatbotId: r.many.integrationModel({
       alias: "integration_chatbotId_chatbot_id",
     }),
@@ -341,6 +344,10 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.chatbotModel.id,
     }),
     inboxTeamMembers: r.many.inboxTeamMemberModel(),
+    users: r.many.userModel({
+      from: r.inboxTeamModel.id.through(r.inboxTeamMemberModel.inboxTeamId),
+      to: r.userModel.id.through(r.inboxTeamMemberModel.userId),
+    }),
   },
   inboxModel: {
     conversations: r.many.conversationModel(),
@@ -417,10 +424,6 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
   inboxTeamMemberModel: {
-    chatbot: r.one.chatbotModel({
-      from: r.inboxTeamMemberModel.chatbotId,
-      to: r.chatbotModel.id,
-    }),
     inboxTeam: r.one.inboxTeamModel({
       from: r.inboxTeamMemberModel.inboxTeamId,
       to: r.inboxTeamModel.id,

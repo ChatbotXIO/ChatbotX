@@ -1,5 +1,4 @@
-import { Separator } from "@aha.chat/ui/components/ui/separator"
-import { type ReactNode, Suspense } from "react"
+import type { ReactNode } from "react"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 
@@ -16,11 +15,10 @@ export default async function FolderableLayout({
 
   return (
     <FolderStoreProvider chatbotId={chatbotId} folderType="automatedResponse">
-      {folders}
-      <Separator className="my-4" />
-      <Suspense>
-        <FlowStoreProvider chatbotId={chatbotId}>{children}</FlowStoreProvider>
-      </Suspense>
+      <FlowStoreProvider chatbotId={chatbotId}>
+        {folders}
+        {children}
+      </FlowStoreProvider>
     </FolderStoreProvider>
   )
 }

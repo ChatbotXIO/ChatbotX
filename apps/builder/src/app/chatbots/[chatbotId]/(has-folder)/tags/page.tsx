@@ -1,7 +1,6 @@
 import { rootFolderId } from "@aha.chat/database/enums"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { CreateTagDialog } from "@/features/tags/create-tag-dialog"
 import { listTags } from "@/features/tags/queries"
 import { listTagsSearchParamsCache } from "@/features/tags/schemas/query"
 import { TagsTable } from "@/features/tags/tags-table"
@@ -24,17 +23,12 @@ export default async function TagsPage(props: {
   ])
 
   return (
-    <>
-      <div className="mb-4 flex w-full justify-end">
-        <CreateTagDialog
-          chatbotId={params.chatbotId}
-          folderId={search.folderId}
-        />
-      </div>
-
-      <Suspense>
-        <TagsTable chatbotId={params.chatbotId} promises={promises} />
-      </Suspense>
-    </>
+    <Suspense>
+      <TagsTable
+        chatbotId={params.chatbotId}
+        folderId={folderId}
+        promises={promises}
+      />
+    </Suspense>
   )
 }

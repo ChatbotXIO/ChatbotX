@@ -53,7 +53,7 @@ export const ContactInboxPanel = () => {
       contact
         ? [
             {
-              keyName: t("tags.heading.title"),
+              keyName: t("fields.tags.label"),
               content: (
                 <TagStoreProvider chatbotId={chatbotId}>
                   <UpdateContactTagField

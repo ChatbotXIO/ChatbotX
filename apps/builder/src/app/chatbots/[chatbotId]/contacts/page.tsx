@@ -1,7 +1,6 @@
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ContactsTable } from "@/features/contacts/contacts-table"
-import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
 import { listContacts } from "@/features/contacts/queries/list-contacts.queries"
 import { listContactsRequest } from "@/features/contacts/schemas/query"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
@@ -25,25 +24,16 @@ export default async function ContactsPage(props: {
   ])
 
   return (
-    <div>
-      <div className="mb-4 flex w-full justify-end">
-        <CreateContactDialog chatbotId={params.chatbotId} />
-      </div>
-
-      <Suspense>
-        <UserStoreProvider chatbotId={params.chatbotId}>
-          <TagStoreProvider chatbotId={params.chatbotId}>
-            <CustomFieldStoreProvider chatbotId={params.chatbotId}>
-              <InboxStoreProvider chatbotId={params.chatbotId}>
-                <ContactsTable
-                  chatbotId={params.chatbotId}
-                  promises={promises}
-                />
-              </InboxStoreProvider>
-            </CustomFieldStoreProvider>
-          </TagStoreProvider>
-        </UserStoreProvider>
-      </Suspense>
-    </div>
+    <Suspense>
+      <UserStoreProvider chatbotId={params.chatbotId}>
+        <TagStoreProvider chatbotId={params.chatbotId}>
+          <CustomFieldStoreProvider chatbotId={params.chatbotId}>
+            <InboxStoreProvider chatbotId={params.chatbotId}>
+              <ContactsTable chatbotId={params.chatbotId} promises={promises} />
+            </InboxStoreProvider>
+          </CustomFieldStoreProvider>
+        </TagStoreProvider>
+      </UserStoreProvider>
+    </Suspense>
   )
 }

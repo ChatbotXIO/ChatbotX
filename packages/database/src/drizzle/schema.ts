@@ -1061,13 +1061,6 @@ export const inboxTeamModel = pgTable("InboxTeam", {
 
 export const inboxTeamMemberModel = pgTable("InboxTeamMember", {
   id: text().primaryKey(),
-  chatbotId: text()
-    .notNull()
-    .references(() => chatbotModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-      name: "InboxTeamMember_chatbotId_fkey",
-    }),
   inboxTeamId: text()
     .notNull()
     .references(() => inboxTeamModel.id, {

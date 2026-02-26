@@ -1103,6 +1103,7 @@
     }
   },
   "flows": {
+    "title": "Flows",
     "aiGenerateText": {
       "label": "{name}: AI Generate Text"
     },
@@ -1390,6 +1391,7 @@
     "signUpTitle": "Sign up to {name}"
   },
   "tags": {
+    "title": "Tags",
     "heading": {
       "title": "Tags"
     }
@@ -1526,13 +1528,26 @@
   "inboxTeams": {
     "title": "Inbox Teams"
   },
-  "errorLog": {
-    "heading": {
-      "title": "Error Logs"
-    }
+  "errorLogs": {
+    "title": "Error Logs"
   },
   "chatbotToken": {
     "title": "ChatbotX API Access Token",
     "description": "Generate a token to allow your chatbot to access ChatbotX APIs. Keep this token secret and do not share it with anyone."
+  },
+  "contacts": {
+    "title": "Contacts"
+  },
+  "auditLogs": {
+    "title": "Audit Logs"
+  },
+  "customFields": {
+    "title": "Custom Fields"
+  },
+  "aiHub": {
+    "title": "AI Hub"
+  },
+  "keywords": {
+    "title": "Keywords"
   }
 }

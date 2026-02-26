@@ -3,15 +3,16 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@aha.chat/ui/components/ui/breadcrumb"
-import { Fragment } from "react"
+import { Fragment, type ReactNode } from "react"
 
 export interface BreadcrumbsProps {
   items: Array<{
     label: string
     href?: string
-    childrenEl?: React.ReactNode
+    element?: ReactNode
   }>
 }
 
@@ -21,13 +22,13 @@ export const AppBreadcrumb = ({ items }: BreadcrumbsProps) => {
   }
 
   const renderLink = (item: BreadcrumbsProps["items"][number]) => {
+    if (item.element) {
+      return item.element
+    }
     if (item.href) {
       return <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>
     }
-    if (item.childrenEl) {
-      return <BreadcrumbLink asChild>{item.childrenEl}</BreadcrumbLink>
-    }
-    return <BreadcrumbLink>{item.label}</BreadcrumbLink>
+    return <BreadcrumbPage>{item.label}</BreadcrumbPage>
   }
 
   return (
