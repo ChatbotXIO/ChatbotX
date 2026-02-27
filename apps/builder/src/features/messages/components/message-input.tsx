@@ -125,6 +125,9 @@ export const MessageInput = () => {
   // Memoize keyboard handler
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (e.nativeEvent.isComposing || e.key === "Process") {
+        return
+      }
       if (e.key === "Enter" && e.shiftKey === false) {
         e.preventDefault()
         handleSubmitWithAction()
