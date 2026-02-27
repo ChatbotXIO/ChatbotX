@@ -1750,7 +1750,8 @@
   },
   "zalo": {
     "description": "This integration lets you create Zalo bots.",
-    "title": "Zalo"
+    "title": "Zalo",
+    "refreshPermissions": "Refresh permissions"
   },
   "invitation": {
     "title": "Invitation",

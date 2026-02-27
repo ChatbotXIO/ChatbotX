@@ -1,5 +1,6 @@
 "use client"
 
+import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,14 +21,18 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectZaloAction } from "../actions/disconnect.action"
 
-export function ZaloDisconnect() {
+export function ZaloDisconnect({
+  integrationZalo,
+}: {
+  integrationZalo: IntegrationZaloModel
+}) {
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState<boolean>(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectZaloAction.bind(null, chatbotId), {
+    useAction(disconnectZaloAction.bind(null, chatbotId, integrationZalo.id), {
       onSuccess: () => {
         router.refresh()
       },
