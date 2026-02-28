@@ -1333,6 +1333,17 @@
     },
     "title": "Claude"
   },
+  "deepseek": {
+    "connect": {
+      "description": "Respond to users naturally with AI powered by your business data.",
+      "title": "DeepSeek"
+    },
+    "setting": {
+      "description": "DeepSeek integration description",
+      "label": "DeepSeek Integration"
+    },
+    "title": "DeepSeek"
+  },
   "settings": {
     "agents": {
       "description": "AI Agents description",
@@ -1352,6 +1363,10 @@
     "claude": {
       "description": "Claude integration description",
       "title": "Claude Integration"
+    },
+    "deepseek": {
+      "description": "DeepSeek integration description",
+      "title": "DeepSeek Integration"
     }
   },
   "signIn": {

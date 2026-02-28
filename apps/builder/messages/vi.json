@@ -1330,6 +1330,17 @@
     },
     "title": "Claude"
   },
+  "deepseek": {
+    "connect": {
+      "description": "Trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn.",
+      "title": "DeepSeek"
+    },
+    "setting": {
+      "description": "Mô tả tích hợp DeepSeek",
+      "label": "Tích hợp DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
   "settings": {
     "agents": {
       "description": "Mô tả AI Agents",
@@ -1349,6 +1360,10 @@
     "claude": {
       "description": "Mô tả tích hợp Claude",
       "title": "Tích hợp Claude"
+    },
+    "deepseek": {
+      "description": "Mô tả tích hợp DeepSeek",
+      "title": "Tích hợp DeepSeek"
     }
   },
   "signIn": {

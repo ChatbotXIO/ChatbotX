@@ -266,6 +266,10 @@ export async function getAIIntegrationInDB(props: {
       return await prisma.integrationClaude.findFirst({
         where,
       })
+    case aiProviders.deepseek:
+      return await prisma.integrationDeepSeek.findFirst({
+        where,
+      })
     default:
       return null
   }
@@ -275,7 +279,8 @@ export function getAIModel(
   model:
     | IntegrationOpenAIModel
     | IntegrationGeminiModel
-    | IntegrationClaudeModel,
+    | IntegrationClaudeModel
+    | IntegrationDeepSeekModel,
   provider: string,
 ) {
   const auth = model.auth as SecretTextAuthValue
@@ -309,6 +314,7 @@ export function createAIModelInstance(props: {
     | IntegrationOpenAIModel
     | IntegrationGeminiModel
     | IntegrationClaudeModel
+    | IntegrationDeepSeekModel
   provider: string
   modelId: string
   abortSignal?: AbortSignal
