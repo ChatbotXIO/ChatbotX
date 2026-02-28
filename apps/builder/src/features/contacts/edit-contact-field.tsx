@@ -1,5 +1,4 @@
 import {
-  CustomFieldType,
   type FillableContactKeys,
   fillableContactKeys,
 } from "@aha.chat/database/types"
@@ -121,9 +120,7 @@ export function EditContactField(props: EditContactField) {
             onSubmit={handleSubmitWithAction}
           >
             <AccountFieldValueInput
-              customFieldType={
-                targetField?.customFieldType ?? CustomFieldType.shortText
-              }
+              customFieldType={targetField?.customFieldType ?? "shortText"}
               name={targetField?.key ?? ""}
             />
 

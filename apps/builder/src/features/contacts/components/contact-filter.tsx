@@ -6,7 +6,6 @@ import {
   ConditionType,
   Operator,
 } from "@aha.chat/database/enums"
-import { IntegrationType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
@@ -202,19 +201,19 @@ const getFieldConfigs = ({
     options: [
       {
         label: "Webchat",
-        value: IntegrationType.webchat,
+        value: "webchat",
       },
       {
         label: "WhatsApp",
-        value: IntegrationType.whatsapp,
+        value: "whatsapp",
       },
       {
         label: "Facebook",
-        value: IntegrationType.messenger,
+        value: "messenger",
       },
       {
         label: "Zalo",
-        value: IntegrationType.zalo,
+        value: "zalo",
       },
     ],
   },
@@ -294,19 +293,19 @@ const getFieldConfigs = ({
     options: [
       {
         label: "Webchat",
-        value: IntegrationType.webchat,
+        value: "webchat",
       },
       {
         label: "WhatsApp",
-        value: IntegrationType.whatsapp,
+        value: "whatsapp",
       },
       {
         label: "Facebook",
-        value: IntegrationType.messenger,
+        value: "messenger",
       },
       {
         label: "Zalo",
-        value: IntegrationType.zalo,
+        value: "zalo",
       },
     ],
   },

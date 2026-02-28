@@ -1,4 +1,4 @@
-import { type FolderModel, FolderType } from "@aha.chat/database/types"
+import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -23,17 +23,17 @@ export default async function SharedFolderSlot(props: {
   let folderType: FolderType | null = null
   switch (featureName) {
     case "automated-responses":
-      folderType = FolderType.automatedResponse
+      folderType = "automatedResponse"
       break
     case "flows":
-      folderType = FolderType.flow
+      folderType = "flow"
       break
     case "account-fields":
     case "custom-fields":
-      folderType = FolderType.customField
+      folderType = "customField"
       break
     case "tags":
-      folderType = FolderType.tag
+      folderType = "tag"
       break
     default:
       break

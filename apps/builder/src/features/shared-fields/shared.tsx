@@ -1,4 +1,4 @@
-import { CustomFieldType } from "@aha.chat/database/types"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 
@@ -13,27 +13,27 @@ export const getCustomFieldTypeLabels = (
   t: TranslationFunction,
 ): CustomFieldTypeLabel[] => [
   {
-    value: CustomFieldType.shortText,
+    value: "shortText",
     label: t("fields.shortText.label"),
   },
   {
-    value: CustomFieldType.number,
+    value: "number",
     label: t("fields.number.label"),
   },
   {
-    value: CustomFieldType.date,
+    value: "date",
     label: t("fields.date.label"),
   },
   {
-    value: CustomFieldType.datetime,
+    value: "datetime",
     label: t("fields.datetime.label"),
   },
   {
-    value: CustomFieldType.boolean,
+    value: "boolean",
     label: t("fields.boolean.label"),
   },
   {
-    value: CustomFieldType.longText,
+    value: "longText",
     label: t("fields.longText.label"),
   },
 ]

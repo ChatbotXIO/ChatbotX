@@ -1,22 +1,23 @@
 "use server"
 
-import { AIEmbeddingStatus, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import type { AIEmbeddingStatus } from "@aha.chat/database/types"
 import { env } from "@/env"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { AIFileCollection, GetAIFilesRequest } from "../schemas"
+import type { AIFileCollection, ListAIFilesRequest } from "../schemas"
 
-export async function getAIFiles(
-  input: GetAIFilesRequest,
+export async function listAIFiles(
+  input: ListAIFilesRequest,
 ): Promise<AIFileCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const data = await prisma.aIFile.findMany({
+  const data = await db.query.aiFileModel.findMany({
     where: {
       chatbotId: input.chatbotId,
     },
-    include: {
+    with: {
       aiEmbeddings: {
-        select: {
+        columns: {
           id: true,
           status: true,
         },
@@ -26,15 +27,15 @@ export async function getAIFiles(
 
   const transformedData = data.map((file) => {
     const hasEmbeddings = file.aiEmbeddings.length > 0
-    let processingStatus: AIEmbeddingStatus = AIEmbeddingStatus.pending
+    let processingStatus: AIEmbeddingStatus = "pending"
     if (hasEmbeddings) {
       const statusSet = new Set(file.aiEmbeddings.map((e) => e.status))
-      if (statusSet.has(AIEmbeddingStatus.error)) {
-        processingStatus = AIEmbeddingStatus.error
-      } else if (statusSet.has(AIEmbeddingStatus.pending)) {
-        processingStatus = AIEmbeddingStatus.processing
+      if (statusSet.has("error")) {
+        processingStatus = "error"
+      } else if (statusSet.has("pending")) {
+        processingStatus = "processing"
       } else {
-        processingStatus = AIEmbeddingStatus.success
+        processingStatus = "success"
       }
     }
 

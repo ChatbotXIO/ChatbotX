@@ -72,7 +72,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: string }) => {
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.connectFeature", {
+            {t("actions.connectFeature", {
               feature: t("fields.openai.label"),
             })}
           </DialogTitle>

@@ -1,7 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
+import { inboxModel, integrationWhatsappModel } from "@aha.chat/database/schema"
+import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { unsubscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
 import {
@@ -19,30 +21,30 @@ export const disconnectWhatsappAction = authActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationWhatsapp =
-        await prisma.integrationWhatsapp.findFirstOrThrow({
-          where: {
-            chatbotId,
-            id,
-          },
-        })
+      const integrationWhatsapp = await findOrFail<IntegrationWhatsappModel>(
+        integrationWhatsappModel,
+        {
+          chatbotId,
+          id,
+        },
+        "Integration Whatsapp not found",
+      )
 
       await unsubscribeWebhook({
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
       })
 
-      await prisma.$transaction(async (tx) => {
-        await tx.integrationWhatsapp.delete({
-          where: { id: integrationWhatsapp.id },
-        })
-        await tx.inbox.update({
-          where: { id: integrationWhatsapp.inboxId },
-          data: { status: InboxStatus.disconnected },
-        })
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(integrationWhatsappModel)
+          .where(eq(integrationWhatsappModel.id, integrationWhatsapp.id))
+
+        await tx
+          .update(inboxModel)
+          .set({ status: InboxStatus.disconnected })
+          .where(eq(inboxModel.id, integrationWhatsapp.inboxId))
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#inboxes`)
-
-      return
     },
   )

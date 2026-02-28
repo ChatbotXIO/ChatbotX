@@ -1,6 +1,13 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, findOrFail, notInArray } from "@aha.chat/database/client"
+import {
+  contactModel,
+  contactsToTagsModel,
+  tagModel,
+} from "@aha.chat/database/schema"
+import type { ContactModel } from "@aha.chat/database/types"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -23,31 +30,64 @@ export const updateContactTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateContactTagRequest
     }) => {
-      const contact = await prisma.contact.findFirstOrThrow({
-        where: {
+      const contact = await findOrFail<ContactModel>(
+        contactModel,
+        {
           id: parsedInput.contactId,
+          chatbotId,
         },
-      })
+        "Contact not found",
+      )
 
-      const returnedTags = await prisma.$transaction(async (tx) => {
-        const tags = await tx.tag.createManyAndReturn({
-          data: parsedInput.tags.map((t) => ({
-            name: t,
-            chatbotId,
-          })),
-          skipDuplicates: true,
-        })
+      const returnedTags = await db.transaction(async (tx) => {
+        if (parsedInput.tags.length > 0) {
+          await tx
+            .insert(tagModel)
+            .values(
+              parsedInput.tags.map((name) => ({
+                id: createId(),
+                name,
+                chatbotId,
+              })),
+            )
+            .onConflictDoNothing({
+              target: [tagModel.chatbotId, tagModel.name],
+            })
+        }
 
-        await tx.contact.update({
-          data: {
-            tags: {
-              connect: tags.map((t) => ({ id: t.id })),
-            },
-          },
+        const tags = await tx.query.tagModel.findMany({
           where: {
-            id: contact.id,
+            chatbotId,
+            name: { in: parsedInput.tags },
           },
         })
+
+        if (tags.length > 0) {
+          await tx
+            .insert(contactsToTagsModel)
+            .values(
+              tags.map((selectedTag) => ({
+                contactId: contact.id,
+                tagId: selectedTag.id,
+              })),
+            )
+            .onConflictDoNothing({
+              target: [
+                contactsToTagsModel.contactId,
+                contactsToTagsModel.tagId,
+              ],
+            })
+
+          await tx.delete(contactsToTagsModel).where(
+            and(
+              eq(contactsToTagsModel.contactId, contact.id),
+              notInArray(
+                contactsToTagsModel.tagId,
+                tags.map((t) => t.id),
+              ),
+            ),
+          )
+        }
 
         return tags
       })

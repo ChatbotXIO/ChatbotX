@@ -1,4 +1,5 @@
-import { findChatbot } from "@/features/chatbot/queries"
+import { db } from "@aha.chat/database/client"
+import { notFound } from "next/navigation"
 import { MessengerManage } from "@/features/integration-messenger/messenger-manage"
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
 import { findOrganization } from "@/features/organization/queries"
@@ -8,9 +9,14 @@ export default async function SettingChannelMessengerPage(props: {
 }) {
   const params = await props.params
 
-  const chatbot = await findChatbot({
-    id: params.chatbotId,
+  const chatbot = await db.query.chatbotModel.findFirst({
+    where: {
+      id: params.chatbotId,
+    },
   })
+  if (!chatbot) {
+    return notFound()
+  }
 
   const promises = Promise.all([
     findIntegrationMessenger({

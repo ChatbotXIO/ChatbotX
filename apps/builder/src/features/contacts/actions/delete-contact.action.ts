@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -21,16 +22,14 @@ export const deleteContactAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.$transaction(async (tx) => {
-        await tx.contact.deleteMany({
-          where: {
-            chatbotId,
-            id: {
-              in: parsedInput.ids,
-            },
-          },
-        })
-      })
+      await db
+        .delete(contactModel)
+        .where(
+          and(
+            eq(contactModel.chatbotId, chatbotId),
+            inArray(contactModel.id, parsedInput.ids),
+          ),
+        )
 
       revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
     },

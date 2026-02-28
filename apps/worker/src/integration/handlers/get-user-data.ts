@@ -1,8 +1,17 @@
-import { FieldType, FileType, MessageType, prisma } from "@aha.chat/database"
-import type { ConversationAttributes } from "@aha.chat/database/types"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import {
+  contactCustomFieldModel,
+  conversationModel,
+  fieldModel,
+} from "@aha.chat/database/schema"
+import type {
+  ConversationAttributes,
+  FieldModel,
+} from "@aha.chat/database/types"
 import { type GetUserDataStepSchema, ReplyFormat } from "@aha.chat/flow-config"
 import { IntegrationException, type Variable } from "@aha.chat/sdk"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
 import { add, isBefore } from "date-fns"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
@@ -61,48 +70,48 @@ async function handleSkipOrError(
   // if user data is valid, save to custom field if configured
   if (validUserData.valid && validUserData.userInput) {
     if (step.outputCfId) {
-      await prisma.$transaction(async (tx) => {
-        await tx.field.findFirstOrThrow({
-          where: {
-            id: step.outputCfId,
-            fieldType: FieldType.customField,
-            chatbotId: props.conversation.chatbotId,
-          },
-          select: {
-            id: true,
-          },
-        })
+      await findOrFail<FieldModel>(
+        fieldModel,
+        {
+          id: step.outputCfId,
+          fieldType: "customField",
+          chatbotId: props.conversation.chatbotId,
+        },
+        "Field not found",
+      )
 
-        await tx.contactCustomField.upsert({
-          where: {
-            contactId_customFieldId: {
-              contactId: props.conversation.contactId,
-              customFieldId: step.outputCfId,
-            },
-          },
-          update: {
-            value: validUserData.userInput,
-          },
-          create: {
+      await db.transaction(async (tx) => {
+        await tx
+          .insert(contactCustomFieldModel)
+          .values({
+            id: createId(),
             contactId: props.conversation.contactId,
             customFieldId: step.outputCfId,
             value: validUserData.userInput ?? "",
-          },
-        })
+          })
+          .onConflictDoUpdate({
+            target: [
+              contactCustomFieldModel.contactId,
+              contactCustomFieldModel.customFieldId,
+            ],
+            set: {
+              value: validUserData.userInput,
+            },
+          })
       })
     }
 
     // remove challenge from conversation attributes
-    await prisma.conversation.update({
-      where: { id: props.conversation.id },
-      data: {
+    await db
+      .update(conversationModel)
+      .set({
         conversationAttributes: {
           ...(props.conversation
             .conversationAttributes as ConversationAttributes),
           challenge: undefined,
         },
-      },
-    })
+      })
+      .where(eq(conversationModel.id, props.conversation.id))
 
     return { result: validUserData.userInput, status: "success" }
   }
@@ -128,12 +137,12 @@ async function handleSkipOrError(
 async function validateUserData(
   props: ExecuteStepProps<GetUserDataStepSchema>,
 ): Promise<GetUserDataResult> {
-  const lastUserMessage = await prisma.message.findFirst({
+  const lastUserMessage = await db.query.messageModel.findFirst({
     where: {
       conversationId: props.conversation.id,
-      messageType: MessageType.incoming,
+      messageType: "incoming",
     },
-    include: {
+    with: {
       attachments: true,
     },
     orderBy: {
@@ -157,7 +166,7 @@ async function validateUserData(
   if (lastUserMessage.attachments.length > 0) {
     if (
       props.step.replyFormat === ReplyFormat.image &&
-      lastUserMessage.attachments[0].fileType === FileType.image
+      lastUserMessage.attachments[0].fileType === "image"
     ) {
       result.valid = true
       result.userInput = lastUserMessage.attachments[0].originPath
@@ -246,9 +255,9 @@ async function sendMessage(
     },
   })
 
-  await prisma.conversation.update({
-    where: { id: conversation.id },
-    data: {
+  await db
+    .update(conversationModel)
+    .set({
       conversationAttributes: {
         ...(conversation.conversationAttributes as ConversationAttributes),
         challenge: {
@@ -265,8 +274,8 @@ async function sendMessage(
           },
         },
       } as ConversationAttributes,
-    },
-  })
+    })
+    .where(eq(conversationModel.id, conversation.id))
 }
 
 function checkSkipCondition(

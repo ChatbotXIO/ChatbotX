@@ -1,22 +1,25 @@
-import { findChatbot } from "@/features/chatbot/queries"
+import { notFound } from "next/navigation"
 import { listIntegrationWhatsapps } from "@/features/integration-whatsapp/queries"
 import { WhatsappManage } from "@/features/integration-whatsapp/whatsapp-manage"
 import { findOrganization } from "@/features/organization/queries"
+import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 
 export default async function SettingChannelWhatsappPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
   const params = await props.params
 
-  const chatbot = await findChatbot({ id: params.chatbotId })
+  const userAndChatbot = await getCurrentUserAndTargetChatbot(params.chatbotId)
+  if (!userAndChatbot) {
+    return notFound()
+  }
+
   const promises = Promise.all([
     listIntegrationWhatsapps({
-      where: {
-        chatbotId: params.chatbotId,
-      },
+      chatbotId: params.chatbotId,
     }),
     findOrganization({
-      id: chatbot.organizationId,
+      id: userAndChatbot.targetChatbot.organizationId,
     }),
   ])
 

@@ -1,5 +1,4 @@
-import { prisma } from "@aha.chat/database"
-import { InboxType } from "@aha.chat/database/types"
+import { db } from "@aha.chat/database/client"
 import { type NextRequest, NextResponse } from "next/server"
 import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
 import { listMessages } from "@/features/messages/queries/list-messages.query"
@@ -12,12 +11,10 @@ export async function GET(req: NextRequest) {
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const data = listGuestMessagesRequest.parse(searchParams)
 
-    const conversation = await prisma.conversation.findFirst({
+    const conversation = await db.query.conversationModel.findFirst({
       where: {
+        inboxType: "webchat",
         sourceId: data.guestConversationId,
-        inbox: {
-          inboxType: InboxType.webchat,
-        },
       },
     })
 

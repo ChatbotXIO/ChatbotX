@@ -23,15 +23,15 @@ export type OutgoingContact = {
 
 export type IncomingConversation = {
   sourceId: string
-  conversationAttributes: Record<string, unknown>
+  conversationAttributes: unknown
   contact: IncomingContact
 }
 
 export type OutgoingConversation = {
   id: string
   chatbotId: string
-  conversationAttributes: Record<string, unknown>
-  sourceId: string
+  conversationAttributes: unknown
+  sourceId: string | null
   inboxId: string
   contactId: string
   contact?: OutgoingContact
@@ -49,7 +49,7 @@ export type OutgoingMessage = {
   attachments?: OutgoingAttachment[]
   inboxId: string
   clientId?: string | null
-  messageType: "outgoing" | "incoming" | "system"
+  messageType: "outgoing" | "incoming" | "activity"
 }
 
 export const MessageType = {

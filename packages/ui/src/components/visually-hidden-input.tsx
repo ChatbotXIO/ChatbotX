@@ -9,10 +9,10 @@ interface VisuallyHiddenInputProps<T = InputValue>
     React.InputHTMLAttributes<HTMLInputElement>,
     "value" | "checked" | "onReset"
   > {
-  value?: T
+  bubbles?: boolean
   checked?: boolean
   control: HTMLElement | null
-  bubbles?: boolean
+  value?: T
 }
 
 function VisuallyHiddenInput<T = InputValue>(

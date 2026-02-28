@@ -1,6 +1,6 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import {
   DatePickerField,
   DateTimePickerField,
@@ -22,7 +22,7 @@ export const AccountFieldValueInput = ({
   const t = useTranslations()
 
   switch (customFieldType) {
-    case CustomFieldType.number:
+    case "number":
       return (
         <InputField
           name={name}
@@ -30,7 +30,7 @@ export const AccountFieldValueInput = ({
           type="number"
         />
       )
-    case CustomFieldType.boolean:
+    case "boolean":
       return (
         <SelectField
           name={name}
@@ -41,14 +41,14 @@ export const AccountFieldValueInput = ({
           placeholder={t("fields.boolean.placeholder")}
         />
       )
-    case CustomFieldType.date: {
+    case "date": {
       return <DatePickerField name={name} />
     }
-    case CustomFieldType.datetime: {
+    case "datetime": {
       const dateTimeFormat = "yyyy-MM-dd HH:mm"
       return <DateTimePickerField dateTimeFormat={dateTimeFormat} name={name} />
     }
-    case CustomFieldType.longText:
+    case "longText":
       return (
         <TextareaField
           name={name}

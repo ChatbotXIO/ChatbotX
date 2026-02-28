@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { logModel } from "@aha.chat/database/schema"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -23,15 +24,15 @@ export const deleteLogAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: DeleteLogsRequest
     }) => {
-      await prisma.log.deleteMany({
-        where: {
-          id: {
-            in: parsedInput.ids,
-          },
-          chatbotId,
-          logType: parsedInput.logType,
-        },
-      })
+      await db
+        .delete(logModel)
+        .where(
+          and(
+            eq(logModel.chatbotId, chatbotId),
+            eq(logModel.logType, parsedInput.logType),
+            inArray(logModel.id, parsedInput.ids),
+          ),
+        )
 
       revalidateCacheTags(`chatbots:${chatbotId}#logs#${parsedInput.logType}`)
     },

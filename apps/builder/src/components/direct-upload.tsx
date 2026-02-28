@@ -1,6 +1,6 @@
 "use client"
 
-import { FileType } from "@aha.chat/database/types"
+import type { FileType } from "@aha.chat/database/types"
 import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -46,22 +46,22 @@ export function DirectUploadOrInsertLink({
 
   const fileConfigs = useMemo(() => {
     switch (fileType) {
-      case FileType.image:
+      case "image":
         return {
           icon: ImageIcon,
           mimeType: "image/*",
         }
-      case FileType.gif:
+      case "gif":
         return {
           icon: ImagePlayIcon,
           mimeType: "image/gif",
         }
-      case FileType.video:
+      case "video":
         return {
           icon: VideoIcon,
           mimeType: "video/*",
         }
-      case FileType.audio:
+      case "audio":
         return {
           icon: Volume2Icon,
           mimeType: "audio/*",
@@ -108,7 +108,7 @@ export function DirectUploadOrInsertLink({
               onClick={chooseUploadFile}
               variant="ghost"
             >
-              {fileType === FileType.image ? (
+              {fileType === "image" ? (
                 <Image alt={stepId} fill={true} src={publicUrl} />
               ) : (
                 <>

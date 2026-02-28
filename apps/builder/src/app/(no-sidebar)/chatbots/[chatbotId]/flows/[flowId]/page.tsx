@@ -1,43 +1,54 @@
+import { db } from "@aha.chat/database/client"
 import { notFound } from "next/navigation"
-import { findChatbot } from "@/features/chatbot/queries"
 import { FlowDetail } from "@/features/flows/flow-detail"
-import { findFlow } from "@/features/flows/queries"
-import { findOrganization } from "@/features/organization/queries"
+import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 
-export default async function FlowPage(props: {
+type FlowPageProps = {
   params: Promise<{ chatbotId: string; flowId: string }>
-}) {
-  const params = await props.params
-  const flowResult = await findFlow({
-    id: params.flowId,
-    chatbotId: params.chatbotId,
-  })
+}
 
-  if (!flowResult.data) {
+export default async function FlowPage({ params }: FlowPageProps) {
+  const { chatbotId, flowId } = await params
+
+  const userAndChatbot = await getCurrentUserAndTargetChatbot(chatbotId)
+  if (!userAndChatbot) {
     return notFound()
   }
 
-  const targetFlowVersion = flowResult.data.flowVersions?.find((v) => v.isDraft)
-  if (!targetFlowVersion) {
-    return null
+  const flow = await db.query.flowModel.findFirst({
+    where: {
+      id: flowId,
+      chatbotId,
+    },
+    with: {
+      flowVersions: true,
+    },
+  })
+  if (!flow) {
+    return notFound()
   }
 
-  const chatbot = await findChatbot({
-    id: params.chatbotId,
-  })
+  const draftFlowVersion = flow.flowVersions?.find((v) => v.isDraft)
+  if (!draftFlowVersion) {
+    return notFound()
+  }
 
-  const organization = await findOrganization({
-    id: chatbot.organizationId,
+  const organization = await db.query.organizationModel.findFirst({
+    where: {
+      id: userAndChatbot.targetChatbot.organizationId,
+    },
   })
   if (!organization) {
     return notFound()
   }
 
   return (
-    <FlowDetail
-      flow={flowResult.data}
-      flowVersion={targetFlowVersion}
-      organization={organization}
-    />
+    <div className="flex h-screen w-screen flex-col">
+      <FlowDetail
+        flow={flow}
+        flowVersion={draftFlowVersion}
+        organization={organization}
+      />
+    </div>
   )
 }

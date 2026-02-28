@@ -1,7 +1,13 @@
 "use server"
 
-import { FieldType, prisma } from "@aha.chat/database"
+import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import {
+  contactCustomFieldModel,
+  contactModel,
+  fieldModel,
+} from "@aha.chat/database/schema"
+import {
+  type FieldModel,
   type FillableContactKeys,
   fillableContactKeys,
 } from "@aha.chat/database/types"
@@ -28,55 +34,62 @@ export const deleteContactCustomFieldAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: DeleteContactCustomFieldRequest
     }) => {
-      const contacts = await prisma.contact.findMany({
+      const contacts = await db.query.contactModel.findMany({
         where: {
           chatbotId,
           id: {
             in: parsedInput.ids,
           },
         },
-        select: {
+        columns: {
           id: true,
         },
       })
       if (contacts.length === 0) {
         return
       }
+
       if (isCuid(parsedInput.customFieldId)) {
-        const customField = await prisma.field.findFirstOrThrow({
-          where: {
+        const customField = await findOrFail<FieldModel>(
+          fieldModel,
+          {
             chatbotId,
             id: parsedInput.customFieldId,
-            fieldType: FieldType.customField,
+            fieldType: "customField",
           },
-        })
+          "Custom field not found",
+        )
 
-        await prisma.$transaction(async (tx) => {
-          await tx.contactCustomField.deleteMany({
-            where: {
-              contactId: {
-                in: contacts.map((c) => c.id),
-              },
-              customFieldId: customField.id,
-            },
-          })
+        await db.transaction(async (tx) => {
+          await tx.delete(contactCustomFieldModel).where(
+            and(
+              inArray(
+                contactCustomFieldModel.contactId,
+                contacts.map((c) => c.id),
+              ),
+              eq(contactCustomFieldModel.customFieldId, customField.id),
+            ),
+          )
         })
       } else if (
         fillableContactKeys.includes(
           parsedInput.customFieldId as FillableContactKeys,
         )
       ) {
-        await prisma.contact.updateMany({
-          where: {
-            chatbotId,
-            id: {
-              in: contacts.map((c) => c.id),
-            },
-          },
-          data: {
+        await db
+          .update(contactModel)
+          .set({
             [parsedInput.customFieldId]: "",
-          },
-        })
+          })
+          .where(
+            and(
+              inArray(
+                contactModel.id,
+                contacts.map((c) => c.id),
+              ),
+              eq(contactModel.chatbotId, chatbotId),
+            ),
+          )
       }
 
       revalidateCacheTags([

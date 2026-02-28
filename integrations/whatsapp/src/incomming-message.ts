@@ -2,7 +2,6 @@ import {
   ContentType,
   type Context,
   type ExternalMediaResult,
-  FileType,
   type IncomingConversation,
   type IncomingMessage,
   MessageType,
@@ -73,7 +72,7 @@ export const receiveMessage = async (props: {
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.audio,
+          fileType: "audio",
           ...mediaSpecs,
         },
       ]
@@ -89,7 +88,7 @@ export const receiveMessage = async (props: {
           name: attached.filename,
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.file,
+          fileType: "file",
           ...mediaSpecs,
         },
       ]
@@ -104,7 +103,7 @@ export const receiveMessage = async (props: {
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.image,
+          fileType: "image",
           ...mediaSpecs,
         },
       ]
@@ -119,7 +118,7 @@ export const receiveMessage = async (props: {
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.image,
+          fileType: "image",
           ...mediaSpecs,
         },
       ]
@@ -133,7 +132,7 @@ export const receiveMessage = async (props: {
         {
           sourceId: attached.id,
           mimeType: attached.mime_type,
-          fileType: FileType.video,
+          fileType: "video",
           ...mediaSpecs,
         },
       ]

@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { findOrFail } from "@aha.chat/database/client"
+import { integrationWhatsappModel } from "@aha.chat/database/schema"
+import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import {
@@ -25,12 +27,14 @@ export const updateWhatsappIceBreakerAction = chatbotActionClient
       parsedInput: UpdateWhatsappIceBreakerSchema
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationWhatsapp =
-        await prisma.integrationWhatsapp.findFirstOrThrow({
-          where: {
-            chatbotId,
-          },
-        })
+      const integrationWhatsapp = await findOrFail<IntegrationWhatsappModel>(
+        integrationWhatsappModel,
+        {
+          chatbotId,
+        },
+        "Integration Whatsapp not found",
+      )
+
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
         uploader,

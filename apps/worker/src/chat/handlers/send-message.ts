@@ -1,5 +1,7 @@
-import { prisma } from "@aha.chat/database"
+import { findOrFail } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
 import type {
+  ContactModel,
   ConversationModel,
   IntegrationType,
 } from "@aha.chat/database/types"
@@ -31,9 +33,11 @@ export async function sendMessageToExternal(
     return
   }
 
-  const contact = await prisma.contact.findFirstOrThrow({
-    where: { id: conversation.contactId },
-  })
+  const contact = await findOrFail<ContactModel>(
+    contactModel,
+    { id: conversation.contactId },
+    "Contact not found",
+  )
 
   await intergationDetail.channels?.channel?.message?.sendMessage?.({
     ctx: {

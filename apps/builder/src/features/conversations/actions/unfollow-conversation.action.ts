@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -16,15 +17,17 @@ export const unfollowConversationAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.conversation.update({
-        where: {
-          id,
-          chatbotId,
-        },
-        data: {
+      await db
+        .update(conversationModel)
+        .set({
           followed: false,
-        },
-      })
+        })
+        .where(
+          and(
+            eq(conversationModel.id, id),
+            eq(conversationModel.chatbotId, chatbotId),
+          ),
+        )
 
       revalidateCacheTags([
         `chatbots:${chatbotId}#contacts`,

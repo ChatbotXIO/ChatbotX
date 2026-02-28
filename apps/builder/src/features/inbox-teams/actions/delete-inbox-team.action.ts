@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { inboxTeamModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -21,14 +22,14 @@ export const deleteInboxTeamAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.inboxTeam.deleteMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-      })
+      await db
+        .delete(inboxTeamModel)
+        .where(
+          and(
+            eq(inboxTeamModel.chatbotId, chatbotId),
+            inArray(inboxTeamModel.id, parsedInput.ids),
+          ),
+        )
 
       revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
     },

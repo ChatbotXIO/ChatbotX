@@ -8,9 +8,7 @@ export default async function WhatsappMessageTemplatePage(props: {
 }) {
   const { chatbotId, id } = await props.params
 
-  const integrationWhatsapp = await findIntegrationWhatsapp({
-    where: { chatbotId, id },
-  })
+  const integrationWhatsapp = await findIntegrationWhatsapp({ chatbotId, id })
 
   const promises = Promise.all([
     getMessageTemplates({

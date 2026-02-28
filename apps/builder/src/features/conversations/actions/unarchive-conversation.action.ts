@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -21,17 +22,17 @@ export const unarchiveConversationAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.conversation.updateMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-        data: {
+      await db
+        .update(conversationModel)
+        .set({
           archivedAt: null,
-        },
-      })
+        })
+        .where(
+          and(
+            eq(conversationModel.chatbotId, chatbotId),
+            inArray(conversationModel.id, parsedInput.ids),
+          ),
+        )
 
       revalidateCacheTags(`chatbots:${chatbotId}#conversations`)
     },

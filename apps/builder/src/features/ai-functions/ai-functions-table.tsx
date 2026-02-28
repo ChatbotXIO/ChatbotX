@@ -11,10 +11,10 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { AIFunctionsCreate } from "./ai-functions-create"
-import type { getAIFunctions } from "./queries"
+import type { listAIFunctions } from "./queries"
 
 type AIFunctionsTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof getAIFunctions>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listAIFunctions>>]>
 }
 
 export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {

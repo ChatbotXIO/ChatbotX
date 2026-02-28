@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
+import type { ContactModel } from "@aha.chat/database/types"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -17,21 +19,23 @@ export const unblockContactAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.contact.findFirstOrThrow({
-        where: {
-          id,
+      const existingContact = await findOrFail<ContactModel>(
+        contactModel,
+        {
           chatbotId,
-        },
-      })
-
-      const contact = await prisma.contact.update({
-        where: {
           id,
         },
-        data: {
+        "Contact not found",
+      )
+
+      const contact = await db
+        .update(contactModel)
+        .set({
           blockedAt: null,
-        },
-      })
+        })
+        .where(eq(contactModel.id, existingContact.id))
+        .returning()
+        .then((result) => result[0])
 
       revalidateCacheTags([
         `chatbots:${chatbotId}#contacts`,

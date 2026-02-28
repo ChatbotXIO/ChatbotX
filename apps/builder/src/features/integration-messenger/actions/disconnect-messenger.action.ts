@@ -1,7 +1,12 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
+import {
+  inboxModel,
+  integrationMessengerModel,
+} from "@aha.chat/database/schema"
+import type { IntegrationMessengerModel } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
 import {
@@ -19,12 +24,15 @@ export const disconnectMessengerAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationMessenger =
-        await prisma.integrationMessenger.findFirstOrThrow({
-          where: { chatbotId },
-        })
+      const integrationMessenger = await findOrFail<IntegrationMessengerModel>(
+        integrationMessengerModel,
+        {
+          chatbotId,
+        },
+        "Integration Messenger not found",
+      )
 
-      await prisma.$transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         // Unsubscribe from app
         const authValue = integrationMessenger.auth as MessengerAuthValue
         await unsubscribePageFromAppWebhook({
@@ -33,13 +41,14 @@ export const disconnectMessengerAction = chatbotActionClient
           version: authValue.metadata.version,
         })
 
-        await tx.integrationMessenger.delete({
-          where: { id: integrationMessenger.id },
-        })
-        await tx.inbox.update({
-          where: { id: integrationMessenger.inboxId },
-          data: { status: InboxStatus.disconnected },
-        })
+        await tx
+          .delete(integrationMessengerModel)
+          .where(eq(integrationMessengerModel.id, integrationMessenger.id))
+
+        await tx
+          .update(inboxModel)
+          .set({ status: InboxStatus.disconnected })
+          .where(eq(inboxModel.id, integrationMessenger.inboxId))
       })
 
       revalidateCacheTags([

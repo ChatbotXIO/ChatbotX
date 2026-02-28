@@ -4,9 +4,6 @@
     "db:migrate": {
       "cache": false
     },
-    "db:client": {
-      "cache": false
-    },
     "db:studio": {
       "cache": false
     },

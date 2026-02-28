@@ -1,47 +1,46 @@
-import { FieldType, type Prisma, prisma } from "@aha.chat/database"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
-import type { FieldFindManyArgs } from "@aha.chat/database/types"
+import { fieldModel } from "@aha.chat/database/schema"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListAccountFieldsSearchParams } from "../schemas/list-account-fields.schema"
-import type { AccountFieldCollection } from "../schemas/types"
+import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
+import type { ListAccountFieldsSearchParams } from "../schemas/query"
+import type { AccountFieldResource } from "../schemas/resource"
 
 export async function listAccountFields(
   input: ListAccountFieldsSearchParams,
-): Promise<AccountFieldCollection> {
+): Promise<PaginatedResponse<AccountFieldResource>> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.FieldWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
-    fieldType: FieldType.accountField,
+    fieldType: "accountField" as const,
+    folderId: input.folderId
+      ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
+        input.folderId === rootFolderId
+        ? { isNull: true as const }
+        : input.folderId
+      : undefined,
+    name: input.name
+      ? {
+          ilike: `%${input.name.toLowerCase()}%`,
+        }
+      : undefined,
   }
 
-  if (input.folderId) {
-    where.folderId = input.folderId === rootFolderId ? null : input.folderId
-  }
+  const orderBy = parseOrderByAsObject(fieldModel, input)
 
-  if (input.name) {
-    where.name = {
-      contains: input.name,
-      mode: "insensitive",
-    }
-  }
-
-  const orderBy = input.sort.map((sortItem) => ({
-    [sortItem.id]: sortItem.desc ? "desc" : "asc",
-  }))
-  const params: FieldFindManyArgs = {
-    where,
-    skip: (input.page - 1) * input.perPage,
-    take: input.perPage,
-    orderBy,
-  }
-
-  const [data, total] = await prisma.$transaction([
-    prisma.field.findMany(params),
-    prisma.field.count({ where: params.where }),
+  const pagination = parsePagination(input)
+  const [data, total] = await Promise.all([
+    db.query.fieldModel.findMany({
+      where,
+      orderBy,
+      ...pagination,
+    }),
+    db.$count(fieldModel, relationsFilterToSQL(fieldModel, where)),
   ])
 
-  const pageCount = Math.ceil(total / input.perPage)
+  const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1
 
   return { data, pageCount }
 }

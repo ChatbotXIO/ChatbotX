@@ -1,8 +1,5 @@
 import {
-  ContentType,
   type IntegrationWebchatModel,
-  MessageType,
-  SenderType,
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import type { MessageButtonTemplate } from "@aha.chat/sdk"
@@ -195,9 +192,9 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
         conversationId: "",
         content: null,
         contentAttributes: null,
-        messageType: MessageType.incoming,
-        contentType: ContentType.text,
-        senderType: SenderType.contact,
+        messageType: "incoming",
+        contentType: "text",
+        senderType: "contact",
         senderId: "",
         clientId: createId(),
         ...message,

@@ -1,6 +1,5 @@
 "use client"
 import { rootFolderId } from "@aha.chat/database/enums"
-import { CustomFieldType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
@@ -100,27 +99,27 @@ function CreateCustomFieldForm({
   const customFieldTypeOptions = useMemo(
     () => [
       {
-        value: CustomFieldType.shortText,
+        value: "shortText",
         label: t("fields.shortText.label"),
       },
       {
-        value: CustomFieldType.number,
+        value: "number",
         label: t("fields.number.label"),
       },
       {
-        value: CustomFieldType.date,
+        value: "date",
         label: t("fields.date.label"),
       },
       {
-        value: CustomFieldType.datetime,
+        value: "datetime",
         label: t("fields.datetime.label"),
       },
       {
-        value: CustomFieldType.boolean,
+        value: "boolean",
         label: t("fields.boolean.label"),
       },
       {
-        value: CustomFieldType.longText,
+        value: "longText",
         label: t("fields.longText.label"),
       },
     ],
@@ -153,7 +152,7 @@ function CreateCustomFieldForm({
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: CustomFieldType.shortText,
+            customFieldType: "shortText",
             description: "",
             folderId: null,
           },

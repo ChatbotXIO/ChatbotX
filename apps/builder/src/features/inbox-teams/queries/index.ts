@@ -1,20 +1,21 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListInboxTeamsRequest } from "../schemas/list-inbox-teams.request"
-import type { InboxTeamCollection } from "../schemas/types"
+import type { InboxTeamResource } from "../schemas/types"
 
 export async function getInboxTeams(
   input: ListInboxTeamsRequest,
-): Promise<InboxTeamCollection> {
+): Promise<PaginatedResponse<InboxTeamResource>> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const data = await prisma.inboxTeam.findMany({
+  const data = await db.query.inboxTeamModel.findMany({
     where: {
       chatbotId: input.chatbotId,
     },
-    include: {
+    with: {
       inboxTeamMembers: {
-        include: {
+        with: {
           user: true,
         },
       },
@@ -24,5 +25,5 @@ export async function getInboxTeams(
     },
   })
 
-  return { data }
+  return { data, pageCount: 1 }
 }

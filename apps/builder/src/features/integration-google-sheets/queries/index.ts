@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { IntegrationGoogleSheetsResource } from "../schemas"
 
 export const getGoogleSheetsIntegration = async ({
@@ -8,11 +8,12 @@ export const getGoogleSheetsIntegration = async ({
 }): Promise<{
   data: IntegrationGoogleSheetsResource | null
 }> => {
-  const data = await prisma.integrationGoogleSheets.findFirst({
-    where: {
-      chatbotId,
-    },
-  })
+  const data =
+    (await db.query.integrationGoogleSheetsModel.findFirst({
+      where: {
+        chatbotId,
+      },
+    })) ?? null
 
   return {
     data,

@@ -8,10 +8,10 @@ const api = ky.create({
 })
 
 interface WhatsappSettings {
-  systemUserId: string
-  systemUserToken: string
   businessId?: string
   businessName: string
+  systemUserId: string
+  systemUserToken: string
 }
 
 export async function addSystemUser({

@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { spreadsheetModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -12,7 +13,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteSpreadsheetAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
-  .schema(bulkUpdateIdsRequest)
+  .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
@@ -21,14 +22,14 @@ export const deleteSpreadsheetAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.spreadsheet.deleteMany({
-        where: {
-          id: {
-            in: parsedInput.ids,
-          },
-          chatbotId,
-        },
-      })
+      await db
+        .delete(spreadsheetModel)
+        .where(
+          and(
+            eq(spreadsheetModel.chatbotId, chatbotId),
+            inArray(spreadsheetModel.id, parsedInput.ids),
+          ),
+        )
 
       revalidateCacheTags(`chatbots:${chatbotId}#spreadsheets`)
     },

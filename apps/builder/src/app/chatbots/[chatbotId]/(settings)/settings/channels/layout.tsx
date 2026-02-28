@@ -1,6 +1,6 @@
 "use client"
 
-import { InboxType } from "@aha.chat/database/types"
+import type { InboxType } from "@aha.chat/database/types"
 import {
   Accordion,
   AccordionContent,
@@ -30,19 +30,19 @@ export default function SettingsChannelsPage({
 }: SettingsChannelsPageProps) {
   const integrationItems: IntegrationItem[] = [
     {
-      value: InboxType.whatsapp,
+      value: "whatsapp",
       content: whatsapp,
     },
     {
-      value: InboxType.messenger,
+      value: "messenger",
       content: messenger,
     },
     {
-      value: InboxType.zalo,
+      value: "zalo",
       content: zalo,
     },
     {
-      value: InboxType.webchat,
+      value: "webchat",
       content: webchat,
     },
   ]

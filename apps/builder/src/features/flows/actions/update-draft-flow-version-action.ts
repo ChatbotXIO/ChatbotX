@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { flowVersionModel } from "@aha.chat/database/schema"
+import type { FlowVersionModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -22,21 +24,23 @@ export const updateDraftFlowVersionAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateDraftFlowVersionSchema
     }) => {
-      const flowVersion = await prisma.flowVersion.findFirstOrThrow({
-        where: {
+      const flowVersion = await findOrFail<FlowVersionModel>(
+        flowVersionModel,
+        {
           id,
           chatbotId,
           isDraft: true,
         },
-      })
+        "Draft flow version not found",
+      )
 
-      await prisma.flowVersion.update({
-        where: { id: flowVersion.id },
-        data: {
+      await db
+        .update(flowVersionModel)
+        .set({
           nodes: parsedInput.nodes,
           edges: parsedInput.edges,
-        },
-      })
+        })
+        .where(eq(flowVersionModel.id, flowVersion.id))
 
       // revalidateCacheTags(`chatbots:${chatbotId}#flows:${id}`)
     },

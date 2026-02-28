@@ -9,12 +9,8 @@ export default async function WhatsappFlowsPage(props: {
   searchParams: Promise<SearchParams>
 }) {
   const { chatbotId, id } = await props.params
-  const integrationWhatsapp = await findIntegrationWhatsapp({
-    where: {
-      id,
-      chatbotId,
-    },
-  })
+
+  const integrationWhatsapp = await findIntegrationWhatsapp({ chatbotId, id })
 
   const promises = Promise.all([
     listWhatsappFlows({

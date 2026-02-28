@@ -1,46 +1,39 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { logModel } from "@aha.chat/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@/lib/pagination"
 import type { LogCollection } from "../schemas"
 import type { GetLogsSchema } from "../schemas/get-logs-schema"
 
 export async function getLogs(input: GetLogsSchema): Promise<LogCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.LogWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
     logType: input.logType,
+    action: input.action ? { ilike: `%${input.action}%` } : undefined,
   }
 
-  if (input.action) {
-    where.AND = [
-      {
-        action: {
-          contains: input.action,
-          mode: "insensitive",
-        },
-      },
-    ]
-  }
+  const pagination = getPaginationWithDefaults(input)
+  const orderBy = parseOrderByAsObject(logModel, input)
 
-  const orderBy = input.sort.map((sortItem) => ({
-    [sortItem.id]: sortItem.desc ? "desc" : "asc",
-  }))
-
-  const [data, total] = await prisma.$transaction([
-    prisma.log.findMany({
-      skip: (input.page - 1) * input.perPage,
-      take: input.perPage,
+  const [data, totalRows] = await Promise.all([
+    db.query.logModel.findMany({
       where,
+      ...pagination,
       orderBy,
-      include: {
+      with: {
         user: true,
         contact: true,
       },
     }),
-    prisma.log.count({ where }),
+    db.$count(logModel, relationsFilterToSQL(logModel, where)),
   ])
 
-  const pageCount = Math.ceil(total / input.perPage)
+  const pageCount = Math.ceil(totalRows / pagination.limit)
 
   return { data, pageCount }
 }

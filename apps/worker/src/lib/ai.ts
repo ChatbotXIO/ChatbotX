@@ -1,4 +1,8 @@
-import { prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
+import {
+  integrationGeminiModel,
+  integrationOpenAIModel,
+} from "@aha.chat/database/schema"
 import type {
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
@@ -38,17 +42,21 @@ export async function getAIIntegrationInDB(props: {
 
   switch (provider) {
     case aiProviders.openai:
-      return await prisma.integrationOpenAI.findFirstOrThrow({
-        where: {
+      return await findOrFail<IntegrationOpenAIModel>(
+        integrationOpenAIModel,
+        {
           chatbotId,
         },
-      })
+        `IntegrationOpenAI not found for chatbotId: ${chatbotId}`,
+      )
     case aiProviders.gemini:
-      return await prisma.integrationGemini.findFirstOrThrow({
-        where: {
+      return await findOrFail<IntegrationGeminiModel>(
+        integrationGeminiModel,
+        {
           chatbotId,
         },
-      })
+        `IntegrationGemini not found for chatbotId: ${chatbotId}`,
+      )
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }
@@ -89,7 +97,7 @@ export async function getAIFileTools(
       return tools
     }
 
-    const allFiles = await prisma.aIFile.findMany({
+    const allFiles = await db.query.aiFileModel.findMany({
       where: { chatbotId, id: { in: selectedFileIds } },
     })
 
@@ -120,10 +128,10 @@ export async function getAIFileTools(
 
     return tools
   } catch (error) {
-    logger.error("[automated-response] getAIFileTools failed", {
+    logger.error(
       error,
-      chatbotId,
-    })
+      `[automated-response] getAIFileTools failed for chatbotId: ${chatbotId}`,
+    )
     return {}
   }
 }
@@ -139,7 +147,7 @@ export async function getAIFunctionTools(
       return tools
     }
 
-    const aiFunctions = await prisma.aIFunction.findMany({
+    const aiFunctions = await db.query.aiFunctionModel.findMany({
       where: {
         chatbotId,
         id: {
@@ -188,10 +196,10 @@ export async function getAIFunctionTools(
     }
     return tools
   } catch (error) {
-    logger.error("[automated-response] getAIFunctionTools failed", {
+    logger.error(
       error,
-      chatbotId,
-    })
+      `[automated-response] getAIFunctionTools failed for chatbotId: ${chatbotId}`,
+    )
     return {}
   }
 }
@@ -208,7 +216,7 @@ export async function getMCPServerTools(
     }
 
     // Find MCP servers from DB
-    const mcpServers = await prisma.aIMCPServer.findMany({
+    const mcpServers = await db.query.aiMCPServerModel.findMany({
       where: { chatbotId, id: { in: selectedMcpIds } },
     })
     if (mcpServers.length === 0) {
@@ -261,10 +269,10 @@ export async function getMCPServerTools(
 
     return tools
   } catch (error) {
-    logger.error("[automated-response] getMCPServerTools failed", {
+    logger.error(
       error,
-      chatbotId,
-    })
+      `[automated-response] getMCPServerTools failed for chatbotId: ${chatbotId}`,
+    )
     return {}
   }
 }

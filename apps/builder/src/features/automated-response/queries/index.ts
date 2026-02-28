@@ -1,43 +1,47 @@
-import type { Prisma } from "@aha.chat/database"
-import { prisma } from "@aha.chat/database"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
-import type {
-  AutomatedResponseModel,
-  AutomatedResponseWhereInput,
-} from "@aha.chat/database/types"
+import { automatedResponseModel } from "@aha.chat/database/schema"
+import type { AutomatedResponseModel } from "@aha.chat/database/types"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListAutomatedResponsesRequest } from "../schemas/get-automated-responses-schema"
-import type { AutomatedResponseCollection } from "../schemas/types"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@/lib/pagination"
+import type { ListAutomatedResponsesRequest } from "../schemas/query"
+import type { AutomatedResponseResource } from "../schemas/resource"
 
-export async function getAutomatedResponses(
+export async function listAutomatedResponses(
   input: ListAutomatedResponsesRequest,
-): Promise<AutomatedResponseCollection> {
+): Promise<PaginatedResponse<AutomatedResponseResource>> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.AutomatedResponseWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
+    userMessages: input.keyword
+      ? { ilike: `%${input.keyword.toLowerCase()}%` }
+      : undefined,
+    folderId: input.folderId
+      ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
+        input.folderId === rootFolderId
+        ? { isNull: true as const }
+        : input.folderId
+      : undefined,
   }
 
-  if (input.keyword) {
-    where.userMessages = {
-      has: input.keyword,
-    }
-  }
-  if (input.folderId) {
-    where.folderId = input.folderId === rootFolderId ? null : input.folderId
-  }
-  const orderBy = input.sort.map((sortItem) => ({
-    [sortItem.id]: sortItem.desc ? "desc" : "asc",
-  }))
+  const pagination = getPaginationWithDefaults(input)
+  const orderBy = parseOrderByAsObject(automatedResponseModel, input)
 
-  const [data, total] = await prisma.$transaction([
-    prisma.automatedResponse.findMany({
-      skip: (input.page - 1) * input.perPage,
-      take: input.perPage,
+  const [data, total] = await Promise.all([
+    db.query.automatedResponseModel.findMany({
       where,
       orderBy,
+      ...pagination,
     }),
-    prisma.automatedResponse.count({ where }),
+    db.$count(
+      automatedResponseModel,
+      relationsFilterToSQL(automatedResponseModel, where),
+    ),
   ])
 
   const pageCount = Math.ceil(total / input.perPage)
@@ -45,10 +49,27 @@ export async function getAutomatedResponses(
   return { data, pageCount }
 }
 
-export async function findAutomatedResponse(
-  where: AutomatedResponseWhereInput,
-): Promise<AutomatedResponseModel | null> {
-  return await prisma.automatedResponse.findFirst({
-    where,
+export const findAutomatedResponse = async (input: {
+  chatbotId: string
+  id: string
+}): Promise<AutomatedResponseModel | undefined> => {
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+
+  return await db.query.automatedResponseModel.findFirst({
+    where: {
+      chatbotId: input.chatbotId,
+      id: input.id,
+    },
   })
+}
+
+export const findAutomatedResponseOrFail = async (input: {
+  chatbotId: string
+  id: string
+}): Promise<AutomatedResponseModel> => {
+  const automatedResponse = await findAutomatedResponse(input)
+  if (!automatedResponse) {
+    throw new Error("Automated response not found")
+  }
+  return automatedResponse
 }

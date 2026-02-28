@@ -1,8 +1,12 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import { IntegrationType } from "@aha.chat/database/types"
+import { db, eq } from "@aha.chat/database/client"
+import {
+  integrationModel,
+  integrationOpenAIModel,
+} from "@aha.chat/database/schema"
 import { AuthType, type SecretTextAuthValue } from "@aha.chat/sdk"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -25,17 +29,19 @@ export const connectOpenAIAction = authActionClient
       parsedInput: ConnectOpenAISchema
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
-        where: {
-          chatbotId,
+      const integrationOpenAI = await db.query.integrationOpenAIModel.findFirst(
+        {
+          where: {
+            chatbotId,
+          },
         },
-      })
+      )
 
-      await prisma.$transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         if (integrationOpenAI) {
-          await tx.integrationOpenAI.update({
-            where: { id: integrationOpenAI.id },
-            data: {
+          await tx
+            .update(integrationOpenAIModel)
+            .set({
               model: openaiModels.gpt4oMini,
               auth: {
                 authType: AuthType.secretText,
@@ -43,26 +49,30 @@ export const connectOpenAIAction = authActionClient
               } as SecretTextAuthValue,
               temperature: parsedInput.temperature,
               maxOutputTokens: parsedInput.maxOutputTokens,
-            },
-          })
+            })
+            .where(eq(integrationOpenAIModel.id, integrationOpenAI.id))
         } else {
-          await tx.integration.create({
-            data: {
+          const integration = await tx
+            .insert(integrationModel)
+            .values({
+              id: createId(),
               chatbotId,
-              integrationType: IntegrationType.openai,
-              openai: {
-                create: {
-                  chatbotId,
-                  model: openaiModels.gpt4oMini,
-                  auth: {
-                    authType: AuthType.secretText,
-                    secretText: parsedInput.apiKey,
-                  } as SecretTextAuthValue,
-                  temperature: parsedInput.temperature,
-                  maxOutputTokens: parsedInput.maxOutputTokens,
-                },
-              },
-            },
+              integrationType: "openai",
+            })
+            .returning()
+            .then((result) => result[0])
+
+          await tx.insert(integrationOpenAIModel).values({
+            id: createId(),
+            integrationId: integration.id,
+            chatbotId,
+            model: openaiModels.gpt4oMini,
+            auth: {
+              authType: AuthType.secretText,
+              secretText: parsedInput.apiKey,
+            } as SecretTextAuthValue,
+            temperature: parsedInput.temperature,
+            maxOutputTokens: parsedInput.maxOutputTokens,
           })
         }
       })

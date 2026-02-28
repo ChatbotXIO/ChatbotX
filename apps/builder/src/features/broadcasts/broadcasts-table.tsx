@@ -1,6 +1,5 @@
 "use client"
 
-import { BroadcastStatus } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -29,7 +28,7 @@ import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
-import type { BroadcastResource } from "./schemas/get-broadcasts-schema"
+import type { BroadcastResource } from "./schemas/resource"
 
 type BroadcastsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listBroadcasts>>]>
@@ -90,7 +89,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) =>
-          row.original.status === BroadcastStatus.scheduled ? (
+          row.original.status === "scheduled" ? (
             <Badge variant="outline">
               {t(`broadcasts.status.${row.original.status}`)}
             </Badge>
@@ -105,14 +104,14 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         },
       },
       {
-        accessorKey: "estimatedContacts",
+        accessorKey: "contactsCount",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
             title={t("fields.estimatedContacts.label")}
           />
         ),
-        cell: ({ row }) => <div>{row.original._count?.contacts ?? 0}</div>,
+        cell: ({ row }) => <div>{row.original.contactsCount ?? 0}</div>,
         meta: {
           label: t("fields.estimatedContacts.label"),
         },

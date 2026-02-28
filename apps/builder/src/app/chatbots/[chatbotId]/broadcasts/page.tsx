@@ -2,7 +2,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
 import { listBroadcasts } from "@/features/broadcasts/queries"
-import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schemas/get-broadcasts-schema"
+import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schemas/query"
 
 export default async function BroadcastsPage(props: {
   params: Promise<{ chatbotId: string }>

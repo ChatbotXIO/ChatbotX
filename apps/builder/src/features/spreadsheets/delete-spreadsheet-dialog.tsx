@@ -22,10 +22,10 @@ import { deleteSpreadsheetAction } from "./actions/delete-spreadsheet-action"
 interface DeleteSpreadsheetsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   chatbotId: string
-  spreadsheets: Row<SpreadsheetModel>["original"][]
-  showTrigger?: boolean
-  onSuccess?: () => void
   onOpenChange: (val: boolean) => void
+  onSuccess?: () => void
+  showTrigger?: boolean
+  spreadsheets: Row<SpreadsheetModel>["original"][]
 }
 
 export function DeleteSpreadsheetsDialog({

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getAIFiles } from "@/features/ai-files/queries"
+import { listAIFiles } from "@/features/ai-files/queries"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 
@@ -11,7 +11,7 @@ export async function GET(
     const { chatbotId } = await params
     await assertCurrentUserCanAccessChatbot(chatbotId)
 
-    const result = await getAIFiles({ chatbotId })
+    const result = await listAIFiles({ chatbotId })
     return NextResponse.json(result)
   } catch (e) {
     return serverErrorHandler(e)

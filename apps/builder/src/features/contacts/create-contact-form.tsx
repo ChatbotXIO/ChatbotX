@@ -1,6 +1,5 @@
 "use client"
 
-import { Gender } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -52,7 +51,7 @@ export function CreateContactForm({
             email: "",
             firstName: "",
             lastName: "",
-            gender: Gender.unknown,
+            gender: "unknown",
           },
         },
         errorMapProps: {},
@@ -61,15 +60,15 @@ export function CreateContactForm({
 
   const genderLabels = [
     {
-      value: Gender.male,
+      value: "male",
       label: t("fields.gender.male"),
     },
     {
-      value: Gender.female,
+      value: "female",
       label: t("fields.gender.female"),
     },
     {
-      value: Gender.unknown,
+      value: "unknown",
       label: t("fields.gender.unknown"),
     },
   ]
@@ -103,7 +102,7 @@ export function CreateContactForm({
         />
 
         <SelectField
-          defaultValue={Gender.unknown}
+          defaultValue="unknown"
           label={t("fields.gender.label")}
           name="gender"
           options={genderLabels}

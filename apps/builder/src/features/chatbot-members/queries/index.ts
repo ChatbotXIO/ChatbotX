@@ -1,10 +1,9 @@
 "use server"
 
-import type { Prisma } from "@aha.chat/database"
-import { prisma } from "@aha.chat/database"
-import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { chatbotMemberModel } from "@aha.chat/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { getPaginationFromInput } from "@/lib/pagination"
+import { getPaginationWithDefaults } from "@/lib/pagination"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members.request"
 import type {
   ChatbotMemberCollection,
@@ -16,57 +15,54 @@ export async function getAgents(
 ): Promise<ChatbotMemberCollection> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const pagination = getPaginationFromInput(input)
+  const pagination = getPaginationWithDefaults(input)
 
-  const where: Prisma.ChatbotMemberWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
     user: input.keyword
       ? {
           name: {
-            contains: input.keyword,
-            mode: "insensitive",
+            ilike: `%${input.keyword.toLowerCase()}%`,
           },
         }
       : undefined,
   }
 
-  const [data, total] = await prisma.$transaction([
-    prisma.chatbotMember.findMany({
+  const [data, totalRows] = await Promise.all([
+    db.query.chatbotMemberModel.findMany({
       ...pagination,
       where,
-      include: {
+      with: {
         user: true,
       },
     }),
-    prisma.chatbotMember.count({
-      where,
-    }),
+    db.$count(
+      chatbotMemberModel,
+      relationsFilterToSQL(chatbotMemberModel, where),
+    ),
   ])
-  const pageCount = Math.ceil(total / (pagination.take ?? 10))
+  const pageCount = Math.ceil(totalRows / pagination.limit)
 
   return { data: data as ChatbotMemberResource[], pageCount }
 }
 
-export const getAllChatbotMembers = async (
-  userId: string,
-): Promise<{
-  chatbotMembers: ChatbotMemberResource[]
-  chatbots: ChatbotResource[]
-  chatbotIds: string[]
-}> => {
-  const chatbotMembers = (await prisma.chatbotMember.findMany({
+export const getAllChatbotMembers = async (userId: string) => {
+  const chatbotMembers = await db.query.chatbotMemberModel.findMany({
     where: {
       userId,
     },
-  })) as ChatbotMemberResource[]
-  const chatbots = await prisma.chatbot.findMany({
-    where: {
-      id: {
-        in: chatbotMembers.map((cm) => cm.chatbotId),
-      },
+    with: {
+      chatbot: true,
     },
   })
-  const chatbotIds = chatbots.map((c) => c.id)
 
-  return { chatbotMembers, chatbots, chatbotIds }
+  const chatbots = chatbotMembers.map((member) => member.chatbot)
+
+  const chatbotIds = Array.from(new Set(chatbots.map((chatbot) => chatbot.id)))
+
+  return {
+    chatbotMembers: chatbotMembers as ChatbotMemberResource[],
+    chatbots,
+    chatbotIds,
+  }
 }

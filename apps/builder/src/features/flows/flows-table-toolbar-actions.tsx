@@ -1,6 +1,6 @@
 "use client"
 
-import { type FlowModel, FolderType } from "@aha.chat/database/types"
+import type { FlowModel } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { Table } from "@tanstack/react-table"
@@ -44,7 +44,7 @@ export function FlowsTableToolbarActions({
           <ChangeFolderDialog
             chatbotId={chatbotId}
             currentFolderId={null}
-            folderType={FolderType.flow}
+            folderType="flow"
             modelIds={table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original.id)}

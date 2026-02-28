@@ -5,7 +5,6 @@ import {
 } from "@aha.chat/flow-config"
 import {
   ContentType,
-  FileType,
   type OutgoingMessage,
   type SendFlowStepProps,
   type SendMessageProps,
@@ -32,13 +31,13 @@ export function* convertMessageToWhatsappMessage(
 
     for (const attachment of message.attachments || []) {
       switch (attachment.fileType) {
-        case FileType.image:
+        case "image":
           yield new Image(attachment.url ?? "")
           continue
-        case FileType.video:
+        case "video":
           yield new Video(attachment.url ?? "")
           continue
-        case FileType.audio:
+        case "audio":
           yield new Audio(attachment.url ?? "")
           continue
         default:
@@ -90,8 +89,9 @@ export const sendMessage = async (
       }
 
       const sendResponse = await whatsappClient.sendMessage(
-        conversation.conversationAttributes.phoneNumberId as string,
-        conversation.sourceId,
+        (conversation.conversationAttributes as { phoneNumberId: string })
+          .phoneNumberId,
+        conversation.sourceId as string,
         whatsappMessage,
       )
 
@@ -145,8 +145,9 @@ export const sendFlowStep = async (
       }
 
       const sendResponse = await whatsappClient.sendMessage(
-        conversation.conversationAttributes.phoneNumberId as string,
-        conversation.sourceId,
+        (conversation.conversationAttributes as { phoneNumberId: string })
+          .phoneNumberId,
+        conversation.sourceId as string,
         whatsappMessage,
       )
 

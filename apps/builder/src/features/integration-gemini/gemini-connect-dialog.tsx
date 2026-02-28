@@ -69,7 +69,7 @@ export const GeminiConnectDialog = () => {
       <DialogContent className={"max-h-screen overflow-y-scroll sm:max-w-md"}>
         <DialogHeader>
           <DialogTitle>
-            {t("messages.connectFeature", {
+            {t("actions.connectFeature", {
               feature: t("fields.gemini.label"),
             })}
           </DialogTitle>

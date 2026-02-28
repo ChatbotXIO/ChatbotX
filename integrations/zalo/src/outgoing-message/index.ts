@@ -5,12 +5,11 @@ import {
   type SendTextStepSchema,
   StepType,
 } from "@aha.chat/flow-config"
-import {
-  FileType,
-  type OutgoingContact,
-  type OutgoingMessage,
-  type SendFlowStepProps,
-  type SendMessageProps,
+import type {
+  OutgoingContact,
+  OutgoingMessage,
+  SendFlowStepProps,
+  SendMessageProps,
 } from "@aha.chat/sdk"
 import { sendMessage, uploadAttachment } from "../api/message"
 import { logger } from "../libs/logger"
@@ -54,7 +53,7 @@ export async function* convertMessageToZaloMessage(
     }
   } else if (message.attachments) {
     for (const attachment of message.attachments) {
-      if (attachment.fileType === FileType.image) {
+      if (attachment.fileType === "image") {
         const {
           data: { attachment_id },
         } = await uploadAttachment(auth, "image", attachment.url as string)
@@ -72,7 +71,7 @@ export async function* convertMessageToZaloMessage(
             },
           },
         }
-      } else if (attachment.fileType === FileType.file) {
+      } else if (attachment.fileType === "file") {
         const {
           data: { token },
         } = await uploadAttachment(auth, "file", attachment.url as string)

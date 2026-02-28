@@ -24,7 +24,7 @@ import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAITriggerAction } from "@/features/ai-triggers/actions/create.action"
-import { createAITriggerRequest } from "@/features/ai-triggers/schemas/create.schema"
+import { createAITriggerRequest } from "@/features/ai-triggers/schemas/action"
 import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 

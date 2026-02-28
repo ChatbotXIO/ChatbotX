@@ -1,6 +1,6 @@
 "use client"
 
-import { FolderType, ReplyType } from "@aha.chat/database/types"
+import { ReplyType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -33,13 +33,13 @@ import { useFlowStore } from "../flows/provider/flow-store-context"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
-import type { getAutomatedResponses } from "./queries"
-import type { CreateAutomatedResponseRequest } from "./schemas/create-automated-responses-schema"
-import type { AutomatedResponseResource } from "./schemas/types"
+import type { listAutomatedResponses } from "./queries"
+import type { CreateAutomatedResponseRequest } from "./schemas/action"
+import type { AutomatedResponseResource } from "./schemas/resource"
 
 type AutomatedResponseTableProps = {
   chatbotId: string
-  promises: Promise<[Awaited<ReturnType<typeof getAutomatedResponses>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listAutomatedResponses>>]>
 }
 
 export function AutomatedResponsesTable({
@@ -270,7 +270,7 @@ export function AutomatedResponsesTable({
       <ChangeFolderDialog
         chatbotId={chatbotId}
         currentFolderId={rowAction?.row.original?.folderId || null}
-        folderType={FolderType.automatedResponse}
+        folderType="automatedResponse"
         modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "move"}

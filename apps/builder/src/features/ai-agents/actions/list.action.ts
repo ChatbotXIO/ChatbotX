@@ -1,36 +1,38 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { aiAgentModel } from "@aha.chat/database/schema"
 import type { AIAgentModel } from "@aha.chat/database/types"
 import type { ListAIAgentsRequest } from "@/features/ai-agents/schemas/query"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@/lib/pagination"
 
 export async function getAIAgents(
   input: ListAIAgentsRequest,
 ): Promise<PaginatedResponse<AIAgentModel>> {
-  const where: Prisma.AIAgentWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
+    name: input.name
+      ? {
+          ilike: `%${input.name.toLowerCase()}%`,
+        }
+      : undefined,
   }
 
-  if (input.name) {
-    where.name = {
-      contains: input.name,
-      mode: "insensitive",
-    }
-  }
+  const pagination = getPaginationWithDefaults(input)
+  const orderBy = parseOrderByAsObject(aiAgentModel, input)
 
-  const orderBy = input.sort.map((sortItem) => ({
-    [sortItem.id]: sortItem.desc ? "desc" : "asc",
-  }))
-
-  const [data, total] = await prisma.$transaction([
-    prisma.aIAgent.findMany({
-      skip: (input.page - 1) * input.perPage,
-      take: input.perPage,
+  const [data, total] = await Promise.all([
+    db.query.aiAgentModel.findMany({
       where,
       orderBy,
+      limit: pagination.limit,
+      offset: pagination.offset,
     }),
-    prisma.aIAgent.count({ where }),
+    db.$count(aiAgentModel, relationsFilterToSQL(aiAgentModel, where)),
   ])
 
   const pageCount = Math.ceil(total / input.perPage)

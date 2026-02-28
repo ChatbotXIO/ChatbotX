@@ -1,4 +1,3 @@
-import { FileType, MessageType } from "@aha.chat/database/types"
 import type {
   MessageButtonTemplate,
   MessageTemplateEntity,
@@ -38,10 +37,10 @@ export const MessageItem = (props: MessageItemProps) => {
 
   let variant: "left" | "right" | "full" = "full"
   switch (message.messageType) {
-    case MessageType.incoming:
+    case "incoming":
       variant = guestDisplay ? "right" : "left"
       break
-    case MessageType.outgoing:
+    case "outgoing":
       variant = guestDisplay ? "left" : "right"
       break
     default:
@@ -78,7 +77,7 @@ const RenderAttachments = (props: { message: MessageResource }) => {
     <div className="grid grid-cols-auto gap-2">
       {(message.attachments ?? []).map((attachment) => {
         switch (attachment.fileType) {
-          case FileType.image:
+          case "image":
             return (
               <Image
                 alt={attachment.name || "Attachment"}
@@ -89,7 +88,7 @@ const RenderAttachments = (props: { message: MessageResource }) => {
                 width={attachment.width || 0}
               />
             )
-          case FileType.video:
+          case "video":
             return (
               <video
                 controls
@@ -105,7 +104,7 @@ const RenderAttachments = (props: { message: MessageResource }) => {
                 />
               </video>
             )
-          case FileType.audio:
+          case "audio":
             return (
               <audio controls key={attachment.id} preload="none">
                 <track default kind="captions" />

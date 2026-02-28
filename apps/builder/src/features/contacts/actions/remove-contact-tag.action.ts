@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { contactsToTagsModel } from "@aha.chat/database/schema"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -23,45 +24,46 @@ export const removeContactTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: RemoveContactTagRequest
     }) => {
-      const contacts = await prisma.contact.findMany({
+      const contacts = await db.query.contactModel.findMany({
         where: {
           chatbotId,
           id: {
             in: parsedInput.ids,
           },
         },
-        select: {
+        columns: {
           id: true,
         },
       })
+
       if (contacts.length === 0) {
         return
       }
 
-      await prisma.$transaction(async (tx) => {
-        const allTags = await tx.tag.findMany({
+      await db.transaction(async (tx) => {
+        const allTags = await tx.query.tagModel.findMany({
           where: {
             chatbotId,
             name: {
               in: parsedInput.tags,
             },
           },
-          select: {
+          columns: {
             id: true,
           },
         })
 
+        const allTagIds = allTags.map((tag) => tag.id)
+
         for (const contact of contacts) {
-          await tx.contact.update({
-            data: {
-              tags: {
-                disconnect: allTags,
-              },
-            },
-            where: {
-              id: contact.id,
-            },
-          })
+          await tx
+            .delete(contactsToTagsModel)
+            .where(
+              and(
+                eq(contactsToTagsModel.contactId, contact.id),
+                inArray(contactsToTagsModel.tagId, allTagIds),
+              ),
+            )
         }
       })
 

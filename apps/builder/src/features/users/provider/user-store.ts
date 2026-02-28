@@ -4,10 +4,8 @@ import type {
   ChatbotMemberCollection,
   ChatbotMemberResource,
 } from "@/features/chatbot-members/schemas/resource"
-import type {
-  InboxTeamCollection,
-  InboxTeamResource,
-} from "@/features/inbox-teams/schemas/types"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { InboxTeamResource } from "@/features/inbox-teams/schemas/types"
 import { maxPerPageString } from "@/lib/shared-request"
 
 export type UserState = {
@@ -113,7 +111,7 @@ export const createUserStore = (props: Partial<UserState>) =>
         })
 
         const { data } = await ky
-          .get<InboxTeamCollection>(
+          .get<PaginatedResponse<InboxTeamResource>>(
             `/api/chatbots/${chatbotId}/inbox-teams?${searchParams.toString()}`,
           )
           .json()

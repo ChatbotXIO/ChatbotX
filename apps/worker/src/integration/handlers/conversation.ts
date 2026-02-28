@@ -1,4 +1,5 @@
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
@@ -31,14 +32,12 @@ export const contactMarkAsRead = async (
 ) => {
   const { sourceConversationId } = props
 
-  await prisma.conversation.updateMany({
-    where: {
-      sourceId: sourceConversationId,
-    },
-    data: {
+  await db
+    .update(conversationModel)
+    .set({
       contactLastSeenAt: new Date(),
-    },
-  })
+    })
+    .where(eq(conversationModel.sourceId, sourceConversationId))
 }
 
 export const agentMarkAsRead = async (
