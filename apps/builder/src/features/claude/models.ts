@@ -28,3 +28,6 @@ export const claudeModelOptions = [
     value: claudeModels.claude3Haiku,
   },
 ]
+
+export const claudeChatModels = claudeModelOptions.map((model) => model.value)
+export type ClaudeChatModel = (typeof claudeChatModels)[number]

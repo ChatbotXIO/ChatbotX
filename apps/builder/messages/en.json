@@ -1322,6 +1322,17 @@
     },
     "title": "OpenAI"
   },
+  "claude": {
+    "connect": {
+      "description": "Respond to users naturally with AI powered by your business data.",
+      "title": "Claude"
+    },
+    "setting": {
+      "description": "Claude integration description",
+      "label": "Claude Integration"
+    },
+    "title": "Claude"
+  },
   "settings": {
     "agents": {
       "description": "AI Agents description",
@@ -1337,6 +1348,10 @@
     "openai": {
       "description": "OpenAI integration description",
       "title": "OpenAI Integration"
+    },
+    "claude": {
+      "description": "Claude integration description",
+      "title": "Claude Integration"
     }
   },
   "signIn": {

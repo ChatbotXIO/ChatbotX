@@ -1,5 +1,6 @@
 import { prisma } from "@aha.chat/database"
 import type {
+  IntegrationClaudeModel,
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
 } from "@aha.chat/database/types"
@@ -261,13 +262,20 @@ export async function getAIIntegrationInDB(props: {
       return await prisma.integrationGemini.findFirst({
         where,
       })
+    case aiProviders.claude:
+      return await prisma.integrationClaude.findFirst({
+        where,
+      })
     default:
       return null
   }
 }
 
 export function getAIModel(
-  model: IntegrationOpenAIModel | IntegrationGeminiModel,
+  model:
+    | IntegrationOpenAIModel
+    | IntegrationGeminiModel
+    | IntegrationClaudeModel,
   provider: string,
 ) {
   const auth = model.auth as SecretTextAuthValue
@@ -297,7 +305,10 @@ export function getAIModel(
 }
 
 export function createAIModelInstance(props: {
-  model: IntegrationOpenAIModel | IntegrationGeminiModel
+  model:
+    | IntegrationOpenAIModel
+    | IntegrationGeminiModel
+    | IntegrationClaudeModel
   provider: string
   modelId: string
   abortSignal?: AbortSignal
