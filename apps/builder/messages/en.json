@@ -1759,8 +1759,53 @@
     },
     "title": "OpenAI"
   },
+  "claude": {
+    "autoReply": {
+      "description": "Enable AI auto reply to respond to users naturally with AI powered by your business data.",
+      "label": "AI Auto Reply"
+    },
+    "connect": {
+      "description": "Respond to users naturally with AI powered by your business data.",
+      "label": "Claude AI"
+    },
+    "title": "Claude AI"
+  },
+  "deepseek": {
+    "autoReply": {
+      "description": "Enable AI auto reply to respond to users naturally with AI powered by your business data.",
+      "label": "AI Auto Reply"
+    },
+    "connect": {
+      "description": "Respond to users naturally with AI powered by your business data.",
+      "label": "DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
   "settings": {
-    "title": "Settings"
+    "title": "Settings",
+    "agents": {
+      "description": "AI Agents description",
+      "title": "AI Agents"
+    },
+    "aiTriggers": {
+      "description": "AI Triggers description",
+      "title": "AI Triggers"
+    },
+    "automatedResponses": {
+      "title": "Keywords"
+    },
+    "openai": {
+      "description": "OpenAI integration description",
+      "title": "OpenAI Integration"
+    },
+    "claude": {
+      "description": "Claude integration description",
+      "title": "Claude Integration"
+    },
+    "deepseek": {
+      "description": "DeepSeek integration description",
+      "title": "DeepSeek Integration"
+    }
   },
   "auth": {
     "orContinueWith": "Or continue with",

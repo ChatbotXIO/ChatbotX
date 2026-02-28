@@ -27,6 +27,10 @@ export type ConversationModel = typeof schema.conversationModel.$inferSelect
 export type InboxModel = typeof schema.inboxModel.$inferSelect
 export type IntegrationSmtpModel =
   typeof schema.integrationSmtpModel.$inferSelect
+export type IntegrationClaudeModel =
+  typeof schema.integrationClaudeModel.$inferSelect
+export type IntegrationDeepseekModel =
+  typeof schema.integrationDeepseekModel.$inferSelect
 export type IntegrationGeminiModel =
   typeof schema.integrationGeminiModel.$inferSelect
 export type IntegrationModel = typeof schema.integrationModel.$inferSelect

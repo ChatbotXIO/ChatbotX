@@ -1771,8 +1771,53 @@
     },
     "title": "OpenAI"
   },
+  "claude": {
+    "autoReply": {
+      "description": "Bật AI tự động trả lời để trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn.",
+      "label": "AI tự động trả lời"
+    },
+    "connect": {
+      "description": "Trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn.",
+      "label": "Claude AI"
+    },
+    "title": "Claude AI"
+  },
+  "deepseek": {
+    "autoReply": {
+      "description": "Bật AI tự động trả lời để trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn.",
+      "label": "AI tự động trả lời"
+    },
+    "connect": {
+      "description": "Trả lời người dùng một cách tự nhiên với AI được hỗ trợ bởi dữ liệu kinh doanh của bạn.",
+      "label": "DeepSeek"
+    },
+    "title": "DeepSeek"
+  },
   "settings": {
-    "title": "Cài đặt"
+    "title": "Cài đặt",
+    "agents": {
+      "description": "Mô tả AI Agents",
+      "title": "AI Agents"
+    },
+    "aiTriggers": {
+      "description": "Mô tả AI Triggers",
+      "title": "AI Triggers"
+    },
+    "automatedResponses": {
+      "title": "Phản hồi tự động"
+    },
+    "openai": {
+      "description": "Mô tả tích hợp OpenAI",
+      "title": "Tích hợp OpenAI"
+    },
+    "claude": {
+      "description": "Mô tả tích hợp Claude",
+      "title": "Tích hợp Claude"
+    },
+    "deepseek": {
+      "description": "Mô tả tích hợp DeepSeek",
+      "title": "Tích hợp DeepSeek"
+    }
   },
   "auth": {
     "orContinueWith": "Hoặc tiếp tục với",

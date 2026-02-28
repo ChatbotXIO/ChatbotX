@@ -32,6 +32,14 @@ export async function getAIIntegrationInDB(props: {
       return await db.query.integrationGeminiModel.findFirst({
         where,
       })
+    case aiProviders.enum.claude:
+      return await db.query.integrationClaudeModel.findFirst({
+        where,
+      })
+    case aiProviders.enum.deepseek:
+      return await db.query.integrationDeepseekModel.findFirst({
+        where,
+      })
     default:
       return null
   }

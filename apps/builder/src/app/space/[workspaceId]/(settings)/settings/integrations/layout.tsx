@@ -14,6 +14,8 @@ type SettingIntegrationLayoutProps = {
   workspaceToken: ReactNode
   openAI: ReactNode
   gemini: ReactNode
+  claude: ReactNode
+  deepSeek: ReactNode
   googleSheets: ReactNode
 }
 
@@ -21,6 +23,8 @@ export default function SettingIntegrationLayout({
   workspaceToken,
   openAI,
   gemini,
+  claude,
+  deepSeek,
   googleSheets,
 }: SettingIntegrationLayoutProps) {
   const t = useTranslations()
@@ -40,6 +44,16 @@ export default function SettingIntegrationLayout({
       keyName: t("gemini.title"),
       icon: BotIcon,
       content: gemini,
+    },
+    {
+      keyName: t("claude.title"),
+      icon: BotIcon,
+      content: claude,
+    },
+    {
+      keyName: t("deepseek.title"),
+      icon: BotIcon,
+      content: deepSeek,
     },
     {
       keyName: t("googleSheets.title"),
