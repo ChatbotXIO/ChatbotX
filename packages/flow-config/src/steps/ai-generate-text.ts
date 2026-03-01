@@ -1,21 +1,7 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { type AIProvider, aiProviders, defaultAIModelIds } from "./ai-shared"
 import { StepType } from "./step-action"
-
-export const aiProviders = {
-  openai: "openai",
-  gemini: "gemini",
-  claude: "claude",
-  deepseek: "deepseek",
-} as const
-export type AIProvider = keyof typeof aiProviders
-
-export const defaultAIModelIds = {
-  openai: "openai/gpt-4o-mini",
-  gemini: "gemini/gemini-2.5-pro",
-  claude: "claude/claude-3-5-sonnet-20241022",
-  deepseek: "deepseek/deepseek-chat",
-} as const
 
 export const aiGenerateTextSchema = z.object({
   id: z.cuid2(),

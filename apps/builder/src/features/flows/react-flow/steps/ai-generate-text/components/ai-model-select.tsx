@@ -12,7 +12,10 @@ import type { FieldValues } from "react-hook-form"
 import { claudeModelOptions } from "@/features/claude/models"
 import { deepseekModelOptions } from "@/features/deepseek/models"
 import { geminiModelOptions } from "@/features/integration-gemini/schemas/models"
-import { openaiChatModelOptions } from "@/features/openai/models"
+import {
+  openaiChatModelOptions,
+  openaiImageModelOptions,
+} from "@/features/openai/models"
 
 const modelOptions: Record<AIProvider, SelectOption[]> = {
   openai: openaiChatModelOptions,
@@ -21,15 +24,28 @@ const modelOptions: Record<AIProvider, SelectOption[]> = {
   deepseek: deepseekModelOptions,
 }
 
+const imageModelOptions: Record<string, SelectOption[]> = {
+  openai: openaiImageModelOptions,
+  claude: [],
+  gemini: [],
+  deepseek: [],
+}
+
 type AIModelSelectProps = SelectFieldProps<FieldValues> & {
   provider: AIProvider
+  type?: "chat" | "image"
 }
 
 export const AIModelSelect = (props: AIModelSelectProps) => {
-  const { provider, ...rest } = props
+  const { provider, type = "chat", ...rest } = props
   const t = useTranslations()
 
-  const options = useMemo(() => modelOptions[provider] ?? [], [provider])
+  const options = useMemo(() => {
+    if (type === "image") {
+      return imageModelOptions[provider] ?? []
+    }
+    return modelOptions[provider] ?? []
+  }, [provider, type])
 
   return (
     <ComboboxField

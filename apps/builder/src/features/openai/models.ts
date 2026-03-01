@@ -100,3 +100,14 @@ export const openaiChatModels = openaiChatModelOptions.map(
   (model) => model.value,
 )
 export type OpenAIChatModel = (typeof openaiChatModels)[number]
+
+export const openaiImageModelOptions = [
+  {
+    label: "DALL-E 3",
+    value: "dall-e-3",
+  },
+  {
+    label: "DALL-E 2",
+    value: "dall-e-2",
+  },
+]

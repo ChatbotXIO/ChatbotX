@@ -78,6 +78,27 @@ export function getAIModel(
   }
 }
 
+export function getAIImageModel(
+  model: IntegrationOpenAIModel | IntegrationGeminiModel,
+  provider: string,
+  modelName: string,
+) {
+  const auth = model.auth as SecretTextAuthValue
+
+  switch (provider) {
+    case aiProviders.openai: {
+      const openai = createOpenAI({ apiKey: auth.secretText })
+      return openai.image(modelName)
+    }
+    case aiProviders.gemini: {
+      const google = createGoogleGenerativeAI({ apiKey: auth.secretText })
+      return google.image(modelName)
+    }
+    default:
+      throw new Error(`Unsupported provider for image generation: ${provider}`)
+  }
+}
+
 export async function getAIFileTools(
   chatbotId: string,
   selectedFileIds: string[],

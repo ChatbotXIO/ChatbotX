@@ -467,6 +467,9 @@
       "label": "Khóa API",
       "placeholder": "Nhập khóa API"
     },
+    "aspectRatio": {
+      "label": "Tỷ lệ khung hình"
+    },
     "auth": {
       "label": "Xác thực"
     },
@@ -648,6 +651,9 @@
       "label": "Nút luồng"
     },
     "flows": {
+      "aiGenerateImage": {
+        "label": "{aiName}: Tạo hình ảnh"
+      },
       "aiGenerateText": {
         "label": "{aiName}: Tạo văn bản"
       },
@@ -833,7 +839,26 @@
       "noPhoneNumbersFound": "Không tìm thấy số điện thoại cho tài khoản này"
     },
     "prompt": {
-      "label": "Prompt"
+      "label": "Prompt",
+      "placeholder": "Nhập prompt để AI tạo hình ảnh..."
+    },
+    "quality": {
+      "label": "Chất lượng",
+      "options": {
+        "auto": "Tự động",
+        "hd": "Cao (HD)",
+        "md": "Trung bình",
+        "ld": "Thấp"
+      }
+    },
+    "size": {
+      "label": "Kích thước",
+      "options": {
+        "auto": "Tự động",
+        "s256": "256x256",
+        "s512": "512x512",
+        "s1024": "1024x1024"
+      }
     },
     "promptMessages": {
       "label": "Tin nhắn prompt",
@@ -861,9 +886,6 @@
     },
     "showLogo": {
       "label": "Hiển thị logo cá nhân"
-    },
-    "size": {
-      "label": "Kích thước"
     },
     "sort": {
       "label": "Sắp xếp",
@@ -1043,13 +1065,17 @@
     },
     "placeholders": {
       "selectTools": "Chọn công cụ",
-      "temperatureHint": "Điều khiển độ ngẫu nhiên (0-2), cao hơn = sáng tạo hơn"
+      "temperatureHint": "Điều khiển độ ngẫu nhiên (0-2), cao hơn = sáng tạo hơn",
+      "selectModelOpenAI": "Chọn mô hình OpenAI",
+      "selectModelGemini": "Chọn mô hình Gemini",
+      "selectModelClaude": "Chọn mô hình Claude",
+      "selectModelDeepseek": "Chọn mô hình DeepSeek"
     },
     "inputCfId": {
       "label": "Trường tùy chỉnh đầu vào"
     },
     "outputCfId": {
-      "label": "Lưu kết quả vào trường tùy chỉnh"
+      "label": "Lưu phản hồi vào một trường tùy chỉnh"
     },
     "jsonPath": {
       "label": "Đường dẫn JSON",
@@ -1084,6 +1110,9 @@
     }
   },
   "flows": {
+    "aiGenerateImage": {
+      "label": "{name}: AI tạo hình ảnh"
+    },
     "actions": {
       "addContactNotes": "Thêm ghi chú liên hệ",
       "addContactTag": "Thêm thẻ liên hệ",

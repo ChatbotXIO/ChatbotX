@@ -648,6 +648,9 @@
       "label": "Flow Node"
     },
     "flows": {
+      "aiGenerateImage": {
+        "label": "{aiName}: Generate Image"
+      },
       "aiGenerateText": {
         "label": "{aiName}: Generate Text"
       },
@@ -834,7 +837,25 @@
     },
     "prompt": {
       "label": "Prompt",
-      "placeholder": "Enter prompt"
+      "placeholder": "Enter prompt to generate image..."
+    },
+    "quality": {
+      "label": "Quality",
+      "options": {
+        "auto": "Auto",
+        "hd": "High (HD)",
+        "md": "Medium",
+        "ld": "Low"
+      }
+    },
+    "size": {
+      "label": "Size",
+      "options": {
+        "auto": "Auto",
+        "s256": "256x256",
+        "s512": "512x512",
+        "s1024": "1024x1024"
+      }
     },
     "promptMessages": {
       "role": {
@@ -861,9 +882,6 @@
     },
     "showLogo": {
       "label": "Show Personal Logo"
-    },
-    "size": {
-      "label": "Size"
     },
     "sort": {
       "label": "Sort",
@@ -1043,13 +1061,17 @@
     },
     "placeholders": {
       "selectTools": "Select tools",
-      "temperatureHint": "Controls randomness (0-2), higher = more creative"
+      "temperatureHint": "Controls randomness (0-2), higher = more creative",
+      "selectModelOpenAI": "Select OpenAI Model",
+      "selectModelGemini": "Select Gemini Model",
+      "selectModelClaude": "Select Claude Model",
+      "selectModelDeepseek": "Select DeepSeek Model"
     },
     "inputCfId": {
       "label": "Input Custom Field"
     },
     "outputCfId": {
-      "label": "Save result to a custom field"
+      "label": "Save response to a custom field"
     },
     "jsonPath": {
       "label": "JSON Path",
@@ -1086,6 +1108,9 @@
   "flows": {
     "aiGenerateText": {
       "label": "{name}: AI Generate Text"
+    },
+    "aiGenerateImage": {
+      "label": "{name}: AI Generate Image"
     },
     "actions": {
       "addContactNotes": "Add Contact Notes",

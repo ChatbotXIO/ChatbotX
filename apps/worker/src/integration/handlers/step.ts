@@ -35,6 +35,7 @@ import {
   unfollowConversation,
 } from "./conversation"
 import type { ExecuteStepProps } from "./flow"
+import { handleAIGenerateImage } from "./generate-image"
 import { handleAIGenerateText } from "./generate-text"
 import { getUserData } from "./get-user-data"
 import {
@@ -140,7 +141,7 @@ export const flowStepHandlers: Record<
   [StepType.openWebsite]: undefined,
   [StepType.aiAnalyzeImage]: undefined,
   [StepType.aiDeleteMessageHistory]: undefined,
-  [StepType.aiGenerateImage]: undefined,
+  [StepType.aiGenerateImage]: handleAIGenerateImage,
   [StepType.aiGenerateTextAgent]: undefined,
   [StepType.aiGenerateText]: handleAIGenerateText,
   [StepType.aiSpeechToText]: undefined,

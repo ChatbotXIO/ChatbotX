@@ -29,7 +29,7 @@
     "@aha.chat/worker-config": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.28",
     "@ai-sdk/deepseek": "^2.0.12",
-    "@ai-sdk/google": "^3.0.15",
+    "@ai-sdk/google": "^3.0.34",
     "@ai-sdk/openai": "^3.0.21",
     "@faker-js/faker": "^10.2.0",
     "@paralleldrive/cuid2": "^3.3.0",
