@@ -8,7 +8,7 @@ export function AppTab({ chatbotId }: { chatbotId: string }) {
   const t = useTranslations()
   return (
     <Card>
-      <CardContent className="flex items-center gap-8">
+      <CardContent className="flex items-center gap-8 px-8">
         <Link
           className="font-medium text-sm"
           href={`/chatbots/${chatbotId}/tags`}
