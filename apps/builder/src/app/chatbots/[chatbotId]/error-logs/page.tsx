@@ -1,4 +1,3 @@
-import { LogType } from "@aha.chat/database"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -22,7 +21,7 @@ export default async function ErrorLogsPage(props: {
     getLogs({
       ...search,
       chatbotId: params.chatbotId,
-      logType: LogType.error,
+      logType: "error",
     }),
   ])
 

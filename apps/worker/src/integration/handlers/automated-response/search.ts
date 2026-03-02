@@ -1,4 +1,17 @@
-import { prisma } from "@aha.chat/database"
+import {
+  and,
+  db,
+  desc,
+  eq,
+  findOrFail,
+  inArray,
+  sql,
+} from "@aha.chat/database/client"
+import {
+  aiEmbeddingModel,
+  integrationOpenAIModel,
+} from "@aha.chat/database/schema"
+import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
 import { createOpenAI } from "@ai-sdk/openai"
 import { embed } from "ai"
 import { logger } from "../../../lib/logger"
@@ -11,18 +24,14 @@ import type {
 } from "./types"
 
 async function getOpenAIIntegration(chatbotId: string) {
-  const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
-    where: {
+  return await findOrFail<IntegrationOpenAIModel>(
+    integrationOpenAIModel,
+    {
       chatbotId,
       autoReply: true,
     },
-  })
-
-  if (!integrationOpenAI) {
-    throw new Error("OpenAI integration not found")
-  }
-
-  return integrationOpenAI
+    "OpenAI integration not found",
+  )
 }
 
 async function createQueryEmbedding(
@@ -50,20 +59,34 @@ async function searchSimilarEmbeddings(
 ): Promise<SimilaritySearchResult[]> {
   const embeddingString = `[${queryEmbedding.join(",")}]`
 
-  const results = await prisma.$queryRaw<SimilaritySearchResult[]>`
-    SELECT
-      "id",
-      "content",
-      "aiFileId",
-      1 - ("embedding" <=> ${embeddingString}::vector) as distance
-    FROM "AIEmbedding"
-    WHERE "chatbotId" = ${config.chatbotId}
-      AND "aiFileId" = ANY(${config.selectedFileIds})
-    ORDER BY "embedding" <=> ${embeddingString}::vector
-    LIMIT ${config.maxResults}
-  `
+  return await db
+    .select({
+      id: aiEmbeddingModel.id,
+      content: aiEmbeddingModel.content,
+      aiFileId: aiEmbeddingModel.aiFileId,
+      distance: sql<number>`(1 - ("embedding" <=> ${embeddingString}::vector))`,
+    })
+    .from(aiEmbeddingModel)
+    .where(
+      and(
+        eq(aiEmbeddingModel.chatbotId, config.chatbotId),
+        inArray(aiEmbeddingModel.aiFileId, config.selectedFileIds),
+      ),
+    )
+    .orderBy(desc(aiEmbeddingModel.embedding))
+    .limit(config.maxResults)
 
-  return results
+  // const results = await db.$queryRaw<SimilaritySearchResult[]>`
+  //   SELECT
+  //     "id",
+  //     "content",
+  //     "aiFileId",
+  //     1 - ("embedding" <=> ${embeddingString}::vector) as distance
+  //   FROM "AIEmbedding"
+  //   WHERE "chatbotId" = ${config.chatbotId}
+  //     AND "aiFileId" = ANY(${config.selectedFileIds})
+  //   ORDER BY "embedding" <=> ${embeddingString}::vector
+  //   LIMIT ${config.maxResults}
 }
 
 function filterRelevantResults(
@@ -112,10 +135,10 @@ export async function performFileSearch(
     const result = formatSearchResults(relevantResults)
     return result
   } catch (error) {
-    logger.error("[automated-response] performFileSearch failed", {
+    logger.error(
       error,
-      chatbotId: config.chatbotId,
-    })
+      `[automated-response] performFileSearch failed for chatbotId: ${config.chatbotId}`,
+    )
     return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : "Unknown error"}`
   }
 }

@@ -1,5 +1,5 @@
-import { prisma } from "@aha.chat/database"
-import { FieldType } from "@aha.chat/database/types"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { contactCustomFieldModel, fieldModel } from "@aha.chat/database/schema"
 import {
   type CountCharactersStepSchema,
   type FormatDateStepSchema,
@@ -8,89 +8,93 @@ import {
   type GetDataFromJsonStepSchema,
 } from "@aha.chat/flow-config"
 import { faker } from "@faker-js/faker"
+import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"
 import { getProperty } from "dot-prop"
-import type { ExecuteStepProps } from "./step"
+import type { ExecuteStepProps } from "./flow"
 
 export async function countCharacters({
   conversation,
   step,
 }: ExecuteStepProps<CountCharactersStepSchema>) {
   const customFieldIds = [step.inputCfId, step.outputCfId]
-  const customFieldsCount = await prisma.field.count({
-    where: {
-      fieldType: FieldType.customField,
-      id: {
-        in: customFieldIds,
-      },
-    },
-  })
+  const customFieldsCount = await db.$count(
+    fieldModel,
+    and(
+      eq(fieldModel.fieldType, "customField"),
+      inArray(fieldModel.id, customFieldIds),
+    ),
+  )
   if (customFieldsCount !== 2) {
     return
   }
 
   // Find target contact custom field
-  const targetContactCustomField = await prisma.contactCustomField.findFirst({
-    where: {
-      customFieldId: step.inputCfId,
-    },
-  })
+  const targetContactCustomField =
+    await db.query.contactCustomFieldModel.findFirst({
+      where: {
+        customFieldId: step.inputCfId,
+      },
+    })
   if (!targetContactCustomField) {
     return
   }
 
   const value = `${`${targetContactCustomField.value}`.length}`
 
-  await prisma.contactCustomField.upsert({
-    where: {
-      contactId_customFieldId: {
-        contactId: conversation.contactId,
-        customFieldId: step.outputCfId,
-      },
-    },
-    update: {
-      value,
-    },
-    create: {
+  await db
+    .insert(contactCustomFieldModel)
+    .values({
+      id: createId(),
       value,
       contactId: conversation.contactId,
       customFieldId: step.outputCfId,
-    },
-  })
+    })
+    .onConflictDoUpdate({
+      target: [
+        contactCustomFieldModel.contactId,
+        contactCustomFieldModel.customFieldId,
+      ],
+      set: {
+        value,
+      },
+    })
 }
 
 export async function formatDate({
   conversation,
   step,
 }: ExecuteStepProps<FormatDateStepSchema>) {
-  const inputContactCustomField = await prisma.contactCustomField.findFirst({
-    where: {
-      customFieldId: step.inputCfId,
-      contactId: conversation.contactId,
-    },
-  })
+  const inputContactCustomField =
+    await db.query.contactCustomFieldModel.findFirst({
+      where: {
+        customFieldId: step.inputCfId,
+        contactId: conversation.contactId,
+      },
+    })
   if (!inputContactCustomField) {
     return
   }
 
   const newValue = format(new Date(inputContactCustomField.value), step.format)
 
-  await prisma.contactCustomField.upsert({
-    where: {
-      contactId_customFieldId: {
-        contactId: conversation.contactId,
-        customFieldId: step.outputCfId,
-      },
-    },
-    update: {
+  await db
+    .insert(contactCustomFieldModel)
+    .values({
+      id: createId(),
       value: newValue,
-    },
-    create: {
       contactId: conversation.contactId,
       customFieldId: step.outputCfId,
-      value: newValue,
-    },
-  })
+    })
+    .onConflictDoUpdate({
+      target: [
+        contactCustomFieldModel.contactId,
+        contactCustomFieldModel.customFieldId,
+      ],
+      set: {
+        value: newValue,
+      },
+    })
 }
 
 export async function generateCode({
@@ -118,22 +122,23 @@ export async function generateCode({
   }
 
   if (value) {
-    await prisma.contactCustomField.upsert({
-      where: {
-        contactId_customFieldId: {
-          contactId: conversation.contactId,
-          customFieldId: step.outputCfId,
-        },
-      },
-      update: {
+    await db
+      .insert(contactCustomFieldModel)
+      .values({
+        id: createId(),
         value,
-      },
-      create: {
         contactId: conversation.contactId,
         customFieldId: step.outputCfId,
-        value,
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: [
+          contactCustomFieldModel.contactId,
+          contactCustomFieldModel.customFieldId,
+        ],
+        set: {
+          value,
+        },
+      })
   }
 }
 
@@ -141,7 +146,7 @@ export async function getDataFromJSON({
   conversation,
   step,
 }: ExecuteStepProps<GetDataFromJsonStepSchema>) {
-  const inputValue = await prisma.contactCustomField.findFirst({
+  const inputValue = await db.query.contactCustomFieldModel.findFirst({
     where: {
       contactId: conversation.contactId,
       customFieldId: step.inputCfId,
@@ -158,43 +163,44 @@ export async function getDataFromJSON({
   }[]
 
   // Find valid custom fields
-  const validCustomFields = await prisma.field.findMany({
+  const validCustomFields = await db.query.fieldModel.findMany({
     where: {
-      fieldType: FieldType.customField,
+      fieldType: "customField",
       chatbotId: conversation.chatbotId,
       id: {
         in: mapping.map((m) => m.outputCfId),
       },
     },
-    select: {
+    columns: {
       id: true,
     },
   })
   const validCustomFieldIds = validCustomFields.map((v) => v.id)
 
-  await prisma.$transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     for (const data of mapping) {
       if (validCustomFieldIds.includes(data.outputCfId)) {
         const value = getProperty(dataJSON, data.jsonPath)
 
         if (value) {
           const encodedValue = JSON.stringify(value)
-          await tx.contactCustomField.upsert({
-            where: {
-              contactId_customFieldId: {
-                contactId: conversation.contactId,
-                customFieldId: data.outputCfId,
-              },
-            },
-            update: {
+          await tx
+            .insert(contactCustomFieldModel)
+            .values({
+              id: createId(),
               value: encodedValue,
-            },
-            create: {
               contactId: conversation.contactId,
               customFieldId: data.outputCfId,
-              value: encodedValue,
-            },
-          })
+            })
+            .onConflictDoUpdate({
+              target: [
+                contactCustomFieldModel.contactId,
+                contactCustomFieldModel.customFieldId,
+              ],
+              set: {
+                value: encodedValue,
+              },
+            })
         }
       }
     }

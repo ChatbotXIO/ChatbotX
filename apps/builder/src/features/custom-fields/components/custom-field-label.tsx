@@ -1,20 +1,20 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 
 const getTranslationKey = (fieldType: CustomFieldType): string => {
   switch (fieldType) {
-    case CustomFieldType.number:
+    case "number":
       return "fields.number.label"
-    case CustomFieldType.date:
+    case "date":
       return "fields.date.label"
-    case CustomFieldType.datetime:
+    case "datetime":
       return "fields.datetime.label"
-    case CustomFieldType.boolean:
+    case "boolean":
       return "fields.boolean.label"
-    case CustomFieldType.longText:
+    case "longText":
       return "fields.longText.label"
     default:
       return "fields.shortText.label"

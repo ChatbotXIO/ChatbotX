@@ -52,7 +52,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
     <>
       <SettingRow
         description={t("openai.connect.description")}
-        label={t("messages.connectFeature", {
+        label={t("actions.connectFeature", {
           feature: t("fields.openai.label"),
         })}
       >

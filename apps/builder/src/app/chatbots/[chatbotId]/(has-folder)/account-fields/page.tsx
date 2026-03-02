@@ -4,7 +4,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AccountFieldsTable } from "@/features/account-fields/account-field-table"
 import { listAccountFields } from "@/features/account-fields/queries/list-account-fields.query"
-import { listAccountFieldsSearchParams } from "@/features/account-fields/schemas/list-account-fields.schema"
+import { listAccountFieldsSearchParams } from "@/features/account-fields/schemas/query"
 
 export default async function AccountFieldsPage(props: {
   params: Promise<{ chatbotId: string }>

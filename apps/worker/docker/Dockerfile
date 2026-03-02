@@ -17,11 +17,6 @@ RUN turbo prune worker --docker
 
 FROM base AS deps
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN apt update && \
-  apt install -y supervisor tini redis && \
-  apt-get autoremove -y && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=pre /app/out/json/ .
@@ -29,10 +24,17 @@ COPY --from=pre /app/.env .env
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
-RUN pnpm turbo run db:client
 RUN pnpm turbo run build --filter=worker
 
-COPY --from=pre /app/apps/worker/docker/rootfs/ /
+FROM base AS release
+RUN apt update && \
+  apt install -y supervisor tini redis && \
+  apt-get autoremove -y && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
+COPY apps/worker/docker/rootfs/ /
+
+COPY --from=deps /app/apps/worker/dist /app/apps/worker/dist
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

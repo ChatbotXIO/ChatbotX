@@ -5,16 +5,9 @@ import type {
 import type { UserResource } from "@/features/users/schemas/resource"
 
 export type InboxTeamResource = InboxTeamModel & {
-  _count?: {
-    inboxTeamMembers?: number
-  }
   inboxTeamMembers?: InboxTeamMemberResource[]
 }
 
-export type InboxTeamCollection = {
-  data: InboxTeamResource[]
-}
-
 export type InboxTeamMemberResource = InboxTeamMemberModel & {
-  user: UserResource
+  user?: UserResource | null
 }

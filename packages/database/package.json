@@ -3,34 +3,36 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@prisma/adapter-pg": "7.4.0",
     "@t3-oss/env-nextjs": "^0.13.10",
+    "drizzle-cuid2": "^2.2.0",
+    "drizzle-orm": "1.0.0-beta.15-859cf75",
+    "pg": "^8.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@paralleldrive/cuid2": "^3.3.0",
-    "@prisma/client": "^7.4.0",
     "@types/node": "^24.10.4",
+    "@types/pg": "^8.18.0",
     "dotenv-cli": "^11.0.0",
-    "prisma": "7.4.0"
+    "drizzle-kit": "1.0.0-beta.15-859cf75"
   },
   "scripts": {
+    "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
-    "db:studio": "dotenv -e ../../.env -- prisma studio",
+    "migrate": "dotenv -e ../../.env -- drizzle-kit migrate",
+    "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
-    "db:client": "dotenv -e ../../.env -- prisma generate",
-    "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
-    "db:setup": "pnpm migrate && pnpm db:client && pnpm db:seed",
-    "db:rollback": "dotenv -e ../../.env -- ./scripts/db-rollback.sh",
-    "migrate": "dotenv -e ../../.env -- prisma migrate deploy",
-    "migrate:squash": "dotenv -e ../../.env -- ./scripts/squash-migrations.sh",
-    "migrate:status": "dotenv -e ../../.env -- prisma migrate status"
+    "db:setup": "pnpm migrate && pnpm db:seed",
+    "db:check": "dotenv -e ../../.env -- drizzle-kit check"
   },
   "exports": {
     ".": "./src/index.ts",
+    "./client": "./src/client.ts",
     "./types": "./src/types.ts",
     "./keys": "./src/keys.ts",
-    "./enums": "./src/enums.ts"
+    "./enums": "./src/enums.ts",
+    "./schema": "./src/drizzle/schema.ts",
+    "./errors": "./src/errors.ts"
   }
 }

@@ -1,4 +1,3 @@
-import { FolderType } from "@aha.chat/database/types"
 import { Card } from "@aha.chat/ui/components/ui/card"
 import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
@@ -19,7 +18,7 @@ export default async function TagsLayout({
   const t = await getTranslations()
 
   return (
-    <FolderStoreProvider chatbotId={chatbotId} folderType={FolderType.tag}>
+    <FolderStoreProvider chatbotId={chatbotId} folderType="tag">
       <AppBreadcrumb
         items={[
           {

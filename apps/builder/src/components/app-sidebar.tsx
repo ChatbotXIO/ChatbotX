@@ -16,6 +16,7 @@ import {
   UsersIcon,
   WorkflowIcon,
 } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { type ComponentProps, use } from "react"
 import { BrandIcon } from "@/components/brand-icon"
@@ -96,9 +97,12 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="gap-0 px-0 py-0">
-        <div className="flex h-12 items-center justify-center border-b">
+        <Link
+          className="flex h-12 items-center justify-center border-b"
+          href="/"
+        >
           <BrandIcon alt="Brand" />
-        </div>
+        </Link>
         <div className="border-b px-1">
           <ChatbotSwitcher chatbots={chatbots} />
         </div>

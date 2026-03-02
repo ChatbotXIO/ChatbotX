@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@aha.chat/logger": "workspace:*",
-    "@aws-sdk/client-s3": "^3.990.0",
-    "@aws-sdk/s3-presigned-post": "^3.990.0",
+    "@aws-sdk/client-s3": "^3.1000.0",
+    "@aws-sdk/s3-presigned-post": "^3.1000.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "@t3-oss/env-nextjs": "^0.13.10",
     "aws4fetch": "^1.0.20",

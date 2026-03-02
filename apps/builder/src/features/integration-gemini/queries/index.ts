@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { IntegrationGeminiResource } from "../schemas/resource"
 
 export const findIntegrationGemini = async ({
@@ -6,8 +6,8 @@ export const findIntegrationGemini = async ({
 }: {
   chatbotId: string
 }): Promise<IntegrationGeminiResource | null> =>
-  await prisma.integrationGemini.findFirst({
+  (await db.query.integrationGeminiModel.findFirst({
     where: {
       chatbotId,
     },
-  })
+  })) ?? null

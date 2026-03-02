@@ -1,5 +1,3 @@
-import { SenderType } from "@aha.chat/database"
-import type { OutgoingMessage } from "@aha.chat/sdk"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -36,21 +34,22 @@ const worker = new Worker(
     logger.info(job.data, "Worker received job")
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
-        const { message, postbackAction, quickReplyAction } =
+        const { message, postbackAction, quickReplyAction, conversation } =
           await receiveMessage(job.data.data)
 
         // Trigger automated response if the message is from a user
         if (
           !(postbackAction || quickReplyAction) &&
           message.content &&
-          message.senderType === SenderType.contact
+          message.senderType === "contact"
         ) {
           await integrationQueue.add(
             IntegrationJobAction.triggerAutomatedResponse,
             {
               type: IntegrationJobAction.triggerAutomatedResponse,
               data: {
-                message: message as OutgoingMessage,
+                message,
+                conversation,
               },
             },
           )

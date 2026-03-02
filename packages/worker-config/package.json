@@ -13,12 +13,15 @@
     "@aha.chat/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@types/node": "^24.10.4",
-    "bullmq": "^5.69.2",
-    "ioredis": "5.9.2",
+    "bullmq": "^5.70.1",
+    "ioredis": "5.9.3",
     "zod": "^4.3.6"
   },
   "exports": {
     ".": "./src/index.ts",
     "./keys": "./src/keys.ts"
+  },
+  "overrides": {
+    "ioredis": "5.9.3"
   }
 }

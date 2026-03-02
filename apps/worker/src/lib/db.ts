@@ -1,4 +1,5 @@
-import { prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
 import type {
   ConversationModel,
   FlowVersionModel,
@@ -14,25 +15,24 @@ export async function findConversationAndFlowVersion(props: {
   flowVersion: FlowVersionModel
   useLatestFlowVersion: boolean
 }> {
-  const conversation = await prisma.conversation.findUnique({
-    where: {
+  const conversation = await findOrFail<ConversationModel>(
+    conversationModel,
+    {
       id: props.conversationId,
     },
-  })
-  if (!conversation) {
-    throw new SdkException("Conversation not found")
-  }
+    "Conversation not found",
+  )
 
-  let flowVersion: FlowVersionModel | null = null
+  let flowVersion: FlowVersionModel | null | undefined = null
   if (props.flowVersionId) {
-    flowVersion = await prisma.flowVersion.findFirst({
+    flowVersion = await db.query.flowVersionModel.findFirst({
       where: {
         id: props.flowVersionId,
         chatbotId: conversation.chatbotId,
       },
     })
   } else if (props.flowId) {
-    const flow = await prisma.flow.findFirst({
+    const flow = await db.query.flowModel.findFirst({
       where: {
         id: props.flowId,
         chatbotId: conversation.chatbotId,
@@ -40,7 +40,7 @@ export async function findConversationAndFlowVersion(props: {
       },
     })
     if (flow?.currentVersionId) {
-      flowVersion = await prisma.flowVersion.findFirst({
+      flowVersion = await db.query.flowVersionModel.findFirst({
         where: {
           id: flow.currentVersionId,
           chatbotId: conversation.chatbotId,

@@ -1,58 +1,55 @@
-import { type Prisma, prisma } from "@aha.chat/database"
-import type { BroadcastModel } from "@aha.chat/database/types"
+import { db, eq, relationsFilterToSQL } from "@aha.chat/database/client"
+import {
+  broadcastModel,
+  contactsOnBroadcastsModel,
+} from "@aha.chat/database/schema"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { GetBroadcastsSchema } from "../schemas/get-broadcasts-schema"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@/lib/pagination"
+import type { GetBroadcastsSchema } from "../schemas/query"
+import type { BroadcastResource } from "../schemas/resource"
 
 export async function listBroadcasts(
   input: GetBroadcastsSchema,
-): Promise<{ data: BroadcastModel[]; pageCount: number }> {
+): Promise<PaginatedResponse<BroadcastResource>> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.BroadcastWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
+    name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,
   }
 
-  if (input.name) {
-    where.AND = [
-      {
-        name: {
-          contains: input.name,
-          mode: "insensitive",
-        },
-      },
-    ]
-  }
-  const orderBy = input.sort.map((sortItem) => {
-    if ((sortItem.id as string) === "estimatedContacts") {
-      return {
-        contacts: {
-          _count: sortItem.desc ? "desc" : "asc",
-        },
-      } as Prisma.BroadcastOrderByWithRelationInput
-    }
-    return {
-      [sortItem.id]: sortItem.desc ? "desc" : "asc",
-    } as Prisma.BroadcastOrderByWithRelationInput
-  })
+  const pagination = getPaginationWithDefaults(input)
+  const orderBy = parseOrderByAsObject(broadcastModel, input)
 
-  const [data, total] = await prisma.$transaction([
-    prisma.broadcast.findMany({
-      skip: (input.page - 1) * input.perPage,
-      take: input.perPage,
+  // Support filter by contacts count
+  // const contactsCountSort = input.sort?.find(
+  //   (sort) => sort.id === "contactsCount",
+  // )
+  // if (contactsCountSort) {
+  //   orderBy.contactsCount = contactsCountSort.desc ? "desc" : "asc"
+  // }
+
+  const [data, total] = await Promise.all([
+    db.query.broadcastModel.findMany({
       where,
+      ...pagination,
       orderBy,
-      include: {
-        _count: {
-          select: {
-            contacts: true,
-          },
-        },
+      extras: {
+        contactsCount: (table) =>
+          db.$count(
+            contactsOnBroadcastsModel,
+            eq(contactsOnBroadcastsModel.broadcastId, table.id),
+          ),
       },
     }),
-    prisma.broadcast.count({ where }),
+    db.$count(broadcastModel, relationsFilterToSQL(broadcastModel, where)),
   ])
 
-  const pageCount = Math.ceil(total / input.perPage)
+  const pageCount = Math.ceil(total / pagination.limit)
 
   return { data, pageCount }
 }

@@ -1,22 +1,20 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { UserModel } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetUsersSchema } from "../schemas/get-users-schema"
 
-export async function getUsers(
+export async function getAllChatbotMembers(
   input: GetUsersSchema,
 ): Promise<{ data: UserModel[] }> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.UserWhereInput = {
+  const where = {
     chatbotMembers: {
-      some: {
-        chatbotId: input.chatbotId,
-      },
+      chatbotId: input.chatbotId,
     },
   }
 
-  const data = await prisma.user.findMany({ where })
+  const data = await db.query.userModel.findMany({ where })
 
   return { data }
 }

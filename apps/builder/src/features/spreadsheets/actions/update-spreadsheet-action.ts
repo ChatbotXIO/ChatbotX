@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { spreadsheetModel } from "@aha.chat/database/schema"
+import type { SpreadsheetModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -24,27 +26,27 @@ export const updateSpreadsheetAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: CreateSpreadsheetRequest
     }) => {
-      const spreadsheet = await prisma.spreadsheet.findFirstOrThrow({
-        where: {
+      const spreadsheet = await findOrFail<SpreadsheetModel>(
+        spreadsheetModel,
+        {
           id,
           chatbotId,
         },
-      })
+        "Spreadsheet not found",
+      )
 
       const spreadsheetId = await verifyGoogleSheetsUrl(
         chatbotId,
         parsedInput.url,
       )
 
-      await prisma.spreadsheet.update({
-        where: {
-          id: spreadsheet.id,
-        },
-        data: {
+      await db
+        .update(spreadsheetModel)
+        .set({
           ...parsedInput,
           spreadsheetId,
-        },
-      })
+        })
+        .where(eq(spreadsheetModel.id, spreadsheet.id))
 
       revalidateCacheTags(`chatbots:${spreadsheet.chatbotId}#spreadsheets`)
     },

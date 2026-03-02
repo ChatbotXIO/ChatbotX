@@ -1,6 +1,5 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
 import {
   type CountCharactersStepSchema,
   countCharactersStepSchema,
@@ -86,7 +85,7 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
 
             <CustomFieldSelect
               allowCreate={true}
-              customFieldTypes={[CustomFieldType.number]}
+              customFieldTypes={["number"]}
               label={t("fields.outputCfId.label")}
               name="outputCfId"
               required

@@ -1,10 +1,5 @@
-import { prisma } from "@aha.chat/database"
-import {
-  AIMessageRole,
-  type ConversationModel,
-  MessageType,
-  SenderType,
-} from "@aha.chat/database/types"
+import { db } from "@aha.chat/database/client"
+import { AIMessageRole, type ConversationModel } from "@aha.chat/database/types"
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
 import type { ModelMessage } from "ai"
 import { maxConversationHistory } from "../automated-response/constants"
@@ -16,18 +11,18 @@ export async function buildAIMessages(
   const messages: ModelMessage[] = []
 
   if (step.remember) {
-    const lastMessages = await prisma.message.findMany({
+    const lastMessages = await db.query.messageModel.findMany({
       where: {
         conversationId: conversation.id,
         content: {
-          not: null,
+          isNotNull: true,
         },
         messageType: {
-          in: [MessageType.incoming, MessageType.outgoing],
+          in: ["incoming", "outgoing"],
         },
       },
       orderBy: { createdAt: "desc" },
-      take: maxConversationHistory,
+      limit: maxConversationHistory,
     })
 
     for (const message of lastMessages) {
@@ -35,7 +30,7 @@ export async function buildAIMessages(
         continue
       }
 
-      if (message.senderType === SenderType.contact) {
+      if (message.senderType === "contact") {
         messages.push({
           role: AIMessageRole.user,
           content: message.content,

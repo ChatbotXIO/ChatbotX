@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useState } from "react"
-import type { getUsers } from "../users/queries"
+import type { getAllChatbotMembers } from "../users/queries"
 import type { UserResource } from "../users/schemas/resource"
 import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
@@ -43,7 +43,7 @@ type ListInboxTeamsProps = {
   promises: Promise<
     [
       Awaited<ReturnType<typeof getInboxTeams>>,
-      Awaited<ReturnType<typeof getUsers>>,
+      Awaited<ReturnType<typeof getAllChatbotMembers>>,
     ]
   >
 }

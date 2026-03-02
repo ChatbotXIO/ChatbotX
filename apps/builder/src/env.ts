@@ -19,6 +19,10 @@ const baseEnv = {
     NEXT_PUBLIC_ASSET_URL: process.env.NEXT_PUBLIC_ASSET_URL,
     NEXT_PUBLIC_MANAGE_URL: process.env.NEXT_PUBLIC_MANAGE_URL,
   },
+  server: {
+    ENVIRONMENT: z.enum(["dev", "prod"]).default("dev"),
+    EDITION: z.enum(["community", "enterprise", "cloud"]).default("community"),
+  },
 }
 
 const googleAuthEnv = {
@@ -38,6 +42,7 @@ const authEnv = {
 export const env = createEnv({
   extends: [partysocket(), database(), mail()],
   server: {
+    ...baseEnv.server,
     ...googleAuthEnv.server,
     ...authEnv.server,
   },

@@ -1,4 +1,4 @@
-import { InboxType } from "@aha.chat/database/types"
+import type { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -40,7 +40,7 @@ export default function GetFlowLinkDialog({
     let url = ""
     const ref = isDraft ? `draft-${flow.id}` : flow.currentVersionId
     switch (inbox.inboxType) {
-      case InboxType.messenger:
+      case "messenger":
         url = `https://m.me/${inbox.sourceId}?ref=${ref}`
         break
       default:

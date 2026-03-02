@@ -1,7 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
+import { inboxModel, integrationZaloModel } from "@aha.chat/database/schema"
+import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -17,18 +19,22 @@ export const disconnectZaloAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationZalo = await prisma.integrationZalo.findFirstOrThrow({
-        where: { chatbotId },
-      })
+      const integrationZalo = await findOrFail<IntegrationZaloModel>(
+        integrationZaloModel,
+        {
+          chatbotId,
+        },
+        "Integration Zalo not found",
+      )
 
-      await prisma.$transaction(async (tx) => {
-        await tx.integrationZalo.delete({
-          where: { id: integrationZalo.id },
-        })
-        await tx.inbox.update({
-          where: { id: integrationZalo.inboxId },
-          data: { status: InboxStatus.disconnected },
-        })
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(integrationZaloModel)
+          .where(eq(integrationZaloModel.id, integrationZalo.id))
+        await tx
+          .update(inboxModel)
+          .set({ status: InboxStatus.disconnected })
+          .where(eq(inboxModel.id, integrationZalo.inboxId))
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#zalos`)

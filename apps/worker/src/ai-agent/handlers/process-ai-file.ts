@@ -1,9 +1,12 @@
-import { AIEmbeddingStatus, prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
+import { aiEmbeddingModel, aiFileModel } from "@aha.chat/database/schema"
+import type { AIEmbeddingStatus, AIFileModel } from "@aha.chat/database/types"
 import {
   AIJobAction,
   type AIJobProcessFile,
   aiAgentQueue,
 } from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
 import { extractTextFromFile } from "../lib/text-extractor"
 
 type TextChunk = { content: string }
@@ -43,12 +46,13 @@ export async function processAIFile(
 ) {
   const { aiFileId } = data
 
-  const aiFile = await prisma.aIFile.findUnique({
-    where: { id: aiFileId },
-  })
-  if (!aiFile) {
-    throw new Error("AI file not found")
-  }
+  const aiFile = await findOrFail<AIFileModel>(
+    aiFileModel,
+    {
+      id: aiFileId,
+    },
+    "AI file not found",
+  )
 
   const text = await extractTextFromFile(aiFile.path, aiFile.mimeType)
 
@@ -58,15 +62,17 @@ export async function processAIFile(
     overlapSize,
   ).map((c) => ({ content: c.content }))
 
-  await prisma.aIEmbedding.createMany({
-    data: chunks.map((c) => ({
+  await db.insert(aiEmbeddingModel).values(
+    chunks.map((c) => ({
+      id: createId(),
       content: c.content,
       chatbotId: aiFile.chatbotId,
       aiFileId: aiFile.id,
-      status: AIEmbeddingStatus.pending,
+      status: "pending" as AIEmbeddingStatus,
     })),
-  })
-  const embeddings = await prisma.aIEmbedding.findMany({
+  )
+
+  const embeddings = await db.query.aiEmbeddingModel.findMany({
     where: {
       aiFileId: aiFile.id,
     },

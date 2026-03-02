@@ -1,11 +1,13 @@
 "use server"
 
-import { FieldType, FolderType, prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { fieldModel } from "@aha.chat/database/schema"
+import type { FieldModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
@@ -24,31 +26,28 @@ export const updateCustomFieldAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateCustomFieldSchema
     }) => {
-      const customField = await prisma.field.findFirstOrThrow({
-        where: {
+      const customField = await findOrFail<FieldModel>(
+        fieldModel,
+        {
           id,
           chatbotId,
-          fieldType: FieldType.accountField,
+          fieldType: "accountField",
         },
-      })
+        "Custom field not found",
+      )
 
       if (
         parsedInput.folderId &&
         parsedInput.folderId !== customField.folderId
       ) {
-        await ensureFolderIdIsExists(
+        await ensureFolderIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.customField,
+          "customField",
         )
       }
 
-      await prisma.field.update({
-        where: {
-          id,
-        },
-        data: parsedInput,
-      })
+      await db.update(fieldModel).set(parsedInput).where(eq(fieldModel.id, id))
 
       revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
     },

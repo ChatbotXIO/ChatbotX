@@ -1,6 +1,6 @@
 import type { ChatbotModel, OrganizationModel } from "@aha.chat/database/types"
 import { getDomainFromHeader } from "@/lib/domain"
-import { findChatbot } from "../chatbot/queries"
+import { findChatbotOrFail } from "../chatbot/queries"
 import { findOrganization } from "../organization/queries"
 
 export async function identifyChatbotAndOrganizationFromRequest(
@@ -18,13 +18,10 @@ export async function identifyChatbotAndOrganizationFromRequest(
     return { organization }
   }
 
-  const chatbot = await findChatbot({
+  const chatbot = await findChatbotOrFail({
     id: chatbotId,
     organizationId: organization.id,
   })
-  if (!chatbot) {
-    throw new Error("Chatbot not found")
-  }
 
   return { chatbot, organization }
 }

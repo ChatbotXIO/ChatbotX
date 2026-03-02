@@ -24,9 +24,7 @@ import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 
 type TagWithContacts = TagModel & {
-  _count?: {
-    contacts: number
-  }
+  contactsCount?: number
 }
 
 type GetColumnsProps = {
@@ -93,7 +91,7 @@ export function getTagColumns({
           title={t("fields.contacts.label")}
         />
       ),
-      cell: ({ row }) => <div>{row.original._count?.contacts ?? 0}</div>,
+      cell: ({ row }) => <div>{row.original.contactsCount ?? 0}</div>,
       size: 50,
       meta: {
         label: t("fields.contacts.label"),

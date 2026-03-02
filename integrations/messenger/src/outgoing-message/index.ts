@@ -10,7 +10,6 @@ import {
 } from "@aha.chat/flow-config"
 import {
   ContentType,
-  FileType,
   type OutgoingConversation,
   type OutgoingMessage,
   type SendFlowStepProps,
@@ -63,7 +62,7 @@ export function* convertMessageToFacebookMessage(
     }
     for (const attachment of message.attachments || []) {
       switch (attachment.fileType) {
-        case FileType.image:
+        case "image":
           yield {
             attachment: getAttachmentTemplate(
               attachment.url as string,
@@ -71,7 +70,7 @@ export function* convertMessageToFacebookMessage(
             ),
           }
           continue
-        case FileType.video:
+        case "video":
           yield {
             attachment: getAttachmentTemplate(
               attachment.url as string,
@@ -79,7 +78,7 @@ export function* convertMessageToFacebookMessage(
             ),
           }
           continue
-        case FileType.audio:
+        case "audio":
           yield {
             attachment: getAttachmentTemplate(
               attachment.url as string,

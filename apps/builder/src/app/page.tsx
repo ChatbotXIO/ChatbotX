@@ -1,11 +1,12 @@
-import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
+import { notFound } from "next/navigation"
 import ChatbotList from "@/features/chatbots/components/chatbot-list"
-import { getCurrentUserId } from "@/lib/auth/utils"
+import { getCurrentUserAndAllLinkedChatbots } from "@/lib/auth/utils"
 
 export default async function MainPage() {
-  const userId = await getCurrentUserId()
+  const userAndChatbots = await getCurrentUserAndAllLinkedChatbots()
+  if (!userAndChatbots) {
+    return notFound()
+  }
 
-  const { chatbots } = await getAllChatbotMembers(userId)
-
-  return <ChatbotList chatbots={chatbots} />
+  return <ChatbotList chatbots={userAndChatbots.allChatbots} />
 }

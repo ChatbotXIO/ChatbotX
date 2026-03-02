@@ -1,6 +1,5 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -49,28 +48,28 @@ export const ContactDetail = () => {
             icon: AtSignIcon,
             label: "Email",
             value: conversation.contact.email,
-            customFieldType: CustomFieldType.shortText,
+            customFieldType: "shortText",
           },
           {
             key: "firstName",
             icon: TextIcon,
             label: "First Name",
             value: conversation.contact.firstName,
-            customFieldType: CustomFieldType.shortText,
+            customFieldType: "shortText",
           },
           {
             key: "lastName",
             icon: TextIcon,
             label: "Last Name",
             value: conversation.contact.lastName,
-            customFieldType: CustomFieldType.shortText,
+            customFieldType: "shortText",
           },
           {
             key: "phoneNumber",
             icon: PhoneIcon,
             label: "Phone Number",
             value: conversation.contact.phoneNumber,
-            customFieldType: CustomFieldType.shortText,
+            customFieldType: "shortText",
           },
         ]
 

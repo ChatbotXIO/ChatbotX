@@ -1,14 +1,26 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import {
+  accountModel,
+  sessionModel,
+  userModel,
+  verificationModel,
+} from "@aha.chat/database/schema"
 import { sendMagicLinkMail } from "@aha.chat/mail"
 import { createId } from "@paralleldrive/cuid2"
 import { betterAuth } from "better-auth"
-import { prismaAdapter } from "better-auth/adapters/prisma"
+import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 import { googleSignInConfig } from "./auth-config"
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: {
+      user: userModel,
+      verification: verificationModel,
+      session: sessionModel,
+      account: accountModel,
+    },
   }),
   socialProviders: {
     google: googleSignInConfig,
@@ -31,4 +43,11 @@ export const auth = betterAuth({
       generateName: () => `Anonymous ${createId()}`,
     }),
   ],
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
+      strategy: "compact", // or "jwt" or "jwe"
+    },
+  },
 })

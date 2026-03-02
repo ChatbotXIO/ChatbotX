@@ -19,10 +19,10 @@ import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { toast } from "sonner"
 import { AIMcpServersCreate } from "./ai-mcp-servers-create"
-import type { getAIMcpServers } from "./queries"
+import type { listAIMcpServers } from "./queries"
 
 type AIMcpServersTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof getAIMcpServers>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listAIMcpServers>>]>
 }
 
 export default function AIMcpServersTable({

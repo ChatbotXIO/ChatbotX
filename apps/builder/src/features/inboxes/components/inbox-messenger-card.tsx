@@ -1,6 +1,5 @@
 "use client"
 
-import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
@@ -30,7 +29,7 @@ export default function InboxMessengerCard({
     <Card className="py-3" key={inbox.id}>
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
         <InboxIcon
-          inboxType={InboxType.messenger}
+          inboxType="messenger"
           label={inbox.integrationMessenger?.name}
         />
 

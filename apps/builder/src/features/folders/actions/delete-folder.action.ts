@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, arrayContains, db, eq, or } from "@aha.chat/database/client"
+import { folderModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -21,9 +22,9 @@ export const deleteFolderAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.$transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         for (const id of parsedInput.ids) {
-          const folder = await tx.folder.findFirst({
+          const folder = await tx.query.folderModel.findFirst({
             where: {
               chatbotId,
               id,
@@ -33,21 +34,17 @@ export const deleteFolderAction = chatbotActionClient
             continue
           }
 
-          await tx.folder.deleteMany({
-            where: {
-              chatbotId,
-              OR: [
-                {
-                  id,
-                },
-                {
-                  paths: {
-                    has: id,
-                  },
-                },
-              ],
-            },
-          })
+          await tx
+            .delete(folderModel)
+            .where(
+              and(
+                eq(folderModel.chatbotId, chatbotId),
+                or(
+                  eq(folderModel.id, id),
+                  arrayContains(folderModel.paths, [id]),
+                ),
+              ),
+            )
 
           revalidateCacheTags([
             `chatbots:${chatbotId}#folders:${folder.folderType}`,

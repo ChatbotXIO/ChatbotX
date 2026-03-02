@@ -28,19 +28,19 @@
     "@aha.chat/partysocket-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
-    "@ai-sdk/anthropic": "^3.0.44",
-    "@ai-sdk/deepseek": "^2.0.20",
-    "@ai-sdk/google": "^3.0.29",
-    "@ai-sdk/openai": "^3.0.29",
+    "@ai-sdk/anthropic": "^3.0.50",
+    "@ai-sdk/deepseek": "^2.0.21",
+    "@ai-sdk/google": "^3.0.34",
+    "@ai-sdk/openai": "^3.0.37",
     "@faker-js/faker": "^10.3.0",
     "@paralleldrive/cuid2": "^3.3.0",
-    "ai": "^6.0.86",
-    "bullmq": "^5.69.2",
+    "ai": "^6.0.105",
+    "bullmq": "^5.70.1",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
     "html-to-text": "^9.0.5",
     "image-size": "^2.0.2",
-    "ioredis": "5.9.2",
+    "ioredis": "5.9.3",
     "ky": "^1.14.3",
     "mailparser": "^3.9.3",
     "mammoth": "^1.11.0",
@@ -59,6 +59,9 @@
     "@types/node": "^24.10.1",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
-    "tsdown": "^0.20.3"
+    "tsdown": "0.21.0-beta.2"
+  },
+  "overrides": {
+    "ioredis": "5.9.3"
   }
 }

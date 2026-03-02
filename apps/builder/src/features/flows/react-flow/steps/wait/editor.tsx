@@ -1,6 +1,5 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
 import { DelayType } from "@aha.chat/flow-config"
 import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
@@ -89,7 +88,7 @@ const WaitStepEditor = (props: WaitStepEditorProps) => {
       )}
       {delayType === DelayType.customField && (
         <CustomFieldSelect
-          customFieldTypes={[CustomFieldType.datetime]}
+          customFieldTypes={["datetime"]}
           label={t("flows.wait.datetimeTooltip")}
           name={`${parentName}.customFieldId`}
         />

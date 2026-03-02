@@ -1,11 +1,11 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { aiAgentModel } from "@aha.chat/database/schema"
 import {
   type UpdateAIAgentRequest,
   updateAIAgentRequest,
 } from "@/features/ai-agents/schemas/request"
-import { AIAgentException } from "@/features/ai-agents/schemas/resource"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -24,45 +24,19 @@ export const updateAIAgentAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAIAgentRequest
     }) => {
-      // Verify if the name is already taken
-      if (parsedInput.name) {
-        const existingAIAgent = await prisma.aIAgent.findFirst({
-          select: {
-            id: true,
-          },
-          where: {
-            name: parsedInput.name,
-            chatbotId,
-            id: {
-              not: agentId,
-            },
-          },
-        })
-
-        if (existingAIAgent) {
-          throw new AIAgentException(
-            `AIAgent with the name "${parsedInput.name}" already exists.`,
-          )
-        }
-      }
-
-      await prisma.$transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         // make all other agents not default
         if (parsedInput.isDefault) {
-          await tx.aIAgent.updateMany({
-            where: {
-              chatbotId,
-            },
-            data: { isDefault: false },
-          })
+          await tx
+            .update(aiAgentModel)
+            .set({ isDefault: false })
+            .where(eq(aiAgentModel.chatbotId, chatbotId))
         }
 
-        await tx.aIAgent.update({
-          where: {
-            id: agentId,
-          },
-          data: parsedInput,
-        })
+        await tx
+          .update(aiAgentModel)
+          .set(parsedInput)
+          .where(eq(aiAgentModel.id, agentId))
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)

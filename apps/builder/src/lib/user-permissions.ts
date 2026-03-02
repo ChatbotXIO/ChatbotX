@@ -1,5 +1,6 @@
-import { prisma } from "@aha.chat/database"
-import type { ChatbotMemberModel } from "@aha.chat/database/types"
+import { findOrFail } from "@aha.chat/database/client"
+import { chatbotMemberModel, chatbotModel } from "@aha.chat/database/schema"
+import type { ChatbotMemberModel, ChatbotModel } from "@aha.chat/database/types"
 import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { NotfoundException } from "./errors/exception"
 
@@ -15,12 +16,21 @@ export const findChatbotOrFail = async (
     throw new NotfoundException("No Chatbot found")
   }
 
-  const chatbotMember = await prisma.chatbotMember.findFirstOrThrow({
-    where: { userId, chatbotId },
-  })
-  const chatbot = await prisma.chatbot.findFirstOrThrow({
-    where: { id: chatbotId },
-  })
+  const chatbotMember = await findOrFail<ChatbotMemberModel>(
+    chatbotMemberModel,
+    {
+      userId,
+      chatbotId,
+    },
+    "Chatbot member not found",
+  )
+  const chatbot = await findOrFail<ChatbotModel>(
+    chatbotModel,
+    {
+      id: chatbotId,
+    },
+    "Chatbot not found",
+  )
 
   return { chatbot, chatbotMember }
 }

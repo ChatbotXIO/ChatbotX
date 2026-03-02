@@ -1,10 +1,18 @@
-import { prisma } from "@aha.chat/database"
-import type { OrganizationSettings } from "@aha.chat/database/types"
-import { IntegrationType } from "@aha.chat/database/types"
+import { db } from "@aha.chat/database/client"
+import {
+  integrationGoogleSheetsModel,
+  integrationModel,
+} from "@aha.chat/database/schema"
+import type {
+  IntegrationType,
+  OrganizationSettings,
+} from "@aha.chat/database/types"
 import type { AuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
+import { createId } from "@paralleldrive/cuid2"
 import { notFound, redirect } from "next/navigation"
+import type { NextRequest } from "next/server"
 import { z } from "zod"
-import { findChatbot } from "@/features/chatbot/queries"
+import { findChatbotOrFail } from "@/features/chatbot/queries"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"
@@ -17,7 +25,7 @@ const stateValidationSchema = z.object({
 
 export const handleCallback = async (
   integrationType: IntegrationType,
-  req: Request,
+  req: NextRequest,
 ) => {
   if (!(integrationType in integrations)) {
     return notFound()
@@ -40,15 +48,15 @@ export const handleCallback = async (
   }
 
   // find chatbot and organization config
-  const chatbot = await findChatbot({ id: stateParams.chatbotId })
+  const chatbot = await findChatbotOrFail({ id: stateParams.chatbotId })
   const organization = await findOrganization({ id: chatbot.organizationId })
   const organizationSettings =
     organization?.settings as unknown as OrganizationSettings
 
   let authResult: AuthValue
-  let additionalIntegrationCreationData = {}
+  let googleSheetsAuth: Oauth2AuthValue | null = null
   switch (integrationType) {
-    case IntegrationType.zalo: {
+    case "zalo": {
       if (!organizationSettings.zalo) {
         return notFound()
       }
@@ -62,10 +70,12 @@ export const handleCallback = async (
       return redirect(stateParams.referer)
     }
 
-    case IntegrationType.googleSheets: {
+    case "googleSheets": {
       if (!organizationSettings.googleSheets) {
         return notFound()
       }
+
+      logger.debug(req, "debug google sheets callback request")
 
       authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
@@ -77,15 +87,7 @@ export const handleCallback = async (
         },
         req,
       })) as unknown as Oauth2AuthValue
-
-      additionalIntegrationCreationData = {
-        googleSheets: {
-          create: {
-            chatbotId: stateParams.chatbotId,
-            auth: authResult,
-          },
-        },
-      }
+      googleSheetsAuth = authResult
       break
     }
 
@@ -97,15 +99,23 @@ export const handleCallback = async (
     return notFound()
   }
 
-  await prisma.$transaction(async (tx) => {
-    // create integration
-    await tx.integration.create({
-      data: {
-        chatbotId: stateParams.chatbotId,
-        integrationType,
-        ...additionalIntegrationCreationData,
-      },
+  await db.transaction(async (tx) => {
+    const integrationId = createId()
+
+    await tx.insert(integrationModel).values({
+      id: integrationId,
+      chatbotId: stateParams.chatbotId,
+      integrationType,
     })
+
+    if (integrationType === "googleSheets" && googleSheetsAuth) {
+      await tx.insert(integrationGoogleSheetsModel).values({
+        id: createId(),
+        chatbotId: stateParams.chatbotId,
+        integrationId,
+        auth: googleSheetsAuth,
+      })
+    }
   })
 
   return redirect(stateParams.referer)

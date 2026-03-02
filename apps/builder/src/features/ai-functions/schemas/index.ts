@@ -5,10 +5,10 @@ export type AIFunctionCollection = {
   data: AIFunctionModel[]
 }
 
-export const getAIFunctionsRequest = z.object({
+export const listAIFunctionsRequest = z.object({
   chatbotId: z.string(),
 })
-export type GetAIFunctionsRequest = z.infer<typeof getAIFunctionsRequest>
+export type GetAIFunctionsRequest = z.infer<typeof listAIFunctionsRequest>
 
 export const createAIFunctionRequest = z.object({
   name: z.string().trim().min(1),
@@ -28,9 +28,5 @@ export const createAIFunctionRequest = z.object({
 })
 export type CreateAIFunctionRequest = z.infer<typeof createAIFunctionRequest>
 
-export const updateAIFunctionRequest = createAIFunctionRequest
-  .partial()
-  .extend({
-    id: z.string(),
-  })
+export const updateAIFunctionRequest = createAIFunctionRequest.partial()
 export type UpdateAIFunctionRequest = z.infer<typeof updateAIFunctionRequest>

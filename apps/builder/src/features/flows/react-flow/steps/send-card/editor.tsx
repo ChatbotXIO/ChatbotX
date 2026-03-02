@@ -1,6 +1,5 @@
 "use client"
 
-import { FileType } from "@aha.chat/database/types"
 import { Input } from "@aha.chat/ui/components/ui/input"
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
@@ -20,7 +19,7 @@ const SendCardStepEditor = (props: SendCardStepEditorProps) => {
     <div className="flex flex-col rounded-lg border border-gray-200">
       <div className="relative flex flex-col gap-2 bg-secondary px-3 py-2">
         <DirectUploadOrInsertLink
-          fileType={FileType.image}
+          fileType="image"
           parentName={`${parentName}.image`}
         />
 

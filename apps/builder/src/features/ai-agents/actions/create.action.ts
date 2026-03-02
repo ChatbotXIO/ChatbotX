@@ -1,11 +1,12 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { aiAgentModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type CreateAIAgentRequest,
   createAIAgentRequest,
 } from "@/features/ai-agents/schemas/request"
-import { AIAgentException } from "@/features/ai-agents/schemas/resource"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -24,40 +25,21 @@ export const createAIAgentAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateAIAgentRequest
     }) => {
-      const existingAIAgent = await prisma.aIAgent.findFirst({
-        select: {
-          id: true,
-        },
-        where: {
-          name: parsedInput.name,
-          chatbotId,
-        },
-      })
-
-      if (existingAIAgent) {
-        throw new AIAgentException(
-          `AIAgent with the name "${parsedInput.name}" already exists.`,
-        )
-      }
-
-      await prisma.$transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         // Reset isDefault to false for all other agents
         if (parsedInput.isDefault) {
-          await tx.aIAgent.updateMany({
-            where: {
-              chatbotId,
-            },
-            data: {
+          await tx
+            .update(aiAgentModel)
+            .set({
               isDefault: false,
-            },
-          })
+            })
+            .where(eq(aiAgentModel.chatbotId, chatbotId))
         }
 
-        await tx.aIAgent.create({
-          data: {
-            chatbotId,
-            ...parsedInput,
-          },
+        await tx.insert(aiAgentModel).values({
+          ...parsedInput,
+          chatbotId,
+          id: createId(),
         })
       })
 

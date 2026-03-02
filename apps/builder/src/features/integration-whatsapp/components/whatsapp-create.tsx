@@ -1,6 +1,6 @@
 "use client"
 
-import { InboxType, type OrganizationSettings } from "@aha.chat/database/types"
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import type {
   WhatsappPhoneNumber,
   WhatsappPhoneNumberResponse,
@@ -230,7 +230,7 @@ export default function WhatsappCreate({
         <CardTitle>
           <InboxIcon
             iconClassName="size-7"
-            inboxType={InboxType.whatsapp}
+            inboxType="whatsapp"
             wrapperClassName="text-xl font-bold gap-2"
           />
         </CardTitle>

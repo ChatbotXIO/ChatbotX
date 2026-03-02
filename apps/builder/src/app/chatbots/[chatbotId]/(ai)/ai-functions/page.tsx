@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import AIFunctionsTable from "@/features/ai-functions/ai-functions-table"
-import { getAIFunctions } from "@/features/ai-functions/queries"
+import { listAIFunctions } from "@/features/ai-functions/queries"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
@@ -17,7 +17,7 @@ export default async function AIFunctionsPage({
   const { chatbotId } = await params
 
   const promises = Promise.all([
-    getAIFunctions({
+    listAIFunctions({
       chatbotId,
     }),
   ])

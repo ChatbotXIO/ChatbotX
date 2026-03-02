@@ -15,7 +15,8 @@ export const sendTyping = async (props: SendTypingProps<WhatsappAuthValue>) => {
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   await whatsappClient.markAsRead(
-    conversation.conversationAttributes.phoneNumberId as string,
+    (conversation.conversationAttributes as { phoneNumberId: string })
+      .phoneNumberId,
     "lastMessageId", // TODO: get last message id
     "text",
   )
@@ -32,7 +33,8 @@ export const agentMarkAsRead = async (
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   await whatsappClient.markAsRead(
-    conversation.conversationAttributes.phoneNumberId as string,
+    (conversation.conversationAttributes as { phoneNumberId: string })
+      .phoneNumberId,
     "lastMessageId", // TODO: get last message id
   )
 }

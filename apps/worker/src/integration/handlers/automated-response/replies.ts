@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import {
   type AIAgentProvider,
   AIMessageRole,
@@ -6,11 +6,11 @@ import {
   ReplyType,
 } from "@aha.chat/database/types"
 import { aiProviders } from "@aha.chat/flow-config"
-import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import {
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
+  type IntegrationJobTriggerAutomatedResponse,
   integrationQueue,
 } from "@aha.chat/worker-config"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
@@ -18,20 +18,20 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
-import type { ReplyByAIProps } from "./types"
+import type { ReplyByAIProps, SecretTextAuthValue } from "./types"
 
 async function replaceCustomFieldAttributes(
   message: string,
   conversationId: string,
 ): Promise<string> {
   try {
-    const conversation = await prisma.conversation.findFirst({
+    const conversation = await db.query.conversationModel.findFirst({
       where: { id: conversationId },
-      include: {
+      with: {
         contact: {
-          include: {
+          with: {
             contactCustomFields: {
-              include: {
+              with: {
                 customField: true,
               },
             },
@@ -73,24 +73,17 @@ async function listAllEnabledAutomatedResponses({
 }: {
   chatbotId: string
 }) {
-  try {
-    return await prisma.automatedResponse.findMany({
-      where: { chatbotId, status: true },
-    })
-  } catch {
-    return []
-  }
+  return await db.query.automatedResponseModel.findMany({
+    where: { chatbotId, status: true },
+    orderBy: { createdAt: "desc" },
+  })
 }
 
-export async function replyByAutomatedResponse({
-  message,
-}: {
-  message: {
-    content?: string | null
-    conversationId: string
-    chatbotId: string
-  }
-}): Promise<boolean> {
+export async function replyByAutomatedResponse(
+  props: IntegrationJobTriggerAutomatedResponse["data"],
+): Promise<boolean> {
+  const { message, conversation } = props
+
   let replied = false
   const allAutomatedResponses = await listAllEnabledAutomatedResponses({
     chatbotId: message.chatbotId,
@@ -117,7 +110,7 @@ export async function replyByAutomatedResponse({
               await chatQueue.add(ChatJobAction.sendChatMessage, {
                 type: ChatJobAction.sendChatMessage,
                 data: {
-                  conversationId: message.conversationId,
+                  conversation,
                   text: stepMessage,
                 },
               })
@@ -126,18 +119,8 @@ export async function replyByAutomatedResponse({
             break
           }
           case ReplyType.Flow: {
-            const flow = await prisma.flow.findFirst({
+            const flow = await db.query.flowModel.findFirst({
               where: { id: reply.flowId },
-              include: {
-                flowVersions: {
-                  where: {
-                    isDraft: false,
-                    isLatest: true,
-                  },
-                  orderBy: { createdAt: "desc" },
-                  take: 1,
-                },
-              },
             })
             if (flow?.currentVersionId) {
               await integrationQueue.add(IntegrationJobAction.sendFlow, {
@@ -163,10 +146,12 @@ export async function replyByAutomatedResponse({
 export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
   return runAIReply(props, {
     provider: aiProviders.gemini,
-    fetchIntegration: async (chatbotId: string) =>
-      prisma.integrationGemini.findFirst({
+    fetchIntegration: async (chatbotId: string) => {
+      const integration = await db.query.integrationGeminiModel.findFirst({
         where: { chatbotId, autoReply: true },
-      }),
+      })
+      return integration?.auth
+    },
     createClient: (apiKey: string) => createGoogleGenerativeAI({ apiKey }),
     onFollowUpError: async () => true,
   })
@@ -175,10 +160,12 @@ export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
 export function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
   return runAIReply(props, {
     provider: aiProviders.openai,
-    fetchIntegration: async (chatbotId: string) =>
-      prisma.integrationOpenAI.findFirst({
+    fetchIntegration: async (chatbotId: string) => {
+      const integration = await db.query.integrationOpenAIModel.findFirst({
         where: { chatbotId, autoReply: true },
-      }),
+      })
+      return integration?.auth
+    },
     createClient: (apiKey: string) => createOpenAI({ apiKey }),
     onFollowUpError: async (ctx) => {
       const fallbackMessage = `${TEXT.foundProductsFallbackPrefix}\n\n${ctx.toolResultsText}`
@@ -190,7 +177,7 @@ export function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
 
 type ProviderRunnerConfig = {
   provider: (typeof aiProviders)[keyof typeof aiProviders]
-  fetchIntegration: (chatbotId: string) => Promise<{ auth: unknown } | null>
+  fetchIntegration: (chatbotId: string) => Promise<unknown>
   createClient: (apiKey: string) => (modelName: string) => LanguageModel
   onFollowUpError: (ctx: {
     conversationId: string
@@ -204,13 +191,12 @@ async function runAIReply(
 ): Promise<boolean> {
   const { message, lastAIMessages, aiAgent, tools } = props
   try {
-    const integration = await cfg.fetchIntegration(message.chatbotId)
-    if (!integration) {
+    const auth = await cfg.fetchIntegration(message.chatbotId)
+    if (!auth) {
       return false
     }
 
-    const apiKey =
-      (integration.auth as SecretTextAuthValue | null)?.secretText || ""
+    const apiKey = (auth as SecretTextAuthValue)?.secretText
 
     if (!apiKey || apiKey.length === 0) {
       return false

@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { flowModel } from "@aha.chat/database/schema"
+import type { FlowModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -20,19 +22,19 @@ export const updateFlowAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateFlowSchema
     }) => {
-      const flow = await prisma.flow.findFirstOrThrow({
-        where: {
+      const flow = await findOrFail<FlowModel>(
+        flowModel,
+        {
           id,
           chatbotId,
         },
-      })
+        "Flow not found",
+      )
 
-      await prisma.flow.update({
-        where: {
-          id: flow.id,
-        },
-        data: parsedInput,
-      })
+      await db
+        .update(flowModel)
+        .set(parsedInput)
+        .where(eq(flowModel.id, flow.id))
 
       revalidateCacheTags(`chatbots:${flow.chatbotId}#flows`)
     },

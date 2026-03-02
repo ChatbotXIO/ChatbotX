@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
@@ -17,10 +17,10 @@ export async function resolveEmbeddingModel(
   chatbotId: string,
 ): Promise<EmbeddingModel> {
   const [integrationOpenAI, integrationGemini] = await Promise.all([
-    prisma.integrationOpenAI.findFirst({
+    db.query.integrationOpenAIModel.findFirst({
       where: { chatbotId },
     }),
-    prisma.integrationGemini.findFirst({
+    db.query.integrationGeminiModel.findFirst({
       where: { chatbotId },
     }),
   ])

@@ -1,7 +1,74 @@
 import z from "zod"
+import type * as schema from "./drizzle/schema"
+import type { integrationType, logType } from "./drizzle/schema"
 
-export * from "./generated/prisma/enums"
-export * from "./generated/prisma/models"
+export type IntegrationWebchatModel =
+  typeof schema.integrationWebchatModel.$inferInsert
+export type UserModel = typeof schema.userModel.$inferSelect
+export type AIAgentModel = typeof schema.aiAgentModel.$inferSelect
+export type AIFunctionModel = typeof schema.aiFunctionModel.$inferSelect
+export type AIMCPServerModel = typeof schema.aiMCPServerModel.$inferSelect
+export type AITriggerModel = typeof schema.aiTriggerModel.$inferSelect
+export type FieldModel = typeof schema.fieldModel.$inferSelect
+export type AutomatedResponseModel =
+  typeof schema.automatedResponseModel.$inferSelect
+export type FlowModel = typeof schema.flowModel.$inferSelect
+export type FolderModel = typeof schema.folderModel.$inferSelect
+export type TagModel = typeof schema.tagModel.$inferSelect
+export type FlowVersionModel = typeof schema.flowVersionModel.$inferSelect
+export type InvitationModel = typeof schema.invitationModel.$inferSelect
+export type BroadcastModel = typeof schema.broadcastModel.$inferInsert
+export type ChatbotMemberModel = typeof schema.chatbotMemberModel.$inferSelect
+export type ChatbotUsageModel = typeof schema.chatbotUsageModel.$inferSelect
+export type ContactModel = typeof schema.contactModel.$inferSelect
+export type ConversationModel = typeof schema.conversationModel.$inferSelect
+export type InboxModel = typeof schema.inboxModel.$inferSelect
+export type IntegrationGeminiModel =
+  typeof schema.integrationGeminiModel.$inferSelect
+export type IntegrationModel = typeof schema.integrationModel.$inferSelect
+export type IntegrationGoogleSheetsModel =
+  typeof schema.integrationGoogleSheetsModel.$inferSelect
+export type IntegrationMessengerModel =
+  typeof schema.integrationMessengerModel.$inferSelect
+export type IntegrationOpenAIModel =
+  typeof schema.integrationOpenAIModel.$inferSelect
+export type IntegrationWhatsappModel =
+  typeof schema.integrationWhatsappModel.$inferSelect
+export type IntegrationZaloModel =
+  typeof schema.integrationZaloModel.$inferSelect
+export type MessageModel = typeof schema.messageModel.$inferSelect
+export type AttachmentModel = typeof schema.attachmentModel.$inferSelect
+export type SpreadsheetModel = typeof schema.spreadsheetModel.$inferSelect
+export type AIEmbeddingModel = typeof schema.aiEmbeddingModel.$inferSelect
+export type AIFileModel = typeof schema.aiFileModel.$inferSelect
+export type ContactCustomFieldModel =
+  typeof schema.contactCustomFieldModel.$inferSelect
+export type ChatbotModel = typeof schema.chatbotModel.$inferSelect
+export type OrganizationModel = typeof schema.organizationModel.$inferSelect
+export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect
+export type InboxTeamModel = typeof schema.inboxTeamModel.$inferSelect
+export type InboxTeamMemberModel =
+  typeof schema.inboxTeamMemberModel.$inferSelect
+export type LogModel = typeof schema.logModel.$inferSelect
+
+export type FolderType = (typeof schema.folderType.enumValues)[number]
+export type LogType = (typeof logType.enumValues)[number]
+export type IntegrationType = (typeof integrationType.enumValues)[number]
+export type InboxType = (typeof schema.inboxType.enumValues)[number]
+export type BroadcastSchedulesType =
+  (typeof schema.broadcastSchedulesType.enumValues)[number]
+export type FileType = (typeof schema.fileType.enumValues)[number]
+export type CustomFieldType = (typeof schema.customFieldType.enumValues)[number]
+export type FieldType = (typeof schema.fieldType.enumValues)[number]
+export type Gender = (typeof schema.gender.enumValues)[number]
+export type ChatbotMemberRole =
+  (typeof schema.chatbotMemberRole.enumValues)[number]
+export type SenderType = (typeof schema.senderType.enumValues)[number]
+export type MessageType = (typeof schema.messageType.enumValues)[number]
+export type ContentType = (typeof schema.contentType.enumValues)[number]
+export type BroadcastStatus = (typeof schema.broadcastStatus.enumValues)[number]
+export type AIEmbeddingStatus =
+  (typeof schema.aiEmbeddingStatus.enumValues)[number]
 
 export const Omnichannel = "omnichannel"
 

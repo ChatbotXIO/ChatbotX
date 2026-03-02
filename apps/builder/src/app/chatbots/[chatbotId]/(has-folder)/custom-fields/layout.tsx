@@ -1,4 +1,3 @@
-import { FolderType } from "@aha.chat/database"
 import { Card } from "@aha.chat/ui/components/ui/card"
 import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
@@ -19,10 +18,7 @@ export default async function FolderableLayout({
   const t = await getTranslations()
 
   return (
-    <FolderStoreProvider
-      chatbotId={chatbotId}
-      folderType={FolderType.customField}
-    >
+    <FolderStoreProvider chatbotId={chatbotId} folderType="customField">
       <AppBreadcrumb
         items={[
           {

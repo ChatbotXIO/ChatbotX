@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { chatbotModel } from "@aha.chat/database/schema"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -24,10 +25,10 @@ export const updateChatbotBasicAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateChatbotBasicRequest
     }) => {
-      await prisma.chatbot.update({
-        where: { id: chatbotId },
-        data: parsedInput,
-      })
+      await db
+        .update(chatbotModel)
+        .set(parsedInput)
+        .where(eq(chatbotModel.id, chatbotId))
     },
   )
 
@@ -42,9 +43,9 @@ export const updateChatbotAdvancedAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateChatbotAdvancedRequest
     }) => {
-      await prisma.chatbot.update({
-        where: { id: chatbotId },
-        data: parsedInput,
-      })
+      await db
+        .update(chatbotModel)
+        .set(parsedInput)
+        .where(eq(chatbotModel.id, chatbotId))
     },
   )

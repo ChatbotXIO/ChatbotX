@@ -11,23 +11,22 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.15",
+    "@biomejs/biome": "^2.4.4",
     "@types/node": "^24.10.4",
-    "knip": "^5.83.1",
+    "knip": "^5.85.0",
     "lefthook": "^2.1.1",
-    "prisma": "7.4.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.8.9",
+    "turbo": "^2.8.12",
     "typescript": "5.9.3",
-    "ultracite": "7.2.1"
+    "ultracite": "7.2.4"
   },
-  "packageManager": "pnpm@10.29.3+sha512.498e1fb4cca5aa06c1dcf2611e6fafc50972ffe7189998c409e90de74566444298ffe43e6cd2acdc775ba1aa7cc5e092a8b7054c811ba8c5770f84693d33d2dc",
+  "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017",
   "engines": {
     "node": ">=24"
   },
   "overrides": {
     "@types/node": "24.x",
-    "ioredis": "5.9.2"
+    "ioredis": "5.9.3"
   },
   "workspaces": [
     "apps/*",

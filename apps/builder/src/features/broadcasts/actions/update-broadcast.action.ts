@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { broadcastModel } from "@aha.chat/database/schema"
+import type { BroadcastModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -10,7 +12,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateBroadcastSchema,
   updateBroadcastSchema,
-} from "../schemas/update-broadcast-schema"
+} from "../schemas/action"
 
 export const updateBroadcastAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
@@ -23,19 +25,15 @@ export const updateBroadcastAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateBroadcastSchema
     }) => {
-      const broadcast = await prisma.broadcast.findFirstOrThrow({
-        where: {
-          id,
-          chatbotId,
-        },
+      const broadcast = await findOrFail<BroadcastModel>(broadcastModel, {
+        id,
+        chatbotId,
       })
 
-      await prisma.broadcast.update({
-        where: {
-          id: broadcast.id,
-        },
-        data: parsedInput,
-      })
+      await db
+        .update(broadcastModel)
+        .set(parsedInput)
+        .where(eq(broadcastModel.id, broadcast.id))
 
       revalidateCacheTags(`chatbots:${chatbotId}#broadcasts`)
     },

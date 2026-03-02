@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { tagModel } from "@aha.chat/database/schema"
 import type { UserModel } from "@aha.chat/database/types"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
@@ -28,15 +29,15 @@ export const updateTagAction = authActionClient
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingTag = await prisma.tag.findFirst({
-        select: {
+      const existingTag = await db.query.tagModel.findFirst({
+        columns: {
           id: true,
         },
         where: {
           name: parsedInput.name,
           chatbotId,
           id: {
-            not: tagId,
+            ne: tagId,
           },
         },
       })
@@ -46,14 +47,12 @@ export const updateTagAction = authActionClient
         )
       }
 
-      await prisma.tag.update({
-        where: {
-          id: tagId,
-        },
-        data: {
+      await db
+        .update(tagModel)
+        .set({
           name: parsedInput.name,
-        },
-      })
+        })
+        .where(eq(tagModel.id, tagId))
 
       revalidateCacheTags(`chatbots:${chatbotId}#tags`)
     },

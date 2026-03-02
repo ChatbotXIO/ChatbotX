@@ -1,9 +1,5 @@
-import type {
-  ConversationStatus,
-  ConversationType,
-} from "@aha.chat/database/enums"
+import type { ConversationStatus } from "@aha.chat/database/enums"
 import type { InboxType } from "@aha.chat/database/types"
-import { MessageType } from "@aha.chat/sdk"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
@@ -21,8 +17,8 @@ export type ConversationFilters = {
   assignedUserId?: string
   inboxType?: InboxType | "omnichannel"
   status?: ConversationStatus[]
-  searchText?: string
-  conversationType?: ConversationType
+  keyword?: string
+  liveChatEnabled?: boolean
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
@@ -368,15 +364,15 @@ export const createChatStore = () => {
       } = get()
 
       // Update last seen timestamps
-      if (message.messageType === MessageType.incoming) {
+      if (message.messageType === "incoming") {
         updateConversation(message.conversationId, {
           contactRepliedAt: message.createdAt,
           contactLastSeenAt: message.createdAt,
         })
       }
       if (
-        message.messageType === MessageType.outgoing ||
-        (message.messageType === MessageType.incoming &&
+        message.messageType === "outgoing" ||
+        (message.messageType === "incoming" &&
           message.conversationId === activeConversationId)
       ) {
         updateConversation(message.conversationId, {

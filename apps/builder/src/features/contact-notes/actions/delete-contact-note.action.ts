@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, findOrFail } from "@aha.chat/database/client"
+import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
+import type { ContactModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -22,18 +24,22 @@ export const deleteContactNoteAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: DeleteContactNoteRequest
     }) => {
-      const contact = await prisma.contact.findFirstOrThrow({
-        where: {
-          chatbotId,
+      const contact = await findOrFail<ContactModel>(
+        contactModel,
+        {
           id,
+          chatbotId,
         },
-      })
+        "Contact note not found",
+      )
 
-      return await prisma.contactNote.delete({
-        where: {
-          id: parsedInput.id,
-          contactId: contact.id,
-        },
-      })
+      await db
+        .delete(contactNoteModel)
+        .where(
+          and(
+            eq(contactNoteModel.id, parsedInput.id),
+            eq(contactNoteModel.contactId, contact.id),
+          ),
+        )
     },
   )

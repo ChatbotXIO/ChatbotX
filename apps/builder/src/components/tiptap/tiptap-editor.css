@@ -5,25 +5,25 @@
 
 /* Dropdown menu */
 .dropdown-menu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem;
+  overflow: auto;
   background: var(--color-white);
   border: 1px solid var(--color-gray-100);
   border-radius: 0.7rem;
   box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  overflow: auto;
-  padding: 0.4rem;
-  position: relative;
   /* min-width: 150px; */
 
   button {
-    align-items: center;
-    background-color: transparent;
     display: flex;
     gap: 0.25rem;
-    text-align: left;
+    align-items: center;
     width: 100%;
+    text-align: left;
+    background-color: transparent;
 
     &:hover,
     &:hover.is-selected {
@@ -35,8 +35,8 @@
     }
 
     img {
-      height: 1em;
       width: 1em;
+      height: 1em;
     }
   }
 }
@@ -48,10 +48,10 @@
 }
 
 .tiptap p.is-editor-empty:first-child::before {
-  color: var(--color-gray-300);
-  content: attr(data-placeholder);
-  font-size: 14px;
   float: left;
   height: 0;
+  font-size: 14px;
+  color: var(--color-gray-300);
   pointer-events: none;
+  content: attr(data-placeholder);
 }

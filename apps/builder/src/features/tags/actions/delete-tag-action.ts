@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { tagModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -21,14 +22,14 @@ export const deleteTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.tag.deleteMany({
-        where: {
-          id: {
-            in: parsedInput.ids,
-          },
-          chatbotId,
-        },
-      })
+      await db
+        .delete(tagModel)
+        .where(
+          and(
+            eq(tagModel.chatbotId, chatbotId),
+            inArray(tagModel.id, parsedInput.ids),
+          ),
+        )
 
       revalidateCacheTags(`chatbots:${chatbotId}#tags`)
     },

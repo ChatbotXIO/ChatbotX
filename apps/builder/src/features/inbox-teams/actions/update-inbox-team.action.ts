@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { inboxTeamModel } from "@aha.chat/database/schema"
+import type { InboxTeamModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -23,13 +25,19 @@ export const updateInboxTeamAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateInboxTeamRequest
     }) => {
-      await prisma.inboxTeam.update({
-        where: {
+      await findOrFail<InboxTeamModel>(
+        inboxTeamModel,
+        {
           id,
           chatbotId,
         },
-        data: parsedInput,
-      })
+        "Inbox team not found",
+      )
+
+      await db
+        .update(inboxTeamModel)
+        .set(parsedInput)
+        .where(eq(inboxTeamModel.id, id))
 
       revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
     },

@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq } from "@aha.chat/database/client"
+import { flowModel, flowVersionModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -18,12 +20,12 @@ export const publishFlowAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const flow = await prisma.flow.findFirst({
+      const flow = await db.query.flowModel.findFirst({
         where: {
           id,
           chatbotId,
         },
-        include: {
+        with: {
           flowVersions: {
             where: {
               isDraft: true,
@@ -42,37 +44,37 @@ export const publishFlowAction = chatbotActionClient
         edges: draftVersion?.edges,
       })
 
-      await prisma.$transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         // Remove all other latest versions
-        await tx.flowVersion.updateMany({
-          where: {
-            flowId: flow.id,
-            isLatest: true,
-          },
-          data: {
+        await tx
+          .update(flowVersionModel)
+          .set({
             isLatest: false,
-          },
+          })
+          .where(
+            and(
+              eq(flowVersionModel.flowId, flow.id),
+              eq(flowVersionModel.isLatest, true),
+            ),
+          )
+
+        const newVersionId = createId()
+        await tx.insert(flowVersionModel).values({
+          id: newVersionId,
+          chatbotId: flow.chatbotId,
+          flowId: flow.id,
+          isDraft: false,
+          isLatest: true,
+          ...validated,
+          startNodeId: draftVersion.startNodeId,
         })
 
-        const newVersion = await prisma.flowVersion.create({
-          data: {
-            chatbotId: flow.chatbotId,
-            flowId: flow.id,
-            isDraft: false,
-            isLatest: true,
-            ...validated,
-            startNodeId: draftVersion.startNodeId,
-          },
-        })
-
-        await tx.flow.update({
-          where: {
-            id: flow.id,
-          },
-          data: {
-            currentVersionId: newVersion.id,
-          },
-        })
+        await tx
+          .update(flowModel)
+          .set({
+            currentVersionId: newVersionId,
+          })
+          .where(eq(flowModel.id, flow.id))
       })
 
       revalidateCacheTags([

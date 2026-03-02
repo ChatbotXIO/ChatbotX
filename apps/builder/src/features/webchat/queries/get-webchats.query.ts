@@ -1,54 +1,48 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db, findOrFail, relationsFilterToSQL } from "@aha.chat/database/client"
+import { integrationWebchatModel } from "@aha.chat/database/schema"
 import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { parsePagination } from "@/lib/pagination"
 import type { GetWebchatRequest } from "../schemas/webchat.schema"
 
 export async function getIntegationWebchats(parsedInputs: GetWebchatRequest) {
   await assertCurrentUserCanAccessChatbot(parsedInputs.chatbotId)
 
-  try {
-    const where: Prisma.IntegrationWebchatWhereInput = {
-      chatbotId: parsedInputs.chatbotId,
-    }
-
-    const orderBy = parsedInputs.sort
-      ? parsedInputs.sort.map((sortItem) => ({
-          [sortItem.id]: sortItem.desc ? "desc" : "asc",
-        }))
-      : [{ createdAt: "desc" }]
-
-    return await prisma.$transaction(async (tx) => {
-      let pageCount = 1
-      const pagination: { skip?: number; take?: number } = {}
-
-      if (parsedInputs.perPage) {
-        const count = await tx.integrationWebchat.count({ where })
-        pageCount = Math.ceil(count / parsedInputs.perPage)
-
-        pagination.skip =
-          (parsedInputs.page ? parsedInputs.page - 1 : 0) * parsedInputs.perPage
-        pagination.take = parsedInputs.perPage
-      }
-
-      const data = await prisma.integrationWebchat.findMany({
-        ...pagination,
-        where,
-        orderBy,
-      })
-
-      return { data, pageCount }
-    })
-  } catch (_err) {
-    return { data: [], pageCount: 0 }
+  const where = {
+    chatbotId: parsedInputs.chatbotId,
   }
+
+  const pagination = parsePagination(parsedInputs)
+  const [data, totalRows] = await Promise.all([
+    db.query.integrationWebchatModel.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc",
+      },
+      ...pagination,
+    }),
+    pagination?.limit
+      ? db.$count(
+          integrationWebchatModel,
+          relationsFilterToSQL(integrationWebchatModel, where),
+        )
+      : Promise.resolve(1),
+  ])
+
+  const pageCount = pagination?.limit
+    ? Math.ceil(totalRows / pagination.limit)
+    : 1
+  return { data, pageCount }
 }
 
 export async function findIntegrationWebchat(
   where: Pick<IntegrationWebchatModel, "id" | "chatbotId">,
 ) {
-  return await prisma.integrationWebchat.findFirstOrThrow({
+  return await findOrFail<IntegrationWebchatModel>(
+    integrationWebchatModel,
     where,
-  })
+    "Integration webchat not found",
+  )
 }

@@ -1,18 +1,18 @@
 /* Aha Chat Widget Styles */
 .ahc-btn {
   position: fixed;
-  bottom: 16px;
   right: 16px;
+  bottom: 16px;
   z-index: 9999;
-  width: 40px;
-  height: 40px;
-  background-color: white;
-  border-radius: 50%;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  background-color: white;
   border: 1px solid gray;
+  border-radius: 50%;
 }
 
 .ahc-btn img {
@@ -36,8 +36,8 @@
 }
 
 .ahc-btn:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .ahc-btn:disabled:hover,
@@ -51,16 +51,16 @@
 }
 
 .ahc-iframe {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9999;
   width: 350px;
   max-width: calc(100vw - 32px);
   height: 500px;
   max-height: calc(100vh - 32px);
+  background: white;
   border: none;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  z-index: 9999;
-  background: white;
 }

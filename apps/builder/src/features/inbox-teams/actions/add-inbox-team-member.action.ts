@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { inboxTeamMemberModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -23,16 +25,16 @@ export const addInboxTeamMemberAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: AddInboxTeamMemberRequest
     }) => {
-      await prisma.$transaction(async (tx) => {
-        const existingMembers = await tx.inboxTeamMember.findMany({
+      await db.transaction(async (tx) => {
+        const existingMembers = await tx.query.inboxTeamMemberModel.findMany({
           where: {
             userId: {
               in: parsedInput.userIds,
             },
             chatbotId,
-            id,
+            inboxTeamId: id,
           },
-          select: {
+          columns: {
             userId: true,
           },
         })
@@ -45,13 +47,16 @@ export const addInboxTeamMemberAction = chatbotActionClient
           (userId) => !existingUserIds.has(userId),
         )
 
-        await tx.inboxTeamMember.createMany({
-          data: newUserIds.map((userId) => ({
-            userId,
-            chatbotId,
-            inboxTeamId: id,
-          })),
-        })
+        if (newUserIds.length > 0) {
+          await tx.insert(inboxTeamMemberModel).values(
+            newUserIds.map((userId) => ({
+              id: createId(),
+              userId,
+              chatbotId,
+              inboxTeamId: id,
+            })),
+          )
+        }
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)

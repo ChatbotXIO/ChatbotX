@@ -1,7 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import type { UserModel } from "@aha.chat/database/types"
+import { db, findOrFail } from "@aha.chat/database/client"
+import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
+import type { ContactModel, UserModel } from "@aha.chat/database/types"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -26,19 +28,24 @@ export const createContactNoteAction = chatbotActionClient
       parsedInput: AddContactNoteRequest
     }) => {
       // Make sure contact exists in the chatbot
-      await prisma.contact.findFirstOrThrow({
-        where: {
+      const contact = await findOrFail<ContactModel>(
+        contactModel,
+        {
           chatbotId,
           id,
         },
-      })
+        "Contact not found",
+      )
 
-      return await prisma.contactNote.create({
-        data: {
-          contactId: id,
+      return await db
+        .insert(contactNoteModel)
+        .values({
+          id: createId(),
+          contactId: contact.id,
           content: parsedInput.content,
           createdById: ctx.user.id,
-        },
-      })
+        })
+        .returning()
+        .then((result) => result[0])
     },
   )

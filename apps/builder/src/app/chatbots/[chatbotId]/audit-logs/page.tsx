@@ -1,4 +1,3 @@
-import { LogType } from "@aha.chat/database"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AuditLogsTable } from "@/features/logs/audit-logs-table"
@@ -17,7 +16,7 @@ export default async function AuditLogsPage(props: {
     getLogs({
       ...search,
       chatbotId: params.chatbotId,
-      logType: LogType.audit,
+      logType: "audit",
     }),
   ])
 

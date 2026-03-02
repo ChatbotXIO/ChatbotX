@@ -1,4 +1,5 @@
-import { InboxType, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import type { IntegrationType } from "@aha.chat/database/types"
 import { integration as integrationChatbotx } from "@aha.chat/integration-chatbotx"
 import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
 import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
@@ -22,37 +23,58 @@ export const allIntegrations: Record<
 }
 
 export const getDBIntegration = async (
-  integrationType: string,
+  integrationType: IntegrationType,
   integrationIdentifier: string,
 ) => {
   switch (integrationType) {
-    case InboxType.whatsapp:
-      return await prisma.integrationWhatsapp.findFirstOrThrow({
-        where: {
-          phoneNumberId: integrationIdentifier,
-        },
-        include: {
-          chatbot: true,
-        },
-      })
-    case InboxType.messenger:
-      return await prisma.integrationMessenger.findFirstOrThrow({
-        where: {
-          pageId: integrationIdentifier,
-        },
-        include: {
-          chatbot: true,
-        },
-      })
-    case InboxType.zalo: {
-      return await prisma.integrationZalo.findFirstOrThrow({
+    case "whatsapp": {
+      const integrationWhatsapp =
+        await db.query.integrationWhatsappModel.findFirst({
+          where: {
+            phoneNumberId: integrationIdentifier,
+          },
+          with: {
+            chatbot: true,
+            inbox: true,
+          },
+        })
+
+      if (!integrationWhatsapp) {
+        throw new Error("Whatsapp integration not found")
+      }
+
+      return integrationWhatsapp
+    }
+    case "messenger": {
+      const integrationMessenger =
+        await db.query.integrationMessengerModel.findFirst({
+          where: {
+            pageId: integrationIdentifier,
+          },
+          with: {
+            chatbot: true,
+            inbox: true,
+          },
+        })
+      if (!integrationMessenger) {
+        throw new Error("Messenger integration not found")
+      }
+      return integrationMessenger
+    }
+    case "zalo": {
+      const integrationZalo = await db.query.integrationZaloModel.findFirst({
         where: {
           oaId: integrationIdentifier,
         },
-        include: {
+        with: {
           chatbot: true,
+          inbox: true,
         },
       })
+      if (!integrationZalo) {
+        throw new Error("Zalo integration not found")
+      }
+      return integrationZalo
     }
     default:
       throw new Error(`Unsupported integration: ${integrationType}`)
