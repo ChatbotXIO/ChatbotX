@@ -5,6 +5,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@aha.chat/ui/components/ui/breadcrumb"
+import { Fragment } from "react"
 
 export interface BreadcrumbsProps {
   items: Array<{
@@ -34,13 +35,10 @@ export const AppBreadcrumb = ({ items }: BreadcrumbsProps) => {
       <BreadcrumbList>
         {items.map((item, idx) => {
           return (
-            <>
-              {/** biome-ignore lint/suspicious/noArrayIndexKey: wip */}
-              <BreadcrumbItem key={item.label + idx}>
-                {renderLink(item)}
-              </BreadcrumbItem>
+            <Fragment key={`${item.label}-${idx}`}>
+              <BreadcrumbItem>{renderLink(item)}</BreadcrumbItem>
               {idx < items.length - 1 && <BreadcrumbSeparator />}
-            </>
+            </Fragment>
           )
         })}
       </BreadcrumbList>
