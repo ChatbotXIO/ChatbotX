@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { authClient } from "@/lib/auth/auth-client"
-import { type MagicLinkRequest, magicLinkRequest } from "../schemas/signin"
+import { type MagicLinkRequest, magicLinkRequest } from "../schemas/action"
 
 export const MagicLinkSignIn = () => {
   const t = useTranslations()
@@ -33,7 +33,7 @@ export const MagicLinkSignIn = () => {
 
     if (data) {
       toast.success("We sent verification URL to your email")
-      redirect("/signin/magic-link-sent")
+      redirect("/auth/magic-link-sent")
     } else {
       toast.error(error.message)
     }
@@ -46,7 +46,7 @@ export const MagicLinkSignIn = () => {
       >
         <InputField
           name="email"
-          placeholder={t("signIn.email")}
+          placeholder={t("fields.email.label")}
           required
           type="email"
         />

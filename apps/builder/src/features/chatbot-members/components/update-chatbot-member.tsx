@@ -27,6 +27,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { isCommunity } from "@/env"
 import { updateChatbotMemberAction } from "../actions/update-chatbot-member.action"
 import { updateChatbotMemberRequest } from "../schemas/chatbot-member.request"
 
@@ -119,13 +120,13 @@ export function UpdateChatbotMemberForm({
           defaultValues: {
             permissions: {
               superAdmin: true,
-              analytics: false,
-              flows: false,
-              contacts: false,
-              onlyAssignedContacts: false,
-              emailAndPhone: false,
-              broadcast: false,
-              ecommerce: false,
+              analytics: true,
+              flows: true,
+              contacts: true,
+              onlyAssignedContacts: true,
+              emailAndPhone: true,
+              broadcast: true,
+              ecommerce: true,
             },
             notificationTypes: {
               notifyAdmin: false,
@@ -135,6 +136,8 @@ export function UpdateChatbotMemberForm({
             notificationChannels: {
               messenger: false,
               email: false,
+              browser: false,
+              telegram: false,
             },
           },
         },
@@ -157,7 +160,9 @@ export function UpdateChatbotMemberForm({
       setValue("permissions.broadcast", true)
       setValue("permissions.ecommerce", true)
     }
+  }, [isSuperAdmin, setValue])
 
+  useEffect(() => {
     if (chatbotMember) {
       reset({
         permissions: chatbotMember.permissions as ChatbotMemberPermissions,
@@ -167,7 +172,7 @@ export function UpdateChatbotMemberForm({
           chatbotMember.notificationChannels as ChatbotMemberNotificationChannels,
       })
     }
-  }, [isSuperAdmin, setValue, chatbotMember, reset])
+  }, [chatbotMember, reset])
 
   return (
     <Form {...form}>
@@ -179,6 +184,7 @@ export function UpdateChatbotMemberForm({
           <Label>{t("fields.permissions.label")}</Label>
           <div className="flex flex-col gap-4">
             <SwitchField
+              disabled={isCommunity}
               formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
               label={t("fields.permissions.superAdmin")}
               name="permissions.superAdmin"

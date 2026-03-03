@@ -22,6 +22,7 @@ import { useEffect, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { isCommunity } from "@/env"
 import { inviteChatbotMemberAction } from "../actions/invite-chatbot-member.action"
 import { inviteChatbotMemberRequest } from "../schemas/chatbot-member.request"
 export function InviteChatbotMemberDialog() {
@@ -173,6 +174,7 @@ export function AddChatbotMemberForm({
         <Label>{t("fields.permissions.label")}</Label>
         <div className="flex flex-col gap-4">
           <SwitchField
+            disabled={isCommunity}
             formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
             label={t("fields.permissions.superAdmin")}
             name="permissions.superAdmin"

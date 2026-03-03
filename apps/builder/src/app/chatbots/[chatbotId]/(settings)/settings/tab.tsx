@@ -1,15 +1,16 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { cn } from "@aha.chat/ui/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "@aha.chat/ui/components/ui/tabs"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useParams, usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 
 export function SettingsTab() {
   const t = useTranslations()
   const pathname = usePathname()
+
+  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const tabs = useMemo(
     () => [
@@ -47,34 +48,16 @@ export function SettingsTab() {
   }, [pathname])
 
   return (
-    <nav
-      aria-label="Settings navigation"
-      className="flex w-full flex-wrap gap-1 border-red border-b bg-muted"
-    >
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.value
-
-        return (
-          <Button
-            aria-current={isActive ? "page" : undefined}
-            asChild
-            className={cn(
-              "rounded-none px-4 py-6 hover:bg-primary-foreground",
-              isActive && "border-primary border-b-2",
-            )}
-            key={tab.value}
-            variant="ghost"
-          >
-            {isActive ? (
-              <span className="cursor-pointer">{tab.label}</span>
-            ) : (
-              <Link href={tab.value} replace>
-                {tab.label}
-              </Link>
-            )}
-          </Button>
-        )
-      })}
-    </nav>
+    <Tabs defaultValue={activeTab}>
+      <TabsList>
+        {tabs.map((tab) => (
+          <TabsTrigger asChild key={tab.value} value={tab.value}>
+            <Link href={`/chatbots/${chatbotId}/settings/${tab.value}`}>
+              {tab.label}
+            </Link>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   )
 }

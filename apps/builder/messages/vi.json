@@ -138,9 +138,6 @@
     "randomRow": "Hàng ngẫu nhiên",
     "clickToEdit": "Nhấp để chỉnh sửa",
     "move": "Di chuyển",
-    "onSuccess": "Khi thành công",
-    "onFailure": "Khi thất bại",
-    "onSkip": "Khi bỏ qua",
     "removeAssignee": "Xóa người được gán",
     "condition": "Điều kiện",
     "sendMail": "Gửi thư",
@@ -747,8 +744,11 @@
       "description": "Vui lòng đợi",
       "label": "Đang tải..."
     },
-    "log": {
-      "label": "Nhật ký"
+    "errorLog": {
+      "label": "Nhật ký lỗi"
+    },
+    "auditLog": {
+      "label": "Nhật ký kiểm toán"
     },
     "max": {
       "label": "Tối đa"
@@ -842,7 +842,6 @@
       "placeholder": "Nhập prompt"
     },
     "promptMessages": {
-      "label": "Tin nhắn prompt",
       "role": {
         "assistant": "Trợ lý",
         "user": "Người dùng"
@@ -1087,6 +1086,15 @@
     },
     "source": {
       "label": "Nguồn"
+    },
+    "password": {
+      "label": "Mật khẩu"
+    },
+    "passwordConfirmation": {
+      "label": "Nhập lại mật khẩu"
+    },
+    "newPassword": {
+      "label": "Mật khẩu mới"
     }
   },
   "flows": {
@@ -1339,27 +1347,42 @@
       "title": "AI Triggers"
     },
     "automatedResponses": {
-      "title": "Phản hồi tự động"
+      "title": "Từ khóa"
     },
     "openai": {
       "description": "Mô tả tích hợp OpenAI",
       "title": "Tích hợp OpenAI"
     }
   },
-  "signIn": {
+  "auth": {
+    "orContinueWith": "Hoặc tiếp tục với",
+    "dontHaveAnAccount": "Chưa có tài khoản?",
+    "alreadyHaveAnAccount": "Đã có tài khoản?",
+    "signUp": "Đăng ký",
     "acceptTermsAndPolicy": "Bằng cách nhấn tiếp tục, bạn đồng ý với",
     "and": "và",
-    "email": "Email",
-    "password": "Mật khẩu",
     "privacyPolicy": "Chính sách bảo mật",
     "termsOfService": "Điều khoản dịch vụ",
-    "title": "Đăng nhập vào {name}",
+    "signInTitle": "Đăng nhập vào {name}",
+    "forgotPasswordTitle": "Quên mật khẩu?",
+    "forgotPasswordDescription": "Đừng lo! Chúng tôi sẽ gửi cho bạn liên kết hướng dẫn đặt lại mật khẩu.",
     "checkYourEmail": "Kiểm tra email của bạn",
     "magicLinkSent": "Chúng tôi đã gửi URL xác minh đến email của bạn",
     "magicLinkSentDescription": "Nhấp vào liên kết trong email của bạn để tiếp tục.",
     "backToSignIn": "Quay lại đăng nhập",
-    "didNotReceiveEmail": "Không nhận được email? Kiểm tra thư mục spam của bạn.",
-    "trySigningInAgain": "Bạn cũng có thể thử đăng nhập lại bằng email khác."
+    "didNotReceiveEmail": "Không nhận được email? Kiểm tra thư mục spam.",
+    "trySigningInAgain": "Bạn cũng có thể thử đăng nhập lại bằng email khác.",
+    "sentMagicLink": "Chúng tôi đã gửi magic link đến email của bạn. Vui lòng kiểm tra email và nhấp vào liên kết để tiếp tục.",
+    "signIn": "Đăng nhập",
+    "signUpSuccess": "Đăng ký thành công. Vui lòng kiểm tra email để xác minh.",
+    "forgotPassword": "Quên mật khẩu?",
+    "rememberedPassword": "Đã nhớ mật khẩu?",
+    "forgotPasswordEmailSent": "Chúng tôi đã gửi email hướng dẫn đặt lại mật khẩu cho bạn.",
+    "magicLinkSentTitle": "Đã gửi magic link",
+    "passwordResetSuccess": "Đặt lại mật khẩu thành công",
+    "resetPasswordTitle": "Đặt lại mật khẩu",
+    "resetPasswordDescription": "Nhập mật khẩu mới của bạn bên dưới.",
+    "signUpTitle": "Đăng ký vào {name}"
   },
   "tags": {
     "heading": {

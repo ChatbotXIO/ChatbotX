@@ -49,7 +49,7 @@ export function SignOut() {
               await authClient.signOut({
                 fetchOptions: {
                   onSuccess: () => {
-                    router.push("/signin")
+                    router.push("/auth/sign-in")
                   },
                 },
               })
