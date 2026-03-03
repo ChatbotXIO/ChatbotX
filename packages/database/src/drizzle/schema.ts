@@ -1480,34 +1480,53 @@ export const invitationModel = pgTable(
   ],
 )
 
-export const logModel = pgTable("Log", {
+export const errorLogModel = pgTable("ErrorLog", {
   id: text().primaryKey(),
   createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
   updatedAt: timestamp({ precision: 3 })
     .notNull()
     .defaultNow()
     .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
-  logType: logType().notNull(),
   action: text().notNull(),
   detail: text().notNull(),
-  url: text(),
+  httpCode: text(),
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
       onDelete: "cascade",
       onUpdate: "cascade",
-      name: "Log_chatbotId_fkey",
+      name: "ErrorLog_chatbotId_fkey",
     }),
-  userId: text().references(() => userModel.id, {
-    onDelete: "set null",
-    onUpdate: "cascade",
-    name: "Log_userId_fkey",
-  }),
   contactId: text().references(() => contactModel.id, {
     onDelete: "set null",
     onUpdate: "cascade",
-    name: "Log_contactId_fkey",
+    name: "ErrorLog_contactId_fkey",
   }),
+})
+
+export const auditLogModel = pgTable("AuditLog", {
+  id: text().primaryKey(),
+  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+  updatedAt: timestamp({ precision: 3 })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  action: text().notNull(),
+  detail: text().notNull(),
+  chatbotId: text()
+    .notNull()
+    .references(() => chatbotModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+      name: "AuditLog_chatbotId_fkey",
+    }),
+  userId: text()
+    .notNull()
+    .references(() => userModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+      name: "AuditLog_userId_fkey",
+    }),
 })
 
 export const messageModel = pgTable(

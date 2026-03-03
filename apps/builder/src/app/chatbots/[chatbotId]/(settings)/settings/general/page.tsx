@@ -14,12 +14,8 @@ export default async function GeneralPage(props: {
   }
 
   return (
-    <div className="px-4">
-      <FlowStoreProvider chatbotId={chatbotId}>
-        <UpdateChatbotForm
-          chatbot={currentUserAndTargetChatbot.targetChatbot}
-        />
-      </FlowStoreProvider>
-    </div>
+    <FlowStoreProvider chatbotId={chatbotId}>
+      <UpdateChatbotForm chatbot={currentUserAndTargetChatbot.targetChatbot} />
+    </FlowStoreProvider>
   )
 }

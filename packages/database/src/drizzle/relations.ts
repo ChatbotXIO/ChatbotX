@@ -53,7 +53,7 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     broadcasts: r.many.broadcastModel(),
     conversation: r.one.conversationModel(),
-    logs: r.many.logModel(),
+    errorLogs: r.many.errorLogModel(),
     contactCustomFields: r.many.contactCustomFieldModel(),
     contactNotes: r.many.contactNoteModel(),
   },
@@ -86,7 +86,7 @@ export const relations = defineRelations(schema, (r) => ({
     conversationParticipants: r.many.conversationParticipantModel(),
     inboxTeamMembers: r.many.inboxTeamMemberModel(),
     invitations: r.many.invitationModel(),
-    logs: r.many.logModel(),
+    auditLogs: r.many.auditLogModel(),
     organizations: r.many.organizationModel(),
     sessions: r.many.sessionModel(),
     chatbotMembers: r.many.chatbotMemberModel(),
@@ -183,7 +183,8 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     integrationZalos: r.many.integrationZaloModel(),
     invitations: r.many.invitationModel(),
-    logs: r.many.logModel(),
+    errorLogs: r.many.errorLogModel(),
+    auditLogs: r.many.auditLogModel(),
     messages: r.many.messageModel(),
     spreadsheets: r.many.spreadsheetModel(),
     foldersViaTag: r.many.folderModel({
@@ -506,17 +507,23 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.organizationModel.id,
     }),
   },
-  logModel: {
+  errorLogModel: {
     chatbot: r.one.chatbotModel({
-      from: r.logModel.chatbotId,
+      from: r.errorLogModel.chatbotId,
       to: r.chatbotModel.id,
     }),
     contact: r.one.contactModel({
-      from: r.logModel.contactId,
+      from: r.errorLogModel.contactId,
       to: r.contactModel.id,
     }),
+  },
+  auditLogModel: {
+    chatbot: r.one.chatbotModel({
+      from: r.auditLogModel.chatbotId,
+      to: r.chatbotModel.id,
+    }),
     user: r.one.userModel({
-      from: r.logModel.userId,
+      from: r.auditLogModel.userId,
       to: r.userModel.id,
     }),
   },

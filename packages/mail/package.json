@@ -5,6 +5,7 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
+    "@react-email/preview-server": "5.2.9",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^7.0.11",
     "@types/react": "19.2.14",

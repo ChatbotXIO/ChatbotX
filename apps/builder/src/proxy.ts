@@ -12,10 +12,10 @@ export async function proxy(request: NextRequest) {
 
   const cookies = getSessionCookie(request)
 
-  const fallbackSigninUrl = new URL("/signin", request.url)
+  const fallbackSigninUrl = new URL("/auth/sign-in", request.url)
   fallbackSigninUrl.searchParams.set("callbackURL", request.url)
 
-  if (!(cookies || request.nextUrl.pathname.includes("/signin"))) {
+  if (!(cookies || request.nextUrl.pathname.includes("/auth/sign-in"))) {
     return NextResponse.redirect(fallbackSigninUrl)
   }
 
@@ -58,6 +58,6 @@ function isPublicRoute(pathname: string) {
 
 export const config = {
   matcher: [
-    "/((?!api|webchat|signin|zalo_verifier|pricing|chat-widget|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json).*)",
+    "/((?!api|webchat|auth|zalo_verifier|pricing|chat-widget|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json).*)",
   ],
 }

@@ -744,8 +744,11 @@
       "description": "Please wait",
       "label": "Loading..."
     },
-    "log": {
-      "label": "Log"
+    "errorLog": {
+      "label": "Error Log"
+    },
+    "auditLog": {
+      "label": "Audit Log"
     },
     "max": {
       "label": "Maximum"
@@ -1083,6 +1086,15 @@
     },
     "source": {
       "label": "Source"
+    },
+    "password": {
+      "label": "Password"
+    },
+    "passwordConfirmation": {
+      "label": "Re-enter password"
+    },
+    "newPassword": {
+      "label": "New Password"
     }
   },
   "flows": {
@@ -1342,20 +1354,35 @@
       "title": "OpenAI Integration"
     }
   },
-  "signIn": {
+  "auth": {
+    "orContinueWith": "Or continue with",
+    "dontHaveAnAccount": "Don't have an account?",
+    "alreadyHaveAnAccount": "Already have an account?",
+    "signUp": "Sign up",
     "acceptTermsAndPolicy": "By clicking continue, you agree to our",
     "and": "and",
-    "email": "Email",
-    "password": "Password",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "title": "Sign in to {name}",
+    "signInTitle": "Sign in to {name}",
+    "forgotPasswordTitle": "Forgot your password?",
+    "forgotPasswordDescription": "No worries! We'll send you a link with instructions on how to reset your password.",
     "checkYourEmail": "Check your email",
     "magicLinkSent": "We sent verification URL to your email",
     "magicLinkSentDescription": "Click the link in your email to continue.",
     "backToSignIn": "Back to sign in",
     "didNotReceiveEmail": "Didn't receive the email? Check your spam folder.",
-    "trySigningInAgain": "You can also try signing in again with a different email."
+    "trySigningInAgain": "You can also try signing in again with a different email.",
+    "sentMagicLink": "We sent a magic link to your email. Please check your email and click the link to continue.",
+    "signIn": "Sign in",
+    "signUpSuccess": "Signed up successfully. Please check your email for verification.",
+    "forgotPassword": "Forgot password?",
+    "rememberedPassword": "Remembered your password?",
+    "forgotPasswordEmailSent": "We've sent you an email with instructions to reset your password.",
+    "magicLinkSentTitle": "Magic link sent",
+    "passwordResetSuccess": "Password reset successfully",
+    "resetPasswordTitle": "Reset your password",
+    "resetPasswordDescription": "Enter your new password below.",
+    "signUpTitle": "Sign up to {name}"
   },
   "tags": {
     "heading": {

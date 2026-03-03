@@ -1,6 +1,6 @@
 import { Suspense } from "react"
-import { ListInboxTeams } from "@/features/inbox-teams/list-inbox-teams"
-import { getInboxTeams } from "@/features/inbox-teams/queries"
+import { ListInboxTeams } from "@/enterprise/features/inbox-teams/list-inbox-teams"
+import { getInboxTeams } from "@/enterprise/features/inbox-teams/queries"
 import { getAllChatbotMembers } from "@/features/users/queries"
 
 export default async function InboxTeamsPage(props: {
