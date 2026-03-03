@@ -42,7 +42,7 @@ const config: IntegrationDefinition<
     verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
     uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
     sendFlowStep: async (props) => {
-      await sendFlowStep(props)
+      return await sendFlowStep(props)
     },
     listMessageTemplates: async ({ ctx }) =>
       await listMessageTemplates(ctx.auth),

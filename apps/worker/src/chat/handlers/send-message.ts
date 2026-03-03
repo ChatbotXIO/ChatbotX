@@ -88,7 +88,7 @@ export async function sendFlowStepToExternal({
   flowId: string
   flowVersionId?: string
   step: SendFlowStepData
-}) {
+}): Promise<{ messageIds?: string[] }> {
   // Find integration auth
   const { inbox, auth } = await getInboxWithAuthFromInboxId(
     conversation.inboxId,
@@ -100,10 +100,10 @@ export async function sendFlowStepToExternal({
     logger.error(
       `Unable to find integration detail for inboxType: ${inbox.inboxType}`,
     )
-    return
+    return {}
   }
 
-  await intergationDetail.runAction("sendFlowStep", {
+  const result = await intergationDetail.runAction("sendFlowStep", {
     ctx: {
       chatbot: inbox.chatbot,
       auth,
@@ -115,4 +115,6 @@ export async function sendFlowStepToExternal({
       step,
     },
   })
+
+  return result || {}
 }

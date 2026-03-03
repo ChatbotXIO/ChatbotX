@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { buttonStepDefaultFn, buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendWaTemplateMessageStepSchema = z.object({
@@ -40,6 +41,27 @@ export const sendWaTemplateMessageStepSchema = z.object({
         .optional(),
     }),
   }),
+  buttons: z
+    .array(buttonStepSchema)
+    .default([])
+    .transform((buttons) => {
+      const templateButtons = buttons.map((btn) => ({
+        id: btn.id,
+        label: btn.label,
+        beforeStep: null,
+        steps: [],
+        buttonType: null,
+      }))
+
+      if (templateButtons.length === 0) {
+        return [
+          buttonStepDefaultFn({ label: "Delivered" }),
+          buttonStepDefaultFn({ label: "Failed" }),
+        ]
+      }
+
+      return templateButtons
+    }),
 })
 
 export type SendWaTemplateMessageStepSchema = z.infer<
@@ -55,6 +77,10 @@ export const sendWaTemplateMessageStepDefaultFn = (
     languageCode: "",
     params: {},
   },
+  buttons: [
+    buttonStepDefaultFn({ label: "Delivered" }),
+    buttonStepDefaultFn({ label: "Failed" }),
+  ],
   ...props,
   id: createId(),
   stepType: StepType.sendWaTemplateMessage,

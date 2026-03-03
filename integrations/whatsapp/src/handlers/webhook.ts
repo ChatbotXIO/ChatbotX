@@ -6,6 +6,14 @@ import type { GetParams } from "whatsapp-api-js/types"
 import { DEFAULT_API_VERSION } from "../constants"
 import type { WhatsappConfig } from "../schemas"
 
+type StatusEvent = {
+  phoneID: string
+  id: string
+  status: "delivered" | "failed" | "read" | "sent"
+  timestamp: string
+  recipient_id: string
+}
+
 export const webhookHandler = async (
   props: HandleRequestProps<WhatsappConfig>,
 ) => {
@@ -27,38 +35,66 @@ export const webhookHandler = async (
 
   if (props.req.method === "POST") {
     try {
-      const result = await new Promise<OnMessageArgs | null>(
-        (resolve, reject) => {
-          middleware.on.message = (args: OnMessageArgs) => {
-            resolve(args)
+      const result = await new Promise<
+        | { type: "message"; data: OnMessageArgs }
+        | { type: "status"; data: StatusEvent }
+        | null
+      >((resolve, reject) => {
+        middleware.on.message = (args: OnMessageArgs) => {
+          resolve({ type: "message", data: args })
+        }
+        middleware.on.sent = () => {
+          resolve(null)
+        }
+        // biome-ignore lint/suspicious/noExplicitAny: whatsapp-api-js library type mismatch
+        middleware.on.status = (args: any) => {
+          resolve({ type: "status", data: args as StatusEvent })
+        }
+        middleware.handle_post(props.req).then((rs) => {
+          if (rs !== 200) {
+            reject(new SdkException("Failed to handle webhook"))
           }
-          middleware.on.sent = () => {
-            resolve(null)
-          }
-          middleware.on.status = () => {
-            resolve(null)
-          }
-          middleware.handle_post(props.req).then((rs) => {
-            if (rs !== 200) {
-              reject(new SdkException("Failed to handle webhook"))
-            }
-          })
+        })
 
-          setTimeout(() => {
-            resolve(null)
-          }, 300)
-        },
-      )
+        setTimeout(() => {
+          resolve(null)
+        }, 300)
+      })
 
-      if (result?.message) {
+      if (result?.type === "message" && result.data.message) {
         await props.queue?.add("incomingMessage", {
           type: "incomingMessage",
           data: {
             integrationType: "whatsapp",
-            integrationIdentifier: result.phoneID,
-            payload: result,
+            payload: {
+              phoneID: result.data.phoneID,
+              from: result.data.from,
+              message: result.data.message,
+              name: result.data.name,
+            },
           },
         })
+      }
+
+      if (result?.type === "status") {
+        const statusData = result.data
+
+        if (
+          statusData.status === "delivered" ||
+          statusData.status === "failed"
+        ) {
+          await props.queue?.add("messageStatus", {
+            type: "messageStatus",
+            data: {
+              integrationType: "whatsapp",
+              payload: {
+                messageId: statusData.id,
+                status: statusData.status,
+                timestamp: statusData.timestamp,
+              },
+            },
+          })
+        }
       }
 
       return "ok"

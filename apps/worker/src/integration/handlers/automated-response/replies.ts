@@ -21,7 +21,7 @@ import { TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps, SecretTextAuthValue } from "./types"
 
-async function replaceCustomFieldAttributes(
+export async function replaceCustomFieldAttributes(
   message: string,
   conversationId: string,
 ): Promise<string> {

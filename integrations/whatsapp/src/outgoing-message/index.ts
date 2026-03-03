@@ -1,6 +1,7 @@
 import {
   type SendImageStepSchema,
   type SendTextStepSchema,
+  type SendWaTemplateMessageStepSchema,
   StepType,
 } from "@aha.chat/flow-config"
 import {
@@ -16,10 +17,12 @@ import type {
   ServerSentMessageResponse,
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../client"
+import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { logger } from "../lib/logger"
-import type { WhatsappAuthValue } from "../schemas"
+import type { TemplateMessage, WhatsappAuthValue } from "../schemas"
 import { convertFlowStepImage } from "./send-image"
 import { convertFlowStepText } from "./send-text"
+import { convertFlowStepWaTemplate } from "./send-wa-template"
 
 export function* convertMessageToWhatsappMessage(
   message: OutgoingMessage,
@@ -52,7 +55,7 @@ export function* convertMessageToWhatsappMessage(
 
 export function* convertFlowStepToWhatsappMessage(
   props: SendFlowStepProps<WhatsappAuthValue>,
-) {
+): Generator<ClientMessage | TemplateMessage> {
   const {
     data: { step },
   } = props
@@ -65,6 +68,14 @@ export function* convertFlowStepToWhatsappMessage(
     case StepType.sendImage:
       yield* convertFlowStepImage(
         props as SendFlowStepProps<WhatsappAuthValue, SendImageStepSchema>,
+      )
+      break
+    case StepType.sendWaTemplateMessage:
+      yield* convertFlowStepWaTemplate(
+        props as SendFlowStepProps<
+          WhatsappAuthValue,
+          SendWaTemplateMessageStepSchema
+        >,
       )
       break
     default:
@@ -130,12 +141,13 @@ export const sendMessage = async (
 
 export const sendFlowStep = async (
   props: SendFlowStepProps<WhatsappAuthValue>,
-) => {
+): Promise<{ messageId?: string; messageIds?: string[] }> => {
   const {
     ctx,
     data: { conversation, step },
   } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
+  const messageIds: string[] = []
 
   try {
     for (const whatsappMessage of convertFlowStepToWhatsappMessage(props)) {
@@ -144,12 +156,43 @@ export const sendFlowStep = async (
         continue
       }
 
-      const sendResponse = await whatsappClient.sendMessage(
-        (conversation.conversationAttributes as { phoneNumberId: string })
-          .phoneNumberId,
-        conversation.sourceId as string,
-        whatsappMessage,
-      )
+      let sendResponse: ServerErrorResponse | ServerSentMessageResponse
+
+      if ("_type" in whatsappMessage && whatsappMessage._type === "template") {
+        const templateMessage = whatsappMessage as TemplateMessage
+        const payload = {
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: conversation.sourceId,
+          type: "template",
+          template: templateMessage.template,
+        }
+
+        const response = await whatsappClient.$$apiFetch$$(
+          `${API_URL}/${DEFAULT_API_VERSION}/${conversation.conversationAttributes.phoneNumberId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          },
+        )
+
+        if (!response.ok) {
+          const errorBody = await response.json()
+          logger.error(errorBody, "Failed to send template message")
+          continue
+        }
+
+        sendResponse = await response.json()
+      } else {
+        sendResponse = await whatsappClient.sendMessage(
+          conversation.conversationAttributes.phoneNumberId as string,
+          conversation.sourceId,
+          whatsappMessage,
+        )
+      }
 
       const serverError = sendResponse as ServerErrorResponse
 
@@ -171,15 +214,17 @@ export const sendFlowStep = async (
           },
           "Message sent successfully",
         )
-        continue
+        messageIds.push(messageId)
+      } else {
+        logger.warn(
+          sendResponse,
+          `Message of type ${whatsappMessage._type} could not be sent`,
+        )
       }
-
-      logger.warn(
-        sendResponse,
-        `Message of type ${whatsappMessage._type} could not be sent`,
-      )
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
   }
+
+  return { messageIds }
 }

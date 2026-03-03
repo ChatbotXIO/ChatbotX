@@ -41,6 +41,31 @@ export const whatsappWebhookEventSchema = z.object({
 })
 export type WhatsappWebhookEvent = z.infer<typeof whatsappWebhookEventSchema>
 
+export type WhatsAppTemplateComponentParameter = {
+  type: string
+  text?: string
+  image?: { link: string }
+  video?: { link: string }
+  document?: { link: string }
+}
+
+export type WhatsAppTemplateComponent = {
+  type: string
+  parameters?: WhatsAppTemplateComponentParameter[]
+  sub_type?: string
+  index?: number
+}
+
+export type TemplateMessage = {
+  _type: "template"
+  type: "template"
+  template: {
+    name: string
+    language: { code: string }
+    components: WhatsAppTemplateComponent[]
+  }
+}
+
 export type WhatsappActions = {
   verifyAccessToken: Handler<
     {
@@ -49,7 +74,9 @@ export type WhatsappActions = {
     WhatsappPhoneNumber
   >
   uploadMedia: Handler<{ ctx: Context<WhatsappAuthValue>; file: File }, string>
-  sendFlowStep: (props: SendFlowStepProps<WhatsappAuthValue>) => Promise<void>
+  sendFlowStep: (
+    props: SendFlowStepProps<WhatsappAuthValue>,
+  ) => Promise<{ messageIds?: string[] }>
   listMessageTemplates: Handler<
     {
       ctx: Context<WhatsappAuthValue>

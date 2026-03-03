@@ -1,4 +1,4 @@
-import { db, findOrFail } from "@aha.chat/database/client"
+import { db, findOrFail, eq } from "@aha.chat/database/client"
 import {
   attachmentModel,
   contactModel,
@@ -45,6 +45,7 @@ import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
 import { sendFlowStepToExternal, sendMessageToExternal } from "./send-message"
+import { replaceWhatsappTemplateVariables, validateWhatsappTemplate } from "../../integration/handlers/wa-template-handler"
 
 const convertButtonsToTemplate = (props: {
   flowId: string
@@ -126,6 +127,32 @@ export async function sendFlowStep({
         sourceId: null,
         content: step.stepType === StepType.sendText ? step.message : null,
       }
+
+       if (step.stepType === StepType.sendWaTemplateMessage) {
+        const isValid = await validateWhatsappTemplate(
+          step.template,
+          conversation.inboxId,
+        )
+        if (!isValid) {
+          return ""
+        }
+
+        const templateParams = await replaceWhatsappTemplateVariables(
+          step.template.params,
+          conversationId,
+        )
+
+        messageData.content = `Template: ${step.template.name}`
+        messageData.contentAttributes = {
+          type: "whatsapp_template",
+          templateName: step.template.name,
+          templateLanguage: step.template.languageCode,
+          templateId: step.template.id,
+          params: templateParams,
+        }
+        step.template.params = templateParams
+      }
+
       if ("buttons" in step && step.buttons.length > 0) {
         messageData.contentAttributes = {
           type: "template",
@@ -208,6 +235,17 @@ export async function sendFlowStep({
           flowId,
           flowVersionId,
           step: step as SendFlowStepData,
+        }).then(async (result) => {
+          const firstMessageId = result?.messageIds?.[0]
+
+          if (firstMessageId && message && typeof message !== "string") {
+            await db
+              .update(messageModel)
+              .set({
+                sourceId: firstMessageId,
+              })
+              .where(eq(messageModel.id, message.id))
+          }
         }),
       )
     }

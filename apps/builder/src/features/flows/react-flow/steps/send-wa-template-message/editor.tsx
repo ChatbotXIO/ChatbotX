@@ -225,7 +225,7 @@ function SendWaTemplateMessageStepEditor(
 ) {
   const { parentName } = props
   const t = useTranslations()
-  const { setValue, watch } = useFormContext()
+  const { setValue, watch, register } = useFormContext()
   const { chatbotId } = useMenuData()
 
   const [templates, setTemplates] = useState<Template[]>([])
@@ -314,6 +314,11 @@ function SendWaTemplateMessageStepEditor(
                     className="space-y-1"
                     key={`param-${param.type}-${param.format}-${param.paramName}`}
                   >
+                    <input
+                      type="hidden"
+                      {...register(`${fieldName}.type`)}
+                      value={param.format}
+                    />
                     <TiptapEditorField
                       name={`${fieldName}.${param.format}.link`}
                       placeholder={`Enter ${param.format} URL`}
@@ -328,6 +333,13 @@ function SendWaTemplateMessageStepEditor(
                   className="grid grid-cols-[90px_18px_1fr] items-start gap-2"
                   key={`param-${param.type}-${param.paramName}`}
                 >
+                  {param.type === "header" && (
+                    <input
+                      type="hidden"
+                      {...register(`${fieldName}.type`)}
+                      value="text"
+                    />
+                  )}
                   <div className="flex h-7 items-center justify-center rounded-md border bg-muted text-muted-foreground text-xs">
                     {`{{${param.paramName}}}`}
                   </div>
