@@ -1,6 +1,11 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import {
+  integrationModel,
+  integrationOpenAIModel,
+} from "@aha.chat/database/schema"
+import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -15,17 +20,20 @@ export const disconnectOpenAIAction = authActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationOpenAI = await prisma.integrationOpenAI.findFirstOrThrow(
+      const integrationOpenAI = await findOrFail<IntegrationOpenAIModel>(
+        integrationOpenAIModel,
         {
-          where: { chatbotId },
+          chatbotId,
         },
+        "Integration OpenAI not found",
       )
 
-      await prisma.$transaction(async (tx) => {
-        await tx.integration.delete({
-          where: { id: integrationOpenAI.integrationId },
-        })
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(integrationModel)
+          .where(eq(integrationModel.id, integrationOpenAI.integrationId))
       })
+
       return
     },
   )

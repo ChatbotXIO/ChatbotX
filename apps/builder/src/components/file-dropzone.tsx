@@ -1,6 +1,6 @@
 "use client"
 
-import { FileType } from "@aha.chat/database/types"
+import type { FileType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Input } from "@aha.chat/ui/components/ui/input"
 import {
@@ -53,23 +53,23 @@ function UploadIcon({
   ...props
 }: { type?: FileType; size: number } & SVGProps<SVGSVGElement>) {
   const uploadIcons: Record<FileType, { icon: LucideIcon }> = {
-    [FileType.video]: {
+    video: {
       icon: Video,
     },
-    [FileType.file]: {
+    file: {
       icon: File,
     },
-    [FileType.audio]: {
+    audio: {
       icon: Volume2,
     },
-    [FileType.gif]: {
+    gif: {
       icon: ImagePlay,
     },
-    [FileType.image]: {
+    image: {
       icon: ImageIcon,
     },
   }
-  const dyanmicIcon = uploadIcons[type ?? FileType.image]
+  const dyanmicIcon = uploadIcons[type ?? "image"]
 
   return <dyanmicIcon.icon {...props} />
 }
@@ -78,7 +78,7 @@ export default function FileDropzone({
   register,
   unregister,
   parentName,
-  type = FileType.image,
+  type = "image",
   mode = "file",
   configs: {
     uploadKeyName = "texts.or",

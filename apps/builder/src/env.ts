@@ -4,6 +4,11 @@ import { keys as partysocket } from "@aha.chat/partysocket-config/keys"
 import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
 
+const environmentRule = z.enum(["dev", "prod"]).default("dev")
+const editionRule = z
+  .enum(["community", "enterprise", "cloud"])
+  .default("community")
+
 const baseEnv = {
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),
@@ -11,6 +16,8 @@ const baseEnv = {
     NEXT_PUBLIC_BILLING_URL: z.url().optional(),
     NEXT_PUBLIC_MANAGE_URL: z.url().optional(),
     NEXT_PUBLIC_ASSET_URL: z.url().optional(),
+    NEXT_PUBLIC_ENVIRONMENT: environmentRule,
+    NEXT_PUBLIC_EDITION: editionRule,
   },
   runtimeEnv: {
     NEXT_PUBLIC_BUILDER_URL: process.env.NEXT_PUBLIC_BUILDER_URL,
@@ -18,7 +25,10 @@ const baseEnv = {
     NEXT_PUBLIC_BILLING_URL: process.env.NEXT_PUBLIC_BILLING_URL,
     NEXT_PUBLIC_ASSET_URL: process.env.NEXT_PUBLIC_ASSET_URL,
     NEXT_PUBLIC_MANAGE_URL: process.env.NEXT_PUBLIC_MANAGE_URL,
+    NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT,
+    NEXT_PUBLIC_EDITION: process.env.NEXT_PUBLIC_EDITION,
   },
+  server: {},
 }
 
 const googleAuthEnv = {
@@ -38,6 +48,7 @@ const authEnv = {
 export const env = createEnv({
   extends: [partysocket(), database(), mail()],
   server: {
+    ...baseEnv.server,
     ...googleAuthEnv.server,
     ...authEnv.server,
   },
@@ -48,3 +59,7 @@ export const env = createEnv({
     ...baseEnv.runtimeEnv,
   },
 })
+
+export const isEnterprise = env.NEXT_PUBLIC_EDITION === "enterprise"
+export const isCloud = env.NEXT_PUBLIC_EDITION === "cloud"
+export const isCommunity = env.NEXT_PUBLIC_EDITION === "community"

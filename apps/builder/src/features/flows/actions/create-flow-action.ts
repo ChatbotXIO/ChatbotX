@@ -1,12 +1,14 @@
 "use server"
 
-import { FolderType, type Prisma, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { flowModel, flowVersionModel } from "@aha.chat/database/schema"
 import { sendMessageNodeDefaultFn } from "@aha.chat/flow-config"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { type CreateFlowSchema, createFlowSchema } from "../schemas/action"
@@ -23,11 +25,7 @@ export const createFlowAction = chatbotActionClient
       parsedInput: CreateFlowSchema
     }) => {
       if (parsedInput.folderId) {
-        await ensureFolderIdIsExists(
-          parsedInput.folderId,
-          chatbotId,
-          FolderType.flow,
-        )
+        await ensureFolderIsExists(parsedInput.folderId, chatbotId, "flow")
       }
 
       const defaultNode = sendMessageNodeDefaultFn({
@@ -37,23 +35,22 @@ export const createFlowAction = chatbotActionClient
         },
       })
 
-      await prisma.$transaction(async (tx) => {
-        await tx.flow.create({
-          data: {
-            ...parsedInput,
-            chatbotId,
-            flowVersions: {
-              create: [
-                {
-                  chatbotId,
-                  nodes: [defaultNode as Prisma.InputJsonObject],
-                  edges: [],
-                  isDraft: true,
-                  startNodeId: defaultNode.id,
-                },
-              ],
-            },
-          },
+      await db.transaction(async (tx) => {
+        const flowId = createId()
+        await tx.insert(flowModel).values({
+          ...parsedInput,
+          id: flowId,
+          chatbotId,
+        })
+
+        await tx.insert(flowVersionModel).values({
+          id: createId(),
+          chatbotId,
+          flowId,
+          nodes: [defaultNode as Record<string, unknown>],
+          edges: [],
+          isDraft: true,
+          startNodeId: defaultNode.id,
         })
       })
 

@@ -1,4 +1,4 @@
-import { InboxType } from "@aha.chat/database/types"
+import type { InboxType } from "@aha.chat/database/types"
 import { cn } from "@aha.chat/ui/lib/utils"
 import {
   SiMessenger,
@@ -34,7 +34,7 @@ export const InboxIcon = memo(
     const defaultLabelClassName = "text-sm truncate"
 
     switch (inboxType) {
-      case InboxType.messenger:
+      case "messenger":
         return (
           <div className={cn(defaultWrapperClassName, wrapperClassName)}>
             <SiMessenger
@@ -48,7 +48,7 @@ export const InboxIcon = memo(
             )}
           </div>
         )
-      case InboxType.whatsapp:
+      case "whatsapp":
         return (
           <div className={cn(defaultWrapperClassName, wrapperClassName)}>
             <SiWhatsapp
@@ -62,7 +62,7 @@ export const InboxIcon = memo(
             )}
           </div>
         )
-      case InboxType.zalo:
+      case "zalo":
         return (
           <div className={cn(defaultWrapperClassName, wrapperClassName)}>
             <SiZalo
@@ -76,7 +76,7 @@ export const InboxIcon = memo(
             )}
           </div>
         )
-      case InboxType.webchat:
+      case "webchat":
         return (
           <div className={cn(defaultWrapperClassName, wrapperClassName)}>
             <AppWindowIcon

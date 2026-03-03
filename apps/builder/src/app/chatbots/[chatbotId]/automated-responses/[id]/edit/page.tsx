@@ -8,6 +8,7 @@ export default async function EditAutomatedResponePage({
   params: Promise<{ chatbotId: string; id: string }>
 }) {
   const { chatbotId, id } = await params
+
   const automatedResponse = await findAutomatedResponse({ chatbotId, id })
   if (!automatedResponse) {
     return notFound()

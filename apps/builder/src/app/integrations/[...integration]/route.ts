@@ -1,4 +1,4 @@
-import type { IntegrationType } from "@aha.chat/database"
+import type { IntegrationType } from "@aha.chat/database/types"
 import { HandleRequestType } from "@aha.chat/sdk"
 import { notFound } from "next/navigation"
 import type { NextRequest } from "next/server"

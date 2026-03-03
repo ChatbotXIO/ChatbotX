@@ -20,7 +20,7 @@ export async function broadcastToChatbotParty(
       },
     )
   } catch (error) {
-    logger.error("Failed to broadcast to chatbot party", error)
+    logger.error(error, "Failed to broadcast to chatbot party")
     return null
   }
 }
@@ -40,7 +40,7 @@ export async function broadcastToGuestParty(
       },
     )
   } catch (error) {
-    logger.error("Failed to broadcast to guest party", error)
+    logger.error(error, "Failed to broadcast to guest party")
     return null
   }
 }

@@ -1,8 +1,8 @@
 import type { FlowNode } from "@aha.chat/flow-config"
-import { SdkException } from "@aha.chat/sdk"
+import { initVariables, SdkException } from "@aha.chat/sdk"
 import type { IntegrationJobRunChallenge } from "@aha.chat/worker-config"
 import { findConversationAndFlowVersion } from "../../lib/db"
-import { flowStepHandlers } from "./step"
+import { runStepsAndQuickReplies } from "./flow"
 
 export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
   const { conversationId, challenge } = data
@@ -34,17 +34,29 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
       throw new SdkException("Target step not found")
     }
 
-    const remainingSteps = targetNode.data.details.steps.slice(targetStepIdx)
-    const targetStep = remainingSteps[0]
+    const variables = initVariables()
+    variables.conversation.challengeAttempts = {
+      name: "challengeAttempts",
+      type: "number",
+      value: challenge.data.attempts,
+    }
+    variables.conversation.challengeLastAttemptAt = {
+      name: "challengeLastAttemptAt",
+      type: "date",
+      value: challenge.data.lastAttemptAt,
+    }
 
-    flowStepHandlers[targetStep.stepType]?.({
+    await runStepsAndQuickReplies({
       conversation,
       flowVersion,
       useLatestFlowVersion,
+      details: targetNode.data.details,
       targetType: "node",
       targetId: targetNode.id,
-      step: targetStep,
-      state: challenge.data,
+      startFromStepIndex: targetStepIdx,
+      ctx: {
+        variables,
+      },
     })
   }
 }

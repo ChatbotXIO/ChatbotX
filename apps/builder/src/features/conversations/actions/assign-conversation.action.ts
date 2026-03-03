@@ -1,10 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import {
-  broadcastToChatbotParty,
-  RealtimeEventType,
-} from "@aha.chat/partysocket-config"
+import { db, inArray } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -36,77 +34,73 @@ export const assignConversationAction = chatbotActionClient
         assignedInboxTeamId: null,
       }
 
-      await prisma.$transaction(async (tx) => {
-        if (parsedInput.assignedId?.startsWith("u_")) {
-          const userId = parsedInput.assignedId.substring(2)
-          const chatbotMember = await tx.chatbotMember.findFirst({
-            where: {
-              chatbotId,
-              userId,
-            },
-          })
-          if (!chatbotMember) {
-            returnValidationErrors(assignConversationSchema, {
-              assignedId: {
-                _errors: ["User is not valid"],
-              },
-            })
-          }
-          updatedData.assignedUserId = chatbotMember.userId
-        } else if (parsedInput.assignedId?.startsWith("t_")) {
-          const inboxteamId = parsedInput.assignedId.substring(2)
-          const inboxTeam = await tx.inboxTeam.findFirst({
-            where: {
-              chatbotId,
-              id: inboxteamId,
-            },
-          })
-          if (!inboxTeam) {
-            returnValidationErrors(assignConversationSchema, {
-              assignedId: {
-                _errors: ["Inbox Team is not valid"],
-              },
-            })
-          }
-          updatedData.assignedInboxTeamId = inboxTeam.id
-        }
-
-        const conversations = await tx.conversation.findMany({
+      if (parsedInput.assignedId?.startsWith("u_")) {
+        const userId = parsedInput.assignedId.substring(2)
+        const chatbotMember = await db.query.chatbotMemberModel.findFirst({
           where: {
             chatbotId,
-            contactId: {
-              in: parsedInput.contactIds,
-            },
+            userId,
           },
-          select: { id: true },
         })
-        const conversationIds = conversations.map((c) => c.id)
-        if (conversationIds.length === 0) {
-          return
+        if (!chatbotMember) {
+          returnValidationErrors(assignConversationSchema, {
+            assignedId: {
+              _errors: ["User is not valid"],
+            },
+          })
         }
-
-        await tx.conversation.updateMany({
+        updatedData.assignedUserId = chatbotMember.userId
+      } else if (parsedInput.assignedId?.startsWith("t_")) {
+        const inboxteamId = parsedInput.assignedId.substring(2)
+        const inboxTeam = await db.query.inboxTeamModel.findFirst({
           where: {
-            id: {
-              in: conversations.map((c) => c.id),
+            chatbotId,
+            id: inboxteamId,
+          },
+        })
+        if (!inboxTeam) {
+          returnValidationErrors(assignConversationSchema, {
+            assignedId: {
+              _errors: ["Inbox Team is not valid"],
             },
-          },
-          data: updatedData,
-        })
+          })
+        }
+        updatedData.assignedInboxTeamId = inboxTeam.id
+      }
 
-        revalidateCacheTags([
-          `chatbots:${chatbotId}#conversations`,
-          `chatbots:${chatbotId}#contacts`,
-        ])
-
-        await broadcastToChatbotParty(chatbotId, {
-          eventType: RealtimeEventType.conversationAssigned,
-          data: {
-            conversationIds,
-            assignedUserId: updatedData.assignedUserId,
-            assignedInboxTeamId: updatedData.assignedInboxTeamId,
+      const conversations = await db.query.conversationModel.findMany({
+        where: {
+          chatbotId,
+          contactId: {
+            in: parsedInput.contactIds,
           },
+        },
+        columns: { id: true },
+      })
+      const conversationIds = conversations.map((c) => c.id)
+      if (conversationIds.length === 0) {
+        return
+      }
+
+      const updatedConversations = await db
+        .update(conversationModel)
+        .set({
+          assignedUserId: updatedData.assignedUserId,
+          assignedInboxTeamId: updatedData.assignedInboxTeamId,
         })
+        .where(inArray(conversationModel.id, conversationIds))
+        .returning()
+
+      revalidateCacheTags([
+        `chatbots:${chatbotId}#conversations`,
+        `chatbots:${chatbotId}#contacts`,
+      ])
+
+      await integrationQueue.add(IntegrationJobAction.assignConversation, {
+        type: IntegrationJobAction.assignConversation,
+        data: {
+          conversations: updatedConversations,
+        },
       })
     },
   )

@@ -1,7 +1,10 @@
 "use server"
 
-import { FieldType, prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { contactCustomFieldModel, fieldModel } from "@aha.chat/database/schema"
+import type { FieldModel } from "@aha.chat/database/types"
 import { FieldOperationType } from "@aha.chat/flow-config"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -24,14 +27,14 @@ export const addContactCustomFieldAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: AddContactCustomFieldRequest
     }) => {
-      const contacts = await prisma.contact.findMany({
+      const contacts = await db.query.contactModel.findMany({
         where: {
           chatbotId,
           id: {
             in: parsedInput.ids,
           },
         },
-        select: {
+        columns: {
           id: true,
         },
       })
@@ -39,22 +42,26 @@ export const addContactCustomFieldAction = chatbotActionClient
         return
       }
 
-      await prisma.$transaction(async (tx) => {
-        const customField = await tx.field.findFirstOrThrow({
-          where: {
-            id: parsedInput.customFieldId,
-            fieldType: FieldType.customField,
-          },
-        })
+      const customField = await findOrFail<FieldModel>(
+        fieldModel,
+        {
+          chatbotId,
+          id: parsedInput.customFieldId,
+          fieldType: "customField",
+        },
+        "Custom field not found",
+      )
 
+      await db.transaction(async (tx) => {
         await Promise.all(
           contacts.map(async (contact) => {
-            const contactCustomField = await tx.contactCustomField.findFirst({
-              where: {
-                contactId: contact.id,
-                customFieldId: customField.id,
-              },
-            })
+            const contactCustomField =
+              await tx.query.contactCustomFieldModel.findFirst({
+                where: {
+                  contactId: contact.id,
+                  customFieldId: customField.id,
+                },
+              })
 
             if (contactCustomField) {
               let value = ""
@@ -81,21 +88,19 @@ export const addContactCustomFieldAction = chatbotActionClient
                   value = parsedInput.value as string
               }
 
-              return tx.contactCustomField.update({
-                where: {
-                  id: contactCustomField.id,
-                },
-                data: {
+              return tx
+                .update(contactCustomFieldModel)
+                .set({
                   value,
-                },
-              })
+                })
+                .where(eq(contactCustomFieldModel.id, contactCustomField.id))
             }
-            return tx.contactCustomField.create({
-              data: {
-                contactId: contact.id,
-                customFieldId: customField.id,
-                value: parsedInput.value as string,
-              },
+
+            return tx.insert(contactCustomFieldModel).values({
+              contactId: contact.id,
+              customFieldId: customField.id,
+              value: parsedInput.value as string,
+              id: createId(),
             })
           }),
         )

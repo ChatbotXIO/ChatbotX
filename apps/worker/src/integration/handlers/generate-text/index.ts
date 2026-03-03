@@ -1,4 +1,5 @@
 import { AIMessageRole, type ConversationModel } from "@aha.chat/database/types"
+
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { getAIIntegrationInDB, getAIModel } from "../../../lib/ai"
@@ -74,12 +75,15 @@ export async function handleAIGenerateText({
       })
     }
   } catch (error) {
-    logger.error("[ai-generate-text] Step failed", {
-      error,
-      conversationId: conversation.id,
-      stepId: step.id,
-      stepType: step.stepType,
-    })
+    logger.error(
+      {
+        error,
+        conversationId: conversation.id,
+        stepId: step.id,
+        stepType: step.stepType,
+      },
+      "[ai-generate-text] Step failed",
+    )
     throw error
   }
 }
@@ -144,11 +148,14 @@ async function handleToolCallsFollowUp({
       chatbotId: conversation.chatbotId,
     })
   } catch (followUpError) {
-    logger.error("[ai-generate-text] Follow-up request failed", {
-      error: followUpError,
-      conversationId: conversation.id,
-      stepId: stepConfig.id,
-    })
+    logger.error(
+      {
+        error: followUpError,
+        conversationId: conversation.id,
+        stepId: stepConfig.id,
+      },
+      "[ai-generate-text] Follow-up request failed",
+    )
 
     await saveResultToCustomField({
       contactId: conversation.contactId,

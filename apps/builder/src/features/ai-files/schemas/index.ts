@@ -11,10 +11,10 @@ export type AIFileCollection = {
   data: AIFileWithProcessing[]
 }
 
-export const getAIFilesRequest = z.object({
+export const listAIFilesRequest = z.object({
   chatbotId: z.string(),
 })
-export type GetAIFilesRequest = z.infer<typeof getAIFilesRequest>
+export type ListAIFilesRequest = z.infer<typeof listAIFilesRequest>
 
 export const createAIFileRequest = z.object({
   path: z.string(),

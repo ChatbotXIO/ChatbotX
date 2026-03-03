@@ -1,27 +1,28 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListContactNotesRequest } from "../schemas/query"
-import type { ContactNoteCollection } from "../schemas/resource"
+import type { ContactNoteResource } from "../schemas/resource"
 
 export async function listContactNotes(
   input: ListContactNotesRequest,
-): Promise<ContactNoteCollection> {
+): Promise<PaginatedResponse<ContactNoteResource>> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const [data] = await prisma.$transaction([
-    prisma.contactNote.findMany({
-      where: {
-        contactId: input.contactId,
+  const data = await db.query.contactNoteModel.findMany({
+    where: {
+      contactId: input.contactId,
+      createdById: {
+        isNotNull: true,
       },
-      include: {
-        createdBy: true,
-      },
-    }),
-  ])
+    },
+    with: {
+      createdBy: true,
+    },
+  })
 
   return {
-    data: data.filter(
-      (note) => note.createdBy !== null,
-    ) as ContactNoteCollection["data"],
+    data,
+    pageCount: 1,
   }
 }

@@ -1,17 +1,19 @@
 "use server"
 
-import { FieldType, FolderType, prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { fieldModel } from "@aha.chat/database/schema"
+import type { FieldModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateAccountFieldRequest,
   updateAccountFieldRequest,
-} from "../schemas/update-account-field.schema"
+} from "../schemas/action"
 
 export const updateAccountFieldAction = chatbotActionClient
   .inputSchema(updateAccountFieldRequest)
@@ -24,31 +26,28 @@ export const updateAccountFieldAction = chatbotActionClient
       parsedInput: UpdateAccountFieldRequest
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const accountField = await prisma.field.findFirstOrThrow({
-        where: {
+      const accountField = await findOrFail<FieldModel>(
+        fieldModel,
+        {
           id,
           chatbotId,
-          fieldType: FieldType.accountField,
+          fieldType: "accountField",
         },
-      })
+        "Account field not found",
+      )
 
       if (
         parsedInput.folderId &&
         parsedInput.folderId !== accountField.folderId
       ) {
-        await ensureFolderIdIsExists(
+        await ensureFolderIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.customField,
+          "customField",
         )
       }
 
-      await prisma.field.update({
-        where: {
-          id,
-        },
-        data: parsedInput,
-      })
+      await db.update(fieldModel).set(parsedInput).where(eq(fieldModel.id, id))
 
       revalidateCacheTags([
         `chatbots:${chatbotId}#accountFields`,

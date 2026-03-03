@@ -1,8 +1,5 @@
 import {
-  ContentType,
   type IntegrationWebchatModel,
-  MessageType,
-  SenderType,
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import type { MessageButtonTemplate } from "@aha.chat/sdk"
@@ -30,6 +27,7 @@ export type GuestSessionState = {
   nextCursorMessage: string | null
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
+  isTyping: boolean
 }
 
 export type GuestSessionActions = {
@@ -45,6 +43,7 @@ export type GuestSessionActions = {
   handleNewMessage: (message: MessageResource) => void
   sendMessage: (content: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
+  setIsTyping: (isTyping: boolean) => void
 
   getMenus: () => PersistentMenuSchema[]
 }
@@ -63,6 +62,8 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     nextCursorMessage: null,
     isLoadMoreMessage: false,
     hasNextMessagePage: true,
+
+    isTyping: false,
 
     initGuestSession: () => {
       const { guestConversationId } = get()
@@ -191,9 +192,9 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
         conversationId: "",
         content: null,
         contentAttributes: null,
-        messageType: MessageType.incoming,
-        contentType: ContentType.text,
-        senderType: SenderType.contact,
+        messageType: "incoming",
+        contentType: "text",
+        senderType: "contact",
         senderId: "",
         clientId: createId(),
         ...message,
@@ -209,6 +210,10 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     getMenus: () => {
       const { config } = get()
       return (config.persistentMenus ?? []) as PersistentMenuSchema[]
+    },
+
+    setIsTyping: (isTyping: boolean) => {
+      set({ isTyping })
     },
   }))
 }

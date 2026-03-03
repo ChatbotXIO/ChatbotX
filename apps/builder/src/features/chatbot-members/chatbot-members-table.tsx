@@ -168,12 +168,10 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <InviteChatbotMemberDialog />
-      </div>
-
       <DataTable table={table}>
-        <DataTableToolbar table={table} />
+        <DataTableToolbar table={table}>
+          <InviteChatbotMemberDialog />
+        </DataTableToolbar>
       </DataTable>
 
       <DeleteChatbotMemberDialog

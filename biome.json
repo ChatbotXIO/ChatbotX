@@ -10,7 +10,6 @@
     "includes": [
       "!**/.next",
       "!**/.turbo",
-      "!**/packages/database/src/generated/prisma",
       "!**/packages/ui/src/components/data-table",
       "!**/packages/ui/src/components/ui",
       "!**/packages/ui/src/lib",

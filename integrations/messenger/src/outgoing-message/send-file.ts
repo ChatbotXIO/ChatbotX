@@ -14,7 +14,10 @@ export async function* convertFlowStepFile(
     SendAudioStepSchema | SendFileStepSchema
   >,
 ) {
-  const { ctx, step } = props
+  const {
+    ctx,
+    data: { step },
+  } = props
   try {
     const media_type = convertMediaType(step.stepType)
     const attachment = await uploadAttachment(ctx.auth, step.url, media_type)
@@ -27,9 +30,6 @@ export async function* convertFlowStepFile(
       },
     }
   } catch (error) {
-    logger.error(
-      "An error occurred while uploading the attachment",
-      JSON.stringify(error),
-    )
+    logger.error(error, "An error occurred while uploading the attachment")
   }
 }

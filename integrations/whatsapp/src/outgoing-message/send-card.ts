@@ -1,4 +1,3 @@
-import type { ILogObj, Logger } from "@aha.chat/logger"
 import { chunkArray } from "@edenchazard/tiny-chunk-array"
 import {
   ActionButtons,
@@ -9,6 +8,7 @@ import {
   Text,
 } from "whatsapp-api-js/messages"
 import { generateBody, generateButton, generateFooter } from "../interactive"
+import { logger } from "../lib/logger"
 
 export const INTERACTIVE_MAX_BUTTONS_COUNT = 3
 
@@ -22,10 +22,12 @@ export type SendCardPayload = {
 export function* generateOutgoingMessages(
   flowVersionId: string,
   payload: SendCardPayload,
-  logger: Logger<ILogObj>,
 ) {
   if (payload.buttons?.length) {
-    const chunks = chunkArray(payload.buttons, INTERACTIVE_MAX_BUTTONS_COUNT)
+    const chunks = chunkArray(
+      payload.buttons,
+      INTERACTIVE_MAX_BUTTONS_COUNT,
+    ) as { id: string; label: string }[][]
 
     if (payload.buttons.length > INTERACTIVE_MAX_BUTTONS_COUNT) {
       logger.info(

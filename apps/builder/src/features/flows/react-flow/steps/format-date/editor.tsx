@@ -1,6 +1,5 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
 import {
   type FormatDateStepSchema,
   FormatTimezone,
@@ -80,10 +79,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
-              customFieldTypes={[
-                CustomFieldType.date,
-                CustomFieldType.datetime,
-              ]}
+              customFieldTypes={["date", "datetime"]}
               label={t("fields.inputCustomField.label")}
               name="inputCfId"
               required

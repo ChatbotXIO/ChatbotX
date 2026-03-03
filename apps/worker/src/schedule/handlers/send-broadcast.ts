@@ -1,4 +1,4 @@
-import { BroadcastStatus, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import {
   IntegrationJobAction,
   integrationQueue,
@@ -6,12 +6,12 @@ import {
 } from "@aha.chat/worker-config"
 
 export const sendBroadcast = async (data: ScheduleJobBroadcast) => {
-  const broadcasts = await prisma.broadcast.findMany({
+  const broadcasts = await db.query.broadcastModel.findMany({
     where: {
       schedulesAt: {
         lte: data.data.schedulesAt,
       },
-      status: BroadcastStatus.scheduled,
+      status: "scheduled",
     },
   })
 

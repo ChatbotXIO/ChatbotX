@@ -1,5 +1,3 @@
-import { SenderType } from "@aha.chat/database"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -12,7 +10,15 @@ import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
-import { readMessage } from "./handlers/conversation"
+import {
+  broadcastBlockContactEvent,
+  broadcastUnblockContactEvent,
+} from "./handlers/contact"
+import {
+  agentMarkAsRead,
+  broadcastAssignConversation,
+  contactMarkAsRead,
+} from "./handlers/conversation"
 import {
   runFlowNode,
   runFlowPostback,
@@ -25,23 +31,25 @@ import { sendBroadcast } from "./handlers/send-broadcast"
 const worker = new Worker(
   queueName.integration,
   async (job: Job<IntegrationJobData>) => {
+    logger.info(job.data, "Worker received job")
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
-        const { message, postbackAction, quickReplyAction } =
+        const { message, postbackAction, quickReplyAction, conversation } =
           await receiveMessage(job.data.data)
 
         // Trigger automated response if the message is from a user
         if (
           !(postbackAction || quickReplyAction) &&
           message.content &&
-          message.senderType === SenderType.contact
+          message.senderType === "contact"
         ) {
           await integrationQueue.add(
             IntegrationJobAction.triggerAutomatedResponse,
             {
               type: IntegrationJobAction.triggerAutomatedResponse,
               data: {
-                message: message as OutgoingMessageEntity,
+                message,
+                conversation,
               },
             },
           )
@@ -64,8 +72,12 @@ const worker = new Worker(
         await triggerAutomatedResponse(job.data.data)
         return
       }
-      case IntegrationJobAction.readMessage: {
-        await readMessage(job.data.data)
+      case IntegrationJobAction.agentMarkAsRead: {
+        await agentMarkAsRead(job.data.data)
+        return
+      }
+      case IntegrationJobAction.contactMarkAsRead: {
+        await contactMarkAsRead(job.data.data)
         return
       }
       case IntegrationJobAction.sendBroadcast: {
@@ -80,6 +92,18 @@ const worker = new Worker(
         await runChallenge(job.data.data)
         return
       }
+      case IntegrationJobAction.blockContact: {
+        await broadcastBlockContactEvent(job.data.data)
+        return
+      }
+      case IntegrationJobAction.unblockContact: {
+        await broadcastUnblockContactEvent(job.data.data)
+        return
+      }
+      case IntegrationJobAction.assignConversation: {
+        await broadcastAssignConversation(job.data.data)
+        return
+      }
       default:
         return
     }
@@ -92,6 +116,6 @@ const worker = new Worker(
 
 worker.on("failed", (job, err) => {
   if (job) {
-    logger.error(`${job.id} has failed`, err)
+    logger.error(err, `Job ${job.id} has failed`)
   }
 })

@@ -1,77 +1,83 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
 import {
-  type ContentType,
-  type ConversationModel,
+  attachmentModel,
+  chatbotUsageModel,
+  contactModel,
+  conversationModel,
+  messageModel,
+} from "@aha.chat/database/schema"
+import type {
+  ChatbotUsageModel,
+  ContentType,
+  ConversationModel,
   Gender,
-  InboxType,
-  type IntegrationType,
-  type MessageModel,
-  MessageType,
-  SenderType,
+  IntegrationType,
+  MessageModel,
 } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
-import type { MessengerWebhookEvent } from "@aha.chat/integration-messenger"
-import type { WhatsappWebhookEvent } from "@aha.chat/integration-whatsapp"
-import type { ZaloWebhookEvent } from "@aha.chat/integration-zalo"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type {
-  AttachmentEntity,
-  AuthValue,
-  Context,
-  ReceivedMessageResult,
+import {
+  type AuthValue,
+  type Context,
+  type IncomingAttachment,
+  SdkException,
 } from "@aha.chat/sdk"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import {
+  IntegrationJobAction,
+  type IntegrationJobReceiveMessage,
+  integrationQueue,
+} from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
 
-export const receiveMessage = async ({
-  integrationType,
-  payload,
-}: {
-  integrationType: string
-  payload: WhatsappWebhookEvent | MessengerWebhookEvent | ZaloWebhookEvent
-}): Promise<{
+export const receiveMessage = async (
+  props: IntegrationJobReceiveMessage["data"],
+): Promise<{
   message: MessageModel
   conversation: ConversationModel
   postbackAction: string | null
   quickReplyAction: string | null
   ref?: string | null
 }> => {
+  const { integrationType, integrationIdentifier } = props
+
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
   }
 
-  const dbIntegration = await getDBIntegration(integrationType, payload)
-  const { chatbot, chatbotId, inboxId, auth } = dbIntegration
+  const dbIntegration = await getDBIntegration(
+    integrationType as IntegrationType,
+    integrationIdentifier,
+  )
+  const { chatbot, chatbotId, inboxId, auth, inbox } = dbIntegration
   const ctx = {
     chatbot,
     auth: auth as AuthValue,
     uploader,
   }
 
-  const parsedMessage: ReceivedMessageResult | null = await allIntegrations[
-    integrationType as IntegrationType
-  ]?.actions.receiveMessage({
+  const parsedMessage = await allIntegrations[
+    integrationType
+  ]?.channels?.channel?.message?.receiveMessage?.({
     ctx,
-    data: payload,
+    data: props,
   })
   if (!parsedMessage) {
-    throw new Error("Unable to parse received message")
+    throw new SdkException("Unable to parse received message")
   }
 
   const { message, conversation, postbackAction, quickReplyAction, ref } =
     parsedMessage
 
-  const result = await prisma.$transaction(async (tx) => {
-    let newContact = await tx.contact.findUnique({
+  const result = await db.transaction(async (tx) => {
+    let newContact = await tx.query.contactModel.findFirst({
       where: {
-        chatbotId_sourceId: {
-          chatbotId,
-          sourceId: conversation.contact.sourceId,
-        },
+        chatbotId,
+        sourceId: conversation.contact.sourceId,
       },
     })
 
@@ -91,102 +97,111 @@ export const receiveMessage = async ({
         }
       }
 
-      const chatbotUsage = await tx.chatbotUsage.findFirstOrThrow({
-        where: { chatbotId },
-      })
+      const chatbotUsage = await findOrFail<ChatbotUsageModel>(
+        chatbotUsageModel,
+        { chatbotId },
+        "Chatbot usage not found",
+      )
       if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
         throw new Error("Max contacts reached")
       }
 
-      newContact = await tx.contact.create({
-        data: {
+      newContact = await tx
+        .insert(contactModel)
+        .values({
+          id: createId(),
           chatbotId,
           sourceId: conversation.contact.sourceId,
           phoneNumber: conversation.contact.phoneNumber,
           email: conversation.contact.email,
           firstName: conversation.contact.firstName,
           lastName: conversation.contact.lastName,
-          gender: (conversation.contact.gender as Gender) || Gender.unknown,
+          gender: (conversation.contact.gender as Gender) || "unknown",
           source: integrationType,
           avatar: conversation.contact.avatar,
-        },
-      })
+        })
+        .returning()
+        .then((result) => result[0])
     }
 
-    const newConversation = await tx.conversation.upsert({
-      where: {
-        contactId: newContact.id,
-      },
-      create: {
+    if (!newContact) {
+      throw new Error("Contact not found")
+    }
+
+    const newConversation = await tx
+      .insert(conversationModel)
+      .values({
+        id: createId(),
         sourceId: conversation.sourceId,
-        conversationAttributes:
-          conversation.conversationAttributes as Prisma.InputJsonValue,
+        conversationAttributes: conversation.conversationAttributes,
+        inboxType: inbox.inboxType,
         inboxId,
         chatbotId,
         contactId: newContact.id,
-      },
-      update: {
-        updatedAt: new Date(),
-        contactRepliedAt: new Date(),
-        lastActivityAt: new Date(),
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: [conversationModel.contactId],
+        set: {
+          updatedAt: new Date(),
+          contactRepliedAt: new Date(),
+          lastActivityAt: new Date(),
+        },
+      })
+      .returning()
+      .then((result) => result[0])
 
     const now = new Date()
 
     // Create message and attachments
-    const newMessage = await tx.message.upsert({
-      where: {
-        chatbotId_sourceId: {
-          chatbotId,
-          sourceId: message.sourceId ?? "",
-        },
-      },
-      create: {
+    const newMessage = await tx
+      .insert(messageModel)
+      .values({
+        id: createId(),
         conversationId: newConversation.id,
         inboxId,
-        senderType:
-          message.messageType === MessageType.outgoing
-            ? SenderType.user
-            : SenderType.contact,
+        senderType: message.messageType === "outgoing" ? "user" : "contact",
         chatbotId,
         sourceId: message.sourceId ?? "",
         senderId:
-          message.messageType === MessageType.outgoing ? null : newContact.id,
+          message.messageType === "outgoing" ? null : (newContact?.id ?? ""),
         messageType: message.messageType,
         content: message.content,
         contentType: message.contentType as ContentType,
-        contentAttributes: message.contentAttributes as Prisma.InputJsonValue,
+        contentAttributes: message.contentAttributes,
         createdAt: now,
         updatedAt: now,
-      },
-      update: {
-        updatedAt: now,
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: [messageModel.chatbotId, messageModel.sourceId],
+        set: {
+          updatedAt: now,
+        },
+      })
+      .returning()
+      .then((result) => result[0])
 
     if (
       message.attachments &&
       newMessage.createdAt.getTime() === now.getTime()
     ) {
-      await tx.attachment.createMany({
-        data: message.attachments.map((attachment: AttachmentEntity) => ({
+      await tx.insert(attachmentModel).values(
+        message.attachments.map((attachment: IncomingAttachment) => ({
+          id: createId(),
           ...attachment,
           messageId: newMessage.id,
           chatbotId: newConversation.chatbotId,
           conversationId: newConversation.id,
         })),
-      })
+      )
     }
 
-    // emit new message to socket
     try {
       broadcastToChatbotParty(newConversation.chatbotId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
       })
     } catch (error) {
-      logger.warn("Unable to emit realtime message", error)
+      logger.warn(error, "Unable to emit realtime message")
     }
 
     return { message: newMessage, conversation: newConversation }
@@ -224,4 +239,4 @@ export const receiveMessage = async ({
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === InboxType.messenger || integrationType === InboxType.zalo
+  integrationType === "messenger" || integrationType === "zalo"

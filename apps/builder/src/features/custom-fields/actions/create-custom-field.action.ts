@@ -1,12 +1,14 @@
 "use server"
 
-import { FieldType, FolderType, Prisma, prisma } from "@aha.chat/database"
+import { db, isDatabaseError } from "@aha.chat/database/client"
+import { fieldModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
@@ -26,34 +28,31 @@ export const createCustomFieldAction = chatbotActionClient
       parsedInput: CreateCustomFieldSchema
     }) => {
       if (parsedInput.folderId) {
-        await ensureFolderIdIsExists(
+        await ensureFolderIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.customField,
+          "customField",
         )
       }
 
       try {
-        await prisma.field.create({
-          data: {
-            chatbotId,
-            fieldType: FieldType.customField,
-            showInInbox: true,
-            ...parsedInput,
-          },
+        await db.insert(fieldModel).values({
+          id: createId(),
+          chatbotId,
+          fieldType: "customField",
+          showInInbox: true,
+          ...parsedInput,
         })
 
         revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
       } catch (error) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === "P2002"
-        ) {
+        if (isDatabaseError(error) && error.cause.code === "23505") {
           return returnValidationErrors(createCustomFieldSchema, {
             _errors: ["Validation Exception"],
             name: { _errors: ["Name is already taken"] },
           })
         }
+
         throw new Error("Failed to create custom field")
       }
     },

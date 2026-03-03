@@ -1,18 +1,20 @@
 "use server"
 
-import { FolderType, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { automatedResponseModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureAllFlowIdsExists } from "@/features/flows/queries"
-import { ensureFolderIdExists } from "@/features/folders/queries"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateAutomatedResponseRequest,
   createAutomatedResponseRequest,
-} from "../schemas/create-automated-responses-schema"
+} from "../schemas/action"
 
 export const createAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
@@ -26,10 +28,10 @@ export const createAutomatedResponseAction = chatbotActionClient
       parsedInput: CreateAutomatedResponseRequest
     }) => {
       if (parsedInput.folderId) {
-        await ensureFolderIdExists(
-          chatbotId,
-          FolderType.automatedResponse,
+        await ensureFolderIsExists(
           parsedInput.folderId,
+          chatbotId,
+          "automatedResponse",
         )
       }
 
@@ -42,13 +44,12 @@ export const createAutomatedResponseAction = chatbotActionClient
       }
       await ensureAllFlowIdsExists(chatbotId, [...new Set(flowIds)])
 
-      await prisma.automatedResponse.create({
-        data: {
-          ...parsedInput,
-          chatbotId,
-          status: true,
-          userMessages: parsedInput.userMessages.map((m) => m.value),
-        },
+      await db.insert(automatedResponseModel).values({
+        ...parsedInput,
+        chatbotId,
+        status: true,
+        userMessages: parsedInput.userMessages.map((m) => m.value),
+        id: createId(),
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#automatedResponses`)

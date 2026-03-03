@@ -12,8 +12,3 @@ export type InboxResource = InboxModel & {
   integrationMessenger?: IntegrationMessengerModel
   integrationZalo?: IntegrationZaloModel
 }
-
-export type InboxCollection = {
-  data: InboxResource[]
-  pageCount: number
-}

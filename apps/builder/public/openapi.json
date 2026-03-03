@@ -1,0 +1,626 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Documentation",
+    "version": "1.0.0",
+    "description": "This is the OpenAPI specification for your project."
+  },
+  "servers": [
+    {
+      "url": "https://builder-dev.aha.chat/api",
+      "description": "Development server"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Local development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {},
+    "responses": {
+      "400": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Invalid request parameters"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "400"
+                }
+              }
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Authentication required"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "401"
+                }
+              }
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Access denied"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "403"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Resource not found"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "404"
+                }
+              }
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Resource already exists"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "409"
+                }
+              }
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "An unexpected error occurred"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "500"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/ai-mcp-servers/validate": {
+      "post": {
+        "operationId": "post-ai-mcp-servers-validate",
+        "summary": "",
+        "description": "",
+        "tags": ["Ai-mcp-servers"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/agents": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-agents",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/ai-files": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-ai-files",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/ai-functions": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-ai-functions",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/ai-mcp-servers": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-ai-mcp-servers",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/contacts": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-contacts",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/conversations": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-conversations",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/custom-fields": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-custom-fields",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/flows": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-flows",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/folders": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-folders",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/inbox-teams": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-inbox-teams",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/inboxes": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-inboxes",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/messages": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-messages",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/spreadsheets": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-spreadsheets",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/tags": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-tags",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/webchats": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-webchats",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/worksheet-headers": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-worksheet-headers",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/worksheets": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-worksheets",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/contacts/count": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-contacts-count",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/conversations/{conversationId}": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-conversations-{conversationId}",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/conversations/list": {
+      "post": {
+        "operationId": "post-chatbots-{chatbotId}-conversations-list",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/chatbots/{chatbotId}/messages/{messageId}": {
+      "get": {
+        "operationId": "get-chatbots-{chatbotId}-messages-{messageId}",
+        "summary": "",
+        "description": "",
+        "tags": ["Chatbots"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/guest/messages": {
+      "get": {
+        "operationId": "get-guest-messages",
+        "summary": "",
+        "description": "",
+        "tags": ["Guest"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-guest-messages",
+        "summary": "",
+        "description": "",
+        "tags": ["Guest"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "get-health",
+        "summary": "",
+        "description": "",
+        "tags": ["Health"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/presigned-upload": {
+      "post": {
+        "operationId": "post-presigned-upload",
+        "summary": "",
+        "description": "",
+        "tags": ["Presigned-upload"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/whatsapp/phone-numbers/list": {
+      "post": {
+        "operationId": "post-whatsapp-phone-numbers-list",
+        "summary": "",
+        "description": "",
+        "tags": ["Whatsapp"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/zalo-verifier/{verifier}": {
+      "get": {
+        "operationId": "get-zalo-verifier-{verifier}",
+        "summary": "",
+        "description": "",
+        "tags": ["Zalo-verifier"],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    }
+  }
+}

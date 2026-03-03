@@ -1,6 +1,9 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
+import { aiTriggerModel } from "@aha.chat/database/schema"
+import type { AITriggerModel } from "@aha.chat/database/types"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -16,26 +19,20 @@ export const duplicateAITriggerAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const {
-        id: eid,
-        name,
-        createdAt,
-        updatedAt,
-        questions,
-        ...rest
-      } = await prisma.aITrigger.findFirstOrThrow({
-        where: {
+      const targetAITrigger = await findOrFail<AITriggerModel>(
+        aiTriggerModel,
+        {
           id,
           chatbotId,
         },
-      })
+        "AITrigger not found",
+      )
+      const { id: eid, name, createdAt, updatedAt, ...rest } = targetAITrigger
 
-      await prisma.aITrigger.create({
-        data: {
-          ...rest,
-          name: `${name} _copy`,
-          questions: questions as Prisma.InputJsonValue[],
-        },
+      await db.insert(aiTriggerModel).values({
+        ...rest,
+        name: `${name} _copy`,
+        id: createId(),
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)

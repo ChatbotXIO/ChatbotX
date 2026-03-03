@@ -1,8 +1,11 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { and, db, desc, eq, inArray } from "@aha.chat/database/client"
+import { attachmentModel, messageModel } from "@aha.chat/database/schema"
 import type { MessageModel } from "@aha.chat/database/types"
+import type { AttachmentResource } from "@/features/attachments/schemas"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { getPaginationWithDefaults } from "@/lib/pagination"
 import type { MessageCollection, MessageResource } from "../schemas"
 import type {
   FindMessageSchema,
@@ -15,42 +18,56 @@ export const listMessages = async (
 ): Promise<MessageCollection> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
-  const perPage = (input.perPage || 10) + 1
-  const where: Prisma.MessageWhereInput = {
-    chatbotId,
-    conversationId: input.conversationId,
+  const where = [eq(messageModel.chatbotId, chatbotId)]
+  if (input.conversationId) {
+    where.push(eq(messageModel.conversationId, input.conversationId))
   }
 
-  const params: Prisma.MessageFindManyArgs = {
-    include: {
-      attachments: true,
-    },
-    take: perPage,
-    where,
-    cursor: input.cursor
-      ? {
-          id: input.cursor,
-        }
-      : undefined,
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-  }
+  const pagination = getPaginationWithDefaults(input)
 
-  let messages: MessageResource[] = await prisma.message.findMany(params)
+  const messages = await db
+    .select()
+    .from(messageModel)
+    .where(and(...where))
+    .limit(pagination.limit)
+    .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
 
   if (messages.length === 0) {
     return { data: [], nextCursor: null, prevCursor: null }
   }
 
+  const messageIds = messages.map((message) => message.id)
+  const messagesWithAttachments = await db
+    .select()
+    .from(attachmentModel)
+    .where(inArray(attachmentModel.messageId, messageIds))
+    .then((attachments) => {
+      return attachments.reduce(
+        (acc, attachment) => {
+          acc[attachment.messageId] = [
+            ...(acc[attachment.messageId] ?? []),
+            attachment,
+          ]
+          return acc
+        },
+        {} as Record<string, AttachmentResource[]>,
+      )
+    })
+    .then((attachments) => {
+      return messages.map((message) => ({
+        ...message,
+        attachments: attachments[message.id] ?? [],
+      }))
+    })
+
   let nextCursor: string | null = null
   const prevCursor: string | null = null
-  if (messages.length === perPage) {
+  if (messagesWithAttachments.length === pagination.limit) {
     const lastMessage = messages.at(-1) as MessageModel
     nextCursor = lastMessage.id
-
-    messages = messages.slice(0, messages.length - 1)
   }
 
-  return { data: messages, nextCursor, prevCursor }
+  return { data: messagesWithAttachments, nextCursor, prevCursor }
 }
 
 export const findMessage = async (
@@ -58,12 +75,16 @@ export const findMessage = async (
 ): Promise<MessageResource> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const message = await prisma.message.findFirstOrThrow({
-    include: {
+  const message = await db.query.messageModel.findFirst({
+    with: {
       attachments: true,
     },
     where: input,
   })
+
+  if (!message) {
+    throw new Error("Message not found")
+  }
 
   return message as MessageResource
 }

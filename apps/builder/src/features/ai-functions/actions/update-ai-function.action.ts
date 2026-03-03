@@ -1,31 +1,30 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import { chatbotIdRequestParams } from "@/features/common/schemas"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { aiFunctionModel } from "@aha.chat/database/schema"
+import type { AIFunctionModel } from "@aha.chat/database/types"
+import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { updateAIFunctionRequest } from "../schemas"
 
 export const updateAIFunctionAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateAIFunctionRequest)
-  .action(async ({ bindArgsParsedInputs, parsedInput }) => {
-    const [chatbotId] = bindArgsParsedInputs
-    const { id, ...data } = parsedInput
-
-    await prisma.aIFunction.findFirstOrThrow({
-      where: {
+  .action(async ({ bindArgsParsedInputs: [chatbotId, id], parsedInput }) => {
+    await findOrFail<AIFunctionModel>(
+      aiFunctionModel,
+      {
         id,
         chatbotId,
       },
-    })
+      `AIFunction with id ${id} not found`,
+    )
 
-    await prisma.aIFunction.update({
-      where: {
-        id,
-        chatbotId,
-      },
-      data,
-    })
+    await db
+      .update(aiFunctionModel)
+      .set(parsedInput)
+      .where(eq(aiFunctionModel.id, id))
+
     revalidateCacheTags(`chatbots:${chatbotId}#aiFunctions`)
   })

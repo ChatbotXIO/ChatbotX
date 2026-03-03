@@ -7,4 +7,4 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-prisma migrate dev resolve --rolled-back $1
+# TODO: add rollback support

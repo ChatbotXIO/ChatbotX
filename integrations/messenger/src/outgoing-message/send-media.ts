@@ -15,7 +15,10 @@ export async function* convertFlowStepMedia(
     SendImageStepSchema | SendVideoStepSchema
   >,
 ) {
-  const { ctx, flowId, flowVersionId, step } = props
+  const {
+    ctx,
+    data: { flowId, flowVersionId, step },
+  } = props
   try {
     const media_type = convertMediaType(step.stepType)
     const attachment = await uploadAttachment(ctx.auth, step.url, media_type)
@@ -40,6 +43,6 @@ export async function* convertFlowStepMedia(
       },
     }
   } catch (error) {
-    logger.error("Error uploading media:", JSON.stringify(error))
+    logger.error(error, "Error uploading media")
   }
 }

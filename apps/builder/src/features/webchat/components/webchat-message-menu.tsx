@@ -1,10 +1,6 @@
 "use client"
 
-import {
-  ContentType,
-  PersistentMenuType,
-  SenderType,
-} from "@aha.chat/database/types"
+import { PersistentMenuType } from "@aha.chat/database/types"
 import { MessageType } from "@aha.chat/sdk"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -57,8 +53,8 @@ export default function WebchatMessageMenu({
           conversationId: "",
           contentAttributes: null,
           messageType: MessageType.incoming,
-          contentType: ContentType.text,
-          senderType: SenderType.contact,
+          contentType: "text",
+          senderType: "contact",
           senderId: "",
           clientId: input.clientId,
         })

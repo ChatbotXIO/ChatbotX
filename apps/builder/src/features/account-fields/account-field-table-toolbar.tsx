@@ -2,7 +2,7 @@ import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { CreateAccountFieldDialog } from "./create-account-field-dialog"
 import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
-import type { AccountFieldResource } from "./schemas/types"
+import type { AccountFieldResource } from "./schemas/resource"
 
 export function AccountFieldToolbarActions({
   chatbotId,

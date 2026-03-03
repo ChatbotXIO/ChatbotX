@@ -1,5 +1,3 @@
-import baseLogger from "@aha.chat/logger"
+import { getChildLogger } from "@aha.chat/logger"
 
-export const logger = baseLogger.getSubLogger({
-  name: "integration-messenger",
-})
+export const logger = getChildLogger("integration-messenger")

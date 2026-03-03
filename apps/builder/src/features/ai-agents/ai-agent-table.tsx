@@ -9,9 +9,9 @@ import { use, useMemo, useState } from "react"
 import type { getAIAgents } from "@/features/ai-agents/actions/list.action"
 import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
-import type { getAIFiles } from "../ai-files/queries"
-import type { getAIFunctions } from "../ai-functions/queries"
-import type { getAIMcpServers } from "../ai-mcp-servers/queries"
+import type { listAIFiles } from "../ai-files/queries"
+import type { listAIFunctions } from "../ai-functions/queries"
+import type { listAIMcpServers } from "../ai-mcp-servers/queries"
 import { ChangeDefault } from "./components/change-default"
 import { CreateAIAgentDialog } from "./create-ai-agent"
 import {
@@ -23,9 +23,9 @@ type AIAgentsTableProps = {
   listPromises: Promise<[Awaited<ReturnType<typeof getAIAgents>>]>
   createPromises: Promise<
     [
-      Awaited<ReturnType<typeof getAIFiles>>,
-      Awaited<ReturnType<typeof getAIFunctions>>,
-      Awaited<ReturnType<typeof getAIMcpServers>>,
+      Awaited<ReturnType<typeof listAIFiles>>,
+      Awaited<ReturnType<typeof listAIFunctions>>,
+      Awaited<ReturnType<typeof listAIMcpServers>>,
     ]
   >
 }

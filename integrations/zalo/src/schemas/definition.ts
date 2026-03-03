@@ -1,14 +1,10 @@
 import type {
-  ContactEntity,
   Context,
-  Handler,
+  IncomingContact,
   Oauth2AuthValue,
   Oauth2Config,
-  ReceivedMessageResult,
   SendFlowStepProps,
-  SendMessageProps,
 } from "@aha.chat/sdk"
-import type { ZaloWebhookEvent } from "./webhook"
 
 export const DEFAULT_VERSION = "v4"
 
@@ -24,19 +20,11 @@ export type ZaloAuthValue = Oauth2AuthValue & {
 }
 
 export type ZaloActions = {
-  receiveMessage: Handler<
-    {
-      ctx: Context<ZaloAuthValue>
-      data: ZaloWebhookEvent
-    },
-    ReceivedMessageResult | null
-  >
   sendFlowStep: (props: SendFlowStepProps<ZaloAuthValue>) => Promise<void>
-  sendMessage: (props: SendMessageProps<ZaloAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<ZaloAuthValue>
     psid: string
-  }) => Promise<ContactEntity>
+  }) => Promise<IncomingContact>
 }
 
 export type ZaloResponseError = {

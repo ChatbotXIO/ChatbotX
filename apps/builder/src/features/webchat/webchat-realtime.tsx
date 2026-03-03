@@ -14,7 +14,9 @@ type WebchatRealtimeProps = {
 }
 
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
-  const { handleNewMessage } = useGuestSessionStore((state) => state)
+  const { handleNewMessage, setIsTyping } = useGuestSessionStore(
+    (state) => state,
+  )
 
   usePartySocket({
     host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
@@ -36,6 +38,9 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
         switch (eventType) {
           case RealtimeEventType.messageCreated:
             handleNewMessage(data as MessageResource)
+            break
+          case RealtimeEventType.typing:
+            setIsTyping(data.typing)
             break
           default:
             break

@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { contactsToTagsModel, tagModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -23,14 +25,14 @@ export const addContactTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: AddContactTagRequest
     }) => {
-      const contacts = await prisma.contact.findMany({
+      const contacts = await db.query.contactModel.findMany({
         where: {
           chatbotId,
           id: {
             in: parsedInput.ids,
           },
         },
-        select: {
+        columns: {
           id: true,
         },
       })
@@ -38,37 +40,49 @@ export const addContactTagAction = chatbotActionClient
         return
       }
 
-      await prisma.$transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         // Create new tags if they don't exist
-        await tx.tag.createMany({
-          data: parsedInput.tags.map((t) => ({
-            name: t,
-            chatbotId,
-          })),
-          skipDuplicates: true,
-        })
+        if (parsedInput.tags.length > 0) {
+          await tx
+            .insert(tagModel)
+            .values(
+              parsedInput.tags.map((name) => ({
+                id: createId(),
+                name,
+                chatbotId,
+              })),
+            )
+            .onConflictDoNothing({
+              target: [tagModel.chatbotId, tagModel.name],
+            })
+        }
 
-        const allTags = await tx.tag.findMany({
+        const allTags = await tx.query.tagModel.findMany({
           where: {
             chatbotId,
             name: { in: parsedInput.tags },
           },
-          select: {
+          columns: {
             id: true,
           },
         })
 
-        for (const contact of contacts) {
-          await tx.contact.update({
-            data: {
-              tags: {
-                connect: allTags,
-              },
-            },
-            where: {
-              id: contact.id,
-            },
-          })
+        const links = contacts.flatMap((contact) =>
+          allTags.map((selectedTag) => ({
+            contactId: contact.id,
+            tagId: selectedTag.id,
+          })),
+        )
+        if (links.length > 0) {
+          await tx
+            .insert(contactsToTagsModel)
+            .values(links)
+            .onConflictDoNothing({
+              target: [
+                contactsToTagsModel.contactId,
+                contactsToTagsModel.tagId,
+              ],
+            })
         }
       })
 

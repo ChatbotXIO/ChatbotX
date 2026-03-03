@@ -1,21 +1,21 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
 import {
-  ContentType,
-  MessageType,
-  SenderType,
-  type UserModel,
-  WEBCHAT_SOURCE_PREFIX,
-} from "@aha.chat/database/types"
+  attachmentModel,
+  conversationModel,
+  messageModel,
+} from "@aha.chat/database/schema"
+import { type UserModel, WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
   broadcastToGuestParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
-import type { AttachmentEntity, ConversationEntity } from "@aha.chat/sdk"
+import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -57,44 +57,49 @@ export const createMessageAction = chatbotActionClient
         )
       }
 
-      const message = await prisma.$transaction(async (tx) => {
-        const newMessage: MessageResource = await tx.message.create({
-          data: {
+      const message = await db.transaction(async (tx) => {
+        const newMessage: MessageResource = await tx
+          .insert(messageModel)
+          .values({
+            id: createId(),
             content: "content" in parsedInput ? parsedInput.content : null,
-            messageType: MessageType.outgoing,
+            messageType: "outgoing",
             chatbotId: conversation.chatbotId,
             conversationId,
-            senderType: SenderType.user,
+            senderType: "user",
             senderId: ctx.user.id,
             inboxId: conversation.inboxId,
-            contentType: ContentType.text,
-          },
-        })
+            contentType: "text",
+          })
+          .returning()
+          .then((result) => result[0])
 
         // create attachment if path exists
         if (uploadedFiles.length > 0) {
-          const attachments = await tx.attachment.createManyAndReturn({
-            data: uploadedFiles.map((file) => ({
-              messageId: newMessage.id,
-              chatbotId: newMessage.chatbotId,
-              conversationId: newMessage.conversationId,
-              ...file,
-            })),
-          })
+          const attachments = await tx
+            .insert(attachmentModel)
+            .values(
+              uploadedFiles.map((file) => ({
+                id: createId(),
+                messageId: newMessage.id,
+                chatbotId: newMessage.chatbotId,
+                conversationId: newMessage.conversationId,
+                ...file,
+              })),
+            )
+            .returning()
 
           newMessage.attachments = attachments as AttachmentResource[]
         }
 
-        await tx.conversation.update({
-          where: {
-            id: conversationId,
-          },
-          data: {
+        await tx
+          .update(conversationModel)
+          .set({
             agentLastSeenAt: new Date(),
             lastActivityAt: new Date(),
             adminRepliedAt: new Date(),
-          },
-        })
+          })
+          .where(eq(conversationModel.id, conversationId))
 
         return newMessage
       })
@@ -123,16 +128,11 @@ export const createMessageAction = chatbotActionClient
           chatQueue.add(ChatJobAction.sendExternalMessage, {
             type: ChatJobAction.sendExternalMessage,
             data: {
-              conversation: conversation as ConversationEntity,
+              conversation: conversation as OutgoingConversation,
               message: {
                 ...message,
-                messageType: MessageType.outgoing,
                 clientId: parsedInput.clientId,
-                sourceId: message.sourceId || "",
-                contentType: message.contentType as unknown as ContentType,
-                content: message.content ?? "",
-                attachments: message.attachments as AttachmentEntity[],
-              },
+              } as OutgoingMessage,
             },
           }),
         )

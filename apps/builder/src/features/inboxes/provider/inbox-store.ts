@@ -1,7 +1,8 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { InboxCollection, InboxResource } from "../schemas/resource"
+import type { InboxResource } from "../schemas/resource"
 
 export type InboxState = {
   loading: boolean
@@ -62,7 +63,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
           perPage: maxPerPageString,
         })
         const { data } = await ky
-          .get<InboxCollection>(
+          .get<PaginatedResponse<InboxResource>>(
             `/api/chatbots/${chatbotId}/inboxes?${searchParams.toString()}`,
           )
           .json()

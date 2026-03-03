@@ -1,13 +1,20 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
-import { IntegrationType, type UserModel } from "@aha.chat/database/types"
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { inboxModel, integrationWhatsappModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
+import {
+  addSystemUser,
+  registerPhoneNumber,
+  shareCreditLine,
+  type WhatsappAuthValue,
+} from "@aha.chat/integration-whatsapp"
 import { exchangeAccessToken } from "@aha.chat/integration-whatsapp/api/auth"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@aha.chat/integration-whatsapp/api/phone-number"
 import { subscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
 import { AuthType } from "@aha.chat/sdk"
+import { createId } from "@paralleldrive/cuid2"
 import { headers } from "next/headers"
 import { env } from "@/env"
 import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
@@ -15,7 +22,6 @@ import { identifyChatbotAndOrganizationFromRequest } from "@/features/integratio
 import { verifyOrganizationSettings } from "@/features/organization/queries"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { BaseException } from "@/lib/errors/exception"
-import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
@@ -70,11 +76,12 @@ export const connectWhatsappAction = authActionClient
         }
 
         // make sure the phone number is unique
-        const existedPhoneNumber = await prisma.integrationWhatsapp.findFirst({
-          where: {
-            phoneNumberId: foundPhoneNumber.id,
-          },
-        })
+        const existedPhoneNumber =
+          await db.query.integrationWhatsappModel.findFirst({
+            where: {
+              phoneNumberId: foundPhoneNumber.id,
+            },
+          })
         if (existedPhoneNumber) {
           throw new BaseException("Phone number is already connected")
         }
@@ -103,11 +110,31 @@ export const connectWhatsappAction = authActionClient
           },
         }
 
+        await addSystemUser({
+          auth,
+          whatsappSettings,
+        })
+        console.info("addSystemUser")
+
+        if (whatsappSettings.businessId) {
+          await shareCreditLine({
+            auth,
+            whatsappSettings,
+          })
+          console.info("shareCreditLine")
+        }
+
+        await registerPhoneNumber({
+          auth,
+        })
+        console.info("registerPhoneNumber")
+
         await subscribeWebhook({
           auth,
         })
+        console.info("subscribeWebhook")
 
-        await prisma.$transaction(async (tx) => {
+        await db.transaction(async (tx) => {
           // create new chatbot if not exists
           if (!chatbotId) {
             const chatbot = await createSimpleChatbot(
@@ -123,41 +150,45 @@ export const connectWhatsappAction = authActionClient
             chatbotId = chatbot.id
           }
 
-          const inbox = await tx.inbox.upsert({
-            where: {
-              chatbotId_inboxType_sourceId: {
-                chatbotId,
-                inboxType: IntegrationType.whatsapp,
-                sourceId: foundPhoneNumber.id,
-              },
-            },
-            create: {
-              chatbotId,
-              inboxType: IntegrationType.whatsapp,
+          const inbox = await tx
+            .insert(inboxModel)
+            .values({
+              id: createId(),
+              chatbotId: chatbotId as string,
+              inboxType: "whatsapp",
               sourceId: foundPhoneNumber.id,
-            },
-            update: {
-              status: InboxStatus.connected,
-            },
-          })
+            })
+            .onConflictDoUpdate({
+              target: [
+                inboxModel.chatbotId,
+                inboxModel.inboxType,
+                inboxModel.sourceId,
+              ],
+              set: {
+                status: InboxStatus.connected,
+              },
+            })
+            .returning()
+            .then((result) => result[0])
 
-          await tx.integrationWhatsapp.upsert({
-            where: {
-              inboxId: inbox.id,
-            },
-            create: {
+          await tx
+            .insert(integrationWhatsappModel)
+            .values({
+              id: createId(),
               chatbotId,
               inboxId: inbox.id,
-              auth: auth as Prisma.InputJsonValue,
+              auth,
               phoneNumberId: foundPhoneNumber.id,
               wabaId: parsedInput.wabaId,
               businessId: parsedInput.businessId,
               name: foundPhoneNumber.verified_name,
-            },
-            update: {
-              updatedAt: new Date(),
-            },
-          })
+            })
+            .onConflictDoUpdate({
+              target: [integrationWhatsappModel.inboxId],
+              set: {
+                updatedAt: new Date(),
+              },
+            })
         })
 
         revalidateCacheTags(`users:${ctx.user.id}#chatbotMembers`)
@@ -166,7 +197,7 @@ export const connectWhatsappAction = authActionClient
           redirectUrl: `/chatbots/${chatbotId}/dashboard`,
         }
       } catch (err: unknown) {
-        logger.error("Unable to verify whatsapp token: ", err)
+        console.error(err, "Unable to verify whatsapp token")
 
         throw new BaseException("Unable to verify Whatsapp token")
       }

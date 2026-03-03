@@ -1,5 +1,5 @@
 import type { ContextQueue } from "./context"
-import type { ConversationEntity, MessageEntity } from "./message"
+import type { IncomingConversation, IncomingMessage } from "./message"
 
 export * from "./context"
 export * from "./message"
@@ -22,8 +22,8 @@ export const HandleRequestType = {
 } as const
 
 export type ReceivedMessageResult = {
-  message: MessageEntity
-  conversation: ConversationEntity
+  message: IncomingMessage
+  conversation: IncomingConversation
   postbackAction: string | null
   quickReplyAction: string | null
   ref: string | null

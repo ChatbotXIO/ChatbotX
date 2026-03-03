@@ -1,5 +1,6 @@
 export const RealtimeEventType = {
   messageCreated: "messageCreated",
+  typing: "typing",
   contactBlocked: "contactBlocked",
   contactUnblocked: "contactUnblocked",
   conversationAssigned: "conversationAssigned",
@@ -8,6 +9,14 @@ export const RealtimeEventType = {
 export type RealtimeEventCreateMessage = {
   eventType: typeof RealtimeEventType.messageCreated
   data: unknown
+}
+
+export type RealtimeEventTyping = {
+  eventType: typeof RealtimeEventType.typing
+  data: {
+    conversationId: string
+    typing: boolean
+  }
 }
 
 export type RealtimeEventContactCommon = {
@@ -32,3 +41,4 @@ export type RealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventContactCommon
   | RealtimeEventConversationAssigned
+  | RealtimeEventTyping

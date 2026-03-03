@@ -112,7 +112,7 @@ export const SelectField = <T extends FieldValues>(
         }
       } catch (error) {
         if (!isCancelled) {
-          logger.error("Error fetching options:", error)
+          logger.error(error, "Error fetching options:")
           setFetchedOptions([])
         }
       }

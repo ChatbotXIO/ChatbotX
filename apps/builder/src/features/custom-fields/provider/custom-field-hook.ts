@@ -1,5 +1,5 @@
 import {
-  CustomFieldType,
+  type CustomFieldType,
   type ReservedCustomFieldNames,
   reservedCustomFieldNames,
 } from "@aha.chat/database/types"
@@ -16,12 +16,12 @@ import { useMemo } from "react"
 import { useCustomFieldStore } from "./custom-field-store-context"
 
 export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
-  [CustomFieldType.shortText]: TextIcon,
-  [CustomFieldType.longText]: TextIcon,
-  [CustomFieldType.number]: HashIcon,
-  [CustomFieldType.date]: CalendarDaysIcon,
-  [CustomFieldType.datetime]: CalendarClockIcon,
-  [CustomFieldType.boolean]: CheckIcon,
+  shortText: TextIcon,
+  longText: TextIcon,
+  number: HashIcon,
+  date: CalendarDaysIcon,
+  datetime: CalendarClockIcon,
+  boolean: CheckIcon,
 }
 
 export const reservedCustomFieldOptions: {
@@ -32,82 +32,82 @@ export const reservedCustomFieldOptions: {
   {
     name: "First Name",
     id: reservedCustomFieldNames.first_name,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Last Name",
     id: reservedCustomFieldNames.last_name,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Full Name",
     id: reservedCustomFieldNames.full_name,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Email",
     id: reservedCustomFieldNames.email,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Phone Number",
     id: reservedCustomFieldNames.phone_number,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Avatar",
     id: reservedCustomFieldNames.avatar,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Locale",
     id: reservedCustomFieldNames.locale,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Gender",
     id: reservedCustomFieldNames.gender,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Timezone",
     id: reservedCustomFieldNames.timezone,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "User ID",
     id: reservedCustomFieldNames.user_id,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "User Tags",
     id: reservedCustomFieldNames.user_tags,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Account Name",
     id: reservedCustomFieldNames.account_name,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Account ID",
     id: reservedCustomFieldNames.account_id,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Page User Name",
     id: reservedCustomFieldNames.page_user_name,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Last Input",
     id: reservedCustomFieldNames.last_input,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
   {
     name: "Current Time",
     id: reservedCustomFieldNames.current_time,
-    customFieldType: CustomFieldType.shortText,
+    customFieldType: "shortText",
   },
 ]
 

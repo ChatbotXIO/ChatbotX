@@ -1,10 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import {
-  broadcastToChatbotParty,
-  RealtimeEventType,
-} from "@aha.chat/partysocket-config"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
+import type { ContactModel } from "@aha.chat/database/types"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -20,31 +19,33 @@ export const blockContactAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      await prisma.contact.findFirstOrThrow({
-        where: {
-          id,
+      const existingContact = await findOrFail<ContactModel>(
+        contactModel,
+        {
           chatbotId,
-        },
-      })
-
-      await prisma.contact.update({
-        where: {
           id,
         },
-        data: {
+        "Contact not found",
+      )
+
+      const contact = await db
+        .update(contactModel)
+        .set({
           blockedAt: new Date(),
-        },
-      })
+        })
+        .where(eq(contactModel.id, existingContact.id))
+        .returning()
+        .then((result) => result[0])
 
       revalidateCacheTags([
         `chatbots:${chatbotId}#contacts`,
         `chatbots:${chatbotId}#conversations`,
       ])
 
-      await broadcastToChatbotParty(chatbotId, {
-        eventType: RealtimeEventType.contactBlocked,
+      await integrationQueue.add(IntegrationJobAction.blockContact, {
+        type: IntegrationJobAction.blockContact,
         data: {
-          contactId: id,
+          contact,
         },
       })
     },

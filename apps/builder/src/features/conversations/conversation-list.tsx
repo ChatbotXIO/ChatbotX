@@ -62,8 +62,8 @@ export default function ConversationList() {
 
   const form = useForm<ConversationFilters>({
     defaultValues: {
-      searchText: "",
-      conversationType: ConversationType.all,
+      keyword: "",
+      liveChatEnabled: undefined,
       inboxType: Omnichannel,
       assignedUserId: AssignerFilterType.all,
       status: [],
@@ -104,7 +104,7 @@ export default function ConversationList() {
             type="button"
             variant="outline"
           >
-            <SearchIcon className={filters.searchText ? "text-primary" : ""} />
+            <SearchIcon className={filters.keyword ? "text-primary" : ""} />
           </Button>
 
           <CreateContactDialog
@@ -123,7 +123,7 @@ export default function ConversationList() {
           {showSearchInput && (
             <InputField
               className="mb-2"
-              name="searchText"
+              name="keyword"
               placeholder={t("actions.search")}
               {...{
                 onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {

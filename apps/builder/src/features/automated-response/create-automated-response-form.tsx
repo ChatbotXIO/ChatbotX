@@ -22,7 +22,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
-import { createAutomatedResponseRequest } from "./schemas/create-automated-responses-schema"
+import { createAutomatedResponseRequest } from "./schemas/action"
 
 type CreateAutomatedResponseFormProps = {
   chatbotId: string

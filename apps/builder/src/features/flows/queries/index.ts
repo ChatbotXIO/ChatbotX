@@ -1,9 +1,9 @@
-import type { Prisma } from "@aha.chat/database"
-import { prisma } from "@aha.chat/database"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
-import type { FlowModel } from "@aha.chat/database/types"
+import { flowModel } from "@aha.chat/database/schema"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
 import { FlowException } from "../schemas/exception"
 import type { FindFlowParams, ListFlowsParams } from "../schemas/query"
 import type { FlowResource } from "../schemas/resource"
@@ -13,45 +13,35 @@ export async function getFlows(
 ): Promise<PaginatedResponse<FlowResource>> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.FlowWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
+    folderId: input.folderId
+      ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
+        input.folderId === rootFolderId
+        ? { isNull: true as const }
+        : input.folderId
+      : undefined,
+    name: input.name
+      ? {
+          ilike: `%${input.name.toLowerCase()}%`,
+        }
+      : undefined,
+    active: input.active !== null ? input.active : undefined,
   }
 
-  if (input.folderId) {
-    where.folderId = input.folderId === rootFolderId ? null : input.folderId
-  }
+  const pagination = parsePagination(input)
+  const orderBy = parseOrderByAsObject(flowModel, input)
 
-  if (input.name) {
-    where.name = {
-      contains: input.name,
-      mode: "insensitive",
-    }
-  }
-
-  if (input.active) {
-    where.active = input.active
-  }
-
-  const orderBy = input.sort
-    ? input.sort.map((sortItem) => ({
-        [sortItem.id]: sortItem.desc ? "desc" : "asc",
-      }))
-    : [{ updatedAt: "desc" }]
-
-  const [data, total] = await prisma.$transaction(async (tx) => {
-    const flows = await tx.flow.findMany({
-      skip: (input.page - 1) * input.perPage,
-      take: input.perPage,
+  const [data, total] = await Promise.all([
+    db.query.flowModel.findMany({
       where,
       orderBy,
-    })
+      ...pagination,
+    }),
+    db.$count(flowModel, relationsFilterToSQL(flowModel, where)),
+  ])
 
-    const count = await tx.flow.count({ where })
-
-    return [flows, count]
-  })
-
-  const pageCount = Math.ceil(total / input.perPage)
+  const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1
 
   return { data, pageCount }
 }
@@ -61,48 +51,36 @@ export const findFlow = async (
 ): Promise<{ data: FlowResource | null }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const flow = await prisma.flow.findFirst({
+  const targetFlow = await db.query.flowModel.findFirst({
     where: {
-      ...input,
+      chatbotId: input.chatbotId,
+      id: input.id,
     },
-    include: {
+    with: {
       flowVersions: true,
     },
   })
-
-  return { data: flow }
-}
-
-export const ensureFlowIdIsExists = async (
-  chatbotId: string,
-  id: string,
-): Promise<FlowModel> => {
-  const flow = await prisma.flow.findFirst({
-    where: {
-      chatbotId,
-      id,
-    },
-  })
-
-  if (!flow) {
+  if (!targetFlow) {
     throw new FlowException("Flow does not exists.")
   }
 
-  return flow
+  return { data: targetFlow }
 }
 
 export const ensureAllFlowIdsExists = async (
   chatbotId: string,
   flowIds: string[],
 ): Promise<void> => {
-  const count = await prisma.flow.count({
+  const rows = await db.query.flowModel.findMany({
     where: {
       chatbotId,
       id: {
         in: flowIds,
       },
     },
+    columns: { id: true },
   })
+  const count = rows.length
 
   if (count !== flowIds.length) {
     throw new FlowException("Flow does not exists.")

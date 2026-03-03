@@ -5,9 +5,8 @@ import {
   SiClaudeHex,
   SiGooglegemini,
   SiGooglegeminiHex,
-  SiOpenai,
-  SiOpenaiHex,
 } from "@icons-pack/react-simple-icons"
+import { OpenAI } from "@lobehub/icons"
 import { BotIcon } from "lucide-react"
 
 type AIIconProps = {
@@ -25,7 +24,7 @@ const AIIconInner = (props: AIIconProps) => {
     case aiProviders.claude:
       return <SiClaude className={fullClassName} fill={SiClaudeHex} />
     case aiProviders.openai:
-      return <SiOpenai className={fullClassName} fill={SiOpenaiHex} />
+      return <OpenAI className={fullClassName} />
     case aiProviders.gemini:
       return (
         <SiGooglegemini className={fullClassName} fill={SiGooglegeminiHex} />

@@ -1,6 +1,8 @@
 "use server"
 
-import { MessageType, prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
+import type { ConversationModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -15,28 +17,31 @@ export const unreadConversationAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      return await prisma.$transaction(async (tx) => {
-        const conversation = await tx.conversation.findFirstOrThrow({
-          where: { id, chatbotId },
-        })
-        const last2Messages = await tx.message.findMany({
+      return await db.transaction(async (tx) => {
+        const conversation = await findOrFail<ConversationModel>(
+          conversationModel,
+          { id, chatbotId },
+          "Conversation not found",
+        )
+
+        const last2Messages = await tx.query.messageModel.findMany({
           where: {
             conversationId: conversation.id,
-            messageType: MessageType.incoming,
+            messageType: "incoming",
           },
           orderBy: { createdAt: "desc" },
-          take: 2,
+          limit: 2,
         })
         const lastMessage = last2Messages.at(-1)
 
         const agentLastSeenAt = lastMessage ? lastMessage.createdAt : null
 
-        await tx.conversation.update({
-          where: { id },
-          data: {
+        await tx
+          .update(conversationModel)
+          .set({
             agentLastSeenAt,
-          },
-        })
+          })
+          .where(eq(conversationModel.id, id))
 
         return { agentLastSeenAt }
       })

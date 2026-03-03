@@ -1,6 +1,5 @@
 "use client"
 
-import { InboxType } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
@@ -42,7 +41,7 @@ export default function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
         <InboxIcon
           iconClassName="size-5"
-          inboxType={InboxType.whatsapp}
+          inboxType="whatsapp"
           label={inbox.integrationWhatsapp?.name}
         />
 

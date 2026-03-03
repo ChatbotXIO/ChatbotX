@@ -1,4 +1,4 @@
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { GoogleSheetsAuthValue } from "@aha.chat/integration-google-sheets"
 import { returnValidationErrors } from "next-safe-action"
 import { integrations } from "@/integration"
@@ -11,16 +11,16 @@ export async function verifyGoogleSheetsUrl(
   chatbotId: string,
   url: string,
 ): Promise<string> {
-  const dbIntegration = await prisma.integration.findFirst({
+  const dbIntegration = await db.query.integrationModel.findFirst({
     where: {
       chatbotId,
-      integrationType: IntegrationType.googleSheets,
+      integrationType: "googleSheets",
     },
-    include: {
-      googleSheets: true,
+    with: {
+      integrationGoogleSheets: true,
     },
   })
-  if (!dbIntegration?.googleSheets) {
+  if (!dbIntegration?.integrationGoogleSheets) {
     returnValidationErrors(createSpreadsheetRequest, {
       url: {
         _errors: ["You need to setup google sheets first."],
@@ -42,7 +42,7 @@ export async function verifyGoogleSheetsUrl(
   try {
     await integrations.googleSheets.actions.listSheetNames({
       ctx: {
-        auth: dbIntegration.googleSheets
+        auth: dbIntegration.integrationGoogleSheets
           .auth as unknown as GoogleSheetsAuthValue,
       },
       props: {
@@ -50,7 +50,7 @@ export async function verifyGoogleSheetsUrl(
       },
     })
   } catch (e) {
-    logger.error("Unable to get data from google sheets", e)
+    logger.error(e, "Unable to get data from google sheets")
 
     returnValidationErrors(createSpreadsheetRequest, {
       url: {

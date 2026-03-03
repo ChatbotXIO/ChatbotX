@@ -123,7 +123,7 @@ export const WebchatMessageInput = ({
   }
 
   const onKeyDown = async (e: KeyboardEvent) => {
-    if (files.length > 0) {
+    if (files.length > 0 || e.nativeEvent.isComposing || e.key === "Process") {
       return
     }
 

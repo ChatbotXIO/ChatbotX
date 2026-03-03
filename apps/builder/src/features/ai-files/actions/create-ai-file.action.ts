@@ -1,7 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { aiFileModel } from "@aha.chat/database/schema"
 import { AIJobAction, aiAgentQueue } from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
@@ -13,18 +15,20 @@ export const createAIFileAction = chatbotActionClient
   .action(async ({ bindArgsParsedInputs, parsedInput }) => {
     const [chatbotId] = bindArgsParsedInputs
 
-    const created = await prisma.aIFile.create({
-      data: {
-        chatbotId,
+    const created = await db
+      .insert(aiFileModel)
+      .values({
         ...parsedInput,
-      },
-    })
+        id: createId(),
+        chatbotId,
+      })
+      .returning({ id: aiFileModel.id })
 
     // Enqueue embedding job right after creation
     await aiAgentQueue.add(AIJobAction.processAIFile, {
       type: AIJobAction.processAIFile,
       data: {
-        aiFileId: created.id,
+        aiFileId: created[0].id,
       },
     })
 

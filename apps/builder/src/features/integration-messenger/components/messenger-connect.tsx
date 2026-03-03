@@ -1,6 +1,6 @@
 "use client"
 
-import { InboxType, type OrganizationSettings } from "@aha.chat/database/types"
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
 import {
   Card,
@@ -99,7 +99,7 @@ export function MessengerConnectButton({
       scope={MESSENGER_SCOPE.join(",")}
     >
       <InboxIcon
-        inboxType={InboxType.messenger}
+        inboxType="messenger"
         label={t("actions.connect")}
         wrapperClassName="gap-2"
       />
