@@ -1595,22 +1595,6 @@ export const whatsappFlowModel = pgTable("WhatsappFlow", {
   isCompleted: boolean().notNull(),
 })
 
-export const whatsappMessageTemplateModel = pgTable("WhatsappMessageTemplate", {
-  ...sharedColumns,
-  name: text().notNull(),
-  integrationWhatsappId: text()
-    .notNull()
-    .references(() => integrationWhatsappModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-      name: "WhatsappMessageTemplate_integrationWhatsappId_fkey",
-    }),
-  sourceId: text().notNull(),
-  language: text().notNull(),
-  category: text().notNull(),
-  status: text().notNull(),
-})
-
 export const jwkModel = pgTable("jwks", {
   id: text().primaryKey(),
   publicKey: text().notNull(),
@@ -1914,3 +1898,19 @@ export const triggerExecutionModel = pgTable(
     ),
   ],
 )
+
+export const whatsappMessageTemplateModel = pgTable("WhatsappMessageTemplate", {
+  ...sharedColumns,
+  name: text().notNull(),
+  integrationWhatsappId: text()
+    .notNull()
+    .references(() => integrationWhatsappModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+      name: "WhatsappMessageTemplate_integrationWhatsappId_fkey",
+    }),
+  sourceId: text().notNull(),
+  language: text().notNull(),
+  category: text().notNull(),
+  status: text().notNull(),
+})
