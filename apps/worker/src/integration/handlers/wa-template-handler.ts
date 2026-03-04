@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { SendWaTemplateMessageStepSchema } from "@aha.chat/flow-config"
 import { replaceCustomFieldAttributes } from "./automated-response/replies"
 
@@ -50,22 +50,23 @@ export async function validateWhatsappTemplate(
   template: SendWaTemplateMessageStepSchema["template"],
   inboxId: string,
 ): Promise<boolean> {
-  const inbox = await prisma.inbox.findFirst({
+  const inbox = await db.query.inboxModel.findFirst({
     where: { id: inboxId },
-    include: { integrationWhatsapp: true },
+    with: { integrationWhatsapp: true },
   })
 
   if (!inbox?.integrationWhatsapp) {
     return false
   }
 
-  const whatsappTemplate = await prisma.whatsappMessageTemplate.findFirst({
-    where: {
-      id: template.id,
-      integrationWhatsappId: inbox.integrationWhatsapp.id,
-      status: "APPROVED",
-    },
-  })
+  const whatsappTemplate =
+    await db.query.whatsappMessageTemplateModel.findFirst({
+      where: {
+        id: template.id,
+        integrationWhatsappId: inbox.integrationWhatsapp.id,
+        status: "APPROVED",
+      },
+    })
 
   if (!whatsappTemplate) {
     return false

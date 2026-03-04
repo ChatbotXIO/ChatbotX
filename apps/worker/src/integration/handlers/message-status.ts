@@ -1,4 +1,5 @@
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { messageModel } from "@aha.chat/database/schema"
 import type { IntegrationJobMessageStatus } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
 import { runFlowPostback } from "./flow"
@@ -7,12 +8,12 @@ export const handleMessageStatus = async (job: IntegrationJobMessageStatus) => {
   const { payload } = job.data
 
   try {
-    const message = await prisma.message.findFirst({
-      where: { sourceId: payload.messageId },
-      include: {
-        conversation: true,
-      },
-    })
+    const message = await db
+      .select()
+      .from(messageModel)
+      .where(eq(messageModel.sourceId, payload.messageId))
+      .limit(1)
+      .then((rows) => rows[0])
 
     if (!message) {
       return
