@@ -1899,18 +1899,31 @@ export const triggerExecutionModel = pgTable(
   ],
 )
 
-export const whatsappMessageTemplateModel = pgTable("WhatsappMessageTemplate", {
-  ...sharedColumns,
-  name: text().notNull(),
-  integrationWhatsappId: text()
-    .notNull()
-    .references(() => integrationWhatsappModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-      name: "WhatsappMessageTemplate_integrationWhatsappId_fkey",
-    }),
-  sourceId: text().notNull(),
-  language: text().notNull(),
-  category: text().notNull(),
-  status: text().notNull(),
-})
+export const whatsappMessageTemplateModel = pgTable(
+  "WhatsappMessageTemplate",
+  {
+    ...sharedColumns,
+    name: text().notNull(),
+    integrationWhatsappId: text()
+      .notNull()
+      .references(() => integrationWhatsappModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "WhatsappMessageTemplate_integrationWhatsappId_fkey",
+      }),
+    sourceId: text().notNull(),
+    language: text().notNull(),
+    category: text().notNull(),
+    status: text().notNull(),
+    components: jsonb().notNull().default(sql`'[]'::jsonb`),
+  },
+  (table) => [
+    uniqueIndex(
+      "WhatsappMessageTemplate_integrationWhatsappId_sourceId_key",
+    ).using(
+      "btree",
+      table.integrationWhatsappId.asc().nullsLast().op("text_ops"),
+      table.sourceId.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)

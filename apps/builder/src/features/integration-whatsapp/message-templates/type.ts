@@ -1,8 +1,8 @@
 export interface MessageTemplate {
-  id: string
-  name: string
-  language: string
   category: string
+  id: string
+  language: string
+  name: string
   status: string
 }
 

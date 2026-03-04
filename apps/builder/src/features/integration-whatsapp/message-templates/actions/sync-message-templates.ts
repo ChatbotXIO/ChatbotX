@@ -1,8 +1,14 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail, inArray } from "@aha.chat/database/client"
+import {
+  integrationWhatsappModel,
+  whatsappMessageTemplateModel,
+} from "@aha.chat/database/schema"
+import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -19,13 +25,14 @@ export const syncMessageTemplateAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationWhatsapp =
-        await prisma.integrationWhatsapp.findFirstOrThrow({
-          where: {
-            chatbotId,
-            id,
-          },
-        })
+      const integrationWhatsapp = await findOrFail<IntegrationWhatsappModel>(
+        integrationWhatsappModel,
+        {
+          chatbotId,
+          id,
+        },
+        "Whatsapp integration not found",
+      )
 
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
@@ -39,16 +46,19 @@ export const syncMessageTemplateAction = chatbotActionClient
         },
       )
 
-      await prisma.$transaction(async (tx) => {
-        const existingTemplates = await tx.whatsappMessageTemplate.findMany({
-          where: {
-            integrationWhatsappId: integrationWhatsapp.id,
-          },
-          select: {
-            id: true,
-            sourceId: true,
-          },
-        })
+      await db.transaction(async (tx) => {
+        const existingTemplates = await tx
+          .select({
+            id: whatsappMessageTemplateModel.id,
+            sourceId: whatsappMessageTemplateModel.sourceId,
+          })
+          .from(whatsappMessageTemplateModel)
+          .where(
+            eq(
+              whatsappMessageTemplateModel.integrationWhatsappId,
+              integrationWhatsapp.id,
+            ),
+          )
 
         const incomingSourceIds = new Set(res.data.map((t) => t.id))
 
@@ -57,44 +67,44 @@ export const syncMessageTemplateAction = chatbotActionClient
         )
 
         if (templatesToDelete.length > 0) {
-          await tx.whatsappMessageTemplate.deleteMany({
-            where: {
-              id: {
-                in: templatesToDelete.map((t) => t.id),
-              },
-            },
-          })
+          await tx.delete(whatsappMessageTemplateModel).where(
+            inArray(
+              whatsappMessageTemplateModel.id,
+              templatesToDelete.map((t) => t.id),
+            ),
+          )
         }
 
         for (const template of res.data) {
-          const components = template.components
-            ? JSON.parse(JSON.stringify(template.components))
-            : []
+          const existing = existingTemplates.find(
+            (t) => t.sourceId === template.id,
+          )
 
-          await tx.whatsappMessageTemplate.upsert({
-            where: {
-              integrationWhatsappId_sourceId: {
+          if (existing) {
+            await tx
+              .update(whatsappMessageTemplateModel)
+              .set({
+                name: template.name,
+                language: template.language,
+                category: template.category,
+                status: template.status,
+                components: template.components,
+              })
+              .where(eq(whatsappMessageTemplateModel.id, existing.id))
+          } else {
+            await tx.insert(whatsappMessageTemplateModel).values([
+              {
+                id: createId(),
+                name: template.name,
                 integrationWhatsappId: integrationWhatsapp.id,
+                language: template.language,
+                category: template.category,
+                status: template.status,
                 sourceId: template.id,
+                components: template.components,
               },
-            },
-            create: {
-              name: template.name,
-              integrationWhatsappId: integrationWhatsapp.id,
-              language: template.language,
-              category: template.category,
-              status: template.status,
-              sourceId: template.id,
-              components,
-            },
-            update: {
-              name: template.name,
-              language: template.language,
-              category: template.category,
-              status: template.status,
-              components,
-            },
-          })
+            ])
+          }
         }
       })
 

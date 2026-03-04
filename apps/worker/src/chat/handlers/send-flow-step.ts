@@ -1,4 +1,4 @@
-import { db, findOrFail, eq } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
 import {
   attachmentModel,
   contactModel,
