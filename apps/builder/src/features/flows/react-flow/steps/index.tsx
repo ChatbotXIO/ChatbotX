@@ -50,6 +50,7 @@ import startAnotherNodeStep from "./start-another-node"
 import { sendExternalFlowStep } from "./start-external-flow"
 import { sendExternalNodeStep } from "./start-external-node"
 import { subscribeBroadcastStep } from "./subscribe-broadcast"
+import typingStep from "./typing"
 import { unarchiveConversationStep } from "./unarchive-conversation"
 import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
@@ -129,6 +130,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [StepType.emailSpacing]: emailSpacingStep,
   [StepType.emailCode]: emailCodeStep,
   [StepType.emailHeader]: emailHeaderStep,
+  [StepType.typing]: typingStep,
 }
 
 export const DynamicStepEditor = memo(

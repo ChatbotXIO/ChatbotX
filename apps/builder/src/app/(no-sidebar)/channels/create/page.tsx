@@ -1,4 +1,4 @@
-import { InboxType, type OrganizationSettings } from "@aha.chat/database/types"
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import { Suspense } from "react"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { MessengerConnect } from "@/features/integration-messenger/components/messenger-connect"
@@ -29,16 +29,16 @@ export default async function CreateChannelPage({
 
   return (
     <Suspense>
-      {selectedChannel === InboxType.whatsapp && settings.whatsapp && (
+      {selectedChannel === "whatsapp" && settings.whatsapp && (
         <WhatsappCreate chatbotId={chatbotId} settings={settings.whatsapp} />
       )}
-      {selectedChannel === InboxType.messenger && settings.messenger && (
+      {selectedChannel === "messenger" && settings.messenger && (
         <MessengerConnect chatbotId={chatbotId} settings={settings.messenger} />
       )}
-      {selectedChannel === InboxType.zalo && settings.zalo && (
+      {selectedChannel === "zalo" && settings.zalo && (
         <ZaloConnect chatbotId={chatbotId} settings={settings.zalo} />
       )}
-      {selectedChannel === InboxType.webchat && (
+      {selectedChannel === "webchat" && (
         <SimpleCreateWebchat chatbotId={chatbotId} />
       )}
       {!selectedChannel && <InboxSelectCard settings={settings} />}

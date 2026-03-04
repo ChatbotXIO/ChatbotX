@@ -1,10 +1,11 @@
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
 import {
-  FieldType,
-  type Gender,
-  reservedCustomFieldNames,
-} from "@aha.chat/database/types"
+  contactCustomFieldModel,
+  contactModel,
+} from "@aha.chat/database/schema"
+import { type Gender, reservedCustomFieldNames } from "@aha.chat/database/types"
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
+import { createId } from "@paralleldrive/cuid2"
 import type { LanguageModel } from "ai"
 import { generateText, Output, streamText } from "ai"
 import { z } from "zod"
@@ -80,7 +81,7 @@ export async function handleAIGenerateText({
 
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,
-      conversation.id,
+      conversation,
       { sendParts: true },
     )
 
@@ -95,17 +96,23 @@ export async function handleAIGenerateText({
     })
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      logger.warn("[ai-generate-text] Step timed out or aborted", {
-        conversationId: conversation.id,
-        stepId: step.id,
-      })
+      logger.warn(
+        {
+          conversationId: conversation.id,
+          stepId: step.id,
+        },
+        "[ai-generate-text] Step timed out or aborted",
+      )
     } else {
-      logger.error("[ai-generate-text] Step failed", {
-        error,
-        conversationId: conversation.id,
-        stepId: step.id,
-        stepType: step.stepType,
-      })
+      logger.error(
+        {
+          error,
+          conversationId: conversation.id,
+          stepId: step.id,
+          stepType: step.stepType,
+        },
+        "[ai-generate-text] Step failed",
+      )
     }
     throw error
   } finally {
@@ -244,18 +251,18 @@ async function saveResultToCustomField({
     }
 
     if (Object.keys(updateData).length > 0) {
-      await prisma.contact.update({
-        where: { id: contactId },
-        data: updateData,
-      })
+      await db
+        .update(contactModel)
+        .set(updateData)
+        .where(eq(contactModel.id, contactId))
     }
     return
   }
 
-  const customField = await prisma.field.findFirst({
+  const customField = await db.query.fieldModel.findFirst({
     where: {
       id: customFieldId,
-      fieldType: FieldType.customField,
+      fieldType: "customField",
       chatbotId,
     },
   })
@@ -264,20 +271,21 @@ async function saveResultToCustomField({
     return
   }
 
-  await prisma.contactCustomField.upsert({
-    where: {
-      contactId_customFieldId: {
-        contactId,
-        customFieldId,
-      },
-    },
-    update: {
-      value: fullText,
-    },
-    create: {
+  await db
+    .insert(contactCustomFieldModel)
+    .values({
+      id: createId(),
       contactId,
       customFieldId,
       value: fullText,
-    },
-  })
+    })
+    .onConflictDoUpdate({
+      target: [
+        contactCustomFieldModel.contactId,
+        contactCustomFieldModel.customFieldId,
+      ],
+      set: {
+        value: fullText,
+      },
+    })
 }

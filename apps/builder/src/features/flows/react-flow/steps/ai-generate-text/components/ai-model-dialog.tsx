@@ -1,6 +1,6 @@
 "use client"
 
-import { aiGenerateTextSchema } from "@aha.chat/flow-config"
+import { aiGenerateTextSchema, aiProviders } from "@aha.chat/flow-config"
 import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
 import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
@@ -69,7 +69,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
         <DialogHeader>
           <DialogTitle className="capitalize">
             {t("fields.flows.aiGenerateText.label", {
-              aiName: "OpenAI",
+              aiName: provider === aiProviders.gemini ? "Gemini" : "OpenAI",
             })}
           </DialogTitle>
           <DialogDescription />
@@ -123,7 +123,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
               <InputNumberField
                 label={t("fields.maxOutputTokens.label")}
-                max={4096}
+                max={32_768}
                 min={250}
                 name="maxOutputTokens"
                 required

@@ -8,13 +8,50 @@ import type {
   SendTextStepSchema,
   SendVideoStepSchema,
 } from "@aha.chat/flow-config"
-import type { BaseAuthValue } from "./auth"
-import type { Context, ConversationEntity, MessageEntity } from "./shared"
+import type { AuthValue } from "./auth"
+import type {
+  Context,
+  OutgoingContact,
+  OutgoingConversation,
+  OutgoingMessage,
+} from "./shared"
 
-export type SendMessageProps<TAuth extends BaseAuthValue> = {
+export type SendMessageProps<TAuth extends AuthValue> = {
   ctx: Context<TAuth>
-  conversation: ConversationEntity
-  message: MessageEntity
+  data: {
+    contact: OutgoingContact
+    conversation: OutgoingConversation
+    message: OutgoingMessage
+  }
+}
+
+export type SendTypingProps<TAuth extends AuthValue> = {
+  ctx: Context<TAuth>
+  data: {
+    conversation: OutgoingConversation
+    typing: boolean
+  }
+}
+
+export type AgentMarkAsReadProps<TAuth extends AuthValue> = {
+  ctx: Context<TAuth>
+  data: {
+    conversation: OutgoingConversation
+  }
+}
+
+export type ContactMarkAsReadProps<TAuth extends AuthValue> = {
+  ctx: Context<TAuth>
+  data: {
+    payload: unknown
+  }
+}
+
+export type BlockContactProps<TAuth extends AuthValue> = {
+  ctx: Context<TAuth>
+  data: {
+    contact: OutgoingContact
+  }
 }
 
 export type SendFlowStepData =
@@ -27,13 +64,13 @@ export type SendFlowStepData =
   | SendQuickReplyStepSchema
   | SendCarouselStepSchema
 
-export type SendFlowStepProps<
-  TAuth extends BaseAuthValue,
-  S = SendFlowStepData,
-> = {
+export type SendFlowStepProps<TAuth extends AuthValue, S = SendFlowStepData> = {
   ctx: Context<TAuth>
-  conversation: ConversationEntity
-  flowId: string
-  flowVersionId?: string
-  step: S
+  data: {
+    contact: OutgoingContact
+    conversation: OutgoingConversation
+    flowId: string
+    flowVersionId?: string
+    step: S
+  }
 }

@@ -1,4 +1,4 @@
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 
 type ListAIIntegrationsProps = {
   where: {
@@ -7,10 +7,10 @@ type ListAIIntegrationsProps = {
 }
 
 export async function listAIIntegrations(props: ListAIIntegrationsProps) {
-  return await prisma.integration.findMany({
+  return await db.query.integrationModel.findMany({
     where: {
       integrationType: {
-        in: [IntegrationType.openai, IntegrationType.gemini],
+        in: ["openai", "gemini"],
       },
       chatbotId: props.where.chatbotId,
     },
@@ -18,10 +18,10 @@ export async function listAIIntegrations(props: ListAIIntegrationsProps) {
 }
 
 export async function hasAIIntegration(chatbotId: string): Promise<boolean> {
-  const exists = await prisma.integration.findFirst({
+  const exists = await db.query.integrationModel.findFirst({
     where: {
       integrationType: {
-        in: [IntegrationType.openai, IntegrationType.gemini],
+        in: ["openai", "gemini"],
       },
       chatbotId,
     },

@@ -2,7 +2,6 @@ import type { Oauth2Config } from "@aha.chat/sdk"
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
-import { logger } from "../lib/logger"
 
 type ExchangeAccessTokenResponse = {
   access_token: string
@@ -31,7 +30,7 @@ export const exchangeAccessToken = async (
 
     return result
   } catch (e) {
-    logger.error("Failed to exchange access token", { error: e })
+    console.error("Failed to exchange access token", e)
     throw new WhatsappException("Failed to exchange access token")
   }
 }

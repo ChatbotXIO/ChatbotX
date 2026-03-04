@@ -1,6 +1,5 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import {
@@ -18,13 +17,10 @@ export const syncMessageTemplateAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationWhatsapp =
-        await prisma.integrationWhatsapp.findFirstOrThrow({
-          where: {
-            chatbotId,
-            id,
-          },
-        })
+      const integrationWhatsapp = findOrFail<IntegrationWhatsapp>(integrationWhatsapp, {
+        chatbotId,
+        id,
+      })
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
         uploader,
@@ -39,12 +35,8 @@ export const syncMessageTemplateAction = chatbotActionClient
           },
         },
       )
-      await prisma.$transaction(async (tx) => {
-        await tx.whatsappMessageTemplate.deleteMany({
-          where: {
-            integrationWhatsappId: integrationWhatsapp.id,
-          },
-        })
+      await db.transaction(async (tx) => {
+        await tx.delete(whatsappMessageTemplateModel).where(eq(whatsappMessageTemplateModel.integrationWhatsappId, integrationWhatsapp.id))
         const data = res.data.map((template) => {
           return {
             name: template.name,
@@ -55,9 +47,7 @@ export const syncMessageTemplateAction = chatbotActionClient
             sourceId: template.id,
           }
         })
-        await tx.whatsappMessageTemplate.createMany({
-          data,
-        })
+        await tx.insert(whatsappMessageTemplateModel).value(data)
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#whatsapp#messageTemplates`)

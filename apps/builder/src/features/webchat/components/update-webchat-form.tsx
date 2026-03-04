@@ -119,7 +119,7 @@ export function UpdateWebchatForm({
         ...rest
       } = integrationWebchat
       form.reset({
-        authorizedDomains: authorizedDomainsArray.map((domain) => ({
+        authorizedDomains: (authorizedDomainsArray ?? []).map((domain) => ({
           value: domain,
         })),
         conversationStarters:

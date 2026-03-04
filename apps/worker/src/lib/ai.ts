@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type {
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
@@ -22,17 +22,9 @@ import {
 import { performFileSearch } from "../integration/handlers/automated-response/search"
 import { logger } from "./logger"
 
+import { ensureRecord, isRecord } from "./utils"
+
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-const EMPTY_RECORD: Record<string, unknown> = {}
-
-function ensureRecord(value: unknown): Record<string, unknown> {
-  return isRecord(value) ? value : EMPTY_RECORD
-}
 
 function jsonSchemaToZodObject(schema: unknown, depth = 0): z.ZodTypeAny {
   if (depth > 6) {
@@ -247,6 +239,7 @@ export async function getAIIntegrationInDB(props: {
   autoReply?: boolean
 }) {
   const { chatbotId, provider, autoReply } = props
+
   const where = {
     chatbotId,
     ...(autoReply !== undefined ? { autoReply } : {}),
@@ -254,11 +247,11 @@ export async function getAIIntegrationInDB(props: {
 
   switch (provider) {
     case aiProviders.openai:
-      return await prisma.integrationOpenAI.findFirst({
+      return await db.query.integrationOpenAIModel.findFirst({
         where,
       })
     case aiProviders.gemini:
-      return await prisma.integrationGemini.findFirst({
+      return await db.query.integrationGeminiModel.findFirst({
         where,
       })
     default:
@@ -321,8 +314,11 @@ export async function getAIFileTools(
       return tools
     }
 
-    const allFiles = await prisma.aIFile.findMany({
-      where: { chatbotId, id: { in: selectedFileIds } },
+    const allFiles = await db.query.aiFileModel.findMany({
+      where: {
+        chatbotId,
+        id: { in: selectedFileIds },
+      },
     })
 
     if (allFiles.length > 0) {
@@ -345,10 +341,13 @@ export async function getAIFileTools(
 
     return tools
   } catch (error) {
-    logger.error("[automated-response] getAIFileTools failed", {
-      error,
-      chatbotId,
-    })
+    logger.error(
+      {
+        error,
+        chatbotId,
+      },
+      "[automated-response] getAIFileTools failed",
+    )
     return {}
   }
 }
@@ -364,7 +363,7 @@ export async function getAIFunctionTools(
       return tools
     }
 
-    const aiFunctions = await prisma.aIFunction.findMany({
+    const aiFunctions = await db.query.aiFunctionModel.findMany({
       where: {
         chatbotId,
         id: {
@@ -388,10 +387,13 @@ export async function getAIFunctionTools(
     }
     return tools
   } catch (error) {
-    logger.error("[automated-response] getAIFunctionTools failed", {
-      error,
-      chatbotId,
-    })
+    logger.error(
+      {
+        error,
+        chatbotId,
+      },
+      "[automated-response] getAIFunctionTools failed",
+    )
     return {}
   }
 }
@@ -408,8 +410,11 @@ export async function getMCPServerTools(
     }
 
     // Find MCP servers from DB
-    const mcpServers = await prisma.aIMCPServer.findMany({
-      where: { chatbotId, id: { in: selectedMcpIds } },
+    const mcpServers = await db.query.aiMCPServerModel.findMany({
+      where: {
+        chatbotId,
+        id: { in: selectedMcpIds },
+      },
     })
     if (mcpServers.length === 0) {
       return tools
@@ -469,10 +474,13 @@ export async function getMCPServerTools(
 
     return tools
   } catch (error) {
-    logger.error("[automated-response] getMCPServerTools failed", {
-      error,
-      chatbotId,
-    })
+    logger.error(
+      {
+        error,
+        chatbotId,
+      },
+      "[automated-response] getMCPServerTools failed",
+    )
     return {}
   }
 }

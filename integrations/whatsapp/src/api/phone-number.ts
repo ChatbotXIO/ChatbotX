@@ -1,7 +1,6 @@
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
-import { logger } from "../lib/logger"
 import type { WhatsappAuthValue, WhatsappPagination } from "../schemas"
 
 export type WhatsappPhoneNumber = {
@@ -39,7 +38,7 @@ export async function listPhoneNumbers(props: {
       )
       .json()
   } catch (error) {
-    logger.error("Unable to list WhatsApp's phone numbers", { error })
+    console.error("Unable to list WhatsApp's phone numbers", error)
 
     throw new WhatsappException("Unable to list WhatsApp's phone numbers")
   }
@@ -65,7 +64,7 @@ export async function findPhoneNumber(props: {
       )
       .json()
   } catch (error) {
-    logger.error("Unable to find WhatsApp's phone number", { error })
+    console.error("Unable to find WhatsApp's phone number", error)
 
     throw new WhatsappException("Unable to find WhatsApp's phone number")
   }
@@ -107,7 +106,7 @@ export const findConversationalAutomation = async (
 
     return result.conversational_automation
   } catch (e) {
-    logger.error("Failed to list conversational automation", { error: e })
+    console.error("Failed to list conversational automation", e)
     throw new WhatsappException("Failed to list conversational automation")
   }
 }
@@ -129,7 +128,7 @@ export async function updateConversationalAutomation(
       },
     )
   } catch (e) {
-    logger.error("Failed to update conversational automation", { error: e })
+    console.error("Failed to update conversational automation", e)
     throw new WhatsappException("Failed to update conversational automation")
   }
 }

@@ -24,8 +24,8 @@ export type AIToolsState = {
 
 export type AIToolsActions = {
   initialize: () => Promise<void>
-  getAIFiles: () => Promise<void>
-  getAIFunctions: () => Promise<void>
+  listAIFiles: () => Promise<void>
+  listAIFunctions: () => Promise<void>
   getAIMCPServers: () => Promise<void>
 }
 
@@ -55,8 +55,8 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
 
       try {
         await Promise.all([
-          get().getAIFiles(),
-          get().getAIFunctions(),
+          get().listAIFiles(),
+          get().listAIFunctions(),
           get().getAIMCPServers(),
         ])
       } catch (error: unknown) {
@@ -71,7 +71,7 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
       }
     },
 
-    getAIFiles: async () => {
+    listAIFiles: async () => {
       const { chatbotId, loadingAIFiles } = get()
 
       if (loadingAIFiles || !chatbotId) {
@@ -98,7 +98,7 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
       }
     },
 
-    getAIFunctions: async () => {
+    listAIFunctions: async () => {
       const { chatbotId, loadingAIFunction } = get()
 
       if (loadingAIFunction || !chatbotId) {

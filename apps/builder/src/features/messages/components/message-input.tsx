@@ -1,11 +1,5 @@
 "use client"
 
-import {
-  ContentType,
-  InboxType,
-  MessageType,
-  SenderType,
-} from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Textarea } from "@aha.chat/ui/components/ui/textarea"
@@ -68,9 +62,9 @@ export const MessageInput = () => {
                 sourceId: null,
                 conversationId: conversation?.id ?? "",
                 contentAttributes: null,
-                messageType: MessageType.outgoing,
-                contentType: ContentType.text,
-                senderType: SenderType.user,
+                messageType: "outgoing",
+                contentType: "text",
+                senderType: "user",
                 senderId: session?.data?.user.id ?? null,
                 clientId: typedInput.clientId,
               })
@@ -125,6 +119,9 @@ export const MessageInput = () => {
   // Memoize keyboard handler
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (e.nativeEvent.isComposing || e.key === "Process") {
+        return
+      }
       if (e.key === "Enter" && e.shiftKey === false) {
         e.preventDefault()
         handleSubmitWithAction()
@@ -134,7 +131,7 @@ export const MessageInput = () => {
   )
 
   // Memoize inbox type and icon for current conversation
-  const currentInboxType = conversation?.inbox?.inboxType ?? InboxType.webchat
+  const currentInboxType = conversation?.inbox?.inboxType ?? "webchat"
 
   // Early return if no active conversation
   if (!activeConversationId) {

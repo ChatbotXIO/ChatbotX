@@ -1,30 +1,35 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { spreadsheetModel } from "@aha.chat/database/schema"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { getPaginationFromInput } from "@/lib/pagination"
+import { parsePagination } from "@/lib/pagination"
 import type { ListSpreadsheetsRequest } from "../schemas/list-spreadsheets.request"
 import type { SpreadsheetResource } from "../schemas/resource"
 
 export const listSpreadsheets = async (
   input: ListSpreadsheetsRequest,
 ): Promise<PaginatedResponse<SpreadsheetResource>> => {
-  let pageCount = 1
-  const pagination = getPaginationFromInput(input)
-
-  const where: Prisma.SpreadsheetWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
   }
 
-  return await prisma.$transaction(async (tx) => {
-    const data = await tx.spreadsheet.findMany({
+  const pagination = parsePagination(input)
+
+  const [data, totalRows] = await Promise.all([
+    db.query.spreadsheetModel.findMany({
       ...pagination,
       where,
-    })
+    }),
+    pagination?.limit
+      ? db.$count(
+          spreadsheetModel,
+          relationsFilterToSQL(spreadsheetModel, where),
+        )
+      : Promise.resolve(1),
+  ])
 
-    if (pagination.skip && pagination.take) {
-      const total = await tx.spreadsheet.count({ where })
-      pageCount = Math.ceil(total / pagination.take)
-    }
+  const pageCount = pagination?.limit
+    ? Math.ceil(totalRows / pagination.limit)
+    : 1
 
-    return { data, pageCount }
-  })
+  return { data, pageCount }
 }

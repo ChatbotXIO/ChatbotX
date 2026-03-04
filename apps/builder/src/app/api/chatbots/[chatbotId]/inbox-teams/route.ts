@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getInboxTeams } from "@/features/inbox-teams/queries"
+import { getInboxTeams } from "@/enterprise/features/inbox-teams/queries"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 

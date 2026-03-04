@@ -10,7 +10,7 @@ export function getAttachmentUrl(attachment: AttachmentResource) {
       process.env.NEXT_PUBLIC_ASSET_URL,
     ).toString()
   } catch (error) {
-    logger.error("Error getting attachment URL", error)
+    logger.error(error, "Error getting attachment URL")
     return ""
   }
 }

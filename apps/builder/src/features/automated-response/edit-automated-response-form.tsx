@@ -26,7 +26,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
-import { updateAutomatedResponseRequest } from "./schemas/update-automated-responses-schema"
+import { updateAutomatedResponseRequest } from "./schemas/action"
 
 type EditAutomatedResponseFormProps = {
   chatbotId: string
@@ -82,7 +82,8 @@ export default function EditAutomatedResponseForm(
       form.reset({
         ...automatedResponse,
         replies: automatedResponse.replies as AutomatedResponseReply[],
-        userMessages: automatedResponse.userMessages.map((m) => ({ value: m })),
+        userMessages:
+          automatedResponse.userMessages?.map((m) => ({ value: m })) ?? [],
       })
     }
   }, [automatedResponse, form])

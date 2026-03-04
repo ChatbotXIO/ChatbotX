@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { spreadsheetModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -29,12 +31,11 @@ export const createSpreadsheetAction = chatbotActionClient
         parsedInput.url,
       )
 
-      await prisma.spreadsheet.create({
-        data: {
-          ...parsedInput,
-          chatbotId,
-          spreadsheetId,
-        },
+      await db.insert(spreadsheetModel).values({
+        ...parsedInput,
+        id: createId(),
+        chatbotId,
+        spreadsheetId,
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#spreadsheets`)

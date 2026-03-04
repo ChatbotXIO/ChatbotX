@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import AIFilesTable from "@/features/ai-files/ai-files-table"
-import { getAIFiles } from "@/features/ai-files/queries"
+import { listAIFiles } from "@/features/ai-files/queries"
 import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 
 type AIFilesPageProps = {
@@ -13,7 +13,7 @@ export default async function AIFilesPage({ params }: AIFilesPageProps) {
   const { chatbotId } = await params
 
   const promises = Promise.all([
-    getAIFiles({
+    listAIFiles({
       chatbotId,
     }),
   ])

@@ -18,7 +18,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteAccountFieldsAction } from "./actions/delete-account-field.action"
-import type { AccountFieldResource } from "./schemas/types"
+import type { AccountFieldResource } from "./schemas/resource"
 
 type DeleteAccountFieldsDialogProps = ComponentPropsWithoutRef<
   typeof Dialog

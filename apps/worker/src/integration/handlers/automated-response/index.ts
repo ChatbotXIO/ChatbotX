@@ -1,6 +1,6 @@
-import { prisma } from "@aha.chat/database"
-import { AIMessageRole, SenderType } from "@aha.chat/database/types"
-import type { OutgoingMessageEntity } from "@aha.chat/sdk"
+import { db } from "@aha.chat/database/client"
+import { AIMessageRole } from "@aha.chat/database/types"
+import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
 import type { ModelMessage } from "ai"
 import { logger } from "../../../lib/logger"
 import { getAIToolset } from "../generate-text/tools"
@@ -9,43 +9,55 @@ import { replyByAI, replyByAutomatedResponse } from "./replies"
 export async function triggerAutomatedResponse({
   message,
 }: {
-  message: OutgoingMessageEntity
+  message: OutgoingMessage
 }) {
   try {
     if (!message.content) {
       return
     }
 
-    if (await replyByAutomatedResponse({ message })) {
+    const conversation = await db.query.conversationModel.findFirst({
+      where: { id: message.conversationId },
+    })
+    if (!conversation) {
       return
     }
 
-    const aiAgent = await prisma.aIAgent.findFirst({
-      where: { chatbotId: message.chatbotId, isDefault: true },
+    if (
+      await replyByAutomatedResponse({
+        message,
+        conversation: conversation as OutgoingConversation,
+      })
+    ) {
+      return
+    }
+
+    const aiAgent = await db.query.aiAgentModel.findFirst({
+      where: {
+        chatbotId: message.chatbotId,
+        isDefault: true,
+      },
     })
     if (!aiAgent) {
       return
     }
 
-    const last100Messages = await prisma.message.findMany({
+    const last100Messages = await db.query.messageModel.findMany({
       where: { conversationId: message.conversationId },
-      orderBy: { createdAt: "desc" },
-      take: 100,
+      orderBy: (table, { desc }) => [desc(table.createdAt)],
+      limit: 100,
     })
     const lastAIMessages: ModelMessage[] = []
     for (const msg of last100Messages) {
       if (!msg.content) {
         continue
       }
-      if (msg.senderType === SenderType.contact) {
+      if (msg.senderType === "contact") {
         lastAIMessages.push({
           role: AIMessageRole.user,
           content: msg.content,
         })
-      } else if (
-        msg.senderType === SenderType.user ||
-        msg.senderType === SenderType.bot
-      ) {
+      } else if (msg.senderType === "user" || msg.senderType === "bot") {
         lastAIMessages.push({ role: "assistant", content: msg.content })
       }
     }
@@ -56,6 +68,7 @@ export async function triggerAutomatedResponse({
     if (
       await replyByAI({
         message,
+        conversation: conversation as OutgoingConversation,
         lastAIMessages,
         aiAgent,
         tools: toolset,
@@ -69,11 +82,14 @@ export async function triggerAutomatedResponse({
       return
     }
   } catch (error) {
-    logger.error("[automated-response] triggerAutomatedResponse failed", {
-      error,
-      conversationId: message.conversationId,
-      chatbotId: message.chatbotId,
-    })
+    logger.error(
+      {
+        error,
+        conversationId: message.conversationId,
+        chatbotId: message.chatbotId,
+      },
+      "[automated-response] triggerAutomatedResponse failed",
+    )
     return
   }
 }

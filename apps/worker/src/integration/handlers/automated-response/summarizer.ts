@@ -1,3 +1,5 @@
+import { isRecord } from "../../../lib/utils"
+
 const MAX_SUMMARY_CHARS = 10_000
 
 export function summarizeToolResult(rawContent: unknown): string | null {
@@ -87,8 +89,4 @@ function clampTextLength(text: string): string {
     return trimmed
   }
   return `${trimmed.slice(0, MAX_SUMMARY_CHARS).trim()}...`
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

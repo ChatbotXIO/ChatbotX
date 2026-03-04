@@ -47,4 +47,5 @@ export const defaultWorkerOptions = {
 // Queue is required Redis connection, so we need to provide a fake queue for the production build
 export const fakeQueue = {
   add: () => Promise.resolve(""),
+  addBulk: () => Promise.resolve(""),
 }

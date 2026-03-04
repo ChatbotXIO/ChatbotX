@@ -1,6 +1,6 @@
-import { UploadMode } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
+import { UploadMode } from "../types"
 import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
@@ -14,10 +14,13 @@ export const sendAudioStepSchema = z.object({
 
 export type SendAudioStepSchema = z.infer<typeof sendAudioStepSchema>
 
-export const sendAudioStepDefaultFn = (): SendAudioStepSchema => ({
+export const sendAudioStepDefaultFn = (
+  props?: Partial<SendAudioStepSchema>,
+): SendAudioStepSchema => ({
   id: createId(),
-  stepType: StepType.sendAudio,
-  mode: UploadMode.file,
+  mode: "file",
   url: "",
   buttons: [],
+  ...props,
+  stepType: StepType.sendAudio,
 })

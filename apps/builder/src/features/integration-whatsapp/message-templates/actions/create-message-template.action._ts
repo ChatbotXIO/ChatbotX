@@ -1,6 +1,5 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
 import { uploader } from "@aha.chat/filesystem"
 import type {
   CreateMessageTemplateProps,
@@ -31,10 +30,8 @@ export const createMessageTemplateAction = chatbotActionClient
       parsedInput: CreateMessageTemplateRequest
     }) => {
       const integrationWhatsapp =
-        await prisma.integrationWhatsapp.findFirstOrThrow({
-          where: {
-            chatbotId,
-          },
+        await findOrFail<IntegrationWhatsappModel>(integrationWhatsappModel, {
+          chatbotId,
         })
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
@@ -59,15 +56,14 @@ export const createMessageTemplateAction = chatbotActionClient
         },
       )
 
-      await prisma.whatsappMessageTemplate.create({
-        data: {
-          name: parsedInput.name,
-          integrationWhatsappId: integrationWhatsapp.id,
-          language: parsedInput.language,
-          category: parsedInput.category,
-          status: res.status,
-          sourceId: res.id,
-        },
+      await db.insert(whatsappMessageTemplate).values({
+        id: createId(),
+        name: parsedInput.name,
+        integrationWhatsappId: integrationWhatsapp.id,
+        language: parsedInput.language,
+        category: parsedInput.category,
+        status: res.status,
+        sourceId: res.id,
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#whatsapp#messageTemplates`)

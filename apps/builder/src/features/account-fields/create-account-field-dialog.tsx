@@ -1,7 +1,6 @@
 "use client"
 
 import { rootFolderId } from "@aha.chat/database/enums"
-import { CustomFieldType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
@@ -31,7 +30,7 @@ import { toast } from "sonner"
 import { useCustomFieldTypeLabels } from "../shared-fields/shared"
 import { AccountFieldValueInput } from "./account-field-value-input"
 import { createAccountFieldAction } from "./actions/create-account-field.action"
-import { createAccountFieldRequest } from "./schemas/create-account-field.schema"
+import { createAccountFieldRequest } from "./schemas/action"
 
 type CreateAccountFieldDialogProps = {
   chatbotId: string
@@ -75,7 +74,7 @@ export function CreateAccountFieldDialog({
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: CustomFieldType.shortText,
+            customFieldType: "shortText",
             value: "",
             description: "",
             folderId: null,

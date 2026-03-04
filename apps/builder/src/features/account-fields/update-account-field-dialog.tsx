@@ -18,8 +18,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateAccountFieldAction } from "./actions/update-account-field.action"
-import type { AccountFieldResource } from "./schemas/types"
-import { updateAccountFieldRequest } from "./schemas/update-account-field.schema"
+import { updateAccountFieldRequest } from "./schemas/action"
+import type { AccountFieldResource } from "./schemas/resource"
 
 type UpdateAccountFieldDialogProps = {
   chatbotId: string

@@ -1,20 +1,16 @@
-import { prisma } from "@aha.chat/database"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { AIFunctionCollection, GetAIFunctionsRequest } from "../schemas"
+import { db } from "@aha.chat/database/client"
+import type { AIFunctionModel } from "@aha.chat/database/types"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { GetAIFunctionsRequest } from "../schemas"
 
-export async function getAIFunctions(
+export async function listAIFunctions(
   input: GetAIFunctionsRequest,
-): Promise<AIFunctionCollection> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
-
-  const data = await prisma.aIFunction.findMany({
+): Promise<PaginatedResponse<AIFunctionModel>> {
+  const data = await db.query.aiFunctionModel.findMany({
     where: {
       chatbotId: input.chatbotId,
     },
-    include: {
-      triggerFlow: true,
-    },
   })
 
-  return { data }
+  return { data, pageCount: 1 }
 }

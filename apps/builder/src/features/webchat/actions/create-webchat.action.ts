@@ -1,7 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import { InboxType } from "@aha.chat/database/types"
+import { db } from "@aha.chat/database/client"
+import { inboxModel, integrationWebchatModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
 import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
@@ -19,7 +19,7 @@ export const createWebchatAction = authActionClient
       parsedInput.chatbotId,
     )
 
-    await prisma.$transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       if (!chatbotId) {
         const newChatbot = await createSimpleChatbot(
           tx,
@@ -35,22 +35,24 @@ export const createWebchatAction = authActionClient
       }
 
       const webchatId = createId()
-      const inbox = await tx.inbox.create({
-        data: {
-          chatbotId,
-          inboxType: InboxType.webchat,
-          sourceId: webchatId,
-        },
-      })
-      await tx.integrationWebchat.create({
-        data: {
-          ...rest,
+      const inbox = await tx
+        .insert(inboxModel)
+        .values({
           id: webchatId,
-          authorizedDomains: authorizedDomains.map((domain) => domain.value),
-          chatbotId,
-          inboxId: inbox.id,
-          auth: "{}",
-        },
+          chatbotId: chatbotId as string,
+          inboxType: "webchat",
+          sourceId: webchatId,
+        })
+        .returning()
+        .then((result) => result[0])
+
+      await tx.insert(integrationWebchatModel).values({
+        ...rest,
+        id: webchatId,
+        authorizedDomains: authorizedDomains.map((domain) => domain.value),
+        chatbotId: chatbotId as string,
+        inboxId: inbox.id,
+        auth: "{}",
       })
     })
 

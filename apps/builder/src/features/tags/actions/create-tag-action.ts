@@ -1,12 +1,14 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import { FolderType, type UserModel } from "@aha.chat/database/types"
+import { db } from "@aha.chat/database/client"
+import { tagModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
@@ -31,8 +33,8 @@ export const createTagAction = authActionClient
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingTag = await prisma.tag.findFirst({
-        select: {
+      const existingTag = await db.query.tagModel.findFirst({
+        columns: {
           id: true,
         },
         where: {
@@ -47,18 +49,13 @@ export const createTagAction = authActionClient
       }
 
       if (parsedInput.folderId) {
-        await ensureFolderIdIsExists(
-          parsedInput.folderId,
-          chatbotId,
-          FolderType.tag,
-        )
+        await ensureFolderIsExists(parsedInput.folderId, chatbotId, "tag")
       }
 
-      await prisma.tag.create({
-        data: {
-          ...parsedInput,
-          chatbotId,
-        },
+      await db.insert(tagModel).values({
+        ...parsedInput,
+        id: createId(),
+        chatbotId,
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#tags`)

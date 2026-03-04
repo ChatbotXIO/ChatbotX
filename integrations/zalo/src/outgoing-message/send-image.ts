@@ -16,7 +16,9 @@ export async function* convertFlowStepImage(
     SendImageStepSchema | SendGifStepSchema
   >,
 ): AsyncGenerator<MessageTemplate> {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   try {
     if (!step.url?.trim()) {
       throw new Error("Image URL is required")
@@ -34,8 +36,8 @@ export async function* convertFlowStepImage(
     const buttons =
       step.stepType === StepType.sendImage
         ? await convertZaloButtons({
-            flowId: props.flowId,
-            flowVersionId: props.flowVersionId,
+            flowId: props.data.flowId,
+            flowVersionId: props.data.flowVersionId,
             buttons: step.buttons,
           })
         : undefined
@@ -57,7 +59,7 @@ export async function* convertFlowStepImage(
       },
     }
   } catch (error) {
-    logger.error("Error uploading media:", JSON.stringify(error))
+    logger.error(error, "Error uploading media")
     throw error
   }
 }

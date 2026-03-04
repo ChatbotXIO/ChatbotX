@@ -1,11 +1,10 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
 } from "../schemas/query"
-import { FolderException } from "../schemas/resource"
 
 export const getFolders = async (
   input: ListFoldersSearchParams,
@@ -14,17 +13,18 @@ export const getFolders = async (
 
   const { folderId, ...rest } = input
 
-  const data = await prisma.folder.findMany({
+  const data = await db.query.folderModel.findMany({
     where: {
       ...rest,
       folderType: rest.folderType as FolderType,
-      parentId: !folderId || input.folderId === "" ? null : input.folderId,
+      parentId:
+        !folderId || input.folderId === null
+          ? { isNull: true as const }
+          : input.folderId,
     },
-    orderBy: [
-      {
-        createdAt: "asc",
-      },
-    ],
+    orderBy: {
+      createdAt: "asc",
+    },
   })
 
   return { data }
@@ -35,7 +35,7 @@ export const getCurrentFolder = async (
 ): Promise<{ folder: FolderModel | null; parents: FolderModel[] }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const folder = await prisma.folder.findFirst({
+  const folder = await db.query.folderModel.findFirst({
     where: input,
   })
   if (!folder) {
@@ -44,7 +44,7 @@ export const getCurrentFolder = async (
 
   let parents: FolderModel[] = []
   if (folder.paths.length > 0) {
-    const tempParents = await prisma.folder.findMany({
+    const tempParents = await db.query.folderModel.findMany({
       where: {
         id: { in: folder.paths },
       },
@@ -68,24 +68,4 @@ export const getCurrentFolder = async (
   }
 
   return { folder, parents }
-}
-
-export const ensureFolderIdExists = async (
-  chatbotId: string,
-  folderType: FolderType,
-  id: string,
-): Promise<void> => {
-  const existingFolder = await prisma.folder.findFirst({
-    select: {
-      id: true,
-    },
-    where: {
-      chatbotId,
-      folderType,
-      id,
-    },
-  })
-  if (!existingFolder) {
-    throw new FolderException("Folder does not exists.")
-  }
 }

@@ -1,10 +1,6 @@
 "use client"
 
-import {
-  type FieldModel,
-  FieldType,
-  FolderType,
-} from "@aha.chat/database/types"
+import type { FieldModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -212,7 +208,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
 
       <DeleteFieldsDialog
         chatbotId={chatbotId}
-        fieldType={FieldType.customField}
+        fieldType="customField"
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         open={rowAction?.variant === "delete"}
@@ -230,7 +226,7 @@ export function CustomFieldsTable({ promises, chatbotId }: FieldsTableProps) {
       <ChangeFolderDialog
         chatbotId={chatbotId}
         currentFolderId={rowAction?.row.original?.folderId || null}
-        folderType={FolderType.customField}
+        folderType="customField"
         modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "move"}

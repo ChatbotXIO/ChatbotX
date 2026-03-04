@@ -1,6 +1,7 @@
 import ky, { type Options } from "ky"
 import { z } from "zod"
 import { logger } from "../../../lib/logger"
+import { ensureRecord, isRecord } from "../../../lib/utils"
 import { JSON_TYPE, TEXT } from "./constants"
 
 type MCPSuccess = { content: unknown; success: true }
@@ -217,14 +218,6 @@ function normalizeMcpContent(content: unknown): unknown {
   return content
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-function ensureRecord(value: unknown): Record<string, unknown> {
-  return isRecord(value) ? value : {}
-}
-
 export function cleanSchemaForGemini(schema: unknown): unknown {
   if (!schema || typeof schema !== JSON_TYPE.object) {
     return schema
@@ -249,7 +242,7 @@ export function cleanSchemaForGemini(schema: unknown): unknown {
           nextProp.type !== JSON_TYPE.object &&
           nextProp.required
         ) {
-          const { required: _omit, ...rest } = nextProp
+          const { required: _, ...rest } = nextProp
           nextProp = rest
         }
 

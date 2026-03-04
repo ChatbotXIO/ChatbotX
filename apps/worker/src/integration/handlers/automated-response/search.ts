@@ -1,17 +1,14 @@
-import { prisma } from "@aha.chat/database"
+import { db, sql } from "@aha.chat/database/client"
 import { createOpenAI } from "@ai-sdk/openai"
 import { embed } from "ai"
 import { logger } from "../../../lib/logger"
+import { isRecord } from "../../../lib/utils"
 import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
 import type {
   FileSearchArgs,
   FileSearchConfig,
   SimilaritySearchResult,
 } from "./types"
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
 
 function getSecretTextFromAuth(auth: unknown): string | null {
   if (!isRecord(auth)) {
@@ -26,7 +23,7 @@ function getSecretTextFromAuth(auth: unknown): string | null {
 }
 
 async function getOpenAIIntegration(chatbotId: string) {
-  const integrationOpenAI = await prisma.integrationOpenAI.findFirst({
+  const integrationOpenAI = await db.query.integrationOpenAIModel.findFirst({
     where: {
       chatbotId,
       autoReply: true,
@@ -70,7 +67,7 @@ async function searchSimilarEmbeddings(
 ): Promise<SimilaritySearchResult[]> {
   const embeddingString = `[${queryEmbedding.join(",")}]`
 
-  const results = await prisma.$queryRaw<SimilaritySearchResult[]>`
+  const results = await db.execute(sql`
     SELECT
       "id",
       "content",
@@ -81,9 +78,9 @@ async function searchSimilarEmbeddings(
       AND "aiFileId" = ANY(${config.selectedFileIds})
     ORDER BY "embedding" <=> ${embeddingString}::vector
     LIMIT ${config.maxResults}
-  `
+  `)
 
-  return results
+  return results.rows as unknown as SimilaritySearchResult[]
 }
 
 function filterRelevantResults(
@@ -132,10 +129,13 @@ export async function performFileSearch(
     const result = formatSearchResults(relevantResults)
     return result
   } catch (error) {
-    logger.error("[automated-response] performFileSearch failed", {
-      error,
-      chatbotId: config.chatbotId,
-    })
+    logger.error(
+      {
+        error,
+        chatbotId: config.chatbotId,
+      },
+      "[automated-response] performFileSearch failed",
+    )
     return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : TEXT.unknownError}`
   }
 }

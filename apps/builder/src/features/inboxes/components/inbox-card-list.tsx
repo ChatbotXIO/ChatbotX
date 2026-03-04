@@ -1,4 +1,4 @@
-import { InboxType } from "@aha.chat/database/types"
+import type { InboxType } from "@aha.chat/database/types"
 import { use } from "react"
 import type { listInboxes } from "../queries"
 import type { InboxResource } from "../schemas/resource"
@@ -17,10 +17,10 @@ const cardConfigs: Record<
   InboxType,
   React.ComponentType<{ inbox: InboxResource }>
 > = {
-  [InboxType.whatsapp]: InboxWhatsappCard,
-  [InboxType.webchat]: InboxWebchatCard,
-  [InboxType.messenger]: InboxMessengerCard,
-  [InboxType.zalo]: InboxZaloCard,
+  whatsapp: InboxWhatsappCard,
+  webchat: InboxWebchatCard,
+  messenger: InboxMessengerCard,
+  zalo: InboxZaloCard,
 }
 
 export default function InboxCardList({

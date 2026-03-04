@@ -1,23 +1,24 @@
 "use server"
 
+import { db } from "@aha.chat/database/client"
 import {
-  BroadcastSchedulesType,
-  BroadcastStatus,
-  type Prisma,
-  prisma,
-} from "@aha.chat/database"
+  broadcastModel,
+  contactsOnBroadcastsModel,
+} from "@aha.chat/database/schema"
+import type { BroadcastModel } from "@aha.chat/database/types"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { createId } from "@paralleldrive/cuid2"
+import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFlowIdIsExists } from "@/features/flows/queries"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateBroadcastRequest,
   createBroadcastRequest,
-} from "../schemas/create-broadcast-schema"
+} from "../schemas/action"
 export const createBroadcastAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(createBroadcastRequest)
@@ -29,25 +30,36 @@ export const createBroadcastAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateBroadcastRequest
     }) => {
-      const flow = await ensureFlowIdIsExists(chatbotId, parsedInput.flowId)
+      const flow = await db.query.flowModel.findFirst({
+        where: {
+          chatbotId,
+          id: parsedInput.flowId,
+        },
+      })
+      if (!flow) {
+        return returnValidationErrors(createBroadcastRequest, {
+          _errors: ["Validation Exception"],
+          flowId: {
+            _errors: ["Flow not found"],
+          },
+        })
+      }
 
-      const data: Prisma.BroadcastUncheckedCreateInput = {
+      const data: BroadcastModel = {
         ...parsedInput,
         name: flow.name,
         chatbotId,
-        status: BroadcastStatus.scheduled,
+        status: "scheduled",
         schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
+        id: createId(),
       }
-      if (
-        data.schedulesType === BroadcastSchedulesType.now ||
-        data.schedulesAt <= new Date()
-      ) {
-        data.status = BroadcastStatus.sent
+      if (data.schedulesType === "now" || data.schedulesAt <= new Date()) {
+        data.status = "sent"
       }
 
       // Calculate contacts to send broadcast
-      const contacts = await prisma.contact.findMany({
-        select: {
+      const contacts = await db.query.contactModel.findMany({
+        columns: {
           id: true,
         },
         where: {
@@ -55,25 +67,27 @@ export const createBroadcastAction = chatbotActionClient
         },
       })
 
-      const broadcast = await prisma.$transaction(
-        async (tx) =>
-          await tx.broadcast.create({
-            data: {
-              ...data,
-              contacts: {
-                create: contacts.map((contact) => ({
-                  contactId: contact.id,
-                })),
-              },
-            },
-          }),
-      )
+      const newBroadcast = await db.transaction(async (tx) => {
+        const newBroadcast = await tx
+          .insert(broadcastModel)
+          .values(data)
+          .returning()
+          .then((result) => result[0])
 
-      if (broadcast.status === BroadcastStatus.sent) {
+        await tx.insert(contactsOnBroadcastsModel).values(
+          contacts.map((contact) => ({
+            broadcastId: newBroadcast.id,
+            contactId: contact.id,
+          })),
+        )
+        return newBroadcast
+      })
+
+      if (newBroadcast.status === "sent") {
         await integrationQueue.add(IntegrationJobAction.sendBroadcast, {
           type: IntegrationJobAction.sendBroadcast,
           data: {
-            broadcastId: broadcast.id,
+            broadcastId: newBroadcast.id,
           },
         })
       }

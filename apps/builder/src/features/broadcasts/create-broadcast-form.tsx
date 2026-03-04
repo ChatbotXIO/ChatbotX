@@ -5,8 +5,8 @@ import {
   BroadcastSubaction,
 } from "@aha.chat/database/enums"
 import {
-  BroadcastSchedulesType,
-  InboxType,
+  type BroadcastSchedulesType,
+  type InboxType,
   Omnichannel,
 } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
@@ -30,7 +30,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
-import { createBroadcastRequest } from "@/features/broadcasts/schemas/create-broadcast-schema"
+import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { ContactFilter } from "../contacts/components/contact-filter"
 import {
   FlowStoreProvider,
@@ -48,73 +48,76 @@ type BroadcastConfig = {
   }[]
 }
 
-const getConfigs = (t: ReturnType<typeof useTranslations>) => [
-  {
-    value: Omnichannel,
-    description:
-      "Send a flow to all contacts. You can send messages or executes actions.",
-    subactions: [
-      {
-        value: BroadcastSubaction.allContacts,
-        name: t("broadcasts.allContacts.title"),
-        description: t("broadcasts.allContacts.description"),
-      },
-    ],
-  },
-  {
-    value: InboxType.messenger,
-    description: "",
-    subactions: [
-      {
-        value: BroadcastSubaction.messengerList,
-        name: t("broadcasts.messengerList.title"),
-        description: t("broadcasts.messengerList.description"),
-      },
-      {
-        value: BroadcastSubaction.messengerActiveContacts,
-        name: t("broadcasts.messengerActiveContacts.title"),
-        description: t("broadcasts.messengerActiveContacts.description"),
-      },
-      {
-        value: BroadcastSubaction.messengerAccountUpdate,
-        name: t("broadcasts.messengerAccountUpdate.title"),
-        description: t("broadcasts.messengerAccountUpdate.description"),
-      },
-      {
-        value: BroadcastSubaction.messengerConfirmedEventUpdate,
-        name: t("broadcasts.messengerConfirmedEventUpdate.title"),
-        description: t("broadcasts.messengerConfirmedEventUpdate.description"),
-      },
-      {
-        value: BroadcastSubaction.messengerPostPurchaseUpdate,
-        name: t("broadcasts.messengerPostPurchaseUpdate.title"),
-        description: t("broadcasts.messengerPostPurchaseUpdate.description"),
-      },
-    ],
-  },
-  {
-    value: InboxType.whatsapp,
-    description: "",
-    subactions: [
-      {
-        value: BroadcastSubaction.allContacts,
-        name: t("broadcasts.allContacts.title"),
-        description: t("broadcasts.allContacts.description"),
-      },
-    ],
-  },
-  {
-    value: InboxType.zalo,
-    description: "",
-    subactions: [
-      {
-        value: BroadcastSubaction.allContacts,
-        name: t("broadcasts.allContacts.title"),
-        description: t("broadcasts.allContacts.description"),
-      },
-    ],
-  },
-]
+const getConfigs = (t: ReturnType<typeof useTranslations>) =>
+  [
+    {
+      value: Omnichannel,
+      description:
+        "Send a flow to all contacts. You can send messages or executes actions.",
+      subactions: [
+        {
+          value: BroadcastSubaction.allContacts,
+          name: t("broadcasts.allContacts.title"),
+          description: t("broadcasts.allContacts.description"),
+        },
+      ],
+    },
+    {
+      value: "messenger",
+      description: "",
+      subactions: [
+        {
+          value: BroadcastSubaction.messengerList,
+          name: t("broadcasts.messengerList.title"),
+          description: t("broadcasts.messengerList.description"),
+        },
+        {
+          value: BroadcastSubaction.messengerActiveContacts,
+          name: t("broadcasts.messengerActiveContacts.title"),
+          description: t("broadcasts.messengerActiveContacts.description"),
+        },
+        {
+          value: BroadcastSubaction.messengerAccountUpdate,
+          name: t("broadcasts.messengerAccountUpdate.title"),
+          description: t("broadcasts.messengerAccountUpdate.description"),
+        },
+        {
+          value: BroadcastSubaction.messengerConfirmedEventUpdate,
+          name: t("broadcasts.messengerConfirmedEventUpdate.title"),
+          description: t(
+            "broadcasts.messengerConfirmedEventUpdate.description",
+          ),
+        },
+        {
+          value: BroadcastSubaction.messengerPostPurchaseUpdate,
+          name: t("broadcasts.messengerPostPurchaseUpdate.title"),
+          description: t("broadcasts.messengerPostPurchaseUpdate.description"),
+        },
+      ],
+    },
+    {
+      value: "whatsapp",
+      description: "",
+      subactions: [
+        {
+          value: BroadcastSubaction.allContacts,
+          name: t("broadcasts.allContacts.title"),
+          description: t("broadcasts.allContacts.description"),
+        },
+      ],
+    },
+    {
+      value: "zalo",
+      description: "",
+      subactions: [
+        {
+          value: BroadcastSubaction.allContacts,
+          name: t("broadcasts.allContacts.title"),
+          description: t("broadcasts.allContacts.description"),
+        },
+      ],
+    },
+  ] as BroadcastConfig[]
 
 type CreateBroadcastFormProps = {
   chatbotId: string
@@ -149,7 +152,7 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
           inboxType: undefined,
           flowId: undefined,
           subaction: BroadcastSubaction.allContacts,
-          schedulesType: BroadcastSchedulesType.now,
+          schedulesType: "now",
           schedulesAt: null,
           contactFilter: {
             operator: "and",
@@ -206,7 +209,7 @@ function CreateBroadcastChooseChannel() {
   const handleChooseChannel = useCallback(
     (inboxType: InboxType) => {
       setValue("inboxType", inboxType)
-      if (inboxType !== InboxType.messenger) {
+      if (inboxType !== "messenger") {
         setValue("subaction", BroadcastSubaction.allContacts)
       } else {
         setValue("subaction", null)
@@ -333,11 +336,11 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const schedulesOptions = useMemo(
     () => [
       {
-        value: BroadcastSchedulesType.now,
+        value: "now",
         label: t("fields.schedule.now"),
       },
       {
-        value: BroadcastSchedulesType.future,
+        value: "future",
         label: t("fields.schedule.scheduled"),
       },
     ],
@@ -365,7 +368,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
   const handleScheduleTypeChange = useCallback(
     (value: BroadcastSchedulesType) => {
-      if (value === BroadcastSchedulesType.now) {
+      if (value === "now") {
         setValue("schedulesAt", null)
       }
     },
@@ -443,7 +446,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
         />
 
         <SelectField
-          defaultValue={BroadcastSchedulesType.now}
+          defaultValue="now"
           label={t("fields.schedule.label")}
           name="schedulesType"
           options={schedulesOptions}
@@ -453,7 +456,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           }
         />
 
-        {watchedSchedulesType === BroadcastSchedulesType.future && (
+        {watchedSchedulesType === "future" && (
           <DateTimePickerField
             disabled={{
               before: new Date(),

@@ -1,3 +1,4 @@
+import type { OutgoingConversation } from "@aha.chat/sdk"
 import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { SUPPORTED_IMAGE_EXTENSIONS } from "./constants"
 
@@ -115,7 +116,7 @@ export function processTextForImagesAndLinks(text: string): string[] {
 }
 
 export async function sendMessageWithRender(
-  conversationId: string,
+  conversation: OutgoingConversation,
   message: string,
 ): Promise<void> {
   const trimmed = message.trim()
@@ -123,7 +124,7 @@ export async function sendMessageWithRender(
     await chatQueue.add(ChatJobAction.sendChatMessage, {
       type: ChatJobAction.sendChatMessage,
       data: {
-        conversationId,
+        conversation,
         url: trimmed,
       },
     })
@@ -133,14 +134,14 @@ export async function sendMessageWithRender(
   await chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
     data: {
-      conversationId,
+      conversation,
       text: trimmed,
     },
   })
 }
 
 export async function sendProcessedTextParts(
-  conversationId: string,
+  conversation: OutgoingConversation,
   text: string,
 ): Promise<number> {
   let count = 0
@@ -153,7 +154,7 @@ export async function sendProcessedTextParts(
       !REGEX_ONLY_WHITESPACE.test(trimmedPart)
     ) {
       count += 1
-      await sendMessageWithRender(conversationId, trimmedPart)
+      await sendMessageWithRender(conversation, trimmedPart)
     }
   }
   return count
@@ -161,7 +162,7 @@ export async function sendProcessedTextParts(
 
 export async function processStreamingText(
   textStream: AsyncIterable<string>,
-  conversationId: string,
+  conversation: OutgoingConversation,
   options?: { sendParts?: boolean },
 ): Promise<{ messageCount: number; fullText: string }> {
   let fullText = ""
@@ -192,7 +193,7 @@ export async function processStreamingText(
           ) {
             messageCount += 1
             if (sendParts) {
-              await sendMessageWithRender(conversationId, trimmedPart)
+              await sendMessageWithRender(conversation, trimmedPart)
             }
           }
         }
@@ -213,7 +214,7 @@ export async function processStreamingText(
       ) {
         messageCount += 1
         if (sendParts) {
-          await sendMessageWithRender(conversationId, trimmedPart)
+          await sendMessageWithRender(conversation, trimmedPart)
         }
       }
     }

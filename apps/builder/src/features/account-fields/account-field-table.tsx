@@ -30,7 +30,7 @@ import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label
 import { AccountFieldToolbarActions } from "./account-field-table-toolbar"
 import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
 import type { listAccountFields } from "./queries/list-account-fields.query"
-import type { AccountFieldResource } from "./schemas/types"
+import type { AccountFieldResource } from "./schemas/resource"
 import { UpdateAccountFieldDialog } from "./update-account-field-dialog"
 
 type FieldsTableProps = {

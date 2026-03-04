@@ -1,7 +1,12 @@
 "use server"
 
-import { IntegrationType, prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import {
+  integrationGeminiModel,
+  integrationModel,
+} from "@aha.chat/database/schema"
 import { AuthType, type SecretTextAuthValue } from "@aha.chat/sdk"
+import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -25,12 +30,6 @@ export const connectGeminiAction = chatbotActionClient
       parsedInput: ConnectGeminiRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationGemini = await prisma.integrationGemini.findFirst({
-        where: {
-          chatbotId,
-        },
-      })
-
       if (!(await verifyGeminiApiKey(parsedInput.apiKey))) {
         return returnValidationErrors(connectGeminiRequest, {
           apiKey: {
@@ -39,11 +38,19 @@ export const connectGeminiAction = chatbotActionClient
         })
       }
 
-      await prisma.$transaction(async (tx) => {
+      const integrationGemini = await db.query.integrationGeminiModel.findFirst(
+        {
+          where: {
+            chatbotId,
+          },
+        },
+      )
+
+      await db.transaction(async (tx) => {
         if (integrationGemini) {
-          await tx.integrationGemini.update({
-            where: { id: integrationGemini.id },
-            data: {
+          await tx
+            .update(integrationGeminiModel)
+            .set({
               model: parsedInput.model,
               auth: {
                 authType: AuthType.secretText,
@@ -51,26 +58,30 @@ export const connectGeminiAction = chatbotActionClient
               } as SecretTextAuthValue,
               temperature: parsedInput.temperature,
               maxOutputTokens: parsedInput.maxOutputTokens,
-            },
-          })
+            })
+            .where(eq(integrationGeminiModel.id, integrationGemini.id))
         } else {
-          await tx.integration.create({
-            data: {
+          const integration = await tx
+            .insert(integrationModel)
+            .values({
               chatbotId,
-              integrationType: IntegrationType.gemini,
-              integrationGemini: {
-                create: {
-                  chatbotId,
-                  model: parsedInput.model,
-                  auth: {
-                    authType: AuthType.secretText,
-                    secretText: parsedInput.apiKey,
-                  } as SecretTextAuthValue,
-                  temperature: parsedInput.temperature,
-                  maxOutputTokens: parsedInput.maxOutputTokens,
-                },
-              },
-            },
+              integrationType: "gemini",
+              id: createId(),
+            })
+            .returning()
+            .then((result) => result[0])
+
+          await tx.insert(integrationGeminiModel).values({
+            chatbotId,
+            model: parsedInput.model,
+            auth: {
+              authType: AuthType.secretText,
+              secretText: parsedInput.apiKey,
+            } as SecretTextAuthValue,
+            temperature: parsedInput.temperature,
+            maxOutputTokens: parsedInput.maxOutputTokens,
+            id: createId(),
+            integrationId: integration.id,
           })
         }
       })

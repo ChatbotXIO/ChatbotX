@@ -1,6 +1,6 @@
 "use client"
 
-import type { FolderType } from "@aha.chat/database"
+import type { FolderType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -125,14 +125,15 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
         },
       },
     )
+  const { setValue } = form
 
   useEffect(() => {
     if (modelIds) {
-      form.setValue("newFolderId", currentFolderId ?? "")
-      form.setValue("folderType", folderType)
-      form.setValue("modelIds", modelIds)
+      setValue("newFolderId", currentFolderId ?? "")
+      setValue("folderType", folderType as FolderType)
+      setValue("modelIds", modelIds)
     }
-  }, [modelIds, currentFolderId, folderType, form.setValue])
+  }, [modelIds, currentFolderId, folderType, setValue])
 
   return (
     <Form {...form}>

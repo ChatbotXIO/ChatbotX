@@ -11,13 +11,16 @@ import {
   type SendQuickReplyStepSchema,
   StepType,
 } from "@aha.chat/flow-config"
-import { SdkException } from "@aha.chat/sdk"
-import type {
-  IntegrationJobRunFlowNode,
-  IntegrationJobSendFlowPostback,
-  IntegrationJobSendFlowQuickReply,
+import { initVariables, SdkException, type Variables } from "@aha.chat/sdk"
+import {
+  IntegrationJobAction,
+  type IntegrationJobRunFlowNode,
+  type IntegrationJobSendFlowPostback,
+  type IntegrationJobSendFlowQuickReply,
+  integrationQueue,
 } from "@aha.chat/worker-config"
 import { findConversationAndFlowVersion } from "../../lib/db"
+import { logger } from "../../lib/logger"
 import { flowStepHandlers } from "./step"
 
 export type ExecuteMultipleStepsProps = {
@@ -26,15 +29,14 @@ export type ExecuteMultipleStepsProps = {
   useLatestFlowVersion: boolean
   targetType: "node" | "button" | "step" | "quickReply"
   targetId: string
+  ctx: {
+    variables: Variables
+  }
   steps: BaseStepSchema[]
 }
 
-export type ExecuteStepProps<T, Y = unknown> = Omit<
-  ExecuteMultipleStepsProps,
-  "steps"
-> & {
+export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
   step: T
-  state?: Y
 }
 
 type ExecuteStepsAndQuickRepliesProps = {
@@ -46,9 +48,23 @@ type ExecuteStepsAndQuickRepliesProps = {
     steps?: BaseStepSchema[] | null
     quickReplies?: ButtonStepProps[] | null
   }
+  startFromStepIndex?: number
   targetType: "node" | "button" | "step" | "quickReply"
   targetId: string
   triggerNextNode?: boolean
+  ctx: {
+    variables: Variables
+  }
+}
+
+export const seekConnectedNode = (
+  flowVersion: FlowVersionModel,
+  sourceId: string,
+) => {
+  const connectedNode = (flowVersion.edges as EdgeSchema[]).find(
+    (edge) => edge.sourceHandle === sourceId,
+  )
+  return connectedNode?.target
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
@@ -81,6 +97,9 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
     details: targetNode.data.details,
     targetType: "node",
     targetId: targetNode.id,
+    ctx: {
+      variables: initVariables(),
+    },
   })
 }
 
@@ -96,24 +115,26 @@ export async function runStepsAndQuickReplies(
   } = props
 
   // run before step
-  if (details.beforeStep) {
+  if (details.beforeStep && !props.startFromStepIndex) {
     await executeMultipleSteps({
       ...props,
       steps: [details.beforeStep],
     })
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 200))
-
   // run steps
   if ("steps" in details && details.steps) {
-    await executeMultipleSteps({
+    const result = await executeMultipleSteps({
       ...props,
-      steps: details.steps,
+      steps: props.startFromStepIndex
+        ? details.steps.slice(props.startFromStepIndex)
+        : details.steps,
     })
-  }
 
-  await new Promise((resolve) => setTimeout(resolve, 200))
+    if (result?.status === "wait" || result?.status === "retry") {
+      return result
+    }
+  }
 
   if (
     "quickReplies" in details &&
@@ -131,8 +152,6 @@ export async function runStepsAndQuickReplies(
       ],
     })
   }
-
-  await new Promise((resolve) => setTimeout(resolve, 200))
 
   if (!triggerNextNode) {
     return
@@ -168,10 +187,13 @@ export async function runStepsAndQuickReplies(
 
 export async function executeMultipleSteps(props: ExecuteMultipleStepsProps) {
   const gen = executeMultipleStepsGenerator(props)
-  let result = await gen.next()
 
-  while (!result.done) {
-    result = await gen.next()
+  for await (const result of gen) {
+    logger.debug({ result }, "execute multiple steps result")
+    if (result?.status === "wait" || result?.status === "retry") {
+      return result
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500))
   }
 }
 
@@ -181,16 +203,41 @@ async function* executeMultipleStepsGenerator(
   const { steps, ...rest } = props
 
   for (const step of steps) {
+    logger.debug({ step }, "executing step")
     const result = await flowStepHandlers[step.stepType as StepType]?.({
       ...rest,
       step,
     })
 
-    if (result?.wait) {
-      return
+    // Try to send nested step based on state of action
+    const resultStatus = result?.status || ""
+    if (
+      resultStatus &&
+      ["success", "skip", "error"].includes(resultStatus) &&
+      step.states &&
+      step.states.length > 0
+    ) {
+      const targetState = step.states.find((s) => s.stateType === resultStatus)
+      if (targetState) {
+        // Find connected node
+        const connectedNodeId = seekConnectedNode(
+          props.flowVersion,
+          targetState.id,
+        )
+        if (connectedNodeId) {
+          await integrationQueue.add(IntegrationJobAction.sendFlow, {
+            type: IntegrationJobAction.sendFlow,
+            data: {
+              conversationId: props.conversation.id,
+              flowId: props.flowVersion.flowId,
+              flowVersionId: props.flowVersion.id,
+              nodeId: connectedNodeId,
+            },
+          })
+        }
+      }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 100))
     yield result
   }
 }
@@ -214,10 +261,10 @@ export async function runFlowPostback(
   const foundedButton = nodes
     .flatMap((n) =>
       "steps" in n.data.details && n.data.details.steps
-        ? n.data.details.steps
+        ? (n.data.details.steps as BaseStepSchema[])
         : [],
     )
-    .flatMap((s) => ("buttons" in s ? s.buttons : []))
+    .flatMap((s) => ("buttons" in s ? (s.buttons as ButtonStepProps[]) : []))
     .find((b) => b.id === parsedAction.buttonId)
 
   if (!foundedButton) {
@@ -231,6 +278,9 @@ export async function runFlowPostback(
     details: foundedButton,
     targetType: "button",
     targetId: foundedButton.id,
+    ctx: {
+      variables: initVariables(),
+    },
   })
 }
 
@@ -269,5 +319,8 @@ export async function runFlowQuickReply(
     details: found,
     targetType: "quickReply",
     targetId: found.id,
+    ctx: {
+      variables: initVariables(),
+    },
   })
 }

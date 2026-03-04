@@ -1,18 +1,16 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 
 export async function listFlowVersions({
   where,
 }: {
-  where: Prisma.FlowVersionWhereInput
+  where: { chatbotId?: string; flowId?: string }
 }) {
-  const [data] = await prisma.$transaction([
-    prisma.flowVersion.findMany({
-      where,
-      include: {
-        flow: true,
-      },
-    }),
-  ])
+  const data = await db.query.flowVersionModel.findMany({
+    where,
+    with: {
+      flow: true,
+    },
+  })
 
   return { data, pageCount: 1 }
 }

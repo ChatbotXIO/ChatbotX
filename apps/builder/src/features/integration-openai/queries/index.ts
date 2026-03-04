@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import type { IntegrationOpenAIResource } from "../schemas/request"
 
 export const findIntegrationOpenAI = async ({
@@ -8,13 +8,13 @@ export const findIntegrationOpenAI = async ({
 }): Promise<{
   data: IntegrationOpenAIResource | null
 }> => {
-  const data = await prisma.integrationOpenAI.findFirst({
+  const data = await db.query.integrationOpenAIModel.findFirst({
     where: {
       chatbotId,
     },
   })
 
   return {
-    data,
+    data: data ?? null,
   }
 }

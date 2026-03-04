@@ -5,11 +5,9 @@ import {
 } from "@aha.chat/flow-config"
 import {
   ContentType,
-  type Context,
-  type ConversationEntity,
-  FileType,
-  type MessageEntity,
+  type OutgoingMessage,
   type SendFlowStepProps,
+  type SendMessageProps,
 } from "@aha.chat/sdk"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
 import type {
@@ -24,7 +22,7 @@ import { convertFlowStepImage } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 
 export function* convertMessageToWhatsappMessage(
-  message: MessageEntity,
+  message: OutgoingMessage,
 ): Generator<ClientMessage | null> {
   if (message.contentType === ContentType.text) {
     if (message.content) {
@@ -33,13 +31,13 @@ export function* convertMessageToWhatsappMessage(
 
     for (const attachment of message.attachments || []) {
       switch (attachment.fileType) {
-        case FileType.image:
+        case "image":
           yield new Image(attachment.url ?? "")
           continue
-        case FileType.video:
+        case "video":
           yield new Video(attachment.url ?? "")
           continue
-        case FileType.audio:
+        case "audio":
           yield new Audio(attachment.url ?? "")
           continue
         default:
@@ -55,7 +53,9 @@ export function* convertMessageToWhatsappMessage(
 export function* convertFlowStepToWhatsappMessage(
   props: SendFlowStepProps<WhatsappAuthValue>,
 ) {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   switch (step.stepType) {
     case StepType.sendText:
       yield* convertFlowStepText(
@@ -72,23 +72,26 @@ export function* convertFlowStepToWhatsappMessage(
   }
 }
 
-export const sendOutgoingMessage = async (
-  ctx: Context<WhatsappAuthValue>,
-  conversation: ConversationEntity,
-  message: MessageEntity,
+export const sendMessage = async (
+  props: SendMessageProps<WhatsappAuthValue>,
 ) => {
+  const {
+    ctx,
+    data: { conversation, message },
+  } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   try {
     for (const whatsappMessage of convertMessageToWhatsappMessage(message)) {
       if (!whatsappMessage) {
-        logger.error("Unable to parse outgoing message", message)
+        logger.error(message, "Unable to parse outgoing message")
         continue
       }
 
       const sendResponse = await whatsappClient.sendMessage(
-        conversation.conversationAttributes.phoneNumberId as string,
-        conversation.sourceId,
+        (conversation.conversationAttributes as { phoneNumberId: string })
+          .phoneNumberId,
+        conversation.sourceId as string,
         whatsappMessage,
       )
 
@@ -96,8 +99,8 @@ export const sendOutgoingMessage = async (
 
       if (serverError?.error) {
         logger.error(
-          `Failed to send message of type ${whatsappMessage._type}`,
           serverError.error,
+          `Failed to send message of type ${whatsappMessage._type}`,
         )
         continue
       }
@@ -105,39 +108,46 @@ export const sendOutgoingMessage = async (
       const messageId = (sendResponse as ServerSentMessageResponse)
         ?.messages?.[0]?.id
       if (messageId) {
-        logger.info("Message sent successfully", {
-          messageId,
-          messageType: whatsappMessage._type,
-        })
+        logger.info(
+          {
+            messageId,
+            messageType: whatsappMessage._type,
+          },
+          "Message sent successfully",
+        )
         continue
       }
 
       logger.warn(
-        `Message of type ${whatsappMessage._type} could not be sent`,
         sendResponse,
+        `Message of type ${whatsappMessage._type} could not be sent`,
       )
     }
   } catch (error) {
-    logger.error("An error occurred while sending the message", error)
+    logger.error(error, "An error occurred while sending the message")
   }
 }
 
 export const sendFlowStep = async (
   props: SendFlowStepProps<WhatsappAuthValue>,
 ) => {
-  const { ctx, conversation, step } = props
+  const {
+    ctx,
+    data: { conversation, step },
+  } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
 
   try {
     for (const whatsappMessage of convertFlowStepToWhatsappMessage(props)) {
       if (!whatsappMessage) {
-        logger.error("Unable to parse outgoing message", step)
+        logger.error(step, "Unable to parse outgoing message")
         continue
       }
 
       const sendResponse = await whatsappClient.sendMessage(
-        conversation.conversationAttributes.phoneNumberId as string,
-        conversation.sourceId,
+        (conversation.conversationAttributes as { phoneNumberId: string })
+          .phoneNumberId,
+        conversation.sourceId as string,
         whatsappMessage,
       )
 
@@ -145,8 +155,8 @@ export const sendFlowStep = async (
 
       if (serverError?.error) {
         logger.error(
-          `Failed to send message of type ${whatsappMessage._type}`,
           serverError.error,
+          `Failed to send message of type ${whatsappMessage._type}`,
         )
         continue
       }
@@ -154,19 +164,22 @@ export const sendFlowStep = async (
       const messageId = (sendResponse as ServerSentMessageResponse)
         ?.messages?.[0]?.id
       if (messageId) {
-        logger.info("Message sent successfully", {
-          messageId,
-          messageType: whatsappMessage._type,
-        })
+        logger.info(
+          {
+            messageId,
+            messageType: whatsappMessage._type,
+          },
+          "Message sent successfully",
+        )
         continue
       }
 
       logger.warn(
-        `Message of type ${whatsappMessage._type} could not be sent`,
         sendResponse,
+        `Message of type ${whatsappMessage._type} could not be sent`,
       )
     }
   } catch (error) {
-    logger.error("An error occurred while sending the message", error)
+    logger.error(error, "An error occurred while sending the message")
   }
 }

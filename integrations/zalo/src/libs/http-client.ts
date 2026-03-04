@@ -41,21 +41,27 @@ export class ZaloHttpClient {
       hooks: {
         beforeRequest: [
           (request) => {
-            logger.debug("Zalo API request", {
-              url: request.url,
-              method: request.method,
-            })
+            logger.debug(
+              {
+                url: request.url,
+                method: request.method,
+              },
+              "Zalo API request",
+            )
           },
         ],
         afterResponse: [
           async (request, _options, response) => {
             if (!response.ok) {
               const errorText = await response.text()
-              logger.error("Zalo API error response", {
-                url: request.url,
-                status: response.status,
-                error: errorText,
-              })
+              logger.error(
+                {
+                  url: request.url,
+                  status: response.status,
+                  error: errorText,
+                },
+                "Zalo API error response",
+              )
 
               throw new ZaloException(
                 `API request failed: ${response.status} ${errorText}`,
@@ -92,7 +98,7 @@ export class ZaloHttpClient {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred"
 
-      logger.error("Zalo HTTP client error", { error: errorMessage })
+      logger.error({ error: errorMessage }, "Zalo HTTP client error")
       throw new ZaloException(`HTTP request failed: ${errorMessage}`)
     }
   }

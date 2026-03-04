@@ -10,15 +10,17 @@ import { convertFacebookButtons } from "./send-button"
 export function* convertFlowStepText(
   props: SendFlowStepProps<MessengerAuthValue, SendTextStepSchema>,
 ): Generator<FacebookMessageAttachment | FacebookMessage> {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   if (step.buttons.length === 0) {
     yield {
       text: step.message,
     }
   } else {
     const buttons = convertFacebookButtons({
-      flowId: props.flowId,
-      flowVersionId: props.flowVersionId,
+      flowId: props.data.flowId,
+      flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,
     })
 

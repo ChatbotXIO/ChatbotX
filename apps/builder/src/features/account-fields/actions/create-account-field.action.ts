@@ -1,17 +1,19 @@
 "use server"
 
-import { FieldType, FolderType, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { fieldModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateAccountFieldRequest,
   createAccountFieldRequest,
-} from "../schemas/create-account-field.schema"
+} from "../schemas/action"
 
 export const createAccountFieldAction = chatbotActionClient
   .inputSchema(createAccountFieldRequest)
@@ -25,20 +27,19 @@ export const createAccountFieldAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       if (parsedInput.folderId) {
-        await ensureFolderIdIsExists(
+        await ensureFolderIsExists(
           parsedInput.folderId,
           chatbotId,
-          FolderType.customField,
+          "customField",
         )
       }
 
-      await prisma.field.create({
-        data: {
-          chatbotId,
-          fieldType: FieldType.accountField,
-          showInInbox: false,
-          ...parsedInput,
-        },
+      await db.insert(fieldModel).values({
+        ...parsedInput,
+        id: createId(),
+        chatbotId,
+        fieldType: "accountField",
+        showInInbox: false,
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#accountFields`)

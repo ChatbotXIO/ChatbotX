@@ -46,7 +46,7 @@ export const GeminiAIManage = (props: GeminiAIManageProps) => {
         )}
       </SettingRow>
 
-      {integrationGemini?.auth && (
+      {integrationGemini?.auth ? (
         <SettingRow
           description={t("gemini.autoReply.description")}
           label={t("gemini.autoReply.label")}
@@ -64,7 +64,7 @@ export const GeminiAIManage = (props: GeminiAIManageProps) => {
             {onPendingGemini && <Loader2Icon className="size-4 animate-spin" />}
           </div>
         </SettingRow>
-      )}
+      ) : null}
     </div>
   )
 }

@@ -1,30 +1,35 @@
-import { BroadcastStatus, prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
+import { broadcastModel } from "@aha.chat/database/schema"
+import type { BroadcastModel } from "@aha.chat/database/types"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 
 export const sendBroadcast = async (broadcastId: string) => {
-  const broadcast = await prisma.broadcast.findFirstOrThrow({
-    where: {
+  const broadcast = await findOrFail<BroadcastModel>(
+    broadcastModel,
+    {
       id: broadcastId,
-      status: BroadcastStatus.scheduled,
+      status: "scheduled",
     },
-  })
+    "Broadcast not found",
+  )
 
-  const contactsOnBroadcasts = await prisma.contactsOnBroadcasts.findMany({
-    where: {
-      broadcastId,
-    },
-  })
+  const contactsOnBroadcasts =
+    await db.query.contactsOnBroadcastsModel.findMany({
+      where: {
+        broadcastId,
+      },
+    })
   if (contactsOnBroadcasts.length === 0) {
     return
   }
 
-  const conversations = await prisma.conversation.findMany({
+  const conversations = await db.query.conversationModel.findMany({
     where: {
       contactId: {
         in: contactsOnBroadcasts.map((cb) => cb.contactId),
       },
     },
-    select: {
+    columns: {
       id: true,
     },
   })

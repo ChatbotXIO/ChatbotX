@@ -1,4 +1,9 @@
-import { prisma } from "@aha.chat/database"
+import { findOrFail } from "@aha.chat/database/client"
+import { conversationModel, flowVersionModel } from "@aha.chat/database/schema"
+import type {
+  ConversationModel,
+  FlowVersionModel,
+} from "@aha.chat/database/types"
 import {
   IntegrationJobAction,
   type IntegrationJobRunRef,
@@ -9,26 +14,25 @@ import { logger } from "../../lib/logger"
 export async function runRef(data: IntegrationJobRunRef["data"]) {
   const { conversationId, ref } = data
 
-  const conversation = await prisma.conversation.findUniqueOrThrow({
-    where: { id: conversationId },
-  })
-
-  if (!conversation) {
-    logger.error(`Conversation not found: ${conversationId}`)
-    return
-  }
+  const conversation = await findOrFail<ConversationModel>(
+    conversationModel,
+    { id: conversationId },
+    "Conversation not found",
+  )
 
   if (ref.startsWith("draft-")) {
-    logger.info(`Draft ref: ${ref}`)
+    logger.debug(`Draft ref: ${ref}`)
     const flowId = ref.replace("draft-", "").trim()
     if (!flowId) {
-      logger.error(`Invalid draft ref: ${ref}`)
+      logger.warn(`Invalid draft ref: ${ref}`)
       return
     }
 
-    const flowVersion = await prisma.flowVersion.findFirstOrThrow({
-      where: { flowId, isDraft: true },
-    })
+    const flowVersion = await findOrFail<FlowVersionModel>(
+      flowVersionModel,
+      { flowId, isDraft: true },
+      "Flow version not found",
+    )
 
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,

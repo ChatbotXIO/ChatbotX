@@ -6,18 +6,14 @@ import {
   queueName,
 } from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
-import { aiLogger, logger } from "../lib/logger"
+import { logger } from "../lib/logger"
 import { processAIFile } from "./handlers/process-ai-file"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 
 const worker = new Worker(
   queueName.aiAgent,
   async (job: Job<AIJobData>) => {
-    aiLogger.info("Worker received job", {
-      id: job.id,
-      name: job.name,
-      type: job.data.type,
-    })
+    logger.info(job.data, `Worker received job: ${job.id}`)
 
     switch (job.data.type) {
       case AIJobAction.processAIFile:
@@ -27,9 +23,7 @@ const worker = new Worker(
         await processPendingEmbedding(job.data.data)
         return
       default:
-        aiLogger.warn("Unknown job type", {
-          type: (job.data as { type?: string }).type,
-        })
+        logger.warn(`Unknown job name: ${job.name}`)
         return
     }
   },
@@ -41,6 +35,6 @@ const worker = new Worker(
 
 worker.on("failed", (job, err) => {
   if (job) {
-    logger.error(`${job.id} has failed`, err)
+    logger.error(err, `Job ${job.id} has failed`)
   }
 })

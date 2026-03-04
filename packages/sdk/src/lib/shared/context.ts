@@ -1,6 +1,6 @@
 import type { Readable } from "node:stream"
 import { z } from "zod"
-import type { BaseAuthValue } from "../auth"
+import type { AuthValue } from "../auth"
 
 export type ContextUploader = {
   putObject(
@@ -20,14 +20,14 @@ export type ChatbotEntity = {
   id: string
 }
 
-export type Context<AO extends BaseAuthValue> = {
+export type Context<AO extends AuthValue> = {
   chatbot?: ChatbotEntity
   uploader?: ContextUploader
   auth: AO
   queue?: ContextQueue
 }
 
-export const contextSchema = z.custom<Context<BaseAuthValue>>(
+export const contextSchema = z.custom<Context<AuthValue>>(
   (data) =>
     typeof data === "object" &&
     data !== null &&

@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { folderModel } from "@aha.chat/database/schema"
+import type { FolderModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -23,18 +25,20 @@ export const editFolderAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: EditFolderSchema
     }) => {
-      const folder = await prisma.folder.findFirstOrThrow({
-        where: {
+      const folder = await findOrFail<FolderModel>(
+        folderModel,
+        {
           chatbotId,
           id,
         },
-      })
+        "Folder not found",
+      )
 
-      await prisma.$transaction(async (tx) => {
-        await tx.folder.update({
-          where: { id },
-          data: parsedInput,
-        })
+      await db.transaction(async (tx) => {
+        await tx
+          .update(folderModel)
+          .set(parsedInput)
+          .where(eq(folderModel.id, folder.id))
 
         revalidateCacheTags([
           `chatbots:${chatbotId}#folders:${folder.folderType}`,

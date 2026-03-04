@@ -8,6 +8,7 @@ import { cn } from "@aha.chat/ui/lib/utils"
 import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { isCommunity } from "@/env"
 import type { ChatbotResource } from "../schemas/resource"
 
 type ChatbotListProps = {
@@ -70,9 +71,10 @@ const ChatbotCard = ({ chatbot }: ChatbotCardProps) => {
 }
 
 const ChatbotList = ({ chatbots }: ChatbotListProps) => (
-  <div className="flex h-screen w-screen justify-start bg-accent px-20">
+  <div className="flex h-screen w-screen justify-start px-20">
     <div className="mt-20 flex flex-wrap gap-6">
-      <CreateChatbotCard />
+      {isCommunity && chatbots.length === 0 && <CreateChatbotCard />}
+
       {chatbots?.map((chatbot) => (
         <ChatbotCard chatbot={chatbot} key={chatbot.id} />
       ))}

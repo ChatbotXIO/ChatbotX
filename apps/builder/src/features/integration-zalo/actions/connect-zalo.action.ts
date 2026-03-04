@@ -1,7 +1,9 @@
-import { IntegrationType, type Prisma, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
+import { inboxModel, integrationZaloModel } from "@aha.chat/database/schema"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
+import { createId } from "@paralleldrive/cuid2"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 
@@ -25,32 +27,35 @@ export async function connectZaloHandler({
     req,
   })) as ZaloAuthValue
 
-  await prisma.$transaction(async (tx) => {
-    const inbox = await tx.inbox.upsert({
-      where: {
-        chatbotId_inboxType_sourceId: {
-          chatbotId,
-          inboxType: IntegrationType.zalo,
-          sourceId: authValue.oaId,
-        },
-      },
-      update: {
-        status: InboxStatus.connected,
-      },
-      create: {
+  await db.transaction(async (tx) => {
+    const inbox = await tx
+      .insert(inboxModel)
+      .values({
+        id: createId(),
         chatbotId,
-        inboxType: IntegrationType.zalo,
+        inboxType: "zalo",
         sourceId: authValue.oaId,
-      },
-    })
-    await tx.integrationZalo.create({
-      data: {
-        inboxId: inbox.id,
-        chatbotId,
-        oaId: authValue.oaId,
-        auth: authValue as unknown as Prisma.InputJsonValue,
-        name: authValue.metadata.oaName,
-      },
+      })
+      .onConflictDoUpdate({
+        target: [
+          inboxModel.chatbotId,
+          inboxModel.inboxType,
+          inboxModel.sourceId,
+        ],
+        set: {
+          status: InboxStatus.connected,
+        },
+      })
+      .returning()
+      .then((result) => result[0])
+
+    await tx.insert(integrationZaloModel).values({
+      id: createId(),
+      inboxId: inbox.id,
+      chatbotId,
+      oaId: authValue.oaId,
+      auth: authValue,
+      name: authValue.metadata.oaName,
     })
   })
 

@@ -1,12 +1,12 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
-import type { UserModel } from "@aha.chat/database/types"
-import { AITriggerException } from "@/features/ai-triggers/schemas/errors.schema"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { aiTriggerModel } from "@aha.chat/database/schema"
+import type { AITriggerModel, UserModel } from "@aha.chat/database/types"
 import {
   type UpdateAITriggerRequest,
   updateAITriggerRequest,
-} from "@/features/ai-triggers/schemas/update.schema"
+} from "@/features/ai-triggers/schemas/action"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -26,34 +26,19 @@ export const updateAITriggerAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAITriggerRequest
     }) => {
-      const existingAITrigger = await prisma.aITrigger.findFirst({
-        select: {
-          id: true,
-        },
-        where: {
-          name: parsedInput.name,
-          chatbotId,
-          id: {
-            not: id,
-          },
-        },
-      })
-
-      if (existingAITrigger) {
-        throw new AITriggerException(
-          `AITrigger with the name "${parsedInput.name}" already exists.`,
-        )
-      }
-
-      await prisma.aITrigger.update({
-        where: {
+      await findOrFail<AITriggerModel>(
+        aiTriggerModel,
+        {
           id,
+          chatbotId,
         },
-        data: {
-          ...parsedInput,
-          questions: parsedInput.questions as Prisma.InputJsonValue[],
-        },
-      })
+        "AITrigger not found",
+      )
+
+      await db
+        .update(aiTriggerModel)
+        .set(parsedInput)
+        .where(eq(aiTriggerModel.id, id))
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
     },

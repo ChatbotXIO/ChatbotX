@@ -38,10 +38,10 @@ const config: IntegrationDefinition<
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {
-    throw new Error("Function not implemented.")
+    throw new Error("Method is not implemented.")
   },
   disconnect(_props: SecretTextAuthValue): Promise<void> {
-    throw new Error("Function not implemented.")
+    throw new Error("Method is not implemented.")
   },
 }
 

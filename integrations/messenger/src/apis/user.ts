@@ -1,4 +1,4 @@
-import type { ContactEntity, Context } from "@aha.chat/sdk"
+import type { Context, IncomingContact } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import { API_URL } from "../constants"
 import { MessengerAPIException } from "../exception"
@@ -12,7 +12,7 @@ export const getUserProfile = async ({
 }: {
   ctx: Context<MessengerAuthValue>
   psid: string
-}): Promise<ContactEntity> => {
+}): Promise<IncomingContact> => {
   try {
     const response = await facebookGraphClient.get<FacebookUserProfile>(
       `${ctx.auth.metadata.version}/${psid}`,
@@ -23,7 +23,7 @@ export const getUserProfile = async ({
       },
     )
 
-    const result: ContactEntity = {
+    const result: IncomingContact = {
       sourceId: psid,
       firstName: response.first_name,
       lastName: response.last_name,
@@ -38,7 +38,7 @@ export const getUserProfile = async ({
 
     return result
   } catch (error) {
-    logger.error("getUserProfile error", error)
+    logger.error(error, "getUserProfile error")
     throw new MessengerAPIException(
       "Failed to fetch user profile",
       `${API_URL}/${ctx.auth.metadata.version}/${psid}`,

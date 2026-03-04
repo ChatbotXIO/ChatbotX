@@ -1,10 +1,17 @@
 "use server"
 
-import { ChatbotMemberRole, type Prisma, prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
+import {
+  chatbotMemberModel,
+  invitationModel,
+  organizationMemberModel,
+} from "@aha.chat/database/schema"
 import type {
   ChatbotMemberNotificationChannels,
   ChatbotMemberNotificationTypes,
+  InvitationModel,
 } from "@aha.chat/database/types"
+import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { BaseException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
@@ -18,16 +25,20 @@ export const acceptInvitationAction = authActionClient
   .action(async ({ ctx, parsedInput }) => {
     const { code } = parsedInput
 
-    const invitation = await prisma.invitation.findUniqueOrThrow({
-      where: { code },
-    })
+    const invitation = await findOrFail<InvitationModel>(
+      invitationModel,
+      {
+        code,
+      },
+      "Invitation not found",
+    )
 
     if (invitation.expiresAt < new Date()) {
       throw new BaseException("Invitation expired")
     }
 
     if (invitation.chatbotId) {
-      const existingMember = await prisma.chatbotMember.findFirst({
+      const existingMember = await db.query.chatbotMemberModel.findFirst({
         where: {
           chatbotId: invitation.chatbotId,
           userId: ctx.user.id,
@@ -37,32 +48,30 @@ export const acceptInvitationAction = authActionClient
         throw new BaseException("You are already a member of this chatbot")
       }
 
-      await prisma.chatbotMember.create({
-        data: {
-          chatbotId: invitation.chatbotId,
-          userId: ctx.user.id,
-          role: ChatbotMemberRole.agent,
-          permissions: invitation.permissions as Prisma.InputJsonValue,
-          notificationTypes: {
-            notifyAdmin: true,
-            newMessageToHuman: true,
-            newOrder: true,
-          } as ChatbotMemberNotificationTypes,
-          notificationChannels: {
-            messenger: true,
-            email: true,
-            telegram: true,
-            browser: true,
-          } as ChatbotMemberNotificationChannels,
-        },
+      await db.insert(chatbotMemberModel).values({
+        id: createId(),
+        chatbotId: invitation.chatbotId,
+        userId: ctx.user.id,
+        role: "agent",
+        permissions: invitation.permissions,
+        notificationTypes: {
+          notifyAdmin: true,
+          newMessageToHuman: true,
+          newOrder: true,
+        } as ChatbotMemberNotificationTypes,
+        notificationChannels: {
+          messenger: true,
+          email: true,
+          telegram: true,
+          browser: true,
+        } as ChatbotMemberNotificationChannels,
       })
     } else {
-      await prisma.organizationMember.create({
-        data: {
-          organizationId: invitation.organizationId,
-          userId: ctx.user.id,
-          role: "member",
-        },
+      await db.insert(organizationMemberModel).values({
+        id: createId(),
+        organizationId: invitation.organizationId,
+        userId: ctx.user.id,
+        role: "member",
       })
     }
   })

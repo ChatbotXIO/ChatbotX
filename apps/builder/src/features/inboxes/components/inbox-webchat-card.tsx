@@ -1,6 +1,5 @@
 "use client"
 
-import { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import Link from "next/link"
@@ -16,7 +15,7 @@ export default function InboxWebchatCard({ inbox }: { inbox: InboxResource }) {
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
         <InboxIcon
           iconClassName="size-5"
-          inboxType={InboxType.webchat}
+          inboxType="webchat"
           label={inbox.integrationWebchat?.name}
           wrapperClassName="flex-2"
         />

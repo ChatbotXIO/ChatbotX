@@ -1,14 +1,19 @@
 "use client"
 
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@aha.chat/ui/components/ui/resizable"
 import { BotIcon, Loader2Icon } from "lucide-react"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
+import { disableBotAction } from "../conversations/actions/disable-bot.action"
 import ConversationList from "../conversations/conversation-list"
 import type { ConversationResource } from "../conversations/schemas/resource"
 import { MessageInput } from "../messages/components/message-input"
@@ -24,16 +29,36 @@ type ChatLayoutProps = {
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
   const { layout = [25, 50, 25] } = props
+  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const {
     conversations,
     isFirstLoadConversation,
     isLoadingConversation,
     activeConversationId,
+    updateConversation,
   } = useChatStore((state) => state)
 
   const [activeConversation, setActiveConversation] =
     useState<ConversationResource | null>(null)
+
+  const { execute: disableBot, isExecuting: isDisablingBot } = useAction(
+    disableBotAction.bind(null, chatbotId),
+    {
+      onSuccess: () => {
+        if (activeConversation) {
+          updateConversation(activeConversation.id, {
+            liveChatEnabled: true,
+          })
+        }
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
+  )
 
   useEffect(() => {
     const selectedConversation = conversations.find(
@@ -66,10 +91,17 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             <div className="flex h-full w-full flex-col">
               <MessageHead />
               {!activeConversation?.liveChatEnabled && (
-                <div className="flex items-center justify-center gap-2 bg-secondary py-1.5 align-center text-sm">
+                <Button
+                  className="rounded-none"
+                  disabled={isDisablingBot}
+                  onClick={() => {
+                    disableBot({ ids: [activeConversation.id] })
+                  }}
+                  variant="secondary"
+                >
                   <BotIcon />
                   {t("messages.botIsActive")}
-                </div>
+                </Button>
               )}
               <MessageList />
               <MessageInput />

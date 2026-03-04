@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export type ContactEntity = {
+export type IncomingContact = {
   sourceId: string
   phoneNumber?: string
   firstName?: string
@@ -10,23 +10,46 @@ export type ContactEntity = {
   gender?: string
 }
 
-export type ConversationEntity = {
-  sourceId: string
-  inboxId?: string
-  conversationAttributes: Record<string, unknown>
-  contact: ContactEntity
+export type OutgoingContact = {
+  id: string
+  sourceId: string | null
+  phoneNumber: string | null
+  firstName: string | null
+  lastName: string | null
+  email: string | null
+  avatar: string | null
+  gender?: string
 }
 
-export const conversationEntitySchema = z.custom<ConversationEntity>(
+export type IncomingConversation = {
+  sourceId: string
+  conversationAttributes: unknown
+  contact: IncomingContact
+}
+
+export type OutgoingConversation = {
+  id: string
+  chatbotId: string
+  conversationAttributes: unknown
+  sourceId: string | null
+  inboxId: string
+  contactId: string
+  contact?: OutgoingContact
+}
+
+export const conversationEntitySchema = z.custom<IncomingConversation>(
   (data) => typeof data === "object",
 )
 
-export type OutgoingMessageEntity = {
+export type OutgoingMessage = {
   chatbotId: string
   conversationId: string
   contentType: ContentType
-  content?: string
-  attachments?: AttachmentEntity[]
+  content: string | null
+  attachments?: OutgoingAttachment[]
+  inboxId: string
+  clientId?: string | null
+  messageType: "outgoing" | "incoming" | "activity"
 }
 
 export const MessageType = {
@@ -35,30 +58,41 @@ export const MessageType = {
 } as const
 export type MessageType = (typeof MessageType)[keyof typeof MessageType]
 
-export type MessageEntity = {
+export type IncomingMessage = {
   sourceId: string
   messageType: MessageType
   contentType: ContentType
   content?: string
   contentAttributes?: MessageLocationEntity | MessageTemplateEntity | unknown
-  attachments?: AttachmentEntity[]
+  attachments?: IncomingAttachment[]
   clientId?: string | null
 }
 
-export const MessageEntitySchema = z.custom<MessageEntity>(
+export const MessageEntitySchema = z.custom<IncomingMessage>(
   (data) => typeof data === "object",
 )
 
-export type AttachmentEntity = {
+export type IncomingAttachment = {
   sourceId: string
   fileType: FileType
   mimeType: string
   originPath: string
   size: number
   url?: string
-  width?: number
-  height?: number
+  width?: number | null
+  height?: number | null
   name?: string
+}
+
+export type OutgoingAttachment = {
+  fileType: FileType
+  mimeType: string
+  originPath: string
+  size: number
+  url?: string
+  width?: number | null
+  height?: number | null
+  name?: string | null
 }
 
 export type ExternalMediaResult = {

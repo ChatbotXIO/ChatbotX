@@ -1,47 +1,42 @@
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { aiTriggerModel } from "@aha.chat/database/schema"
 import type {
   AITriggerCollection,
   ListAITriggersRequest,
-} from "@/features/ai-triggers/schemas/get.schema"
+} from "@/features/ai-triggers/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@/lib/pagination"
 
 export const listAITriggers = async (
   input: ListAITriggersRequest,
 ): Promise<AITriggerCollection> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const where: Prisma.AITriggerWhereInput = {
+  const where = {
     chatbotId: input.chatbotId,
+    name: input.name
+      ? {
+          ilike: `%${input.name.toLowerCase()}%`,
+        }
+      : undefined,
   }
 
-  let orderBy: Record<string, string>[] = []
-  const page = input.page ? input.page - 1 : 1
-  const perPage = input.perPage ? input.perPage : 10
+  const pagination = getPaginationWithDefaults(input)
+  const orderBy = parseOrderByAsObject(aiTriggerModel, input)
 
-  if (input.sort) {
-    orderBy = input.sort.map((sortItem) => ({
-      [sortItem.id]: sortItem.desc ? "desc" : "asc",
-    }))
-  }
-
-  if (input.name) {
-    where.name = {
-      contains: input.name,
-      mode: "insensitive",
-    }
-  }
-
-  const [data, total] = await prisma.$transaction([
-    prisma.aITrigger.findMany({
-      skip: page * perPage,
-      take: perPage,
+  const [data, total] = await Promise.all([
+    db.query.aiTriggerModel.findMany({
       where,
       orderBy,
+      ...pagination,
     }),
-    prisma.aITrigger.count({ where }),
+    db.$count(aiTriggerModel, relationsFilterToSQL(aiTriggerModel, where)),
   ])
 
-  const pageCount = Math.ceil(total / perPage)
+  const pageCount = Math.ceil(total / pagination.limit)
 
   return { data, pageCount }
 }

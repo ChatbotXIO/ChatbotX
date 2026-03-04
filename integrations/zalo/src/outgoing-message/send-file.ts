@@ -7,7 +7,9 @@ import type { MessageTemplate } from "../schemas/webhook"
 export async function* convertFlowStepFile(
   props: SendFlowStepProps<ZaloAuthValue, SendFileStepSchema>,
 ): AsyncGenerator<MessageTemplate> {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   if (!step.url?.trim()) {
     throw new Error("File URL is required")
   }

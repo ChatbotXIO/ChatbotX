@@ -1,6 +1,11 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import {
+  integrationGoogleSheetsModel,
+  integrationModel,
+} from "@aha.chat/database/schema"
+import type { IntegrationGoogleSheetsModel } from "@aha.chat/database/types"
 import {
   type GoogleSheetsAuthValue,
   integration as integrationGoogleSheets,
@@ -20,26 +25,28 @@ export const disconnectGoogleSheets = authActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const googleSheets =
-        await prisma.integrationGoogleSheets.findFirstOrThrow({
-          where: { chatbotId },
-        })
+      const googleSheets = await findOrFail<IntegrationGoogleSheetsModel>(
+        integrationGoogleSheetsModel,
+        {
+          chatbotId,
+        },
+        "Integration Google Sheets not found",
+      )
       try {
         await integrationGoogleSheets.disconnect?.(
           googleSheets.auth as GoogleSheetsAuthValue,
         )
       } catch (e) {
         logger.error(
-          "Unable to disconnect google sheets for chatbot",
-          { chatbotId },
           e,
+          `Unable to disconnect google sheets for chatbot: ${chatbotId}`,
         )
       }
 
-      await prisma.$transaction(async (tx) => {
-        await tx.integration.delete({
-          where: { id: googleSheets.integrationId },
-        })
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(integrationModel)
+          .where(eq(integrationModel.id, googleSheets.integrationId))
       })
       return
     },

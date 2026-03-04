@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@types/node": "^24.10.4",
-    "tslog": "^4.10.2"
+    "pino": "^10.3.1"
   },
   "exports": {
     ".": "./src/index.ts"

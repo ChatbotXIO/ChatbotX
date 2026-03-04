@@ -1,7 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { folderModel } from "@aha.chat/database/schema"
 import type { FolderModel } from "@aha.chat/database/types"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -25,9 +27,9 @@ export const createFolderAction = chatbotActionClient
       parsedInput: CreateFolderSchema
     }) => {
       let paths: string[] = []
-      let parentFolder: FolderModel | null = null
+      let parentFolder: FolderModel | null | undefined = null
       if (parsedInput.parentId) {
-        parentFolder = await prisma.folder.findFirst({
+        parentFolder = await db.query.folderModel.findFirst({
           where: { id: parsedInput.parentId },
         })
         if (!parentFolder) {
@@ -37,12 +39,11 @@ export const createFolderAction = chatbotActionClient
         paths = [...parentFolder.paths, parentFolder.id]
       }
 
-      await prisma.folder.create({
-        data: {
-          ...parsedInput,
-          chatbotId,
-          paths,
-        },
+      await db.insert(folderModel).values({
+        ...parsedInput,
+        id: createId(),
+        chatbotId,
+        paths,
       })
 
       revalidateCacheTags(

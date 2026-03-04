@@ -1,7 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
-import { init } from "@paralleldrive/cuid2"
+import { db } from "@aha.chat/database/client"
+import { invitationModel } from "@aha.chat/database/schema"
+import { createId, init } from "@paralleldrive/cuid2"
 import { addDays } from "date-fns"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
@@ -12,14 +13,17 @@ export const inviteChatbotMemberAction = chatbotActionClient
   .inputSchema(inviteChatbotMemberRequest)
   .action(
     async ({ ctx, parsedInput, bindArgsParsedInputs: [chatbotId] }) =>
-      await prisma.invitation.create({
-        data: {
+      await db
+        .insert(invitationModel)
+        .values({
+          id: createId(),
           code: init({ length: 32 })(),
           permissions: parsedInput.permissions,
           expiresAt: addDays(new Date(), 1),
           chatbotId,
           organizationId: ctx.chatbot.organizationId,
           invitedBy: ctx.user.id,
-        },
-      }),
+        })
+        .returning()
+        .then((result) => result[0]),
   )

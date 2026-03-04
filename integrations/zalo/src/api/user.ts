@@ -1,4 +1,4 @@
-import type { ContactEntity, Context } from "@aha.chat/sdk"
+import type { Context, IncomingContact } from "@aha.chat/sdk"
 import { ZALO_API_ENDPOINTS } from "../constants"
 import { handleZaloError, ZaloException } from "../libs/exception"
 import { ZaloHttpClient } from "../libs/http-client"
@@ -24,7 +24,7 @@ export const getUserProfile = ({
 }: {
   ctx: Context<ZaloAuthValue>
   psid: string
-}): Promise<ContactEntity> =>
+}): Promise<IncomingContact> =>
   handleZaloError("Get user profile", async () => {
     const client = ZaloHttpClient.createAuthenticatedClient(
       ctx.auth.tokens.accessToken,
@@ -39,7 +39,7 @@ export const getUserProfile = ({
       throw new ZaloException(response.message)
     }
 
-    const result: ContactEntity = {
+    const result: IncomingContact = {
       sourceId: psid,
       firstName: response.data?.display_name || "",
       phoneNumber: response.data?.shared_info?.phone || "",

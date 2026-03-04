@@ -1,6 +1,6 @@
 "use client"
 
-import { FolderType, type TagModel } from "@aha.chat/database/types"
+import type { TagModel } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { FolderUpIcon } from "lucide-react"
@@ -35,7 +35,7 @@ export function TagsTableToolbarActions({
           <ChangeFolderDialog
             chatbotId={chatbotId}
             currentFolderId={null}
-            folderType={FolderType.tag}
+            folderType="tag"
             modelIds={table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original.id)}

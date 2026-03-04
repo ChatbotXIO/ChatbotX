@@ -1,6 +1,8 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { integrationGeminiModel } from "@aha.chat/database/schema"
+import type { IntegrationGeminiModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -22,18 +24,15 @@ export const updateGeminiAction = chatbotActionClient
       parsedInput: UpdateGeminiRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationGemini = await prisma.integrationGemini.findFirstOrThrow(
-        {
-          where: { chatbotId },
-        },
+      const integrationGemini = await findOrFail<IntegrationGeminiModel>(
+        integrationGeminiModel,
+        { chatbotId },
+        "Integration Gemini not found",
       )
 
-      await prisma.integrationGemini.update({
-        where: { id: integrationGemini.id },
-        data: {
-          ...parsedInput,
-        },
-      })
-      return
+      await db
+        .update(integrationGeminiModel)
+        .set(parsedInput)
+        .where(eq(integrationGeminiModel.id, integrationGemini.id))
     },
   )

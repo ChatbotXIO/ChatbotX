@@ -1,6 +1,5 @@
 "use client"
 
-import { CustomFieldType } from "@aha.chat/database/types"
 import { FieldOperationType } from "@aha.chat/flow-config"
 import {
   DatePickerField,
@@ -133,23 +132,23 @@ export default function AddContactCustomFieldDialog({
             <div className="flex flex-col gap-2">
               <Label>{t("fields.value.label")}</Label>
 
-              {selectedCustomFieldType === CustomFieldType.longText && (
+              {selectedCustomFieldType === "longText" && (
                 <TextareaField name="value" />
               )}
 
-              {selectedCustomFieldType === CustomFieldType.shortText && (
+              {selectedCustomFieldType === "shortText" && (
                 <InputField name="value" />
               )}
 
-              {selectedCustomFieldType === CustomFieldType.number && (
+              {selectedCustomFieldType === "number" && (
                 <InputField name="value" type="number" />
               )}
 
-              {selectedCustomFieldType === CustomFieldType.date && (
+              {selectedCustomFieldType === "date" && (
                 <DatePickerField name="value" />
               )}
 
-              {selectedCustomFieldType === CustomFieldType.datetime && (
+              {selectedCustomFieldType === "datetime" && (
                 <DateTimePickerField name="value" />
               )}
             </div>

@@ -1,11 +1,12 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
+import { aiTriggerModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type CreateAITriggerRequest,
   createAITriggerRequest,
-} from "@/features/ai-triggers/schemas/create.schema"
-import { AITriggerException } from "@/features/ai-triggers/schemas/errors.schema"
+} from "@/features/ai-triggers/schemas/action"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -24,28 +25,10 @@ export const createAITriggerAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateAITriggerRequest
     }) => {
-      const existingAITrigger = await prisma.aITrigger.findFirst({
-        select: {
-          id: true,
-        },
-        where: {
-          name: parsedInput.name,
-          chatbotId,
-        },
-      })
-
-      if (existingAITrigger) {
-        throw new AITriggerException(
-          `AI Trigger with the name "${parsedInput.name}" already exists.`,
-        )
-      }
-
-      await prisma.aITrigger.create({
-        data: {
-          ...parsedInput,
-          questions: parsedInput.questions as Prisma.InputJsonValue[],
-          chatbotId,
-        },
+      await db.insert(aiTriggerModel).values({
+        ...parsedInput,
+        chatbotId,
+        id: createId(),
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)

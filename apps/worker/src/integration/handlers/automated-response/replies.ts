@@ -1,5 +1,6 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import { ReplyType } from "@aha.chat/database/types"
+import type { OutgoingConversation } from "@aha.chat/sdk"
 import {
   ChatJobAction,
   chatQueue,
@@ -9,14 +10,11 @@ import {
 import { streamText, type ToolSet, tool } from "ai"
 import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
+import { isRecord } from "../../../lib/utils"
 import { TEXT } from "./constants"
 import { summarizeToolResult } from "./summarizer"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
 
 type ParsedAIAgentProvider = {
   provider: string
@@ -85,13 +83,13 @@ async function replaceCustomFieldAttributes(
   conversationId: string,
 ): Promise<string> {
   try {
-    const conversation = await prisma.conversation.findFirst({
+    const conversation = await db.query.conversationModel.findFirst({
       where: { id: conversationId },
-      include: {
+      with: {
         contact: {
-          include: {
+          with: {
             contactCustomFields: {
-              include: {
+              with: {
                 customField: true,
               },
             },
@@ -134,7 +132,7 @@ async function listAllEnabledAutomatedResponses({
   chatbotId: string
 }) {
   try {
-    return await prisma.automatedResponse.findMany({
+    return await db.query.automatedResponseModel.findMany({
       where: { chatbotId, status: true },
     })
   } catch {
@@ -144,12 +142,14 @@ async function listAllEnabledAutomatedResponses({
 
 export async function replyByAutomatedResponse({
   message,
+  conversation,
 }: {
   message: {
     content?: string | null
     conversationId: string
     chatbotId: string
   }
+  conversation: OutgoingConversation
 }): Promise<boolean> {
   try {
     let replied = false
@@ -182,7 +182,7 @@ export async function replyByAutomatedResponse({
             await chatQueue.add(ChatJobAction.sendChatMessage, {
               type: ChatJobAction.sendChatMessage,
               data: {
-                conversationId: message.conversationId,
+                conversation,
                 text: stepMessage,
               },
             })
@@ -190,16 +190,16 @@ export async function replyByAutomatedResponse({
             break
           }
           case ReplyType.Flow: {
-            const flow = await prisma.flow.findFirst({
+            const flow = await db.query.flowModel.findFirst({
               where: { id: reply.flowId },
-              include: {
+              with: {
                 flowVersions: {
                   where: {
                     isDraft: false,
                     isLatest: true,
                   },
-                  orderBy: { createdAt: "desc" },
-                  take: 1,
+                  orderBy: (table, { desc }) => [desc(table.createdAt)],
+                  limit: 1,
                 },
               },
             })
@@ -222,11 +222,14 @@ export async function replyByAutomatedResponse({
     }
     return replied
   } catch (error) {
-    logger.error("[automated-response] replyByAutomatedResponse failed", {
-      error,
-      conversationId: message.conversationId,
-      chatbotId: message.chatbotId,
-    })
+    logger.error(
+      {
+        error,
+        conversationId: message.conversationId,
+        chatbotId: message.chatbotId,
+      },
+      "[automated-response] replyByAutomatedResponse failed",
+    )
     return false
   }
 }
@@ -306,7 +309,7 @@ async function runAIReply(
 
     const { messageCount } = await processStreamingText(
       result.textStream,
-      message.conversationId,
+      props.conversation,
       { sendParts: true },
     )
 
@@ -336,7 +339,7 @@ async function runAIReply(
 
       const { messageCount: followUpCount } = await processStreamingText(
         followUpResult.textStream,
-        message.conversationId,
+        props.conversation,
         { sendParts: true },
       )
 
@@ -347,18 +350,21 @@ async function runAIReply(
 
     const fallbackText = buildFallbackTextFromTools(toolExecutions)
     if (fallbackText) {
-      await sendMessageWithRender(message.conversationId, fallbackText)
+      await sendMessageWithRender(props.conversation, fallbackText)
       return true
     }
 
     return false
   } catch (error) {
-    logger.error("[automated-response] runAIReply failed", {
-      error,
-      provider,
-      conversationId: message.conversationId,
-      chatbotId: message.chatbotId,
-    })
+    logger.error(
+      {
+        error,
+        provider,
+        conversationId: message.conversationId,
+        chatbotId: message.chatbotId,
+      },
+      "[automated-response] runAIReply failed",
+    )
     return false
   } finally {
     clearTimeout(timeoutId)
@@ -402,14 +408,17 @@ function wrapToolsWithLogging(
           ctx.onToolResult?.(toolName, result, options.toolCallId)
           return result
         } catch (error) {
-          logger.error("[automated-response] tool failed", {
-            toolName,
-            provider: ctx.provider,
-            conversationId: ctx.conversationId,
-            chatbotId: ctx.chatbotId,
-            ms: Date.now() - startedAt,
-            error,
-          })
+          logger.error(
+            {
+              toolName,
+              provider: ctx.provider,
+              conversationId: ctx.conversationId,
+              chatbotId: ctx.chatbotId,
+              ms: Date.now() - startedAt,
+              error,
+            },
+            "[automated-response] tool failed",
+          )
           throw error
         }
       },

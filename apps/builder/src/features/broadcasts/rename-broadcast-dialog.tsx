@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateBroadcastAction } from "./actions/update-broadcast.action"
-import { updateBroadcastSchema } from "./schemas/update-broadcast-schema"
+import { updateBroadcastSchema } from "./schemas/action"
 
 export function RenameBroadcastDialog({
   broadcast,

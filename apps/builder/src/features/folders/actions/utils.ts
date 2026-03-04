@@ -1,23 +1,19 @@
-import { type FolderType, prisma } from "@aha.chat/database"
-import { FolderException } from "../schemas/resource"
+import { findOrFail } from "@aha.chat/database/client"
+import { folderModel } from "@aha.chat/database/schema"
+import type { FolderModel, FolderType } from "@aha.chat/database/types"
 
-export const ensureFolderIdIsExists = async (
+export const ensureFolderIsExists = async (
   id: string,
   chatbotId: string,
   folderType: FolderType,
 ) => {
-  const existingFolder = await prisma.folder.findFirst({
-    select: {
-      id: true,
-    },
-    where: {
+  await findOrFail<FolderModel>(
+    folderModel,
+    {
       chatbotId,
       id,
       folderType,
     },
-  })
-
-  if (!existingFolder) {
-    throw new FolderException("Folder does not exists.")
-  }
+    "Folder does not exists.",
+  )
 }

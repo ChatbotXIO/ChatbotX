@@ -10,11 +10,9 @@ export default async function WhatsappMessageTemplatePage({
 }) {
   const { chatbotId, id } = await params
 
-  const integrationWhatsapp = await findIntegrationWhatsapp({
-    where: { chatbotId, id },
-  })
+  const integrationWhatsapp = await findIntegrationWhatsapp({ chatbotId, id })
 
-  const urls = getUrls(integrationWhatsapp.auth as unknown as WhatsappAuthValue)
+  const urls = getUrls(integrationWhatsapp.auth as WhatsappAuthValue)
 
   return <WhatsappUsefulLinks urls={urls} />
 }

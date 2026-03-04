@@ -1,43 +1,62 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, findOrFail } from "@aha.chat/database/client"
+import {
+  invitationModel,
+  organizationModel,
+  userModel,
+} from "@aha.chat/database/schema"
+import type {
+  ChatbotModel,
+  InvitationModel,
+  OrganizationModel,
+  UserModel,
+} from "@aha.chat/database/types"
 import { BaseException } from "@/lib/errors/exception"
 
 export async function findInvitation({ code }: { code: string }) {
-  const invitation = await prisma.invitation.findUniqueOrThrow({
-    where: {
-      code,
+  const invitation = await findOrFail<InvitationModel>(
+    invitationModel,
+    {
+      where: {
+        code,
+      },
     },
-  })
+    "Invitation not found",
+  )
   if (invitation.expiresAt < new Date()) {
     throw new BaseException("Invitation expired")
   }
 
-  const user = await prisma.user.findUnique({
-    where: {
-      id: invitation.invitedBy,
+  const user = await findOrFail<UserModel>(
+    userModel,
+    {
+      where: {
+        id: invitation.invitedBy,
+      },
     },
-  })
-  if (!user) {
-    throw new BaseException("User not found")
-  }
+    "User not found",
+  )
 
-  const chatbot = invitation.chatbotId
-    ? await prisma.chatbot.findUnique({
+  let chatbot: ChatbotModel | null = null
+  if (invitation.chatbotId) {
+    chatbot =
+      (await db.query.chatbotModel.findFirst({
         where: {
           id: invitation.chatbotId,
         },
-      })
-    : null
-
-  const organization = await prisma.organization.findUnique({
-    where: {
-      id: invitation.organizationId,
-    },
-  })
-  if (!organization) {
-    throw new BaseException("Organization not found")
+      })) ?? null
   }
+
+  const organization = await findOrFail<OrganizationModel>(
+    organizationModel,
+    {
+      where: {
+        id: invitation.organizationId,
+      },
+    },
+    "Organization not found",
+  )
 
   return {
     invitation,

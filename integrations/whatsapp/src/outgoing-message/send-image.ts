@@ -18,7 +18,9 @@ import { MAX_BUTTONS } from "./shared"
 export function* convertFlowStepImage(
   props: SendFlowStepProps<WhatsappAuthValue, SendImageStepSchema>,
 ) {
-  const { step } = props
+  const {
+    data: { step },
+  } = props
   if (step.buttons.length === 0) {
     yield new Image(step.url)
   } else {
@@ -27,8 +29,8 @@ export function* convertFlowStepImage(
     for (const c1 of chunks) {
       const buttons = c1.map((button) => {
         const buttonId = encodeButtonPayload({
-          flowId: props.flowId,
-          flowVersionId: props.flowVersionId,
+          flowId: props.data.flowId,
+          flowVersionId: props.data.flowVersionId,
           buttonId: button.id,
         })
         return new Button(buttonId, button.label)

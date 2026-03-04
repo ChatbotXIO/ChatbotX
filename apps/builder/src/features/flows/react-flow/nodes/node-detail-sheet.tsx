@@ -67,7 +67,7 @@ export const NodeDetailSheetContent = memo(
           <NodeNameEditor activeNode={activeNode} />
         </SheetTitle>
         <SheetDescription />
-        <div className="flex flex-1 flex-col gap-4 overflow-hidden p-5">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
           <NodeEditor
             nodeDetails={activeNode.data.details}
             nodeId={activeNode.id}

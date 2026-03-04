@@ -28,11 +28,11 @@ import { use, useMemo, useState } from "react"
 import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
 import { DeleteAIFileDialog } from "./delete-ai-file-dialog"
-import type { getAIFiles } from "./queries"
+import type { listAIFiles } from "./queries"
 import type { AIFileWithProcessing } from "./schemas"
 
 type AIFilesTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof getAIFiles>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listAIFiles>>]>
 }
 
 function RowActionCell({ aiFile }: { aiFile: AIFileWithProcessing }) {
