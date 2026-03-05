@@ -10,7 +10,7 @@ import {
   parseOrderByAsObject,
 } from "@/lib/pagination"
 
-export async function getAIAgents(
+export async function listAIAgents(
   input: ListAIAgentsRequest,
 ): Promise<PaginatedResponse<AIAgentModel>> {
   const where = {

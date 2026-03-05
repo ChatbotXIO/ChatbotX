@@ -1,22 +1,20 @@
-import type { AIAgentModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
-import {
-  createSearchParamsCache,
-  parseAsInteger,
-  parseAsString,
-} from "nuqs/server"
+import z from "zod"
+import { aiAgentResourceSchema } from "./resource"
 
-export const listAIAgentRequest = createSearchParamsCache({
-  page: parseAsInteger.withDefault(1),
-  perPage: parseAsInteger.withDefault(10),
-  sort: getSortingStateParser<AIAgentModel>().withDefault([
-    { id: "createdAt", desc: true },
-  ]),
-  name: parseAsString.withDefault(""),
+export const listAIAgentsRequest = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  perPage: z.coerce.number().int().min(1).default(10),
+  sort: z
+    .array(z.object({ id: z.string(), desc: z.boolean() }))
+    .default([{ id: "createdAt", desc: true }]),
+  name: z.string().optional(),
 })
 
-export type ListAIAgentsRequest = Awaited<
-  ReturnType<typeof listAIAgentRequest.parse>
-> & {
+export type ListAIAgentsRequest = z.infer<typeof listAIAgentsRequest> & {
   chatbotId: string
 }
+
+export const listAIAgentsResponse = z.object({
+  data: z.array(aiAgentResourceSchema),
+  pageCount: z.number().int().min(1),
+})

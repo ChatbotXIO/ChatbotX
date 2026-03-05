@@ -16,6 +16,8 @@ import {
   vector,
 } from "drizzle-orm/pg-core"
 
+export * from "drizzle-orm/zod"
+
 export const logType = pgEnum("LogType", ["error", "audit"])
 export const customFieldType = pgEnum("CustomFieldType", [
   "shortText",
@@ -1824,4 +1826,15 @@ export const whatsappMessageTemplateModel = pgTable("WhatsappMessageTemplate", {
   language: text().notNull(),
   category: text().notNull(),
   status: text().notNull(),
+})
+
+export const jwkModel = pgTable("jwks", {
+  id: text().primaryKey(),
+  publicKey: text().notNull(),
+  privateKey: text().notNull(),
+  createdAt: timestamp({
+    precision: 6,
+    withTimezone: true,
+  }).notNull(),
+  expiresAt: timestamp({ precision: 6, withTimezone: true }),
 })

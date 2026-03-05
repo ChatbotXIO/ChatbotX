@@ -6,8 +6,8 @@ import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
-import type { getAIAgents } from "@/features/ai-agents/actions/list.action"
 import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
+import type { listAIAgents } from "@/features/ai-agents/queries"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
 import type { listAIFiles } from "../ai-files/queries"
 import type { listAIFunctions } from "../ai-functions/queries"
@@ -20,7 +20,7 @@ import {
 } from "./table-columns"
 
 type AIAgentsTableProps = {
-  listPromises: Promise<[Awaited<ReturnType<typeof getAIAgents>>]>
+  listPromises: Promise<[Awaited<ReturnType<typeof listAIAgents>>]>
   createPromises: Promise<
     [
       Awaited<ReturnType<typeof listAIFiles>>,

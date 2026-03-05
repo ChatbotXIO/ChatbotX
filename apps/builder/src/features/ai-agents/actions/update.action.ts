@@ -5,7 +5,7 @@ import { aiAgentModel } from "@aha.chat/database/schema"
 import {
   type UpdateAIAgentRequest,
   updateAIAgentRequest,
-} from "@/features/ai-agents/schemas/request"
+} from "@/features/ai-agents/schemas/action"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
