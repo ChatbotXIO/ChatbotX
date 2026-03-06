@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@clickhouse/client": "^1.11.0",
     "@t3-oss/env-nextjs": "^0.13.10",
     "drizzle-cuid2": "^2.2.0",
     "drizzle-orm": "1.0.0-beta.15-859cf75",
@@ -21,6 +22,8 @@
     "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
     "migrate": "dotenv -e ../../.env -- drizzle-kit migrate",
+    "clickhouse:migrate": "dotenv -e ../../.env -- tsx src/clickhouse/run.ts",
+    "clickhouse:refresh": "dotenv -e ../../.env -v CLICKHOUSE_MIGRATIONS_FORCE=1 -- tsx src/clickhouse/run.ts",
     "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:setup": "pnpm migrate && pnpm db:seed",
@@ -34,6 +37,6 @@
     "./enums": "./src/enums.ts",
     "./schema": "./src/drizzle/schema/index.ts",
     "./errors": "./src/errors.ts",
-    "./utils": "./src/utils.ts"
+    "./clickhouse/client": "./src/clickhouse/client.ts"
   }
 }

@@ -7,29 +7,26 @@ import {
 import type { AnalyticsJobData } from "@aha.chat/worker-config"
 import { logger } from "../../lib/logger"
 
-let isBotMessageRunning: Date | null = null
-const expirationTime = 30 * 60 * 1000
+const runningJobs = new Map<string, Date>()
+const EXPIRATION_MS = 30 * 60 * 1000
 
-export const syncBotMessage = async (data: AnalyticsJobData) => {
+export const syncEvents = async (data: AnalyticsJobData) => {
+  const eventType = data.data.type
   const now = new Date()
+  const lastRun = runningJobs.get(eventType)
 
-  if (
-    isBotMessageRunning &&
-    now.getTime() - isBotMessageRunning.getTime() < expirationTime
-  ) {
-    logger.info("Sync bot message is running")
+  if (lastRun && now.getTime() - lastRun.getTime() < EXPIRATION_MS) {
+    logger.info(`Sync ${eventType} is already running`)
     return
   }
 
-  isBotMessageRunning = now
+  runningJobs.set(eventType, now)
 
   try {
-    const eventType = data.data.type
-
     const cfg = getAnalyticsConfig(eventType)
 
     if (!cfg) {
-      logger.error("Analytics config not found", { eventType })
+      logger.error(`[syncEvents] Analytics config not found for: ${eventType}`)
       return
     }
 
@@ -40,20 +37,20 @@ export const syncBotMessage = async (data: AnalyticsJobData) => {
 
     const uploader = new NdjsonS3Uploader(cfg.uploader)
     const cleaner = new NdjsonCleaner({ rootPath: cfg.uploader.rootPath })
-    const maxAgeMs = cfg.finalize.maxAgeMs
 
     const results = await Promise.allSettled([
-      finalizer.finalizeTmpFiles(maxAgeMs),
+      finalizer.finalizeTmpFiles(cfg.finalize.maxAgeMs),
       uploader.uploadReadyFiles(),
       cleaner.cleanupEmptyDirs(),
+      cleaner.cleanupUploadedFiles(),
     ])
 
-    results.forEach((result, index) => {
+    for (const result of results) {
       if (result.status === "rejected") {
-        logger.error(`Task ${index} failed`, result.reason)
+        logger.error(result.reason, `[syncEvents:${eventType}] Task failed`)
       }
-    })
+    }
   } finally {
-    isBotMessageRunning = null
+    runningJobs.delete(eventType)
   }
 }

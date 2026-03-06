@@ -48,6 +48,10 @@ export async function countContacts(
 ): Promise<{ total: number }> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
+  if (!input.keyword) {
+    return getTotalContactsFromStats(input.chatbotId)
+  }
+
   const where = generateWhere(input)
 
   const total = await db.$count(
@@ -55,6 +59,29 @@ export async function countContacts(
     relationsFilterToSQL(contactModel, where),
   )
   return { total }
+}
+
+async function getTotalContactsFromStats(
+  chatbotId: string,
+): Promise<{ total: number }> {
+  try {
+    const inboxes = await db.query.inboxModel.findMany({
+      where: { chatbotId },
+      with: {
+        contactStats: true,
+      },
+    })
+
+    const total = inboxes.reduce(
+      (sum, inbox) => sum + (inbox.contactStats?.totalContacts ?? 0),
+      0,
+    )
+
+    return { total }
+  } catch (error) {
+    console.error("Error getting total contacts from stats:", error)
+    return { total: 0 }
+  }
 }
 
 const generateWhere = (input: ListContactsRequest & { chatbotId: string }) => {

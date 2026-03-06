@@ -361,6 +361,7 @@ export const relations = defineRelations(schema, (r) => ({
     integrationZalo: r.one.integrationZaloModel(),
     messages: r.many.messageModel(),
     integrationWhatsapp: r.one.integrationWhatsappModel(),
+    contactStats: r.one.inboxContactStatsModel(),
   },
   conversationParticipantModel: {
     chatbot: r.one.chatbotModel({
@@ -661,6 +662,12 @@ export const relations = defineRelations(schema, (r) => ({
     webhook: r.one.webhookModel({
       from: r.conditionModel.webhookId,
       to: r.webhookModel.id,
+    }),
+  },
+  inboxContactStatsModel: {
+    inbox: r.one.inboxModel({
+      from: r.inboxContactStatsModel.inboxId,
+      to: r.inboxModel.id,
     }),
   },
 }))

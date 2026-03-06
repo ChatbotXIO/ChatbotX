@@ -1,13 +1,13 @@
 import { contactTrackingService, query } from "@aha.chat/analytics"
-import { prisma } from "@aha.chat/database"
-import type { ScheduleJobReconcileContactEvents } from "@aha.chat/worker-config"
+import { and, db, eq, gte, lt } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
 import { logger } from "../../lib/logger"
 
 const BATCH_SIZE = 1000
 
-export const reconcileContactEvents = async (
-  job: ScheduleJobReconcileContactEvents,
-) => {
+export const reconcileContactEvents = async (job: {
+  data: { chatbotId: string; fromDate: string; toDate: string }
+}) => {
   const { chatbotId, fromDate, toDate } = job.data
 
   logger.info(
@@ -42,31 +42,29 @@ export const reconcileContactEvents = async (
     `Found ${existingIds.size} existing contacts in ClickHouse for the time range`,
   )
 
-  let skip = 0
+  let offset = 0
   let reconciledCount = 0
 
   while (true) {
-    const contacts = await prisma.contact.findMany({
-      where: {
-        chatbotId,
-        createdAt: {
-          gte: from,
-          lt: to,
-        },
-      },
-      select: {
-        id: true,
-        chatbotId: true,
-        createdAt: true,
-        source: true,
-        sourceId: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-      skip,
-      take: BATCH_SIZE,
-    })
+    const contacts = await db
+      .select({
+        id: contactModel.id,
+        chatbotId: contactModel.chatbotId,
+        createdAt: contactModel.createdAt,
+        source: contactModel.source,
+        sourceId: contactModel.sourceId,
+      })
+      .from(contactModel)
+      .where(
+        and(
+          eq(contactModel.chatbotId, chatbotId),
+          gte(contactModel.createdAt, from),
+          lt(contactModel.createdAt, to),
+        ),
+      )
+      .orderBy(contactModel.createdAt)
+      .limit(BATCH_SIZE)
+      .offset(offset)
 
     if (contacts.length === 0) {
       break
@@ -94,13 +92,13 @@ export const reconcileContactEvents = async (
         )
       } catch (error) {
         logger.error(
-          `Failed to reconcile contacts for chatbot ${chatbotId}`,
           error,
+          `Failed to reconcile contacts for chatbot ${chatbotId}`,
         )
       }
     }
 
-    skip += BATCH_SIZE
+    offset += BATCH_SIZE
 
     await new Promise((resolve) => setTimeout(resolve, 100))
   }

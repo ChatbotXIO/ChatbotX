@@ -1,3 +1,4 @@
+import { contactTrackingService } from "@aha.chat/analytics"
 import { db } from "@aha.chat/database/client"
 import type { IntegrationJobTriggerAutomatedResponse } from "@aha.chat/worker-config"
 import type { ModelMessage } from "ai"
@@ -32,6 +33,22 @@ export async function triggerAutomatedResponse(
       },
     })
 
+    return
+  }
+
+  if (await replyByAutomatedResponse(props)) {
+    await trackBotResponse({
+      chatbotId: message.chatbotId,
+      conversationId: message.conversationId,
+      messageId,
+      hasResponse: true,
+      responseType: "automated_response",
+      routeType: "FLOW",
+      result: "success",
+      aiProvider: "none",
+      startTime,
+    })
+    await trackBotMessageOutAsContactEvent(message)
     return
   }
 
@@ -105,6 +122,7 @@ export async function triggerAutomatedResponse(
       aiProvider: "openai",
       startTime,
     })
+    await trackBotMessageOutAsContactEvent(message)
     return
   }
   if (
@@ -131,6 +149,7 @@ export async function triggerAutomatedResponse(
       aiProvider: "gemini",
       startTime,
     })
+    await trackBotMessageOutAsContactEvent(message)
     return
   }
 
@@ -150,4 +169,36 @@ export async function triggerAutomatedResponse(
     },
     startTime,
   })
+}
+
+async function trackBotMessageOutAsContactEvent(
+  message: IntegrationJobTriggerAutomatedResponse["data"]["message"],
+) {
+  try {
+    const conversation = await db.query.conversationModel.findFirst({
+      where: { id: message.conversationId },
+      with: {
+        contact: { columns: { sourceId: true, source: true } },
+        inbox: { columns: { inboxType: true } },
+      },
+    })
+
+    if (conversation?.contact?.sourceId) {
+      await contactTrackingService.trackEvent({
+        chatbotId: message.chatbotId,
+        contactId: conversation.contact.sourceId,
+        eventType: "contact_message_out",
+        senderType: "bot",
+        occurredAt: new Date(),
+        source: conversation.contact.source ?? undefined,
+        sourceId: conversation.contact.sourceId,
+        channel: conversation.inbox?.inboxType ?? undefined,
+      })
+    }
+  } catch (error) {
+    console.error(
+      "[triggerAutomatedResponse] Failed to track bot contact_message_out",
+      error,
+    )
+  }
 }

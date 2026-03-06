@@ -1,4 +1,3 @@
-export * from "./analytics-manifest.service"
 export * from "./base.service"
 export * from "./bot-message-analytics.service"
 export * from "./bot-message-tracking.service"

@@ -1,5 +1,7 @@
 export * from "./bootstrap"
+export * from "./bot-message-events-spooler"
 export * from "./contact-events-spooler"
+export * from "./conversation-events-spooler"
 export * from "./events-config"
 export * from "./ndjson-spooler-registry"
 export * from "./time-series"

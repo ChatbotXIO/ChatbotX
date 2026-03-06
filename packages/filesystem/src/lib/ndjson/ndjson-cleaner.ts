@@ -36,6 +36,48 @@ export class NdjsonCleaner {
     }
   }
 
+  async cleanupUploadedFiles(maxAgeMs = 24 * 60 * 60 * 1000): Promise<void> {
+    const uploadedDir = path.join(this.config.rootPath, "uploaded")
+    await this.deleteOldFiles(uploadedDir, maxAgeMs)
+  }
+
+  private async deleteOldFiles(dir: string, maxAgeMs: number): Promise<void> {
+    let entries: fs.Dirent[]
+    try {
+      entries = await readdir(dir, { withFileTypes: true })
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        console.error(
+          `[NdjsonCleaner] Error scanning uploaded dir ${dir}`,
+          error,
+        )
+      }
+      return
+    }
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await this.deleteOldFiles(fullPath, maxAgeMs)
+        continue
+      }
+
+      try {
+        const st = await stat(fullPath)
+        if (Date.now() - st.mtimeMs >= maxAgeMs) {
+          await rm(fullPath)
+        }
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+          console.error(
+            `[NdjsonCleaner] Failed to remove uploaded file ${fullPath}`,
+            error,
+          )
+        }
+      }
+    }
+  }
+
   private async scanAndCleanup(
     dir: string,
     maxAgeMs: number,

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { createClient } from "@clickhouse/client"
-import { command, ping } from "../client"
+import { command, ping } from "./client"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -86,8 +86,7 @@ async function runMigrations() {
       .filter((s) => s.length > 0),
   )
 
-  const migrationsDir =
-    process.env.CLICKHOUSE_MIGRATIONS_DIR || join(__dirname, "./clickhouse")
+  const migrationsDir = process.env.CLICKHOUSE_MIGRATIONS_DIR || __dirname
 
   if (!statSync(migrationsDir, { throwIfNoEntry: false })?.isDirectory()) {
     console.error(`Migrations directory not found: ${migrationsDir}`)

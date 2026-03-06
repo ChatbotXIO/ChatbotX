@@ -12,6 +12,7 @@ export const AnalyticsJobData = {
   syncBotMessage: "sync-bot-message",
   ingestContactEvents: "ingest-contact-events",
   ingestBotMessageEvents: "ingest-bot-message-events",
+  ingestConversationEvents: "ingest-conversation-events",
 } as const
 
 export type AnalyticsJob = {
@@ -21,8 +22,9 @@ export type AnalyticsJob = {
     | typeof AnalyticsJobData.syncBotMessage
     | typeof AnalyticsJobData.ingestContactEvents
     | typeof AnalyticsJobData.ingestBotMessageEvents
+    | typeof AnalyticsJobData.ingestConversationEvents
   data: {
-    type: "contact_events" | "bot_message_events"
+    type: "contact_events" | "bot_message_events" | "conversation_events"
   }
 }
 

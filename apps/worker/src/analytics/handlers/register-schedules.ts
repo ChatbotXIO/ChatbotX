@@ -1,6 +1,7 @@
 import {
   BOT_MESSAGE_EVENTS_EVENT_TYPE,
   CONTACT_EVENTS_EVENT_TYPE,
+  CONVERSATION_EVENTS_EVENT_TYPE,
 } from "@aha.chat/analytics"
 import { AnalyticsJobData, analyticsQueue } from "@aha.chat/worker-config"
 import { Queue } from "bullmq"
@@ -66,6 +67,38 @@ export const registerSchedules = async () => {
           type: AnalyticsJobData.ingestBotMessageEvents,
           data: {
             type: BOT_MESSAGE_EVENTS_EVENT_TYPE,
+          },
+        },
+      },
+    )
+
+    await analyticsQueue.upsertJobScheduler(
+      AnalyticsJobData.syncConversation,
+      {
+        every: 10_000,
+      },
+      {
+        name: AnalyticsJobData.syncConversation,
+        data: {
+          type: AnalyticsJobData.syncConversation,
+          data: {
+            type: CONVERSATION_EVENTS_EVENT_TYPE,
+          },
+        },
+      },
+    )
+
+    await analyticsQueue.upsertJobScheduler(
+      AnalyticsJobData.ingestConversationEvents,
+      {
+        every: 10_000,
+      },
+      {
+        name: AnalyticsJobData.ingestConversationEvents,
+        data: {
+          type: AnalyticsJobData.ingestConversationEvents,
+          data: {
+            type: CONVERSATION_EVENTS_EVENT_TYPE,
           },
         },
       },

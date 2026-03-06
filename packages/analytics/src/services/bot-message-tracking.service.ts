@@ -22,6 +22,7 @@ export class BotMessageTrackingService extends BaseService {
       occurred_at: Math.floor(event.occurredAt.getTime() / 1000),
       has_response: event.hasResponse ? 1 : 0,
       response_type: event.responseType,
+      route_type: event.routeType || "",
       result: event.result || "",
       ai_provider: event.aiProvider,
       channel: event.channel || null,

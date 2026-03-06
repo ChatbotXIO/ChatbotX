@@ -2,7 +2,7 @@ import {
   command as executeCommand,
   insert as executeInsert,
   query as executeQuery,
-} from "../client"
+} from "@aha.chat/database/clickhouse/client"
 
 export abstract class BaseRepository {
   protected query<T>(
@@ -30,9 +30,20 @@ export abstract class BaseRepository {
     field: string,
     from: Date,
     to: Date,
+    columnType: "Date" | "DateTime" = "DateTime",
   ): { sql: string; params: Record<string, number> } {
     const fromTimestamp = Math.floor(from.getTime() / 1000)
     const toTimestamp = Math.floor(to.getTime() / 1000)
+
+    if (columnType === "Date") {
+      return {
+        sql: `${field} >= toDate(toDateTime({from:UInt32}, 'UTC')) AND ${field} < toDate(toDateTime({to:UInt32}, 'UTC'))`,
+        params: {
+          from: fromTimestamp,
+          to: toTimestamp,
+        },
+      }
+    }
 
     return {
       sql: `${field} >= {from:UInt32} AND ${field} < {to:UInt32}`,

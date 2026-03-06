@@ -4,7 +4,10 @@ import { DonutChart } from "@/components/charts/donut-chart"
 import { RadarChart } from "@/components/charts/radar-chart"
 import AnalysisFilterForm from "@/features/analysis/filter-form"
 import { AnalysisStoreProvider } from "@/features/analysis/provider/analysis-store-context"
+import { BotMessagesAIProvidersTable } from "@/features/analytics/components/bot-messages-ai-providers-table"
 import { BotMessagesByResultChart } from "@/features/analytics/components/bot-messages-by-result-chart"
+import { BotMessagesNoResponseChart } from "@/features/analytics/components/bot-messages-no-response-chart"
+import { BotMessagesWithResponseChart } from "@/features/analytics/components/bot-messages-with-response-chart"
 import { ContactsByChannelChart } from "@/features/analytics/components/contacts-by-channel-chart"
 import { ContactsByCountryChart } from "@/features/analytics/components/contacts-by-country-chart"
 import { ContactsBySourceChart } from "@/features/analytics/components/contacts-by-source-chart"
@@ -202,6 +205,9 @@ export default async function Dashboard({
         <ChatbotMemberAnalysis />
         <div className="grid grid-cols-2 gap-4">
           <BotMessagesByResultChart chatbotId={chatbotId} />
+          <BotMessagesWithResponseChart chatbotId={chatbotId} />
+          <BotMessagesNoResponseChart chatbotId={chatbotId} />
+          <BotMessagesAIProvidersTable chatbotId={chatbotId} />
           <MessagesBySenderChart chatbotId={chatbotId} />
           <ConversationsMovedChart chatbotId={chatbotId} />
           <DonutChart

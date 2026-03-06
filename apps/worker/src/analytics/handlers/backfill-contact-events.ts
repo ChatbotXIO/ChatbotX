@@ -1,17 +1,14 @@
 import { contactTrackingService } from "@aha.chat/analytics"
-import { prisma } from "@aha.chat/database"
-import type { ScheduleJobBackfillContactEvents } from "@aha.chat/worker-config"
+import { db } from "@aha.chat/database/client"
 import { logger } from "../../lib/logger"
 
 const BATCH_SIZE = 1000
 
-export const backfillContactEvents = async (
-  _job: ScheduleJobBackfillContactEvents,
-) => {
+export const backfillContactEvents = async () => {
   logger.info("Starting backfill of contact events to ClickHouse")
 
-  const chatbots = await prisma.chatbot.findMany({
-    select: { id: true },
+  const chatbots = await db.query.chatbotModel.findMany({
+    columns: { id: true },
   })
 
   logger.info(`Found ${chatbots.length} chatbots to process`)
@@ -21,22 +18,24 @@ export const backfillContactEvents = async (
     let processedCount = 0
 
     while (true) {
-      const contacts = await prisma.contact.findMany({
-        where: {
-          chatbotId: chatbot.id,
-        },
-        select: {
+      const contacts = await db.query.contactModel.findMany({
+        where: { chatbotId: chatbot.id },
+        columns: {
           id: true,
           chatbotId: true,
           createdAt: true,
           source: true,
           sourceId: true,
         },
-        orderBy: {
-          createdAt: "asc",
+        with: {
+          conversation: {
+            columns: {},
+            with: { inbox: { columns: { inboxType: true } } },
+          },
         },
-        skip,
-        take: BATCH_SIZE,
+        orderBy: { createdAt: "asc" },
+        offset: skip,
+        limit: BATCH_SIZE,
       })
 
       if (contacts.length === 0) {
@@ -52,6 +51,7 @@ export const backfillContactEvents = async (
           occurredAt: contact.createdAt,
           source: contact.source,
           sourceId: contact.sourceId as string,
+          channel: contact.conversation?.inbox?.inboxType || "",
         }))
 
       try {
@@ -62,8 +62,8 @@ export const backfillContactEvents = async (
         )
       } catch (error) {
         logger.error(
-          `Failed to backfill contacts for chatbot ${chatbot.id}`,
           error,
+          `Failed to backfill contacts for chatbot ${chatbot.id}`,
         )
       }
 

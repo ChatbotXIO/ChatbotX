@@ -119,21 +119,30 @@ export class ContactStatsRepository extends BaseRepository {
       "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
     const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
 
     const sql = `
       SELECT
         chatbot_id,
-        toStartOfMonth(day) as month,
+        month,
         event_type,
-        sum(countMerge(event_count_state)) as count,
-        sum(uniqMerge(unique_contacts_state)) as unique_contacts
-      FROM contact_stats_daily
-      WHERE chatbot_id = {chatbotId:String}
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
-        ${eventTypeFilter}
+        sum(count) as count,
+        sum(unique_contacts) as unique_contacts
+      FROM (
+        SELECT
+          chatbot_id,
+          toStartOfMonth(day) as month,
+          event_type,
+          countMerge(event_count_state) as count,
+          uniqMerge(unique_contacts_state) as unique_contacts
+        FROM contact_stats_daily
+        WHERE chatbot_id = {chatbotId:String}
+          AND ${timeFilter.sql}
+          ${eventTypeFilter}
+        GROUP BY chatbot_id, day, event_type
+      )
       GROUP BY chatbot_id, month, event_type
       ORDER BY month ASC, event_type ASC
     `
@@ -177,6 +186,7 @@ export class ContactStatsRepository extends BaseRepository {
       "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
     const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
 
@@ -189,8 +199,7 @@ export class ContactStatsRepository extends BaseRepository {
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contact_stats_daily
       WHERE chatbot_id = {chatbotId:String}
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        AND ${timeFilter.sql}
         ${eventTypeFilter}
       GROUP BY chatbot_id, day, event_type
       ORDER BY day ASC, event_type ASC
@@ -230,6 +239,7 @@ export class ContactStatsRepository extends BaseRepository {
       "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
 
     const baselineSql = `
@@ -379,6 +389,7 @@ export class ContactStatsRepository extends BaseRepository {
       "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
 
     const baselineSql = `
@@ -508,15 +519,16 @@ export class ContactStatsRepository extends BaseRepository {
     timeRange: TimeRange,
   ): Promise<number> {
     const timeFilter = this.buildTimestampFilter(
-      "occurred_at",
+      "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
 
     const sql = `
       SELECT
-        uniq(contact_id) AS new_contacts
-      FROM contact_events
+        uniqMerge(unique_contacts_state) AS new_contacts
+      FROM contact_stats_daily
       WHERE chatbot_id = {chatbotId:String}
         AND ${timeFilter.sql}
         AND event_type = 'contact_created'
@@ -537,6 +549,13 @@ export class ContactStatsRepository extends BaseRepository {
     timeRange: TimeRange,
     dimension: "country" | "channel",
   ): Promise<ContactsByDimension[]> {
+    const timeFilter = this.buildTimestampFilter(
+      "day",
+      timeRange.from,
+      timeRange.to,
+      "Date",
+    )
+
     const sql = `
       SELECT
         ${dimension} as dimension,
@@ -544,14 +563,10 @@ export class ContactStatsRepository extends BaseRepository {
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contacts_by_${dimension}_daily
       WHERE chatbot_id = {chatbotId:String}
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        AND ${timeFilter.sql}
       GROUP BY dimension
       ORDER BY count DESC
     `
-
-    const fromTimestamp = Math.floor(timeRange.from.getTime() / 1000)
-    const toTimestamp = Math.floor(timeRange.to.getTime() / 1000)
 
     const result = await this.query<{
       dimension: string
@@ -559,8 +574,7 @@ export class ContactStatsRepository extends BaseRepository {
       unique_contacts: string
     }>(sql, {
       chatbotId,
-      from: fromTimestamp,
-      to: toTimestamp,
+      ...timeFilter.params,
     })
 
     return result.map((row) => ({
@@ -581,6 +595,13 @@ export class ContactStatsRepository extends BaseRepository {
     chatbotId: string,
     timeRange: TimeRange,
   ): Promise<ContactsByDimension[]> {
+    const timeFilter = this.buildTimestampFilter(
+      "day",
+      timeRange.from,
+      timeRange.to,
+      "Date",
+    )
+
     const sql = `
       SELECT
         channel as dimension,
@@ -588,14 +609,10 @@ export class ContactStatsRepository extends BaseRepository {
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contacts_by_channel_daily
       WHERE chatbot_id = {chatbotId:String}
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        AND ${timeFilter.sql}
       GROUP BY channel
       ORDER BY count DESC
     `
-
-    const fromTimestamp = Math.floor(timeRange.from.getTime() / 1000)
-    const toTimestamp = Math.floor(timeRange.to.getTime() / 1000)
 
     const result = await this.query<{
       dimension: string
@@ -603,8 +620,7 @@ export class ContactStatsRepository extends BaseRepository {
       unique_contacts: string
     }>(sql, {
       chatbotId,
-      from: fromTimestamp,
-      to: toTimestamp,
+      ...timeFilter.params,
     })
 
     return result.map((row) => ({
@@ -622,6 +638,7 @@ export class ContactStatsRepository extends BaseRepository {
       "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
 
     const sql = `
@@ -629,8 +646,7 @@ export class ContactStatsRepository extends BaseRepository {
         uniqMerge(active_contacts_state) as active_contacts
       FROM active_contacts_daily
       WHERE chatbot_id = {chatbotId:String}
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        AND ${timeFilter.sql}
     `
 
     const result = await this.query<{ active_contacts: string }>(sql, {
@@ -646,21 +662,20 @@ export class ContactStatsRepository extends BaseRepository {
     timeRange: TimeRange,
   ): Promise<ContactsByDimension[]> {
     const timeFilter = this.buildTimestampFilter(
-      "occurred_at",
+      "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
 
     const sql = `
       SELECT
         source as dimension,
-        count() as count,
-        uniq(contact_id) as unique_contacts
-      FROM contact_events
+        countMerge(event_count_state) as count,
+        uniqMerge(unique_contacts_state) as unique_contacts
+      FROM contacts_by_source_daily
       WHERE chatbot_id = {chatbotId:String}
         AND ${timeFilter.sql}
-        AND source != ''
-        AND event_type = 'contact_created'
       GROUP BY source
       ORDER BY count DESC
     `
@@ -695,8 +710,12 @@ export class ContactStatsRepository extends BaseRepository {
     const table = "contact_stats_daily"
     const timeColumn = "day"
 
-    const fromTimestamp = Math.floor(timeRange.from.getTime() / 1000)
-    const toTimestamp = Math.floor(timeRange.to.getTime() / 1000)
+    const timeFilter = this.buildTimestampFilter(
+      "day",
+      timeRange.from,
+      timeRange.to,
+      "Date",
+    )
 
     const sql = `
       SELECT
@@ -707,8 +726,7 @@ export class ContactStatsRepository extends BaseRepository {
         countMerge(event_count_state) as count
       FROM ${table}
       WHERE chatbot_id = {chatbotId:String}
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        AND ${timeFilter.sql}
         AND event_type = 'contact_message_out'
         AND sender_type != ''
       GROUP BY chatbot_id, ${timeColumn}, channel, sender_type
@@ -723,8 +741,7 @@ export class ContactStatsRepository extends BaseRepository {
       count: string
     }>(sql, {
       chatbotId,
-      from: fromTimestamp,
-      to: toTimestamp,
+      ...timeFilter.params,
     })
 
     return result.map((row) => ({

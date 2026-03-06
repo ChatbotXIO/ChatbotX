@@ -6,8 +6,12 @@ export class ConversationStatsRepository extends BaseRepository {
     chatbotId: string,
     timeRange: TimeRange,
   ): Promise<ConversationHandoffStats[]> {
-    const fromTimestamp = Math.floor(timeRange.from.getTime() / 1000)
-    const toTimestamp = Math.floor(timeRange.to.getTime() / 1000)
+    const timeFilter = this.buildTimestampFilter(
+      "day",
+      timeRange.from,
+      timeRange.to,
+      "Date",
+    )
 
     const sql = `
       SELECT
@@ -17,8 +21,7 @@ export class ConversationStatsRepository extends BaseRepository {
         countMerge(handoff_count_state) as count
       FROM conversation_handoffs_daily
       WHERE chatbot_id = {chatbotId:String}
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        AND ${timeFilter.sql}
       GROUP BY chatbot_id, day, direction
       ORDER BY day ASC, direction ASC
     `
@@ -30,8 +33,7 @@ export class ConversationStatsRepository extends BaseRepository {
       count: string
     }>(sql, {
       chatbotId,
-      from: fromTimestamp,
-      to: toTimestamp,
+      ...timeFilter.params,
     })
 
     return result.map((row) => ({

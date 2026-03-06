@@ -1,46 +1,48 @@
 import { clickhouseEventWriter } from "./clickhouse-event-writer"
 
 export interface EventRow {
-  event_id: string
+  channel: string | null
   chatbot_id: string
   contact_id: string
+  country: string | null
+  event_id: string
   event_type: string
+  inserted_at: number
+  metadata: string | null
   occurred_at: number
+  sender_type: string
   source: string | null
   source_id: string | null
-  channel: string | null
-  country: string | null
-  metadata: string | null
-  inserted_at: number
 }
 
 export interface BotMessageEventRow {
-  event_id: string
-  chatbot_id: string
-  message_id: string
-  conversation_id: string
-  occurred_at: number
-  has_response: number
-  response_type: string
-  result: string
   ai_provider: string
   channel: string | null
-  source: string | null
-  metadata: string | null
+  chatbot_id: string
+  conversation_id: string
+  event_id: string
+  has_response: number
   inserted_at: number
+  message_id: string
+  metadata: string | null
+  occurred_at: number
+  response_type: string
+  result: string
+  route_type: string
+  source: string | null
 }
 
 export interface ConversationEventRow {
-  event_id: string
+  channel: string
   chatbot_id: string
   conversation_id: string
+  event_id: string
   event_type: string
-  occurred_at: number
   from_assignee: string
-  to_assignee: string
-  channel: string
-  metadata: string
   inserted_at: number
+  metadata: string
+  occurred_at: number
+  to_assignee: string
 }
 
 export interface EventWriter {

@@ -825,6 +825,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@clickhouse/client':
+        specifier: ^1.11.0
+        version: 1.18.1
       '@t3-oss/env-nextjs':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)

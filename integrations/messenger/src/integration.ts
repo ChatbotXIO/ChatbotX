@@ -26,6 +26,7 @@ const config: IntegrationDefinition<
       message: {
         receiveMessage,
         sendMessage,
+        receiveMessage,
       },
       conversation: {
         sendTyping,

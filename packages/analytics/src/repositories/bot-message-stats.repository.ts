@@ -32,21 +32,31 @@ export class BotMessageStatsRepository extends BaseRepository {
       "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
 
     const sql = `
       SELECT
         chatbot_id,
-        toStartOfMonth(day) as month,
+        month,
         result,
         response_type,
         ai_provider,
-        sum(countMerge(event_count_state)) as count
-      FROM bot_messages_daily
-      WHERE chatbot_id = {chatbotId:String}
-        AND result != ''
-        AND day >= toDate(toDateTime({from:UInt32}, 'UTC'))
-        AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+        sum(count) as count
+      FROM (
+        SELECT
+          chatbot_id,
+          toStartOfMonth(day) as month,
+          result,
+          response_type,
+          ai_provider,
+          countMerge(event_count_state) as count
+        FROM bot_messages_daily
+        WHERE chatbot_id = {chatbotId:String}
+          AND result != ''
+          AND ${timeFilter.sql}
+        GROUP BY chatbot_id, day, result, response_type, ai_provider
+      )
       GROUP BY chatbot_id, month, result, response_type, ai_provider
       ORDER BY month ASC, result ASC
     `
@@ -186,6 +196,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       timeColumn,
       timeRange.from,
       timeRange.to,
+      granularity === "day" ? "Date" : "DateTime",
     )
 
     const sql = `
@@ -233,6 +244,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       timeColumn,
       timeRange.from,
       timeRange.to,
+      granularity === "day" ? "Date" : "DateTime",
     )
 
     const sql = `
@@ -280,18 +292,25 @@ export class BotMessageStatsRepository extends BaseRepository {
       "day",
       timeRange.from,
       timeRange.to,
+      "Date",
     )
 
     const sql = `
       SELECT
         ai_provider,
-        sum(countMerge(event_count_state)) as count
-      FROM bot_messages_daily
-      WHERE chatbot_id = {chatbotId:String}
-        AND has_response = 1
-        AND response_type = 'ai_agent'
-        AND ai_provider != 'none'
-        AND ${timeFilter.sql}
+        sum(count) as count
+      FROM (
+        SELECT
+          ai_provider,
+          countMerge(event_count_state) as count
+        FROM bot_messages_daily
+        WHERE chatbot_id = {chatbotId:String}
+          AND has_response = 1
+          AND response_type = 'ai_agent'
+          AND ai_provider != 'none'
+          AND ${timeFilter.sql}
+        GROUP BY day, ai_provider
+      )
       GROUP BY ai_provider
       ORDER BY count DESC
     `

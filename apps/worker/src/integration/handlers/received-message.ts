@@ -90,6 +90,7 @@ export const receiveMessage = async (
         sourceId: conversation.contact.sourceId,
       },
     })
+    console.log({ newContact })
 
     let isNewContact = false
     if (!newContact) {
@@ -247,6 +248,38 @@ export const receiveMessage = async (
     } catch (error) {
       console.error("Failed to emit contactCreated event:", error)
     }
+    contactTrackingService
+      .trackEvent({
+        chatbotId,
+        contactId: conversation.contact.sourceId,
+        eventType: "contact_created",
+        occurredAt: result.message.createdAt,
+        source: integrationType,
+        sourceId: conversation.contact.sourceId,
+        channel: inbox.inboxType,
+      })
+      .catch((error) => {
+        logger.error(error, "[receiveMessage] Failed to track contact_created")
+      })
+  }
+
+  if (conversation.contact.sourceId) {
+    contactTrackingService
+      .trackEvent({
+        chatbotId,
+        contactId: conversation.contact.sourceId,
+        eventType: "contact_message_in",
+        occurredAt: result.message.createdAt,
+        source: integrationType,
+        sourceId: conversation.contact.sourceId,
+        channel: inbox.inboxType,
+      })
+      .catch((error) => {
+        logger.error(
+          error,
+          "[receiveMessage] Failed to track contact_message_in",
+        )
+      })
   }
 
   if (postbackAction) {
