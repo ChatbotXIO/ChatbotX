@@ -1,7 +1,8 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { TagCollection, TagResource } from "../schemas/resource"
+import type { ListTagsResponse } from "../schemas/query"
+import type { TagResource } from "../schemas/resource"
 
 export type TagState = {
   loading: boolean
@@ -63,7 +64,7 @@ export const createTagStore = (props: Partial<TagState>) =>
           active: "true",
         })
         const { data } = await ky
-          .get<TagCollection>(
+          .get<ListTagsResponse>(
             `/api/chatbots/${chatbotId}/tags?${searchParams.toString()}`,
           )
           .json()

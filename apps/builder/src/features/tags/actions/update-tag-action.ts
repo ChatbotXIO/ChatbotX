@@ -6,7 +6,6 @@ import type { UserModel } from "@aha.chat/database/types"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { TagException } from "../schemas/error"
 import {
   type UpdateTagBindSchema,
   type UpdateTagSchema,
@@ -42,7 +41,7 @@ export const updateTagAction = authActionClient
         },
       })
       if (existingTag) {
-        throw new TagException(
+        throw new Error(
           `Tag with the name "${parsedInput.name}" already exists.`,
         )
       }

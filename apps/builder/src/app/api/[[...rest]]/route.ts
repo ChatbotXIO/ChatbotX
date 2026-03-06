@@ -26,13 +26,17 @@ const openAPIHandler = new OpenAPIHandler(router, {
         commonSchemas: {
           UndefinedError: { error: "UndefinedError" },
         },
-        security: [],
-        // security: [{ bearerAuth: [] }],
+        security: [{ bearerAuth: [] }, { chatbotToken: [] }],
         components: {
           securitySchemes: {
             bearerAuth: {
               type: "http",
               scheme: "bearer",
+            },
+            chatbotToken: {
+              type: "apiKey",
+              in: "header",
+              name: "X-CHATBOT-TOKEN",
             },
           },
         },
@@ -42,6 +46,9 @@ const openAPIHandler = new OpenAPIHandler(router, {
           securitySchemes: {
             bearerAuth: {
               token: "default-token",
+            },
+            chatbotToken: {
+              token: "default-chatbot-token",
             },
           },
         },

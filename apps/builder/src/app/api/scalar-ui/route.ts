@@ -20,6 +20,9 @@ export async function GET() {
                 bearerAuth: {
                   token: 'default-token',
                 },
+                chatbotToken: {
+                  token: 'default-chatbot-token',
+                },
               },
             },
           })

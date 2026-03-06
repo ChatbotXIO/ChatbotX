@@ -1,3 +1,4 @@
+import { contactModel, createSelectSchema } from "@aha.chat/database/schema"
 import type {
   ContactCustomFieldModel,
   ContactModel,
@@ -13,6 +14,8 @@ import type { LucideIcon } from "lucide-react"
 import { BaseException } from "@/lib/errors/exception"
 
 export class ContactException extends BaseException {}
+
+export const contactResource = createSelectSchema(contactModel)
 
 export type ContactResource = ContactModel & {
   contactCustomFields?: ContactCustomFieldModel[]

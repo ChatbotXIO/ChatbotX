@@ -1,5 +1,6 @@
 "use client"
 
+import type { ContactCustomFieldModel } from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -73,7 +74,9 @@ export const ContactDetail = () => {
           },
         ]
 
-        for (const cc of conversation?.contact.contactCustomFields || []) {
+        // TODO: get contact custom fields from conversation
+        for (const cc of [] as ContactCustomFieldModel[]) {
+          // for (const cc of conversation?.contact.contactCustomFields || []) {
           const targetCustomField = customFields.find(
             (c) => c.id === cc.customFieldId,
           )

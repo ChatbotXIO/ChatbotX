@@ -1,4 +1,5 @@
 import z from "zod"
+import { chatbotAuthMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listAIAgents } from "../queries"
 import { listAIAgentsRequest, listAIAgentsResponse } from "../schemas/query"
@@ -10,13 +11,8 @@ const listAIAgentsAPI = authorizedAPI
     summary: "List AI agents",
     tags: ["AI"],
   })
-  .input(
-    z
-      .object({
-        chatbotId: z.string(),
-      })
-      .and(listAIAgentsRequest),
-  )
+  .input(listAIAgentsRequest.and(z.object({ chatbotId: z.string() })))
+  .use(chatbotAuthMiddleware, (input) => input.chatbotId)
   .output(listAIAgentsResponse)
   .handler(async ({ input }) => {
     return await listAIAgents(input)

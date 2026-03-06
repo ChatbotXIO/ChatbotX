@@ -1,4 +1,5 @@
 import { asc, desc, type PgTable, type SQL } from "@aha.chat/database/client"
+import z from "zod"
 
 type PaginationInput = {
   page?: number | null
@@ -16,6 +17,12 @@ export const defaultPagination = {
   limit: 20,
   offset: 0,
 }
+
+export const basePaginationRequest = z.object({
+  page: z.coerce.number().int().min(1).nullish(),
+  perPage: z.coerce.number().int().min(1).nullish(),
+  sort: z.array(z.object({ id: z.string(), desc: z.boolean() })),
+})
 
 export const parsePagination = (
   input: PaginationInput,

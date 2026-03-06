@@ -42,7 +42,7 @@ import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
 import type {
   InboxTeamMemberResource,
   InboxTeamResource,
-} from "./schemas/types"
+} from "./schemas/resource"
 
 type ListInboxTeamsProps = {
   chatbotId: string

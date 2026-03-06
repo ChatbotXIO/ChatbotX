@@ -3,10 +3,11 @@ import { rootFolderId } from "@aha.chat/database/enums"
 import { contactsToTagsModel, tagModel } from "@aha.chat/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
-import type { GetTagsSchema } from "../schemas/get-tags-schema"
-import type { TagCollection } from "../schemas/resource"
+import type { ListTagsRequest, ListTagsResponse } from "../schemas/query"
 
-export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
+export async function listTags(
+  input: ListTagsRequest & { chatbotId: string },
+): Promise<ListTagsResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const where = {

@@ -1,6 +1,6 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { InboxTeamResource } from "@/enterprise/features/inbox-teams/schemas/types"
+import type { InboxTeamResource } from "@/enterprise/features/inbox-teams/schemas/resource"
 import type {
   ChatbotMemberCollection,
   ChatbotMemberResource,

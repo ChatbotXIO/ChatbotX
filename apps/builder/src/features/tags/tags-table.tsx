@@ -11,13 +11,13 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
-import type { getTags } from "./queries"
+import type { listTags } from "./queries"
 import { getTagColumns } from "./tags-table-columns"
 import { TagsTableToolbarActions } from "./tags-table-toolbar-actions"
 import { UpdateTagDialog } from "./update-tag-dialog"
 
 type TagsTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof getTags>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listTags>>]>
   chatbotId: string
 }
 

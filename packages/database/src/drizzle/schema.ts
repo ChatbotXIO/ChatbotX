@@ -66,15 +66,6 @@ export const inboxType = pgEnum("InboxType", [
   "whatsapp",
   "zalo",
 ])
-export const integrationType = pgEnum("IntegrationType", [
-  "webchat",
-  "googleSheets",
-  "messenger",
-  "openai",
-  "gemini",
-  "whatsapp",
-  "zalo",
-])
 export const aiEmbeddingStatus = pgEnum("AIEmbeddingStatus", [
   "pending",
   "success",
@@ -529,6 +520,7 @@ export const chatbotModel = pgTable("Chatbot", {
       name: "Chatbot_organizationId_fkey",
     }),
   plan: text().default("free").notNull(),
+  token: text(),
 })
 
 export const chatbotMemberModel = pgTable("ChatbotMember", {
@@ -745,7 +737,7 @@ export const conversationModel = pgTable(
     archivedAt: timestamp({ precision: 3 }),
     inboxType: inboxType().notNull().default("webchat"),
     sourceId: text(),
-    conversationAttributes: jsonb(),
+    conversationAttributes: jsonb().$type<{ [x: string]: unknown }>(),
     contactLastSeenAt: timestamp({ precision: 3 }),
     agentLastSeenAt: timestamp({ precision: 3 }),
     lastActivityAt: timestamp({ precision: 3 }).defaultNow().notNull(),
@@ -1110,12 +1102,17 @@ export const integrationModel = pgTable(
         onUpdate: "cascade",
         name: "Integration_chatbotId_fkey",
       }),
-    integrationType: integrationType().notNull(),
+    integrationType: text().notNull(),
   },
   (table) => [
     index("Integration_chatbotId_idx").using(
       "btree",
       table.chatbotId.asc().nullsLast().op("text_ops"),
+    ),
+    index("Integration_chatbotId_integrationType_key").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.integrationType.asc().nullsLast().op("text_ops"),
     ),
   ],
 )
@@ -1562,7 +1559,7 @@ export const messageModel = pgTable(
         name: "Message_chatbotId_fkey",
       }),
     content: text(),
-    contentAttributes: jsonb(),
+    contentAttributes: jsonb().$type<{ [x: string]: unknown }>(),
     messageType: messageType().notNull(),
     contentType: contentType().notNull(),
     senderType: senderType().notNull(),

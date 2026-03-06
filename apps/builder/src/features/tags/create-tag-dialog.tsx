@@ -23,7 +23,7 @@ import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createTagAction } from "./actions/create-tag-action"
-import { createTagSchema } from "./schemas/create-tag-schema"
+import { createTagRequest } from "./schemas/action"
 
 type CreateTagDialogProps = {
   chatbotId: string
@@ -41,7 +41,7 @@ export const CreateTagDialog = ({
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
       createTagAction.bind(null, chatbotId),
-      zodResolver(createTagSchema),
+      zodResolver(createTagRequest),
       {
         actionProps: {
           onSuccess: () => {

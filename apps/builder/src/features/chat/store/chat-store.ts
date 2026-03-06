@@ -5,8 +5,10 @@ import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
 import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type {
-  ConversationCollection,
   ConversationResource,
+  FindConversationResponse,
+  ListConversationItemResource,
+  ListConversationsResponse,
 } from "@/features/conversations/schemas/resource"
 import type {
   MessageCollection,
@@ -25,7 +27,7 @@ export type ConversationFilters = {
 export type ChatState = {
   // conversation list
   isFirstLoadConversation: boolean
-  conversations: ConversationResource[]
+  conversations: ListConversationsResponse["data"]
   nextCursorConversation: string | null
   isLoadingConversation: boolean
   activeConversationId: string | null
@@ -41,7 +43,7 @@ export type ChatState = {
 
 export type ChatActions = {
   // Conversation actions
-  prependConversation: (newConversation: ConversationResource) => void
+  prependConversation: (newConversation: ListConversationItemResource) => void
   loadMoreConversations: (chatbotId: string) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
   updateConversation: (
@@ -90,7 +92,7 @@ export const createChatStore = () => {
     isLoadMoreMessage: false,
     hasNextMessagePage: true,
 
-    prependConversation: (newConversation: ConversationResource) =>
+    prependConversation: (newConversation: ListConversationItemResource) =>
       set((state) => ({
         conversations: [newConversation, ...state.conversations],
       })),
@@ -116,7 +118,7 @@ export const createChatStore = () => {
         ...filters,
       }
       const { data: newConversations, nextCursor } = await ky
-        .post<ConversationCollection>(
+        .post<ListConversationsResponse>(
           `/api/chatbots/${chatbotId}/conversations/list`,
           { json: searchParams },
         )
@@ -272,7 +274,7 @@ export const createChatStore = () => {
     },
 
     updateConversationViaMessage: async (message: MessageResource) => {
-      const { conversations, activeConversationId, prependConversation } = get()
+      const { conversations, prependConversation } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.id === message.conversationId,
       )
@@ -285,14 +287,6 @@ export const createChatStore = () => {
         // Update the latest message
         conversation.messages = [message]
 
-        // Handle unread count
-        if (conversation.id !== activeConversationId) {
-          if (!conversation._count) {
-            conversation._count = { messages: 1 }
-          }
-          conversation._count.messages = (conversation._count.messages || 0) + 1
-        }
-
         // Remove conversation from current position
         updatedConversations.splice(conversationIndex, 1)
 
@@ -301,7 +295,7 @@ export const createChatStore = () => {
       } else {
         // New conversation, we'll need basic details
         const newConversation = await ky
-          .get<{ data: ConversationResource }>(
+          .get<FindConversationResponse>(
             `/api/chatbots/${message.chatbotId}/conversations/${message.conversationId}`,
           )
           .json()

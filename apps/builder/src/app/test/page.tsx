@@ -16,8 +16,8 @@ export default function TestPage() {
 
   return (
     <div>
-      <div>Token: {token}</div>
       <div>Error: {JSON.stringify(error)}</div>
+      <div>Token: {token}</div>
     </div>
   )
 }

@@ -12,14 +12,10 @@ import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import {
-  type CreateTagSchema,
-  createTagSchema,
-} from "../schemas/create-tag-schema"
-import { TagException } from "../schemas/error"
+import { type CreateTagRequest, createTagRequest } from "../schemas/action"
 
 export const createTagAction = authActionClient
-  .inputSchema(createTagSchema)
+  .inputSchema(createTagRequest)
   .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
@@ -28,36 +24,51 @@ export const createTagAction = authActionClient
       bindArgsParsedInputs: [chatbotId],
     }: {
       ctx: { user: UserModel }
-      parsedInput: CreateTagSchema
+      parsedInput: CreateTagRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      const existingTag = await db.query.tagModel.findFirst({
-        columns: {
-          id: true,
-        },
-        where: {
-          name: parsedInput.name,
-          chatbotId,
-        },
-      })
-      if (existingTag) {
-        throw new TagException(
-          `Tag with the name "${parsedInput.name}" already exists.`,
-        )
-      }
-
-      if (parsedInput.folderId) {
-        await ensureFolderIsExists(parsedInput.folderId, chatbotId, "tag")
-      }
-
-      await db.insert(tagModel).values({
-        ...parsedInput,
-        id: createId(),
-        chatbotId,
-      })
-
-      revalidateCacheTags(`chatbots:${chatbotId}#tags`)
+      return await createTag({ chatbotId, ...parsedInput })
     },
   )
+
+export const createTag = async (
+  parsedInput: CreateTagRequest & { chatbotId: string },
+) => {
+  const existingTag = await db.query.tagModel.findFirst({
+    columns: {
+      id: true,
+    },
+    where: {
+      name: parsedInput.name,
+      chatbotId: parsedInput.chatbotId,
+    },
+  })
+  if (existingTag) {
+    throw new Error(`Tag with the name "${parsedInput.name}" already exists.`)
+  }
+
+  if (parsedInput.folderId) {
+    await ensureFolderIsExists(
+      parsedInput.folderId,
+      parsedInput.chatbotId,
+      "tag",
+    )
+  }
+
+  const newTag = await db
+    .insert(tagModel)
+    .values({
+      ...parsedInput,
+      id: createId(),
+    })
+    .returning()
+    .then((result) => result[0])
+
+  revalidateCacheTags(`chatbots:${parsedInput.chatbotId}#tags`)
+
+  return {
+    data: newTag,
+  }
+}

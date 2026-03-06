@@ -1,7 +1,9 @@
-import type { AttachmentModel } from "@aha.chat/database/types"
+import { attachmentModel, createSelectSchema } from "@aha.chat/database/schema"
+import type z from "zod"
 import { logger } from "@/lib/log"
 
-export type AttachmentResource = AttachmentModel
+export const attachmentResource = createSelectSchema(attachmentModel)
+export type AttachmentResource = z.infer<typeof attachmentResource>
 
 export function getAttachmentUrl(attachment: AttachmentResource) {
   try {

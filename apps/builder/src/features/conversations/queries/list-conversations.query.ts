@@ -28,14 +28,14 @@ import type {
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { getPaginationWithDefaults } from "@/lib/pagination"
 import type {
-  ConversationCollection,
-  ConversationResource,
+  FindConversationResponse,
+  ListConversationsResponse,
 } from "../schemas/resource"
 
 export const listConversations = async (
   chatbotId: string,
   input: ListConversationsRequest = {},
-): Promise<ConversationCollection> => {
+): Promise<ListConversationsResponse> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
   const pagination = getPaginationWithDefaults(input)
@@ -118,10 +118,10 @@ export const listConversations = async (
   return {
     data: conversations.map((c) => ({
       ...c.Conversation,
-      contact: c.Contact ?? undefined,
-      inbox: c.Inbox ?? undefined,
-      assignedUser: c.User ?? undefined,
-      assignedInboxTeam: c.InboxTeam ?? undefined,
+      contact: c.Contact,
+      inbox: c.Inbox,
+      assignedUser: c.User,
+      assignedInboxTeam: c.InboxTeam,
       messages: c.lastMessage ? [c.lastMessage] : [],
     })),
     nextCursor: null,
@@ -131,15 +131,16 @@ export const listConversations = async (
 
 export const findConversation = async (
   input: FindConversationSchema,
-): Promise<{
-  data: ConversationResource
-}> => {
+): Promise<FindConversationResponse> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const conversation = await db.query.conversationModel.findFirst({
     with: {
       contact: true,
       inbox: true,
+      messages: true,
+      assignedUser: true,
+      assignedInboxTeam: true,
     },
     where: input,
   })
@@ -147,5 +148,20 @@ export const findConversation = async (
     throw new Error("Conversation not found")
   }
 
-  return { data: conversation as ConversationResource }
+  const lastMessage = await db.query.messageModel.findFirst({
+    where: {
+      conversationId: conversation.id,
+      messageType: {
+        in: ["incoming", "outgoing"],
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  })
+
+  return {
+    data: {
+      ...conversation,
+      messages: lastMessage ? [lastMessage] : [],
+    },
+  }
 }

@@ -23,14 +23,14 @@ import { useChatStore } from "../chat/store/chat-store-provider"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { readConversationAction } from "./actions/read-conversation.action"
-import type { ConversationResource } from "./schemas/resource"
+import type { ListConversationItemResource } from "./schemas/resource"
 
 type ConversationItemProps = {
-  conversation: ConversationResource
+  conversation: ListConversationItemResource
   onSelect: () => void
 }
 
-const assignedIcon = (conversation: ConversationResource) => {
+const assignedIcon = (conversation: ListConversationItemResource) => {
   if (conversation.assignedUserId) {
     return (
       <Tooltip>

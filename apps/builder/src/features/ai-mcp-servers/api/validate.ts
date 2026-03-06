@@ -6,17 +6,19 @@ import {
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import z from "zod"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
+import { chatbotAuthMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { validateAIMcpServerRequest } from "../schemas"
 
 export const validateAIMcpServer = authorizedAPI
   .route({
     method: "POST",
-    path: "/ai-mcp-servers/validate",
+    path: "/chatbots/{chatbotId}/ai-mcp-servers/validate",
     summary: "Validate an MCP server",
     tags: ["AI"],
   })
-  .input(validateAIMcpServerRequest)
+  .input(validateAIMcpServerRequest.and(z.object({ chatbotId: z.string() })))
+  .use(chatbotAuthMiddleware, (input) => input.chatbotId)
   .output(z.any())
   .handler(async ({ input }) => {
     const headers: Record<string, string> = {}
