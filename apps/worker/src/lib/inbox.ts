@@ -12,7 +12,7 @@ export const getIntegrationAuth = async (
 
   const integrationTable = `Integration${inboxName}`
   const result = await db.execute(
-    sql`select auth from ${integrationTable} where "inboxId" = ${inbox.id} limit 1`,
+    sql`select auth from ${sql.identifier(integrationTable)} where "inboxId" = ${inbox.id} limit 1`,
   )
 
   if (!result.rows[0]) {
