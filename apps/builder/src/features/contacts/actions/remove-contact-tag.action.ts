@@ -24,53 +24,66 @@ export const removeContactTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: RemoveContactTagRequest
     }) => {
-      const contacts = await db.query.contactModel.findMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-        columns: {
-          id: true,
-        },
+      await removeContactTags({
+        bindArgsParsedInputs: [chatbotId],
+        parsedInput,
       })
-
-      if (contacts.length === 0) {
-        return
-      }
-
-      await db.transaction(async (tx) => {
-        const allTags = await tx.query.tagModel.findMany({
-          where: {
-            chatbotId,
-            name: {
-              in: parsedInput.tags,
-            },
-          },
-          columns: {
-            id: true,
-          },
-        })
-
-        const allTagIds = allTags.map((tag) => tag.id)
-
-        for (const contact of contacts) {
-          await tx
-            .delete(contactsToTagsModel)
-            .where(
-              and(
-                eq(contactsToTagsModel.contactId, contact.id),
-                inArray(contactsToTagsModel.tagId, allTagIds),
-              ),
-            )
-        }
-      })
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
-        `chatbots:${chatbotId}#tags`,
-      ])
     },
   )
+
+export const removeContactTags = async ({
+  bindArgsParsedInputs: [chatbotId],
+  parsedInput,
+}: {
+  bindArgsParsedInputs: ChatbotIdRequestParams
+  parsedInput: RemoveContactTagRequest
+}) => {
+  const contacts = await db.query.contactModel.findMany({
+    where: {
+      chatbotId,
+      id: {
+        in: parsedInput.ids,
+      },
+    },
+    columns: {
+      id: true,
+    },
+  })
+
+  if (contacts.length === 0) {
+    return
+  }
+
+  await db.transaction(async (tx) => {
+    const allTags = await tx.query.tagModel.findMany({
+      where: {
+        chatbotId,
+        name: {
+          in: parsedInput.tags,
+        },
+      },
+      columns: {
+        id: true,
+      },
+    })
+
+    const allTagIds = allTags.map((tag) => tag.id)
+
+    for (const contact of contacts) {
+      await tx
+        .delete(contactsToTagsModel)
+        .where(
+          and(
+            eq(contactsToTagsModel.contactId, contact.id),
+            inArray(contactsToTagsModel.tagId, allTagIds),
+          ),
+        )
+    }
+  })
+
+  revalidateCacheTags([
+    `chatbots:${chatbotId}#contacts`,
+    `chatbots:${chatbotId}#conversations`,
+    `chatbots:${chatbotId}#tags`,
+  ])
+}

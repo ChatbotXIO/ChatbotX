@@ -6,7 +6,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
-import { basePaginationRequest } from "@/lib/pagination"
+import { basePaginationRequest } from "@/lib/pagination-server"
 import { tagResource } from "./resource"
 
 export const listTagsSearchParams = {

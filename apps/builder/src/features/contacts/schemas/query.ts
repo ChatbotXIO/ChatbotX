@@ -1,27 +1,20 @@
 import { Operator } from "@aha.chat/database/enums"
-import type { ContactModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
-import {
-  createSearchParamsCache,
-  parseAsArrayOf,
-  parseAsInteger,
-  parseAsString,
-} from "nuqs/server"
 import z from "zod"
+import { basePaginationRequest } from "@/lib/pagination-server"
+import { contactResource } from "./resource"
 
-export const listContactsRequest = createSearchParamsCache({
-  page: parseAsInteger.withDefault(1),
-  perPage: parseAsInteger.withDefault(10),
-  keyword: parseAsString.withDefault(""),
-  sort: getSortingStateParser<ContactModel>().withDefault([
-    { id: "createdAt", desc: true },
-  ]),
-  includes: parseAsArrayOf(parseAsString),
+export const listContactsRequest = basePaginationRequest.and(
+  z.object({
+    keyword: z.string().optional(),
+  }),
+)
+export type ListContactsRequest = z.infer<typeof listContactsRequest>
+
+export const listContactsResponse = z.object({
+  data: z.array(contactResource),
+  pageCount: z.number(),
 })
-
-export type ListContactsRequest = Awaited<
-  ReturnType<typeof listContactsRequest.parse>
-> & { chatbotId: string }
+export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
 export const contactFilterRequest = z.object({
   contactFilter: z.object({

@@ -10,13 +10,14 @@ export const privateFlowsAPI = {
       method: "GET",
       path: "/chatbots/{chatbotId}/flows",
       summary: "List flows",
-      tags: ["Flows", "Private APIs"],
+      tags: ["Flows"],
     })
     .input(listFlowsRequest.and(withChatbotIdSchema))
     .use(chatbotAuthMiddleware, (input) => input.chatbotId)
     .output(listFlowsResponse)
-    .handler(async ({ context, input }) => {
-      return await listFlows({ ...input, chatbotId: context.chatbot.id })
+    .handler(async ({ input }) => {
+      const { chatbotId, ...rest } = input
+      return await listFlows({ ...rest, chatbotId })
     }),
 }
 

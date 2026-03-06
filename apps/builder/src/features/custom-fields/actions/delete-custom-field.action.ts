@@ -22,16 +22,26 @@ export const deleteFieldsAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await db
-        .delete(fieldModel)
-        .where(
-          and(
-            eq(fieldModel.chatbotId, chatbotId),
-            eq(fieldModel.fieldType, "customField"),
-            inArray(fieldModel.id, parsedInput.ids),
-          ),
-        )
-
-      revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+      await deleteCustomFields({ chatbotId, ids: parsedInput.ids })
     },
   )
+
+export const deleteCustomFields = async ({
+  chatbotId,
+  ids,
+}: {
+  chatbotId: string
+  ids: string[]
+}) => {
+  await db
+    .delete(fieldModel)
+    .where(
+      and(
+        eq(fieldModel.chatbotId, chatbotId),
+        eq(fieldModel.fieldType, "customField"),
+        inArray(fieldModel.id, ids),
+      ),
+    )
+
+  revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+}

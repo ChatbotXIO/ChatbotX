@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
-import { updateCustomFieldSchema } from "./schemas/action"
+import { updateCustomFieldRequest } from "./schemas/action"
 
 export function UpdateCustomFieldDialog({
   chatbotId,
@@ -43,7 +43,7 @@ export function UpdateCustomFieldDialog({
     form: { setValue },
   } = useHookFormAction(
     updateCustomFieldAction.bind(null, chatbotId, customField?.id ?? ""),
-    zodResolver(updateCustomFieldSchema),
+    zodResolver(updateCustomFieldRequest),
     {
       actionProps: {
         onSuccess: () => {

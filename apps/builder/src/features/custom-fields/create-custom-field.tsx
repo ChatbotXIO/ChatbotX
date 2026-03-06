@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
-import { createCustomFieldSchema } from "./schemas/action"
+import { createCustomFieldRequest } from "./schemas/action"
 
 type CreateCustomFieldDialogProps = {
   chatbotId: string
@@ -129,7 +129,7 @@ function CreateCustomFieldForm({
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
       createCustomFieldAction.bind(null, chatbotId),
-      zodResolver(createCustomFieldSchema),
+      zodResolver(createCustomFieldRequest),
       {
         actionProps: {
           onSuccess: () => {

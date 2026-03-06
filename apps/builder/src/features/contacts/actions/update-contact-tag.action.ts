@@ -6,7 +6,7 @@ import {
   contactsToTagsModel,
   tagModel,
 } from "@aha.chat/database/schema"
-import type { ContactModel } from "@aha.chat/database/types"
+import type { ContactModel, TagModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
@@ -30,74 +30,81 @@ export const updateContactTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateContactTagRequest
     }) => {
-      const contact = await findOrFail<ContactModel>(
-        contactModel,
-        {
-          id: parsedInput.contactId,
-          chatbotId,
-        },
-        "Contact not found",
-      )
-
-      const returnedTags = await db.transaction(async (tx) => {
-        if (parsedInput.tags.length > 0) {
-          await tx
-            .insert(tagModel)
-            .values(
-              parsedInput.tags.map((name) => ({
-                id: createId(),
-                name,
-                chatbotId,
-              })),
-            )
-            .onConflictDoNothing({
-              target: [tagModel.chatbotId, tagModel.name],
-            })
-        }
-
-        const tags = await tx.query.tagModel.findMany({
-          where: {
-            chatbotId,
-            name: { in: parsedInput.tags },
-          },
-        })
-
-        if (tags.length > 0) {
-          await tx
-            .insert(contactsToTagsModel)
-            .values(
-              tags.map((selectedTag) => ({
-                contactId: contact.id,
-                tagId: selectedTag.id,
-              })),
-            )
-            .onConflictDoNothing({
-              target: [
-                contactsToTagsModel.contactId,
-                contactsToTagsModel.tagId,
-              ],
-            })
-
-          await tx.delete(contactsToTagsModel).where(
-            and(
-              eq(contactsToTagsModel.contactId, contact.id),
-              notInArray(
-                contactsToTagsModel.tagId,
-                tags.map((t) => t.id),
-              ),
-            ),
-          )
-        }
-
-        return tags
-      })
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
-        `chatbots:${chatbotId}#tags`,
-      ])
-
-      return returnedTags
+      return await updateContactTags({ chatbotId, parsedInput })
     },
   )
+
+export const updateContactTags = async ({
+  chatbotId,
+  parsedInput,
+}: {
+  chatbotId: string
+  parsedInput: UpdateContactTagRequest
+}): Promise<TagModel[]> => {
+  const contact = await findOrFail<ContactModel>(
+    contactModel,
+    {
+      id: parsedInput.contactId,
+      chatbotId,
+    },
+    "Contact not found",
+  )
+
+  const returnedTags = await db.transaction(async (tx) => {
+    if (parsedInput.tags.length > 0) {
+      await tx
+        .insert(tagModel)
+        .values(
+          parsedInput.tags.map((name) => ({
+            id: createId(),
+            name,
+            chatbotId,
+          })),
+        )
+        .onConflictDoNothing({
+          target: [tagModel.chatbotId, tagModel.name],
+        })
+    }
+
+    const tags = await tx.query.tagModel.findMany({
+      where: {
+        chatbotId,
+        name: { in: parsedInput.tags },
+      },
+    })
+
+    if (tags.length > 0) {
+      await tx
+        .insert(contactsToTagsModel)
+        .values(
+          tags.map((selectedTag) => ({
+            contactId: contact.id,
+            tagId: selectedTag.id,
+          })),
+        )
+        .onConflictDoNothing({
+          target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
+        })
+
+      await tx.delete(contactsToTagsModel).where(
+        and(
+          eq(contactsToTagsModel.contactId, contact.id),
+          notInArray(
+            contactsToTagsModel.tagId,
+            tags.map((t) => t.id),
+          ),
+        ),
+      )
+    }
+
+    return tags
+  })
+
+  revalidateCacheTags([
+    `chatbots:${chatbotId}#contacts`,
+    `chatbots:${chatbotId}#conversations`,
+    `chatbots:${chatbotId}#tags`,
+  ])
+
+  return returnedTags
+}

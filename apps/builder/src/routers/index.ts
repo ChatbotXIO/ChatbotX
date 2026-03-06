@@ -1,5 +1,6 @@
 import aiAgentsAPI from "@/features/ai-agents/api"
 import { aiMcpServerApi } from "@/features/ai-mcp-servers/api"
+import contactsAPI from "@/features/contacts/api"
 import conversationsAPI from "@/features/conversations/api"
 import customFieldsAPI from "@/features/custom-fields/api"
 import flowsAPI from "@/features/flows/api"
@@ -12,4 +13,5 @@ export const router = {
   tagsAPI,
   customFieldsAPI,
   flowsAPI,
+  contactsAPI,
 }

@@ -5,7 +5,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
-import { basePaginationRequest } from "@/lib/pagination"
+import { basePaginationRequest } from "@/lib/pagination-server"
 import { type CustomFieldResource, customFieldResource } from "./resource"
 
 export const listCustomFieldsSearchParams = createSearchParamsCache({

@@ -22,15 +22,20 @@ export const deleteTagAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await db
-        .delete(tagModel)
-        .where(
-          and(
-            eq(tagModel.chatbotId, chatbotId),
-            inArray(tagModel.id, parsedInput.ids),
-          ),
-        )
-
-      revalidateCacheTags(`chatbots:${chatbotId}#tags`)
+      await deleteTags({ chatbotId, ids: parsedInput.ids })
     },
   )
+
+export const deleteTags = async ({
+  chatbotId,
+  ids,
+}: {
+  chatbotId: string
+  ids: string[]
+}) => {
+  await db
+    .delete(tagModel)
+    .where(and(eq(tagModel.chatbotId, chatbotId), inArray(tagModel.id, ids)))
+
+  revalidateCacheTags(`chatbots:${chatbotId}#tags`)
+}

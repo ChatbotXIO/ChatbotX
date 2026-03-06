@@ -1,8 +1,8 @@
-import chatbotTagsAPI from "./chatbot-tags"
-import publicTagsAPI from "./public-tags"
+import privateTagsAPI from "./private"
+import publicTagsAPI from "./public"
 
 const tagsAPI = {
-  ...chatbotTagsAPI,
+  ...privateTagsAPI,
   ...publicTagsAPI,
 }
 
