@@ -5,11 +5,17 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
 import type { ListTagsRequest, ListTagsResponse } from "../schemas/query"
 
+export const listTagsRSC = async (
+  input: ListTagsRequest & { chatbotId: string },
+) => {
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+
+  return await listTags(input)
+}
+
 export async function listTags(
   input: ListTagsRequest & { chatbotId: string },
 ): Promise<ListTagsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
-
   const where = {
     chatbotId: input.chatbotId,
     name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,

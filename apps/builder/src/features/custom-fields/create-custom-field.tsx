@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
-import { createCustomFieldSchema } from "./schemas/create-custom-field.schema"
+import { createCustomFieldSchema } from "./schemas/action"
 
 type CreateCustomFieldDialogProps = {
   chatbotId: string

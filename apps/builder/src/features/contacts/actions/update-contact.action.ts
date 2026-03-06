@@ -16,7 +16,7 @@ import {
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { listCustomFields } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { maxPerPageString } from "@/lib/shared-request"
 import {

@@ -13,7 +13,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateCustomFieldSchema,
   updateCustomFieldSchema,
-} from "../schemas/update-custom-field.schema"
+} from "../schemas/action"
 
 export const updateCustomFieldAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

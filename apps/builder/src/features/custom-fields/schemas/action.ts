@@ -8,3 +8,10 @@ export const createCustomFieldSchema = z.object({
   description: z.string().nullable(),
 })
 export type CreateCustomFieldSchema = z.infer<typeof createCustomFieldSchema>
+
+export const updateCustomFieldSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  description: z.string().optional(),
+  folderId: z.cuid2().nullish(),
+})
+export type UpdateCustomFieldSchema = z.infer<typeof updateCustomFieldSchema>

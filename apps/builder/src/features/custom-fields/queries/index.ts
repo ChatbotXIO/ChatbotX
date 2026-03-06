@@ -3,14 +3,22 @@ import { rootFolderId } from "@aha.chat/database/enums"
 import { fieldModel } from "@aha.chat/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
-import type { CustomFieldCollection } from "../schemas"
-import type { ListCustomFieldsSearchParams } from "../schemas/list-custom-fields.schema"
+import type {
+  ListCustomFieldsRequest,
+  ListCustomFieldsResponse,
+} from "../schemas/query"
 
-export async function listCustomFields(
-  input: ListCustomFieldsSearchParams,
-): Promise<CustomFieldCollection> {
+export const listCustomFieldsRSC = async (
+  input: ListCustomFieldsRequest & { chatbotId: string },
+) => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
+  return listCustomFields(input)
+}
+
+export async function listCustomFields(
+  input: ListCustomFieldsRequest & { chatbotId: string },
+): Promise<ListCustomFieldsResponse> {
   const where = {
     chatbotId: input.chatbotId,
     fieldType: "customField" as const,
@@ -41,5 +49,5 @@ export async function listCustomFields(
 
   const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1
 
-  return { data, pageCount }
+  return { data, pageCount, ...pagination }
 }

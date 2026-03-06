@@ -14,7 +14,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldSchema,
   createCustomFieldSchema,
-} from "../schemas/create-custom-field.schema"
+} from "../schemas/action"
 
 export const createCustomFieldAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

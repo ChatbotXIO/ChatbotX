@@ -5,6 +5,7 @@ import {
 } from "@ai-sdk/mcp"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import z from "zod"
+import { withChatbotIdSchema } from "@/features/chatbots/schemas/resource"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { chatbotAuthMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -17,7 +18,7 @@ export const validateAIMcpServer = authorizedAPI
     summary: "Validate an MCP server",
     tags: ["AI"],
   })
-  .input(validateAIMcpServerRequest.and(z.object({ chatbotId: z.string() })))
+  .input(validateAIMcpServerRequest.and(withChatbotIdSchema))
   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
   .output(z.any())
   .handler(async ({ input }) => {

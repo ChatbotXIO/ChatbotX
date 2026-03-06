@@ -4,7 +4,9 @@ import {
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
-import type { CustomFieldResource } from "."
+import z from "zod"
+import { basePaginationRequest } from "@/lib/pagination"
+import { type CustomFieldResource, customFieldResource } from "./resource"
 
 export const listCustomFieldsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -21,3 +23,15 @@ export type ListCustomFieldsSearchParams = Awaited<
 > & {
   chatbotId: string
 }
+
+export const listCustomFieldsRequest = basePaginationRequest.extend({
+  name: z.string().nullish(),
+  folderId: z.string().nullish(),
+})
+export type ListCustomFieldsRequest = z.infer<typeof listCustomFieldsRequest>
+
+export const listCustomFieldsResponse = z.object({
+  data: z.array(customFieldResource),
+  pageCount: z.number(),
+})
+export type ListCustomFieldsResponse = z.infer<typeof listCustomFieldsResponse>
