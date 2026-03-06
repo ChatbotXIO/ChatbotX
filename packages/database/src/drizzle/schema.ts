@@ -957,8 +957,10 @@ export const flowVersionModel = pgTable("FlowVersion", {
       onUpdate: "cascade",
       name: "FlowVersion_flowId_fkey",
     }),
-  nodes: jsonb().notNull(),
-  edges: jsonb().notNull(),
+  // biome-ignore lint/suspicious/noExplicitAny: use any
+  nodes: jsonb().$type<any[]>().notNull(),
+  // biome-ignore lint/suspicious/noExplicitAny: use any
+  edges: jsonb().$type<any[]>().notNull(),
   isDraft: boolean().notNull(),
   isLatest: boolean().default(false).notNull(),
   startNodeId: text().notNull(),
