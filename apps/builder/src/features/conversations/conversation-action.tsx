@@ -30,10 +30,10 @@ import { followConversationAction } from "./actions/follow-conversation.action"
 import { unarchiveConversationAction } from "./actions/unarchive-conversation.action"
 import { unfollowConversationAction } from "./actions/unfollow-conversation.action"
 import { unreadConversationAction } from "./actions/unread-conversation.action"
-import type { ConversationResource } from "./schemas/resource"
+import type { ListConversationItemResource } from "./schemas/resource"
 
 type ConversationActionProps = {
-  conversation: ConversationResource
+  conversation: ListConversationItemResource
 }
 
 export function ConversationAction({ conversation }: ConversationActionProps) {
@@ -125,7 +125,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   )
 
   const { execute: blockContactFn, isExecuting: isBlockingContact } = useAction(
-    blockContactAction.bind(null, chatbotId, conversation.contact?.id || ""),
+    blockContactAction.bind(null, chatbotId, conversation.contactId),
     {
       onSuccess: () => {
         updateContact(conversation.contactId, {
@@ -141,7 +141,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   )
 
   const { execute: unblockContactFn } = useAction(
-    unblockContactAction.bind(null, chatbotId, conversation.contact?.id || ""),
+    unblockContactAction.bind(null, chatbotId, conversation.contactId),
     {
       onSuccess: () => {
         updateContact(conversation.contactId, {

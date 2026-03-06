@@ -4,7 +4,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateFlowDialog } from "@/features/flows/create-flow-dialog"
 import { FlowsTable } from "@/features/flows/flows-table"
-import { getFlows } from "@/features/flows/queries"
+import { listFlowsRSC } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schemas/query"
 
 export default async function FlowsPage(props: {
@@ -19,7 +19,7 @@ export default async function FlowsPage(props: {
   const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
-    getFlows({
+    listFlowsRSC({
       ...search,
       folderId,
       chatbotId: params.chatbotId,

@@ -1,3 +1,3 @@
-import { BaseException } from "@/lib/errors/exception"
+import { aiAgentModel, createSelectSchema } from "@aha.chat/database/schema"
 
-export class AIAgentException extends BaseException {}
+export const aiAgentResourceSchema = createSelectSchema(aiAgentModel)

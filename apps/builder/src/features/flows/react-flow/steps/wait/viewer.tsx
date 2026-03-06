@@ -3,7 +3,7 @@
 import { DelayType, type WaitStepSchema } from "@aha.chat/flow-config"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import type { CustomFieldCollection } from "@/features/custom-fields/schemas"
+import type { ListCustomFieldsResponse } from "@/features/custom-fields/schemas/query"
 import { callAPI } from "@/lib/swr"
 
 type WaitStepViewerProps = {
@@ -16,7 +16,7 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
   const t = useTranslations()
   const params = useParams<{ chatbotId: string }>()
   const url = `/api/chatbots/${params.chatbotId}/custom-fields?perPage=9999`
-  const { data: dataCustomFields } = callAPI<CustomFieldCollection>(url)
+  const { data: dataCustomFields } = callAPI<ListCustomFieldsResponse>(url)
 
   const customField = (dataCustomFields?.data ?? []).find(
     (obj) =>

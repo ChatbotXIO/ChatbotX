@@ -47,7 +47,7 @@ import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
-import { createAIAgentRequest } from "@/features/ai-agents/schemas/request"
+import { createAIAgentRequest } from "@/features/ai-agents/schemas/action"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import { openaiChatModelOptions } from "../openai/models"
 

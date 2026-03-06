@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
-import { updateCustomFieldSchema } from "./schemas/update-custom-field.schema"
+import { updateCustomFieldSchema } from "./schemas/action"
 
 export function UpdateCustomFieldDialog({
   chatbotId,

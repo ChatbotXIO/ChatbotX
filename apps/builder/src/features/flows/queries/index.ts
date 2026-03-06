@@ -1,16 +1,27 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
 import { flowModel } from "@aha.chat/database/schema"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
 import { FlowException } from "../schemas/exception"
-import type { FindFlowParams, ListFlowsParams } from "../schemas/query"
+import type {
+  FindFlowParams,
+  ListFlowsRequest,
+  ListFlowsResponse,
+} from "../schemas/query"
 import type { FlowResource } from "../schemas/resource"
 
-export async function getFlows(
-  input: ListFlowsParams,
-): Promise<PaginatedResponse<FlowResource>> {
+export const listFlowsRSC = async (
+  input: ListFlowsRequest & { chatbotId: string },
+) => {
+  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+
+  return listFlows(input)
+}
+
+export async function listFlows(
+  input: ListFlowsRequest & { chatbotId: string },
+): Promise<ListFlowsResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const where = {
@@ -37,13 +48,25 @@ export async function getFlows(
       where,
       orderBy,
       ...pagination,
+      with: {
+        flowVersions: {
+          where: {
+            OR: [
+              { isDraft: true },
+              {
+                isLatest: true,
+              },
+            ],
+          },
+        },
+      },
     }),
     db.$count(flowModel, relationsFilterToSQL(flowModel, where)),
   ])
 
   const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1
 
-  return { data, pageCount }
+  return { data, pageCount, ...pagination }
 }
 
 export const findFlow = async (

@@ -28,12 +28,12 @@ import { ChangeFolderDialog } from "../folders/change-folder"
 import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
-import type { listCustomFields } from "./queries"
-import type { CustomFieldResource } from "./schemas"
+import type { listCustomFieldsRSC } from "./queries"
+import type { CustomFieldResource } from "./schemas/resource"
 import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
 
 type FieldsTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof listCustomFields>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listCustomFieldsRSC>>]>
   chatbotId: string
 }
 

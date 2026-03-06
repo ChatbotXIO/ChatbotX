@@ -1,10 +1,8 @@
-import type { FlowModel, FlowVersionModel } from "@aha.chat/database/types"
+import { createSelectSchema, flowModel } from "@aha.chat/database/schema"
+import type z from "zod"
+import { BaseException } from "@/lib/errors/exception"
 
-export type FlowVersionResource = FlowVersionModel
+export class FlowException extends BaseException {}
 
-export type FlowResource = FlowModel & {
-  _count?: {
-    contacts?: number
-  }
-  flowVersions?: FlowVersionResource[]
-}
+export const flowResource = createSelectSchema(flowModel)
+export type FlowResource = z.infer<typeof flowResource>
