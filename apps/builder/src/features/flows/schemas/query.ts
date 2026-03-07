@@ -7,7 +7,7 @@ import {
 } from "nuqs/server"
 import z from "zod"
 import { flowVersionResourece } from "@/features/flow-versions/schema/resource"
-import { basePaginationRequest } from "@/lib/pagination-server"
+import { basePaginationRequest } from "@/lib/pagination"
 import { type FlowResource, flowResource } from "./resource"
 
 export const listFlowsSearchParams = createSearchParamsCache({

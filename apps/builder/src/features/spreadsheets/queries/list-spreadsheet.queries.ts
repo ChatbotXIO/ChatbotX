@@ -1,7 +1,7 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { spreadsheetModel } from "@aha.chat/database/schema"
+import { parsePagination } from "@aha.chat/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { parsePagination } from "@/lib/pagination"
 import type { ListSpreadsheetsRequest } from "../schemas/list-spreadsheets.request"
 import type { SpreadsheetResource } from "../schemas/resource"
 

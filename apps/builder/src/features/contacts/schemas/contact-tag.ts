@@ -1,5 +1,5 @@
-import { createSelectSchema, tagModel } from "@aha.chat/database/schema"
 import { z } from "zod"
+import { tagResource } from "@/features/tags/schemas/resource"
 
 export const addContactTagRequest = z.object({
   ids: z.array(z.cuid2()),
@@ -26,6 +26,6 @@ export const listContactTagsRequest = z.object({
 export type ListContactTagsRequest = z.infer<typeof listContactTagsRequest>
 
 export const listContactTagsResponse = z.object({
-  data: z.array(createSelectSchema(tagModel)),
+  data: z.array(tagResource),
 })
 export type ListContactTagsResponse = z.infer<typeof listContactTagsResponse>

@@ -37,11 +37,11 @@ import AddContactCustomFieldDialog from "./components/add-custom-field-dialog"
 import ClearContactCustomFieldDialog from "./components/delete-contact-custom-field"
 import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
-import type { ContactResource } from "./schemas/resource"
+import type { ListContactsItem } from "./schemas/query"
 
 type ContactListActionProps = {
   chatbotId: string
-  table: Table<ContactResource>
+  table: Table<ListContactsItem>
 }
 
 export function ContactListAction({ table }: ContactListActionProps) {

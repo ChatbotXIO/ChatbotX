@@ -6,12 +6,13 @@ import {
   contactsToTagsModel,
   tagModel,
 } from "@aha.chat/database/schema"
-import type { ContactModel, TagModel } from "@aha.chat/database/types"
+import type { ContactModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import type { TagResource } from "@/features/tags/schemas/resource"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
@@ -40,7 +41,7 @@ export const updateContactTags = async ({
 }: {
   chatbotId: string
   parsedInput: UpdateContactTagRequest
-}): Promise<TagModel[]> => {
+}): Promise<TagResource[]> => {
   const contact = await findOrFail<ContactModel>(
     contactModel,
     {

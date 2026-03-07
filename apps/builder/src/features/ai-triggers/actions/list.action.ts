@@ -1,14 +1,14 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { aiTriggerModel } from "@aha.chat/database/schema"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@aha.chat/database/utils"
 import type {
   AITriggerCollection,
   ListAITriggersRequest,
 } from "@/features/ai-triggers/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import {
-  getPaginationWithDefaults,
-  parseOrderByAsObject,
-} from "@/lib/pagination"
 
 export const listAITriggers = async (
   input: ListAITriggersRequest,

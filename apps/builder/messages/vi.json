@@ -144,7 +144,9 @@
     "splitTraffic": "Chia lưu lượng",
     "wait": "Chờ",
     "landingPage": "Trang đích",
-    "addNotes": "Thêm ghi chú"
+    "addNotes": "Thêm ghi chú",
+    "generate": "Tạo",
+    "regenerate": "Tạo lại"
   },
   "states": {
     "success": "Thành công",
@@ -1095,6 +1097,9 @@
     },
     "newPassword": {
       "label": "Mật khẩu mới"
+    },
+    "chatbotToken": {
+      "label": "Token truy cập API"
     }
   },
   "flows": {
@@ -1525,5 +1530,9 @@
     "heading": {
       "title": "Nhật ký lỗi"
     }
+  },
+  "chatbotToken": {
+    "title": "Token truy cập API ChatbotX",
+    "description": "Tạo token để cho phép chatbot của bạn truy cập API ChatbotX. Giữ token này bí mật và không chia sẻ với ai."
   }
 }

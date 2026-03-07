@@ -13,7 +13,7 @@ export const publicListTagsAPI = chatbotTokenAPI
     method: "GET",
     path: "/public/chatbots/tags",
     summary: "List tags",
-    tags: ["Tags", "Public APIs"],
+    tags: ["Tags"],
   })
   .input(listTagsRequest)
   .output(listTagsResponse)
@@ -26,7 +26,7 @@ export const publicCreateTagAPI = chatbotTokenAPI
     method: "POST",
     path: "/public/chatbots/tags",
     summary: "Create tag",
-    tags: ["Tags", "Public APIs"],
+    tags: ["Tags"],
   })
   .input(createTagRequest)
   .output(createTagResponse)
@@ -39,7 +39,7 @@ export const publicUpdateTagAPI = chatbotTokenAPI
     method: "PUT",
     path: "/public/chatbots/tags/{id}",
     summary: "Update tag",
-    tags: ["Tags", "Public APIs"],
+    tags: ["Tags"],
   })
   .input(updateTagSchema.and(z.object({ id: z.string() })))
   .handler(async ({ context, input }) => {
@@ -56,7 +56,7 @@ export const publicDeleteTagsAPI = chatbotTokenAPI
     method: "DELETE",
     path: "/public/chatbots/tags",
     summary: "Delete tags",
-    tags: ["Tags", "Public APIs"],
+    tags: ["Tags"],
   })
   .input(z.object({ ids: z.array(z.string()) }))
   .handler(async ({ context, input }) => {

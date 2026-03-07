@@ -39,7 +39,6 @@ export const updateCustomField = async ({
   id: string
   parsedInput: UpdateCustomFieldRequest
 }) => {
-  console.log("Updating custom field", { chatbotId, id, parsedInput })
   const customField = await findOrFail<FieldModel>(
     fieldModel,
     {

@@ -1,10 +1,10 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@/lib/pagination"
+} from "@aha.chat/database/utils"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListContactsRequest,
   ListContactsResponse,

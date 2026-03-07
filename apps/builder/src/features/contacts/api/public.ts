@@ -18,7 +18,7 @@ export const publicAPIs = {
       method: "GET",
       path: "/public/chatbots/contacts",
       summary: "List contacts",
-      tags: ["Contacts", "Public APIs"],
+      tags: ["Contacts"],
     })
     .input(listContactsRequest)
     .output(listContactsResponse)
@@ -33,7 +33,7 @@ export const publicAPIs = {
       method: "POST",
       path: "/public/chatbots/contacts",
       summary: "Create a contact",
-      tags: ["Contacts", "Public APIs"],
+      tags: ["Contacts"],
     })
     .input(createContactRequest)
     .handler(async ({ context, input }) => {
@@ -44,7 +44,7 @@ export const publicAPIs = {
       method: "GET",
       path: "/public/chatbots/contacts/{contactId}/tags",
       summary: "List contact tags",
-      tags: ["Contacts", "Public APIs"],
+      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
     .output(listContactTagsResponse)
@@ -60,7 +60,7 @@ export const publicAPIs = {
       method: "POST",
       path: "/public/chatbots/contacts/tags",
       summary: "Add contact tags",
-      tags: ["Contacts", "Public APIs"],
+      tags: ["Contacts"],
     })
     .input(addContactTagRequest)
     .handler(async ({ context, input }) => {
@@ -78,7 +78,7 @@ export const publicAPIs = {
       method: "DELETE",
       path: "/public/chatbots/contacts/tags",
       summary: "Remove contact tags",
-      tags: ["Contacts", "Public APIs"],
+      tags: ["Contacts"],
     })
     .input(removeContactTagRequest)
     .handler(async ({ context, input }) => {

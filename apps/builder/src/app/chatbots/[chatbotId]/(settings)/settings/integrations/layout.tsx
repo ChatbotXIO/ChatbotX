@@ -6,17 +6,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
-import { BotIcon, TableIcon } from "lucide-react"
+import { BotIcon, CodeIcon, TableIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 
 type SettingIntegrationLayoutProps = {
+  chatbotToken: ReactNode
   openAI: ReactNode
   gemini: ReactNode
   googleSheets: ReactNode
 }
 
 export default function SettingIntegrationLayout({
+  chatbotToken,
   openAI,
   gemini,
   googleSheets,
@@ -24,6 +26,11 @@ export default function SettingIntegrationLayout({
   const t = useTranslations()
 
   const integrationItems = [
+    {
+      keyName: t("chatbotToken.title"),
+      icon: CodeIcon,
+      content: chatbotToken,
+    },
     {
       keyName: t("openai.title"),
       icon: BotIcon,

@@ -19,7 +19,7 @@ const publicCustomFieldsAPI = {
       method: "GET",
       path: "/public/chatbots/custom-fields",
       summary: "List custom fields",
-      tags: ["Custom Fields", "Public APIs"],
+      tags: ["Custom Fields"],
     })
     .input(listCustomFieldsRequest)
     .output(listCustomFieldsResponse)
@@ -31,7 +31,7 @@ const publicCustomFieldsAPI = {
       method: "POST",
       path: "/public/chatbots/custom-fields",
       summary: "Create custom field",
-      tags: ["Custom Fields", "Public APIs"],
+      tags: ["Custom Fields"],
     })
     .input(createCustomFieldRequest)
     .handler(async ({ context, input }) => {
@@ -42,7 +42,7 @@ const publicCustomFieldsAPI = {
       method: "PUT",
       path: "/public/chatbots/custom-fields/{id}",
       summary: "Update custom field",
-      tags: ["Custom Fields", "Public APIs"],
+      tags: ["Custom Fields"],
     })
     .input(updateCustomFieldRequest.and(z.object({ id: z.string() })))
     .handler(async ({ context, input }) => {
@@ -58,7 +58,7 @@ const publicCustomFieldsAPI = {
       method: "DELETE",
       path: "/public/chatbots/custom-fields",
       summary: "Delete custom fields",
-      tags: ["Custom Fields", "Public APIs"],
+      tags: ["Custom Fields"],
     })
     .input(z.object({ ids: z.array(z.string()) }))
     .handler(async ({ context, input }) => {
