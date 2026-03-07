@@ -18,6 +18,7 @@ import {
 import { sharedColumns, timestampConfig } from "./shared"
 
 export * from "drizzle-orm/zod"
+export * from "./enterprise"
 
 export const logType = pgEnum("LogType", ["error", "audit"])
 export const customFieldType = pgEnum("CustomFieldType", [

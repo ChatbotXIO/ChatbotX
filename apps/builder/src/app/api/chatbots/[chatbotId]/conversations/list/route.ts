@@ -4,6 +4,13 @@ import { listConversationsRequest } from "@/features/conversations/schemas/query
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 
+/**
+ * List Conversations
+ * @description Lists conversations for a chatbot
+ * @body listConversationsRequest
+ * @response ConversationCollection
+ * @openapi
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ chatbotId: string }> },

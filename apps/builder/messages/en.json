@@ -1330,6 +1330,9 @@
     },
     "savedReplies": {
       "label": "Saved Replies"
+    },
+    "role": {
+      "label": "Role"
     }
   },
   "flows": {

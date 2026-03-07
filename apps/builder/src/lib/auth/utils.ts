@@ -25,9 +25,10 @@ export const getCurrentUser = async (): Promise<UserModel | null> => {
 
   return session?.user
     ? {
-        ...session?.user,
-        image: session?.user.image || null,
-        isAnonymous: session?.user.isAnonymous ?? false,
+        ...session.user,
+        image: session.user.image || null,
+        isAnonymous: session.user.isAnonymous ?? false,
+        stripeCustomerId: session.user.stripeCustomerId || null,
       }
     : null
 }

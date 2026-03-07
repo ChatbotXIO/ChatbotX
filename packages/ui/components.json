@@ -9,13 +9,15 @@
     "baseColor": "neutral",
     "cssVariables": true
   },
+  "iconLibrary": "lucide",
   "aliases": {
     "components": "@aha.chat/ui/components",
     "utils": "@aha.chat/ui/lib/utils",
-    "hooks": "@aha.chat/ui/hooks",
-    "lib": "@aha.chat/ui/lib",
     "ui": "@aha.chat/ui/components/ui",
-    "config": "@aha.chat/ui/config"
+    "lib": "@aha.chat/ui/lib",
+    "hooks": "@aha.chat/ui/hooks"
   },
-  "iconLibrary": "lucide"
+  "registries": {
+    "@billingsdk": "https://billingsdk.com/r/{name}.json"
+  }
 }

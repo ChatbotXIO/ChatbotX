@@ -1,6 +1,5 @@
 import z from "zod"
 import type * as schema from "./drizzle/schema"
-import type { logType } from "./drizzle/schema"
 
 export const integrationType = {
   webchat: "webchat",
@@ -66,7 +65,6 @@ export type WebhookModel = typeof schema.webhookModel.$inferSelect
 export type ConditionModel = typeof schema.conditionModel.$inferSelect
 
 export type FolderType = (typeof schema.folderType.enumValues)[number]
-export type LogType = (typeof logType.enumValues)[number]
 export type IntegrationType = keyof typeof integrationType
 export type InboxType = (typeof schema.inboxType.enumValues)[number]
 export type BroadcastSchedulesType =
@@ -85,6 +83,8 @@ export type AIEmbeddingStatus =
 export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
+export type OrganizationMember =
+  typeof schema.organizationMemberModel.$inferSelect
 
 export const Omnichannel = "omnichannel"
 

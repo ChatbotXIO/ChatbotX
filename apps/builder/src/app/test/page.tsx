@@ -1,23 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { authClient } from "@/lib/auth/auth-client"
 
 export default function TestPage() {
-  const [token, setToken] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    authClient.token().then(({ data, error }) => {
-      setToken(data?.token ?? null)
-      setError(error?.message ?? null)
+  const createOrganization = async () => {
+    const { data, error } = await authClient.organization.create({
+      name: "My Organization", // required
+      slug: "my-org", // required
+      logo: "https://example.com/logo.png",
+      metadata: {},
+      userId: "some_user_id",
+      keepCurrentActiveOrganization: false,
     })
-  }, [])
 
-  return (
-    <div>
-      <div>Error: {JSON.stringify(error)}</div>
-      <div>Token: {token}</div>
-    </div>
-  )
+    console.log(data, error)
+  }
+
+  return <Button onClick={createOrganization}>create organization</Button>
 }
