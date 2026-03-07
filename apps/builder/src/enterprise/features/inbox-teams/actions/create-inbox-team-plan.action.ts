@@ -1,6 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@aha.chat/database/client"
+import { db } from "@aha.chat/database/client"
 import { inboxTeamPlanModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import {

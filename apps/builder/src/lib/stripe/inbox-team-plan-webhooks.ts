@@ -1,7 +1,7 @@
 import { db } from "@aha.chat/database/client"
 import { inboxTeamPlanSubscriptionModel } from "@aha.chat/database/schema"
 import { eq } from "drizzle-orm"
-import Stripe from "stripe"
+import type Stripe from "stripe"
 
 /**
  * Handles Stripe webhook events for inbox team plan subscriptions
@@ -22,10 +22,7 @@ export async function handleInboxTeamPlanWebhook(event: Stripe.Event) {
 
     case "customer.subscription.trial_will_end": {
       const subscription = data.object as Stripe.Subscription
-      console.log(
-        "Trial will end soon for subscription:",
-        subscription.id,
-      )
+      console.log("Trial will end soon for subscription:", subscription.id)
       // You can add logic here to send a notification to the user
       return true
     }
@@ -65,7 +62,10 @@ async function updateSubscriptionStatus(subscription: Stripe.Subscription) {
         updatedAt,
       })
       .where(
-        eq(inboxTeamPlanSubscriptionModel.stripeSubscriptionId, subscription.id),
+        eq(
+          inboxTeamPlanSubscriptionModel.stripeSubscriptionId,
+          subscription.id,
+        ),
       )
 
     return true
@@ -93,7 +93,10 @@ async function cancelSubscription(subscription: Stripe.Subscription) {
         updatedAt: new Date(),
       })
       .where(
-        eq(inboxTeamPlanSubscriptionModel.stripeSubscriptionId, subscription.id),
+        eq(
+          inboxTeamPlanSubscriptionModel.stripeSubscriptionId,
+          subscription.id,
+        ),
       )
 
     return true

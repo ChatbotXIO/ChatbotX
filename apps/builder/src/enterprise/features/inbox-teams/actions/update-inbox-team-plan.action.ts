@@ -1,6 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@aha.chat/database/client"
+import { db, eq } from "@aha.chat/database/client"
 import { inboxTeamPlanModel } from "@aha.chat/database/schema"
 import {
   type ChatbotIdRequestParams,
@@ -61,8 +61,7 @@ export const updateInboxTeamPlanAction = chatbotActionClient
               parsedInput.description !== undefined
                 ? parsedInput.description
                 : plan.description,
-            maxTeamMembers:
-              parsedInput.maxTeamMembers ?? plan.maxTeamMembers,
+            maxTeamMembers: parsedInput.maxTeamMembers ?? plan.maxTeamMembers,
             limits: parsedInput.limits || plan.limits,
             freeTrial: parsedInput.freeTrial ?? plan.freeTrial,
             updatedAt: new Date(),

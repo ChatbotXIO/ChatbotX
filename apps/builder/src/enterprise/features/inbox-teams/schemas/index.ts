@@ -1,35 +1,33 @@
 // Team schemas
-export { inboxTeamResource, type InboxTeamResource } from "./resource"
+
 export {
-  type InboxTeamMemberResource,
-} from "./resource"
-export {
-  createInboxTeamRequest,
-  type CreateInboxTeamRequest,
-} from "./create-inbox-team.request"
-export {
-  updateInboxTeamRequest,
-  type UpdateInboxTeamRequest,
-} from "./update-inbox-team.request"
-export {
-  addInboxTeamMemberRequest,
   type AddInboxTeamMemberRequest,
+  addInboxTeamMemberRequest,
 } from "./add-inbox-team-member.request"
 export {
-  listInboxTeamsRequest,
-  type ListInboxTeamsRequest,
-} from "./list-inbox-teams.request"
-
-// Plan schemas
+  type CreateInboxTeamRequest,
+  createInboxTeamRequest,
+} from "./create-inbox-team.request"
 export {
-  inboxTeamPlanResource,
-  type InboxTeamPlanResource,
-} from "./resource"
-export {
-  createInboxTeamPlanRequest,
   type CreateInboxTeamPlanRequest,
+  createInboxTeamPlanRequest,
 } from "./create-inbox-team-plan.request"
 export {
-  updateInboxTeamPlanRequest,
+  type ListInboxTeamsRequest,
+  listInboxTeamsRequest,
+} from "./list-inbox-teams.request"
+export {
+  type InboxTeamMemberResource,
+  type InboxTeamPlanResource,
+  type InboxTeamResource,
+  inboxTeamPlanResource,
+  inboxTeamResource,
+} from "./resource"
+export {
+  type UpdateInboxTeamRequest,
+  updateInboxTeamRequest,
+} from "./update-inbox-team.request"
+export {
   type UpdateInboxTeamPlanRequest,
+  updateInboxTeamPlanRequest,
 } from "./update-inbox-team-plan.request"
