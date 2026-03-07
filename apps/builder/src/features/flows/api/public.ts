@@ -8,7 +8,7 @@ const publicFlowsAPI = {
       method: "GET",
       path: "/public/chatbots/flows",
       summary: "List flows",
-      tags: ["Flows", "Public APIs"],
+      tags: ["Flows"],
     })
     .input(listFlowsRequest)
     .output(listFlowsResponse)

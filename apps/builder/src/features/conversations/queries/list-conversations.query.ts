@@ -21,12 +21,12 @@ import {
   userModel,
 } from "@aha.chat/database/schema"
 import type { InboxType } from "@aha.chat/database/types"
+import { getPaginationWithDefaults } from "@aha.chat/database/utils"
 import type {
   FindConversationSchema,
   ListConversationsRequest,
 } from "@/features/conversations/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { getPaginationWithDefaults } from "@/lib/pagination"
 import type {
   FindConversationResponse,
   ListConversationsResponse,

@@ -33,6 +33,7 @@
     "./keys": "./src/keys.ts",
     "./enums": "./src/enums.ts",
     "./schema": "./src/drizzle/schema.ts",
-    "./errors": "./src/errors.ts"
+    "./errors": "./src/errors.ts",
+    "./utils": "./src/utils.ts"
   }
 }

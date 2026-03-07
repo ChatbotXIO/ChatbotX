@@ -2,8 +2,8 @@
 
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { chatbotMemberModel } from "@aha.chat/database/schema"
+import { getPaginationWithDefaults } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { getPaginationWithDefaults } from "@/lib/pagination"
 import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members.request"
 import type {
   ChatbotMemberCollection,

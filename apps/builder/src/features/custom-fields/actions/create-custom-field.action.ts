@@ -12,48 +12,51 @@ import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type CreateCustomFieldSchema,
-  createCustomFieldSchema,
+  type CreateCustomFieldRequest,
+  createCustomFieldRequest,
 } from "../schemas/action"
 
 export const createCustomFieldAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
-  .inputSchema(createCustomFieldSchema)
+  .inputSchema(createCustomFieldRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: CreateCustomFieldSchema
+      parsedInput: CreateCustomFieldRequest
     }) => {
-      if (parsedInput.folderId) {
-        await ensureFolderIsExists(
-          parsedInput.folderId,
-          chatbotId,
-          "customField",
-        )
-      }
-
-      try {
-        await db.insert(fieldModel).values({
-          id: createId(),
-          chatbotId,
-          fieldType: "customField",
-          showInInbox: true,
-          ...parsedInput,
-        })
-
-        revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
-      } catch (error) {
-        if (isDatabaseError(error) && error.cause.code === "23505") {
-          return returnValidationErrors(createCustomFieldSchema, {
-            _errors: ["Validation Exception"],
-            name: { _errors: ["Name is already taken"] },
-          })
-        }
-
-        throw new Error("Failed to create custom field")
-      }
+      await createCustomField(chatbotId, parsedInput)
     },
   )
+
+export const createCustomField = async (
+  chatbotId: string,
+  parsedInput: CreateCustomFieldRequest,
+) => {
+  if (parsedInput.folderId) {
+    await ensureFolderIsExists(parsedInput.folderId, chatbotId, "customField")
+  }
+
+  try {
+    await db.insert(fieldModel).values({
+      id: createId(),
+      chatbotId,
+      fieldType: "customField",
+      showInInbox: true,
+      ...parsedInput,
+    })
+
+    revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+  } catch (error) {
+    if (isDatabaseError(error) && error.cause.code === "23505") {
+      return returnValidationErrors(createCustomFieldRequest, {
+        _errors: ["Validation Exception"],
+        name: { _errors: ["Name is already taken"] },
+      })
+    }
+
+    throw new Error("Failed to create custom field")
+  }
+}

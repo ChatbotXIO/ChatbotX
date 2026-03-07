@@ -1,11 +1,11 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { errorLogModel } from "@aha.chat/database/schema"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@/lib/pagination"
+} from "@aha.chat/database/utils"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ErrorLogResource } from "../schemas"
 import type { ListErrorLogsRequest } from "../schemas/query"
 

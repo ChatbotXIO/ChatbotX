@@ -1,8 +1,8 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
 import { fieldModel } from "@aha.chat/database/schema"
+import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
 import type {
   ListCustomFieldsRequest,
   ListCustomFieldsResponse,
