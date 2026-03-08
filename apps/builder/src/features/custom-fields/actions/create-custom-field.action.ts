@@ -13,6 +13,7 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldRequest,
+  type CreateCustomFieldResponse,
   createCustomFieldRequest,
 } from "../schemas/action"
 
@@ -34,21 +35,27 @@ export const createCustomFieldAction = chatbotActionClient
 export const createCustomField = async (
   chatbotId: string,
   parsedInput: CreateCustomFieldRequest,
-) => {
+): Promise<CreateCustomFieldResponse> => {
   if (parsedInput.folderId) {
     await ensureFolderIsExists(parsedInput.folderId, chatbotId, "customField")
   }
 
   try {
-    await db.insert(fieldModel).values({
-      id: createId(),
-      chatbotId,
-      fieldType: "customField",
-      showInInbox: true,
-      ...parsedInput,
-    })
+    const newField = await db
+      .insert(fieldModel)
+      .values({
+        id: createId(),
+        chatbotId,
+        fieldType: "customField",
+        showInInbox: true,
+        ...parsedInput,
+      })
+      .returning()
+      .then((result) => result[0])
 
     revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+
+    return { id: newField.id }
   } catch (error) {
     if (isDatabaseError(error) && error.cause.code === "23505") {
       return returnValidationErrors(createCustomFieldRequest, {

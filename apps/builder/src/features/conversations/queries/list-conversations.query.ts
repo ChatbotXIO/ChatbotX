@@ -165,3 +165,23 @@ export const findConversation = async (
     },
   }
 }
+
+export const findConversationByContact = async ({
+  chatbotId,
+  contactId,
+  inboxType,
+}: {
+  chatbotId: string
+  contactId: string
+  inboxType: InboxType
+}) => {
+  return await db.query.conversationModel.findFirst({
+    where: {
+      chatbotId,
+      contactId,
+      inbox: {
+        inboxType,
+      },
+    },
+  })
+}

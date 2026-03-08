@@ -14,6 +14,11 @@ export const createContactRequest = z.object({
 })
 export type CreateContactRequest = z.infer<typeof createContactRequest>
 
+export const createContactResponse = z.object({
+  id: z.string(),
+})
+export type CreateContactResponse = z.infer<typeof createContactResponse>
+
 export const updateContactFieldRequest = z.record(z.string(), z.string())
 export type UpdateContactFieldRequest = z.infer<
   typeof updateContactFieldRequest

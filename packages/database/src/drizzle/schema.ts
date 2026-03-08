@@ -41,6 +41,7 @@ export const senderType = pgEnum("SenderType", [
   "contact",
   "system",
   "user",
+  "api",
 ])
 export const messageType = pgEnum("MessageType", [
   "incoming",

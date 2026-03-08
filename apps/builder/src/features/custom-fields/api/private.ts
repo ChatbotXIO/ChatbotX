@@ -8,6 +8,7 @@ import { updateCustomField } from "../actions/update-custom-field.action"
 import { listCustomFields } from "../queries"
 import {
   createCustomFieldRequest,
+  createCustomFieldResponse,
   updateCustomFieldRequest,
 } from "../schemas/action"
 import {
@@ -38,6 +39,7 @@ export const privateCustomFieldsAPI = {
       tags: ["Custom Fields"],
     })
     .input(createCustomFieldRequest.and(withChatbotIdSchema))
+    .output(createCustomFieldResponse)
     .use(chatbotAuthMiddleware, (input) => input.chatbotId)
     .handler(async ({ input }) => {
       const { chatbotId, ...rest } = input
@@ -67,22 +69,22 @@ export const privateCustomFieldsAPI = {
   privateDeleteCustomFieldsAPI: authorizedAPI
     .route({
       method: "DELETE",
-      path: "/chatbots/{chatbotId}/custom-fields",
+      path: "/chatbots/{chatbotId}/custom-fields/{customFieldId}",
       summary: "Delete custom field",
       tags: ["Custom Fields"],
     })
     .input(
       z.object({
         chatbotId: z.string(),
-        ids: z.array(z.string()),
+        customFieldId: z.string(),
       }),
     )
     .use(chatbotAuthMiddleware, (input) => input.chatbotId)
     .handler(async ({ input }) => {
-      const { chatbotId, ids } = input
+      const { chatbotId, customFieldId } = input
       return await deleteCustomFields({
         chatbotId,
-        ids,
+        ids: [customFieldId],
       })
     }),
 }

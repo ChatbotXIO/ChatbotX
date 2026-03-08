@@ -6,7 +6,7 @@ import { createTag } from "../actions/create-tag-action"
 import { deleteTags } from "../actions/delete-tag-action"
 import { updateTag } from "../actions/update-tag-action"
 import { listTags } from "../queries"
-import { createTagRequest, createTagResponse } from "../schemas/action"
+import { createTagRequest } from "../schemas/action"
 import { listTagsRequest, listTagsResponse } from "../schemas/query"
 import { updateTagSchema } from "../schemas/update-tag-schema"
 
@@ -33,9 +33,10 @@ export const privateCreateChatbotTagAPI = authorizedAPI
   })
   .input(createTagRequest.and(withChatbotIdSchema))
   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-  .output(createTagResponse)
+  .output(z.object({ id: z.string() }))
   .handler(async ({ input }) => {
-    return await createTag(input)
+    const { data } = await createTag(input)
+    return { id: data.id }
   })
 
 export const privateUpdateTagAPI = authorizedAPI
@@ -65,23 +66,23 @@ export const privateUpdateTagAPI = authorizedAPI
 export const privateDeleteTagsAPI = authorizedAPI
   .route({
     method: "DELETE",
-    path: "/chatbots/{chatbotId}/tags",
-    summary: "Delete tags",
+    path: "/chatbots/{chatbotId}/tags/{id}",
+    summary: "Delete tag",
     tags: ["Tags"],
   })
   .input(
     withChatbotIdSchema.and(
       z.object({
-        ids: z.array(z.string()),
+        id: z.string(),
       }),
     ),
   )
   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
   .handler(async ({ input }) => {
-    const { chatbotId, ids } = input
+    const { chatbotId, id } = input
     return await deleteTags({
       chatbotId,
-      ids,
+      ids: [id],
     })
   })
 
