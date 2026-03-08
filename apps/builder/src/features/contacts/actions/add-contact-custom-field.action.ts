@@ -120,3 +120,40 @@ export const addContactCustomFields = async ({
 
   revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
 }
+
+export const setContactCustomFieldValue = async ({
+  chatbotId,
+  contactId,
+  customFieldId,
+  value,
+}: {
+  chatbotId: string
+  contactId: string
+  customFieldId: string
+  value: string
+}) => {
+  const contactCustomField = await db.query.contactCustomFieldModel.findFirst({
+    where: {
+      contactId,
+      customFieldId,
+    },
+  })
+
+  if (contactCustomField) {
+    await db
+      .update(contactCustomFieldModel)
+      .set({
+        value,
+      })
+      .where(eq(contactCustomFieldModel.id, contactCustomField.id))
+  } else {
+    await db.insert(contactCustomFieldModel).values({
+      contactId,
+      customFieldId,
+      value,
+      id: createId(),
+    })
+  }
+
+  revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
+}

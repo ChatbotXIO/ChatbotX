@@ -4,7 +4,7 @@ import { createTag } from "../actions/create-tag-action"
 import { deleteTags } from "../actions/delete-tag-action"
 import { updateTag } from "../actions/update-tag-action"
 import { listTags } from "../queries"
-import { createTagRequest, createTagResponse } from "../schemas/action"
+import { createTagRequest } from "../schemas/action"
 import { listTagsRequest, listTagsResponse } from "../schemas/query"
 import { updateTagSchema } from "../schemas/update-tag-schema"
 
@@ -29,9 +29,13 @@ export const publicCreateTagAPI = chatbotTokenAPI
     tags: ["Tags"],
   })
   .input(createTagRequest)
-  .output(createTagResponse)
+  .output(z.object({ id: z.string() }))
   .handler(async ({ context, input }) => {
-    return await createTag({ ...input, chatbotId: context.chatbot.id })
+    const { data } = await createTag({
+      ...input,
+      chatbotId: context.chatbot.id,
+    })
+    return { id: data.id }
   })
 
 export const publicUpdateTagAPI = chatbotTokenAPI
@@ -54,16 +58,16 @@ export const publicUpdateTagAPI = chatbotTokenAPI
 export const publicDeleteTagsAPI = chatbotTokenAPI
   .route({
     method: "DELETE",
-    path: "/public/chatbots/tags",
-    summary: "Delete tags",
+    path: "/public/chatbots/tags/{id}",
+    summary: "Delete tag",
     tags: ["Tags"],
   })
-  .input(z.object({ ids: z.array(z.string()) }))
+  .input(z.object({ id: z.string() }))
   .handler(async ({ context, input }) => {
-    const { ids } = input
+    const { id } = input
     return await deleteTags({
       chatbotId: context.chatbot.id,
-      ids,
+      ids: [id],
     })
   })
 

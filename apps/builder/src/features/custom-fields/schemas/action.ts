@@ -9,6 +9,13 @@ export const createCustomFieldRequest = z.object({
 })
 export type CreateCustomFieldRequest = z.infer<typeof createCustomFieldRequest>
 
+export const createCustomFieldResponse = z.object({
+  id: z.string(),
+})
+export type CreateCustomFieldResponse = z.infer<
+  typeof createCustomFieldResponse
+>
+
 export const updateCustomFieldRequest = z.object({
   name: z.string().trim().min(1).max(255),
   description: z.string().optional(),

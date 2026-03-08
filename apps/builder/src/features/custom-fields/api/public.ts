@@ -6,6 +6,7 @@ import { updateCustomField } from "../actions/update-custom-field.action"
 import { listCustomFields } from "../queries"
 import {
   createCustomFieldRequest,
+  createCustomFieldResponse,
   updateCustomFieldRequest,
 } from "../schemas/action"
 import {
@@ -34,6 +35,7 @@ const publicCustomFieldsAPI = {
       tags: ["Custom Fields"],
     })
     .input(createCustomFieldRequest)
+    .output(createCustomFieldResponse)
     .handler(async ({ context, input }) => {
       return await createCustomField(context.chatbot.id, input)
     }),
@@ -56,16 +58,16 @@ const publicCustomFieldsAPI = {
   publicDeleteCustomFieldsAPI: chatbotTokenAPI
     .route({
       method: "DELETE",
-      path: "/public/chatbots/custom-fields",
-      summary: "Delete custom fields",
+      path: "/public/chatbots/custom-fields/{customFieldId}",
+      summary: "Delete custom field",
       tags: ["Custom Fields"],
     })
-    .input(z.object({ ids: z.array(z.string()) }))
+    .input(z.object({ customFieldId: z.string() }))
     .handler(async ({ context, input }) => {
-      const { ids } = input
+      const { customFieldId } = input
       return await deleteCustomFields({
         chatbotId: context.chatbot.id,
-        ids,
+        ids: [customFieldId],
       })
     }),
 }

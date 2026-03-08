@@ -9,34 +9,34 @@ import {
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type RemoveContactTagRequest,
-  removeContactTagRequest,
+  type RemoveContactTagsRequest,
+  removeContactTagsRequest,
 } from "../schemas/contact-tag"
 
 export const removeContactTagAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
-  .inputSchema(removeContactTagRequest)
+  .inputSchema(removeContactTagsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: RemoveContactTagRequest
+      parsedInput: RemoveContactTagsRequest
     }) => {
       await removeContactTags({
-        bindArgsParsedInputs: [chatbotId],
+        chatbotId,
         parsedInput,
       })
     },
   )
 
 export const removeContactTags = async ({
-  bindArgsParsedInputs: [chatbotId],
+  chatbotId,
   parsedInput,
 }: {
-  bindArgsParsedInputs: ChatbotIdRequestParams
-  parsedInput: RemoveContactTagRequest
+  chatbotId: string
+  parsedInput: RemoveContactTagsRequest
 }) => {
   const contacts = await db.query.contactModel.findMany({
     where: {
@@ -58,9 +58,18 @@ export const removeContactTags = async ({
     const allTags = await tx.query.tagModel.findMany({
       where: {
         chatbotId,
-        name: {
-          in: parsedInput.tags,
-        },
+        OR: [
+          {
+            name: {
+              in: parsedInput.tags,
+            },
+          },
+          {
+            id: {
+              in: parsedInput.tags,
+            },
+          },
+        ],
       },
       columns: {
         id: true,
