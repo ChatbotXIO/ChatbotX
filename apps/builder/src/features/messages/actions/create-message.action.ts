@@ -6,11 +6,7 @@ import {
   conversationModel,
   messageModel,
 } from "@aha.chat/database/schema"
-import {
-  type InboxType,
-  type UserModel,
-  WEBCHAT_SOURCE_PREFIX,
-} from "@aha.chat/database/types"
+import { type UserModel, WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
@@ -18,22 +14,14 @@ import {
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
 import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
-import {
-  ChatJobAction,
-  chatQueue,
-  IntegrationJobAction,
-  integrationQueue,
-} from "@aha.chat/worker-config"
+import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import {
-  findConversation,
-  findConversationByContact,
-} from "@/features/conversations/queries/list-conversations.query"
+import { findConversation } from "@/features/conversations/queries/list-conversations.query"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
@@ -157,231 +145,231 @@ export const createMessageAction = chatbotActionClient
     },
   )
 
-export const sendTextMessage = async ({
-  chatbotId,
-  contactId,
-  channel,
-  text,
-}: {
-  chatbotId: string
-  contactId: string
-  channel: InboxType
-  text: string
-}) => {
-  const conversation = await findConversationByContact({
-    chatbotId,
-    contactId,
-    inboxType: channel,
-  })
+// export const sendTextMessage = async ({
+//   chatbotId,
+//   contactId,
+//   channel,
+//   text,
+// }: {
+//   chatbotId: string
+//   contactId: string
+//   channel: InboxType
+//   text: string
+// }) => {
+//   const conversation = await findConversationByContact({
+//     chatbotId,
+//     contactId,
+//     inboxType: channel,
+//   })
 
-  if (!conversation) {
-    throw new Error("Conversation not found")
-  }
+//   if (!conversation) {
+//     throw new Error("Conversation not found")
+//   }
 
-  const conversationId = conversation.id
+//   const conversationId = conversation.id
 
-  const message = await db.transaction(async (tx) => {
-    const newMessage: MessageResource = await tx
-      .insert(messageModel)
-      .values({
-        id: createId(),
-        content: text,
-        messageType: "outgoing",
-        chatbotId: conversation.chatbotId,
-        conversationId,
-        senderType: "api",
-        senderId: null,
-        inboxId: conversation.inboxId,
-        contentType: "text",
-      })
-      .returning()
-      .then((result) => result[0])
+//   const message = await db.transaction(async (tx) => {
+//     const newMessage: MessageResource = await tx
+//       .insert(messageModel)
+//       .values({
+//         id: createId(),
+//         content: text,
+//         messageType: "outgoing",
+//         chatbotId: conversation.chatbotId,
+//         conversationId,
+//         senderType: "api",
+//         senderId: null,
+//         inboxId: conversation.inboxId,
+//         contentType: "text",
+//       })
+//       .returning()
+//       .then((result) => result[0])
 
-    await tx
-      .update(conversationModel)
-      .set({
-        agentLastSeenAt: new Date(),
-        lastActivityAt: new Date(),
-        adminRepliedAt: new Date(),
-      })
-      .where(eq(conversationModel.id, conversationId))
+//     await tx
+//       .update(conversationModel)
+//       .set({
+//         agentLastSeenAt: new Date(),
+//         lastActivityAt: new Date(),
+//         adminRepliedAt: new Date(),
+//       })
+//       .where(eq(conversationModel.id, conversationId))
 
-    return newMessage
-  })
+//     return newMessage
+//   })
 
-  const promises: Promise<unknown>[] = [
-    broadcastToChatbotParty(chatbotId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: message,
-    }),
-  ]
-  if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
-    promises.push(
-      broadcastToGuestParty(conversation.sourceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: message,
-      }),
-    )
-  } else {
-    promises.push(
-      chatQueue.add(ChatJobAction.sendExternalMessage, {
-        type: ChatJobAction.sendExternalMessage,
-        data: {
-          conversation: conversation as OutgoingConversation,
-          message: message as OutgoingMessage,
-        },
-      }),
-    )
-  }
+//   const promises: Promise<unknown>[] = [
+//     broadcastToChatbotParty(chatbotId, {
+//       eventType: RealtimeEventType.messageCreated,
+//       data: message,
+//     }),
+//   ]
+//   if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
+//     promises.push(
+//       broadcastToGuestParty(conversation.sourceId, {
+//         eventType: RealtimeEventType.messageCreated,
+//         data: message,
+//       }),
+//     )
+//   } else {
+//     promises.push(
+//       chatQueue.add(ChatJobAction.sendExternalMessage, {
+//         type: ChatJobAction.sendExternalMessage,
+//         data: {
+//           conversation: conversation as OutgoingConversation,
+//           message: message as OutgoingMessage,
+//         },
+//       }),
+//     )
+//   }
 
-  // Broadcast and send
-  await Promise.all(promises)
+//   // Broadcast and send
+//   await Promise.all(promises)
 
-  revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
-}
+//   revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
+// }
 
-export const sendFileMessage = async ({
-  chatbotId,
-  contactId,
-  channel,
-  file,
-}: {
-  chatbotId: string
-  contactId: string
-  channel: InboxType
-  file: File
-}) => {
-  const conversation = await findConversationByContact({
-    chatbotId,
-    contactId,
-    inboxType: channel,
-  })
+// export const sendFileMessage = async ({
+//   chatbotId,
+//   contactId,
+//   channel,
+//   file,
+// }: {
+//   chatbotId: string
+//   contactId: string
+//   channel: InboxType
+//   file: File
+// }) => {
+//   const conversation = await findConversationByContact({
+//     chatbotId,
+//     contactId,
+//     inboxType: channel,
+//   })
 
-  if (!conversation) {
-    throw new Error("Conversation not found")
-  }
+//   if (!conversation) {
+//     throw new Error("Conversation not found")
+//   }
 
-  const conversationId = conversation.id
+//   const conversationId = conversation.id
 
-  // upload file
-  const uploadedFiles = await uploadMultipleFiles(
-    [file],
-    `public/chatbots/${chatbotId}/conversations/${conversation.id}`,
-  )
+//   // upload file
+//   const uploadedFiles = await uploadMultipleFiles(
+//     [file],
+//     `public/chatbots/${chatbotId}/conversations/${conversation.id}`,
+//   )
 
-  const message = await db.transaction(async (tx) => {
-    const newMessage: MessageResource = await tx
-      .insert(messageModel)
-      .values({
-        id: createId(),
-        content: null,
-        messageType: "outgoing",
-        chatbotId: conversation.chatbotId,
-        conversationId,
-        senderType: "api",
-        senderId: null,
-        inboxId: conversation.inboxId,
-        contentType: "text",
-      })
-      .returning()
-      .then((result) => result[0])
+//   const message = await db.transaction(async (tx) => {
+//     const newMessage: MessageResource = await tx
+//       .insert(messageModel)
+//       .values({
+//         id: createId(),
+//         content: null,
+//         messageType: "outgoing",
+//         chatbotId: conversation.chatbotId,
+//         conversationId,
+//         senderType: "api",
+//         senderId: null,
+//         inboxId: conversation.inboxId,
+//         contentType: "text",
+//       })
+//       .returning()
+//       .then((result) => result[0])
 
-    // create attachment
-    const attachments = await tx
-      .insert(attachmentModel)
-      .values(
-        uploadedFiles.map((file) => ({
-          id: createId(),
-          messageId: newMessage.id,
-          chatbotId: newMessage.chatbotId,
-          conversationId: newMessage.conversationId,
-          ...file,
-        })),
-      )
-      .returning()
+//     // create attachment
+//     const attachments = await tx
+//       .insert(attachmentModel)
+//       .values(
+//         uploadedFiles.map((file) => ({
+//           id: createId(),
+//           messageId: newMessage.id,
+//           chatbotId: newMessage.chatbotId,
+//           conversationId: newMessage.conversationId,
+//           ...file,
+//         })),
+//       )
+//       .returning()
 
-    newMessage.attachments = attachments as AttachmentResource[]
+//     newMessage.attachments = attachments as AttachmentResource[]
 
-    await tx
-      .update(conversationModel)
-      .set({
-        agentLastSeenAt: new Date(),
-        lastActivityAt: new Date(),
-        adminRepliedAt: new Date(),
-      })
-      .where(eq(conversationModel.id, conversationId))
+//     await tx
+//       .update(conversationModel)
+//       .set({
+//         agentLastSeenAt: new Date(),
+//         lastActivityAt: new Date(),
+//         adminRepliedAt: new Date(),
+//       })
+//       .where(eq(conversationModel.id, conversationId))
 
-    return newMessage
-  })
+//     return newMessage
+//   })
 
-  const promises: Promise<unknown>[] = [
-    broadcastToChatbotParty(chatbotId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: message,
-    }),
-  ]
-  if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
-    promises.push(
-      broadcastToGuestParty(conversation.sourceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: message,
-      }),
-    )
-  } else {
-    promises.push(
-      chatQueue.add(ChatJobAction.sendExternalMessage, {
-        type: ChatJobAction.sendExternalMessage,
-        data: {
-          conversation: conversation as OutgoingConversation,
-          message: message as OutgoingMessage,
-        },
-      }),
-    )
-  }
+//   const promises: Promise<unknown>[] = [
+//     broadcastToChatbotParty(chatbotId, {
+//       eventType: RealtimeEventType.messageCreated,
+//       data: message,
+//     }),
+//   ]
+//   if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
+//     promises.push(
+//       broadcastToGuestParty(conversation.sourceId, {
+//         eventType: RealtimeEventType.messageCreated,
+//         data: message,
+//       }),
+//     )
+//   } else {
+//     promises.push(
+//       chatQueue.add(ChatJobAction.sendExternalMessage, {
+//         type: ChatJobAction.sendExternalMessage,
+//         data: {
+//           conversation: conversation as OutgoingConversation,
+//           message: message as OutgoingMessage,
+//         },
+//       }),
+//     )
+//   }
 
-  // Broadcast and send
-  await Promise.all(promises)
+//   // Broadcast and send
+//   await Promise.all(promises)
 
-  revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
-}
+//   revalidateCacheTags(`chatbots:${chatbotId}:conversations`)
+// }
 
-export const sendFlowMessage = async ({
-  chatbotId,
-  contactId,
-  channel,
-  flowId,
-}: {
-  chatbotId: string
-  contactId: string
-  channel: InboxType
-  flowId: string
-}) => {
-  const conversation = await findConversationByContact({
-    chatbotId,
-    contactId,
-    inboxType: channel,
-  })
+// export const sendFlowMessage = async ({
+//   chatbotId,
+//   contactId,
+//   channel,
+//   flowId,
+// }: {
+//   chatbotId: string
+//   contactId: string
+//   channel: InboxType
+//   flowId: string
+// }) => {
+//   const conversation = await findConversationByContact({
+//     chatbotId,
+//     contactId,
+//     inboxType: channel,
+//   })
 
-  if (!conversation) {
-    throw new Error("Conversation not found")
-  }
+//   if (!conversation) {
+//     throw new Error("Conversation not found")
+//   }
 
-  const flowVersion = await db.query.flowVersionModel.findFirst({
-    where: {
-      flowId,
-      isDraft: false,
-    },
-  })
+//   const flowVersion = await db.query.flowVersionModel.findFirst({
+//     where: {
+//       flowId,
+//       isDraft: false,
+//     },
+//   })
 
-  if (!flowVersion) {
-    throw new Error("Flow version not found")
-  }
+//   if (!flowVersion) {
+//     throw new Error("Flow version not found")
+//   }
 
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      conversationId: conversation.id,
-      flowId,
-    },
-  })
-}
+//   await integrationQueue.add(IntegrationJobAction.sendFlow, {
+//     type: IntegrationJobAction.sendFlow,
+//     data: {
+//       conversationId: conversation.id,
+//       flowId,
+//     },
+//   })
+// }

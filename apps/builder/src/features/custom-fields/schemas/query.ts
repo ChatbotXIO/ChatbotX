@@ -1,3 +1,4 @@
+import { createSelectSchema, fieldModel } from "@aha.chat/database/schema"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
@@ -6,7 +7,11 @@ import {
 } from "nuqs/server"
 import z from "zod"
 import { basePaginationRequest } from "@/lib/pagination"
-import { type CustomFieldResource, customFieldResource } from "./resource"
+import {
+  type CustomFieldResource,
+  customFieldResource,
+  publicCustomFieldResource,
+} from "./resource"
 
 export const listCustomFieldsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -35,3 +40,15 @@ export const listCustomFieldsResponse = z.object({
   pageCount: z.number(),
 })
 export type ListCustomFieldsResponse = z.infer<typeof listCustomFieldsResponse>
+
+export const findCustomFieldRequest = createSelectSchema(fieldModel)
+  .pick({ id: true, chatbotId: true, name: true })
+  .partial()
+export type FindCustomFieldRequest = z.infer<typeof findCustomFieldRequest>
+
+export const listPublicCustomFieldsResponse = z.object({
+  data: z.array(publicCustomFieldResource),
+})
+export type ListPublicCustomFieldsResponse = z.infer<
+  typeof listPublicCustomFieldsResponse
+>

@@ -1,14 +1,4 @@
 import { withChatbotIdSchema } from "@/features/chatbots/schemas/resource"
-import {
-  sendFileMessage,
-  sendFlowMessage,
-  sendTextMessage,
-} from "@/features/messages/actions/create-message.action"
-import {
-  sendFileMessageRequest,
-  sendFlowMessageRequest,
-  sendTextMessageRequest,
-} from "@/features/messages/schemas/create-message.schema"
 import { chatbotAuthMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
@@ -23,7 +13,7 @@ import { createContactRequest, createContactResponse } from "../schemas/action"
 import {
   deleteContactCustomFieldRequest,
   listContactCustomFieldsRequest,
-  listContactCustomFieldsResponse,
+  listPublicContactCustomFieldsResponse,
   setContactCustomFieldValueRequest,
 } from "../schemas/contact-custom-field"
 import {
@@ -49,6 +39,7 @@ export const privateAPIs = {
       const { chatbotId, ...rest } = input
       return await listContacts({ ...rest, chatbotId })
     }),
+
   privateCreateContactAPI: authorizedAPI
     .route({
       method: "POST",
@@ -63,6 +54,7 @@ export const privateAPIs = {
       const { chatbotId, ...parsedInput } = input
       return await createContact({ chatbotId, parsedInput })
     }),
+
   privateListContactTagsAPI: authorizedAPI
     .route({
       method: "GET",
@@ -80,6 +72,7 @@ export const privateAPIs = {
         contactId,
       })
     }),
+
   privateAddContactTagAPI: authorizedAPI
     .route({
       method: "POST",
@@ -99,6 +92,7 @@ export const privateAPIs = {
         },
       })
     }),
+
   privateRemoveContactTagAPI: authorizedAPI
     .route({
       method: "DELETE",
@@ -118,6 +112,7 @@ export const privateAPIs = {
         },
       })
     }),
+
   privateListContactFieldsAPI: authorizedAPI
     .route({
       method: "GET",
@@ -126,15 +121,17 @@ export const privateAPIs = {
       tags: ["Contacts"],
     })
     .input(listContactCustomFieldsRequest)
-    .output(listContactCustomFieldsResponse)
+    .output(listPublicContactCustomFieldsResponse)
     .use(chatbotAuthMiddleware, (input) => input.chatbotId)
     .handler(async ({ input }) => {
       const { chatbotId, contactId } = input
+
       return await listContactCustomFields({
         chatbotId,
         contactId,
       })
     }),
+
   privateAddContactFieldAPI: authorizedAPI
     .route({
       method: "POST",
@@ -153,6 +150,7 @@ export const privateAPIs = {
         value: input.value,
       })
     }),
+
   privateDeleteContactFieldAPI: authorizedAPI
     .route({
       method: "DELETE",
@@ -170,60 +168,61 @@ export const privateAPIs = {
         fieldId: customFieldId,
       })
     }),
-  privateSendTextMessageAPI: authorizedAPI
-    .route({
-      method: "POST",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/text",
-      summary: "Send text message to contact",
-      tags: ["Contacts"],
-    })
-    .input(sendTextMessageRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-    .handler(async ({ input }) => {
-      const { chatbotId, contactId, text, channel } = input
-      await sendTextMessage({
-        chatbotId,
-        contactId,
-        text,
-        channel,
-      })
-    }),
-  privateSendFileMessageAPI: authorizedAPI
-    .route({
-      method: "POST",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/file",
-      summary: "Send file message to contact",
-      tags: ["Contacts"],
-    })
-    .input(sendFileMessageRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-    .handler(async ({ input }) => {
-      const { chatbotId, contactId, channel, file } = input
-      await sendFileMessage({
-        chatbotId,
-        contactId,
-        channel,
-        file,
-      })
-    }),
-  privateSendFlowMessageAPI: authorizedAPI
-    .route({
-      method: "POST",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/flow",
-      summary: "Send flow message to contact",
-      tags: ["Contacts"],
-    })
-    .input(sendFlowMessageRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-    .handler(async ({ input }) => {
-      const { chatbotId, contactId, channel, flowId } = input
-      await sendFlowMessage({
-        chatbotId,
-        contactId,
-        channel,
-        flowId,
-      })
-    }),
+
+  // privateSendTextMessageAPI: authorizedAPI
+  //   .route({
+  //     method: "POST",
+  //     path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/text",
+  //     summary: "Send text message to contact",
+  //     tags: ["Contacts"],
+  //   })
+  //   .input(sendTextMessageRequest.and(withChatbotIdSchema))
+  //   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+  //   .handler(async ({ input }) => {
+  //     const { chatbotId, contactId, text, channel } = input
+  //     await sendTextMessage({
+  //       chatbotId,
+  //       contactId,
+  //       text,
+  //       channel,
+  //     })
+  //   }),
+  // privateSendFileMessageAPI: authorizedAPI
+  //   .route({
+  //     method: "POST",
+  //     path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/file",
+  //     summary: "Send file message to contact",
+  //     tags: ["Contacts"],
+  //   })
+  //   .input(sendFileMessageRequest.and(withChatbotIdSchema))
+  //   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+  //   .handler(async ({ input }) => {
+  //     const { chatbotId, contactId, channel, file } = input
+  //     await sendFileMessage({
+  //       chatbotId,
+  //       contactId,
+  //       channel,
+  //       file,
+  //     })
+  //   }),
+  // privateSendFlowMessageAPI: authorizedAPI
+  //   .route({
+  //     method: "POST",
+  //     path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/flow",
+  //     summary: "Send flow message to contact",
+  //     tags: ["Contacts"],
+  //   })
+  //   .input(sendFlowMessageRequest.and(withChatbotIdSchema))
+  //   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+  //   .handler(async ({ input }) => {
+  //     const { chatbotId, contactId, channel, flowId } = input
+  //     await sendFlowMessage({
+  //       chatbotId,
+  //       contactId,
+  //       channel,
+  //       flowId,
+  //     })
+  //   }),
 }
 
 export default privateAPIs

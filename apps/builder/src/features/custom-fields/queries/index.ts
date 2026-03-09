@@ -4,9 +4,11 @@ import { fieldModel } from "@aha.chat/database/schema"
 import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
+  FindCustomFieldRequest,
   ListCustomFieldsRequest,
   ListCustomFieldsResponse,
 } from "../schemas/query"
+import type { CustomFieldResource } from "../schemas/resource"
 
 export const listCustomFieldsRSC = async (
   input: ListCustomFieldsRequest & { chatbotId: string },
@@ -50,4 +52,15 @@ export async function listCustomFields(
   const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1
 
   return { data, pageCount, ...pagination }
+}
+
+export const findCustomField = async (
+  input: FindCustomFieldRequest,
+): Promise<CustomFieldResource | undefined> => {
+  return await db.query.fieldModel.findFirst({
+    where: {
+      ...input,
+      fieldType: "customField" as const,
+    },
+  })
 }

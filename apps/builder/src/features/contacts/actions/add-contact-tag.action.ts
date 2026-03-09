@@ -1,7 +1,12 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { contactsToTagsModel, tagModel } from "@aha.chat/database/schema"
+import { and, db, eq, findOrFail } from "@aha.chat/database/client"
+import {
+  contactModel,
+  contactsToTagsModel,
+  tagModel,
+} from "@aha.chat/database/schema"
+import type { ContactModel, TagModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
@@ -101,4 +106,61 @@ export const addContactTags = async ({
     `chatbots:${chatbotId}#conversations`,
     `chatbots:${chatbotId}#tags`,
   ])
+}
+
+export const attachContactTag = async ({
+  chatbotId,
+  contactId,
+  tagId,
+}: {
+  chatbotId: string
+  contactId: string
+  tagId: string
+}) => {
+  findOrFail<ContactModel>(contactModel, {
+    id: contactId,
+    chatbotId,
+  })
+  findOrFail<TagModel>(tagModel, {
+    id: tagId,
+    chatbotId,
+  })
+
+  await db
+    .insert(contactsToTagsModel)
+    .values({
+      contactId,
+      tagId,
+    })
+    .onConflictDoNothing({
+      target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
+    })
+}
+
+export const detachContactTag = async ({
+  chatbotId,
+  contactId,
+  tagId,
+}: {
+  chatbotId: string
+  contactId: string
+  tagId: string
+}) => {
+  findOrFail<ContactModel>(contactModel, {
+    id: contactId,
+    chatbotId,
+  })
+  findOrFail<TagModel>(tagModel, {
+    id: tagId,
+    chatbotId,
+  })
+
+  await db
+    .delete(contactsToTagsModel)
+    .where(
+      and(
+        eq(contactsToTagsModel.contactId, contactId),
+        eq(contactsToTagsModel.tagId, tagId),
+      ),
+    )
 }
