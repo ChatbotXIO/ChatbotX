@@ -51,6 +51,7 @@ export const receiveMessage = async (props: {
   ctx: Context<ZaloAuthValue>
   data: {
     integrationType: string
+    integrationIdentifier: string
     payload: unknown
   }
 }): Promise<ReceivedMessageResult | null> => {

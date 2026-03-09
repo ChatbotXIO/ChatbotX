@@ -38,7 +38,7 @@ const assignedIcon = (conversation: ListConversationItemResource) => {
           <Avatar className="size-4">
             <AvatarImage src={conversation.assignedUser?.image ?? ""} />
 
-            <AvatarFallback className="text-xs">
+            <AvatarFallback className="text-[0.5rem]">
               {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
             </AvatarFallback>
           </Avatar>
@@ -137,8 +137,8 @@ export default function ConversationItem({
             />
           </div>
           {conversation.followed && (
-            <div className="absolute bottom-0 left-0 transform">
-              <StarIcon className="fill-yellow-400 text-yellow-400" />
+            <div className="absolute top-0 right-0 transform">
+              <StarIcon className="fill-yellow-400 text-zinc-500" />
             </div>
           )}
         </div>
