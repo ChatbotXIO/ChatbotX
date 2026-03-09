@@ -12,7 +12,6 @@ const publicCustomFieldsAPI = {
       method: "GET",
       path: "/public/chatbots/custom-fields",
       summary: "Get all custom fields",
-      tags: ["Chatbots"],
     })
     .input(z.object({}))
     .output(z.object({ data: z.array(publicCustomFieldResource) }))
@@ -25,7 +24,6 @@ const publicCustomFieldsAPI = {
       method: "POST",
       path: "/public/chatbots/custom-fields",
       summary: "Create a custom field",
-      tags: ["Chatbots"],
     })
     .input(createCustomFieldRequest.pick({ name: true, customFieldType: true }))
     .output(publicCustomFieldResource)
@@ -38,7 +36,6 @@ const publicCustomFieldsAPI = {
       method: "GET",
       path: "/public/chatbots/custom-fields/{id}",
       summary: "Get custom field by id",
-      tags: ["Chatbots"],
     })
     .input(z.object({ id: z.string() }))
     .output(publicCustomFieldResource)
@@ -58,7 +55,6 @@ const publicCustomFieldsAPI = {
       method: "GET",
       path: "/public/chatbots/custom-fields/name/{name}",
       summary: "Get custom field by name",
-      tags: ["Chatbots"],
     })
     .input(z.object({ name: z.string() }))
     .output(publicCustomFieldResource)
