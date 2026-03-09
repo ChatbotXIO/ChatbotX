@@ -31,6 +31,7 @@ export const privateCustomFieldsAPI = {
       const { chatbotId, ...rest } = input
       return await listCustomFields({ ...rest, chatbotId })
     }),
+
   privateCreateCustomFieldAPI: authorizedAPI
     .route({
       method: "POST",
@@ -45,6 +46,7 @@ export const privateCustomFieldsAPI = {
       const { chatbotId, ...rest } = input
       return await createCustomField(chatbotId, rest)
     }),
+
   privateUpdateCustomFieldAPI: authorizedAPI
     .route({
       method: "PUT",
@@ -66,6 +68,7 @@ export const privateCustomFieldsAPI = {
         parsedInput: rest,
       })
     }),
+
   privateDeleteCustomFieldsAPI: authorizedAPI
     .route({
       method: "DELETE",

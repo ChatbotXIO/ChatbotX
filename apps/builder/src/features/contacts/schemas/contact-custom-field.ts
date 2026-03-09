@@ -4,6 +4,7 @@ import {
 } from "@aha.chat/database/schema"
 import { FieldOperationType } from "@aha.chat/flow-config"
 import { z } from "zod"
+import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 
 export const contactCustomFieldResource = createSelectSchema(
   contactCustomFieldModel,
@@ -57,4 +58,20 @@ export const deleteContactCustomFieldRequest = z.object({
 })
 export type DeleteContactCustomFieldRequest = z.infer<
   typeof deleteContactCustomFieldRequest
+>
+
+export const publicContactCustomFieldResource = publicCustomFieldResource.and(
+  z.object({
+    value: z.string(),
+  }),
+)
+export type PublicContactCustomFieldResource = z.infer<
+  typeof publicContactCustomFieldResource
+>
+
+export const listPublicContactCustomFieldsResponse = z.object({
+  data: z.array(publicContactCustomFieldResource),
+})
+export type ListPublicContactCustomFieldsResponse = z.infer<
+  typeof listPublicContactCustomFieldsResponse
 >

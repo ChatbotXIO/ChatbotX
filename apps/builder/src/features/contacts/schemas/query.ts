@@ -2,13 +2,17 @@ import { Operator } from "@aha.chat/database/enums"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schemas/resource"
 import { conversationResource } from "@/features/conversations/schemas/resource"
+import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 import { inboxResource } from "@/features/inboxes/schemas/resource"
-import { tagResource } from "@/features/tags/schemas/resource"
+import {
+  publicTagResource,
+  tagResource,
+} from "@/features/tags/schemas/resource"
 import { userResource } from "@/features/users/schemas/resource"
 import { basePaginationRequest } from "@/lib/pagination"
 import { contactCustomFieldResource } from "./contact-custom-field"
 import { contactNoteResource } from "./contact-note"
-import { contactResource } from "./resource"
+import { contactResource, publicContactResource } from "./resource"
 
 export const listContactsRequest = basePaginationRequest.and(
   z.object({
@@ -55,3 +59,34 @@ export const contactFilterRequest = z.object({
   }),
 })
 export type ContactFilterRequest = z.infer<typeof contactFilterRequest>
+
+export const findContactRequest = contactResource
+  .pick({ id: true, chatbotId: true })
+  .partial()
+export type FindContactRequest = z.infer<typeof findContactRequest>
+
+export const publicFindContactResponse = publicContactResource.and(
+  z.object({
+    tags: z.array(publicTagResource),
+    customFields: z.array(publicCustomFieldResource),
+  }),
+)
+export type PublicFindContactResponse = z.infer<
+  typeof publicFindContactResponse
+>
+
+export const publicListContactsResponse = z.object({
+  data: z.array(publicFindContactResponse),
+})
+export type PublicListContactsResponse = z.infer<
+  typeof publicListContactsResponse
+>
+
+export const publicListContactsByCustomFieldRequest = z.object({
+  customFieldId: z.string(),
+  value: z.string(),
+})
+
+export type PublicListContactsByCustomFieldRequest = z.infer<
+  typeof publicListContactsByCustomFieldRequest
+>

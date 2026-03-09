@@ -115,5 +115,5 @@ export const createContact = async ({
     `chatbots:${chatbotId}#conversations`,
   ])
 
-  return { id: contact.id }
+  return contact
 }

@@ -61,6 +61,8 @@ export const createTag = async (
     .insert(tagModel)
     .values({
       ...parsedInput,
+      folderId: parsedInput.folderId ?? null,
+      syncToMessenger: parsedInput.syncToMessenger ?? true,
       id: createId(),
     })
     .returning()

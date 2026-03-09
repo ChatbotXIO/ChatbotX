@@ -6,3 +6,10 @@ export class FieldException extends BaseException {}
 
 export const customFieldResource = createSelectSchema(fieldModel)
 export type CustomFieldResource = z.infer<typeof customFieldResource>
+
+export const publicCustomFieldResource = customFieldResource.pick({
+  id: true,
+  name: true,
+  customFieldType: true,
+  description: true,
+})

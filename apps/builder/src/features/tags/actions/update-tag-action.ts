@@ -57,12 +57,16 @@ export const updateTag = async ({
     throw new Error(`Tag with the name "${parsedInput.name}" already exists.`)
   }
 
-  await db
+  const updatedTag = await db
     .update(tagModel)
     .set({
       name: parsedInput.name,
     })
     .where(eq(tagModel.id, id))
+    .returning()
+    .then((result) => result[0])
 
   revalidateCacheTags(`chatbots:${chatbotId}#tags`)
+
+  return updatedTag
 }
