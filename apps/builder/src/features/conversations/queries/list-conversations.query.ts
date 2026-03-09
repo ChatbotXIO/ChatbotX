@@ -100,6 +100,7 @@ export const listConversations = async (
       ),
     )
     .orderBy(desc(messageModel.createdAt))
+    .limit(1)
 
   const conversations = await db
     .select()
@@ -113,6 +114,7 @@ export const listConversations = async (
       eq(conversationModel.assignedInboxTeamId, inboxTeamModel.id),
     )
     .where(and(...where))
+    .orderBy(desc(conversationModel.lastActivityAt))
     .limit(pagination.limit)
 
   return {

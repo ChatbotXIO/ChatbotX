@@ -29,8 +29,6 @@ type IChannel<IAuth extends AuthValue> = {
         data: {
           integrationType: string
           integrationIdentifier: string
-          sourceContactId: string
-          sourceConversationId: string
           payload: unknown
         }
       },
@@ -54,8 +52,6 @@ type IChannel<IAuth extends AuthValue> = {
         data: {
           integrationType: string
           integrationIdentifier: string
-          sourceContactId: string
-          sourceConversationId: string
           payload: unknown
         }
       },

@@ -23,14 +23,14 @@ export type OutgoingContact = {
 
 export type IncomingConversation = {
   sourceId: string
-  conversationAttributes: unknown
+  conversationAttributes: { [x: string]: unknown }
   contact: IncomingContact
 }
 
 export type OutgoingConversation = {
   id: string
   chatbotId: string
-  conversationAttributes: unknown
+  conversationAttributes: { [x: string]: unknown } | null
   sourceId: string | null
   inboxId: string
   contactId: string
@@ -63,7 +63,10 @@ export type IncomingMessage = {
   messageType: MessageType
   contentType: ContentType
   content?: string
-  contentAttributes?: MessageLocationEntity | MessageTemplateEntity | unknown
+  contentAttributes?:
+    | MessageLocationEntity
+    | MessageTemplateEntity
+    | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
 }
