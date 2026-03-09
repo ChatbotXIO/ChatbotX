@@ -1,4 +1,4 @@
-name: ahachat
+name: chatbotx
 
 include:
   - docker-compose.yml
@@ -8,7 +8,7 @@ services:
     build:
       context: .
       dockerfile: apps/builder/docker/Dockerfile
-    # image: realcodesiman/ahachat-builder:latest
+    # image: realcodesiman/chatbotx-builder:latest
     platform: linux/amd64
     restart: unless-stopped
     env_file:
@@ -34,7 +34,7 @@ services:
     build:
       context: .
       dockerfile: apps/worker/docker/Dockerfile
-    # image: realcodesiman/ahachat-worker:latest
+    # image: realcodesiman/chatbotx-worker:latest
     platform: linux/amd64
     restart: unless-stopped
     env_file:
@@ -46,7 +46,7 @@ services:
     # build:
     #   context: .
     #   dockerfile: apps/partysocket/docker/Dockerfile
-    image: realcodesiman/ahachat-partysocket:latest
+    image: realcodesiman/chatbotx-partysocket:latest
     platform: linux/amd64
     restart: unless-stopped
     env_file:
@@ -57,5 +57,5 @@ services:
       - "host.docker.internal:host-gateway"
 
 networks:
-  ahachat-network:
+  chatbotx-network:
     driver: bridge

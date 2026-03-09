@@ -1,4 +1,4 @@
-name: ahachat
+name: chatbotx
 
 services:
   postgres:
@@ -8,8 +8,8 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-ahachat}
-      - POSTGRES_USER=${POSTGRES_USER:-ahachat}
+      - POSTGRES_DB=${POSTGRES_DB:-chatbotx}
+      - POSTGRES_USER=${POSTGRES_USER:-chatbotx}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -39,7 +39,7 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: ahachat
+      MINIO_ROOT_USER: chatbotx
       MINIO_ROOT_PASSWORD: nr541Kv59xB4f48bhZOy5wBz
     volumes:
       - s3-data:/data
@@ -57,10 +57,10 @@ services:
     entrypoint: >
       /bin/sh -c "
       sleep 10;
-      /usr/bin/mc alias set minio http://minio:9000 ahachat nr541Kv59xB4f48bhZOy5wBz;
-      /usr/bin/mc mb minio/ahachat;
-      /usr/bin/mc mb minio/ahachat/public;
-      /usr/bin/mc anonymous set public minio/ahachat/public;
+      /usr/bin/mc alias set minio http://minio:9000 chatbotx nr541Kv59xB4f48bhZOy5wBz;
+      /usr/bin/mc mb minio/chatbotx;
+      /usr/bin/mc mb minio/chatbotx/public;
+      /usr/bin/mc anonymous set public minio/chatbotx/public;
       exit 0;
       "
 
