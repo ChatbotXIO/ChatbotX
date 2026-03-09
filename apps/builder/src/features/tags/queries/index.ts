@@ -1,14 +1,21 @@
 import { db, eq, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
 import { contactsToTagsModel, tagModel } from "@aha.chat/database/schema"
+import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { parseOrderByAsObject, parsePagination } from "@/lib/pagination"
-import type { GetTagsSchema } from "../schemas/get-tags-schema"
-import type { TagCollection } from "../schemas/resource"
+import type { ListTagsRequest, ListTagsResponse } from "../schemas/query"
 
-export async function getTags(input: GetTagsSchema): Promise<TagCollection> {
+export const listTagsRSC = async (
+  input: ListTagsRequest & { chatbotId: string },
+) => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
+  return await listTags(input)
+}
+
+export async function listTags(
+  input: ListTagsRequest & { chatbotId: string },
+): Promise<ListTagsResponse> {
   const where = {
     chatbotId: input.chatbotId,
     name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,

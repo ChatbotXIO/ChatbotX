@@ -34,68 +34,81 @@ export const deleteContactCustomFieldAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: DeleteContactCustomFieldRequest
     }) => {
-      const contacts = await db.query.contactModel.findMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-        columns: {
-          id: true,
-        },
+      await deleteContactCustomFields({
+        bindArgsParsedInputs: [chatbotId],
+        parsedInput,
       })
-      if (contacts.length === 0) {
-        return
-      }
-
-      if (isCuid(parsedInput.customFieldId)) {
-        const customField = await findOrFail<FieldModel>(
-          fieldModel,
-          {
-            chatbotId,
-            id: parsedInput.customFieldId,
-            fieldType: "customField",
-          },
-          "Custom field not found",
-        )
-
-        await db.transaction(async (tx) => {
-          await tx.delete(contactCustomFieldModel).where(
-            and(
-              inArray(
-                contactCustomFieldModel.contactId,
-                contacts.map((c) => c.id),
-              ),
-              eq(contactCustomFieldModel.customFieldId, customField.id),
-            ),
-          )
-        })
-      } else if (
-        fillableContactKeys.includes(
-          parsedInput.customFieldId as FillableContactKeys,
-        )
-      ) {
-        await db
-          .update(contactModel)
-          .set({
-            [parsedInput.customFieldId]: "",
-          })
-          .where(
-            and(
-              inArray(
-                contactModel.id,
-                contacts.map((c) => c.id),
-              ),
-              eq(contactModel.chatbotId, chatbotId),
-            ),
-          )
-      }
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
-        `chatbots:${chatbotId}#fields`,
-      ])
     },
   )
+
+export const deleteContactCustomFields = async ({
+  bindArgsParsedInputs: [chatbotId],
+  parsedInput,
+}: {
+  bindArgsParsedInputs: ChatbotIdRequestParams
+  parsedInput: DeleteContactCustomFieldRequest
+}) => {
+  const contacts = await db.query.contactModel.findMany({
+    where: {
+      chatbotId,
+      id: {
+        in: parsedInput.ids,
+      },
+    },
+    columns: {
+      id: true,
+    },
+  })
+  if (contacts.length === 0) {
+    return
+  }
+
+  if (isCuid(parsedInput.customFieldId)) {
+    const customField = await findOrFail<FieldModel>(
+      fieldModel,
+      {
+        chatbotId,
+        id: parsedInput.customFieldId,
+        fieldType: "customField",
+      },
+      "Custom field not found",
+    )
+
+    await db.transaction(async (tx) => {
+      await tx.delete(contactCustomFieldModel).where(
+        and(
+          inArray(
+            contactCustomFieldModel.contactId,
+            contacts.map((c) => c.id),
+          ),
+          eq(contactCustomFieldModel.customFieldId, customField.id),
+        ),
+      )
+    })
+  } else if (
+    fillableContactKeys.includes(
+      parsedInput.customFieldId as FillableContactKeys,
+    )
+  ) {
+    await db
+      .update(contactModel)
+      .set({
+        [parsedInput.customFieldId]: "",
+      })
+      .where(
+        and(
+          inArray(
+            contactModel.id,
+            contacts.map((c) => c.id),
+          ),
+          eq(contactModel.chatbotId, chatbotId),
+        ),
+      )
+  }
+
+  revalidateCacheTags([
+    `chatbots:${chatbotId}#contacts`,
+    `chatbots:${chatbotId}#conversations`,
+    `chatbots:${chatbotId}#fields`,
+  ])
+}

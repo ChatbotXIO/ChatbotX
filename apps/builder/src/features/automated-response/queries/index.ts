@@ -2,12 +2,12 @@ import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
 import { automatedResponseModel } from "@aha.chat/database/schema"
 import type { AutomatedResponseModel } from "@aha.chat/database/types"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@/lib/pagination"
+} from "@aha.chat/database/utils"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListAutomatedResponsesRequest } from "../schemas/query"
 import type { AutomatedResponseResource } from "../schemas/resource"
 

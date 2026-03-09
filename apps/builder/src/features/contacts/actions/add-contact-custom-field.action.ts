@@ -27,85 +27,96 @@ export const addContactCustomFieldAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: AddContactCustomFieldRequest
     }) => {
-      const contacts = await db.query.contactModel.findMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-        columns: {
-          id: true,
-        },
+      await addContactCustomFields({
+        bindArgsParsedInputs: [chatbotId],
+        parsedInput,
       })
-      if (contacts.length === 0) {
-        return
-      }
-
-      const customField = await findOrFail<FieldModel>(
-        fieldModel,
-        {
-          chatbotId,
-          id: parsedInput.customFieldId,
-          fieldType: "customField",
-        },
-        "Custom field not found",
-      )
-
-      await db.transaction(async (tx) => {
-        await Promise.all(
-          contacts.map(async (contact) => {
-            const contactCustomField =
-              await tx.query.contactCustomFieldModel.findFirst({
-                where: {
-                  contactId: contact.id,
-                  customFieldId: customField.id,
-                },
-              })
-
-            if (contactCustomField) {
-              let value = ""
-              switch (parsedInput.operation) {
-                case FieldOperationType.append:
-                  value = contactCustomField.value + String(parsedInput.value)
-                  break
-                case FieldOperationType.prepend:
-                  value = String(parsedInput.value) + contactCustomField.value
-                  break
-                case FieldOperationType.increase:
-                  value = String(
-                    Number(contactCustomField.value) +
-                      Number(parsedInput.value),
-                  )
-                  break
-                case FieldOperationType.decrease:
-                  value = String(
-                    Number(contactCustomField.value) -
-                      Number(parsedInput.value),
-                  )
-                  break
-                default:
-                  value = parsedInput.value as string
-              }
-
-              return tx
-                .update(contactCustomFieldModel)
-                .set({
-                  value,
-                })
-                .where(eq(contactCustomFieldModel.id, contactCustomField.id))
-            }
-
-            return tx.insert(contactCustomFieldModel).values({
-              contactId: contact.id,
-              customFieldId: customField.id,
-              value: parsedInput.value as string,
-              id: createId(),
-            })
-          }),
-        )
-      })
-
-      revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
     },
   )
+
+export const addContactCustomFields = async ({
+  bindArgsParsedInputs: [chatbotId],
+  parsedInput,
+}: {
+  bindArgsParsedInputs: ChatbotIdRequestParams
+  parsedInput: AddContactCustomFieldRequest
+}) => {
+  const contacts = await db.query.contactModel.findMany({
+    where: {
+      chatbotId,
+      id: {
+        in: parsedInput.ids,
+      },
+    },
+    columns: {
+      id: true,
+    },
+  })
+  if (contacts.length === 0) {
+    return
+  }
+
+  const customField = await findOrFail<FieldModel>(
+    fieldModel,
+    {
+      chatbotId,
+      id: parsedInput.customFieldId,
+      fieldType: "customField",
+    },
+    "Custom field not found",
+  )
+
+  await db.transaction(async (tx) => {
+    await Promise.all(
+      contacts.map(async (contact) => {
+        const contactCustomField =
+          await tx.query.contactCustomFieldModel.findFirst({
+            where: {
+              contactId: contact.id,
+              customFieldId: customField.id,
+            },
+          })
+
+        if (contactCustomField) {
+          let value = ""
+          switch (parsedInput.operation) {
+            case FieldOperationType.append:
+              value = contactCustomField.value + String(parsedInput.value)
+              break
+            case FieldOperationType.prepend:
+              value = String(parsedInput.value) + contactCustomField.value
+              break
+            case FieldOperationType.increase:
+              value = String(
+                Number(contactCustomField.value) + Number(parsedInput.value),
+              )
+              break
+            case FieldOperationType.decrease:
+              value = String(
+                Number(contactCustomField.value) - Number(parsedInput.value),
+              )
+              break
+            default:
+              value = parsedInput.value as string
+          }
+
+          return tx
+            .update(contactCustomFieldModel)
+            .set({
+              value,
+            })
+            .where(eq(contactCustomFieldModel.id, contactCustomField.id))
+        }
+
+        return tx.insert(contactCustomFieldModel).values({
+          contactId: contact.id,
+          customFieldId: customField.id,
+          value: parsedInput.value as string,
+          id: createId(),
+        })
+      }),
+    )
+  })
+
+  revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
+}

@@ -32,6 +32,7 @@ export const receiveMessage = async (props: {
   ctx: Context<WhatsappAuthValue>
   data: {
     integrationType: string
+    integrationIdentifier: string
     payload: unknown
   }
 }): Promise<ReceivedMessageResult | null> => {
@@ -150,9 +151,9 @@ export const receiveMessage = async (props: {
     }
     case "contacts": {
       message.content = "Received contacts"
-      message.contentAttributes = (
-        data.message as ServerContactsMessage
-      ).contacts
+      message.contentAttributes = {
+        contacts: (data.message as ServerContactsMessage).contacts,
+      }
       break
     }
     case "interactive": {

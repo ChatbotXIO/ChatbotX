@@ -28,7 +28,6 @@ import {
   useEffect,
 } from "react"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
-import type { FlowVersionResource } from "../schemas/resource"
 import { NodeViewer } from "./nodes/viewer"
 import AddNodeButton from "./panel-buttons/add-node-button"
 import FocusButton from "./panel-buttons/focus-button"
@@ -37,6 +36,7 @@ import ZoomOutButton from "./panel-buttons/zoom-out-button"
 import "./react-flow-wrapper.css"
 import { createId } from "@paralleldrive/cuid2"
 import type { ButtonProps } from "react-day-picker"
+import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import ButtonEdge from "./edges/button-edge"
 
 const nodeTypes = {

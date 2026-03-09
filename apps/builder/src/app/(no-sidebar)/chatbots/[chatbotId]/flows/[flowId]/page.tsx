@@ -1,5 +1,6 @@
 import { db } from "@aha.chat/database/client"
 import { notFound } from "next/navigation"
+import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 
@@ -46,7 +47,7 @@ export default async function FlowPage({ params }: FlowPageProps) {
     <div className="flex h-screen w-screen flex-col">
       <FlowDetail
         flow={flow}
-        flowVersion={draftFlowVersion}
+        flowVersion={draftFlowVersion as FlowVersionResource}
         organization={organization}
       />
     </div>

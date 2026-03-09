@@ -17,7 +17,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteTeamMembersAction } from "./actions/delete-inbox-team-member.action"
-import type { InboxTeamMemberResource } from "./schemas/types"
+import type { InboxTeamMemberResource } from "./schemas/resource"
 
 type DeleteMembersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   onSuccess?: () => void

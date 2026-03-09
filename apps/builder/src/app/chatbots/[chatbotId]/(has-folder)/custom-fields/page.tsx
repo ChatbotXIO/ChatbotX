@@ -4,8 +4,8 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field"
 import { CustomFieldsTable } from "@/features/custom-fields/custom-field-table"
-import { listCustomFields } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/list-custom-fields.schema"
+import { listCustomFieldsRSC } from "@/features/custom-fields/queries"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
 
 export default async function CustomFieldsPage(props: {
   params: Promise<{ chatbotId: string }>
@@ -19,7 +19,7 @@ export default async function CustomFieldsPage(props: {
   const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
-    listCustomFields({
+    listCustomFieldsRSC({
       ...search,
       chatbotId: params.chatbotId,
       folderId,

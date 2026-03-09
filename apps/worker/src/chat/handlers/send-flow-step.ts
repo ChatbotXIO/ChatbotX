@@ -312,20 +312,6 @@ export const sendChatMessage = async (
           message: message as OutgoingMessage,
         },
       })
-
-      await allIntegrations.chatbotx?.channels?.channel?.message?.sendMessage?.(
-        {
-          ctx: {
-            chatbot: inbox.chatbot,
-            auth,
-          },
-          data: {
-            contact,
-            conversation,
-            message: message as OutgoingMessage,
-          },
-        },
-      )
     } catch (error) {
       logger.error(
         error,

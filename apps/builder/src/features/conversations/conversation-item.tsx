@@ -23,14 +23,14 @@ import { useChatStore } from "../chat/store/chat-store-provider"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { readConversationAction } from "./actions/read-conversation.action"
-import type { ConversationResource } from "./schemas/resource"
+import type { ListConversationItemResource } from "./schemas/resource"
 
 type ConversationItemProps = {
-  conversation: ConversationResource
+  conversation: ListConversationItemResource
   onSelect: () => void
 }
 
-const assignedIcon = (conversation: ConversationResource) => {
+const assignedIcon = (conversation: ListConversationItemResource) => {
   if (conversation.assignedUserId) {
     return (
       <Tooltip>
@@ -38,7 +38,7 @@ const assignedIcon = (conversation: ConversationResource) => {
           <Avatar className="size-4">
             <AvatarImage src={conversation.assignedUser?.image ?? ""} />
 
-            <AvatarFallback className="text-xs">
+            <AvatarFallback className="text-[0.5rem]">
               {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
             </AvatarFallback>
           </Avatar>
@@ -137,8 +137,8 @@ export default function ConversationItem({
             />
           </div>
           {conversation.followed && (
-            <div className="absolute bottom-0 left-0 transform">
-              <StarIcon className="fill-yellow-400 text-yellow-400" />
+            <div className="absolute top-0 right-0 transform">
+              <StarIcon className="fill-yellow-400 text-zinc-500" />
             </div>
           )}
         </div>

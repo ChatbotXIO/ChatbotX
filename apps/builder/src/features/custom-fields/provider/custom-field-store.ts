@@ -2,7 +2,8 @@ import type { FieldType } from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { CustomFieldCollection, CustomFieldResource } from "../schemas"
+import type { ListCustomFieldsResponse } from "../schemas/query"
+import type { CustomFieldResource } from "../schemas/resource"
 
 export type CustomFieldSelectOption = {
   label: string
@@ -72,7 +73,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
           perPage: maxPerPageString,
         })
         const { data } = await ky
-          .get<CustomFieldCollection>(
+          .get<ListCustomFieldsResponse>(
             `/api/chatbots/${chatbotId}/custom-fields?${searchParams.toString()}`,
           )
           .json()

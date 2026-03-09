@@ -1,3 +1,4 @@
+import { createSelectSchema, inboxModel } from "@aha.chat/database/schema"
 import type {
   InboxModel,
   IntegrationMessengerModel,
@@ -5,6 +6,8 @@ import type {
   IntegrationWhatsappModel,
   IntegrationZaloModel,
 } from "@aha.chat/database/types"
+
+export const inboxResource = createSelectSchema(inboxModel)
 
 export type InboxResource = InboxModel & {
   integrationWhatsapp?: IntegrationWhatsappModel

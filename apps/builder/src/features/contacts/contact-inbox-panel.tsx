@@ -37,8 +37,11 @@ export const ContactInboxPanel = () => {
 
       if (conversation?.contact) {
         setContact(conversation.contact)
-        setContactNotes(conversation.contact.contactNotes || [])
-        setTags(conversation.contact.tags || [])
+        // TODO: get contact notes and tags from conversation
+        setContactNotes([] as ContactNoteModel[])
+        setTags([] as TagModel[])
+        // setContactNotes(conversation.contact.contactNotes || [])
+        // setTags(conversation.contact.tags || [])
       } else {
         setContact(null)
       }

@@ -1,3 +1,9 @@
-import type { ChatbotModel } from "@aha.chat/database/types"
+import { chatbotModel, createSelectSchema } from "@aha.chat/database/schema"
+import z from "zod"
 
-export type ChatbotResource = ChatbotModel
+export const chatbotResource = createSelectSchema(chatbotModel)
+export type ChatbotResource = z.infer<typeof chatbotResource>
+
+export const withChatbotIdSchema = z.object({
+  chatbotId: z.cuid2(),
+})

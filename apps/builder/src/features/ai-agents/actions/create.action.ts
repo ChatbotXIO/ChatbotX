@@ -6,7 +6,7 @@ import { createId } from "@paralleldrive/cuid2"
 import {
   type CreateAIAgentRequest,
   createAIAgentRequest,
-} from "@/features/ai-agents/schemas/request"
+} from "@/features/ai-agents/schemas/action"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

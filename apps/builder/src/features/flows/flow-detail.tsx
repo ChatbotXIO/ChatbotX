@@ -7,13 +7,14 @@ import type {
 import { ReactFlowProvider } from "@xyflow/react"
 import { AIToolsStoreProvider } from "../ai-triggers/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
+import type { FlowVersionResource } from "../flow-versions/schema/resource"
 import { InboxStoreProvider } from "../inboxes/provider/inbox-store-context"
 import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import { UserStoreProvider } from "../users/provider/user-store-context"
 import { FlowStoreProvider } from "./provider/flow-store-context"
 import { ReactFlowFrame } from "./react-flow/frame"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
-import type { FlowResource, FlowVersionResource } from "./schemas/resource"
+import type { FlowResource } from "./schemas/resource"
 
 type FlowDetailProps = {
   flow: FlowResource

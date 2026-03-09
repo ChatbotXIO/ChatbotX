@@ -2,7 +2,7 @@ import { db } from "@aha.chat/database/client"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListInboxTeamsRequest } from "../schemas/list-inbox-teams.request"
-import type { InboxTeamResource } from "../schemas/types"
+import type { InboxTeamResource } from "../schemas/resource"
 
 export async function getInboxTeams(
   input: ListInboxTeamsRequest,

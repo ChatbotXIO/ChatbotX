@@ -1,9 +1,9 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
 import { inboxModel } from "@aha.chat/database/schema"
+import { getPaginationWithDefaults } from "@aha.chat/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { getPaginationWithDefaults } from "@/lib/pagination"
 import type { ListInboxesRequest } from "../schemas/query"
 import type { InboxResource } from "../schemas/resource"
 

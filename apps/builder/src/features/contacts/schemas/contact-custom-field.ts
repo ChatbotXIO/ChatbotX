@@ -1,5 +1,13 @@
+import {
+  contactCustomFieldModel,
+  createSelectSchema,
+} from "@aha.chat/database/schema"
 import { FieldOperationType } from "@aha.chat/flow-config"
 import { z } from "zod"
+
+export const contactCustomFieldResource = createSelectSchema(
+  contactCustomFieldModel,
+)
 
 export const addContactCustomFieldRequest = z.object({
   ids: z.array(z.cuid2()),

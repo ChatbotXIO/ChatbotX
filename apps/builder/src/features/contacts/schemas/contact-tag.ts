@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { tagResource } from "@/features/tags/schemas/resource"
 
 export const addContactTagRequest = z.object({
   ids: z.array(z.cuid2()),
@@ -23,3 +24,8 @@ export const listContactTagsRequest = z.object({
   contactId: z.cuid2(),
 })
 export type ListContactTagsRequest = z.infer<typeof listContactTagsRequest>
+
+export const listContactTagsResponse = z.object({
+  data: z.array(tagResource),
+})
+export type ListContactTagsResponse = z.infer<typeof listContactTagsResponse>

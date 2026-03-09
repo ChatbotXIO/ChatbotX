@@ -1,17 +1,18 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@/lib/pagination"
-import type { ListContactsRequest } from "../schemas/query"
-import type { ContactResource } from "../schemas/resource"
+} from "@aha.chat/database/utils"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import type {
+  ListContactsRequest,
+  ListContactsResponse,
+} from "../schemas/query"
 
 export async function listContacts(
-  input: ListContactsRequest,
-): Promise<PaginatedResponse<ContactResource>> {
+  input: ListContactsRequest & { chatbotId: string },
+): Promise<ListContactsResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const where = generateWhere(input)
@@ -43,7 +44,7 @@ export async function listContacts(
 }
 
 export async function countContacts(
-  input: ListContactsRequest,
+  input: ListContactsRequest & { chatbotId: string },
 ): Promise<{ total: number }> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
@@ -56,7 +57,7 @@ export async function countContacts(
   return { total }
 }
 
-const generateWhere = (input: ListContactsRequest) => {
+const generateWhere = (input: ListContactsRequest & { chatbotId: string }) => {
   const where = {
     chatbotId: input.chatbotId,
     ...(input.keyword

@@ -3,12 +3,12 @@ import {
   broadcastModel,
   contactsOnBroadcastsModel,
 } from "@aha.chat/database/schema"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@/lib/pagination"
+} from "@aha.chat/database/utils"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetBroadcastsSchema } from "../schemas/query"
 import type { BroadcastResource } from "../schemas/resource"
 

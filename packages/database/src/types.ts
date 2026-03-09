@@ -1,6 +1,17 @@
 import z from "zod"
 import type * as schema from "./drizzle/schema"
-import type { integrationType, logType } from "./drizzle/schema"
+import type { logType } from "./drizzle/schema"
+
+export const integrationType = {
+  webchat: "webchat",
+  googleSheets: "googleSheets",
+  messenger: "messenger",
+  openai: "openai",
+  gemini: "gemini",
+  whatsapp: "whatsapp",
+  zalo: "zalo",
+  chatbotX: "chatbotX",
+} as const
 
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferInsert
@@ -54,7 +65,7 @@ export type AuditLogModel = typeof schema.auditLogModel.$inferSelect
 
 export type FolderType = (typeof schema.folderType.enumValues)[number]
 export type LogType = (typeof logType.enumValues)[number]
-export type IntegrationType = (typeof integrationType.enumValues)[number]
+export type IntegrationType = keyof typeof integrationType
 export type InboxType = (typeof schema.inboxType.enumValues)[number]
 export type BroadcastSchedulesType =
   (typeof schema.broadcastSchedulesType.enumValues)[number]
@@ -74,6 +85,16 @@ export type AIEmbeddingStatus =
 export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
+
+// export const integrationType = pgEnum("IntegrationType", [
+//   "webchat",
+//   "googleSheets",
+//   "messenger",
+//   "openai",
+//   "gemini",
+//   "whatsapp",
+//   "zalo",
+// ])
 
 export const ReplyType = {
   Message: "R01",

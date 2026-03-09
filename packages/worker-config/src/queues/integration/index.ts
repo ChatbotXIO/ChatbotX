@@ -30,8 +30,6 @@ export type IntegrationJobReceiveMessage = {
   data: {
     integrationType: string
     integrationIdentifier: string
-    sourceContactId: string
-    sourceConversationId: string
     payload: unknown
   }
 }
@@ -91,7 +89,6 @@ export type IntegrationJobContactMarkAsRead = {
   data: {
     integrationType: string
     integrationIdentifier: string
-    sourceContactId: string
     sourceConversationId: string
     payload: unknown
   }

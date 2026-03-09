@@ -55,12 +55,8 @@ export const webhookHandler = async (
           type: "incomingMessage",
           data: {
             integrationType: "whatsapp",
-            payload: {
-              phoneID: result.phoneID,
-              from: result.from,
-              message: result.message,
-              name: result.name,
-            },
+            integrationIdentifier: result.phoneID,
+            payload: result,
           },
         })
       }

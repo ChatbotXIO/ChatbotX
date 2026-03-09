@@ -14,6 +14,7 @@ import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
+import type { ListContactsItem } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
 import { getFullName } from "./utils"
 
@@ -28,7 +29,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
 
   const channelOptions = useConfiguredInboxTypeOptions()
 
-  const columns = useMemo<ColumnDef<ContactResource>[]>(
+  const columns = useMemo<ColumnDef<ListContactsItem>[]>(
     () => [
       {
         id: "select",

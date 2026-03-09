@@ -3,8 +3,8 @@
 import { db, findOrFail, relationsFilterToSQL } from "@aha.chat/database/client"
 import { integrationWebchatModel } from "@aha.chat/database/schema"
 import type { IntegrationWebchatModel } from "@aha.chat/database/types"
+import { parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { parsePagination } from "@/lib/pagination"
 import type { GetWebchatRequest } from "../schemas/webchat.schema"
 
 export async function getIntegationWebchats(parsedInputs: GetWebchatRequest) {
