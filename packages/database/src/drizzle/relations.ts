@@ -43,7 +43,7 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.contactModel.chatbotId,
       to: r.chatbotModel.id,
     }),
-    fields: r.many.fieldModel({
+    customFields: r.many.fieldModel({
       from: r.contactModel.id.through(r.contactCustomFieldModel.contactId),
       to: r.fieldModel.id.through(r.contactCustomFieldModel.customFieldId),
     }),
@@ -569,10 +569,12 @@ export const relations = defineRelations(schema, (r) => ({
     customField: r.one.fieldModel({
       from: r.contactCustomFieldModel.customFieldId,
       to: r.fieldModel.id,
+      optional: false,
     }),
     contact: r.one.contactModel({
       from: r.contactCustomFieldModel.contactId,
       to: r.contactModel.id,
+      optional: false,
     }),
   },
   chatbotMemberModel: {

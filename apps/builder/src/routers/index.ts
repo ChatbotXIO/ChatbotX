@@ -1,3 +1,4 @@
+import botFieldsAPI from "@/features/account-fields/api"
 import aiAgentsAPI from "@/features/ai-agents/api"
 import { aiMcpServerApi } from "@/features/ai-mcp-servers/api"
 import contactsAPI from "@/features/contacts/api"
@@ -14,4 +15,5 @@ export const router = {
   customFieldsAPI,
   flowsAPI,
   contactsAPI,
+  botFieldsAPI,
 }

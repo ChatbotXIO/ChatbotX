@@ -1,37 +1,93 @@
 import z from "zod"
+import { NotfoundException } from "@/lib/errors/exception"
+import { maxPerPage } from "@/lib/shared-request"
 import { chatbotTokenAPI } from "@/orpc"
 import { createTag } from "../actions/create-tag-action"
-import { deleteTags } from "../actions/delete-tag-action"
+import { deleteTag } from "../actions/delete-tag-action"
 import { updateTag } from "../actions/update-tag-action"
-import { listTags } from "../queries"
-import { createTagRequest, createTagResponse } from "../schemas/action"
-import { listTagsRequest, listTagsResponse } from "../schemas/query"
-import { updateTagSchema } from "../schemas/update-tag-schema"
+import { findTag, listTags } from "../queries"
+import { createTagRequest } from "../schemas/action"
+import { publicLstTagsResponse } from "../schemas/query"
+import { publicTagResource, tagResource } from "../schemas/resource"
 
 export const publicListTagsAPI = chatbotTokenAPI
   .route({
     method: "GET",
     path: "/public/chatbots/tags",
-    summary: "List tags",
-    tags: ["Tags"],
+    summary: "Get all tags",
+    tags: ["Chatbots"],
   })
-  .input(listTagsRequest)
-  .output(listTagsResponse)
+  .input(z.object({}))
+  .output(publicLstTagsResponse)
   .handler(async ({ context, input }) => {
-    return await listTags({ ...input, chatbotId: context.chatbot.id })
+    return await listTags({
+      ...input,
+      chatbotId: context.chatbot.id,
+      sort: [{ id: "createdAt", desc: true }],
+      perPage: maxPerPage,
+    })
   })
 
 export const publicCreateTagAPI = chatbotTokenAPI
   .route({
     method: "POST",
     path: "/public/chatbots/tags",
-    summary: "Create tag",
-    tags: ["Tags"],
+    summary: "Create a new tag",
+    tags: ["Chatbots"],
+    successStatus: 201,
   })
-  .input(createTagRequest)
-  .output(createTagResponse)
+  .input(createTagRequest.pick({ name: true }))
+  .output(publicTagResource)
   .handler(async ({ context, input }) => {
-    return await createTag({ ...input, chatbotId: context.chatbot.id })
+    const { data } = await createTag({
+      ...input,
+      chatbotId: context.chatbot.id,
+    })
+
+    return data
+  })
+
+export const publicFindTagAPI = chatbotTokenAPI
+  .route({
+    method: "GET",
+    path: "/public/chatbots/tags/{id}",
+    summary: "Get tag by id",
+    tags: ["Chatbots"],
+  })
+  .input(z.object({ id: z.string() }))
+  .output(tagResource.pick({ id: true, name: true }))
+  .handler(async ({ context, input }) => {
+    const tag = await findTag({
+      ...input,
+      chatbotId: context.chatbot.id,
+    })
+
+    if (!tag) {
+      throw new NotfoundException("Tag not found")
+    }
+
+    return tag
+  })
+
+export const publicFindTagByNameAPI = chatbotTokenAPI
+  .route({
+    method: "GET",
+    path: "/public/chatbots/tags/name/{name}",
+    summary: "Get tag by name",
+    tags: ["Chatbots"],
+  })
+  .input(z.object({ name: z.string() }))
+  .output(publicTagResource)
+  .handler(async ({ context, input }) => {
+    const tag = await findTag({
+      ...input,
+      chatbotId: context.chatbot.id,
+    })
+    if (!tag) {
+      throw new NotfoundException("Tag not found")
+    }
+
+    return tag
   })
 
 export const publicUpdateTagAPI = chatbotTokenAPI
@@ -39,9 +95,12 @@ export const publicUpdateTagAPI = chatbotTokenAPI
     method: "PUT",
     path: "/public/chatbots/tags/{id}",
     summary: "Update tag",
-    tags: ["Tags"],
+    tags: ["Chatbots"],
   })
-  .input(updateTagSchema.and(z.object({ id: z.string() })))
+  .input(
+    createTagRequest.pick({ name: true }).and(z.object({ id: z.string() })),
+  )
+  .output(publicTagResource)
   .handler(async ({ context, input }) => {
     const { id, ...rest } = input
     return await updateTag({
@@ -54,16 +113,18 @@ export const publicUpdateTagAPI = chatbotTokenAPI
 export const publicDeleteTagsAPI = chatbotTokenAPI
   .route({
     method: "DELETE",
-    path: "/public/chatbots/tags",
-    summary: "Delete tags",
-    tags: ["Tags"],
+    path: "/public/chatbots/tags/{id}",
+    summary: "Delete tag",
+    tags: ["Chatbots"],
+    successStatus: 204,
   })
-  .input(z.object({ ids: z.array(z.string()) }))
+  .input(z.object({ id: z.string() }))
   .handler(async ({ context, input }) => {
-    const { ids } = input
-    return await deleteTags({
+    const { id } = input
+
+    return await deleteTag({
       chatbotId: context.chatbot.id,
-      ids,
+      id,
     })
   })
 
@@ -72,6 +133,8 @@ const publicTagsAPI = {
   publicCreateTagAPI,
   publicUpdateTagAPI,
   publicDeleteTagsAPI,
+  publicFindTagAPI,
+  publicFindTagByNameAPI,
 }
 
 export default publicTagsAPI

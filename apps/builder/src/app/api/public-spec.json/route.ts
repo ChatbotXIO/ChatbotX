@@ -8,7 +8,7 @@ const openAPIGenerator = new OpenAPIGenerator({
   schemaConverters: [new ZodToJsonSchemaConverter()],
 })
 
-async function handleRequest(_request: Request) {
+async function handleRequest(request: Request) {
   const spec = await openAPIGenerator.generate(publicRouter, {
     info: {
       title: "ChatbotX",
@@ -29,6 +29,15 @@ async function handleRequest(_request: Request) {
       },
     },
     servers: [{ url: `${env.NEXT_PUBLIC_BUILDER_URL}/api` }],
+    filter: ({ contract }) => {
+      const searchParams = new URLSearchParams(request.url.split("?")[1])
+      const filter = searchParams.get("filter")
+
+      if (filter && contract["~orpc"].route.path) {
+        return contract["~orpc"].route.path.startsWith(`/public/${filter}`)
+      }
+      return true
+    },
   })
 
   return spec ? Response.json(spec) : new Response("Not found", { status: 404 })

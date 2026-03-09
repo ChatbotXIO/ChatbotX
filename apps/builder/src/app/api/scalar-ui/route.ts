@@ -14,7 +14,7 @@ export async function GET() {
         <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
         <script>
           Scalar.createApiReference('#app', {
-            url: '/api/spec.json',
+            url: '/api/public-spec.json',
             authentication: {
               securitySchemes: {
                 bearerAuth: {

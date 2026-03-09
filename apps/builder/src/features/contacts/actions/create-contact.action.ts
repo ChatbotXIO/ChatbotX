@@ -18,6 +18,7 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateContactRequest,
+  type CreateContactResponse,
   createContactRequest,
 } from "../schemas/action"
 
@@ -42,7 +43,7 @@ export const createContact = async ({
 }: {
   chatbotId: string
   parsedInput: CreateContactRequest
-}) => {
+}): Promise<CreateContactResponse> => {
   // Make sure phone number is not exists in the chatbot
   const existedContact = await db.query.contactModel.findFirst({
     where: {
@@ -79,8 +80,8 @@ export const createContact = async ({
     })
   }
 
-  await db.transaction(async (tx) => {
-    const contact = await tx
+  const contact = await db.transaction(async (tx) => {
+    const newContact = await tx
       .insert(contactModel)
       .values({
         ...parsedInput,
@@ -101,14 +102,18 @@ export const createContact = async ({
     await tx.insert(conversationModel).values({
       inboxType: inbox.inboxType,
       chatbotId,
-      contactId: contact.id,
+      contactId: newContact.id,
       inboxId: inbox.id,
       id: createId(),
     })
+
+    return newContact
   })
 
   revalidateCacheTags([
     `chatbots:${chatbotId}#contacts`,
     `chatbots:${chatbotId}#conversations`,
   ])
+
+  return contact
 }

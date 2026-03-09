@@ -1,73 +1,110 @@
 import z from "zod"
+import { NotfoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
 import { createCustomField } from "../actions/create-custom-field.action"
-import { deleteCustomFields } from "../actions/delete-custom-field.action"
-import { updateCustomField } from "../actions/update-custom-field.action"
-import { listCustomFields } from "../queries"
-import {
-  createCustomFieldRequest,
-  updateCustomFieldRequest,
-} from "../schemas/action"
-import {
-  listCustomFieldsRequest,
-  listCustomFieldsResponse,
-} from "../schemas/query"
+import { findCustomField, listCustomFields } from "../queries"
+import { createCustomFieldRequest } from "../schemas/action"
+import { publicCustomFieldResource } from "../schemas/resource"
 
 const publicCustomFieldsAPI = {
   publicListCustomFieldsAPI: chatbotTokenAPI
     .route({
       method: "GET",
       path: "/public/chatbots/custom-fields",
-      summary: "List custom fields",
-      tags: ["Custom Fields"],
+      summary: "Get all custom fields",
+      tags: ["Chatbots"],
     })
-    .input(listCustomFieldsRequest)
-    .output(listCustomFieldsResponse)
+    .input(z.object({}))
+    .output(z.object({ data: z.array(publicCustomFieldResource) }))
     .handler(async ({ context, input }) => {
       return await listCustomFields({ ...input, chatbotId: context.chatbot.id })
     }),
+
   publicCreateCustomFieldAPI: chatbotTokenAPI
     .route({
       method: "POST",
       path: "/public/chatbots/custom-fields",
-      summary: "Create custom field",
-      tags: ["Custom Fields"],
+      summary: "Create a custom field",
+      tags: ["Chatbots"],
     })
-    .input(createCustomFieldRequest)
+    .input(createCustomFieldRequest.pick({ name: true, customFieldType: true }))
+    .output(publicCustomFieldResource)
     .handler(async ({ context, input }) => {
       return await createCustomField(context.chatbot.id, input)
     }),
-  publicUpdateCustomFieldAPI: chatbotTokenAPI
+
+  publicFindCustomFieldAPI: chatbotTokenAPI
     .route({
-      method: "PUT",
+      method: "GET",
       path: "/public/chatbots/custom-fields/{id}",
-      summary: "Update custom field",
-      tags: ["Custom Fields"],
+      summary: "Get custom field by id",
+      tags: ["Chatbots"],
     })
-    .input(updateCustomFieldRequest.and(z.object({ id: z.string() })))
+    .input(z.object({ id: z.string() }))
+    .output(publicCustomFieldResource)
     .handler(async ({ context, input }) => {
-      const { id, ...rest } = input
-      return await updateCustomField({
+      const customField = await findCustomField({
+        id: input.id,
         chatbotId: context.chatbot.id,
-        id,
-        parsedInput: rest,
       })
+      if (!customField) {
+        throw new NotfoundException("Custom field not found")
+      }
+      return customField
     }),
-  publicDeleteCustomFieldsAPI: chatbotTokenAPI
+
+  publicFindCustomFieldByNameAPI: chatbotTokenAPI
     .route({
-      method: "DELETE",
-      path: "/public/chatbots/custom-fields",
-      summary: "Delete custom fields",
-      tags: ["Custom Fields"],
+      method: "GET",
+      path: "/public/chatbots/custom-fields/name/{name}",
+      summary: "Get custom field by name",
+      tags: ["Chatbots"],
     })
-    .input(z.object({ ids: z.array(z.string()) }))
+    .input(z.object({ name: z.string() }))
+    .output(publicCustomFieldResource)
     .handler(async ({ context, input }) => {
-      const { ids } = input
-      return await deleteCustomFields({
+      const customField = await findCustomField({
         chatbotId: context.chatbot.id,
-        ids,
+        name: input.name,
       })
+      if (!customField) {
+        throw new NotfoundException("Custom field not found")
+      }
+      return customField
     }),
+
+  // publicUpdateCustomFieldAPI: chatbotTokenAPI
+  //   .route({
+  //     method: "PUT",
+  //     path: "/public/chatbots/custom-fields/{id}",
+  //     summary: "Update custom field",
+  //     tags: ["Custom Fields"],
+  //   })
+  //   .input(updateCustomFieldRequest.and(z.object({ id: z.string() })))
+  //   .handler(async ({ context, input }) => {
+  //     const { id, ...rest } = input
+  //     return await updateCustomField({
+  //       chatbotId: context.chatbot.id,
+  //       id,
+  //       parsedInput: rest,
+  //     })
+  //   }),
+
+  // publicDeleteCustomFieldsAPI: chatbotTokenAPI
+  //   .route({
+  //     method: "DELETE",
+  //     path: "/public/chatbots/custom-fields/{customFieldId}",
+  //     summary: "Delete custom field",
+  //     tags: ["Custom Fields"],
+  //   })
+  //   .input(z.object({ customFieldId: z.string() }))
+  //   .handler(async ({ context, input }) => {
+  //     const { customFieldId } = input
+  //     return await deleteCustomFields({
+  //       chatbotId: context.chatbot.id,
+  //       ids: [customFieldId],
+  //     })
+  //   }),
 }
 
 export default publicCustomFieldsAPI
