@@ -182,6 +182,7 @@ export const receiveMessage = async (
 
     if (
       message.attachments &&
+      message.attachments.length > 0 &&
       newMessage.createdAt.getTime() === now.getTime()
     ) {
       await tx.insert(attachmentModel).values(

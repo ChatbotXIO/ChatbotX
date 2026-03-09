@@ -71,12 +71,18 @@ const handleWebhookEvent = async (
         type: "contactMarkAsRead",
         data: {
           integrationType: "messenger",
+          integrationIdentifier: webhookData.entry[0].id,
+          sourceConversationId: webhookData.entry[0].messaging[0].sender.id,
           payload: webhookData,
         },
       })
       return
     }
 
+    // Skip if this message is not a message
+    if (!webhookData.entry[0].messaging[0].message) {
+      return
+    }
     if (
       webhookData.entry[0].messaging[0].message?.is_echo === true &&
       webhookData.entry[0].messaging[0].message?.metadata ===
@@ -86,10 +92,17 @@ const handleWebhookEvent = async (
       return
     }
 
+    // Calculate integration identifier
+    const integrationIdentifier = webhookData.entry[0].messaging[0].message
+      ?.is_echo
+      ? webhookData.entry[0].messaging[0].sender.id
+      : webhookData.entry[0].messaging[0].recipient.id
+
     await queue?.add("incomingMessage", {
       type: "incomingMessage",
       data: {
         integrationType: "messenger",
+        integrationIdentifier,
         payload: webhookData,
       },
     })
