@@ -15,7 +15,6 @@ export const publicListTagsAPI = chatbotTokenAPI
     method: "GET",
     path: "/public/chatbots/tags",
     summary: "Get all tags",
-    tags: ["Chatbots"],
   })
   .input(z.object({}))
   .output(publicLstTagsResponse)
@@ -33,7 +32,6 @@ export const publicCreateTagAPI = chatbotTokenAPI
     method: "POST",
     path: "/public/chatbots/tags",
     summary: "Create a new tag",
-    tags: ["Chatbots"],
     successStatus: 201,
   })
   .input(createTagRequest.pick({ name: true }))
@@ -52,7 +50,6 @@ export const publicFindTagAPI = chatbotTokenAPI
     method: "GET",
     path: "/public/chatbots/tags/{id}",
     summary: "Get tag by id",
-    tags: ["Chatbots"],
   })
   .input(z.object({ id: z.string() }))
   .output(tagResource.pick({ id: true, name: true }))
@@ -74,7 +71,6 @@ export const publicFindTagByNameAPI = chatbotTokenAPI
     method: "GET",
     path: "/public/chatbots/tags/name/{name}",
     summary: "Get tag by name",
-    tags: ["Chatbots"],
   })
   .input(z.object({ name: z.string() }))
   .output(publicTagResource)
@@ -95,7 +91,6 @@ export const publicUpdateTagAPI = chatbotTokenAPI
     method: "PUT",
     path: "/public/chatbots/tags/{id}",
     summary: "Update tag",
-    tags: ["Chatbots"],
   })
   .input(
     createTagRequest.pick({ name: true }).and(z.object({ id: z.string() })),
@@ -115,7 +110,6 @@ export const publicDeleteTagsAPI = chatbotTokenAPI
     method: "DELETE",
     path: "/public/chatbots/tags/{id}",
     summary: "Delete tag",
-    tags: ["Chatbots"],
     successStatus: 204,
   })
   .input(z.object({ id: z.string() }))

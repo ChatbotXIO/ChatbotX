@@ -38,7 +38,6 @@ export const publicAPIs = {
       method: "GET",
       path: "/public/contacts/{contactId}",
       summary: "Get contact by contact id",
-      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
     .output(publicFindContactResponse)
@@ -60,7 +59,6 @@ export const publicAPIs = {
       method: "POST",
       path: "/public/contacts",
       summary: "Create a contact",
-      tags: ["Contacts"],
     })
     .input(createContactRequest)
     .output(publicFindContactResponse)
@@ -84,7 +82,6 @@ export const publicAPIs = {
       summary: "List contacts by custom field",
       description:
         "Find contacts by custom field value. It will return maximum 100 contacts. The results are sorted by the last custom field value update for a contact.",
-      tags: ["Contacts"],
     })
     .input(publicListContactsByCustomFieldRequest)
     .output(publicListContactsResponse)
@@ -100,7 +97,6 @@ export const publicAPIs = {
       method: "GET",
       path: "/public/contacts/{contactId}/tags",
       summary: "Get all tags added to this contact",
-      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
     .output(publicLstTagsResponse)
@@ -117,7 +113,6 @@ export const publicAPIs = {
       method: "POST",
       path: "/public/contacts/{contactId}/tags/{tagId}",
       summary: "Add a tag to the contact",
-      tags: ["Contacts"],
       successStatus: 204,
     })
     .input(z.object({ contactId: z.string(), tagId: z.string() }))
@@ -133,7 +128,6 @@ export const publicAPIs = {
       method: "DELETE",
       path: "/public/contacts/{contactId}/tags/{tagId}",
       summary: "Remove a tag from the contact",
-      tags: ["Contacts"],
       successStatus: 204,
     })
     .input(removeContactTagRequest)
@@ -149,7 +143,6 @@ export const publicAPIs = {
       method: "GET",
       path: "/public/contacts/{contactId}/custom-fields",
       summary: "Get all custom fields from a contact",
-      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
     .output(listPublicContactCustomFieldsResponse)
@@ -166,7 +159,6 @@ export const publicAPIs = {
       method: "GET",
       path: "/public/contacts/{contactId}/custom-fields/{customFieldId}",
       summary: "Get contact custom field value",
-      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string(), customFieldId: z.string() }))
     .output(publicContactCustomFieldResource)
@@ -186,7 +178,6 @@ export const publicAPIs = {
       method: "POST",
       path: "/public/contacts/{contactId}/custom-fields",
       summary: "Set contact custom field value",
-      tags: ["Contacts"],
     })
     .input(setContactCustomFieldValueRequest)
     .handler(async ({ context, input }) => {
@@ -205,7 +196,6 @@ export const publicAPIs = {
       method: "DELETE",
       path: "/public/contacts/{contactId}/custom-fields/{customFieldId}",
       summary: "Delete contact custom field",
-      tags: ["Contacts"],
       successStatus: 204,
     })
     .input(deleteContactCustomFieldRequest)

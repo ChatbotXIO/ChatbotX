@@ -9,7 +9,6 @@ const publicFlowsAPI = {
       method: "GET",
       path: "/public/chatbots/flows",
       summary: "Get all flows",
-      tags: ["Chatbots"],
     })
     .input(z.object({}))
     .output(

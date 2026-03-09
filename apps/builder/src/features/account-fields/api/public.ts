@@ -11,7 +11,6 @@ const publicBotFieldsAPI = {
       method: "GET",
       path: "/public/chatbots/bot-fields/{id}",
       summary: "Get bot field by id",
-      tags: ["Chatbots"],
     })
     .input(z.object({ id: z.string() }))
     .output(publicAccountFieldResource)
@@ -31,7 +30,6 @@ const publicBotFieldsAPI = {
       method: "PUT",
       path: "/public/chatbots/bot-fields/{id}",
       summary: "Update bot field",
-      tags: ["Chatbots"],
     })
     .input(z.object({ id: z.string(), value: z.string() }))
     .output(publicAccountFieldResource)
@@ -49,7 +47,6 @@ const publicBotFieldsAPI = {
       method: "DELETE",
       path: "/public/chatbots/bot-fields/{id}",
       summary: "Unset the value of the bot field",
-      tags: ["Chatbots"],
     })
     .input(z.object({ id: z.string() }))
     .output(publicAccountFieldResource)
