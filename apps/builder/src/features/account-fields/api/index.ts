@@ -1,7 +1,7 @@
-import publicBotFieldsAPI from "./public"
+import botFieldChatbotTokenAPIs from "./chatbot-token"
 
-const botFieldsAPI = {
-  ...publicBotFieldsAPI,
+const botFieldAPIs = {
+  ...botFieldChatbotTokenAPIs,
 }
 
-export default botFieldsAPI
+export default botFieldAPIs

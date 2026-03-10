@@ -1,13 +1,15 @@
-import publicBotFieldsAPI from "@/features/account-fields/api/public"
-import contactsPublicAPIs from "@/features/contacts/api/public"
-import customFieldsPublicAPI from "@/features/custom-fields/api/public"
-import publicFlowsAPI from "@/features/flows/api/public"
-import tagsPublicAPI from "@/features/tags/api/public"
+import botFieldChatbotTokenAPIs from "@/features/account-fields/api/chatbot-token"
+import { broadcastChatbotTokenAPIs } from "@/features/broadcasts/api/chatbot-token"
+import contactChatbotTokenAPIs from "@/features/contacts/api/chatbot-token"
+import customFieldChatbotTokenAPIs from "@/features/custom-fields/api/chatbot-token"
+import flowChatbotTokenAPIs from "@/features/flows/api/chatbot-token"
+import tagChatbotTokenAPIs from "@/features/tags/api/chatbot-token"
 
 export const publicRouter = {
-  ...contactsPublicAPIs,
-  ...customFieldsPublicAPI,
-  ...tagsPublicAPI,
-  ...publicFlowsAPI,
-  ...publicBotFieldsAPI,
+  ...contactChatbotTokenAPIs,
+  ...customFieldChatbotTokenAPIs,
+  ...tagChatbotTokenAPIs,
+  ...flowChatbotTokenAPIs,
+  ...botFieldChatbotTokenAPIs,
+  ...broadcastChatbotTokenAPIs,
 }

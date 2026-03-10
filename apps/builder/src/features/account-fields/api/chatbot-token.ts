@@ -5,12 +5,13 @@ import { updateAccountField } from "../actions/update-account-field.action"
 import { findAccountField } from "../queries/index"
 import { publicAccountFieldResource } from "../schemas/resource"
 
-const publicBotFieldsAPI = {
-  publicFindBotFieldAPI: chatbotTokenAPI
+const botFieldChatbotTokenAPIs = {
+  findBotFieldChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/chatbots/bot-fields/{id}",
+      path: "/v1/bot-fields/{id}",
       summary: "Get bot field by id",
+      tags: ["Bot Fields"],
     })
     .input(z.object({ id: z.string() }))
     .output(publicAccountFieldResource)
@@ -25,11 +26,12 @@ const publicBotFieldsAPI = {
       return botField
     }),
 
-  publicUpdateBotFieldAPI: chatbotTokenAPI
+  updateBotFieldChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "PUT",
-      path: "/public/chatbots/bot-fields/{id}",
+      path: "/v1/bot-fields/{id}",
       summary: "Update bot field",
+      tags: ["Bot Fields"],
     })
     .input(z.object({ id: z.string(), value: z.string() }))
     .output(publicAccountFieldResource)
@@ -42,11 +44,12 @@ const publicBotFieldsAPI = {
       })
     }),
 
-  publicDeleteBotFieldsAPI: chatbotTokenAPI
+  deleteBotFieldsChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "DELETE",
-      path: "/public/chatbots/bot-fields/{id}",
+      path: "/v1/bot-fields/{id}",
       summary: "Unset the value of the bot field",
+      tags: ["Bot Fields"],
     })
     .input(z.object({ id: z.string() }))
     .output(publicAccountFieldResource)
@@ -61,4 +64,4 @@ const publicBotFieldsAPI = {
     }),
 }
 
-export default publicBotFieldsAPI
+export default botFieldChatbotTokenAPIs

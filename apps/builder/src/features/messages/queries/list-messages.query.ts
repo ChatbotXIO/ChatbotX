@@ -3,7 +3,10 @@
 import { and, db, desc, eq, inArray } from "@aha.chat/database/client"
 import { attachmentModel, messageModel } from "@aha.chat/database/schema"
 import type { MessageModel } from "@aha.chat/database/types"
-import { getPaginationWithDefaults } from "@aha.chat/database/utils"
+import {
+  getPaginationWithDefaults,
+  getPublicUrl,
+} from "@aha.chat/database/utils"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { MessageCollection, MessageResource } from "../schemas"
@@ -46,7 +49,7 @@ export const listMessages = async (
         (acc, attachment) => {
           acc[attachment.messageId] = [
             ...(acc[attachment.messageId] ?? []),
-            attachment,
+            { ...attachment, url: getPublicUrl(attachment.originPath) },
           ]
           return acc
         },

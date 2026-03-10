@@ -3,12 +3,13 @@ import { chatbotTokenAPI } from "@/orpc"
 import { listFlows } from "../queries"
 import { flowResource } from "../schemas/resource"
 
-const publicFlowsAPI = {
-  publicListFlowsAPI: chatbotTokenAPI
+const flowChatbotTokenAPIs = {
+  listFlowsChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/chatbots/flows",
+      path: "/v1/flows",
       summary: "Get all flows",
+      tags: ["Flows"],
     })
     .input(z.object({}))
     .output(
@@ -25,4 +26,4 @@ const publicFlowsAPI = {
     }),
 }
 
-export default publicFlowsAPI
+export default flowChatbotTokenAPIs

@@ -14,6 +14,7 @@ import type {
   ConversationAttributes,
   IntegrationWebchatModel,
 } from "@aha.chat/database/types"
+import { getPublicUrl } from "@aha.chat/database/utils"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
@@ -124,6 +125,12 @@ export async function handleCreateWebchatMessage({
             })),
           )
           .returning()
+          .then((result) =>
+            result.map((attachment) => ({
+              ...attachment,
+              url: getPublicUrl(attachment.originPath),
+            })),
+          )
 
         newMessage.attachments = attachments as AttachmentResource[]
       }
