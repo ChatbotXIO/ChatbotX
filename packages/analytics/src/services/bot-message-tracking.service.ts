@@ -1,11 +1,17 @@
 import { BOT_MESSAGE_EVENTS_EVENT_TYPE } from "../lib/events-config"
-import { getSpooler } from "../lib/ndjson-spooler-registry"
 import type { CreateBotMessageEvent } from "../models"
 import { BaseService } from "./base.service"
-import { getDefaultEventWriter } from "./event-writer-factory"
 
 export class BotMessageTrackingService extends BaseService {
-  async trackEvent(event: CreateBotMessageEvent): Promise<void> {
+  async trackEvent(
+    event: CreateBotMessageEvent,
+    options?: { skipSpooler?: boolean },
+  ): Promise<void> {
+    const skipSpooler = options?.skipSpooler ?? false
+    if (!skipSpooler) {
+      await this.ensureBootstrapped()
+    }
+
     if (
       !(event.occurredAt instanceof Date) ||
       Number.isNaN(event.occurredAt.getTime())
@@ -38,21 +44,11 @@ export class BotMessageTrackingService extends BaseService {
       return
     }
 
-    const sp = getSpooler(BOT_MESSAGE_EVENTS_EVENT_TYPE)
-    if (!sp) {
-      throw new Error("Spooler not initialized")
-    }
-
-    await this.tryOrFallback(
-      async () => {
-        await sp.writeEvent(row)
-      },
-      async () => {
-        const writer = getDefaultEventWriter()
-        await writer.insertOne(BOT_MESSAGE_EVENTS_EVENT_TYPE, row)
-      },
-      "[BotMessageTrackingService] Spool write failed, fallback to direct insert",
-      "[BotMessageTrackingService] Direct insert failed",
+    await this.persistEvent(
+      BOT_MESSAGE_EVENTS_EVENT_TYPE,
+      row,
+      skipSpooler,
+      "BotMessageTrackingService",
     )
   }
 

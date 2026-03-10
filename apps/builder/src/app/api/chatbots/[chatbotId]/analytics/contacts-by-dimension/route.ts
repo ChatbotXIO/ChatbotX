@@ -7,6 +7,7 @@ import { serverErrorHandler } from "@/lib/errors/server-handler"
 const querySchema = z.object({
   from: z.string().transform((val) => new Date(val)),
   to: z.string().transform((val) => new Date(val)),
+  timezone: z.string().default("UTC"),
   dimension: z.enum(["country", "channel", "source"]).default("channel"),
   eventTypes: z
     .string()
@@ -37,18 +38,21 @@ export async function GET(
         data = await contactAnalyticsService.getContactsByCountry(
           chatbotId,
           timeRange,
+          searchParams.timezone,
         )
         break
       case "channel":
         data = await contactAnalyticsService.getContactsByChannel(
           chatbotId,
           timeRange,
+          searchParams.timezone,
         )
         break
       case "source":
         data = await contactAnalyticsService.getContactsBySource(
           chatbotId,
           timeRange,
+          searchParams.timezone,
         )
         break
       default:

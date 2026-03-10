@@ -24,9 +24,11 @@ export function TotalContactsChart({ chatbotId }: TotalContactsChartProps) {
         const toDate = to ? new Date(to) : new Date()
         const fromDate = from ? new Date(from) : subDays(toDate, 7)
 
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
         const params = new URLSearchParams({
           from: fromDate.toISOString(),
           to: toDate.toISOString(),
+          timezone,
         })
 
         const response = await fetch(
@@ -49,6 +51,7 @@ export function TotalContactsChart({ chatbotId }: TotalContactsChartProps) {
           }
         })
 
+        console.log("Total Contacts Chart Data:", chartData)
         setData(chartData)
       } catch (error) {
         console.error("Failed to fetch total contacts:", error)

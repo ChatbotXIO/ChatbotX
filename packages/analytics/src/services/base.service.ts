@@ -42,7 +42,71 @@ export abstract class BaseService {
   private redis?: Redis
   private dedupTTL = 3600
 
-  private readonly dedupKeys = new Set<string>(["contact_message_in"])
+  private readonly dedupKeys = new Set<string>()
+
+  private static bootstrapFn: (() => Promise<void>) | null = null
+  private static spoolerWriteFn:
+    | ((eventType: string, row: Record<string, unknown>) => Promise<void>)
+    | null = null
+
+  static registerBootstrap(fn: () => Promise<void>) {
+    BaseService.bootstrapFn = fn
+  }
+
+  static registerSpoolerWriter(
+    fn: (eventType: string, row: Record<string, unknown>) => Promise<void>,
+  ) {
+    BaseService.spoolerWriteFn = fn
+  }
+
+  protected async ensureBootstrapped(): Promise<void> {
+    if (BaseService.bootstrapFn) {
+      await BaseService.bootstrapFn()
+    }
+  }
+
+  protected async writeToSpooler(
+    eventType: string,
+    row: Record<string, unknown>,
+  ): Promise<void> {
+    if (!BaseService.spoolerWriteFn) {
+      throw new Error(
+        "Spooler writer not registered. Call BaseService.registerSpoolerWriter() first.",
+      )
+    }
+    await BaseService.spoolerWriteFn(eventType, row)
+  }
+
+  protected async persistEvent(
+    eventType: string,
+    row: Record<string, unknown>,
+    skipSpooler: boolean,
+    serviceName: string,
+  ): Promise<void> {
+    if (skipSpooler) {
+      await this.runSafely(async () => {
+        const { getDefaultEventWriter } = await import("./event-writer-factory")
+        const writer = getDefaultEventWriter()
+        // biome-ignore lint/suspicious/noExplicitAny: Generic method accepts different event row types
+        await writer.insertOne(eventType, row as any)
+      }, `[${serviceName}] Direct insert failed`)
+      return
+    }
+
+    await this.tryOrFallback(
+      async () => {
+        await this.writeToSpooler(eventType, row)
+      },
+      async () => {
+        const { getDefaultEventWriter } = await import("./event-writer-factory")
+        const writer = getDefaultEventWriter()
+        // biome-ignore lint/suspicious/noExplicitAny: Generic method accepts different event row types
+        await writer.insertOne(eventType, row as any)
+      },
+      `[${serviceName}] Spool write failed, fallback to direct insert`,
+      `[${serviceName}] Direct insert failed`,
+    )
+  }
 
   setRedis(redis: Redis, ttl = 3600) {
     this.redis = redis

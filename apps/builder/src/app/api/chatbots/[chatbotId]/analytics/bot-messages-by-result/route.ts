@@ -7,6 +7,7 @@ import { serverErrorHandler } from "@/lib/errors/server-handler"
 const querySchema = z.object({
   from: z.string().transform((val) => new Date(val)),
   to: z.string().transform((val) => new Date(val)),
+  timezone: z.string().default("UTC"),
   granularity: z.enum(["minute", "hour", "day"]).default("day"),
 })
 
@@ -28,6 +29,7 @@ export async function GET(
         from: searchParams.from,
         to: searchParams.to,
       },
+      searchParams.timezone,
       searchParams.granularity,
     )
 

@@ -1,11 +1,17 @@
 import { CONTACT_EVENTS_EVENT_TYPE } from "../lib/events-config"
-import { getSpooler } from "../lib/ndjson-spooler-registry"
 import type { CreateContactEvent } from "../models"
 import { BaseService } from "./base.service"
-import { getDefaultEventWriter } from "./event-writer-factory"
 
 export class ContactTrackingService extends BaseService {
-  async trackEvent(event: CreateContactEvent): Promise<void> {
+  async trackEvent(
+    event: CreateContactEvent,
+    options?: { skipSpooler?: boolean },
+  ): Promise<void> {
+    const skipSpooler = options?.skipSpooler ?? false
+    if (!skipSpooler) {
+      await this.ensureBootstrapped()
+    }
+
     if (
       !(event.occurredAt instanceof Date) ||
       Number.isNaN(event.occurredAt.getTime())
@@ -35,21 +41,11 @@ export class ContactTrackingService extends BaseService {
       return
     }
 
-    const sp = getSpooler(CONTACT_EVENTS_EVENT_TYPE)
-    if (!sp) {
-      throw new Error("Spooler not initialized")
-    }
-
-    await this.tryOrFallback(
-      async () => {
-        await sp.writeEvent(row)
-      },
-      async () => {
-        const writer = getDefaultEventWriter()
-        await writer.insertOne(CONTACT_EVENTS_EVENT_TYPE, row)
-      },
-      "[ContactTrackingService] Spool write failed, fallback to direct insert",
-      "[ContactTrackingService] Direct insert failed",
+    await this.persistEvent(
+      CONTACT_EVENTS_EVENT_TYPE,
+      row,
+      skipSpooler,
+      "ContactTrackingService",
     )
   }
 

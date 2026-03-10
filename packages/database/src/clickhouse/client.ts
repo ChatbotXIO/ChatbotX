@@ -4,6 +4,10 @@ const clickhouseUrl = process.env.CLICKHOUSE_URL
 const clickhouseUser = process.env.CLICKHOUSE_USER
 const clickhousePassword = process.env.CLICKHOUSE_PASSWORD
 const clickhouseDatabase = process.env.CLICKHOUSE_DB
+const clickhouseRequestTimeout = Number.parseInt(
+  process.env.CLICKHOUSE_REQUEST_TIMEOUT || "300000",
+  10,
+)
 
 // console.log("ClickHouse environment variables:", {
 //   clickhouseUrl,
@@ -23,6 +27,7 @@ export const clickhouse = createClient({
   username: clickhouseUser,
   password: clickhousePassword,
   database: clickhouseDatabase,
+  request_timeout: clickhouseRequestTimeout,
   compression: {
     request: true,
     response: true,

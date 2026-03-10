@@ -119,24 +119,30 @@ export const assignConversationAction = chatbotActionClient
         updatedData.assignedUserId || updatedData.assignedInboxTeamId
       if (toAssignee) {
         for (const conv of conversations) {
-          await conversationTrackingService.trackEvent({
-            chatbotId,
-            conversationId: conv.id,
-            eventType: "conversation_assigned",
-            toAssignee,
-            occurredAt: new Date(),
-            channel: conv.inboxType,
-          })
+          await conversationTrackingService.trackEvent(
+            {
+              chatbotId,
+              conversationId: conv.id,
+              eventType: "conversation_assigned",
+              toAssignee,
+              occurredAt: new Date(),
+              channel: conv.inbox?.inboxType as string,
+            },
+            { skipSpooler: true },
+          )
         }
       } else {
         for (const conv of conversations) {
-          await conversationTrackingService.trackEvent({
-            chatbotId,
-            conversationId: conv.id,
-            eventType: "conversation_unassigned",
-            occurredAt: new Date(),
-            channel: conv.inbox?.inboxType as string,
-          })
+          await conversationTrackingService.trackEvent(
+            {
+              chatbotId,
+              conversationId: conv.id,
+              eventType: "conversation_unassigned",
+              occurredAt: new Date(),
+              channel: conv.inbox?.inboxType as string,
+            },
+            { skipSpooler: true },
+          )
         }
       }
 

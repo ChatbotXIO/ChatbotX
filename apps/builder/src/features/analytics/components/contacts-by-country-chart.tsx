@@ -26,9 +26,11 @@ export function ContactsByCountryChart({
         const toDate = to ? new Date(to) : new Date()
         const fromDate = from ? new Date(from) : subDays(toDate, 30)
 
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
         const params = new URLSearchParams({
           from: fromDate.toISOString(),
           to: toDate.toISOString(),
+          timezone,
           dimension: "country",
         })
 

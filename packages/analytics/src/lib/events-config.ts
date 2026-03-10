@@ -1,4 +1,4 @@
-import { NDJSON_EXT } from "@aha.chat/filesystem"
+import { NDJSON_EXT } from "@aha.chat/filesystem/constants"
 
 export const CONTACT_EVENTS_EVENT_TYPE = "contact_events"
 export const CONVERSATION_EVENTS_EVENT_TYPE = "conversation_events"

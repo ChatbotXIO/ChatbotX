@@ -133,9 +133,9 @@ class Uploader {
       .join("/")
 
     const command = new CopyObjectCommand({
-      Bucket: env.AWS_BUCKET,
+      Bucket: env.S3_BUCKET,
       Key: destinationPath,
-      CopySource: `${env.AWS_BUCKET}/${encodedSource}`,
+      CopySource: `${env.S3_BUCKET}/${encodedSource}`,
     })
 
     return await this.#client.send(command)
@@ -151,7 +151,7 @@ class Uploader {
 
   async listObjects(prefix: string) {
     const command = new ListObjectsV2Command({
-      Bucket: env.AWS_BUCKET,
+      Bucket: env.S3_BUCKET,
       Prefix: prefix,
     })
     const response = await this.#client.send(command)

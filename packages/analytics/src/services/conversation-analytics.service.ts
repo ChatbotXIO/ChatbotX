@@ -5,8 +5,13 @@ export class ConversationAnalyticsService {
   getHandoffsByDay(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<ConversationHandoffStats[]> {
-    return conversationStatsRepository.getHandoffsByDay(chatbotId, timeRange)
+    return conversationStatsRepository.getHandoffsByDay(
+      chatbotId,
+      timeRange,
+      timezone,
+    )
   }
 }
 

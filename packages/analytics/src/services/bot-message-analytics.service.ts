@@ -9,11 +9,13 @@ export class BotMessageAnalyticsService {
   getMessagesByResult(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
     granularity: "minute" | "hour" | "day",
   ): Promise<BotMessageStats[]> {
     return botMessageStatsRepository.getMessagesByResult(
       chatbotId,
       timeRange,
+      timezone,
       granularity,
     )
   }
@@ -21,11 +23,13 @@ export class BotMessageAnalyticsService {
   getMessagesWithNoResponse(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
     granularity: "minute" | "hour" | "day",
   ): Promise<BotMessageStats[]> {
     return botMessageStatsRepository.getMessagesWithNoResponse(
       chatbotId,
       timeRange,
+      timezone,
       granularity,
     )
   }
@@ -33,11 +37,13 @@ export class BotMessageAnalyticsService {
   getMessagesWithResponse(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
     granularity: "minute" | "hour" | "day",
   ): Promise<BotMessageStats[]> {
     return botMessageStatsRepository.getMessagesWithResponse(
       chatbotId,
       timeRange,
+      timezone,
       granularity,
     )
   }
@@ -45,8 +51,13 @@ export class BotMessageAnalyticsService {
   getAIProviderStats(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<BotMessageAIProviderStats[]> {
-    return botMessageStatsRepository.getAIProviderStats(chatbotId, timeRange)
+    return botMessageStatsRepository.getAIProviderStats(
+      chatbotId,
+      timeRange,
+      timezone,
+    )
   }
 }
 

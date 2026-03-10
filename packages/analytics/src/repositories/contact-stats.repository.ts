@@ -113,37 +113,38 @@ export class ContactStatsRepository extends BaseRepository {
   async getStatsByMonth(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
     eventTypes?: ContactEventType[],
   ): Promise<ContactStats[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
     const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
+    const monthGroup = this.buildMonthGroupFromHourly(timezone)
 
     const sql = `
       SELECT
         chatbot_id,
-        month,
+        month_group as month,
         event_type,
         sum(count) as count,
         sum(unique_contacts) as unique_contacts
       FROM (
         SELECT
           chatbot_id,
-          toStartOfMonth(day) as month,
+          ${monthGroup} as month_group,
           event_type,
           countMerge(event_count_state) as count,
           uniqMerge(unique_contacts_state) as unique_contacts
-        FROM contact_stats_daily
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
           AND ${timeFilter.sql}
           ${eventTypeFilter}
-        GROUP BY chatbot_id, day, event_type
+        GROUP BY chatbot_id, month_group, event_type
       )
-      GROUP BY chatbot_id, month, event_type
+      GROUP BY chatbot_id, month_group, event_type
       ORDER BY month ASC, event_type ASC
     `
 
@@ -176,32 +177,42 @@ export class ContactStatsRepository extends BaseRepository {
   async getStatsByDay(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
     eventTypes?: ContactEventType[],
   ): Promise<ContactStats[]> {
     if (shouldUseMonthlyGranularity(timeRange.from, timeRange.to)) {
-      return this.getStatsByMonth(chatbotId, timeRange, eventTypes)
+      return this.getStatsByMonth(chatbotId, timeRange, timezone, eventTypes)
     }
 
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
     const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
+    const dayGroup = this.buildDayGroupFromHourly(timezone)
 
     const sql = `
       SELECT
         chatbot_id,
-        day,
+        day_group as day,
         event_type,
-        countMerge(event_count_state) as count,
-        uniqMerge(unique_contacts_state) as unique_contacts
-      FROM contact_stats_daily
-      WHERE chatbot_id = {chatbotId:String}
-        AND ${timeFilter.sql}
-        ${eventTypeFilter}
-      GROUP BY chatbot_id, day, event_type
+        sum(count) as count,
+        sum(unique_contacts) as unique_contacts
+      FROM (
+        SELECT
+          chatbot_id,
+          ${dayGroup} as day_group,
+          event_type,
+          countMerge(event_count_state) as count,
+          uniqMerge(unique_contacts_state) as unique_contacts
+        FROM contact_stats_hourly
+        WHERE chatbot_id = {chatbotId:String}
+          AND ${timeFilter.sql}
+          ${eventTypeFilter}
+        GROUP BY chatbot_id, day_group, event_type
+      )
+      GROUP BY chatbot_id, day_group, event_type
       ORDER BY day ASC, event_type ASC
     `
 
@@ -234,57 +245,58 @@ export class ContactStatsRepository extends BaseRepository {
   async getTotalContactsByMonth(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<DailyTotalContacts[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
+    const monthGroup = this.buildMonthGroupFromHourly(timezone)
 
     const baselineSql = `
-      WITH daily_created AS (
+      WITH hourly_created AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS created_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS created_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day < toStartOfMonth(toDate(toDateTime({from:UInt32}, 'UTC')))
+          AND hour < toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_created'
-        GROUP BY day
+        GROUP BY hour
       ),
-      daily_deleted AS (
+      hourly_deleted AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS deleted_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS deleted_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day < toStartOfMonth(toDate(toDateTime({from:UInt32}, 'UTC')))
+          AND hour < toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_deleted'
-        GROUP BY day
+        GROUP BY hour
       )
       SELECT
         sum(created_contacts) - sum(deleted_contacts) AS baseline_total
-      FROM daily_created
-      FULL OUTER JOIN daily_deleted USING (day)
+      FROM hourly_created
+      FULL OUTER JOIN hourly_deleted USING (hour)
     `
 
     const createdSql = `
-      WITH daily AS (
+      WITH hourly AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS created_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS created_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+          AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_created'
-        GROUP BY day
+        GROUP BY hour
       ),
       monthly AS (
         SELECT
-          toStartOfMonth(day) as month,
+          ${monthGroup} as month,
           sum(created_contacts) AS created_contacts
-        FROM daily
+        FROM hourly
         GROUP BY month
       ),
       cumulative AS (
@@ -297,26 +309,26 @@ export class ContactStatsRepository extends BaseRepository {
         month,
         total_contacts
       FROM cumulative
-      WHERE month >= toStartOfMonth(toDate(toDateTime({from:UInt32}, 'UTC')))
+      WHERE month >= toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
       ORDER BY month ASC
     `
 
     const deletedSql = `
-      WITH daily AS (
+      WITH hourly AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS deleted_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS deleted_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+          AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_deleted'
-        GROUP BY day
+        GROUP BY hour
       ),
       monthly AS (
         SELECT
-          toStartOfMonth(day) as month,
+          ${monthGroup} as month,
           sum(deleted_contacts) AS deleted_contacts
-        FROM daily
+        FROM hourly
         GROUP BY month
       ),
       cumulative AS (
@@ -329,7 +341,7 @@ export class ContactStatsRepository extends BaseRepository {
         month,
         total_deleted
       FROM cumulative
-      WHERE month >= toStartOfMonth(toDate(toDateTime({from:UInt32}, 'UTC')))
+      WHERE month >= toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
       ORDER BY month ASC
     `
 
@@ -381,53 +393,61 @@ export class ContactStatsRepository extends BaseRepository {
   async getTotalContactsByDay(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<DailyTotalContacts[]> {
     if (shouldUseMonthlyGranularity(timeRange.from, timeRange.to)) {
-      return this.getTotalContactsByMonth(chatbotId, timeRange)
+      return this.getTotalContactsByMonth(chatbotId, timeRange, timezone)
     }
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
+    const dayGroup = this.buildDayGroupFromHourly(timezone)
 
     const baselineSql = `
-      WITH daily_created AS (
+      WITH hourly_created AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS created_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS created_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day < toDate(toDateTime({from:UInt32}, 'UTC'))
+          AND hour < toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_created'
-        GROUP BY day
+        GROUP BY hour
       ),
-      daily_deleted AS (
+      hourly_deleted AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS deleted_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS deleted_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day < toDate(toDateTime({from:UInt32}, 'UTC'))
+          AND hour < toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_deleted'
-        GROUP BY day
+        GROUP BY hour
       )
       SELECT
         sum(created_contacts) - sum(deleted_contacts) AS baseline_total
-      FROM daily_created
-      FULL OUTER JOIN daily_deleted USING (day)
+      FROM hourly_created
+      FULL OUTER JOIN hourly_deleted USING (hour)
     `
 
     const createdSql = `
-      WITH daily AS (
+      WITH hourly AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS created_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS created_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+          AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_created'
+        GROUP BY hour
+      ),
+      daily AS (
+        SELECT
+          ${dayGroup} as day,
+          sum(created_contacts) AS created_contacts
+        FROM hourly
         GROUP BY day
       ),
       cumulative AS (
@@ -440,19 +460,26 @@ export class ContactStatsRepository extends BaseRepository {
         day,
         total_contacts
       FROM cumulative
-      WHERE day >= toDate(toDateTime({from:UInt32}, 'UTC'))
+      WHERE day >= toDate(toDateTime({from:UInt32}, {timezone:String}))
       ORDER BY day ASC
     `
 
     const deletedSql = `
-      WITH daily AS (
+      WITH hourly AS (
         SELECT
-          day,
-          uniqMerge(unique_contacts_state) AS deleted_contacts
-        FROM contact_stats_daily
+          hour,
+          countMerge(event_count_state) AS deleted_contacts
+        FROM contact_stats_hourly
         WHERE chatbot_id = {chatbotId:String}
-          AND day <= toDate(toDateTime({to:UInt32}, 'UTC'))
+          AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_deleted'
+        GROUP BY hour
+      ),
+      daily AS (
+        SELECT
+          ${dayGroup} as day,
+          sum(deleted_contacts) AS deleted_contacts
+        FROM hourly
         GROUP BY day
       ),
       cumulative AS (
@@ -465,7 +492,7 @@ export class ContactStatsRepository extends BaseRepository {
         day,
         total_deleted
       FROM cumulative
-      WHERE day >= toDate(toDateTime({from:UInt32}, 'UTC'))
+      WHERE day >= toDate(toDateTime({from:UInt32}, {timezone:String}))
       ORDER BY day ASC
     `
 
@@ -517,18 +544,18 @@ export class ContactStatsRepository extends BaseRepository {
   async getNewContactsCount(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<number> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
 
     const sql = `
       SELECT
         uniqMerge(unique_contacts_state) AS new_contacts
-      FROM contact_stats_daily
+      FROM contact_stats_hourly
       WHERE chatbot_id = {chatbotId:String}
         AND ${timeFilter.sql}
         AND event_type = 'contact_created'
@@ -547,13 +574,13 @@ export class ContactStatsRepository extends BaseRepository {
   async getContactsByDimension(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
     dimension: "country" | "channel",
   ): Promise<ContactsByDimension[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
 
     const sql = `
@@ -561,7 +588,7 @@ export class ContactStatsRepository extends BaseRepository {
         ${dimension} as dimension,
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
-      FROM contacts_by_${dimension}_daily
+      FROM contacts_by_${dimension}_hourly
       WHERE chatbot_id = {chatbotId:String}
         AND ${timeFilter.sql}
       GROUP BY dimension
@@ -587,19 +614,25 @@ export class ContactStatsRepository extends BaseRepository {
   getContactsByCountry(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<ContactsByDimension[]> {
-    return this.getContactsByDimension(chatbotId, timeRange, "country")
+    return this.getContactsByDimension(
+      chatbotId,
+      timeRange,
+      timezone,
+      "country",
+    )
   }
 
   async getContactsByChannel(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<ContactsByDimension[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
 
     const sql = `
@@ -607,7 +640,7 @@ export class ContactStatsRepository extends BaseRepository {
         channel as dimension,
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
-      FROM contacts_by_channel_daily
+      FROM contacts_by_channel_hourly
       WHERE chatbot_id = {chatbotId:String}
         AND ${timeFilter.sql}
       GROUP BY channel
@@ -633,18 +666,18 @@ export class ContactStatsRepository extends BaseRepository {
   async getActiveContacts(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<number> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
 
     const sql = `
       SELECT
         uniqMerge(active_contacts_state) as active_contacts
-      FROM active_contacts_daily
+      FROM active_contacts_hourly
       WHERE chatbot_id = {chatbotId:String}
         AND ${timeFilter.sql}
     `
@@ -660,12 +693,12 @@ export class ContactStatsRepository extends BaseRepository {
   async getContactsBySource(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<ContactsByDimension[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
 
     const sql = `
@@ -673,7 +706,7 @@ export class ContactStatsRepository extends BaseRepository {
         source as dimension,
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
-      FROM contacts_by_source_daily
+      FROM contacts_by_source_hourly
       WHERE chatbot_id = {chatbotId:String}
         AND ${timeFilter.sql}
       GROUP BY source
@@ -699,38 +732,49 @@ export class ContactStatsRepository extends BaseRepository {
   async getMessagesBySender(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
     granularity: "day" | "month" = "day",
   ): Promise<MessagesBySenderStats[]> {
-    const _effectiveGranularity =
+    const effectiveGranularity =
       granularity === "day" &&
       shouldUseMonthlyGranularity(timeRange.from, timeRange.to)
         ? "month"
         : granularity
 
-    const table = "contact_stats_daily"
-    const timeColumn = "day"
-
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
+
+    const timeGroup =
+      effectiveGranularity === "month"
+        ? this.buildMonthGroupFromHourly(timezone)
+        : this.buildDayGroupFromHourly(timezone)
 
     const sql = `
       SELECT
         chatbot_id,
-        ${timeColumn} as timestamp,
+        time_group as timestamp,
         channel,
         sender_type,
-        countMerge(event_count_state) as count
-      FROM ${table}
-      WHERE chatbot_id = {chatbotId:String}
-        AND ${timeFilter.sql}
-        AND event_type = 'contact_message_out'
-        AND sender_type != ''
-      GROUP BY chatbot_id, ${timeColumn}, channel, sender_type
-      ORDER BY ${timeColumn} ASC, channel ASC, sender_type ASC
+        sum(count) as count
+      FROM (
+        SELECT
+          chatbot_id,
+          ${timeGroup} as time_group,
+          channel,
+          sender_type,
+          countMerge(event_count_state) as count
+        FROM contact_stats_hourly
+        WHERE chatbot_id = {chatbotId:String}
+          AND ${timeFilter.sql}
+          AND event_type IN ('contact_message_out')
+          AND sender_type != ''
+        GROUP BY chatbot_id, time_group, channel, sender_type
+      )
+      GROUP BY chatbot_id, time_group, channel, sender_type
+      ORDER BY timestamp ASC, channel ASC, sender_type ASC
     `
 
     const result = await this.query<{

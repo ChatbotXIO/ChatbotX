@@ -263,6 +263,7 @@
     "averageDurationOfConversation": "Average duration of a conversation (Minutes)",
     "averageDurationOfConversationHelp": "It is the average time a conversation has been handled by a human before being moved to the bot.",
     "success": "Success",
+    "fallback": "Fallback",
     "fallbackFlow": "Fallback flow",
     "admins": "Admins",
     "name": "Name",

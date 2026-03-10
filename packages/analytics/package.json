@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./server": "./src/server.ts",
     "./events": "./src/events.ts",
     "./queries": "./src/queries.ts"
   },

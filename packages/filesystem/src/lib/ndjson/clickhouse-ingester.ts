@@ -121,12 +121,7 @@ export class ClickhouseIngester {
       `
       console.log({ query })
 
-      await this.config.clickhouseClient.command({
-        query,
-        clickhouse_settings: {
-          wait_end_of_query: 1,
-        },
-      })
+      await this.executeWithRetry(query, objectKey, attempts)
 
       await this.config.manifestStore.markIngested(objectKey)
     } catch (error) {
@@ -141,5 +136,48 @@ export class ClickhouseIngester {
 
   private claimForProcessing(objectKey: string): Promise<number | null> {
     return this.config.manifestStore.claimForProcessing(objectKey)
+  }
+
+  private async executeWithRetry(
+    query: string,
+    objectKey: string,
+    currentAttempt: number,
+  ): Promise<void> {
+    const maxRetryAttempts = 3
+    let lastError: Error | null = null
+
+    for (let retry = 0; retry < maxRetryAttempts; retry++) {
+      try {
+        await this.config.clickhouseClient.command({
+          query,
+          clickhouse_settings: {
+            wait_end_of_query: 1,
+          },
+        })
+        return
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+        const isTimeoutError =
+          lastError.message.includes("Timeout") ||
+          lastError.message.includes("timeout") ||
+          lastError.message.includes("ETIMEDOUT")
+
+        if (!isTimeoutError || retry === maxRetryAttempts - 1) {
+          throw lastError
+        }
+
+        const backoffMs = Math.min(1000 * 2 ** retry, 10_000)
+        console.warn(
+          `[ClickhouseIngester] Timeout error for ${objectKey}, attempt ${currentAttempt}, retry ${retry + 1}/${maxRetryAttempts}. Retrying in ${backoffMs}ms...`,
+        )
+        await this.sleep(backoffMs)
+      }
+    }
+
+    throw lastError || new Error("Unknown error during retry")
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

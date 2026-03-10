@@ -28,9 +28,11 @@ export function BotMessagesNoResponseChart({
         const toDate = to ? new Date(to) : new Date()
         const fromDate = from ? new Date(from) : subDays(toDate, 7)
 
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
         const params = new URLSearchParams({
           from: fromDate.toISOString(),
           to: toDate.toISOString(),
+          timezone,
           granularity: "day",
         })
 

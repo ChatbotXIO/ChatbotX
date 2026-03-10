@@ -1,11 +1,17 @@
 import { CONVERSATION_EVENTS_EVENT_TYPE } from "../lib/events-config"
-import { getSpooler } from "../lib/ndjson-spooler-registry"
 import type { CreateConversationEvent } from "../models"
 import { BaseService } from "./base.service"
-import { getDefaultEventWriter } from "./event-writer-factory"
 
 export class ConversationTrackingService extends BaseService {
-  async trackEvent(event: CreateConversationEvent): Promise<void> {
+  async trackEvent(
+    event: CreateConversationEvent,
+    options?: { skipSpooler?: boolean },
+  ): Promise<void> {
+    const skipSpooler = options?.skipSpooler ?? false
+    if (!skipSpooler) {
+      await this.ensureBootstrapped()
+    }
+
     if (
       !(event.occurredAt instanceof Date) ||
       Number.isNaN(event.occurredAt.getTime())
@@ -33,21 +39,11 @@ export class ConversationTrackingService extends BaseService {
       return
     }
 
-    const sp = getSpooler(CONVERSATION_EVENTS_EVENT_TYPE)
-    if (!sp) {
-      throw new Error("Spooler not initialized")
-    }
-
-    await this.tryOrFallback(
-      async () => {
-        await sp.writeEvent(row)
-      },
-      async () => {
-        const writer = getDefaultEventWriter()
-        await writer.insertOne(CONVERSATION_EVENTS_EVENT_TYPE, row)
-      },
-      "[ConversationTrackingService] Spool write failed, fallback to direct insert",
-      "[ConversationTrackingService] Direct insert failed",
+    await this.persistEvent(
+      CONVERSATION_EVENTS_EVENT_TYPE,
+      row,
+      skipSpooler,
+      "ConversationTrackingService",
     )
   }
 }

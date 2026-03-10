@@ -126,16 +126,19 @@ export const createContact = async ({
   }
 
   if (contact.sourceId) {
-    await contactTrackingService.trackEvent({
-      chatbotId,
-      contactId: contact.sourceId,
-      eventType: "contact_created",
-      occurredAt: contact.createdAt,
-      source: contact.source,
-      sourceId: contact.sourceId,
-      channel: inbox.inboxType,
-      country: undefined,
-    })
+    await contactTrackingService.trackEvent(
+      {
+        chatbotId,
+        contactId: contact.sourceId,
+        eventType: "contact_created",
+        occurredAt: contact.createdAt,
+        source: contact.source,
+        sourceId: contact.sourceId,
+        channel: inbox.inboxType,
+        country: undefined,
+      },
+      { skipSpooler: true },
+    )
   }
 
   revalidateCacheTags([

@@ -5,24 +5,33 @@ export class ConversationStatsRepository extends BaseRepository {
   async getHandoffsByDay(
     chatbotId: string,
     timeRange: TimeRange,
+    timezone: string,
   ): Promise<ConversationHandoffStats[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "day",
+    const timeFilter = this.buildHourlyTimestampFilter(
       timeRange.from,
       timeRange.to,
-      "Date",
+      timezone,
     )
+    const dayGroup = this.buildDayGroupFromHourly(timezone)
 
     const sql = `
       SELECT
         chatbot_id,
-        day,
+        day_group as day,
         direction,
-        countMerge(handoff_count_state) as count
-      FROM conversation_handoffs_daily
-      WHERE chatbot_id = {chatbotId:String}
-        AND ${timeFilter.sql}
-      GROUP BY chatbot_id, day, direction
+        sum(count) as count
+      FROM (
+        SELECT
+          chatbot_id,
+          ${dayGroup} as day_group,
+          direction,
+          countMerge(handoff_count_state) as count
+        FROM conversation_handoffs_hourly
+        WHERE chatbot_id = {chatbotId:String}
+          AND ${timeFilter.sql}
+        GROUP BY chatbot_id, day_group, direction
+      )
+      GROUP BY chatbot_id, day_group, direction
       ORDER BY day ASC, direction ASC
     `
 

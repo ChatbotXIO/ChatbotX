@@ -7,6 +7,7 @@ import { serverErrorHandler } from "@/lib/errors/server-handler"
 const querySchema = z.object({
   from: z.string().transform((val) => new Date(val)),
   to: z.string().transform((val) => new Date(val)),
+  timezone: z.string().default("UTC"),
 })
 
 export async function GET(
@@ -29,6 +30,7 @@ export async function GET(
     const data = await contactAnalyticsService.getTotalContactsByDay(
       chatbotId,
       timeRange,
+      searchParams.timezone,
     )
 
     return NextResponse.json(data)
