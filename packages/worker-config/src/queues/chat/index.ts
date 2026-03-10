@@ -17,6 +17,7 @@ import {
   getRedisConnection,
 } from "../../lib/connection"
 import { queueName } from "../../lib/types"
+import type { BotResponseTrackingContext } from "../types"
 
 export const ChatJobAction = {
   sendExternalMessage: "sendExternalMessage",
@@ -50,16 +51,25 @@ export type ChatJobSendFlowStep = {
       | SendCardStepSchema
       | SendCarouselStepSchema
       | SendQuickReplyStepSchema
+    trackingContext?: BotResponseTrackingContext
   }
 }
 
 export type ChatJobSendChatMessage = {
   type: typeof ChatJobAction.sendChatMessage
-  data: {
-    conversation: OutgoingConversation
-    text?: string
-    url?: string
-  }
+  data:
+    | {
+        conversation: OutgoingConversation
+        text?: string
+        url?: string
+        trackingContext?: BotResponseTrackingContext
+      }
+    | {
+        conversationId: string
+        text?: string
+        url?: string
+        trackingContext?: BotResponseTrackingContext
+      }
 }
 
 export type ChatJobSendTyping = {

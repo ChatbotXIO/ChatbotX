@@ -25,22 +25,46 @@ const s3Client = new S3Client({
   forcePathStyle: true,
 })
 
+const ingestedCache = new Map<string, number>()
+const CACHE_TTL = 5 * 60 * 1000
+
 const manifestStore: NdjsonIngestManifestStore = {
   async filterNotIngested(objectKeys) {
     if (objectKeys.length === 0) {
       return []
     }
 
+    const now = Date.now()
+    const uncached: string[] = []
+    const cachedIngested = new Set<string>()
+
+    for (const key of objectKeys) {
+      const cachedTime = ingestedCache.get(key)
+      if (cachedTime && now - cachedTime <= CACHE_TTL) {
+        cachedIngested.add(key)
+      } else {
+        uncached.push(key)
+      }
+    }
+
+    if (uncached.length === 0) {
+      return objectKeys.filter((k) => !cachedIngested.has(k))
+    }
+
     const result = await db.execute<{ objectKey: string }>(
       sql`
         SELECT "objectKey" FROM "AnalyticsManifestStatus"
-        WHERE "objectKey" = ANY(${sql.raw(`ARRAY[${objectKeys.map((k) => `'${k.replace(/'/g, "''")}'`).join(",")}]`)})
+        WHERE "objectKey" = ANY(${sql.raw(`ARRAY[${uncached.map((k) => `'${k.replace(/'/g, "''")}'`).join(",")}]`)})
         AND status = 'ingested'
       `,
     )
 
-    const ingestedSet = new Set(result.rows.map((r) => r.objectKey))
-    return objectKeys.filter((k) => !ingestedSet.has(k))
+    for (const row of result.rows) {
+      ingestedCache.set(row.objectKey, now)
+      cachedIngested.add(row.objectKey)
+    }
+
+    return objectKeys.filter((k) => !cachedIngested.has(k))
   },
 
   async claimForProcessing(objectKey) {
@@ -53,6 +77,8 @@ const manifestStore: NdjsonIngestManifestStore = {
             attempts = "AnalyticsManifestStatus".attempts + 1,
             "updatedAt" = CURRENT_TIMESTAMP
         WHERE "AnalyticsManifestStatus".status NOT IN ('processing', 'ingested')
+           OR ("AnalyticsManifestStatus".status = 'processing'
+               AND "AnalyticsManifestStatus"."updatedAt" < CURRENT_TIMESTAMP - INTERVAL '60 minutes')
         RETURNING attempts, status
       `,
     )
@@ -75,6 +101,7 @@ const manifestStore: NdjsonIngestManifestStore = {
         WHERE "objectKey" = ${objectKey}
       `,
     )
+    ingestedCache.set(objectKey, Date.now())
   },
 
   async markFailed(objectKey, errorMessage) {
@@ -116,11 +143,11 @@ function getIngester(eventType: string): ClickhouseIngester {
 
 export const ingestEvents = async (data: AnalyticsJobData) => {
   const eventType = data.data.type
-  logger.info(`Starting ${eventType} ingestion to ClickHouse`)
+  // logger.info(`Starting ${eventType} ingestion to ClickHouse`)
 
   try {
     await getIngester(eventType).ingestCommittedFiles()
-    logger.info(`${eventType} ingestion completed`)
+    // logger.info(`${eventType} ingestion completed`)
   } catch (error) {
     logger.error(error, `${eventType} ingestion failed`)
     throw error

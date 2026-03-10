@@ -57,7 +57,7 @@ export function NewContactsChart({ chatbotId }: NewContactsChartProps) {
             value: [
               {
                 label: t("analytics.contacts"),
-                value: item.count,
+                value: item.uniqueContacts,
               },
             ],
           }

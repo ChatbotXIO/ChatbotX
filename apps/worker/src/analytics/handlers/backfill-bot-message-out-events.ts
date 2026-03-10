@@ -11,7 +11,7 @@ import { logger } from "../../lib/logger"
 const BATCH_SIZE = 1000
 
 export const backfillBotMessageOutEvents = async () => {
-  logger.info("Starting backfill of bot outgoing message events to ClickHouse")
+  // logger.info("Starting backfill of bot outgoing message events to ClickHouse")
 
   const chatbots = await db.query.chatbotModel.findMany({
     columns: { id: true },
@@ -19,7 +19,6 @@ export const backfillBotMessageOutEvents = async () => {
 
   for (const chatbot of chatbots) {
     let offset = 0
-    let processedCount = 0
 
     while (true) {
       const messages = await db
@@ -71,10 +70,9 @@ export const backfillBotMessageOutEvents = async () => {
 
       try {
         await contactTrackingService.trackEvents(events)
-        processedCount += messages.length
-        logger.info(
-          `Backfilled ${processedCount} bot outgoing messages for chatbot ${chatbot.id}`,
-        )
+        // logger.info(
+        //   `Backfilled ${messages.length} bot outgoing messages for chatbot ${chatbot.id}`,
+        // )
       } catch (error) {
         logger.error(
           error,
@@ -86,10 +84,10 @@ export const backfillBotMessageOutEvents = async () => {
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
 
-    logger.info(
-      `Completed bot message backfill for chatbot ${chatbot.id}: ${processedCount} messages`,
-    )
+    // logger.info(
+    //   `Completed bot message backfill for chatbot ${chatbot.id}`,
+    // )
   }
 
-  logger.info("Bot message backfill completed for all chatbots")
+  // logger.info("Bot message backfill completed for all chatbots")
 }

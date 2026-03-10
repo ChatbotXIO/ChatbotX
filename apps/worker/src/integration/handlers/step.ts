@@ -55,7 +55,7 @@ import {
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
 ) {
-  const { conversation, flowVersion, step } = props
+  const { conversation, flowVersion, step, trackingContext } = props
   await chatQueue.add(ChatJobAction.sendFlowMessage, {
     type: ChatJobAction.sendFlowMessage,
     data: {
@@ -63,6 +63,7 @@ export async function sendFlowMessage(
       flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
       step,
+      trackingContext,
     },
   })
 }

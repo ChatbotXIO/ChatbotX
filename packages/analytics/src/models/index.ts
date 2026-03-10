@@ -1,5 +1,9 @@
 export type {
+  BotMessageAIProvider,
   BotMessageAIProviderStats,
+  BotMessageFallbackReason,
+  BotMessageResponseType,
+  BotMessageResult,
   BotMessageRouteType,
   BotMessageStats,
   CreateBotMessageEvent,
@@ -23,3 +27,4 @@ export type {
   ConversationHandoffStats,
   CreateConversationEvent,
 } from "./conversation-event.model"
+export type { TriggerContext, TriggerSource } from "./trigger-context.model"

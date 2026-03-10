@@ -127,11 +127,6 @@ export class NdjsonS3Uploader {
       const stagingKey = `${this.config.s3Prefix}/staging/${dtPart}/${hourPart}/${fileName}${NDJSON_EXT.TMP}`
       const committedKey = `${this.config.s3Prefix}/committed/${dtPart}/${hourPart}/${fileName}.ndjson`
 
-      console.log({
-        stagingKey,
-        committedKey,
-        uploadingPath,
-      })
       const body = fs.createReadStream(uploadingPath)
       await uploader.putObject(stagingKey, body)
 

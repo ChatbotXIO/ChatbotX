@@ -7,17 +7,23 @@ export type ContactEventType =
 export type ContactSenderType = "bot" | "human" | ""
 
 export interface ContactEvent {
-  eventId: string
+  channel?: string
   chatbotId: string
   contactId: string
+  country?: string
+  eventId: string
   eventType: ContactEventType
-  senderType?: ContactSenderType
+  metadata?: Record<string, unknown> & {
+    triggerContext?: {
+      triggerSource: string
+      triggerHandler: string
+      triggerType: string
+    }
+  }
   occurredAt: Date
+  senderType?: ContactSenderType
   source?: string
   sourceId?: string
-  channel?: string
-  country?: string
-  metadata?: Record<string, unknown>
 }
 
 export type CreateContactEvent = Omit<ContactEvent, "eventId">

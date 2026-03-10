@@ -48,7 +48,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           result,
           response_type,
           ai_provider,
-          countMerge(event_count_state) as count
+          uniqExactMerge(unique_messages_state) as count
         FROM bot_messages_hourly
         WHERE chatbot_id = {chatbotId:String}
           AND result != ''
@@ -119,7 +119,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             result,
             response_type,
             ai_provider,
-            countMerge(event_count_state) as count
+            uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
           WHERE chatbot_id = {chatbotId:String}
             AND result != ''
@@ -168,7 +168,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         result,
         response_type,
         ai_provider,
-        countMerge(event_count_state) as count
+        uniqExactMerge(unique_messages_state) as count
       FROM ${table}
       WHERE chatbot_id = {chatbotId:String}
         AND result != ''
@@ -224,7 +224,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ${dayGroup} as day_group,
             has_response,
             response_type,
-            countMerge(event_count_state) as count
+            uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
           WHERE chatbot_id = {chatbotId:String}
             AND has_response = 0
@@ -267,7 +267,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         ${timeColumn} as timestamp,
         has_response,
         response_type,
-        countMerge(event_count_state) as count
+        uniqExactMerge(unique_messages_state) as count
       FROM ${table}
       WHERE chatbot_id = {chatbotId:String}
         AND has_response = 0
@@ -323,7 +323,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             response_type,
             result,
             ai_provider,
-            countMerge(event_count_state) as count
+            uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
           WHERE chatbot_id = {chatbotId:String}
             AND has_response = 1
@@ -396,7 +396,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         response_type,
         result,
         ai_provider,
-        countMerge(event_count_state) as count
+        uniqExactMerge(unique_messages_state) as count
       FROM ${table}
       WHERE chatbot_id = {chatbotId:String}
         AND has_response = 1
@@ -445,7 +445,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       FROM (
         SELECT
           ai_provider,
-          countMerge(event_count_state) as count
+          uniqExactMerge(unique_messages_state) as count
         FROM bot_messages_hourly
         WHERE chatbot_id = {chatbotId:String}
           AND has_response = 1

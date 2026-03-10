@@ -43,6 +43,11 @@ export interface BotMessageEvent {
     intentConfidence?: number
     fallbackReason?: BotMessageFallbackReason
     latency?: number
+    triggerContext?: {
+      triggerSource: string
+      triggerHandler: string
+      triggerType: string
+    }
   }
 }
 

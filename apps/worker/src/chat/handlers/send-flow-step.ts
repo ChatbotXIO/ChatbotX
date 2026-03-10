@@ -1,3 +1,4 @@
+import { contactTrackingService } from "@aha.chat/analytics"
 import { db, findOrFail } from "@aha.chat/database/client"
 import {
   attachmentModel,
@@ -39,6 +40,7 @@ import type {
   ChatJobSendFlowStep,
 } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
+import { trackBotResponse } from "../../integration/handlers/automated-response/track-bot-response"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
@@ -101,6 +103,7 @@ export async function sendFlowStep({
   flowId,
   flowVersionId,
   step,
+  trackingContext,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
     where: { id: conversationId },
@@ -210,18 +213,98 @@ export async function sendFlowStep({
     }
 
     await Promise.all(promises)
+
+    if (conversation.contact?.sourceId) {
+      const inbox = await db.query.inboxModel.findFirst({
+        where: { id: conversation.inboxId },
+        columns: { inboxType: true },
+      })
+      contactTrackingService
+        .trackEvent({
+          chatbotId: conversation.chatbotId,
+          contactId: conversation.contact.sourceId,
+          eventType: "contact_message_out",
+          senderType: "bot",
+          occurredAt: new Date(),
+          source: conversation.contact.source ?? undefined,
+          sourceId: conversation.contact.sourceId,
+          channel: inbox?.inboxType ?? undefined,
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "sendFlowStep",
+              triggerType: "bot_message_out_flow",
+            },
+          },
+        })
+        .catch((error) => {
+          logger.error(
+            error,
+            "[sendFlowStep] Failed to track contact_message_out",
+          )
+        })
+    }
+
+    if (trackingContext) {
+      await trackBotResponse({
+        ...trackingContext,
+        hasResponse: true,
+        routeType: "FLOW",
+        result: "success",
+        metadata: {
+          flowId,
+        },
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "sendFlowStep",
+          triggerType: trackingContext.triggerType,
+        },
+      })
+    }
   } catch (error) {
     logger.error(
       error,
       `sendFlowStep error for conversationId: ${conversationId}`,
     )
+
+    if (trackingContext) {
+      await trackBotResponse({
+        ...trackingContext,
+        hasResponse: false,
+        routeType: "FLOW",
+        result: "fallback",
+        metadata: {
+          flowId,
+          fallbackReason: "HANDLER_ERROR_TO_FALLBACK",
+        },
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "sendFlowStep",
+          triggerType: `${trackingContext.triggerType}_failed`,
+        },
+      })
+    }
   }
 }
 
 export const sendChatMessage = async (
   props: ChatJobSendChatMessage["data"],
 ) => {
-  const { conversation, text, url } = props
+  const { text, url, trackingContext } = props
+
+  const conversationId =
+    "conversation" in props ? props.conversation.id : props.conversationId
+  const conversation =
+    "conversation" in props
+      ? props.conversation
+      : await db.query.conversationModel.findFirst({
+          where: { id: props.conversationId },
+        })
+
+  if (!conversation) {
+    logger.error(`Conversation not found for conversationId: ${conversationId}`)
+    return
+  }
 
   try {
     const message = await db.transaction(async (tx) => {
@@ -305,6 +388,9 @@ export const sendChatMessage = async (
         message: message as OutgoingMessage,
       },
     })
+    console.log({
+      aaa: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    })
 
     const promises: Promise<unknown>[] = [
       broadcastToChatbotParty(conversation.chatbotId, {
@@ -329,11 +415,78 @@ export const sendChatMessage = async (
     }
 
     await Promise.all(promises)
+    console.log({
+      aaa: "aaaaaaaaaaaaaaaaaaaaaaaaa1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    })
+
+    if (contact.sourceId) {
+      contactTrackingService
+        .trackEvent({
+          chatbotId: conversation.chatbotId,
+          contactId: contact.sourceId,
+          eventType: "contact_message_out",
+          senderType: "bot",
+          occurredAt: new Date(),
+          source: contact.source ?? undefined,
+          sourceId: contact.sourceId,
+          channel: inbox.inboxType,
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "sendChatMessage",
+              triggerType: "bot_message_out_chat",
+            },
+          },
+        })
+        .catch((error) => {
+          logger.error(
+            error,
+            "[sendChatMessage] Failed to track contact_message_out",
+          )
+        })
+    }
+
+    if (trackingContext) {
+      await trackBotResponse({
+        ...trackingContext,
+        hasResponse: true,
+        routeType:
+          trackingContext.responseType === "automated_response"
+            ? "FLOW"
+            : "AGENT",
+        result: "success",
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "sendChatMessage",
+          triggerType: trackingContext.triggerType,
+        },
+      })
+    }
   } catch (error) {
     logger.error(
       error,
       `sendChatMessage error for conversationId: ${conversation.id}`,
     )
+
+    if (trackingContext) {
+      await trackBotResponse({
+        ...trackingContext,
+        hasResponse: false,
+        routeType:
+          trackingContext.responseType === "automated_response"
+            ? "FLOW"
+            : "AGENT",
+        result: "fallback",
+        metadata: {
+          fallbackReason: "HANDLER_ERROR_TO_FALLBACK",
+        },
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "sendChatMessage",
+          triggerType: `${trackingContext.triggerType}_failed`,
+        },
+      })
+    }
   }
 }
 

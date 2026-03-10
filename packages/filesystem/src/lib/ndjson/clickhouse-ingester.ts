@@ -69,16 +69,25 @@ export class ClickhouseIngester {
           Bucket: this.config.s3Bucket,
           Prefix: `${this.config.s3Prefix}/committed/`,
           ContinuationToken: continuationToken,
-          MaxKeys: 1000,
+          MaxKeys: 100,
         }),
       )
 
       const contents = response.Contents || []
+
+      if (contents.length === 0) {
+        return []
+      }
+
       const batchKeys: string[] = []
       for (const obj of contents) {
         if (obj.Key?.endsWith(".ndjson")) {
           batchKeys.push(obj.Key)
         }
+      }
+
+      if (batchKeys.length === 0) {
+        return []
       }
 
       const notIngested = await this.filterNotIngested(batchKeys)
@@ -119,7 +128,7 @@ export class ClickhouseIngester {
           'JSONEachRow'
         )
       `
-      console.log({ query })
+      // console.log({ query })
 
       await this.executeWithRetry(query, objectKey, attempts)
 

@@ -331,6 +331,13 @@ export async function stepUnassignConversation({
       fromAssignee:
         conversation.assignedUserId || conversation.assignedInboxTeamId || "",
       occurredAt: new Date(),
+      metadata: {
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "stepUnassignConversation",
+          triggerType: "flow_action",
+        },
+      },
     })
     .catch((error) => {
       console.error("[stepUnassignConversation] Failed to track", error)

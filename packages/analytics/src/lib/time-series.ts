@@ -183,7 +183,13 @@ export function fillBotMessageStatsDaySeries(
   const byKey = new Map<string, BotMessageStats>()
   for (const r of rows) {
     if (r.result) {
-      byKey.set(keyOf(getUtcDayKey(r.timestamp), r.result), r)
+      const key = keyOf(getUtcDayKey(r.timestamp), r.result)
+      const existing = byKey.get(key)
+      if (existing) {
+        existing.count += r.count
+      } else {
+        byKey.set(key, { ...r })
+      }
     }
   }
 
@@ -220,7 +226,13 @@ export function fillBotMessageStatsMonthSeries(
   const byKey = new Map<string, BotMessageStats>()
   for (const r of rows) {
     if (r.result) {
-      byKey.set(keyOf(getUtcMonthKey(r.timestamp), r.result), r)
+      const key = keyOf(getUtcMonthKey(r.timestamp), r.result)
+      const existing = byKey.get(key)
+      if (existing) {
+        existing.count += r.count
+      } else {
+        byKey.set(key, { ...r })
+      }
     }
   }
 

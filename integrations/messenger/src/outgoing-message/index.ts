@@ -105,7 +105,7 @@ const buildMessagePayload = (
   message: FacebookMessageAttachmentPayload | FacebookMessage,
   messagingType: "MESSAGE_TAG" | "RESPONSE" = "MESSAGE_TAG",
 ): FacebookSendMessageRequest => {
-  const recipientId = conversation.sourceId
+  const recipientId = conversation.contact?.sourceId || conversation.sourceId
 
   if (!recipientId) {
     throw new Error("Missing recipient ID in conversation")

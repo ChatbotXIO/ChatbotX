@@ -1,4 +1,8 @@
-import { ChatJobAction, chatQueue } from "@aha.chat/worker-config"
+import {
+  type BotResponseTrackingContext,
+  ChatJobAction,
+  chatQueue,
+} from "@aha.chat/worker-config"
 import { SUPPORTED_IMAGE_EXTENSIONS } from "./constants"
 
 // Precompiled regex literals (top-level for performance)
@@ -115,6 +119,7 @@ export function processTextForImagesAndLinks(text: string): string[] {
 export async function sendMessageWithRender(
   conversationId: string,
   message: string,
+  trackingContext?: BotResponseTrackingContext,
 ): Promise<void> {
   const trimmed = message.trim()
   if (isImageUrl(trimmed)) {
@@ -123,6 +128,7 @@ export async function sendMessageWithRender(
       data: {
         conversationId,
         url: trimmed,
+        trackingContext,
       },
     })
     return
@@ -133,6 +139,7 @@ export async function sendMessageWithRender(
     data: {
       conversationId,
       text: trimmed,
+      trackingContext,
     },
   })
 }
@@ -160,7 +167,10 @@ export async function sendProcessedTextParts(
 export async function processStreamingText(
   textStream: AsyncIterable<string>,
   conversationId: string,
-  options?: { sendParts?: boolean },
+  options?: {
+    sendParts?: boolean
+    trackingContext?: BotResponseTrackingContext
+  },
 ): Promise<{ messageCount: number; fullText: string }> {
   let fullText = ""
   let messageCount = 0
@@ -190,7 +200,11 @@ export async function processStreamingText(
           ) {
             messageCount += 1
             if (sendParts) {
-              await sendMessageWithRender(conversationId, trimmedPart)
+              await sendMessageWithRender(
+                conversationId,
+                trimmedPart,
+                options?.trackingContext,
+              )
             }
           }
         }
@@ -211,7 +225,11 @@ export async function processStreamingText(
       ) {
         messageCount += 1
         if (sendParts) {
-          await sendMessageWithRender(conversationId, trimmedPart)
+          await sendMessageWithRender(
+            conversationId,
+            trimmedPart,
+            options?.trackingContext,
+          )
         }
       }
     }

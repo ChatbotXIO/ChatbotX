@@ -7,6 +7,7 @@ import {
 } from "@aha.chat/database/types"
 import { aiProviders } from "@aha.chat/flow-config"
 import {
+  type BotResponseTrackingContext,
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
@@ -81,6 +82,7 @@ async function listAllEnabledAutomatedResponses({
 
 export async function replyByAutomatedResponse(
   props: IntegrationJobTriggerAutomatedResponse["data"],
+  trackingContext: BotResponseTrackingContext,
 ): Promise<boolean> {
   const { message, conversation } = props
 
@@ -117,6 +119,7 @@ export async function replyByAutomatedResponse(
                 data: {
                   conversation,
                   text: stepMessage,
+                  trackingContext,
                 },
               })
             }
@@ -134,6 +137,7 @@ export async function replyByAutomatedResponse(
                   conversationId: message.conversationId,
                   flowId: flow.id,
                   messageId,
+                  trackingContext,
                 },
               })
               replied = true
@@ -151,36 +155,54 @@ export async function replyByAutomatedResponse(
   return { replied, isFlow, flowId, automatedResponseId }
 }
 
-export function replyByGemini(props: ReplyByAIProps): Promise<boolean> {
-  return runAIReply(props, {
-    provider: aiProviders.gemini,
-    fetchIntegration: async (chatbotId: string) => {
-      const integration = await db.query.integrationGeminiModel.findFirst({
-        where: { chatbotId, autoReply: true },
-      })
-      return integration?.auth
+export function replyByGemini(
+  props: ReplyByAIProps,
+  trackingContext: BotResponseTrackingContext,
+): Promise<boolean> {
+  return runAIReply(
+    props,
+    {
+      provider: aiProviders.gemini,
+      fetchIntegration: async (chatbotId: string) => {
+        const integration = await db.query.integrationGeminiModel.findFirst({
+          where: { chatbotId, autoReply: true },
+        })
+        return integration?.auth
+      },
+      createClient: (apiKey: string) => createGoogleGenerativeAI({ apiKey }),
+      onFollowUpError: async () => true,
     },
-    createClient: (apiKey: string) => createGoogleGenerativeAI({ apiKey }),
-    onFollowUpError: async () => true,
-  })
+    trackingContext,
+  )
 }
 
-export function replyByOpenAI(props: ReplyByAIProps): Promise<boolean> {
-  return runAIReply(props, {
-    provider: aiProviders.openai,
-    fetchIntegration: async (chatbotId: string) => {
-      const integration = await db.query.integrationOpenAIModel.findFirst({
-        where: { chatbotId, autoReply: true },
-      })
-      return integration?.auth
+export function replyByOpenAI(
+  props: ReplyByAIProps,
+  trackingContext: BotResponseTrackingContext,
+): Promise<boolean> {
+  return runAIReply(
+    props,
+    {
+      provider: aiProviders.openai,
+      fetchIntegration: async (chatbotId: string) => {
+        const integration = await db.query.integrationOpenAIModel.findFirst({
+          where: { chatbotId, autoReply: true },
+        })
+        return integration?.auth
+      },
+      createClient: (apiKey: string) => createOpenAI({ apiKey }),
+      onFollowUpError: async (ctx) => {
+        const fallbackMessage = `${TEXT.foundProductsFallbackPrefix}\n\n${ctx.toolResultsText}`
+        await sendMessageWithRender(
+          ctx.conversationId,
+          fallbackMessage,
+          trackingContext,
+        )
+        return true
+      },
     },
-    createClient: (apiKey: string) => createOpenAI({ apiKey }),
-    onFollowUpError: async (ctx) => {
-      const fallbackMessage = `${TEXT.foundProductsFallbackPrefix}\n\n${ctx.toolResultsText}`
-      await sendMessageWithRender(ctx.conversationId, fallbackMessage)
-      return true
-    },
-  })
+    trackingContext,
+  )
 }
 
 type ProviderRunnerConfig = {
@@ -196,6 +218,7 @@ type ProviderRunnerConfig = {
 async function runAIReply(
   props: ReplyByAIProps,
   cfg: ProviderRunnerConfig,
+  trackingContext: BotResponseTrackingContext,
 ): Promise<boolean> {
   const { message, lastAIMessages, aiAgent, tools } = props
   try {
@@ -247,7 +270,7 @@ async function runAIReply(
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,
       message.conversationId,
-      { sendParts: true },
+      { sendParts: true, trackingContext },
     )
 
     if (toolCalls && toolCalls.length > 0) {
@@ -277,7 +300,7 @@ async function runAIReply(
           await processStreamingText(
             followUpResult.textStream,
             message.conversationId,
-            { sendParts: true },
+            { sendParts: true, trackingContext },
           )
         if (followUpMessageCount > 0) {
           return true

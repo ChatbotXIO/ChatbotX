@@ -127,6 +127,13 @@ export const assignConversationAction = chatbotActionClient
               toAssignee,
               occurredAt: new Date(),
               channel: conv.inbox?.inboxType as string,
+              metadata: {
+                triggerContext: {
+                  triggerSource: "api",
+                  triggerHandler: "assignConversation",
+                  triggerType: "conversation_assigned",
+                },
+              },
             },
             { skipSpooler: true },
           )
@@ -140,6 +147,13 @@ export const assignConversationAction = chatbotActionClient
               eventType: "conversation_unassigned",
               occurredAt: new Date(),
               channel: conv.inbox?.inboxType as string,
+              metadata: {
+                triggerContext: {
+                  triggerSource: "api",
+                  triggerHandler: "assignConversation",
+                  triggerType: "conversation_unassigned",
+                },
+              },
             },
             { skipSpooler: true },
           )

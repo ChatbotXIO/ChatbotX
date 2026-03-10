@@ -37,6 +37,7 @@
     "./enums": "./src/enums.ts",
     "./schema": "./src/drizzle/schema/index.ts",
     "./errors": "./src/errors.ts",
-    "./clickhouse/client": "./src/clickhouse/client.ts"
+    "./clickhouse/client": "./src/clickhouse/client.ts",
+    "./utils": "./src/utils.ts"
   }
 }

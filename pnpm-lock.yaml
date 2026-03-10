@@ -1324,6 +1324,9 @@ importers:
 
   packages/worker-config:
     dependencies:
+      '@aha.chat/analytics':
+        specifier: workspace:*
+        version: link:../analytics
       '@aha.chat/database':
         specifier: workspace:*
         version: link:../database

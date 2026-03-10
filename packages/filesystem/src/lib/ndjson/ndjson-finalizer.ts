@@ -29,7 +29,6 @@ export class NdjsonFinalizer {
 
     try {
       const files = await this.listTmpFiles(this.config.rootPath)
-      console.log({ files })
 
       for (const filePath of files) {
         await this.finalizeFile(filePath, maxAgeMs)
@@ -96,7 +95,6 @@ export class NdjsonFinalizer {
     }
 
     const ageMs = Date.now() - createdAt
-    console.log({ ageMs, maxAgeMs })
     if (ageMs < maxAgeMs) {
       return
     }

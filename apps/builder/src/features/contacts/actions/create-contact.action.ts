@@ -136,6 +136,13 @@ export const createContact = async ({
         sourceId: contact.sourceId,
         channel: inbox.inboxType,
         country: undefined,
+        metadata: {
+          triggerContext: {
+            triggerSource: "api",
+            triggerHandler: "createContact",
+            triggerType: "contact_created",
+          },
+        },
       },
       { skipSpooler: true },
     )

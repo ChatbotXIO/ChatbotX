@@ -5,7 +5,9 @@ import {
   type BotMessageResult,
   type BotMessageRouteType,
   botMessageTrackingService,
+  type TriggerContext,
 } from "@aha.chat/analytics"
+import type { BotResponseTrackingContext } from "@aha.chat/worker-config"
 
 interface TrackBotResponseParams {
   chatbotId: string
@@ -23,12 +25,25 @@ interface TrackBotResponseParams {
     fallbackReason?: BotMessageFallbackReason
   }
   startTime: number
+  triggerContext?: TriggerContext
+}
+
+export function createTrackingContext(params: {
+  messageId: string
+  chatbotId: string
+  conversationId: string
+  responseType: BotMessageResponseType
+  aiProvider: BotMessageAIProvider
+  triggerType: string
+}): BotResponseTrackingContext {
+  return {
+    ...params,
+    startTime: Date.now(),
+  }
 }
 
 export async function trackBotResponse(params: TrackBotResponseParams) {
   try {
-    console.log("[trackBotResponse] Tracking bot response:", params)
-
     await botMessageTrackingService.trackEvent({
       chatbotId: params.chatbotId,
       conversationId: params.conversationId,
@@ -42,6 +57,7 @@ export async function trackBotResponse(params: TrackBotResponseParams) {
       metadata: {
         ...params.metadata,
         latency: Date.now() - params.startTime,
+        triggerContext: params.triggerContext,
       },
     })
   } catch (error) {

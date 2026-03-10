@@ -13,6 +13,7 @@ import {
 } from "@aha.chat/flow-config"
 import { initVariables, SdkException, type Variables } from "@aha.chat/sdk"
 import {
+  type BotResponseTrackingContext,
   IntegrationJobAction,
   type IntegrationJobRunFlowNode,
   type IntegrationJobSendFlowPostback,
@@ -33,6 +34,7 @@ export type ExecuteMultipleStepsProps = {
     variables: Variables
   }
   steps: BaseStepSchema[]
+  trackingContext?: BotResponseTrackingContext
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
@@ -55,6 +57,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   ctx: {
     variables: Variables
   }
+  trackingContext?: BotResponseTrackingContext
 }
 
 export const seekConnectedNode = (
@@ -68,6 +71,7 @@ export const seekConnectedNode = (
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
+  const { trackingContext } = props.data
   const { conversation, flowVersion, useLatestFlowVersion } =
     await findConversationAndFlowVersion({
       conversationId: props.data.conversationId,
@@ -100,6 +104,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
     ctx: {
       variables: initVariables(),
     },
+    trackingContext,
   })
 }
 

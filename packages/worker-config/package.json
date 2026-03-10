@@ -8,6 +8,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "@aha.chat/analytics": "workspace:*",
     "@aha.chat/database": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/sdk": "workspace:*",

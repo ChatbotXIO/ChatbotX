@@ -16,7 +16,7 @@ import { syncEvents } from "./handlers/sync-events"
 async function startScheduleWorker() {
   try {
     await ensureBootstrapped()
-    logger.info("Analytics bootstrapped successfully")
+    // logger.info("Analytics bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap analytics")
     process.exit(1)
@@ -25,7 +25,7 @@ async function startScheduleWorker() {
   if (analyticsQueue instanceof Queue) {
     registerSchedules()
       .then(() => {
-        logger.info("Schedules registered")
+        // logger.info("Schedules registered")
       })
       .catch((err) => {
         logger.error(err, "Error registering schedules")

@@ -10,9 +10,9 @@ export const reconcileContactEvents = async (job: {
 }) => {
   const { chatbotId, fromDate, toDate } = job.data
 
-  logger.info(
-    `Starting reconciliation for chatbot ${chatbotId} from ${fromDate} to ${toDate}`,
-  )
+  // logger.info(
+  //   `Starting reconciliation for chatbot ${chatbotId} from ${fromDate} to ${toDate}`,
+  // )
 
   const from = new Date(fromDate)
   const to = new Date(toDate)
@@ -38,12 +38,11 @@ export const reconcileContactEvents = async (job: {
 
   const existingIds = new Set(existingContactIds.map((r) => r.contact_id))
 
-  logger.info(
-    `Found ${existingIds.size} existing contacts in ClickHouse for the time range`,
-  )
+  // logger.info(
+  //   `Found ${existingIds.size} existing contacts in ClickHouse for the time range`,
+  // )
 
   let offset = 0
-  let reconciledCount = 0
 
   while (true) {
     const contacts = await db
@@ -86,10 +85,9 @@ export const reconcileContactEvents = async (job: {
 
       try {
         await contactTrackingService.trackEvents(events)
-        reconciledCount += missingContacts.length
-        logger.info(
-          `Reconciled ${reconciledCount} missing contacts for chatbot ${chatbotId}`,
-        )
+        // logger.info(
+        //   `Reconciled ${missingContacts.length} missing contacts for chatbot ${chatbotId}`,
+        // )
       } catch (error) {
         logger.error(
           error,
@@ -103,7 +101,7 @@ export const reconcileContactEvents = async (job: {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
 
-  logger.info(
-    `Reconciliation completed for chatbot ${chatbotId}: ${reconciledCount} contacts added`,
-  )
+  // logger.info(
+  //   `Reconciliation completed for chatbot ${chatbotId}`,
+  // )
 }
