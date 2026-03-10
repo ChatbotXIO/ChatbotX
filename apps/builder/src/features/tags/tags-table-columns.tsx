@@ -96,6 +96,7 @@ export function getTagColumns({
       meta: {
         label: t("fields.contacts.label"),
       },
+      enableHiding: false,
     },
     {
       id: "actions",

@@ -2,12 +2,19 @@
 
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
+import { CreateFlowDialog } from "./create-flow-dialog"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import { getFlowColumns } from "./flows-table-columns"
 import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
@@ -18,9 +25,10 @@ import type { FlowResource } from "./schemas/resource"
 type FlowsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listFlowsRSC>>]>
   chatbotId: string
+  folderId: string | null
 }
 
-export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
+export function FlowsTable({ promises, chatbotId, folderId }: FlowsTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -44,43 +52,51 @@ export function FlowsTable({ promises, chatbotId }: FlowsTableProps) {
   })
 
   return (
-    <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <FlowsTableToolbarActions
-            chatbotId={chatbotId}
-            setRowAction={setRowAction}
-            table={table}
-          />
-        </DataTableToolbar>
-      </DataTable>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-bold text-xl">{t("flows.title")}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <FlowsTableToolbarActions
+              chatbotId={chatbotId}
+              setRowAction={setRowAction}
+              table={table}
+            />
+            <CreateFlowDialog chatbotId={chatbotId} folderId={folderId} />
+          </DataTableToolbar>
+        </DataTable>
 
-      <DeleteFlowsDialog
-        chatbotId={chatbotId}
-        flows={rowAction?.row.original ? [rowAction?.row.original] : []}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          rowAction?.row.toggleSelected(false)
-          router.refresh()
-        }}
-        open={rowAction?.variant === "delete"}
-        showTrigger={false}
-      />
+        <DeleteFlowsDialog
+          chatbotId={chatbotId}
+          flows={rowAction?.row.original ? [rowAction?.row.original] : []}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            rowAction?.row.toggleSelected(false)
+            router.refresh()
+          }}
+          open={rowAction?.variant === "delete"}
+          showTrigger={false}
+        />
 
-      <RenameFlowDialog
-        flow={rowAction?.row.original || null}
-        onOpenChange={() => setRowAction(null)}
-        open={rowAction?.variant === "rename"}
-      />
+        <RenameFlowDialog
+          flow={rowAction?.row.original || null}
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "rename"}
+        />
 
-      <ChangeFolderDialog
-        chatbotId={chatbotId}
-        currentFolderId={rowAction?.row.original?.folderId || null}
-        folderType="flow"
-        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
-        onOpenChange={() => setRowAction(null)}
-        open={rowAction?.variant === "move"}
-      />
-    </>
+        <ChangeFolderDialog
+          chatbotId={chatbotId}
+          currentFolderId={rowAction?.row.original?.folderId || null}
+          folderType="flow"
+          modelIds={
+            rowAction?.row.original ? [rowAction?.row.original.id] : null
+          }
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "move"}
+        />
+      </CardContent>
+    </Card>
   )
 }

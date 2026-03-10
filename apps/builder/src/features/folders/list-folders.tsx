@@ -1,18 +1,12 @@
 "use client"
 
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@aha.chat/ui/components/ui/breadcrumb"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
 import { parseAsString, useQueryState } from "@aha.chat/ui/lib/nuqs"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
-import { Fragment, use, useState } from "react"
+import { use, useState } from "react"
+import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { CreateFolderDialog } from "./create-folder-dialog"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { EditFolderDialog } from "./edit-folder-dialog"
@@ -58,55 +52,54 @@ const ListFolders = (props: ListFoldersProps) => {
   return (
     <>
       {/* Breadcrumb */}
-
       <div className="flex">
-        <Breadcrumb className="flex-1">
-          <BreadcrumbList className="gap-1 sm:gap-1">
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Button
-                  className="p-0 hover:bg-transparent"
-                  onClick={() => setFolderId(null)}
-                  variant="ghost"
-                >
-                  Root
-                </Button>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            {parents.map((parentFolder: FolderModel) => (
-              <Fragment key={parentFolder.id}>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Button
-                      className="p-0 hover:bg-transparent"
-                      onClick={() => setFolderId(parentFolder.id)}
-                      variant="ghost"
-                    >
-                      {parentFolder.name}
-                    </Button>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-              </Fragment>
-            ))}
-            {folder && (
-              <>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Button
-                      className="p-0 hover:bg-transparent"
-                      disabled
-                      variant="ghost"
-                    >
-                      {folder?.name ?? "N/A"}
-                    </Button>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-              </>
-            )}
-          </BreadcrumbList>
-        </Breadcrumb>
+        <div className="flex flex-1 flex-col justify-center">
+          <AppBreadcrumb
+            items={[
+              {
+                label: "Root",
+                element: (
+                  <Button
+                    className="p-0 hover:bg-transparent"
+                    onClick={() => setFolderId(null)}
+                    variant="ghost"
+                  >
+                    Root
+                  </Button>
+                ),
+              },
+              ...parents.map((parentFolder: FolderModel) => ({
+                label: parentFolder.name,
+                element: (
+                  <Button
+                    className="p-0 hover:bg-transparent"
+                    onClick={() => setFolderId(parentFolder.id)}
+                    variant="ghost"
+                  >
+                    {parentFolder.name}
+                  </Button>
+                ),
+                onClick: () => setFolderId(parentFolder.id),
+              })),
+              ...(folder
+                ? [
+                    {
+                      label: folder?.name ?? "...",
+                      element: (
+                        <Button
+                          className="p-0 hover:bg-transparent"
+                          disabled
+                          variant="ghost"
+                        >
+                          {folder.name}
+                        </Button>
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </div>
 
         <CreateFolderDialog chatbotId={chatbotId} folderType={folderType} />
       </div>

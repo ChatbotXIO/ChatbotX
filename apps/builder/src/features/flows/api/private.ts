@@ -17,6 +17,7 @@ export const privateFlowsAPI = {
     .output(listFlowsResponse)
     .handler(async ({ input }) => {
       const { chatbotId, ...rest } = input
+
       return await listFlows({ ...rest, chatbotId })
     }),
 }
