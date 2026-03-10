@@ -34,7 +34,7 @@ async function handleRequest(request: Request) {
       const filter = searchParams.get("filter")
 
       if (filter && contract["~orpc"].route.path) {
-        return contract["~orpc"].route.path.startsWith(`/public/${filter}`)
+        return contract["~orpc"].route.path.startsWith(`/v1/${filter}`)
       }
       return true
     },
