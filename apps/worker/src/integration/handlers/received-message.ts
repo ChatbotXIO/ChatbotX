@@ -90,7 +90,6 @@ export const receiveMessage = async (
         sourceId: conversation.contact.sourceId,
       },
     })
-    console.log({ newContact })
 
     let isNewContact = false
     if (!newContact) {
@@ -134,6 +133,7 @@ export const receiveMessage = async (
         })
         .returning()
         .then((result) => result[0])
+      console.log({ newContact })
 
       isNewContact = true
     }
@@ -269,6 +269,7 @@ export const receiveMessage = async (
         chatbotId,
         contactId: conversation.contact.sourceId,
         eventType: "contact_message_in",
+        senderType: "human",
         occurredAt: result.message.createdAt,
         source: integrationType,
         sourceId: conversation.contact.sourceId,
