@@ -6,12 +6,13 @@ import { findCustomField, listCustomFields } from "../queries"
 import { createCustomFieldRequest } from "../schemas/action"
 import { publicCustomFieldResource } from "../schemas/resource"
 
-const publicCustomFieldsAPI = {
-  publicListCustomFieldsAPI: chatbotTokenAPI
+const chatbotTokenCustomFieldsAPI = {
+  listCustomFieldsChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/chatbots/custom-fields",
+      path: "/v1/custom-fields",
       summary: "Get all custom fields",
+      tags: ["Custom Fields"],
     })
     .input(z.object({}))
     .output(z.object({ data: z.array(publicCustomFieldResource) }))
@@ -19,11 +20,12 @@ const publicCustomFieldsAPI = {
       return await listCustomFields({ ...input, chatbotId: context.chatbot.id })
     }),
 
-  publicCreateCustomFieldAPI: chatbotTokenAPI
+  createCustomFieldChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "POST",
-      path: "/public/chatbots/custom-fields",
+      path: "/v1/custom-fields",
       summary: "Create a custom field",
+      tags: ["Custom Fields"],
     })
     .input(createCustomFieldRequest.pick({ name: true, customFieldType: true }))
     .output(publicCustomFieldResource)
@@ -31,11 +33,12 @@ const publicCustomFieldsAPI = {
       return await createCustomField(context.chatbot.id, input)
     }),
 
-  publicFindCustomFieldAPI: chatbotTokenAPI
+  findCustomFieldChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/chatbots/custom-fields/{id}",
+      path: "/v1/custom-fields/{id}",
       summary: "Get custom field by id",
+      tags: ["Custom Fields"],
     })
     .input(z.object({ id: z.string() }))
     .output(publicCustomFieldResource)
@@ -50,11 +53,12 @@ const publicCustomFieldsAPI = {
       return customField
     }),
 
-  publicFindCustomFieldByNameAPI: chatbotTokenAPI
+  findCustomFieldByNameChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/chatbots/custom-fields/name/{name}",
+      path: "/v1/custom-fields/name/{name}",
       summary: "Get custom field by name",
+      tags: ["Custom Fields"],
     })
     .input(z.object({ name: z.string() }))
     .output(publicCustomFieldResource)
@@ -68,39 +72,6 @@ const publicCustomFieldsAPI = {
       }
       return customField
     }),
-
-  // publicUpdateCustomFieldAPI: chatbotTokenAPI
-  //   .route({
-  //     method: "PUT",
-  //     path: "/public/chatbots/custom-fields/{id}",
-  //     summary: "Update custom field",
-  //     tags: ["Custom Fields"],
-  //   })
-  //   .input(updateCustomFieldRequest.and(z.object({ id: z.string() })))
-  //   .handler(async ({ context, input }) => {
-  //     const { id, ...rest } = input
-  //     return await updateCustomField({
-  //       chatbotId: context.chatbot.id,
-  //       id,
-  //       parsedInput: rest,
-  //     })
-  //   }),
-
-  // publicDeleteCustomFieldsAPI: chatbotTokenAPI
-  //   .route({
-  //     method: "DELETE",
-  //     path: "/public/chatbots/custom-fields/{customFieldId}",
-  //     summary: "Delete custom field",
-  //     tags: ["Custom Fields"],
-  //   })
-  //   .input(z.object({ customFieldId: z.string() }))
-  //   .handler(async ({ context, input }) => {
-  //     const { customFieldId } = input
-  //     return await deleteCustomFields({
-  //       chatbotId: context.chatbot.id,
-  //       ids: [customFieldId],
-  //     })
-  //   }),
 }
 
-export default publicCustomFieldsAPI
+export default chatbotTokenCustomFieldsAPI

@@ -18,6 +18,12 @@ export const createMessageRequest = z
         )
         .min(1),
     }),
+    // z.object({
+    //   fileUrl: z.url(),
+    // }),
+    z.object({
+      flowId: z.cuid2(),
+    }),
   ])
   .and(
     z.object({
@@ -65,12 +71,6 @@ export type CreateWebchatMessageRequest = z.infer<
   typeof createWebchatMessageRequest
 >
 
-export const sendTextMessageRequest = z.object({
-  contactId: z.string(),
-  channel: createSelectSchema(inboxType),
-  text: z.string().trim().min(1).max(1000),
-})
-
 export const sendFileMessageRequest = z.object({
   contactId: z.string(),
   channel: createSelectSchema(inboxType),
@@ -84,3 +84,9 @@ export const sendFlowMessageRequest = z.object({
   channel: createSelectSchema(inboxType),
   flowId: z.cuid2(),
 })
+
+export const chatbotTokenCreateMessageRequest = createMessageRequest.and(
+  z.object({
+    channel: createSelectSchema(inboxType),
+  }),
+)

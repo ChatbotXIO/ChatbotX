@@ -1,8 +1,8 @@
+import chatbotTokenAPIs from "./chatbot-token"
 import privateAPIs from "./private"
-import publicAPIs from "./public"
 
 const contactsAPIs = {
-  ...publicAPIs,
+  ...chatbotTokenAPIs,
   ...privateAPIs,
 }
 

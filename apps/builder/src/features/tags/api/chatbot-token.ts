@@ -10,11 +10,12 @@ import { createTagRequest } from "../schemas/action"
 import { publicLstTagsResponse } from "../schemas/query"
 import { publicTagResource, tagResource } from "../schemas/resource"
 
-export const publicListTagsAPI = chatbotTokenAPI
+export const listTagsChatbotTokenAPI = chatbotTokenAPI
   .route({
     method: "GET",
-    path: "/public/chatbots/tags",
+    path: "/v1/tags",
     summary: "Get all tags",
+    tags: ["Tags"],
   })
   .input(z.object({}))
   .output(publicLstTagsResponse)
@@ -27,12 +28,13 @@ export const publicListTagsAPI = chatbotTokenAPI
     })
   })
 
-export const publicCreateTagAPI = chatbotTokenAPI
+export const createTagChatbotTokenAPI = chatbotTokenAPI
   .route({
     method: "POST",
-    path: "/public/chatbots/tags",
+    path: "/v1/tags",
     summary: "Create a new tag",
     successStatus: 201,
+    tags: ["Tags"],
   })
   .input(createTagRequest.pick({ name: true }))
   .output(publicTagResource)
@@ -45,11 +47,12 @@ export const publicCreateTagAPI = chatbotTokenAPI
     return data
   })
 
-export const publicFindTagAPI = chatbotTokenAPI
+export const findTagChatbotTokenAPI = chatbotTokenAPI
   .route({
     method: "GET",
-    path: "/public/chatbots/tags/{id}",
+    path: "/v1/tags/{id}",
     summary: "Get tag by id",
+    tags: ["Tags"],
   })
   .input(z.object({ id: z.string() }))
   .output(tagResource.pick({ id: true, name: true }))
@@ -66,11 +69,12 @@ export const publicFindTagAPI = chatbotTokenAPI
     return tag
   })
 
-export const publicFindTagByNameAPI = chatbotTokenAPI
+export const findTagByNameChatbotTokenAPI = chatbotTokenAPI
   .route({
     method: "GET",
-    path: "/public/chatbots/tags/name/{name}",
+    path: "/v1/tags/name/{name}",
     summary: "Get tag by name",
+    tags: ["Tags"],
   })
   .input(z.object({ name: z.string() }))
   .output(publicTagResource)
@@ -86,11 +90,12 @@ export const publicFindTagByNameAPI = chatbotTokenAPI
     return tag
   })
 
-export const publicUpdateTagAPI = chatbotTokenAPI
+export const updateTagChatbotTokenAPI = chatbotTokenAPI
   .route({
     method: "PUT",
-    path: "/public/chatbots/tags/{id}",
+    path: "/v1/tags/{id}",
     summary: "Update tag",
+    tags: ["Tags"],
   })
   .input(
     createTagRequest.pick({ name: true }).and(z.object({ id: z.string() })),
@@ -105,12 +110,13 @@ export const publicUpdateTagAPI = chatbotTokenAPI
     })
   })
 
-export const publicDeleteTagsAPI = chatbotTokenAPI
+export const deleteTagsChatbotTokenAPI = chatbotTokenAPI
   .route({
     method: "DELETE",
-    path: "/public/chatbots/tags/{id}",
+    path: "/v1/tags/{id}",
     summary: "Delete tag",
     successStatus: 204,
+    tags: ["Tags"],
   })
   .input(z.object({ id: z.string() }))
   .handler(async ({ context, input }) => {
@@ -122,13 +128,13 @@ export const publicDeleteTagsAPI = chatbotTokenAPI
     })
   })
 
-const publicTagsAPI = {
-  publicListTagsAPI,
-  publicCreateTagAPI,
-  publicUpdateTagAPI,
-  publicDeleteTagsAPI,
-  publicFindTagAPI,
-  publicFindTagByNameAPI,
+const tagChatbotTokenAPIs = {
+  listTagsChatbotTokenAPI,
+  createTagChatbotTokenAPI,
+  findTagChatbotTokenAPI,
+  findTagByNameChatbotTokenAPI,
+  updateTagChatbotTokenAPI,
+  deleteTagsChatbotTokenAPI,
 }
 
-export default publicTagsAPI
+export default tagChatbotTokenAPIs

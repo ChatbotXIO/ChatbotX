@@ -1,4 +1,9 @@
+import { findOrFail } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
+import type { ConversationModel } from "@aha.chat/database/types"
 import { z } from "zod"
+import { createMessage } from "@/features/messages/actions/create-message.action"
+import { chatbotTokenCreateMessageRequest } from "@/features/messages/schemas/create-message.schema"
 import { publicLstTagsResponse } from "@/features/tags/schemas/query"
 import { NotfoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
@@ -32,12 +37,13 @@ import {
   publicListContactsResponse,
 } from "../schemas/query"
 
-export const publicAPIs = {
-  publicFindContactAPI: chatbotTokenAPI
+export const chatbotTokenAPIs = {
+  findContactChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/contacts/{contactId}",
+      path: "/v1/contacts/{contactId}",
       summary: "Get contact by contact id",
+      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
     .output(publicFindContactResponse)
@@ -54,11 +60,12 @@ export const publicAPIs = {
       return contact
     }),
 
-  publicCreateContactAPI: chatbotTokenAPI
+  createContactChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "POST",
-      path: "/public/contacts",
+      path: "/v1/contacts",
       summary: "Create a contact",
+      tags: ["Contacts"],
     })
     .input(createContactRequest)
     .output(publicFindContactResponse)
@@ -75,13 +82,14 @@ export const publicAPIs = {
       return newContact
     }),
 
-  publicListContactsByCustomFieldAPI: chatbotTokenAPI
+  listContactsByCustomFieldChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/contacts/find-by-custom-field",
+      path: "/v1/contacts/find-by-custom-field",
       summary: "List contacts by custom field",
       description:
         "Find contacts by custom field value. It will return maximum 100 contacts. The results are sorted by the last custom field value update for a contact.",
+      tags: ["Contacts"],
     })
     .input(publicListContactsByCustomFieldRequest)
     .output(publicListContactsResponse)
@@ -92,11 +100,12 @@ export const publicAPIs = {
       })
     }),
 
-  publicListContactTagsAPI: chatbotTokenAPI
+  listContactTagsChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/contacts/{contactId}/tags",
+      path: "/v1/contacts/{contactId}/tags",
       summary: "Get all tags added to this contact",
+      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
     .output(publicLstTagsResponse)
@@ -108,12 +117,13 @@ export const publicAPIs = {
       })
     }),
 
-  publicAddContactTagsAPI: chatbotTokenAPI
+  addContactTagsChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "POST",
-      path: "/public/contacts/{contactId}/tags/{tagId}",
+      path: "/v1/contacts/{contactId}/tags/{tagId}",
       summary: "Add a tag to the contact",
       successStatus: 204,
+      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string(), tagId: z.string() }))
     .handler(async ({ context, input }) => {
@@ -123,12 +133,13 @@ export const publicAPIs = {
       })
     }),
 
-  publicDeleteContactTagAPI: chatbotTokenAPI
+  deleteContactTagChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "DELETE",
-      path: "/public/contacts/{contactId}/tags/{tagId}",
+      path: "/v1/contacts/{contactId}/tags/{tagId}",
       summary: "Remove a tag from the contact",
       successStatus: 204,
+      tags: ["Contacts"],
     })
     .input(removeContactTagRequest)
     .handler(async ({ context, input }) => {
@@ -138,11 +149,12 @@ export const publicAPIs = {
       })
     }),
 
-  publicListContactCustomFieldsAPI: chatbotTokenAPI
+  listContactCustomFieldsChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/contacts/{contactId}/custom-fields",
+      path: "/v1/contacts/{contactId}/custom-fields",
       summary: "Get all custom fields from a contact",
+      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
     .output(listPublicContactCustomFieldsResponse)
@@ -154,11 +166,12 @@ export const publicAPIs = {
       })
     }),
 
-  publicFindContactCustomFieldValueAPI: chatbotTokenAPI
+  findContactCustomFieldValueChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "GET",
-      path: "/public/contacts/{contactId}/custom-fields/{customFieldId}",
+      path: "/v1/contacts/{contactId}/custom-fields/{customFieldId}",
       summary: "Get contact custom field value",
+      tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string(), customFieldId: z.string() }))
     .output(publicContactCustomFieldResource)
@@ -173,16 +186,18 @@ export const publicAPIs = {
       })
     }),
 
-  publicSetContactCustomFieldValueAPI: chatbotTokenAPI
+  setContactCustomFieldValueChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "POST",
-      path: "/public/contacts/{contactId}/custom-fields",
+      path: "/v1/contacts/{contactId}/custom-fields/{customFieldId}",
       summary: "Set contact custom field value",
+      tags: ["Contacts"],
     })
     .input(setContactCustomFieldValueRequest)
     .handler(async ({ context, input }) => {
       const { contactId } = input
       const chatbotId = context.chatbot.id
+
       await setContactCustomFieldValue({
         chatbotId,
         contactId,
@@ -191,12 +206,13 @@ export const publicAPIs = {
       })
     }),
 
-  publicDeleteContactCustomFieldAPI: chatbotTokenAPI
+  deleteContactCustomFieldChatbotTokenAPI: chatbotTokenAPI
     .route({
       method: "DELETE",
-      path: "/public/contacts/{contactId}/custom-fields/{customFieldId}",
+      path: "/v1/contacts/{contactId}/custom-fields/{customFieldId}",
       summary: "Delete contact custom field",
       successStatus: 204,
+      tags: ["Contacts"],
     })
     .input(deleteContactCustomFieldRequest)
     .handler(async ({ context, input }) => {
@@ -209,60 +225,40 @@ export const publicAPIs = {
       })
     }),
 
-  // publicSendTextMessageAPI: chatbotTokenAPI
-  //   .route({
-  //     method: "POST",
-  //     path: "/public/contacts/{contactId}/send/text",
-  //     summary: "Send text message to contact",
-  //     tags: ["Contacts"],
-  //   })
-  //   .input(sendTextMessageRequest)
-  //   .handler(async ({ context, input }) => {
-  //     const { contactId, text, channel } = input
-  //     const chatbotId = context.chatbot.id
-  //     await sendTextMessage({
-  //       chatbotId,
-  //       contactId,
-  //       channel,
-  //       text,
-  //     })
-  //   }),
-  // publicSendFileMessageAPI: chatbotTokenAPI
-  //   .route({
-  //     method: "POST",
-  //     path: "/public/contacts/{contactId}/send/file",
-  //     summary: "Send file message to contact",
-  //     tags: ["Contacts"],
-  //   })
-  //   .input(sendFileMessageRequest)
-  //   .handler(async ({ context, input }) => {
-  //     const chatbotId = context.chatbot.id
-  //     const { contactId, file, channel } = input
-  //     await sendFileMessage({
-  //       chatbotId,
-  //       contactId,
-  //       file,
-  //       channel,
-  //     })
-  //   }),
-  // publicSendFlowMessageAPI: chatbotTokenAPI
-  //   .route({
-  //     method: "POST",
-  //     path: "/public/contacts/{contactId}/send/flow",
-  //     summary: "Send flow message to contact",
-  //     tags: ["Contacts"],
-  //   })
-  //   .input(sendFlowMessageRequest)
-  //   .handler(async ({ context, input }) => {
-  //     const chatbotId = context.chatbot.id
-  //     const { contactId, flowId, channel } = input
-  //     await sendFlowMessage({
-  //       chatbotId,
-  //       contactId,
-  //       flowId,
-  //       channel,
-  //     })
-  //   }),
+  sendMessageChatbotTokenAPI: chatbotTokenAPI
+    .route({
+      method: "POST",
+      path: "/v1/contacts/{contactId}/messages",
+      summary: "Send message to contact",
+      tags: ["Contacts"],
+    })
+    .input(
+      chatbotTokenCreateMessageRequest.and(
+        z.object({
+          contactId: z.string(),
+        }),
+      ),
+    )
+    .handler(async ({ context, input }) => {
+      const contact = await publicFindContact({
+        id: input.contactId,
+        chatbotId: context.chatbot.id,
+      })
+      if (!contact) {
+        throw new NotfoundException("Contact not found")
+      }
+
+      const conversation = await findOrFail<ConversationModel>(
+        conversationModel,
+        {
+          chatbotId: context.chatbot.id,
+          contactId: input.contactId,
+          inboxType: input.channel,
+        },
+      )
+
+      await createMessage(conversation, input)
+    }),
 }
 
-export default publicAPIs
+export default chatbotTokenAPIs

@@ -102,3 +102,12 @@ export const parseOrderByAsObject = (
     {} as Record<string, unknown>,
   )
 }
+
+export const getPublicUrl = (path: string) => {
+  try {
+    return new URL(path, process.env.NEXT_PUBLIC_ASSET_URL).toString()
+  } catch (error) {
+    console.error("Error getting attachment URL", error)
+    return ""
+  }
+}

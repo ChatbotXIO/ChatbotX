@@ -1,7 +1,7 @@
 import {
   type Context,
   guessFileTypeFromMimeType,
-  type OutgoingAttachment,
+  type IncomingAttachment,
 } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import { fetch } from "cross-fetch"
@@ -40,7 +40,7 @@ export const getMessageAttachmentEntity = ({
 }: {
   ctx: Context<ZaloAuthValue>
   attachment: MessageAttachment
-}): Promise<OutgoingAttachment | undefined> =>
+}): Promise<IncomingAttachment | undefined> =>
   handleZaloError("Get message attachment", async () => {
     if (!attachment.payload.url) {
       throw new ZaloException("No attachment URL found")

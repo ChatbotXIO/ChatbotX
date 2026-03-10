@@ -11,7 +11,8 @@ import {
   type InboxModel,
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
-import { uploadFileFromUrl } from "@aha.chat/filesystem"
+import { getPublicUrl } from "@aha.chat/database/utils"
+import { uploadFileFromUrl } from "@aha.chat/filesystem/node-upload"
 import {
   type ButtonStepProps,
   ButtonType,
@@ -172,7 +173,10 @@ export async function sendFlowStep({
             ...uploadedFile,
           })
           .returning()
-          .then((result) => result[0])
+          .then((result) => ({
+            ...result[0],
+            url: getPublicUrl(result[0].originPath),
+          }))
 
         ;(newMessage as { attachments?: AttachmentModel[] }).attachments =
           attachment ? [attachment] : undefined
@@ -253,7 +257,11 @@ export const sendChatMessage = async (
             ...uploadedFile,
           })
           .returning()
-          .then((result) => result[0])
+          .then((result) => ({
+            ...result[0],
+            url: getPublicUrl(result[0].originPath),
+          }))
+
         ;(newMessage as { attachments?: AttachmentModel[] }).attachments = [
           attachment,
         ]

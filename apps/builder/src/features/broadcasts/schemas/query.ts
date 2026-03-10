@@ -5,6 +5,8 @@ import {
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
+import z from "zod"
+import { publicBroadcastResource } from "./resource"
 
 export const getBroadcastsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -18,3 +20,7 @@ export const getBroadcastsSearchParamsCache = createSearchParamsCache({
 export type GetBroadcastsSchema = Awaited<
   ReturnType<typeof getBroadcastsSearchParamsCache.parse>
 > & { chatbotId: string }
+
+export const publicListBroadcastsResponse = z.object({
+  data: z.array(publicBroadcastResource),
+})

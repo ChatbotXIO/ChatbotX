@@ -1,9 +1,9 @@
+import chatbotTokenTagsAPI from "./chatbot-token"
 import privateTagsAPI from "./private"
-import publicTagsAPI from "./public"
 
 const tagsAPI = {
   ...privateTagsAPI,
-  ...publicTagsAPI,
+  ...chatbotTokenTagsAPI,
 }
 
 export default tagsAPI

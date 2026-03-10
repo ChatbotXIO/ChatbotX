@@ -92,7 +92,7 @@ export type OutgoingAttachment = {
   mimeType: string
   originPath: string
   size: number
-  url?: string
+  url: string
   width?: number | null
   height?: number | null
   name?: string | null
