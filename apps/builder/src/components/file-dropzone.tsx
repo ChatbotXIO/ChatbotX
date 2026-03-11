@@ -199,7 +199,7 @@ export default function FileDropzone({
   }
 
   const _hasFile = () => {
-    if (type === FileType.image) {
+    if (type === "image") {
       return (
         <>
           <Image
