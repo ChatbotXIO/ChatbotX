@@ -1,0 +1,48 @@
+{
+  "name": "chatbotX",
+  "version": "0.1.0",
+  "description": "ChatbotX CLI - Command line interface for the ChatbotX API",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "chatbotX": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsup src/index.ts --watch",
+    "build": "tsup src/index.ts",
+    "start": "node ./dist/index.js",
+    "publish": "pnpm build && pnpm publish --access public --no-git-checks"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "chatbotX",
+    "cli",
+    "scheduling",
+    "automation",
+    "ai-agent",
+    "command-line"
+  ],
+  "author": "",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chatbotxio/ChatbotX.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://chatbotx.io",
+  "bugs": {
+    "url": "https://github.com/chatbotxio/ChatbotX/issues"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "yargs": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/yargs": "^17.0.35",
+    "tsup": "^8.5.1",
+    "typescript": "^5.8.2"
+  }
+}
