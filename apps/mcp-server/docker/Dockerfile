@@ -13,7 +13,7 @@ RUN npm install -g turbo@^2
 # Generate a partial monorepo for a target package
 WORKDIR /app
 COPY . .
-RUN turbo prune mcp-server --docker
+RUN turbo prune chatbotx-mcp-server --docker
 
 FROM base AS deps
 ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -24,11 +24,11 @@ COPY --from=pre /app/.env .env
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
-RUN pnpm turbo run build --filter=mcp-server
+RUN pnpm turbo run build --filter=chatbotx-mcp-server
 
 FROM base AS release
 RUN apt update && \
-  apt install -y supervisor tini redis && \
+  apt install -y supervisor tini && \
   apt-get autoremove -y && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
@@ -38,4 +38,4 @@ COPY --from=deps /app/apps/mcp-server/dist /app/apps/mcp-server/dist
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["mcp-server"]
+EXPOSE 3000
