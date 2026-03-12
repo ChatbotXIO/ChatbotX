@@ -42,10 +42,10 @@ export default async function SharedFolderSlot(props: {
       folderType = "tag"
       break
     case "triggers":
-      folderType = FolderType.trigger
+      folderType = "trigger"
       break
     case "webhooks":
-      folderType = FolderType.webhook
+      folderType = "webhook"
       break
     default:
       break

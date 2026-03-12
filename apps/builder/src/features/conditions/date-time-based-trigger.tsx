@@ -1,5 +1,4 @@
-import { DateTimeTriggerType } from "@aha.chat/database/enums"
-import { CustomFieldType } from "@aha.chat/database/types"
+import { CustomFieldType, DateTimeTriggerType } from "@aha.chat/database/enums"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useTranslations } from "next-intl"

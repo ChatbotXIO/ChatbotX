@@ -1,6 +1,7 @@
 "use server"
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
+
 import { rootFolderId } from "@aha.chat/database/enums"
 import {
   automatedResponseModel,
@@ -10,9 +11,10 @@ import {
   triggerModel,
   webhookModel,
 } from "@aha.chat/database/schema"
+
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { ChatbotXException } from "@/lib/errors/exception"
+import { ChatbotXException, notFoundException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { changeFolderRequest } from "../schemas/action"
 
@@ -36,7 +38,7 @@ export const changeFolderAction = chatbotActionClient
         ),
       )
     if (!resources || resources.length === 0) {
-      throw new ChatbotXException("Resource not found")
+      throw notFoundException("Resource not found")
     }
 
     let newFolderId: string | null = null

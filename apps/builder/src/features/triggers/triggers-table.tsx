@@ -1,7 +1,7 @@
 "use client"
 
+import { FolderType } from "@aha.chat/database/enums"
 import type { TriggerModel } from "@aha.chat/database/types"
-import { FolderType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"

@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import { Condition as ConditionEnum } from "@aha.chat/database/enums"
 import type { ChatbotModel } from "@aha.chat/database/types"
 import type { ConditionEvaluationContext } from "../types"
@@ -87,19 +87,20 @@ export class ConditionEvaluator {
     if (customFieldId === actualCustomFieldId) {
       actualValue = metadata.newValue
     } else {
-      const contactCustomField = await prisma.contactCustomField.findFirst({
-        where: {
-          contactId,
-          customFieldId,
-        },
-        select: { value: true },
-      })
+      const contactCustomField =
+        await db.query.contactCustomFieldModel.findFirst({
+          where: {
+            contactId,
+            customFieldId,
+          },
+          columns: { value: true },
+        })
       actualValue = contactCustomField?.value
     }
 
-    const customField = await prisma.field.findUnique({
+    const customField = await db.query.fieldModel.findFirst({
       where: { id: customFieldId },
-      select: { customFieldType: true },
+      columns: { customFieldType: true },
     })
 
     if (!operator) {
@@ -335,13 +336,15 @@ export class ConditionEvaluator {
       return false
     }
 
-    const contactCustomField = await prisma.contactCustomField.findFirst({
-      where: {
-        contactId,
-        customFieldId,
+    const contactCustomField = await db.query.contactCustomFieldModel.findFirst(
+      {
+        where: {
+          contactId,
+          customFieldId,
+        },
+        columns: { value: true },
       },
-      select: { value: true },
-    })
+    )
 
     if (!contactCustomField?.value) {
       return false

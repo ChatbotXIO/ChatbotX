@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import { Condition as ConditionEnum } from "@aha.chat/database/enums"
 import type { ChatbotModel } from "@aha.chat/database/types"
 import { logger } from "../../lib/logger"
@@ -25,27 +25,30 @@ export class WebhookMatcherService {
 
     const sourceId = metadata.sourceId as string | undefined
 
-    const webhooks = await prisma.webhook.findMany({
+    const webhooks = await db.query.webhookModel.findMany({
       where: {
         chatbotId,
         active: true,
-        conditions: {
-          some: {
-            type: { in: conditionTypes },
-            ...(sourceId ? { sourceId } : {}),
-          },
-        },
       },
-      include: {
+      with: {
         conditions: true,
       },
     })
 
-    if (webhooks.length === 0) {
+    // Filter webhooks that have matching conditions
+    const filteredWebhooks = webhooks.filter((webhook) =>
+      webhook.conditions.some(
+        (c) =>
+          conditionTypes.includes(c.type) &&
+          (sourceId ? c.sourceId === sourceId : true),
+      ),
+    )
+
+    if (filteredWebhooks.length === 0) {
       return
     }
 
-    const chatbot = await prisma.chatbot.findUnique({
+    const chatbot = await db.query.chatbotModel.findFirst({
       where: {
         id: chatbotId,
       },
@@ -55,7 +58,7 @@ export class WebhookMatcherService {
       return
     }
 
-    for (const webhook of webhooks) {
+    for (const webhook of filteredWebhooks) {
       const isMatch = await this.evaluateWebhookConditions(
         webhook,
         eventData,
@@ -70,8 +73,8 @@ export class WebhookMatcherService {
           })
         } catch (error) {
           logger.error(
-            `Failed to execute webhook ${webhook.id} for chatbot ${chatbotId}`,
             error,
+            `Failed to execute webhook ${webhook.id} for chatbot ${chatbotId}`,
           )
         }
       }

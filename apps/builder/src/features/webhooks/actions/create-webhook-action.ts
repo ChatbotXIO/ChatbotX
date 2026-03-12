@@ -1,13 +1,16 @@
 "use server"
 
-import { FolderType, prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { FolderType } from "@aha.chat/database/enums"
+import { webhookModel } from "@aha.chat/database/schema"
 import { updateWebhookCache } from "@aha.chat/events"
+import { createId } from "@paralleldrive/cuid2"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { MAX_WEBHOOKS_PER_CHATBOT } from "../constants"
 import {
@@ -29,9 +32,10 @@ export const createWebhookAction = chatbotActionClient
     }) => {
       const t = await getTranslations()
 
-      const existingWebhooksCount = await prisma.webhook.count({
-        where: { chatbotId },
-      })
+      const existingWebhooksCount = await db.$count(
+        webhookModel,
+        eq(webhookModel.chatbotId, chatbotId),
+      )
 
       if (existingWebhooksCount >= MAX_WEBHOOKS_PER_CHATBOT) {
         throw new MaxWebhooksReachedException(
@@ -43,7 +47,7 @@ export const createWebhookAction = chatbotActionClient
       }
 
       if (parsedInput.folderId) {
-        await ensureFolderIdIsExists(
+        await ensureFolderIsExists(
           parsedInput.folderId,
           chatbotId,
           FolderType.webhook,
@@ -52,13 +56,16 @@ export const createWebhookAction = chatbotActionClient
 
       const { ...webhookData } = parsedInput
 
-      const result = await prisma.webhook.create({
-        data: {
+      const result = await db
+        .insert(webhookModel)
+        .values({
+          id: createId(),
           ...webhookData,
           chatbotId,
           url: "",
-        },
-      })
+        })
+        .returning()
+        .then((rows) => rows[0])
 
       await updateWebhookCache(chatbotId)
 

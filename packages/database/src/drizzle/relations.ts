@@ -639,4 +639,28 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.customFieldModel.id,
     }),
   },
+  triggerModel: {
+    conditions: r.many.conditionModel(),
+    chatbot: r.one.chatbotModel({
+      from: r.triggerModel.chatbotId,
+      to: r.chatbotModel.id,
+    }),
+  },
+  webhookModel: {
+    conditions: r.many.conditionModel(),
+    chatbot: r.one.chatbotModel({
+      from: r.webhookModel.chatbotId,
+      to: r.chatbotModel.id,
+    }),
+  },
+  conditionModel: {
+    trigger: r.one.triggerModel({
+      from: r.conditionModel.triggerId,
+      to: r.triggerModel.id,
+    }),
+    webhook: r.one.webhookModel({
+      from: r.conditionModel.webhookId,
+      to: r.webhookModel.id,
+    }),
+  },
 }))

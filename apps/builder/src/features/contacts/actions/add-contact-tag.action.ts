@@ -150,6 +150,12 @@ export const attachContactTag = async ({
     .onConflictDoNothing({
       target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
     })
+  // Emit tag applied event
+  try {
+    await emitTagApplied(chatbotId, contactId, tagId)
+  } catch (error) {
+    console.error("Failed to emit tagApplied event:", error)
+  }
 }
 
 export const detachContactTag = async ({

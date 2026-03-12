@@ -5,11 +5,11 @@ export type DateTimeOperator = "before" | "after" | "atTheDayOf"
 export type DateTimeUnit = "minutes" | "hours" | "days"
 
 export interface DateTimeCondition {
-  triggerType: DateTimeOperator
-  timeValue?: number
-  timeType?: DateTimeUnit
   at?: string
   customFieldId: string
+  timeType?: DateTimeUnit
+  timeValue?: number
+  triggerType: DateTimeOperator
 }
 
 export type DateTimeTriggerValue = {

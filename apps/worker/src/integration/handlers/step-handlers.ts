@@ -10,6 +10,13 @@ import {
 } from "@aha.chat/database/client"
 import { contactModel, conversationModel } from "@aha.chat/database/schema"
 import {
+  emitConversationArchived,
+  emitConversationAssigned,
+  emitConversationTransferredToBot,
+  emitConversationTransferredToHuman,
+  emitConversationUnassigned,
+} from "@aha.chat/events"
+import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
   AutoAssignConversationRule,
@@ -53,6 +60,17 @@ export async function stepArchiveConversation({
       archivedAt: new Date(),
     })
     .where(eq(conversationModel.id, conversation.id))
+
+  // Emit conversation archived event
+  try {
+    await emitConversationArchived(
+      conversation.chatbotId,
+      conversation.contactId,
+      conversation.id,
+    )
+  } catch (error) {
+    console.error("Failed to emit conversationArchived event:", error)
+  }
 }
 
 export async function stepUnarchiveConversation({
@@ -70,6 +88,8 @@ export async function stepAssignConversation({
   conversation,
   step,
 }: ExecuteStepProps<AssignConversationStepSchema>) {
+  let assignedTo: string | null = null
+
   if (step.assignedId.startsWith("u_")) {
     const userId = step.assignedId.substring(2)
     const chatbotMember = await db.query.chatbotMemberModel.findFirst({
@@ -85,6 +105,7 @@ export async function stepAssignConversation({
           assignedUserId: userId,
         })
         .where(eq(conversationModel.id, conversation.id))
+      assignedTo = userId
     }
   } else if (step.assignedId.startsWith("t_")) {
     const inboxTeamId = step.assignedId.substring(2)
@@ -101,6 +122,21 @@ export async function stepAssignConversation({
           assignedInboxTeamId: inboxTeamId,
         })
         .where(eq(conversationModel.id, conversation.id))
+      assignedTo = inboxTeamId
+    }
+  }
+
+  // Emit conversation assigned event
+  if (assignedTo) {
+    try {
+      await emitConversationAssigned(
+        conversation.chatbotId,
+        conversation.contactId,
+        conversation.id,
+        assignedTo,
+      )
+    } catch (error) {
+      console.error("Failed to emit conversationAssigned event:", error)
     }
   }
 }
@@ -274,6 +310,17 @@ export async function stepUnassignConversation({
       assignedInboxTeamId: null,
     })
     .where(eq(conversationModel.id, conversation.id))
+
+  // Emit conversation unassigned event
+  try {
+    await emitConversationUnassigned(
+      conversation.chatbotId,
+      conversation.contactId,
+      conversation.id,
+    )
+  } catch (error) {
+    console.error("Failed to emit conversationUnassigned event:", error)
+  }
 }
 
 export async function stepFollowConversation({
@@ -307,6 +354,17 @@ export async function stepDisableBot({
       liveChatEnabled: true,
     })
     .where(eq(conversationModel.id, conversation.id))
+
+  // Emit conversation transferred to human event
+  try {
+    await emitConversationTransferredToHuman(
+      conversation.chatbotId,
+      conversation.contactId,
+      conversation.id,
+    )
+  } catch (error) {
+    console.error("Failed to emit conversationTransferredToHuman event:", error)
+  }
 }
 
 export async function stepEnableBot({
@@ -318,6 +376,17 @@ export async function stepEnableBot({
       liveChatEnabled: false,
     })
     .where(eq(conversationModel.id, conversation.id))
+
+  // Emit conversation transferred to bot event
+  try {
+    await emitConversationTransferredToBot(
+      conversation.chatbotId,
+      conversation.contactId,
+      conversation.id,
+    )
+  } catch (error) {
+    console.error("Failed to emit conversationTransferredToBot event:", error)
+  }
 }
 
 export const stepSendTyping = async (

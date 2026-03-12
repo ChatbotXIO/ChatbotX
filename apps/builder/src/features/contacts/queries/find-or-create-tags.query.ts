@@ -1,6 +1,8 @@
 "use server"
 
-import { type Prisma, prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { tagModel } from "@aha.chat/database/schema"
+import { createId } from "@paralleldrive/cuid2"
 
 export type Tag = {
   id: string
@@ -13,7 +15,7 @@ export type Tag = {
 }
 
 export async function findOrCreateTags(
-  tx: Prisma.TransactionClient | null,
+  tx: typeof db | null,
   chatbotId: string,
   tagNames: string[],
 ): Promise<{
@@ -21,13 +23,13 @@ export async function findOrCreateTags(
   newlyCreatedTags: Tag[]
   allTags: Tag[]
 }> {
-  const prismaClient = tx || prisma
+  const dbClient = tx || db
 
-  const existingTags = await prismaClient.tag.findMany({
-    where: {
-      chatbotId,
-      name: { in: tagNames },
-    },
+  const existingTags = await dbClient.query.tagModel.findMany({
+    where: and(
+      eq(tagModel.chatbotId, chatbotId),
+      inArray(tagModel.name, tagNames),
+    ),
   })
 
   const existingTagNames = new Set(existingTags.map((t) => t.name))
@@ -36,13 +38,17 @@ export async function findOrCreateTags(
   let newlyCreatedTags: Tag[] = []
 
   if (missingTagNames.length > 0) {
-    newlyCreatedTags = await prismaClient.tag.createManyAndReturn({
-      data: missingTagNames.map((name) => ({
-        name,
-        chatbotId,
-      })),
-      skipDuplicates: true,
-    })
+    newlyCreatedTags = await dbClient
+      .insert(tagModel)
+      .values(
+        missingTagNames.map((name) => ({
+          id: createId(),
+          name,
+          chatbotId,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning()
   }
 
   const allTags = [...existingTags, ...newlyCreatedTags]

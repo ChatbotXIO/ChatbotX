@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { webhookModel } from "@aha.chat/database/schema"
 import { removeWebhookCache } from "@aha.chat/events"
 import {
   type BulkUpdateIdsRequest,
@@ -21,14 +22,14 @@ export const deleteWebhooksAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.webhook.deleteMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-      })
+      await db
+        .delete(webhookModel)
+        .where(
+          and(
+            eq(webhookModel.chatbotId, chatbotId),
+            inArray(webhookModel.id, parsedInput.ids),
+          ),
+        )
 
       await removeWebhookCache(chatbotId)
     },

@@ -1,5 +1,10 @@
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { TriggerAction } from "@aha.chat/database/enums"
+import {
+  contactCustomFieldModel,
+  contactsToTagsModel,
+  conversationModel,
+} from "@aha.chat/database/schema"
 import {
   FieldOperationType,
   type SpreadsheetClearRowSchema,
@@ -14,20 +19,7 @@ import {
 
 import baseLogger from "@aha.chat/logger"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
-import {
-  addContactTag,
-  clearContactCustomField,
-  removeContactTag,
-  setContactCustomField,
-} from "../../integration/handlers/contact-handler"
-import {
-  archiveConversation,
-  assignConversation,
-  disableBot,
-  enableBot,
-  unarchiveConversation,
-  unassignConversation,
-} from "../../integration/handlers/conversation-handler"
+import { createId } from "@paralleldrive/cuid2"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -42,7 +34,7 @@ export class ActionExecutor {
     const { action, contactId, chatbotId } = context
     const actionType = action.type
 
-    const conversation = await prisma.conversation.findFirst({
+    const conversation = await db.query.conversationModel.findFirst({
       where: {
         contactId,
         chatbotId,
@@ -60,82 +52,85 @@ export class ActionExecutor {
     switch (actionType) {
       case TriggerAction.addTag: {
         const tagIds = action.tagIds as string[]
-        const tags = await prisma.tag.findMany({
+        const existingTags = await db.query.tagModel.findMany({
           where: {
             id: { in: tagIds },
             chatbotId,
           },
-          select: { name: true },
         })
 
-        await addContactTag({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "C01" as const,
-            tags: tags.map((t) => t.name),
-          },
-        })
+        if (existingTags.length > 0) {
+          await db
+            .insert(contactsToTagsModel)
+            .values(
+              existingTags.map((t) => ({
+                contactId: conversation.contactId,
+                tagId: t.id,
+              })),
+            )
+            .onConflictDoNothing()
+        }
         break
       }
 
       case TriggerAction.removeTag: {
         const tagIds = action.tagIds as string[]
-        const tags = await prisma.tag.findMany({
-          where: {
-            id: { in: tagIds },
-            chatbotId,
-          },
-          select: { name: true },
-        })
-        await removeContactTag({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "C01" as const,
-            tags: tags.map((t) => t.name),
-          },
-        })
+        if (tagIds.length > 0) {
+          await db
+            .delete(contactsToTagsModel)
+            .where(
+              and(
+                eq(contactsToTagsModel.contactId, conversation.contactId),
+                inArray(contactsToTagsModel.tagId, tagIds),
+              ),
+            )
+        }
         break
       }
 
-      case TriggerAction.setCustomField:
-        await setContactCustomField({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "C06" as const,
-            inputCfId: action.customFieldId as string,
-            operation:
-              (action.operation as (typeof FieldOperationType)[keyof typeof FieldOperationType]) ||
-              FieldOperationType.set,
-            value: action.value as string,
-          },
-        })
-        break
+      case TriggerAction.setCustomField: {
+        const customFieldId = action.customFieldId as string
+        const value = action.value as string
+        const operation =
+          (action.operation as (typeof FieldOperationType)[keyof typeof FieldOperationType]) ||
+          FieldOperationType.set
 
-      case TriggerAction.clearCustomField:
-        await clearContactCustomField({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "C07" as const,
-            inputCfId: action.customFieldId as string,
-          },
-        })
+        if (operation === FieldOperationType.set) {
+          await db
+            .insert(contactCustomFieldModel)
+            .values({
+              contactId: conversation.contactId,
+              customFieldId,
+              value,
+              id: createId(),
+            })
+            .onConflictDoUpdate({
+              target: [
+                contactCustomFieldModel.contactId,
+                contactCustomFieldModel.customFieldId,
+              ],
+              set: { value },
+            })
+        }
         break
+      }
+
+      case TriggerAction.clearCustomField: {
+        const customFieldId = action.customFieldId as string
+        await db
+          .delete(contactCustomFieldModel)
+          .where(
+            and(
+              eq(contactCustomFieldModel.contactId, conversation.contactId),
+              eq(contactCustomFieldModel.customFieldId, customFieldId),
+            ),
+          )
+        break
+      }
 
       case TriggerAction.startAnotherFlow: {
         const flowId = action.flowId as string
-        const flow = await prisma.flow.findFirst({
+        const flow = await db.query.flowModel.findFirst({
           where: {
             id: flowId,
             chatbotId,
@@ -161,88 +156,79 @@ export class ActionExecutor {
       }
 
       case TriggerAction.archiveConversation:
-        await archiveConversation({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "I08" as const,
-          },
-        })
+        await db
+          .update(conversationModel)
+          .set({ archivedAt: new Date() })
+          .where(eq(conversationModel.id, conversation.id))
         break
 
       case TriggerAction.unarchiveConversation:
-        await unarchiveConversation({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "I09" as const,
-          },
-        })
+        await db
+          .update(conversationModel)
+          .set({ archivedAt: null })
+          .where(eq(conversationModel.id, conversation.id))
         break
 
-      case TriggerAction.assignConversation:
-        await assignConversation({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "I03" as const,
-            assignedId: action.assignedId as string,
-          },
-        })
+      case TriggerAction.assignConversation: {
+        const assignedId = action.assignedId as string
+        if (assignedId.startsWith("u_")) {
+          const userId = assignedId.substring(2)
+          const chatbotMember = await db.query.chatbotMemberModel.findFirst({
+            where: {
+              userId,
+              chatbotId: conversation.chatbotId,
+            },
+          })
+          if (chatbotMember) {
+            await db
+              .update(conversationModel)
+              .set({ assignedUserId: userId })
+              .where(eq(conversationModel.id, conversation.id))
+          }
+        } else if (assignedId.startsWith("t_")) {
+          const inboxTeamId = assignedId.substring(2)
+          const inboxTeam = await db.query.inboxTeamModel.findFirst({
+            where: {
+              id: inboxTeamId,
+              chatbotId: conversation.chatbotId,
+            },
+          })
+          if (inboxTeam) {
+            await db
+              .update(conversationModel)
+              .set({ assignedInboxTeamId: inboxTeamId })
+              .where(eq(conversationModel.id, conversation.id))
+          }
+        }
         break
+      }
 
       case TriggerAction.unassignConversation:
-        await unassignConversation({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "I05" as const,
-          },
-        })
+        await db
+          .update(conversationModel)
+          .set({ assignedUserId: null, assignedInboxTeamId: null })
+          .where(eq(conversationModel.id, conversation.id))
         break
 
       case TriggerAction.disableBot:
-        await disableBot({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "I01" as const,
-          },
-        })
+        await db
+          .update(conversationModel)
+          .set({ liveChatEnabled: true })
+          .where(eq(conversationModel.id, conversation.id))
         break
 
       case TriggerAction.enableBot:
-        await enableBot({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "I02" as const,
-          },
-        })
+        await db
+          .update(conversationModel)
+          .set({ liveChatEnabled: false })
+          .where(eq(conversationModel.id, conversation.id))
         break
 
       case TriggerAction.transferConversationToHuman:
-        await disableBot({
-          conversation,
-          flowId: "",
-          flowVersionId: "",
-          step: {
-            id: "",
-            stepType: "I01" as const,
-          },
-        })
+        await db
+          .update(conversationModel)
+          .set({ liveChatEnabled: true })
+          .where(eq(conversationModel.id, conversation.id))
         if (action.notifyAdmins) {
           baseLogger.info(
             `Notifying admins for conversation ${conversation.id}`,

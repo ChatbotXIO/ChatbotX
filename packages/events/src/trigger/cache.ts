@@ -1,4 +1,3 @@
-import { prisma } from "@aha.chat/database"
 import { BaseCache } from "../base-cache"
 import type { TriggerEventType } from "./types"
 
@@ -6,8 +5,9 @@ class TriggerCache extends BaseCache {
   protected cachePrefix = "trigger:cache:"
   protected redisTTL = 3600
   protected ramTTL = 5000
-  protected getTable() {
-    return prisma.trigger
+
+  protected getTableName(): string {
+    return "triggerModel"
   }
 }
 

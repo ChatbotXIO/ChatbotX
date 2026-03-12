@@ -2,7 +2,7 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { botFieldModel } from "@aha.chat/database/schema"
-import type { FieldModel } from "@aha.chat/database/types"
+import type { BotFieldModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -24,7 +24,7 @@ export const updateBotField = async ({
   id: string
   parsedInput: UpdateBotFieldRequest
 }) => {
-  const botField = await findOrFail<FieldModel>(
+  const botField = await findOrFail<BotFieldModel>(
     botFieldModel,
     {
       id,

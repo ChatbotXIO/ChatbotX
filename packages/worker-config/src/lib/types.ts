@@ -3,7 +3,7 @@ export const queueName = {
   chat: "chat",
   aiAgent: "aiAgent",
   schedule: "schedule",
-  default: "default",
   trigger: "trigger",
   webhook: "webhook",
+  default: "default",
 } as const

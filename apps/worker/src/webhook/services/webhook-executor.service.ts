@@ -1,4 +1,4 @@
-import { prisma } from "@aha.chat/database"
+import { db } from "@aha.chat/database/client"
 import { Condition } from "@aha.chat/database/enums"
 import { logger } from "../../lib/logger"
 import type { WebhookEventData, WebhookWithConditions } from "../types"
@@ -64,9 +64,9 @@ export class WebhookExecutor {
       eventData.eventType === Condition.tagApplied ||
       eventData.eventType === Condition.tagRemoved
     ) {
-      const tag = await prisma.tag.findUnique({
+      const tag = await db.query.tagModel.findFirst({
         where: { id: data.tagId as string },
-        select: { name: true },
+        columns: { name: true },
       })
 
       return {
@@ -265,11 +265,7 @@ export class WebhookExecutor {
     }
 
     logger.error(
-      `Webhook ${webhook.id} failed after ${this.MAX_RETRIES} retries`,
-      {
-        webhookId: webhook.id,
-        url: webhook.url,
-      },
+      `Webhook ${webhook.id} failed after ${this.MAX_RETRIES} retries - url: ${webhook.url}`,
     )
   }
 }

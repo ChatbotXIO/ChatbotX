@@ -180,3 +180,25 @@ export const DateTimeTriggerType = {
 } as const
 export type DateTimeTriggerType =
   (typeof DateTimeTriggerType)[keyof typeof DateTimeTriggerType]
+
+export const FolderType = {
+  tag: "tag",
+  flow: "flow",
+  customField: "customField",
+  automatedResponse: "automatedResponse",
+  trigger: "trigger",
+  webhook: "webhook",
+} as const
+export type FolderType = (typeof FolderType)[keyof typeof FolderType]
+
+export const CustomFieldType = {
+  shortText: "shortText",
+  number: "number",
+  date: "date",
+  datetime: "datetime",
+  boolean: "boolean",
+  longText: "longText",
+} as const
+
+export type CustomFieldType =
+  (typeof CustomFieldType)[keyof typeof CustomFieldType]

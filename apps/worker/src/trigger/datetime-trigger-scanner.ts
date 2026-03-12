@@ -28,7 +28,7 @@ export async function scanDateTimeTriggers(): Promise<void> {
     //   },
     // )
   } catch (error) {
-    logger.error("Error scanning datetime triggers:", error)
+    logger.error(error, "Error scanning datetime triggers")
   }
 }
 
@@ -39,6 +39,6 @@ export async function cleanupTriggerExecutions(): Promise<void> {
     const deletedCount = await cleanupOldExecutions()
     logger.info(`Cleaned up ${deletedCount} old trigger executions`)
   } catch (error) {
-    logger.error("Error cleaning up trigger executions:", error)
+    logger.error(error, "Error cleaning up trigger executions")
   }
 }

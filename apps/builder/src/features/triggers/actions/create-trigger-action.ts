@@ -1,13 +1,16 @@
 "use server"
 
-import { FolderType, prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { FolderType } from "@aha.chat/database/enums"
+import { triggerModel } from "@aha.chat/database/schema"
 import { updateTriggerCache } from "@aha.chat/events"
+import { createId } from "@paralleldrive/cuid2"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureFolderIdIsExists } from "@/features/folders/actions/utils"
+import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"
 import {
@@ -29,9 +32,10 @@ export const createTriggerAction = chatbotActionClient
     }) => {
       const t = await getTranslations()
 
-      const existingTriggersCount = await prisma.trigger.count({
-        where: { chatbotId },
-      })
+      const existingTriggersCount = await db.$count(
+        triggerModel,
+        eq(triggerModel.chatbotId, chatbotId),
+      )
 
       if (existingTriggersCount >= MAX_TRIGGERS_PER_CHATBOT) {
         throw new MaxTriggersReachedException(
@@ -43,33 +47,24 @@ export const createTriggerAction = chatbotActionClient
       }
 
       if (parsedInput.folderId) {
-        await ensureFolderIdIsExists(
+        await ensureFolderIsExists(
           parsedInput.folderId,
           chatbotId,
           FolderType.trigger,
         )
       }
 
-      const { conditions, actions, ...triggerData } = parsedInput
+      const { ...triggerData } = parsedInput
 
-      const result = await prisma.trigger.create({
-        data: {
+      const result = await db
+        .insert(triggerModel)
+        .values({
+          id: createId(),
           ...triggerData,
           chatbotId,
-          actions,
-          triggerConditions: {
-            create: conditions.map((c) => ({
-              type: c.type,
-              sourceId: "sourceId" in c ? c.sourceId : null,
-              operator: "operator" in c ? c.operator : null,
-              value: "value" in c && c.value !== null ? c.value : undefined,
-            })),
-          },
-        },
-        include: {
-          triggerConditions: true,
-        },
-      })
+        })
+        .returning()
+        .then((rows) => rows[0])
 
       await updateTriggerCache(chatbotId)
 

@@ -320,6 +320,7 @@ export function AddCondition({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {options.map((option, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: safe index
           <div key={index}>
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               {option.label}

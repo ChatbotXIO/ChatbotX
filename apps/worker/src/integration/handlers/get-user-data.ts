@@ -6,7 +6,7 @@ import {
 } from "@aha.chat/database/schema"
 import type {
   ConversationAttributes,
-  FieldModel,
+  CustomFieldModel,
 } from "@aha.chat/database/types"
 import { type GetUserDataStepSchema, ReplyFormat } from "@aha.chat/flow-config"
 import { IntegrationException, type Variable } from "@aha.chat/sdk"
@@ -70,7 +70,7 @@ async function handleSkipOrError(
   // if user data is valid, save to custom field if configured
   if (validUserData.valid && validUserData.userInput) {
     if (step.outputCfId) {
-      await findOrFail<FieldModel>(
+      await findOrFail<CustomFieldModel>(
         customFieldModel,
         {
           id: step.outputCfId,

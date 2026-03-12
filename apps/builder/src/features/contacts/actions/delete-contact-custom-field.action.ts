@@ -7,7 +7,7 @@ import {
   customFieldModel,
 } from "@aha.chat/database/schema"
 import {
-  type FieldModel,
+  type CustomFieldModel,
   type FillableContactKeys,
   fillableContactKeys,
 } from "@aha.chat/database/types"
@@ -67,7 +67,7 @@ export const deleteContactCustomFields = async ({
   }
 
   if (isCuid(customFieldId)) {
-    const customField = await findOrFail<FieldModel>(
+    const customField = await findOrFail<CustomFieldModel>(
       customFieldModel,
       {
         chatbotId,

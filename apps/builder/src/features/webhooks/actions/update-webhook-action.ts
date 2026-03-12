@@ -1,7 +1,9 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { conditionModel, webhookModel } from "@aha.chat/database/schema"
 import { updateWebhookCache } from "@aha.chat/events"
+import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -25,9 +27,11 @@ export const updateWebhookAction = chatbotActionClient
     }) => {
       const { conditions, url } = parsedInput
 
-      const result = await prisma.$transaction(async (tx) => {
-        const existingConditions = await tx.condition.findMany({
-          where: { webhookId: id },
+      const result = await db.transaction(async (tx) => {
+        const existingConditions = await tx.query.conditionModel.findMany({
+          where: {
+            webhookId: id,
+          },
         })
 
         const existingIds = new Set(existingConditions.map((c) => c.id))
@@ -49,51 +53,55 @@ export const updateWebhookAction = chatbotActionClient
           (c) => !("id" in c && c.id),
         )
 
-        await tx.webhook.update({
-          where: { chatbotId, id },
-          data: { url },
-        })
+        await tx
+          .update(webhookModel)
+          .set({ url })
+          .where(
+            and(eq(webhookModel.chatbotId, chatbotId), eq(webhookModel.id, id)),
+          )
 
         if (conditionsToDelete.length > 0) {
-          await tx.condition.deleteMany({
-            where: {
-              id: { in: conditionsToDelete.map((c) => c.id) },
-            },
-          })
+          await tx.delete(conditionModel).where(
+            inArray(
+              conditionModel.id,
+              conditionsToDelete.map((c) => c.id),
+            ),
+          )
         }
 
         for (const condition of conditionsToUpdate) {
-          await tx.condition.update({
-            where: { id: condition.id as string },
-            data: {
+          await tx
+            .update(conditionModel)
+            .set({
               type: condition.type,
               sourceId: "sourceId" in condition ? condition.sourceId : null,
               operator: "operator" in condition ? condition.operator : null,
               value:
                 "value" in condition && condition.value !== null
                   ? condition.value
-                  : undefined,
-            },
-          })
+                  : null,
+            })
+            .where(eq(conditionModel.id, condition.id as string))
         }
 
         if (conditionsToCreate.length > 0) {
-          await tx.condition.createMany({
-            data: conditionsToCreate.map((c) => ({
+          await tx.insert(conditionModel).values(
+            conditionsToCreate.map((c) => ({
+              id: createId(),
               webhookId: id,
               type: c.type,
               sourceId: "sourceId" in c ? c.sourceId : null,
               operator: "operator" in c ? c.operator : null,
-              value: "value" in c && c.value !== null ? c.value : undefined,
+              value: "value" in c && c.value !== null ? c.value : null,
             })),
-          })
+          )
         }
 
-        const result = await tx.webhook.findUnique({
-          where: { id },
+        return await tx.query.webhookModel.findFirst({
+          where: {
+            id,
+          },
         })
-
-        return result
       })
 
       await updateWebhookCache(chatbotId)

@@ -1,6 +1,7 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { triggerModel } from "@aha.chat/database/schema"
 import { z } from "zod"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -27,19 +28,21 @@ export const updateTriggerSettingsAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateTriggerSettingsSchema
     }) => {
-      const trigger = await prisma.trigger.findFirstOrThrow({
+      const trigger = await db.query.triggerModel.findFirst({
         where: {
           id,
           chatbotId,
         },
       })
 
-      await prisma.trigger.update({
-        where: {
-          id: trigger.id,
-        },
-        data: parsedInput,
-      })
+      if (!trigger) {
+        throw new Error("Trigger not found")
+      }
+
+      await db
+        .update(triggerModel)
+        .set(parsedInput)
+        .where(eq(triggerModel.id, trigger.id))
 
       revalidateCacheTags(`chatbots:${trigger.chatbotId}#triggers`)
     },

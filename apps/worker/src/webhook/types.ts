@@ -1,8 +1,8 @@
-import type { Prisma } from "@aha.chat/database"
+import type { ConditionModel, WebhookModel } from "@aha.chat/database/types"
 
-export type WebhookWithConditions = Prisma.WebhookGetPayload<{
-  include: { conditions: true }
-}>
+export type WebhookWithConditions = WebhookModel & {
+  conditions: ConditionModel[]
+}
 
 export type WebhookEventData = {
   chatbotId: string

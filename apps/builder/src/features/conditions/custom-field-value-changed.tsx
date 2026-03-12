@@ -1,5 +1,4 @@
-import { Operator } from "@aha.chat/database/enums"
-import { CustomFieldType } from "@aha.chat/database/types"
+import { CustomFieldType, Operator } from "@aha.chat/database/enums"
 import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
 import { Input } from "@aha.chat/ui/components/ui/input"
 import {

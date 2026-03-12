@@ -1,3 +1,4 @@
+import { db } from "@aha.chat/database/client"
 import { getRedisConnection } from "@aha.chat/worker-config"
 import { LRUCache } from "lru-cache"
 
@@ -10,14 +11,7 @@ export abstract class BaseCache {
   protected abstract cachePrefix: string
   protected abstract redisTTL: number
   protected abstract ramTTL: number
-  protected abstract getTable(): {
-    findMany: (args: {
-      where: { chatbotId: string; active: true }
-      select: { conditions: { select: { type: true; sourceId: true } } }
-    }) => Promise<
-      Array<{ conditions: Array<{ type: number; sourceId: string | null }> }>
-    >
-  }
+  protected abstract getTableName(): string
 
   private _ramCache?: LRUCache<string, CacheEntry>
 
@@ -62,16 +56,17 @@ export abstract class BaseCache {
   protected async buildCacheData(
     chatbotId: string,
   ): Promise<Record<number, string[]>> {
-    const table = this.getTable()
+    const tableName = this.getTableName()
 
-    const items = await table.findMany({
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic table access
+    const items = await (db.query as Record<string, any>)[tableName].findMany({
       where: {
         chatbotId,
         active: true,
       },
-      select: {
+      with: {
         conditions: {
-          select: {
+          columns: {
             type: true,
             sourceId: true,
           },

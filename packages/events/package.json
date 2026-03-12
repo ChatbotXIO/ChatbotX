@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./context": "./src/context.ts"
   },
   "dependencies": {
     "@aha.chat/worker-config": "workspace:*",

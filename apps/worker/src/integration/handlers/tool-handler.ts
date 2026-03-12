@@ -319,6 +319,7 @@ export async function getDataFromJSON({
     return updated
   })
 
+  // Emit custom field changed events
   for (const field of updatedFields) {
     try {
       await emitCustomFieldChanged(

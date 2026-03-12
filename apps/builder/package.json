@@ -28,7 +28,6 @@
     "@aha.chat/sdk": "workspace:*",
     "@aha.chat/ui": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
-    "@aha.chat/trigger-events": "workspace:*",
     "@ai-sdk/mcp": "^1.0.22",
     "@floating-ui/dom": "^1.7.5",
     "@giphy/js-types": "^5.1.0",
