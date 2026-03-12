@@ -1,4 +1,4 @@
-import { ChatbotXAPI } from "../api"
+import type { ChatbotXAPI } from "@aha.chat/public-apis"
 import {
   createTag as createTagApi,
   deleteTag as deleteTagApi,
@@ -6,58 +6,102 @@ import {
   showTag as showTagApi,
   showTagByName as showTagByNameApi,
   updateTag as updateTagApi,
-} from "../apis/tags"
+} from "@aha.chat/public-apis/tags"
+import { createApiClient } from "../config"
+import { type CommandArg, printResult, validateCommandArgs } from "./common"
 
-export const listTags = async (): Promise<void> => {
-  const api = new ChatbotXAPI()
-  const result = await listTagsApi(api)
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
+type TagParamKey = "id" | "name"
+
+type TagCommandArg = CommandArg<TagParamKey>
+
+export type TagCommandParams = Partial<Record<TagParamKey, string>>
+
+type TagCommand = {
+  name: string
+  args: TagCommandArg[]
+  execute: (api: ChatbotXAPI, params: TagCommandParams) => Promise<unknown>
+}
+export type TagCommandName = keyof typeof tagCommands
+
+export const executeTagCommand = async (
+  commandName: TagCommandName,
+  params: TagCommandParams = {},
+): Promise<void> => {
+  validateCommandArgs(commandName, params, tagCommands)
+  const api = createApiClient()
+  const result = await tagCommands[commandName].execute(api, params)
+  printResult(result)
 }
 
-export const createTag = async (name: string): Promise<void> => {
-  if (!name) {
-    throw new Error("Tag name is required")
-  }
-  const api = new ChatbotXAPI()
-  const result = await createTagApi(api, name)
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
-}
-
-export const showTag = async (id: string): Promise<void> => {
-  if (!id) {
-    throw new Error("Tag ID is required")
-  }
-  const api = new ChatbotXAPI()
-  const result = await showTagApi(api, id)
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
-}
-
-export const showTagByName = async (name: string): Promise<void> => {
-  if (!name) {
-    throw new Error("Tag name is required")
-  }
-  const api = new ChatbotXAPI()
-  const result = await showTagByNameApi(api, name)
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
-}
-
-export const updateTag = async (id: string, name: string): Promise<void> => {
-  if (!id) {
-    throw new Error("Tag ID is required")
-  }
-  if (!name) {
-    throw new Error("New tag name is required")
-  }
-  const api = new ChatbotXAPI()
-  const result = await updateTagApi(api, id, name)
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
-}
-
-export const deleteTag = async (id: string): Promise<void> => {
-  if (!id) {
-    throw new Error("Tag ID is required")
-  }
-  const api = new ChatbotXAPI()
-  const result = await deleteTagApi(api, id)
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
-}
+export const tagCommands = {
+  "tags:list": {
+    name: "List all tags",
+    args: [],
+    execute: (api: ChatbotXAPI) => listTagsApi(api),
+  },
+  "tags:create": {
+    name: "Create a new tag",
+    args: [
+      {
+        key: "name",
+        description: "Tag name",
+        required: true,
+      },
+    ],
+    execute: (api: ChatbotXAPI, params: TagCommandParams) =>
+      createTagApi(api, params.name ?? ""),
+  },
+  "tags:show": {
+    name: "Show tag details",
+    args: [
+      {
+        key: "id",
+        description: "Tag ID",
+        required: true,
+      },
+    ],
+    execute: (api: ChatbotXAPI, params: TagCommandParams) =>
+      showTagApi(api, params.id ?? ""),
+  },
+  "tags:show-by-name": {
+    name: "Show tag details by name",
+    args: [
+      {
+        key: "name",
+        description: "Tag name",
+        required: true,
+      },
+    ],
+    execute: (api: ChatbotXAPI, params: TagCommandParams) =>
+      showTagByNameApi(api, params.name ?? ""),
+  },
+  "tags:update": {
+    name: "Update a tag",
+    args: [
+      {
+        key: "id",
+        description: "Tag ID",
+        required: true,
+      },
+      {
+        key: "name",
+        description: "New tag name",
+        required: true,
+      },
+    ],
+    execute: (api: ChatbotXAPI, params: TagCommandParams) =>
+      updateTagApi(api, params.id ?? "", params.name ?? ""),
+  },
+  "tags:delete": {
+    name: "Delete a tag",
+    args: [
+      {
+        key: "id",
+        description: "Tag ID",
+        required: true,
+      },
+    ],
+    execute: (api: ChatbotXAPI, params: TagCommandParams) =>
+      deleteTagApi(api, params.id ?? ""),
+  },
+} satisfies Record<string, TagCommand>
