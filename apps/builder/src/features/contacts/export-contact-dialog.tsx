@@ -12,13 +12,21 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
+import type { MultiSelectGroup } from "@aha.chat/ui/components/ui/sersavan/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
+import { useTagSelectOptions } from "../tags/provider/tag-hook"
 import { exportContactsAction } from "./actions/export-contacts.action"
-import { exportContactsRequest } from "./schemas/action"
+import {
+  contactFieldPrefix,
+  contactPrefix,
+  contactTagPrefix,
+  exportContactsRequest,
+} from "./schemas/action"
 
 export function ExportContactDialog({
   chatbotId,
@@ -30,12 +38,43 @@ export function ExportContactDialog({
   trigger: React.ReactElement
 }) {
   const t = useTranslations()
-  const options = [
-    { label: t("fields.firstName.label"), value: "firstName" },
-    { label: t("fields.lastName.label"), value: "lastName" },
-    { label: t("fields.fullName.label"), value: "fullName" },
-    { label: t("fields.email.label"), value: "email" },
-    { label: t("fields.phoneNumber.label"), value: "phoneNumber" },
+
+  const customFieldOptions = useCustomFieldSelectOptions({
+    prefix: contactFieldPrefix,
+  })
+  const tagOptions = useTagSelectOptions({ prefix: contactTagPrefix })
+
+  const options: MultiSelectGroup[] = [
+    {
+      heading: t("fields.accountFields.label"),
+      options: [
+        {
+          label: t("fields.firstName.label"),
+          value: `${contactPrefix}:firstName`,
+        },
+        {
+          label: t("fields.lastName.label"),
+          value: `${contactPrefix}:lastName`,
+        },
+        {
+          label: t("fields.fullName.label"),
+          value: `${contactPrefix}:fullName`,
+        },
+        { label: t("fields.email.label"), value: `${contactPrefix}:email` },
+        {
+          label: t("fields.phoneNumber.label"),
+          value: `${contactPrefix}:phoneNumber`,
+        },
+      ],
+    },
+    {
+      heading: t("fields.customFields.label"),
+      options: customFieldOptions,
+    },
+    {
+      heading: t("fields.tags.label"),
+      options: tagOptions,
+    },
   ]
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -44,7 +83,11 @@ export function ExportContactDialog({
     {
       actionProps: {
         onSuccess: () => {
-          // TODO
+          toast.success(
+            t("messages.exportedSuccess", {
+              feature: t("fields.contact.label"),
+            }),
+          )
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -56,7 +99,7 @@ export function ExportContactDialog({
         mode: "onChange",
         defaultValues: {
           contactIds,
-          fields: options.map((opt) => opt.value),
+          fields: options[0].options.slice(0, 5).map((opt) => opt.value), // Get first 5 options from the account
         },
       },
       errorMapProps: {},

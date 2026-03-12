@@ -1100,9 +1100,25 @@
     },
     "chatbotToken": {
       "label": "Token truy cập API"
+    },
+    "fullName": {
+      "label": "Họ và tên"
+    },
+    "moreOptions": {
+      "label": "Tùy chọn khác"
+    },
+    "customFields": {
+      "label": "Trường tùy chỉnh"
+    },
+    "tags": {
+      "label": "Thẻ"
+    },
+    "accountFields": {
+      "label": "Trường tài khoản"
     }
   },
   "flows": {
+    "title": "Luồng",
     "aiGenerateText": {
       "label": "{name}: AI Tạo văn bản"
     },
@@ -1321,7 +1337,8 @@
     "disableSuccess": "Đã tắt {feature} thành công",
     "enableFeature": "Bật {feature}",
     "enableFeatureDescription": "Bạn có chắc chắn muốn bật {feature}?",
-    "enableSuccess": "Đã bật {feature} thành công"
+    "enableSuccess": "Đã bật {feature} thành công",
+    "exportedSuccess": "{feature} đã được xuất thành công"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1390,6 +1407,7 @@
     "signUpTitle": "Đăng ký vào {name}"
   },
   "tags": {
+    "title": "Thẻ",
     "heading": {
       "title": "Thẻ"
     }
@@ -1537,6 +1555,9 @@
   },
   "contacts": {
     "title": "Liên hệ"
+  },
+  "errorLogs": {
+    "title": "Nhật ký lỗi"
   },
   "auditLogs": {
     "title": "Nhật ký kiểm tra"

@@ -1,10 +1,14 @@
 "use server"
 
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
+import { DefaultJobAction, defaultQueue } from "@aha.chat/worker-config"
+import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type ExportContactsRequest,
@@ -16,19 +20,54 @@ export const exportContactsAction = chatbotActionClient
   .inputSchema(exportContactsRequest)
   .action(
     async ({
+      ctx: { user },
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
+      ctx: { user: UserModel }
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: ExportContactsRequest
     }) => {
-      // TODO
-      console.log(JSON.stringify(parsedInput, null, 2))
-      await Promise.resolve(parsedInput)
+      const { contactIds, fields } = parsedInput
 
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
+      // Make sure the contacts exist
+      const contactsCount = await db.$count(
+        contactModel,
+        and(
+          eq(contactModel.chatbotId, chatbotId),
+          inArray(contactModel.id, contactIds),
+        ),
+      )
+      if (contactsCount === 0) {
+        return returnValidationErrors(exportContactsRequest, {
+          _errors: ["Validation Exception"],
+          fields: {
+            _errors: ["No contacts found"],
+          },
+        })
+      }
+
+      await Promise.all([
+        defaultQueue.add(DefaultJobAction.exportContacts, {
+          type: DefaultJobAction.exportContacts,
+          data: {
+            chatbotId,
+            requestedUserId: user.id,
+            contactIds,
+            fields,
+            outputPath: `/tmp/contacts-list-${Date.now()}.csv`,
+            outputFormat: "csv",
+          },
+        }),
+        defaultQueue.add(DefaultJobAction.sendAuditLog, {
+          type: DefaultJobAction.sendAuditLog,
+          data: {
+            userId: user.id,
+            chatbotId,
+            action: "export",
+            detail: "Contacts",
+          },
+        }),
       ])
     },
   )

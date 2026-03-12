@@ -1,6 +1,10 @@
 import { gender, inboxType } from "@aha.chat/database/schema"
 import { z } from "zod"
 
+export const contactPrefix = "ct"
+export const contactFieldPrefix = "cf"
+export const contactTagPrefix = "tg"
+
 export const createContactRequest = z.object({
   phoneNumber: z
     .string()

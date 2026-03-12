@@ -7,15 +7,19 @@ export const useTagOptions = (): string[] => {
   return useMemo(() => tags.map((tag) => tag.name), [tags])
 }
 
-export const useTagSelectOptions = (): { label: string; value: string }[] => {
+export const useTagSelectOptions = ({
+  prefix,
+}: {
+  prefix?: string
+} = {}): { label: string; value: string }[] => {
   const tags = useTagStore((state) => state.tags)
 
   return useMemo(
     () =>
       tags.map((tag) => ({
         label: tag.name,
-        value: tag.id,
+        value: prefix ? `${prefix}:${tag.id}` : tag.id,
       })),
-    [tags],
+    [tags, prefix],
   )
 }

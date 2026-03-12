@@ -34,7 +34,6 @@ export function ContactFilterDialog() {
     e.preventDefault()
     e.stopPropagation()
 
-    console.log(form.getValues())
     setOpen(false)
   }
 
