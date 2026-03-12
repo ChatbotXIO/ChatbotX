@@ -324,7 +324,7 @@ importers:
 
   apps/cli:
     dependencies:
-      '@aha.chat/public-apis':
+      '@chatbotx/public-apis':
         specifier: workspace:*
         version: link:../../packages/public-apis
       ky:
@@ -349,7 +349,7 @@ importers:
 
   apps/mcp-server:
     dependencies:
-      '@aha.chat/public-apis':
+      '@chatbotx/public-apis':
         specifier: workspace:*
         version: link:../../packages/public-apis
       '@modelcontextprotocol/sdk':
@@ -362,12 +362,18 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@aha.chat/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^25.4.0
         version: 25.4.0
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
+      tsdown:
+        specifier: 0.21.0-beta.2
+        version: 0.21.0-beta.2(oxc-resolver@11.19.1)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

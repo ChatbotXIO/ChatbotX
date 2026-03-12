@@ -1,5 +1,5 @@
 {
-  "name": "cli",
+  "name": "chatbotx-cli",
   "version": "0.1.0",
   "description": "ChatbotX CLI - Command line interface for the ChatbotX API",
   "main": "dist/index.js",
@@ -13,10 +13,6 @@
     "start": "node ./dist/index.js",
     "publish": "pnpm build && pnpm publish --access public --no-git-checks"
   },
-  "files": [
-    "dist",
-    "README.md"
-  ],
   "keywords": [
     "chatbotX",
     "cli",
@@ -25,19 +21,8 @@
     "ai-agent",
     "command-line"
   ],
-  "author": "",
-  "license": "AGPL-3.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/chatbotxio/ChatbotX.git",
-    "directory": "apps/cli"
-  },
-  "homepage": "https://chatbotx.io",
-  "bugs": {
-    "url": "https://github.com/chatbotxio/ChatbotX/issues"
-  },
   "dependencies": {
-    "@aha.chat/public-apis": "workspace:*",
+    "@chatbotx/public-apis": "workspace:*",
     "ky": "^1.14.3",
     "yargs": "^18.0.0"
   },

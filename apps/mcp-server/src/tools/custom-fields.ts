@@ -1,11 +1,11 @@
-import type { ChatbotXAPI } from "@aha.chat/public-apis"
+import type { ChatbotXAPI } from "@chatbotx/public-apis"
 import {
   createCustomField,
   getCustomField,
   getCustomFieldByName,
   listCustomFields,
-} from "@aha.chat/public-apis/custom-fields"
-import { formatResult } from "../utils.js"
+} from "@chatbotx/public-apis"
+import { formatResult } from "../utils"
 
 type CustomFieldType =
   | "shortText"

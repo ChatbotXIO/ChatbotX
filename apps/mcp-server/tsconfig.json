@@ -1,12 +1,7 @@
 {
+  "extends": "@aha.chat/typescript-config/base.json",
+  "include": ["src/**/*.ts"],
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "./build",
-    "rootDir": "./src",
-    "strict": true,
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*"]
+    "strictNullChecks": true
+  }
 }

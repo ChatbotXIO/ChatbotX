@@ -1,7 +1,7 @@
-import { ChatbotXAPI } from "@aha.chat/public-apis"
 import "dotenv/config"
-import customFields from "./tools/custom-fields.js"
-import tags from "./tools/tag.js"
+import { ChatbotXAPI } from "@chatbotx/public-apis"
+import customFields from "./tools/custom-fields"
+import tags from "./tools/tag"
 
 const api = new ChatbotXAPI(
   process.env.API_KEY || "",

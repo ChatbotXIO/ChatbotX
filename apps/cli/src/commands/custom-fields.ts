@@ -1,10 +1,10 @@
-import type { ChatbotXAPI } from "@aha.chat/public-apis"
+import type { ChatbotXAPI } from "@chatbotx/public-apis"
 import {
   createCustomField as createCustomFieldApi,
   getCustomField as getCustomFieldApi,
   getCustomFieldByName as getCustomFieldByNameApi,
   listCustomFields as listCustomFieldsApi,
-} from "@aha.chat/public-apis/custom-fields"
+} from "@chatbotx/public-apis/custom-fields"
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 

@@ -1,4 +1,4 @@
-import type { ChatbotXAPI } from "@aha.chat/public-apis"
+import type { ChatbotXAPI } from "@chatbotx/public-apis"
 
 export interface McpContent {
   text: string
