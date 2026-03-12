@@ -36,9 +36,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-builder
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-worker
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-realtime
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -79,8 +79,8 @@ jobs:
           file: ./apps/builder/docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-builder:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-builder:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder:${{ needs.prepare-metadata.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder:latest
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -119,8 +119,8 @@ jobs:
           file: ./apps/worker/docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-worker:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-worker:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker:${{ needs.prepare-metadata.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker:latest
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -159,8 +159,8 @@ jobs:
           file: ./apps/partysocket/docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-realtime:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-realtime:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime:${{ needs.prepare-metadata.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime:latest
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -180,6 +180,6 @@ jobs:
     steps:
       - name: Output image URLs
         run: |
-          echo "Builder image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-builder:${{ needs.prepare-metadata.outputs.version }}"
-          echo "Worker image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-worker:${{ needs.prepare-metadata.outputs.version }}"
-          echo "Realtime image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/ahachat-realtime:${{ needs.prepare-metadata.outputs.version }}"
+          echo "Builder image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder:${{ needs.prepare-metadata.outputs.version }}"
+          echo "Worker image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker:${{ needs.prepare-metadata.outputs.version }}"
+          echo "Realtime image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime:${{ needs.prepare-metadata.outputs.version }}"

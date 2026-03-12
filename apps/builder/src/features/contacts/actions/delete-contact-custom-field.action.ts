@@ -19,40 +19,43 @@ import {
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type DeleteContactCustomFieldRequest,
-  deleteContactCustomFieldRequest,
+  type DeleteContactCustomFieldsRequest,
+  deleteContactCustomFieldsRequest,
 } from "../schemas/contact-custom-field"
 
 export const deleteContactCustomFieldAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
-  .inputSchema(deleteContactCustomFieldRequest)
+  .inputSchema(deleteContactCustomFieldsRequest)
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: DeleteContactCustomFieldRequest
+      parsedInput: DeleteContactCustomFieldsRequest
     }) => {
       await deleteContactCustomFields({
-        bindArgsParsedInputs: [chatbotId],
-        parsedInput,
+        chatbotId,
+        contactIds: parsedInput.ids,
+        fieldId: parsedInput.customFieldId,
       })
     },
   )
 
 export const deleteContactCustomFields = async ({
-  bindArgsParsedInputs: [chatbotId],
-  parsedInput,
+  chatbotId,
+  contactIds,
+  fieldId,
 }: {
-  bindArgsParsedInputs: ChatbotIdRequestParams
-  parsedInput: DeleteContactCustomFieldRequest
+  chatbotId: string
+  contactIds: string[]
+  fieldId: string
 }) => {
   const contacts = await db.query.contactModel.findMany({
     where: {
       chatbotId,
       id: {
-        in: parsedInput.ids,
+        in: contactIds,
       },
     },
     columns: {
@@ -63,12 +66,12 @@ export const deleteContactCustomFields = async ({
     return
   }
 
-  if (isCuid(parsedInput.customFieldId)) {
+  if (isCuid(fieldId)) {
     const customField = await findOrFail<FieldModel>(
       fieldModel,
       {
         chatbotId,
-        id: parsedInput.customFieldId,
+        id: fieldId,
         fieldType: "customField",
       },
       "Custom field not found",
@@ -85,15 +88,11 @@ export const deleteContactCustomFields = async ({
         ),
       )
     })
-  } else if (
-    fillableContactKeys.includes(
-      parsedInput.customFieldId as FillableContactKeys,
-    )
-  ) {
+  } else if (fillableContactKeys.includes(fieldId as FillableContactKeys)) {
     await db
       .update(contactModel)
       .set({
-        [parsedInput.customFieldId]: "",
+        [fieldId]: "",
       })
       .where(
         and(

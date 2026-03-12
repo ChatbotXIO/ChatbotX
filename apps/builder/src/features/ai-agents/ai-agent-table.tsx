@@ -2,6 +2,14 @@
 
 import type { AIAgentModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -68,60 +76,61 @@ export function AIAgentsTable({
   })
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h3 className="font-semibold text-lg">{t("aiAgent.title")}</h3>
-          <p className="text-muted-foreground text-sm">
-            {t("aiAgent.description")}
-          </p>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-bold text-xl">
+          {t("aiAgent.title")}
+        </CardTitle>
+        <CardDescription>{t("aiAgent.description")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <CreateAIAgentDialog
+              files={files}
+              functions={functions}
+              mcpServers={mcpServers}
+              onSuccess={() => {
+                router.refresh()
+              }}
+            />
+          </DataTableToolbar>
+        </DataTable>
 
-        <CreateAIAgentDialog
+        <DeleteAIAgentsDialog
+          agents={rowAction?.row.original ? [rowAction?.row.original] : []}
+          chatbotId={chatbotId}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            rowAction?.row.toggleSelected(false)
+            router.refresh()
+          }}
+          open={rowAction?.variant === "delete"}
+          showTrigger={false}
+        />
+
+        <UpdateAIAgentDialog
+          agent={rowAction?.row.original || null}
+          chatbotId={chatbotId}
           files={files}
           functions={functions}
           mcpServers={mcpServers}
+          onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             router.refresh()
           }}
+          open={rowAction?.variant === "update"}
         />
-      </div>
 
-      <DataTable table={table} />
-
-      <DeleteAIAgentsDialog
-        agents={rowAction?.row.original ? [rowAction?.row.original] : []}
-        chatbotId={chatbotId}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          rowAction?.row.toggleSelected(false)
-          router.refresh()
-        }}
-        open={rowAction?.variant === "delete"}
-        showTrigger={false}
-      />
-
-      <UpdateAIAgentDialog
-        agent={rowAction?.row.original || null}
-        chatbotId={chatbotId}
-        files={files}
-        functions={functions}
-        mcpServers={mcpServers}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          router.refresh()
-        }}
-        open={rowAction?.variant === "update"}
-      />
-
-      <ChangeDefault
-        aiAgent={rowAction?.row.original || null}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          router.refresh()
-        }}
-        open={rowAction?.variant === "toggleDefault"}
-      />
-    </div>
+        <ChangeDefault
+          aiAgent={rowAction?.row.original || null}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          open={rowAction?.variant === "toggleDefault"}
+        />
+      </CardContent>
+    </Card>
   )
 }

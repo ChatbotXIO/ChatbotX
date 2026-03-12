@@ -4,11 +4,11 @@ import { z } from "zod"
 export const keys = () =>
   createEnv({
     server: {
-      AWS_URL: z.url().optional(),
-      AWS_ACCESS_KEY_ID: z.string().min(1).optional(),
-      AWS_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-      AWS_REGION: z.string().min(1),
-      AWS_BUCKET: z.string().min(1),
+      S3_ENDPOINT: z.url().optional(),
+      S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+      S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+      S3_REGION: z.string().min(1),
+      S3_BUCKET: z.string().min(1),
     },
     experimental__runtimeEnv: {},
   })

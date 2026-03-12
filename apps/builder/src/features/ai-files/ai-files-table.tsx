@@ -2,8 +2,16 @@
 
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { Badge } from "@aha.chat/ui/components/ui/badge"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -227,24 +235,24 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
   })
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-lg">{t("aiFiles.title")}</h3>
-          <p className="text-muted-foreground text-sm">
-            {t("aiFiles.description")}
-          </p>
-        </div>
-        <AIFilesCreate
-          onSuccess={() => {
-            router.refresh()
-          }}
-        />
-      </div>
-
-      <DataTable table={table}>
-        {/* <DataTableToolbar table={table} /> */}
-      </DataTable>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-bold text-xl">
+          {t("aiFiles.title")}
+        </CardTitle>
+        <CardDescription>{t("aiFiles.description")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <AIFilesCreate
+              onSuccess={() => {
+                router.refresh()
+              }}
+            />
+          </DataTableToolbar>
+        </DataTable>
+      </CardContent>
+    </Card>
   )
 }

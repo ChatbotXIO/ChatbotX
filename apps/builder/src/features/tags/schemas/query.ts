@@ -1,3 +1,4 @@
+import { createSelectSchema, tagModel } from "@aha.chat/database/schema"
 import type { TagModel } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
@@ -7,7 +8,7 @@ import {
 } from "nuqs/server"
 import z from "zod"
 import { basePaginationRequest } from "@/lib/pagination"
-import { tagResource } from "./resource"
+import { publicTagResource, tagResource } from "./resource"
 
 export const listTagsSearchParams = {
   page: parseAsInteger,
@@ -34,3 +35,13 @@ export const listTagsResponse = z.object({
   pageCount: z.number().int().min(1),
 })
 export type ListTagsResponse = z.infer<typeof listTagsResponse>
+
+export const publicLstTagsResponse = z.object({
+  data: z.array(publicTagResource),
+})
+export type ListPublicTagResponse = z.infer<typeof publicLstTagsResponse>
+
+export const findTagRequest = createSelectSchema(tagModel)
+  .pick({ id: true, chatbotId: true, folderId: true, name: true })
+  .partial()
+export type FindTagRequest = z.infer<typeof findTagRequest>

@@ -5,6 +5,12 @@ import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -32,6 +38,7 @@ import { toast } from "sonner"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
+import { AddAutomatedResponseButton } from "./components/add-automated-response-button"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { listAutomatedResponses } from "./queries"
 import type { CreateAutomatedResponseRequest } from "./schemas/action"
@@ -106,6 +113,7 @@ export function AutomatedResponsesTable({
         meta: {
           label: t("fields.userMessage.label"),
         },
+        enableHiding: false,
       },
       {
         id: "replies",
@@ -145,6 +153,7 @@ export function AutomatedResponsesTable({
           )
         },
         enableSorting: false,
+        enableHiding: false,
         meta: {
           label: t("fields.botResponse.label"),
         },
@@ -167,6 +176,7 @@ export function AutomatedResponsesTable({
           />
         ),
         enableSorting: false,
+        enableHiding: false,
         meta: {
           label: t("fields.status.label"),
         },
@@ -187,6 +197,7 @@ export function AutomatedResponsesTable({
           label: t("fields.createdAt.label"),
         },
         enableSorting: true,
+        enableHiding: false,
       },
       {
         id: "action",
@@ -249,33 +260,44 @@ export function AutomatedResponsesTable({
   })
 
   return (
-    <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table} />
-      </DataTable>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-bold text-xl">
+          {t("keywords.title")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <AddAutomatedResponseButton />
+          </DataTableToolbar>
+        </DataTable>
 
-      <DeleteAutomatedResponsesDialog
-        automatedResponses={
-          rowAction?.row.original ? [rowAction?.row.original] : []
-        }
-        chatbotId={chatbotId}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          router.refresh()
-        }}
-        open={rowAction?.variant === "delete"}
-        showTrigger={false}
-      />
+        <DeleteAutomatedResponsesDialog
+          automatedResponses={
+            rowAction?.row.original ? [rowAction?.row.original] : []
+          }
+          chatbotId={chatbotId}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          open={rowAction?.variant === "delete"}
+          showTrigger={false}
+        />
 
-      <ChangeFolderDialog
-        chatbotId={chatbotId}
-        currentFolderId={rowAction?.row.original?.folderId || null}
-        folderType="automatedResponse"
-        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
-        onOpenChange={() => setRowAction(null)}
-        open={rowAction?.variant === "move"}
-      />
-    </>
+        <ChangeFolderDialog
+          chatbotId={chatbotId}
+          currentFolderId={rowAction?.row.original?.folderId || null}
+          folderType="automatedResponse"
+          modelIds={
+            rowAction?.row.original ? [rowAction?.row.original.id] : null
+          }
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "move"}
+        />
+      </CardContent>
+    </Card>
   )
 }
 

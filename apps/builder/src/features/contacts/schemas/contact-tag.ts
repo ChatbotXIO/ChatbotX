@@ -13,11 +13,11 @@ export const updateContactTagRequest = z.object({
 })
 export type UpdateContactTagRequest = z.infer<typeof updateContactTagRequest>
 
-export const removeContactTagRequest = z.object({
+export const removeContactTagsRequest = z.object({
   ids: z.array(z.cuid2()),
   tags: z.array(z.string()),
 })
-export type RemoveContactTagRequest = z.infer<typeof removeContactTagRequest>
+export type RemoveContactTagsRequest = z.infer<typeof removeContactTagsRequest>
 
 export const listContactTagsRequest = z.object({
   chatbotId: z.cuid2(),
@@ -29,3 +29,9 @@ export const listContactTagsResponse = z.object({
   data: z.array(tagResource),
 })
 export type ListContactTagsResponse = z.infer<typeof listContactTagsResponse>
+
+export const removeContactTagRequest = z.object({
+  contactId: z.cuid2(),
+  tagId: z.string(),
+})
+export type RemoveContactTagRequest = z.infer<typeof removeContactTagRequest>

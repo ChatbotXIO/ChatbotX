@@ -14,6 +14,7 @@ import type {
   IntegrationType,
   MessageModel,
 } from "@aha.chat/database/types"
+import { getPublicUrl } from "@aha.chat/database/utils"
 import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
@@ -192,6 +193,7 @@ export const receiveMessage = async (
           messageId: newMessage.id,
           chatbotId: newConversation.chatbotId,
           conversationId: newConversation.id,
+          url: getPublicUrl(attachment.originPath),
         })),
       )
     }

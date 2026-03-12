@@ -15,6 +15,44 @@ import {
   updateAccountFieldRequest,
 } from "../schemas/action"
 
+export const updateAccountField = async ({
+  chatbotId,
+  id,
+  parsedInput,
+}: {
+  chatbotId: string
+  id: string
+  parsedInput: UpdateAccountFieldRequest
+}) => {
+  const accountField = await findOrFail<FieldModel>(
+    fieldModel,
+    {
+      id,
+      chatbotId,
+      fieldType: "accountField",
+    },
+    "Account field not found",
+  )
+
+  if (parsedInput.folderId && parsedInput.folderId !== accountField.folderId) {
+    await ensureFolderIsExists(parsedInput.folderId, chatbotId, "customField")
+  }
+
+  const updatedAccountField = await db
+    .update(fieldModel)
+    .set(parsedInput)
+    .where(eq(fieldModel.id, id))
+    .returning()
+    .then((result) => result[0])
+
+  revalidateCacheTags([
+    `chatbots:${chatbotId}#accountFields`,
+    `chatbots:${chatbotId}#accountFields:${id}`,
+  ])
+
+  return updatedAccountField
+}
+
 export const updateAccountFieldAction = chatbotActionClient
   .inputSchema(updateAccountFieldRequest)
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
@@ -26,32 +64,6 @@ export const updateAccountFieldAction = chatbotActionClient
       parsedInput: UpdateAccountFieldRequest
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const accountField = await findOrFail<FieldModel>(
-        fieldModel,
-        {
-          id,
-          chatbotId,
-          fieldType: "accountField",
-        },
-        "Account field not found",
-      )
-
-      if (
-        parsedInput.folderId &&
-        parsedInput.folderId !== accountField.folderId
-      ) {
-        await ensureFolderIsExists(
-          parsedInput.folderId,
-          chatbotId,
-          "customField",
-        )
-      }
-
-      await db.update(fieldModel).set(parsedInput).where(eq(fieldModel.id, id))
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#accountFields`,
-        `chatbots:${chatbotId}#accountFields:${id}`,
-      ])
+      return await updateAccountField({ chatbotId, id, parsedInput })
     },
   )

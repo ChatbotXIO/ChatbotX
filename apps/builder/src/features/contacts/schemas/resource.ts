@@ -13,3 +13,14 @@ export type ContactEditableField = {
   value: string | null | undefined
   customFieldType: CustomFieldType
 }
+
+export const publicContactResource = contactResource.pick({
+  id: true,
+  phoneNumber: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  gender: true,
+  source: true,
+  sourceId: true,
+})

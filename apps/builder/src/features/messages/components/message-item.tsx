@@ -16,7 +16,6 @@ import { format } from "date-fns"
 import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { getAttachmentUrl } from "@/features/attachments/schemas"
 import type { MessageResource } from "../schemas"
 import { MessageBubble } from "./message-bubble"
 
@@ -84,7 +83,7 @@ const RenderAttachments = (props: { message: MessageResource }) => {
                 className="max-w-80 rounded-xl"
                 height={attachment.height || 0}
                 key={attachment.id}
-                src={getAttachmentUrl(attachment)}
+                src={attachment.url}
                 width={attachment.width || 0}
               />
             )
@@ -98,20 +97,14 @@ const RenderAttachments = (props: { message: MessageResource }) => {
                 width="320"
               >
                 <track default kind="captions" />
-                <source
-                  src={getAttachmentUrl(attachment)}
-                  type={attachment.mimeType}
-                />
+                <source src={attachment.url} type={attachment.mimeType} />
               </video>
             )
           case "audio":
             return (
               <audio controls key={attachment.id} preload="none">
                 <track default kind="captions" />
-                <source
-                  src={getAttachmentUrl(attachment)}
-                  type={attachment.mimeType}
-                />
+                <source src={attachment.url} type={attachment.mimeType} />
               </audio>
             )
           default:
@@ -121,8 +114,8 @@ const RenderAttachments = (props: { message: MessageResource }) => {
                 key={attachment.id}
               >
                 <PaperclipIcon className="size-5 flex-none" />
-                <Link className="truncate" href={getAttachmentUrl(attachment)}>
-                  {getAttachmentUrl(attachment)}
+                <Link className="truncate" href={attachment.url}>
+                  {attachment.url}
                 </Link>
               </div>
             )

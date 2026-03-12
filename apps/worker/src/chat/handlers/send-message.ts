@@ -25,8 +25,8 @@ export async function sendMessageToExternal(
   )
 
   // Find integration detail
-  const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
-  if (!intergationDetail) {
+  const integrationDetail = allIntegrations[inbox.inboxType as IntegrationType]
+  if (!integrationDetail) {
     logger.debug(
       `Does not support this integration for inboxType: ${inbox.inboxType}`,
     )
@@ -39,7 +39,7 @@ export async function sendMessageToExternal(
     "Contact not found",
   )
 
-  await intergationDetail.channels?.channel?.message?.sendMessage?.({
+  await integrationDetail.channels?.channel?.message?.sendMessage?.({
     ctx: {
       chatbot: inbox.chatbot,
       auth,
@@ -61,15 +61,15 @@ export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
   )
 
   // Find integration detail
-  const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
-  if (!intergationDetail) {
+  const integrationDetail = allIntegrations[inbox.inboxType as IntegrationType]
+  if (!integrationDetail) {
     logger.debug(
       `Does not support this integration for inboxType: ${inbox.inboxType}`,
     )
     return
   }
 
-  await intergationDetail.channels?.channel?.conversation?.sendTyping?.({
+  await integrationDetail.channels?.channel?.conversation?.sendTyping?.({
     ctx: {
       chatbot: inbox.chatbot,
       auth,

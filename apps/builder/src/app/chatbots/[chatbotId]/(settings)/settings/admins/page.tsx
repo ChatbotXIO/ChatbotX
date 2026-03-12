@@ -27,9 +27,7 @@ export default async function SettingsAdminPage({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-bold text-2xl">
-          {t("admins.title")}
-        </CardTitle>
+        <CardTitle className="font-bold text-xl">{t("admins.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <ChatbotMembersTable promises={promises} />

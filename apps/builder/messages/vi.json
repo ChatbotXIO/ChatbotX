@@ -1534,5 +1534,20 @@
   "chatbotToken": {
     "title": "Token truy cập API ChatbotX",
     "description": "Tạo token để cho phép chatbot của bạn truy cập API ChatbotX. Giữ token này bí mật và không chia sẻ với ai."
+  },
+  "contacts": {
+    "title": "Liên hệ"
+  },
+  "auditLogs": {
+    "title": "Nhật ký kiểm tra"
+  },
+  "customFields": {
+    "title": "Trường tùy chỉnh"
+  },
+  "aiHub": {
+    "title": "AI Hub"
+  },
+  "keywords": {
+    "title": "Từ khóa"
   }
 }
