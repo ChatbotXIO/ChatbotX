@@ -6,7 +6,7 @@ import {
   listCustomFields as listCustomFieldsApi,
 } from "@aha.chat/public-apis/custom-fields"
 import { createApiClient } from "../config"
-import { type CommandArg, printResult, validateCommandArgs } from "./common"
+import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 
 const CUSTOM_FIELD_TYPES = [
   "shortText",

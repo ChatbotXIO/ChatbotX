@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 import { ChatbotXAPI, type ChatbotXConfig } from "@aha.chat/public-apis"
-import { parseBooleanEnv } from "./commands/common"
+import { parseBooleanEnv } from "./commands/utils"
 
 export type ConfigOptions = {
   apiKey?: string

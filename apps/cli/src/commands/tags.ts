@@ -8,7 +8,7 @@ import {
   updateTag as updateTagApi,
 } from "@aha.chat/public-apis/tags"
 import { createApiClient } from "../config"
-import { type CommandArg, printResult, validateCommandArgs } from "./common"
+import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 
 type TagParamKey = "id" | "name"
 

@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import "dotenv/config"
-import { createApi } from "./common.js"
 import customFields from "./tools/custom-fields.js"
 import tags from "./tools/tag.js"
 import type { ToolDefinition } from "./types.js"
+import { createApi } from "./utils.js"
 
 const server = new McpServer({ name: "ahachat-manager", version: "1.0.0" })
 
