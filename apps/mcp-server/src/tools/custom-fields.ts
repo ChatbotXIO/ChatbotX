@@ -5,7 +5,7 @@ import {
   getCustomFieldByName,
   listCustomFields,
 } from "@aha.chat/public-apis/custom-fields"
-import { formatResult } from "../common.js"
+import { formatResult } from "../utils.js"
 
 type CustomFieldType =
   | "shortText"

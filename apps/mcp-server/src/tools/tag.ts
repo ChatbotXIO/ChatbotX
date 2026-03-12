@@ -7,7 +7,7 @@ import {
   showTagByName,
   updateTag,
 } from "@aha.chat/public-apis/tags"
-import { formatResult } from "../common.js"
+import { formatResult } from "../utils.js"
 
 export default {
   list_tags: {
