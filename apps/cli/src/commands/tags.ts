@@ -6,7 +6,7 @@ import {
   showTag as showTagApi,
   showTagByName as showTagByNameApi,
   updateTag as updateTagApi,
-} from "@chatbotx/public-apis/tags"
+} from "@chatbotx/public-apis"
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 

@@ -8,8 +8,8 @@
     "chatbotx": "./dist/index.js"
   },
   "scripts": {
-    "dev": "tsup src/index.ts --watch",
-    "build": "tsup src/index.ts",
+    "dev": "dotenv -e ../../.env -- tsx src/index.ts",
+    "build": "tsdown",
     "start": "node ./dist/index.js",
     "publish": "pnpm build && pnpm publish --access public --no-git-checks"
   },
@@ -29,6 +29,8 @@
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
     "@types/yargs": "^17.0.35",
+    "dotenv-cli": "^11.0.0",
+    "tsdown": "0.21.0-beta.2",
     "tsup": "^8.5.1",
     "typescript": "^5.8.2"
   }

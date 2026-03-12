@@ -11,7 +11,7 @@ import {
   listTagsByContactId,
   sendMessageToContact,
   updateContactCustomFieldValue,
-} from "@chatbotx/public-apis/contacts"
+} from "@chatbotx/public-apis"
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 
