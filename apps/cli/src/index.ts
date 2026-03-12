@@ -1,7 +1,6 @@
 import type { Argv } from "yargs"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
-import { type CliCommand, toCliCommands } from "./commands/common"
 import { setConfig } from "./commands/config"
 import {
   type ContactCommandName,
@@ -21,6 +20,7 @@ import {
   type TagCommandParams,
   tagCommands,
 } from "./commands/tags"
+import { type CliCommand, toCliCommands } from "./commands/utils"
 import type { ConfigOptions } from "./config"
 
 const allCommands: Record<string, CliCommand> = {

@@ -13,7 +13,7 @@ import {
   updateContactCustomFieldValue,
 } from "@aha.chat/public-apis/contacts"
 import { createApiClient } from "../config"
-import { type CommandArg, printResult, validateCommandArgs } from "./common"
+import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 
 type ContactParamKey =
   | "id"
