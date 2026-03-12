@@ -1,16 +1,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
-import type { ChatbotXConfig } from "./api"
+import { ChatbotXAPI, type ChatbotXConfig } from "@aha.chat/public-apis"
+import { parseBooleanEnv } from "./commands/common"
 
-type ConfigOverrides = {
+export type ConfigOptions = {
   apiKey?: string
   apiUrl?: string
-}
-
-type StoredConfig = {
-  apiKey?: string
-  apiUrl?: string
+  allowSelfSignedCert?: boolean
 }
 
 const CONFIG_DIR = ".chatbotX"
@@ -20,17 +17,17 @@ const getConfigFilePath = (): string => {
   return join(homedir(), CONFIG_DIR, CONFIG_FILE)
 }
 
-const readStoredConfig = (): StoredConfig => {
+const readStoredConfig = (): ConfigOptions => {
   try {
     const raw = readFileSync(getConfigFilePath(), "utf8")
-    const parsed = JSON.parse(raw) as StoredConfig
+    const parsed = JSON.parse(raw) as ConfigOptions
     return parsed
   } catch {
     return {}
   }
 }
 
-const writeStoredConfig = (config: StoredConfig): void => {
+const writeStoredConfig = (config: ConfigOptions): void => {
   const dir = join(homedir(), CONFIG_DIR)
   mkdirSync(dir, { recursive: true })
   writeFileSync(getConfigFilePath(), JSON.stringify(config, null, 2), "utf8")
@@ -50,7 +47,29 @@ export const setApiKey = (apiKey: string): void => {
   })
 }
 
-export const getConfig = (overrides?: ConfigOverrides): ChatbotXConfig => {
+export const setApiUrl = (apiUrl: string): void => {
+  const trimmedApiUrl = apiUrl.trim()
+
+  if (!trimmedApiUrl) {
+    throw new Error("API URL is empty")
+  }
+
+  const current = readStoredConfig()
+  writeStoredConfig({
+    ...current,
+    apiUrl: trimmedApiUrl,
+  })
+}
+
+export const setAllowSelfSignedCert = (allowSelfSignedCert: boolean): void => {
+  const current = readStoredConfig()
+  writeStoredConfig({
+    ...current,
+    allowSelfSignedCert,
+  })
+}
+
+export const getConfig = (overrides?: ConfigOptions): ChatbotXConfig => {
   if (overrides?.apiKey) {
     setApiKey(overrides.apiKey)
   }
@@ -60,15 +79,29 @@ export const getConfig = (overrides?: ConfigOverrides): ChatbotXConfig => {
     overrides?.apiKey ?? process.env.CHATBOTX_API_KEY ?? stored.apiKey
   const apiUrl =
     overrides?.apiUrl ?? process.env.CHATBOTX_API_URL ?? stored.apiUrl
+  const allowSelfSignedCert =
+    overrides?.allowSelfSignedCert ??
+    parseBooleanEnv(process.env.CHATBOTX_ALLOW_SELF_SIGNED_CERT) ??
+    stored.allowSelfSignedCert
 
   if (!apiKey) {
     throw new Error(
-      "Missing API key. Run: chatbotX config:set --apiKey=your_api_key",
+      "Missing API key. Run: chatbotx config set --apiKey your_api_key",
     )
   }
 
   return {
     apiKey,
     apiUrl,
+    allowSelfSignedCert,
   }
+}
+
+export const createApiClient = (overrides?: ConfigOptions): ChatbotXAPI => {
+  const config = getConfig(overrides)
+  return new ChatbotXAPI(
+    config.apiKey,
+    config.apiUrl,
+    config.allowSelfSignedCert,
+  )
 }
