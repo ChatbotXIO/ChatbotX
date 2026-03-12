@@ -1,7 +1,7 @@
-import type { ChatbotXAPI } from "./index"
-import type { Contact } from "./schemas/contact"
-import type { ContactCustomField } from "./schemas/custom-field"
-import type { Tag } from "./schemas/tag"
+import type { ChatbotXAPI } from "../index"
+import type { Contact } from "../schemas/contact"
+import type { ContactCustomField } from "../schemas/custom-field"
+import type { Tag } from "../schemas/tag"
 
 const CONTACTS_PREFIX = "/contacts"
 
