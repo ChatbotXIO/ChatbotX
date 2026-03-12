@@ -4,10 +4,9 @@ import customFields from "./tools/custom-fields.js"
 import tags from "./tools/tag.js"
 
 const api = new ChatbotXAPI(
-  process.env.API_KEY ||
-    "vlcgtznllk912o8kg7tqe86m.qnuvvstrffydwgxtmnxrjtyqwjrnqqax",
-  process.env.API_URL || "https://builder-dev.aha.chat/api/v1",
-  true,
+  process.env.API_KEY || "",
+  process.env.API_URL || "",
+  process.env.ALLOW_SELF_SIGNED_CERT === "true",
 )
 
 async function testTools() {
