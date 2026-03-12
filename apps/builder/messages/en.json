@@ -59,6 +59,10 @@
     "getTools": "Get Tools",
     "import": "Import",
     "inboxActions": "Inbox",
+    "selectOptions": "Select options",
+    "exportContacts": "Export Contacts",
+    "filter": "Filter",
+    "selectFile": "Select file",
     "insertLink": "Insert link",
     "loginWithMagicLink": "Login with Magic Link",
     "manage": "Manage",
@@ -642,6 +646,12 @@
       "label": "First name",
       "placeholder": "Enter first name"
     },
+    "countryCode": {
+      "label": "Country Code"
+    },
+    "contactId": {
+      "label": "Contact ID / Subscriber ID / PSID"
+    },
     "flow": {
       "label": "Flow"
     },
@@ -1100,6 +1110,21 @@
     },
     "chatbotToken": {
       "label": "API Access Token"
+    },
+    "fullName": {
+      "label": "Full Name"
+    },
+    "moreOptions": {
+      "label": "More Options"
+    },
+    "customFields": {
+      "label": "Custom Fields"
+    },
+    "tags": {
+      "label": "Tags"
+    },
+    "accountFields": {
+      "label": "Account Fields"
     }
   },
   "flows": {
@@ -1322,7 +1347,8 @@
     "disableSuccess": "{feature} disabled successfully",
     "enableFeature": "Enable {feature}",
     "enableFeatureDescription": "Are you sure you want to enable the {feature}?",
-    "enableSuccess": "{feature} enabled successfully"
+    "enableSuccess": "{feature} enabled successfully",
+    "exportedSuccess": "{feature} exported successfully"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

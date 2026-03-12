@@ -13,6 +13,7 @@ import { cn } from "@aha.chat/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import {
   File,
+  FileIcon,
   ImageIcon,
   ImagePlay,
   type LucideIcon,
@@ -146,6 +147,8 @@ export default function FileDropzone({
         _imagePreview(file)
       } else if (file.type.startsWith("video/")) {
         _videoPreview(file)
+      } else {
+        setPreview(file.name)
       }
 
       onDrop?.(file)
@@ -176,9 +179,10 @@ export default function FileDropzone({
       <div className="flex flex-col items-center">
         <UploadIcon className="text-gray-500" size={30} type={type} />
         <div>
-          {t("texts.or")}
+          {t("actions.selectFile")}
           {!isCard && (
             <>
+              {t("texts.or")}
               {"\u00A0"}
               <Button
                 className="p-0 text-destructive"
@@ -195,24 +199,32 @@ export default function FileDropzone({
   }
 
   const _hasFile = () => {
+    if (type === "image") {
+      return (
+        <>
+          <Image
+            alt="Thumbnail"
+            className="h-full w-full object-cover"
+            src={preview}
+          />
+          <div className="absolute top-1 right-1 z-10">
+            <Button
+              className="size-5 rounded-full"
+              onClick={_onRemove}
+              size="icon"
+              variant="outline"
+            >
+              <X size={10} />
+            </Button>
+          </div>
+        </>
+      )
+    }
     return (
-      <>
-        <Image
-          alt="Thumbnail"
-          className="h-full w-full object-cover"
-          src={preview}
-        />
-        <div className="absolute top-1 right-1 z-10">
-          <Button
-            className="size-5 rounded-full"
-            onClick={_onRemove}
-            size="icon"
-            variant="outline"
-          >
-            <X size={10} />
-          </Button>
-        </div>
-      </>
+      <div className="flex flex-col gap-2 items-center px-4">
+        <FileIcon />
+        <span className="text-sm">{preview}</span>
+      </div>
     )
   }
 

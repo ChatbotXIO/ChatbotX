@@ -6,6 +6,7 @@ export default defineConfig({
     "src/chat/worker.ts",
     "src/integration/worker.ts",
     "src/ai-agent/worker.ts",
+    "src/default/worker.ts",
   ],
   dts: true,
   shims: true,

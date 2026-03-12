@@ -111,11 +111,14 @@ export const reservedCustomFieldOptions: {
   },
 ]
 
-export const useCustomFieldSelectOptions = (props: {
-  customFieldTypes?: CustomFieldType[]
-  includeReserved?: boolean
-}): SelectOption[] => {
-  const { customFieldTypes, includeReserved } = props
+export const useCustomFieldSelectOptions = (
+  props: {
+    customFieldTypes?: CustomFieldType[]
+    includeReserved?: boolean
+    prefix?: string
+  } = {},
+): SelectOption[] => {
+  const { customFieldTypes, includeReserved, prefix } = props
 
   const { customFields } = useCustomFieldStore((state) => state)
 
@@ -131,15 +134,15 @@ export const useCustomFieldSelectOptions = (props: {
         )
         .map((customField) => ({
           label: customField.name,
-          value: customField.id,
+          value: prefix ? `${prefix}:${customField.id}` : customField.id,
           Icon: customFieldIconsMap[customField.customFieldType],
         }))
     }
 
     return allFields.map((customField) => ({
       label: customField.name,
-      value: customField.id,
+      value: prefix ? `${prefix}:${customField.id}` : customField.id,
       Icon: customFieldIconsMap[customField.customFieldType],
     }))
-  }, [customFieldTypes, includeReserved, customFields])
+  }, [customFieldTypes, includeReserved, customFields, prefix])
 }

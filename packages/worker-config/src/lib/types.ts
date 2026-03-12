@@ -3,4 +3,5 @@ export const queueName = {
   chat: "chat",
   aiAgent: "aiAgent",
   schedule: "schedule",
+  default: "default",
 } as const

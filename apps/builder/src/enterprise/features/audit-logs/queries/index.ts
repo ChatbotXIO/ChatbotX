@@ -16,7 +16,7 @@ export async function listAuditLogs(
 
   const where = {
     chatbotId: input.chatbotId,
-    userId: input.userId !== null ? input.userId : undefined,
+    // userId: input.userId !== null ? input.userId : undefined,
   }
 
   const pagination = getPaginationWithDefaults(input)
