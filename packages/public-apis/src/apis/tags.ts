@@ -1,5 +1,5 @@
-import type { ChatbotXAPI } from "./index.js"
-import type { Tag } from "./schemas/tag.js"
+import type { ChatbotXAPI } from "../index"
+import type { Tag } from "../schemas/tag"
 
 const TAGS_PREFIX = "/tags"
 

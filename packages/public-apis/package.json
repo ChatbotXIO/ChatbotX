@@ -16,9 +16,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./contacts": "./src/contacts.ts",
-    "./custom-fields": "./src/custom-fields.ts",
-    "./tags": "./src/tags.ts",
+    "./contacts": "./src/apis/contacts.ts",
+    "./custom-fields": "./src/apis/custom-fields.ts",
+    "./tags": "./src/apis/tags.ts",
     "./schemas": "./src/schemas"
   }
 }

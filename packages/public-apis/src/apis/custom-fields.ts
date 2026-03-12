@@ -1,5 +1,5 @@
-import type { ChatbotXAPI } from "./index.js"
-import type { CustomField } from "./schemas/custom-field.js"
+import type { ChatbotXAPI } from "../index"
+import type { CustomField } from "../schemas/custom-field"
 
 const CUSTOM_FIELDS_PREFIX = "/custom-fields"
 
