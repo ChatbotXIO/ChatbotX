@@ -1,24 +1,20 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Default",
+  "display": "Base",
   "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ESNext"],
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "jsx": "preserve",
+    "allowJs": false,
+    "noEmit": true,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "target": "es2022",
-    "allowJs": true,
     "resolveJsonModule": true,
-    "moduleDetection": "force",
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-
-    "strict": true,
-
-    "module": "preserve",
-    "moduleResolution": "bundler",
-    "noEmit": true,
-
-    "lib": ["esnext"],
-
-    "jsx": "preserve"
+    "verbatimModuleSyntax": true
   }
 }

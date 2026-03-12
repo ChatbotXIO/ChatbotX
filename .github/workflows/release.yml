@@ -39,6 +39,7 @@ jobs:
             ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder
             ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker
             ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -166,6 +167,46 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64 #,linux/arm64
 
+  build-mcp-server-image:
+    runs-on: ubuntu-latest
+    needs: prepare-metadata
+    permissions:
+      contents: read
+      packages: write
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Create .env file from secrets
+        uses: 0ndt/envfile@v2
+        with:
+          secrets: ${{ toJSON(secrets) }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push mcp-server image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/mcp-server/docker/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server:${{ needs.prepare-metadata.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server:latest
+          labels: ${{ needs.prepare-metadata.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64 #,linux/arm64
+
   output-image-urls:
     runs-on: ubuntu-latest
     needs:
@@ -173,6 +214,7 @@ jobs:
       - build-builder-image
       - build-worker-image
       - build-realtime-image
+      - build-mcp-server-image
     if: github.event_name != 'pull_request'
     permissions:
       contents: read
@@ -183,3 +225,4 @@ jobs:
           echo "Builder image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder:${{ needs.prepare-metadata.outputs.version }}"
           echo "Worker image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker:${{ needs.prepare-metadata.outputs.version }}"
           echo "Realtime image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime:${{ needs.prepare-metadata.outputs.version }}"
+          echo "MCP Server image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server:${{ needs.prepare-metadata.outputs.version }}"

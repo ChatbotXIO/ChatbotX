@@ -1,4 +1,4 @@
-import type { ChatbotXAPI } from "../index"
+import type { ChatbotXAPI } from "../lib/api"
 import type { Contact } from "../schemas/contact"
 import type { ContactCustomField } from "../schemas/custom-field"
 import type { Tag } from "../schemas/tag"

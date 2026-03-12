@@ -1,13 +1,13 @@
-import type { ChatbotXAPI } from "@aha.chat/public-apis"
 import {
+  type ChatbotXAPI,
   createTag,
   deleteTag,
   listTags,
   showTag,
   showTagByName,
   updateTag,
-} from "@aha.chat/public-apis/tags"
-import { formatResult } from "../utils.js"
+} from "@chatbotx/public-apis"
+import { formatResult } from "../utils"
 
 export default {
   list_tags: {

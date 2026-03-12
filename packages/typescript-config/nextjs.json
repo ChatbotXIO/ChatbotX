@@ -5,8 +5,10 @@
     "plugins": [{ "name": "next" }],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "allowJs": true,
     "jsx": "preserve",
-    "noEmit": true
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "types": ["node"]
   }
 }
