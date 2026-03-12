@@ -14,7 +14,7 @@ export class ChatbotXAPI {
 
   constructor(apiKey: string, apiUrl?: string, allowSelfSignedCert = true) {
     this.apiKey = apiKey
-    this.apiUrl = apiUrl || "https://builder-dev.aha.chat/api/v1"
+    this.apiUrl = apiUrl || "https://api.chatbotx.io/api/v1"
 
     if (allowSelfSignedCert) {
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
