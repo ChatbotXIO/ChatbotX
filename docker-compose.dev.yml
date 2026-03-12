@@ -56,6 +56,19 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  mcp-server:
+    build:
+      context: .
+      dockerfile: apps/mcp-server/docker/Dockerfile
+    platform: linux/amd64
+    restart: unless-stopped
+    env_file:
+      - ./.env.dev
+    ports:
+      - "3125:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 networks:
   chatbotx-network:
     driver: bridge
