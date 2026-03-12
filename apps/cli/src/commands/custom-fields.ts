@@ -4,7 +4,7 @@ import {
   getCustomField as getCustomFieldApi,
   getCustomFieldByName as getCustomFieldByNameApi,
   listCustomFields as listCustomFieldsApi,
-} from "@chatbotx/public-apis/custom-fields"
+} from "@chatbotx/public-apis"
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 
