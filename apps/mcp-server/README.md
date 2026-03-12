@@ -150,7 +150,7 @@ pnpm test
 ### Via TypeScript
 
 ```typescript
-import { ChatbotXAPI } from "@aha.chat/public-apis";
+import { ChatbotXAPI } from "@chatbotx/public-apis";
 import tags from "./src/tools/tag";
 
 const api = new ChatbotXAPI("your-api-key");
@@ -181,7 +181,7 @@ console.log(result);
 
 ## 📦 Dependencies
 
-- `@aha.chat/public-apis`: ChatbotX API client
+- `@chatbotx/public-apis`: ChatbotX API client
 - `@modelcontextprotocol/sdk`: MCP framework
 - `dotenv`: Environment configuration
 - `zod`: Schema validation

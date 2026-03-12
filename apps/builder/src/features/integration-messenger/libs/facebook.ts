@@ -1,9 +1,10 @@
 import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
 
-declare const FB: facebook.FacebookStatic // Declare FB if not already globally available
+// declare const FB: facebook.FacebookStatic // Declare FB if not already globally available
 
 export const getFacebookPages = (): Promise<FacebookPage[]> => {
   return new Promise((resolve, reject) => {
+    // @ts-expect-error
     window.FB.api(
       "/me/accounts",
       "get",

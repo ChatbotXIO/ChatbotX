@@ -2,10 +2,10 @@ import { createRequire } from "node:module"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import "dotenv/config"
-import customFields from "./tools/custom-fields.js"
-import tags from "./tools/tag.js"
-import type { ToolDefinition } from "./types.js"
-import { createApi } from "./utils.js"
+import customFields from "./tools/custom-fields"
+import tags from "./tools/tag"
+import type { ToolDefinition } from "./types"
+import { createApi } from "./utils"
 
 const require = createRequire(import.meta.url)
 const packageJson = require("../package.json") as {
@@ -39,6 +39,13 @@ for (const [key, tool] of Object.entries(allTools)) {
   )
 }
 
-const transport = new StdioServerTransport()
-await server.connect(transport)
-console.log("MCP Server running...")
+async function main() {
+  const transport = new StdioServerTransport()
+  await server.connect(transport)
+  console.error("Weather MCP Server running on stdio")
+}
+
+main().catch((error) => {
+  console.error("Fatal error in main():", error)
+  process.exit(1)
+})

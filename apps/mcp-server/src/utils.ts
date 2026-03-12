@@ -1,4 +1,4 @@
-import { ChatbotXAPI } from "@aha.chat/public-apis"
+import { ChatbotXAPI } from "@chatbotx/public-apis"
 
 const trailingSlashRegex = /\/$/
 

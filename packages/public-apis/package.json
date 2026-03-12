@@ -1,5 +1,5 @@
 {
-  "name": "@aha.chat/public-apis",
+  "name": "@chatbotx/public-apis",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
@@ -15,10 +15,6 @@
     "zod": "^4.3.6"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./contacts": "./src/apis/contacts.ts",
-    "./custom-fields": "./src/apis/custom-fields.ts",
-    "./tags": "./src/apis/tags.ts",
-    "./schemas": "./src/schemas"
+    ".": "./src/index.ts"
   }
 }
