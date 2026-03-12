@@ -1,5 +1,5 @@
 {
-  "name": "chatbotX",
+  "name": "cli",
   "version": "0.1.0",
   "description": "ChatbotX CLI - Command line interface for the ChatbotX API",
   "main": "dist/index.js",
