@@ -6,7 +6,7 @@ MCP (Model Context Protocol) Server for ChatbotX API management. Provides tools 
 
 - **Node.js**: v20+ recommended
 - **pnpm**: v10.30.3 or higher
-- **Environment Variables**: API_KEY, API_URL (optional)
+- **Environment Variables**: CHATBOTX_API_KEY, CHATBOTX_API_URL (optional)
 
 ## 🚀 Installation
 
@@ -20,9 +20,9 @@ pnpm install
 
 ```bash
 # .env
-API_KEY=your-api-key-here
-API_URL=https://your-api-url.com/api/v1
-ALLOW_SELF_SIGNED_CERT=true  # Only for development
+CHATBOTX_API_KEY=your-api-key-here
+CHATBOTX_API_URL=https://your-api-url.com/api/v1
+CHATBOTX_ALLOW_SELF_SIGNED_CERT=true  # Only for development
 ```
 
 ## 📖 Available Scripts
@@ -133,11 +133,11 @@ src/
 
 ## 🔧 Environment Variables
 
-| Variable                 | Description                               | Default                        | Required               |
-| ------------------------ | ----------------------------------------- | ------------------------------ | ---------------------- |
-| `API_KEY`                | ChatbotX API authentication key           | `test-api-key`                 | ⚠️ Yes (in production) |
-| `API_URL`                | ChatbotX API base URL                     | `http://localhost:3000/api/v1` | No                     |
-| `ALLOW_SELF_SIGNED_CERT` | Allow self-signed certificates (dev only) | `true`                         | No                     |
+| Variable                          | Description                               | Default                        | Required               |
+| --------------------------------- | ----------------------------------------- | ------------------------------ | ---------------------- |
+| `CHATBOTX_API_KEY`                | ChatbotX API authentication key           | `test-api-key`                 | ⚠️ Yes (in production) |
+| `CHATBOTX_API_URL`                | ChatbotX API base URL                     | `http://localhost:3000/api/v1` | No                     |
+| `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Allow self-signed certificates (dev only) | `true`                         | No                     |
 
 ## 📝 Example Usage
 
@@ -164,7 +164,7 @@ console.log(result);
 
 - Check if `API_URL` is correct
 - Verify `API_KEY` is valid
-- For self-signed certificates, ensure `ALLOW_SELF_SIGNED_CERT=true`
+- For self-signed certificates, ensure `CHATBOTX_ALLOW_SELF_SIGNED_CERT=true`
 
 ### Build errors with TypeScript
 

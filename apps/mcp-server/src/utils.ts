@@ -7,14 +7,18 @@ export const formatResult = (value: unknown): string => {
 }
 
 export const createApi = (): ChatbotXAPI => {
-  const apiKey = process.env.API_KEY?.trim()
+  const apiKey = process.env.CHATBOTX_API_KEY?.trim()
 
   if (!apiKey) {
-    throw new Error("Missing API_KEY")
+    throw new Error("Missing CHATBOTX_API_KEY")
   }
 
-  const apiUrl = process.env.API_URL?.trim().replace(trailingSlashRegex, "")
-  const allowSelfSignedCert = process.env.ALLOW_SELF_SIGNED_CERT === "true"
+  const apiUrl = process.env.CHATBOTX_API_URL?.trim().replace(
+    trailingSlashRegex,
+    "",
+  )
+  const allowSelfSignedCert =
+    process.env.CHATBOTX_ALLOW_SELF_SIGNED_CERT === "true"
 
   return new ChatbotXAPI(apiKey, apiUrl, allowSelfSignedCert)
 }
