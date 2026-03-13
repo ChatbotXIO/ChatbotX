@@ -195,7 +195,7 @@ export const loopableExportContacts = async (
   const customFieldNameById: Record<string, string> =
     requestedCustomFieldIds.length === 0
       ? {}
-      : await db.query.fieldModel
+      : await db.query.customFieldModel
           .findMany({
             where: {
               id: { in: requestedCustomFieldIds },

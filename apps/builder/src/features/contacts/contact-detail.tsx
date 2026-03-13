@@ -49,28 +49,28 @@ export const ContactDetail = () => {
             icon: AtSignIcon,
             label: "Email",
             value: conversation.contact.email,
-            customFieldType: "shortText",
+            type: "shortText",
           },
           {
             key: "firstName",
             icon: TextIcon,
             label: "First Name",
             value: conversation.contact.firstName,
-            customFieldType: "shortText",
+            type: "shortText",
           },
           {
             key: "lastName",
             icon: TextIcon,
             label: "Last Name",
             value: conversation.contact.lastName,
-            customFieldType: "shortText",
+            type: "shortText",
           },
           {
             key: "phoneNumber",
             icon: PhoneIcon,
             label: "Phone Number",
             value: conversation.contact.phoneNumber,
-            customFieldType: "shortText",
+            type: "shortText",
           },
         ]
 
@@ -83,10 +83,10 @@ export const ContactDetail = () => {
           if (targetCustomField) {
             tmpContactFields.push({
               key: cc.customFieldId,
-              icon: customFieldIconsMap[targetCustomField.customFieldType],
+              icon: customFieldIconsMap[targetCustomField.type],
               label: targetCustomField.name,
               value: cc.value,
-              customFieldType: targetCustomField.customFieldType,
+              type: targetCustomField.type,
             })
           }
         }
@@ -158,10 +158,10 @@ export const ContactDetail = () => {
                 ...contactFields,
                 {
                   key: customFieldId,
-                  icon: customFieldIconsMap[targetCustomField.customFieldType],
+                  icon: customFieldIconsMap[targetCustomField.type],
                   label: targetCustomField.name,
                   value: "",
-                  customFieldType: targetCustomField.customFieldType,
+                  type: targetCustomField.type,
                 },
               ])
             }

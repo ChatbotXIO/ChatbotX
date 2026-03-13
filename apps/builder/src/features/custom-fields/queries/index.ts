@@ -1,6 +1,6 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
-import { fieldModel } from "@aha.chat/database/schema"
+import { customFieldModel } from "@aha.chat/database/schema"
 import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
@@ -23,7 +23,6 @@ export async function listCustomFields(
 ): Promise<ListCustomFieldsResponse> {
   const where = {
     chatbotId: input.chatbotId,
-    fieldType: "customField" as const,
     folderId: input.folderId
       ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
         input.folderId === rootFolderId
@@ -38,15 +37,15 @@ export async function listCustomFields(
   }
 
   const pagination = parsePagination(input)
-  const orderBy = parseOrderByAsObject(fieldModel, input)
+  const orderBy = parseOrderByAsObject(customFieldModel, input)
 
   const [data, total] = await Promise.all([
-    db.query.fieldModel.findMany({
+    db.query.customFieldModel.findMany({
       where,
       orderBy,
       ...pagination,
     }),
-    db.$count(fieldModel, relationsFilterToSQL(fieldModel, where)),
+    db.$count(customFieldModel, relationsFilterToSQL(customFieldModel, where)),
   ])
 
   const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1
@@ -57,10 +56,9 @@ export async function listCustomFields(
 export const findCustomField = async (
   input: FindCustomFieldRequest,
 ): Promise<CustomFieldResource | undefined> => {
-  return await db.query.fieldModel.findFirst({
+  return await db.query.customFieldModel.findFirst({
     where: {
       ...input,
-      fieldType: "customField" as const,
     },
   })
 }

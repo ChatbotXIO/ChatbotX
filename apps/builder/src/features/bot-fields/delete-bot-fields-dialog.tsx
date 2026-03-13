@@ -17,36 +17,34 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
-import { deleteAccountFieldsAction } from "./actions/delete-account-field.action"
-import type { AccountFieldResource } from "./schemas/resource"
+import { deleteBotFieldsAction } from "./actions/delete-bot-field.action"
+import type { BotFieldResource } from "./schemas/resource"
 
-type DeleteAccountFieldsDialogProps = ComponentPropsWithoutRef<
-  typeof Dialog
-> & {
+type DeleteBotFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
-  records: Row<AccountFieldResource>["original"][]
+  records: Row<BotFieldResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange?: (val: boolean) => void
 }
 
-export function DeleteAccountFieldsDialog({
+export function DeleteBotFieldsDialog({
   chatbotId,
   records,
   showTrigger = true,
   onOpenChange,
   onSuccess,
   ...props
-}: DeleteAccountFieldsDialogProps) {
+}: DeleteBotFieldsDialogProps) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteAccountFieldsAction.bind(null, chatbotId),
+    deleteBotFieldsAction.bind(null, chatbotId),
     {
       onSuccess: () => {
         toast.success(
           t("messages.deletedSuccess", {
-            feature: t("fields.accountField.label"),
+            feature: t("fields.botField.label"),
           }),
         )
         onOpenChange?.(false)
@@ -74,12 +72,12 @@ export function DeleteAccountFieldsDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", {
-              feature: t("fields.accountField.label"),
+              feature: t("fields.botField.label"),
             })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("messages.deleteConfirmation", {
-              feature: t("fields.accountField.label"),
+              feature: t("fields.botField.label"),
             })}
           </DialogDescription>
         </DialogHeader>

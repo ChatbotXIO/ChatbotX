@@ -17,25 +17,25 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
-import { updateAccountFieldAction } from "./actions/update-account-field.action"
-import { updateAccountFieldRequest } from "./schemas/action"
-import type { AccountFieldResource } from "./schemas/resource"
+import { updateBotFieldAction } from "./actions/update-bot-field.action"
+import { updateBotFieldRequest } from "./schemas/action"
+import type { BotFieldResource } from "./schemas/resource"
 
-type UpdateAccountFieldDialogProps = {
+type UpdateBotFieldDialogProps = {
   chatbotId: string
-  accountField: AccountFieldResource | null
+  botField: BotFieldResource | null
   open: boolean
   onOpenChange: (val: boolean) => void
   onSuccess?: () => void
 }
 
-export function UpdateAccountFieldDialog({
+export function UpdateBotFieldDialog({
   chatbotId,
-  accountField,
+  botField,
   open,
   onOpenChange,
   onSuccess,
-}: UpdateAccountFieldDialogProps) {
+}: UpdateBotFieldDialogProps) {
   const t = useTranslations()
 
   const {
@@ -44,14 +44,14 @@ export function UpdateAccountFieldDialog({
     resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
-    updateAccountFieldAction.bind(null, chatbotId, accountField?.id ?? ""),
-    zodResolver(updateAccountFieldRequest),
+    updateBotFieldAction.bind(null, chatbotId, botField?.id ?? ""),
+    zodResolver(updateBotFieldRequest),
     {
       actionProps: {
         onSuccess: () => {
           toast.success(
             t("messages.updatedSuccess", {
-              feature: t("fields.accountField.label"),
+              feature: t("fields.botField.label"),
             }),
           )
           onOpenChange(false)
@@ -72,12 +72,12 @@ export function UpdateAccountFieldDialog({
   )
 
   useEffect(() => {
-    if (accountField) {
-      setValue("name", accountField.name)
-      setValue("description", accountField.description ?? "")
-      // setValue("value", accountField.value ?? "")
+    if (botField) {
+      setValue("name", botField.name)
+      setValue("description", botField.description ?? "")
+      // setValue("value", botField.value ?? "")
     }
-  }, [accountField, setValue])
+  }, [botField, setValue])
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -85,7 +85,7 @@ export function UpdateAccountFieldDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.editFeature", {
-              feature: t("fields.accountField.label"),
+              feature: t("fields.botField.label"),
             })}
           </DialogTitle>
           <DialogDescription />

@@ -2,7 +2,7 @@ import { db, eq, findOrFail } from "@aha.chat/database/client"
 import {
   contactCustomFieldModel,
   conversationModel,
-  fieldModel,
+  customFieldModel,
 } from "@aha.chat/database/schema"
 import type {
   ConversationAttributes,
@@ -71,10 +71,9 @@ async function handleSkipOrError(
   if (validUserData.valid && validUserData.userInput) {
     if (step.outputCfId) {
       await findOrFail<FieldModel>(
-        fieldModel,
+        customFieldModel,
         {
           id: step.outputCfId,
-          fieldType: "customField",
           chatbotId: props.conversation.chatbotId,
         },
         "Field not found",

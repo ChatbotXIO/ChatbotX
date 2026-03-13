@@ -1,7 +1,7 @@
 "use server"
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { fieldModel } from "@aha.chat/database/schema"
+import { customFieldModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -34,12 +34,11 @@ export const deleteCustomFields = async ({
   ids: string[]
 }) => {
   await db
-    .delete(fieldModel)
+    .delete(customFieldModel)
     .where(
       and(
-        eq(fieldModel.chatbotId, chatbotId),
-        eq(fieldModel.fieldType, "customField"),
-        inArray(fieldModel.id, ids),
+        eq(customFieldModel.chatbotId, chatbotId),
+        inArray(customFieldModel.id, ids),
       ),
     )
 

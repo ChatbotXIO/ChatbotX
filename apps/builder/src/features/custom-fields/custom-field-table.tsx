@@ -119,18 +119,14 @@ export function CustomFieldsTable({
       },
       {
         id: "Type",
-        accessorKey: "customFieldType",
+        accessorKey: "type",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
             title={t("fields.type.label")}
           />
         ),
-        cell: ({ row }) => (
-          <CustomFieldTypeLabel
-            customFieldType={row.original.customFieldType}
-          />
-        ),
+        cell: ({ row }) => <CustomFieldTypeLabel type={row.original.type} />,
         meta: {
           label: t("fields.type.label"),
         },
@@ -233,7 +229,6 @@ export function CustomFieldsTable({
 
         <DeleteFieldsDialog
           chatbotId={chatbotId}
-          fieldType="customField"
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => rowAction?.row.toggleSelected(false)}
           open={rowAction?.variant === "delete"}

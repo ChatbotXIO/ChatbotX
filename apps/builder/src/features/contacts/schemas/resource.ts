@@ -11,7 +11,7 @@ export type ContactEditableField = {
   icon: LucideIcon
   label: string
   value: string | null | undefined
-  customFieldType: CustomFieldType
+  type: CustomFieldType
 }
 
 export const publicContactResource = contactResource.pick({

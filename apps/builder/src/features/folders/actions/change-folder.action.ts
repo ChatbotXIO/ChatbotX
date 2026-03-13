@@ -4,7 +4,7 @@ import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
 import {
   automatedResponseModel,
-  fieldModel,
+  customFieldModel,
   flowModel,
   tagModel,
 } from "@aha.chat/database/schema"
@@ -84,7 +84,7 @@ function findResourceModel(folderType: string) {
     case "flow":
       return flowModel
     case "customField":
-      return fieldModel
+      return customFieldModel
     case "automatedResponse":
       return automatedResponseModel
     default:

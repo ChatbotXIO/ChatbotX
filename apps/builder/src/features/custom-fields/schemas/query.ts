@@ -1,4 +1,4 @@
-import { createSelectSchema, fieldModel } from "@aha.chat/database/schema"
+import { createSelectSchema, customFieldModel } from "@aha.chat/database/schema"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
@@ -41,7 +41,7 @@ export const listCustomFieldsResponse = z.object({
 })
 export type ListCustomFieldsResponse = z.infer<typeof listCustomFieldsResponse>
 
-export const findCustomFieldRequest = createSelectSchema(fieldModel)
+export const findCustomFieldRequest = createSelectSchema(customFieldModel)
   .pick({ id: true, chatbotId: true, name: true })
   .partial()
 export type FindCustomFieldRequest = z.infer<typeof findCustomFieldRequest>

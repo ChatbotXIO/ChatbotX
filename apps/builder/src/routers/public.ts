@@ -1,4 +1,4 @@
-import botFieldChatbotTokenAPIs from "@/features/account-fields/api/chatbot-token"
+import botFieldChatbotTokenAPIs from "@/features/bot-fields/api/chatbot-token"
 import { broadcastChatbotTokenAPIs } from "@/features/broadcasts/api/chatbot-token"
 import contactChatbotTokenAPIs from "@/features/contacts/api/chatbot-token"
 import customFieldChatbotTokenAPIs from "@/features/custom-fields/api/chatbot-token"

@@ -3,7 +3,7 @@ import { z } from "zod"
 
 export const createCustomFieldRequest = z.object({
   name: z.string().trim().min(1).max(255),
-  customFieldType: z.enum(customFieldType.enumValues),
+  type: z.enum(customFieldType.enumValues),
   folderId: z.cuid2().nullish(),
   description: z.string().nullish(),
 })

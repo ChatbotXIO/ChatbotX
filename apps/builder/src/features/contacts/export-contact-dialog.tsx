@@ -46,7 +46,7 @@ export function ExportContactDialog({
 
   const options: MultiSelectGroup[] = [
     {
-      heading: t("fields.accountFields.label"),
+      heading: t("fields.botFields.label"),
       options: [
         {
           label: t("fields.firstName.label"),

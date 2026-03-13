@@ -9659,7 +9659,7 @@
       "entityType": "enums"
     },
     {
-      "values": ["accountField", "customField"],
+      "values": ["botField", "customField"],
       "name": "FieldType",
       "schema": "public",
       "entityType": "enums"

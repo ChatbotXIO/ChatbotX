@@ -8,7 +8,7 @@ CREATE TYPE "public"."BroadcastStatus" AS ENUM('scheduled', 'sent');--> statemen
 CREATE TYPE "public"."ChatbotMemberRole" AS ENUM('owner', 'agent');--> statement-breakpoint
 CREATE TYPE "public"."ContentType" AS ENUM('text', 'location');--> statement-breakpoint
 CREATE TYPE "public"."CustomFieldType" AS ENUM('shortText', 'number', 'date', 'datetime', 'boolean', 'longText');--> statement-breakpoint
-CREATE TYPE "public"."FieldType" AS ENUM('accountField', 'customField');--> statement-breakpoint
+CREATE TYPE "public"."FieldType" AS ENUM('botField', 'customField');--> statement-breakpoint
 CREATE TYPE "public"."FileType" AS ENUM('image', 'video', 'audio', 'gif', 'file');--> statement-breakpoint
 CREATE TYPE "public"."FolderType" AS ENUM('tag', 'flow', 'customField', 'automatedResponse');--> statement-breakpoint
 CREATE TYPE "public"."Gender" AS ENUM('male', 'female', 'unknown');--> statement-breakpoint

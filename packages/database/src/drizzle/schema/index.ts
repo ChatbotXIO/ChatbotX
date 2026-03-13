@@ -15,6 +15,7 @@ import {
   varchar,
   vector,
 } from "drizzle-orm/pg-core"
+import { sharedColumns } from "./shared"
 
 export * from "drizzle-orm/zod"
 
@@ -27,7 +28,6 @@ export const customFieldType = pgEnum("CustomFieldType", [
   "boolean",
   "longText",
 ])
-export const fieldType = pgEnum("FieldType", ["accountField", "customField"])
 export const folderType = pgEnum("FolderType", [
   "tag",
   "flow",
@@ -149,7 +149,7 @@ export const prismaMigrations = pgTable("_prisma_migrations", {
 })
 
 export const accountModel = pgTable("Account", {
-  id: text().primaryKey(),
+  ...sharedColumns,
   accountId: text().notNull(),
   providerId: text().notNull(),
   accessToken: text(),
@@ -159,11 +159,6 @@ export const accountModel = pgTable("Account", {
   scope: text(),
   idToken: text(),
   password: text(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
   userId: text()
     .notNull()
     .references(() => userModel.id, {
@@ -173,33 +168,8 @@ export const accountModel = pgTable("Account", {
     }),
 })
 
-export const activityLogModel = pgTable("ActivityLog", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
-  chatbotId: text()
-    .notNull()
-    .references(() => chatbotModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-      name: "ActivityLog_chatbotId_fkey",
-    }),
-  userId: text()
-    .notNull()
-    .references(() => userModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-      name: "ActivityLog_userId_fkey",
-    }),
-  data: text().notNull(),
-  action: text().notNull(),
-})
-
 export const aiAgentModel = pgTable("AIAgent", {
-  id: text().primaryKey(),
+  ...sharedColumns,
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
@@ -207,11 +177,6 @@ export const aiAgentModel = pgTable("AIAgent", {
       onUpdate: "cascade",
       name: "AIAgent_chatbotId_fkey",
     }),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
   name: text().notNull(),
   prompt: text(),
   messages: jsonb().array().notNull().default(sql`[]`),
@@ -223,12 +188,7 @@ export const aiAgentModel = pgTable("AIAgent", {
 })
 
 export const aiAssistantModel = pgTable("AIAssistant", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
@@ -247,12 +207,7 @@ export const aiAssistantModel = pgTable("AIAssistant", {
 export const aiEmbeddingModel = pgTable(
   "AIEmbedding",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     content: text().notNull(),
     embedding: vector("embedding", { dimensions: 1536 }),
     status: aiEmbeddingStatus().default("pending").notNull(),
@@ -280,12 +235,7 @@ export const aiEmbeddingModel = pgTable(
 )
 
 export const aiFileModel = pgTable("AIFile", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   name: text().notNull(),
   path: text().notNull(),
   size: integer().notNull(),
@@ -300,12 +250,7 @@ export const aiFileModel = pgTable("AIFile", {
 })
 
 export const aiFunctionModel = pgTable("AIFunction", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   name: text().notNull(),
   purpose: text(),
   dataCollect: jsonb(),
@@ -325,12 +270,7 @@ export const aiFunctionModel = pgTable("AIFunction", {
 })
 
 export const aiMCPServerModel = pgTable("AIMCPServer", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   name: text().notNull(),
   url: text().notNull(),
   auth: jsonb().notNull(),
@@ -346,12 +286,7 @@ export const aiMCPServerModel = pgTable("AIMCPServer", {
 })
 
 export const aiTriggerModel = pgTable("AITrigger", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
@@ -369,12 +304,7 @@ export const aiTriggerModel = pgTable("AITrigger", {
 export const attachmentModel = pgTable(
   "Attachment",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {
@@ -421,12 +351,7 @@ export const attachmentModel = pgTable(
 export const automatedResponseModel = pgTable(
   "AutomatedResponse",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {
@@ -450,12 +375,7 @@ export const automatedResponseModel = pgTable(
 export const broadcastModel = pgTable(
   "Broadcast",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     name: text().notNull(),
     chatbotId: text()
       .notNull()
@@ -499,12 +419,7 @@ export const broadcastModel = pgTable(
 )
 
 export const chatbotModel = pgTable("Chatbot", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   name: text().notNull(),
   defaultReply: text(),
   targetCountry: text(),
@@ -525,12 +440,7 @@ export const chatbotModel = pgTable("Chatbot", {
 })
 
 export const chatbotMemberModel = pgTable("ChatbotMember", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
@@ -554,12 +464,7 @@ export const chatbotMemberModel = pgTable("ChatbotMember", {
 export const chatbotUsageModel = pgTable(
   "ChatbotUsage",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     contactsCount: integer().default(0).notNull(),
     maxContacts: integer().default(0).notNull(),
     chatbotId: text()
@@ -581,12 +486,7 @@ export const chatbotUsageModel = pgTable(
 export const contactModel = pgTable(
   "Contact",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     avatar: text(),
     phoneNumber: text(),
     email: text(),
@@ -620,12 +520,7 @@ export const contactModel = pgTable(
 export const contactCustomFieldModel = pgTable(
   "ContactCustomField",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     value: text().notNull(),
     contactId: text()
       .notNull()
@@ -636,7 +531,7 @@ export const contactCustomFieldModel = pgTable(
       }),
     customFieldId: text()
       .notNull()
-      .references(() => fieldModel.id, {
+      .references(() => customFieldModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
         name: "ContactCustomField_customFieldId_fkey",
@@ -673,12 +568,7 @@ export const contactInboxModel = pgTable(
 )
 
 export const contactNoteModel = pgTable("ContactNote", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   content: text().notNull(),
   contactId: text()
     .notNull()
@@ -728,12 +618,7 @@ export const contactsOnBroadcastsModel = pgTable(
 export const conversationModel = pgTable(
   "Conversation",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     liveChatEnabled: boolean().default(false).notNull(),
     archivedAt: timestamp({ precision: 3 }),
     inboxType: inboxType().notNull().default("webchat"),
@@ -793,12 +678,7 @@ export const conversationModel = pgTable(
 export const conversationParticipantModel = pgTable(
   "ConversationParticipant",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {
@@ -838,25 +718,18 @@ export const conversationParticipantModel = pgTable(
   ],
 )
 
-export const fieldModel = pgTable(
-  "Field",
+export const customFieldModel = pgTable(
+  "CustomField",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     name: text().notNull(),
-    customFieldType: customFieldType().notNull(),
+    type: customFieldType().notNull(),
     description: text(),
     folderId: text().references(() => folderModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
       name: "Field_folderId_fkey",
     }),
-    fieldType: fieldType().notNull(),
-    value: text(),
     showInInbox: boolean().notNull(),
     chatbotId: text()
       .notNull()
@@ -867,22 +740,48 @@ export const fieldModel = pgTable(
       }),
   },
   (table) => [
-    uniqueIndex("Field_chatbotId_fieldType_name_key").using(
+    uniqueIndex("CustomField_chatbotId_fieldType_name_key").using(
       "btree",
       table.chatbotId.asc().nullsLast().op("enum_ops"),
-      table.fieldType.asc().nullsLast().op("text_ops"),
+      table.type.asc().nullsLast().op("text_ops"),
+      table.name.asc().nullsLast().op("enum_ops"),
+    ),
+  ],
+)
+
+export const botFieldModel = pgTable(
+  "BotField",
+  {
+    ...sharedColumns,
+    name: text().notNull(),
+    type: customFieldType().notNull(),
+    value: text(),
+    description: text(),
+    folderId: text().references(() => folderModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+      name: "BotField_folderId_fkey",
+    }),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "BotField_chatbotId_fkey",
+      }),
+  },
+  (table) => [
+    uniqueIndex("BotField_chatbotId_fieldType_name_key").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("enum_ops"),
+      table.type.asc().nullsLast().op("text_ops"),
       table.name.asc().nullsLast().op("enum_ops"),
     ),
   ],
 )
 
 export const flowModel = pgTable("Flow", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   name: text().notNull(),
   active: boolean().default(true).notNull(),
   enableInInbox: boolean().default(true).notNull(),
@@ -903,12 +802,7 @@ export const flowModel = pgTable("Flow", {
 })
 
 export const flowRunModel = pgTable("FlowRun", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
@@ -938,12 +832,7 @@ export const flowRunModel = pgTable("FlowRun", {
 })
 
 export const flowVersionModel = pgTable("FlowVersion", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
@@ -970,12 +859,7 @@ export const flowVersionModel = pgTable("FlowVersion", {
 export const folderModel = pgTable(
   "Folder",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     name: text().notNull(),
     folderType: folderType().notNull(),
     parentId: text(),
@@ -1011,12 +895,7 @@ export const folderModel = pgTable(
 export const inboxModel = pgTable(
   "Inbox",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     inboxType: inboxType().notNull(),
     sourceId: text().notNull(),
     chatbotId: text()
@@ -1043,12 +922,7 @@ export const inboxModel = pgTable(
 )
 
 export const inboxTeamModel = pgTable("InboxTeam", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   chatbotId: text()
     .notNull()
     .references(() => chatbotModel.id, {
@@ -1060,7 +934,7 @@ export const inboxTeamModel = pgTable("InboxTeam", {
 })
 
 export const inboxTeamMemberModel = pgTable("InboxTeamMember", {
-  id: text().primaryKey(),
+  ...sharedColumns,
   inboxTeamId: text()
     .notNull()
     .references(() => inboxTeamModel.id, {
@@ -1075,22 +949,12 @@ export const inboxTeamMemberModel = pgTable("InboxTeamMember", {
       onUpdate: "cascade",
       name: "InboxTeamMember_userId_fkey",
     }),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
 })
 
 export const integrationModel = pgTable(
   "Integration",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {
@@ -1116,12 +980,7 @@ export const integrationModel = pgTable(
 export const integrationGeminiModel = pgTable(
   "IntegrationGemini",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     auth: jsonb().notNull(),
     autoReply: boolean().default(false).notNull(),
     chatbotId: text()
@@ -1158,12 +1017,7 @@ export const integrationGeminiModel = pgTable(
 export const integrationGoogleSheetsModel = pgTable(
   "IntegrationGoogleSheets",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {
@@ -1191,12 +1045,7 @@ export const integrationGoogleSheetsModel = pgTable(
 export const integrationMessengerModel = pgTable(
   "IntegrationMessenger",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     auth: jsonb().notNull(),
     pageId: text().notNull(),
     name: text().notNull(),
@@ -1243,12 +1092,7 @@ export const integrationMessengerModel = pgTable(
 export const integrationOpenAIModel = pgTable(
   "IntegrationOpenAI",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     auth: jsonb().notNull(),
     autoReply: boolean().default(true).notNull(),
     autoReplyVoice: boolean().default(false).notNull(),
@@ -1293,12 +1137,7 @@ export const integrationOpenAIModel = pgTable(
 export const integrationWebchatModel = pgTable(
   "IntegrationWebchat",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     auth: jsonb().notNull(),
     name: text().notNull(),
     enable: boolean().default(true).notNull(),
@@ -1353,12 +1192,7 @@ export const integrationWebchatModel = pgTable(
 export const integrationWhatsappModel = pgTable(
   "IntegrationWhatsapp",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     auth: jsonb().notNull(),
     phoneNumberId: text().notNull(),
     wabaId: text().notNull(),
@@ -1390,12 +1224,7 @@ export const integrationWhatsappModel = pgTable(
 export const integrationZaloModel = pgTable(
   "IntegrationZalo",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     auth: jsonb().notNull(),
     oaId: text().notNull(),
     name: text().notNull(),
@@ -1438,12 +1267,7 @@ export const integrationZaloModel = pgTable(
 export const invitationModel = pgTable(
   "Invitation",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     code: text().notNull(),
     permissions: jsonb().notNull(),
     expiresAt: timestamp({ precision: 3 }).notNull(),
@@ -1476,12 +1300,7 @@ export const invitationModel = pgTable(
 )
 
 export const errorLogModel = pgTable("ErrorLog", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   action: text().notNull(),
   detail: text().notNull(),
   httpCode: text(),
@@ -1527,12 +1346,7 @@ export const auditLogModel = pgTable("AuditLog", {
 export const messageModel = pgTable(
   "Message",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     conversationId: text()
       .notNull()
       .references(() => conversationModel.id, {
@@ -1591,12 +1405,7 @@ export const messageModel = pgTable(
 export const organizationModel = pgTable(
   "Organization",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     name: text().notNull(),
     slug: text(),
     logo: text(),
@@ -1619,12 +1428,7 @@ export const organizationModel = pgTable(
 )
 
 export const organizationMemberModel = pgTable("OrganizationMember", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   role: text().notNull(),
   organizationId: text()
     .notNull()
@@ -1645,12 +1449,7 @@ export const organizationMemberModel = pgTable("OrganizationMember", {
 export const sessionModel = pgTable(
   "Session",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     expiresAt: timestamp({ precision: 3 }).notNull(),
     token: text().notNull(),
     ipAddress: text(),
@@ -1674,12 +1473,7 @@ export const sessionModel = pgTable(
 export const spreadsheetModel = pgTable(
   "Spreadsheet",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {
@@ -1711,12 +1505,7 @@ export const spreadsheetModel = pgTable(
 export const tagModel = pgTable(
   "Tag",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     name: text().notNull(),
     folderId: text().references(() => folderModel.id, {
       onDelete: "set null",
@@ -1748,12 +1537,7 @@ export const tagModel = pgTable(
 export const userModel = pgTable(
   "User",
   {
-    id: text().primaryKey(),
-    createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-    updatedAt: timestamp({ precision: 3 })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+    ...sharedColumns,
     name: text(),
     email: text().notNull(),
     emailVerified: boolean().default(false).notNull(),
@@ -1769,24 +1553,14 @@ export const userModel = pgTable(
 )
 
 export const verificationModel = pgTable("Verification", {
-  id: text().primaryKey(),
+  ...sharedColumns,
   identifier: text().notNull(),
   value: text().notNull(),
   expiresAt: timestamp({ precision: 3 }).notNull(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
 })
 
 export const whatsappFlowModel = pgTable("WhatsappFlow", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   name: text().notNull(),
   integrationWhatsappId: text()
     .notNull()
@@ -1801,12 +1575,7 @@ export const whatsappFlowModel = pgTable("WhatsappFlow", {
 })
 
 export const whatsappMessageTemplateModel = pgTable("WhatsappMessageTemplate", {
-  id: text().primaryKey(),
-  createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp({ precision: 3 })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
+  ...sharedColumns,
   name: text().notNull(),
   integrationWhatsappId: text()
     .notNull()

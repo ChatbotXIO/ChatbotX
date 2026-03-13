@@ -28,21 +28,21 @@ import { useEffect, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCustomFieldTypeLabels } from "../shared-fields/shared"
-import { AccountFieldValueInput } from "./account-field-value-input"
-import { createAccountFieldAction } from "./actions/create-account-field.action"
-import { createAccountFieldRequest } from "./schemas/action"
+import { BotFieldValueInput } from "./account-field-value-input"
+import { createBotFieldAction } from "./actions/create-bot-field.action"
+import { createBotFieldRequest } from "./schemas/action"
 
-type CreateAccountFieldDialogProps = {
+type CreateBotFieldDialogProps = {
   chatbotId: string
   folderId: string | null
   onSuccess?: () => void
 }
 
-export function CreateAccountFieldDialog({
+export function CreateBotFieldDialog({
   chatbotId,
   folderId,
   onSuccess,
-}: CreateAccountFieldDialogProps) {
+}: CreateBotFieldDialogProps) {
   const t = useTranslations()
 
   const [open, setOpen] = useState(false)
@@ -50,14 +50,14 @@ export function CreateAccountFieldDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAccountFieldAction.bind(null, chatbotId),
-      zodResolver(createAccountFieldRequest),
+      createBotFieldAction.bind(null, chatbotId),
+      zodResolver(createBotFieldRequest),
       {
         actionProps: {
           onSuccess: () => {
             toast.success(
               t("messages.createdSuccess", {
-                feature: t("fields.accountField.label"),
+                feature: t("fields.botField.label"),
               }),
             )
             setOpen(false)
@@ -74,7 +74,7 @@ export function CreateAccountFieldDialog({
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: "shortText",
+            type: "shortText",
             value: "",
             description: "",
             folderId: null,
@@ -93,7 +93,7 @@ export function CreateAccountFieldDialog({
 
   const watchCustomFieldType = useWatch({
     control,
-    name: "customFieldType",
+    name: "type",
   })
 
   const handleClose = () => {
@@ -106,7 +106,7 @@ export function CreateAccountFieldDialog({
         <Button size="sm">
           <PlusIcon />
           {t("actions.createFeature", {
-            feature: t("fields.accountField.label"),
+            feature: t("fields.botField.label"),
           })}
         </Button>
       </DialogTrigger>
@@ -114,7 +114,7 @@ export function CreateAccountFieldDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {
-              feature: t("fields.accountField.label"),
+              feature: t("fields.botField.label"),
             })}
           </DialogTitle>
           <DialogDescription />
@@ -136,9 +136,7 @@ export function CreateAccountFieldDialog({
               render={() => (
                 <FormItem>
                   <FormLabel>{t("fields.value.label")}</FormLabel>
-                  <AccountFieldValueInput
-                    customFieldType={watchCustomFieldType}
-                  />
+                  <BotFieldValueInput type={watchCustomFieldType} />
                   <FormMessage />
                 </FormItem>
               )}

@@ -20,7 +20,7 @@ export type AIAgentModel = typeof schema.aiAgentModel.$inferSelect
 export type AIFunctionModel = typeof schema.aiFunctionModel.$inferSelect
 export type AIMCPServerModel = typeof schema.aiMCPServerModel.$inferSelect
 export type AITriggerModel = typeof schema.aiTriggerModel.$inferSelect
-export type FieldModel = typeof schema.fieldModel.$inferSelect
+export type FieldModel = typeof schema.customFieldModel.$inferSelect
 export type AutomatedResponseModel =
   typeof schema.automatedResponseModel.$inferSelect
 export type FlowModel = typeof schema.flowModel.$inferSelect
@@ -71,7 +71,6 @@ export type BroadcastSchedulesType =
   (typeof schema.broadcastSchedulesType.enumValues)[number]
 export type FileType = (typeof schema.fileType.enumValues)[number]
 export type CustomFieldType = (typeof schema.customFieldType.enumValues)[number]
-export type FieldType = (typeof schema.fieldType.enumValues)[number]
 export type Gender = (typeof schema.gender.enumValues)[number]
 export type ChatbotMemberRole =
   (typeof schema.chatbotMemberRole.enumValues)[number]

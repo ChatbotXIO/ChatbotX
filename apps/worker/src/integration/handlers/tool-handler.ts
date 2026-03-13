@@ -1,5 +1,8 @@
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { contactCustomFieldModel, fieldModel } from "@aha.chat/database/schema"
+import { and, db, inArray } from "@aha.chat/database/client"
+import {
+  contactCustomFieldModel,
+  customFieldModel,
+} from "@aha.chat/database/schema"
 import {
   type CountCharactersStepSchema,
   type FormatDateStepSchema,
@@ -19,11 +22,8 @@ export async function countCharacters({
 }: ExecuteStepProps<CountCharactersStepSchema>) {
   const customFieldIds = [step.inputCfId, step.outputCfId]
   const customFieldsCount = await db.$count(
-    fieldModel,
-    and(
-      eq(fieldModel.fieldType, "customField"),
-      inArray(fieldModel.id, customFieldIds),
-    ),
+    customFieldModel,
+    and(inArray(customFieldModel.id, customFieldIds)),
   )
   if (customFieldsCount !== 2) {
     return
@@ -163,9 +163,8 @@ export async function getDataFromJSON({
   }[]
 
   // Find valid custom fields
-  const validCustomFields = await db.query.fieldModel.findMany({
+  const validCustomFields = await db.query.customFieldModel.findMany({
     where: {
-      fieldType: "customField",
       chatbotId: conversation.chatbotId,
       id: {
         in: mapping.map((m) => m.outputCfId),

@@ -10,18 +10,18 @@ import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { useTranslations } from "next-intl"
 
-type AccountFieldValueInputProps = {
+type BotFieldValueInputProps = {
   name?: string
-  customFieldType: CustomFieldType
+  type: CustomFieldType
 }
 
-export const AccountFieldValueInput = ({
+export const BotFieldValueInput = ({
   name = "value",
-  customFieldType,
-}: AccountFieldValueInputProps) => {
+  type,
+}: BotFieldValueInputProps) => {
   const t = useTranslations()
 
-  switch (customFieldType) {
+  switch (type) {
     case "number":
       return (
         <InputField
