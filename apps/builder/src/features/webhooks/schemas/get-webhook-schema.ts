@@ -1,5 +1,5 @@
+import type { WebhookModel } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
-import type { WebhookModel } from "node_modules/@aha.chat/database/src/generated/prisma/models/Webhook"
 import {
   createSearchParamsCache,
   parseAsInteger,

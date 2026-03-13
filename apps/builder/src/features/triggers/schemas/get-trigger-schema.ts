@@ -1,5 +1,5 @@
+import type { TriggerModel } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
-import type { TriggerModel } from "node_modules/@aha.chat/database/src/generated/prisma/models/Trigger"
 import {
   createSearchParamsCache,
   parseAsInteger,

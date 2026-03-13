@@ -78,7 +78,7 @@ export function WebhooksTable({ promises, chatbotId }: WebhooksTableProps) {
         chatbotId={chatbotId}
         currentFolderId={rowAction?.row.original?.folderId || null}
         folderType={FolderType.webhook}
-        modelId={rowAction?.row.original?.id || null}
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : []}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "move"}
       />
