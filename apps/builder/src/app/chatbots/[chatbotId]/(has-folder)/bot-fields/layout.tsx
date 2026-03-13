@@ -1,4 +1,3 @@
-import { Separator } from "@aha.chat/ui/components/ui/separator"
 import type { ReactNode } from "react"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 
@@ -16,7 +15,6 @@ export default async function FolderableLayout({
   return (
     <FolderStoreProvider chatbotId={chatbotId} folderType="customField">
       {folders}
-      <Separator className="my-4" />
       {children}
     </FolderStoreProvider>
   )

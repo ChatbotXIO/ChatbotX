@@ -1,7 +1,7 @@
 "use server"
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { fieldModel } from "@aha.chat/database/schema"
+import { customFieldModel } from "@aha.chat/database/schema"
 import type { FieldModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -40,11 +40,10 @@ export const updateCustomField = async ({
   parsedInput: UpdateCustomFieldRequest
 }) => {
   const customField = await findOrFail<FieldModel>(
-    fieldModel,
+    customFieldModel,
     {
       id,
       chatbotId,
-      fieldType: "customField",
     },
     "Custom field not found",
   )
@@ -53,7 +52,10 @@ export const updateCustomField = async ({
     await ensureFolderIsExists(parsedInput.folderId, chatbotId, "customField")
   }
 
-  await db.update(fieldModel).set(parsedInput).where(eq(fieldModel.id, id))
+  await db
+    .update(customFieldModel)
+    .set(parsedInput)
+    .where(eq(customFieldModel.id, id))
 
   revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
 }

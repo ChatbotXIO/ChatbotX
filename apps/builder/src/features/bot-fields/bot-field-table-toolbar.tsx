@@ -1,24 +1,24 @@
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
-import { CreateAccountFieldDialog } from "./create-account-field-dialog"
-import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
-import type { AccountFieldResource } from "./schemas/resource"
+import { CreateBotFieldDialog } from "./create-bot-field-dialog"
+import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
+import type { BotFieldResource } from "./schemas/resource"
 
-export function AccountFieldToolbarActions({
+export function BotFieldToolbarActions({
   chatbotId,
   folderId,
   table,
 }: {
   chatbotId: string
   folderId: string | null
-  table: Table<AccountFieldResource>
+  table: Table<BotFieldResource>
 }) {
   const router = useRouter()
 
   return (
     <>
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <DeleteAccountFieldsDialog
+        <DeleteBotFieldsDialog
           chatbotId={chatbotId}
           onSuccess={() => {
             router.refresh()
@@ -29,7 +29,7 @@ export function AccountFieldToolbarActions({
         />
       ) : null}
 
-      <CreateAccountFieldDialog
+      <CreateBotFieldDialog
         chatbotId={chatbotId}
         folderId={folderId}
         onSuccess={() => {

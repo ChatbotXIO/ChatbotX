@@ -96,7 +96,7 @@ export default function AddContactCustomFieldDialog({
     const selectedCustomField = customFields.find(
       (field) => field.id === watchCustomFieldId,
     )
-    return selectedCustomField?.customFieldType ?? null
+    return selectedCustomField?.type ?? null
   }, [watchCustomFieldId, customFields])
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -124,9 +124,9 @@ export default function AddContactCustomFieldDialog({
             <CustomFieldSelect name="customFieldId" required />
 
             <CustomFieldOperationSelect
-              customFieldType={selectedCustomFieldType}
               name="operation"
               required
+              type={selectedCustomFieldType}
             />
 
             <div className="flex flex-col gap-2">

@@ -27,7 +27,7 @@ const chatbotTokenCustomFieldsAPI = {
       summary: "Create a custom field",
       tags: ["Custom Fields"],
     })
-    .input(createCustomFieldRequest.pick({ name: true, customFieldType: true }))
+    .input(createCustomFieldRequest.pick({ name: true, type: true }))
     .output(publicCustomFieldResource)
     .handler(async ({ context, input }) => {
       return await createCustomField(context.chatbot.id, input)

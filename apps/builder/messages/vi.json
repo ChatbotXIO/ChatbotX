@@ -429,7 +429,7 @@
     "accessToken": {
       "label": "Token truy cập"
     },
-    "accountField": {
+    "botField": {
       "label": "Trường tài khoản"
     },
     "accountTimezone": {
@@ -1113,7 +1113,7 @@
     "tags": {
       "label": "Thẻ"
     },
-    "accountFields": {
+    "botFields": {
       "label": "Trường tài khoản"
     }
   },

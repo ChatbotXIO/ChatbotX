@@ -1,7 +1,10 @@
 "use server"
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { contactCustomFieldModel, fieldModel } from "@aha.chat/database/schema"
+import {
+  contactCustomFieldModel,
+  customFieldModel,
+} from "@aha.chat/database/schema"
 import type { FieldModel } from "@aha.chat/database/types"
 import { FieldOperationType } from "@aha.chat/flow-config"
 import { createId } from "@paralleldrive/cuid2"
@@ -57,11 +60,10 @@ export const addContactCustomFields = async ({
   }
 
   const customField = await findOrFail<FieldModel>(
-    fieldModel,
+    customFieldModel,
     {
       chatbotId,
       id: parsedInput.customFieldId,
-      fieldType: "customField",
     },
     "Custom field not found",
   )

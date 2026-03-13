@@ -433,8 +433,8 @@
     "accessToken": {
       "label": "Access Token"
     },
-    "accountField": {
-      "label": "Account Field"
+    "botField": {
+      "label": "Bot Field"
     },
     "accountTimezone": {
       "description": "The timezone of your chatbot.",
@@ -1123,8 +1123,8 @@
     "tags": {
       "label": "Tags"
     },
-    "accountFields": {
-      "label": "Account Fields"
+    "botFields": {
+      "label": "Bot Fields"
     }
   },
   "flows": {

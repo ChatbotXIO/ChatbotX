@@ -152,7 +152,7 @@ function CreateCustomFieldForm({
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: "shortText",
+            type: "shortText",
             description: "",
             folderId: null,
           },

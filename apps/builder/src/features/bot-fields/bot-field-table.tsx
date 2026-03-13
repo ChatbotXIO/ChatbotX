@@ -4,6 +4,12 @@ import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -27,19 +33,19 @@ import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { useCopyToClipboard } from "usehooks-ts"
 import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label"
-import { AccountFieldToolbarActions } from "./account-field-table-toolbar"
-import { DeleteAccountFieldsDialog } from "./delete-account-fields-dialog"
-import type { listAccountFields } from "./queries"
-import type { AccountFieldResource } from "./schemas/resource"
-import { UpdateAccountFieldDialog } from "./update-account-field-dialog"
+import { BotFieldToolbarActions } from "./bot-field-table-toolbar"
+import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
+import type { listBotFields } from "./queries"
+import type { BotFieldResource } from "./schemas/resource"
+import { UpdateBotFieldDialog } from "./update-bot-field-dialog"
 
 type FieldsTableProps = {
   chatbotId: string
   folderId: string | null
-  promises: Promise<[Awaited<ReturnType<typeof listAccountFields>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listBotFields>>]>
 }
 
-export function AccountFieldsTable({
+export function BotFieldsTable({
   chatbotId,
   folderId,
   promises,
@@ -48,11 +54,11 @@ export function AccountFieldsTable({
   const router = useRouter()
 
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<AccountFieldResource> | null>(null)
+    useState<DataTableRowAction<BotFieldResource> | null>(null)
   const [_, copyToClipboard] = useCopyToClipboard()
   const t = useTranslations()
 
-  const columns = useMemo<ColumnDef<AccountFieldResource>[]>(
+  const columns = useMemo<ColumnDef<BotFieldResource>[]>(
     () => [
       {
         id: "select",
@@ -101,15 +107,11 @@ export function AccountFieldsTable({
         enableColumnFilter: true,
       },
       {
-        accessorKey: "customFieldType",
+        accessorKey: "type",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Type" />
         ),
-        cell: ({ row }) => (
-          <CustomFieldTypeLabel
-            customFieldType={row.original.customFieldType}
-          />
-        ),
+        cell: ({ row }) => <CustomFieldTypeLabel type={row.original.type} />,
         enableSorting: false,
       },
       {
@@ -178,38 +180,46 @@ export function AccountFieldsTable({
   })
 
   return (
-    <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <AccountFieldToolbarActions
-            chatbotId={chatbotId}
-            folderId={folderId}
-            table={table}
-          />
-        </DataTableToolbar>
-      </DataTable>
+    <Card>
+      <CardHeader className="flex items-center">
+        <CardTitle className="flex-1 font-bold text-xl">
+          {t("fields.botField.label")}
+        </CardTitle>
+      </CardHeader>
 
-      <DeleteAccountFieldsDialog
-        chatbotId={chatbotId}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          rowAction?.row.toggleSelected(false)
-          router.refresh()
-        }}
-        open={rowAction?.variant === "delete"}
-        records={rowAction?.row.original ? [rowAction?.row.original] : []}
-        showTrigger={false}
-      />
+      <CardContent>
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <BotFieldToolbarActions
+              chatbotId={chatbotId}
+              folderId={folderId}
+              table={table}
+            />
+          </DataTableToolbar>
+        </DataTable>
 
-      <UpdateAccountFieldDialog
-        accountField={rowAction?.row.original || null}
-        chatbotId={chatbotId}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          router.refresh()
-        }}
-        open={rowAction?.variant === "update"}
-      />
-    </>
+        <DeleteBotFieldsDialog
+          chatbotId={chatbotId}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            rowAction?.row.toggleSelected(false)
+            router.refresh()
+          }}
+          open={rowAction?.variant === "delete"}
+          records={rowAction?.row.original ? [rowAction?.row.original] : []}
+          showTrigger={false}
+        />
+
+        <UpdateBotFieldDialog
+          botField={rowAction?.row.original || null}
+          chatbotId={chatbotId}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          open={rowAction?.variant === "update"}
+        />
+      </CardContent>
+    </Card>
   )
 }

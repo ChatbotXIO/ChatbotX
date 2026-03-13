@@ -1,6 +1,5 @@
 "use client"
 
-import type { FieldType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -27,14 +26,12 @@ type DeleteFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange?: (val: boolean) => void
-  fieldType: FieldType
 }
 
 export function DeleteFieldsDialog({
   chatbotId,
   records,
   showTrigger = true,
-  fieldType,
   onSuccess,
   onOpenChange,
   ...props

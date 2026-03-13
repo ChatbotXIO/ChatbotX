@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@aha.chat/database/client"
-import { fieldModel } from "@aha.chat/database/schema"
+import { botFieldModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
@@ -11,19 +11,19 @@ import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type CreateAccountFieldRequest,
-  createAccountFieldRequest,
+  type CreateBotFieldRequest,
+  createBotFieldRequest,
 } from "../schemas/action"
 
-export const createAccountFieldAction = chatbotActionClient
-  .inputSchema(createAccountFieldRequest)
+export const createBotFieldAction = chatbotActionClient
+  .inputSchema(createBotFieldRequest)
   .bindArgsSchemas(chatbotIdRequestParams)
   .action(
     async ({
       parsedInput,
       bindArgsParsedInputs: [chatbotId],
     }: {
-      parsedInput: CreateAccountFieldRequest
+      parsedInput: CreateBotFieldRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
       if (parsedInput.folderId) {
@@ -34,14 +34,12 @@ export const createAccountFieldAction = chatbotActionClient
         )
       }
 
-      await db.insert(fieldModel).values({
+      await db.insert(botFieldModel).values({
         ...parsedInput,
         id: createId(),
         chatbotId,
-        fieldType: "accountField",
-        showInInbox: false,
       })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#accountFields`)
+      revalidateCacheTags(`chatbots:${chatbotId}#botFields`)
     },
   )

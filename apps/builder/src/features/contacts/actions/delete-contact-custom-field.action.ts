@@ -4,7 +4,7 @@ import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
-  fieldModel,
+  customFieldModel,
 } from "@aha.chat/database/schema"
 import {
   type FieldModel,
@@ -68,11 +68,10 @@ export const deleteContactCustomFields = async ({
 
   if (isCuid(fieldId)) {
     const customField = await findOrFail<FieldModel>(
-      fieldModel,
+      customFieldModel,
       {
         chatbotId,
         id: fieldId,
-        fieldType: "customField",
       },
       "Custom field not found",
     )

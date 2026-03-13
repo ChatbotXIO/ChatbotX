@@ -1,7 +1,7 @@
 "use server"
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { fieldModel } from "@aha.chat/database/schema"
+import { botFieldModel } from "@aha.chat/database/schema"
 import type { FieldModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -11,59 +11,58 @@ import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
-  type UpdateAccountFieldRequest,
-  updateAccountFieldRequest,
+  type UpdateBotFieldRequest,
+  updateBotFieldRequest,
 } from "../schemas/action"
 
-export const updateAccountField = async ({
+export const updateBotField = async ({
   chatbotId,
   id,
   parsedInput,
 }: {
   chatbotId: string
   id: string
-  parsedInput: UpdateAccountFieldRequest
+  parsedInput: UpdateBotFieldRequest
 }) => {
-  const accountField = await findOrFail<FieldModel>(
-    fieldModel,
+  const botField = await findOrFail<FieldModel>(
+    botFieldModel,
     {
       id,
       chatbotId,
-      fieldType: "accountField",
     },
     "Account field not found",
   )
 
-  if (parsedInput.folderId && parsedInput.folderId !== accountField.folderId) {
+  if (parsedInput.folderId && parsedInput.folderId !== botField.folderId) {
     await ensureFolderIsExists(parsedInput.folderId, chatbotId, "customField")
   }
 
-  const updatedAccountField = await db
-    .update(fieldModel)
+  const updatedBotField = await db
+    .update(botFieldModel)
     .set(parsedInput)
-    .where(eq(fieldModel.id, id))
+    .where(eq(botFieldModel.id, id))
     .returning()
     .then((result) => result[0])
 
   revalidateCacheTags([
-    `chatbots:${chatbotId}#accountFields`,
-    `chatbots:${chatbotId}#accountFields:${id}`,
+    `chatbots:${chatbotId}#botFields`,
+    `chatbots:${chatbotId}#botFields:${id}`,
   ])
 
-  return updatedAccountField
+  return updatedBotField
 }
 
-export const updateAccountFieldAction = chatbotActionClient
-  .inputSchema(updateAccountFieldRequest)
+export const updateBotFieldAction = chatbotActionClient
+  .inputSchema(updateBotFieldRequest)
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
       parsedInput,
       bindArgsParsedInputs: [chatbotId, id],
     }: {
-      parsedInput: UpdateAccountFieldRequest
+      parsedInput: UpdateBotFieldRequest
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      return await updateAccountField({ chatbotId, id, parsedInput })
+      return await updateBotField({ chatbotId, id, parsedInput })
     },
   )

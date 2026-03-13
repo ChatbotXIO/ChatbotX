@@ -6,9 +6,9 @@ import {
   parseAsString,
 } from "nuqs/server"
 import type z from "zod"
-import { accountFieldResource } from "./resource"
+import { botFieldResource } from "./resource"
 
-export const listAccountFieldsSearchParams = createSearchParamsCache({
+export const listBotFieldsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   name: parseAsString,
@@ -18,13 +18,13 @@ export const listAccountFieldsSearchParams = createSearchParamsCache({
   ]),
 })
 
-export type ListAccountFieldsSearchParams = Awaited<
-  ReturnType<typeof listAccountFieldsSearchParams.parse>
+export type ListBotFieldsSearchParams = Awaited<
+  ReturnType<typeof listBotFieldsSearchParams.parse>
 > & {
   chatbotId: string
 }
 
-export const findAccountFieldRequest = accountFieldResource
+export const findBotFieldRequest = botFieldResource
   .pick({ id: true, chatbotId: true, name: true })
   .partial()
-export type FindAccountFieldRequest = z.infer<typeof findAccountFieldRequest>
+export type FindBotFieldRequest = z.infer<typeof findBotFieldRequest>

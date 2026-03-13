@@ -1,9 +1,9 @@
 import z from "zod"
 import { NotfoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
-import { updateAccountField } from "../actions/update-account-field.action"
-import { findAccountField } from "../queries/index"
-import { publicAccountFieldResource } from "../schemas/resource"
+import { updateBotField } from "../actions/update-bot-field.action"
+import { findBotField } from "../queries/index"
+import { publicBotFieldResource } from "../schemas/resource"
 
 const botFieldChatbotTokenAPIs = {
   findBotFieldChatbotTokenAPI: chatbotTokenAPI
@@ -14,9 +14,9 @@ const botFieldChatbotTokenAPIs = {
       tags: ["Bot Fields"],
     })
     .input(z.object({ id: z.string() }))
-    .output(publicAccountFieldResource)
+    .output(publicBotFieldResource)
     .handler(async ({ context, input }) => {
-      const botField = await findAccountField({
+      const botField = await findBotField({
         id: input.id,
         chatbotId: context.chatbot.id,
       })
@@ -34,10 +34,10 @@ const botFieldChatbotTokenAPIs = {
       tags: ["Bot Fields"],
     })
     .input(z.object({ id: z.string(), value: z.string() }))
-    .output(publicAccountFieldResource)
+    .output(publicBotFieldResource)
     .handler(async ({ context, input }) => {
       const { id, ...rest } = input
-      return await updateAccountField({
+      return await updateBotField({
         chatbotId: context.chatbot.id,
         id,
         parsedInput: rest,
@@ -52,9 +52,9 @@ const botFieldChatbotTokenAPIs = {
       tags: ["Bot Fields"],
     })
     .input(z.object({ id: z.string() }))
-    .output(publicAccountFieldResource)
+    .output(publicBotFieldResource)
     .handler(async ({ context, input }) => {
-      return await updateAccountField({
+      return await updateBotField({
         chatbotId: context.chatbot.id,
         id: input.id,
         parsedInput: {

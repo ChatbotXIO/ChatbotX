@@ -26,88 +26,88 @@ export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
 
 export const reservedCustomFieldOptions: {
   name: string
-  customFieldType: CustomFieldType
+  type: CustomFieldType
   id: ReservedCustomFieldNames
 }[] = [
   {
     name: "First Name",
     id: reservedCustomFieldNames.first_name,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Last Name",
     id: reservedCustomFieldNames.last_name,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Full Name",
     id: reservedCustomFieldNames.full_name,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Email",
     id: reservedCustomFieldNames.email,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Phone Number",
     id: reservedCustomFieldNames.phone_number,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Avatar",
     id: reservedCustomFieldNames.avatar,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Locale",
     id: reservedCustomFieldNames.locale,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Gender",
     id: reservedCustomFieldNames.gender,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Timezone",
     id: reservedCustomFieldNames.timezone,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "User ID",
     id: reservedCustomFieldNames.user_id,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "User Tags",
     id: reservedCustomFieldNames.user_tags,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Account Name",
     id: reservedCustomFieldNames.account_name,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Account ID",
     id: reservedCustomFieldNames.account_id,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Page User Name",
     id: reservedCustomFieldNames.page_user_name,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Last Input",
     id: reservedCustomFieldNames.last_input,
-    customFieldType: "shortText",
+    type: "shortText",
   },
   {
     name: "Current Time",
     id: reservedCustomFieldNames.current_time,
-    customFieldType: "shortText",
+    type: "shortText",
   },
 ]
 
@@ -129,20 +129,18 @@ export const useCustomFieldSelectOptions = (
 
     if (customFieldTypes) {
       return allFields
-        .filter((customField) =>
-          customFieldTypes.includes(customField.customFieldType),
-        )
+        .filter((customField) => customFieldTypes.includes(customField.type))
         .map((customField) => ({
           label: customField.name,
           value: prefix ? `${prefix}:${customField.id}` : customField.id,
-          Icon: customFieldIconsMap[customField.customFieldType],
+          Icon: customFieldIconsMap[customField.type],
         }))
     }
 
     return allFields.map((customField) => ({
       label: customField.name,
       value: prefix ? `${prefix}:${customField.id}` : customField.id,
-      Icon: customFieldIconsMap[customField.customFieldType],
+      Icon: customFieldIconsMap[customField.type],
     }))
   }, [customFieldTypes, includeReserved, customFields, prefix])
 }

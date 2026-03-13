@@ -97,14 +97,14 @@ type CustomFieldOperationSelectProps = {
   name: string
   label?: string
   required?: boolean
-  customFieldType: CustomFieldType | null
+  type: CustomFieldType | null
 }
 
 const getOperationOptions = (
-  customFieldType: CustomFieldType | null,
+  type: CustomFieldType | null,
   t: ReturnType<typeof useTranslations>,
 ): SelectOption[] => {
-  if (customFieldType === "shortText" || customFieldType === "longText") {
+  if (type === "shortText" || type === "longText") {
     return [
       {
         label: t("fields.customField.set_value"),
@@ -121,7 +121,7 @@ const getOperationOptions = (
     ]
   }
 
-  if (customFieldType === "number") {
+  if (type === "number") {
     return [
       {
         label: t("fields.customField.set_value"),
@@ -150,16 +150,9 @@ export const CustomFieldOperationSelect = (
   props: CustomFieldOperationSelectProps,
 ) => {
   const t = useTranslations()
-  const {
-    label = t("fields.operation.label"),
-    customFieldType,
-    ...rest
-  } = props
+  const { label = t("fields.operation.label"), type, ...rest } = props
 
-  const options = useMemo(
-    () => getOperationOptions(customFieldType, t),
-    [customFieldType, t],
-  )
+  const options = useMemo(() => getOperationOptions(type, t), [type, t])
 
   return <SelectField label={label} options={options} {...rest} />
 }

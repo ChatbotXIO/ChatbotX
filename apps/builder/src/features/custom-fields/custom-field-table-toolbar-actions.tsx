@@ -31,7 +31,6 @@ export function CustomFieldsTableToolbarActions({
         <>
           <DeleteFieldsDialog
             chatbotId={chatbotId}
-            fieldType="customField"
             onSuccess={() => table.toggleAllRowsSelected(false)}
             records={table
               .getFilteredSelectedRowModel()

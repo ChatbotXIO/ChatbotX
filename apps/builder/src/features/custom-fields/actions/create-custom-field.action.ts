@@ -1,7 +1,7 @@
 "use server"
 
 import { db, isDatabaseError } from "@aha.chat/database/client"
-import { fieldModel } from "@aha.chat/database/schema"
+import { customFieldModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -42,11 +42,10 @@ export const createCustomField = async (
 
   try {
     const newField = await db
-      .insert(fieldModel)
+      .insert(customFieldModel)
       .values({
         id: createId(),
         chatbotId,
-        fieldType: "customField",
         showInInbox: true,
         ...parsedInput,
       })
