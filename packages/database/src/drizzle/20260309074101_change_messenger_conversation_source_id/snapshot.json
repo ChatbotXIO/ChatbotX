@@ -48,7 +48,7 @@
       "schema": "public"
     },
     {
-      "values": ["botField", "customField"],
+      "values": ["accountField", "customField"],
       "name": "FieldType",
       "entityType": "enums",
       "schema": "public"
