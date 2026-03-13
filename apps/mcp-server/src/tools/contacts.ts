@@ -1,16 +1,26 @@
 import {
   addTagToContact,
   type ChatbotXAPI,
+  contactCustomFieldInputSchema,
   createContact,
+  createContactInputSchema,
   deleteContactCustomField,
+  deleteContactCustomFieldInputSchema,
   deleteTagFromContact,
   getContactById,
+  getContactByIdInputSchema,
   getContactCustomFieldValue,
   listContactsByCustomField,
+  listContactsByCustomFieldInputSchema,
   listCustomFieldsByContactId,
+  listCustomFieldsByContactIdInputSchema,
   listTagsByContactId,
+  listTagsByContactIdInputSchema,
   sendMessageToContact,
+  sendMessageToContactInputSchema,
   updateContactCustomFieldValue,
+  updateContactCustomFieldValueInputSchema,
+  updateContactTagInputSchema,
 } from "@chatbotx/public-apis"
 import { formatResult } from "../utils"
 
@@ -21,12 +31,11 @@ const getErrorMessage = (error: unknown): string => {
 export default {
   get_contact_by_id: {
     description: "Get a contact by its ID.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof getContactById>[1],
-    ) => {
+    inputSchema: getContactByIdInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await getContactById(api, input)
+        const validatedInput = getContactByIdInputSchema.parse(input)
+        const result = await getContactById(api, validatedInput)
 
         return {
           content: [
@@ -53,12 +62,11 @@ export default {
   },
   list_contacts_by_custom_field: {
     description: "Find contacts by custom field and value.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof listContactsByCustomField>[1],
-    ) => {
+    inputSchema: listContactsByCustomFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await listContactsByCustomField(api, input)
+        const validatedInput = listContactsByCustomFieldInputSchema.parse(input)
+        const result = await listContactsByCustomField(api, validatedInput)
 
         return {
           content: [
@@ -85,12 +93,11 @@ export default {
   },
   list_tags_by_contact_id: {
     description: "Get all tags for a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof listTagsByContactId>[1],
-    ) => {
+    inputSchema: listTagsByContactIdInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await listTagsByContactId(api, input)
+        const validatedInput = listTagsByContactIdInputSchema.parse(input)
+        const result = await listTagsByContactId(api, validatedInput)
 
         return {
           content: [
@@ -117,12 +124,11 @@ export default {
   },
   add_tag_to_contact: {
     description: "Add a tag to a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof addTagToContact>[1],
-    ) => {
+    inputSchema: updateContactTagInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await addTagToContact(api, input)
+        const validatedInput = updateContactTagInputSchema.parse(input)
+        const result = await addTagToContact(api, validatedInput)
 
         return {
           content: [
@@ -149,12 +155,11 @@ export default {
   },
   delete_tag_from_contact: {
     description: "Delete a tag from a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof deleteTagFromContact>[1],
-    ) => {
+    inputSchema: updateContactTagInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await deleteTagFromContact(api, input)
+        const validatedInput = updateContactTagInputSchema.parse(input)
+        const result = await deleteTagFromContact(api, validatedInput)
 
         return {
           content: [
@@ -181,12 +186,12 @@ export default {
   },
   list_custom_fields_by_contact_id: {
     description: "Get all custom fields of a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof listCustomFieldsByContactId>[1],
-    ) => {
+    inputSchema: listCustomFieldsByContactIdInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await listCustomFieldsByContactId(api, input)
+        const validatedInput =
+          listCustomFieldsByContactIdInputSchema.parse(input)
+        const result = await listCustomFieldsByContactId(api, validatedInput)
 
         return {
           content: [
@@ -213,12 +218,11 @@ export default {
   },
   get_contact_custom_field_value: {
     description: "Get a custom field value of a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof getContactCustomFieldValue>[1],
-    ) => {
+    inputSchema: contactCustomFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await getContactCustomFieldValue(api, input)
+        const validatedInput = contactCustomFieldInputSchema.parse(input)
+        const result = await getContactCustomFieldValue(api, validatedInput)
 
         return {
           content: [
@@ -245,12 +249,12 @@ export default {
   },
   update_contact_custom_field_value: {
     description: "Update a custom field value for a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof updateContactCustomFieldValue>[1],
-    ) => {
+    inputSchema: updateContactCustomFieldValueInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await updateContactCustomFieldValue(api, input)
+        const validatedInput =
+          updateContactCustomFieldValueInputSchema.parse(input)
+        const result = await updateContactCustomFieldValue(api, validatedInput)
 
         return {
           content: [
@@ -277,12 +281,11 @@ export default {
   },
   delete_contact_custom_field: {
     description: "Delete a custom field from a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof deleteContactCustomField>[1],
-    ) => {
+    inputSchema: deleteContactCustomFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await deleteContactCustomField(api, input)
+        const validatedInput = deleteContactCustomFieldInputSchema.parse(input)
+        const result = await deleteContactCustomField(api, validatedInput)
 
         return {
           content: [
@@ -309,12 +312,11 @@ export default {
   },
   send_message_to_contact: {
     description: "Send a message to a contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof sendMessageToContact>[1],
-    ) => {
+    inputSchema: sendMessageToContactInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await sendMessageToContact(api, input)
+        const validatedInput = sendMessageToContactInputSchema.parse(input)
+        const result = await sendMessageToContact(api, validatedInput)
 
         return {
           content: [
@@ -341,12 +343,11 @@ export default {
   },
   create_contact: {
     description: "Create a new contact.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof createContact>[1],
-    ) => {
+    inputSchema: createContactInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await createContact(api, input)
+        const validatedInput = createContactInputSchema.parse(input)
+        const result = await createContact(api, validatedInput)
 
         return {
           content: [

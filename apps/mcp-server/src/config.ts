@@ -4,9 +4,9 @@ import { env } from "./env"
 const trailingSlashRegex = /\/$/
 
 export const getChatbotXConfigFromEnv = (): ChatbotXConfig => {
-  const apiKey = env.API_KEY.trim()
-  const apiUrl = env.API_URL?.trim().replace(trailingSlashRegex, "")
-  const allowSelfSignedCert = env.ALLOW_SELF_SIGNED_CERT === "true"
+  const apiKey = env.CHATBOTX_API_KEY.trim()
+  const apiUrl = env.CHATBOTX_API_URL.trim().replace(trailingSlashRegex, "")
+  const allowSelfSignedCert = env.CHATBOTX_ALLOW_SELF_SIGNED_CERT === "true"
 
   return {
     apiKey,

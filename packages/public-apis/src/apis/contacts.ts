@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type { paths } from "../generated/chatbotx"
 import type { ChatbotXAPI } from "../lib/api"
 
@@ -51,6 +52,61 @@ type CreateContactBody =
   paths["/v1/contacts"]["post"]["requestBody"]["content"]["application/json"]
 type CreateContactResponse =
   paths["/v1/contacts"]["post"]["responses"]["200"]["content"]["application/json"]
+
+export const getContactByIdInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+})
+
+export const listContactsByCustomFieldInputSchema = z.object({
+  customFieldId: z.string().min(1, "customFieldId is required"),
+  value: z.string().min(1, "value is required"),
+})
+
+export const listTagsByContactIdInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+})
+
+export const updateContactTagInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+  tagId: z.string().min(1, "tagId is required"),
+})
+
+export const listCustomFieldsByContactIdInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+})
+
+export const contactCustomFieldInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+  customFieldId: z.string().min(1, "customFieldId is required"),
+})
+
+export const updateContactCustomFieldValueInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+  customFieldId: z.string().min(1, "customFieldId is required"),
+  value: z.string(),
+})
+
+export const deleteContactCustomFieldInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+  customFieldId: z.string().min(1, "customFieldId is required"),
+})
+
+export const sendMessageToContactInputSchema = z.object({
+  contactId: z.string().min(1, "contactId is required"),
+  channel: z.enum(["webchat", "messenger", "whatsapp", "zalo"]),
+  content: z.string().optional(),
+  files: z.array(z.unknown()).optional(),
+  flowId: z.string().optional(),
+  clientId: z.string().optional(),
+})
+
+export const createContactInputSchema = z.object({
+  phoneNumber: z.string().min(1, "phoneNumber is required"),
+  email: z.string().email(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  gender: z.enum(["unknown", "male", "female"]),
+})
 
 export const getContactById = (
   api: ChatbotXAPI,

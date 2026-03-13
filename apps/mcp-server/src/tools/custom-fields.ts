@@ -1,8 +1,11 @@
 import type { ChatbotXAPI } from "@chatbotx/public-apis"
 import {
   createCustomField,
+  createCustomFieldInputSchema,
   getCustomField,
   getCustomFieldByName,
+  getCustomFieldByNameInputSchema,
+  getCustomFieldInputSchema,
   listCustomFields,
 } from "@chatbotx/public-apis"
 import { formatResult } from "../utils"
@@ -43,12 +46,11 @@ export default {
   },
   create_custom_field: {
     description: "Create a new custom field with the given name.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof createCustomField>[1],
-    ) => {
+    inputSchema: createCustomFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await createCustomField(api, input)
+        const validatedInput = createCustomFieldInputSchema.parse(input)
+        const result = await createCustomField(api, validatedInput)
 
         return {
           content: [
@@ -75,12 +77,11 @@ export default {
   },
   get_custom_field: {
     description: "Get a custom field by its ID.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof getCustomField>[1],
-    ) => {
+    inputSchema: getCustomFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await getCustomField(api, input)
+        const validatedInput = getCustomFieldInputSchema.parse(input)
+        const result = await getCustomField(api, validatedInput)
 
         return {
           content: [
@@ -107,12 +108,11 @@ export default {
   },
   get_custom_field_by_name: {
     description: "Get a custom field by its name.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof getCustomFieldByName>[1],
-    ) => {
+    inputSchema: getCustomFieldByNameInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await getCustomFieldByName(api, input)
+        const validatedInput = getCustomFieldByNameInputSchema.parse(input)
+        const result = await getCustomFieldByName(api, validatedInput)
 
         return {
           content: [

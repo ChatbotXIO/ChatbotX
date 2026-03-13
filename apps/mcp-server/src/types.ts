@@ -1,4 +1,5 @@
 import type { ChatbotXAPI } from "@chatbotx/public-apis"
+import type { ZodType } from "zod"
 
 export interface McpContent {
   text: string
@@ -14,6 +15,7 @@ export interface McpToolResult {
 export interface ToolDefinition<TInput = Record<string, unknown>> {
   description: string
   execute: (api: ChatbotXAPI, input?: TInput) => Promise<McpToolResult>
+  inputSchema?: ZodType<TInput>
 }
 
 export type ToolRegistry = Record<string, ToolDefinition<unknown>>

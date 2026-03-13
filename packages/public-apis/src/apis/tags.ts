@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type { paths } from "../generated/chatbotx"
 import type { ChatbotXAPI } from "../lib/api"
 
@@ -29,6 +30,27 @@ type DeleteTagPathParams =
   paths["/v1/tags/{id}"]["delete"]["parameters"]["path"]
 type DeleteTagResponse =
   paths["/v1/tags/{id}"]["delete"]["responses"]["204"]["content"]["application/json"]
+
+export const createTagInputSchema = z.object({
+  name: z.string().min(1, "name is required"),
+})
+
+export const showTagInputSchema = z.object({
+  id: z.string().min(1, "id is required"),
+})
+
+export const showTagByNameInputSchema = z.object({
+  name: z.string().min(1, "name is required"),
+})
+
+export const updateTagInputSchema = z.object({
+  id: z.string().min(1, "id is required"),
+  name: z.string().min(1, "name is required"),
+})
+
+export const deleteTagInputSchema = z.object({
+  id: z.string().min(1, "id is required"),
+})
 
 export const listTags = (api: ChatbotXAPI): Promise<ListTagsResponse> => {
   return api.getClient().get("tags").json<ListTagsResponse>()

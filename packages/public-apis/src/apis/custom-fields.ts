@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type { paths } from "../generated/chatbotx"
 import type { ChatbotXAPI } from "../lib/api"
 
@@ -18,6 +19,26 @@ type GetCustomFieldByNamePathParams =
   paths["/v1/custom-fields/name/{name}"]["get"]["parameters"]["path"]
 type GetCustomFieldByNameResponse =
   paths["/v1/custom-fields/name/{name}"]["get"]["responses"]["200"]["content"]["application/json"]
+
+export const createCustomFieldInputSchema = z.object({
+  name: z.string().min(1, "name is required"),
+  customFieldType: z.enum([
+    "shortText",
+    "number",
+    "date",
+    "datetime",
+    "boolean",
+    "longText",
+  ]),
+})
+
+export const getCustomFieldInputSchema = z.object({
+  id: z.string().min(1, "id is required"),
+})
+
+export const getCustomFieldByNameInputSchema = z.object({
+  name: z.string().min(1, "name is required"),
+})
 
 export const listCustomFields = (
   api: ChatbotXAPI,

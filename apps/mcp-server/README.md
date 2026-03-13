@@ -41,6 +41,40 @@ pnpm start
 pnpm test
 ```
 
+## Transport Modes
+
+This server now supports two transport modes:
+
+- `stdio` (default): for local MCP clients that spawn the process
+- `sse`: HTTP + SSE endpoints for remote MCP usage
+- `both`: run `stdio` and `sse` together in one process
+
+Set mode with environment variable:
+
+```bash
+CHATBOTX_MCP_TRANSPORT=stdio
+# or
+CHATBOTX_MCP_TRANSPORT=sse
+# or
+CHATBOTX_MCP_TRANSPORT=both
+```
+
+When running in `sse` mode, endpoints are:
+
+- `POST /messages` for `initialize` (returns `mcp-session-id` header)
+- `POST /messages` with `mcp-session-id` header for subsequent messages
+- `GET /sse?sessionId=<id>` (or `mcp-session-id` header) to open/refresh SSE stream
+
+Default SSE server address:
+
+- `http://127.0.0.1:3333/sse`
+
+Example run:
+
+```bash
+CHATBOTX_MCP_TRANSPORT=sse CHATBOTX_MCP_PORT=3333 pnpm dev
+```
+
 ## Tool Coverage
 
 The server currently registers these tools.
@@ -150,6 +184,11 @@ src/
 | `CHATBOTX_API_KEY`                | ChatbotX API key                               | none                      | Yes      |
 | `CHATBOTX_API_URL`                | ChatbotX API base URL                          | `https://api.chatbotx.io` | No       |
 | `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Allow self-signed cert in TLS (`true`/`false`) | none                      | No       |
+| `CHATBOTX_MCP_TRANSPORT`          | MCP transport mode (`stdio`, `sse`, `both`)    | `stdio`                   | No       |
+| `CHATBOTX_MCP_HOST`               | Host for SSE HTTP server                       | `127.0.0.1`               | No       |
+| `CHATBOTX_MCP_PORT`               | Port for SSE HTTP server                       | `3333`                    | No       |
+| `CHATBOTX_MCP_SSE_PATH`           | SSE connection path                            | `/sse`                    | No       |
+| `CHATBOTX_MCP_MESSAGES_PATH`      | POST message path                              | `/messages`               | No       |
 
 ## Troubleshooting
 

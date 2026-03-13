@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type { paths } from "../generated/chatbotx"
 import type { ChatbotXAPI } from "../lib/api"
 
@@ -18,6 +19,19 @@ type DeleteBotFieldPathParams =
   paths["/v1/bot-fields/{id}"]["delete"]["parameters"]["path"]
 type DeleteBotFieldResponse =
   paths["/v1/bot-fields/{id}"]["delete"]["responses"]["200"]["content"]["application/json"]
+
+export const getBotFieldInputSchema = z.object({
+  id: z.string().min(1, "id is required"),
+})
+
+export const updateBotFieldInputSchema = z.object({
+  id: z.string().min(1, "id is required"),
+  value: z.string(),
+})
+
+export const deleteBotFieldInputSchema = z.object({
+  id: z.string().min(1, "id is required"),
+})
 
 export const getBotField = (
   api: ChatbotXAPI,

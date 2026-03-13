@@ -1,11 +1,16 @@
 import {
   type ChatbotXAPI,
   createTag,
+  createTagInputSchema,
   deleteTag,
+  deleteTagInputSchema,
   listTags,
   showTag,
   showTagByName,
+  showTagByNameInputSchema,
+  showTagInputSchema,
   updateTag,
+  updateTagInputSchema,
 } from "@chatbotx/public-apis"
 import { formatResult } from "../utils"
 
@@ -45,12 +50,11 @@ export default {
   },
   create_tag: {
     description: "Create a new tag with the given name.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof createTag>[1],
-    ) => {
+    inputSchema: createTagInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await createTag(api, input)
+        const validatedInput = createTagInputSchema.parse(input)
+        const result = await createTag(api, validatedInput)
 
         return {
           content: [
@@ -77,9 +81,11 @@ export default {
   },
   get_tag: {
     description: "Get a tag by its ID.",
-    execute: async (api: ChatbotXAPI, input: Parameters<typeof showTag>[1]) => {
+    inputSchema: showTagInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await showTag(api, input)
+        const validatedInput = showTagInputSchema.parse(input)
+        const result = await showTag(api, validatedInput)
 
         return {
           content: [
@@ -106,12 +112,11 @@ export default {
   },
   get_tag_by_name: {
     description: "Get a tag by its name.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof showTagByName>[1],
-    ) => {
+    inputSchema: showTagByNameInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await showTagByName(api, input)
+        const validatedInput = showTagByNameInputSchema.parse(input)
+        const result = await showTagByName(api, validatedInput)
 
         return {
           content: [
@@ -138,12 +143,11 @@ export default {
   },
   update_tag: {
     description: "Update the name of an existing tag.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof updateTag>[1],
-    ) => {
+    inputSchema: updateTagInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await updateTag(api, input)
+        const validatedInput = updateTagInputSchema.parse(input)
+        const result = await updateTag(api, validatedInput)
 
         return {
           content: [
@@ -170,12 +174,11 @@ export default {
   },
   delete_tag: {
     description: "Delete a tag by its ID.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof deleteTag>[1],
-    ) => {
+    inputSchema: deleteTagInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        await deleteTag(api, input)
+        const validatedInput = deleteTagInputSchema.parse(input)
+        await deleteTag(api, validatedInput)
 
         return {
           content: [

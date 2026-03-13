@@ -1,8 +1,11 @@
 import {
   type ChatbotXAPI,
   deleteBotField,
+  deleteBotFieldInputSchema,
   getBotField,
+  getBotFieldInputSchema,
   updateBotField,
+  updateBotFieldInputSchema,
 } from "@chatbotx/public-apis"
 import { formatResult } from "../utils"
 
@@ -13,12 +16,11 @@ const getErrorMessage = (error: unknown): string => {
 export default {
   get_bot_field: {
     description: "Get a bot field by its ID.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof getBotField>[1],
-    ) => {
+    inputSchema: getBotFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await getBotField(api, input)
+        const validatedInput = getBotFieldInputSchema.parse(input)
+        const result = await getBotField(api, validatedInput)
 
         return {
           content: [
@@ -45,12 +47,11 @@ export default {
   },
   update_bot_field: {
     description: "Update a bot field value by ID.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof updateBotField>[1],
-    ) => {
+    inputSchema: updateBotFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await updateBotField(api, input)
+        const validatedInput = updateBotFieldInputSchema.parse(input)
+        const result = await updateBotField(api, validatedInput)
 
         return {
           content: [
@@ -77,12 +78,11 @@ export default {
   },
   delete_bot_field: {
     description: "Delete a bot field by ID.",
-    execute: async (
-      api: ChatbotXAPI,
-      input: Parameters<typeof deleteBotField>[1],
-    ) => {
+    inputSchema: deleteBotFieldInputSchema,
+    execute: async (api: ChatbotXAPI, input: unknown) => {
       try {
-        const result = await deleteBotField(api, input)
+        const validatedInput = deleteBotFieldInputSchema.parse(input)
+        const result = await deleteBotField(api, validatedInput)
 
         return {
           content: [
