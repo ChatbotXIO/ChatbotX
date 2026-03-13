@@ -7,13 +7,9 @@ import {
 } from "@chatbotx/public-apis"
 import { formatResult } from "../utils"
 
-type CustomFieldType =
-  | "shortText"
-  | "number"
-  | "date"
-  | "datetime"
-  | "boolean"
-  | "longText"
+const getErrorMessage = (error: unknown): string => {
+  return error instanceof Error ? error.message : "Unknown error"
+}
 
 export default {
   list_custom_fields: {
@@ -26,12 +22,12 @@ export default {
           content: [
             {
               type: "text" as const,
-              text: `Custom field list:\n${formatResult(result.data)}`,
+              text: `Custom field list:\n${formatResult(result)}`,
             },
           ],
         }
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error"
+        const message = getErrorMessage(error)
 
         return {
           isError: true,
@@ -49,13 +45,10 @@ export default {
     description: "Create a new custom field with the given name.",
     execute: async (
       api: ChatbotXAPI,
-      {
-        name,
-        customFieldType,
-      }: { name: string; customFieldType: CustomFieldType },
+      input: Parameters<typeof createCustomField>[1],
     ) => {
       try {
-        const result = await createCustomField(api, { name, customFieldType })
+        const result = await createCustomField(api, input)
 
         return {
           content: [
@@ -66,7 +59,7 @@ export default {
           ],
         }
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error"
+        const message = getErrorMessage(error)
 
         return {
           isError: true,
@@ -82,9 +75,12 @@ export default {
   },
   get_custom_field: {
     description: "Get a custom field by its ID.",
-    execute: async (api: ChatbotXAPI, { id }: { id: string }) => {
+    execute: async (
+      api: ChatbotXAPI,
+      input: Parameters<typeof getCustomField>[1],
+    ) => {
       try {
-        const result = await getCustomField(api, id)
+        const result = await getCustomField(api, input)
 
         return {
           content: [
@@ -95,7 +91,7 @@ export default {
           ],
         }
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error"
+        const message = getErrorMessage(error)
 
         return {
           isError: true,
@@ -111,9 +107,12 @@ export default {
   },
   get_custom_field_by_name: {
     description: "Get a custom field by its name.",
-    execute: async (api: ChatbotXAPI, { name }: { name: string }) => {
+    execute: async (
+      api: ChatbotXAPI,
+      input: Parameters<typeof getCustomFieldByName>[1],
+    ) => {
       try {
-        const result = await getCustomFieldByName(api, name)
+        const result = await getCustomFieldByName(api, input)
 
         return {
           content: [
@@ -124,7 +123,7 @@ export default {
           ],
         }
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error"
+        const message = getErrorMessage(error)
 
         return {
           isError: true,

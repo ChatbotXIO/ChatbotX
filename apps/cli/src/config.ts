@@ -96,6 +96,12 @@ export const getConfig = (overrides?: ConfigOptions): ChatbotXConfig => {
     )
   }
 
+  if (!apiUrl) {
+    throw new Error(
+      "Missing API URL. Run: chatbotx config set --apiUrl your_api_url",
+    )
+  }
+
   return {
     apiKey,
     apiUrl,

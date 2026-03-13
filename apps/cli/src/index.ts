@@ -1,41 +1,65 @@
 import type { Argv } from "yargs"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
+import {
+  type BotFieldCommandName,
+  botFieldCommands,
+  executeBotFieldCommand,
+} from "./commands/bot-fields"
+import {
+  type BroadcastCommandName,
+  broadcastCommands,
+  executeBroadcastCommand,
+} from "./commands/broadcasts"
 import { setConfig } from "./commands/config"
 import {
   type ContactCommandName,
-  type ContactCommandParams,
   contactCommands,
   executeContactCommand,
 } from "./commands/contacts"
 import {
   type CustomFieldCommandName,
-  type CustomFieldCommandParams,
   customFieldCommands,
   executeCustomFieldCommand,
 } from "./commands/custom-fields"
 import {
+  executeFlowCommand,
+  type FlowCommandName,
+  flowCommands,
+} from "./commands/flows"
+import {
   executeTagCommand,
   type TagCommandName,
-  type TagCommandParams,
   tagCommands,
 } from "./commands/tags"
 import { type CliCommand, toCliCommands } from "./commands/utils"
 import type { ConfigOptions } from "./config"
 
 const allCommands: Record<string, CliCommand> = {
-  ...toCliCommands<TagCommandName, TagCommandParams>(
-    tagCommands,
-    executeTagCommand,
-  ),
-  ...toCliCommands<CustomFieldCommandName, CustomFieldCommandParams>(
-    customFieldCommands,
-    executeCustomFieldCommand,
-  ),
-  ...toCliCommands<ContactCommandName, ContactCommandParams>(
-    contactCommands,
-    executeContactCommand,
-  ),
+  ...toCliCommands<
+    BroadcastCommandName,
+    NonNullable<Parameters<typeof executeBroadcastCommand>[1]>
+  >(broadcastCommands, executeBroadcastCommand),
+  ...toCliCommands<
+    FlowCommandName,
+    NonNullable<Parameters<typeof executeFlowCommand>[1]>
+  >(flowCommands, executeFlowCommand),
+  ...toCliCommands<
+    BotFieldCommandName,
+    NonNullable<Parameters<typeof executeBotFieldCommand>[1]>
+  >(botFieldCommands, executeBotFieldCommand),
+  ...toCliCommands<
+    TagCommandName,
+    NonNullable<Parameters<typeof executeTagCommand>[1]>
+  >(tagCommands, executeTagCommand),
+  ...toCliCommands<
+    CustomFieldCommandName,
+    NonNullable<Parameters<typeof executeCustomFieldCommand>[1]>
+  >(customFieldCommands, executeCustomFieldCommand),
+  ...toCliCommands<
+    ContactCommandName,
+    NonNullable<Parameters<typeof executeContactCommand>[1]>
+  >(contactCommands, executeContactCommand),
 }
 
 const groupCommands = (

@@ -1,217 +1,165 @@
 # MCP Server - ChatbotX
 
-MCP (Model Context Protocol) Server for ChatbotX API management. Provides tools to manage tags and custom fields through an MCP-compliant interface.
+MCP (Model Context Protocol) Server for ChatbotX API management. This server registers tools for tags, custom fields, contacts, bot fields, flows, and broadcasts.
 
-## 📋 Prerequisites
+## Prerequisites
 
-- **Node.js**: v20+ recommended
-- **pnpm**: v10.30.3 or higher
-- **Environment Variables**: API_KEY, API_URL (optional)
+- Node.js v20+ recommended
+- pnpm v10.30.3+
+- Environment variable: `CHATBOTX_API_KEY`
 
-## 🚀 Installation
+## Installation
 
-1. **Install dependencies**:
+1. Install dependencies:
 
 ```bash
 pnpm install
 ```
 
-2. **Create `.env` file** (optional, for custom API configuration):
+2. Configure environment (example):
 
 ```bash
 # .env
-API_KEY=your-api-key-here
-API_URL=https://your-api-url.com/api/v1
-ALLOW_SELF_SIGNED_CERT=true  # Only for development
+CHATBOTX_API_KEY=your-api-key-here
+CHATBOTX_API_URL=https://api.chatbotx.io
+CHATBOTX_ALLOW_SELF_SIGNED_CERT=true
 ```
 
-## 📖 Available Scripts
-
-### Development
+## Available Scripts
 
 ```bash
-# Run the MCP server in development mode (with TypeScript)
+# Development (watch mode)
 pnpm dev
-```
 
-### Build
-
-```bash
-# Compile TypeScript to JavaScript
+# Build
 pnpm build
-```
 
-### Production
-
-```bash
-# Run the compiled server
+# Run compiled server
 pnpm start
-```
 
-### Testing
-
-```bash
-# Test all tools with the test script
+# Run test script
 pnpm test
 ```
 
-## 🧪 Testing Tools
+## Tool Coverage
 
-### Quick Test
-
-Run all tools at once:
-
-```bash
-pnpm test
-```
-
-This executes `src/test-tools.ts` and tests:
-
-- ✅ `list_tags` - Get all tags
-- ✅ `create_tag` - Create a new tag
-- ✅ `list_custom_fields` - Get all custom fields
-- ✅ `create_custom_field` - Create a new custom field
-
-### Expected Output
-
-```
-🧪 Testing MCP Server Tools...
-
-📋 Testing list_tags...
-✅ list_tags result: { content: [...] }
-
----
-
-📋 Testing list_custom_fields...
-✅ list_custom_fields result: { content: [...] }
-
----
-
-✏️ Testing create_tag...
-✅ create_tag result: { content: [...] }
-
----
-
-✏️ Testing create_custom_field...
-✅ create_custom_field result: { content: [...] }
-```
-
-## 📂 Project Structure
-
-```
-src/
-├── index.ts              # Main MCP server entry point
-├── types.ts              # Shared type definitions
-├── tools/
-│   ├── tag.ts            # Tag management tools
-│   └── custom-fields.ts  # Custom field management tools
-├── common.ts             # Utility functions
-└── test-tools.ts         # Testing script for all tools
-```
-
-## 🛠️ Tools Documentation
+The server currently registers these tools.
 
 ### Tags
 
-- **`list_tags`**: Get a list of all tags in the system
-  - No parameters required
-  - Returns: Array of tag objects with `id` and `name`
-
-- **`create_tag`**: Create a new tag with the given name
-  - Parameters: `{ name: string }`
-  - Returns: Created tag object
+- `list_tags`
+  - Input: none
+- `create_tag`
+  - Input: `{ name: string }`
+- `get_tag`
+  - Input: `{ id: string }`
+- `get_tag_by_name`
+  - Input: `{ name: string }`
+- `update_tag`
+  - Input: `{ id: string; name: string }`
+- `delete_tag`
+  - Input: `{ id: string }`
 
 ### Custom Fields
 
-- **`list_custom_fields`**: Get a list of all custom fields in the system
-  - No parameters required
-  - Returns: Array of custom field objects
+- `list_custom_fields`
+  - Input: none
+- `create_custom_field`
+  - Input: `{ name: string; customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText" }`
+- `get_custom_field`
+  - Input: `{ id: string }`
+- `get_custom_field_by_name`
+  - Input: `{ name: string }`
 
-- **`create_custom_field`**: Create a new custom field
-  - Parameters: `{ name: string; customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText" }`
-  - Returns: Created custom field object
+### Contacts
 
-## 🔧 Environment Variables
+- `get_contact_by_id`
+  - Input: `{ contactId: string }`
+- `list_contacts_by_custom_field`
+  - Input: `{ customFieldId: string; value: string }`
+- `list_tags_by_contact_id`
+  - Input: `{ contactId: string }`
+- `add_tag_to_contact`
+  - Input: `{ contactId: string; tagId: string }`
+- `delete_tag_from_contact`
+  - Input: `{ contactId: string; tagId: string }`
+- `list_custom_fields_by_contact_id`
+  - Input: `{ contactId: string }`
+- `get_contact_custom_field_value`
+  - Input: `{ contactId: string; customFieldId: string }`
+- `update_contact_custom_field_value`
+  - Input: `{ contactId: string; customFieldId: string; value: string }`
+- `delete_contact_custom_field`
+  - Input: `{ contactId: string; customFieldId: string }`
+- `send_message_to_contact`
+  - Input: `{ contactId: string; channel: "webchat" | "messenger" | "whatsapp" | "zalo"; content?: string; files?: unknown[]; flowId?: string; clientId?: string }`
+- `create_contact`
+  - Input: `{ phoneNumber: string; email: string; gender: "male" | "female" | "unknown"; firstName?: string; lastName?: string }`
 
-| Variable                 | Description                               | Default                        | Required               |
-| ------------------------ | ----------------------------------------- | ------------------------------ | ---------------------- |
-| `API_KEY`                | ChatbotX API authentication key           | `test-api-key`                 | ⚠️ Yes (in production) |
-| `API_URL`                | ChatbotX API base URL                     | `http://localhost:3000/api/v1` | No                     |
-| `ALLOW_SELF_SIGNED_CERT` | Allow self-signed certificates (dev only) | `true`                         | No                     |
+### Bot Fields
 
-## 📝 Example Usage
+- `get_bot_field`
+  - Input: `{ id: string }`
+- `update_bot_field`
+  - Input: `{ id: string; value: string }`
+- `delete_bot_field`
+  - Input: `{ id: string }`
 
-### Via Test Script
+### Flows
 
-```bash
-pnpm test
+- `list_flows`
+  - Input: none
+
+### Broadcasts
+
+- `list_broadcasts`
+  - Input: none
+
+## Test Script Notes
+
+`pnpm test` currently runs `src/test-tools.ts` and only exercises:
+
+- `list_tags`
+- `list_custom_fields`
+
+If you need broader smoke coverage, extend `src/test-tools.ts` with the additional tools listed above.
+
+## Project Structure
+
+```text
+src/
+├── index.ts
+├── env.ts
+├── config.ts
+├── utils.ts
+├── types.ts
+├── test-tools.ts
+└── tools/
+    ├── tag.ts
+    ├── custom-fields.ts
+    ├── contacts.ts
+    ├── bot-fields.ts
+    ├── flows.ts
+    └── broadcasts.ts
 ```
 
-### Via TypeScript
+## Environment Variables
 
-```typescript
-import { ChatbotXAPI } from "@chatbotx/public-apis";
-import tags from "./src/tools/tag";
+| Variable                          | Description                                    | Default                   | Required |
+| --------------------------------- | ---------------------------------------------- | ------------------------- | -------- |
+| `CHATBOTX_API_KEY`                | ChatbotX API key                               | none                      | Yes      |
+| `CHATBOTX_API_URL`                | ChatbotX API base URL                          | `https://api.chatbotx.io` | No       |
+| `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Allow self-signed cert in TLS (`true`/`false`) | none                      | No       |
 
-const api = new ChatbotXAPI("your-api-key");
-const result = await tags.list_tags.execute(api);
-console.log(result);
-```
+## Troubleshooting
 
-## 🐛 Troubleshooting
+### API connection errors
 
-### Error: API connection failed
+- Verify `CHATBOTX_API_KEY`
+- Verify `CHATBOTX_API_URL`
+- For local/self-signed TLS, set `CHATBOTX_ALLOW_SELF_SIGNED_CERT=true`
 
-- Check if `API_URL` is correct
-- Verify `API_KEY` is valid
-- For self-signed certificates, ensure `ALLOW_SELF_SIGNED_CERT=true`
+### Build issues
 
-### Build errors with TypeScript
-
-- Run `pnpm build` to see detailed TypeScript errors
-- Check TypeScript version: `pnpm ls typescript`
-
-## 📚 Technology Stack
-
-- **Runtime**: Node.js with TypeScript
-- **Type Safety**: TypeScript with strict mode
-- **Framework**: Model Context Protocol SDK
-- **Package Manager**: pnpm
-- **Development**: tsx for TypeScript execution
-
-## 📦 Dependencies
-
-- `@chatbotx/public-apis`: ChatbotX API client
-- `@modelcontextprotocol/sdk`: MCP framework
-- `dotenv`: Environment configuration
-- `zod`: Schema validation
-
-## 🚢 Deployment
-
-### Build for Production
-
-```bash
-pnpm build
-```
-
-### Run Production Server
-
-```bash
-pnpm start
-```
-
-### Docker (if available)
-
-Check the `docker/` folder for Dockerfile configuration.
-
-## 📝 License
-
-ISC
-
-## 👤 Author
-
-ChatbotX Team
-
----
-
-**Last Updated**: March 12, 2026
+- Run `pnpm build` for detailed errors
+- Check TypeScript install in workspace

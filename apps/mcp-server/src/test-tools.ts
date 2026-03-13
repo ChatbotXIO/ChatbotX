@@ -30,38 +30,6 @@ async function testTools() {
     const message = error instanceof Error ? error.message : String(error)
     console.log("❌ list_custom_fields error:", message)
   }
-
-  console.log("\n---\n")
-
-  // Test create_tag
-  console.log("✏️ Testing create_tag...")
-  try {
-    const createTagResult = await tags.create_tag.execute(api, {
-      name: `Test Tag ${Date.now()}`,
-    })
-    console.log("✅ create_tag result:", createTagResult)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
-    console.log("❌ create_tag error:", message)
-  }
-
-  console.log("\n---\n")
-
-  // Test create_custom_field
-  console.log("✏️ Testing create_custom_field...")
-  try {
-    const createFieldResult = await customFields.create_custom_field.execute(
-      api,
-      {
-        name: `Test Field ${Date.now()}`,
-        customFieldType: "shortText",
-      },
-    )
-    console.log("✅ create_custom_field result:", createFieldResult)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
-    console.log("❌ create_custom_field error:", message)
-  }
 }
 
 testTools()

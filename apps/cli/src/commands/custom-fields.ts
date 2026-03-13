@@ -18,12 +18,16 @@ const CUSTOM_FIELD_TYPES = [
 ] as const
 
 type CustomFieldType = (typeof CUSTOM_FIELD_TYPES)[number]
-type CustomFieldParamKey = "id" | "name" | "customFieldType"
-type CustomFieldCommandArg = CommandArg<CustomFieldParamKey>
 
-export type CustomFieldCommandParams = Partial<
-  Record<CustomFieldParamKey, string>
+type CustomFieldCommandParams = Partial<
+  Parameters<typeof createCustomFieldApi>[1] &
+    Parameters<typeof getCustomFieldApi>[1] &
+    Parameters<typeof getCustomFieldByNameApi>[1]
 >
+
+type CustomFieldParamKey = keyof Required<CustomFieldCommandParams>
+
+type CustomFieldCommandArg = CommandArg<CustomFieldParamKey>
 
 type CustomFieldCommand = {
   name: string
@@ -76,7 +80,7 @@ export const customFieldCommands = {
       },
       {
         key: "customFieldType",
-        description: "Custom field type",
+        description: `Custom field type (${CUSTOM_FIELD_TYPES.join(", ")})`,
         required: true,
       },
     ],
@@ -87,7 +91,7 @@ export const customFieldCommands = {
       }),
   },
   "custom-fields:show": {
-    name: "Show custom field details",
+    name: "Get custom field by ID",
     args: [
       {
         key: "id",
@@ -96,10 +100,10 @@ export const customFieldCommands = {
       },
     ],
     execute: (api: ChatbotXAPI, params: CustomFieldCommandParams) =>
-      getCustomFieldApi(api, params.id ?? ""),
+      getCustomFieldApi(api, { id: params.id ?? "" }),
   },
   "custom-fields:show-by-name": {
-    name: "Show custom field details by name",
+    name: "Get custom field by name",
     args: [
       {
         key: "name",
@@ -108,6 +112,6 @@ export const customFieldCommands = {
       },
     ],
     execute: (api: ChatbotXAPI, params: CustomFieldCommandParams) =>
-      getCustomFieldByNameApi(api, params.name ?? ""),
+      getCustomFieldByNameApi(api, { name: params.name ?? "" }),
   },
 } satisfies Record<string, CustomFieldCommand>

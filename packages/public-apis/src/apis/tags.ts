@@ -27,6 +27,8 @@ type UpdateTagResponse =
 
 type DeleteTagPathParams =
   paths["/v1/tags/{id}"]["delete"]["parameters"]["path"]
+type DeleteTagResponse =
+  paths["/v1/tags/{id}"]["delete"]["responses"]["204"]["content"]["application/json"]
 
 export const listTags = (api: ChatbotXAPI): Promise<ListTagsResponse> => {
   return api.getClient().get("tags").json<ListTagsResponse>()
@@ -78,11 +80,9 @@ export const updateTag = (
 export const deleteTag = (
   api: ChatbotXAPI,
   input: DeleteTagPathParams,
-): Promise<unknown> => {
+): Promise<DeleteTagResponse> => {
   return api
     .getClient()
-    .delete(`tags/${input.id}`, {
-      json: {},
-    })
-    .json()
+    .delete(`tags/${input.id}`, { json: {} })
+    .json<DeleteTagResponse>()
 }

@@ -10,17 +10,24 @@ import {
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 
-type TagParamKey = "id" | "name"
+type TagCommandParams = Partial<
+  Parameters<typeof createTagApi>[1] &
+    Parameters<typeof showTagApi>[1] &
+    Parameters<typeof showTagByNameApi>[1] &
+    Parameters<typeof updateTagApi>[1] &
+    Parameters<typeof deleteTagApi>[1]
+>
+
+type TagParamKey = keyof Required<TagCommandParams>
 
 type TagCommandArg = CommandArg<TagParamKey>
-
-export type TagCommandParams = Partial<Record<TagParamKey, string>>
 
 type TagCommand = {
   name: string
   args: TagCommandArg[]
   execute: (api: ChatbotXAPI, params: TagCommandParams) => Promise<unknown>
 }
+
 export type TagCommandName = keyof typeof tagCommands
 
 export const executeTagCommand = async (
@@ -49,10 +56,10 @@ export const tagCommands = {
       },
     ],
     execute: (api: ChatbotXAPI, params: TagCommandParams) =>
-      createTagApi(api, params.name ?? ""),
+      createTagApi(api, { name: params.name ?? "" }),
   },
   "tags:show": {
-    name: "Show tag details",
+    name: "Get tag by ID",
     args: [
       {
         key: "id",
@@ -61,10 +68,10 @@ export const tagCommands = {
       },
     ],
     execute: (api: ChatbotXAPI, params: TagCommandParams) =>
-      showTagApi(api, params.id ?? ""),
+      showTagApi(api, { id: params.id ?? "" }),
   },
   "tags:show-by-name": {
-    name: "Show tag details by name",
+    name: "Get tag by name",
     args: [
       {
         key: "name",
@@ -73,7 +80,7 @@ export const tagCommands = {
       },
     ],
     execute: (api: ChatbotXAPI, params: TagCommandParams) =>
-      showTagByNameApi(api, params.name ?? ""),
+      showTagByNameApi(api, { name: params.name ?? "" }),
   },
   "tags:update": {
     name: "Update a tag",
@@ -90,7 +97,7 @@ export const tagCommands = {
       },
     ],
     execute: (api: ChatbotXAPI, params: TagCommandParams) =>
-      updateTagApi(api, params.id ?? "", params.name ?? ""),
+      updateTagApi(api, { id: params.id ?? "", name: params.name ?? "" }),
   },
   "tags:delete": {
     name: "Delete a tag",
@@ -102,6 +109,6 @@ export const tagCommands = {
       },
     ],
     execute: (api: ChatbotXAPI, params: TagCommandParams) =>
-      deleteTagApi(api, params.id ?? ""),
+      deleteTagApi(api, { id: params.id ?? "" }),
   },
 } satisfies Record<string, TagCommand>

@@ -1,26 +1,34 @@
 import type { paths } from "../generated/chatbotx"
 import type { ChatbotXAPI } from "../lib/api"
-import type {
-  Contact,
-  FindContactRequest,
-  FindContactsByCustomFieldRequest,
-} from "../schemas/contact"
-import type { ContactCustomField } from "../schemas/custom-field"
-import type { Tag } from "../schemas/tag"
 
-type ListTagsByContactIdInput =
+type GetContactByIdPathParams =
+  paths["/v1/contacts/{contactId}"]["get"]["parameters"]["path"]
+type GetContactByIdResponse =
+  paths["/v1/contacts/{contactId}"]["get"]["responses"]["200"]["content"]["application/json"]
+
+type ListContactsByCustomFieldQueryParams =
+  paths["/v1/contacts/find-by-custom-field"]["get"]["parameters"]["query"]
+type ListContactsByCustomFieldResponse =
+  paths["/v1/contacts/find-by-custom-field"]["get"]["responses"]["200"]["content"]["application/json"]
+
+type ListTagsByContactIdPathParams =
   paths["/v1/contacts/{contactId}/tags"]["get"]["parameters"]["path"]
+type ListTagsByContactIdResponse =
+  paths["/v1/contacts/{contactId}/tags"]["get"]["responses"]["200"]["content"]["application/json"]
 
 type UpdateContactTagPathParams =
   paths["/v1/contacts/{contactId}/tags/{tagId}"]["post"]["parameters"]["path"]
 type UpdateContactTagInput = UpdateContactTagPathParams
 
-type ListCustomFieldsByContactIdInput =
+type ListCustomFieldsByContactIdPathParams =
   paths["/v1/contacts/{contactId}/custom-fields"]["get"]["parameters"]["path"]
+type ListCustomFieldsByContactIdResponse =
+  paths["/v1/contacts/{contactId}/custom-fields"]["get"]["responses"]["200"]["content"]["application/json"]
 
 type ContactCustomFieldPathParams =
   paths["/v1/contacts/{contactId}/custom-fields/{customFieldId}"]["get"]["parameters"]["path"]
-type ContactCustomFieldInput = ContactCustomFieldPathParams
+type ContactCustomFieldResponse =
+  paths["/v1/contacts/{contactId}/custom-fields/{customFieldId}"]["get"]["responses"]["200"]["content"]["application/json"]
 
 type UpdateContactCustomFieldValuePathParams =
   paths["/v1/contacts/{contactId}/custom-fields/{customFieldId}"]["post"]["parameters"]["path"]
@@ -29,6 +37,9 @@ type UpdateContactCustomFieldValueBody =
 type UpdateContactCustomFieldValueInput =
   UpdateContactCustomFieldValuePathParams & UpdateContactCustomFieldValueBody
 
+type DeleteContactCustomFieldPathParams =
+  paths["/v1/contacts/{contactId}/custom-fields/{customFieldId}"]["delete"]["parameters"]["path"]
+
 type SendMessageToContactPathParams =
   paths["/v1/contacts/{contactId}/messages"]["post"]["parameters"]["path"]
 type SendMessageToContactBody =
@@ -36,20 +47,25 @@ type SendMessageToContactBody =
 type SendMessageToContactInput = SendMessageToContactPathParams &
   SendMessageToContactBody
 
-type CreateContactInput =
+type CreateContactBody =
   paths["/v1/contacts"]["post"]["requestBody"]["content"]["application/json"]
+type CreateContactResponse =
+  paths["/v1/contacts"]["post"]["responses"]["200"]["content"]["application/json"]
 
 export const getContactById = (
   api: ChatbotXAPI,
-  input: FindContactRequest,
-): Promise<Contact> => {
-  return api.getClient().get(`contacts/${input.id}`).json<Contact>()
+  input: GetContactByIdPathParams,
+): Promise<GetContactByIdResponse> => {
+  return api
+    .getClient()
+    .get(`contacts/${input.contactId}`)
+    .json<GetContactByIdResponse>()
 }
 
 export const listContactsByCustomField = (
   api: ChatbotXAPI,
-  input: FindContactsByCustomFieldRequest,
-): Promise<{ data: Contact[] }> => {
+  input: ListContactsByCustomFieldQueryParams,
+): Promise<ListContactsByCustomFieldResponse> => {
   return api
     .getClient()
     .get("contacts/find-by-custom-field", {
@@ -58,17 +74,17 @@ export const listContactsByCustomField = (
         value: input.value,
       },
     })
-    .json<{ data: Contact[] }>()
+    .json<ListContactsByCustomFieldResponse>()
 }
 
 export const listTagsByContactId = (
   api: ChatbotXAPI,
-  input: ListTagsByContactIdInput,
-): Promise<{ data: Tag[] }> => {
+  input: ListTagsByContactIdPathParams,
+): Promise<ListTagsByContactIdResponse> => {
   return api
     .getClient()
     .get(`contacts/${input.contactId}/tags`)
-    .json<{ data: Tag[] }>()
+    .json<ListTagsByContactIdResponse>()
 }
 
 export const addTagToContact = (
@@ -93,22 +109,22 @@ export const deleteTagFromContact = (
 
 export const listCustomFieldsByContactId = (
   api: ChatbotXAPI,
-  input: ListCustomFieldsByContactIdInput,
-): Promise<{ data: ContactCustomField[] }> => {
+  input: ListCustomFieldsByContactIdPathParams,
+): Promise<ListCustomFieldsByContactIdResponse> => {
   return api
     .getClient()
     .get(`contacts/${input.contactId}/custom-fields`)
-    .json<{ data: ContactCustomField[] }>()
+    .json<ListCustomFieldsByContactIdResponse>()
 }
 
 export const getContactCustomFieldValue = (
   api: ChatbotXAPI,
-  input: ContactCustomFieldInput,
-): Promise<ContactCustomField> => {
+  input: ContactCustomFieldPathParams,
+): Promise<ContactCustomFieldResponse> => {
   return api
     .getClient()
     .get(`contacts/${input.contactId}/custom-fields/${input.customFieldId}`)
-    .json<ContactCustomField>()
+    .json<ContactCustomFieldResponse>()
 }
 
 export const updateContactCustomFieldValue = (
@@ -125,7 +141,7 @@ export const updateContactCustomFieldValue = (
 
 export const deleteContactCustomField = (
   api: ChatbotXAPI,
-  input: ContactCustomFieldInput,
+  input: DeleteContactCustomFieldPathParams,
 ): Promise<unknown> => {
   return api
     .getClient()
@@ -158,12 +174,12 @@ export const sendMessageToContact = (
 
 export const createContact = (
   api: ChatbotXAPI,
-  input: CreateContactInput,
-): Promise<Contact> => {
+  input: CreateContactBody,
+): Promise<CreateContactResponse> => {
   return api
     .getClient()
     .post("contacts", {
       json: input,
     })
-    .json<Contact>()
+    .json<CreateContactResponse>()
 }
