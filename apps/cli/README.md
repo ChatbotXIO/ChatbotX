@@ -123,7 +123,7 @@ chatbotx custom-fields show-by-name --name <fieldName>
 ### Get contact by ID
 
 ```bash
-chatbotx contacts get-by-id --id <contactId>
+chatbotx contacts show --contactId <contactId>
 ```
 
 ### List contacts by custom field value
@@ -132,56 +132,99 @@ chatbotx contacts get-by-id --id <contactId>
 chatbotx contacts list-by-custom-field --customFieldId <customFieldId> --customFieldValue <value>
 ```
 
-### List tags of a contact by contact ID
+### List tags of a contact
 
 ```bash
-chatbotx contacts list-tags-by-id --id <contactId>
+chatbotx contacts list-tags --contactId <contactId>
 ```
 
 ### Add a tag to a contact
 
 ```bash
-chatbotx contacts add-tag --id <contactId> --tagId <tagId>
+chatbotx contacts add-tag --contactId <contactId> --tagId <tagId>
 ```
 
 ### Delete a tag from a contact
 
 ```bash
-chatbotx contacts delete-tag --id <contactId> --tagId <tagId>
+chatbotx contacts delete-tag --contactId <contactId> --tagId <tagId>
 ```
 
-### List custom fields of a contact by contact ID
+### List custom fields of a contact
 
 ```bash
-chatbotx contacts list-custom-fields-by-id --id <contactId>
+chatbotx contacts list-custom-fields --contactId <contactId>
 ```
 
 ### Get a contact's custom field value
 
 ```bash
-chatbotx contacts get-custom-field-value --id <contactId> --customFieldId <customFieldId>
+chatbotx contacts get-custom-field-value --contactId <contactId> --customFieldId <customFieldId>
 ```
 
 ### Update a contact custom field value
 
 ```bash
-chatbotx contacts update-custom-field-value --id <contactId> --customFieldId <customFieldId> --value <customFieldValue>
+chatbotx contacts update-custom-field-value --contactId <contactId> --customFieldId <customFieldId> --value <customFieldValue>
 ```
 
 ### Delete a contact custom field
 
 ```bash
-chatbotx contacts delete-custom-field --id <contactId> --customFieldId <customFieldId>
+chatbotx contacts delete-custom-field --contactId <contactId> --customFieldId <customFieldId>
 ```
 
 ### Send a message to a contact
 
 ```bash
-chatbotx contacts send-message --id <contactId> --channel <channel> --content <message> --files <file1,file2> --flowId <flowId> --clientId <clientId>
+chatbotx contacts send-message --contactId <contactId> --channel <channel> --content <message> --files <file1,file2> --flowId <flowId> --clientId <clientId>
 ```
+
+Valid `channel` values:
+
+- `webchat`
+- `messenger`
+- `whatsapp`
+- `zalo`
 
 ### Create a new contact
 
 ```bash
 chatbotx contacts create --phoneNumber <phoneNumber> --email <email> --gender <male|female|unknown> --firstName <firstName> --lastName <lastName>
+```
+
+## 5. Commands: `bot-fields`
+
+### Get bot field by ID
+
+```bash
+chatbotx bot-fields show --id <botFieldId>
+```
+
+### Update bot field value
+
+```bash
+chatbotx bot-fields update --id <botFieldId> --value <value>
+```
+
+### Unset bot field value
+
+```bash
+chatbotx bot-fields delete --id <botFieldId>
+```
+
+## 6. Commands: `flows`
+
+### List all flows
+
+```bash
+chatbotx flows list
+```
+
+## 7. Commands: `broadcasts`
+
+### List all broadcasts
+
+```bash
+chatbotx broadcasts list
 ```

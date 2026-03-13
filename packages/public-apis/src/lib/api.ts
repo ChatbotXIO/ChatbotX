@@ -30,7 +30,7 @@ export class ChatbotXAPI {
     }
 
     this.client = ky.create({
-      prefixUrl: new URL(this.apiUrl, "/api/v1").toString(),
+      prefixUrl: new URL("/api/v1", this.apiUrl).toString(),
       // throwHttpErrors: false,
       headers: {
         "Content-Type": "application/json",

@@ -15,26 +15,29 @@ import {
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 
-type ContactParamKey =
-  | "id"
-  | "customFieldId"
-  | "customFieldValue"
-  | "value"
-  | "tagId"
-  | "channel"
-  | "content"
-  | "files"
-  | "flowId"
-  | "clientId"
-  | "phoneNumber"
-  | "email"
-  | "gender"
-  | "firstName"
-  | "lastName"
+type ContactCommandParams = Partial<
+  Omit<
+    Parameters<typeof getContactById>[1] &
+      Parameters<typeof listContactsByCustomField>[1] &
+      Parameters<typeof listTagsByContactId>[1] &
+      Parameters<typeof addTagToContact>[1] &
+      Parameters<typeof deleteTagFromContact>[1] &
+      Parameters<typeof listCustomFieldsByContactId>[1] &
+      Parameters<typeof getContactCustomFieldValue>[1] &
+      Parameters<typeof updateContactCustomFieldValue>[1] &
+      Parameters<typeof deleteContactCustomField>[1] &
+      Parameters<typeof sendMessageToContact>[1] &
+      Parameters<typeof createContact>[1],
+    "files"
+  > & {
+    files?: string
+    customFieldValue?: string
+  }
+>
+
+type ContactParamKey = keyof Required<ContactCommandParams>
 
 type ContactCommandArg = CommandArg<ContactParamKey>
-
-export type ContactCommandParams = Partial<Record<ContactParamKey, string>>
 
 type ContactCommand = {
   name: string
@@ -59,13 +62,13 @@ export const contactCommands = {
     name: "Get contact by ID",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
     ],
     execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
-      getContactById(api, params.id ?? ""),
+      getContactById(api, { contactId: params.contactId ?? "" }),
   },
   "contacts:list-by-custom-field": {
     name: "List contacts by custom field value",
@@ -81,29 +84,29 @@ export const contactCommands = {
         required: true,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const customFieldId = params.customFieldId ?? ""
-      const customFieldValue = params.customFieldValue ?? ""
-      return listContactsByCustomField(api, customFieldId, customFieldValue)
-    },
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      listContactsByCustomField(api, {
+        customFieldId: params.customFieldId ?? "",
+        value: params.customFieldValue ?? "",
+      }),
   },
-  "contacts:list-tags-by-id": {
-    name: "List tags of a contact by contact ID",
+  "contacts:list-tags": {
+    name: "List tags of a contact",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
     ],
     execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
-      listTagsByContactId(api, params.id ?? ""),
+      listTagsByContactId(api, { contactId: params.contactId ?? "" }),
   },
   "contacts:add-tag": {
     name: "Add a tag to a contact",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
@@ -113,17 +116,17 @@ export const contactCommands = {
         required: true,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const contactId = params.id ?? ""
-      const tagId = params.tagId ?? ""
-      return addTagToContact(api, contactId, tagId)
-    },
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      addTagToContact(api, {
+        contactId: params.contactId ?? "",
+        tagId: params.tagId ?? "",
+      }),
   },
   "contacts:delete-tag": {
     name: "Delete a tag from a contact",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
@@ -133,29 +136,29 @@ export const contactCommands = {
         required: true,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const contactId = params.id ?? ""
-      const tagId = params.tagId ?? ""
-      return deleteTagFromContact(api, contactId, tagId)
-    },
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      deleteTagFromContact(api, {
+        contactId: params.contactId ?? "",
+        tagId: params.tagId ?? "",
+      }),
   },
-  "contacts:list-custom-fields-by-id": {
-    name: "List custom fields of a contact by contact ID",
+  "contacts:list-custom-fields": {
+    name: "List custom fields of a contact",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
     ],
     execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
-      listCustomFieldsByContactId(api, params.id ?? ""),
+      listCustomFieldsByContactId(api, { contactId: params.contactId ?? "" }),
   },
   "contacts:get-custom-field-value": {
     name: "Get a contact's custom field value",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
@@ -165,17 +168,17 @@ export const contactCommands = {
         required: true,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const contactId = params.id ?? ""
-      const customFieldId = params.customFieldId ?? ""
-      return getContactCustomFieldValue(api, contactId, customFieldId)
-    },
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      getContactCustomFieldValue(api, {
+        contactId: params.contactId ?? "",
+        customFieldId: params.customFieldId ?? "",
+      }),
   },
   "contacts:update-custom-field-value": {
     name: "Update a contact custom field value",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
@@ -190,18 +193,18 @@ export const contactCommands = {
         required: true,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const contactId = params.id ?? ""
-      const customFieldId = params.customFieldId ?? ""
-      const value = params.value ?? ""
-      return updateContactCustomFieldValue(api, contactId, customFieldId, value)
-    },
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      updateContactCustomFieldValue(api, {
+        contactId: params.contactId ?? "",
+        customFieldId: params.customFieldId ?? "",
+        value: params.value ?? "",
+      }),
   },
   "contacts:delete-custom-field": {
     name: "Delete a contact custom field",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
@@ -211,29 +214,29 @@ export const contactCommands = {
         required: true,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const contactId = params.id ?? ""
-      const customFieldId = params.customFieldId ?? ""
-      return deleteContactCustomField(api, contactId, customFieldId)
-    },
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      deleteContactCustomField(api, {
+        contactId: params.contactId ?? "",
+        customFieldId: params.customFieldId ?? "",
+      }),
   },
   "contacts:send-message": {
     name: "Send a message to a contact",
     args: [
       {
-        key: "id",
+        key: "contactId",
         description: "Contact ID",
         required: true,
       },
       {
         key: "channel",
-        description: "Channel (e.g. webchat)",
+        description: "Channel (webchat, messenger, whatsapp, zalo)",
         required: true,
       },
       {
         key: "content",
         description: "Message content",
-        required: true,
+        required: false,
       },
       {
         key: "files",
@@ -251,23 +254,22 @@ export const contactCommands = {
         required: false,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const contactId = params.id ?? ""
-      const channel = params.channel ?? ""
-      const content = params.content ?? ""
-      const files = params.files
-        ?.split(",")
-        .map((file) => file.trim())
-        .filter((file) => file.length > 0)
-
-      return sendMessageToContact(api, contactId, {
-        channel,
-        content,
-        files,
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      sendMessageToContact(api, {
+        contactId: params.contactId ?? "",
+        channel: params.channel as
+          | "webchat"
+          | "messenger"
+          | "whatsapp"
+          | "zalo",
+        content: params.content,
+        files: params.files
+          ?.split(",")
+          .map((f) => f.trim())
+          .filter((f) => f.length > 0),
         flowId: params.flowId,
         clientId: params.clientId,
-      })
-    },
+      }),
   },
   "contacts:create": {
     name: "Create a new contact",
@@ -298,19 +300,13 @@ export const contactCommands = {
         required: false,
       },
     ],
-    execute: (api: ChatbotXAPI, params: ContactCommandParams) => {
-      const phoneNumber = params.phoneNumber ?? ""
-      const email = params.email ?? ""
-      const gender = params.gender ?? "unknown"
-      const firstName = params.firstName
-      const lastName = params.lastName
-      return createContact(api, {
-        phoneNumber,
-        email,
-        gender: gender as "male" | "female" | "unknown",
-        firstName,
-        lastName,
-      })
-    },
+    execute: (api: ChatbotXAPI, params: ContactCommandParams) =>
+      createContact(api, {
+        phoneNumber: params.phoneNumber ?? "",
+        email: params.email ?? "",
+        gender: params.gender as "male" | "female" | "unknown",
+        firstName: params.firstName,
+        lastName: params.lastName,
+      }),
   },
 } satisfies Record<string, ContactCommand>

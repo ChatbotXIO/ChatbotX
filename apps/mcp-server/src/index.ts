@@ -4,7 +4,11 @@ import { name as packageName, version as packageVersion } from "../package.json"
 import "dotenv/config"
 import { createChatbotXAPI } from "@chatbotx/public-apis"
 import { env } from "./env"
+import botFields from "./tools/bot-fields"
+import broadcasts from "./tools/broadcasts"
+import contacts from "./tools/contacts"
 import customFields from "./tools/custom-fields"
+import flows from "./tools/flows"
 import tags from "./tools/tag"
 import type { ToolDefinition } from "./types"
 
@@ -14,8 +18,12 @@ const server = new McpServer({
 })
 
 const allTools = {
+  ...botFields,
+  ...broadcasts,
+  ...contacts,
   ...tags,
   ...customFields,
+  ...flows,
 }
 
 // loop all tools and register to server
@@ -27,7 +35,11 @@ for (const [key, tool] of Object.entries(allTools)) {
       description,
     },
     async (input) => {
-      const api = createChatbotXAPI(env)
+      const api = createChatbotXAPI({
+        apiKey: env.CHATBOTX_API_KEY ?? "",
+        apiUrl: env.CHATBOTX_API_URL ?? "",
+        allowSelfSignedCert: env.CHATBOTX_ALLOW_SELF_SIGNED_CERT === "true",
+      })
       const result = await execute(api, input)
       return result
     },
