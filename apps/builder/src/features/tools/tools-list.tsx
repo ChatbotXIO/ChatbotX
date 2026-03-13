@@ -119,7 +119,7 @@ export const ToolsList = () => {
         >
           <CardContent className="flex flex-col gap-4">
             <div className="flex items-center justify-center">
-              <tool.icon size={30} />
+              <tool.icon className="text-primary" size={30} />
             </div>
             <div className="text-center">
               <h3 className="font-semibold">{tool.label}</h3>

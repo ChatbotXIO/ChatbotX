@@ -232,6 +232,17 @@ export const receiveMessage = async (
     })
   }
 
+  if (ref) {
+    await integrationQueue.add(IntegrationJobAction.sendFlowRef, {
+      type: IntegrationJobAction.sendFlowRef,
+      data: {
+        conversationId: result.conversation.id,
+        contactId: result.conversation.contactId,
+        ref,
+      },
+    })
+  }
+
   return {
     message: result.message,
     conversation: result.conversation,

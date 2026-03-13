@@ -155,7 +155,8 @@
   "states": {
     "success": "Success",
     "error": "Error",
-    "skip": "Skip"
+    "skip": "Skip",
+    "getLink": "Get Link"
   },
   "admins": {
     "title": "Admins"

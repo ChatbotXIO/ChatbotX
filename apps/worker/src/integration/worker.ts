@@ -27,6 +27,7 @@ import {
 import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { sendBroadcast } from "./handlers/send-broadcast"
+import { sendFlowRef } from "./handlers/send-flow-ref"
 
 const worker = new Worker(
   queueName.integration,
@@ -66,6 +67,10 @@ const worker = new Worker(
       }
       case IntegrationJobAction.runFlowQuickReply: {
         await runFlowQuickReply(job.data.data)
+        return
+      }
+      case IntegrationJobAction.sendFlowRef: {
+        await sendFlowRef(job.data.data)
         return
       }
       case IntegrationJobAction.triggerAutomatedResponse: {

@@ -10,39 +10,51 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
+import { SiZalo, SiZaloHex } from "@icons-pack/react-simple-icons"
 import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
 import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { getInboxLink } from "@/features/ref-links/helpers"
 import type { InboxResource } from "../schemas/resource"
-import { InboxIcon } from "./inbox-icon"
 
-export default function InboxZaloCard({ inbox }: { inbox: InboxResource }) {
+export default function InboxZaloCard({
+  inbox,
+  actionLabel,
+}: {
+  inbox: InboxResource
+  actionLabel?: string
+}) {
+  const link = getInboxLink({
+    inboxType: "zalo",
+    inboxes: [inbox],
+    chatbotId: inbox.chatbotId,
+  })
   return (
     <Card className="py-3" key={inbox.id}>
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <InboxIcon inboxType="zalo" label={inbox.integrationZalo?.name} />
-        <ZaloQRCodeDiaglog oaId={inbox.integrationZalo?.oaId ?? ""} />
+        <SiZalo aria-hidden="true" className="size-5" fill={SiZaloHex} />
+        <p className="flex-1 truncate text-sm">{inbox.integrationZalo?.name}</p>
+        <ZaloQRCodeDiaglog actionLabel={actionLabel} link={link} />
       </CardContent>
     </Card>
   )
 }
 
-function ZaloQRCodeDiaglog({ oaId }: { oaId: string }) {
+function ZaloQRCodeDiaglog({
+  link,
+  actionLabel,
+}: {
+  link: string
+  actionLabel?: string
+}) {
   const t = useTranslations()
   const [_, copy] = useCopyToClipboard()
 
-  const [zaloUrl, setZaloUrl] = useState<string>("")
-
-  useEffect(() => {
-    setZaloUrl(`https://zalo.me/${oaId}`)
-  }, [oaId])
-
   const handleCopy = () => {
-    copy(zaloUrl).then(() => {
+    copy(link).then(() => {
       toast.success(t("messages.copiedToClipboard"))
     })
   }
@@ -51,7 +63,7 @@ function ZaloQRCodeDiaglog({ oaId }: { oaId: string }) {
     <Dialog>
       <DialogTrigger asChild>
         <Button size="sm" type="button" variant="secondary">
-          {t("actions.testNow")}
+          {actionLabel ?? t("actions.testNow")}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -65,17 +77,15 @@ function ZaloQRCodeDiaglog({ oaId }: { oaId: string }) {
         </DialogHeader>
         <div className="flex flex-col items-center justify-center gap-2">
           <p>{t("actions.scanQRCode")}</p>
-          <QRCode value={zaloUrl} />
+          <QRCode value={link} />
 
           <p>{t("texts.or")}</p>
           <div className="-mt-2 flex items-center justify-center gap-2">
             <Link
               className="text-sky-600 no-underline hover:underline dark:text-sky-400"
-              href={zaloUrl}
-              rel="noopener noreferrer"
-              target="_blank"
+              href={link}
             >
-              {zaloUrl}
+              {link}
             </Link>
             <Button
               onClick={handleCopy}

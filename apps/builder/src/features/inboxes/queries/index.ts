@@ -1,28 +1,24 @@
-import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { type Prisma, prisma } from "@aha.chat/database"
 import { InboxStatus } from "@aha.chat/database/enums"
-import { inboxModel } from "@aha.chat/database/schema"
-import { getPaginationWithDefaults } from "@aha.chat/database/utils"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListInboxesRequest } from "../schemas/query"
-import type { InboxResource } from "../schemas/resource"
+import type { InboxCollection } from "../schemas/resource"
 
 export async function listInboxes(
   input: ListInboxesRequest,
-): Promise<PaginatedResponse<InboxResource>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
-
-  const where = {
+): Promise<InboxCollection> {
+  const where: Prisma.InboxWhereInput = {
     chatbotId: input.chatbotId,
     status: InboxStatus.connected,
   }
 
-  const pagination = getPaginationWithDefaults(input)
-  const [data, totalRows] = await Promise.all([
-    db.query.inboxModel.findMany({
-      ...pagination,
+  const take = input.perPage || 10
+  const skip = ((input.page ?? 1) - 1) * take
+  const [data, total] = await prisma.$transaction([
+    prisma.inbox.findMany({
+      skip,
+      take,
       where,
-      with: input.includes?.includes("integration")
+      include: input.includes?.includes("integration")
         ? {
             integrationWhatsapp: true,
             integrationWebchat: true,
@@ -31,10 +27,10 @@ export async function listInboxes(
           }
         : undefined,
     }),
-    db.$count(inboxModel, relationsFilterToSQL(inboxModel, where)),
+    prisma.inbox.count({ where }),
   ])
 
-  const pageCount = Math.ceil(totalRows / pagination.limit)
+  const pageCount = Math.ceil(total / take)
 
   return { data, pageCount }
 }

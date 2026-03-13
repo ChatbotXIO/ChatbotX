@@ -13,42 +13,45 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { Loader, Trash } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
-import { deleteReflinkAction } from "./actions/delete-ref-link-action"
-import type { ReflinkResource } from "./schemas/types"
+import { deleteRefLinkAction } from "./actions/delete-ref-link-action"
+import type { RefLinkResource } from "./schemas/types"
 
-type DeleteReflinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+type DeleteRefLinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
-  reflinks: Row<ReflinkResource>["original"][]
+  refLinks: Row<RefLinkResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
-  onOpenChange: (val: boolean) => void
+  onOpenChange?: (val: boolean) => void
 }
 
-export function DeleteReflinkDialog({
+export function DeleteRefLinksDialog({
   chatbotId,
-  reflinks,
+  refLinks,
   showTrigger = true,
   onSuccess,
   onOpenChange,
   ...props
-}: DeleteReflinkDialogProps) {
+}: DeleteRefLinkDialogProps) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
-    deleteReflinkAction.bind(null, chatbotId),
+    deleteRefLinkAction.bind(null, chatbotId),
     {
       onSuccess: () => {
         toast.success(
           t("messages.deletedSuccess", {
-            feature: t("fields.reflink.label"),
+            feature: t("fields.refLink.label"),
           }),
         )
-        onOpenChange(false)
+        onOpenChange?.(false)
         onSuccess?.()
+        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -64,7 +67,7 @@ export function DeleteReflinkDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("actions.delete")} ({reflinks.length})
+            {t("actions.delete")} ({refLinks.length})
           </Button>
         </DialogTrigger>
       ) : null}
@@ -72,12 +75,12 @@ export function DeleteReflinkDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", {
-              feature: t("fields.reflink.label"),
+              feature: t("fields.refLink.label"),
             })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("dialog.deleteConfirmation", {
-              feature: t("fields.reflink.label"),
+              feature: t("fields.refLink.label"),
             })}
           </DialogDescription>
         </DialogHeader>
@@ -85,7 +88,7 @@ export function DeleteReflinkDialog({
         <DialogFooter className="gap-2 sm:space-x-0">
           <DialogClose asChild>
             <Button
-              onClick={() => onOpenChange(false)}
+              onClick={() => onOpenChange?.(false)}
               size="sm"
               variant="ghost"
             >
@@ -95,7 +98,7 @@ export function DeleteReflinkDialog({
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
-            onClick={() => execute({ ids: reflinks.map((f) => f.id) })}
+            onClick={() => execute({ ids: refLinks.map((f) => f.id) })}
             size="sm"
             variant="destructive"
           >
