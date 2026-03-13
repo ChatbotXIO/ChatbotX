@@ -10,17 +10,20 @@ type AsyncLocalStorageType = {
 let asyncLocalStorage: AsyncLocalStorageType | null = null
 
 // Try to load AsyncLocalStorage - will fail in Edge Runtime
-function initAsyncLocalStorage() {
+async function initAsyncLocalStorage() {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const asyncHooks = require("node:async_hooks")
+    const asyncHooks = await import("node:async_hooks")
     return new asyncHooks.AsyncLocalStorage()
-  } catch {
+  } catch (e) {
+    console.error("Failed to load AsyncLocalStorage:", e)
     return null
   }
 }
 
-asyncLocalStorage = initAsyncLocalStorage()
+// Initialize async - will be null initially, then populated
+initAsyncLocalStorage().then((storage) => {
+  asyncLocalStorage = storage as AsyncLocalStorageType | null
+})
 
 export function setTriggerExecutionContext(context: ExecutionContext) {
   if (!asyncLocalStorage) {

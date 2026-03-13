@@ -46,6 +46,8 @@ export const receiveMessage = async (
   quickReplyAction: string | null
   ref?: string | null
 }> => {
+  setWebhookExecutionContext({ source: "webhook" })
+
   const { integrationType, integrationIdentifier } = props
 
   setWebhookExecutionContext({ source: "webhook" })
