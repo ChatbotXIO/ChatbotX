@@ -1,14 +1,22 @@
-import ky, { type Options } from "ky"
-import { hasTlsSelfSignedCause } from "./request"
+import ky, { type KyInstance } from "ky"
+import type { ChatbotXConfig } from "./config"
+
+export type ChatbotXAPIProps = {
+  apiKey: string
+  apiUrl: string
+  allowSelfSignedCert?: boolean
+}
 
 export class ChatbotXAPI {
   private static hasWarnedInsecureTls = false
   private readonly apiKey: string
   private readonly apiUrl: string
+  private readonly client: KyInstance
 
-  constructor(apiKey: string, apiUrl?: string, allowSelfSignedCert = true) {
+  constructor(props: ChatbotXAPIProps) {
+    const { apiKey, apiUrl, allowSelfSignedCert } = props
     this.apiKey = apiKey
-    this.apiUrl = apiUrl || "https://api.chatbotx.io/api/v1"
+    this.apiUrl = apiUrl
 
     if (allowSelfSignedCert) {
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
@@ -20,53 +28,22 @@ export class ChatbotXAPI {
         ChatbotXAPI.hasWarnedInsecureTls = true
       }
     }
+
+    this.client = ky.create({
+      prefixUrl: new URL(this.apiUrl, "/api/v1").toString(),
+      // throwHttpErrors: false,
+      headers: {
+        "Content-Type": "application/json",
+        "X-CHATBOT-TOKEN": this.apiKey,
+      },
+    })
   }
 
-  async request<T = unknown>(
-    endpoint: string,
-    options: Options = {},
-  ): Promise<T> {
-    const url = `${this.apiUrl}${endpoint}`
-    const headers = {
-      "Content-Type": "application/json",
-      "X-CHATBOT-TOKEN": this.apiKey,
-      ...(options.headers ?? {}),
-    }
-
-    let response: Awaited<ReturnType<typeof ky>>
-
-    try {
-      response = await ky(url, {
-        ...options,
-        headers,
-        throwHttpErrors: false,
-      })
-    } catch (error: unknown) {
-      if (hasTlsSelfSignedCause(error)) {
-        throw new Error(
-          "TLS certificate validation failed (self-signed certificate in chain). Add your CA via NODE_EXTRA_CA_CERTS=/path/to/ca.pem, or for local dev only set CHATBOTX_ALLOW_SELF_SIGNED_CERT=true.",
-        )
-      }
-
-      throw error
-    }
-
-    const contentType = response.headers.get("content-type") ?? ""
-    const isJson = contentType.includes("application/json")
-    const rawBody = await response.text()
-
-    if (!response.ok) {
-      throw new Error(`API Error (${response.status}): ${rawBody}`)
-    }
-
-    if (!rawBody) {
-      return {} as T
-    }
-
-    if (isJson) {
-      return JSON.parse(rawBody) as T
-    }
-
-    return { raw: rawBody } as T
+  getClient(): KyInstance {
+    return this.client
   }
+}
+
+export const createChatbotXAPI = (config: ChatbotXConfig): ChatbotXAPI => {
+  return new ChatbotXAPI(config)
 }

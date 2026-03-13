@@ -17,6 +17,7 @@
   "dependencies": {
     "@chatbotx/public-apis": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@t3-oss/env-core": "^0.13.10",
     "dotenv": "^16.4.5",
     "zod": "^4.3.6"
   },

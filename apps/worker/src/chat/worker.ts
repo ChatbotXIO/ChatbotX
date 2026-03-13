@@ -24,6 +24,7 @@ const worker = new Worker(
       case ChatJobAction.sendChatMessage:
         await sendChatMessage(job.data.data)
         return
+
       default:
         throw new SdkException("ChatJobAction action is not defined")
     }

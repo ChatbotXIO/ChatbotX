@@ -1,13 +1,10 @@
 import "dotenv/config"
-import { ChatbotXAPI } from "@chatbotx/public-apis"
+import { createChatbotXAPI } from "@chatbotx/public-apis"
+import { getChatbotXConfigFromEnv } from "./config"
 import customFields from "./tools/custom-fields"
 import tags from "./tools/tag"
 
-const api = new ChatbotXAPI(
-  process.env.CHATBOTX_API_KEY || "",
-  process.env.CHATBOTX_API_URL || "",
-  process.env.CHATBOTX_ALLOW_SELF_SIGNED_CERT === "true",
-)
+const api = createChatbotXAPI(getChatbotXConfigFromEnv())
 
 async function testTools() {
   console.log("🧪 Testing MCP Server Tools...\n")

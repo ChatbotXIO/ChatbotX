@@ -1,37 +1,58 @@
+import type { paths } from "../generated/chatbotx"
 import type { ChatbotXAPI } from "../lib/api"
-import type { CustomField } from "../schemas/custom-field"
 
-const CUSTOM_FIELDS_PREFIX = "/custom-fields"
+type ListCustomFieldsResponse =
+  paths["/v1/custom-fields"]["get"]["responses"]["200"]["content"]["application/json"]
+
+type CreateCustomFieldBody =
+  paths["/v1/custom-fields"]["post"]["requestBody"]["content"]["application/json"]
+type CreateCustomFieldResponse =
+  paths["/v1/custom-fields"]["post"]["responses"]["200"]["content"]["application/json"]
+
+type GetCustomFieldPathParams =
+  paths["/v1/custom-fields/{id}"]["get"]["parameters"]["path"]
+type GetCustomFieldResponse =
+  paths["/v1/custom-fields/{id}"]["get"]["responses"]["200"]["content"]["application/json"]
+
+type GetCustomFieldByNamePathParams =
+  paths["/v1/custom-fields/name/{name}"]["get"]["parameters"]["path"]
+type GetCustomFieldByNameResponse =
+  paths["/v1/custom-fields/name/{name}"]["get"]["responses"]["200"]["content"]["application/json"]
 
 export const listCustomFields = (
   api: ChatbotXAPI,
-): Promise<{ data: CustomField[] }> => {
-  return api.request(CUSTOM_FIELDS_PREFIX, { method: "GET" })
+): Promise<ListCustomFieldsResponse> => {
+  return api.getClient().get("custom-fields").json<ListCustomFieldsResponse>()
 }
 
 export const createCustomField = (
   api: ChatbotXAPI,
-  params: {
-    name: string
-    customFieldType: CustomField["customFieldType"]
-  },
-): Promise<CustomField> => {
-  return api.request(CUSTOM_FIELDS_PREFIX, {
-    method: "POST",
-    body: JSON.stringify(params),
-  })
+  input: CreateCustomFieldBody,
+): Promise<CreateCustomFieldResponse> => {
+  return api
+    .getClient()
+    .post("custom-fields", {
+      json: input,
+    })
+    .json<CreateCustomFieldResponse>()
 }
 
 export const getCustomField = (
   api: ChatbotXAPI,
-  id: string,
-): Promise<CustomField> => {
-  return api.request(`${CUSTOM_FIELDS_PREFIX}/${id}`, { method: "GET" })
+  input: GetCustomFieldPathParams,
+): Promise<GetCustomFieldResponse> => {
+  return api
+    .getClient()
+    .get(`custom-fields/${input.id}`)
+    .json<GetCustomFieldResponse>()
 }
 
 export const getCustomFieldByName = (
   api: ChatbotXAPI,
-  name: string,
-): Promise<CustomField> => {
-  return api.request(`${CUSTOM_FIELDS_PREFIX}/name/${name}`, { method: "GET" })
+  input: GetCustomFieldByNamePathParams,
+): Promise<GetCustomFieldByNameResponse> => {
+  return api
+    .getClient()
+    .get(`custom-fields/name/${input.name}`)
+    .json<GetCustomFieldByNameResponse>()
 }

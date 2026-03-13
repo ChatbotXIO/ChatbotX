@@ -2,10 +2,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { name as packageName, version as packageVersion } from "../package.json"
 import "dotenv/config"
+import { createChatbotXAPI } from "@chatbotx/public-apis"
+import { env } from "./env"
 import customFields from "./tools/custom-fields"
 import tags from "./tools/tag"
 import type { ToolDefinition } from "./types"
-import { createApi } from "./utils"
 
 const server = new McpServer({
   name: packageName,
@@ -26,7 +27,7 @@ for (const [key, tool] of Object.entries(allTools)) {
       description,
     },
     async (input) => {
-      const api = createApi()
+      const api = createChatbotXAPI(env)
       const result = await execute(api, input)
       return result
     },
