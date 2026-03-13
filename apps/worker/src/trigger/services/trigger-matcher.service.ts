@@ -78,6 +78,10 @@ export class TriggerMatcherService {
     }
 
     for (const condition of conditions) {
+      if (eventData.eventType !== condition.type) {
+        continue
+      }
+
       const isMatch = await this.conditionEvaluator.evaluate({
         condition,
         eventData,

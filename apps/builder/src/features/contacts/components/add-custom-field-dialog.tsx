@@ -57,8 +57,8 @@ export default function AddContactCustomFieldDialog({
               feature: t("fields.contact.label"),
             }),
           )
-          // form.reset()
-          // setOpen(false)
+          form.reset()
+          setOpen(false)
         },
         onError: ({ error }) => {
           if (error.serverError) {
