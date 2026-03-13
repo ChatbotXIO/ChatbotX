@@ -2,6 +2,19 @@ import { z } from "zod"
 import { customFieldSchema } from "./custom-field"
 import { tagSchema } from "./tag"
 
+export const findContactRequest = z.object({
+  id: z.string(),
+})
+export type FindContactRequest = z.infer<typeof findContactRequest>
+
+export const findContactsByCustomFieldRequest = z.object({
+  customFieldId: z.string(),
+  value: z.string(),
+})
+export type FindContactsByCustomFieldRequest = z.infer<
+  typeof findContactsByCustomFieldRequest
+>
+
 export const contactSchema = z.object({
   id: z.string(),
   phoneNumber: z.string(),
