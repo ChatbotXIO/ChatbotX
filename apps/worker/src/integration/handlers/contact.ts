@@ -194,15 +194,17 @@ export async function addContactTag({
 
     insertedTags = tags
 
-    await tx
-      .insert(contactsToTagsModel)
-      .values(
-        tags.map((t) => ({
-          contactId: conversation.contactId,
-          tagId: t.id,
-        })),
-      )
-      .onConflictDoNothing()
+    if (tags.length > 0) {
+      await tx
+        .insert(contactsToTagsModel)
+        .values(
+          tags.map((t) => ({
+            contactId: conversation.contactId,
+            tagId: t.id,
+          })),
+        )
+        .onConflictDoNothing()
+    }
   })
 
   // Emit tag applied events
