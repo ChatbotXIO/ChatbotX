@@ -1,4 +1,4 @@
-import type { FolderType } from "@aha.chat/database/types"
+import type { FolderType } from "@aha.chat/database/enums"
 
 export function getFolderTypeFromFeature(
   featureName?: string,

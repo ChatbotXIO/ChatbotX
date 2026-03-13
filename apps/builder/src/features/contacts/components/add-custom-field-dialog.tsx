@@ -98,7 +98,7 @@ export default function AddContactCustomFieldDialog({
 
         <Form {...form}>
           <form
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-6"
             onSubmit={handleSubmitWithAction}
           >
             <SetCustomField />

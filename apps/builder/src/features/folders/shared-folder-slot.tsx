@@ -1,4 +1,5 @@
-import type { FolderModel, FolderType } from "@aha.chat/database/types"
+import type { FolderType } from "@aha.chat/database/enums"
+import type { FolderModel } from "@aha.chat/database/types"
 import {
   Card,
   CardContent,

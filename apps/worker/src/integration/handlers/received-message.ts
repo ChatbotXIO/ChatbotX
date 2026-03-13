@@ -15,10 +15,8 @@ import type {
   MessageModel,
 } from "@aha.chat/database/types"
 import { getPublicUrl } from "@aha.chat/database/utils"
-import {
-  emitContactCreated,
-  setWebhookExecutionContext,
-} from "@aha.chat/events"
+import { emitContactCreated } from "@aha.chat/events"
+import { setWebhookExecutionContext } from "@aha.chat/events/context"
 import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
