@@ -258,8 +258,6 @@ export class ActionExecutor {
             }
             await getSpreadsheetRow({
               conversation,
-              flowId: "",
-              flowVersionId: "",
               step,
             })
             break
@@ -277,8 +275,6 @@ export class ActionExecutor {
             }
             await clearSpreadsheetRow({
               conversation,
-              flowId: "",
-              flowVersionId: "",
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break
@@ -297,8 +293,6 @@ export class ActionExecutor {
             }
             await getSpreadsheetRandomRow({
               conversation,
-              flowId: "",
-              flowVersionId: "",
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break
@@ -316,8 +310,6 @@ export class ActionExecutor {
             }
             await sendSpreadsheetData({
               conversation,
-              flowId: "",
-              flowVersionId: "",
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break
@@ -336,8 +328,6 @@ export class ActionExecutor {
             }
             await updateSpreadsheetRow({
               conversation,
-              flowId: "",
-              flowVersionId: "",
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break
