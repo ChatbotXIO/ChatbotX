@@ -1,5 +1,5 @@
 import z from "zod"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
 import { updateBotField } from "../actions/update-bot-field.action"
 import { findBotField } from "../queries/index"
@@ -21,7 +21,7 @@ const botFieldChatbotTokenAPIs = {
         chatbotId: context.chatbot.id,
       })
       if (!botField) {
-        throw new NotfoundException("Bot field not found")
+        throw notFoundException("Bot field not found")
       }
       return botField
     }),

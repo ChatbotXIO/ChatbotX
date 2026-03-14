@@ -18,7 +18,7 @@ import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-a
 import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { verifyOrganizationSettings } from "@/features/organization/queries"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schemas"
@@ -40,7 +40,7 @@ export const selectPageAction = authActionClient
         const settings = await verifyOrganizationSettings(organization)
         const messengerSettings = settings.messenger
         if (!messengerSettings) {
-          throw new BaseException("Messenger settings not found")
+          throw new ChatbotXException("Messenger settings not found")
         }
 
         await db.transaction(async (tx) => {
@@ -126,11 +126,11 @@ export const selectPageAction = authActionClient
         }
       } catch (error) {
         if (isDatabaseError(error) && error.cause.code === "23505") {
-          throw new BaseException("Page already connected")
+          throw new ChatbotXException("Page already connected")
         }
 
         logger.error(error, "Failed to connect Facebook page")
-        throw new BaseException("Failed to connect Facebook page")
+        throw new ChatbotXException("Failed to connect Facebook page")
       }
     },
   )

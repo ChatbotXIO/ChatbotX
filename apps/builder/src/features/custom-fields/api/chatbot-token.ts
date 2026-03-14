@@ -1,5 +1,8 @@
+import { findOrFail } from "@aha.chat/database/client"
+import { customFieldModel } from "@aha.chat/database/schema"
+import type { CustomFieldModel } from "@aha.chat/database/types"
 import z from "zod"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
 import { createCustomField } from "../actions/create-custom-field.action"
 import { findCustomField, listCustomFields } from "../queries"
@@ -48,7 +51,7 @@ const chatbotTokenCustomFieldsAPI = {
         chatbotId: context.chatbot.id,
       })
       if (!customField) {
-        throw new NotfoundException("Custom field not found")
+        throw notFoundException("Custom field not found")
       }
       return customField
     }),
@@ -63,13 +66,14 @@ const chatbotTokenCustomFieldsAPI = {
     .input(z.object({ name: z.string() }))
     .output(publicCustomFieldResource)
     .handler(async ({ context, input }) => {
-      const customField = await findCustomField({
-        chatbotId: context.chatbot.id,
-        name: input.name,
-      })
-      if (!customField) {
-        throw new NotfoundException("Custom field not found")
-      }
+      const customField = await findOrFail<CustomFieldModel>(
+        customFieldModel,
+        {
+          chatbotId: context.chatbot.id,
+          name: input.name,
+        },
+        "Custom field not found",
+      )
       return customField
     }),
 }

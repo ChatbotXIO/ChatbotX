@@ -1,5 +1,5 @@
 import { db } from "@aha.chat/database/client"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import type {
   ListContactCustomFieldsRequest,
   ListPublicContactCustomFieldsResponse,
@@ -45,7 +45,7 @@ export async function findContactCustomField(input: {
   })
 
   if (!contactCustomField) {
-    throw new NotfoundException("Contact custom field not found")
+    throw notFoundException("Contact custom field not found")
   }
   return {
     ...contactCustomField.customField,

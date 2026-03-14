@@ -10,8 +10,8 @@ import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { BroadcastException } from "../schemas/resource"
 
 export const resendBroadcastAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
@@ -21,7 +21,7 @@ export const resendBroadcastAction = chatbotActionClient
       chatbotId,
     })
     if (broadcast.status !== "sent") {
-      throw new BroadcastException("Broadcast is not sent")
+      throw new ChatbotXException("Broadcast is not sent")
     }
 
     const newBroadcast = await db.transaction(async (tx) => {

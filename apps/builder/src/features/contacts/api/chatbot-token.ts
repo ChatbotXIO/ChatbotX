@@ -5,7 +5,7 @@ import { z } from "zod"
 import { createMessage } from "@/features/messages/actions/create-message.action"
 import { chatbotTokenCreateMessageRequest } from "@/features/messages/schemas/create-message.schema"
 import { publicLstTagsResponse } from "@/features/tags/schemas/query"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
 import {
@@ -54,7 +54,7 @@ export const chatbotTokenAPIs = {
       })
 
       if (!contact) {
-        throw new NotfoundException("Contact not found")
+        throw notFoundException("Contact not found")
       }
 
       return contact
@@ -77,7 +77,7 @@ export const chatbotTokenAPIs = {
 
       const newContact = await publicFindContact({ id: contact.id })
       if (!newContact) {
-        throw new NotfoundException("Contact not found")
+        throw notFoundException("Contact not found")
       }
       return newContact
     }),
@@ -245,7 +245,7 @@ export const chatbotTokenAPIs = {
         chatbotId: context.chatbot.id,
       })
       if (!contact) {
-        throw new NotfoundException("Contact not found")
+        throw notFoundException("Contact not found")
       }
 
       const conversation = await findOrFail<ConversationModel>(

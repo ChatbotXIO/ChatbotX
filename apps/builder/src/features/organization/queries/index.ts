@@ -7,7 +7,7 @@ import {
   organizationSettingsSchema,
 } from "@aha.chat/database/types"
 import { getDomainFromHeader } from "@/lib/domain"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 
 export async function findOrganizationByDomain(): Promise<OrganizationModel | null> {
@@ -38,7 +38,7 @@ export async function findOrganizationSettings(
   const organization = await findOrganization(where)
   if (!organization) {
     logger.debug({ where }, "Organization not found")
-    throw new BaseException("Organization not found")
+    throw new ChatbotXException("Organization not found")
   }
 
   return verifyOrganizationSettings(organization)
@@ -54,7 +54,9 @@ export async function findOrganizationSettingsByKey<
 
   const value = settings?.[settingsKey]
   if (!value) {
-    throw new BaseException(`Organization settings ${settingsKey} is not valid`)
+    throw new ChatbotXException(
+      `Organization settings ${settingsKey} is not valid`,
+    )
   }
 
   return value as NonNullable<OrganizationSettings[K]>

@@ -80,20 +80,12 @@ export type ContentType = (typeof schema.contentType.enumValues)[number]
 export type BroadcastStatus = (typeof schema.broadcastStatus.enumValues)[number]
 export type AIEmbeddingStatus =
   (typeof schema.aiEmbeddingStatus.enumValues)[number]
+export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
+export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 
 export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
-
-// export const integrationType = pgEnum("IntegrationType", [
-//   "webchat",
-//   "googleSheets",
-//   "messenger",
-//   "openai",
-//   "gemini",
-//   "whatsapp",
-//   "zalo",
-// ])
 
 export const ReplyType = {
   Message: "R01",
