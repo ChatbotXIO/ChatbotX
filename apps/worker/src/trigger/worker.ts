@@ -64,7 +64,7 @@ const worker = new Worker(
 
 worker.on("failed", (job, err) => {
   if (job) {
-    logger.error(`Trigger job ${job.id} has failed`, err)
+    logger.error(err, `Trigger job ${job.id} has failed`)
   }
 })
 
