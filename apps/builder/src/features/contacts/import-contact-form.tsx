@@ -58,7 +58,7 @@ export function ImportContactsForm({ chatbotId }: { chatbotId: string }) {
           fieldMapping: [
             {
               column: "",
-              fieldId: "",
+              customFieldId: "",
             },
           ],
         },
@@ -271,7 +271,7 @@ export function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
                   <div className="flex-1">
                     <CustomFieldSelect
                       label=""
-                      name={`fieldMapping.${index}.fieldId`}
+                      name={`fieldMapping.${index}.customFieldId`}
                     />
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { SiFacebook, SiMessenger } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
@@ -18,118 +19,178 @@ import {
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useCallback, useMemo } from "react"
+
+const TOOLS_CONFIG = [
+  {
+    id: "messenger-list",
+    labelKey: "messengerList.title",
+    descriptionKey: "messengerList.description",
+    icon: SiMessenger,
+  },
+  {
+    id: "facebook-comment",
+    labelKey: "facebookCommentAutomation.title",
+    descriptionKey: "facebookCommentAutomation.description",
+    icon: SiFacebook,
+  },
+  {
+    id: "facebook-lead-ads",
+    labelKey: "facebookLeadAdsAutomation.title",
+    descriptionKey: "facebookLeadAdsAutomation.description",
+    icon: SiFacebook,
+  },
+  {
+    id: "triggers-actions",
+    labelKey: "triggersAndActions.title",
+    descriptionKey: "triggersAndActions.description",
+    icon: LightbulbIcon,
+  },
+  {
+    id: "drip-campaigns",
+    labelKey: "dripCampaigns.title",
+    descriptionKey: "dripCampaigns.description",
+    icon: Layers2Icon,
+  },
+  {
+    id: "reflinks",
+    labelKey: "reflinks.title",
+    descriptionKey: "reflinks.description",
+    icon: LinkIcon,
+    getLink: (id: string) => `/chatbots/${id}/reflinks`,
+  },
+  {
+    id: "qr-code",
+    labelKey: "qrCodeGenerator.title",
+    descriptionKey: "qrCodeGenerator.description",
+    icon: QrCodeIcon,
+    getLink: (id: string) => `/chatbots/${id}/qr-codes`,
+  },
+  {
+    id: "templates",
+    labelKey: "templates.title",
+    descriptionKey: "templates.description",
+    icon: CopyIcon,
+  },
+  {
+    id: "appointment",
+    labelKey: "appointmentScheduling.title",
+    descriptionKey: "appointmentScheduling.description",
+    icon: CalendarIcon,
+  },
+  {
+    id: "questionnaires",
+    labelKey: "questionnaires.title",
+    descriptionKey: "questionnaires.description",
+    icon: CircleQuestionMarkIcon,
+  },
+  {
+    id: "ecommerce",
+    labelKey: "ecommerce.title",
+    descriptionKey: "ecommerce.description",
+    icon: CardSimIcon,
+  },
+  {
+    id: "places-near-me",
+    labelKey: "placesNearMe.title",
+    descriptionKey: "placesNearMe.description",
+    icon: MapIcon,
+  },
+  {
+    id: "poll-manager",
+    labelKey: "pollManager.title",
+    descriptionKey: "pollManager.description",
+    icon: UserCheck2Icon,
+  },
+  {
+    id: "bot-simulator",
+    labelKey: "botSimulator.title",
+    descriptionKey: "botSimulator.description",
+    icon: BotIcon,
+  },
+  {
+    id: "webhooks",
+    labelKey: "webhooks.title",
+    descriptionKey: "webhooks.description",
+    icon: UsersIcon,
+  },
+] as const
 
 export const ToolsList = () => {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
   const router = useRouter()
 
-  const tools = [
-    {
-      label: t("tools.messengerList.label"),
-      description: t("tools.messengerList.description"),
-      icon: SiMessenger,
+  const tools = useMemo(
+    () =>
+      TOOLS_CONFIG.map((config) => ({
+        id: config.id,
+        label: t(config.labelKey),
+        description: t(config.descriptionKey),
+        icon: config.icon,
+        link:
+          "getLink" in config && config.getLink
+            ? config.getLink(chatbotId ?? "")
+            : undefined,
+      })),
+    [t, chatbotId],
+  )
+
+  const handleCardClick = useCallback(
+    (link: string | undefined) => {
+      if (link) {
+        router.push(link)
+      }
     },
-    {
-      label: t("tools.facebookCommentAutomation.label"),
-      description: t("tools.facebookCommentAutomation.description"),
-      icon: SiFacebook,
+    [router],
+  )
+
+  const handleCardKeyDown = useCallback(
+    (link: string | undefined, e: React.KeyboardEvent) => {
+      if (!link) {
+        return
+      }
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault()
+        router.push(link)
+      }
     },
-    {
-      label: t("tools.facebookLeadAdsAutomation.label"),
-      description: t("tools.facebookLeadAdsAutomation.description"),
-      icon: SiFacebook,
-    },
-    {
-      label: t("tools.triggersAndActions.label"),
-      description: t("tools.triggersAndActions.description"),
-      icon: LightbulbIcon,
-    },
-    {
-      label: t("tools.dripCampaigns.label"),
-      description: t("tools.dripCampaigns.description"),
-      icon: Layers2Icon,
-    },
-    {
-      label: t("reflinks.title"),
-      description: t("reflinks.description"),
-      icon: LinkIcon,
-      link: `/chatbots/${chatbotId}/reflinks`,
-    },
-    {
-      label: t("tools.QRCodeGenerator.label"),
-      description: t("tools.QRCodeGenerator.description"),
-      icon: QrCodeIcon,
-      link: `/chatbots/${chatbotId}/qr-codes`,
-    },
-    {
-      label: t("tools.templates.label"),
-      description: t("tools.templates.description"),
-      icon: CopyIcon,
-    },
-    {
-      label: t("tools.appointmentScheduling.label"),
-      description: t("tools.appointmentScheduling.description"),
-      icon: CalendarIcon,
-    },
-    {
-      label: t("tools.questionnaires.label"),
-      description: t("tools.questionnaires.description"),
-      icon: CircleQuestionMarkIcon,
-    },
-    {
-      label: t("tools.ecommerce.label"),
-      description: t("tools.ecommerce.description"),
-      icon: CardSimIcon,
-    },
-    {
-      label: t("tools.placesNearMe.label"),
-      description: t("tools.placesNearMe.description"),
-      icon: MapIcon,
-    },
-    {
-      label: t("tools.pollManager.label"),
-      description: t("tools.pollManager.description"),
-      icon: UserCheck2Icon,
-    },
-    {
-      label: t("tools.botSimulator.label"),
-      description: t("tools.botSimulator.description"),
-      icon: BotIcon,
-    },
-    {
-      label: t("tools.webhooks.label"),
-      description: t("tools.webhooks.description"),
-      icon: UsersIcon,
-    },
-  ]
+    [router],
+  )
 
   return (
-    <div className="grid w-auto justify-center gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,350px))]">
-      {tools.map((tool, index) => (
-        <Card
-          className={`${tool.link ? "cursor-pointer hover:shadow-md" : ""}`}
-          // biome-ignore lint/suspicious/noArrayIndexKey: wip
-          key={index}
-          onClick={() => {
-            if (tool.link) {
-              router.push(tool.link)
-            }
-          }}
-        >
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center justify-center">
-              <tool.icon className="text-primary" size={30} />
-            </div>
-            <div className="text-center">
-              <h3 className="font-semibold">{tool.label}</h3>
-              <p className="text-muted-foreground text-sm">
-                {tool.description}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="grid w-auto grid-cols-[repeat(auto-fit,minmax(200px,350px))] justify-center gap-4">
+      {tools.map((tool) => {
+        const isDisabled = !tool.link
+        return (
+          <Card
+            aria-disabled={isDisabled}
+            aria-label={tool.link ? tool.label : undefined}
+            className={cn(
+              tool.link && "cursor-pointer hover:shadow-md",
+              isDisabled &&
+                "pointer-events-none cursor-not-allowed opacity-60 grayscale",
+            )}
+            key={tool.id}
+            onClick={() => handleCardClick(tool.link)}
+            onKeyDown={(e) => handleCardKeyDown(tool.link, e)}
+            role={tool.link ? "button" : undefined}
+            tabIndex={tool.link ? 0 : undefined}
+          >
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center justify-center">
+                <tool.icon className="text-primary" size={30} />
+              </div>
+              <div className="text-center">
+                <h3 className="font-semibold">{tool.label}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {tool.description}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }

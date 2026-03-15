@@ -38,7 +38,7 @@ export default function GetFlowLinkDialog({
     }
 
     let url = ""
-    const ref = isDraft ? `draft-${flow.id}` : flow.currentVersionId
+    const ref = isDraft ? `draft-${flow.id}` : `flow-${flow.id}`
     switch (inbox.inboxType) {
       case "messenger":
         url = `https://m.me/${inbox.sourceId}?ref=${ref}`

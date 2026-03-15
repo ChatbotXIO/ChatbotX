@@ -15,7 +15,7 @@ export function ReflinksTableToolbarActions({
   chatbotId,
 }: ReflinksTableToolbarActionsProps) {
   return (
-    <div>
+    <>
       <div className="flex items-center gap-2">
         {table.getFilteredSelectedRowModel().rows.length > 0 ? (
           <DeleteReflinksDialog
@@ -29,6 +29,6 @@ export function ReflinksTableToolbarActions({
       </div>
 
       <CreateReflinkDialog chatbotId={chatbotId} />
-    </div>
+    </>
   )
 }

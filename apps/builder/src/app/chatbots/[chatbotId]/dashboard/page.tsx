@@ -1,6 +1,7 @@
-import InboxCardList from "@/features/inboxes/components/inbox-card-list"
+import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import InboxStatsList from "@/features/inboxes/components/inbox-stats-list"
 import { listInboxes } from "@/features/inboxes/queries"
+import { maxPerPage } from "@/lib/shared-request"
 
 export default async function Dashboard({
   params,
@@ -11,7 +12,7 @@ export default async function Dashboard({
   const { data: inboxes } = await listInboxes({
     chatbotId,
     includes: ["integration"],
-    perPage: 1000,
+    perPage: maxPerPage,
   })
 
   return (

@@ -34,7 +34,7 @@ const worker = new Worker(
     logger.info(job.data, "Worker received job")
     switch (job.data.type) {
       case IntegrationJobAction.incomingMessage: {
-        const { message, postbackAction, quickReplyAction, conversation } =
+        const { message, postbackAction, quickReplyAction, conversation, ref } =
           await receiveMessage(job.data.data)
 
         // Trigger automated response if the message is from a user
@@ -53,6 +53,16 @@ const worker = new Worker(
               },
             },
           )
+        }
+
+        if (ref) {
+          await integrationQueue.add(IntegrationJobAction.runRef, {
+            type: IntegrationJobAction.runRef,
+            data: {
+              conversationId: conversation.id,
+              ref,
+            },
+          })
         }
         return
       }

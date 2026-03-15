@@ -47,12 +47,6 @@ export function UpdateReflinkDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      {/* <DialogTrigger asChild>
-        <Button>
-          <PencilIcon />
-          {t("messages.editFeature", { feature: t("fields.reflink.label") })}
-        </Button>
-      </DialogTrigger> */}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -118,7 +112,7 @@ export function UpdateReflinkForm(props: {
       form.reset({
         name: reflink.name,
         flowId: reflink.flowId,
-        // customFieldId: reflink.customFieldId,
+        customFieldId: reflink.customFieldId,
       })
     }
   }, [reflink, form])
@@ -137,7 +131,7 @@ export function UpdateReflinkForm(props: {
 
         <CustomFieldSelect
           label={t("fields.savePayloadToCustomField.label")}
-          name="fieldId"
+          name="customFieldId"
         />
 
         <div className="flex justify-end gap-4">

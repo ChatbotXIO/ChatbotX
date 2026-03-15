@@ -12,11 +12,8 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
-import { MessengerQRCodeDiaglog } from "../inboxes/components/inbox-messenger-card"
-import { WebchatQRCodeDialog } from "../inboxes/components/inbox-webchat-card"
-import { WhatsappQRCodeDialog } from "../inboxes/components/inbox-whatsapp-card"
-import { ZaloQRCodeDiaglog } from "../inboxes/components/inbox-zalo-card"
 import { useInboxStore } from "../inboxes/provider/inbox-store-context"
+import { ScanQRCodeDiaglog } from "../qrcode/scan-qrcode"
 import { getInboxLink } from "./helpers"
 import type { ReflinkResource } from "./schemas/resource"
 
@@ -53,6 +50,7 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
   const { inboxes } = useInboxStore((state) => state)
 
   const handleCopy = (text: string) => {
+    console.log("copying text", text)
     copyToClipboard(text)
       .then(() => {
         toast.success(t("messages.copiedToClipboard"))
@@ -62,17 +60,9 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
       })
   }
 
-  const allDialogs = {
-    messenger: MessengerQRCodeDiaglog,
-    whatsapp: WhatsappQRCodeDialog,
-    webchat: WebchatQRCodeDialog,
-    zalo: ZaloQRCodeDiaglog,
-  }
-
   return (
     <div className="flex flex-col gap-3">
       {inboxes.map((inbox) => {
-        const CardComponent = allDialogs[inbox.inboxType as InboxType]
         const link = getInboxLink({ inbox, reflinkData })
 
         return (
@@ -86,7 +76,12 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
             >
               {t("actions.copyUrl")}
             </Button>
-            <CardComponent link={link} />
+
+            <ScanQRCodeDiaglog
+              link={link}
+              title={"Scan QR Code to connect to the inbox"}
+              triggerName={t("actions.qrCode")}
+            />
           </div>
         )
       })}

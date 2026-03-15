@@ -4,6 +4,18 @@ import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { env } from "@/env"
 import type { InboxResource } from "../inboxes/schemas/resource"
 
+const buildUrlWithParam = (
+  baseUrl: string,
+  paramKey: string,
+  paramValue?: string,
+): string => {
+  const url = new URL(baseUrl)
+  if (paramValue) {
+    url.searchParams.set(paramKey, paramValue)
+  }
+  return url.toString()
+}
+
 // Messenger: https://m.me/FB_PAGE_ID?ref=giveaway
 // Instagram: https://ig.me/m/INSTAGRAM_USERNAME?ref=giveaway
 // WhatsApp: https://wa.me/PHONE_NUMBER?text=/giveaway
@@ -13,46 +25,37 @@ import type { InboxResource } from "../inboxes/schemas/resource"
 export const getInboxLink = (props: {
   inbox: InboxResource
   reflinkData?: string
-}) => {
+}): string => {
   const { inbox, reflinkData } = props
 
   switch (inbox.inboxType) {
-    case "messenger": {
-      const url = new URL(`https://m.me/${inbox.sourceId}`)
-      if (reflinkData) {
-        url.searchParams.set("ref", reflinkData)
-      }
-      return url.toString()
-    }
-
+    case "messenger":
+      return buildUrlWithParam(
+        `https://m.me/${inbox.sourceId}`,
+        "ref",
+        reflinkData,
+      )
     case "whatsapp": {
-      const url = new URL(
-        `https://wa.me/${(inbox.integrationWhatsapp?.auth as WhatsappAuthValue).metadata.phoneNumber.display_phone_number}`,
+      const phoneNumber = (
+        inbox.integrationWhatsapp?.auth as WhatsappAuthValue | undefined
+      )?.metadata?.phoneNumber?.display_phone_number
+      return buildUrlWithParam(
+        `https://wa.me/${phoneNumber ?? ""}`,
+        "text",
+        reflinkData ? `/${reflinkData}` : undefined,
       )
-      if (reflinkData) {
-        url.searchParams.set("text", `/${reflinkData}`)
-      }
-      return url.toString()
     }
-
-    case "webchat": {
-      const url = new URL(
+    case "webchat":
+      return buildUrlWithParam(
         `${env.NEXT_PUBLIC_BUILDER_URL}/webchat?chatbotId=${inbox.chatbotId}&webchatId=${inbox.sourceId}`,
+        "ref",
+        reflinkData,
       )
-      if (reflinkData) {
-        url.searchParams.set("ref", reflinkData)
-      }
-      return url.toString()
-    }
-
-    default: {
-      const url = new URL(
+    default:
+      return buildUrlWithParam(
         `${env.NEXT_PUBLIC_BUILDER_URL}/link?chatbotId=${inbox.chatbotId}`,
+        "ref",
+        reflinkData,
       )
-      if (reflinkData) {
-        url.searchParams.set("ref", reflinkData)
-      }
-      return url.toString()
-    }
   }
 }

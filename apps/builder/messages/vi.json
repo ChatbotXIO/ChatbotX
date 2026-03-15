@@ -1,10 +1,12 @@
 {
   "actions": {
     "copy": "Sao chép",
+    "copyUrl": "Sao chép URL",
     "actions": "Hành động",
     "add": "Thêm",
     "addContactNotes": "Thêm ghi chú liên hệ",
     "addContactTag": "Thêm thẻ liên hệ",
+    "addVariable": "Thêm biến",
     "addFeature": "Thêm {feature}",
     "addFlowReply": "Thêm phản hồi luồng",
     "addMore": "Thêm nữa",
@@ -59,6 +61,10 @@
     "getTools": "Lấy công cụ",
     "import": "Nhập",
     "inboxActions": "Hộp thư",
+    "selectOptions": "Chọn tùy chọn",
+    "exportContacts": "Xuất liên hệ",
+    "filter": "Lọc",
+    "selectFile": "Chọn tệp",
     "insertLink": "Chèn liên kết",
     "loginWithMagicLink": "Đăng nhập bằng Magic Link",
     "manage": "Quản lý",
@@ -146,7 +152,8 @@
     "landingPage": "Trang đích",
     "addNotes": "Thêm ghi chú",
     "generate": "Tạo",
-    "regenerate": "Tạo lại"
+    "regenerate": "Tạo lại",
+    "qrCode": "Mã QR"
   },
   "states": {
     "success": "Thành công",
@@ -247,6 +254,8 @@
     "title": "Thanh toán"
   },
   "broadcasts": {
+    "title": "Phát sóng",
+    "description": "Gửi tin nhắn cho liên hệ của bạn theo thời gian thực hoặc lên lịch sau. Bạn có thể gửi cho tất cả liên hệ, một danh sách cụ thể hoặc một liên hệ cụ thể.",
     "scheduleSendMessage": "Lên lịch gửi tin nhắn",
     "update": {
       "title": "Cập nhật phát sóng"
@@ -496,6 +505,15 @@
     "automatedResponses": {
       "label": "Phản hồi tự động"
     },
+    "reflink": {
+      "label": "Liên kết giới thiệu"
+    },
+    "learnMore": {
+      "label": "Tìm hiểu thêm"
+    },
+    "savePayloadToCustomField": {
+      "label": "Lưu payload vào trường tùy chỉnh"
+    },
     "autoReply": {
       "label": "Tự động trả lời"
     },
@@ -571,6 +589,7 @@
     },
     "customField": {
       "label": "Trường tùy chỉnh",
+      "savePayloadTo": "Lưu phản hồi vào Trường tùy chỉnh",
       "set_value": "Thiết lập giá trị",
       "append": "Thêm vào cuối",
       "prepend": "Thêm vào đầu",
@@ -641,6 +660,12 @@
     "firstName": {
       "label": "Tên",
       "placeholder": "Nhập tên"
+    },
+    "countryCode": {
+      "label": "Mã quốc gia"
+    },
+    "contactId": {
+      "label": "ID Liên hệ / ID Người đăng ký / PSID"
     },
     "flow": {
       "label": "Luồng"
@@ -871,6 +896,9 @@
     },
     "size": {
       "label": "Kích thước"
+    },
+    "imageSize": {
+      "label": "Kích thước hình ảnh"
     },
     "sort": {
       "label": "Sắp xếp",
@@ -1338,7 +1366,8 @@
     "enableFeature": "Bật {feature}",
     "enableFeatureDescription": "Bạn có chắc chắn muốn bật {feature}?",
     "enableSuccess": "Đã bật {feature} thành công",
-    "exportedSuccess": "{feature} đã được xuất thành công"
+    "exportedSuccess": "{feature} đã được xuất thành công",
+    "syncedSuccessfully": "Đã đồng bộ thành công"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1360,6 +1389,8 @@
     "title": "OpenAI"
   },
   "settings": {
+    "title": "Cài đặt",
+    "description": "Cấu hình cài đặt chatbot của bạn.",
     "agents": {
       "description": "Mô tả AI Agents",
       "title": "AI Agents"
@@ -1570,5 +1601,65 @@
   },
   "keywords": {
     "title": "Từ khóa"
+  },
+  "messengerList": {
+    "title": "Danh sách Messenger",
+    "description": "Xây dựng danh sách và gửi phát sóng hàng ngày để tăng tương tác và doanh số. Có thể là chiến dịch tiếp thị theo thời gian, chiến dịch nhỏ giọt, khuyến mãi..."
+  },
+  "facebookCommentAutomation": {
+    "title": "Tự động hóa bình luận Facebook",
+    "description": "Thu hút thêm khách hàng và tăng doanh số trong khi tiết kiệm thời gian bằng cách tự động trả lời bình luận Facebook."
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Tự động hóa Facebook Lead Ads",
+    "description": "Bán nhiều hơn và có khách hàng tốt hơn bằng cách tự động sàng lọc lead Facebook hoặc Instagram trên WhatsApp."
+  },
+  "triggersAndActions": {
+    "title": "Kích hoạt & Hành động",
+    "description": "Sử dụng kích hoạt để tự động hóa tác vụ khi một số sự kiện xảy ra trong bot của bạn."
+  },
+  "dripCampaigns": {
+    "title": "Chiến dịch nhỏ giọt",
+    "description": "Gửi một chuỗi tin nhắn cho liên hệ của bạn theo thời gian để xây dựng tương tác và hướng dẫn họ qua phễu bán hàng."
+  },
+  "qrCodeGenerator": {
+    "title": "Trình tạo mã QR",
+    "description": "Tạo mã QR để giúp khách hàng nhanh chóng bắt đầu cuộc trò chuyện với doanh nghiệp của bạn tại địa điểm thực."
+  },
+  "templates": {
+    "title": "Mẫu",
+    "description": "Mẫu cho phép bạn nhanh chóng sao chép luồng và nội dung khác sang tài khoản khác."
+  },
+  "appointmentScheduling": {
+    "title": "Lên lịch hẹn",
+    "description": "Để liên hệ của bạn dễ dàng đặt lịch hẹn với bạn."
+  },
+  "questionnaires": {
+    "title": "Bảng câu hỏi",
+    "description": "Nhanh chóng thực hiện khảo sát và câu đố với phản hồi kết quả theo thời gian thực."
+  },
+  "ecommerce": {
+    "title": "Thương mại điện tử",
+    "description": "Để khách hàng mua sản phẩm của bạn trong bot."
+  },
+  "placesNearMe": {
+    "title": "Địa điểm gần tôi",
+    "description": "Để khách hàng dễ dàng tìm địa điểm kinh doanh của bạn gần họ."
+  },
+  "pollManager": {
+    "title": "Quản lý bình chọn",
+    "description": "Thực hiện bình chọn hoặc hệ thống bỏ phiếu. Bạn cũng có thể sử dụng để thu thập ý kiến khách hàng."
+  },
+  "botSimulator": {
+    "title": "Mô phỏng Bot",
+    "description": "Mô phỏng Bot cho phép bạn hiển thị bot hoạt động trên bất kỳ trang web nào mà không cần thêm mã."
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "description": "Thông báo cho hệ thống của bạn khi một số sự kiện xảy ra trong bot. Bạn có thể sử dụng webhooks để chuyển dữ liệu sang hệ thống của bạn."
+  },
+  "reflinks": {
+    "title": "Liên kết giới thiệu",
+    "description": "Chia sẻ bot của bạn trên trang web, mạng xã hội hoặc ứng dụng nhắn tin khác làm điểm vào để người dùng bắt đầu cuộc trò chuyện với bot."
   }
 }

@@ -38,7 +38,7 @@ export function CreateReflinkDialog({ chatbotId }: { chatbotId: string }) {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="sm">
           <PlusIcon />
           {t("actions.createFeature", { feature: t("fields.reflink.label") })}
         </Button>
@@ -122,7 +122,7 @@ export function CreateReflinkForm({
 
         <CustomFieldSelect
           label={t("fields.customField.savePayloadTo")}
-          name="fieldId"
+          name="customFieldId"
         />
 
         <div className="flex justify-end gap-2">

@@ -127,18 +127,6 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {/* <GetQRCodeDialog
-                // chatbotId={row.original.chatbotId}
-                onOpenQRCode={setQRCodeText}
-                reflink={row.original}
-                trigger={
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <LinkIcon />
-                    {t("actions.getLinkOrQRCode")}
-                  </DropdownMenuItem>
-                }
-              /> */}
-
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "copyUrl" })}
               >

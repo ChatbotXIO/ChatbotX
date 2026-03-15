@@ -6,6 +6,7 @@
     "add": "Add",
     "addContactNotes": "Add Contact Notes",
     "addContactTag": "Add Contact Tag",
+    "addVariable": "Add Variable",
     "addFeature": "Add {feature}",
     "addFlowReply": "Add flow reply",
     "addMore": "Add more",
@@ -1326,6 +1327,7 @@
     "pleaseWait": "Please wait...",
     "processingRequest": "Processing your request...",
     "savedSuccessfully": "Saved successfully",
+    "syncedSuccessfully": "Synced successfully",
     "signedInSuccessfully": "Signed in successfully",
     "unarchivedSuccess": "{feature} unarchived successfully",
     "unknownError": "Unknown error",
@@ -1661,6 +1663,62 @@
   },
   "keywords": {
     "title": "Keywords"
+  },
+  "messengerList": {
+    "title": "Messenger List",
+    "description": "Build your list and send daily broadcasts to increase engagement and sales. It can be time-sensitive marketing campaigns, drip campaigns, promotions..."
+  },
+  "facebookCommentAutomation": {
+    "title": "Facebook Comment Automations",
+    "description": "Get more customers and increase sales while saving your time by automatically replying to Facebook comments."
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Facebook Lead Ads Automations",
+    "description": "Sell more and get better customers by auto-qualifying your Facebook or Instagram leads on WhatsApp."
+  },
+  "triggersAndActions": {
+    "title": "Triggers & Actions",
+    "description": "Use triggers to automate tasks when some events happen inside your bot."
+  },
+  "dripCampaigns": {
+    "title": "Drip Campaigns",
+    "description": "Send a series of messages to your contacts over time to build engagement and guide them through the sales funnel."
+  },
+  "qrCodeGenerator": {
+    "title": "QR Code Generator",
+    "description": "Generate QR codes to help your customers quickly start a conversation with your business in physical locations."
+  },
+  "templates": {
+    "title": "Templates",
+    "description": "Templates allow you to quickly copy flows and other content to other accounts."
+  },
+  "appointmentScheduling": {
+    "title": "Appointments Scheduling",
+    "description": "Let your contacts easily book an appointment with you."
+  },
+  "questionnaires": {
+    "title": "Questionnaires",
+    "description": "Quickly conduct surveys and quizzes with real-time feedback on results."
+  },
+  "ecommerce": {
+    "title": "Ecommerce",
+    "description": "Let your customers buy your products inside your bot."
+  },
+  "placesNearMe": {
+    "title": "Places Near Me",
+    "description": "Let your customers easily find your business locations near them."
+  },
+  "pollManager": {
+    "title": "Poll Manager",
+    "description": "Conduct polling or voting systems. You can use it to collect customers opinions also."
+  },
+  "botSimulator": {
+    "title": "Bot Simulator",
+    "description": "Bot Simulator allows you to show the bot working on any website without adding any code."
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "description": "Notify your system when some events occur inside your bot. You can use webhooks to transfer data to your system."
   },
   "reflinks": {
     "title": "Reflinks",

@@ -1,6 +1,8 @@
 "use client"
 
 import type { InboxType } from "@aha.chat/database/types"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { memo, useMemo } from "react"
 import type { InboxResource } from "../schemas/resource"
 import { InboxMessengerCard } from "./inbox-messenger-card"
 import InboxNewCard from "./inbox-new-card"
@@ -30,40 +32,42 @@ export const cardConfigs: Record<
   zalo: InboxZaloCard,
 }
 
-export default function InboxCardList({
+export const InboxCardList = memo(function InboxCardList({
   chatbotId,
   actionLabel,
   allowAddNew = true,
   direction = "horizontal",
   inboxes,
 }: InboxCardListProps) {
-  const inboxesFiltered = allowAddNew
-    ? inboxes
-    : inboxes.filter((inbox) => inbox.inboxType !== "zalo")
+  const inboxesFiltered = useMemo(
+    () =>
+      allowAddNew
+        ? inboxes
+        : inboxes.filter((inbox) => inbox.inboxType !== "zalo"),
+    [allowAddNew, inboxes],
+  )
 
   return (
     <div
-      className={`grid gap-4 ${
+      className={cn(
+        "grid gap-4",
         direction === "horizontal"
           ? "md:grid-cols-2 lg:grid-cols-4"
-          : "w-full grid-cols-1"
-      }`}
-    >
-      {inboxesFiltered.map((inbox) =>
-        (() => {
-          const CardComponent = cardConfigs[inbox.inboxType]
-
-          return (
-            <CardComponent
-              actionLabel={actionLabel}
-              inbox={inbox}
-              key={inbox.id}
-            />
-          )
-        })(),
+          : "w-full grid-cols-1",
       )}
+    >
+      {inboxesFiltered.map((inbox) => {
+        const CardComponent = cardConfigs[inbox.inboxType]
+        return (
+          <CardComponent
+            actionLabel={actionLabel}
+            inbox={inbox}
+            key={inbox.id}
+          />
+        )
+      })}
 
       {allowAddNew && <InboxNewCard chatbotId={chatbotId} />}
     </div>
   )
-}
+})

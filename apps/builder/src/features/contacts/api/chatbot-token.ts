@@ -221,7 +221,7 @@ export const chatbotTokenAPIs = {
       await deleteContactCustomFields({
         chatbotId,
         contactIds: [contactId],
-        fieldId: customFieldId,
+        customFieldId,
       })
     }),
 

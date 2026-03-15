@@ -88,12 +88,6 @@ export const messengerReferralSchema = z.object({
 })
 export type MessengerReferral = z.infer<typeof messengerReferralSchema>
 
-export const messengerSenderSchema = idSchema
-export type MessengerSender = z.infer<typeof messengerSenderSchema>
-
-export const messengerRecipientSchema = idSchema
-export type MessengerRecipient = z.infer<typeof messengerRecipientSchema>
-
 export const messengerMessagingEventSchema = z.object({
   sender: idSchema,
   recipient: idSchema,
