@@ -14,9 +14,6 @@ export const IntegrationJobAction = {
   incomingMessage: "incomingMessage",
   runFlowPostback: "runFlowPostback",
   runFlowQuickReply: "runFlowQuickReply",
-  sendFlowPostback: "sendFlowPostback",
-  sendFlowQuickReply: "sendFlowQuickReply",
-  sendFlowRef: "sendFlowRef",
   triggerAutomatedResponse: "triggerAutomatedResponse",
   sendBroadcast: "sendBroadcast",
   agentMarkAsRead: "agentMarkAsRead",
@@ -62,15 +59,6 @@ export type IntegrationJobSendFlowQuickReply = {
     conversationId: string
     action: string
     ref?: string | null
-  }
-}
-
-export type IntegrationJobSendFlowRef = {
-  type: typeof IntegrationJobAction.sendFlowRef
-  data: {
-    conversationId: string
-    contactId: string
-    ref: string
   }
 }
 
@@ -175,7 +163,6 @@ export type IntegrationJobData =
   | IntegrationJobUnblockContact
   | IntegrationJobAssignConversation
   | IntegrationJobCreateMessage
-  | IntegrationJobSendFlowRef
 
 export const integrationQueue =
   process.env.NEXT_PHASE !== "phase-production-build"

@@ -18,35 +18,35 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
-import { deleteRefLinkAction } from "./actions/delete-ref-link-action"
-import type { RefLinkResource } from "./schemas/types"
+import { deleteReflinksAction } from "./actions/delete-reflinks.action"
+import type { ReflinkResource } from "./schemas/resource"
 
-type DeleteRefLinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+type DeleteReflinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string
-  refLinks: Row<RefLinkResource>["original"][]
+  reflinks: Row<ReflinkResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange?: (val: boolean) => void
 }
 
-export function DeleteRefLinksDialog({
+export function DeleteReflinksDialog({
   chatbotId,
-  refLinks,
+  reflinks,
   showTrigger = true,
   onSuccess,
   onOpenChange,
   ...props
-}: DeleteRefLinkDialogProps) {
+}: DeleteReflinkDialogProps) {
   const t = useTranslations()
   const router = useRouter()
 
   const { execute, isPending } = useAction(
-    deleteRefLinkAction.bind(null, chatbotId),
+    deleteReflinksAction.bind(null, chatbotId),
     {
       onSuccess: () => {
         toast.success(
           t("messages.deletedSuccess", {
-            feature: t("fields.refLink.label"),
+            feature: t("fields.reflink.label"),
           }),
         )
         onOpenChange?.(false)
@@ -67,7 +67,7 @@ export function DeleteRefLinksDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Trash aria-hidden="true" className="mr-2 size-4" />
-            {t("actions.delete")} ({refLinks.length})
+            {t("actions.delete")} ({reflinks.length})
           </Button>
         </DialogTrigger>
       ) : null}
@@ -75,12 +75,12 @@ export function DeleteRefLinksDialog({
         <DialogHeader>
           <DialogTitle>
             {t("messages.deleteFeature", {
-              feature: t("fields.refLink.label"),
+              feature: t("fields.reflink.label"),
             })}
           </DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
-            {t("dialog.deleteConfirmation", {
-              feature: t("fields.refLink.label"),
+            {t("messages.deleteConfirmation", {
+              feature: t("fields.reflink.label"),
             })}
           </DialogDescription>
         </DialogHeader>
@@ -98,7 +98,7 @@ export function DeleteRefLinksDialog({
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
-            onClick={() => execute({ ids: refLinks.map((f) => f.id) })}
+            onClick={() => execute({ ids: reflinks.map((f) => f.id) })}
             size="sm"
             variant="destructive"
           >

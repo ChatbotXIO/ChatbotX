@@ -8,8 +8,57 @@ import {
   SiZalo,
   SiZaloHex,
 } from "@icons-pack/react-simple-icons"
-import { AppWindowIcon, GlobeIcon } from "lucide-react"
+import { AppWindowIcon, GlobeIcon, type LucideIcon } from "lucide-react"
+import type { ComponentType, SVGProps } from "react"
 import { memo } from "react"
+
+type IconSize = "small" | "medium" | "large"
+
+const ICON_SIZE_CLASSES: Record<IconSize, string> = {
+  small: "size-4",
+  medium: "size-5",
+  large: "size-6",
+}
+
+const LABEL_SIZE_CLASSES: Record<IconSize, string> = {
+  small: "text-xs truncate",
+  medium: "text-sm truncate",
+  large: "text-base truncate",
+}
+
+type InboxIconConfig = {
+  Icon: ComponentType<SVGProps<SVGSVGElement> & { fill?: string }> | LucideIcon
+  fill?: string
+  iconClassName?: string
+  defaultLabel: string
+}
+
+const INBOX_ICON_CONFIG: Record<InboxType | "omnichannel", InboxIconConfig> = {
+  messenger: {
+    Icon: SiMessenger,
+    fill: SiMessengerHex,
+    defaultLabel: "Messenger",
+  },
+  whatsapp: {
+    Icon: SiWhatsapp,
+    fill: SiWhatsappHex,
+    defaultLabel: "Whatsapp",
+  },
+  zalo: {
+    Icon: SiZalo,
+    fill: SiZaloHex,
+    defaultLabel: "Zalo",
+  },
+  webchat: {
+    Icon: AppWindowIcon,
+    iconClassName: "fill-zinc-100 dark:stroke-zinc-800",
+    defaultLabel: "Webchat",
+  },
+  omnichannel: {
+    Icon: GlobeIcon,
+    defaultLabel: "Omnichannel",
+  },
+}
 
 type InboxIconProps = {
   inboxType: InboxType | "omnichannel"
@@ -18,6 +67,7 @@ type InboxIconProps = {
   label?: string
   labelClassName?: string
   showLabel?: boolean
+  size?: IconSize
 }
 
 export const InboxIcon = memo(
@@ -28,82 +78,32 @@ export const InboxIcon = memo(
     label,
     labelClassName,
     showLabel = true,
+    size = "medium",
   }: InboxIconProps) => {
-    const defaultWrapperClassName = "flex items-center gap-1"
-    const defaultIconClassName = "size-4"
-    const defaultLabelClassName = "text-sm truncate"
+    const config = INBOX_ICON_CONFIG[inboxType] ?? INBOX_ICON_CONFIG.omnichannel
+    const {
+      Icon,
+      fill,
+      iconClassName: configIconClassName,
+      defaultLabel,
+    } = config
 
-    switch (inboxType) {
-      case "messenger":
-        return (
-          <div className={cn(defaultWrapperClassName, wrapperClassName)}>
-            <SiMessenger
-              className={cn(defaultIconClassName, iconClassName)}
-              fill={SiMessengerHex}
-            />
-            {showLabel && (
-              <span className={cn(defaultLabelClassName, labelClassName)}>
-                {label ?? "Messenger"}
-              </span>
-            )}
-          </div>
-        )
-      case "whatsapp":
-        return (
-          <div className={cn(defaultWrapperClassName, wrapperClassName)}>
-            <SiWhatsapp
-              className={cn(defaultIconClassName, iconClassName)}
-              fill={SiWhatsappHex}
-            />
-            {showLabel && (
-              <span className={cn(defaultLabelClassName, labelClassName)}>
-                {label ?? "Whatsapp"}
-              </span>
-            )}
-          </div>
-        )
-      case "zalo":
-        return (
-          <div className={cn(defaultWrapperClassName, wrapperClassName)}>
-            <SiZalo
-              className={cn(defaultIconClassName, iconClassName)}
-              fill={SiZaloHex}
-            />
-            {showLabel && (
-              <span className={cn(defaultLabelClassName, labelClassName)}>
-                {label ?? "Zalo"}
-              </span>
-            )}
-          </div>
-        )
-      case "webchat":
-        return (
-          <div className={cn(defaultWrapperClassName, wrapperClassName)}>
-            <AppWindowIcon
-              className={cn(
-                defaultIconClassName,
-                iconClassName,
-                "fill-zinc-100 dark:stroke-zinc-800",
-              )}
-            />
-            {showLabel && (
-              <span className={cn(defaultLabelClassName, labelClassName)}>
-                {label ?? "Webchat"}
-              </span>
-            )}
-          </div>
-        )
-      default:
-        return (
-          <div className={cn(defaultWrapperClassName, wrapperClassName)}>
-            <GlobeIcon className={cn(defaultIconClassName, iconClassName)} />
-            {showLabel && (
-              <span className={cn(defaultLabelClassName, labelClassName)}>
-                {label ?? "Omnichannel"}
-              </span>
-            )}
-          </div>
-        )
-    }
+    return (
+      <div className={cn("flex items-center gap-2", wrapperClassName)}>
+        <Icon
+          {...(fill && { fill })}
+          className={cn(
+            ICON_SIZE_CLASSES[size],
+            iconClassName,
+            configIconClassName,
+          )}
+        />
+        {showLabel && (
+          <span className={cn(LABEL_SIZE_CLASSES[size], labelClassName)}>
+            {label ?? defaultLabel}
+          </span>
+        )}
+      </div>
+    )
   },
 )

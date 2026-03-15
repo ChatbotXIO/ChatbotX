@@ -10,16 +10,17 @@ export function FrameHeader({ flow }: { flow: FlowResource }) {
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-      <AppBreadcrumb
-        items={[
-          {
-            label: t("fields.flows.label"),
-            href: `/chatbots/${flow.chatbotId}/flows`,
-          },
-          { label: flow.name, href: "" },
-        ]}
-      />
-
+      <div className="flex-1">
+        <AppBreadcrumb
+          items={[
+            {
+              label: t("fields.flows.label"),
+              href: `/chatbots/${flow.chatbotId}/flows`,
+            },
+            { label: flow.name, href: "" },
+          ]}
+        />
+      </div>
       {/* <ThemeSwitcher /> */}
 
       <FlowEditToolbar chatbotId={flow.chatbotId} flow={flow} />

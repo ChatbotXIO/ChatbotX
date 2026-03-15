@@ -17,39 +17,25 @@ import { useTranslations } from "next-intl"
 import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
-import { getInboxLink } from "@/features/ref-links/helpers"
+import { getInboxLink } from "@/features/reflinks/helpers"
 import type { InboxResource } from "../schemas/resource"
 
-export default function InboxZaloCard({
-  inbox,
-  actionLabel,
-}: {
-  inbox: InboxResource
-  actionLabel?: string
-}) {
+export function InboxZaloCard({ inbox }: { inbox: InboxResource }) {
   const link = getInboxLink({
-    inboxType: "zalo",
-    inboxes: [inbox],
-    chatbotId: inbox.chatbotId,
+    inbox,
   })
   return (
     <Card className="py-3" key={inbox.id}>
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
         <SiZalo aria-hidden="true" className="size-5" fill={SiZaloHex} />
         <p className="flex-1 truncate text-sm">{inbox.integrationZalo?.name}</p>
-        <ZaloQRCodeDiaglog actionLabel={actionLabel} link={link} />
+        <ZaloQRCodeDiaglog link={link} />
       </CardContent>
     </Card>
   )
 }
 
-function ZaloQRCodeDiaglog({
-  link,
-  actionLabel,
-}: {
-  link: string
-  actionLabel?: string
-}) {
+export function ZaloQRCodeDiaglog({ link }: { link: string }) {
   const t = useTranslations()
   const [_, copy] = useCopyToClipboard()
 
@@ -63,7 +49,7 @@ function ZaloQRCodeDiaglog({
     <Dialog>
       <DialogTrigger asChild>
         <Button size="sm" type="button" variant="secondary">
-          {actionLabel ?? t("actions.testNow")}
+          {t("actions.testNow")}
         </Button>
       </DialogTrigger>
       <DialogContent>

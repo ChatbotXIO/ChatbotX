@@ -4,6 +4,12 @@ import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -20,35 +26,29 @@ import {
   PencilIcon,
   Trash2Icon,
 } from "lucide-react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
-import { DeleteRefLinksDialog } from "./delete-ref-links-dialog"
-import { GetQRCodeDialog } from "./get-qr-code-dialog"
-import GetRefLinkDialog from "./get-ref-link-dialog"
-import type { getRefLinks } from "./queries"
-import { RefLinksTableToolbarActions } from "./ref-links-table-toolbar-actions"
-import type { RefLinkResource } from "./schemas/types"
+import { DeleteReflinksDialog } from "./delete-reflinks"
+import { GetReflinksDialog } from "./get-reflinks-dialog"
+import { ReflinksTableToolbarActions } from "./reflinks-table-toolbar-actions"
+import type { ListReflinkItem, ListReflinksResponse } from "./schemas/query"
+import { UpdateReflinkDialog } from "./update-reflink"
 
-type RefLinksTableProps = {
+type ReflinksTableProps = {
   chatbotId: string
-  promises: Promise<[Awaited<ReturnType<typeof getRefLinks>>]>
+  promises: Promise<[Awaited<ListReflinksResponse>]>
 }
 
-export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
+export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
   const t = useTranslations()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const [qrCodeText, setQRCodeText] = React.useState<string | null>(null)
-
   const [{ data, pageCount }] = use(promises)
 
   const [rowAction, setRowAction] =
-    React.useState<DataTableRowAction<RefLinkResource> | null>(null)
+    React.useState<DataTableRowAction<ListReflinkItem> | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: we need to memoize the columns
-  const columns = useMemo<ColumnDef<RefLinkResource>[]>(
+  const columns = useMemo<ColumnDef<ListReflinkItem>[]>(
     () => [
       {
         id: "select",
@@ -78,8 +78,8 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
         enableHiding: false,
       },
       {
-        id: "name",
-        accessorKey: "name",
+        id: "keyword",
+        accessorKey: "keyword",
         size: 100,
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -88,18 +88,11 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
           />
         ),
         cell: ({ row }) => {
-          const { id, name } = row.original
-          return (
-            <Link
-              href={`/chatbots/${chatbotId}/ref-links/${id}/edit?${searchParams.toString()}`}
-            >
-              {name}
-            </Link>
-          )
+          return <span>{row.original.name}</span>
         },
         meta: {
-          label: t("fields.name.label"),
-          placeholder: t("fields.name.placeholder"),
+          label: t("fields.keyword.label"),
+          placeholder: t("fields.keyword.searchPlaceholder"),
           variant: "text",
         },
         enableColumnFilter: true,
@@ -113,7 +106,7 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
             title={t("fields.botResponse.label")}
           />
         ),
-        cell: ({ row }) => row.original.flow?.name,
+        cell: ({ row }) => row.original.flow.name,
         enableSorting: false,
         meta: {
           label: t("fields.botResponse.label"),
@@ -134,26 +127,32 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <GetRefLinkDialog
-                chatbotId={chatbotId}
+              {/* <GetQRCodeDialog
+                // chatbotId={row.original.chatbotId}
                 onOpenQRCode={setQRCodeText}
-                refLink={row.original}
+                reflink={row.original}
                 trigger={
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <LinkIcon />
                     {t("actions.getLinkOrQRCode")}
                   </DropdownMenuItem>
                 }
-              />
+              /> */}
 
-              <DropdownMenuItem asChild>
-                <Link
-                  href={`/chatbots/${chatbotId}/ref-links/${row.original.id}/edit`}
-                >
-                  <PencilIcon />
-                  {t("actions.update")}
-                </Link>
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "copyUrl" })}
+              >
+                <LinkIcon />
+                {t("actions.copyUrl")}
               </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "update" })}
+              >
+                <PencilIcon />
+                {t("actions.update")}
+              </DropdownMenuItem>
+
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
                 variant="destructive"
@@ -168,7 +167,7 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
         enableHiding: false,
       },
     ],
-    [],
+    [t],
   )
 
   const { table } = useDataTable({
@@ -185,29 +184,43 @@ export function RefLinksTable({ chatbotId, promises }: RefLinksTableProps) {
   })
 
   return (
-    <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <RefLinksTableToolbarActions chatbotId={chatbotId} table={table} />
-        </DataTableToolbar>
-      </DataTable>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-bold text-xl">
+          {t("reflinks.title")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <DataTable table={table}>
+          <DataTableToolbar table={table}>
+            <ReflinksTableToolbarActions chatbotId={chatbotId} table={table} />
+          </DataTableToolbar>
+        </DataTable>
 
-      <GetQRCodeDialog
-        onOpenChange={() => setQRCodeText(null)}
-        open={Boolean(qrCodeText)}
-        text={qrCodeText}
-      />
+        <GetReflinksDialog
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "copyUrl"}
+          reflink={rowAction?.row.original ?? null}
+        />
 
-      <DeleteRefLinksDialog
-        chatbotId={chatbotId}
-        onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          router.refresh()
-        }}
-        open={rowAction?.variant === "delete"}
-        refLinks={rowAction?.row.original ? [rowAction?.row.original] : []}
-        showTrigger={false}
-      />
-    </>
+        <UpdateReflinkDialog
+          chatbotId={chatbotId}
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "update"}
+          reflink={rowAction?.row.original ?? null}
+        />
+
+        <DeleteReflinksDialog
+          chatbotId={chatbotId}
+          onOpenChange={() => setRowAction(null)}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          open={rowAction?.variant === "delete"}
+          reflinks={rowAction?.row.original ? [rowAction?.row.original] : []}
+          showTrigger={false}
+        />
+      </CardContent>
+    </Card>
   )
 }

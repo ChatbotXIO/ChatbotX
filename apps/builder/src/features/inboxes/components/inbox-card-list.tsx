@@ -2,11 +2,11 @@
 
 import type { InboxType } from "@aha.chat/database/types"
 import type { InboxResource } from "../schemas/resource"
-import InboxMessengerCard from "./inbox-messenger-card"
+import { InboxMessengerCard } from "./inbox-messenger-card"
 import InboxNewCard from "./inbox-new-card"
-import InboxWebchatCard from "./inbox-webchat-card"
-import InboxWhatsappCard from "./inbox-whatsapp-card"
-import InboxZaloCard from "./inbox-zalo-card"
+import { InboxWebchatCard } from "./inbox-webchat-card"
+import { InboxWhatsappCard } from "./inbox-whatsapp-card"
+import { InboxZaloCard } from "./inbox-zalo-card"
 
 type InboxCardListProps = {
   chatbotId: string
@@ -14,10 +14,9 @@ type InboxCardListProps = {
   actionLabel?: string
   direction?: "horizontal" | "vertical"
   inboxes: InboxResource[]
-  refId?: string
 }
 
-const cardConfigs: Record<
+export const cardConfigs: Record<
   InboxType,
   React.ComponentType<{
     inbox: InboxResource
@@ -37,11 +36,11 @@ export default function InboxCardList({
   allowAddNew = true,
   direction = "horizontal",
   inboxes,
-  refId,
 }: InboxCardListProps) {
   const inboxesFiltered = allowAddNew
     ? inboxes
     : inboxes.filter((inbox) => inbox.inboxType !== "zalo")
+
   return (
     <div
       className={`grid gap-4 ${
@@ -59,7 +58,6 @@ export default function InboxCardList({
               actionLabel={actionLabel}
               inbox={inbox}
               key={inbox.id}
-              refId={refId}
             />
           )
         })(),

@@ -228,11 +228,7 @@ export default function WhatsappCreate({
     <Card className={`${CARD_MARGIN} ${MAX_CARD_WIDTH}`}>
       <CardHeader>
         <CardTitle>
-          <InboxIcon
-            iconClassName="size-7"
-            inboxType="whatsapp"
-            wrapperClassName="text-xl font-bold gap-2"
-          />
+          <InboxIcon inboxType="whatsapp" size="large" />
         </CardTitle>
         <CardDescription />
       </CardHeader>

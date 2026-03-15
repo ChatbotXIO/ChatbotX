@@ -51,10 +51,10 @@ export const ToolsList = () => {
       icon: Layers2Icon,
     },
     {
-      label: t("tools.entryPointsLinks.label"),
-      description: t("tools.entryPointsLinks.description"),
+      label: t("reflinks.title"),
+      description: t("reflinks.description"),
       icon: LinkIcon,
-      link: `/chatbots/${chatbotId}/ref-links`,
+      link: `/chatbots/${chatbotId}/reflinks`,
     },
     {
       label: t("tools.QRCodeGenerator.label"),

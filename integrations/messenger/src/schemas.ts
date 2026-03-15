@@ -1,13 +1,9 @@
 import type {
   Context,
-  Handler,
   IncomingContact,
-  IncomingConversation,
-  IncomingMessage,
   Oauth2AuthValue,
   Oauth2Config,
   SendFlowStepProps,
-  SendMessageProps,
 } from "@aha.chat/sdk"
 import { z } from "zod"
 
@@ -30,20 +26,6 @@ export type MessengerAuthValue = Oauth2AuthValue & {
 }
 
 export type MessengerActions = {
-  receiveMessage: Handler<
-    {
-      ctx: Context<MessengerAuthValue>
-      data: MessengerWebhookEvent
-    },
-    {
-      message: IncomingMessage
-      conversation: IncomingConversation
-      postbackAction?: { flowVersionId: string; buttonId: string } | null
-      quickReplyAction?: { flowVersionId: string; buttonId: string } | null
-      ref?: string | null
-    }
-  >
-  sendMessage: (props: SendMessageProps<MessengerAuthValue>) => Promise<void>
   sendFlowStep: (props: SendFlowStepProps<MessengerAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<MessengerAuthValue>

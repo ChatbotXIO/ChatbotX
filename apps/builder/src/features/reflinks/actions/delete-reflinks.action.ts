@@ -1,15 +1,17 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { reflinkModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
-export const deleteReflinkAction = chatbotActionClient
+export const deleteReflinksAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
@@ -20,13 +22,15 @@ export const deleteReflinkAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await prisma.reflink.deleteMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-      })
+      await db
+        .delete(reflinkModel)
+        .where(
+          and(
+            eq(reflinkModel.chatbotId, chatbotId),
+            inArray(reflinkModel.id, parsedInput.ids),
+          ),
+        )
+
+      revalidateCacheTags(`chatbots:${chatbotId}#reflinks`)
     },
   )

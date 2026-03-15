@@ -1,7 +1,7 @@
 {
   "actions": {
     "copy": "Copy",
-    "copyLink": "Copy Link",
+    "copyUrl": "Copy URL",
     "actions": "Actions",
     "add": "Add",
     "addContactNotes": "Add Contact Notes",
@@ -151,14 +151,13 @@
     "landingPage": "Landing Page",
     "addNotes": "Add Notes",
     "generate": "Generate",
-    "regenerate": "Regenerate"
+    "regenerate": "Regenerate",
+    "qrCode": "QR Code"
   },
   "states": {
     "success": "Success",
     "error": "Error",
-    "skip": "Skip",
-    "getLink": "Get Link",
-    "getLinkOrQRCode": "Get Link / QR Code"
+    "skip": "Skip"
   },
   "admins": {
     "title": "Admins"
@@ -254,10 +253,9 @@
     "title": "Billing"
   },
   "broadcasts": {
+    "title": "Broadcasts",
+    "description": "Send messages to your contacts in real-time or schedule them for later. You can send messages to all contacts, a specific list of contacts, or a specific contact.",
     "scheduleSendMessage": "Schedule send message",
-    "update": {
-      "title": "Update Broadcast"
-    },
     "inboxType": {
       "messenger": "Messenger",
       "whatsapp": "WhatsApp",
@@ -587,6 +585,7 @@
     },
     "customField": {
       "label": "Custom Field",
+      "savePayloadTo": "Save response to Custom Field",
       "set_value": "Set value",
       "append": "Append to the end",
       "prepend": "Prepend to the beginning",
@@ -1140,6 +1139,11 @@
     },
     "botFields": {
       "label": "Bot Fields"
+    },
+    "keyword": {
+      "label": "Keyword",
+      "placeholder": "Enter keyword",
+      "searchPlaceholder": "Search keyword..."
     }
   },
   "flows": {
@@ -1385,6 +1389,8 @@
     "title": "OpenAI"
   },
   "settings": {
+    "title": "Settings",
+    "description": "Configure your chatbot settings.",
     "agents": {
       "description": "AI Agents description",
       "title": "AI Agents"
@@ -1408,6 +1414,7 @@
     "signUp": "Sign up"
   },
   "tools": {
+    "title": "Tools",
     "messengerList": {
       "label": "Messenger List",
       "description": "Build your list and send daily broadcasts to increase engagement and sales. It can be time-sensitive marketing campaigns, drip campaigns, promotions..."
@@ -1427,10 +1434,6 @@
     "dripCampaigns": {
       "label": "Drip Campaigns",
       "description": "Send a series of messages to your contacts over time to build engagement and guide them through the sales funnel."
-    },
-    "entryPointsLinks": {
-      "label": "Entry Points Links",
-      "description": "Share your bot on websites, social media platforms, or other messaging apps as an entry point for users to start a conversation with the bot."
     },
     "magicLinks": {
       "label": "Magic Links",
@@ -1658,5 +1661,9 @@
   },
   "keywords": {
     "title": "Keywords"
+  },
+  "reflinks": {
+    "title": "Reflinks",
+    "description": "Share your bot on websites, social media platforms, or other messaging apps as an entry point for users to start a conversation with the bot."
   }
 }

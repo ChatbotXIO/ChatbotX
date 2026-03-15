@@ -82,6 +82,7 @@ export type AIEmbeddingStatus =
   (typeof schema.aiEmbeddingStatus.enumValues)[number]
 export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
+export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
 
 export const Omnichannel = "omnichannel"
 

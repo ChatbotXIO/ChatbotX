@@ -17,23 +17,12 @@ import { useTranslations } from "next-intl"
 import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
-import { getInboxLink } from "@/features/ref-links/helpers"
+import { getInboxLink } from "@/features/reflinks/helpers"
 import type { InboxResource } from "../schemas/resource"
 
-export default function InboxMessengerCard({
-  inbox,
-  actionLabel,
-  refId,
-}: {
-  inbox: InboxResource
-  actionLabel?: string
-  refId?: string
-}) {
+export function InboxMessengerCard({ inbox }: { inbox: InboxResource }) {
   const link = getInboxLink({
-    inboxType: "messenger",
-    inboxes: [inbox],
-    chatbotId: inbox.chatbotId,
-    refId,
+    inbox,
   })
 
   return (
@@ -47,19 +36,13 @@ export default function InboxMessengerCard({
         <p className="flex-1 truncate text-sm">
           {inbox.integrationMessenger?.name}
         </p>
-        <MessengerQRCodeDiaglog actionLabel={actionLabel} link={link} />
+        <MessengerQRCodeDiaglog link={link} />
       </CardContent>
     </Card>
   )
 }
 
-function MessengerQRCodeDiaglog({
-  link,
-  actionLabel,
-}: {
-  link: string
-  actionLabel?: string
-}) {
+export function MessengerQRCodeDiaglog({ link }: { link: string }) {
   const t = useTranslations()
   const [_, copy] = useCopyToClipboard()
 
@@ -73,7 +56,7 @@ function MessengerQRCodeDiaglog({
     <Dialog>
       <DialogTrigger asChild>
         <Button size="sm" type="button" variant="secondary">
-          {actionLabel ?? t("actions.testNow")}
+          {t("actions.testNow")}
         </Button>
       </DialogTrigger>
       <DialogContent>

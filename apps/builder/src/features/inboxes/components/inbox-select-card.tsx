@@ -60,11 +60,7 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
         <ul aria-label="Available inbox types" className="flex flex-col gap-4">
           {inboxOptions.map((inbox) => (
             <li className="flex items-center gap-2" key={inbox.value}>
-              <InboxIcon
-                iconClassName="size-6"
-                inboxType={inbox.value}
-                wrapperClassName="flex-1 gap-2"
-              />
+              <InboxIcon inboxType={inbox.value} />
               <Button
                 disabled={
                   inbox.value !== "webchat" && !(inbox.value in settings)

@@ -1,3 +1,4 @@
+import type { InboxType } from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
@@ -16,6 +17,7 @@ export type InboxState = {
 export type InboxActions = {
   initialize: () => Promise<void>
   getAllInboxes: () => Promise<void>
+  groupInboxesByType: () => Record<InboxType, InboxResource[]>
 }
 
 export type InboxStore = InboxState & InboxActions
@@ -79,5 +81,16 @@ export const createInboxStore = (props: Partial<InboxState>) =>
       } finally {
         set({ loading: false })
       }
+    },
+
+    groupInboxesByType: () => {
+      const { inboxes } = get()
+      return inboxes.reduce(
+        (acc, inbox) => {
+          acc[inbox.inboxType] = [...(acc[inbox.inboxType] || []), inbox]
+          return acc
+        },
+        {} as Record<InboxType, InboxResource[]>,
+      )
     },
   }))

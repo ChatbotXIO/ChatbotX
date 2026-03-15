@@ -5,7 +5,7 @@ import z from "zod"
 import InboxCardList from "@/features/inboxes/components/inbox-card-list"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { listInboxes } from "@/features/inboxes/queries"
-import { findRefLink } from "@/features/ref-links/queries"
+import { findReflink } from "@/features/reflinks/queries"
 
 export default async function LinkPage(props: {
   searchParams: Promise<SearchParams>
@@ -13,7 +13,6 @@ export default async function LinkPage(props: {
   const t = await getTranslations()
   const searchParams = await props.searchParams
 
-  console.log(searchParams)
   const { data } = z
     .object({
       chatbotId: z.cuid2(),
@@ -25,7 +24,7 @@ export default async function LinkPage(props: {
     return notFound()
   }
 
-  const refLink = await findRefLink({
+  const reflink = await findReflink({
     chatbotId: data.chatbotId,
     id: data.ref.split("_")[1],
   })
@@ -34,7 +33,7 @@ export default async function LinkPage(props: {
     includes: ["integration"],
     perPage: 1000,
   })
-  if (!refLink) {
+  if (!reflink) {
     return notFound()
   }
 
@@ -47,7 +46,7 @@ export default async function LinkPage(props: {
           chatbotId={data.chatbotId}
           direction="vertical"
           inboxes={inboxes}
-          refId={data.ref}
+          // reflinkData={reflink.name}
         />
       </InboxStoreProvider>
     </div>

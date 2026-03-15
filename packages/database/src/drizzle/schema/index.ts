@@ -1600,3 +1600,37 @@ export const jwkModel = pgTable("jwks", {
   }).notNull(),
   expiresAt: timestamp({ precision: 6, withTimezone: true }),
 })
+
+export const reflinkModel = pgTable(
+  "Reflink",
+  {
+    ...sharedColumns,
+    name: text().notNull(),
+    flowId: text()
+      .notNull()
+      .references(() => flowModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "Reflink_flowId_fkey",
+      }),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "Reflink_chatbotId_fkey",
+      }),
+    customFieldId: text().references(() => customFieldModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+      name: "Reflink_customFieldId_fkey",
+    }),
+  },
+  (table) => [
+    uniqueIndex("Reflink_chatbotId_name_key").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)

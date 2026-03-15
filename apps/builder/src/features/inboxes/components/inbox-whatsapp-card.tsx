@@ -17,23 +17,12 @@ import { useTranslations } from "next-intl"
 import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
-import { getInboxLink } from "@/features/ref-links/helpers"
+import { getInboxLink } from "@/features/reflinks/helpers"
 import type { InboxResource } from "../schemas/resource"
 
-export default function InboxWhatsappCard({
-  inbox,
-  actionLabel,
-  refId,
-}: {
-  inbox: InboxResource
-  actionLabel?: string
-  refId?: string
-}) {
+export function InboxWhatsappCard({ inbox }: { inbox: InboxResource }) {
   const link = getInboxLink({
-    inboxType: "whatsapp",
-    inboxes: [inbox],
-    chatbotId: inbox.chatbotId,
-    refId,
+    inbox,
   })
 
   return (
@@ -48,19 +37,13 @@ export default function InboxWhatsappCard({
           {inbox.integrationWhatsapp?.name}
         </p>
 
-        <WhatsappQRCodeDialog actionLabel={actionLabel} link={link} />
+        <WhatsappQRCodeDialog link={link} />
       </CardContent>
     </Card>
   )
 }
 
-function WhatsappQRCodeDialog({
-  link,
-  actionLabel,
-}: {
-  link: string
-  actionLabel?: string
-}) {
+export function WhatsappQRCodeDialog({ link }: { link: string }) {
   const t = useTranslations()
   const [, copy] = useCopyToClipboard()
 
@@ -74,7 +57,7 @@ function WhatsappQRCodeDialog({
     <Dialog>
       <DialogTrigger asChild>
         <Button size="sm" type="button" variant="secondary">
-          {actionLabel ?? t("actions.testNow")}
+          {t("actions.testNow")}
         </Button>
       </DialogTrigger>
       <DialogContent>

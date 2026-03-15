@@ -134,6 +134,7 @@ export default function ConversationItem({
             <InboxIcon
               inboxType={conversation.inbox?.inboxType ?? Omnichannel}
               showLabel={false}
+              size="small"
             />
           </div>
           {conversation.followed && (
