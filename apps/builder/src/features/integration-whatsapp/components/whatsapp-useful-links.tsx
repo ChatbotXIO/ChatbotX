@@ -52,7 +52,7 @@ export default memo(function WhatsappUsefulLinks({
   )
 
   return (
-    <div className="flex flex-col flex-wrap gap-4">
+    <div className="my-4 flex flex-col flex-wrap items-center gap-4">
       {links.map((link) => (
         <Button
           asChild

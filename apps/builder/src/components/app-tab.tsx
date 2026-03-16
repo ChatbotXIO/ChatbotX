@@ -17,7 +17,7 @@ export function AppTab({ tabs }: AppTabProps) {
       <CardContent className="flex items-center gap-8 px-8">
         {tabs.map((tab) => (
           <Link
-            className={`border-b-2 py-6 text-sm ${tab.isActive ? "border-gray-400 dark:border-white dark:text-gray-50" : "border-transparent font-medium text-gray-800 dark:text-gray-400"}`}
+            className={`border-b-2 py-6 text-sm ${tab.isActive ? "border-neutral-700 dark:border-white dark:text-gray-50" : "border-transparent font-medium text-gray-800 dark:text-gray-400"}`}
             href={tab.href}
             key={tab.href}
           >
