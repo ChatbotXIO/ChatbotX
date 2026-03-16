@@ -1,12 +1,13 @@
 import { db } from "@aha.chat/database/client"
 import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import type { IntegrationZaloResource } from "../schemas/resource"
 
 export const findIntegrationZalo = async ({
   chatbotId,
 }: {
   chatbotId: string
-}): Promise<IntegrationZaloModel | null> => {
+}): Promise<IntegrationZaloResource | null> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
   return (

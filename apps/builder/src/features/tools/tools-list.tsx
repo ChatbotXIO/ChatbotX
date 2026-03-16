@@ -9,7 +9,6 @@ import {
   CardSimIcon,
   CircleQuestionMarkIcon,
   CopyIcon,
-  Layers2Icon,
   LinkIcon,
   MapIcon,
   QrCodeIcon,
@@ -31,19 +30,6 @@ const TOOLS_CONFIG = [
     labelKey: "facebookLeadAdsAutomation.title",
     descriptionKey: "facebookLeadAdsAutomation.description",
     icon: SiFacebook,
-  },
-  // {
-  //   id: "triggers-actions",
-  //   labelKey: "triggersAndActions.title",
-  //   descriptionKey: "triggersAndActions.description",
-  //   icon: LightbulbIcon,
-  //   getLink: (id: string) => `/chatbots/${id}/triggers`,
-  // },
-  {
-    id: "drip-campaigns",
-    labelKey: "dripCampaigns.title",
-    descriptionKey: "dripCampaigns.description",
-    icon: Layers2Icon,
   },
   {
     id: "reflinks",

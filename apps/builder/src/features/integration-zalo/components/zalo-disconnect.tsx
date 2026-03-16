@@ -1,6 +1,5 @@
 "use client"
 
-import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,11 +19,12 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectZaloAction } from "../actions/disconnect.action"
+import type { IntegrationZaloResource } from "../schemas/resource"
 
 export function ZaloDisconnect({
   integrationZalo,
 }: {
-  integrationZalo: IntegrationZaloModel
+  integrationZalo: IntegrationZaloResource
 }) {
   const t = useTranslations()
   const router = useRouter()

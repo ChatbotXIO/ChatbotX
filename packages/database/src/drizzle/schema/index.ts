@@ -1227,7 +1227,7 @@ export const integrationZaloModel = pgTable(
   "IntegrationZalo",
   {
     ...sharedColumns,
-    auth: jsonb().notNull(),
+    auth: jsonb().$type<{ [x: string]: unknown }>().notNull(),
     oaId: text().notNull(),
     name: text().notNull(),
     chatbotId: text()

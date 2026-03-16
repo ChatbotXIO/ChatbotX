@@ -327,7 +327,7 @@ const getFieldConfigs = ({
         value: "messenger",
       },
       {
-        label: "Zalo",
+        label: "Zalo OA",
         value: "zalo",
       },
     ],

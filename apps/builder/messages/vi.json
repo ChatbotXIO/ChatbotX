@@ -1805,14 +1805,6 @@
     "title": "Tự động hóa Facebook Lead Ads",
     "description": "Bán nhiều hơn và có khách hàng tốt hơn bằng cách tự động sàng lọc lead Facebook hoặc Instagram trên WhatsApp."
   },
-  "triggersAndActions": {
-    "title": "Kích hoạt & Hành động",
-    "description": "Sử dụng kích hoạt để tự động hóa tác vụ khi một số sự kiện xảy ra trong bot của bạn."
-  },
-  "dripCampaigns": {
-    "title": "Chiến dịch nhỏ giọt",
-    "description": "Gửi một chuỗi tin nhắn cho liên hệ của bạn theo thời gian để xây dựng tương tác và hướng dẫn họ qua phễu bán hàng."
-  },
   "qrCodeGenerator": {
     "title": "Trình tạo mã QR",
     "description": "Tạo mã QR để giúp khách hàng nhanh chóng bắt đầu cuộc trò chuyện với doanh nghiệp của bạn tại địa điểm thực."
