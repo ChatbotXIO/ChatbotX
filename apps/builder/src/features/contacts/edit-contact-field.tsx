@@ -19,7 +19,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect } from "react"
 import { toast } from "sonner"
-import { AccountFieldValueInput } from "../account-fields/account-field-value-input"
+import { BotFieldValueInput } from "../bot-fields/account-field-value-input"
 import { deleteContactCustomFieldAction } from "./actions/delete-contact-custom-field.action"
 import { updateContactFieldAction } from "./actions/update-contact-field.action"
 import { updateContactFieldRequest } from "./schemas/action"
@@ -119,9 +119,9 @@ export function EditContactField(props: EditContactField) {
             className="flex flex-col gap-4"
             onSubmit={handleSubmitWithAction}
           >
-            <AccountFieldValueInput
-              customFieldType={targetField?.customFieldType ?? "shortText"}
+            <BotFieldValueInput
               name={targetField?.key ?? ""}
+              type={targetField?.type ?? "shortText"}
             />
 
             <DialogFooter className="mt-4 justify-start">

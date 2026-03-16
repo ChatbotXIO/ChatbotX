@@ -43,9 +43,11 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.contactModel.chatbotId,
       to: r.chatbotModel.id,
     }),
-    customFields: r.many.fieldModel({
+    customFields: r.many.customFieldModel({
       from: r.contactModel.id.through(r.contactCustomFieldModel.contactId),
-      to: r.fieldModel.id.through(r.contactCustomFieldModel.customFieldId),
+      to: r.customFieldModel.id.through(
+        r.contactCustomFieldModel.customFieldId,
+      ),
     }),
     users: r.many.userModel({
       from: r.contactModel.id.through(r.contactNoteModel.contactId),
@@ -75,9 +77,6 @@ export const relations = defineRelations(schema, (r) => ({
   },
   userModel: {
     accounts: r.many.accountModel(),
-    chatbotsViaActivityLog: r.many.chatbotModel({
-      alias: "chatbot_id_user_id_via_activityLog",
-    }),
     chatbotsViaChatbotMember: r.many.chatbotModel({
       alias: "chatbot_id_user_id_via_chatbotMember",
     }),
@@ -96,11 +95,6 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
   chatbotModel: {
-    usersViaActivityLog: r.many.userModel({
-      from: r.chatbotModel.id.through(r.activityLogModel.chatbotId),
-      to: r.userModel.id.through(r.activityLogModel.userId),
-      alias: "chatbot_id_user_id_via_activityLog",
-    }),
     aiAgents: r.many.aiAgentModel(),
     aiAssistants: r.many.aiAssistantModel(),
     aiFilesViaAiEmbedding: r.many.aiFileModel({
@@ -136,10 +130,10 @@ export const relations = defineRelations(schema, (r) => ({
     contacts: r.many.contactModel(),
     conversations: r.many.conversationModel(),
     conversationParticipants: r.many.conversationParticipantModel(),
-    foldersViaField: r.many.folderModel({
-      from: r.chatbotModel.id.through(r.fieldModel.chatbotId),
-      to: r.folderModel.id.through(r.fieldModel.folderId),
-      alias: "chatbot_id_folder_id_via_field",
+    foldersViaCustomField: r.many.folderModel({
+      from: r.chatbotModel.id.through(r.customFieldModel.chatbotId),
+      to: r.folderModel.id.through(r.customFieldModel.folderId),
+      alias: "chatbot_id_folder_id_via_customField",
     }),
     foldersViaFlow: r.many.folderModel({
       from: r.chatbotModel.id.through(r.flowModel.chatbotId),
@@ -238,6 +232,7 @@ export const relations = defineRelations(schema, (r) => ({
     integrationMessengers: r.many.integrationMessengerModel(),
     integrationWebchats: r.many.integrationWebchatModel(),
     integrationZalos: r.many.integrationZaloModel(),
+    reflinks: r.many.reflinkModel(),
   },
   aiMCPServerModel: {
     chatbot: r.one.chatbotModel({
@@ -325,8 +320,9 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.chatbotModel.id,
     }),
   },
-  fieldModel: {
+  customFieldModel: {
     contacts: r.many.contactModel(),
+    reflinks: r.many.reflinkModel(),
   },
   broadcastModel: {
     contactsOnBroadcasts: r.many.contactsOnBroadcastsModel(),
@@ -380,20 +376,7 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.userModel.id,
     }),
   },
-  folderModel: {
-    chatbotsViaField: r.many.chatbotModel({
-      alias: "chatbot_id_folder_id_via_field",
-    }),
-    chatbotsViaFlow: r.many.chatbotModel({
-      alias: "chatbot_id_folder_id_via_flow",
-    }),
-    chatbotsViaFolder: r.many.chatbotModel({
-      alias: "chatbot_id_folder_id_via_folder",
-    }),
-    chatbotsViaTag: r.many.chatbotModel({
-      alias: "chatbot_id_folder_id_via_tag",
-    }),
-  },
+  folderModel: {},
   flowRunModel: {
     chatbot: r.one.chatbotModel({
       from: r.flowRunModel.chatbotId,
@@ -569,9 +552,9 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
   contactCustomFieldModel: {
-    customField: r.one.fieldModel({
+    customField: r.one.customFieldModel({
       from: r.contactCustomFieldModel.customFieldId,
-      to: r.fieldModel.id,
+      to: r.customFieldModel.id,
       optional: false,
     }),
     contact: r.one.contactModel({
@@ -643,6 +626,41 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.contactsToTagsModel.tagId,
       to: r.tagModel.id,
       optional: false,
+    }),
+  },
+  reflinkModel: {
+    flow: r.one.flowModel({
+      from: r.reflinkModel.flowId,
+      to: r.flowModel.id,
+      optional: false,
+    }),
+    customField: r.one.customFieldModel({
+      from: r.reflinkModel.customFieldId,
+      to: r.customFieldModel.id,
+    }),
+  },
+  triggerModel: {
+    conditions: r.many.conditionModel(),
+    chatbot: r.one.chatbotModel({
+      from: r.triggerModel.chatbotId,
+      to: r.chatbotModel.id,
+    }),
+  },
+  webhookModel: {
+    conditions: r.many.conditionModel(),
+    chatbot: r.one.chatbotModel({
+      from: r.webhookModel.chatbotId,
+      to: r.chatbotModel.id,
+    }),
+  },
+  conditionModel: {
+    trigger: r.one.triggerModel({
+      from: r.conditionModel.triggerId,
+      to: r.triggerModel.id,
+    }),
+    webhook: r.one.webhookModel({
+      from: r.conditionModel.webhookId,
+      to: r.webhookModel.id,
     }),
   },
 }))

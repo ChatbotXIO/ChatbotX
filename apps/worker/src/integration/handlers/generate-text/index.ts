@@ -259,10 +259,9 @@ export async function saveResultToCustomField({
     return
   }
 
-  const customField = await db.query.fieldModel.findFirst({
+  const customField = await db.query.customFieldModel.findFirst({
     where: {
       id: customFieldId,
-      fieldType: "customField",
       chatbotId,
     },
   })

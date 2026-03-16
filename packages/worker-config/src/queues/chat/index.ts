@@ -23,6 +23,7 @@ export const ChatJobAction = {
   sendFlowMessage: "sendFlowMessage",
   sendChatMessage: "sendChatMessage",
   sendTyping: "sendTyping",
+  notifyExportResult: "notifyExportResult",
 } as const
 
 export type ChatJobSendExternalMessage = {
@@ -69,11 +70,22 @@ export type ChatJobSendTyping = {
   }
 }
 
+export type ChatJobNotifyExportResult = {
+  type: typeof ChatJobAction.notifyExportResult
+  data: {
+    chatbotId: string
+    userId: string
+    status: "pending" | "completed" | "failed"
+    outputPath: string
+  }
+}
+
 export type ChatJobData =
   | ChatJobSendExternalMessage
   | ChatJobSendFlowStep
   | ChatJobSendChatMessage
   | ChatJobSendTyping
+  | ChatJobNotifyExportResult
 
 export const chatQueue =
   process.env.NEXT_PHASE !== "phase-production-build"

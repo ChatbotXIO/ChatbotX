@@ -152,7 +152,7 @@ function CreateCustomFieldForm({
           mode: "onChange",
           defaultValues: {
             name: "",
-            customFieldType: "shortText",
+            type: "shortText",
             description: "",
             folderId: null,
           },
@@ -181,7 +181,7 @@ function CreateCustomFieldForm({
 
         <SelectField
           label={t("fields.type.label")}
-          name="customFieldType"
+          name="type"
           options={customFieldTypeOptions}
           required
         />

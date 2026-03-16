@@ -4,6 +4,7 @@ export const RealtimeEventType = {
   contactBlocked: "contactBlocked",
   contactUnblocked: "contactUnblocked",
   conversationAssigned: "conversationAssigned",
+  notifyExportResult: "notifyExportResult",
 } as const
 
 export type RealtimeEventCreateMessage = {
@@ -34,6 +35,15 @@ export type RealtimeEventConversationAssigned = {
     conversationIds: string[]
     assignedUserId: string | null
     assignedInboxTeamId: string | null
+  }
+}
+
+export type RealtimeEventNotifyExportResult = {
+  eventType: typeof RealtimeEventType.notifyExportResult
+  data: {
+    outputPath: string
+    status: "pending" | "processing" | "completed" | "failed"
+    error?: string
   }
 }
 

@@ -1,9 +1,15 @@
-import { contactModel, createSelectSchema } from "@aha.chat/database/schema"
+import {
+  contactCustomFieldModel,
+  contactModel,
+  createSelectSchema,
+} from "@aha.chat/database/schema"
 import type { CustomFieldType } from "@aha.chat/database/types"
 import type { LucideIcon } from "lucide-react"
-import type { z } from "zod"
+import { z } from "zod"
 
-export const contactResource = createSelectSchema(contactModel)
+export const contactResource = createSelectSchema(contactModel).extend({
+  contactCustomFields: z.array(createSelectSchema(contactCustomFieldModel)),
+})
 export type ContactResource = z.infer<typeof contactResource>
 
 export type ContactEditableField = {
@@ -11,7 +17,7 @@ export type ContactEditableField = {
   icon: LucideIcon
   label: string
   value: string | null | undefined
-  customFieldType: CustomFieldType
+  type: CustomFieldType
 }
 
 export const publicContactResource = contactResource.pick({

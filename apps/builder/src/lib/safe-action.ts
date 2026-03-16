@@ -8,7 +8,7 @@ import {
 } from "next-safe-action"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
-import { BaseException } from "./errors/exception"
+import { ChatbotXException } from "./errors/exception"
 import { logger } from "./log"
 
 export const actionClient = createSafeActionClient({
@@ -18,7 +18,7 @@ export const actionClient = createSafeActionClient({
       return DEFAULT_SERVER_ERROR_MESSAGE
     }
 
-    if (error instanceof BaseException || error instanceof SdkException) {
+    if (error instanceof ChatbotXException || error instanceof SdkException) {
       return error.message
     }
 

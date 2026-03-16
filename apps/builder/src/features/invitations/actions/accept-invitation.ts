@@ -13,7 +13,7 @@ import type {
 } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
 
 export const acceptInvitationAction = authActionClient
@@ -34,7 +34,7 @@ export const acceptInvitationAction = authActionClient
     )
 
     if (invitation.expiresAt < new Date()) {
-      throw new BaseException("Invitation expired")
+      throw new ChatbotXException("Invitation expired")
     }
 
     if (invitation.chatbotId) {
@@ -45,7 +45,7 @@ export const acceptInvitationAction = authActionClient
         },
       })
       if (existingMember) {
-        throw new BaseException("You are already a member of this chatbot")
+        throw new ChatbotXException("You are already a member of this chatbot")
       }
 
       await db.insert(chatbotMemberModel).values({

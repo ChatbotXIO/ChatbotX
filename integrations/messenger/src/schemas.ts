@@ -81,9 +81,12 @@ export const messengerPostbackSchema = z.object({
   payload: z.string(),
 })
 
-const messengerReferralSchema = z.object({
+export const messengerReferralSchema = z.object({
   ref: z.string(),
+  source: z.string(),
+  type: z.string(),
 })
+export type MessengerReferral = z.infer<typeof messengerReferralSchema>
 
 export const messengerMessagingEventSchema = z.object({
   sender: idSchema,

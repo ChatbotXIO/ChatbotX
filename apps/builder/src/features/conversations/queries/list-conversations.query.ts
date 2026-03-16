@@ -13,6 +13,7 @@ import {
   sql,
 } from "@aha.chat/database/client"
 import {
+  contactCustomFieldModel,
   contactModel,
   conversationModel,
   inboxModel,
@@ -117,10 +118,28 @@ export const listConversations = async (
     .orderBy(desc(conversationModel.lastActivityAt))
     .limit(pagination.limit)
 
+  const contactIds = conversations
+    .map((c) => c.Contact?.id)
+    .filter(Boolean) as string[]
+  const contactCustomFields =
+    contactIds.length > 0
+      ? await db
+          .select()
+          .from(contactCustomFieldModel)
+          .where(inArray(contactCustomFieldModel.contactId, contactIds))
+      : []
+
   return {
     data: conversations.map((c) => ({
       ...c.Conversation,
-      contact: c.Contact,
+      contact: c.Contact
+        ? {
+            ...c.Contact,
+            contactCustomFields: contactCustomFields.filter(
+              (ccf) => ccf.contactId === c.Contact?.id,
+            ),
+          }
+        : null,
       inbox: c.Inbox,
       assignedUser: c.User,
       assignedInboxTeam: c.InboxTeam,
@@ -138,7 +157,11 @@ export const findConversation = async (
 
   const conversation = await db.query.conversationModel.findFirst({
     with: {
-      contact: true,
+      contact: {
+        with: {
+          contactCustomFields: true,
+        },
+      },
       inbox: true,
       messages: true,
       assignedUser: true,

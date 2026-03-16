@@ -3,7 +3,7 @@ import { rootFolderId } from "@aha.chat/database/enums"
 import { flowModel } from "@aha.chat/database/schema"
 import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { FlowException } from "../schemas/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import type {
   FindFlowParams,
   ListFlowsRequest,
@@ -84,7 +84,7 @@ export const findFlow = async (
     },
   })
   if (!targetFlow) {
-    throw new FlowException("Flow does not exists.")
+    throw notFoundException("Flow does not exists.")
   }
 
   return { data: targetFlow }
@@ -106,6 +106,6 @@ export const ensureAllFlowIdsExists = async (
   const count = rows.length
 
   if (count !== flowIds.length) {
-    throw new FlowException("Flow does not exists.")
+    throw notFoundException("Flow does not exists.")
   }
 }

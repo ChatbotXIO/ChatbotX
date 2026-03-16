@@ -5,26 +5,27 @@ import { InboxStatus } from "@aha.chat/database/enums"
 import { inboxModel, integrationZaloModel } from "@aha.chat/database/schema"
 import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const disconnectZaloAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [chatbotId, id],
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
       const integrationZalo = await findOrFail<IntegrationZaloModel>(
         integrationZaloModel,
         {
           chatbotId,
+          id,
         },
-        "Integration Zalo not found",
+        "Integration Zalo OA not found",
       )
 
       await db.transaction(async (tx) => {

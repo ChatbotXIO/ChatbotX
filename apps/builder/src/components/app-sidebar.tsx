@@ -10,11 +10,13 @@ import {
   AtomIcon,
   BrainIcon,
   ChartPieIcon,
+  LightbulbIcon,
   MessageCircleMoreIcon,
   RadioIcon,
   SlidersHorizontalIcon,
   UsersIcon,
   WorkflowIcon,
+  WrenchIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -72,22 +74,33 @@ export function AppSidebar({
         icon: BrainIcon,
       },
       {
-        title: t("fields.automatedResponses.label"),
+        title: t("keywords.title"),
         url: `/chatbots/${chatbotId}/automated-responses`,
         icon: AtomIcon,
       },
       {
-        title: t("fields.broadcasts.label"),
+        title: t("broadcasts.title"),
         url: `/chatbots/${chatbotId}/broadcasts`,
         icon: RadioIcon,
       },
-      // {
-      //   title: t("fields.tools.label"),
-      //   url: `/chatbots/${chatbotId}/tools`,
-      //   icon: WrenchIcon,
-      // },
       {
-        title: t("fields.settings.label"),
+        title: t("triggers.title"),
+        url: `/chatbots/${chatbotId}/triggers`,
+        icon: LightbulbIcon,
+      },
+
+      {
+        title: t("webhooks.title"),
+        url: `/chatbots/${chatbotId}/webhooks`,
+        icon: UsersIcon,
+      },
+      {
+        title: t("tools.title"),
+        url: `/chatbots/${chatbotId}/tools`,
+        icon: WrenchIcon,
+      },
+      {
+        title: t("settings.title"),
         url: `/chatbots/${chatbotId}/settings/general`,
         icon: SlidersHorizontalIcon,
       },

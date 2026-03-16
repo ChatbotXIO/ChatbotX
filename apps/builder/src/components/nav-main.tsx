@@ -7,6 +7,7 @@ import {
   SidebarMenuItem,
 } from "@aha.chat/ui/components/ui/sidebar"
 import type { LucideIcon } from "lucide-react"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 export function NavMain({
@@ -31,14 +32,14 @@ export function NavMain({
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton
-              asChild
+              className="h-9"
               isActive={pathname.startsWith(item.url)}
               tooltip={item.title}
             >
-              <a href={item.url}>
-                {item.icon && <item.icon />}
+              <Link className="flex items-center gap-2" href={item.url}>
+                {item.icon && <item.icon className="size-5" />}
                 <span>{item.title}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}

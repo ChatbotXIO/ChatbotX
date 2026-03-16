@@ -1,0 +1,31 @@
+{
+  "name": "chatbotx-mcp-server",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "start": "node dist/index.mjs",
+    "dev": "dotenv -e ../../.env -- tsx --watch src/index.ts",
+    "test": "dotenv -e ../../.env -- tsx src/test-tools.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "@chatbotx/public-apis": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@t3-oss/env-core": "^0.13.10",
+    "dotenv": "^16.4.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^25.4.0",
+    "dotenv-cli": "^11.0.0",
+    "tsdown": "0.21.0-beta.2",
+    "typescript": "^5.9.3"
+  }
+}

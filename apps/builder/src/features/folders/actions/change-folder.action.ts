@@ -4,16 +4,17 @@ import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { rootFolderId } from "@aha.chat/database/enums"
 import {
   automatedResponseModel,
-  fieldModel,
+  customFieldModel,
   flowModel,
   tagModel,
+  triggerModel,
+  webhookModel,
 } from "@aha.chat/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException, notFoundException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { changeFolderRequest } from "../schemas/action"
-import { FolderException } from "../schemas/resource"
 
 export const changeFolderAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
@@ -35,7 +36,7 @@ export const changeFolderAction = chatbotActionClient
         ),
       )
     if (!resources || resources.length === 0) {
-      throw new BaseException("Resource not found")
+      throw notFoundException("Resource not found")
     }
 
     let newFolderId: string | null = null
@@ -84,10 +85,14 @@ function findResourceModel(folderType: string) {
     case "flow":
       return flowModel
     case "customField":
-      return fieldModel
+      return customFieldModel
     case "automatedResponse":
       return automatedResponseModel
+    case "trigger":
+      return triggerModel
+    case "webhook":
+      return webhookModel
     default:
-      throw new FolderException("Invalid folder type")
+      throw new ChatbotXException("Invalid folder type")
   }
 }

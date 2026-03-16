@@ -9,7 +9,7 @@ import type {
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { updateChatbotMemberRequest } from "../schemas/chatbot-member.request"
 
@@ -26,7 +26,7 @@ export const updateChatbotMemberAction = chatbotActionClient
     const currentUserAndTargetChatbot =
       await getCurrentUserAndTargetChatbot(chatbotId)
     if (!currentUserAndTargetChatbot) {
-      throw new BaseException(
+      throw new ChatbotXException(
         "You are not authorized to update this chatbot member",
       )
     }
@@ -34,7 +34,7 @@ export const updateChatbotMemberAction = chatbotActionClient
     const permissions = currentUserAndTargetChatbot.targetChatbotMember
       .permissions as ChatbotMemberPermissions
     if (!permissions.superAdmin) {
-      throw new BaseException(
+      throw new ChatbotXException(
         "You are not authorized to update this chatbot member. You need to be a super admin to do this.",
       )
     }

@@ -1,12 +1,6 @@
 "use client"
 
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@aha.chat/ui/components/ui/card"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
@@ -38,15 +32,10 @@ export function AuditLogsTable({ promises }: AuditLogsTableProps) {
   })
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("auditLogs.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <DataTable table={table} />
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <h3 className="font-bold text-xl">{t("auditLogs.title")}</h3>
+
+      <DataTable table={table} />
+    </div>
   )
 }

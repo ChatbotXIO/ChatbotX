@@ -1,6 +1,6 @@
 "use client"
 
-import type { FieldModel } from "@aha.chat/database/types"
+import type { CustomFieldModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -53,7 +53,7 @@ export function CustomFieldsTable({
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<FieldModel> | null>(null)
+    useState<DataTableRowAction<CustomFieldModel> | null>(null)
   // const [_, copyFieldId] = useCopyToClipboard()
 
   // const handleCopy = (id: string) => {
@@ -119,18 +119,14 @@ export function CustomFieldsTable({
       },
       {
         id: "Type",
-        accessorKey: "customFieldType",
+        accessorKey: "type",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
             title={t("fields.type.label")}
           />
         ),
-        cell: ({ row }) => (
-          <CustomFieldTypeLabel
-            customFieldType={row.original.customFieldType}
-          />
-        ),
+        cell: ({ row }) => <CustomFieldTypeLabel type={row.original.type} />,
         meta: {
           label: t("fields.type.label"),
         },
@@ -233,7 +229,6 @@ export function CustomFieldsTable({
 
         <DeleteFieldsDialog
           chatbotId={chatbotId}
-          fieldType="customField"
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => rowAction?.row.toggleSelected(false)}
           open={rowAction?.variant === "delete"}

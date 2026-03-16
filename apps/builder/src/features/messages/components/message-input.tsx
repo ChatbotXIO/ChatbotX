@@ -167,7 +167,9 @@ export const MessageInput = () => {
             <FileUploadPreview ref={fileUploadRef} />
           </div>
           <div className="flex w-full items-center pl-2.5">
-            <InboxIcon inboxType={currentInboxType} wrapperClassName="flex-1" />
+            <div className="flex-1">
+              <InboxIcon inboxType={currentInboxType} />
+            </div>
 
             <div className="message-toolbar flex items-center gap-2">
               <Button

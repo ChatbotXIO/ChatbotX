@@ -108,9 +108,11 @@ export async function sendFlowStepToExternal({
       chatbot: inbox.chatbot,
       auth,
     },
-    conversation,
-    flowId,
-    flowVersionId,
-    step,
+    data: {
+      conversation,
+      flowId,
+      flowVersionId,
+      step,
+    },
   })
 }

@@ -1,7 +1,10 @@
 import ky from "ky"
 import { keys } from "./keys"
 import { logger } from "./logger"
-import type { RealtimeEventData } from "./schemas"
+import type {
+  RealtimeEventData,
+  RealtimeEventNotifyExportResult,
+} from "./schemas"
 
 const env = keys()
 
@@ -20,7 +23,7 @@ export async function broadcastToChatbotParty(
       },
     )
   } catch (error) {
-    logger.error(error, "Failed to broadcast to chatbot party")
+    logger.error(error, `Failed to broadcast to chatbot ${chatbotId} party`)
     return null
   }
 }
@@ -41,6 +44,26 @@ export async function broadcastToGuestParty(
     )
   } catch (error) {
     logger.error(error, "Failed to broadcast to guest party")
+    return null
+  }
+}
+
+export async function broadcastToUserParty(
+  userId: string,
+  json: RealtimeEventNotifyExportResult,
+) {
+  try {
+    return await ky.post(
+      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/users/${userId}`,
+      {
+        headers: {
+          "X-API-KEY": env.PARTYSOCKET_API_KEY,
+        },
+        json,
+      },
+    )
+  } catch (error) {
+    logger.error(error, `Failed to broadcast to user ${userId} party`)
     return null
   }
 }

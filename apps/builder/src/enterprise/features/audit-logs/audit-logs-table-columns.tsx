@@ -21,12 +21,12 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
         <div>
           {row.original.user ? (
             <div className="flex items-center gap-2">
-              <Avatar className="h-5 w-5">
+              <Avatar className="size-6">
                 <AvatarImage
                   alt="userImage"
                   src={row.original.user.image || undefined}
                 />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarFallback>{row.original.user.name?.[0]}</AvatarFallback>
               </Avatar>
               {row.original.user.name}
             </div>
@@ -38,22 +38,22 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
       enableHiding: false,
     },
     {
-      accessorKey: "detail",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Data" />
-      ),
-      cell: ({ row }) => <div>{row.original.detail}</div>,
-      size: 400,
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
       accessorKey: "action",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Action" />
       ),
       cell: ({ row }) => <div>{row.original.action}</div>,
       size: 50,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "detail",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Data" />
+      ),
+      cell: ({ row }) => <div>{row.original.detail}</div>,
+      size: 400,
       enableSorting: false,
       enableHiding: false,
     },

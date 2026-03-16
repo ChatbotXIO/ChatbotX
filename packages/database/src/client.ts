@@ -71,3 +71,7 @@ export const isDatabaseError = (
     "code" in error.cause
   )
 }
+
+export const isUniqueViolationError = (error: unknown): boolean => {
+  return isDatabaseError(error) && error.cause.code === "23505"
+}

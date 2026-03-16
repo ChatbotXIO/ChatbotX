@@ -1,103 +1,45 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { CopyIcon } from "lucide-react"
-import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
-import QRCode from "react-qr-code"
-import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
+import { memo, useMemo } from "react"
+import { ScanQRCodeDiaglog } from "@/features/qrcode/scan-qrcode"
+import { getInboxLink } from "@/features/reflinks/helpers"
 import type { InboxResource } from "../schemas/resource"
 import { InboxIcon } from "./inbox-icon"
 
-export default function InboxMessengerCard({
-  inbox,
-}: {
+type InboxMessengerCardProps = {
   inbox: InboxResource
-}) {
+}
+
+export const InboxMessengerCard = memo(function InboxMessengerCard({
+  inbox,
+}: InboxMessengerCardProps) {
+  const t = useTranslations()
+  const link = useMemo(
+    () =>
+      getInboxLink({
+        inbox,
+      }),
+    [inbox],
+  )
+
   return (
-    <Card className="py-3" key={inbox.id}>
+    <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
         <InboxIcon
           inboxType="messenger"
           label={inbox.integrationMessenger?.name}
         />
 
-        <MessengerQRCodeDiaglog
-          pageId={inbox.integrationMessenger?.pageId ?? ""}
+        <ScanQRCodeDiaglog
+          link={link}
+          title={t("actions.connectFeature", {
+            feature: t("fields.messenger.label"),
+          })}
+          triggerName={t("actions.testNow")}
         />
       </CardContent>
     </Card>
   )
-}
-
-function MessengerQRCodeDiaglog({ pageId }: { pageId: string }) {
-  const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
-
-  const [messengerUrl, setMessengerUrl] = useState<string>("")
-
-  useEffect(() => {
-    setMessengerUrl(`https://m.me/${pageId}`)
-  }, [pageId])
-
-  const handleCopy = () => {
-    copy(messengerUrl).then(() => {
-      toast.success(t("messages.copiedToClipboard"))
-    })
-  }
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="secondary">
-          {t("actions.testNow")}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {t("actions.connectFeature", {
-              feature: t("fields.whatsapp.label"),
-            })}
-          </DialogTitle>
-          <DialogDescription />
-        </DialogHeader>
-        <div className="flex flex-col items-center justify-center gap-2">
-          <p>{t("actions.scanQRCode")}</p>
-          <QRCode value={messengerUrl} />
-
-          <p>{t("texts.or")}</p>
-          <div className="-mt-2 flex items-center justify-center gap-2">
-            <Link
-              className="text-sky-600 no-underline hover:underline dark:text-sky-400"
-              href={messengerUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {messengerUrl}
-            </Link>
-            <Button
-              onClick={handleCopy}
-              size="icon"
-              type="button"
-              variant="secondary"
-            >
-              <CopyIcon className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
+})

@@ -1,21 +1,30 @@
+"use client"
+
 import type { InboxType } from "@aha.chat/database/types"
-import { use } from "react"
-import type { listInboxes } from "../queries"
+import { cn } from "@aha.chat/ui/lib/utils"
+import { memo, useMemo } from "react"
 import type { InboxResource } from "../schemas/resource"
-import InboxMessengerCard from "./inbox-messenger-card"
+import { InboxMessengerCard } from "./inbox-messenger-card"
 import InboxNewCard from "./inbox-new-card"
-import InboxWebchatCard from "./inbox-webchat-card"
-import InboxWhatsappCard from "./inbox-whatsapp-card"
-import InboxZaloCard from "./inbox-zalo-card"
+import { InboxWebchatCard } from "./inbox-webchat-card"
+import { InboxWhatsappCard } from "./inbox-whatsapp-card"
+import { InboxZaloCard } from "./inbox-zalo-card"
 
 type InboxCardListProps = {
   chatbotId: string
-  inboxesPromise: Promise<[Awaited<ReturnType<typeof listInboxes>>]>
+  allowAddNew?: boolean
+  actionLabel?: string
+  direction?: "horizontal" | "vertical"
+  inboxes: InboxResource[]
 }
 
-const cardConfigs: Record<
+export const cardConfigs: Record<
   InboxType,
-  React.ComponentType<{ inbox: InboxResource }>
+  React.ComponentType<{
+    inbox: InboxResource
+    actionLabel?: string
+    refId?: string
+  }>
 > = {
   whatsapp: InboxWhatsappCard,
   webchat: InboxWebchatCard,
@@ -23,23 +32,42 @@ const cardConfigs: Record<
   zalo: InboxZaloCard,
 }
 
-export default function InboxCardList({
+export const InboxCardList = memo(function InboxCardList({
   chatbotId,
-  inboxesPromise,
+  actionLabel,
+  allowAddNew = true,
+  direction = "horizontal",
+  inboxes,
 }: InboxCardListProps) {
-  const [{ data: inboxes }] = use(inboxesPromise)
+  const inboxesFiltered = useMemo(
+    () =>
+      allowAddNew
+        ? inboxes
+        : inboxes.filter((inbox) => inbox.inboxType !== "zalo"),
+    [allowAddNew, inboxes],
+  )
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {inboxes.map((inbox) =>
-        (() => {
-          const CardComponent = cardConfigs[inbox.inboxType]
-
-          return <CardComponent inbox={inbox} key={inbox.id} />
-        })(),
+    <div
+      className={cn(
+        "grid gap-4",
+        direction === "horizontal"
+          ? "md:grid-cols-2 lg:grid-cols-4"
+          : "w-full grid-cols-1",
       )}
+    >
+      {inboxesFiltered.map((inbox) => {
+        const CardComponent = cardConfigs[inbox.inboxType]
+        return (
+          <CardComponent
+            actionLabel={actionLabel}
+            inbox={inbox}
+            key={inbox.id}
+          />
+        )
+      })}
 
-      <InboxNewCard chatbotId={chatbotId} />
+      {allowAddNew && <InboxNewCard chatbotId={chatbotId} />}
     </div>
   )
-}
+})

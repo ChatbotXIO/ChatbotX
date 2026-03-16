@@ -1,6 +1,9 @@
 "use client"
 
-import type { ContactCustomFieldModel } from "@aha.chat/database/types"
+import {
+  type FillableContactKeys,
+  fillableContactKeys,
+} from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -23,7 +26,9 @@ export const ContactDetail = () => {
   const t = useTranslations()
 
   const { chatbotId } = useParams<{ chatbotId: string }>()
-  const { activeConversationId, conversations } = useChatStore((state) => state)
+  const { activeConversationId, conversations, updateContact } = useChatStore(
+    (state) => state,
+  )
 
   const [contact, setContact] = useState<ContactResource | null>(null)
   const [selectedField, setSelectedField] =
@@ -49,44 +54,42 @@ export const ContactDetail = () => {
             icon: AtSignIcon,
             label: "Email",
             value: conversation.contact.email,
-            customFieldType: "shortText",
+            type: "shortText",
           },
           {
             key: "firstName",
             icon: TextIcon,
             label: "First Name",
             value: conversation.contact.firstName,
-            customFieldType: "shortText",
+            type: "shortText",
           },
           {
             key: "lastName",
             icon: TextIcon,
             label: "Last Name",
             value: conversation.contact.lastName,
-            customFieldType: "shortText",
+            type: "shortText",
           },
           {
             key: "phoneNumber",
             icon: PhoneIcon,
             label: "Phone Number",
             value: conversation.contact.phoneNumber,
-            customFieldType: "shortText",
+            type: "shortText",
           },
         ]
 
-        // TODO: get contact custom fields from conversation
-        for (const cc of [] as ContactCustomFieldModel[]) {
-          // for (const cc of conversation?.contact.contactCustomFields || []) {
+        for (const cc of conversation.contact.contactCustomFields || []) {
           const targetCustomField = customFields.find(
             (c) => c.id === cc.customFieldId,
           )
           if (targetCustomField) {
             tmpContactFields.push({
               key: cc.customFieldId,
-              icon: customFieldIconsMap[targetCustomField.customFieldType],
+              icon: customFieldIconsMap[targetCustomField.type],
               label: targetCustomField.name,
               value: cc.value,
-              customFieldType: targetCustomField.customFieldType,
+              type: targetCustomField.type,
             })
           }
         }
@@ -158,10 +161,10 @@ export const ContactDetail = () => {
                 ...contactFields,
                 {
                   key: customFieldId,
-                  icon: customFieldIconsMap[targetCustomField.customFieldType],
+                  icon: customFieldIconsMap[targetCustomField.type],
                   label: targetCustomField.name,
                   value: "",
-                  customFieldType: targetCustomField.customFieldType,
+                  type: targetCustomField.type,
                 },
               ])
             }
@@ -180,13 +183,34 @@ export const ContactDetail = () => {
         }}
         onOpenChange={() => setSelectedField(null)}
         onUpdated={(key, value) => {
-          const updatedContactFields = contactFields.map((field) => {
-            if (field.key === key) {
-              return { ...field, value }
+          if (fillableContactKeys.includes(key as FillableContactKeys)) {
+            updateContact(contact.id, { [key]: value })
+          } else {
+            const updatedCustomFields = (contact.contactCustomFields || []).map(
+              (cf) => {
+                if (cf.customFieldId === key) {
+                  return { ...cf, value }
+                }
+                return cf
+              },
+            )
+
+            // If not found, add it
+            if (!updatedCustomFields.find((cf) => cf.customFieldId === key)) {
+              updatedCustomFields.push({
+                contactId: contact.id,
+                customFieldId: key,
+                value,
+                id: "", // temporary ID, will be overwritten by server on reload
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
             }
-            return field
-          })
-          setContactFields(updatedContactFields)
+
+            updateContact(contact.id, {
+              contactCustomFields: updatedCustomFields,
+            })
+          }
         }}
         open={Boolean(selectedField)}
         targetField={selectedField}

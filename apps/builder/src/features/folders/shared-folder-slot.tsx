@@ -1,4 +1,5 @@
-import type { FolderModel, FolderType } from "@aha.chat/database/types"
+import type { FolderType } from "@aha.chat/database/enums"
+import type { FolderModel } from "@aha.chat/database/types"
 import {
   Card,
   CardContent,
@@ -34,12 +35,18 @@ export default async function SharedFolderSlot(props: {
     case "flows":
       folderType = "flow"
       break
-    case "account-fields":
+    case "bot-fields":
     case "custom-fields":
       folderType = "customField"
       break
     case "tags":
       folderType = "tag"
+      break
+    case "triggers":
+      folderType = "trigger"
+      break
+    case "webhooks":
+      folderType = "webhook"
       break
     default:
       break

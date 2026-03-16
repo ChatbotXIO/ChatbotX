@@ -1,0 +1,7 @@
+{
+  "extends": "@aha.chat/typescript-config/library.json",
+  "include": ["src/**/*.ts"],
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
+}

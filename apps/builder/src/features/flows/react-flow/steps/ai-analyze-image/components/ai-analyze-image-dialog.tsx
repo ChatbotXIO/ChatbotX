@@ -85,10 +85,10 @@ export const AIAnalyzeImageDialog = ({
             <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-4 overflow-y-auto">
               <AIModelSelect name="model" provider={provider} required />
 
-              <TiptapEditorField
-                label={t("fields.imageUrl.label")}
+              <CustomFieldSelect
+                includeReserved={true}
+                label="Image"
                 name="imageUrl"
-                placeholder={t("fields.imageUrl.placeholder")}
                 required
               />
 

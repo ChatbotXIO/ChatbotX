@@ -1,0 +1,24 @@
+{
+  "name": "@chatbotx/public-apis",
+  "version": "0.1.0",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "type": "module",
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "5.9.3",
+    "openapi-typescript": "^7.0.0"
+  },
+  "dependencies": {
+    "@aha.chat/logger": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "ky": "^1.14.3",
+    "zod": "^4.3.6"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate:chatbotx": "openapi-typescript https://builder-dev.aha.chat/api/public-spec.json --output src/generated/chatbotx.ts"
+  }
+}

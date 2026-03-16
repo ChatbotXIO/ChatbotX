@@ -11,7 +11,7 @@ import {
 import {
   contactCustomFieldModel,
   contactModel,
-  fieldModel,
+  customFieldModel,
 } from "@aha.chat/database/schema"
 import {
   type ContactModel,
@@ -70,12 +70,11 @@ export const updateContactFields = async ({
     customFieldIds.length > 0
       ? await db
           .select()
-          .from(fieldModel)
+          .from(customFieldModel)
           .where(
             and(
-              eq(fieldModel.chatbotId, chatbotId),
-              eq(fieldModel.fieldType, "customField"),
-              inArray(fieldModel.id, customFieldIds),
+              eq(customFieldModel.chatbotId, chatbotId),
+              inArray(customFieldModel.id, customFieldIds),
             ),
           )
       : []
