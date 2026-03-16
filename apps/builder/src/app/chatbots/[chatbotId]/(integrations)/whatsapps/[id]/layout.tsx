@@ -13,7 +13,7 @@ export default async function WhatsappLayout({
   params,
 }: LayoutProps) {
   const t = await getTranslations()
-  const { chatbotId } = await params // TODO: get chatbotId from params
+  const { chatbotId } = await params
 
   return (
     <>
