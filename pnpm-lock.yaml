@@ -559,10 +559,10 @@ importers:
         specifier: ^1.14.3
         version: 1.14.3
       mailparser:
-        specifier: ^3.9.4
+        specifier: ^3.9.3
         version: 3.9.4
       mammoth:
-        specifier: ^1.12.0
+        specifier: ^1.11.0
         version: 1.12.0
       mime-types:
         specifier: ^3.0.2
