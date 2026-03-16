@@ -169,7 +169,7 @@ export const sendFlowStep = async (
         }
 
         const response = await whatsappClient.$$apiFetch$$(
-          `${API_URL}/${DEFAULT_API_VERSION}/${conversation.conversationAttributes.phoneNumberId}/messages`,
+          `${API_URL}/${DEFAULT_API_VERSION}/${conversation.conversationAttributes?.phoneNumberId}/messages`,
           {
             method: "POST",
             headers: {
@@ -188,8 +188,8 @@ export const sendFlowStep = async (
         sendResponse = await response.json()
       } else {
         sendResponse = await whatsappClient.sendMessage(
-          conversation.conversationAttributes.phoneNumberId as string,
-          conversation.sourceId,
+          conversation.conversationAttributes?.phoneNumberId as string,
+          conversation.sourceId as string,
           whatsappMessage,
         )
       }

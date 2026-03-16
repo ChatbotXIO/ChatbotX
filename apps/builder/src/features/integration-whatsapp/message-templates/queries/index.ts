@@ -1,5 +1,4 @@
-import { prisma } from "@aha.chat/database"
-import { findOrFail } from "@aha.chat/database/client"
+import { db, findOrFail } from "@aha.chat/database/client"
 import { integrationWhatsappModel } from "@aha.chat/database/schema"
 import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schemas/get-message-templates-schema"
@@ -20,11 +19,11 @@ export const getMessageTemplates = async (
     "Whatsapp integration not found",
   )
 
-  return await prisma.whatsappMessageTemplate.findMany({
+  return await db.query.whatsappMessageTemplateModel.findMany({
     where: {
       integrationWhatsappId: integrationWhatsapp.id,
     },
-    select: {
+    columns: {
       id: true,
       name: true,
       language: true,
@@ -52,9 +51,9 @@ export const getTemplatesForChatbot = async (
     filter.status = status
   }
 
-  return await prisma.whatsappMessageTemplate.findMany({
+  return await db.query.whatsappMessageTemplateModel.findMany({
     where: filter,
-    select: {
+    columns: {
       id: true,
       name: true,
       language: true,
