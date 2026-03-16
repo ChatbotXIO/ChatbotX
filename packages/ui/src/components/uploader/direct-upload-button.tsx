@@ -49,7 +49,6 @@ export function DirectUploadButton({
   onUploadSuccess,
   onUploadError,
   triggerRef,
-  label = "Upload File",
   ...props
 }: DirectUploadButtonProps) {
   const [files, setFiles] = useState<File[]>([])
@@ -178,7 +177,7 @@ export function DirectUploadButton({
             ) : (
               <UploadIcon />
             )}
-            {label}
+            Upload file
           </Button>
         </FileUploadTrigger>
       </FileUploadDropzone>

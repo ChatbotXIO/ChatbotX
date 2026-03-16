@@ -48,7 +48,7 @@ export const importContactsRequest = z.object({
     .array(
       z.object({
         column: z.string(),
-        customFieldId: z.string(),
+        fieldId: z.string(),
       }),
     )
     .optional(),

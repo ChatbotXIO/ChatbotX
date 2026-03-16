@@ -2,7 +2,7 @@ import { z } from "zod"
 
 const aiTriggerQuestionSchema = z.object({
   name: z.string().trim().min(1).max(40).optional(),
-  customFieldId: z.cuid2().optional(),
+  fieldId: z.cuid2().optional(),
 })
 
 export const createAITriggerRequest = z.object({

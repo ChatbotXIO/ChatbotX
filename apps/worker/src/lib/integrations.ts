@@ -72,7 +72,7 @@ export const getDBIntegration = async (
         },
       })
       if (!integrationZalo) {
-        throw new Error("Zalo OA integration not found")
+        throw new Error("Zalo integration not found")
       }
       return integrationZalo
     }

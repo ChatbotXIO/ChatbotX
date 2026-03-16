@@ -132,7 +132,7 @@ export function FlowEditToolbar({
               <LinkIcon />
               {t("actions.getDraftLink")}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setAction("getPublishedLink")}>
+            <DropdownMenuItem disabled>
               <LinkIcon />
               {t("actions.getPublishedLink")}
             </DropdownMenuItem>
@@ -190,13 +190,6 @@ export function FlowEditToolbar({
         isDraft={true}
         onOpenChange={() => setAction(null)}
         open={action === "getDraftLink"}
-      />
-
-      <GetFlowLinkDialog
-        flow={flow}
-        isDraft={false}
-        onOpenChange={() => setAction(null)}
-        open={action === "getPublishedLink"}
       />
     </div>
   )

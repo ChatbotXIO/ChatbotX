@@ -134,7 +134,6 @@ export default function ConversationItem({
             <InboxIcon
               channel={conversation.inbox?.channel ?? channelType.omnichannel}
               showLabel={false}
-              size="small"
             />
           </div>
           {conversation.followed && (
@@ -145,7 +144,7 @@ export default function ConversationItem({
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="truncate text-left font-medium dark:text-gray-200">
+          <div className="truncate text-left font-medium">
             {contactFullName}
           </div>
           <div

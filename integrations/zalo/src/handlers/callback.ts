@@ -27,17 +27,17 @@ export const callbackHandler = async (
   )
 
   if (!access_token) {
-    throw new SdkException("Access token not received from Zalo OA")
+    throw new SdkException("Access token not received from Zalo")
   }
 
   if (!refresh_token) {
-    throw new SdkException("Refresh token not received from Zalo OA")
+    throw new SdkException("Refresh token not received from Zalo")
   }
 
   const oaProfile = await getZaloOAProfile(access_token)
 
   if (!oaProfile?.oa_id) {
-    throw new SdkException("Invalid OA profile received from Zalo OA")
+    throw new SdkException("Invalid OA profile received from Zalo")
   }
 
   const builderUrl = process.env.NEXT_PUBLIC_BUILDER_URL

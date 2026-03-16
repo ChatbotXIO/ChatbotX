@@ -1,0 +1,17 @@
+{
+  "name": "@aha.chat/scheduler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aha.chat/logger": "workspace:*",
+    "ioredis": "5.9.3"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}

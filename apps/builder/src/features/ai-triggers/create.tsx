@@ -91,7 +91,7 @@ export function CreateAITriggerDialog({
   const onAddDataCollection = () => {
     append({
       name: "",
-      customFieldId: "",
+      fieldId: "",
     })
   }
 
@@ -138,7 +138,7 @@ export function CreateAITriggerDialog({
 
                     <div className="basis-5/12">
                       <ComboboxField
-                        name={`questions.${i}.customFieldId`}
+                        name={`questions.${i}.fieldId`}
                         options={customFieldSelectOptions}
                       />
                     </div>

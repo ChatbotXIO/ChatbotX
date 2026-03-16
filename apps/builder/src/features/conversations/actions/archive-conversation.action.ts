@@ -2,8 +2,6 @@
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
-import { emitConversationArchived } from "@chatbotx/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -20,26 +18,10 @@ export const archiveConversationAction = chatbotActionClient
     async ({
       bindArgsParsedInputs: [chatbotId],
       parsedInput,
-      ctx,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
-      ctx: { user: UserModel }
     }) => {
-      // Get conversations before archiving to emit events
-      const conversations = await db.query.conversationModel.findMany({
-        where: {
-          chatbotId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-        columns: {
-          id: true,
-          contactId: true,
-        },
-      })
-
       await db
         .update(conversationModel)
         .set({
@@ -51,20 +33,6 @@ export const archiveConversationAction = chatbotActionClient
             inArray(conversationModel.id, parsedInput.ids),
           ),
         )
-
-      // Emit conversation archived events
-      for (const conv of conversations) {
-        try {
-          await emitConversationArchived(
-            chatbotId,
-            conv.contactId,
-            conv.id,
-            ctx.user.id,
-          )
-        } catch (error) {
-          console.error("Failed to emit conversationArchived event:", error)
-        }
-      }
 
       revalidateCacheTags(`chatbots:${chatbotId}#conversations`)
     },

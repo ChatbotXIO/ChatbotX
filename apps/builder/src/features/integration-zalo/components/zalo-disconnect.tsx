@@ -19,20 +19,15 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectZaloAction } from "../actions/disconnect.action"
-import type { IntegrationZaloResource } from "../schemas/resource"
 
-export function ZaloDisconnect({
-  integrationZalo,
-}: {
-  integrationZalo: IntegrationZaloResource
-}) {
+export function ZaloDisconnect() {
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState<boolean>(false)
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectZaloAction.bind(null, chatbotId, integrationZalo.id), {
+    useAction(disconnectZaloAction.bind(null, chatbotId), {
       onSuccess: () => {
         router.refresh()
       },

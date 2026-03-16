@@ -36,7 +36,7 @@ export const sendOutgoingMessage = async (
     )) {
       const payload = buildMessagePayload(contact, zaloMessage)
       await sendMessage(ctx.auth, payload)
-      logger.info(`Message sent for Zalo OA UID: ${conversation.sourceId}`)
+      logger.info(`Message sent for Zalo UID: ${conversation.sourceId}`)
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")

@@ -167,7 +167,13 @@
     "addNotes": "Thêm ghi chú",
     "generate": "Tạo",
     "regenerate": "Tạo lại",
-    "qrCode": "Mã QR"
+    "qrCode": "Mã QR",
+    "addSequence": "Thêm chăm sóc",
+    "removeSequence": "Xóa chăm sóc",
+    "activate": "Kích hoạt",
+    "deactivate": "Tắt",
+    "saving": "Đang lưu...",
+    "creating": "Đang tạo..."
   },
   "states": {
     "success": "Thành công",
@@ -192,12 +198,11 @@
       "label": "AI Agents"
     },
     "subtitle": "Quản lý AI agents và công cụ để nâng cao khả năng chatbot của bạn.",
-    "title": "AI Agents",
-    "name": "Agents"
+    "title": "AI Agents"
   },
   "aiFiles": {
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
-    "title": "Knowledge"
+    "title": "AI Files"
   },
   "aiFunctions": {
     "description": "Cấu hình các chức năng LLM để làm cho AI agent thông minh hơn",
@@ -205,7 +210,7 @@
   },
   "aiMcpServers": {
     "description": "Kết nối AI với các hệ thống bên ngoài qua MCP",
-    "title": "MCP Servers",
+    "title": "AI MCP Servers",
     "tools": {
       "label": "Công cụ có sẵn"
     }
@@ -1453,7 +1458,10 @@
       "emailSpacing": "Khoảng cách",
       "emailCode": "Mã",
       "emailHeader": "Tiêu đề",
-      "typing": "Đang gõ"
+      "typing": "Đang gõ",
+      "sequenceActions": "Hành động chăm sóc",
+      "subscribeSequence": "Đăng ký chăm sóc",
+      "unsubscribeSequence": "Hủy đăng ký chăm sóc"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1644,7 +1652,10 @@
     "enableFeatureDescription": "Bạn có chắc chắn muốn bật {feature}?",
     "enableSuccess": "Đã bật {feature} thành công",
     "exportedSuccess": "{feature} đã được xuất thành công",
-    "syncedSuccessfully": "Đã đồng bộ thành công"
+    "syncedSuccessfully": "Đã đồng bộ thành công",
+    "selectedCount": "Đã chọn {count}",
+    "deleteMultipleItems": "Bạn có chắc chắn muốn xóa {count} {feature}?",
+    "deleteFeatureDescription": "Bạn có chắc chắn muốn xóa {feature} này?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi."
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1767,7 +1778,9 @@
     "minValue": "Giá trị tối thiểu là {min}",
     "passwordMismatch": "Mật khẩu không khớp",
     "required": "Trường này là bắt buộc",
-    "maxItemsReached": "Tối đa {max} {feature} cho mỗi chatbot"
+    "maxItemsReached": "Tối đa {max} {feature} cho mỗi chatbot",
+    "minOneContactRequired": "Cần ít nhất một liên hệ",
+    "minOneSequenceRequired": "Cần ít nhất một chuỗi chăm sóc"
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
@@ -1964,6 +1977,9 @@
   "customFields": {
     "title": "Trường tùy chỉnh"
   },
+  "aiHub": {
+    "title": "AI Hub"
+  },
   "keywords": {
     "title": "Từ khóa"
   },
@@ -2021,5 +2037,135 @@
   "reflinks": {
     "title": "Liên kết giới thiệu",
     "description": "Chia sẻ bot của bạn trên trang web, mạng xã hội hoặc ứng dụng nhắn tin khác làm điểm vào để người dùng bắt đầu cuộc trò chuyện với bot."
+  },
+  "sequences": {
+    "heading": {
+      "title": "Chăm sóc"
+    },
+    "field": {
+      "placeholder": "Chọn",
+      "searchPlaceholder": "Tìm kiếm",
+      "emptyMessage": "Không tìm thấy"
+    },
+    "subscribers": "Người đăng ký",
+    "steps": "Các tin nhắn",
+    "step": "Tin nhắn",
+    "addStep": "Thêm tin nhắn",
+    "addFirstStep": "Thêm tin nhắn đầu tiên",
+    "noSteps": "Chưa có tin nhắn nào. Thêm tin nhắn đầu tiên để bắt đầu.",
+    "delayDays": "Độ trễ (Ngày)",
+    "delayHours": "Độ trễ (Giờ)",
+    "createNewReply": "Tạo kịch bản mới",
+    "selectExisting": "Chọn kịch bản có sẵn",
+    "selectFlow": "Chọn kịch bản",
+    "selectedFlow": "Kịch bản đã chọn",
+    "searchFlow": "Tìm kiếm kịch bản...",
+    "delay": "Độ trễ",
+    "delayValue": "Giá trị",
+    "after": "Sau tin nhắn",
+    "afterEnrollment": "Sau khi tham gia",
+    "pleaseSelectFlow": "Vui lòng chọn kịch bản",
+    "confirmDeleteStep": "Bạn có chắc chắn muốn xóa tin nhắn này?",
+    "delayUnits": {
+      "immediate": "Ngay lập tức",
+      "minutes": "Phút",
+      "hours": "Giờ",
+      "days": "Ngày",
+      "specificTime": "Thời gian chính xác"
+    },
+    "specificDateTime": "Ngày & Giờ",
+    "timeValidation": "Thời gian tin nhắn này phải sau tin nhắn trước",
+    "validation": {
+      "exception": "Lỗi xác thực",
+      "nameExists": "Tên chuỗi chăm sóc đã tồn tại",
+      "folderNameExists": "Tên thư mục đã tồn tại",
+      "maxDepthExceeded": "Vượt quá độ sâu thư mục tối đa ({depth} cấp)"
+    },
+    "maxOneFolder": "Một chuỗi chăm sóc chỉ có thể trong một thư mục",
+    "minOneSequenceRequired": "Cần ít nhất một chuỗi chăm sóc",
+    "activated": "Kích hoạt chăm sóc thành công",
+    "deactivated": "Tắt chăm sóc thành công",
+    "noFlowSelected": "Chưa chọn kịch bản",
+    "sendLabel": "Gửi",
+    "selectFlowFirst": "Vui lòng chọn kịch bản trước khi bật tin nhắn",
+    "delayValueRequired": "Vui lòng nhập giá trị thời gian chờ",
+    "specificTimeRequired": "Vui lòng chọn thời gian cụ thể",
+    "timeRangeRequired": "Vui lòng chọn khoảng thời gian gửi",
+    "invalidTimeRange": "Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc",
+    "schedule": "Lịch trình",
+    "flow": "Kịch bản",
+    "active": "Hoạt động",
+    "messageSentAtLeast": "Tin nhắn này sẽ được gửi ít nhất",
+    "afterPreviousMessage": "sau tin nhắn trước đó (ngày = 24h)",
+    "anyTime": "Bất kỳ lúc nào",
+    "setTimeRange": "Đặt khoảng thời gian gửi",
+    "sendBetween": "Gửi trong khoảng",
+    "from": "Từ",
+    "to": "đến",
+    "selectDays": "Chọn ngày",
+    "anyDay": "Bất kỳ ngày nào",
+    "allDays": "Tất cả các ngày",
+    "deselectAll": "Bỏ chọn tất cả",
+    "saveUpdateSchedule": "Lưu & Cập nhật lịch trình",
+    "monday": "Thứ Hai",
+    "tuesday": "Thứ Ba",
+    "wednesday": "Thứ Tư",
+    "thursday": "Thứ Năm",
+    "friday": "Thứ Sáu",
+    "saturday": "Thứ Bảy",
+    "sunday": "Chủ Nhật",
+    "mon": "T2",
+    "tue": "T3",
+    "wed": "T4",
+    "thu": "T5",
+    "fri": "T6",
+    "sat": "T7",
+    "sun": "CN",
+    "afterText": "Sau",
+    "folders": {
+      "title": "Thư mục",
+      "allSequences": "Tất cả chăm sóc",
+      "createNew": "Tạo thư mục mới",
+      "created": "Đã tạo thư mục thành công",
+      "renamed": "Đã đổi tên thư mục thành công",
+      "folderDeleted": "Đã xóa thư mục thành công",
+      "nameRequired": "Tên thư mục là bắt buộc",
+      "confirmDeleteFolder": "Bạn có chắc chắn muốn xóa thư mục này?",
+      "confirmDeleteFolderWithName": "Bạn có chắc chắn muốn xóa thư mục \"{name}\"?",
+      "sequenceCount": "{count} chăm sóc",
+      "createDescription": "Tạo thư mục mới để tổ chức các chăm sóc của bạn",
+      "rename": "Đổi tên thư mục",
+      "renameDescription": "Nhập tên mới cho thư mục",
+      "moveToFolder": "Di chuyển vào thư mục",
+      "selectFolder": "Chọn thư mục",
+      "pleaseSelectFolder": "Vui lòng chọn thư mục",
+      "noFolder": "Không có thư mục",
+      "movedToFolder": "Đã di chuyển chăm sóc vào thư mục",
+      "bulkMoved": "Đã di chuyển {count} chăm sóc thành công",
+      "bulkMoveTitle": "Di chuyển {count} chăm sóc vào thư mục",
+      "selectMultipleHint": "Chọn nhiều thư mục bằng cách tick vào checkbox"
+    },
+    "addContactSequenceDialog": {
+      "title": "Thêm chăm sóc",
+      "description": "Thêm chăm sóc vào các liên hệ đã chọn",
+      "sequencesField": {
+        "label": "Chăm sóc",
+        "placeholder": "Chọn chăm sóc"
+      },
+      "submit": "Thêm chăm sóc",
+      "success": "Đã thêm chăm sóc thành công",
+      "error": "Không thể thêm chăm sóc"
+    },
+    "removeContactSequenceDialog": {
+      "title": "Xóa chăm sóc",
+      "description": "Xóa chăm sóc khỏi các liên hệ đã chọn",
+      "sequencesField": {
+        "label": "Chăm sóc",
+        "placeholder": "Chọn chăm sóc"
+      },
+      "submit": "Xóa chăm sóc",
+      "success": "Đã xóa chăm sóc thành công",
+      "error": "Không thể xóa chăm sóc"
+    }
   }
 }

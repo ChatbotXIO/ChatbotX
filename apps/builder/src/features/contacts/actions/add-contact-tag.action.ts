@@ -6,7 +6,6 @@ import {
   contactsToTagsModel,
   tagModel,
 } from "@aha.chat/database/schema"
-import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
@@ -36,7 +35,6 @@ export const addContactTagAction = chatbotActionClient
       })
     },
   )
-
 export const addContactTags = async ({
   chatbotId,
   parsedInput,
@@ -59,7 +57,7 @@ export const addContactTags = async ({
     return
   }
 
-  const allTags = await db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     // Create new tags if they don't exist
     if (parsedInput.tags.length > 0) {
       await tx
@@ -100,20 +98,7 @@ export const addContactTags = async ({
           target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
         })
     }
-
-    return allTags
   })
-
-  // Emit tag applied events for all contacts and tags
-  for (const contact of contacts) {
-    for (const tag of allTags) {
-      try {
-        await emitTagApplied(chatbotId, contact.id, tag.id)
-      } catch (error) {
-        console.error("Failed to emit tagApplied event:", error)
-      }
-    }
-  }
 
   revalidateCacheTags([
     `chatbots:${chatbotId}#contacts`,
@@ -149,13 +134,6 @@ export const attachContactTag = async ({
     .onConflictDoNothing({
       target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
     })
-
-  // Emit tag applied event
-  try {
-    await emitTagApplied(chatbotId, contactId, tagId)
-  } catch (error) {
-    console.error("Failed to emit tagApplied event:", error)
-  }
 }
 
 export const detachContactTag = async ({
@@ -184,11 +162,4 @@ export const detachContactTag = async ({
         eq(contactsToTagsModel.tagId, tagId),
       ),
     )
-
-  // Emit tag removed event
-  try {
-    await emitTagRemoved(chatbotId, contactId, tagId)
-  } catch (error) {
-    console.error("Failed to emit tagRemoved event:", error)
-  }
 }

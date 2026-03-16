@@ -21,7 +21,6 @@ type SpreadsheetDialogProps = {
   name: string
   onSubmit: () => void
   children?: ReactNode
-  trigger?: ReactNode
 }
 
 export const SpreadsheetDialog = ({
@@ -30,7 +29,6 @@ export const SpreadsheetDialog = ({
   // name,
   onSubmit,
   children,
-  trigger,
 }: SpreadsheetDialogProps) => {
   const t = useTranslations()
   // const { formState } = useFormContext()
@@ -38,15 +36,13 @@ export const SpreadsheetDialog = ({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogTrigger asChild>
-        {trigger ?? (
-          <div className="flex flex-col items-center rounded-md border-2 border-transparent p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
-            <div className="flex items-center justify-center gap-2">
-              <FileSpreadsheetIcon className="text-gray-500" size={20} />
-              <p className="font-medium text-sm">Google Sheets</p>
-            </div>
-            {/* <div className="mt-2 text-gray-500 text-xs">{t(name)}</div> */}
+        <div className="flex flex-col items-center rounded-md border-2 border-transparent p-2 transition-all ease-in hover:cursor-pointer hover:border-blue-500 hover:shadow-xl">
+          <div className="flex items-center justify-center gap-2">
+            <FileSpreadsheetIcon className="text-gray-500" size={20} />
+            <p className="font-medium text-sm">Google Sheets</p>
           </div>
-        )}
+          {/* <div className="mt-2 text-gray-500 text-xs">{t(name)}</div> */}
+        </div>
       </DialogTrigger>
       <DialogContent aria-describedby={undefined} className="flex-1">
         <DialogHeader>

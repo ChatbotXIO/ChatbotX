@@ -1,3 +1,4 @@
+import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
 import { useEffect, useMemo, useState } from "react"
 import { useInboxStore } from "./inbox-store-context"
 
@@ -15,7 +16,7 @@ export const allInboxConfigs = {
     value: "whatsapp",
   },
   zalo: {
-    label: "Zalo OA",
+    label: "Zalo",
     value: "zalo",
   },
   webchat: {
@@ -24,7 +25,7 @@ export const allInboxConfigs = {
   },
 } as const
 
-export const useConfiguredInboxTypeOptions = () => {
+export const useConfiguredInboxTypeOptions: () => SelectOption[] = () => {
   const [inboxTypes, setInboxTypes] = useState<string[]>([])
   const inboxes = useInboxStore((state) => state.inboxes)
 

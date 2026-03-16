@@ -30,6 +30,7 @@ export type AIAgentModel = typeof schema.aiAgentModel.$inferSelect
 export type AIFunctionModel = typeof schema.aiFunctionModel.$inferSelect
 export type AIMCPServerModel = typeof schema.aiMCPServerModel.$inferSelect
 export type AITriggerModel = typeof schema.aiTriggerModel.$inferSelect
+export type FieldModel = typeof schema.customFieldModel.$inferSelect
 export type AutomatedResponseModel =
   typeof schema.automatedResponseModel.$inferSelect
 export type FlowModel = typeof schema.flowModel.$inferSelect
@@ -71,9 +72,13 @@ export type InboxTeamMemberModel =
   typeof schema.inboxTeamMemberModel.$inferSelect
 export type ErrorLogModel = typeof schema.errorLogModel.$inferSelect
 export type AuditLogModel = typeof schema.auditLogModel.$inferSelect
-export type TriggerModel = typeof schema.triggerModel.$inferSelect
-export type WebhookModel = typeof schema.webhookModel.$inferSelect
-export type ConditionModel = typeof schema.conditionModel.$inferSelect
+export type SequenceModel = typeof schema.sequenceModel.$inferSelect
+export type SequenceStepModel = typeof schema.sequenceStepModel.$inferSelect
+export type ContactsOnSequenceModel =
+  typeof schema.contactsOnSequenceModel.$inferSelect
+export type SequenceEventModel = typeof schema.sequenceEventModel.$inferSelect
+export type SequenceDispatchModel =
+  typeof schema.sequenceDispatchModel.$inferSelect
 
 export type PlanModel = typeof schema.planModel.$inferSelect
 export type FolderType = (typeof schema.folderType.enumValues)[number]

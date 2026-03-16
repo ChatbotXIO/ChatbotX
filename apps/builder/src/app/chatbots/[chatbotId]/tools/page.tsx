@@ -1,5 +1,3 @@
-import { ToolsList } from "@/features/tools/tools-list"
-
-export default async function ToolsPage() {
-  return <ToolsList />
+export default function ToolsPage() {
+  return "tools page"
 }

@@ -28,10 +28,12 @@ import { startAnotherNodeStepSchema } from "./steps/start-another-node"
 import { startExternalFlowStepSchema } from "./steps/start-external-flow"
 import { startExternalNodeStepSchema } from "./steps/start-external-node"
 import { subscribeBroadcastStepSchema } from "./steps/subscribe-broadcast"
+import { subscribeSequenceStepSchema } from "./steps/subscribe-sequence"
 import { unarchiveConversationStepSchema } from "./steps/unarchive-conversation"
 import { unassignConversationStepSchema } from "./steps/unassign-conversation"
 import { unfollowConversationStepSchema } from "./steps/unfollow-conversation"
 import { unsubscribeBroadcastStepSchema } from "./steps/unsubscribe-broadcast"
+import { unsubscribeSequenceStepSchema } from "./steps/unsubscribe-sequence"
 
 const inboxSteps = [
   enableBotStepSchema,
@@ -58,6 +60,11 @@ const contactSteps = [
 const broadcastSteps = [
   subscribeBroadcastStepSchema,
   unsubscribeBroadcastStepSchema,
+]
+
+const sequenceSteps = [
+  subscribeSequenceStepSchema,
+  unsubscribeSequenceStepSchema,
 ]
 
 const toolSteps = [
@@ -93,6 +100,7 @@ export const actionSteps = [
   ...inboxSteps,
   ...contactSteps,
   ...broadcastSteps,
+  ...sequenceSteps,
   ...toolSteps,
   ...emailSteps,
   ...flowSteps,

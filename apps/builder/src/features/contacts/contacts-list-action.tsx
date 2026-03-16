@@ -17,6 +17,7 @@ import {
   BotIcon,
   CloudDownloadIcon,
   CloudUploadIcon,
+  Layers2Icon,
   ListIcon,
   MessageCirclePlusIcon,
   OctagonXIcon,
@@ -28,14 +29,17 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
 import DisableBotDialog from "../conversations/components/disable-bot-dialog"
 import EnableBotDialog from "../conversations/components/enable-bot-dialog"
+import AddContactSequenceDialog from "./components/add-contact-sequence-dialog"
 import AddContactTagDialog from "./components/add-contact-tag-dialog"
 import AddContactCustomFieldDialog from "./components/add-custom-field-dialog"
 import ClearContactCustomFieldDialog from "./components/delete-contact-custom-field"
 import DeleteContactDialog from "./components/remove-contact-dialog"
+import RemoveContactSequenceDialog from "./components/remove-contact-sequence-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
 import { ExportContactDialog } from "./export-contact-dialog"
 import type { ListContactsItem } from "./schemas/query"
@@ -91,6 +95,21 @@ export function ContactListAction({
             </DropdownMenuItem>
           }
         />
+
+        <SequenceStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+          <AddContactSequenceDialog
+            ids={rows.map((r) => r.id)}
+            trigger={
+              <DropdownMenuItem
+                disabled={rows.length === 0}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <Layers2Icon />
+                {t("actions.addSequence")}
+              </DropdownMenuItem>
+            }
+          />
+        </SequenceStoreProvider>
 
         <AddContactCustomFieldDialog
           ids={rows.map((r) => r.id)}
@@ -161,6 +180,24 @@ export function ContactListAction({
                   </DropdownMenuItem>
                 }
               />
+
+              <SequenceStoreProvider
+                autoInitialize={true}
+                chatbotId={chatbotId}
+              >
+                <RemoveContactSequenceDialog
+                  ids={rows.map((r) => r.id)}
+                  trigger={
+                    <DropdownMenuItem
+                      disabled={rows.length === 0}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Layers2Icon />
+                      {t("actions.removeSequence")}
+                    </DropdownMenuItem>
+                  }
+                />
+              </SequenceStoreProvider>
 
               <ClearContactCustomFieldDialog
                 ids={rows.map((r) => r.id)}

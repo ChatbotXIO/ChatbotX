@@ -6,32 +6,23 @@ import { useFormContext, useWatch } from "react-hook-form"
 import { callAPI } from "@/lib/swr"
 
 type IWorksheetColumnSelectProps = {
-  parentName?: string
   name: string
   label?: string
 }
 
 export const WorksheetColumnSelect = ({
-  parentName,
   name,
   label = "",
 }: IWorksheetColumnSelectProps) => {
   const params = useParams<{ chatbotId: string }>()
-  const getFieldName = (field: string) => {
-    if (!parentName) {
-      return field
-    }
-    return `${parentName}.${field}`
-  }
-
   const { control } = useFormContext()
   const spreadsheetId = useWatch({
     control,
-    name: getFieldName("spreadsheetId"),
+    name: "spreadsheetId",
   })
   const sheetName = useWatch({
     control,
-    name: getFieldName("sheetName"),
+    name: "sheetName",
   })
 
   const worksheetHeadersUrl = `/api/chatbots/${params.chatbotId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
@@ -44,7 +35,7 @@ export const WorksheetColumnSelect = ({
   return (
     <SelectField
       label={label}
-      name={getFieldName(name)}
+      name={name}
       options={headers}
       placeholder="Please select"
     />

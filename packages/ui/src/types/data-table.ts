@@ -36,7 +36,7 @@ export interface ExtendedColumnFilter<TData> extends FilterItemSchema {
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>
-  variant: "update" | "delete" | "duplicate" | "rename" | "resend" | "enable" | "move" | "copyUrl"
+  variant: "update" | "delete" | "duplicate" | "rename" | "resend" | "enable" | "move"
 }
 
 export type { ColumnDef } from "@tanstack/react-table"

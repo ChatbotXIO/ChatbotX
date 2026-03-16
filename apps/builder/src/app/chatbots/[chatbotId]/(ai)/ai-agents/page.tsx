@@ -5,7 +5,7 @@ import { listAIAgents } from "@/features/ai-agents/queries"
 import { listAIAgentsRequest } from "@/features/ai-agents/schemas/query"
 import { listAIFiles } from "@/features/ai-files/queries"
 import { listAIFunctions } from "@/features/ai-functions/queries"
-import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
+import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { listAIMcpServers } from "@/features/ai-mcp-servers/queries"
 
 type AIAgentsPageProps = {
@@ -40,7 +40,7 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
 
   return (
     <div className="space-y-6">
-      <AITab />
+      <AIHubBreadcrumb />
 
       <Suspense>
         <AIAgentsTable

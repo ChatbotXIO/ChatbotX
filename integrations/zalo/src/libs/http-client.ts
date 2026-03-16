@@ -46,7 +46,7 @@ export class ZaloHttpClient {
                 url: request.url,
                 method: request.method,
               },
-              "Zalo OA API request",
+              "Zalo API request",
             )
           },
         ],
@@ -60,7 +60,7 @@ export class ZaloHttpClient {
                   status: response.status,
                   error: errorText,
                 },
-                "Zalo OA API error response",
+                "Zalo API error response",
               )
 
               throw new ZaloException(
@@ -85,7 +85,7 @@ export class ZaloHttpClient {
       if (typeof data === "object" && data !== null && "error" in data) {
         const apiError = data as ZaloApiErrorResponse
         if (apiError.error !== 0) {
-          throw new ZaloException(`Zalo OA API error: ${apiError.message}`)
+          throw new ZaloException(`Zalo API error: ${apiError.message}`)
         }
       }
 
@@ -98,7 +98,7 @@ export class ZaloHttpClient {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred"
 
-      logger.error({ error: errorMessage }, "Zalo OA HTTP client error")
+      logger.error({ error: errorMessage }, "Zalo HTTP client error")
       throw new ZaloException(`HTTP request failed: ${errorMessage}`)
     }
   }

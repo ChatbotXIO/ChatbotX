@@ -2,14 +2,9 @@ Copyright (c) 2024-present AhaChat LLC.
 
 Portions of this software are licensed as follows:
 
-* All content that resides under <https://github.com/chatbotxio/ChatbotX> of
-  this repository (Commercial License) is licensed under the license defined in
-  "apps/builder/src/enterprise/LICENSE".
-* All third party components incorporated into the ChatbotX Software are
-  licensed under the original license provided by the owner of the applicable
-  component.
-* Content outside of the above mentioned directories or restrictions above is
-  available under the "AGPLv3" license as defined below.
+* All content that resides under https://github.com/chatbotxio/ChatbotX of this repository (Commercial License) is licensed under the license defined in "apps/builder/src/enterprise/LICENSE".
+* All third party components incorporated into the ChatbotX Software are licensed under the original license provided by the owner of the applicable component.
+* Content outside of the above mentioned directories or restrictions above is available under the "AGPLv3" license as defined below.
 
                     GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007

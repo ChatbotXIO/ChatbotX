@@ -39,6 +39,7 @@ export default function ManageAccessTokenPage(
             resetFormAndAction()
           },
           onError: ({ error }) => {
+            console.log("error", error)
             if (error.serverError) {
               toast.error(error.serverError)
             }

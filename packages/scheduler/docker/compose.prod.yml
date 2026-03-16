@@ -1,0 +1,23 @@
+include:
+  - compose.base.yml
+
+services:
+  dragonfly:
+    environment:
+      - DRAGONFLY_PASSWORD=${DRAGONFLY_PASSWORD}
+
+  zookeeper:
+
+  kafka:
+    environment:
+      - KAFKA_ADVERTISED_LISTENERS=EXTERNAL://${KAFKA_EXTERNAL_HOST}:${KAFKA_EXTERNAL_PORT:-9092},INTERNAL://kafka:9093
+      - KAFKA_NUM_PARTITIONS=${KAFKA_NUM_PARTITIONS:-32}
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=1
+      - KAFKA_MIN_INSYNC_REPLICAS=${KAFKA_MIN_INSYNC_REPLICAS:-1}
+      - KAFKA_LOG_RETENTION_HOURS=168
+      - KAFKA_LOG_SEGMENT_BYTES=1073741824
+      - KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS=300000
+
+  kafka-ui:
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=production

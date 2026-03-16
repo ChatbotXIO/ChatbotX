@@ -13,12 +13,14 @@ import {
 } from "@aha.chat/worker-config"
 import {
   addContactNotes,
+  addContactSequence,
   addContactTag,
   clearContactCustomField,
   deleteContact,
   markEmailVerified,
   optInEmail,
   optOutEmail,
+  removeContactSequence,
   removeContactTag,
   setContactCustomField,
 } from "./contact"
@@ -187,6 +189,8 @@ export const flowStepHandlers: Record<
   [StepType.spreadsheetSendData]: sendSpreadsheetData,
   [StepType.spreadsheetUpdateRow]: updateSpreadsheetRow,
   [StepType.waitUserReply]: undefined,
+  [StepType.subscribeSequence]: addContactSequence,
+  [StepType.unsubscribeSequence]: removeContactSequence,
   [StepType.sendQuickReply]: sendFlowMessage,
   [StepType.emailH3]: undefined,
   [StepType.emailText]: undefined,

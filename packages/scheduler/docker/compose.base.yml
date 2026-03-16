@@ -1,0 +1,24 @@
+include:
+  - dragonfly.yml
+  - kafka.yml
+
+services:
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui-scheduler
+    depends_on:
+      - kafka
+    ports:
+      - "${KAFKA_UI_PORT:-8090}:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=${KAFKA_UI_CLUSTER_NAME:-dev}
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9093
+      - KAFKA_CLUSTERS_0_PROPERTIES_SASL_MECHANISM=PLAIN
+      - KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL=SASL_PLAINTEXT
+      - KAFKA_CLUSTERS_0_PROPERTIES_SASL_JAAS_CONFIG=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="${KAFKA_ADMIN_PASSWORD}";
+      - AUTH_TYPE=LOGIN_FORM
+      - SPRING_SECURITY_USER_NAME=${KAFKA_UI_USER:-admin}
+      - SPRING_SECURITY_USER_PASSWORD=${KAFKA_UI_PASSWORD:-admin}
+    networks:
+      - scheduler-network
+    restart: unless-stopped

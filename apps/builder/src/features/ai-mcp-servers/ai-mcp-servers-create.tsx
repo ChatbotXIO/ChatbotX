@@ -72,7 +72,7 @@ export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
           onSuccess: () => {
             toast.success(
               t("messages.createdSuccess", {
-                feature: t("fields.mcpServer.label"),
+                feature: t("fields.aiMcpServer.label"),
               }),
             )
             resetFormAndAction()
@@ -128,7 +128,7 @@ export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
         <Button>
           <PlusIcon className="h-4 w-4" />
           {t("actions.createFeature", {
-            feature: t("fields.mcpServer.label"),
+            feature: t("fields.aiMcpServer.label"),
           })}
         </Button>
       </DialogTrigger>
@@ -136,7 +136,7 @@ export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {
-              feature: t("fields.mcpServer.label"),
+              feature: t("fields.aiMcpServer.label"),
             })}
           </DialogTitle>
         </DialogHeader>

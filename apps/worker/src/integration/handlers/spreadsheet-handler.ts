@@ -25,7 +25,6 @@ import {
 } from "@aha.chat/integration-google-sheets"
 import { SdkException } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
-import { emitCustomFieldChanged } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
@@ -343,32 +342,10 @@ const updateContactCustomFields = async ({
   headers: string[]
   foundRow: string[]
 }) => {
-  // Fetch custom field names for event emission
-  const customFieldIds = step.map
-    .map((m) => m.customFieldId)
-    .filter(Boolean) as string[]
-  const customFields = await db.query.customFieldModel.findMany({
-    where: {
-      id: { in: customFieldIds },
-    },
-    columns: { id: true, name: true },
-  })
-  const customFieldMap = new Map(customFields.map((f) => [f.id, f.name]))
-
   for (const mapItem of step.map) {
     const headerIndex = headers.indexOf(mapItem.header)
     if (headerIndex !== -1 && mapItem.customFieldId) {
       const value = foundRow[headerIndex]
-
-      // Get existing value before update
-      const existing = await db.query.contactCustomFieldModel.findFirst({
-        where: {
-          contactId: conversation.contactId,
-          customFieldId: mapItem.customFieldId,
-        },
-        columns: { value: true },
-      })
-
       await db
         .insert(contactCustomFieldModel)
         .values({
@@ -386,20 +363,6 @@ const updateContactCustomFields = async ({
             value,
           },
         })
-
-      // Emit custom field changed event
-      try {
-        await emitCustomFieldChanged(
-          conversation.chatbotId,
-          conversation.contactId,
-          mapItem.customFieldId,
-          customFieldMap.get(mapItem.customFieldId) || mapItem.customFieldId,
-          existing?.value || null,
-          value,
-        )
-      } catch (error) {
-        console.error("Failed to emit customFieldChanged event:", error)
-      }
     }
   }
 }

@@ -1,0 +1,30 @@
+services:
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: dragonfly-scheduler
+    command:
+      - --requirepass=${DRAGONFLY_PASSWORD}
+      - --port=6380
+      - --maxmemory=${DRAGONFLY_MAX_MEMORY:-4gb}
+      - --proactor_threads=${DRAGONFLY_THREADS:-4}
+    ports:
+      - "${DRAGONFLY_PORT:-6380}:6380"
+    volumes:
+      - dragonfly_data:/data
+    environment:
+      - DRAGONFLY_PASSWORD=${DRAGONFLY_PASSWORD}
+    networks:
+      - scheduler-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "-a", "${DRAGONFLY_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dragonfly_data:
+
+networks:
+  scheduler-network:
+    driver: bridge

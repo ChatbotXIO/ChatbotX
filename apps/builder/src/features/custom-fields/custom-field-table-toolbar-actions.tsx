@@ -1,6 +1,6 @@
 "use client"
 
-import type { CustomFieldModel } from "@aha.chat/database/types"
+import type { FieldModel } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { FolderUpIcon } from "lucide-react"
@@ -10,8 +10,11 @@ import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 
 type CustomFieldsTableToolbarActionsProps = {
-  table: Table<CustomFieldModel>
+  table: Table<FieldModel>
   chatbotId: string
+  // setRowAction: React.Dispatch<
+  //   React.SetStateAction<DataTableRowAction<FieldModel> | null>
+  // >
 }
 
 export function CustomFieldsTableToolbarActions({

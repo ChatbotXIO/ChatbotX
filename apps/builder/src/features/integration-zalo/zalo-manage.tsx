@@ -1,36 +1,27 @@
 "use client"
 
 import { organizationSettingsSchema } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@aha.chat/ui/components/ui/table"
-import { PlusCircleIcon } from "lucide-react"
-import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { SettingRow } from "@/components/setting-row"
 import type { findOrganization } from "../organization/queries"
+import { ZaloConnect } from "./components/zalo-connect"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
-import type { listIntegrationZalo } from "./queries"
+import type { findIntegrationZalo } from "./queries"
 
-type ZaloManageProps = {
-  chatbotId: string
+export type ZaloManageProps = {
   promises: Promise<
     [
-      Awaited<ReturnType<typeof listIntegrationZalo>>,
+      Awaited<ReturnType<typeof findIntegrationZalo>>,
       Awaited<ReturnType<typeof findOrganization>>,
     ]
   >
 }
-
-export function ZaloManage({ chatbotId, promises }: ZaloManageProps) {
-  const [{ data: integrationZalos }, organization] = use(promises)
+export function ZaloManage({ promises }: ZaloManageProps) {
   const t = useTranslations()
+  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const [integrationZalo, organization] = use(promises)
 
   const { data: settings } = organizationSettingsSchema.safeParse(
     organization?.settings,
@@ -46,47 +37,14 @@ export function ZaloManage({ chatbotId, promises }: ZaloManageProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-end gap-2">
-        <Button size="sm" variant="secondary">
-          <Link
-            className="flex items-center gap-2"
-            href={`/channels/create?channel=zalo&chatbotId=${chatbotId}`}
-          >
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", { feature: t("fields.zalo.label") })}
-          </Link>
-        </Button>
-      </div>
-
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("fields.name.label")}</TableHead>
-              <TableHead className="w-[200px]" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {integrationZalos.map((integrationZalo) => (
-              <TableRow key={integrationZalo.id}>
-                <TableCell>{integrationZalo.name}</TableCell>
-                <TableCell className="flex w-[200px] justify-end gap-2">
-                  <Button size="sm" variant="secondary">
-                    {t("zalo.refreshPermissions")}
-                  </Button>
-                  <ZaloDisconnect integrationZalo={integrationZalo} />
-                </TableCell>
-              </TableRow>
-            ))}
-            {integrationZalos.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={2}>No data</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <SettingRow description={t("zalo.description")} label={t("zalo.title")}>
+      {integrationZalo ? (
+        <div className="flex flex-col gap-2">
+          <ZaloDisconnect />
+        </div>
+      ) : (
+        <ZaloConnect chatbotId={chatbotId} settings={settings.zalo} />
+      )}
+    </SettingRow>
   )
 }

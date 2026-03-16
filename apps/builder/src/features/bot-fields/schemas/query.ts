@@ -1,3 +1,4 @@
+import type { FieldModel } from "@aha.chat/database/types"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
@@ -5,14 +6,14 @@ import {
   parseAsString,
 } from "nuqs/server"
 import type z from "zod"
-import { type BotFieldResource, botFieldResource } from "./resource"
+import { botFieldResource } from "./resource"
 
 export const listBotFieldsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   name: parseAsString,
   folderId: parseAsString,
-  sort: getSortingStateParser<BotFieldResource>().withDefault([
+  sort: getSortingStateParser<FieldModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
 })

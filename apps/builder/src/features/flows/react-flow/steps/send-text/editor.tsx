@@ -16,7 +16,7 @@ const SendTextStepEditor = (props: SendTextStepEditorProps) => {
         <TiptapEditorField name={`${parentName}.message`} />
       </div>
 
-      <div className="bg-slate-200 px-3 py-2 dark:bg-neutral-900">
+      <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>
     </div>

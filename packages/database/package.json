@@ -13,7 +13,7 @@
     "@aha.chat/typescript-config": "workspace:*",
     "@paralleldrive/cuid2": "^3.3.0",
     "@types/node": "^24.10.4",
-    "@types/pg": "^8.18.0",
+    "@types/pg": "^8.20.0",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "1.0.0-beta.18-7eb39f0"
   },

@@ -23,7 +23,7 @@
     "lucide-react": "^0.577.0",
     "next-intl": "^4.8.3",
     "react": "19.2.4",
-    "react-hook-form": "^7.71.2",
+    "react-hook-form": "^7.72.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },

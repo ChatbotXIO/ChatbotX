@@ -1,0 +1,13 @@
+{
+  "extends": "@aha.chat/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@aha.chat/database": ["../database/src/index.ts"],
+      "@aha.chat/logger": ["../logger/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

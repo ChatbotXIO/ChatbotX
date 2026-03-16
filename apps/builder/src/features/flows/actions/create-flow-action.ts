@@ -35,7 +35,7 @@ export const createFlowAction = chatbotActionClient
         },
       })
 
-      await db.transaction(async (tx) => {
+      const flowId = await db.transaction(async (tx) => {
         const flowId = createId()
         await tx.insert(flowModel).values({
           ...parsedInput,
@@ -52,8 +52,12 @@ export const createFlowAction = chatbotActionClient
           isDraft: true,
           startNodeId: defaultNode.id,
         })
+
+        return flowId
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#flows`)
+
+      return { flowId }
     },
   )

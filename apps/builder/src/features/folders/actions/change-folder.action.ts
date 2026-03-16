@@ -1,18 +1,17 @@
 "use server"
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { rootFolderId } from "@aha.chat/database/enums"
+import { FolderType, rootFolderId } from "@aha.chat/database/enums"
 import {
   automatedResponseModel,
   customFieldModel,
   flowModel,
+  sequenceModel,
   tagModel,
-  triggerModel,
-  webhookModel,
 } from "@aha.chat/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { ChatbotXException, notFoundException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { changeFolderRequest } from "../schemas/action"
 
@@ -36,7 +35,7 @@ export const changeFolderAction = chatbotActionClient
         ),
       )
     if (!resources || resources.length === 0) {
-      throw notFoundException("Resource not found")
+      throw new ChatbotXException("Resource not found")
     }
 
     let newFolderId: string | null = null
@@ -80,18 +79,16 @@ export const changeFolderAction = chatbotActionClient
 
 function findResourceModel(folderType: string) {
   switch (folderType) {
-    case "tag":
+    case FolderType.tag:
       return tagModel
-    case "flow":
+    case FolderType.flow:
       return flowModel
-    case "customField":
+    case FolderType.customField:
       return customFieldModel
-    case "automatedResponse":
+    case FolderType.automatedResponse:
       return automatedResponseModel
-    case "trigger":
-      return triggerModel
-    case "webhook":
-      return webhookModel
+    case FolderType.sequence:
+      return sequenceModel
     default:
       throw new ChatbotXException("Invalid folder type")
   }

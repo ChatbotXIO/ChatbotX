@@ -89,6 +89,10 @@ export const StepType = {
   spreadsheetUpdateRow: "G04",
   spreadsheetClearRow: "G05",
 
+  // Sequence Operations (Q_)
+  subscribeSequence: "Q01",
+  unsubscribeSequence: "Q02",
+
   // Eamil
   emailText: "M01",
   emailH3: "M02",

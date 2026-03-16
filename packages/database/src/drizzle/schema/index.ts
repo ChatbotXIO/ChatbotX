@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm"
 import {
+  bigint,
   boolean,
   doublePrecision,
   foreignKey,
@@ -44,6 +45,7 @@ export const folderType = pgEnum("FolderType", [
   "automatedResponse",
   "trigger",
   "webhook",
+  "sequence",
 ])
 export const chatbotMemberRole = pgEnum("ChatbotMemberRole", ["owner", "agent"])
 export const gender = pgEnum("Gender", ["male", "female", "unknown"])
@@ -1675,6 +1677,200 @@ export const reflinkModel = pgTable(
       "btree",
       table.chatbotId.asc().nullsLast().op("text_ops"),
       table.name.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)
+
+// Sequence Feature Tables
+export const sequenceModel = pgTable(
+  "Sequence",
+  {
+    ...sharedColumns,
+    name: text().notNull(),
+    folderId: text().references(() => folderModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+      name: "Sequence_folderId_fkey",
+    }),
+    active: boolean().notNull().default(true),
+    subscribers: integer().notNull().default(0),
+    messages: integer().notNull().default(0),
+    openRate: doublePrecision().notNull().default(0),
+    ctr: doublePrecision().notNull().default(0),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "Sequence_chatbotId_fkey",
+      }),
+  },
+  (table) => [
+    index("Sequence_folderId_idx").on(table.folderId),
+    uniqueIndex("Sequence_chatbotId_name_key").on(table.chatbotId, table.name),
+  ],
+)
+
+export const sequenceStepModel = pgTable(
+  "SequenceStep",
+  {
+    ...sharedColumns,
+    order: integer().notNull(),
+    delayDays: integer().notNull(),
+    delayMinutes: integer().notNull().default(0),
+    delayUnit: text().default("days"),
+    specificDateTime: timestamp({ precision: 3 }),
+    isActive: boolean().notNull().default(true),
+    anytime: boolean().notNull().default(true),
+    sendTimeStart: text(),
+    sendTimeEnd: text(),
+    sendDays: text().default(
+      '["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]',
+    ),
+    flowId: text().references(() => flowModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+      name: "SequenceStep_flowId_fkey",
+    }),
+    sequenceId: text()
+      .notNull()
+      .references(() => sequenceModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "SequenceStep_sequenceId_fkey",
+      }),
+  },
+  (table) => [
+    index("SequenceStep_sequenceId_idx").on(table.sequenceId),
+    index("SequenceStep_flowId_idx").on(table.flowId),
+  ],
+)
+
+export const contactsOnSequenceModel = pgTable(
+  "ContactsOnSequence",
+  {
+    ...sharedColumns,
+    enrolledAt: timestamp({ precision: 3 }).notNull().defaultNow(),
+    completedAt: timestamp({ precision: 3 }),
+    currentStep: integer().notNull().default(0),
+    status: text().notNull().default("active"),
+    nextRunAt: timestamp({ precision: 3 }),
+    lastStepId: text(),
+    nextStepId: text(),
+    lockedAt: timestamp({ precision: 3 }),
+    lockOwner: text(),
+    errorCount: integer().notNull().default(0),
+    lastError: text(),
+    contactId: text()
+      .notNull()
+      .references(() => contactModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "ContactsOnSequence_contactId_fkey",
+      }),
+    sequenceId: text()
+      .notNull()
+      .references(() => sequenceModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "ContactsOnSequence_sequenceId_fkey",
+      }),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "ContactsOnSequence_chatbotId_fkey",
+      }),
+  },
+  (table) => [
+    index("ContactsOnSequence_sequenceId_idx").on(table.sequenceId),
+    index("ContactsOnSequence_contactId_idx").on(table.contactId),
+    index("ContactsOnSequence_chatbotId_idx").on(table.chatbotId),
+    index("ContactsOnSequence_status_nextRunAt_idx").on(
+      table.status,
+      table.nextRunAt,
+    ),
+    index("ContactsOnSequence_chatbotId_status_nextRunAt_idx").on(
+      table.chatbotId,
+      table.status,
+      table.nextRunAt,
+    ),
+    uniqueIndex("ContactsOnSequence_contactId_sequenceId_chatbotId_key").on(
+      table.contactId,
+      table.sequenceId,
+      table.chatbotId,
+    ),
+  ],
+)
+
+export const sequenceEventModel = pgTable(
+  "SequenceEvent",
+  {
+    ...sharedColumns,
+    occurredAt: timestamp({ precision: 3 }).notNull().defaultNow(),
+    eventType: text().notNull(),
+    payload: jsonb(),
+    chatbotId: text().notNull(),
+    sequenceId: text().notNull(),
+    contactId: text().notNull(),
+    stepId: text(),
+    dispatchId: text(),
+  },
+  (table) => [
+    index("SequenceEvent_chatbotId_occurredAt_idx").on(
+      table.chatbotId,
+      table.occurredAt,
+    ),
+    index("SequenceEvent_contactId_occurredAt_idx").on(
+      table.contactId,
+      table.occurredAt,
+    ),
+    index("SequenceEvent_sequenceId_eventType_idx").on(
+      table.sequenceId,
+      table.eventType,
+    ),
+  ],
+)
+
+export const sequenceDispatchModel = pgTable(
+  "SequenceDispatch",
+  {
+    ...sharedColumns,
+    runAtMs: bigint({ mode: "number" }).notNull().default(0),
+    bucket: integer().notNull().default(0),
+    status: text().notNull().default("pending"),
+    idempotencyKey: text().notNull(),
+    attempt: integer().notNull().default(0),
+    lastError: text(),
+    lockedAt: timestamp({ precision: 3 }),
+    lockOwner: text(),
+    completedAt: timestamp({ precision: 3 }),
+    chatbotId: text().notNull(),
+    sequenceId: text().notNull(),
+    contactId: text().notNull(),
+    stepId: text().notNull(),
+    enrollmentId: text().notNull(),
+  },
+  (table) => [
+    index("SequenceDispatch_status_runAtMs_idx").on(
+      table.status,
+      table.runAtMs,
+    ),
+    index("SequenceDispatch_chatbotId_status_runAtMs_idx").on(
+      table.chatbotId,
+      table.status,
+      table.runAtMs,
+    ),
+    uniqueIndex("SequenceDispatch_idempotencyKey_key").on(
+      table.idempotencyKey,
+      table.chatbotId,
+    ),
+    index("SequenceDispatch_enrollmentId_idx").on(table.enrollmentId),
+    index("SequenceDispatch_bucket_status_runAtMs_idx").on(
+      table.bucket,
+      table.status,
+      table.runAtMs,
     ),
   ],
 )

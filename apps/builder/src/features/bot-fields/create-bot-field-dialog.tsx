@@ -125,7 +125,7 @@ export function CreateBotFieldDialog({
 
             <SelectField
               label={t("fields.type.label")}
-              name="type"
+              name="customFieldType"
               options={customFieldTypeLabels}
               required
             />
