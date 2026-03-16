@@ -28,10 +28,20 @@
     &:hover,
     &:hover.is-selected {
       background-color: var(--color-gray-200);
+
+      @media (prefers-color-scheme: dark) {
+        background-color: var(--color-gray-700);
+        color: var(--color-gray-100);
+      }
     }
 
     &.is-selected {
       background-color: var(--color-gray-300);
+
+      @media (prefers-color-scheme: dark) {
+        background-color: var(--color-gray-700);
+        color: var(--color-gray-100);
+      }
     }
 
     img {

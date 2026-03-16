@@ -189,11 +189,11 @@
       "label": "AI Agents"
     },
     "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
-    "title": "AI Agents"
+    "title": "Agents"
   },
   "aiFiles": {
     "description": "Give Your Agents Access to PDFs, Docs, and More",
-    "title": "AI Files"
+    "title": "Knowledge"
   },
   "aiFunctions": {
     "description": "Configure LLM functions to make your AI agent more intelligent",
@@ -201,7 +201,7 @@
   },
   "aiMcpServers": {
     "description": "Connect AI to External Systems via MCP",
-    "title": "AI MCP Servers",
+    "title": "MCP Servers",
     "tools": {
       "label": "Available Tools"
     }
@@ -1838,9 +1838,6 @@
   },
   "customFields": {
     "title": "Custom Fields"
-  },
-  "aiHub": {
-    "title": "AI Hub"
   },
   "keywords": {
     "title": "Keywords"

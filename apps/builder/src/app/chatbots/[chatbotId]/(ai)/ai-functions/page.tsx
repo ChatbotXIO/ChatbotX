@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import AIFunctionsTable from "@/features/ai-functions/ai-functions-table"
 import { listAIFunctions } from "@/features/ai-functions/queries"
-import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
+import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
@@ -24,7 +24,7 @@ export default async function AIFunctionsPage({
 
   return (
     <div className="space-y-6">
-      <AIHubBreadcrumb />
+      <AITab />
 
       <Suspense>
         <FlowStoreProvider chatbotId={chatbotId}>

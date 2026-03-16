@@ -51,7 +51,6 @@ export function AppSidebar({
         title: t("fields.analytics.label"),
         url: `/chatbots/${chatbotId}/dashboard`,
         icon: ChartPieIcon,
-        isActive: true,
       },
       {
         title: t("fields.inbox.label"),
@@ -69,7 +68,7 @@ export function AppSidebar({
         icon: UsersIcon,
       },
       {
-        title: t("aiHub.title"),
+        title: t("aiAgent.setting.label"),
         url: `/chatbots/${chatbotId}/ai-agents`,
         icon: BrainIcon,
       },

@@ -69,12 +69,17 @@ export const VariableList = ({
   }))
 
   return (
-    <div className="dropdown-menu">
+    <div className="dropdown-menu bg-background!">
       {props.items.length > 0 && (
-        <div className="flex flex-col justify-start gap-2">
+        <div
+          className="flex max-h-60 w-50 flex-col justify-start gap-2 overflow-y-auto"
+          onWheel={(e) => {
+            e.stopPropagation()
+          }}
+        >
           {props.items.map((item, index) => (
             <button
-              className={`px-2 ${index === selectedIndex ? "is-selected" : ""}`}
+              className={`px-2 ${index === selectedIndex ? "is-selected text-gray-100" : "text-gray-600"}`}
               // biome-ignore lint/suspicious/noArrayIndexKey: index is unique
               key={index}
               onClick={() => selectItem(index)}

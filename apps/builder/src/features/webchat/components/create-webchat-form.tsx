@@ -343,7 +343,11 @@ export function CreateWebchatForm() {
         />
 
         <DialogFooter>
-          <Button type="button" variant="link">
+          <Button
+            onClick={() => router.push(`/chatbots/${chatbotId}/webchats`)}
+            type="button"
+            variant="link"
+          >
             {t("actions.cancel")}
           </Button>
           <Button

@@ -35,7 +35,25 @@ export default async function ErrorLogsPage(props: {
           { label: t("errorLogs.title"), href: "" },
         ]}
       />
-      <AppTab chatbotId={params.chatbotId} />
+      <AppTab
+        tabs={[
+          {
+            label: t("tags.title"),
+            href: `/chatbots/${params.chatbotId}/tags`,
+            isActive: false,
+          },
+          {
+            label: t("customFields.title"),
+            href: `/chatbots/${params.chatbotId}/custom-fields`,
+            isActive: false,
+          },
+          {
+            label: t("errorLogs.title"),
+            href: `/chatbots/${params.chatbotId}/error-logs`,
+            isActive: true,
+          },
+        ]}
+      />
       <Suspense>
         <ErrorLogsTable chatbotId={params.chatbotId} promises={promises} />
       </Suspense>

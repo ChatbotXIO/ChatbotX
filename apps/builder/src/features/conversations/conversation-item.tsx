@@ -145,7 +145,7 @@ export default function ConversationItem({
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="truncate text-left font-medium">
+          <div className="truncate text-left font-medium dark:text-gray-200">
             {contactFullName}
           </div>
           <div

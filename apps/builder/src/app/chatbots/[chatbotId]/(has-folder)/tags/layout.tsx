@@ -27,7 +27,25 @@ export default async function TagsLayout({
           { label: t("tags.title") },
         ]}
       />
-      <AppTab chatbotId={chatbotId} />
+      <AppTab
+        tabs={[
+          {
+            label: t("tags.title"),
+            href: `/chatbots/${chatbotId}/tags`,
+            isActive: true,
+          },
+          {
+            label: t("customFields.title"),
+            href: `/chatbots/${chatbotId}/custom-fields`,
+            isActive: false,
+          },
+          {
+            label: t("errorLogs.title"),
+            href: `/chatbots/${chatbotId}/error-logs`,
+            isActive: false,
+          },
+        ]}
+      />
       {folders}
       {children}
     </FolderStoreProvider>
