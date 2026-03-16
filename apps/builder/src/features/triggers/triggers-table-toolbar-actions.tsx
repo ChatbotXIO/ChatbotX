@@ -5,12 +5,13 @@ import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import type { Dispatch, SetStateAction } from "react"
-
+import { CreateTriggerDialog } from "./create-trigger-dialog"
 import { DeleteTriggersDialog } from "./delete-triggers-dialog"
 
 type TriggersTableToolbarActionsProps = {
   table: Table<TriggerModel>
   chatbotId: string
+  folderId: string | null
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<TriggerModel> | null>
   >
@@ -19,6 +20,7 @@ type TriggersTableToolbarActionsProps = {
 export function TriggersTableToolbarActions({
   table,
   chatbotId,
+  folderId,
   setRowAction,
 }: TriggersTableToolbarActionsProps) {
   const router = useRouter()
@@ -38,6 +40,8 @@ export function TriggersTableToolbarActions({
             .rows.map((row) => row.original)}
         />
       ) : null}
+
+      <CreateTriggerDialog chatbotId={chatbotId} folderId={folderId} />
     </div>
   )
 }

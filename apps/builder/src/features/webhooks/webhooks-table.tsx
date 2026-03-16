@@ -19,9 +19,14 @@ import { WebhooksTableToolbarActions } from "./webhooks-table-toolbar-actions"
 type WebhooksTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getWebhooks>>]>
   chatbotId: string
+  folderId: string | null
 }
 
-export function WebhooksTable({ promises, chatbotId }: WebhooksTableProps) {
+export function WebhooksTable({
+  promises,
+  chatbotId,
+  folderId,
+}: WebhooksTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -53,6 +58,7 @@ export function WebhooksTable({ promises, chatbotId }: WebhooksTableProps) {
         <DataTableToolbar table={table}>
           <WebhooksTableToolbarActions
             chatbotId={chatbotId}
+            folderId={folderId}
             setRowAction={setRowAction}
             table={table}
           />

@@ -1,5 +1,4 @@
 import { FolderType } from "@aha.chat/database/enums"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
 import type { ReactNode } from "react"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 
@@ -21,7 +20,6 @@ export default async function WebhooksLayout({
       folderType={FolderType.webhook}
     >
       {folders}
-      <Separator />
       {children}
     </FolderStoreProvider>
   )

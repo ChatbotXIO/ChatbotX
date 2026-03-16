@@ -19,9 +19,14 @@ import { TriggersTableToolbarActions } from "./triggers-table-toolbar-actions"
 type TriggersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getTriggers>>]>
   chatbotId: string
+  folderId: string | null
 }
 
-export function TriggersTable({ promises, chatbotId }: TriggersTableProps) {
+export function TriggersTable({
+  promises,
+  chatbotId,
+  folderId,
+}: TriggersTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -53,6 +58,7 @@ export function TriggersTable({ promises, chatbotId }: TriggersTableProps) {
         <DataTableToolbar table={table}>
           <TriggersTableToolbarActions
             chatbotId={chatbotId}
+            folderId={folderId}
             setRowAction={setRowAction}
             table={table}
           />

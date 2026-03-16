@@ -10,6 +10,7 @@
   },
   "actions": {
     "copy": "Sao chép",
+    "copyUrl": "Sao chép URL",
     "actions": "Hành động",
     "add": "Thêm",
     "addContactNotes": "Thêm ghi chú liên hệ",
@@ -939,9 +940,6 @@
       "label": "Tìm kiếm",
       "placeholder": "Tìm kiếm..."
     },
-    "settings": {
-      "label": "Cài đặt"
-    },
     "showLogo": {
       "label": "Hiển thị logo cá nhân"
     },
@@ -1194,6 +1192,47 @@
     },
     "botFields": {
       "label": "Trường tài khoản"
+    },
+    "ecommerce": {
+      "label": "Thương mại điện tử"
+    },
+    "settings": {
+      "label": "Cài đặt",
+      "agents": {
+        "description": "Mô tả AI Agents",
+        "title": "AI Agents"
+      },
+      "aiTriggers": {
+        "description": "Mô tả AI Triggers",
+        "title": "AI Triggers"
+      },
+      "automatedResponses": {
+        "title": "Từ khóa"
+      },
+      "title": "Cài đặt"
+    },
+    "signIn": {
+      "acceptTermsAndPolicy": "Bằng cách nhấn tiếp tục, bạn đồng ý với",
+      "and": "và",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "privacyPolicy": "Chính sách bảo mật",
+      "termsOfService": "Điều khoản dịch vụ",
+      "title": "Đăng nhập vào {name}",
+      "checkYourEmail": "Kiểm tra email của bạn",
+      "magicLinkSent": "Chúng tôi đã gửi URL xác minh đến email của bạn",
+      "magicLinkSentDescription": "Nhấp vào liên kết trong email của bạn để tiếp tục.",
+      "backToSignIn": "Quay lại đăng nhập",
+      "didNotReceiveEmail": "Không nhận được email? Kiểm tra thư mục spam.",
+      "trySigningInAgain": "Bạn cũng có thể thử đăng nhập lại bằng email khác."
+    },
+    "keyword": {
+      "label": "Từ khóa",
+      "placeholder": "Nhập từ khóa",
+      "searchPlaceholder": "Tìm kiếm từ khóa..."
+    },
+    "accountFields": {
+      "label": "Trường tài khoản"
     }
   },
   "flows": {
@@ -1374,14 +1413,6 @@
       "button": {
         "connect": "Kết nối"
       }
-    },
-    "openAI": {
-      "apiKey": "Khóa API OpenAI",
-      "button": {
-        "connect": "Kết nối"
-      },
-      "maxTokens": "Token tối đa",
-      "temperature": "Nhiệt độ"
     },
     "title": "Tích hợp"
   },
@@ -1758,6 +1789,9 @@
   },
   "keywords": {
     "title": "Từ khóa"
+  },
+  "triggers": {
+    "title": "Kích hoạt"
   },
   "messengerList": {
     "title": "Danh sách Messenger",

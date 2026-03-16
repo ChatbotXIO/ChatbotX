@@ -1,7 +1,12 @@
-import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
+import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { CreateWebhookDialog } from "@/features/webhooks/create-webhook-dialog"
 import { getWebhooks } from "@/features/webhooks/queries"
 import { getWebhooksSearchParamsCache } from "@/features/webhooks/schemas/get-webhook-schema"
 import { WebhooksTable } from "@/features/webhooks/webhooks-table"
@@ -13,6 +18,7 @@ export default async function WebhooksPage(props: {
   const params = await props.params
   const searchParams = await props.searchParams
   const search = getWebhooksSearchParamsCache.parse(searchParams)
+  const t = await getTranslations()
 
   const promises = Promise.all([
     getWebhooks({
@@ -22,18 +28,21 @@ export default async function WebhooksPage(props: {
   ])
 
   return (
-    <>
-      <div className="mb-4 flex w-full justify-end">
-        <CreateWebhookDialog
-          chatbotId={params.chatbotId}
-          folderId={search.folderId}
-          webhook={<Button>Create Webhook</Button>}
-        />
-      </div>
-
-      <Suspense>
-        <WebhooksTable chatbotId={params.chatbotId} promises={promises} />
-      </Suspense>
-    </>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-bold text-xl">
+          {t("webhooks.title")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Suspense>
+          <WebhooksTable
+            chatbotId={params.chatbotId}
+            folderId={search.folderId}
+            promises={promises}
+          />
+        </Suspense>
+      </CardContent>
+    </Card>
   )
 }

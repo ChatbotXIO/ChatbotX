@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { cn } from "@aha.chat/ui/lib/utils"
-import { SiFacebook, SiMessenger } from "@icons-pack/react-simple-icons"
+import { SiFacebook } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
   CalendarIcon,
@@ -10,24 +10,16 @@ import {
   CircleQuestionMarkIcon,
   CopyIcon,
   Layers2Icon,
-  LightbulbIcon,
   LinkIcon,
   MapIcon,
   QrCodeIcon,
   UserCheck2Icon,
-  UsersIcon,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
 
 const TOOLS_CONFIG = [
-  {
-    id: "messenger-list",
-    labelKey: "messengerList.title",
-    descriptionKey: "messengerList.description",
-    icon: SiMessenger,
-  },
   {
     id: "facebook-comment",
     labelKey: "facebookCommentAutomation.title",
@@ -40,12 +32,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "facebookLeadAdsAutomation.description",
     icon: SiFacebook,
   },
-  {
-    id: "triggers-actions",
-    labelKey: "triggersAndActions.title",
-    descriptionKey: "triggersAndActions.description",
-    icon: LightbulbIcon,
-  },
+  // {
+  //   id: "triggers-actions",
+  //   labelKey: "triggersAndActions.title",
+  //   descriptionKey: "triggersAndActions.description",
+  //   icon: LightbulbIcon,
+  //   getLink: (id: string) => `/chatbots/${id}/triggers`,
+  // },
   {
     id: "drip-campaigns",
     labelKey: "dripCampaigns.title",
@@ -108,12 +101,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "botSimulator.description",
     icon: BotIcon,
   },
-  {
-    id: "webhooks",
-    labelKey: "webhooks.title",
-    descriptionKey: "webhooks.description",
-    icon: UsersIcon,
-  },
+  // {
+  //   id: "webhooks",
+  //   labelKey: "webhooks.title",
+  //   descriptionKey: "webhooks.description",
+  //   icon: UsersIcon,
+  //   getLink: (id: string) => `/chatbots/${id}/webhooks`,
+  // },
 ] as const
 
 export const ToolsList = () => {

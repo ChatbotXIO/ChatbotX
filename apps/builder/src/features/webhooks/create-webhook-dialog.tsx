@@ -15,11 +15,11 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon } from "lucide-react"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import "react-day-picker/style.css"
 import { useRouter } from "next/navigation"
-import { type ReactElement, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createWebhookAction } from "./actions/create-webhook-action"
 import { createWebhookSchema } from "./schemas/create-webhook-schema"
@@ -27,11 +27,9 @@ import { createWebhookSchema } from "./schemas/create-webhook-schema"
 export function CreateWebhookDialog({
   chatbotId,
   folderId,
-  webhook,
 }: {
   chatbotId: string
   folderId: string | null
-  webhook: ReactElement
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -78,7 +76,12 @@ export function CreateWebhookDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogTrigger asChild>{webhook}</DialogTrigger>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <PlusIcon />
+          {t("actions.createFeature", { feature: t("fields.webhook.label") })}
+        </Button>
+      </DialogTrigger>
 
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>

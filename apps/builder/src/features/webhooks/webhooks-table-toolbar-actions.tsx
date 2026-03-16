@@ -5,12 +5,13 @@ import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import type { Dispatch, SetStateAction } from "react"
-
+import { CreateWebhookDialog } from "./create-webhook-dialog"
 import { DeleteWebhooksDialog } from "./delete-webhooks-dialog"
 
 type WebhooksTableToolbarActionsProps = {
   table: Table<WebhookModel>
   chatbotId: string
+  folderId: string | null
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<WebhookModel> | null>
   >
@@ -19,6 +20,7 @@ type WebhooksTableToolbarActionsProps = {
 export function WebhooksTableToolbarActions({
   table,
   chatbotId,
+  folderId,
   setRowAction,
 }: WebhooksTableToolbarActionsProps) {
   const router = useRouter()
@@ -38,6 +40,8 @@ export function WebhooksTableToolbarActions({
             .rows.map((row) => row.original)}
         />
       ) : null}
+
+      <CreateWebhookDialog chatbotId={chatbotId} folderId={folderId} />
     </div>
   )
 }
