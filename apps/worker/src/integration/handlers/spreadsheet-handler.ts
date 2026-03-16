@@ -11,7 +11,6 @@ import type {
   IntegrationGoogleSheetsModel,
   SpreadsheetModel,
 } from "@aha.chat/database/types"
-import { emitCustomFieldChanged } from "@aha.chat/events"
 import type {
   EdgeSchema,
   FilterMode,
@@ -28,6 +27,7 @@ import {
 } from "@aha.chat/integration-google-sheets"
 import { SdkException } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { emitCustomFieldChanged } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
@@ -428,6 +428,10 @@ const sendFlow = async (
   >,
   isSuccess: boolean,
 ) => {
+  if (!flowVersion) {
+    return
+  }
+
   const currentFlowVersion = await findOrFail<FlowVersionModel>(
     flowVersionModel,
     {

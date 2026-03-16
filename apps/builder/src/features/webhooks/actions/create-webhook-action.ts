@@ -3,7 +3,7 @@
 import { db, eq } from "@aha.chat/database/client"
 import { FolderType } from "@aha.chat/database/enums"
 import { webhookModel } from "@aha.chat/database/schema"
-import { updateWebhookCache } from "@aha.chat/events"
+import { updateWebhookCache } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { getTranslations } from "next-intl/server"
 import {
@@ -11,13 +11,13 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { MAX_WEBHOOKS_PER_CHATBOT } from "../constants"
 import {
   type CreateWebhookSchema,
   createWebhookSchema,
 } from "../schemas/create-webhook-schema"
-import { MaxWebhooksReachedException } from "../schemas/exception"
 
 export const createWebhookAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
@@ -38,7 +38,7 @@ export const createWebhookAction = chatbotActionClient
       )
 
       if (existingWebhooksCount >= MAX_WEBHOOKS_PER_CHATBOT) {
-        throw new MaxWebhooksReachedException(
+        throw new ChatbotXException(
           t("validation.maxItemsReached", {
             max: MAX_WEBHOOKS_PER_CHATBOT,
             feature: "webhooks",

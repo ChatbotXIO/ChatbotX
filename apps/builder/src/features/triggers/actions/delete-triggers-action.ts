@@ -2,7 +2,7 @@
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { triggerModel } from "@aha.chat/database/schema"
-import { removeTriggerCache } from "@aha.chat/events"
+import { removeTriggerCache } from "@chatbotx/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

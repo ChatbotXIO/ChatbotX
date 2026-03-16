@@ -1,11 +1,11 @@
 // Main unified emitters
-export * from "./event-dispatcher"
 
+export * from "./context"
+export * from "./event-dispatcher"
 // Trigger events
 export * from "./trigger/cache"
 export * as TriggerEventEmitter from "./trigger/emitter"
 export type { TriggerEventType } from "./trigger/types"
-
 // Webhook events
 export * from "./webhook/cache"
 export * as WebhookEventEmitter from "./webhook/emitter"

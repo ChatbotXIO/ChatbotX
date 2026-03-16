@@ -10,13 +10,6 @@ import {
 } from "@aha.chat/database/client"
 import { contactModel, conversationModel } from "@aha.chat/database/schema"
 import {
-  emitConversationArchived,
-  emitConversationAssigned,
-  emitConversationTransferredToBot,
-  emitConversationTransferredToHuman,
-  emitConversationUnassigned,
-} from "@aha.chat/events"
-import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
   AutoAssignConversationRule,
@@ -35,6 +28,13 @@ import {
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
 import type { OutgoingConversation } from "@aha.chat/sdk"
+import {
+  emitConversationArchived,
+  emitConversationAssigned,
+  emitConversationTransferredToBot,
+  emitConversationTransferredToHuman,
+  emitConversationUnassigned,
+} from "@chatbotx/events"
 import { subHours } from "date-fns"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"

@@ -98,9 +98,9 @@ export class ConditionEvaluator {
       actualValue = contactCustomField?.value
     }
 
-    const customField = await db.query.fieldModel.findFirst({
+    const customField = await db.query.customFieldModel.findFirst({
       where: { id: customFieldId },
-      columns: { customFieldType: true },
+      columns: { type: true },
     })
 
     if (!operator) {
@@ -111,7 +111,7 @@ export class ConditionEvaluator {
       operator,
       actualValue,
       expectedValue,
-      customField?.customFieldType,
+      customField?.type,
       chatbot.accountTimezone || "UTC",
     )
   }

@@ -2,7 +2,7 @@
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { contactsToTagsModel } from "@aha.chat/database/schema"
-import { emitTagRemoved } from "@aha.chat/events"
+import { emitTagRemoved } from "@chatbotx/events"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

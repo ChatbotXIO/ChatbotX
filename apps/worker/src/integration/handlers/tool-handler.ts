@@ -3,7 +3,6 @@ import {
   contactCustomFieldModel,
   customFieldModel,
 } from "@aha.chat/database/schema"
-import { emitCustomFieldChanged } from "@aha.chat/events"
 import {
   type CountCharactersStepSchema,
   type FormatDateStepSchema,
@@ -11,6 +10,7 @@ import {
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
 } from "@aha.chat/flow-config"
+import { emitCustomFieldChanged } from "@chatbotx/events"
 import { faker } from "@faker-js/faker"
 import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"

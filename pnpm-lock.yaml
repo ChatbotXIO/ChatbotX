@@ -38,9 +38,6 @@ importers:
       '@aha.chat/database':
         specifier: workspace:*
         version: link:../../packages/database
-      '@aha.chat/events':
-        specifier: workspace:*
-        version: link:../../packages/events
       '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
@@ -86,6 +83,9 @@ importers:
       '@ai-sdk/mcp':
         specifier: ^1.0.22
         version: 1.0.22(zod@4.3.6)
+      '@chatbotx/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@floating-ui/dom':
         specifier: ^1.7.5
         version: 1.7.5
@@ -426,9 +426,6 @@ importers:
       '@aha.chat/database':
         specifier: workspace:*
         version: link:../../packages/database
-      '@aha.chat/events':
-        specifier: workspace:*
-        version: link:../../packages/events
       '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
@@ -474,6 +471,9 @@ importers:
       '@ai-sdk/openai':
         specifier: ^3.0.37
         version: 3.0.37(zod@4.3.6)
+      '@chatbotx/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@faker-js/faker':
         specifier: ^10.3.0
         version: 10.3.0

@@ -2,7 +2,7 @@
 
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { webhookModel } from "@aha.chat/database/schema"
-import { removeWebhookCache } from "@aha.chat/events"
+import { removeWebhookCache } from "@chatbotx/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

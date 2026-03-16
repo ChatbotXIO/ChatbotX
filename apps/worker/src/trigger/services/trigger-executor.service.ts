@@ -3,7 +3,7 @@ import {
   triggerContactHistoryModel,
   triggerStatsModel,
 } from "@aha.chat/database/schema"
-import { setTriggerExecutionContext } from "@aha.chat/events/context"
+import { setTriggerExecutionContext } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { logger } from "../../lib/logger"
 import type { TriggerWithConditions } from "../types"

@@ -15,8 +15,6 @@ import type {
   MessageModel,
 } from "@aha.chat/database/types"
 import { getPublicUrl } from "@aha.chat/database/utils"
-import { emitContactCreated } from "@aha.chat/events"
-import { setWebhookExecutionContext } from "@aha.chat/events/context"
 import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
@@ -33,6 +31,10 @@ import {
   type IntegrationJobReceiveMessage,
   integrationQueue,
 } from "@aha.chat/worker-config"
+import {
+  emitContactCreated,
+  setWebhookExecutionContext,
+} from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"

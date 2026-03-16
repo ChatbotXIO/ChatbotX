@@ -6,8 +6,8 @@ import {
   customFieldModel,
 } from "@aha.chat/database/schema"
 import type { CustomFieldModel } from "@aha.chat/database/types"
-import { emitCustomFieldChanged } from "@aha.chat/events"
 import { FieldOperationType } from "@aha.chat/flow-config"
+import { emitCustomFieldChanged } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

@@ -3,7 +3,7 @@
 import { db, eq } from "@aha.chat/database/client"
 import { FolderType } from "@aha.chat/database/enums"
 import { triggerModel } from "@aha.chat/database/schema"
-import { updateTriggerCache } from "@aha.chat/events"
+import { updateTriggerCache } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { getTranslations } from "next-intl/server"
 import {
@@ -11,13 +11,13 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"
 import {
   type CreateTriggerSchema,
   createTriggerSchema,
 } from "../schemas/create-trigger-schema"
-import { MaxTriggersReachedException } from "../schemas/exception"
 
 export const createTriggerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)
@@ -38,7 +38,7 @@ export const createTriggerAction = chatbotActionClient
       )
 
       if (existingTriggersCount >= MAX_TRIGGERS_PER_CHATBOT) {
-        throw new MaxTriggersReachedException(
+        throw new ChatbotXException(
           t("validation.maxItemsReached", {
             max: MAX_TRIGGERS_PER_CHATBOT,
             feature: "triggers",

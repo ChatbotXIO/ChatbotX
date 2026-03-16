@@ -3,7 +3,7 @@
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
 import type { UserModel } from "@aha.chat/database/types"
-import { emitConversationArchived } from "@aha.chat/events"
+import { emitConversationArchived } from "@chatbotx/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

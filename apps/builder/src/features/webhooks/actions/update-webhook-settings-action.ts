@@ -2,7 +2,7 @@
 
 import { db, eq } from "@aha.chat/database/client"
 import { webhookModel } from "@aha.chat/database/schema"
-import { updateWebhookCache } from "@aha.chat/events"
+import { updateWebhookCache } from "@chatbotx/events"
 import { z } from "zod"
 import {
   type ChatbotIdAndIdRequestParams,

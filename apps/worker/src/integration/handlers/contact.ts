@@ -8,11 +8,6 @@ import {
   tagModel,
 } from "@aha.chat/database/schema"
 import type { ConversationModel } from "@aha.chat/database/types"
-import {
-  emitCustomFieldChanged,
-  emitTagApplied,
-  emitTagRemoved,
-} from "@aha.chat/events"
 import type {
   AddContactTagStepSchema,
   AddNotesStepSchema,
@@ -31,6 +26,11 @@ import type {
   IntegrationJobBlockContact,
   IntegrationJobUnblockContact,
 } from "@aha.chat/worker-config"
+import {
+  emitCustomFieldChanged,
+  emitTagApplied,
+  emitTagRemoved,
+} from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
@@ -68,7 +68,7 @@ export async function setContactCustomField({
     })
 
   // Emit custom field changed event
-  const customField = await db.query.fieldModel.findFirst({
+  const customField = await db.query.customFieldModel.findFirst({
     where: { id: step.inputCfId },
   })
   if (customField) {
@@ -110,7 +110,7 @@ export async function clearContactCustomField({
     )
 
   // Emit custom field changed event
-  const customField = await db.query.fieldModel.findFirst({
+  const customField = await db.query.customFieldModel.findFirst({
     where: { id: step.inputCfId },
   })
   if (customField) {

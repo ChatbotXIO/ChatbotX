@@ -3,7 +3,7 @@
 import { and, db, eq } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
 import type { UserModel } from "@aha.chat/database/types"
-import { emitConversationFollowUp } from "@aha.chat/events"
+import { emitConversationFollowUp } from "@chatbotx/events"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

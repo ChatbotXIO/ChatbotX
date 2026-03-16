@@ -33,8 +33,7 @@ export const CustomFieldValueChanged = ({
   const customFieldId = form.watch(`${parentName}.sourceId`)
 
   const customFieldType = useMemo(
-    () =>
-      customFields.find((field) => field.id === customFieldId)?.customFieldType,
+    () => customFields.find((field) => field.id === customFieldId)?.type,
     [customFieldId, customFields],
   )
 
