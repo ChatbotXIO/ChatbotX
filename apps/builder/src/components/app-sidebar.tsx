@@ -68,7 +68,7 @@ export function AppSidebar({
         icon: UsersIcon,
       },
       {
-        title: t("aiAgent.setting.label"),
+        title: t("aiAgent.title"),
         url: `/chatbots/${chatbotId}/ai-agents`,
         icon: BrainIcon,
       },

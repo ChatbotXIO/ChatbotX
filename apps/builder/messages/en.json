@@ -189,7 +189,8 @@
       "label": "AI Agents"
     },
     "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
-    "title": "Agents"
+    "title": "AI Agents",
+    "name": "Agents"
   },
   "aiFiles": {
     "description": "Give Your Agents Access to PDFs, Docs, and More",

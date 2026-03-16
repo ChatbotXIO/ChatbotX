@@ -15,7 +15,7 @@ export function AITab() {
     <AppTab
       tabs={[
         {
-          label: t("aiAgent.title"),
+          label: t("aiAgent.name"),
           href: `/chatbots/${chatbotId}/ai-agents`,
           isActive: activeTab === "ai-agents",
         },

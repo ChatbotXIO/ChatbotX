@@ -189,7 +189,8 @@
       "label": "AI Agents"
     },
     "subtitle": "Quản lý AI agents và công cụ để nâng cao khả năng chatbot của bạn.",
-    "title": "Agents"
+    "title": "AI Agents",
+    "name": "Agents"
   },
   "aiFiles": {
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",

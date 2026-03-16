@@ -37,19 +37,16 @@ const INBOX_ICON_CONFIG: Record<InboxType | "omnichannel", InboxIconConfig> = {
   messenger: {
     Icon: SiMessenger,
     fill: SiMessengerHex,
-    iconClassName: "bg-white rounded-[20px]",
     defaultLabel: "Messenger",
   },
   whatsapp: {
     Icon: SiWhatsapp,
     fill: SiWhatsappHex,
-    iconClassName: "bg-white rounded-[20px]",
     defaultLabel: "Whatsapp",
   },
   zalo: {
     Icon: SiZalo,
     fill: SiZaloHex,
-    iconClassName: "bg-white rounded-[20px]",
     defaultLabel: "Zalo OA",
   },
   webchat: {
