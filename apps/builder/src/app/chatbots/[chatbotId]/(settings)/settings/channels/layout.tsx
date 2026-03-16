@@ -51,11 +51,11 @@ export default function SettingsChannelsPage({
     <Accordion className="w-full" collapsible type="single">
       {integrationItems.map((integration) => (
         <AccordionItem
-          className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
+          className="transition-all hover:data-[state=open]:rounded-none"
           key={integration.value}
           value={integration.value}
         >
-          <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200">
+          <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-muted hover:no-underline data-[state=open]:bg-muted">
             <InboxIcon inboxType={integration.value} />
           </AccordionTrigger>
           <AccordionContent className="p-4">

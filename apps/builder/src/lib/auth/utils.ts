@@ -7,7 +7,7 @@ import type {
   UserModel,
 } from "@aha.chat/database/types"
 import { headers } from "next/headers"
-import { NotfoundException } from "../errors/exception"
+import { ChatbotXException } from "../errors/exception"
 import { auth } from "./auth"
 
 export const getCurrentUserId = async (): Promise<string> => {
@@ -36,7 +36,7 @@ export const assertCurrentUserCanAccessChatbot = async (chatbotId: string) => {
   const userAndChatbots = await getCurrentUserAndTargetChatbot(chatbotId)
 
   if (!userAndChatbots) {
-    throw new NotfoundException("User is not associated with this chatbot")
+    throw new ChatbotXException("User is not associated with this chatbot")
   }
 }
 

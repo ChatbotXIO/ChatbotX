@@ -8,9 +8,9 @@ import {
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { notFoundException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { publishFlowSchema } from "../schemas/action"
-import { FlowException } from "../schemas/exception"
 
 export const publishFlowAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
@@ -35,7 +35,7 @@ export const publishFlowAction = chatbotActionClient
       })
 
       if (!flow || flow.flowVersions.length === 0) {
-        throw new FlowException("Flow not found")
+        throw notFoundException("Flow not found")
       }
 
       const draftVersion = flow.flowVersions[0]

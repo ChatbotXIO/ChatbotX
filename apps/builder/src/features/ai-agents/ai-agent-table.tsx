@@ -78,9 +78,7 @@ export function AIAgentsTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("aiAgent.title")}
-        </CardTitle>
+        <CardTitle className="font-bold text-xl">{t("aiAgent.name")}</CardTitle>
         <CardDescription>{t("aiAgent.description")}</CardDescription>
       </CardHeader>
       <CardContent>

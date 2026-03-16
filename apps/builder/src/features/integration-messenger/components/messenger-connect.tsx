@@ -98,11 +98,7 @@ export function MessengerConnectButton({
       }}
       scope={MESSENGER_SCOPE.join(",")}
     >
-      <InboxIcon
-        inboxType="messenger"
-        label={t("actions.connect")}
-        wrapperClassName="gap-2"
-      />
+      <InboxIcon inboxType="messenger" label={t("actions.connect")} />
     </FacebookLogin>
   )
 }

@@ -1,8 +1,17 @@
 export class SdkException extends Error {
-  constructor(messages: string) {
-    super(messages)
+  code: string
+  httpStatusCode: number
 
-    Object.setPrototypeOf(this, SdkException.prototype)
+  constructor(message: string, code = "sysmtemError", httpStatusCode = 400) {
+    super(message)
+
+    this.name = this.constructor.name
+    this.code = code
+    this.httpStatusCode = httpStatusCode
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, SdkException)
+    }
   }
 
   static methodNotImplemented() {

@@ -2,6 +2,8 @@
 
 import { and, db, eq } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
+import { emitConversationFollowUp } from "@chatbotx/events"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -14,9 +16,27 @@ export const followConversationAction = chatbotActionClient
   .action(
     async ({
       bindArgsParsedInputs: [chatbotId, id],
+      ctx,
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      ctx: { user: UserModel }
     }) => {
+      // Get conversation before updating to emit event
+      const conversation = await db.query.conversationModel.findFirst({
+        where: {
+          id,
+          chatbotId,
+        },
+        columns: {
+          id: true,
+          contactId: true,
+        },
+      })
+
+      if (!conversation) {
+        throw new Error("Conversation not found")
+      }
+
       await db
         .update(conversationModel)
         .set({
@@ -28,6 +48,29 @@ export const followConversationAction = chatbotActionClient
             eq(conversationModel.chatbotId, chatbotId),
           ),
         )
+
+      try {
+        await emitConversationFollowUp(
+          chatbotId,
+          conversation.contactId,
+          conversation.id,
+          ctx.user.id,
+        )
+      } catch (error) {
+        console.error("Failed to emit conversationFollowUp event:", error)
+      }
+
+      // Emit conversation follow up event
+      try {
+        await emitConversationFollowUp(
+          chatbotId,
+          conversation.contactId,
+          conversation.id,
+          ctx.user.id,
+        )
+      } catch (error) {
+        console.error("Failed to emit conversationFollowUp event:", error)
+      }
 
       revalidateCacheTags([
         `chatbots:${chatbotId}#contacts`,

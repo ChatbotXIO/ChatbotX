@@ -12,7 +12,7 @@ import type {
   OrganizationModel,
   UserModel,
 } from "@aha.chat/database/types"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 
 export async function findInvitation({ code }: { code: string }) {
   const invitation = await findOrFail<InvitationModel>(
@@ -25,7 +25,7 @@ export async function findInvitation({ code }: { code: string }) {
     "Invitation not found",
   )
   if (invitation.expiresAt < new Date()) {
-    throw new BaseException("Invitation expired")
+    throw new ChatbotXException("Invitation expired")
   }
 
   const user = await findOrFail<UserModel>(

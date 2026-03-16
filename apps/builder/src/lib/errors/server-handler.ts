@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { NotfoundException } from "./exception"
+import { ChatbotXException } from "./exception"
 
 export function serverErrorHandler(error: unknown) {
   if (error instanceof z.ZodError) {
@@ -15,10 +15,10 @@ export function serverErrorHandler(error: unknown) {
     )
   }
 
-  if (error instanceof NotfoundException) {
+  if (error instanceof ChatbotXException) {
     return NextResponse.json(
       { message: error.message, errors: [] },
-      { status: 404 },
+      { status: error.httpStatusCode },
     )
   }
 

@@ -1,17 +1,11 @@
 import { SmartCoercionPlugin } from "@orpc/json-schema"
 import { OpenAPIHandler } from "@orpc/openapi/fetch"
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins"
-import { onError } from "@orpc/server"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { router } from "@/routers"
 import "@/polyfill"
 
 const openAPIHandler = new OpenAPIHandler(router, {
-  interceptors: [
-    onError((error) => {
-      console.log(error)
-    }),
-  ],
   plugins: [
     new SmartCoercionPlugin({
       schemaConverters: [new ZodToJsonSchemaConverter()],

@@ -124,7 +124,7 @@ export const ContactDetail = () => {
           <div className="flex w-full items-center gap-1" key={editable.key}>
             <div className="flex basis-1/3 flex-wrap items-center gap-1 truncate">
               <editable.icon className="size-4" />
-              <div className="flex-1 truncate dark:text-white">
+              <div className="flex-1 truncate dark:text-gray-400">
                 {editable.label}
               </div>
             </div>

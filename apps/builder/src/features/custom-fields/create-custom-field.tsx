@@ -181,7 +181,7 @@ function CreateCustomFieldForm({
 
         <SelectField
           label={t("fields.type.label")}
-          name="customFieldType"
+          name="type"
           options={customFieldTypeOptions}
           required
         />

@@ -1,5 +1,10 @@
 import z from "zod"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
+import {
+  posibleErrorsOnCreatingResource,
+  posibleErrorsOnDeletingResource,
+  posibleErrorsOnFindingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
 import { chatbotTokenAPI } from "@/orpc"
 import { createTag } from "../actions/create-tag-action"
@@ -19,6 +24,7 @@ export const listTagsChatbotTokenAPI = chatbotTokenAPI
   })
   .input(z.object({}))
   .output(publicLstTagsResponse)
+  .errors(posibleErrorsOnFindingResource)
   .handler(async ({ context, input }) => {
     return await listTags({
       ...input,
@@ -38,6 +44,7 @@ export const createTagChatbotTokenAPI = chatbotTokenAPI
   })
   .input(createTagRequest.pick({ name: true }))
   .output(publicTagResource)
+  .errors(posibleErrorsOnCreatingResource)
   .handler(async ({ context, input }) => {
     const { data } = await createTag({
       ...input,
@@ -56,6 +63,7 @@ export const findTagChatbotTokenAPI = chatbotTokenAPI
   })
   .input(z.object({ id: z.string() }))
   .output(tagResource.pick({ id: true, name: true }))
+  .errors(posibleErrorsOnFindingResource)
   .handler(async ({ context, input }) => {
     const tag = await findTag({
       ...input,
@@ -63,7 +71,7 @@ export const findTagChatbotTokenAPI = chatbotTokenAPI
     })
 
     if (!tag) {
-      throw new NotfoundException("Tag not found")
+      throw notFoundException("Tag not found")
     }
 
     return tag
@@ -78,13 +86,14 @@ export const findTagByNameChatbotTokenAPI = chatbotTokenAPI
   })
   .input(z.object({ name: z.string() }))
   .output(publicTagResource)
+  .errors(posibleErrorsOnFindingResource)
   .handler(async ({ context, input }) => {
     const tag = await findTag({
       ...input,
       chatbotId: context.chatbot.id,
     })
     if (!tag) {
-      throw new NotfoundException("Tag not found")
+      throw notFoundException("Tag not found")
     }
 
     return tag
@@ -101,6 +110,7 @@ export const updateTagChatbotTokenAPI = chatbotTokenAPI
     createTagRequest.pick({ name: true }).and(z.object({ id: z.string() })),
   )
   .output(publicTagResource)
+  .errors(posibleErrorsOnCreatingResource)
   .handler(async ({ context, input }) => {
     const { id, ...rest } = input
     return await updateTag({
@@ -119,6 +129,7 @@ export const deleteTagsChatbotTokenAPI = chatbotTokenAPI
     tags: ["Tags"],
   })
   .input(z.object({ id: z.string() }))
+  .errors(posibleErrorsOnDeletingResource)
   .handler(async ({ context, input }) => {
     const { id } = input
 

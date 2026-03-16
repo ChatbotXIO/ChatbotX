@@ -26,6 +26,11 @@ import type {
   IntegrationJobBlockContact,
   IntegrationJobUnblockContact,
 } from "@aha.chat/worker-config"
+import {
+  emitCustomFieldChanged,
+  emitTagApplied,
+  emitTagRemoved,
+} from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
@@ -35,6 +40,15 @@ export async function setContactCustomField({
   conversation,
   step,
 }: ExecuteStepProps<SetCustomFieldStepSchema>) {
+  // Get old value before update
+  const existingField = await db.query.contactCustomFieldModel.findFirst({
+    where: {
+      contactId: conversation.contactId,
+      customFieldId: step.inputCfId,
+    },
+  })
+  const oldValue = existingField?.value ?? null
+
   await db
     .insert(contactCustomFieldModel)
     .values({
@@ -52,12 +66,40 @@ export async function setContactCustomField({
         value: step.value,
       },
     })
+
+  // Emit custom field changed event
+  const customField = await db.query.customFieldModel.findFirst({
+    where: { id: step.inputCfId },
+  })
+  if (customField) {
+    try {
+      await emitCustomFieldChanged(
+        conversation.chatbotId,
+        conversation.contactId,
+        step.inputCfId,
+        customField.name,
+        oldValue,
+        step.value,
+      )
+    } catch (error) {
+      console.error("Failed to emit customFieldChanged event:", error)
+    }
+  }
 }
 
 export async function clearContactCustomField({
   conversation,
   step,
 }: ExecuteStepProps<ClearCustomFieldStepSchema>) {
+  // Get old value before delete
+  const existingField = await db.query.contactCustomFieldModel.findFirst({
+    where: {
+      contactId: conversation.contactId,
+      customFieldId: step.inputCfId,
+    },
+  })
+  const oldValue = existingField?.value ?? null
+
   await db
     .delete(contactCustomFieldModel)
     .where(
@@ -66,6 +108,25 @@ export async function clearContactCustomField({
         eq(contactCustomFieldModel.customFieldId, step.inputCfId),
       ),
     )
+
+  // Emit custom field changed event
+  const customField = await db.query.customFieldModel.findFirst({
+    where: { id: step.inputCfId },
+  })
+  if (customField) {
+    try {
+      await emitCustomFieldChanged(
+        conversation.chatbotId,
+        conversation.contactId,
+        step.inputCfId,
+        customField.name,
+        oldValue,
+        null,
+      )
+    } catch (error) {
+      console.error("Failed to emit customFieldChanged event:", error)
+    }
+  }
 }
 
 export async function addContactNotes({
@@ -116,8 +177,10 @@ export async function addContactTag({
   conversation,
   step,
 }: ExecuteStepProps<AddContactTagStepSchema>) {
+  const insertedTags: { id: string }[] = []
+
   await db.transaction(async (tx) => {
-    const tags = await tx
+    await tx
       .insert(tagModel)
       .values(
         step.tags.map((t) => ({
@@ -129,16 +192,43 @@ export async function addContactTag({
       .onConflictDoNothing()
       .returning()
 
-    await tx
-      .insert(contactsToTagsModel)
-      .values(
-        tags.map((t) => ({
-          contactId: conversation.contactId,
-          tagId: t.id,
-        })),
+    const existingTags = await tx
+      .select()
+      .from(tagModel)
+      .where(
+        and(
+          eq(tagModel.chatbotId, conversation.chatbotId),
+          inArray(tagModel.name, step.tags),
+        ),
       )
-      .onConflictDoNothing()
+
+    if (existingTags.length > 0) {
+      await tx
+        .insert(contactsToTagsModel)
+        .values(
+          existingTags.map((t) => ({
+            contactId: conversation.contactId,
+            tagId: t.id,
+          })),
+        )
+        .onConflictDoNothing()
+
+      insertedTags.push(...existingTags.map((t) => ({ id: t.id })))
+    }
   })
+
+  // Emit tag applied events
+  for (const tag of insertedTags) {
+    try {
+      await emitTagApplied(
+        conversation.chatbotId,
+        conversation.contactId,
+        tag.id,
+      )
+    } catch (error) {
+      console.error("Failed to emit tagApplied event:", error)
+    }
+  }
 }
 
 export async function removeContactTag({
@@ -147,7 +237,7 @@ export async function removeContactTag({
 }: ExecuteStepProps<AddContactTagStepSchema>) {
   const tags = await db.query.tagModel.findMany({
     where: {
-      chatbotId: conversation.id,
+      chatbotId: conversation.chatbotId,
       name: {
         in: step.tags,
       },
@@ -169,6 +259,19 @@ export async function removeContactTag({
       ),
     ),
   )
+
+  // Emit tag removed events
+  for (const tag of tags) {
+    try {
+      await emitTagRemoved(
+        conversation.chatbotId,
+        conversation.contactId,
+        tag.id,
+      )
+    } catch (error) {
+      console.error("Failed to emit tagRemoved event:", error)
+    }
+  }
 }
 
 export async function deleteContact({

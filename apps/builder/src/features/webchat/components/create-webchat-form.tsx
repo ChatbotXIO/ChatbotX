@@ -25,6 +25,7 @@ import { Separator } from "@aha.chat/ui/components/ui/separator"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
@@ -343,8 +344,10 @@ export function CreateWebchatForm() {
         />
 
         <DialogFooter>
-          <Button type="button" variant="link">
-            {t("actions.cancel")}
+          <Button asChild size="sm" variant="ghost">
+            <Link href={`/chatbots/${chatbotId}/webchats`}>
+              {t("actions.cancel")}
+            </Link>
           </Button>
           <Button
             disabled={!form.formState.isValid || form.formState.isSubmitting}

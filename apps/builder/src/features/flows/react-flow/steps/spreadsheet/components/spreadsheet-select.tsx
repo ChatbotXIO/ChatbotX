@@ -26,6 +26,7 @@ export const SpreadsheetSelect = ({
       {...props}
       fetchOptionsUrl={url}
       label={t("fields.spreadsheets.label")}
+      required
     />
 
     // <FormItem className="w-full">

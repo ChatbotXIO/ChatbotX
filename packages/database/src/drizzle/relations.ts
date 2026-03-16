@@ -232,6 +232,7 @@ export const relations = defineRelations(schema, (r) => ({
     integrationMessengers: r.many.integrationMessengerModel(),
     integrationWebchats: r.many.integrationWebchatModel(),
     integrationZalos: r.many.integrationZaloModel(),
+    reflinks: r.many.reflinkModel(),
   },
   aiMCPServerModel: {
     chatbot: r.one.chatbotModel({
@@ -321,6 +322,7 @@ export const relations = defineRelations(schema, (r) => ({
   },
   customFieldModel: {
     contacts: r.many.contactModel(),
+    reflinks: r.many.reflinkModel(),
   },
   broadcastModel: {
     contactsOnBroadcasts: r.many.contactsOnBroadcastsModel(),
@@ -624,6 +626,41 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.contactsToTagsModel.tagId,
       to: r.tagModel.id,
       optional: false,
+    }),
+  },
+  reflinkModel: {
+    flow: r.one.flowModel({
+      from: r.reflinkModel.flowId,
+      to: r.flowModel.id,
+      optional: false,
+    }),
+    customField: r.one.customFieldModel({
+      from: r.reflinkModel.customFieldId,
+      to: r.customFieldModel.id,
+    }),
+  },
+  triggerModel: {
+    conditions: r.many.conditionModel(),
+    chatbot: r.one.chatbotModel({
+      from: r.triggerModel.chatbotId,
+      to: r.chatbotModel.id,
+    }),
+  },
+  webhookModel: {
+    conditions: r.many.conditionModel(),
+    chatbot: r.one.chatbotModel({
+      from: r.webhookModel.chatbotId,
+      to: r.chatbotModel.id,
+    }),
+  },
+  conditionModel: {
+    trigger: r.one.triggerModel({
+      from: r.conditionModel.triggerId,
+      to: r.triggerModel.id,
+    }),
+    webhook: r.one.webhookModel({
+      from: r.conditionModel.webhookId,
+      to: r.webhookModel.id,
     }),
   },
 }))

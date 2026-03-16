@@ -6,6 +6,7 @@ import {
   ConditionType,
   Operator,
 } from "@aha.chat/database/enums"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
@@ -44,6 +45,7 @@ import {
   useWatch,
 } from "react-hook-form"
 import z from "zod"
+
 import {
   allContinentOptions,
   allCountryOptions,
@@ -72,7 +74,7 @@ type FieldConfig = {
   options?: SelectOption[]
 }
 
-const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
+export const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
   [ConditionType.multiSelect]: [
     Operator.is,
     Operator.isNot,
@@ -89,10 +91,15 @@ const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
     Operator.startsWith,
     Operator.endsWith,
   ],
-  [ConditionType.boolean]: [Operator.is, Operator.hasNoValue],
+  [ConditionType.boolean]: [
+    Operator.is,
+    Operator.hasNoValue,
+    Operator.hasAnyValue,
+  ],
   [ConditionType.datetime]: [
     Operator.is,
     Operator.isNot,
+    Operator.hasAnyValue,
     Operator.hasNoValue,
     Operator.greaterThan,
     Operator.lessThan,
@@ -116,6 +123,22 @@ const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
     Operator.interval,
     Operator.notInterval,
   ],
+}
+
+export const convertCustomFieldTypeToConditionType = (
+  type?: CustomFieldType,
+): ConditionType => {
+  switch (type) {
+    case "number":
+      return ConditionType.number
+    case "date":
+    case "datetime":
+      return ConditionType.datetime
+    case "boolean":
+      return ConditionType.boolean
+    default:
+      return ConditionType.text
+  }
 }
 
 const contactFilterRowSchema = z.object({
@@ -212,7 +235,7 @@ const getFieldConfigs = ({
         value: "messenger",
       },
       {
-        label: "Zalo",
+        label: "Zalo OA",
         value: "zalo",
       },
     ],
@@ -304,7 +327,7 @@ const getFieldConfigs = ({
         value: "messenger",
       },
       {
-        label: "Zalo",
+        label: "Zalo OA",
         value: "zalo",
       },
     ],
@@ -334,7 +357,9 @@ const getFieldConfigs = ({
   },
 ]
 
-const getConditionOptions = (t: (key: string) => string): ConditionOption[] => [
+export const getConditionOptions = (
+  t: (key: string) => string,
+): ConditionOption[] => [
   {
     value: Operator.is,
     label: t("fields.operator.is"),

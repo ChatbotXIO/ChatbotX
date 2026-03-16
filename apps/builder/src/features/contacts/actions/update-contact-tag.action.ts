@@ -7,6 +7,7 @@ import {
   tagModel,
 } from "@aha.chat/database/schema"
 import type { ContactModel } from "@aha.chat/database/types"
+import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,
@@ -50,6 +51,17 @@ export const updateContactTags = async ({
     },
     "Contact not found",
   )
+
+  // Get old tags before update
+  const oldTags = await db.query.contactsToTagsModel.findMany({
+    where: {
+      contactId: contact.id,
+    },
+    columns: {
+      tagId: true,
+    },
+  })
+  const oldTagIds = new Set(oldTags.map((t) => t.tagId))
 
   const returnedTags = await db.transaction(async (tx) => {
     if (parsedInput.tags.length > 0) {
@@ -100,6 +112,29 @@ export const updateContactTags = async ({
 
     return tags
   })
+
+  // Emit tag events based on changes
+  const newTagIds = new Set(returnedTags.map((t) => t.id))
+  const newlyAppliedTags = returnedTags.filter((tag) => !oldTagIds.has(tag.id))
+  const removedTagIds = Array.from(oldTagIds).filter((id) => !newTagIds.has(id))
+
+  // Emit tagApplied for newly added tags
+  for (const tag of newlyAppliedTags) {
+    try {
+      await emitTagApplied(chatbotId, contact.id, tag.id)
+    } catch (error) {
+      console.error("Failed to emit tagApplied event:", error)
+    }
+  }
+
+  // Emit tagRemoved for removed tags
+  for (const tagId of removedTagIds) {
+    try {
+      await emitTagRemoved(chatbotId, contact.id, tagId)
+    } catch (error) {
+      console.error("Failed to emit tagRemoved event:", error)
+    }
+  }
 
   revalidateCacheTags([
     `chatbots:${chatbotId}#contacts`,

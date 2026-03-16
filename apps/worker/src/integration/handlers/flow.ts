@@ -25,11 +25,11 @@ import { flowStepHandlers } from "./step"
 
 export type ExecuteMultipleStepsProps = {
   conversation: ConversationModel
-  flowVersion: FlowVersionModel
-  useLatestFlowVersion: boolean
-  targetType: "node" | "button" | "step" | "quickReply"
-  targetId: string
-  ctx: {
+  flowVersion?: FlowVersionModel
+  useLatestFlowVersion?: boolean
+  targetType?: "node" | "button" | "step" | "quickReply"
+  targetId?: string
+  ctx?: {
     variables: Variables
   }
   steps: BaseStepSchema[]

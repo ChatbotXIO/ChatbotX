@@ -15,14 +15,16 @@ export default async function InboxPage({ params }: InboxPageProps) {
   const { chatbotId } = await params
 
   return (
-    <ChatStoreProvider>
-      <InboxStoreProvider chatbotId={chatbotId}>
-        <UserStoreProvider chatbotId={chatbotId}>
-          <CustomFieldStoreProvider chatbotId={chatbotId}>
-            <ChatLayout layout={savedLayout} />
-          </CustomFieldStoreProvider>
-        </UserStoreProvider>
-      </InboxStoreProvider>
-    </ChatStoreProvider>
+    <div className="-m-6">
+      <ChatStoreProvider>
+        <InboxStoreProvider chatbotId={chatbotId}>
+          <UserStoreProvider chatbotId={chatbotId}>
+            <CustomFieldStoreProvider chatbotId={chatbotId}>
+              <ChatLayout layout={savedLayout} />
+            </CustomFieldStoreProvider>
+          </UserStoreProvider>
+        </InboxStoreProvider>
+      </ChatStoreProvider>
+    </div>
   )
 }

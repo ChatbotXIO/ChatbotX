@@ -1,93 +1,42 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { CopyIcon } from "lucide-react"
-import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
-import QRCode from "react-qr-code"
-import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
+import { memo, useMemo } from "react"
+import { ScanQRCodeDiaglog } from "@/features/qrcode/scan-qrcode"
+import { getInboxLink } from "@/features/reflinks/helpers"
 import type { InboxResource } from "../schemas/resource"
 import { InboxIcon } from "./inbox-icon"
 
-export default function InboxZaloCard({ inbox }: { inbox: InboxResource }) {
+type InboxZaloCardProps = {
+  inbox: InboxResource
+}
+
+export const InboxZaloCard = memo(function InboxZaloCard({
+  inbox,
+}: InboxZaloCardProps) {
+  const t = useTranslations()
+  const link = useMemo(
+    () =>
+      getInboxLink({
+        inbox,
+      }),
+    [inbox],
+  )
+
   return (
-    <Card className="py-3" key={inbox.id}>
+    <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
         <InboxIcon inboxType="zalo" label={inbox.integrationZalo?.name} />
-        <ZaloQRCodeDiaglog oaId={inbox.integrationZalo?.oaId ?? ""} />
+
+        <ScanQRCodeDiaglog
+          link={link}
+          title={t("actions.connectFeature", {
+            feature: t("fields.zalo.label"),
+          })}
+          triggerName={t("actions.testNow")}
+        />
       </CardContent>
     </Card>
   )
-}
-
-function ZaloQRCodeDiaglog({ oaId }: { oaId: string }) {
-  const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
-
-  const [zaloUrl, setZaloUrl] = useState<string>("")
-
-  useEffect(() => {
-    setZaloUrl(`https://zalo.me/${oaId}`)
-  }, [oaId])
-
-  const handleCopy = () => {
-    copy(zaloUrl).then(() => {
-      toast.success(t("messages.copiedToClipboard"))
-    })
-  }
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="secondary">
-          {t("actions.testNow")}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {t("actions.connectFeature", {
-              feature: t("fields.whatsapp.label"),
-            })}
-          </DialogTitle>
-          <DialogDescription />
-        </DialogHeader>
-        <div className="flex flex-col items-center justify-center gap-2">
-          <p>{t("actions.scanQRCode")}</p>
-          <QRCode value={zaloUrl} />
-
-          <p>{t("texts.or")}</p>
-          <div className="-mt-2 flex items-center justify-center gap-2">
-            <Link
-              className="text-sky-600 no-underline hover:underline dark:text-sky-400"
-              href={zaloUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {zaloUrl}
-            </Link>
-            <Button
-              onClick={handleCopy}
-              size="icon"
-              type="button"
-              variant="secondary"
-            >
-              <CopyIcon className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
+})

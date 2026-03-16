@@ -1,7 +1,8 @@
 "use server"
 
-import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import { tagModel } from "@aha.chat/database/schema"
+import type { TagModel } from "@aha.chat/database/types"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -9,7 +10,6 @@ import {
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { NotfoundException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteTagAction = chatbotActionClient
@@ -48,18 +48,16 @@ export const deleteTag = async ({
   chatbotId: string
   id: string
 }) => {
-  const tag = await db.query.tagModel.findFirst({
-    where: {
+  const tag = await findOrFail<TagModel>(
+    tagModel,
+    {
       chatbotId,
       id,
     },
-  })
+    "Tag not found",
+  )
 
-  if (!tag) {
-    throw new NotfoundException("Tag not found")
-  }
-
-  await db.delete(tagModel).where(eq(tagModel.id, id))
+  await db.delete(tagModel).where(eq(tagModel.id, tag.id))
 
   revalidateCacheTags(`chatbots:${chatbotId}#tags`)
 }

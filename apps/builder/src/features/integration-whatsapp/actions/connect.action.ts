@@ -21,7 +21,7 @@ import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-a
 import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { verifyOrganizationSettings } from "@/features/organization/queries"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 
@@ -42,7 +42,7 @@ export const connectWhatsappAction = authActionClient
         const settings = await verifyOrganizationSettings(organization)
         const whatsappSettings = settings.whatsapp
         if (!whatsappSettings) {
-          throw new BaseException("Whatsapp settings not found")
+          throw new ChatbotXException("Whatsapp settings not found")
         }
 
         // Trying to exchange code to access token
@@ -56,7 +56,7 @@ export const connectWhatsappAction = authActionClient
           }
 
           if (!parsedInput.accessToken) {
-            throw new BaseException("Access token is required")
+            throw new ChatbotXException("Access token is required")
           }
         }
 
@@ -66,13 +66,13 @@ export const connectWhatsappAction = authActionClient
           version: whatsappSettings.version,
         })
         if (phoneNumbers.data.length === 0) {
-          throw new BaseException("No phone numbers found")
+          throw new ChatbotXException("No phone numbers found")
         }
         const foundPhoneNumber = phoneNumbers.data.find(
           (phoneNumber) => phoneNumber.id === parsedInput.phoneNumberId,
         )
         if (!foundPhoneNumber) {
-          throw new BaseException("Phone number not found")
+          throw new ChatbotXException("Phone number not found")
         }
 
         // make sure the phone number is unique
@@ -83,7 +83,7 @@ export const connectWhatsappAction = authActionClient
             },
           })
         if (existedPhoneNumber) {
-          throw new BaseException("Phone number is already connected")
+          throw new ChatbotXException("Phone number is already connected")
         }
 
         // Validate wabaId
@@ -199,7 +199,7 @@ export const connectWhatsappAction = authActionClient
       } catch (err: unknown) {
         console.error(err, "Unable to verify whatsapp token")
 
-        throw new BaseException("Unable to verify Whatsapp token")
+        throw new ChatbotXException("Unable to verify Whatsapp token")
       }
     },
   )

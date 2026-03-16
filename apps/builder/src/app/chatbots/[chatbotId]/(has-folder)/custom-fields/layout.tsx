@@ -27,7 +27,25 @@ export default async function FolderableLayout({
           { label: t("customField.heading.title"), href: "" },
         ]}
       />
-      <AppTab chatbotId={chatbotId} />
+      <AppTab
+        tabs={[
+          {
+            label: t("tags.title"),
+            href: `/chatbots/${chatbotId}/tags`,
+            isActive: false,
+          },
+          {
+            label: t("customFields.title"),
+            href: `/chatbots/${chatbotId}/custom-fields`,
+            isActive: true,
+          },
+          {
+            label: t("errorLogs.title"),
+            href: `/chatbots/${chatbotId}/error-logs`,
+            isActive: false,
+          },
+        ]}
+      />
       {folders}
       {children}
     </FolderStoreProvider>

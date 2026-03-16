@@ -83,6 +83,9 @@ importers:
       '@ai-sdk/mcp':
         specifier: ^1.0.22
         version: 1.0.22(zod@4.3.6)
+      '@chatbotx/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@floating-ui/dom':
         specifier: ^1.7.5
         version: 1.7.5
@@ -468,6 +471,9 @@ importers:
       '@ai-sdk/openai':
         specifier: ^3.0.37
         version: 3.0.37(zod@4.3.6)
+      '@chatbotx/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@faker-js/faker':
         specifier: ^10.3.0
         version: 10.3.0
@@ -804,6 +810,25 @@ importers:
       drizzle-kit:
         specifier: 1.0.0-beta.15-859cf75
         version: 1.0.0-beta.15-859cf75
+
+  packages/events:
+    dependencies:
+      '@aha.chat/database':
+        specifier: workspace:*
+        version: link:../database
+      '@aha.chat/worker-config':
+        specifier: workspace:*
+        version: link:../worker-config
+      lru-cache:
+        specifier: ^11.0.2
+        version: 11.2.6
+    devDependencies:
+      '@aha.chat/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
   packages/filesystem:
     dependencies:

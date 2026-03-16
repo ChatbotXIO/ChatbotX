@@ -7,6 +7,8 @@ export default defineConfig({
     "src/integration/worker.ts",
     "src/ai-agent/worker.ts",
     "src/default/worker.ts",
+    "src/trigger/worker.ts",
+    "src/webhook/worker.ts",
   ],
   dts: true,
   shims: true,

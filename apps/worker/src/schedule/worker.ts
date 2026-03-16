@@ -8,6 +8,10 @@ import {
 } from "@aha.chat/worker-config"
 import { type Job, Queue, Worker } from "bullmq"
 import { logger } from "../lib/logger"
+import {
+  cleanupTriggerExecutions,
+  scanDateTimeTriggers,
+} from "../trigger/datetime-trigger-scanner"
 import { registerSchedules } from "./handlers/register-schedules"
 import { sendBroadcast } from "./handlers/send-broadcast"
 
@@ -28,6 +32,15 @@ const worker = new Worker(
       case ScheduleJobData.sendBroadcast:
         await sendBroadcast(job.data)
         return
+
+      case ScheduleJobData.evaluateTriggers:
+        await scanDateTimeTriggers()
+        return
+
+      case ScheduleJobData.cleanupTriggers:
+        await cleanupTriggerExecutions()
+        return
+
       default:
         throw new SdkException("ScheduleJobAction action is not defined")
     }

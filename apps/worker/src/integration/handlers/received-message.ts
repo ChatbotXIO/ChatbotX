@@ -31,6 +31,10 @@ import {
   type IntegrationJobReceiveMessage,
   integrationQueue,
 } from "@aha.chat/worker-config"
+import {
+  emitContactCreated,
+  setWebhookExecutionContext,
+} from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
@@ -44,7 +48,11 @@ export const receiveMessage = async (
   quickReplyAction: string | null
   ref?: string | null
 }> => {
+  setWebhookExecutionContext({ source: "webhook" })
+
   const { integrationType, integrationIdentifier } = props
+
+  setWebhookExecutionContext({ source: "webhook" })
 
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
@@ -82,6 +90,7 @@ export const receiveMessage = async (
       },
     })
 
+    let isNewContact = false
     if (!newContact) {
       if (canGetUserProfileIfNeeded(integrationType)) {
         const integration = allIntegrations[integrationType]
@@ -123,6 +132,8 @@ export const receiveMessage = async (
         })
         .returning()
         .then((result) => result[0])
+
+      isNewContact = true
     }
 
     if (!newContact) {
@@ -207,8 +218,35 @@ export const receiveMessage = async (
       logger.warn(error, "Unable to emit realtime message")
     }
 
-    return { message: newMessage, conversation: newConversation }
+    return {
+      message: newMessage,
+      conversation: newConversation,
+      isNewContact,
+      contactId: newContact.id,
+      contactData: isNewContact
+        ? {
+            name: newContact.firstName,
+            phone: newContact.phoneNumber,
+            email: newContact.email,
+          }
+        : undefined,
+    }
   })
+
+  // Emit contact created event if new contact
+  if (result.isNewContact && result.contactData) {
+    try {
+      await emitContactCreated(
+        chatbotId,
+        result.contactId,
+        result.contactData.name || undefined,
+        result.contactData.phone || undefined,
+        result.contactData.email || undefined,
+      )
+    } catch (error) {
+      console.error("Failed to emit contactCreated event:", error)
+    }
+  }
 
   if (postbackAction) {
     await integrationQueue.add(IntegrationJobAction.runFlowPostback, {

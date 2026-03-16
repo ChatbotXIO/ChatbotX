@@ -84,6 +84,78 @@ export const InboxStatus = {
 } as const
 export type InboxStatus = (typeof InboxStatus)[keyof typeof InboxStatus]
 
+export const Condition = {
+  tagApplied: 1,
+  tagRemoved: 2,
+
+  customFieldValueChanged: 10,
+  dateTimeBasedTrigger: 11,
+  conversationTransferredToHuman: 12,
+  conversationTransferredToBot: 13,
+  newContact: 14,
+  contactUnsubscribedFormBroadcast: 15,
+  archived: 16,
+  followUp: 17,
+  conversationAssigned: 18,
+  conversationUnassigned: 19,
+
+  incomingCall: 20,
+  missedAudioCall: 21,
+  callEnded: 22,
+
+  ticketCreated: 30,
+  ticketMovedToStage: 31,
+  ticketValueChanged: 32,
+  ticketStatusChanged: 33,
+  ticketPriorityChanged: 34,
+
+  subscribedToSequence: 40,
+  unsubscribedFromSequence: 41,
+
+  WhatsappShoppingCartSent: 50,
+  userAskedAboutProduct: 51,
+  cartAbandoned: 52,
+  newOrder: 53,
+  orderAccepted: 54,
+  orderShipped: 55,
+  orderConcluded: 56,
+  orderCancelled: 57,
+  categoryAddedToCart: 58,
+  productAddedToCart: 59,
+  productRemovedFromCart: 60,
+  productOrdered: 61,
+
+  contactReferredANewContact: 70,
+  contactReferredExistingContact: 71,
+} as const
+export type Condition = (typeof Condition)[keyof typeof Condition]
+
+export const TriggerAction = {
+  startAnotherFlow: "A01",
+  startExternalStep: "A02",
+  addTag: "A03",
+  removeTag: "A04",
+  setCustomField: "A05",
+  clearCustomField: "A06",
+  transferConversationToHuman: "A07",
+  runGoogleSheet: "A08",
+  archiveConversation: "A09",
+  unarchiveConversation: "A10",
+  assignConversation: "A11",
+  unassignConversation: "A12",
+  disableBot: "A13",
+  enableBot: "A14",
+} as const
+export type TriggerAction = (typeof TriggerAction)[keyof typeof TriggerAction]
+
+export const DateTimeTriggerType = {
+  atTheDayOf: "atTheDayOf",
+  before: "before",
+  after: "after",
+} as const
+export type DateTimeTriggerType =
+  (typeof DateTimeTriggerType)[keyof typeof DateTimeTriggerType]
+
 export const AssignerFilterType = {
   all: "all",
   unassigned: "unassigned",
@@ -108,3 +180,25 @@ export const ConversationType = {
 } as const
 export type ConversationType =
   (typeof ConversationType)[keyof typeof ConversationType]
+
+export const FolderType = {
+  tag: "tag",
+  flow: "flow",
+  customField: "customField",
+  automatedResponse: "automatedResponse",
+  trigger: "trigger",
+  webhook: "webhook",
+} as const
+export type FolderType = (typeof FolderType)[keyof typeof FolderType]
+
+export const CustomFieldType = {
+  shortText: "shortText",
+  number: "number",
+  date: "date",
+  datetime: "datetime",
+  boolean: "boolean",
+  longText: "longText",
+} as const
+
+export type CustomFieldType =
+  (typeof CustomFieldType)[keyof typeof CustomFieldType]

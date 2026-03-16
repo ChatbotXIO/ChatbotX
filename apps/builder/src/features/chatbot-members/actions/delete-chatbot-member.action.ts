@@ -9,7 +9,7 @@ import type {
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 export const deleteChatbotMemberAction = chatbotActionClient
@@ -22,16 +22,16 @@ export const deleteChatbotMemberAction = chatbotActionClient
       "Chatbot member not found",
     )
     if (chatbotMember.userId === ctx.user.id) {
-      throw new BaseException("You cannot delete yourself from the chatbot")
+      throw new ChatbotXException("You cannot delete yourself from the chatbot")
     }
     if (chatbotMember.role === "owner") {
-      throw new BaseException("You cannot delete the owner of the chatbot")
+      throw new ChatbotXException("You cannot delete the owner of the chatbot")
     }
 
     const currentUserAndTargetChatbot =
       await getCurrentUserAndTargetChatbot(chatbotId)
     if (!currentUserAndTargetChatbot) {
-      throw new BaseException(
+      throw new ChatbotXException(
         "You are not authorized to delete this chatbot member",
       )
     }
@@ -39,7 +39,7 @@ export const deleteChatbotMemberAction = chatbotActionClient
     const permissions = currentUserAndTargetChatbot.targetChatbotMember
       .permissions as ChatbotMemberPermissions
     if (!permissions.superAdmin) {
-      throw new BaseException(
+      throw new ChatbotXException(
         "You are not authorized to delete this chatbot member. You need to be a super admin to do this.",
       )
     }

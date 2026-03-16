@@ -26,7 +26,7 @@ export async function GET(
 There Is No Limit To What You Can Accomplish Using Zalo!
 </body>
 
-</html>    
+</html>
     `,
     {
       status: 200,

@@ -1,5 +1,5 @@
 import { db } from "@aha.chat/database/client"
-import { ORPCError } from "@orpc/client"
+import { ORPCError } from "@orpc/server"
 import { base } from "./context"
 
 export const chatbotTokenMiddleware = base.middleware(

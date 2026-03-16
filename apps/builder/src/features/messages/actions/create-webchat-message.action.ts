@@ -26,7 +26,7 @@ import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { actionClient } from "@/lib/safe-action"
 import type { MessageResource } from "../schemas"
 import {
@@ -257,7 +257,7 @@ async function getConversationFromInput(
         "Chatbot usage not found",
       )
       if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
-        throw new BaseException("Max contacts reached")
+        throw new ChatbotXException("Max contacts reached")
       }
 
       contact = await tx
@@ -277,7 +277,7 @@ async function getConversationFromInput(
     }
 
     if (!contact) {
-      throw new BaseException("Contact not found")
+      throw new ChatbotXException("Contact not found")
     }
 
     conversation = await tx
@@ -294,7 +294,7 @@ async function getConversationFromInput(
   }
 
   if (!conversation) {
-    throw new BaseException("Conversation not found")
+    throw new ChatbotXException("Conversation not found")
   }
 
   return { conversation }
