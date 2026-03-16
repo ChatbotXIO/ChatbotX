@@ -25,7 +25,7 @@ export const disconnectZaloAction = chatbotActionClient
           chatbotId,
           id,
         },
-        "Integration Zalo not found",
+        "Integration Zalo OA not found",
       )
 
       await db.transaction(async (tx) => {

@@ -274,7 +274,7 @@
     "inboxType": {
       "messenger": "Messenger",
       "whatsapp": "WhatsApp",
-      "zalo": "Zalo"
+      "zalo": "Zalo OA"
     },
     "status": {
       "scheduled": "Đã lên lịch",
@@ -416,7 +416,7 @@
       "label": "Messenger"
     },
     "zalo": {
-      "label": "Zalo"
+      "label": "Zalo OA"
     },
     "matchAll": {
       "label": "Khớp tất cả các điều kiện bên dưới"
@@ -1687,8 +1687,8 @@
     "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác"
   },
   "zalo": {
-    "description": "Tích hợp này cho phép bạn tạo bot Zalo.",
-    "title": "Zalo"
+    "description": "Tích hợp này cho phép bạn tạo bot Zalo OA.",
+    "title": "Zalo OA"
   },
   "invitation": {
     "title": "Lời mời",

@@ -271,7 +271,7 @@
     "inboxType": {
       "messenger": "Messenger",
       "whatsapp": "WhatsApp",
-      "zalo": "Zalo"
+      "zalo": "Zalo OA"
     },
     "status": {
       "scheduled": "Scheduled",
@@ -413,7 +413,7 @@
       "label": "Messenger"
     },
     "zalo": {
-      "label": "Zalo"
+      "label": "Zalo OA"
     },
     "matchAll": {
       "label": "Match all the conditions below"
@@ -1749,8 +1749,8 @@
     "transferPhoneNumber": "Transfer phone from another Whatsapp provider"
   },
   "zalo": {
-    "description": "This integration lets you create Zalo bots.",
-    "title": "Zalo",
+    "description": "This integration lets you create Zalo OA bots.",
+    "title": "Zalo OA",
     "refreshPermissions": "Refresh permissions"
   },
   "invitation": {

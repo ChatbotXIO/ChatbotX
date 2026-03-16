@@ -1,8 +1,5 @@
 import { db } from "@aha.chat/database/client"
-import type {
-  IntegrationZaloModel,
-  IntegrationZaloWhereInput,
-} from "@aha.chat/database/types"
+import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export const findIntegrationZalo = async ({
@@ -24,7 +21,7 @@ export const findIntegrationZalo = async ({
 export const listIntegrationZalo = async ({
   where,
 }: {
-  where: IntegrationZaloWhereInput
+  where: { chatbotId?: string; id?: string }
 }): Promise<{ data: IntegrationZaloModel[] }> => {
   const data = await db.query.integrationZaloModel.findMany({
     where,

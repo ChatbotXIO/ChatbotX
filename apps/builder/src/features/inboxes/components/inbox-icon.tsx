@@ -47,7 +47,7 @@ const INBOX_ICON_CONFIG: Record<InboxType | "omnichannel", InboxIconConfig> = {
   zalo: {
     Icon: SiZalo,
     fill: SiZaloHex,
-    defaultLabel: "Zalo",
+    defaultLabel: "Zalo OA",
   },
   webchat: {
     Icon: AppWindowIcon,

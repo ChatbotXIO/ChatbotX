@@ -15,7 +15,7 @@ export const allInboxConfigs = {
     value: "whatsapp",
   },
   zalo: {
-    label: "Zalo",
+    label: "Zalo OA",
     value: "zalo",
   },
   webchat: {
