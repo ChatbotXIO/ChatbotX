@@ -1,9 +1,9 @@
 "use client"
 
-import { aiGenerateTextSchema, aiProviders } from "@aha.chat/flow-config"
-import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
-import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
-import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
+import {
+  aiAnalyzeImageProviders,
+  aiAnalyzeImageSchema,
+} from "@aha.chat/flow-config"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -21,24 +21,24 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
-import { useAIToolOptions } from "@/features/ai-triggers/use-ai-tools"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { AIModelSelect } from "./ai-model-select"
+import { AIModelSelect } from "../../ai-generate-text/components/ai-model-select"
 
-type AIModelDialogProps = {
+type AIAnalyzeImageDialogProps = {
   parentName: string
 }
 
-export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
+export const AIAnalyzeImageDialog = ({
+  parentName,
+}: AIAnalyzeImageDialogProps) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const toolOptions = useAIToolOptions()
 
   const { control, getValues, setValue } = useFormContext()
   const provider = useWatch({ name: `${parentName}.provider`, control })
 
   const form = useForm({
-    resolver: zodResolver(aiGenerateTextSchema),
+    resolver: zodResolver(aiAnalyzeImageSchema),
     defaultValues: getValues(parentName),
   })
 
@@ -68,8 +68,13 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
       <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="capitalize">
-            {t("fields.flows.aiGenerateText.label", {
-              name: provider === aiProviders.gemini ? "Gemini" : "OpenAI",
+            {t("fields.flows.aiAnalyzeImage.label", {
+              name:
+                {
+                  [aiAnalyzeImageProviders.gemini]: "Gemini",
+                  [aiAnalyzeImageProviders.claude]: "Claude",
+                  [aiAnalyzeImageProviders.openai]: "OpenAI",
+                }[provider as keyof typeof aiAnalyzeImageProviders] || "OpenAI",
             })}
           </DialogTitle>
           <DialogDescription />
@@ -81,15 +86,16 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
               <AIModelSelect name="model" provider={provider} required />
 
               <TiptapEditorField
-                label={t("fields.prompt.label")}
-                name="system"
-                placeholder={t("fields.prompt.placeholder")}
+                label={t("fields.imageUrl.label")}
+                name="imageUrl"
+                placeholder={t("fields.imageUrl.placeholder")}
+                required
               />
 
               <TiptapEditorField
-                label={t("fields.userMessage.label")}
-                name="text"
-                required
+                label={t("fields.prompt.label")}
+                name="prompt"
+                placeholder={t("fields.prompt.placeholder")}
               />
 
               <CustomFieldSelect
@@ -98,36 +104,6 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
                 label={t("fields.outputCfId.label")}
                 name="outputCfId"
                 required
-              />
-
-              <MultiSelectField
-                label={t("fields.tools.label")}
-                name="tools"
-                options={toolOptions}
-              />
-
-              <SwitchField
-                formItemClassName="flex flex-row items-center justify-between rounded-lg border p-3"
-                label={t("fields.rememberConversation.label")}
-                name="remember"
-              />
-
-              <InputNumberField
-                label={t("fields.temperature.label")}
-                max={2}
-                min={0}
-                name="temperature"
-                required
-                stepper={0.1}
-              />
-
-              <InputNumberField
-                label={t("fields.maxOutputTokens.label")}
-                max={32_768}
-                min={250}
-                name="maxOutputTokens"
-                required
-                stepper={1}
               />
             </div>
 

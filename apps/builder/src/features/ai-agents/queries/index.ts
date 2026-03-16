@@ -35,7 +35,7 @@ export async function listAIAgents(
     db.$count(aiAgentModel, relationsFilterToSQL(aiAgentModel, where)),
   ])
 
-  const pageCount = Math.ceil(total / input.perPage)
+  const pageCount = Math.max(1, Math.ceil(total / input.perPage))
 
   return { data, pageCount }
 }

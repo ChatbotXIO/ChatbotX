@@ -32,7 +32,7 @@ export type ListTagsRequest = z.infer<typeof listTagsRequest>
 
 export const listTagsResponse = z.object({
   data: z.array(tagResource),
-  pageCount: z.number().int().min(1),
+  pageCount: z.number().int(),
 })
 export type ListTagsResponse = z.infer<typeof listTagsResponse>
 

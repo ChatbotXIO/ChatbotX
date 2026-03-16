@@ -1,28 +1,29 @@
 "use client"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
+import { BotIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useFormContext, useWatch } from "react-hook-form"
+import { BaseStepEditor } from "../base/editor"
+import { AIAnalyzeImageDialog } from "./components/ai-analyze-image-dialog"
 
-const AIAnalyzeImageEditor = () => {
+type AIAnalyzeImageEditorProps = {
+  parentName: string
+}
+
+const AIAnalyzeImageEditor = (props: AIAnalyzeImageEditorProps) => {
+  const { parentName } = props
   const t = useTranslations()
 
-  return (
-    <Dialog>
-      <DialogTrigger>{t("actions.edit")}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("flows.actions.aiAnalyzeImage")}</DialogTitle>
-        </DialogHeader>
+  const { control } = useFormContext()
+  const provider = useWatch({ name: `${parentName}.provider`, control })
 
-        <div className="flex flex-col gap-2">wip</div>
-      </DialogContent>
-    </Dialog>
+  return (
+    <BaseStepEditor
+      icon={BotIcon}
+      title={t("flows.aiAnalyzeImage.label", { name: provider })}
+    >
+      <AIAnalyzeImageDialog parentName={parentName} />
+    </BaseStepEditor>
   )
 }
 

@@ -1,9 +1,17 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import {
+  and,
+  db,
+  eq,
+  findOrFail,
+  inArray,
+  sql,
+} from "@aha.chat/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
+  fieldModel,
 } from "@aha.chat/database/schema"
 import {
   type ContactModel,
@@ -15,10 +23,7 @@ import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { listCustomFields } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { maxPerPageString } from "@/lib/shared-request"
 import {
   type UpdateContactFieldRequest,
   updateContactFieldRequest,
@@ -57,15 +62,26 @@ export const updateContactFields = async ({
     "Contact not found",
   )
 
-  const allCustomFields = await listCustomFields({
-    chatbotId,
-    ...listCustomFieldsSearchParams.parse({
-      chatbotId,
-      perPage: maxPerPageString,
-    }),
-  })
+  const customFieldIds = Object.keys(parsedInput).filter(
+    (key) => !fillableContactKeys.includes(key as FillableContactKeys),
+  )
+
+  const allCustomFields =
+    customFieldIds.length > 0
+      ? await db
+          .select()
+          .from(fieldModel)
+          .where(
+            and(
+              eq(fieldModel.chatbotId, chatbotId),
+              eq(fieldModel.fieldType, "customField"),
+              inArray(fieldModel.id, customFieldIds),
+            ),
+          )
+      : []
+
   const allCustomFieldsMap = new Map(
-    allCustomFields.data.map((field) => [field.id, field]),
+    allCustomFields.map((field) => [field.id, field]),
   )
 
   // Prepare data
@@ -90,25 +106,26 @@ export const updateContactFields = async ({
     }
 
     if (Object.keys(customFields).length > 0) {
-      for (const [key, value] of Object.entries(customFields)) {
-        await tx
-          .insert(contactCustomFieldModel)
-          .values({
-            contactId: id,
+      await tx
+        .insert(contactCustomFieldModel)
+        .values(
+          Object.entries(customFields).map(([key, value]) => ({
+            contactId: contact.id,
             customFieldId: key,
             value: value as string,
             id: createId(),
-          })
-          .onConflictDoUpdate({
-            target: [
-              contactCustomFieldModel.contactId,
-              contactCustomFieldModel.customFieldId,
-            ],
-            set: {
-              value: value as string,
-            },
-          })
-      }
+          })),
+        )
+        .onConflictDoUpdate({
+          target: [
+            contactCustomFieldModel.contactId,
+            contactCustomFieldModel.customFieldId,
+          ],
+          set: {
+            value: sql`excluded.value`,
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          },
+        })
     }
   })
 }

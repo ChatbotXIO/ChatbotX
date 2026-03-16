@@ -17,7 +17,7 @@ import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
 import { getAIToolset } from "./tools"
 
-const contactSchema = z.object({
+export const contactSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   fullName: z.string(),
@@ -26,9 +26,9 @@ const contactSchema = z.object({
   gender: z.enum(["male", "female", "unknown"]),
 })
 
-type ContactSchemaOutput = z.infer<typeof contactSchema>
+export type ContactSchemaOutput = z.infer<typeof contactSchema>
 
-type ContactData = {
+export type ContactData = {
   firstName?: string
   lastName?: string
   fullName?: string
@@ -122,7 +122,7 @@ export async function handleAIGenerateText({
 
 const REGEX_ONLY_NUMBERS = /^\d+$/
 
-async function validateExtractedData(
+export async function validateExtractedData(
   data: ContactSchemaOutput,
 ): Promise<ContactData> {
   const validated: ContactData = {}
@@ -158,7 +158,7 @@ async function validateExtractedData(
   return await Promise.resolve(validated)
 }
 
-async function saveResultToCustomField({
+export async function saveResultToCustomField({
   contactId,
   customFieldId,
   fullText,

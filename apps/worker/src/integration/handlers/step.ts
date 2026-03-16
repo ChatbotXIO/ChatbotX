@@ -11,6 +11,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@aha.chat/worker-config"
+import { handleAIAnalyzeImage } from "./analyze-image"
 import {
   addContactNotes,
   addContactTag,
@@ -144,7 +145,7 @@ export const flowStepHandlers: Record<
   [StepType.markEmailVerified]: markEmailVerified,
   [StepType.notifyAgent]: undefined,
   [StepType.openWebsite]: undefined,
-  [StepType.aiAnalyzeImage]: undefined,
+  [StepType.aiAnalyzeImage]: handleAIAnalyzeImage,
   [StepType.aiDeleteMessageHistory]: undefined,
   [StepType.aiGenerateImage]: undefined,
   [StepType.aiGenerateTextAgent]: undefined,

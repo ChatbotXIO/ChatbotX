@@ -57,6 +57,7 @@ export const createTag = async (
     )
   }
 
+  const now = new Date()
   const newTag = await db
     .insert(tagModel)
     .values({
@@ -64,6 +65,8 @@ export const createTag = async (
       folderId: parsedInput.folderId ?? null,
       syncToMessenger: parsedInput.syncToMessenger ?? true,
       id: createId(),
+      createdAt: now,
+      updatedAt: now,
     })
     .returning()
     .then((result) => result[0])

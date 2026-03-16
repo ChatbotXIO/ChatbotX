@@ -41,6 +41,7 @@ export const createCustomField = async (
   }
 
   try {
+    const now = new Date()
     const newField = await db
       .insert(fieldModel)
       .values({
@@ -49,6 +50,8 @@ export const createCustomField = async (
         fieldType: "customField",
         showInInbox: true,
         ...parsedInput,
+        createdAt: now,
+        updatedAt: now,
       })
       .returning()
       .then((result) => result[0])

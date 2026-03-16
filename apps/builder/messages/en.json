@@ -52,7 +52,7 @@
     "followConversation": "Follow Conversation",
     "formatDate": "Format Date",
     "generateCode": "Generate Code",
-    "generateText": "Generate Text",
+    "generateText": "AI Generate Text",
     "getDataFromJson": "Get Data From JSON",
     "getEmbedCode": "Get Embed Code",
     "getID": "Get ID",
@@ -653,11 +653,14 @@
     },
     "flows": {
       "aiGenerateText": {
-        "label": "{aiName}: Generate Text"
+        "label": "{name}: AI Generate Text"
       },
       "label": "Flows",
       "sendMessage": {
         "label": "Send Message"
+      },
+      "aiAnalyzeImage": {
+        "label": "{name}: AI Analyze Image"
       }
     },
     "flowToSend": {
@@ -720,6 +723,10 @@
     },
     "insertLink": {
       "label": "Insert link"
+    },
+    "imageUrl": {
+      "label": "Image URL or Variable",
+      "placeholder": "Enter image URL or '{'variable'}'"
     },
     "instructions": {
       "label": "System Message (Prompt)",
@@ -1106,6 +1113,9 @@
     "title": "Flows",
     "aiGenerateText": {
       "label": "{name}: AI Generate Text"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name}: AI Analyze Image"
     },
     "actions": {
       "addContactNotes": "Add Contact Notes",

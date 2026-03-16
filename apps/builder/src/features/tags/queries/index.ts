@@ -53,7 +53,7 @@ export async function listTags(
   ])
 
   const pageCount = pagination?.limit
-    ? Math.ceil(totalRows / pagination.limit)
+    ? Math.max(1, Math.ceil(totalRows / pagination.limit))
     : 1
 
   return { data, pageCount }

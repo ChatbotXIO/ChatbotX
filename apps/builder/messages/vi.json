@@ -653,11 +653,14 @@
     },
     "flows": {
       "aiGenerateText": {
-        "label": "{aiName}: Tạo văn bản"
+        "label": "{name}: AI Tạo văn bản"
       },
       "label": "Luồng",
       "sendMessage": {
         "label": "Gửi tin nhắn"
+      },
+      "aiAnalyzeImage": {
+        "label": "{name}: AI Phân tích hình ảnh"
       }
     },
     "flowToSend": {
@@ -720,6 +723,10 @@
     },
     "insertLink": {
       "label": "Chèn liên kết"
+    },
+    "imageUrl": {
+      "label": "URL hình ảnh hoặc Biến",
+      "placeholder": "Nhập URL hình ảnh hoặc '{'variable'}'"
     },
     "instructions": {
       "label": "Tin nhắn hệ thống (Prompt)",
@@ -1105,6 +1112,9 @@
   "flows": {
     "aiGenerateText": {
       "label": "{name}: AI Tạo văn bản"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name}: AI Phân tích hình ảnh"
     },
     "actions": {
       "addContactNotes": "Thêm ghi chú liên hệ",

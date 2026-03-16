@@ -11,7 +11,7 @@ type PaginationOutput = {
   offset: number
 }
 
-export const maxLimit = 50
+export const maxLimit = 1000
 
 export const defaultPagination = {
   limit: 20,

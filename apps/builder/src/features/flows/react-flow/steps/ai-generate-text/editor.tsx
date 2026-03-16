@@ -20,8 +20,8 @@ export const AIGenerateTextEditor = (props: AIGenerateTextEditorProps) => {
   return (
     <BaseStepEditor
       icon={BotIcon}
-      title={t("fields.flows.aiGenerateText.label", {
-        aiName: provider,
+      title={t("flows.aiGenerateText.label", {
+        name: provider,
       })}
     >
       <AIModelDialog parentName={parentName} />

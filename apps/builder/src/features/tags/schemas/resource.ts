@@ -1,7 +1,9 @@
 import { createSelectSchema, tagModel } from "@aha.chat/database/schema"
-import type z from "zod"
+import z from "zod"
 
-export const tagResource = createSelectSchema(tagModel)
+export const tagResource = createSelectSchema(tagModel).extend({
+  contactsCount: z.number().optional(),
+})
 export type TagResource = z.infer<typeof tagResource>
 
 export const publicTagResource = tagResource.pick({

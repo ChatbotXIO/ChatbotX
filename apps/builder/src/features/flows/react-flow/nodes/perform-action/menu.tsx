@@ -75,6 +75,16 @@ const openaiMenus = (t: TranslationFn): MenuItem[] => [
           provider: "openai",
         },
       },
+      {
+        label: t("flows.aiAnalyzeImage.label", {
+          name: "OpenAI",
+        }),
+        icon: OpenAIIcon,
+        stepType: StepType.aiAnalyzeImage,
+        props: {
+          provider: "openai",
+        },
+      },
     ],
   },
 ]
@@ -95,6 +105,16 @@ const claudeMenus = (t: TranslationFn): MenuItem[] => [
           provider: "claude",
         },
       },
+      {
+        label: t("flows.aiAnalyzeImage.label", {
+          name: "Claude",
+        }),
+        icon: SiClaude,
+        stepType: StepType.aiAnalyzeImage,
+        props: {
+          provider: "claude",
+        },
+      },
     ],
   },
 ]
@@ -111,6 +131,16 @@ const geminiMenus = (t: TranslationFn): MenuItem[] => [
         }),
         icon: SiGooglegemini,
         stepType: StepType.aiGenerateText,
+        props: {
+          provider: "gemini",
+        },
+      },
+      {
+        label: t("flows.aiAnalyzeImage.label", {
+          name: "Gemini",
+        }),
+        icon: SiGooglegemini,
+        stepType: StepType.aiAnalyzeImage,
         props: {
           provider: "gemini",
         },

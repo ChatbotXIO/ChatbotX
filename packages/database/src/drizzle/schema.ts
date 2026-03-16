@@ -489,7 +489,7 @@ export const broadcastModel = pgTable(
     ),
     index("Broadcast_inboxType_idx").using(
       "btree",
-      table.inboxType.asc().nullsLast().op("text_ops"),
+      table.inboxType.asc().nullsLast().op("enum_ops"),
     ),
     index("Broadcast_schedulesAt_idx").using(
       "btree",
@@ -643,10 +643,9 @@ export const contactCustomFieldModel = pgTable(
       }),
   },
   (table) => [
-    uniqueIndex("ContactCustomField_contactId_customFieldId_key").using(
-      "btree",
-      table.contactId.asc().nullsLast().op("text_ops"),
-      table.customFieldId.asc().nullsLast().op("text_ops"),
+    uniqueIndex("ContactCustomField_contactId_customFieldId_key").on(
+      table.contactId,
+      table.customFieldId,
     ),
   ],
 )
@@ -783,10 +782,7 @@ export const conversationModel = pgTable(
       table.chatbotId.asc().nullsLast().op("text_ops"),
       table.sourceId.asc().nullsLast().op("text_ops"),
     ),
-    uniqueIndex("Conversation_contactId_key").using(
-      "btree",
-      table.contactId.asc().nullsLast().op("text_ops"),
-    ),
+    uniqueIndex("Conversation_contactId_key").on(table.contactId),
   ],
 )
 
@@ -869,9 +865,9 @@ export const fieldModel = pgTable(
   (table) => [
     uniqueIndex("Field_chatbotId_fieldType_name_key").using(
       "btree",
-      table.chatbotId.asc().nullsLast().op("enum_ops"),
-      table.fieldType.asc().nullsLast().op("text_ops"),
-      table.name.asc().nullsLast().op("enum_ops"),
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.fieldType.asc().nullsLast().op("enum_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
     ),
   ],
 )
@@ -1033,11 +1029,10 @@ export const inboxModel = pgTable(
       "btree",
       table.chatbotId.asc().nullsLast().op("text_ops"),
     ),
-    uniqueIndex("Inbox_chatbotId_inboxType_sourceId_key").using(
-      "btree",
-      table.chatbotId.asc().nullsLast().op("text_ops"),
-      table.inboxType.asc().nullsLast().op("enum_ops"),
-      table.sourceId.asc().nullsLast().op("enum_ops"),
+    uniqueIndex("Inbox_chatbotId_inboxType_sourceId_key").on(
+      table.chatbotId,
+      table.inboxType,
+      table.sourceId,
     ),
   ],
 )
@@ -1567,10 +1562,9 @@ export const messageModel = pgTable(
       "btree",
       table.chatbotId.asc().nullsLast().op("text_ops"),
     ),
-    uniqueIndex("Message_chatbotId_sourceId_key").using(
-      "btree",
-      table.chatbotId.asc().nullsLast().op("text_ops"),
-      table.sourceId.asc().nullsLast().op("text_ops"),
+    uniqueIndex("Message_chatbotId_sourceId_key").on(
+      table.chatbotId,
+      table.sourceId,
     ),
     index("Message_conversationId_idx").using(
       "btree",
